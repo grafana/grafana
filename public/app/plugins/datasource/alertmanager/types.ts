@@ -208,7 +208,6 @@ export type AlertmanagerGroup = {
   labels: { [key: string]: string };
   receiver: { name: string };
   alerts: AlertmanagerAlert[];
-  id: string;
 };
 
 export interface AlertmanagerStatus {

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type fakeCredential struct {
+type fakeRetriever struct {
 	key                string
 	initCalledTimes    int
 	calledTimes        int
@@ -20,16 +20,16 @@ type fakeCredential struct {
 	getAccessTokenFunc func(ctx context.Context, scopes []string) (*AccessToken, error)
 }
 
-func (c *fakeCredential) GetCacheKey() string {
+func (c *fakeRetriever) GetCacheKey() string {
 	return c.key
 }
 
-func (c *fakeCredential) Reset() {
+func (c *fakeRetriever) Reset() {
 	c.initCalledTimes = 0
 	c.calledTimes = 0
 }
 
-func (c *fakeCredential) Init() error {
+func (c *fakeRetriever) Init() error {
 	c.initCalledTimes = c.initCalledTimes + 1
 	if c.initFunc != nil {
 		return c.initFunc()
@@ -37,7 +37,7 @@ func (c *fakeCredential) Init() error {
 	return nil
 }
 
-func (c *fakeCredential) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
+func (c *fakeRetriever) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
 	c.calledTimes = c.calledTimes + 1
 	if c.getAccessTokenFunc != nil {
 		return c.getAccessTokenFunc(ctx, scopes)
@@ -52,15 +52,15 @@ func TestConcurrentTokenCache_GetAccessToken(t *testing.T) {
 	scopes1 := []string{"Scope1"}
 	scopes2 := []string{"Scope2"}
 
-	t.Run("should request access token from credential", func(t *testing.T) {
+	t.Run("should request access token from retriever", func(t *testing.T) {
 		cache := NewConcurrentTokenCache()
-		credential := &fakeCredential{key: "credential-1"}
+		tokenRetriever := &fakeRetriever{key: "retriever"}
 
-		token, err := cache.GetAccessToken(ctx, credential, scopes1)
+		token, err := cache.GetAccessToken(ctx, tokenRetriever, scopes1)
 		require.NoError(t, err)
-		assert.Equal(t, "credential-1-token-1", token)
+		assert.Equal(t, "retriever-token-1", token)
 
-		assert.Equal(t, 1, credential.calledTimes)
+		assert.Equal(t, 1, tokenRetriever.calledTimes)
 	})
 
 	t.Run("should return cached token for same scopes", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestConcurrentTokenCache_GetAccessToken(t *testing.T) {
 		var err error
 
 		cache := NewConcurrentTokenCache()
-		credential := &fakeCredential{key: "credential-1"}
+		credential := &fakeRetriever{key: "credential-1"}
 
 		token1, err = cache.GetAccessToken(ctx, credential, scopes1)
 		require.NoError(t, err)
@@ -94,8 +94,8 @@ func TestConcurrentTokenCache_GetAccessToken(t *testing.T) {
 		var err error
 
 		cache := NewConcurrentTokenCache()
-		credential1 := &fakeCredential{key: "credential-1"}
-		credential2 := &fakeCredential{key: "credential-2"}
+		credential1 := &fakeRetriever{key: "credential-1"}
+		credential2 := &fakeRetriever{key: "credential-2"}
 
 		token1, err = cache.GetAccessToken(ctx, credential1, scopes1)
 		require.NoError(t, err)
@@ -119,8 +119,8 @@ func TestConcurrentTokenCache_GetAccessToken(t *testing.T) {
 }
 
 func TestCredentialCacheEntry_EnsureInitialized(t *testing.T) {
-	t.Run("when credential init returns error", func(t *testing.T) {
-		credential := &fakeCredential{
+	t.Run("when retriever init returns error", func(t *testing.T) {
+		tokenRetriever := &fakeRetriever{
 			initFunc: func() error {
 				return errors.New("unable to initialize")
 			},
@@ -128,7 +128,7 @@ func TestCredentialCacheEntry_EnsureInitialized(t *testing.T) {
 
 		t.Run("should return error", func(t *testing.T) {
 			cacheEntry := &credentialCacheEntry{
-				credential: credential,
+				retriever: tokenRetriever,
 			}
 
 			err := cacheEntry.ensureInitialized()
@@ -137,10 +137,10 @@ func TestCredentialCacheEntry_EnsureInitialized(t *testing.T) {
 		})
 
 		t.Run("should call init again each time and return error", func(t *testing.T) {
-			credential.Reset()
+			tokenRetriever.Reset()
 
 			cacheEntry := &credentialCacheEntry{
-				credential: credential,
+				retriever: tokenRetriever,
 			}
 
 			var err error
@@ -153,13 +153,13 @@ func TestCredentialCacheEntry_EnsureInitialized(t *testing.T) {
 			err = cacheEntry.ensureInitialized()
 			assert.Error(t, err)
 
-			assert.Equal(t, 3, credential.initCalledTimes)
+			assert.Equal(t, 3, tokenRetriever.initCalledTimes)
 		})
 	})
 
-	t.Run("when credential init returns error only once", func(t *testing.T) {
+	t.Run("when retriever init returns error only once", func(t *testing.T) {
 		var times = 0
-		credential := &fakeCredential{
+		tokenRetriever := &fakeRetriever{
 			initFunc: func() error {
 				times = times + 1
 				if times == 1 {
@@ -169,9 +169,9 @@ func TestCredentialCacheEntry_EnsureInitialized(t *testing.T) {
 			},
 		}
 
-		t.Run("should call credential init again only while it returns error", func(t *testing.T) {
+		t.Run("should call retriever init again only while it returns error", func(t *testing.T) {
 			cacheEntry := &credentialCacheEntry{
-				credential: credential,
+				retriever: tokenRetriever,
 			}
 
 			var err error
@@ -184,52 +184,52 @@ func TestCredentialCacheEntry_EnsureInitialized(t *testing.T) {
 			err = cacheEntry.ensureInitialized()
 			assert.NoError(t, err)
 
-			assert.Equal(t, 2, credential.initCalledTimes)
+			assert.Equal(t, 2, tokenRetriever.initCalledTimes)
 		})
 	})
 
-	t.Run("when credential init panics", func(t *testing.T) {
-		credential := &fakeCredential{
+	t.Run("when retriever init panics", func(t *testing.T) {
+		tokenRetriever := &fakeRetriever{
 			initFunc: func() error {
 				panic(errors.New("unable to initialize"))
 			},
 		}
 
-		t.Run("should call credential init again each time", func(t *testing.T) {
-			credential.Reset()
+		t.Run("should call retriever init again each time", func(t *testing.T) {
+			tokenRetriever.Reset()
 
 			cacheEntry := &credentialCacheEntry{
-				credential: credential,
+				retriever: tokenRetriever,
 			}
 
 			func() {
 				defer func() {
-					assert.NotNil(t, recover(), "credential expected to panic")
+					assert.NotNil(t, recover(), "retriever expected to panic")
 				}()
 				_ = cacheEntry.ensureInitialized()
 			}()
 
 			func() {
 				defer func() {
-					assert.NotNil(t, recover(), "credential expected to panic")
+					assert.NotNil(t, recover(), "retriever expected to panic")
 				}()
 				_ = cacheEntry.ensureInitialized()
 			}()
 
 			func() {
 				defer func() {
-					assert.NotNil(t, recover(), "credential expected to panic")
+					assert.NotNil(t, recover(), "retriever expected to panic")
 				}()
 				_ = cacheEntry.ensureInitialized()
 			}()
 
-			assert.Equal(t, 3, credential.initCalledTimes)
+			assert.Equal(t, 3, tokenRetriever.initCalledTimes)
 		})
 	})
 
-	t.Run("when credential init panics only once", func(t *testing.T) {
+	t.Run("when retriever init panics only once", func(t *testing.T) {
 		var times = 0
-		credential := &fakeCredential{
+		tokenRetriever := &fakeRetriever{
 			initFunc: func() error {
 				times = times + 1
 				if times == 1 {
@@ -239,23 +239,23 @@ func TestCredentialCacheEntry_EnsureInitialized(t *testing.T) {
 			},
 		}
 
-		t.Run("should call credential init again only while it panics", func(t *testing.T) {
+		t.Run("should call retriever init again only while it panics", func(t *testing.T) {
 			cacheEntry := &credentialCacheEntry{
-				credential: credential,
+				retriever: tokenRetriever,
 			}
 
 			var err error
 
 			func() {
 				defer func() {
-					assert.NotNil(t, recover(), "credential expected to panic")
+					assert.NotNil(t, recover(), "retriever expected to panic")
 				}()
 				_ = cacheEntry.ensureInitialized()
 			}()
 
 			func() {
 				defer func() {
-					assert.Nil(t, recover(), "credential not expected to panic")
+					assert.Nil(t, recover(), "retriever not expected to panic")
 				}()
 				err = cacheEntry.ensureInitialized()
 				assert.NoError(t, err)
@@ -263,13 +263,13 @@ func TestCredentialCacheEntry_EnsureInitialized(t *testing.T) {
 
 			func() {
 				defer func() {
-					assert.Nil(t, recover(), "credential not expected to panic")
+					assert.Nil(t, recover(), "retriever not expected to panic")
 				}()
 				err = cacheEntry.ensureInitialized()
 				assert.NoError(t, err)
 			}()
 
-			assert.Equal(t, 2, credential.initCalledTimes)
+			assert.Equal(t, 2, tokenRetriever.initCalledTimes)
 		})
 	})
 }
@@ -279,8 +279,8 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 
 	scopes := []string{"Scope1"}
 
-	t.Run("when credential getAccessToken returns error", func(t *testing.T) {
-		credential := &fakeCredential{
+	t.Run("when retriever getAccessToken returns error", func(t *testing.T) {
+		tokenRetriever := &fakeRetriever{
 			getAccessTokenFunc: func(ctx context.Context, scopes []string) (*AccessToken, error) {
 				invalidToken := &AccessToken{Token: "invalid_token", ExpiresOn: timeNow().Add(time.Hour)}
 				return invalidToken, errors.New("unable to get access token")
@@ -289,9 +289,9 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 
 		t.Run("should return error", func(t *testing.T) {
 			cacheEntry := &scopesCacheEntry{
-				credential: credential,
-				scopes:     scopes,
-				cond:       sync.NewCond(&sync.Mutex{}),
+				retriever: tokenRetriever,
+				scopes:    scopes,
+				cond:      sync.NewCond(&sync.Mutex{}),
 			}
 
 			accessToken, err := cacheEntry.getAccessToken(ctx)
@@ -300,13 +300,13 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 			assert.Equal(t, "", accessToken)
 		})
 
-		t.Run("should call credential again each time and return error", func(t *testing.T) {
-			credential.Reset()
+		t.Run("should call retriever again each time and return error", func(t *testing.T) {
+			tokenRetriever.Reset()
 
 			cacheEntry := &scopesCacheEntry{
-				credential: credential,
-				scopes:     scopes,
-				cond:       sync.NewCond(&sync.Mutex{}),
+				retriever: tokenRetriever,
+				scopes:    scopes,
+				cond:      sync.NewCond(&sync.Mutex{}),
 			}
 
 			var err error
@@ -319,13 +319,13 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 			_, err = cacheEntry.getAccessToken(ctx)
 			assert.Error(t, err)
 
-			assert.Equal(t, 3, credential.calledTimes)
+			assert.Equal(t, 3, tokenRetriever.calledTimes)
 		})
 	})
 
-	t.Run("when credential getAccessToken returns error only once", func(t *testing.T) {
+	t.Run("when retriever getAccessToken returns error only once", func(t *testing.T) {
 		var times = 0
-		credential := &fakeCredential{
+		retriever := &fakeRetriever{
 			getAccessTokenFunc: func(ctx context.Context, scopes []string) (*AccessToken, error) {
 				times = times + 1
 				if times == 1 {
@@ -337,11 +337,11 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 			},
 		}
 
-		t.Run("should call credential again only while it returns error", func(t *testing.T) {
+		t.Run("should call retriever again only while it returns error", func(t *testing.T) {
 			cacheEntry := &scopesCacheEntry{
-				credential: credential,
-				scopes:     scopes,
-				cond:       sync.NewCond(&sync.Mutex{}),
+				retriever: retriever,
+				scopes:    scopes,
+				cond:      sync.NewCond(&sync.Mutex{}),
 			}
 
 			var accessToken string
@@ -358,54 +358,54 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, "token-2", accessToken)
 
-			assert.Equal(t, 2, credential.calledTimes)
+			assert.Equal(t, 2, retriever.calledTimes)
 		})
 	})
 
-	t.Run("when credential getAccessToken panics", func(t *testing.T) {
-		credential := &fakeCredential{
+	t.Run("when retriever getAccessToken panics", func(t *testing.T) {
+		tokenRetriever := &fakeRetriever{
 			getAccessTokenFunc: func(ctx context.Context, scopes []string) (*AccessToken, error) {
 				panic(errors.New("unable to get access token"))
 			},
 		}
 
-		t.Run("should call credential again each time", func(t *testing.T) {
-			credential.Reset()
+		t.Run("should call retriever again each time", func(t *testing.T) {
+			tokenRetriever.Reset()
 
 			cacheEntry := &scopesCacheEntry{
-				credential: credential,
-				scopes:     scopes,
-				cond:       sync.NewCond(&sync.Mutex{}),
+				retriever: tokenRetriever,
+				scopes:    scopes,
+				cond:      sync.NewCond(&sync.Mutex{}),
 			}
 
 			func() {
 				defer func() {
-					assert.NotNil(t, recover(), "credential expected to panic")
+					assert.NotNil(t, recover(), "retriever expected to panic")
 				}()
 				_, _ = cacheEntry.getAccessToken(ctx)
 			}()
 
 			func() {
 				defer func() {
-					assert.NotNil(t, recover(), "credential expected to panic")
+					assert.NotNil(t, recover(), "retriever expected to panic")
 				}()
 				_, _ = cacheEntry.getAccessToken(ctx)
 			}()
 
 			func() {
 				defer func() {
-					assert.NotNil(t, recover(), "credential expected to panic")
+					assert.NotNil(t, recover(), "retriever expected to panic")
 				}()
 				_, _ = cacheEntry.getAccessToken(ctx)
 			}()
 
-			assert.Equal(t, 3, credential.calledTimes)
+			assert.Equal(t, 3, tokenRetriever.calledTimes)
 		})
 	})
 
-	t.Run("when credential getAccessToken panics only once", func(t *testing.T) {
+	t.Run("when retriever getAccessToken panics only once", func(t *testing.T) {
 		var times = 0
-		credential := &fakeCredential{
+		tokenRetriever := &fakeRetriever{
 			getAccessTokenFunc: func(ctx context.Context, scopes []string) (*AccessToken, error) {
 				times = times + 1
 				if times == 1 {
@@ -416,11 +416,11 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 			},
 		}
 
-		t.Run("should call credential again only while it panics", func(t *testing.T) {
+		t.Run("should call retriever again only while it panics", func(t *testing.T) {
 			cacheEntry := &scopesCacheEntry{
-				credential: credential,
-				scopes:     scopes,
-				cond:       sync.NewCond(&sync.Mutex{}),
+				retriever: tokenRetriever,
+				scopes:    scopes,
+				cond:      sync.NewCond(&sync.Mutex{}),
 			}
 
 			var accessToken string
@@ -428,14 +428,14 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 
 			func() {
 				defer func() {
-					assert.NotNil(t, recover(), "credential expected to panic")
+					assert.NotNil(t, recover(), "retriever expected to panic")
 				}()
 				_, _ = cacheEntry.getAccessToken(ctx)
 			}()
 
 			func() {
 				defer func() {
-					assert.Nil(t, recover(), "credential not expected to panic")
+					assert.Nil(t, recover(), "retriever not expected to panic")
 				}()
 				accessToken, err = cacheEntry.getAccessToken(ctx)
 				assert.NoError(t, err)
@@ -444,14 +444,14 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 
 			func() {
 				defer func() {
-					assert.Nil(t, recover(), "credential not expected to panic")
+					assert.Nil(t, recover(), "retriever not expected to panic")
 				}()
 				accessToken, err = cacheEntry.getAccessToken(ctx)
 				assert.NoError(t, err)
 				assert.Equal(t, "token-2", accessToken)
 			}()
 
-			assert.Equal(t, 2, credential.calledTimes)
+			assert.Equal(t, 2, tokenRetriever.calledTimes)
 		})
 	})
 }
