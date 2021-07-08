@@ -5,6 +5,142 @@
   "category": "tsdb",
   "routes": [
     {
+      "host": "prometheus.azure.net",
+      "method": "POST",
+      "path": "api/v1/query",
+      "reqRole": "Viewer",
+      "authType": "{{if .JsonData.azureAuth}}azure{{else}}none{{end}}",
+      "tokenAuth": {
+        "scopes": ["https://management.azure.com/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
+          "azure_cloud": "AzureCloud",
+          "tenant_id": "{{.JsonData.azureTenantId | orEmpty}}",
+          "client_id": "{{.JsonData.azureClientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.azureClientSecret | orEmpty}}"
+        }
+      }
+    },
+    {
+      "host": "prometheus.azure.net",
+      "method": "POST",
+      "path": "api/v1/query_range",
+      "reqRole": "Viewer",
+      "authType": "{{if .JsonData.azureAuth}}azure{{else}}none{{end}}",
+      "tokenAuth": {
+        "scopes": ["https://management.azure.com/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
+          "azure_cloud": "AzureCloud",
+          "tenant_id": "{{.JsonData.azureTenantId | orEmpty}}",
+          "client_id": "{{.JsonData.azureClientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.azureClientSecret | orEmpty}}"
+        }
+      }
+    },
+    {
+      "host": "prometheus.azure.net",
+      "method": "POST",
+      "path": "api/v1/series",
+      "reqRole": "Viewer",
+      "authType": "{{if .JsonData.azureAuth}}azure{{else}}none{{end}}",
+      "tokenAuth": {
+        "scopes": ["https://management.azure.com/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
+          "azure_cloud": "AzureCloud",
+          "tenant_id": "{{.JsonData.azureTenantId | orEmpty}}",
+          "client_id": "{{.JsonData.azureClientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.azureClientSecret | orEmpty}}"
+        }
+      }
+    },
+    {
+      "host": "prometheus.azure.net",
+      "method": "POST",
+      "path": "api/v1/labels",
+      "reqRole": "Viewer",
+      "authType": "{{if .JsonData.azureAuth}}azure{{else}}none{{end}}",
+      "tokenAuth": {
+        "scopes": ["https://management.azure.com/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
+          "azure_cloud": "AzureCloud",
+          "tenant_id": "{{.JsonData.azureTenantId | orEmpty}}",
+          "client_id": "{{.JsonData.azureClientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.azureClientSecret | orEmpty}}"
+        }
+      }
+    },
+    {
+      "host": "prometheus.azure.net",
+      "method": "POST",
+      "path": "api/v1/query_exemplars",
+      "reqRole": "Viewer",
+      "authType": "{{if .JsonData.azureAuth}}azure{{else}}none{{end}}",
+      "tokenAuth": {
+        "scopes": ["https://management.azure.com/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
+          "azure_cloud": "AzureCloud",
+          "tenant_id": "{{.JsonData.azureTenantId | orEmpty}}",
+          "client_id": "{{.JsonData.azureClientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.azureClientSecret | orEmpty}}"
+        }
+      }
+    },
+    {
+      "host": "prometheus.azure.net",
+      "method": "GET",
+      "path": "/rules",
+      "reqRole": "Viewer",
+      "authType": "{{if .JsonData.azureAuth}}azure{{else}}none{{end}}",
+      "tokenAuth": {
+        "scopes": ["https://management.azure.com/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
+          "azure_cloud": "AzureCloud",
+          "tenant_id": "{{.JsonData.azureTenantId | orEmpty}}",
+          "client_id": "{{.JsonData.azureClientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.azureClientSecret | orEmpty}}"
+        }
+      }
+    },
+    {
+      "host": "prometheus.azure.net",
+      "method": "POST",
+      "path": "/rules",
+      "reqRole": "Editor",
+      "authType": "{{if .JsonData.azureAuth}}azure{{else}}none{{end}}",
+      "tokenAuth": {
+        "scopes": ["https://management.azure.com/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
+          "azure_cloud": "AzureCloud",
+          "tenant_id": "{{.JsonData.azureTenantId | orEmpty}}",
+          "client_id": "{{.JsonData.azureClientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.azureClientSecret | orEmpty}}"
+        }
+      }
+    },
+    {
+      "host": "prometheus.azure.net",
+      "method": "DELETE",
+      "path": "/rules",
+      "reqRole": "Editor",
+      "authType": "{{if .JsonData.azureAuth}}azure{{else}}none{{end}}",
+      "tokenAuth": {
+        "scopes": ["https://management.azure.com/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
+          "azure_cloud": "AzureCloud",
+          "tenant_id": "{{.JsonData.azureTenantId | orEmpty}}",
+          "client_id": "{{.JsonData.azureClientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.azureClientSecret | orEmpty}}"
+        }
+      }
+    },
+    {
       "method": "POST",
       "path": "api/v1/query",
       "reqRole": "Viewer"
