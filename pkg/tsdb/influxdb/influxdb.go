@@ -40,7 +40,11 @@ var (
 var ErrInvalidHttpMode error = errors.New("'httpMode' should be either 'GET' or 'POST'")
 
 func init() {
-	registry.Register(&registry.Descriptor{Instance: &Service{}})
+	registry.Register(&registry.Descriptor{
+		Name:         "InfluxDBService",
+		InitPriority: registry.Low,
+		Instance:     &Service{},
+	})
 }
 
 func (s *Service) Init() error {
@@ -51,7 +55,7 @@ func (s *Service) Init() error {
 		QueryDataHandler: s,
 	})
 
-	if err := s.BackendPluginManager.Register("influxdb", factory); err != nil {
+	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "influxdb", factory); err != nil {
 		glog.Error("Failed to register plugin", "error", err)
 	}
 
