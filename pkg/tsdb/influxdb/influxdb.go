@@ -86,8 +86,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		model := ds.Info{
 			HTTPClient:    client,
 			Url:           jsonData.Url,
-			BasicAuth:     jsonData.BasicAuth,
-			User:          jsonData.User,
 			Database:      jsonData.Database,
 			Version:       jsonData.Version,
 			HTTPMode:      httpMode,
@@ -95,7 +93,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			DefaultBucket: jsonData.DefaultBucket,
 			Organization:  jsonData.Organization,
 			MaxSeries:     maxSeries,
-			Password:      settings.DecryptedSecureJSONData["password"],
 			Token:         settings.DecryptedSecureJSONData["token"],
 		}
 		return model, nil
@@ -211,10 +208,6 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *ds.Info, query stri
 	}
 
 	req.URL.RawQuery = params.Encode()
-
-	if !dsInfo.BasicAuth && dsInfo.User != "" {
-		req.SetBasicAuth(dsInfo.User, dsInfo.Password)
-	}
 
 	glog.Debug("Influxdb request", "url", req.URL.String())
 	return req, nil
