@@ -266,6 +266,11 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	// found route if there are any
 	if len(proxy.plugin.Routes) > 0 {
 		for _, route := range proxy.plugin.Routes {
+			// host match
+			if !matchHost(route.Host, proxy.ds.Url) {
+				continue
+			}
+
 			// method match
 			if route.Method != "" && route.Method != "*" && route.Method != proxy.ctx.Req.Method {
 				continue
@@ -301,6 +306,19 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	return nil
+}
+
+func matchHost(hostCondition string, datasourceUrl string) bool {
+	if hostCondition == "" || hostCondition == "*" {
+		return true
+	}
+
+	parsedUrl, err := url.Parse(datasourceUrl)
+	if err != nil {
+		return false
+	}
+
+	return hostCondition == parsedUrl.Host
 }
 
 func (proxy *DataSourceProxy) logRequest() {
