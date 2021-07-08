@@ -183,6 +183,36 @@ func TestPutAlert(t *testing.T) {
 				}
 			},
 		}, {
+			title: "Allow spaces in label and annotation name",
+			postableAlerts: apimodels.PostableAlerts{
+				PostableAlerts: []models.PostableAlert{
+					{
+						Annotations: models.LabelSet{"Dashboard URL": "http://localhost:3000"},
+						Alert: models.Alert{
+							Labels:       models.LabelSet{"alertname": "Alert4", "Spaced Label": "works"},
+							GeneratorURL: "http://localhost/url1",
+						},
+						StartsAt: strfmt.DateTime{},
+						EndsAt:   strfmt.DateTime{},
+					},
+				},
+			},
+			expAlerts: func(now time.Time) []*types.Alert {
+				return []*types.Alert{
+					{
+						Alert: model.Alert{
+							Annotations:  model.LabelSet{"Dashboard URL": "http://localhost:3000"},
+							Labels:       model.LabelSet{"alertname": "Alert4", "Spaced Label": "works"},
+							StartsAt:     now,
+							EndsAt:       now.Add(defaultResolveTimeout),
+							GeneratorURL: "http://localhost/url1",
+						},
+						UpdatedAt: now,
+						Timeout:   true,
+					},
+				}
+			},
+		}, {
 			title: "Invalid labels",
 			postableAlerts: apimodels.PostableAlerts{
 				PostableAlerts: []models.PostableAlert{
