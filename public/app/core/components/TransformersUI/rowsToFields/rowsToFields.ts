@@ -10,6 +10,7 @@ import {
   FieldConfig,
   FieldType,
   getFieldDisplayName,
+  ReducerID,
   ThresholdsMode,
 } from '@grafana/data';
 
@@ -21,6 +22,7 @@ export interface RowToFieldsTransformOptions {
 
 export interface RowToFieldsTransformMappings {
   fieldName: string;
+  reducerId?: ReducerID;
   configProperty: string;
 }
 
@@ -54,7 +56,7 @@ export function rowsToFields(options: RowToFieldsTransformOptions, data: DataFra
   let valueField: Field | null = null;
 
   for (const field of data.fields) {
-    const fieldName = getFieldDisplayName(field);
+    const fieldName = getFieldDisplayName(field, data);
 
     if (!nameField) {
       // When no name field defined default to first string field
@@ -118,7 +120,7 @@ export function rowsToFields(options: RowToFieldsTransformOptions, data: DataFra
     { min: 0, max: 30 }, 
  * }
  */
-function getFieldConfigFromFrame(
+export function getFieldConfigFromFrame(
   frame: DataFrame,
   rowIndex: number,
   mappings: RowToFieldsTransformMappings[]
@@ -126,7 +128,7 @@ function getFieldConfigFromFrame(
   const config: FieldConfig = {};
 
   for (const field of frame.fields) {
-    const fieldName = getFieldDisplayName(field);
+    const fieldName = getFieldDisplayName(field, frame);
     const configProperty = lookUpConfigMapDefinition(fieldName, mappings);
 
     if (!configProperty) {
@@ -134,6 +136,7 @@ function getFieldConfigFromFrame(
     }
 
     const configValue = field.values.get(rowIndex);
+
     if (configValue === null || configValue === undefined) {
       continue;
     }
@@ -154,6 +157,7 @@ const configMapHandlers: Record<string, FieldToConfigMapDef> = {
   max: 'max',
   min: 'min',
   unit: 'unit',
+  decimals: 'decimals',
   color: (value, config) => {
     config.color = { fixedColor: value, mode: FieldColorModeId.Fixed };
   },
@@ -172,7 +176,7 @@ const configMapHandlers: Record<string, FieldToConfigMapDef> = {
     }
 
     config.thresholds.steps.push({
-      value: parseInt(value, 10),
+      value: numeric,
       color: 'red',
     });
   },

@@ -1,11 +1,5 @@
 import React, { ChangeEvent } from 'react';
-import {
-  DataTransformerID,
-  SelectableValue,
-  standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
-} from '@grafana/data';
+import { DataTransformerID, SelectableValue, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
 import { Input, Select } from '@grafana/ui';
 import { rowsToFieldsTransformer, RowToFieldsTransformOptions } from './rowsToFields';
 
