@@ -98,7 +98,7 @@ export interface InteractionEchoEventPayload {
 }
 
 /**
- * Describes pageview event with predefined {@link EchoEventType.EchoEventType} type.
+ * Describes interaction event with predefined {@link EchoEventType.EchoEventType} type.
  *
  * @public
  */
