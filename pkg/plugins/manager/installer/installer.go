@@ -417,6 +417,22 @@ func normalizeVersion(version string) string {
 	return normalized
 }
 
+func (i *Installer) GetPreInstallDetails(pluginID, version, pluginRepoURL string) (plugins.PreInstallDetails, error) {
+	plugin, err := i.getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL)
+	if err != nil {
+		return plugins.PreInstallDetails{}, err
+	}
+
+	v, err := i.selectVersion(&plugin, version)
+	if err != nil {
+		return plugins.PreInstallDetails{}, err
+	}
+
+	return plugins.PreInstallDetails{
+		PluginZipURL: fmt.Sprintf("%s/%s/versions/%s/download", pluginRepoURL, pluginID, v.Version),
+	}, nil
+}
+
 // selectVersion returns latest version if none is specified or the specified version. If the version string is not
 // matched to existing version it errors out. It also errors out if version that is matched is not available for current
 // os and platform. It expects plugin.Versions to be sorted so the newest version is first.

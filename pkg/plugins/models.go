@@ -149,3 +149,7 @@ type EnabledPlugins struct {
 	DataSources map[string]*DataSourcePlugin
 	Apps        []*AppPlugin
 }
+
+type PreInstallDetails struct {
+	PluginZipURL string
+}
