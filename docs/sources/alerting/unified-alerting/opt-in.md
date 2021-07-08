@@ -18,12 +18,14 @@ Read and write access to dashboard alerts in Grafana versions 7 and earlier were
 - If there are no dashboard permissions and the dashboard is under a folder, then the rule is linked to this folder and inherits its permissions.
 - If there are no dashboard permissions and the dashboard is under the General folder, then the rule is linked to the `General Alerting` folder and the rule inherits the default permissions.
 
-During beta, Grafana 8 alerting system can retrieve rules from all available Prometheus, Loki, and Alertmanager data sources. It might not be able to fetch rules from all other supported data sources at this time. 
+During beta, Grafana 8 alerting system can retrieve rules from all available Prometheus, Loki, and Alertmanager data sources. It might not be able to fetch rules from all other supported data sources at this time.
 
 Also notification channels are migrated to an Alertmanager configuration with the appropriate routes and receivers. Default notification channels are added as contact points to the default route. Notification channels not associated with any Dashboard alert go to the `autogen-unlinked-channel-recv` route.
 
 Since `Hipchat` and `Sensu` are discontinued, they are not migrated to the new alerting. If you have dashboard alerts associated with those types of channels and you want to migrate to the new alerting, make sure you assign another supported notification channel, so that you continue to receive notifications for those alerts.
 Finally, silences (expiring after one year) are created for all paused dashboard alerts.
+
+If you are using notification channels that contain secrets, these channels must be re-saved to enable encrypted settings prior to migration (If they were created before 7.2 and not modified since). See [Upgrading: Ensure encryption of existing alerting notification channel secrets]({{< relref "../../installation/upgrading.md">}}#ensure-encryption-of-existing-alert-notification-channel-secrets).
 
 ## Disabling Grafana 8 Alerting after migration
 To disable Grafana 8 Alerting, remove or disable the `ngalert` feature toggle. Dashboard alerts will be re-enabled and any alerts created during or after the migration are deleted.
