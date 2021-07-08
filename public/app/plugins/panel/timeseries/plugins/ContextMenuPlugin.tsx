@@ -107,7 +107,8 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
 
       // TODO: remove listeners on unmount
       plotCanvas.current?.addEventListener('mouseup', (e: MouseEvent) => {
-        if (!isClick) {
+        // ignore cmd+click, this is handled by annotation editor
+        if (!isClick || e.metaKey) {
           setPoint(null);
           return;
         }

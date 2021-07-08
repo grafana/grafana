@@ -30,10 +30,12 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
     if (plotInstance) {
       plotInstance.setSelect({ top: 0, left: 0, width: 0, height: 0 });
     }
-  }, [setSelection, plotCtx]);
+    setIsAddingAnnotation(false);
+  }, [setSelection, , setIsAddingAnnotation, plotCtx]);
 
   useLayoutEffect(() => {
     let annotating = false;
+    let isClick = false;
 
     const setSelect = (u: uPlot) => {
       if (annotating) {
@@ -82,10 +84,32 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
           if (e.button === 0) {
             handler(e);
             if (e.metaKey) {
+              isClick = true;
               annotating = true;
             }
           }
 
+          return null;
+        },
+        mousemove: (u, targ, handler) => (e) => {
+          if (e.button === 0) {
+            handler(e);
+            // handle cmd+drag
+            if (e.metaKey) {
+              isClick = false;
+              annotating = true;
+            }
+          }
+
+          return null;
+        },
+        mouseup: (u, targ, handler) => (e) => {
+          // handle cmd+click
+          if (isClick && u.cursor.left && e.button === 0 && e.metaKey) {
+            u.setSelect({ left: u.cursor.left, width: 0, top: 0, height: 0 });
+            annotating = true;
+          }
+          handler(e);
           return null;
         },
       },

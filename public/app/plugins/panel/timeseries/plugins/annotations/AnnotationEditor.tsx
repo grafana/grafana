@@ -121,7 +121,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       `;
     },
     markerTriangle: css`
-      top: 100%;
+      top: calc(100% + 2px);
       left: -4px;
       position: absolute;
     `,
