@@ -31,11 +31,12 @@ export const worldmapBehaviorLayer: MapLayerRegistryItem<WorldmapConfig> = {
   create: (map: Map, options: MapLayerConfig<WorldmapConfig>, theme: GrafanaTheme2): MapLayerHandler => {
     // const config = { ...defaultOptions, ...options.config };
     const vectorLayer = new layer.Vector({});
+    let legendInstance = <SimpleLegend txt={ `initalizing...`}/>;
     let count = 0;
     return {
       init: () => vectorLayer,
       legend: () => {
-        return <SimpleLegend txt={ `Update: ${count}`}/>;
+        return legendInstance;
       },
       update: (data: PanelData) => {
         count++;
@@ -56,6 +57,7 @@ export const worldmapBehaviorLayer: MapLayerRegistryItem<WorldmapConfig> = {
             features.push(dot);
           }
         }
+        legendInstance = <SimpleLegend txt={ `Update: ${count}`} data={data}/>;
 
         const vectorSource = new source.Vector({ features });
         vectorLayer.setSource(vectorSource);
