@@ -34,7 +34,7 @@ type PluginV2 struct {
 	Renderer pluginextensionv2.RendererPlugin
 }
 
-// JSONData represents the plugin's plugin.json data
+// JSONData represents the plugin's plugin.json
 type JSONData struct {
 	// Common settings
 	Type         string                `json:"type"`

@@ -76,15 +76,12 @@ func (s *CloudWatchService) Init() error {
 	plog.Debug("initing")
 
 	im := datasource.NewInstanceManager(NewInstanceSettings())
-	cw := newExecutor(s.LogsService, im, s.Cfg, awsds.NewSessionCache())
-
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: cw,
+		QueryDataHandler: newExecutor(s.LogsService, im, s.Cfg, awsds.NewSessionCache()),
 	})
 
 	if s.PluginManagerV2.IsEnabled() {
 		pluginJSONPath := "datasource/cloudwatch/plugin.json"
-
 		return s.PluginManagerV2.InitCorePlugin(context.Background(), pluginJSONPath, factory)
 	}
 

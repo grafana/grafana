@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/plugins"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
@@ -19,6 +21,7 @@ func init() {
 }
 
 type testDataPlugin struct {
+	PluginManagerV2      plugins.ManagerV2     `inject:""`
 	BackendPluginManager backendplugin.Manager `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 	logger               log.Logger
@@ -38,6 +41,11 @@ func (p *testDataPlugin) Init() error {
 		CallResourceHandler: httpadapter.New(resourceMux),
 		StreamHandler:       newTestStreamHandler(p.logger),
 	})
+
+	if p.PluginManagerV2.IsEnabled() {
+		pluginJSONPath := "datasource/testdata/plugin.json"
+		return p.PluginManagerV2.InitCorePlugin(context.Background(), pluginJSONPath, factory)
+	}
 	err := p.BackendPluginManager.RegisterAndStart(context.Background(), "testdata", factory)
 	if err != nil {
 		p.logger.Error("Failed to register plugin", "error", err)
