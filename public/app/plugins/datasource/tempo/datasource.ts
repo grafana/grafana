@@ -1,14 +1,22 @@
-import { DataQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
+import {
+  DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+} from '@grafana/data';
 import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { TraceToLogsData, TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { serializeParams } from 'app/core/utils/fetch';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { compact, identity, pick, pickBy } from 'lodash';
-import { merge, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { from, merge, Observable, throwError } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
+import { LokiOptions, LokiQuery } from '../loki/types';
 import TempoLanguageProvider from './language_provider';
-import { createTableFrameFromSearch, transformTrace } from './resultTransformer';
+import { createTableFrameFromSearch, transformTrace, transformTraceList } from './resultTransformer';
 
-export type TempoQueryType = 'search' | 'traceId';
+export type TempoQueryType = 'search' | 'traceId' | 'lokiSearch';
 
 export type TempoQuery = {
   query: string;
@@ -17,6 +25,7 @@ export type TempoQuery = {
   minDuration?: string;
   maxDuration?: string;
   limit?: number;
+  linkedQuery?: LokiQuery;
 } & DataQuery;
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLogsData> {
@@ -36,6 +45,40 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLo
     const traceTargets = filteredTargets.filter(
       (target) => target.queryType === 'traceId' || target.queryType === undefined
     );
+    const lokiSearchTargets = filteredTargets.filter((target) => target.queryType === 'lokiSearch');
+
+    // Run search queries on linked datasource
+    if (this.tracesToLogs?.datasourceUid && lokiSearchTargets.length > 0) {
+      const dsSrv = getDatasourceSrv();
+      subQueries.push(
+        from(dsSrv.get(this.tracesToLogs.datasourceUid)).pipe(
+          mergeMap((linkedDatasource: DataSourceApi) => {
+            // Wrap linked query into a data request based on original request
+            const linkedRequest: DataQueryRequest = {
+              ...options,
+              targets: lokiSearchTargets.map((t) => t.linkedQuery!),
+            };
+            // Find trace matchers in derived fields of the linked datasource that's identical to this datasource
+            const settings: DataSourceInstanceSettings<LokiOptions> = (linkedDatasource as any).instanceSettings;
+            const traceLinkMatcher: string[] =
+              settings.jsonData.derivedFields
+                ?.filter((field) => field.datasourceUid === this.uid && field.matcherRegex)
+                .map((field) => field.matcherRegex) || [];
+            if (!traceLinkMatcher || traceLinkMatcher.length === 0) {
+              return throwError(
+                'No Loki datasource configured for search. Set up Derived Fields for traces in a Loki datasource settings and link it to this Tempo datasource.'
+              );
+            } else {
+              return (linkedDatasource.query(linkedRequest) as Observable<DataQueryResponse>).pipe(
+                map((response) =>
+                  response.error ? response : transformTraceList(response, this.uid, this.name, traceLinkMatcher)
+                )
+              );
+            }
+          })
+        )
+      );
+    }
 
     if (searchTargets.length) {
       const tags = searchTargets[0].search.split(/\s+(?=([^"]*"[^"]*")*[^"]*$)/g);
