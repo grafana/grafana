@@ -236,7 +236,7 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 		}
 
 		if isolation := ss.dbCfg.IsolationLevel; isolation != "" {
-			cnnstr += "&tx_isolation=" + isolation
+			cnnstr += "&tx_isolation=" + url.QueryEscape("'"+isolation+"'")
 		}
 
 		cnnstr += ss.buildExtraConnectionString('&')
