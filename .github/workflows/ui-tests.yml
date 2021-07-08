@@ -34,9 +34,12 @@ jobs:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
           key: ${{ runner.os }}-yarn-${{ matrix.node-version }}-${{ hashFiles('**/yarn.lock') }}
 
+      - name: Clean Yarn cache
+        run: yarn cache clean
+
       - name: Install dependencies for Grafana
         working-directory: ./grafana
-        run: yarn install --prefer-offline --frozen-lockfile --no-progress
+        run: yarn install --prefer-offline --frozen-lockfile --no-progress --network-concurrency 1
 
       - name: Start Environment
         working-directory: ./grafana
