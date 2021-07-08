@@ -12,6 +12,7 @@ import {
   updateAlertManagerConfigAction,
   createOrUpdateSilenceAction,
   fetchFolderAction,
+  fetchAlertGroupsAction,
 } from './actions';
 
 export const reducer = combineReducers({
@@ -34,6 +35,11 @@ export const reducer = combineReducers({
   amAlerts: createAsyncMapSlice('amAlerts', fetchAmAlertsAction, (alertManagerSourceName) => alertManagerSourceName)
     .reducer,
   folders: createAsyncMapSlice('folders', fetchFolderAction, (uid) => uid).reducer,
+  amAlertGroups: createAsyncMapSlice(
+    'amAlertGroups',
+    fetchAlertGroupsAction,
+    (alertManagerSourceName) => alertManagerSourceName
+  ).reducer,
 });
 
 export type UnifiedAlertingState = ReturnType<typeof reducer>;
