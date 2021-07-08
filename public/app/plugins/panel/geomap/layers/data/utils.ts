@@ -1,4 +1,5 @@
 import { DataFrame, DataFrameView } from '@grafana/data';
+import { FieldMappingOptions } from '../../types'
 
 interface locations {
   lowestValue: number;
@@ -16,7 +17,7 @@ interface location {
  /**
    * Function that formats dataframe into locations
    */
-export function dataFrameToLocations(frame: DataFrame, config: any): locations {
+export function dataFrameToLocations(frame: DataFrame, config: FieldMappingOptions): locations {
   let dataValues: location[] = [];
 
   let formattedData: locations = {
