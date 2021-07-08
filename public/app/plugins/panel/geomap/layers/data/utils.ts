@@ -13,6 +13,9 @@ interface location {
   value: number;
 }
 
+ /**
+   * Function that formats dataframe into locations
+   */
 export function dataFrameToLocations(frame: DataFrame, config: any): locations {
   let dataValues: location[] = [];
 
@@ -45,7 +48,6 @@ export function dataFrameToLocations(frame: DataFrame, config: any): locations {
 
       // Geohash Data
       else if (config.fieldMapping.queryFormat === "geohash"){
-        // Decode Geohash from data for location
         const encodedGeohash = row[config.fieldMapping.geohashField];
         const decodedGeohash = decodeGeohash(encodedGeohash);
 
@@ -53,7 +55,6 @@ export function dataFrameToLocations(frame: DataFrame, config: any): locations {
         lng = decodedGeohash.longitude;
       }
 
-      // Grab metric from data
       value = row[config.fieldMapping.metricField];
 
       // Update highest and lowest value
@@ -64,7 +65,6 @@ export function dataFrameToLocations(frame: DataFrame, config: any): locations {
           lowestValue = value;
       }
 
-      // For each data point, create a dataValue
       dataValues.push({latitude: lat, longitude: lng, value: value});
 
     });
@@ -75,6 +75,9 @@ export function dataFrameToLocations(frame: DataFrame, config: any): locations {
   return formattedData;
 }
 
+ /**
+   * Function that decodes input geohash into latitude and longitude
+   */
 function decodeGeohash(geohash: string) {
   if (!geohash || geohash.length === 0) {
     throw new Error('Missing geohash value');
