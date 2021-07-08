@@ -7,11 +7,11 @@ import { useParams } from 'react-router-dom';
 
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
-import { GRAFANA_API_ROOT } from '../constants';
 import { usePlugin } from '../hooks/usePlugins';
 import { Page as PluginPage } from '../components/Page';
 import { Loader } from '../components/Loader';
 import { Page } from 'app/core/components/Page/Page';
+import { PluginLogo } from '../components/PluginLogo';
 
 export default function PluginDetails(): JSX.Element | null {
   const { pluginId } = useParams<{ pluginId: string }>();
@@ -24,7 +24,10 @@ export default function PluginDetails(): JSX.Element | null {
   const { isLoading, local, remote, remoteVersions } = usePlugin(pluginId);
   const styles = useStyles2(getStyles);
 
-  const description = remote?.description;
+  console.log('local', local);
+  console.log('remote', remote);
+
+  const description = remote?.description ?? local?.info?.description;
   const readme = remote?.readme;
   const version = local?.info?.version || remote?.version;
   const links = (local?.info?.links || remote?.json?.info?.links) ?? [];
@@ -42,8 +45,8 @@ export default function PluginDetails(): JSX.Element | null {
     <Page>
       <PluginPage>
         <div className={styles.headerContainer}>
-          <img
-            src={`${GRAFANA_API_ROOT}/plugins/${pluginId}/versions/${remote?.version}/logos/small`}
+          <PluginLogo
+            plugin={remote ?? local}
             className={css`
               object-fit: cover;
               width: 100%;
@@ -51,11 +54,12 @@ export default function PluginDetails(): JSX.Element | null {
               max-width: 68px;
             `}
           />
+
           <div className={styles.headerWrapper}>
-            <h1>{remote?.name}</h1>
+            <h1>{remote?.name ?? local?.name}</h1>
             <div className={styles.headerLinks}>
               <a className={styles.headerOrgName} href={'/plugins'}>
-                {remote?.orgName}
+                {remote?.orgName ?? local?.info?.author?.name}
               </a>
               {links.map((link: any) => (
                 <a key={link.name} href={link.url}>
@@ -88,7 +92,10 @@ export default function PluginDetails(): JSX.Element | null {
         </TabsBar>
         <TabContent>
           {tabs.find((_) => _.label === 'Overview')?.active && (
-            <div className={styles.readme} dangerouslySetInnerHTML={{ __html: readme ?? '' }} />
+            <div
+              className={styles.readme}
+              dangerouslySetInnerHTML={{ __html: readme ?? 'No plugin help or readme markdown file was found' }}
+            />
           )}
           {tabs.find((_) => _.label === 'Version history')?.active && <VersionList versions={remoteVersions ?? []} />}
         </TabContent>

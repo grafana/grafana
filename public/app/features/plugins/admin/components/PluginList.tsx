@@ -7,6 +7,7 @@ import { Grid } from '../components/Grid';
 import { Plugin } from '../types';
 import { GrafanaTheme2 } from '@grafana/data';
 import { isLocalPlugin } from '../guards';
+import { PluginLogo } from './PluginLogo';
 
 interface Props {
   plugins: Plugin[];
@@ -24,8 +25,8 @@ export const PluginList = ({ plugins }: Props) => {
             key={`${orgName}-${name}-${typeCode}`}
             href={`/plugins/${getPluginId(plugin)}`}
             image={
-              <img
-                src={getImageSrc(plugin)}
+              <PluginLogo
+                plugin={plugin}
                 className={css`
                   max-height: 64px;
                 `}
@@ -49,13 +50,6 @@ function getPluginId(plugin: Plugin): string {
     return plugin.id;
   }
   return plugin.slug;
-}
-
-function getImageSrc(plugin: Plugin): string {
-  if (isLocalPlugin(plugin)) {
-    return plugin.info.logos.large;
-  }
-  return `https://grafana.com/api/plugins/${plugin.slug}/versions/${plugin.version}/logos/small`;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

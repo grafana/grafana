@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { Plugin, Metadata } from '../types';
+import { Plugin, LocalPlugin } from '../types';
 import { api } from '../api';
 
 type PluginsState = {
@@ -91,7 +91,7 @@ type PluginState = {
   isLoading: boolean;
   remote?: Plugin;
   remoteVersions?: Array<{ version: string; createdAt: string }>;
-  local?: Metadata;
+  local?: LocalPlugin;
 };
 
 export const usePlugin = (slug: string): PluginState => {

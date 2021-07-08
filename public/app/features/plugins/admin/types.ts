@@ -74,17 +74,7 @@ export type LocalPlugin = {
   signatureType: string;
   state: string;
   type: string;
-};
-
-export type Metadata = {
-  info: {
-    version: string;
-    links: Array<{
-      name: string;
-      url: string;
-    }>;
-  };
-  dev: boolean;
+  dev: boolean | undefined;
 };
 
 export interface Version {
@@ -95,7 +85,7 @@ export interface Version {
 export interface PluginDetails {
   remote?: Plugin;
   remoteVersions?: Version[];
-  local?: Metadata;
+  local?: LocalPlugin;
 }
 
 export interface Org {
