@@ -180,7 +180,7 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
         </InlineField>
         <InlineField>
           <Input
-            className="width-4"
+            className="width-7"
             width={12}
             placeholder="Example 15s"
             min={0}
