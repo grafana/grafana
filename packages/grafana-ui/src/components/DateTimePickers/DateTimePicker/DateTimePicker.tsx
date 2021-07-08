@@ -3,7 +3,7 @@ import { useMedia } from 'react-use';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { css, cx } from '@emotion/css';
 import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Icon, Input, Portal } from '../..';
+import { Button, Field, HorizontalGroup, Icon, Input, Portal } from '../..';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { isValid } from '../utils';
 import { getBodyStyles, getStyles as getCalendarStyles } from '../TimeRangePicker/TimePickerCalendar';
@@ -46,19 +46,22 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
   );
 
   return (
-    <div data-testid="date-time-picker">
+    <div data-testid="date-time-picker" style={{ position: 'relative' }}>
       <DateTimeInput date={date} onChange={onChange} isFullscreen={isFullscreen} onOpen={onOpen} label={label} />
       {isOpen ? (
         isFullscreen ? (
           <ClickOutsideWrapper onClick={() => setOpen(false)}>
-            <DateTimeCalendar date={date} onChange={onApply} isFullscreen={true} />
+            <DateTimeCalendar date={date} onChange={onApply} isFullscreen={true} onClose={() => setOpen(false)} />
           </ClickOutsideWrapper>
         ) : (
           <Portal>
-            <div className={styles.modal} onClick={stopPropagation}>
-              <DateTimeCalendar date={date} onChange={onApply} isFullscreen={false} />
-            </div>
-            <div className={containerStyles.backdrop} onClick={stopPropagation} />
+            portal
+            <ClickOutsideWrapper onClick={() => setOpen(false)}>
+              <div className={styles.modal} onClick={stopPropagation}>
+                <DateTimeCalendar date={date} onChange={onApply} isFullscreen={false} onClose={() => setOpen(false)} />
+              </div>
+              <div className={containerStyles.backdrop} onClick={stopPropagation} />
+            </ClickOutsideWrapper>
           </Portal>
         )
       ) : null}
@@ -69,6 +72,7 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
 interface DateTimeCalendarProps {
   date?: DateTime;
   onChange: (date: DateTime) => void;
+  onClose: () => void;
   isFullscreen: boolean;
 }
 
@@ -133,7 +137,7 @@ const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, on
   );
 };
 
-const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onChange, isFullscreen }) => {
+const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onClose, onChange, isFullscreen }) => {
   const calendarStyles = useStyles2(getBodyStyles);
   const styles = useStyles2(getStyles);
   const [internalDate, setInternalDate] = useState<Date>(() => {
@@ -174,11 +178,14 @@ const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onChange, isFullscr
       <div className={styles.time}>
         <TimeOfDayPicker showSeconds={true} onChange={onChangeTime} value={dateTime(internalDate)} />
       </div>
-      <div>
+      <HorizontalGroup>
         <Button type="button" onClick={() => onChange(dateTime(internalDate))}>
           Apply
         </Button>
-      </div>
+        <Button variant="secondary" type="button" onClick={onClose}>
+          Cancel
+        </Button>
+      </HorizontalGroup>
     </div>
   );
 };
@@ -192,16 +199,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   fullScreen: css`
     position: absolute;
-    right: 500px;
-    bottom: 400px;
   `,
   time: css`
     margin-bottom: ${theme.spacing(2)};
   `,
   modal: css`
     position: fixed;
-    top: 20%;
-    left: 10%;
+    top: 25%;
+    left: 25%;
     width: 100%;
     z-index: ${theme.zIndex.modal};
     max-width: 280px;
