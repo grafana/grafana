@@ -294,14 +294,12 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) response.Response {
 	}
 
 	resp := response.CreateNormalResponse(
-		http.Header{"Content-Type": []string{"text/plain", "charset=utf-8"}},
+		http.Header{"Cache-Control": []string{"public", "max-age=3600"}},
 		[]byte{},
 		200)
 
 	if hs.Cfg.Env == setting.Dev {
 		resp.SetHeader("Cache-Control", "max-age=0, must-revalidate, no-cache")
-	} else {
-		resp.SetHeader("Cache-Control", "public, max-age=3600")
 	}
 
 	http.ServeContent(resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
