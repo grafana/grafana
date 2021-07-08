@@ -187,29 +187,29 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
       {/* When groups are selectable, I *think* we will want to show a 2-wide space instead
             of the collapse button for leaf rows that have no children to get them to align */}
 
-      <span className={styles.entryContentItem}>
-        {hasChildren ? (
-          <IconButton
-            className={styles.collapseButton}
-            name={isOpen ? 'angle-down' : 'angle-right'}
-            aria-label={isOpen ? 'Collapse' : 'Expand'}
-            onClick={handleToggleCollapse}
-            id={entry.id}
-          />
-        ) : (
-          <Space layout="inline" h={2} />
-        )}
-      </span>
-
-      {isSelectable && (
-        <span className={styles.entryContentItem}>
-          <Checkbox id={checkboxId} onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />
-        </span>
+      {hasChildren ? (
+        <IconButton
+          className={styles.collapseButton}
+          name={isOpen ? 'angle-down' : 'angle-right'}
+          aria-label={isOpen ? 'Collapse' : 'Expand'}
+          onClick={handleToggleCollapse}
+          id={entry.id}
+        />
+      ) : (
+        <Space layout="inline" h={2} />
       )}
 
-      <span className={styles.entryContentItem}>
-        <EntryIcon entry={entry} isOpen={isOpen} />
-      </span>
+      <Space layout="inline" h={2} />
+
+      {isSelectable && (
+        <>
+          <Checkbox id={checkboxId} onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />
+          <Space layout="inline" h={2} />
+        </>
+      )}
+
+      <EntryIcon entry={entry} isOpen={isOpen} />
+      <Space layout="inline" h={1} />
 
       <label htmlFor={checkboxId} className={cx(styles.entryContentItem, styles.truncated)}>
         {entry.name}

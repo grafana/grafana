@@ -51,6 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   nestedEntry: css({
     display: 'flex',
+    alignItems: 'center',
   }),
 
   entryContentItem: css({
