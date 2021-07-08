@@ -50,7 +50,6 @@ export function dataFrameToLocations(frame: DataFrame, config: any): locations {
       else if (config.fieldMapping.queryFormat === "geohash"){
         const encodedGeohash = row[config.fieldMapping.geohashField];
         const decodedGeohash = decodeGeohash(encodedGeohash);
-
         lat = decodedGeohash.latitude;
         lng = decodedGeohash.longitude;
       }
