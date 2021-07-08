@@ -207,7 +207,7 @@
     "@emotion/core": "10.0.27",
     "@grafana/aws-sdk": "0.0.3",
     "@grafana/slate-react": "0.22.9-grafana",
-    "@percona/platform-core": "^0.7.7",
+    "@percona/platform-core": "^0.8.1",
     "@popperjs/core": "2.5.4",
     "@reduxjs/toolkit": "1.5.0",
     "@sentry/browser": "5.25.0",
