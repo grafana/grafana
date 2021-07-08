@@ -107,7 +107,7 @@ export class GeomapPanel extends Component<Props> {
    * Called when PanelData changes (query results etc)
    */
   dataChanged(data: PanelData, showLegend?: boolean) {
-    const legends: React.ReactElement[] = [];
+    const legends: React.ReactNode[] = [];
     for (const state of this.layers) {
       if (state.handler.update) {
         state.handler.update(data);

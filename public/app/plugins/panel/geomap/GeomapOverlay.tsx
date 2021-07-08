@@ -5,8 +5,8 @@ import { stylesFactory } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 export interface OverlayProps {
-  topRight?: React.ReactElement[];
-  bottomLeft?: React.ReactElement[];
+  topRight?: React.ReactNode[];
+  bottomLeft?: React.ReactNode[];
 }
 
 export class GeomapOverlay extends PureComponent<OverlayProps> {
