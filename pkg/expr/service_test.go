@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -32,19 +33,25 @@ func TestService(t *testing.T) {
 	s := Service{DataService: &dataSvc}
 	me := &mockEndpoint{
 		Frames: []*data.Frame{dsDF},
+		T:      t,
 	}
+
 	s.DataService.RegisterQueryHandler("test", func(*models.DataSource) (plugins.DataPlugin, error) {
 		return me, nil
 	})
+
+	dsJson := simplejson.New()
+	dsJson.Set("timeInterval", "2s")
+
 	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
-		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test"}
+		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test", JsonData: dsJson}
 		return nil
 	})
 
 	queries := []Query{
 		{
 			RefID: "A",
-			JSON:  json.RawMessage(`{ "datasource": "test", "datasourceId": 1, "orgId": 1, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			JSON:  json.RawMessage(`{ "datasource": "test", "datasourceId": 1, "orgId": 1, "maxDataPoints": 1000 }`),
 		},
 		{
 			RefID: "B",
@@ -96,11 +103,13 @@ func fp(f float64) *float64 {
 
 type mockEndpoint struct {
 	Frames data.Frames
+	T      *testing.T
 }
 
 // nolint:staticcheck // plugins.DataQueryResult deprecated
 func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
 	plugins.DataResponse, error) {
+	require.Equal(me.T, int64(2000), query.Queries[0].IntervalMS)
 	return plugins.DataResponse{
 		Results: map[string]plugins.DataQueryResult{
 			"A": {
