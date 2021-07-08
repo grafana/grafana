@@ -223,7 +223,7 @@ func TestRealQuery(t *testing.T) {
 		json.Set("organization", "test-org")
 
 		dsInfo := &datasource.Info{
-			Url: "http://localhost:9999", // NOTE! no api/v2
+			URL: "http://localhost:9999", // NOTE! no api/v2
 		}
 
 		runner, err := runnerFromDataSource(httpclient.NewProvider(), dsInfo)

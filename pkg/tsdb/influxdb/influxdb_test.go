@@ -14,7 +14,7 @@ import (
 
 func TestExecutor_createRequest(t *testing.T) {
 	datasource := &ds.Info{
-		Url:      "http://awesome-influxdb:1337",
+		URL:      "http://awesome-influxdb:1337",
 		Database: "awesome-db",
 		HTTPMode: "GET",
 	}

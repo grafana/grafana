@@ -26,11 +26,12 @@ import (
 )
 
 type Service struct {
-	httpClientProvider   httpclient.Provider
+	HTTPClientProvider   httpclient.Provider   `inject:""`
+	BackendPluginManager backendplugin.Manager `inject:""`
 	QueryParser          *InfluxdbQueryParser
 	ResponseParser       *ResponseParser
-	BackendPluginManager backendplugin.Manager `inject:""`
-	im                   instancemgmt.InstanceManager
+
+	im instancemgmt.InstanceManager
 }
 
 var (
@@ -49,7 +50,7 @@ func init() {
 
 func (s *Service) Init() error {
 	glog = log.New("tsdb.influxdb")
-	s.im = datasource.NewInstanceManager(newInstanceSettings(s.httpClientProvider))
+	s.im = datasource.NewInstanceManager(newInstanceSettings(s.HTTPClientProvider))
 
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
@@ -89,15 +90,17 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 		model := ds.Info{
 			HTTPClient:    client,
-			Url:           jsonData.Url,
-			Database:      jsonData.Database,
+			URL:           settings.URL,
+			Database:      settings.Database,
 			Version:       jsonData.Version,
 			HTTPMode:      httpMode,
 			TimeInterval:  jsonData.TimeInterval,
 			DefaultBucket: jsonData.DefaultBucket,
 			Organization:  jsonData.Organization,
-			MaxSeries:     maxSeries,
-			Token:         settings.DecryptedSecureJSONData["token"],
+			JsonData:      jsonData.JsonData,
+
+			MaxSeries: maxSeries,
+			Token:     settings.DecryptedSecureJSONData["token"],
 		}
 		return model, nil
 	}
@@ -112,7 +115,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 	version := dsInfo.Version
 	if version == "Flux" {
-		return flux.Query(ctx, s.httpClientProvider, dsInfo, *req)
+		return flux.Query(ctx, s.HTTPClientProvider, dsInfo, *req)
 	}
 
 	glog.Debug("Making a non-Flux type query")
@@ -172,7 +175,7 @@ func (s *Service) getQuery(dsInfo *ds.Info, query *backend.QueryDataRequest) (*Q
 }
 
 func (s *Service) createRequest(ctx context.Context, dsInfo *ds.Info, query string) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -223,10 +226,10 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*ds.Info, error) {
 		return nil, err
 	}
 
-	instance, ok := i.(*ds.Info)
+	instance, ok := i.(ds.Info)
 	if !ok {
 		return nil, fmt.Errorf("failed to cast datsource info")
 	}
 
-	return instance, nil
+	return &instance, nil
 }

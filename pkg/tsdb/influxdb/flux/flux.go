@@ -72,7 +72,7 @@ func runnerFromDataSource(httpClientProvider httpclient.Provider, dsInfo *ds.Inf
 		return nil, fmt.Errorf("missing organization in datasource configuration")
 	}
 
-	url := dsInfo.Url
+	url := dsInfo.URL
 	if url == "" {
 		return nil, fmt.Errorf("missing URL from datasource configuration")
 	}

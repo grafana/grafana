@@ -7,8 +7,8 @@ import (
 type Info struct {
 	HTTPClient *http.Client
 	Token      string
+	URL        string
 
-	Url           string `json:"url"`
 	Database      string `json:"database"`
 	Version       string `json:"version"`
 	HTTPMode      string `json:"httpMode"`
