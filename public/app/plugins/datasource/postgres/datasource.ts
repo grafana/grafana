@@ -10,6 +10,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { PostgresOptions, PostgresQuery, PostgresQueryForInterpolation } from './types';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
+import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 
 export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, PostgresOptions> {
   id: any;
@@ -174,12 +175,7 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
         return { status: 'success', message: 'Database Connection OK' };
       })
       .catch((err: any) => {
-        console.error(err);
-        if (err.data && err.data.message) {
-          return { status: 'error', message: err.data.message };
-        } else {
-          return { status: 'error', message: err.status };
-        }
+        return toTestingStatus(err);
       });
   }
 

@@ -1,6 +1,6 @@
 import { DataQuery, toDataFrameDTO, DataFrame } from '@grafana/data';
-import { FetchResponse } from 'src/services';
-import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
+import { FetchError, FetchResponse } from 'src/services';
+import { BackendDataSourceResponse, toDataQueryResponse, toTestingStatus } from './queryResponse';
 
 const resp = ({
   data: {
@@ -332,5 +332,45 @@ describe('Query Response parser', () => {
         },
       ]
     `);
+  });
+
+  describe('should convert to TestingStatus', () => {
+    test('from api/ds/query generic errors', () => {
+      const result = toTestingStatus({ status: 500, data: { message: 'message', error: 'error' } } as FetchError);
+      expect(result).toMatchObject({
+        status: 'error',
+        message: 'message',
+        details: { message: 'error' },
+      });
+    });
+    test('from api/ds/query result errors', () => {
+      const result = toTestingStatus({
+        status: 400,
+        data: {
+          results: {
+            A: {
+              error: 'error',
+            },
+          },
+        },
+      } as FetchError);
+      expect(result).toMatchObject({
+        status: 'error',
+        message: 'error',
+      });
+    });
+    test('unknown errors', () => {
+      expect(() => {
+        toTestingStatus({ status: 503, data: 'Fatal Error' } as FetchError);
+      }).toThrow();
+
+      expect(() => {
+        toTestingStatus({ status: 503, data: {} } as FetchError);
+      }).toThrow();
+
+      expect(() => {
+        toTestingStatus({ status: 503 } as FetchError);
+      }).toThrow();
+    });
   });
 });
