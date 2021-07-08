@@ -28,7 +28,7 @@ You can make a panel retrieve fresh data more frequently by increasing the **Max
 - Reduced likelihood that APIs will rate-limit or throttle requests.
 
 ## Data sources that work with query caching
-Query caching works for all [Enterprise data sources](https://grafana.com/grafana/plugins/?type=datasource&enterprise=1), and it works for all [built-in data sources]({{< relref "../datasources/_index.md" >}}) except for Elasticsearch.
+Query caching works for all [Enterprise data sources](https://grafana.com/grafana/plugins/?type=datasource&enterprise=1), and it works for all [built-in data sources]({{< relref "../datasources/_index.md" >}}) except for Elasticsearch, Prometheus, and Loki, which cache queries themselves.
 
 Query caching also works for all data sources that include a backend. More specifically, caching works with data sources that extend the `DataSourceWithBackend` class in the plugins SDK.
 
