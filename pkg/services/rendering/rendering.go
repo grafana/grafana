@@ -56,7 +56,7 @@ type RenderingService struct {
 	Cfg                *setting.Cfg             `inject:""`
 	RemoteCacheService *remotecache.RemoteCache `inject:""`
 	PluginManager      plugins.Manager          `inject:""`
-	PluginManagerV2    plugins.PluginManagerV2  `inject:""`
+	PluginManagerV2    plugins.ManagerV2        `inject:""`
 }
 
 func (rs *RenderingService) Init() error {

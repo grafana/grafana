@@ -52,10 +52,10 @@ type PluginScanner struct {
 }
 
 type PluginManager struct {
-	BackendPluginManager backendplugin.Manager   `inject:""`
-	Cfg                  *setting.Cfg            `inject:""`
-	SQLStore             *sqlstore.SQLStore      `inject:""`
-	PluginManagerV2      plugins.PluginManagerV2 `inject:""`
+	BackendPluginManager backendplugin.Manager `inject:""`
+	Cfg                  *setting.Cfg          `inject:""`
+	SQLStore             *sqlstore.SQLStore    `inject:""`
+	PluginManagerV2      plugins.ManagerV2     `inject:""`
 	pluginInstaller      plugins.PluginInstaller
 	log                  log.Logger
 	scanningErrors       []error

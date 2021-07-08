@@ -116,7 +116,7 @@ type PluginInitializerV2 interface {
 	InitializeCorePluginWithBackend(p *PluginV2, factory backendplugin.PluginFactoryFunc) error
 }
 
-type PluginManagerV2 interface {
+type ManagerV2 interface {
 	// Fetch plugin info
 	Plugin(pluginID string) *PluginV2
 	DataSource(pluginID string) *PluginV2

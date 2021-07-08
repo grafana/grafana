@@ -93,7 +93,7 @@ type HTTPServer struct {
 	DataProxy              *datasourceproxy.DatasourceProxyService `inject:""`
 	PluginRequestValidator models.PluginRequestValidator           `inject:""`
 	PluginManager          plugins.Manager                         `inject:""`
-	PluginManagerV2        plugins.PluginManagerV2                 `inject:""`
+	PluginManagerV2        plugins.ManagerV2                       `inject:""`
 	SearchService          *search.SearchService                   `inject:""`
 	ShortURLService        shorturls.Service                       `inject:""`
 	Live                   *live.GrafanaLive                       `inject:""`

@@ -66,10 +66,10 @@ func init() {
 }
 
 type CloudWatchService struct {
-	LogsService          *LogsService            `inject:""`
-	BackendPluginManager backendplugin.Manager   `inject:""`
-	PluginManagerV2      plugins.PluginManagerV2 `inject:""`
-	Cfg                  *setting.Cfg            `inject:""`
+	LogsService          *LogsService          `inject:""`
+	BackendPluginManager backendplugin.Manager `inject:""`
+	PluginManagerV2      plugins.ManagerV2     `inject:""`
+	Cfg                  *setting.Cfg          `inject:""`
 }
 
 func (s *CloudWatchService) Init() error {

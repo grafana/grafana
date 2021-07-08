@@ -29,7 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
-var _ plugins.PluginManagerV2 = (*PluginManagerV2)(nil)
+var _ plugins.ManagerV2 = (*PluginManagerV2)(nil)
 
 var externalManagedCorePlugins = map[string]struct{}{
 	"cloudwatch": {},
