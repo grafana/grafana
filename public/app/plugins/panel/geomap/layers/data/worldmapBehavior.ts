@@ -1,28 +1,19 @@
 import { MapLayerRegistryItem, MapLayerConfig, MapLayerHandler, PanelData, GrafanaTheme2 } from '@grafana/data';
-import { dataFrameToLocations } from './utils'
 import { FieldMappingOptions } from '../../types'
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
-//import * as style from 'ol/style';
-//import {Point} from 'ol/geom';
-//import { fromLonLat } from 'ol/proj';
-//import tinycolor from 'tinycolor2';
+import * as style from 'ol/style';
+import {Point} from 'ol/geom';
+import { fromLonLat } from 'ol/proj';
+import tinycolor from 'tinycolor2';
 
 export interface WorldmapConfig {
-  fieldMapping: FieldMappingOptions,
   // anything
 }
 
 const defaultOptions: WorldmapConfig = {
-  fieldMapping: {
-    queryFormat: 'coordinates',
-    metricField: '',
-    geohashField: '',
-    latitudeField: '',
-    longitudeField: '',
-  }
   // icon: 'https://openlayers.org/en/latest/examples/data/icon.png',
 };
 
@@ -37,20 +28,14 @@ export const worldmapBehaviorLayer: MapLayerRegistryItem<WorldmapConfig> = {
    * @param options
    */
   create: (map: Map, options: MapLayerConfig<WorldmapConfig>, theme: GrafanaTheme2): MapLayerHandler => {
-    const config = { ...defaultOptions, ...options.config };
+    // const config = { ...defaultOptions, ...options.config };
 
     const vectorLayer = new layer.Vector({});
     return {
       init: () => vectorLayer,
       update: (map: Map, data: PanelData) => {
+        const features:Feature[] = [];
 
-        const dots = dataFrameToLocations(data.series[0], config);
-
-        console.log(dots);
-
-        const features: Feature[] = [];
-
-        /*
         for( let x=0; x<100; x+=20) {
           for( let y=0; y<40; y+=10) {
             const dot = new Feature({
@@ -67,7 +52,6 @@ export const worldmapBehaviorLayer: MapLayerRegistryItem<WorldmapConfig> = {
             features.push(dot);
           }
         }
-        */
 
         const vectorSource = new source.Vector({ features });
         vectorLayer.setSource(vectorSource);
