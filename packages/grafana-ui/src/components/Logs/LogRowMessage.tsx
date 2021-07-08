@@ -53,16 +53,40 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-function restructureLog(line: string, prettifyLogMessage: boolean): string[] {
+function restructureLog(line: string, prettifyLogMessage: boolean): string {
   if (prettifyLogMessage) {
     try {
       const parser = getParser(line) as LogsParser;
-      return parser.getFields(line);
+      const fields = parser.getFields(line);
+      return fields.join('\n');
     } catch (error) {
-      return [line];
+      return line;
     }
   }
-  return [line];
+  return line;
+}
+
+function renderLogMessage(
+  needsHighlighter: boolean | '' | undefined,
+  hasAnsi: boolean,
+  restructuredEntry: string,
+  highlights: string[] | undefined,
+  highlightClassName: string
+) {
+  if (needsHighlighter) {
+    return (
+      <Highlighter
+        textToHighlight={restructuredEntry}
+        searchWords={highlights ?? []}
+        findChunks={findHighlightChunksInText}
+        highlightClassName={highlightClassName}
+      />
+    );
+  } else if (hasAnsi) {
+    return <LogMessageAnsi value={restructuredEntry} />;
+  } else {
+    return restructuredEntry;
+  }
 }
 
 class UnThemedLogRowMessage extends PureComponent<Props> {
@@ -89,9 +113,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
 
     const style = getLogRowStyles(theme, row.logLevel);
     const { entry, hasAnsi, raw } = row;
-    const restructuredEntry = hasAnsi
-      ? restructureLog(raw, prettifyLogMessage)
-      : restructureLog(entry, prettifyLogMessage);
+    const restructuredEntry = restructureLog(raw, prettifyLogMessage);
 
     const previewHighlights = highlighterExpressions?.length && !isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
@@ -120,18 +142,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             />
           )}
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
-            {needsHighlighter ? (
-              <Highlighter
-                textToHighlight={restructuredEntry.join('\n')}
-                searchWords={highlights ?? []}
-                findChunks={findHighlightChunksInText}
-                highlightClassName={highlightClassName}
-              />
-            ) : hasAnsi ? (
-              <LogMessageAnsi value={restructuredEntry.join('\n')} />
-            ) : (
-              restructuredEntry.join('\n')
-            )}
+            {renderLogMessage(needsHighlighter, hasAnsi, restructuredEntry, highlights, highlightClassName)}
           </span>
           {showContextToggle?.(row) && (
             <span onClick={this.onContextToggle} className={cx('log-row-context', style.context)}>
