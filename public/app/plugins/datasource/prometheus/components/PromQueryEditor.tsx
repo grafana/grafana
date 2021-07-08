@@ -71,7 +71,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
       intervalFactorOption:
         INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor) || INTERVAL_FACTOR_OPTIONS[0],
       // Step option
-      stepOption: STEP_OPTIONS.find((option) => option.value === query.stepOption) || DEFAULT_STEP_OPTION,
+      stepOption: STEP_OPTIONS.find((option) => option.value === query.stepMode) || DEFAULT_STEP_OPTION,
       // Switch options
       instant: Boolean(query.instant),
       exemplar: Boolean(query.exemplar),
@@ -105,7 +105,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
   };
 
   onStepChange = (option: SelectableValue<StepType>) => {
-    this.query.stepOption = option.value;
+    this.query.stepMode = option.value;
     this.setState({ stepOption: option }, this.onRunQuery);
   };
 

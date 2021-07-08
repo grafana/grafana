@@ -413,7 +413,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
     const range = Math.ceil(end - start);
     // target.stepOption specifies whether to use min, max or exact step
-    const stepOption = (target.stepOption || DEFAULT_STEP_OPTION.value) as StepType;
+    const stepOption = target.stepMode || (DEFAULT_STEP_OPTION.value as StepType);
     // options.interval is the dynamically calculated interval
     let interval: number = rangeUtil.intervalToSeconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query, or same as interval otherwise.
