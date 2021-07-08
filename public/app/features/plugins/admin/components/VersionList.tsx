@@ -12,6 +12,10 @@ interface Props {
 export const VersionList = ({ versions }: Props) => {
   const styles = useStyles2(getStyles);
 
+  if (versions.length === 0) {
+    return <div className={styles.container}>No version history was found.</div>;
+  }
+
   return (
     <div className={styles.container}>
       <table className={styles.table}>

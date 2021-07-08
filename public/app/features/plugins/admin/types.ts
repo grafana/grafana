@@ -42,15 +42,39 @@ export interface Plugin {
   };
 }
 
-export type Metadata = {
+export type LocalPlugin = {
+  category: string;
+  defaultNavUrl: string;
+  enabled: boolean;
+  hasUpdate: boolean;
+  id: string;
   info: {
-    version: string;
+    author: {
+      name: string;
+      url: string;
+    };
+    build: {};
+    description: string;
     links: Array<{
       name: string;
       url: string;
     }>;
+    logos: {
+      large: string;
+      small: string;
+    };
+    updated: string;
+    version: string;
   };
-  dev: boolean;
+  latestVersion: string;
+  name: string;
+  pinned: boolean;
+  signature: string;
+  signatureOrg: string;
+  signatureType: string;
+  state: string;
+  type: string;
+  dev: boolean | undefined;
 };
 
 export interface Version {
@@ -61,7 +85,7 @@ export interface Version {
 export interface PluginDetails {
   remote?: Plugin;
   remoteVersions?: Version[];
-  local?: Metadata;
+  local?: LocalPlugin;
 }
 
 export interface Org {

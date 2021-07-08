@@ -376,14 +376,6 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		})
 	}
 
-	if c.IsGrafanaAdmin {
-		if hs.Cfg.PluginAdminEnabled {
-			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
-				Text: "Plugin catalog", Id: "plugin-catalog", Url: hs.Cfg.AppSubURL + "/a/grafana-plugin-admin-app", Icon: "plug",
-			})
-		}
-	}
-
 	if hs.Cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.ActionLDAPStatusRead) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "LDAP", Id: "ldap", Url: hs.Cfg.AppSubURL + "/admin/ldap", Icon: "book",

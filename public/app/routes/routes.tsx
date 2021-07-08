@@ -8,6 +8,7 @@ import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamic
 import { RouteDescriptor } from '../core/navigation/types';
 import { Redirect } from 'react-router-dom';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
+import { getPluginsAdminRoutes } from 'app/features/plugins/routes';
 import { contextSrv } from 'app/core/services/context_srv';
 
 export const extraRoutes: RouteDescriptor[] = [];
@@ -322,16 +323,6 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),
     },
-    {
-      path: '/plugins',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "PluginListPage" */ 'app/features/plugins/PluginListPage')
-      ),
-    },
-    {
-      path: '/plugins/:pluginId/',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginPage" */ '../features/plugins/PluginPage')),
-    },
     // TODO[Router]
     // {
     //   path: '/plugins/:pluginId/page/:slug',
@@ -517,12 +508,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
       ),
     },
+    ...getPluginsAdminRoutes(),
     ...extraRoutes,
     {
       path: '/*',
       component: ErrorPage,
     },
-
     // TODO[Router]
     // ...playlistRoutes,
   ];
