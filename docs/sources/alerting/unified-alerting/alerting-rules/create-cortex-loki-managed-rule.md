@@ -64,6 +64,6 @@ Labels are key value pairs that categorize or identify an alert. Labels are  use
 
 To evaluate the rule and see what alerts it would produce, click **Preview alerts**. It will display a list of alerts with state and value of for each one.
 
-## Opt-out a Loki or Prometheus datasource
+## Opt-out a Loki or Prometheus data source
 
-If you do not want to allow creating rules for a particular Loki or Prometheus datasource, go to it's settings page and uncheck "Manage alerts via Alerting UI".
+If you do not want to allow creating rules for a particular Loki or Prometheus data source, go to its settings page and clear the **Manage alerts via Alerting UI** checkbox.

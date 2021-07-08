@@ -47,6 +47,6 @@ To edit or delete a rule:
 1. Click **Edit** to go to the rule editing form. Make changes following [instructions listed here]({{< relref "./create-grafana-managed-rule.md" >}}).
 1. Click **Delete"** to delete a rule. 
 
-## Opt-out a Loki or Prometheus datasource
+## Opt-out a Loki or Prometheus data source
 
-If you do not want rules to be loaded from a Prometheus or Loki datasource, go to it's settings page and uncheck "Manage alerts via Alerting UI".
+If you do not want rules to be loaded from a Prometheus or Loki data source, go to its settings page and clear the **Manage alerts via Alerting UI** checkbox.
