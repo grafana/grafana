@@ -635,7 +635,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     } else if (stepMode === 'max') {
       adjustedInterval = Math.min(interval * resolution, stepInterval, safeInterval);
     } else if (stepMode === 'exact') {
-      adjustedInterval = Math.min(stepInterval * resolution, safeInterval);
+      adjustedInterval = Math.max(stepInterval * resolution, safeInterval);
     }
     return adjustedInterval;
   }
