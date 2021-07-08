@@ -4,6 +4,7 @@ import Map from 'ol/Map';
 import { PanelData } from '../types';
 import { GrafanaTheme2 } from '../themes';
 import { PanelOptionsEditorBuilder } from '../utils';
+import { ReactNode } from 'react';
 
 /**
  * This gets saved in panel json
@@ -31,7 +32,8 @@ export interface MapLayerConfig<TCustom = any> {
  */
 export interface MapLayerHandler {
   init: () => BaseLayer;
-  update?: (map: Map, data: PanelData) => void;
+  legend?: () => ReactNode;
+  update?: (data: PanelData) => void;
 }
 
 /**
@@ -44,6 +46,11 @@ export interface MapLayerRegistryItem<TConfig = MapLayerConfig> extends Registry
    * This layer can be used as a background
    */
   isBaseMap?: boolean;
+
+  /**
+   * Show transparency controls in UI (for non-basemaps)
+   */
+  showTransparency?: boolean;
 
   /**
    * Function that configures transformation and returns a transformer

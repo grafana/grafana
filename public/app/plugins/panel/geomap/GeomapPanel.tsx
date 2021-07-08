@@ -15,14 +15,13 @@ import 'ol/ol.css';
 
 import { ControlsOptions, GeomapPanelOptions, MapViewConfig } from './types';
 import { defaultGrafanaThemedMap } from './layers/basemaps';
-import { InfoControl } from './components/InfoControl';
 import { centerPointRegistry, MapCenterID } from './view';
 import { fromLonLat } from 'ol/proj';
 import { Coordinate } from 'ol/coordinate';
-import { LegendControl } from './components/LegendControl';
 import { css } from '@emotion/css';
-import { stylesFactory } from '../../../../../packages/grafana-ui/src';
-import { GeomapOverlay } from './GeomapOverlay';
+import { stylesFactory } from '@grafana/ui';
+import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
+import { DebugOverlay } from './components/DebugOverlay';
 
 interface MapLayerState {
   config: MapLayerConfig;
@@ -42,37 +41,42 @@ export class GeomapPanel extends Component<Props> {
   layers: MapLayerState[] = [];
   mouseWheelZoom: MouseWheelZoom;
   style = getStyles(config.theme);
+  overlayProps: OverlayProps = {};
 
   constructor(props: Props) {
     super(props);
   }
 
-  componentDidUpdate(oldProps: Props) {
+  shouldComponentUpdate(nextProps: Props) {
     if (!this.map) {
-      return; // not yet initalized
+      return true; // not yet initalized
     }
 
     // Check for resize
-    if (this.props.height !== oldProps.height || this.props.width !== oldProps.width) {
+    if (this.props.height !== nextProps.height || this.props.width !== nextProps.width) {
       this.map.updateSize();
     }
 
     // External configuraiton changed
-    if (this.props.options !== oldProps.options) {
-      this.optionsChanged(oldProps.options);
+    let layersChanged = false;
+    if (this.props.options !== nextProps.options) {
+      layersChanged = this.optionsChanged(nextProps.options);
     }
 
     // External data changed
-    if (this.props.data !== oldProps.data) {
-      this.dataChanged(this.props.data);
+    if (layersChanged || this.props.data !== nextProps.data) {
+      this.dataChanged(nextProps.data, nextProps.options.controls.showLegend);
     }
+
+    return true; // always?
   }
 
   /**
    * Called when the panel options change
    */
-  optionsChanged(oldOptions: GeomapPanelOptions) {
-    const { options } = this.props;
+  optionsChanged(options: GeomapPanelOptions): boolean {
+    let layersChanged = false;
+    const oldOptions = this.props.options;
     console.log('options changed!', options);
 
     if (options.view !== oldOptions.view) {
@@ -88,23 +92,31 @@ export class GeomapPanel extends Component<Props> {
     if (options.basemap !== oldOptions.basemap) {
       console.log('Basemap changed');
       this.initBasemap(options.basemap);
+      layersChanged = true;
     }
 
     if (options.layers !== oldOptions.layers) {
       console.log('layers changed');
       this.initLayers(options.layers ?? []);
+      layersChanged = true;
     }
+    return layersChanged;
   }
 
   /**
    * Called when PanelData changes (query results etc)
    */
-  dataChanged(data: PanelData) {
+  dataChanged(data: PanelData, showLegend?: boolean) {
+    const legends: React.ReactElement[] = [];
     for (const state of this.layers) {
       if (state.handler.update) {
-        state.handler.update(this.map, data);
+        state.handler.update(data);
+      }
+      if (showLegend && state.handler.legend) {
+        legends.push(state.handler.legend());
       }
     }
+    this.overlayProps.bottomLeft = legends;
   }
 
   initMapRef = (div: HTMLDivElement) => {
@@ -132,6 +144,8 @@ export class GeomapPanel extends Component<Props> {
     this.initControls(options.controls);
     this.initBasemap(options.basemap);
     this.initLayers(options.layers);
+    this.dataChanged(this.props.data, options.controls.showLegend);
+    this.forceUpdate(); // first render
   };
 
   initBasemap(cfg: MapLayerConfig) {
@@ -169,9 +183,6 @@ export class GeomapPanel extends Component<Props> {
 
       const handler = item.create(this.map, overlay, config.theme2);
       const layer = handler.init();
-      if (handler.update) {
-        handler.update(this.map, this.props.data);
-      }
       this.map.addLayer(layer);
       this.layers.push({
         config: overlay,
@@ -186,6 +197,8 @@ export class GeomapPanel extends Component<Props> {
       center: [0, 0],
       zoom: 1,
     });
+
+    // With shared views, all panels use the same view instance
     if (config.shared) {
       if (!sharedView) {
         sharedView = view;
@@ -246,20 +259,20 @@ export class GeomapPanel extends Component<Props> {
       this.map.addControl(new Attribution({ collapsed: true, collapsible: true }));
     }
 
+    // Update the react overlays
+    const overlayProps: OverlayProps = {};
     if (options.showDebug) {
-      this.map.addControl(new InfoControl());
+      overlayProps.topRight = [<DebugOverlay key="debug" map={this.map} />];
     }
 
-    if (options.showLegend) {
-      this.map.addControl(new LegendControl());
-    }
+    this.overlayProps = overlayProps;
   }
 
   render() {
     return (
       <div className={this.style.wrap}>
         <div className={this.style.map} ref={this.initMapRef}></div>
-        <GeomapOverlay map={this.map} />
+        <GeomapOverlay {...this.overlayProps} />
       </div>
     );
   }
