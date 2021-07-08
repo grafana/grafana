@@ -56,24 +56,6 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
           placeholder: defaultXYZConfig.attribution,
         },
       });
-    // .addNumberInput({
-    //   path: 'minZoom',
-    //   name: 'Min Zoom',
-    //   settings: {
-    //     placeholder: 'Auto',
-    //     min: 1,
-    //     max: 25,
-    //   },
-    // })
-    // .addNumberInput({
-    //   path: 'maxZoom',
-    //   name: 'Max Zoom',
-    //   settings: {
-    //     placeholder: 'Auto',
-    //     min: 1,
-    //     max: 25,
-    //   },
-    // });
   },
 };
 
