@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  DataFrame,
   getFieldDisplayName,
   GrafanaTheme2,
   SelectableValue,
@@ -7,9 +8,9 @@ import {
   TransformerUIProps,
 } from '@grafana/data';
 import { configFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
-import { IconButton, InlineField, InlineFieldRow, InlineLabel, Select, useStyles2, ValuePicker } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineLabel, Select, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { configMapHandlers } from '../rowsToFields/rowsToFields';
+import { configMapHandlers, lookUpConfigMapDefinition } from '../rowsToFields/shared';
 import { capitalize } from 'lodash';
 
 interface Props extends TransformerUIProps<ConfigFromQueryTransformOptions> {}
@@ -24,10 +25,17 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
 
   const currentRefId = options.configRefId || 'config';
   const fieldNames: Array<SelectableValue<string>> = [];
-  const configProps = getConfigProperties();
+  const configProps: Array<SelectableValue<string | undefined>> = configMapHandlers.map((def) => ({
+    label: capitalize(def.key),
+    value: def.key,
+  }));
+
+  let configFrame: DataFrame | null = null;
 
   for (const frame of input) {
     if (frame.refId === options.configRefId) {
+      configFrame = frame;
+
       for (const field of frame.fields) {
         const fieldName = getFieldDisplayName(field, frame, input);
         fieldNames.push({ label: fieldName, value: fieldName });
@@ -42,31 +50,19 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     });
   };
 
-  const onAddMapping = (value: SelectableValue<string>) => {
-    onChange({
-      ...options,
-      mappings: [
-        ...options.mappings,
-        {
-          fieldName: value.value!,
-          configProperty: 'max',
-        },
-      ],
-    });
-  };
-
-  const onChangeConfigProperty = (idx: number, value: SelectableValue<string>) => {
-    const mappings = [...options.mappings];
-    mappings.splice(idx, 1, {
-      ...mappings[idx],
-      configProperty: value.value!,
+  const onChangeConfigProperty = (fieldName: string, value: SelectableValue<string | undefined>) => {
+    // Remove any mappings for fields that does not exist on configFrame and current edit
+    const mappings = options.mappings.filter((map) => {
+      return configFrame?.fields.find((field) => {
+        const name = getFieldDisplayName(field, configFrame!);
+        return name === map.fieldName && fieldName !== name;
+      });
     });
 
-    onChange({ ...options, mappings });
-  };
+    if (value.value) {
+      mappings.push({ fieldName: fieldName, configProperty: value.value! });
+    }
 
-  const onRemoveMapping = (idx: number) => {
-    const mappings = [...options.mappings.slice(0, idx), ...options.mappings.slice(idx + 1)];
     onChange({ ...options, mappings });
   };
 
@@ -78,57 +74,66 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineLabel width={20}>Field to config mapping</InlineLabel>
-        <div className={styles.mappings}>
-          {options.mappings.map((mapping, index: number) => (
-            <InlineFieldRow key={index.toString()}>
-              <InlineLabel width="auto">{mapping.fieldName}</InlineLabel>
-              <InlineLabel width="auto">Map to</InlineLabel>
-              <InlineField label="Configuration property">
-                <Select
-                  onChange={(value) => onChangeConfigProperty(index, value)}
-                  options={configProps}
-                  value={mapping.configProperty}
-                />
-              </InlineField>
-              <InlineLabel>
-                <IconButton
-                  name="trash-alt"
-                  size="sm"
-                  onClick={() => onRemoveMapping(index)}
-                  aria-label="remove mapping"
-                />
-              </InlineLabel>
-            </InlineFieldRow>
-          ))}
-          <InlineField>
-            <ValuePicker
-              variant="secondary"
-              size="md"
-              label="Add manual mapping"
-              options={fieldNames}
-              onChange={onAddMapping}
-            />
-          </InlineField>
-        </div>
+        <InlineLabel width={20}>Mappings</InlineLabel>
+        {configFrame && (
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th className={styles.headerCell}>Field name</th>
+                <th className={styles.headerCell}>Maps to config</th>
+              </tr>
+            </thead>
+            <tbody>
+              {configFrame.fields.map((field) => {
+                const fieldName = getFieldDisplayName(field, configFrame!);
+                const def = lookUpConfigMapDefinition(fieldName, options.mappings);
+
+                return (
+                  <tr key={fieldName}>
+                    <td className={styles.labelCell}>{fieldName}</td>
+                    <td className={styles.selectCell}>
+                      <Select
+                        options={configProps}
+                        value={def?.key}
+                        onChange={(value) => onChangeConfigProperty(fieldName, value)}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </InlineFieldRow>
     </>
   );
 }
 
-function getConfigProperties(): Array<SelectableValue<string>> {
-  const options: Array<SelectableValue<string>> = [];
-
-  for (const key of Object.keys(configMapHandlers)) {
-    options.push({ label: capitalize(key), value: key });
-  }
-
-  return options;
-}
-
 const getStyles = (theme: GrafanaTheme2) => ({
   mappings: css`
     flex-grow: 1;
+  `,
+  table: css`
+    td,
+    th {
+      border-right: 4px solid ${theme.colors.background.primary};
+      border-bottom: 4px solid ${theme.colors.background.primary};
+      white-space: nowrap;
+      min-width: 120px;
+    }
+  `,
+  headerCell: css`
+    background: ${theme.colors.background.secondary};
+    font-size: ${theme.typography.bodySmall.fontSize};
+    line-height: ${theme.spacing(4)};
+    padding: ${theme.spacing(0, 1)};
+  `,
+  labelCell: css`
+    background: ${theme.colors.background.secondary};
+    padding: ${theme.spacing(0, 1)};
+  `,
+  selectCell: css`
+    padding: 0;
   `,
 });
 

@@ -12,7 +12,8 @@ import {
   reduceField,
   ReducerID,
 } from '@grafana/data';
-import { getFieldConfigFromFrame, RowToFieldsTransformMappings } from '../rowsToFields/rowsToFields';
+import { RowToFieldsTransformMappings } from '../rowsToFields/rowsToFields';
+import { getFieldConfigFromFrame } from '../rowsToFields/shared';
 
 export interface ConfigFromQueryTransformOptions {
   configRefId: string;

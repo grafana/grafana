@@ -1,18 +1,15 @@
 import { map } from 'rxjs/operators';
 import {
-  anyToNumber,
   ArrayVector,
   DataFrame,
   DataTransformerID,
   DataTransformerInfo,
   Field,
-  FieldColorModeId,
-  FieldConfig,
   FieldType,
   getFieldDisplayName,
   ReducerID,
-  ThresholdsMode,
 } from '@grafana/data';
+import { getFieldConfigFromFrame } from './shared';
 
 export interface RowToFieldsTransformOptions {
   nameField?: string;
@@ -104,90 +101,4 @@ export function rowsToFields(options: RowToFieldsTransformOptions, data: DataFra
     fields: outFields,
     length: 1,
   };
-}
-
-/**
- * Transforms a frame with fields to a map of field configs
- *
- * Input
- * | Name        | Min | Max |
- * --------------------------------
- * | Temperature |  0  | 30  |
- * | Pressure    |  0  | 100 |
- *
- * Outputs
- * {
-    { min: 0, max: 30 }, 
- * }
- */
-export function getFieldConfigFromFrame(
-  frame: DataFrame,
-  rowIndex: number,
-  mappings: RowToFieldsTransformMappings[]
-): FieldConfig {
-  const config: FieldConfig = {};
-
-  for (const field of frame.fields) {
-    const fieldName = getFieldDisplayName(field, frame);
-    const configProperty = lookUpConfigMapDefinition(fieldName, mappings);
-
-    if (!configProperty) {
-      continue;
-    }
-
-    const configValue = field.values.get(rowIndex);
-
-    if (configValue === null || configValue === undefined) {
-      continue;
-    }
-
-    if (typeof configProperty === 'function') {
-      configProperty(configValue, config);
-    } else {
-      config[configProperty] = configValue;
-    }
-  }
-
-  return config;
-}
-
-type FieldToConfigMapDef = keyof FieldConfig | ((value: any, config: FieldConfig) => void);
-
-export const configMapHandlers: Record<string, FieldToConfigMapDef> = {
-  max: 'max',
-  min: 'min',
-  unit: 'unit',
-  decimals: 'decimals',
-  color: (value, config) => {
-    config.color = { fixedColor: value, mode: FieldColorModeId.Fixed };
-  },
-  threshold1: (value, config) => {
-    const numeric = anyToNumber(value);
-
-    if (isNaN(numeric)) {
-      return;
-    }
-
-    if (!config.thresholds) {
-      config.thresholds = {
-        mode: ThresholdsMode.Absolute,
-        steps: [{ value: -Infinity, color: 'green' }],
-      };
-    }
-
-    config.thresholds.steps.push({
-      value: numeric,
-      color: 'red',
-    });
-  },
-};
-
-function lookUpConfigMapDefinition(fieldName: string, mappings: RowToFieldsTransformMappings[]) {
-  for (const map of mappings) {
-    if (fieldName === map.fieldName) {
-      return configMapHandlers[map.configProperty];
-    }
-  }
-
-  return configMapHandlers[fieldName] || configMapHandlers[fieldName.toLowerCase()];
 }
