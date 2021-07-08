@@ -15,6 +15,7 @@ import { concatenateTransformRegistryItem } from '../components/TransformersUI/C
 import { renameByRegexTransformRegistryItem } from '../components/TransformersUI/RenameByRegexTransformer';
 import { histogramTransformRegistryItem } from '../components/TransformersUI/HistogramTransformerEditor';
 import { rowsToFieldsTransformRegistryItem } from '../components/TransformersUI/rowsToFields/RowsToFieldsTransformerEditor';
+import { configFromQueryTransformRegistryItem } from '../components/TransformersUI/configFromQuery/ConfigFromQueryTransformerEditor';
 
 export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
   return [
@@ -34,5 +35,6 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     mergeTransformerRegistryItem,
     histogramTransformRegistryItem,
     rowsToFieldsTransformRegistryItem,
+    configFromQueryTransformRegistryItem,
   ];
 };

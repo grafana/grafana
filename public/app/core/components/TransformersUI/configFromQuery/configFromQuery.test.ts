@@ -1,5 +1,5 @@
 import { toDataFrame, FieldType, ReducerID } from '@grafana/data';
-import { extractConfigFromQuery, ConfigFromQueryTransformerOptions } from './configFromQuery';
+import { extractConfigFromQuery, ConfigFromQueryTransformOptions } from './configFromQuery';
 
 describe('config from data', () => {
   const config = toDataFrame({
@@ -24,7 +24,7 @@ describe('config from data', () => {
   });
 
   it('Select and apply with two frames and default mappings and reducer', () => {
-    const options: ConfigFromQueryTransformerOptions = {
+    const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
       mappings: [],
     };
@@ -36,7 +36,7 @@ describe('config from data', () => {
   });
 
   it('With custom mappings', () => {
-    const options: ConfigFromQueryTransformerOptions = {
+    const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
       mappings: [{ fieldName: 'Min', configProperty: 'decimals' }],
     };
@@ -47,7 +47,7 @@ describe('config from data', () => {
   });
 
   it('With custom reducer', () => {
-    const options: ConfigFromQueryTransformerOptions = {
+    const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
       mappings: [{ fieldName: 'Max', configProperty: 'max', reducerId: ReducerID.min }],
     };

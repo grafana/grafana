@@ -1,6 +1,5 @@
-import React, { ChangeEvent } from 'react';
-import { DataTransformerID, SelectableValue, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
-import { Input, Select } from '@grafana/ui';
+import React from 'react';
+import { TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
 import { rowsToFieldsTransformer, RowToFieldsTransformOptions } from './rowsToFields';
 
 interface Props extends TransformerUIProps<RowToFieldsTransformOptions> {}

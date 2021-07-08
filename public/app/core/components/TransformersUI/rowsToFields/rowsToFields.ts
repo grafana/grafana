@@ -27,7 +27,7 @@ export interface RowToFieldsTransformMappings {
 }
 
 export const rowsToFieldsTransformer: DataTransformerInfo<RowToFieldsTransformOptions> = {
-  id: DataTransformerID.configFromData,
+  id: DataTransformerID.rowsToFields,
   name: 'Rows to fields',
   description: 'Convert rows to fields with dynamic config',
   defaultOptions: {},
@@ -153,7 +153,7 @@ export function getFieldConfigFromFrame(
 
 type FieldToConfigMapDef = keyof FieldConfig | ((value: any, config: FieldConfig) => void);
 
-const configMapHandlers: Record<string, FieldToConfigMapDef> = {
+export const configMapHandlers: Record<string, FieldToConfigMapDef> = {
   max: 'max',
   min: 'min',
   unit: 'unit',
