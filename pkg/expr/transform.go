@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 )
@@ -46,7 +47,6 @@ func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery
 		}
 		req.Queries = append(req.Queries, Query{
 			JSON:          modelJSON,
-			Interval:      time.Duration(q.IntervalMS) * time.Millisecond,
 			RefID:         q.RefID,
 			MaxDataPoints: q.MaxDataPoints,
 			QueryType:     q.QueryType,
@@ -189,9 +189,15 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 		if err != nil {
 			return nil, err
 		}
+
+		calculatedInterval, err := interval.GetIntervalFrom(getDsInfo.Result, sj, time.Second)
+		if err != nil {
+			s.Cfg.Logger.Error("failed to extract interval from query", err)
+		}
+
 		queries[i] = plugins.DataSubQuery{
 			RefID:         query.RefID,
-			IntervalMS:    query.Interval.Milliseconds(),
+			IntervalMS:    calculatedInterval.Milliseconds(),
 			MaxDataPoints: query.MaxDataPoints,
 			QueryType:     query.QueryType,
 			DataSource:    getDsInfo.Result,

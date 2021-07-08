@@ -125,10 +125,6 @@ func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (
 		if err != nil {
 			return nil, fmt.Errorf("failed to get query model: %w", err)
 		}
-		interval, err := q.GetIntervalDuration()
-		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve intervalMs from the model: %w", err)
-		}
 
 		maxDatapoints, err := q.GetMaxDatapoints()
 		if err != nil {
@@ -142,7 +138,6 @@ func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (
 			},
 			DatasourceUID: q.DatasourceUID,
 			JSON:          model,
-			Interval:      interval,
 			RefID:         q.RefID,
 			MaxDataPoints: maxDatapoints,
 			QueryType:     q.QueryType,

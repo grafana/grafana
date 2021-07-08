@@ -124,51 +124,6 @@ func (aq *AlertQuery) GetMaxDatapoints() (int64, error) {
 	return int64(maxDataPoints), nil
 }
 
-// setIntervalMS sets the model IntervalMs if it's missing or invalid
-func (aq *AlertQuery) setIntervalMS() error {
-	if aq.modelProps == nil {
-		err := aq.setModelProps()
-		if err != nil {
-			return err
-		}
-	}
-	i, ok := aq.modelProps["intervalMs"] // GEL requires intervalMs inside the query JSON
-	if !ok {
-		aq.modelProps["intervalMs"] = defaultIntervalMS
-	}
-	intervalMs, ok := i.(float64)
-	if !ok || intervalMs == 0 {
-		aq.modelProps["intervalMs"] = defaultIntervalMS
-	}
-	return nil
-}
-
-func (aq *AlertQuery) getIntervalMS() (int64, error) {
-	err := aq.setIntervalMS()
-	if err != nil {
-		return 0, err
-	}
-
-	intervalMs, ok := aq.modelProps["intervalMs"].(float64)
-	if !ok {
-		return 0, fmt.Errorf("failed to cast intervalMs to float64: %v", aq.modelProps["intervalMs"])
-	}
-	return int64(intervalMs), nil
-}
-
-func (aq *AlertQuery) GetIntervalDuration() (time.Duration, error) {
-	err := aq.setIntervalMS()
-	if err != nil {
-		return 0, err
-	}
-
-	intervalMs, ok := aq.modelProps["intervalMs"].(float64)
-	if !ok {
-		return 0, fmt.Errorf("failed to cast intervalMs to float64: %v", aq.modelProps["intervalMs"])
-	}
-	return time.Duration(intervalMs) * time.Millisecond, nil
-}
-
 // GetDatasource returns the query datasource identifier.
 func (aq *AlertQuery) GetDatasource() (string, error) {
 	return aq.DatasourceUID, nil
@@ -176,11 +131,6 @@ func (aq *AlertQuery) GetDatasource() (string, error) {
 
 func (aq *AlertQuery) GetModel() ([]byte, error) {
 	err := aq.setMaxDatapoints()
-	if err != nil {
-		return nil, err
-	}
-
-	err = aq.setIntervalMS()
 	if err != nil {
 		return nil, err
 	}

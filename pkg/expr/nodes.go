@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -126,8 +125,7 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 }
 
 const (
-	defaultIntervalMS = int64(64)
-	defaultMaxDP      = int64(5000)
+	defaultMaxDP = int64(5000)
 )
 
 // DSNode is a DPNode that holds a datasource request.
@@ -137,11 +135,10 @@ type DSNode struct {
 	datasourceID  int64
 	datasourceUID string
 
-	orgID      int64
-	queryType  string
-	timeRange  TimeRange
-	intervalMS int64
-	maxDP      int64
+	orgID     int64
+	queryType string
+	timeRange TimeRange
+	maxDP     int64
 }
 
 // NodeType returns the data pipeline node type.
@@ -160,12 +157,11 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64
 			id:    dp.NewNode().ID(),
 			refID: rn.RefID,
 		},
-		orgID:      orgID,
-		query:      json.RawMessage(encodedQuery),
-		queryType:  rn.QueryType,
-		intervalMS: defaultIntervalMS,
-		maxDP:      defaultMaxDP,
-		timeRange:  rn.TimeRange,
+		orgID:     orgID,
+		query:     json.RawMessage(encodedQuery),
+		queryType: rn.QueryType,
+		maxDP:     defaultMaxDP,
+		timeRange: rn.TimeRange,
 	}
 
 	rawDsID, ok := rn.Query["datasourceId"]
@@ -181,14 +177,6 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64
 			return nil, fmt.Errorf("neither datasourceId or datasourceUid in expression data source request for refId %v", rn.RefID)
 		}
 		dsNode.datasourceUID = rn.DatasourceUID
-	}
-
-	var floatIntervalMS float64
-	if rawIntervalMS := rn.Query["intervalMs"]; ok {
-		if floatIntervalMS, ok = rawIntervalMS.(float64); !ok {
-			return nil, fmt.Errorf("expected intervalMs to be an float64, got type %T for refId %v", rawIntervalMS, rn.RefID)
-		}
-		dsNode.intervalMS = int64(floatIntervalMS)
 	}
 
 	var floatMaxDP float64
@@ -218,7 +206,6 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 		{
 			RefID:         dn.refID,
 			MaxDataPoints: dn.maxDP,
-			Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
 			JSON:          dn.query,
 			TimeRange: backend.TimeRange{
 				From: dn.timeRange.From,
