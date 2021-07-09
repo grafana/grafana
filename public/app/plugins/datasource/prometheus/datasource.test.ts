@@ -18,7 +18,7 @@ import {
   prometheusRegularEscape,
   prometheusSpecialRegexEscape,
 } from './datasource';
-import { PromOptions, PromQuery } from './types';
+import { PromOptions, PromQuery, StepType } from './types';
 import { VariableHide } from '../../../features/variables/types';
 import { describe } from '../../../../test/lib/common';
 import { QueryOptions } from 'app/types';
@@ -1701,6 +1701,25 @@ describe('PrometheusDatasource', () => {
         let interval = ds.adjustInterval(dynamicInterval, stepInterval, range, intervalFactor, 'exact');
         expect(interval).toBe(stepInterval * intervalFactor);
       });
+    });
+    it('should not return a value less than the safe interval', () => {
+      let newStepInterval = 0.13;
+      let intervalFactor = 1;
+      let stepMode: StepType = 'min';
+      let safeInterval = range / 11000;
+      if (safeInterval > 1) {
+        safeInterval = Math.ceil(safeInterval);
+      }
+      let interval = ds.adjustInterval(dynamicInterval, newStepInterval, range, intervalFactor, stepMode);
+      expect(interval).toBeGreaterThanOrEqual(safeInterval);
+
+      stepMode = 'max';
+      interval = ds.adjustInterval(dynamicInterval, newStepInterval, range, intervalFactor, stepMode);
+      expect(interval).toBeGreaterThanOrEqual(safeInterval);
+
+      stepMode = 'exact';
+      interval = ds.adjustInterval(dynamicInterval, newStepInterval, range, intervalFactor, stepMode);
+      expect(interval).toBeGreaterThanOrEqual(safeInterval);
     });
   });
 });
