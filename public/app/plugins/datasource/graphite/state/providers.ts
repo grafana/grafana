@@ -167,7 +167,7 @@ export async function getTagValues(
 async function addAltTagSegments(
   state: GraphiteQueryEditorState,
   prefix: string,
-  altSegments: any[]
+  altSegments: GraphiteSegment[]
 ): Promise<GraphiteSegment[]> {
   let tagSegments = await getTagsAsSegments(state, prefix);
 
