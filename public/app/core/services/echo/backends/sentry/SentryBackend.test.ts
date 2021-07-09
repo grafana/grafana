@@ -35,6 +35,7 @@ describe('SentryEchoBackend', () => {
     user: {
       email: 'darth.vader@sith.glx',
       id: 504,
+      orgId: 1,
     },
   };
 

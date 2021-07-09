@@ -8,23 +8,30 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
 type Manager struct {
+	log     log.Logger
+	metrics *metrics.Metrics
+
 	cache       *cache
 	quit        chan struct{}
 	ResendDelay time.Duration
-	Log         log.Logger
-	metrics     *metrics.Metrics
+
+	ruleStore     store.RuleStore
+	instanceStore store.InstanceStore
 }
 
-func NewManager(logger log.Logger, metrics *metrics.Metrics) *Manager {
+func NewManager(logger log.Logger, metrics *metrics.Metrics, ruleStore store.RuleStore, instanceStore store.InstanceStore) *Manager {
 	manager := &Manager{
-		cache:       newCache(logger, metrics),
-		quit:        make(chan struct{}),
-		ResendDelay: 1 * time.Minute, // TODO: make this configurable
-		Log:         logger,
-		metrics:     metrics,
+		cache:         newCache(logger, metrics),
+		quit:          make(chan struct{}),
+		ResendDelay:   1 * time.Minute, // TODO: make this configurable
+		log:           logger,
+		metrics:       metrics,
+		ruleStore:     ruleStore,
+		instanceStore: instanceStore,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -32,6 +39,71 @@ func NewManager(logger log.Logger, metrics *metrics.Metrics) *Manager {
 
 func (st *Manager) Close() {
 	st.quit <- struct{}{}
+}
+
+func (st *Manager) Warm() {
+	st.log.Info("warming cache for startup")
+	st.ResetCache()
+
+	orgIds, err := st.instanceStore.FetchOrgIds()
+	if err != nil {
+		st.log.Error("unable to fetch orgIds", "msg", err.Error())
+	}
+
+	var states []*State
+	for _, orgId := range orgIds {
+		// Get Rules
+		ruleCmd := ngModels.ListAlertRulesQuery{
+			OrgID: orgId,
+		}
+		if err := st.ruleStore.GetOrgAlertRules(&ruleCmd); err != nil {
+			st.log.Error("unable to fetch previous state", "msg", err.Error())
+		}
+
+		ruleByUID := make(map[string]*ngModels.AlertRule, len(ruleCmd.Result))
+		for _, rule := range ruleCmd.Result {
+			ruleByUID[rule.UID] = rule
+		}
+
+		// Get Instances
+		cmd := ngModels.ListAlertInstancesQuery{
+			RuleOrgID: orgId,
+		}
+		if err := st.instanceStore.ListAlertInstances(&cmd); err != nil {
+			st.log.Error("unable to fetch previous state", "msg", err.Error())
+		}
+
+		for _, entry := range cmd.Result {
+			ruleForEntry, ok := ruleByUID[entry.RuleUID]
+			if !ok {
+				st.log.Error("rule not found for instance, ignoring", "rule", entry.RuleUID)
+				continue
+			}
+
+			lbs := map[string]string(entry.Labels)
+			cacheId, err := entry.Labels.StringKey()
+			if err != nil {
+				st.log.Error("error getting cacheId for entry", "msg", err.Error())
+			}
+			stateForEntry := &State{
+				AlertRuleUID:       entry.RuleUID,
+				OrgID:              entry.RuleOrgID,
+				CacheId:            cacheId,
+				Labels:             lbs,
+				State:              translateInstanceState(entry.CurrentState),
+				Results:            []Evaluation{},
+				StartsAt:           entry.CurrentStateSince,
+				EndsAt:             entry.CurrentStateEnd,
+				LastEvaluationTime: entry.LastEvalTime,
+				Annotations:        ruleForEntry.Annotations,
+			}
+			states = append(states, stateForEntry)
+		}
+	}
+
+	for _, s := range states {
+		st.set(s)
+	}
 }
 
 func (st *Manager) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *State {
@@ -57,13 +129,13 @@ func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
 }
 
 func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []*State {
-	st.Log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
+	st.log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
 	var states []*State
 	for _, result := range results {
 		s := st.setNextState(alertRule, result)
 		states = append(states, s)
 	}
-	st.Log.Debug("returning changed states to scheduler", "count", len(states))
+	st.log.Debug("returning changed states to scheduler", "count", len(states))
 	return states
 }
 
@@ -80,7 +152,7 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 	})
 	currentState.TrimResults(alertRule)
 
-	st.Log.Debug("setting alert state", "uid", alertRule.UID)
+	st.log.Debug("setting alert state", "uid", alertRule.UID)
 	switch result.State {
 	case eval.Normal:
 		currentState.resultNormal(result)
@@ -113,10 +185,10 @@ func (st *Manager) recordMetrics() {
 	for {
 		select {
 		case <-ticker.C:
-			st.Log.Info("recording state cache metrics", "now", time.Now())
+			st.log.Info("recording state cache metrics", "now", time.Now())
 			st.cache.recordMetrics()
 		case <-st.quit:
-			st.Log.Debug("stopping state cache metrics recording", "now", time.Now())
+			st.log.Debug("stopping state cache metrics recording", "now", time.Now())
 			ticker.Stop()
 			return
 		}
@@ -126,5 +198,16 @@ func (st *Manager) recordMetrics() {
 func (st *Manager) Put(states []*State) {
 	for _, s := range states {
 		st.set(s)
+	}
+}
+
+func translateInstanceState(state ngModels.InstanceStateType) eval.State {
+	switch {
+	case state == ngModels.InstanceStateFiring:
+		return eval.Alerting
+	case state == ngModels.InstanceStateNormal:
+		return eval.Normal
+	default:
+		return eval.Error
 	}
 }
