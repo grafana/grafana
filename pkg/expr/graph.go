@@ -157,7 +157,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		case dsName == DatasourceName || dsUID == DatasourceUID:
 			node, err = buildCMDNode(dp, rn)
 		default: // If it's not an expression query, it's a data source query.
-			node, err = s.buildDSNode(dp, rn, req.OrgId)
+			node, err = s.buildDSNode(dp, rn, req)
 		}
 		if err != nil {
 			return nil, err
