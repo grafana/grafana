@@ -1,11 +1,12 @@
 import { DataFrame, DataFrameView } from '@grafana/data';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
+import { FieldMappingOptions, QueryFormat } from '../../types'
 
  /**
    * Function that formats dataframe into a Point[]
    */
-export function dataFrameToPoints(frame: DataFrame, config: any): Point[] {
+export function dataFrameToPoints(frame: DataFrame, fieldMapping: FieldMappingOptions, queryFormat: QueryFormat): Point[] {
 
   let points: Point[] = [];
 
@@ -19,13 +20,13 @@ export function dataFrameToPoints(frame: DataFrame, config: any): Point[] {
       let lat;
 
       // Coordinate Data
-      if (config.queryFormat.locationType === "coordinates") {
-        lng = row[config.fieldMapping.latitudeField];
-        lat = row[config.fieldMapping.longitudeField];
+      if (queryFormat.locationType === "coordinates") {
+        lng = row[fieldMapping.latitudeField];
+        lat = row[fieldMapping.longitudeField];
       }
       // Geohash Data
-      else if (config.queryFormat.locationType === "geohash"){
-        const encodedGeohash = row[config.fieldMapping.geohashField];
+      else if (queryFormat.locationType === "geohash"){
+        const encodedGeohash = row[fieldMapping.geohashField];
         const decodedGeohash = decodeGeohash(encodedGeohash);
         lng = decodedGeohash.latitude;
         lat = decodedGeohash.longitude;
