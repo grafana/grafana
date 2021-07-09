@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { Button, CascaderOption, SegmentSelect } from '@grafana/ui';
+import React, { useCallback } from 'react';
+import { Button, Segment } from '@grafana/ui';
 import { FuncDef } from '../gfunc';
 import { forEach, sortBy } from 'lodash';
 import { actions } from '../state/actions';
@@ -29,34 +29,22 @@ function createOptions(funcDefs: FuncDef[]) {
 }
 
 export function AddGraphiteFunction(props: Props) {
-  const [isOpen, setIsOpen] = useState(false);
-
   const onChange = useCallback(
     ({ value }) => {
       props.dispatch(actions.addFunction({ name: value }));
-      setIsOpen(false);
     },
     [props.dispatch]
   );
 
-  const options: CascaderOption[] = createOptions(props.funcDefs);
-  return isOpen ? (
-    <SegmentSelect
+  const options = createOptions(props.funcDefs);
+
+  return (
+    <Segment
+      Component={<Button icon="plus" variant="secondary" />}
       options={options}
       onChange={onChange}
-      onClickOutside={() => {
-        setIsOpen(false);
-      }}
-      width={200}
-    />
-  ) : (
-    <Button
-      icon="plus"
-      type="button"
-      variant="secondary"
-      onClick={() => {
-        setIsOpen(true);
-      }}
-    />
+      inputWidth={150}
+      submitOnClickAway={false}
+    ></Segment>
   );
 }

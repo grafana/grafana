@@ -6,4 +6,6 @@ export interface SegmentProps<T> {
   allowCustomValue?: boolean;
   placeholder?: string;
   disabled?: boolean;
+  submitOnClickAway?: boolean;
+  inputWidth?: number;
 }
