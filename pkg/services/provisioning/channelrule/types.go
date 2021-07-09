@@ -95,5 +95,6 @@ func createUpdateCommand(ds *upsertChannelRuleFromConfig, id int64) models.Updat
 		Pattern: ds.Pattern,
 		Config:  ds.Config,
 		Secure:  ds.Secure,
+		Version: ds.Version,
 	}
 }

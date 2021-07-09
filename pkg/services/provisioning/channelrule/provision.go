@@ -66,6 +66,9 @@ func (dc *Provisioner) apply(cfg *configs) error {
 		} else {
 			dc.log.Debug("updating channelRule from configuration", "pattern", rule.Pattern)
 			updateCmd := createUpdateCommand(rule, ruleInstance.Id)
+			if updateCmd.Version == 0 {
+				updateCmd.Version = ruleInstance.Version + 1
+			}
 			_, err := dc.storage.UpdateChannelRule(updateCmd)
 			if err != nil {
 				return err

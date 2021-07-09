@@ -250,12 +250,13 @@ func (s *ManagedStream) remoteWriteFrame(orgID int64, channel string, rule model
 	orgChannel := orgchannel.PrependOrgID(orgID, channel)
 	if t, ok := s.remoteWriteTime[orgChannel]; ok && remoteWriteConfig.SampleMilliseconds > 0 {
 		if time.Now().Before(t.Add(time.Duration(remoteWriteConfig.SampleMilliseconds) * time.Millisecond)) {
+			logger.Debug("Skip remote write due to sampling interval", "channel", channel)
 			s.remoteWriteTimeMu.Unlock()
 			return nil
 		}
-		// Save current time as time of remote write for a channel.
-		s.remoteWriteTime[orgChannel] = time.Now()
 	}
+	// Save current time as time of remote write for a channel.
+	s.remoteWriteTime[orgChannel] = time.Now()
 	s.remoteWriteTimeMu.Unlock()
 
 	// Use remote write for a stream.

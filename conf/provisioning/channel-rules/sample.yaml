@@ -3,20 +3,23 @@ apiVersion: 0
 
 # # list of channel rules that should be deleted from the database
 #deleteChannelRules:
-#   - pattern: xxx/*
+#   - pattern: stream/*
 #     orgId: 1
 
-# # list of channel rules to insert/update depending
-# # on what's available in the database
+ # list of channel rules to insert/update depending
+ # on what's available in the database
 #channelRules:
 #   # <string, required> pattern of the channel rule. Required
-# - pattern: yyy/*
+# - pattern: stream/*
 #   # <int> org id. Will default to orgId 1 if not specified.
 #   orgId: 1
 #   config:
 #     remoteWrite:
-#       endpoint: "test"
+#       enabled: true
+#       endpoint: "..."
+#       user: "..."
+#       sampleMilliseconds: 15000
 #   # <string> json object of data that will be encrypted.
 #   secure:
 #     remoteWritePassword: "..."
-#   version: 1
+#   version: 0
