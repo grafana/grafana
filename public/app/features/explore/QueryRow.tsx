@@ -6,7 +6,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import AngularQueryEditor from './QueryEditor';
 import { QueryRowActions } from './QueryRowActions';
 import { StoreState } from 'app/types';
-import { DataQuery, LoadingState, DataSourceApi, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, LoadingState, DataSourceApi } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { ExploreItemState, ExploreId } from 'app/types/explore';
 import { highlightLogsExpressionAction } from './state/explorePane';
@@ -66,7 +66,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.setState({ textEditModeEnabled: !this.state.textEditModeEnabled });
   };
 
-  setReactQueryEditor = (datasourceInstance: DataSourceApi<DataQuery, DataSourceJsonData, {}>) => {
+  setReactQueryEditor = (datasourceInstance: DataSourceApi) => {
     let QueryEditor;
     // TODO:unification
     if (datasourceInstance.components?.ExploreMetricsQueryField) {
@@ -81,7 +81,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     return QueryEditor;
   };
 
-  renderQueryEditor = (datasourceInstance: DataSourceApi<DataQuery, DataSourceJsonData, {}>) => {
+  renderQueryEditor = (datasourceInstance: DataSourceApi) => {
     const { history, query, exploreEvents, range, queryResponse, exploreId } = this.props;
 
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
