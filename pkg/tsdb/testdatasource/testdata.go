@@ -1,7 +1,6 @@
 package testdatasource
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -42,11 +41,7 @@ func (p *testDataPlugin) Init() error {
 		StreamHandler:       newTestStreamHandler(p.logger),
 	})
 
-	if p.PluginManagerV2.IsEnabled() {
-		pluginJSONPath := "datasource/testdata/plugin.json"
-		return p.PluginManagerV2.InitCorePlugin(context.Background(), pluginJSONPath, factory)
-	}
-	err := p.BackendPluginManager.RegisterAndStart(context.Background(), "testdata", factory)
+	err := p.BackendPluginManager.Register("testdata", factory)
 	if err != nil {
 		p.logger.Error("Failed to register plugin", "error", err)
 	}

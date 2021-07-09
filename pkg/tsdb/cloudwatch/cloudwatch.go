@@ -80,12 +80,7 @@ func (s *CloudWatchService) Init() error {
 		QueryDataHandler: newExecutor(s.LogsService, im, s.Cfg, awsds.NewSessionCache()),
 	})
 
-	if s.PluginManagerV2.IsEnabled() {
-		pluginJSONPath := "datasource/cloudwatch/plugin.json"
-		return s.PluginManagerV2.InitCorePlugin(context.Background(), pluginJSONPath, factory)
-	}
-
-	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "cloudwatch", factory); err != nil {
+	if err := s.BackendPluginManager.Register("cloudwatch", factory); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
 	}
 	return nil

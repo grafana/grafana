@@ -5,7 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func FromV2(v2 *plugins.PluginV2) *plugins.PluginBase {
+func fromV2(v2 *plugins.PluginV2) *plugins.PluginBase {
 	if v2 == nil {
 		return nil
 	}
@@ -52,7 +52,7 @@ func FromV2(v2 *plugins.PluginV2) *plugins.PluginBase {
 		SignatureOrg:        v2.SignatureOrg,
 		GrafanaNetVersion:   v2.GrafanaComVersion,
 		GrafanaNetHasUpdate: v2.GrafanaComHasUpdate,
-		Root:                FromV2(v2.Parent),
+		Root:                fromV2(v2.Parent),
 	}
 
 	for _, include := range v2.Includes {
@@ -97,14 +97,14 @@ func FromV2(v2 *plugins.PluginV2) *plugins.PluginBase {
 	return p
 }
 
-func DataSourceFromV2(v2 *plugins.PluginV2) *plugins.DataSourcePlugin {
-	if v2 == nil || v2.Type != "datasource" {
+func dataSourceFromV2(v2 *plugins.PluginV2) *plugins.DataSourcePlugin {
+	if v2 == nil || !v2.IsDataSource() {
 		return nil
 	}
 
 	ds := &plugins.DataSourcePlugin{
 		FrontendPluginBase: plugins.FrontendPluginBase{
-			PluginBase: *FromV2(v2),
+			PluginBase: *fromV2(v2),
 		},
 		Annotations:  v2.Annotations,
 		Metrics:      v2.Metrics,
@@ -165,14 +165,14 @@ func DataSourceFromV2(v2 *plugins.PluginV2) *plugins.DataSourcePlugin {
 	return ds
 }
 
-func PanelFromV2(v2 *plugins.PluginV2) *plugins.PanelPlugin {
-	if v2 == nil || v2.Type != "panel" {
+func panelFromV2(v2 *plugins.PluginV2) *plugins.PanelPlugin {
+	if v2 == nil || !v2.IsPanel() {
 		return nil
 	}
 
 	p := &plugins.PanelPlugin{
 		FrontendPluginBase: plugins.FrontendPluginBase{
-			PluginBase: *FromV2(v2),
+			PluginBase: *fromV2(v2),
 		},
 		SkipDataQuery: v2.SkipDataQuery,
 	}
@@ -180,14 +180,14 @@ func PanelFromV2(v2 *plugins.PluginV2) *plugins.PanelPlugin {
 	return p
 }
 
-func AppFromV2(v2 *plugins.PluginV2) *plugins.AppPlugin {
-	if v2 == nil || v2.Type != "app" {
+func appFromV2(v2 *plugins.PluginV2) *plugins.AppPlugin {
+	if v2 == nil || !v2.IsApp() {
 		return nil
 	}
 
 	app := &plugins.AppPlugin{
 		FrontendPluginBase: plugins.FrontendPluginBase{
-			PluginBase: *FromV2(v2),
+			PluginBase: *fromV2(v2),
 		},
 		AutoEnabled: v2.AutoEnabled,
 		Pinned:      v2.Pinned,
@@ -230,4 +230,20 @@ func AppFromV2(v2 *plugins.PluginV2) *plugins.AppPlugin {
 	}
 
 	return app
+}
+
+func rendererFromV2(v2 *plugins.PluginV2) *plugins.RendererPlugin {
+	if v2 == nil || !v2.IsRenderer() {
+		return nil
+	}
+
+	renderer := &plugins.RendererPlugin{
+		FrontendPluginBase: plugins.FrontendPluginBase{
+			PluginBase: *fromV2(v2),
+		},
+		Executable:   v2.Executable,
+		GrpcPluginV2: v2.Renderer,
+	}
+
+	return renderer
 }

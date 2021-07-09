@@ -15,8 +15,10 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/registry"
@@ -36,6 +38,7 @@ type manager struct {
 	Cfg                    *setting.Cfg                  `inject:""`
 	License                models.Licensing              `inject:""`
 	PluginRequestValidator models.PluginRequestValidator `inject:""`
+	PluginManagerV2        plugins.ManagerV2             `inject:""`
 	pluginsMu              sync.RWMutex
 	plugins                map[string]backendplugin.Plugin
 	logger                 log.Logger
@@ -53,6 +56,10 @@ func (m *manager) Run(ctx context.Context) error {
 
 // Register registers a backend plugin
 func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	if m.PluginManagerV2.IsEnabled() {
+		return m.PluginManagerV2.InitCorePlugin(context.Background(), pluginID, factory)
+	}
+
 	m.logger.Debug("Registering backend plugin", "pluginId", pluginID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
@@ -232,6 +239,10 @@ func (m *manager) stop(ctx context.Context) {
 
 // CollectMetrics collects metrics from a registered backend plugin.
 func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
+	if m.PluginManagerV2.IsEnabled() {
+		return m.PluginManagerV2.CollectMetrics(ctx, pluginID)
+	}
+
 	p, registered := m.Get(pluginID)
 	if !registered {
 		return nil, backendplugin.ErrPluginNotRegistered
@@ -251,6 +262,10 @@ func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*backend
 
 // CheckHealth checks the health of a registered backend plugin.
 func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginContext) (*backend.CheckHealthResult, error) {
+	if m.PluginManagerV2.IsEnabled() {
+		return m.PluginManagerV2.CheckHealth(ctx, pluginContext)
+	}
+
 	var dsURL string
 	if pluginContext.DataSourceInstanceSettings != nil {
 		dsURL = pluginContext.DataSourceInstanceSettings.URL
@@ -291,6 +306,10 @@ func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 }
 
 func (m *manager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if m.PluginManagerV2.IsEnabled() {
+		return m.PluginManagerV2.QueryData(ctx, req)
+	}
+
 	p, registered := m.Get(req.PluginContext.PluginID)
 	if !registered {
 		return nil, backendplugin.ErrPluginNotRegistered
@@ -383,6 +402,11 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 
 // CallResource calls a plugin resource.
 func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
+	if m.PluginManagerV2.IsEnabled() {
+		m.PluginManagerV2.CallResource(pCtx, reqCtx, path)
+		return
+	}
+
 	var dsURL string
 	if pCtx.DataSourceInstanceSettings != nil {
 		dsURL = pCtx.DataSourceInstanceSettings.URL

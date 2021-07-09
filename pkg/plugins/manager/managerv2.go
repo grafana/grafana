@@ -31,9 +31,12 @@ import (
 
 var _ plugins.ManagerV2 = (*PluginManagerV2)(nil)
 
-var externalManagedCorePlugins = map[string]struct{}{
-	"cloudwatch": {},
-	"testdata":   {},
+var externalManagedCorePlugins = map[string]string{
+	"cloudwatch":                       "datasource/cloudwatch/plugin.json",
+	"testdata":                         "datasource/testdata/plugin.json",
+	"graphite":                         "datasource/graphite/plugin.json",
+	"opentsdb":                         "datasource/opentsdb/plugin.json",
+	"grafana-azure-monitor-datasource": "datasource/grafana-azure-monitor-datasource/plugin.json",
 }
 
 type PluginManagerV2 struct {
@@ -110,8 +113,8 @@ func (m *PluginManagerV2) IsDisabled() bool {
 	return !exists
 }
 
-func (m *PluginManagerV2) InitCorePlugin(ctx context.Context, pluginJSONPath string, factory backendplugin.PluginFactoryFunc) error {
-	fullPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", pluginJSONPath)
+func (m *PluginManagerV2) InitCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	fullPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", externalManagedCorePlugins[pluginID])
 
 	plugin, err := m.PluginLoader.Load(fullPath, plugins.Core)
 	if err != nil {

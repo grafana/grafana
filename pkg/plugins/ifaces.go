@@ -155,7 +155,7 @@ type ManagerV2 interface {
 	// IsRegistered checks if a plugin is registered with the manager.
 	IsRegistered(pluginID string) bool
 	// InitCorePlugin loads and initializes a core plugin.
-	InitCorePlugin(ctx context.Context, pluginJSONPath string, factory backendplugin.PluginFactoryFunc) error
+	InitCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error
 
 	// Install installs a plugin.
 	Install(ctx context.Context, pluginID, version string) error

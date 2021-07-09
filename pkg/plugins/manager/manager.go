@@ -212,14 +212,26 @@ func (pm *PluginManager) Renderer() *plugins.RendererPlugin {
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
-	return pm.renderer
+	r := pm.renderer
+
+	if r != nil {
+		return r
+	}
+
+	return rendererFromV2(pm.PluginManagerV2.Renderer())
 }
 
 func (pm *PluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
-	return pm.dataSources[id]
+	ds := pm.dataSources[id]
+
+	if ds != nil {
+		return ds
+	}
+
+	return dataSourceFromV2(pm.PluginManagerV2.DataSource(id))
 }
 
 func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
@@ -231,28 +243,23 @@ func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
 		rslt = append(rslt, ds)
 	}
 
+	for _, ds := range pm.PluginManagerV2.DataSources() {
+		rslt = append(rslt, dataSourceFromV2(ds))
+	}
+
 	return rslt
 }
 
 func (pm *PluginManager) DataSourceCount() int {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	return len(pm.dataSources)
+	return len(pm.DataSources())
 }
 
 func (pm *PluginManager) PanelCount() int {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	return len(pm.panels)
+	return len(pm.Panels())
 }
 
 func (pm *PluginManager) AppCount() int {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	return len(pm.apps)
+	return len(pm.Apps())
 }
 
 func (pm *PluginManager) Plugins() []*plugins.PluginBase {
@@ -262,6 +269,10 @@ func (pm *PluginManager) Plugins() []*plugins.PluginBase {
 	var rslt []*plugins.PluginBase
 	for _, p := range pm.plugins {
 		rslt = append(rslt, p)
+	}
+
+	for _, ds := range pm.PluginManagerV2.Plugins() {
+		rslt = append(rslt, fromV2(ds))
 	}
 
 	return rslt
@@ -276,6 +287,10 @@ func (pm *PluginManager) Apps() []*plugins.AppPlugin {
 		rslt = append(rslt, p)
 	}
 
+	for _, ds := range pm.PluginManagerV2.Apps() {
+		rslt = append(rslt, appFromV2(ds))
+	}
+
 	return rslt
 }
 
@@ -288,6 +303,10 @@ func (pm *PluginManager) Panels() []*plugins.PanelPlugin {
 		rslt = append(rslt, p)
 	}
 
+	for _, ds := range pm.PluginManagerV2.Panels() {
+		rslt = append(rslt, panelFromV2(ds))
+	}
+
 	return rslt
 }
 
@@ -295,14 +314,26 @@ func (pm *PluginManager) GetPlugin(id string) *plugins.PluginBase {
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
-	return pm.plugins[id]
+	p := pm.plugins[id]
+
+	if p != nil {
+		return p
+	}
+
+	return fromV2(pm.PluginManagerV2.Plugin(id))
 }
 
 func (pm *PluginManager) GetApp(id string) *plugins.AppPlugin {
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()
 
-	return pm.apps[id]
+	app := pm.apps[id]
+
+	if app != nil {
+		return app
+	}
+
+	return appFromV2(pm.PluginManagerV2.App(id))
 }
 
 func (pm *PluginManager) GrafanaLatestVersion() string {
