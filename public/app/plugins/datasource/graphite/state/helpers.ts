@@ -107,7 +107,7 @@ export function setSegmentFocus(state: GraphiteQueryEditorState, segmentIndex: n
   });
 }
 
-export function spliceSegments(state: GraphiteQueryEditorState, index: any): void {
+export function spliceSegments(state: GraphiteQueryEditorState, index: number): void {
   state.segments = state.segments.splice(0, index);
   state.queryModel.segments = state.queryModel.segments.splice(0, index);
 }
