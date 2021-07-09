@@ -188,6 +188,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               showDetectedFields={showDetectedFields!}
               getFieldLinks={getFieldLinks}
               wrapLogMessage={wrapLogMessage}
+              highlighterExpressions={highlighterExpressions}
             />
           ) : (
             <LogRowMessage
