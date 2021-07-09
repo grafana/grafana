@@ -1,8 +1,17 @@
-import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import {
+  FieldColorModeId,
+  FieldConfigProperty,
+  FieldType,
+  identityOverrideProcessor,
+  PanelPlugin,
+} from '@grafana/data';
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { TimelineOptions, TimelineFieldConfig, defaultPanelOptions, defaultTimelineFieldConfig } from './types';
 import { BarValueVisibility, commonOptionsBuilder } from '@grafana/ui';
 import { timelinePanelChangedHandler } from './migrations';
+import { SpanNullsEditor } from '../timeseries/SpanNullsEditor';
+
+//const categoryStyles = ['Graph styles'];
 
 export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(StateTimelinePanel)
   .setPanelChangeHandler(timelinePanelChangedHandler)
@@ -38,6 +47,17 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
             max: 100,
             step: 1,
           },
+        })
+        .addCustomEditor<void, boolean>({
+          id: 'spanNulls',
+          path: 'spanNulls',
+          name: 'Connect null values',
+          //category: categoryStyles,
+          defaultValue: false,
+          editor: SpanNullsEditor,
+          override: SpanNullsEditor,
+          shouldApply: (f) => f.type !== FieldType.time,
+          process: identityOverrideProcessor,
         });
     },
   })
