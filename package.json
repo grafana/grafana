@@ -272,7 +272,7 @@
     "pluralize": "^8.0.0",
     "prismjs": "1.24.0",
     "prop-types": "15.7.2",
-    "rc-cascader": "1.4.1",
+    "rc-cascader": "1.4.3",
     "re-resizable": "^6.2.0",
     "react": "17.0.1",
     "react-beautiful-dnd": "13.1.0",
