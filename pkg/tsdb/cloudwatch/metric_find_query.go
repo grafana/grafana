@@ -144,7 +144,7 @@ var metricsMap = map[string][]string{
 
 var dimensionsMap = map[string][]string{
 	"AWS/ACMPrivateCA":            {},
-	"AWS/AmazonMQ":                {"Broker", "NetworkConnector", "Queue", "Topic"},
+	"AWS/AmazonMQ":                {"Broker", "NetworkConnector", "Queue", "Topic", "Node", "Virtual host"},
 	"AWS/ApiGateway":              {"ApiId", "ApiName", "Method", "Resource", "Stage"},
 	"AWS/AppStream":               {"Fleet"},
 	"AWS/AppSync":                 {"GraphQLAPIId"},
