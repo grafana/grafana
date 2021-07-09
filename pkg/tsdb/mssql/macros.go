@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/gtime"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -16,8 +17,6 @@ const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type msSQLMacroEngine struct {
 	*sqleng.SQLMacroEngineBase
-	timeRange backend.TimeRange
-	query     backend.DataQuery
 }
 
 func newMssqlMacroEngine() sqleng.SQLMacroEngine {
@@ -26,8 +25,6 @@ func newMssqlMacroEngine() sqleng.SQLMacroEngine {
 
 func (m *msSQLMacroEngine) Interpolate(query backend.DataQuery, timeRange backend.TimeRange,
 	sql string) (string, error) {
-	m.timeRange = timeRange
-	m.query = query
 	// TODO: Return any error
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
@@ -37,7 +34,7 @@ func (m *msSQLMacroEngine) Interpolate(query backend.DataQuery, timeRange backen
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
 		}
-		res, err := m.evaluateMacro(groups[1], args)
+		res, err := m.evaluateMacro(timeRange, query, groups[1], args)
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -52,7 +49,7 @@ func (m *msSQLMacroEngine) Interpolate(query backend.DataQuery, timeRange backen
 	return sql, nil
 }
 
-func (m *msSQLMacroEngine) evaluateMacro(name string, args []string) (string, error) {
+func (m *msSQLMacroEngine) evaluateMacro(timeRange plugins.DataTimeRange, query plugins.DataSubQuery, name string, args []string) (string, error) {
 	switch name {
 	case "__time":
 		if len(args) == 0 {
@@ -69,11 +66,11 @@ func (m *msSQLMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 
-		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.timeRange.From.UTC().Format(time.RFC3339), m.timeRange.To.UTC().Format(time.RFC3339)), nil
+		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], timeRange.GetFromAsTimeUTC().Format(time.RFC3339), timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeFrom":
-		return fmt.Sprintf("'%s'", m.timeRange.From.UTC().Format(time.RFC3339)), nil
+		return fmt.Sprintf("'%s'", timeRange.GetFromAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeTo":
-		return fmt.Sprintf("'%s'", m.timeRange.To.UTC().Format(time.RFC3339)), nil
+		return fmt.Sprintf("'%s'", timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
@@ -83,14 +80,14 @@ func (m *msSQLMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := sqleng.SetupFillmode(m.query, interval, args[2])
+			err := sqleng.SetupFillmode(query, interval, args[2])
 			if err != nil {
 				return "", err
 			}
 		}
 		return fmt.Sprintf("FLOOR(DATEDIFF(second, '1970-01-01', %s)/%.0f)*%.0f", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__timeGroupAlias":
-		tg, err := m.evaluateMacro("__timeGroup", args)
+		tg, err := m.evaluateMacro(timeRange, query, "__timeGroup", args)
 		if err == nil {
 			return tg + " AS [time]", nil
 		}
@@ -99,16 +96,16 @@ func (m *msSQLMacroEngine) evaluateMacro(name string, args []string) (string, er
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.From.Unix(), args[0], m.timeRange.To.Unix()), nil
+		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], timeRange.GetFromAsSecondsEpoch(), args[0], timeRange.GetToAsSecondsEpoch()), nil
 	case "__unixEpochNanoFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.From.UTC().UnixNano(), args[0], m.timeRange.To.UTC().UnixNano()), nil
+		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], timeRange.GetFromAsTimeUTC().UnixNano(), args[0], timeRange.GetToAsTimeUTC().UnixNano()), nil
 	case "__unixEpochNanoFrom":
-		return fmt.Sprintf("%d", m.timeRange.From.UTC().UnixNano()), nil
+		return fmt.Sprintf("%d", timeRange.GetFromAsTimeUTC().UnixNano()), nil
 	case "__unixEpochNanoTo":
-		return fmt.Sprintf("%d", m.timeRange.To.UTC().UnixNano()), nil
+		return fmt.Sprintf("%d", timeRange.GetToAsTimeUTC().UnixNano()), nil
 	case "__unixEpochGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
@@ -118,14 +115,14 @@ func (m *msSQLMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := sqleng.SetupFillmode(m.query, interval, args[2])
+			err := sqleng.SetupFillmode(query, interval, args[2])
 			if err != nil {
 				return "", err
 			}
 		}
 		return fmt.Sprintf("FLOOR(%s/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochGroupAlias":
-		tg, err := m.evaluateMacro("__unixEpochGroup", args)
+		tg, err := m.evaluateMacro(timeRange, query, "__unixEpochGroup", args)
 		if err == nil {
 			return tg + " AS [time]", nil
 		}

@@ -13,11 +13,8 @@ export default {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disable: true,
-    },
     controls: {
-      exclude: ['size', 'variant', 'icon', 'className', 'fullWidth'],
+      exclude: ['size', 'variant', 'icon', 'className', 'fullWidth', 'getText', 'onClipboardCopy', 'onClipboardError'],
     },
   },
 } as Meta;

@@ -18,7 +18,7 @@ For example, you could change the number of decimal places shown in all numeric 
 
 Grafana displays a list of field overrides, if any have been created for this panel.
 
-![View overrides](/img/docs/time-series-panel/panel-editor-8-0.png)
+![View overrides](/static/img/docs/time-series-panel/panel-editor-8-0.png)
 
 ## Add a field override
 

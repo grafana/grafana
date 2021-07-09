@@ -1,7 +1,9 @@
 package azuremonitor
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -67,6 +69,46 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.azureResourceGraphQueries, queries, cmpopts.IgnoreUnexported(simplejson.Json{})); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestAzureResourceGraphCreateRequest(t *testing.T) {
+	ctx := context.Background()
+	dsInfo := datasourceInfo{
+		Services: map[string]datasourceService{
+			azureResourceGraph: {URL: "http://ds"},
+		},
+	}
+
+	tests := []struct {
+		name            string
+		expectedURL     string
+		expectedHeaders http.Header
+		Err             require.ErrorAssertionFunc
+	}{
+		{
+			name:        "creates a request",
+			expectedURL: "http://ds/",
+			expectedHeaders: http.Header{
+				"Content-Type": []string{"application/json"},
+				"User-Agent":   []string{"Grafana/"},
+			},
+			Err: require.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ds := AzureResourceGraphDatasource{}
+			req, err := ds.createRequest(ctx, dsInfo, []byte{})
+			tt.Err(t, err)
+			if req.URL.String() != tt.expectedURL {
+				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())
+			}
+			if !cmp.Equal(req.Header, tt.expectedHeaders) {
+				t.Errorf("Unexpected HTTP headers: %v", cmp.Diff(req.Header, tt.expectedHeaders))
 			}
 		})
 	}

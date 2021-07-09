@@ -39,11 +39,17 @@ export default {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disable: true,
-    },
     controls: {
-      exclude: ['placeholder', 'initialValue', 'changeOnSelect'],
+      exclude: [
+        'placeholder',
+        'initialValue',
+        'changeOnSelect',
+        'onSelect',
+        'loadData',
+        'onChange',
+        'onPopupVisibleChange',
+        'formatCreateLabel',
+      ],
     },
   },
   args: {

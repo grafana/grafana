@@ -126,8 +126,21 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
+func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*sqleng.DataSourceInfo, error) {
+	i, err := s.im.Get(pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+	instance := i.(sqleng.DataSourceInfo)
+	return &instance, nil
+}
+
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return nil, nil
+	dsInfo, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+	return dsInfo.QueryData(ctx, req)
 }
 
 type mysqlQueryResultTransformer struct {
@@ -289,6 +302,44 @@ func (t *mysqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 			Name:           "handle YEAR",
 			InputScanKind:  reflect.Struct,
 			InputTypeName:  "YEAR",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableInt64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseInt(*in, 10, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle TINYINT",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "TINYINT",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableInt64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseInt(*in, 10, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle SMALLINT",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "SMALLINT",
 			ConversionFunc: func(in *string) (*string, error) { return in, nil },
 			Replacer: &sqlutil.StringFieldReplacer{
 				OutputFieldType: data.FieldTypeNullableInt64,

@@ -49,14 +49,14 @@ export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
 
   if (isDeleting) {
     return (
-      <HorizontalGroup>
+      <HorizontalGroup align="flex-start">
         <Spinner />
         deleting
       </HorizontalGroup>
     );
   } else if (isCreating) {
     return (
-      <HorizontalGroup>
+      <HorizontalGroup align="flex-start">
         {' '}
         <Spinner />
         creating
@@ -64,7 +64,7 @@ export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
     );
   } else if (promRule && isAlertingRule(promRule)) {
     return (
-      <HorizontalGroup>
+      <HorizontalGroup align="flex-start">
         <AlertStateTag state={promRule.state} />
         {forTime}
       </HorizontalGroup>
@@ -80,5 +80,6 @@ const getStyle = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.bodySmall.fontSize};
     color: ${theme.colors.text.secondary};
     white-space: nowrap;
+    padding-top: 2px;
   `,
 });

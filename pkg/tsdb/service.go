@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
@@ -49,6 +49,7 @@ type Service struct {
 	PluginManager          plugins.Manager           `inject:""`
 	BackendPluginManager   backendplugin.Manager     `inject:""`
 	HTTPClientProvider     httpclient.Provider       `inject:""`
+	OAuthTokenService      *oauthtoken.Service       `inject:""`
 
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
@@ -57,7 +58,6 @@ type Service struct {
 // Init initialises the service.
 func (s *Service) Init() error {
 	s.registry["graphite"] = graphite.New(s.HTTPClientProvider)
-	s.registry["opentsdb"] = opentsdb.New(s.HTTPClientProvider)
 	s.registry["prometheus"] = prometheus.New(s.HTTPClientProvider)
 	s.registry["influxdb"] = influxdb.New(s.HTTPClientProvider)
 	s.registry["mssql"] = mssql.NewExecutor
@@ -82,7 +82,7 @@ func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 		return plugin.DataQuery(ctx, ds, query)
 	}
 
-	return dataPluginQueryAdapter(ds.Type, s.BackendPluginManager).DataQuery(ctx, ds, query)
+	return dataPluginQueryAdapter(ds.Type, s.BackendPluginManager, s.OAuthTokenService).DataQuery(ctx, ds, query)
 }
 
 // RegisterQueryHandler registers a query handler factory.

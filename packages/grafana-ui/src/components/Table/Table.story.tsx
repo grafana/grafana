@@ -27,9 +27,6 @@ export default {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disable: true,
-    },
   },
   args: {
     width: 700,

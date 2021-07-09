@@ -6,18 +6,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/stretchr/testify/assert"
-
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestResponseParser(t *testing.T) {
-	Convey("Elasticsearch response parser test", t, func() {
-		Convey("Simple query and count", func() {
+	t.Run("Elasticsearch response parser test", func(t *testing.T) {
+		t.Run("Simple query and count", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -46,24 +44,28 @@ func TestResponseParser(t *testing.T) {
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Series, ShouldHaveLength, 1)
-			series := queryRes.Series[0]
-			So(series.Name, ShouldEqual, "Count")
-			So(series.Points, ShouldHaveLength, 2)
-			So(series.Points[0][0].Float64, ShouldEqual, 10)
-			So(series.Points[0][1].Float64, ShouldEqual, 1000)
-			So(series.Points[1][0].Float64, ShouldEqual, 15)
-			So(series.Points[1][1].Float64, ShouldEqual, 2000)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 1)
+
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "Count")
+			require.Len(t, frame.Fields, 2)
+
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 		})
 
-		Convey("Simple query count & avg aggregation", func() {
+		t.Run("Simple query count & avg aggregation", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -94,32 +96,37 @@ func TestResponseParser(t *testing.T) {
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Series, ShouldHaveLength, 2)
-			seriesOne := queryRes.Series[0]
-			So(seriesOne.Name, ShouldEqual, "Count")
-			So(seriesOne.Points, ShouldHaveLength, 2)
-			So(seriesOne.Points[0][0].Float64, ShouldEqual, 10)
-			So(seriesOne.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesOne.Points[1][0].Float64, ShouldEqual, 15)
-			So(seriesOne.Points[1][1].Float64, ShouldEqual, 2000)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 2)
 
-			seriesTwo := queryRes.Series[1]
-			So(seriesTwo.Name, ShouldEqual, "Average value")
-			So(seriesTwo.Points, ShouldHaveLength, 2)
-			So(seriesTwo.Points[0][0].Float64, ShouldEqual, 88)
-			So(seriesTwo.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesTwo.Points[1][0].Float64, ShouldEqual, 99)
-			So(seriesTwo.Points[1][1].Float64, ShouldEqual, 2000)
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "Count")
+			require.Len(t, frame.Fields, 2)
+
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
+
+			frame = dataframes[1]
+			require.Equal(t, frame.Name, "Average value")
+			require.Len(t, frame.Fields, 2)
+
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 		})
 
-		Convey("Single group by query one metric", func() {
+		t.Run("Single group by query one metric", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -157,32 +164,34 @@ func TestResponseParser(t *testing.T) {
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Series, ShouldHaveLength, 2)
-			seriesOne := queryRes.Series[0]
-			So(seriesOne.Name, ShouldEqual, "server1")
-			So(seriesOne.Points, ShouldHaveLength, 2)
-			So(seriesOne.Points[0][0].Float64, ShouldEqual, 1)
-			So(seriesOne.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesOne.Points[1][0].Float64, ShouldEqual, 3)
-			So(seriesOne.Points[1][1].Float64, ShouldEqual, 2000)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 2)
 
-			seriesTwo := queryRes.Series[1]
-			So(seriesTwo.Name, ShouldEqual, "server2")
-			So(seriesTwo.Points, ShouldHaveLength, 2)
-			So(seriesTwo.Points[0][0].Float64, ShouldEqual, 2)
-			So(seriesTwo.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesTwo.Points[1][0].Float64, ShouldEqual, 8)
-			So(seriesTwo.Points[1][1].Float64, ShouldEqual, 2000)
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "server1")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
+
+			frame = dataframes[1]
+			require.Equal(t, frame.Name, "server2")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 		})
 
-		Convey("Single group by query two metrics", func() {
+		t.Run("Single group by query two metrics", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -226,48 +235,51 @@ func TestResponseParser(t *testing.T) {
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Series, ShouldHaveLength, 4)
-			seriesOne := queryRes.Series[0]
-			So(seriesOne.Name, ShouldEqual, "server1 Count")
-			So(seriesOne.Points, ShouldHaveLength, 2)
-			So(seriesOne.Points[0][0].Float64, ShouldEqual, 1)
-			So(seriesOne.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesOne.Points[1][0].Float64, ShouldEqual, 3)
-			So(seriesOne.Points[1][1].Float64, ShouldEqual, 2000)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 4)
 
-			seriesTwo := queryRes.Series[1]
-			So(seriesTwo.Name, ShouldEqual, "server1 Average @value")
-			So(seriesTwo.Points, ShouldHaveLength, 2)
-			So(seriesTwo.Points[0][0].Float64, ShouldEqual, 10)
-			So(seriesTwo.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesTwo.Points[1][0].Float64, ShouldEqual, 12)
-			So(seriesTwo.Points[1][1].Float64, ShouldEqual, 2000)
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "server1 Count")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 
-			seriesThree := queryRes.Series[2]
-			So(seriesThree.Name, ShouldEqual, "server2 Count")
-			So(seriesThree.Points, ShouldHaveLength, 2)
-			So(seriesThree.Points[0][0].Float64, ShouldEqual, 1)
-			So(seriesThree.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesThree.Points[1][0].Float64, ShouldEqual, 3)
-			So(seriesThree.Points[1][1].Float64, ShouldEqual, 2000)
+			frame = dataframes[1]
+			require.Equal(t, frame.Name, "server1 Average @value")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 
-			seriesFour := queryRes.Series[3]
-			So(seriesFour.Name, ShouldEqual, "server2 Average @value")
-			So(seriesFour.Points, ShouldHaveLength, 2)
-			So(seriesFour.Points[0][0].Float64, ShouldEqual, 20)
-			So(seriesFour.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesFour.Points[1][0].Float64, ShouldEqual, 32)
-			So(seriesFour.Points[1][1].Float64, ShouldEqual, 2000)
+			frame = dataframes[2]
+			require.Equal(t, frame.Name, "server2 Count")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
+
+			frame = dataframes[3]
+			require.Equal(t, frame.Name, "server2 Average @value")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 		})
 
-		Convey("With percentiles", func() {
+		t.Run("With percentiles", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -298,32 +310,35 @@ func TestResponseParser(t *testing.T) {
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Series, ShouldHaveLength, 2)
-			seriesOne := queryRes.Series[0]
-			So(seriesOne.Name, ShouldEqual, "p75")
-			So(seriesOne.Points, ShouldHaveLength, 2)
-			So(seriesOne.Points[0][0].Float64, ShouldEqual, 3.3)
-			So(seriesOne.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesOne.Points[1][0].Float64, ShouldEqual, 2.3)
-			So(seriesOne.Points[1][1].Float64, ShouldEqual, 2000)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 2)
 
-			seriesTwo := queryRes.Series[1]
-			So(seriesTwo.Name, ShouldEqual, "p90")
-			So(seriesTwo.Points, ShouldHaveLength, 2)
-			So(seriesTwo.Points[0][0].Float64, ShouldEqual, 5.5)
-			So(seriesTwo.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesTwo.Points[1][0].Float64, ShouldEqual, 4.5)
-			So(seriesTwo.Points[1][1].Float64, ShouldEqual, 2000)
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "p75")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
+
+			frame = dataframes[1]
+			require.Equal(t, frame.Name, "p90")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 		})
 
-		Convey("With extended stats", func() {
+		t.Run("With extended stats", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -379,53 +394,67 @@ func TestResponseParser(t *testing.T) {
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Series, ShouldHaveLength, 6)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 6)
 
-			seriesOne := queryRes.Series[0]
-			So(seriesOne.Name, ShouldEqual, "server1 Max")
-			So(seriesOne.Points, ShouldHaveLength, 1)
-			So(seriesOne.Points[0][0].Float64, ShouldEqual, 10.2)
-			So(seriesOne.Points[0][1].Float64, ShouldEqual, 1000)
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "server1 Max")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 1)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 1)
 
-			seriesTwo := queryRes.Series[1]
-			So(seriesTwo.Name, ShouldEqual, "server1 Std Dev Lower")
-			So(seriesTwo.Points, ShouldHaveLength, 1)
-			So(seriesTwo.Points[0][0].Float64, ShouldEqual, -2)
-			So(seriesTwo.Points[0][1].Float64, ShouldEqual, 1000)
+			frame = dataframes[1]
+			require.Equal(t, frame.Name, "server1 Std Dev Lower")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 1)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 1)
 
-			seriesThree := queryRes.Series[2]
-			So(seriesThree.Name, ShouldEqual, "server1 Std Dev Upper")
-			So(seriesThree.Points, ShouldHaveLength, 1)
-			So(seriesThree.Points[0][0].Float64, ShouldEqual, 3)
-			So(seriesThree.Points[0][1].Float64, ShouldEqual, 1000)
+			frame = dataframes[2]
+			require.Equal(t, frame.Name, "server1 Std Dev Upper")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 1)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 1)
 
-			seriesFour := queryRes.Series[3]
-			So(seriesFour.Name, ShouldEqual, "server2 Max")
-			So(seriesFour.Points, ShouldHaveLength, 1)
-			So(seriesFour.Points[0][0].Float64, ShouldEqual, 15.5)
-			So(seriesFour.Points[0][1].Float64, ShouldEqual, 1000)
+			frame = dataframes[3]
+			require.Equal(t, frame.Name, "server2 Max")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 1)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 1)
 
-			seriesFive := queryRes.Series[4]
-			So(seriesFive.Name, ShouldEqual, "server2 Std Dev Lower")
-			So(seriesFive.Points, ShouldHaveLength, 1)
-			So(seriesFive.Points[0][0].Float64, ShouldEqual, -1)
-			So(seriesFive.Points[0][1].Float64, ShouldEqual, 1000)
+			frame = dataframes[4]
+			require.Equal(t, frame.Name, "server2 Std Dev Lower")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 1)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 1)
 
-			seriesSix := queryRes.Series[5]
-			So(seriesSix.Name, ShouldEqual, "server2 Std Dev Upper")
-			So(seriesSix.Points, ShouldHaveLength, 1)
-			So(seriesSix.Points[0][0].Float64, ShouldEqual, 4)
-			So(seriesSix.Points[0][1].Float64, ShouldEqual, 1000)
+			frame = dataframes[5]
+			require.Equal(t, frame.Name, "server2 Std Dev Upper")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 1)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 1)
 		})
 
-		Convey("Single group by with alias pattern", func() {
+		t.Run("Single group by with alias pattern", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -471,86 +500,75 @@ func TestResponseParser(t *testing.T) {
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Series, ShouldHaveLength, 3)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 3)
 
-			seriesOne := queryRes.Series[0]
-			So(seriesOne.Name, ShouldEqual, "server1 Count and {{not_exist}} server1")
-			So(seriesOne.Points, ShouldHaveLength, 2)
-			So(seriesOne.Points[0][0].Float64, ShouldEqual, 1)
-			So(seriesOne.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesOne.Points[1][0].Float64, ShouldEqual, 3)
-			So(seriesOne.Points[1][1].Float64, ShouldEqual, 2000)
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "server1 Count and {{not_exist}} server1")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 
-			seriesTwo := queryRes.Series[1]
-			So(seriesTwo.Name, ShouldEqual, "server2 Count and {{not_exist}} server2")
-			So(seriesTwo.Points, ShouldHaveLength, 2)
-			So(seriesTwo.Points[0][0].Float64, ShouldEqual, 2)
-			So(seriesTwo.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesTwo.Points[1][0].Float64, ShouldEqual, 8)
-			So(seriesTwo.Points[1][1].Float64, ShouldEqual, 2000)
+			frame = dataframes[1]
+			require.Equal(t, frame.Name, "server2 Count and {{not_exist}} server2")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 
-			seriesThree := queryRes.Series[2]
-			So(seriesThree.Name, ShouldEqual, "0 Count and {{not_exist}} 0")
-			So(seriesThree.Points, ShouldHaveLength, 2)
-			So(seriesThree.Points[0][0].Float64, ShouldEqual, 2)
-			So(seriesThree.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesThree.Points[1][0].Float64, ShouldEqual, 8)
-			So(seriesThree.Points[1][1].Float64, ShouldEqual, 2000)
+			frame = dataframes[2]
+			require.Equal(t, frame.Name, "0 Count and {{not_exist}} 0")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 		})
 
-		Convey("Histogram response", func() {
+		t.Run("Histogram response", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }],
-          "bucketAggs": [{ "type": "histogram", "field": "bytes", "id": "3" }]
+         "bucketAggs": [{ "type": "histogram", "field": "bytes", "id": "3" }]
 				}`,
 			}
 			response := `{
         "responses": [
-          {
-            "aggregations": {
-              "3": {
-                "buckets": [{ "doc_count": 1, "key": 1000 }, { "doc_count": 3, "key": 2000 }, { "doc_count": 2, "key": 3000 }]
-              }
-            }
-          }
+         {
+           "aggregations": {
+             "3": {
+               "buckets": [{ "doc_count": 1, "key": 1000 }, { "doc_count": 3, "key": 2000 }, { "doc_count": 2, "key": 3000 }]
+             }
+           }
+         }
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Tables, ShouldHaveLength, 1)
-
-			rows := queryRes.Tables[0].Rows
-			So(rows, ShouldHaveLength, 3)
-			cols := queryRes.Tables[0].Columns
-			So(cols, ShouldHaveLength, 2)
-
-			So(cols[0].Text, ShouldEqual, "bytes")
-			So(cols[1].Text, ShouldEqual, "Count")
-
-			So(rows[0][0].(null.Float).Float64, ShouldEqual, 1000)
-			So(rows[0][1].(null.Float).Float64, ShouldEqual, 1)
-			So(rows[1][0].(null.Float).Float64, ShouldEqual, 2000)
-			So(rows[1][1].(null.Float).Float64, ShouldEqual, 3)
-			So(rows[2][0].(null.Float).Float64, ShouldEqual, 3000)
-			So(rows[2][1].(null.Float).Float64, ShouldEqual, 2)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 1)
 		})
 
-		Convey("With two filters agg", func() {
+		t.Run("With two filters agg", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -590,33 +608,35 @@ func TestResponseParser(t *testing.T) {
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Series, ShouldHaveLength, 2)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 2)
 
-			seriesOne := queryRes.Series[0]
-			So(seriesOne.Name, ShouldEqual, "@metric:cpu")
-			So(seriesOne.Points, ShouldHaveLength, 2)
-			So(seriesOne.Points[0][0].Float64, ShouldEqual, 1)
-			So(seriesOne.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesOne.Points[1][0].Float64, ShouldEqual, 3)
-			So(seriesOne.Points[1][1].Float64, ShouldEqual, 2000)
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "@metric:cpu")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 
-			seriesTwo := queryRes.Series[1]
-			So(seriesTwo.Name, ShouldEqual, "@metric:logins.count")
-			So(seriesTwo.Points, ShouldHaveLength, 2)
-			So(seriesTwo.Points[0][0].Float64, ShouldEqual, 2)
-			So(seriesTwo.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesTwo.Points[1][0].Float64, ShouldEqual, 8)
-			So(seriesTwo.Points[1][1].Float64, ShouldEqual, 2000)
+			frame = dataframes[1]
+			require.Equal(t, frame.Name, "@metric:logins.count")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 		})
 
-		Convey("With dropfirst and last aggregation", func() {
+		t.Run("With dropfirst and last aggregation", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -659,86 +679,88 @@ func TestResponseParser(t *testing.T) {
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Series, ShouldHaveLength, 2)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 2)
 
-			seriesOne := queryRes.Series[0]
-			So(seriesOne.Name, ShouldEqual, "Average")
-			So(seriesOne.Points, ShouldHaveLength, 1)
-			So(seriesOne.Points[0][0].Float64, ShouldEqual, 2000)
-			So(seriesOne.Points[0][1].Float64, ShouldEqual, 2)
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "Average")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 
-			seriesTwo := queryRes.Series[1]
-			So(seriesTwo.Name, ShouldEqual, "Count")
-			So(seriesTwo.Points, ShouldHaveLength, 1)
-			So(seriesTwo.Points[0][0].Float64, ShouldEqual, 200)
-			So(seriesTwo.Points[0][1].Float64, ShouldEqual, 2)
+			frame = dataframes[1]
+			require.Equal(t, frame.Name, "Count")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 		})
 
-		Convey("No group by time", func() {
+		t.Run("No group by time", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
 					"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
-          "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
+         "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
 				}`,
 			}
 			response := `{
         "responses": [
-          {
-            "aggregations": {
-              "2": {
-                "buckets": [
-                  {
-                    "1": { "value": 1000 },
-                    "key": "server-1",
-                    "doc_count": 369
-                  },
-                  {
-                    "1": { "value": 2000 },
-                    "key": "server-2",
-                    "doc_count": 200
-                  }
-                ]
-              }
-            }
-          }
+         {
+           "aggregations": {
+             "2": {
+               "buckets": [
+                 {
+                   "1": { "value": 1000 },
+                   "key": "server-1",
+                   "doc_count": 369
+                 },
+                 {
+                   "1": { "value": 2000 },
+                   "key": "server-2",
+                   "doc_count": 200
+                 }
+               ]
+             }
+           }
+         }
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Tables, ShouldHaveLength, 1)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 1)
 
-			rows := queryRes.Tables[0].Rows
-			So(rows, ShouldHaveLength, 2)
-			cols := queryRes.Tables[0].Columns
-			So(cols, ShouldHaveLength, 3)
-
-			So(cols[0].Text, ShouldEqual, "host")
-			So(cols[1].Text, ShouldEqual, "Average")
-			So(cols[2].Text, ShouldEqual, "Count")
-
-			So(rows[0][0].(string), ShouldEqual, "server-1")
-			So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-			So(rows[0][2].(null.Float).Float64, ShouldEqual, 369)
-			So(rows[1][0].(string), ShouldEqual, "server-2")
-			So(rows[1][1].(null.Float).Float64, ShouldEqual, 2000)
-			So(rows[1][2].(null.Float).Float64, ShouldEqual, 200)
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "")
+			require.Len(t, frame.Fields, 3)
+			require.Equal(t, frame.Fields[0].Name, "host")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "Average")
+			require.Equal(t, frame.Fields[1].Len(), 2)
+			require.Equal(t, frame.Fields[2].Name, "Count")
+			require.Equal(t, frame.Fields[2].Len(), 2)
 		})
 
-		Convey("Multiple metrics of same type", func() {
+		t.Run("Multiple metrics of same type", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -765,30 +787,29 @@ func TestResponseParser(t *testing.T) {
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Tables, ShouldHaveLength, 1)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 1)
 
-			rows := queryRes.Tables[0].Rows
-			So(rows, ShouldHaveLength, 1)
-			cols := queryRes.Tables[0].Columns
-			So(cols, ShouldHaveLength, 3)
-
-			So(cols[0].Text, ShouldEqual, "host")
-			So(cols[1].Text, ShouldEqual, "Average test")
-			So(cols[2].Text, ShouldEqual, "Average test2")
-
-			So(rows[0][0].(string), ShouldEqual, "server-1")
-			So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-			So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "")
+			require.Len(t, frame.Fields, 3)
+			require.Equal(t, frame.Fields[0].Name, "host")
+			require.Equal(t, frame.Fields[0].Len(), 1)
+			require.Equal(t, frame.Fields[1].Name, "Average test")
+			require.Equal(t, frame.Fields[1].Len(), 1)
+			require.Equal(t, frame.Fields[2].Name, "Average test2")
+			require.Equal(t, frame.Fields[2].Len(), 1)
 		})
 
-		Convey("With bucket_script", func() {
+		t.Run("With bucket_script", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -833,40 +854,43 @@ func TestResponseParser(t *testing.T) {
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Series, ShouldHaveLength, 3)
-			seriesOne := queryRes.Series[0]
-			So(seriesOne.Name, ShouldEqual, "Sum @value")
-			So(seriesOne.Points, ShouldHaveLength, 2)
-			So(seriesOne.Points[0][0].Float64, ShouldEqual, 2)
-			So(seriesOne.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesOne.Points[1][0].Float64, ShouldEqual, 3)
-			So(seriesOne.Points[1][1].Float64, ShouldEqual, 2000)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 3)
 
-			seriesTwo := queryRes.Series[1]
-			So(seriesTwo.Name, ShouldEqual, "Max @value")
-			So(seriesTwo.Points, ShouldHaveLength, 2)
-			So(seriesTwo.Points[0][0].Float64, ShouldEqual, 3)
-			So(seriesTwo.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesTwo.Points[1][0].Float64, ShouldEqual, 4)
-			So(seriesTwo.Points[1][1].Float64, ShouldEqual, 2000)
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "Sum @value")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 
-			seriesThree := queryRes.Series[2]
-			So(seriesThree.Name, ShouldEqual, "Sum @value * Max @value")
-			So(seriesThree.Points, ShouldHaveLength, 2)
-			So(seriesThree.Points[0][0].Float64, ShouldEqual, 6)
-			So(seriesThree.Points[0][1].Float64, ShouldEqual, 1000)
-			So(seriesThree.Points[1][0].Float64, ShouldEqual, 12)
-			So(seriesThree.Points[1][1].Float64, ShouldEqual, 2000)
+			frame = dataframes[1]
+			require.Equal(t, frame.Name, "Max @value")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
+
+			frame = dataframes[2]
+			require.Equal(t, frame.Name, "Sum @value * Max @value")
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Len(), 2)
 		})
 
-		Convey("Terms with two bucket_script", func() {
+		t.Run("Terms with two bucket_script", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -920,78 +944,31 @@ func TestResponseParser(t *testing.T) {
 				]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
+
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Tables[0].Rows, ShouldHaveLength, 2)
-			So(queryRes.Tables[0].Columns[1].Text, ShouldEqual, "Sum")
-			So(queryRes.Tables[0].Columns[2].Text, ShouldEqual, "Max")
-			So(queryRes.Tables[0].Columns[3].Text, ShouldEqual, "params.var1 * params.var2")
-			So(queryRes.Tables[0].Columns[4].Text, ShouldEqual, "params.var1 * params.var2 * 2")
-			So(queryRes.Tables[0].Rows[0][1].(null.Float).Float64, ShouldEqual, 2)
-			So(queryRes.Tables[0].Rows[0][2].(null.Float).Float64, ShouldEqual, 3)
-			So(queryRes.Tables[0].Rows[0][3].(null.Float).Float64, ShouldEqual, 6)
-			So(queryRes.Tables[0].Rows[0][4].(null.Float).Float64, ShouldEqual, 24)
-			So(queryRes.Tables[0].Rows[1][1].(null.Float).Float64, ShouldEqual, 3)
-			So(queryRes.Tables[0].Rows[1][2].(null.Float).Float64, ShouldEqual, 4)
-			So(queryRes.Tables[0].Rows[1][3].(null.Float).Float64, ShouldEqual, 12)
-			So(queryRes.Tables[0].Rows[1][4].(null.Float).Float64, ShouldEqual, 48)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 1)
+
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "")
+			require.Len(t, frame.Fields, 5)
+			require.Equal(t, frame.Fields[0].Name, "@timestamp")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "Sum")
+			require.Equal(t, frame.Fields[1].Len(), 2)
+			require.Equal(t, frame.Fields[2].Name, "Max")
+			require.Equal(t, frame.Fields[2].Len(), 2)
+			require.Equal(t, frame.Fields[3].Name, "params.var1 * params.var2")
+			require.Equal(t, frame.Fields[3].Len(), 2)
+			require.Equal(t, frame.Fields[4].Name, "params.var1 * params.var2 * 2")
+			require.Equal(t, frame.Fields[4].Len(), 2)
 		})
-		// Convey("Raw documents query", func() {
-		// 	targets := map[string]string{
-		// 		"A": `{
-		// 			"timeField": "@timestamp",
-		// 			"metrics": [{ "type": "raw_document", "id": "1" }]
-		// 		}`,
-		// 	}
-		// 	response := `{
-		//     "responses": [
-		//       {
-		//         "hits": {
-		//           "total": 100,
-		//           "hits": [
-		//             {
-		//               "_id": "1",
-		//               "_type": "type",
-		//               "_index": "index",
-		//               "_source": { "sourceProp": "asd" },
-		//               "fields": { "fieldProp": "field" }
-		//             },
-		//             {
-		//               "_source": { "sourceProp": "asd2" },
-		//               "fields": { "fieldProp": "field2" }
-		//             }
-		//           ]
-		//         }
-		//       }
-		//     ]
-		// 	}`
-		// 	rp, err := newResponseParserForTest(targets, response)
-		// 	So(err, ShouldBeNil)
-		// 	result, err := rp.getTimeSeries()
-		// 	So(err, ShouldBeNil)
-		// 	So(result.Results, ShouldHaveLength, 1)
-
-		// 	queryRes := result.Results["A"]
-		// 	So(queryRes, ShouldNotBeNil)
-		// 	So(queryRes.Tables, ShouldHaveLength, 1)
-
-		// 	rows := queryRes.Tables[0].Rows
-		// 	So(rows, ShouldHaveLength, 1)
-		// 	cols := queryRes.Tables[0].Columns
-		// 	So(cols, ShouldHaveLength, 3)
-
-		// 	So(cols[0].Text, ShouldEqual, "host")
-		// 	So(cols[1].Text, ShouldEqual, "Average test")
-		// 	So(cols[2].Text, ShouldEqual, "Average test2")
-
-		// 	So(rows[0][0].(string), ShouldEqual, "server-1")
-		// 	So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-		// 	So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
-		// })
 	})
 
 	t.Run("With top_metrics", func(t *testing.T) {
@@ -1035,7 +1012,7 @@ func TestResponseParser(t *testing.T) {
 									]
 								}
 							}
-						]			
+						]
 					}
 				}
 			}]
@@ -1048,24 +1025,41 @@ func TestResponseParser(t *testing.T) {
 
 		queryRes := result.Results["A"]
 		assert.NotNil(t, queryRes)
-		assert.Len(t, queryRes.Series, 2)
+		dataframes, err := queryRes.Dataframes.Decoded()
+		assert.NoError(t, err)
+		assert.Len(t, dataframes, 2)
 
-		seriesOne := queryRes.Series[0]
-		assert.Equal(t, seriesOne.Name, "Top Metrics @value")
-		assert.Len(t, seriesOne.Points, 2)
-		assert.Equal(t, seriesOne.Points[0][0].Float64, 1.)
-		assert.Equal(t, seriesOne.Points[0][1].Float64, 1609459200000.)
-		assert.Equal(t, seriesOne.Points[1][0].Float64, 1.)
-		assert.Equal(t, seriesOne.Points[1][1].Float64, 1609459210000.)
+		frame := dataframes[0]
+		assert.Equal(t, frame.Name, "Top Metrics @value")
+		assert.Len(t, frame.Fields, 2)
+		require.Equal(t, frame.Fields[0].Len(), 2)
+		require.Equal(t, frame.Fields[1].Len(), 2)
+		v, _ := frame.FloatAt(0, 0)
+		assert.Equal(t, 1609459200000., v)
+		v, _ = frame.FloatAt(1, 0)
+		assert.Equal(t, 1., v)
 
-		seriesTwo := queryRes.Series[1]
-		assert.Equal(t, seriesTwo.Name, "Top Metrics @anotherValue")
-		assert.Len(t, seriesTwo.Points, 2)
+		v, _ = frame.FloatAt(0, 1)
+		assert.Equal(t, 1609459210000., v)
+		v, _ = frame.FloatAt(1, 1)
+		assert.Equal(t, 1., v)
 
-		assert.Equal(t, seriesTwo.Points[0][0].Float64, 2.)
-		assert.Equal(t, seriesTwo.Points[0][1].Float64, 1609459200000.)
-		assert.Equal(t, seriesTwo.Points[1][0].Float64, 2.)
-		assert.Equal(t, seriesTwo.Points[1][1].Float64, 1609459210000.)
+		frame = dataframes[1]
+		assert.Equal(t, frame.Name, "Top Metrics @anotherValue")
+		l, _ := frame.MarshalJSON()
+		fmt.Println(string(l))
+		assert.Len(t, frame.Fields, 2)
+		require.Equal(t, frame.Fields[0].Len(), 2)
+		require.Equal(t, frame.Fields[1].Len(), 2)
+		v, _ = frame.FloatAt(0, 0)
+		assert.Equal(t, 1609459200000., v)
+		v, _ = frame.FloatAt(1, 0)
+		assert.Equal(t, 2., v)
+
+		v, _ = frame.FloatAt(0, 1)
+		assert.Equal(t, 1609459210000., v)
+		v, _ = frame.FloatAt(1, 1)
+		assert.Equal(t, 2., v)
 	})
 }
 

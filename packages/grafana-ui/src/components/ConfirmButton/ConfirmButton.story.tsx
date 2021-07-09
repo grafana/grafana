@@ -17,11 +17,8 @@ export default {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disable: true,
-    },
     controls: {
-      exclude: ['className'],
+      exclude: ['className', 'onClick', 'onCancel', 'onConfirm'],
     },
   },
   args: {

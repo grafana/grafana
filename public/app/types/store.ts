@@ -1,5 +1,5 @@
 import { ThunkAction, ThunkDispatch as GenericThunkDispatch } from 'redux-thunk';
-import { PayloadAction } from '@reduxjs/toolkit';
+import { Action, PayloadAction } from '@reduxjs/toolkit';
 import { NavIndex } from '@grafana/data';
 import { AlertRulesState, NotificationChannelState } from './alerting';
 import { UnifiedAlertingState } from '../features/alerting/unified/state/reducers';
@@ -50,4 +50,4 @@ export interface StoreState {
  */
 export type ThunkResult<R> = ThunkAction<R, StoreState, undefined, PayloadAction<any>>;
 
-export type ThunkDispatch = GenericThunkDispatch<StoreState, undefined, any>;
+export type ThunkDispatch = GenericThunkDispatch<StoreState, undefined, Action>;

@@ -1,5 +1,5 @@
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { getLogAnalyticsManagementApiRoute } from '../api/routes';
+import { getManagementApiRoute } from '../api/routes';
 import {
   locationDisplayNames,
   logsSupportedLocationsKusto,
@@ -94,19 +94,19 @@ export default class ResourcePickerData {
     const query = `
       resourcecontainers
         | where type == "microsoft.resources/subscriptions"
-        | where id == "${subscriptionURI}"
+        | where id =~ "${subscriptionURI}"
         | project subscriptionName=name, subscriptionId
 
         | join kind=leftouter (
           resourcecontainers
             | where type == "microsoft.resources/subscriptions/resourcegroups"
-            | where id == "${resourceGroupURI}"
+            | where id =~ "${resourceGroupURI}"
             | project resourceGroupName=name, resourceGroup, subscriptionId
         ) on subscriptionId
 
         | join kind=leftouter (
           resources
-            | where id == "${resourceURI}"
+            | where id =~ "${resourceURI}"
             | project resourceName=name, subscriptionId
         ) on subscriptionId
 
@@ -148,7 +148,7 @@ export default class ResourcePickerData {
     try {
       return await getBackendSrv()
         .fetch<AzureGraphResponse<T>>({
-          url: this.proxyUrl + '/' + getLogAnalyticsManagementApiRoute(this.cloud) + RESOURCE_GRAPH_URL,
+          url: this.proxyUrl + '/' + getManagementApiRoute(this.cloud) + RESOURCE_GRAPH_URL,
           method: 'POST',
           data: {
             query: query,
