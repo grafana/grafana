@@ -147,7 +147,7 @@ Query: query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 Regex:
 ```
 
-### Using `$__rate_interval` variable
+### Using `$__rate_interval`
 
 > **Note:** Available in Grafana 7.2 and above
 
@@ -158,7 +158,7 @@ OK:       rate(http_requests_total[5m])
 Better:   rate(http_requests_total[$__rate_interval])
 ```
 
-Details: `$__rate_interval` is defined as max( `$__interval` + _Scrape interval_, 4 \* _Scrape interval_), where _Scrape interval_ is the Min step setting (AKA query_interval, a setting per PromQL query) if any is set. Otherwise, the _Scrape interval_ is set in the Prometheus data source (but ignoring any Min interval setting in the panel, because the latter is modified by the resolution setting). [This article](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/) contians additional details.
+Details: `$__rate_interval` is defined as max(`$__interval` + _Scrape interval_, 4 \* _Scrape interval_), where _Scrape interval_ is the Min step setting (AKA query_interval, a setting per PromQL query) if any is set. Otherwise, the Scrape interval setting in the Prometheus data source is used. (The Min interval setting in the panel is modified by the resolution setting and therefore doesn't have any effect on _Scrape interval_.) [This article](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/) contains additional details.
 
 ### Using variables in queries
 
