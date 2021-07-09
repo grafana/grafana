@@ -343,7 +343,7 @@ describe('sharedReducer', () => {
     });
   });
 
-  describe('when setCurrentVariableValue is dispatched and current.value is nothing', () => {
+  describe('when setCurrentVariableValue is dispatched and current.value has no value', () => {
     it('then the first available option should be selected', () => {
       const adapter = createQueryVariableAdapter();
       const { initialState } = getVariableTestContext(adapter, {
@@ -368,6 +368,28 @@ describe('sharedReducer', () => {
               { selected: false, text: 'C', value: 'C' },
             ],
             current: { selected: true, text: 'A', value: 'A' },
+          } as unknown) as QueryVariableModel,
+        });
+    });
+  });
+
+  describe('when setCurrentVariableValue is dispatched and current.value has no value and there are no options', () => {
+    it('then no option should be selected', () => {
+      const adapter = createQueryVariableAdapter();
+      const { initialState } = getVariableTestContext(adapter, {
+        options: [],
+      });
+      const current = { text: '', value: '', selected: false };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, { option: current });
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(setCurrentVariableValue(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '0': ({
+            ...initialState[0],
+            options: [],
+            current: { selected: false, text: '', value: '' },
           } as unknown) as QueryVariableModel,
         });
     });
