@@ -23,6 +23,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
     getSuggestions: (scope?: VariableSuggestionsScope) => {
       return data ? getDataLinksVariableSuggestions(data.series, scope) : [];
     },
+    builder: plugin.optionsBuilder,
   };
 
   const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {

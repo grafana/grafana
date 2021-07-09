@@ -1,10 +1,9 @@
-import React, { FC, useMemo } from 'react';
+import React, { FC, useEffect, useMemo } from 'react';
 import { GrafanaTheme, StandardEditorProps } from '@grafana/data';
 import { Select, stylesFactory, useStyles } from '@grafana/ui';
 import { GeomapPanelOptions, MapCenterConfig } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
 import { css } from '@emotion/css';
-import { NumberInput } from '../components/NumberInput';
 
 export const MapCenterEditor: FC<StandardEditorProps<MapCenterConfig, any, GeomapPanelOptions>> = ({
   value,
@@ -23,53 +22,77 @@ export const MapCenterEditor: FC<StandardEditorProps<MapCenterConfig, any, Geoma
     return centerPointRegistry.selectOptions(ids);
   }, [value?.id]);
 
+  useEffect(() => {
+    if (!context.builder || !value) {
+      return;
+    }
+    if (value.id === MapCenterID.Coordinates) {
+      context.builder.addNumberInput({
+        path: 'view.center.lat',
+        category: ['Map View'],
+        name: 'Latitude',
+        showIf: (o) => o.view.center.id === MapCenterID.Coordinates,
+      });
+    }
+  });
+
   return (
     <div>
       <Select
         options={views.options}
         value={views.current}
         onChange={(v) => {
+          if (v.value === MapCenterID.Coordinates) {
+            context.builder?.addNumberInput({
+              path: 'view.center.lat',
+              category: ['Map View'],
+              name: 'Latitude',
+              showIf: (o) => o.view.center.id === MapCenterID.Coordinates,
+            });
+          } else {
+            context.builder?.remove('view.center.lat');
+          }
           onChange({
             id: v.value!,
           });
         }}
       />
-      {value?.id === MapCenterID.Coordinates && (
-        <div>
-          <table className={style.table}>
-            <tbody>
-              <tr>
-                <th className={style.half}>Latitude</th>
-                <th className={style.half}>Longitude</th>
-              </tr>
-              <tr>
-                <td>
-                  <NumberInput
-                    value={value.lat}
-                    min={-90}
-                    max={90}
-                    placeholder="0"
-                    onChange={(v) => {
-                      onChange({ ...value, lat: v });
-                    }}
-                  />
-                </td>
-                <td>
-                  <NumberInput
-                    value={value.lon}
-                    min={-180}
-                    max={180}
-                    placeholder="0"
-                    onChange={(v) => {
-                      onChange({ ...value, lon: v });
-                    }}
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
+      {/*{value?.id === MapCenterID.Coordinates && (*/}
+      {/*  <div>*/}
+      {/*    <table className={style.table}>*/}
+      {/*      <tbody>*/}
+      {/*        <tr>*/}
+      {/*          <th className={style.half}>Latitude</th>*/}
+      {/*          <th className={style.half}>Longitude</th>*/}
+      {/*        </tr>*/}
+      {/*        <tr>*/}
+      {/*          <td>*/}
+      {/*            <NumberInput*/}
+      {/*              value={value.lat}*/}
+      {/*              min={-90}*/}
+      {/*              max={90}*/}
+      {/*              placeholder="0"*/}
+      {/*              onChange={(v) => {*/}
+      {/*                onChange({ ...value, lat: v });*/}
+      {/*              }}*/}
+      {/*            />*/}
+      {/*          </td>*/}
+      {/*          <td>*/}
+      {/*            <NumberInput*/}
+      {/*              value={value.lon}*/}
+      {/*              min={-180}*/}
+      {/*              max={180}*/}
+      {/*              placeholder="0"*/}
+      {/*              onChange={(v) => {*/}
+      {/*                onChange({ ...value, lon: v });*/}
+      {/*              }}*/}
+      {/*            />*/}
+      {/*          </td>*/}
+      {/*        </tr>*/}
+      {/*      </tbody>*/}
+      {/*    </table>*/}
+      {/*  </div>*/}
+      {/*)}*/}
     </div>
   );
 };
