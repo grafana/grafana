@@ -148,8 +148,10 @@ var (
 	appliedEnvOverrides          []string
 
 	// analytics
-	GoogleAnalyticsId  string
-	GoogleTagManagerId string
+	GoogleAnalyticsId       string
+	GoogleTagManagerId      string
+	RudderstackDataPlaneUrl string
+	RudderstackWriteKey     string
 
 	// LDAP
 	LDAPEnabled           bool
@@ -894,6 +896,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
+	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
+	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
 	if len(cfg.ReportingDistributor) >= 100 {
