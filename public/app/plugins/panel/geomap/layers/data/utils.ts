@@ -21,15 +21,15 @@ export function dataFrameToPoints(frame: DataFrame, fieldMapping: FieldMappingOp
 
       // Coordinate Data
       if (queryFormat.locationType === "coordinates") {
-        lng = row[fieldMapping.latitudeField];
-        lat = row[fieldMapping.longitudeField];
+        lng = row[fieldMapping.longitudeField];
+        lat = row[fieldMapping.latitudeField];
       }
       // Geohash Data
       else if (queryFormat.locationType === "geohash"){
         const encodedGeohash = row[fieldMapping.geohashField];
         const decodedGeohash = decodeGeohash(encodedGeohash);
-        lng = decodedGeohash.latitude;
-        lat = decodedGeohash.longitude;
+        lng = decodedGeohash.longitude;
+        lat = decodedGeohash.latitude;
       }
       points.push(new Point(fromLonLat([lng,lat])));
     });
