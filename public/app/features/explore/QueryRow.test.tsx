@@ -21,6 +21,7 @@ const setup = (propOverrides?: object) => {
     absoluteRange: {} as AbsoluteTimeRange,
     removeQueryRowAction: jest.fn() as any,
     runQueries: jest.fn(),
+    clearCache: jest.fn(),
     queryResponse: {} as PanelData,
     latency: 1,
   };
