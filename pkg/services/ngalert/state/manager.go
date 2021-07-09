@@ -262,5 +262,4 @@ func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.Ale
 		st.log.Error("error saving alert annotation", "alertRuleUID", alertRule.UID, "error", err.Error())
 		return
 	}
-	return
 }
