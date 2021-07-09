@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { geomapLayerRegistry } from './layers/registry';
-import { Map as GeoMap, View } from 'ol';
+import { Map, View } from 'ol';
 import Attribution from 'ol/control/Attribution';
 import Zoom from 'ol/control/Zoom';
 import ScaleLine from 'ol/control/ScaleLine';
@@ -33,21 +33,16 @@ interface MapLayerState {
 let sharedView: View | undefined = undefined;
 
 type Props = PanelProps<GeomapPanelOptions>;
-
 export class GeomapPanel extends Component<Props> {
   globalCSS = getGlobalStyles(config.theme2);
 
-  map: GeoMap;
+  map: Map;
 
   basemap: BaseLayer;
   layers: MapLayerState[] = [];
   mouseWheelZoom: MouseWheelZoom;
   style = getStyles(config.theme);
   overlayProps: OverlayProps = {};
-
-  constructor(props: Props) {
-    super(props);
-  }
 
   shouldComponentUpdate(nextProps: Props) {
     if (!this.map) {
@@ -127,11 +122,11 @@ export class GeomapPanel extends Component<Props> {
     }
 
     if (!div) {
-      this.map = (undefined as unknown) as GeoMap;
+      this.map = (undefined as unknown) as Map;
       return;
     }
     const { options } = this.props;
-    this.map = new GeoMap({
+    this.map = new Map({
       view: this.initMapView(options.view),
       pixelRatio: 1, // or zoom?
       layers: [], // loaded explicitly below

@@ -20,8 +20,10 @@ export interface MapLayerConfig<TCustom = any> {
   type: string;
   name?: string; // configured display name
 
-  // Layer transparency
-  transparency?: number;
+  // Common properties:
+  // https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
+  // Layer opacity (0-1)
+  opacity?: number;
 
   // Custom options depending on the type
   config?: TCustom;
