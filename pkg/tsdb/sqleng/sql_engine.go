@@ -173,7 +173,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	return result, nil
 }
 
-//nolint: staticcheck // plugins.DataQueryResult deprecated
+//nolint: staticcheck,gocyclo // plugins.DataQueryResult deprecated
 func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup, queryContext plugins.DataQuery,
 	ch chan plugins.DataQueryResult) {
 	defer wg.Done()
