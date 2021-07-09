@@ -9,6 +9,27 @@ type Props = {
   funcDefs: FuncDef[];
 };
 
+export function AddGraphiteFunction({ dispatch, funcDefs }: Props) {
+  const onChange = useCallback(
+    ({ value }) => {
+      dispatch(actions.addFunction({ name: value }));
+    },
+    [dispatch]
+  );
+
+  const options = useMemo(() => createOptions(funcDefs), [funcDefs]);
+
+  return (
+    <Segment
+      Component={<Button icon="plus" variant="secondary" />}
+      options={options}
+      onChange={onChange}
+      inputWidth={150}
+      submitOnClickAway={false}
+    ></Segment>
+  );
+}
+
 function createOptions(funcDefs: FuncDef[]) {
   const categories: any = {};
 
@@ -26,25 +47,4 @@ function createOptions(funcDefs: FuncDef[]) {
   });
 
   return sortBy(categories, 'label');
-}
-
-export function AddGraphiteFunction(props: Props) {
-  const onChange = useCallback(
-    ({ value }) => {
-      props.dispatch(actions.addFunction({ name: value }));
-    },
-    [props.dispatch]
-  );
-
-  const options = useMemo(() => createOptions(props.funcDefs), [props.funcDefs]);
-
-  return (
-    <Segment
-      Component={<Button icon="plus" variant="secondary" />}
-      options={options}
-      onChange={onChange}
-      inputWidth={150}
-      submitOnClickAway={false}
-    ></Segment>
-  );
 }

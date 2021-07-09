@@ -7,9 +7,9 @@ type Props = {
   dispatch: any;
 };
 
-export function PlayButton(props: Props) {
+export function PlayButton({ dispatch }: Props) {
   const onClick = useCallback(() => {
-    props.dispatch(actions.unpause());
-  }, []);
+    dispatch(actions.unpause());
+  }, [dispatch]);
   return <Button icon="play" onClick={onClick} type="button" variant="secondary" />;
 }

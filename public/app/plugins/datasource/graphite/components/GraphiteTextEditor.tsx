@@ -7,17 +7,17 @@ type Props = {
   dispatch: any;
 };
 
-export function GraphiteTextEditor(props: Props) {
-  const [currentQuery, updateCurrentQuery] = useState<string>(props.rawQuery);
+export function GraphiteTextEditor({ rawQuery, dispatch }: Props) {
+  const [currentQuery, updateCurrentQuery] = useState<string>(rawQuery);
 
   const applyChanges = useCallback(() => {
-    props.dispatch(actions.updateQuery({ query: currentQuery }));
-  }, [props.dispatch, currentQuery]);
+    dispatch(actions.updateQuery({ query: currentQuery }));
+  }, [dispatch, currentQuery]);
 
   return (
     <>
       <QueryField
-        query={props.rawQuery}
+        query={rawQuery}
         onChange={updateCurrentQuery}
         onBlur={applyChanges}
         onRunQuery={applyChanges}
