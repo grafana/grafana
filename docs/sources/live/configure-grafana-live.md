@@ -22,7 +22,6 @@ In case you want to increase this limit, ensure that your server and infrastruct
 ## Request origin check
 
 To avoid hijacking of WebSocket connection Grafana Live checks the Origin request header sent by a client in an HTTP Upgrade request. Requests without Origin header pass through without any origin check.
-		
 
 By default, Live accepts connections with Origin header that matches configured [root_url]({{< relref "../administration/configuration.md#root_url" >}}) (which is a public Grafana URL).
 
