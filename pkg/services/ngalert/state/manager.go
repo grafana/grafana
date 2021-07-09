@@ -223,6 +223,7 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 }
 
 func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.AlertRule, result eval.Result) {
+	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", new.String())
 	dashUid, ok := alertRule.Annotations["__dashboardUid__"]
 	if !ok {
 		return
