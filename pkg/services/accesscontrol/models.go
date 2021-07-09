@@ -67,6 +67,9 @@ const (
 	ActionUsersQuotasList        = "users.quotas:list"
 	ActionUsersQuotasUpdate      = "users.quotas:update"
 
+	// Annotation actions
+	AnnotationCreate = "users:create"
+
 	// Org actions
 	ActionOrgUsersRead       = "org.users:read"
 	ActionOrgUsersAdd        = "org.users:add"
