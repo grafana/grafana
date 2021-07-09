@@ -10,11 +10,11 @@ when investigating certain performance problems. It's *not* recommended to have 
 
 ## Turn on profiling
 
-The `grafana-server` can be started with the arguments `-profile` to enable profiling and  `-profile-port` to override
-the default HTTP port (`6060`) where the `pprof` debugging endpoints are available, for example:
+The `grafana-server` can be started with the arguments `-profile` to enable profiling, `-profile-addr` to override the default HTTP address (`localhost`), and
+`-profile-port` to override the default HTTP port (`6060`) where the `pprof` debugging endpoints are available, for example:
 
 ```bash
-./grafana-server -profile -profile-port=8080
+./grafana-server -profile -profile-addr=0.0.0.0 -profile-port=8080
 ```
 
 Note that `pprof` debugging endpoints are served on a different port than the Grafana HTTP server.
@@ -23,6 +23,7 @@ You can configure or override profiling settings using environment variables:
 
 ```bash
 export GF_DIAGNOSTICS_PROFILING_ENABLED=true
+export GF_DIAGNOSTICS_PROFILING_ADDR=0.0.0.0
 export GF_DIAGNOSTICS_PROFILING_PORT=8080
 ```
 
