@@ -127,7 +127,12 @@ const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, on
 
   const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
   return (
-    <Field label={label} onClick={stopPropagation} invalid={internalDate.invalid} error="Incorrect date format">
+    <Field
+      label={label}
+      onClick={stopPropagation}
+      invalid={!!(internalDate.value && internalDate.invalid)}
+      error="Incorrect date format"
+    >
       <Input
         onClick={stopPropagation}
         onChange={onChangeDate}
@@ -136,6 +141,7 @@ const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, on
         onFocus={onFocus}
         onBlur={onBlur}
         data-testid="date-time-input"
+        placeholder="Select date/time"
       />
     </Field>
   );
