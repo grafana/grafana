@@ -184,6 +184,10 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 		if rs.PluginManagerV2.Renderer() != nil {
 			renderer := rs.PluginManagerV2.Renderer()
 
+			if err := renderer.Start(ctx); err != nil {
+				return nil, err
+			}
+
 			rs.version = renderer.Info.Version
 			rs.renderAction = rs.renderViaPlugin
 			rs.renderCSVAction = rs.renderCSVViaPlugin
