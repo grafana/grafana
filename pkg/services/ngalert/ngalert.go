@@ -49,10 +49,10 @@ type AlertNG struct {
 	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
 	QuotaService    *quota.QuotaService                     `inject:""`
 	Metrics         *metrics.Metrics                        `inject:""`
-	Alertmanager    *notifier.Alertmanager
 	Log             log.Logger
 	schedule        schedule.ScheduleService
 	stateManager    *state.Manager
+	Alertmanager    *notifier.Alertmanager
 }
 
 func init() {
@@ -62,7 +62,6 @@ func init() {
 // Init initializes the AlertingService.
 func (ng *AlertNG) Init() error {
 	ng.Log = log.New("ngalert")
-	ng.stateManager = state.NewManager(ng.Log, ng.Metrics)
 	baseInterval := baseIntervalSeconds * time.Second
 
 	store := &store.DBstore{
@@ -89,7 +88,8 @@ func (ng *AlertNG) Init() error {
 		Notifier:      ng.Alertmanager,
 		Metrics:       ng.Metrics,
 	}
-	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL)
+	ng.stateManager = state.NewManager(ng.Log, ng.Metrics, store, store)
+	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, ng.stateManager)
 
 	api := api.API{
 		Cfg:             ng.Cfg,
@@ -113,11 +113,11 @@ func (ng *AlertNG) Init() error {
 // Run starts the scheduler.
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
-	ng.schedule.WarmStateCache(ng.stateManager)
+	ng.stateManager.Warm()
 
 	children, subCtx := errgroup.WithContext(ctx)
 	children.Go(func() error {
-		return ng.schedule.Ticker(subCtx, ng.stateManager)
+		return ng.schedule.Ticker(subCtx)
 	})
 	children.Go(func() error {
 		return ng.Alertmanager.Run(subCtx)
