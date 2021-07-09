@@ -39,7 +39,7 @@ describe('SearchItem', () => {
     expect(screen.getAllByText('Test 1')).toHaveLength(1);
   });
 
-  it('should mark item as checked', () => {
+  it('should toggle items when checked', () => {
     const mockedOnToggleChecked = jest.fn();
     setup({ editable: true, onToggleChecked: mockedOnToggleChecked });
     const checkbox = screen.getByRole('checkbox');
@@ -47,6 +47,10 @@ describe('SearchItem', () => {
     fireEvent.click(checkbox);
     expect(mockedOnToggleChecked).toHaveBeenCalledTimes(1);
     expect(mockedOnToggleChecked).toHaveBeenCalledWith(data);
+  });
+
+  it('should mark items as checked', () => {
+    setup({ editable: true, item: { ...data, checked: true } });
     expect(screen.getByRole('checkbox')).toBeChecked();
   });
 

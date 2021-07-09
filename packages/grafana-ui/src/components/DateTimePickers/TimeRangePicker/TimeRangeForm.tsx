@@ -28,21 +28,27 @@ interface Props {
 interface InputState {
   value: string;
   invalid: boolean;
+  errorMessage: string;
 }
 
-const errorMessage = 'Please enter a past date or "now"';
+const ERROR_MESSAGES = {
+  default: 'Please enter a past date or "now"',
+  range: '"From" can\'t be after "To"',
+};
 
 export const TimeRangeForm: React.FC<Props> = (props) => {
   const { value, isFullscreen = false, timeZone, onApply: onApplyFromProps, isReversed } = props;
+  const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
 
-  const [from, setFrom] = useState<InputState>(valueToState(value.raw.from, false, timeZone));
-  const [to, setTo] = useState<InputState>(valueToState(value.raw.to, true, timeZone));
+  const [from, setFrom] = useState<InputState>(fromValue);
+  const [to, setTo] = useState<InputState>(toValue);
   const [isOpen, setOpen] = useState(false);
 
   // Synchronize internal state with external value
   useEffect(() => {
-    setFrom(valueToState(value.raw.from, false, timeZone));
-    setTo(valueToState(value.raw.to, true, timeZone));
+    const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
+    setFrom(fromValue);
+    setTo(toValue);
   }, [value.raw.from, value.raw.to, timeZone]);
 
   const onOpen = useCallback(
@@ -79,9 +85,10 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
   );
 
   const onChange = useCallback(
-    (from: DateTime, to: DateTime) => {
-      setFrom(valueToState(from, false, timeZone));
-      setTo(valueToState(to, true, timeZone));
+    (from: DateTime | string, to: DateTime | string) => {
+      const [fromValue, toValue] = valueToState(from, to, timeZone);
+      setFrom(fromValue);
+      setTo(toValue);
     },
     [timeZone]
   );
@@ -90,21 +97,21 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
 
   return (
     <>
-      <Field label="From" invalid={from.invalid} error={errorMessage}>
+      <Field label="From" invalid={from.invalid} error={from.errorMessage}>
         <Input
           onClick={(event) => event.stopPropagation()}
           onFocus={onFocus}
-          onChange={(event) => setFrom(eventToState(event, false, timeZone))}
+          onChange={(event) => onChange(event.currentTarget.value, to.value)}
           addonAfter={icon}
           aria-label={selectors.components.TimePicker.fromField}
           value={from.value}
         />
       </Field>
-      <Field label="To" invalid={to.invalid} error={errorMessage}>
+      <Field label="To" invalid={to.invalid} error={to.errorMessage}>
         <Input
           onClick={(event) => event.stopPropagation()}
           onFocus={onFocus}
-          onChange={(event) => setTo(eventToState(event, true, timeZone))}
+          onChange={(event) => onChange(from.value, event.currentTarget.value)}
           addonAfter={icon}
           aria-label={selectors.components.TimePicker.toField}
           value={to.value}
@@ -129,14 +136,34 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
   );
 };
 
-function eventToState(event: FormEvent<HTMLInputElement>, roundup?: boolean, timeZone?: TimeZone): InputState {
-  return valueToState(event.currentTarget.value, roundup, timeZone);
+function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
+  const raw: RawTimeRange = { from, to };
+  const timeRange = rangeUtil.convertRawToRange(raw, timezone);
+  const valid = timeRange.from.isSame(timeRange.to) || timeRange.from.isBefore(timeRange.to);
+
+  return !valid;
 }
 
-function valueToState(raw: DateTime | string, roundup?: boolean, timeZone?: TimeZone): InputState {
-  const value = valueAsString(raw, timeZone);
-  const invalid = !isValid(value, roundup, timeZone);
-  return { value, invalid };
+function valueToState(
+  rawFrom: DateTime | string,
+  rawTo: DateTime | string,
+  timeZone?: TimeZone
+): [InputState, InputState] {
+  const fromValue = valueAsString(rawFrom, timeZone);
+  const toValue = valueAsString(rawTo, timeZone);
+  const fromInvalid = !isValid(fromValue, false, timeZone);
+  const toInvalid = !isValid(toValue, true, timeZone);
+  // If "To" is invalid, we should not check the range anyways
+  const rangeInvalid = isRangeInvalid(fromValue, toValue, timeZone) && !toInvalid;
+
+  return [
+    {
+      value: fromValue,
+      invalid: fromInvalid || rangeInvalid,
+      errorMessage: rangeInvalid && !fromInvalid ? ERROR_MESSAGES.range : ERROR_MESSAGES.default,
+    },
+    { value: toValue, invalid: toInvalid, errorMessage: ERROR_MESSAGES.default },
+  ];
 }
 
 function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
