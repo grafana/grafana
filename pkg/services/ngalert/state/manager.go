@@ -1,7 +1,13 @@
 package state
 
 import (
+	"fmt"
+	"strconv"
 	"time"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 
@@ -151,25 +157,25 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 		EvaluationString: result.EvaluationString,
 	})
 	currentState.TrimResults(alertRule)
+	oldState := currentState.State
 
 	st.log.Debug("setting alert state", "uid", alertRule.UID)
-	var err error
 	switch result.State {
 	case eval.Normal:
-		err = currentState.resultNormal(alertRule, result)
+		currentState.resultNormal(alertRule, result)
 	case eval.Alerting:
-		err = currentState.resultAlerting(alertRule, result)
+		currentState.resultAlerting(alertRule, result)
 	case eval.Error:
-		err = currentState.resultError(alertRule, result)
+		currentState.resultError(alertRule, result)
 	case eval.NoData:
-		err = currentState.resultNoData(alertRule, result)
+		currentState.resultNoData(alertRule, result)
 	case eval.Pending: // we do not emit results with this state
-	}
-	if err != nil {
-		st.log.Error("error setting next alert state", "ruleUID", alertRule.UID, "error", err.Error())
 	}
 
 	st.set(currentState)
+	if oldState != currentState.State {
+		go st.createAlertAnnotation(currentState.State, alertRule, result)
+	}
 	return currentState
 }
 
@@ -214,4 +220,47 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	default:
 		return eval.Error
 	}
+}
+
+func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.AlertRule, result eval.Result) {
+	dashUid, ok := alertRule.Annotations["__dashboardUid__"]
+	if !ok {
+		return
+	}
+
+	panelUid := alertRule.Annotations["__panelId__"]
+
+	panelId, err := strconv.ParseInt(panelUid, 10, 64)
+	if err != nil {
+		st.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", alertRule.UID, "error", err.Error())
+		return
+	}
+
+	query := &models.GetDashboardQuery{
+		Uid:   dashUid,
+		OrgId: alertRule.OrgID,
+	}
+
+	err = sqlstore.GetDashboard(query)
+	if err != nil {
+		st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
+		return
+	}
+
+	annotationText := fmt.Sprintf("%s %s", result.Instance.String(), new.String())
+
+	item := &annotations.Item{
+		OrgId:       alertRule.OrgID,
+		DashboardId: query.Result.Id,
+		PanelId:     panelId,
+		Text:        annotationText,
+		Epoch:       result.EvaluatedAt.UnixNano() / int64(time.Millisecond),
+	}
+
+	annotationRepo := annotations.GetRepository()
+	if err = annotationRepo.Save(item); err != nil {
+		st.log.Error("error saving alert annotation", "alertRuleUID", alertRule.UID, "error", err.Error())
+		return
+	}
+	return
 }

@@ -1,13 +1,7 @@
 package state
 
 import (
-	"fmt"
-	"strconv"
 	"time"
-
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -36,22 +30,16 @@ type Evaluation struct {
 	EvaluationString string
 }
 
-func (a *State) resultNormal(alertRule *ngModels.AlertRule, result eval.Result) error {
-	oldState := a.State
+func (a *State) resultNormal(alertRule *ngModels.AlertRule, result eval.Result) {
 	if a.State != eval.Normal {
 		a.EndsAt = result.EvaluatedAt
 		a.StartsAt = result.EvaluatedAt
 	}
 	a.Error = result.Error // should be nil since state is not error
 	a.State = eval.Normal
-	if oldState != a.State {
-		return createAlertAnnotation(a.State, alertRule, result)
-	}
-	return nil
 }
 
-func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result) error {
-	oldState := a.State
+func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result) {
 	switch a.State {
 	case eval.Alerting:
 		a.setEndsAt(alertRule, result)
@@ -71,14 +59,9 @@ func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result
 			a.State = eval.Pending
 		}
 	}
-	if oldState != a.State {
-		return createAlertAnnotation(a.State, alertRule, result)
-	}
-	return nil
 }
 
-func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) error {
-	oldState := a.State
+func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 	a.Error = result.Error
 	if a.StartsAt.IsZero() {
 		a.StartsAt = result.EvaluatedAt
@@ -88,14 +71,9 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) e
 	if alertRule.ExecErrState == ngModels.AlertingErrState {
 		a.State = eval.Alerting
 	}
-	if oldState != a.State {
-		return createAlertAnnotation(a.State, alertRule, result)
-	}
-	return nil
 }
 
-func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) error {
-	oldState := a.State
+func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) {
 	if a.StartsAt.IsZero() {
 		a.StartsAt = result.EvaluatedAt
 	}
@@ -109,10 +87,6 @@ func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) 
 	case ngModels.OK:
 		a.State = eval.Normal
 	}
-	if oldState != a.State {
-		return createAlertAnnotation(a.State, alertRule, result)
-	}
-	return nil
 }
 
 func (a *State) NeedsSending(resendDelay time.Duration) bool {
@@ -159,44 +133,4 @@ func (a *State) setEndsAt(alertRule *ngModels.AlertRule, result eval.Result) {
 		// For is not set or is less than or equal to IntervalSeconds
 		a.EndsAt = result.EvaluatedAt.Add(time.Duration(alertRule.IntervalSeconds*2) * time.Second)
 	}
-}
-
-func createAlertAnnotation(new eval.State, alertRule *ngModels.AlertRule, result eval.Result) error {
-	dashUid, ok := alertRule.Annotations["__dashboardUid__"]
-	if !ok {
-		return nil
-	}
-
-	panelUid := alertRule.Annotations["__panelId__"]
-
-	panelId, err := strconv.ParseInt(panelUid, 10, 64)
-	if err != nil {
-		return err
-	}
-
-	query := &models.GetDashboardQuery{
-		Uid:   dashUid,
-		OrgId: alertRule.OrgID,
-	}
-
-	err = sqlstore.GetDashboard(query)
-	if err != nil {
-		return err
-	}
-
-	annotationText := fmt.Sprintf("%s %s", result.Instance.String(), new.String())
-
-	item := &annotations.Item{
-		OrgId:       alertRule.OrgID,
-		DashboardId: query.Result.Id,
-		PanelId:     panelId,
-		Text:        annotationText,
-		Epoch:       result.EvaluatedAt.UnixNano() / int64(time.Millisecond),
-	}
-
-	annotationRepo := annotations.GetRepository()
-	if err = annotationRepo.Save(item); err != nil {
-		return err
-	}
-	return nil
 }
