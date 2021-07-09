@@ -29,7 +29,7 @@ interface MapLayerState {
   layer: BaseLayer; // used to add|remove
 }
 
-// The firs one will be reused
+// Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
 
 type Props = PanelProps<GeomapPanelOptions>;
