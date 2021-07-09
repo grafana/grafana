@@ -136,12 +136,12 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     }
   }
   if (actions.removeFunction.match(action)) {
-    state.queryModel.removeFunction(action.payload.funcDef);
+    state.queryModel.removeFunction(action.payload.func);
     handleTargetChanged(state);
   }
   if (actions.moveFunction.match(action)) {
-    const { funcDef, offset } = action.payload;
-    state.queryModel.moveFunction(funcDef, offset);
+    const { func, offset } = action.payload;
+    state.queryModel.moveFunction(func, offset);
     handleTargetChanged(state);
   }
   if (actions.targetChanged.match(action)) {

@@ -29,15 +29,15 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
       let cancelBlur: any = null;
 
       ctrl.handleRemoveFunction = (func: any) => {
-        ctrl.dispatch(actions.removeFunction({ funcDef: func }));
+        ctrl.dispatch(actions.removeFunction({ func }));
       };
 
       ctrl.handleMoveLeft = (func: any) => {
-        ctrl.dispatch(actions.moveFunction({ funcDef: func, offset: -1 }));
+        ctrl.dispatch(actions.moveFunction({ func, offset: -1 }));
       };
 
       ctrl.handleMoveRight = (func: any) => {
-        ctrl.dispatch(actions.moveFunction({ funcDef: func, offset: 1 }));
+        ctrl.dispatch(actions.moveFunction({ func, offset: 1 }));
       };
 
       function clickFuncParam(this: any, paramIndex: any) {

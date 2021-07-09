@@ -1,5 +1,6 @@
 import { GraphiteQueryEditorAngularDependencies, GraphiteSegment, GraphiteTag } from '../types';
 import { createAction } from '@reduxjs/toolkit';
+import { FuncInstance } from '../gfunc';
 
 /**
  * List of possible actions changing the state of QueryEditor
@@ -20,8 +21,8 @@ const unpause = createAction('unpause');
 
 // Functions
 const addFunction = createAction<{ name: string }>('add-function');
-const removeFunction = createAction<{ funcDef: object }>('remove-function');
-const moveFunction = createAction<{ funcDef: object; offset: number }>('move-function');
+const removeFunction = createAction<{ func: FuncInstance }>('remove-function');
+const moveFunction = createAction<{ func: FuncInstance; offset: number }>('move-function');
 
 // Text editor
 const targetChanged = createAction('target-changed');
