@@ -101,7 +101,7 @@ export async function checkOtherSegments(
  * Note: It's a bit hidden feature. After selecting one metric, and pressing down arrow the dropdown can be expanded.
  * But there's nothing indicating what's in focus and how to expand the dropdown.
  */
-export function setSegmentFocus(state: GraphiteQueryEditorState, segmentIndex: any): void {
+export function setSegmentFocus(state: GraphiteQueryEditorState, segmentIndex: number): void {
   each(state.segments, (segment, index) => {
     segment.focus = segmentIndex === index;
   });
