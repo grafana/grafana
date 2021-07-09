@@ -147,7 +147,7 @@ export async function getTagValues(
   state: GraphiteQueryEditorState,
   tag: { key: any },
   index: number,
-  valuePrefix: any
+  valuePrefix: string
 ): Promise<AngularDropdownOptions[]> {
   const tagExpressions = state.queryModel.renderTagExpressions(index);
   const tagKey = tag.key;
