@@ -1,4 +1,49 @@
 
+<!-- 8.0.5 START -->
+
+# 8.0.5 (2021-07-08)
+
+### Features and enhancements
+
+* **Cloudwatch Logs:** Send error down to client. [#36277](https://github.com/grafana/grafana/pull/36277), [@zoltanbedi](https://github.com/zoltanbedi)
+* **Folders:** Return 409 Conflict status when folder already exists. [#36429](https://github.com/grafana/grafana/pull/36429), [@dsotirakis](https://github.com/dsotirakis)
+* **TimeSeries:** Do not show series in tooltip if it's hidden in the viz. [#36353](https://github.com/grafana/grafana/pull/36353), [@dprokop](https://github.com/dprokop)
+
+### Bug fixes
+
+* **AzureMonitor:** Fix issue where resource group name is missing on the resource picker button. [#36400](https://github.com/grafana/grafana/pull/36400), [@joshhunt](https://github.com/joshhunt)
+* **Chore:** Fix AWS auth assuming role with workspace IAM. [#36430](https://github.com/grafana/grafana/pull/36430), [@wbrowne](https://github.com/wbrowne)
+* **DashboardQueryRunner:** Fixes unrestrained subscriptions being created. [#36371](https://github.com/grafana/grafana/pull/36371), [@hugohaggmark](https://github.com/hugohaggmark)
+* **DateFormats:** Fix reading correct setting key for use_browser_locale. [#36428](https://github.com/grafana/grafana/pull/36428), [@torkelo](https://github.com/torkelo)
+* **Links:** Fix links to other apps outside Grafana when under sub path. [#36498](https://github.com/grafana/grafana/pull/36498), [@torkelo](https://github.com/torkelo)
+* **Snapshots:** Fix snapshot absolute time range issue. [#36350](https://github.com/grafana/grafana/pull/36350), [@torkelo](https://github.com/torkelo)
+* **Table:** Fix data link color. [#36446](https://github.com/grafana/grafana/pull/36446), [@tharun208](https://github.com/tharun208)
+* **Time Series:** Fix X-axis time format when tick increment is larger than a year. [#36335](https://github.com/grafana/grafana/pull/36335), [@torkelo](https://github.com/torkelo)
+* **Tooltip Plugin:** Prevent tooltip render if field is undefined. [#36260](https://github.com/grafana/grafana/pull/36260), [@ashharrison90](https://github.com/ashharrison90)
+
+<!-- 8.0.5 END -->
+
+<!-- 8.0.4 START -->
+
+# 8.0.4 (2021-07-01)
+
+### Features and enhancements
+
+* **Live:** Rely on app url for origin check. [#35983](https://github.com/grafana/grafana/pull/35983), [@FZambia](https://github.com/FZambia)
+* **PieChart:** Sort legend descending, update placeholder to show default …. [#36062](https://github.com/grafana/grafana/pull/36062), [@ashharrison90](https://github.com/ashharrison90)
+* **TimeSeries panel:** Do not reinitialize plot when thresholds mode change. [#35952](https://github.com/grafana/grafana/pull/35952), [@dprokop](https://github.com/dprokop)
+
+### Bug fixes
+
+* **Elasticsearch:** Allow case sensitive custom options in date_histogram interval. [#36168](https://github.com/grafana/grafana/pull/36168), [@Elfo404](https://github.com/Elfo404)
+* **Elasticsearch:** Restore previous field naming strategy when using variables. [#35624](https://github.com/grafana/grafana/pull/35624), [@Elfo404](https://github.com/Elfo404)
+* **Explore:** Fix import of queries between SQL data sources. [#36210](https://github.com/grafana/grafana/pull/36210), [@ivanahuckova](https://github.com/ivanahuckova)
+* **InfluxDB:** InfluxQL query editor: fix retention policy handling. [#36022](https://github.com/grafana/grafana/pull/36022), [@gabor](https://github.com/gabor)
+* **Loki:** Send correct time range in template variable queries. [#36268](https://github.com/grafana/grafana/pull/36268), [@ivanahuckova](https://github.com/ivanahuckova)
+* **TimeSeries:** Preserve RegExp series overrides when migrating from old graph panel. [#36134](https://github.com/grafana/grafana/pull/36134), [@ashharrison90](https://github.com/ashharrison90)
+
+<!-- 8.0.4 END -->
+
 <!-- 8.0.3 START -->
 
 # 8.0.3 (2021-06-18)

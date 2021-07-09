@@ -31,4 +31,10 @@ export interface PanelModel<TOptions = any> {
 
   /** The queries in a panel */
   targets?: DataQuery[];
+
+  /** alerting v1 object */
+  alert?: any;
+
+  // // runtime?
+  // scopedVars?: ScopedVars;
 }

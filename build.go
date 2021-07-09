@@ -393,7 +393,6 @@ func runError(cmd string, args ...string) ([]byte, error) {
 func runPrint(cmd string, args ...string) {
 	log.Println(cmd, strings.Join(args, " "))
 	ecmd := exec.Command(cmd, args...)
-	ecmd.Env = append(os.Environ(), "GO111MODULE=on")
 	ecmd.Stdout = os.Stdout
 	ecmd.Stderr = os.Stderr
 	err := ecmd.Run()

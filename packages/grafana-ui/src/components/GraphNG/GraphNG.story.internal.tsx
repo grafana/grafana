@@ -14,7 +14,7 @@ export default {
   decorators: [withCenteredStory],
   parameters: {
     controls: {
-      exclude: ['className', 'timeRange', 'data', 'legend', 'fields'],
+      exclude: ['className', 'data', 'legend', 'fields', 'structureRev', 'onLegendClick', 'preparePlotFrame'],
     },
   },
   argTypes: {
