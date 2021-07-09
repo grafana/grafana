@@ -183,7 +183,7 @@ function removeTaggedEntry(altSegments: any[]) {
   remove(altSegments, (s) => s.value === '_tagged');
 }
 
-function mapToDropdownOptions(results: any[]) {
+function mapToDropdownOptions(results: string[]) {
   return map(results, (value) => {
     return { text: value, value: value };
   });
