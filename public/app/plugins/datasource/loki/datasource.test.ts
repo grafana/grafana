@@ -95,12 +95,13 @@ describe('LokiDatasource', () => {
       const range = { from: dateTime(), to: dateTime(), raw: raw };
       const options = {
         range,
+        interval: '2s',
       };
 
       const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
-      expect(adjustIntervalSpy).toHaveBeenCalledWith(1000, expect.anything());
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(1000, 2000, expect.anything(), 0, expect.anything());
     });
 
     it('should use provided intervalMs', () => {
@@ -110,12 +111,13 @@ describe('LokiDatasource', () => {
       const options = {
         range,
         intervalMs: 2000,
+        interval: '2s',
       };
 
       const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
-      expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything(), expect.anything(), 0, expect.anything());
     });
 
     it('should set the minimal step to 1ms', () => {
@@ -125,12 +127,19 @@ describe('LokiDatasource', () => {
       const options = {
         range,
         intervalMs: 0.0005,
+        interval: '2s',
       };
 
       const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
-      expect(adjustIntervalSpy).toHaveBeenCalledWith(0.0005, expect.anything());
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(
+        0.0005,
+        expect.anything(),
+        expect.anything(),
+        1000,
+        expect.anything()
+      );
       // Step is in seconds (1 ms === 0.001 s)
       expect(req.step).toEqual(0.001);
     });
