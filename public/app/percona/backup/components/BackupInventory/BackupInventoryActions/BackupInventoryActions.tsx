@@ -6,10 +6,11 @@ import { BackupInventoryActionsProps } from './BackupInventoryActions.types';
 import { getStyles } from './BackupInventoryActions.styles';
 import { Messages } from './BackupInventoryActions.messages';
 
-export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({ backup, onRestore, onBackup }) => {
+export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({ backup, onRestore, onBackup, onDelete }) => {
   const styles = useStyles(getStyles);
   const handeClick = () => onRestore(backup);
   const handleBackup = () => onBackup(backup);
+  const handleDelete = () => onDelete(backup);
 
   return (
     <div className={styles.actionsWrapper}>
@@ -27,6 +28,17 @@ export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({ backup
         data-qa="restore-backup-artifact-button"
         role="button"
         onClick={handleBackup}
+      />
+      <DBIcon
+        tooltipText={Messages.deleteBackup}
+        type="delete"
+        disabled={
+          backup.status === BackupStatus.BACKUP_STATUS_IN_PROGRESS ||
+          backup.status === BackupStatus.BACKUP_STATUS_PENDING
+        }
+        data-qa="delete-backup-artifact-button"
+        role="button"
+        onClick={handleDelete}
       />
     </div>
   );
