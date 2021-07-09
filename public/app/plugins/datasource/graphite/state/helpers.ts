@@ -186,7 +186,7 @@ export function handleTargetChanged(state: GraphiteQueryEditorState): void {
 }
 
 /**
- * When metrics autocomplete fails - the error is shown, by only once per page view
+ * When metrics autocomplete fails - the error is shown, but only once per page view
  */
 export function handleMetricsAutoCompleteError(
   state: GraphiteQueryEditorState,
