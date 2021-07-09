@@ -757,6 +757,10 @@ func (pm *PluginManager) GetPluginMarkdown(pluginId string, name string) ([]byte
 }
 
 func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
+	if pm.PluginManagerV2.IsEnabled() {
+		return pm.PluginManagerV2.StaticRoutes()
+	}
+
 	return pm.staticRoutes
 }
 
