@@ -18,9 +18,8 @@ export const usePlugins = () => {
       const filteredPlugins = items.filter((plugin) => {
         const isNotRenderer = plugin.typeCode !== 'renderer';
         const isSigned = Boolean(plugin.versionSignatureType);
-        const isNotEnterprise = plugin.status !== 'enterprise';
 
-        return isNotRenderer && isSigned && isNotEnterprise;
+        return isNotRenderer && isSigned;
       });
 
       const installedPlugins = await api.getInstalledPlugins();
