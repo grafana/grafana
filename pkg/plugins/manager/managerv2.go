@@ -248,6 +248,11 @@ func (m *PluginManagerV2) PluginByType(pluginID string, pluginType plugins.Plugi
 }
 
 func (m *PluginManagerV2) Plugins(pluginTypes ...plugins.PluginType) []*plugins.PluginV2 {
+	// if no types passed, assume all
+	if len(pluginTypes) == 0 {
+		pluginTypes = plugins.PluginTypes
+	}
+
 	var requestedTypes = make(map[plugins.PluginType]struct{})
 	for _, pt := range pluginTypes {
 		requestedTypes[pt] = struct{}{}
