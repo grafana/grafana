@@ -19,33 +19,33 @@ type configReader struct {
 }
 
 func (cr *configReader) readConfig(path string) ([]*configs, error) {
-	var channelRules []*configs
+	var ruleConfigs []*configs
 
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		cr.log.Error("can't read channel rule provisioning files from directory", "path", path, "error", err)
-		return channelRules, nil
+		return ruleConfigs, nil
 	}
 
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml") {
-			channelRule, err := cr.parseChannelRuleConfig(path, file)
+			ruleConfig, err := cr.parseChannelRuleConfig(path, file)
 			if err != nil {
 				return nil, err
 			}
 
-			if channelRule != nil {
-				channelRules = append(channelRules, channelRule)
+			if ruleConfig != nil {
+				ruleConfigs = append(ruleConfigs, ruleConfig)
 			}
 		}
 	}
 
-	err = cr.validateDefaultUniqueness(channelRules)
+	err = cr.validateDefaultUniqueness(ruleConfigs)
 	if err != nil {
 		return nil, err
 	}
 
-	return channelRules, nil
+	return ruleConfigs, nil
 }
 
 func (cr *configReader) parseChannelRuleConfig(path string, file os.FileInfo) (*configs, error) {
@@ -80,13 +80,13 @@ func (cr *configReader) parseChannelRuleConfig(path string, file os.FileInfo) (*
 	return v0.mapToChannelRuleFromConfig(apiVersion.APIVersion), nil
 }
 
-func (cr *configReader) validateDefaultUniqueness(channelRules []*configs) error {
-	for i := range channelRules {
-		if channelRules[i].ChannelRules == nil {
+func (cr *configReader) validateDefaultUniqueness(ruleConfigs []*configs) error {
+	for i := range ruleConfigs {
+		if ruleConfigs[i].ChannelRules == nil {
 			continue
 		}
 
-		for _, rule := range channelRules[i].ChannelRules {
+		for _, rule := range ruleConfigs[i].ChannelRules {
 			if rule.OrgID == 0 {
 				rule.OrgID = 1
 			}
@@ -96,7 +96,7 @@ func (cr *configReader) validateDefaultUniqueness(channelRules []*configs) error
 			}
 		}
 
-		for _, rule := range channelRules[i].DeleteChannelRules {
+		for _, rule := range ruleConfigs[i].DeleteChannelRules {
 			if rule.OrgID == 0 {
 				rule.OrgID = 1
 			}
