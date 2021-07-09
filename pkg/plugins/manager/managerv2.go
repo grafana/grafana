@@ -228,53 +228,38 @@ func (m *PluginManagerV2) Plugin(pluginID string) *plugins.PluginV2 {
 	p, ok := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
 
-	if ok && p.IsDecommissioned() {
+	if ok && (p.IsDecommissioned()) {
 		return nil
 	}
 
 	return p
 }
 
-func (m *PluginManagerV2) DataSource(pluginID string) *plugins.PluginV2 {
-	p := m.Plugin(pluginID)
+func (m *PluginManagerV2) PluginByType(pluginID string, pluginType plugins.PluginType) *plugins.PluginV2 {
+	m.pluginsMu.RLock()
+	p, ok := m.plugins[pluginID]
+	m.pluginsMu.RUnlock()
 
-	if p == nil {
+	if ok && (p.IsDecommissioned() || p.Type != pluginType) {
 		return nil
 	}
 
-	if p.IsDataSource() {
-		return p
-	}
-
-	return nil
+	return p
 }
 
-func (m *PluginManagerV2) Panel(pluginID string) *plugins.PluginV2 {
-	p := m.Plugin(pluginID)
-
-	if p == nil {
-		return nil
+func (m *PluginManagerV2) Plugins(pluginTypes ...plugins.PluginType) []*plugins.PluginV2 {
+	var requestedTypes = make(map[plugins.PluginType]struct{})
+	for _, pt := range pluginTypes {
+		requestedTypes[pt] = struct{}{}
 	}
 
-	if p.IsPanel() {
-		return p
+	var pluginsList []*plugins.PluginV2
+	for _, p := range m.plugins {
+		if _, exists := requestedTypes[p.Type]; exists {
+			pluginsList = append(pluginsList, p)
+		}
 	}
-
-	return nil
-}
-
-func (m *PluginManagerV2) App(pluginID string) *plugins.PluginV2 {
-	p := m.Plugin(pluginID)
-
-	if p == nil {
-		return nil
-	}
-
-	if p.IsApp() {
-		return p
-	}
-
-	return nil
+	return pluginsList
 }
 
 func (m *PluginManagerV2) Renderer() *plugins.PluginV2 {
@@ -283,45 +268,8 @@ func (m *PluginManagerV2) Renderer() *plugins.PluginV2 {
 			return p
 		}
 	}
+
 	return nil
-}
-
-func (m *PluginManagerV2) DataSources() []*plugins.PluginV2 {
-	var dataSources []*plugins.PluginV2
-	for _, p := range m.plugins {
-		if p.IsDataSource() {
-			dataSources = append(dataSources, p)
-		}
-	}
-	return dataSources
-}
-
-func (m *PluginManagerV2) Apps() []*plugins.PluginV2 {
-	var apps []*plugins.PluginV2
-	for _, p := range m.plugins {
-		if p.IsApp() {
-			apps = append(apps, p)
-		}
-	}
-	return apps
-}
-
-func (m *PluginManagerV2) Panels() []*plugins.PluginV2 {
-	var panels []*plugins.PluginV2
-	for _, p := range m.plugins {
-		if p.IsPanel() {
-			panels = append(panels, p)
-		}
-	}
-	return panels
-}
-
-func (m *PluginManagerV2) Plugins() []*plugins.PluginV2 {
-	var pluginsList []*plugins.PluginV2
-	for _, p := range m.plugins {
-		pluginsList = append(pluginsList, p)
-	}
-	return pluginsList
 }
 
 func (m *PluginManagerV2) StaticRoutes() []*plugins.PluginStaticRoute {

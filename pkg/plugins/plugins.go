@@ -37,14 +37,14 @@ type PluginV2 struct {
 // JSONData represents the plugin's plugin.json
 type JSONData struct {
 	// Common settings
-	Type         string                `json:"type"`
+	Type         PluginType            `json:"type"`
 	Name         string                `json:"name"`
 	ID           string                `json:"id"`
 	Info         PluginInfo            `json:"info"`
 	Dependencies PluginDependencies    `json:"dependencies"`
 	Includes     []*PluginInclude      `json:"includes"`
 	Module       string                `json:"module"`
-	BaseUrl      string                `json:"baseUrl"`
+	BaseURL      string                `json:"baseUrl"`
 	Category     string                `json:"category"`
 	HideFromList bool                  `json:"hideFromList,omitempty"`
 	Preload      bool                  `json:"preload"`
@@ -240,4 +240,20 @@ const (
 	Core     PluginClass = "core"
 	Bundled  PluginClass = "bundled"
 	External PluginClass = "external"
+)
+
+var PluginTypes = []PluginType{
+	DataSource,
+	Panel,
+	App,
+	Renderer,
+}
+
+type PluginType string
+
+const (
+	DataSource PluginType = "datasource"
+	Panel      PluginType = "panel"
+	App        PluginType = "app"
+	Renderer   PluginType = "renderer"
 )

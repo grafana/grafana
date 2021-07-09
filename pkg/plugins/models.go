@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	PluginTypeApp       = "app"
 	PluginTypeDashboard = "dashboard"
 )
 

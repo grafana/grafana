@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -121,20 +122,10 @@ type ManagerV2 interface {
 
 	// Plugin returns a plugin.
 	Plugin(pluginID string) *PluginV2
+	// PluginByType returns a plugin by type.
+	PluginByType(pluginID string, pluginType PluginType) *PluginV2
 	// Plugins returns all plugins.
-	Plugins() []*PluginV2
-	// DataSource returns a datasource plugin.
-	DataSource(pluginID string) *PluginV2
-	// DataSources returns all data source plugins.
-	DataSources() []*PluginV2
-	// Panel returns a panel plugin.
-	Panel(pluginID string) *PluginV2
-	// Panels returns all panel plugins.
-	Panels() []*PluginV2
-	// App returns an app plugin.
-	App(pluginID string) *PluginV2
-	// Apps returns all app plugins.
-	Apps() []*PluginV2
+	Plugins(pluginType ...PluginType) []*PluginV2
 	// Renderer returns a renderer plugin.
 	Renderer() *PluginV2
 

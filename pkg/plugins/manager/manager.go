@@ -231,7 +231,7 @@ func (pm *PluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
 		return ds
 	}
 
-	return dataSourceFromV2(pm.PluginManagerV2.DataSource(id))
+	return dataSourceFromV2(pm.PluginManagerV2.PluginByType(id, plugins.DataSource))
 }
 
 func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
@@ -243,7 +243,7 @@ func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
 		rslt = append(rslt, ds)
 	}
 
-	for _, ds := range pm.PluginManagerV2.DataSources() {
+	for _, ds := range pm.PluginManagerV2.Plugins(plugins.DataSource) {
 		rslt = append(rslt, dataSourceFromV2(ds))
 	}
 
@@ -287,7 +287,7 @@ func (pm *PluginManager) Apps() []*plugins.AppPlugin {
 		rslt = append(rslt, p)
 	}
 
-	for _, ds := range pm.PluginManagerV2.Apps() {
+	for _, ds := range pm.PluginManagerV2.Plugins(plugins.App) {
 		rslt = append(rslt, appFromV2(ds))
 	}
 
@@ -303,7 +303,7 @@ func (pm *PluginManager) Panels() []*plugins.PanelPlugin {
 		rslt = append(rslt, p)
 	}
 
-	for _, ds := range pm.PluginManagerV2.Panels() {
+	for _, ds := range pm.PluginManagerV2.Plugins(plugins.Panel) {
 		rslt = append(rslt, panelFromV2(ds))
 	}
 
@@ -333,7 +333,7 @@ func (pm *PluginManager) GetApp(id string) *plugins.AppPlugin {
 		return app
 	}
 
-	return appFromV2(pm.PluginManagerV2.App(id))
+	return appFromV2(pm.PluginManagerV2.PluginByType(id, plugins.App))
 }
 
 func (pm *PluginManager) GrafanaLatestVersion() string {

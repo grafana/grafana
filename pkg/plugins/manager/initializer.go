@@ -62,11 +62,11 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 
 	i.handleModuleDefaults(p)
 
-	p.Info.Logos.Small = getPluginLogoUrl(p.Type, p.Info.Logos.Small, p.BaseUrl)
-	p.Info.Logos.Large = getPluginLogoUrl(p.Type, p.Info.Logos.Large, p.BaseUrl)
+	p.Info.Logos.Small = getPluginLogoUrl(p.Type, p.Info.Logos.Small, p.BaseURL)
+	p.Info.Logos.Large = getPluginLogoUrl(p.Type, p.Info.Logos.Large, p.BaseURL)
 
 	for i := 0; i < len(p.Info.Screenshots); i++ {
-		p.Info.Screenshots[i].Path = evalRelativePluginUrlPath(p.Info.Screenshots[i].Path, p.BaseUrl, p.Type)
+		p.Info.Screenshots[i].Path = evalRelativePluginUrlPath(p.Info.Screenshots[i].Path, p.BaseURL, p.Type)
 	}
 
 	if p.Type == "app" {
@@ -142,10 +142,10 @@ func (i *Initializer) InitializeCorePluginWithBackend(p *plugins.PluginV2, facto
 
 func (i *Initializer) handleModuleDefaults(p *plugins.PluginV2) {
 	if p.IsExternalPlugin() {
-		metrics.SetPluginBuildInformation(p.ID, p.Type, p.Info.Version, string(p.Signature))
+		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 
 		p.Module = path.Join("plugins", p.ID, "module")
-		p.BaseUrl = path.Join("public/plugins", p.ID)
+		p.BaseURL = path.Join("public/plugins", p.ID)
 		return
 	}
 
@@ -155,14 +155,14 @@ func (i *Initializer) handleModuleDefaults(p *plugins.PluginV2) {
 	currentDir := filepath.Base(p.PluginDir)
 	// use path package for the following statements
 	// because these are not file paths
-	p.Module = path.Join("app/plugins", p.Type, currentDir, "module")
-	p.BaseUrl = path.Join("public/app/plugins", p.Type, currentDir)
+	p.Module = path.Join("app/plugins", string(p.Type), currentDir, "module")
+	p.BaseURL = path.Join("public/app/plugins", string(p.Type), currentDir)
 }
 
 func (i *Initializer) setPathsBasedOnApp(parent *plugins.PluginV2, child *plugins.PluginV2) {
 	appSubPath := strings.ReplaceAll(strings.Replace(child.PluginDir, parent.PluginDir, "", 1), "\\", "/")
 	child.IncludedInAppID = parent.ID
-	child.BaseUrl = parent.BaseUrl
+	child.BaseURL = parent.BaseURL
 
 	if parent.IsExternalPlugin() {
 		child.Module = util.JoinURLFragments("plugins/"+parent.ID, appSubPath) + "/module"
@@ -171,7 +171,7 @@ func (i *Initializer) setPathsBasedOnApp(parent *plugins.PluginV2, child *plugin
 	}
 }
 
-func getPluginLogoUrl(pluginType, path, baseUrl string) string {
+func getPluginLogoUrl(pluginType plugins.PluginType, path, baseUrl string) string {
 	if path == "" {
 		return defaultLogoPath(pluginType)
 	}
@@ -179,11 +179,11 @@ func getPluginLogoUrl(pluginType, path, baseUrl string) string {
 	return evalRelativePluginUrlPath(path, baseUrl, pluginType)
 }
 
-func defaultLogoPath(pluginType string) string {
-	return "public/img/icn-" + pluginType + ".svg"
+func defaultLogoPath(pluginType plugins.PluginType) string {
+	return "public/img/icn-" + string(pluginType) + ".svg"
 }
 
-func evalRelativePluginUrlPath(pathStr, baseUrl, pluginType string) string {
+func evalRelativePluginUrlPath(pathStr, baseUrl string, pluginType plugins.PluginType) string {
 	if pathStr == "" {
 		return ""
 	}

@@ -11,7 +11,7 @@ func fromV2(v2 *plugins.PluginV2) *plugins.PluginBase {
 	}
 
 	p := &plugins.PluginBase{
-		Type: v2.Type,
+		Type: string(v2.Type),
 		Name: v2.Name,
 		Id:   v2.ID,
 		Info: plugins.PluginInfo{
@@ -37,7 +37,7 @@ func fromV2(v2 *plugins.PluginV2) *plugins.PluginBase {
 			GrafanaVersion: v2.Dependencies.GrafanaVersion,
 		},
 		Module:              v2.Module,
-		BaseUrl:             v2.BaseUrl,
+		BaseUrl:             v2.BaseURL,
 		Category:            v2.Category,
 		HideFromList:        v2.HideFromList,
 		Preload:             v2.Preload,
