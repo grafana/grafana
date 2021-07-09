@@ -1,11 +1,13 @@
 import React from 'react';
-import { StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
+import { PanelOptionsEditorItem, StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
 import { get as lodashGet } from 'lodash';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import { OptionPaneRenderProps } from './types';
 import { updateDefaultFieldConfigValue, setOptionImmutably } from './utils';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
+
+type categoryGetter = (categoryNames?: string[]) => OptionsPaneCategoryDescriptor;
 
 export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor[] {
   const { plugin, panel, onPanelOptionsChanged, onFieldConfigsChange, data, dashboard } = props;
@@ -37,39 +39,16 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
     }));
   };
 
-  /**
-   * Panel options
-   */
-  for (const pluginOption of plugin.optionEditors.list()) {
-    if (pluginOption.showIf && !pluginOption.showIf(currentOptions, data?.series)) {
-      continue;
-    }
-
-    const category = getOptionsPaneCategory(pluginOption.category);
-    const Editor = pluginOption.editor;
-
-    category.addItem(
-      new OptionsPaneItemDescriptor({
-        title: pluginOption.name,
-        description: pluginOption.description,
-        render: function renderEditor() {
-          const onChange = (value: any) => {
-            const newOptions = setOptionImmutably(currentOptions, pluginOption.path, value);
-            onPanelOptionsChanged(newOptions);
-          };
-
-          return (
-            <Editor
-              value={lodashGet(currentOptions, pluginOption.path)}
-              onChange={onChange}
-              item={pluginOption}
-              context={context}
-            />
-          );
-        },
-      })
-    );
-  }
+  // Load the options into categories
+  fillOptionsPaneItems(
+    plugin.optionEditors.list(),
+    getOptionsPaneCategory,
+    (path: string, value: any) => {
+      const newOptions = setOptionImmutably(context.options, path, value);
+      onPanelOptionsChanged(newOptions);
+    },
+    context
+  );
 
   /**
    * Field options
@@ -119,4 +98,46 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
   }
 
   return Object.values(categoryIndex);
+}
+
+/**
+ * This will iterate all options panes and add register them with the configured categories
+ *
+ * @internal
+ */
+export function fillOptionsPaneItems(
+  optionEditors: PanelOptionsEditorItem[],
+  getOptionsPaneCategory: categoryGetter,
+  onValueChanged: (path: string, value: any) => void,
+  context: StandardEditorContext<any>
+) {
+  for (const pluginOption of optionEditors) {
+    if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data)) {
+      continue;
+    }
+
+    const category = getOptionsPaneCategory(pluginOption.category);
+    const Editor = pluginOption.editor;
+
+    // TODO? can some options recursivly call: fillOptionsPaneItems?
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: pluginOption.name,
+        description: pluginOption.description,
+        render: function renderEditor() {
+          return (
+            <Editor
+              value={lodashGet(context.options, pluginOption.path)}
+              onChange={(value: any) => {
+                onValueChanged(pluginOption.path, value);
+              }}
+              item={pluginOption}
+              context={context}
+            />
+          );
+        },
+      })
+    );
+  }
 }
