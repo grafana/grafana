@@ -24,7 +24,7 @@ export async function getAltSegments(
   index: number,
   prefix: string
 ): Promise<GraphiteSegment[]> {
-  let query = prefix && prefix.length > 0 ? '*' + prefix + '*' : '*';
+  let query = prefix.length > 0 ? '*' + prefix + '*' : '*';
   if (index > 0) {
     query = state.queryModel.getSegmentPathUpTo(index) + '.' + query;
   }
