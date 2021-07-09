@@ -1,9 +1,12 @@
-import { CascaderOption as RCCascaderOption } from 'rc-cascader/lib/Cascader';
+import { CascaderValueType, CascaderOption as RCCascaderOption } from 'rc-cascader/lib/Cascader';
 import { CascaderOption } from './Cascader';
 
-type onChangeType = ((values: string[], options: CascaderOption[]) => void) | undefined;
+type onChangeType = ((values: CascaderValueType, options: CascaderOption[]) => void) | undefined;
 
-export const onChangeCascader = (onChanged: onChangeType) => (values: string[], options: RCCascaderOption[]) => {
+export const onChangeCascader = (onChanged: onChangeType) => (
+  values: CascaderValueType,
+  options: RCCascaderOption[]
+) => {
   if (onChanged) {
     onChanged(values, fromRCOptions(options));
   }
