@@ -168,7 +168,6 @@ function initEchoSrv() {
     registerEchoBackend(
       new GAEchoBackend({
         googleAnalyticsId: (config as any).googleAnalyticsId,
-        // debug: process.env.NODE_ENV !== 'production',
       })
     );
   }
