@@ -10,9 +10,8 @@ import {
 import { geomapLayerRegistry } from '../layers/registry';
 import { defaultGrafanaThemedMap } from '../layers/basemaps';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
-import { get as lodashGet } from 'lodash';
+import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVizualizationOptions';
 
 export interface LayerEditorProps<TConfig = any> {
   config?: MapLayerConfig<TConfig>;
@@ -55,44 +54,30 @@ export const LayerEditor: FC<LayerEditorProps> = ({ config, onChange, data, filt
       title: 'Layer config',
     });
 
-    const ctx: StandardEditorContext<any> = {
+    const context: StandardEditorContext<any> = {
       data,
       options: config?.config,
     };
 
     const currentConfig = { ...layer.defaultOptions, ...config?.config };
     const reg = optionsEditorBuilder.getRegistry();
-    for (const pluginOption of reg.list()) {
-      if (pluginOption.showIf && !pluginOption.showIf(currentConfig, data)) {
-        continue;
-      }
 
-      // The nested value
-      const doChange = (value: any) => {
+    // Load the options into categories
+    fillOptionsPaneItems(
+      reg.list(),
+
+      // Always use the same category
+      (categoryNames) => category,
+
+      // Custom upate function
+      (path: string, value: any) => {
         onChange({
           ...config,
-          config: setOptionImmutably(currentConfig, pluginOption.path!, value),
+          config: setOptionImmutably(currentConfig, path, value),
         } as MapLayerConfig);
-      };
-
-      const Editor = pluginOption.editor;
-      category.addItem(
-        new OptionsPaneItemDescriptor({
-          title: pluginOption.name,
-          description: pluginOption.description,
-          render: function renderEditor() {
-            return (
-              <Editor
-                value={lodashGet(currentConfig, pluginOption.path)}
-                onChange={doChange}
-                item={pluginOption}
-                context={ctx}
-              />
-            );
-          },
-        })
-      );
-    }
+      },
+      context
+    );
 
     return (
       <>
