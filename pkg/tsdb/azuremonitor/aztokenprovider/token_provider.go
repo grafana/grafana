@@ -161,6 +161,10 @@ func (c *clientSecretTokenRetriever) GetCacheKey() string {
 }
 
 func (c *clientSecretTokenRetriever) Init() error {
+	if c.authority == "" {
+		err := fmt.Errorf("authority for Azure authentication not configured (unknown Azure cloud or invalid custom authority)")
+		return err
+	}
 	options := &azidentity.ClientSecretCredentialOptions{AuthorityHost: c.authority}
 	if credential, err := azidentity.NewClientSecretCredential(c.tenantId, c.clientId, c.clientSecret, options); err != nil {
 		return err

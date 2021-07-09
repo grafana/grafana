@@ -11,11 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPrometheus(t *testing.T) {
+	cfg := setting.NewCfg()
+
 	json, _ := simplejson.NewJson([]byte(`
 		{ "customQueryParameters": "custom=par/am&second=f oo"}
 	`))
@@ -32,7 +35,7 @@ func TestPrometheus(t *testing.T) {
 	provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
 		Middlewares: []sdkhttpclient.Middleware{mw},
 	})
-	plug, err := New(provider)(dsInfo)
+	plug, err := New(provider, cfg)(dsInfo)
 	require.NoError(t, err)
 	executor := plug.(*PrometheusExecutor)
 
