@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"regexp"
 	"sort"
@@ -52,20 +53,17 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	}
 	namespace, err := model.Get("namespace").String()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get namespace: %v", err)
 	}
 	metricName, err := model.Get("metricName").String()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get metricName: %v", err)
 	}
 	dimensions, err := parseDimensions(model)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse dimensions: %v", err)
 	}
-	statistics, err := parseStatistics(model)
-	if err != nil {
-		return nil, err
-	}
+	statistics := parseStatistics(model)
 
 	p := model.Get("period").MustString("")
 	var period int
@@ -84,12 +82,12 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 		if reNumber.Match([]byte(p)) {
 			period, err = strconv.Atoi(p)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to parse period as integer: %v", err)
 			}
 		} else {
 			d, err := time.ParseDuration(p)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to parse period as duration: %v", err)
 			}
 			period = int(d.Seconds())
 		}
@@ -125,13 +123,13 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	}, nil
 }
 
-func parseStatistics(model *simplejson.Json) ([]string, error) {
+func parseStatistics(model *simplejson.Json) []string {
 	var statistics []string
 	for _, s := range model.Get("statistics").MustArray() {
 		statistics = append(statistics, s.(string))
 	}
 
-	return statistics, nil
+	return statistics
 }
 
 func parseDimensions(model *simplejson.Json) (map[string][]string, error) {
@@ -145,7 +143,7 @@ func parseDimensions(model *simplejson.Json) (map[string][]string, error) {
 				parsedDimensions[k] = append(parsedDimensions[k], value.(string))
 			}
 		} else {
-			return nil, errors.New("failed to parse dimensions")
+			return nil, errors.New("unknown type as dimension value")
 		}
 	}
 

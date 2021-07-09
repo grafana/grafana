@@ -21,10 +21,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, model *
 	namespace := model.Get("namespace").MustString("")
 	metricName := model.Get("metricName").MustString("")
 	dimensions := model.Get("dimensions").MustMap()
-	statistics, err := parseStatistics(model)
-	if err != nil {
-		return nil, err
-	}
+	statistics := parseStatistics(model)
 	period := int64(model.Get("period").MustInt(0))
 	if period == 0 && !usePrefixMatch {
 		period = 300
