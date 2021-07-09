@@ -27,24 +27,6 @@ type queryModel struct {
 	Interval      time.Duration     `json:"-"`
 }
 
-// The following is commented out but kept as it should be useful when
-// restoring this code to be closer to the SDK's models.
-
-func GetQueryModel(query backend.DataQuery) (*queryModel, error) {
-	model := &queryModel{}
-
-	err := json.Unmarshal(query.JSON, &model)
-	if err != nil {
-		return nil, fmt.Errorf("error reading query: %s", err.Error())
-	}
-
-	// Copy directly from the well typed query
-	model.TimeRange = query.TimeRange
-	model.MaxDataPoints = query.MaxDataPoints
-	model.Interval = query.Interval
-	return model, nil
-}
-
 // getQueryModelTSDB builds a queryModel from plugins.DataQuery information and datasource configuration (dsInfo).
 func getQueryModelTSDB(query backend.DataQuery, timeRange backend.TimeRange,
 	dsInfo *datasource.Info) (*queryModel, error) {

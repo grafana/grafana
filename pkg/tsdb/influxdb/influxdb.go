@@ -97,7 +97,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			TimeInterval:  jsonData.TimeInterval,
 			DefaultBucket: jsonData.DefaultBucket,
 			Organization:  jsonData.Organization,
-			JsonData:      jsonData.JsonData,
 
 			MaxSeries: maxSeries,
 			Token:     settings.DecryptedSecureJSONData["token"],
