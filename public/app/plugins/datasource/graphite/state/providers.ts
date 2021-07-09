@@ -100,7 +100,7 @@ export function getTagOperators(): AngularDropdownOptions[] {
 export async function getTags(
   state: GraphiteQueryEditorState,
   index: number,
-  tagPrefix: any
+  tagPrefix: string
 ): Promise<AngularDropdownOptions[]> {
   try {
     const tagExpressions = state.queryModel.renderTagExpressions(index);
