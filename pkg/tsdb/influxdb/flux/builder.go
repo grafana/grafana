@@ -27,7 +27,8 @@ type columnInfo struct {
 	name             string
 	converter        *data.FieldConverter
 	shouldGetLabels  bool
-	isTheSingleValue bool
+	isTheSimpleValue bool
+	isTheSimpleTime  bool
 }
 
 // frameBuilder is an interface to help testing.
@@ -184,7 +185,8 @@ func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 				name:             name,
 				converter:        converter,
 				shouldGetLabels:  true, // we default to get-labels
-				isTheSingleValue: false,
+				isTheSimpleValue: false,
+				isTheSimpleTime:  false,
 			}
 
 			if isTimestamp {
@@ -207,7 +209,11 @@ func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 	if hasSimpleTimeCol && (len(nonTimestampCols) == 1) && (nonTimestampCols[0].name == "_value") {
 		// there is a simple timestamp column, and there is a single non-timestamp value column
 		// named "_value". we decide that this is "the" value-column.
-		nonTimestampCols[0].isTheSingleValue = true
+		nonTimestampCols[0].isTheSimpleValue = true
+
+		// now that we know that there is both a single correctly named timestamp column
+		// and a single correctly named value column, we mark the timestamp column as THE timestamp
+		timestampCols[0].isTheSimpleTime = true
 	}
 
 	// grafana wants the timestamp columns first, so we add them first
@@ -301,13 +307,29 @@ func (fb *frameBuilder) Append(record *query.FluxRecord) error {
 			fields[idx] = data.NewFieldFromFieldType(col.converter.OutputFieldType, 0)
 			fields[idx].Name = col.name
 
-			if col.isTheSingleValue {
+			if col.isTheSimpleTime {
+				// the standard name for the timestamp column
+				// in grafana is `Time`. in this simple-case we will
+				// use that name. this should improve
+				// compatibility with the ui-components
+				fields[idx].Name = "Time"
+			}
+
+			if col.isTheSimpleValue {
 				fieldLabel := labels["_field"]
 				if fieldLabel != "" {
 					fields[idx].Name = fieldLabel
 					delete(labels, "_field")
+				} else {
+					// the standard name for the value column
+					// in grafana is `Value`. in this simple-case we will
+					// use that name. this should improve
+					// compatibility with the ui-components
+					fields[idx].Name = "Value"
 				}
+			}
 
+			if col.isTheSimpleTime || col.isTheSimpleValue {
 				// when the data-structure is "simple"
 				// (meaning simple-time and simple-value),
 				// we remove the "_start" and "_stop"
