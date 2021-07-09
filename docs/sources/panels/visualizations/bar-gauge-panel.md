@@ -46,7 +46,7 @@ Choose a stacking direction.
 
 - **Auto -** Grafana selects what it thinks is the best orientation.
 - **Horizontal -** Bars stretch horizontally, left to right.
-- **Vertical -** Bars stretch vertically, top to bottom.
+- **Vertical -** Bars stretch vertically, bottom to top.
 
 ### Display mode
 

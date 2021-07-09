@@ -20,7 +20,7 @@ export const VizLegendStatsList: React.FunctionComponent<{ stats: DisplayValue[]
       className={styles.list}
       items={stats}
       renderItem={(stat) => (
-        <div className={styles.item}>
+        <div className={styles.item} title={stat.description}>
           {stat.title && `${capitalize(stat.title)}:`} {formattedValueToString(stat)}
         </div>
       )}

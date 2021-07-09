@@ -3,37 +3,81 @@ package opentsdb
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
 	"time"
 
-	"golang.org/x/net/context/ctxhttp"
-
 	"encoding/json"
-	"io/ioutil"
-	"net/http"
-	"net/url"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
+	"golang.org/x/net/context/ctxhttp"
 )
 
-type OpenTsdbExecutor struct {
-	httpClientProvider httpclient.Provider
+type Service struct {
+	HTTPClientProvider   httpclient.Provider   `inject:""`
+	Cfg                  *setting.Cfg          `inject:""`
+	BackendPluginManager backendplugin.Manager `inject:""`
+
+	im instancemgmt.InstanceManager
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func New(httpClientProvider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
-	//nolint: staticcheck // plugins.DataPlugin deprecated
-	return func(*models.DataSource) (plugins.DataPlugin, error) {
-		return &OpenTsdbExecutor{
-			httpClientProvider: httpClientProvider,
-		}, nil
+type datasourceInfo struct {
+	HTTPClient *http.Client
+	URL        string
+}
+
+type DsAccess string
+
+func init() {
+	registry.Register(&registry.Descriptor{Instance: &Service{}})
+}
+
+func (s *Service) Init() error {
+	s.im = datasource.NewInstanceManager(newInstanceSettings(s.HTTPClientProvider))
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
+
+	if err := s.BackendPluginManager.Register("opentsdb", factory); err != nil {
+		plog.Error("Failed to register plugin", "error", err)
+	}
+
+	return nil
+}
+
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		opts, err := settings.HTTPClientOptions()
+		if err != nil {
+			return nil, err
+		}
+
+		client, err := httpClientProvider.New(opts)
+		if err != nil {
+			return nil, err
+		}
+
+		model := &datasourceInfo{
+			HTTPClient: client,
+			URL:        settings.URL,
+		}
+
+		return model, nil
 	}
 }
 
@@ -41,16 +85,16 @@ var (
 	plog = log.New("tsdb.opentsdb")
 )
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
-func (e *OpenTsdbExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
-	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var tsdbQuery OpenTsdbQuery
 
-	tsdbQuery.Start = queryContext.TimeRange.GetFromAsMsEpoch()
-	tsdbQuery.End = queryContext.TimeRange.GetToAsMsEpoch()
+	q := req.Queries[0]
 
-	for _, query := range queryContext.Queries {
-		metric := e.buildMetric(query)
+	tsdbQuery.Start = q.TimeRange.From.UnixNano() / int64(time.Millisecond)
+	tsdbQuery.End = q.TimeRange.To.UnixNano() / int64(time.Millisecond)
+
+	for _, query := range req.Queries {
+		metric := s.buildMetric(query)
 		tsdbQuery.Queries = append(tsdbQuery.Queries, metric)
 	}
 
@@ -59,33 +103,31 @@ func (e *OpenTsdbExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		plog.Debug("OpenTsdb request", "params", tsdbQuery)
 	}
 
-	req, err := e.createRequest(dsInfo, tsdbQuery)
+	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return nil, err
 	}
 
-	httpClient, err := dsInfo.GetHTTPClient(e.httpClientProvider)
+	request, err := s.createRequest(dsInfo, tsdbQuery)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return &backend.QueryDataResponse{}, err
 	}
 
-	res, err := ctxhttp.Do(ctx, httpClient, req)
+	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, request)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return &backend.QueryDataResponse{}, err
 	}
 
-	queryResult, err := e.parseResponse(tsdbQuery, res)
+	result, err := s.parseResponse(res)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return &backend.QueryDataResponse{}, err
 	}
 
-	return plugins.DataResponse{
-		Results: queryResult,
-	}, nil
+	return result, nil
 }
 
-func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsdbQuery) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.Url)
+func (s *Service) createRequest(dsInfo *datasourceInfo, data OpenTsdbQuery) (*http.Request, error) {
+	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -104,17 +146,11 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
-	}
-
 	return req, nil
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
-func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response) (map[string]plugins.DataQueryResult, error) {
-	queryResults := make(map[string]plugins.DataQueryResult)
-	queryRes := plugins.DataQueryResult{}
+func (s *Service) parseResponse(res *http.Response) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -157,45 +193,51 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 			data.NewField("time", nil, timeVector),
 			data.NewField("value", nil, values)))
 	}
-	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
-	queryResults["A"] = queryRes
-	return queryResults, nil
+	result := resp.Responses["A"]
+	result.Frames = frames
+	resp.Responses["A"] = result
+	return resp, nil
 }
 
-func (e *OpenTsdbExecutor) buildMetric(query plugins.DataSubQuery) map[string]interface{} {
+func (s *Service) buildMetric(query backend.DataQuery) map[string]interface{} {
 	metric := make(map[string]interface{})
 
+	model, err := simplejson.NewJson(query.JSON)
+	if err != nil {
+		return nil
+	}
+
 	// Setting metric and aggregator
-	metric["metric"] = query.Model.Get("metric").MustString()
-	metric["aggregator"] = query.Model.Get("aggregator").MustString()
+	metric["metric"] = model.Get("metric").MustString()
+	metric["aggregator"] = model.Get("aggregator").MustString()
 
 	// Setting downsampling options
-	disableDownsampling := query.Model.Get("disableDownsampling").MustBool()
+	disableDownsampling := model.Get("disableDownsampling").MustBool()
 	if !disableDownsampling {
-		downsampleInterval := query.Model.Get("downsampleInterval").MustString()
+		downsampleInterval := model.Get("downsampleInterval").MustString()
 		if downsampleInterval == "" {
 			downsampleInterval = "1m" // default value for blank
 		}
-		downsample := downsampleInterval + "-" + query.Model.Get("downsampleAggregator").MustString()
-		if query.Model.Get("downsampleFillPolicy").MustString() != "none" {
-			metric["downsample"] = downsample + "-" + query.Model.Get("downsampleFillPolicy").MustString()
+		downsample := downsampleInterval + "-" + model.Get("downsampleAggregator").MustString()
+		if model.Get("downsampleFillPolicy").MustString() != "none" {
+			metric["downsample"] = downsample + "-" + model.Get("downsampleFillPolicy").MustString()
 		} else {
 			metric["downsample"] = downsample
 		}
 	}
 
 	// Setting rate options
-	if query.Model.Get("shouldComputeRate").MustBool() {
+	if model.Get("shouldComputeRate").MustBool() {
 		metric["rate"] = true
 		rateOptions := make(map[string]interface{})
-		rateOptions["counter"] = query.Model.Get("isCounter").MustBool()
+		rateOptions["counter"] = model.Get("isCounter").MustBool()
 
-		counterMax, counterMaxCheck := query.Model.CheckGet("counterMax")
+		counterMax, counterMaxCheck := model.CheckGet("counterMax")
 		if counterMaxCheck {
 			rateOptions["counterMax"] = counterMax.MustFloat64()
 		}
 
-		resetValue, resetValueCheck := query.Model.CheckGet("counterResetValue")
+		resetValue, resetValueCheck := model.CheckGet("counterResetValue")
 		if resetValueCheck {
 			rateOptions["resetValue"] = resetValue.MustFloat64()
 		}
@@ -208,16 +250,30 @@ func (e *OpenTsdbExecutor) buildMetric(query plugins.DataSubQuery) map[string]in
 	}
 
 	// Setting tags
-	tags, tagsCheck := query.Model.CheckGet("tags")
+	tags, tagsCheck := model.CheckGet("tags")
 	if tagsCheck && len(tags.MustMap()) > 0 {
 		metric["tags"] = tags.MustMap()
 	}
 
 	// Setting filters
-	filters, filtersCheck := query.Model.CheckGet("filters")
+	filters, filtersCheck := model.CheckGet("filters")
 	if filtersCheck && len(filters.MustArray()) > 0 {
 		metric["filters"] = filters.MustArray()
 	}
 
 	return metric
+}
+
+func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+	i, err := s.im.Get(pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	instance, ok := i.(*datasourceInfo)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast datsource info")
+	}
+
+	return instance, nil
 }
