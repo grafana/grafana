@@ -53,7 +53,7 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
       const seriesColor = scaleColor.color;
 
       return {
-        disabled: !seriesConfig.show ?? false,
+        disabled: !(seriesConfig.show ?? true),
         fieldIndex,
         color: seriesColor,
         label,
