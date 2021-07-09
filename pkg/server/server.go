@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	_ "github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/auth"
 	_ "github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -130,7 +131,8 @@ type Server struct {
 
 	serviceRegistry serviceRegistry
 
-	HTTPServer *api.HTTPServer `inject:""`
+	HTTPServer    *api.HTTPServer             `inject:""`
+	AccessControl accesscontrol.AccessControl `inject:""`
 }
 
 // init initializes the server and its services.
@@ -155,6 +157,9 @@ func (s *Server) init() error {
 	if err := s.buildServiceGraph(services); err != nil {
 		return err
 	}
+
+	// Loop through all registrations to register grafana fixed roles
+	s.AccessControl.RegisterFixedRoles()
 
 	if s.listener != nil {
 		for _, service := range services {

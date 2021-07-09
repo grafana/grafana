@@ -117,6 +117,7 @@ func (hs *HTTPServer) Init() error {
 
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
+	hs.AddFixedRoleRegistrations()
 
 	return nil
 }

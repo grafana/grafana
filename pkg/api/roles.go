@@ -20,7 +20,7 @@ const (
 
 // GetFixedRoleRegistrations returns the list of fixed roles and their grants to organization roles
 // ("Viewer", "Editor", "Admin") or "Grafana Admin" that HTTPServer needs
-func (hs *HTTPServer) GetFixedRoleRegistrations() []accesscontrol.RoleRegistration {
+func (hs *HTTPServer) AddFixedRoleRegistrations() {
 	registrations := []accesscontrol.RoleRegistration{
 		{
 			Role: accesscontrol.RoleDTO{
@@ -38,5 +38,5 @@ func (hs *HTTPServer) GetFixedRoleRegistrations() []accesscontrol.RoleRegistrati
 		},
 	}
 
-	return registrations
+	hs.AccessControl.AddFixedRoleRegistrations(registrations)
 }

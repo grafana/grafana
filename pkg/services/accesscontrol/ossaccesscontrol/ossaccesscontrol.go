@@ -9,16 +9,16 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/evaluator"
-	acregistry "github.com/grafana/grafana/pkg/services/accesscontrol/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
-	Cfg        *setting.Cfg          `inject:""`
-	UsageStats usagestats.UsageStats `inject:""`
-	Log        log.Logger
+	Cfg           *setting.Cfg          `inject:""`
+	UsageStats    usagestats.UsageStats `inject:""`
+	Log           log.Logger
+	registrations accesscontrol.RegistrationList
 }
 
 // Init initializes the OSSAccessControlService.
@@ -27,7 +27,7 @@ func (ac *OSSAccessControlService) Init() error {
 
 	ac.registerUsageMetrics()
 
-	return acregistry.RegisterRegistrantsRoles(context.TODO(), ac)
+	return nil
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
@@ -53,58 +53,6 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 	}
 
 	return 1
-}
-
-func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {
-	if storedRole, ok := accesscontrol.FixedRoles[role.Name]; ok {
-		// If a package wants to override another package's role, the version
-		// needs to be increased. Hence, we don't overwrite a role with a
-		// greater version.
-		if storedRole.Version >= role.Version {
-			return
-		}
-	}
-	// Save role
-	accesscontrol.FixedRoles[role.Name] = role
-}
-
-func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
-	for _, builtInRole := range builtInRoles {
-		assignments := []string{}
-
-		// Only record new assignments
-		alreadyAssigned := false
-		if assignments, ok := accesscontrol.FixedRoleGrants[builtInRole]; ok {
-			for _, assignedRole := range assignments {
-				if assignedRole == role.Name {
-					alreadyAssigned = true
-				}
-			}
-		}
-		if !alreadyAssigned {
-			assignments = append(assignments, role.Name)
-			accesscontrol.FixedRoleGrants[builtInRole] = assignments
-		}
-	}
-}
-
-// RegisterFixedRole saves a fixed role and assigns it to built-in roles
-func (ac *OSSAccessControlService) RegisterFixedRole(_ context.Context, role accesscontrol.RoleDTO, builtInRoles []string) error {
-	err := accesscontrol.ValidateFixedRole(role)
-	if err != nil {
-		return err
-	}
-
-	err = accesscontrol.ValidateBuiltInRoles(builtInRoles)
-	if err != nil {
-		return err
-	}
-
-	ac.saveFixedRole(role)
-
-	ac.assignFixedRole(role, builtInRoles)
-
-	return nil
 }
 
 // Evaluate evaluates access to the given resource
@@ -147,4 +95,72 @@ func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser
 	}
 
 	return roles
+}
+
+func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {
+	if storedRole, ok := accesscontrol.FixedRoles[role.Name]; ok {
+		// If a package wants to override another package's role, the version
+		// needs to be increased. Hence, we don't overwrite a role with a
+		// greater version.
+		if storedRole.Version >= role.Version {
+			return
+		}
+	}
+	// Save role
+	accesscontrol.FixedRoles[role.Name] = role
+}
+
+func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
+	for _, builtInRole := range builtInRoles {
+		assignments := []string{}
+
+		// Only record new assignments
+		alreadyAssigned := false
+		if assignments, ok := accesscontrol.FixedRoleGrants[builtInRole]; ok {
+			for _, assignedRole := range assignments {
+				if assignedRole == role.Name {
+					alreadyAssigned = true
+				}
+			}
+		}
+		if !alreadyAssigned {
+			assignments = append(assignments, role.Name)
+			accesscontrol.FixedRoleGrants[builtInRole] = assignments
+		}
+	}
+}
+
+// RegisterFixedRole saves a fixed role and assigns it to built-in roles
+func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) error {
+	err := accesscontrol.ValidateFixedRole(role)
+	if err != nil {
+		return err
+	}
+
+	err = accesscontrol.ValidateBuiltInRoles(builtInRoles)
+	if err != nil {
+		return err
+	}
+
+	ac.saveFixedRole(role)
+
+	ac.assignFixedRole(role, builtInRoles)
+
+	return nil
+}
+
+// RegisterFixedRoles launches all registrations of the service registration list
+func (ac *OSSAccessControlService) RegisterFixedRoles() error {
+	var err error
+	// TODO discuss with team the cases in which we want to error (duplicated roles)
+	ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+		err = ac.registerFixedRole(registration.Role, registration.Grants)
+		return err != nil
+	})
+	return err
+}
+
+// AddFixedRoleRegistrations allow the caller to declare, to the service, fixed roles and their assignments
+func (ac *OSSAccessControlService) AddFixedRoleRegistrations(registrations []accesscontrol.RoleRegistration) {
+	ac.registrations.Append(registrations...)
 }

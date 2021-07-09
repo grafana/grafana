@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -136,14 +135,6 @@ type DatabaseMigrator interface {
 	// AddMigrations allows the service to add migrations to
 	// the database migrator.
 	AddMigration(mg *migrator.Migrator)
-}
-
-// RoleRegistrant should be implemented by services that have
-// fixed role to declare to the AccessControl service
-type RoleRegistrant interface {
-	// GetFixedRoleRegistrations returns the list of roles
-	// the service needs to register
-	GetFixedRoleRegistrations() []accesscontrol.RoleRegistration
 }
 
 // IsDisabled returns whether a service is disabled.

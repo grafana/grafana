@@ -298,13 +298,12 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 				UsageStats: &usageStatsMock{t: t, metricsFuncs: make([]usagestats.MetricsFunc, 0)},
 				Log:        log.New("accesscontrol-test"),
 			}
-			ctx := context.TODO()
 
 			for i, run := range tc.runs {
 				// Remove any inserted role after the test case has been run
 				t.Cleanup(func() { removeRole(run.role.Name) })
 
-				err := ac.RegisterFixedRole(ctx, run.role, run.builtInRoles)
+				err := ac.registerFixedRole(run.role, run.builtInRoles)
 				if run.wantErr != nil {
 					assert.ErrorIs(t, err, run.wantErr)
 					return
