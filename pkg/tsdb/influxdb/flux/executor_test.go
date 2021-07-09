@@ -84,7 +84,7 @@ func TestExecuteSimple(t *testing.T) {
 	require.Len(t, dr.Frames, 1)
 	require.Contains(t, dr.Frames[0].Name, "test")
 	require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
-	require.Equal(t, "_time", dr.Frames[0].Fields[0].Name)
+	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
 
 	st, err := dr.Frames[0].StringTable(-1, -1)
 	require.NoError(t, err)
@@ -102,7 +102,7 @@ func TestExecuteMultiple(t *testing.T) {
 	require.Len(t, dr.Frames, 3)
 	require.Contains(t, dr.Frames[0].Name, "test")
 	require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
-	require.Equal(t, "_time", dr.Frames[0].Fields[0].Name)
+	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
 
 	st, err := dr.Frames[0].StringTable(-1, -1)
 	require.NoError(t, err)
@@ -120,7 +120,7 @@ func TestExecuteGrouping(t *testing.T) {
 	require.Len(t, dr.Frames, 3)
 	require.Contains(t, dr.Frames[0].Name, "system")
 	require.Len(t, dr.Frames[0].Fields[1].Labels, 1)
-	require.Equal(t, "_time", dr.Frames[0].Fields[0].Name)
+	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
 
 	st, err := dr.Frames[0].StringTable(-1, -1)
 	require.NoError(t, err)
@@ -139,7 +139,7 @@ func TestAggregateGrouping(t *testing.T) {
 	// 	 `Name:
 	// Dimensions: 2 Fields by 3 Rows
 	// +-------------------------------+--------------------------+
-	// | Name: _time                   | Name: _value             |
+	// | Name: Time                    | Name: Value              |
 	// | Labels:                       | Labels: host=hostname.ru |
 	// | Type: []*time.Time            | Type: []*float64         |
 	// +-------------------------------+--------------------------+
@@ -154,8 +154,8 @@ func TestAggregateGrouping(t *testing.T) {
 	t3 := time.Date(2020, 6, 5, 12, 8, 0, 0, time.UTC)
 
 	expectedFrame := data.NewFrame("",
-		data.NewField("_time", nil, []*time.Time{&t1, &t2, &t3}),
-		data.NewField("_value", map[string]string{"host": "hostname.ru"}, []*float64{
+		data.NewField("Time", nil, []*time.Time{&t1, &t2, &t3}),
+		data.NewField("Value", map[string]string{"host": "hostname.ru"}, []*float64{
 			pointer.Float64(8.291),
 			pointer.Float64(0.534),
 			pointer.Float64(0.667),
@@ -311,6 +311,6 @@ func TestTimestampFirst(t *testing.T) {
 	// we make sure the timestamp-column is the first column
 	// in the dataframe, even if it was not the first column
 	// in the csv.
-	require.Equal(t, "_time", dr.Frames[0].Fields[0].Name)
-	require.Equal(t, "_value", dr.Frames[0].Fields[1].Name)
+	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
+	require.Equal(t, "Value", dr.Frames[0].Fields[1].Name)
 }
