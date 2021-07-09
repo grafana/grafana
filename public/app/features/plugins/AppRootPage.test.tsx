@@ -6,8 +6,9 @@ import { importAppPlugin } from './plugin_loader';
 import { getMockPlugin } from './__mocks__/pluginMocks';
 import { AppPlugin, PluginType, AppRootProps, NavModelItem } from '@grafana/data';
 import { Route, Router } from 'react-router-dom';
-import { locationService } from '@grafana/runtime';
+import { locationService, setEchoSrv } from '@grafana/runtime';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
+import { Echo } from 'app/core/services/echo/Echo';
 
 jest.mock('./PluginSettingsCache', () => ({
   getPluginSettings: jest.fn(),
@@ -70,6 +71,7 @@ function renderUnderRouter() {
 describe('AppRootPage', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    setEchoSrv(new Echo());
   });
 
   it('should not mount plugin twice if nav is changed', async () => {

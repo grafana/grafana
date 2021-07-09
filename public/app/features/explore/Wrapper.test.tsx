@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import Wrapper from './Wrapper';
 import { configureStore } from '../../store/configureStore';
 import { Provider } from 'react-redux';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import {
   ArrayDataFrame,
   DataQueryResponse,
@@ -26,6 +26,7 @@ import { splitOpen } from './state/main';
 import { Route, Router } from 'react-router-dom';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { initialUserState } from '../profile/state/reducers';
+import { Echo } from 'app/core/services/echo/Echo';
 
 type Mock = jest.Mock;
 
@@ -265,6 +266,7 @@ type SetupOptions = {
   datasources?: DatasourceSetup[];
   query?: any;
 };
+
 function setup(options?: SetupOptions): { datasources: { [name: string]: DataSourceApi }; store: EnhancedStore } {
   // Clear this up otherwise it persists data source selection
   // TODO: probably add test for that too
@@ -296,6 +298,7 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
       return intervals;
     },
   } as any);
+  setEchoSrv(new Echo());
 
   const store = configureStore();
   store.getState().user = {
