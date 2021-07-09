@@ -3,6 +3,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
+  AlertmanagerGroup,
   Silence,
   SilenceCreatePayload,
 } from 'app/plugins/datasource/alertmanager/types';
@@ -19,6 +20,7 @@ import {
   expireSilence,
   fetchAlertManagerConfig,
   fetchAlerts,
+  fetchAlertGroups,
   fetchSilences,
   createOrUpdateSilence,
   updateAlertManagerConfig,
@@ -534,3 +536,10 @@ export const fetchFolderIfNotFetchedAction = (uid: string): ThunkResult<void> =>
     }
   };
 };
+
+export const fetchAlertGroupsAction = createAsyncThunk(
+  'unifiedalerting/fetchAlertGroups',
+  (alertManagerSourceName: string): Promise<AlertmanagerGroup[]> => {
+    return withSerializedError(fetchAlertGroups(alertManagerSourceName));
+  }
+);
