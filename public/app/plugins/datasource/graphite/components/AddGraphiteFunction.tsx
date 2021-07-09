@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Button, Segment } from '@grafana/ui';
 import { FuncDef } from '../gfunc';
 import { forEach, sortBy } from 'lodash';
@@ -36,7 +36,7 @@ export function AddGraphiteFunction(props: Props) {
     [props.dispatch]
   );
 
-  const options = createOptions(props.funcDefs);
+  const options = useMemo(() => createOptions(props.funcDefs), [props.funcDefs]);
 
   return (
     <Segment
