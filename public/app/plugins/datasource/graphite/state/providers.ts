@@ -179,7 +179,7 @@ async function addAltTagSegments(
   return altSegments.concat(...tagSegments);
 }
 
-function removeTaggedEntry(altSegments: any[]) {
+function removeTaggedEntry(altSegments: GraphiteSegment[]) {
   remove(altSegments, (s) => s.value === '_tagged');
 }
 
