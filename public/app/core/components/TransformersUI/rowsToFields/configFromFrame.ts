@@ -4,9 +4,15 @@ import {
   FieldColorModeId,
   FieldConfig,
   getFieldDisplayName,
+  ReducerID,
   ThresholdsMode,
 } from '@grafana/data';
-import { RowToFieldsTransformMappings } from './rowsToFields';
+
+export interface FieldToConfigMapping {
+  fieldName: string;
+  reducerId?: ReducerID;
+  configProperty: string;
+}
 
 /**
  * Transforms a frame with fields to a map of field configs
@@ -26,7 +32,7 @@ import { RowToFieldsTransformMappings } from './rowsToFields';
 export function getFieldConfigFromFrame(
   frame: DataFrame,
   rowIndex: number,
-  mappings: RowToFieldsTransformMappings[]
+  mappings: FieldToConfigMapping[]
 ): FieldConfig {
   const config: FieldConfig = {};
 
@@ -134,7 +140,7 @@ function toNumericOrUndefined(value: any) {
 
 export function lookUpConfigMapDefinition(
   fieldName: string,
-  mappings: RowToFieldsTransformMappings[]
+  mappings: FieldToConfigMapping[]
 ): FieldConfigMapDefinition | null {
   const index = getConfigMapHandlersIndex();
 

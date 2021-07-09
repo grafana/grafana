@@ -12,12 +12,11 @@ import {
   reduceField,
   ReducerID,
 } from '@grafana/data';
-import { RowToFieldsTransformMappings } from '../rowsToFields/rowsToFields';
-import { getFieldConfigFromFrame } from '../rowsToFields/shared';
+import { getFieldConfigFromFrame, FieldToConfigMapping } from '../rowsToFields/configFromFrame';
 
 export interface ConfigFromQueryTransformOptions {
   configRefId: string;
-  mappings: RowToFieldsTransformMappings[];
+  mappings: FieldToConfigMapping[];
   applyTo?: MatcherConfig;
   applyToConfigQuery?: boolean;
 }
@@ -85,7 +84,7 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
   return output;
 }
 
-function getFieldReducer(field: Field, frame: DataFrame, mappings: RowToFieldsTransformMappings[]): ReducerID {
+function getFieldReducer(field: Field, frame: DataFrame, mappings: FieldToConfigMapping[]): ReducerID {
   const fieldName = getFieldDisplayName(field, frame);
 
   for (const mapping of mappings) {

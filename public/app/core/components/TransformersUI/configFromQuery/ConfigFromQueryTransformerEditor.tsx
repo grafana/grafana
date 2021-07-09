@@ -10,7 +10,7 @@ import {
 import { configFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
 import { InlineField, InlineFieldRow, InlineLabel, Select, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { configMapHandlers, lookUpConfigMapDefinition } from '../rowsToFields/shared';
+import { configMapHandlers, lookUpConfigMapDefinition } from '../rowsToFields/configFromFrame';
 import { capitalize } from 'lodash';
 
 interface Props extends TransformerUIProps<ConfigFromQueryTransformOptions> {}

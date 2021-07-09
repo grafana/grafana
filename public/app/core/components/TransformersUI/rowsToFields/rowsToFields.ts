@@ -7,20 +7,13 @@ import {
   Field,
   FieldType,
   getFieldDisplayName,
-  ReducerID,
 } from '@grafana/data';
-import { getFieldConfigFromFrame } from './shared';
+import { getFieldConfigFromFrame, FieldToConfigMapping } from './configFromFrame';
 
 export interface RowToFieldsTransformOptions {
   nameField?: string;
   valueField?: string;
-  mappings?: RowToFieldsTransformMappings[];
-}
-
-export interface RowToFieldsTransformMappings {
-  fieldName: string;
-  reducerId?: ReducerID;
-  configProperty: string;
+  mappings?: FieldToConfigMapping[];
 }
 
 export const rowsToFieldsTransformer: DataTransformerInfo<RowToFieldsTransformOptions> = {
