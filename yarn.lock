@@ -4963,10 +4963,10 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react-beautiful-dnd@12.1.2":
-  version "12.1.2"
-  resolved "https://registry.yarnpkg.com/@types/react-beautiful-dnd/-/react-beautiful-dnd-12.1.2.tgz#dfd1bdb072e92c1363e5f7a4c1842eaf95f77b21"
-  integrity sha512-h+0mA4cHmzL4BhyCniB6ZSSZhfO9LpXXbnhdAfa2k7klS03woiOT+Dh5AchY6eoQXk3vQVtqn40YY3u+MwFs8A==
+"@types/react-beautiful-dnd@13.1.1":
+  version "13.1.1"
+  resolved "https://registry.yarnpkg.com/@types/react-beautiful-dnd/-/react-beautiful-dnd-13.1.1.tgz#fb3fe24a334cc757d290e75722e4d3c8368ce3a3"
+  integrity sha512-1lBBxVSutE8CQM37Jq7KvJwuA94qaEEqsx+G0dnwzG6Sfwf6JGcNeFk5jjjhJli1q2naeMZm+D/dvT/zyX4QPw==
   dependencies:
     "@types/react" "*"
 
@@ -5093,10 +5093,10 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react-table@7.0.12":
-  version "7.0.12"
-  resolved "https://registry.yarnpkg.com/@types/react-table/-/react-table-7.0.12.tgz#cb57c8dfb110f8c2d0f04b9d44a70f9235a13b27"
-  integrity sha512-x/8nFrCjr1ySs51pkHsDQz3t+nW94qS/M9mpyLoweJNd9YKFzJ2mbVcUshfcMOyR1/UR+6lfz2EKA1lzOoJz+w==
+"@types/react-table@7.7.2":
+  version "7.7.2"
+  resolved "https://registry.yarnpkg.com/@types/react-table/-/react-table-7.7.2.tgz#434f8230eb011c7eed8f3550fdf25befafebcfac"
+  integrity sha512-NwB78t3YV5pZ1NK3m2vylb/d0DKVyWH4y4GMCtlE4tg2n5ENM4ejzKnT46YKuqG2cPjWc+PIxuRVMd5OYX1z4A==
   dependencies:
     "@types/react" "*"
 
