@@ -139,6 +139,7 @@ type DSNode struct {
 	queryType string
 	timeRange TimeRange
 	maxDP     int64
+	request   Request
 }
 
 // NodeType returns the data pipeline node type.
@@ -146,7 +147,7 @@ func (dn *DSNode) NodeType() NodeType {
 	return TypeDatasourceNode
 }
 
-func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, error) {
+func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
 	encodedQuery, err := json.Marshal(rn.Query)
 	if err != nil {
 		return nil, err
@@ -157,11 +158,12 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64
 			id:    dp.NewNode().ID(),
 			refID: rn.RefID,
 		},
-		orgID:     orgID,
+		orgID:     req.OrgId,
 		query:     json.RawMessage(encodedQuery),
 		queryType: rn.QueryType,
 		maxDP:     defaultMaxDP,
 		timeRange: rn.TimeRange,
+		request:   *req,
 	}
 
 	rawDsID, ok := rn.Query["datasourceId"]
@@ -218,6 +220,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 	resp, err := s.queryData(ctx, &backend.QueryDataRequest{
 		PluginContext: pc,
 		Queries:       q,
+		Headers:       dn.request.Headers,
 	})
 
 	if err != nil {

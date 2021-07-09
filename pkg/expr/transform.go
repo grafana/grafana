@@ -212,6 +212,7 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 	tQ := plugins.DataQuery{
 		TimeRange: &timeRange,
 		Queries:   queries,
+		Headers:   req.Headers,
 	}
 
 	// Execute the converted queries

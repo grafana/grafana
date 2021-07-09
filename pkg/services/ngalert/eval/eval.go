@@ -117,6 +117,10 @@ type AlertExecCtx struct {
 func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (*expr.Request, error) {
 	req := &expr.Request{
 		OrgId: ctx.OrgID,
+		Headers: map[string]string{
+			// Some data sources check this in query method as sometimes alerting needs special considerations.
+			"FromAlert": "true",
+		},
 	}
 
 	for i := range data {
