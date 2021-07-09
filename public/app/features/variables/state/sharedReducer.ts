@@ -122,11 +122,12 @@ const sharedReducerSlice = createSlice({
       const current = { ...option, text: ensureStringValues(option?.text), value: ensureStringValues(option?.value) };
 
       // If no value is set, default to the first avilable
-      if (!current.value) {
+      if (!current.value && instanceState.options.length) {
         instanceState.current = { ...instanceState.options[0], selected: true };
-        instanceState.options = instanceState.options.map((option, index) =>
-          index === 0 ? instanceState.current : { ...option, selected: false }
-        );
+        instanceState.options.forEach((option) => {
+          option.selected = false;
+        });
+        instanceState.options[0] = instanceState.current;
         return;
       }
 
