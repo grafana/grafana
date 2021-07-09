@@ -135,7 +135,7 @@ type ManagerV2 interface {
 	// QueryData queries data from a plugin.
 	QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error)
 	// CallResource calls a plugin resource.
-	CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string)
+	CallResource(pCtx backend.PluginContext, ctx *models.ReqContext, path string)
 	// CollectMetrics collects metrics from a plugin.
 	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
 	// CheckHealth performs a health check on a plugin.
