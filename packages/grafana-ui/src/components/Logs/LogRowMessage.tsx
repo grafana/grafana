@@ -54,7 +54,31 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-const restructureLog = (line: string, prettifyLogMessage: boolean): string => {
+function renderLogMessage(
+  hasAnsi: boolean,
+  entry: string,
+  highlights: string[] | undefined,
+  highlightClassName: string
+) {
+  const needsHighlighter =
+    highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;
+  if (needsHighlighter) {
+    return (
+      <Highlighter
+        textToHighlight={entry}
+        searchWords={highlights ?? []}
+        findChunks={findHighlightChunksInText}
+        highlightClassName={highlightClassName}
+      />
+    );
+  } else if (hasAnsi) {
+    return <LogMessageAnsi value={entry} />;
+  } else {
+    return entry;
+  }
+}
+
+const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): string => {
   if (prettifyLogMessage) {
     try {
       const parser = getParser(line) as LogsParser;
@@ -65,32 +89,7 @@ const restructureLog = (line: string, prettifyLogMessage: boolean): string => {
     }
   }
   return line;
-};
-
-function renderLogMessage(
-  needsHighlighter: boolean | '' | undefined,
-  hasAnsi: boolean,
-  restructuredEntry: string,
-  highlights: string[] | undefined,
-  highlightClassName: string
-) {
-  if (needsHighlighter) {
-    return (
-      <Highlighter
-        textToHighlight={restructuredEntry}
-        searchWords={highlights ?? []}
-        findChunks={findHighlightChunksInText}
-        highlightClassName={highlightClassName}
-      />
-    );
-  } else if (hasAnsi) {
-    return <LogMessageAnsi value={restructuredEntry} />;
-  } else {
-    return restructuredEntry;
-  }
-}
-
-const memoizeRestructureLog = memoizeOne(restructureLog);
+});
 
 class UnThemedLogRowMessage extends PureComponent<Props> {
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
@@ -115,13 +114,11 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     } = this.props;
 
     const style = getLogRowStyles(theme, row.logLevel);
-    const { entry, hasAnsi, raw } = row;
-    const restructuredEntry = memoizeRestructureLog(raw, prettifyLogMessage);
+    const { hasAnsi, raw } = row;
+    const restructuredEntry = restructureLog(raw, prettifyLogMessage);
 
     const previewHighlights = highlighterExpressions?.length && !isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
-    const needsHighlighter =
-      highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;
     const highlightClassName = previewHighlights
       ? cx([style.logsRowMatchHighLight, style.logsRowMatchHighLightPreview])
       : cx([style.logsRowMatchHighLight]);
@@ -145,7 +142,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             />
           )}
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
-            {renderLogMessage(needsHighlighter, hasAnsi, restructuredEntry, highlights, highlightClassName)}
+            {renderLogMessage(hasAnsi, restructuredEntry, highlights, highlightClassName)}
           </span>
           {showContextToggle?.(row) && (
             <span onClick={this.onContextToggle} className={cx('log-row-context', style.context)}>
