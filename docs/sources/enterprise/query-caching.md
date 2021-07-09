@@ -27,6 +27,23 @@ You can make a panel retrieve fresh data more frequently by increasing the **Max
 - Reduced API costs.
 - Reduced likelihood that APIs will rate-limit or throttle requests.
 
+## Data sources that work with query caching
+
+Query caching works for all [Enterprise data sources](https://grafana.com/grafana/plugins/?type=datasource&enterprise=1), and it works for the following [built-in data sources]({{< relref "../datasources/_index.md" >}}):
+- CloudWatch
+- Google Cloud Monitoring
+- InfluxDB
+- Microsoft SQL Server
+- MySQL
+- Postgres
+- Tempo
+
+Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana query caching does not improve performance.
+
+Query caching also works for all data sources that include a backend. More specifically, caching works with data sources that extend the `DataSourceWithBackend` class in the plugins SDK.
+
+To tell if a data source works with query caching, follow the instructions below to **Enable and Configure query caching**. If caching is enabled in Grafana but the Caching tab is not visible for the given data source, then query caching is not available for that data source.
+
 ## Enable and configure query caching
 
 You must be an Org admin or Grafana admin to enable query caching for a data source. For more information on Grafana roles and permissions, visit the [Permissions page]({{< relref "../permissions/_index.md" >}}).
