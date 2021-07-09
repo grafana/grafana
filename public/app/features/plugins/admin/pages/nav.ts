@@ -16,16 +16,9 @@ export function getCatalogNavModel(tab: CatalogTab, baseURL: string): NavModel {
   pages.push({
     text: 'Browse',
     icon: 'icon-gf icon-gf-apps',
-    url: `${baseURL}`,
+    url: `${baseURL}${CatalogTab.Browse}`,
     id: CatalogTab.Browse,
   });
-
-  //   pages.push({
-  //     text: 'Discover',
-  //     icon: 'file-alt',
-  //     url: `${baseURL}${CatalogTab.Discover}`,
-  //     id: CatalogTab.Discover,
-  //   });
 
   pages.push({
     text: 'Library',
