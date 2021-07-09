@@ -1,16 +1,8 @@
-<<<<<<< HEAD
-import React, { useMemo, useCallback } from 'react';
-import { LogRows, CustomScrollbar, useTheme2 } from '@grafana/ui';
-import { PanelProps, Field } from '@grafana/data';
-import { PanelOptions } from './models.gen';
-import { css } from '@emotion/css';
-=======
 import React, { useCallback, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { LogRows, CustomScrollbar, LogLabels, useStyles2 } from '@grafana/ui';
 import { PanelProps, Field, Labels, GrafanaTheme2 } from '@grafana/data';
-import { Options } from './types';
->>>>>>> origin/main
+import { PanelOptions } from './models.gen';
 import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { COMMON_LABELS } from '../../../core/logs_model';
