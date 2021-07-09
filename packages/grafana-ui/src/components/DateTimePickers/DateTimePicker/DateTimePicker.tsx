@@ -2,13 +2,12 @@ import React, { FC, FormEvent, ReactNode, useCallback, useEffect, useState } fro
 import { useMedia } from 'react-use';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { css, cx } from '@emotion/css';
-import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, HorizontalGroup, Icon, Input, Portal } from '../..';
-import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
-import { isValid } from '../utils';
+import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
+import { Button, ClickOutsideWrapper, Field, HorizontalGroup, Icon, Input, Portal } from '../..';
+import { TimeOfDayPicker } from '../TimeOfDayPicker';
 import { getBodyStyles, getStyles as getCalendarStyles } from '../TimeRangePicker/TimePickerCalendar';
 import { useStyles2, useTheme2 } from '../../../themes';
-import { TimeOfDayPicker } from '../TimeOfDayPicker';
+import { isValid } from '../utils';
 
 export interface Props {
   /** Input date for the component */
@@ -97,7 +96,7 @@ const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, on
     if (date) {
       setInternalDate({
         invalid: !isValid(dateTimeFormat(date)),
-        value: dateTimeFormat(date),
+        value: isDateTime(date) ? dateTimeFormat(date) : date,
       });
     }
   }, [date]);
@@ -120,6 +119,12 @@ const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, on
     [isFullscreen, onOpen]
   );
 
+  const onBlur = useCallback(() => {
+    if (isDateTime(internalDate.value)) {
+      onChange(dateTime(internalDate.value));
+    }
+  }, [internalDate.value, onChange]);
+
   const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
   return (
     <Field label={label} onClick={stopPropagation} invalid={internalDate.invalid} error="Incorrect date format">
@@ -129,7 +134,7 @@ const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, on
         addonAfter={icon}
         value={internalDate.value}
         onFocus={onFocus}
-        onBlur={() => onChange(dateTime(internalDate.value))}
+        onBlur={onBlur}
         data-testid="date-time-input"
       />
     </Field>
