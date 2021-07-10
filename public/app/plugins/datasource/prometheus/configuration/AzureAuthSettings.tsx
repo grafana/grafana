@@ -1,5 +1,6 @@
 import React, { FunctionComponent, useMemo } from 'react';
 import { DataSourceSettings } from '@grafana/data';
+import { InlineFormLabel, Input } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 import { KnownAzureClouds, AzureCredentials } from './AzureCredentials';
 import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
@@ -22,13 +23,31 @@ export const AzureAuthSettings: FunctionComponent<Props> = (props: Props) => {
   return (
     <>
       <h6>Azure Authentication</h6>
+      <AzureCredentialsForm
+        managedIdentityEnabled={config.azure.managedIdentityEnabled}
+        credentials={credentials}
+        azureCloudOptions={KnownAzureClouds}
+        onCredentialsChange={onCredentialsChange}
+      />
+      <h6>Azure Prometheus Configuration</h6>
       <div className="gf-form-group">
-        <AzureCredentialsForm
-          managedIdentityEnabled={config.azure.managedIdentityEnabled}
-          credentials={credentials}
-          azureCloudOptions={KnownAzureClouds}
-          onCredentialsChange={onCredentialsChange}
-        />
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel className="width-12">AAD resource ID</InlineFormLabel>
+            <div className="width-15">
+              <Input
+                className="width-30"
+                value={dataSourceConfig.jsonData.azurePrometheusResourceId || ''}
+                onChange={(event) =>
+                  onChange({
+                    ...dataSourceConfig,
+                    jsonData: { ...dataSourceConfig.jsonData, azurePrometheusResourceId: event.currentTarget.value },
+                  })
+                }
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );
