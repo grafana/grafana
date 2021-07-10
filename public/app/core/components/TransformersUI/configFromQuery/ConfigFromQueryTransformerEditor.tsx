@@ -90,6 +90,7 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
             frame={configFrame}
             mappings={options.mappings}
             onChange={(mappings) => onChange({ ...options, mappings })}
+            withReducers
           />
         )}
       </InlineFieldRow>

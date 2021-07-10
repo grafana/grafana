@@ -1,6 +1,6 @@
 import React from 'react';
-import { DataFrame, getFieldDisplayName, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Select, useStyles2 } from '@grafana/ui';
+import { DataFrame, getFieldDisplayName, GrafanaTheme2, ReducerID, SelectableValue } from '@grafana/data';
+import { Select, StatsPicker, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import {
   configMapHandlers,
@@ -13,9 +13,10 @@ interface Props {
   frame: DataFrame;
   mappings: FieldToConfigMapping[];
   onChange: (mappings: FieldToConfigMapping[]) => void;
+  withReducers?: boolean;
 }
 
-export function FieldToConfigMappingEditor({ frame, mappings, onChange }: Props) {
+export function FieldToConfigMappingEditor({ frame, mappings, onChange, withReducers }: Props) {
   const styles = useStyles2(getStyles);
   const rows = getViewModelRows(frame, mappings);
   const configProps: Array<SelectableValue<string | undefined>> = configMapHandlers.map((def) => ({
@@ -44,12 +45,25 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange }: Props)
     }
   };
 
+  const onChangeReducer = (row: FieldToConfigRowViewModel, reducerId: ReducerID) => {
+    const existingIdx = mappings.findIndex((x) => x.fieldName === row.fieldName);
+
+    if (existingIdx !== -1) {
+      const update = [...mappings];
+      update.splice(existingIdx, 1, { ...mappings[existingIdx], reducerId });
+      onChange(update);
+    } else {
+      onChange([...mappings, { fieldName: row.fieldName, configProperty: row.configHandlerKey, reducerId }]);
+    }
+  };
+
   return (
     <table className={styles.table}>
       <thead>
         <tr>
-          <th className={styles.headerCell}>Field name</th>
-          <th className={styles.headerCell}>Maps to config</th>
+          <th>Field name</th>
+          <th>Maps to config</th>
+          {withReducers && <th>Reducer</th>}
         </tr>
       </thead>
       <tbody>
@@ -64,6 +78,14 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange }: Props)
                 onChange={(value) => onChangeConfigProperty(row, value)}
               />
             </td>
+            {withReducers && (
+              <td>
+                <StatsPicker
+                  stats={[row.reducerId]}
+                  onChange={(stats: string[]) => onChangeReducer(row, stats[0] as ReducerID)}
+                />
+              </td>
+            )}
           </tr>
         ))}
       </tbody>
@@ -76,6 +98,7 @@ interface FieldToConfigRowViewModel {
   fieldName: string;
   isAutomatic: boolean;
   missingInFrame?: boolean;
+  reducerId: string;
 }
 
 function getViewModelRows(frame: DataFrame, mappings: FieldToConfigMapping[]): FieldToConfigRowViewModel[] {
@@ -91,6 +114,7 @@ function getViewModelRows(frame: DataFrame, mappings: FieldToConfigMapping[]): F
       fieldName,
       isAutomatic: mapping !== null,
       configHandlerKey: handler?.key ?? null,
+      reducerId: mapping?.reducerId ?? ReducerID.lastNotNull,
     };
   }
 
@@ -102,6 +126,7 @@ function getViewModelRows(frame: DataFrame, mappings: FieldToConfigMapping[]): F
         configHandlerKey: mapping.configProperty,
         isAutomatic: false,
         missingInFrame: true,
+        reducerId: mapping.reducerId ?? ReducerID.lastNotNull,
       };
     }
   }
@@ -121,12 +146,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
       white-space: nowrap;
       min-width: 158px;
     }
-  `,
-  headerCell: css`
-    background: ${theme.colors.background.secondary};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    line-height: ${theme.spacing(4)};
-    padding: ${theme.spacing(0, 1)};
+    th {
+      background: ${theme.colors.background.secondary};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      line-height: ${theme.spacing(4)};
+      padding: ${theme.spacing(0, 1)};
+    }
   `,
   labelCell: css`
     font-size: ${theme.typography.bodySmall.fontSize};
