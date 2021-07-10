@@ -129,6 +129,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(0, 1)};
   `,
   labelCell: css`
+    font-size: ${theme.typography.bodySmall.fontSize};
     background: ${theme.colors.background.secondary};
     padding: ${theme.spacing(0, 1)};
     max-width: 400px;

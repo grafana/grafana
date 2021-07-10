@@ -7,7 +7,15 @@ import {
   TransformerUIProps,
 } from '@grafana/data';
 import { configFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
-import { fieldMatchersUI, InlineField, InlineFieldRow, InlineLabel, Select, useStyles2 } from '@grafana/ui';
+import {
+  fieldMatchersUI,
+  InlineField,
+  InlineFieldRow,
+  InlineLabel,
+  InlineSwitch,
+  Select,
+  useStyles2,
+} from '@grafana/ui';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
 import { css } from '@emotion/css';
 
@@ -41,6 +49,10 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     onChange({ ...options, applyTo: { id: currentMatcher.id, options: matcherOption } });
   };
 
+  const onApplyToConfigChange = () => {
+    onChange({ ...options, applyToConfig: !options.applyToConfig });
+  };
+
   const matchers = fieldMatchersUI
     .list()
     .filter((o) => !o.excludeFromPicker)
@@ -52,12 +64,17 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
         <InlineField label="Config query" labelWidth={20}>
           <Select onChange={onRefIdChange} options={refIds} value={currentRefId} width={30} />
         </InlineField>
+        <InlineField label="Apply to self" tooltip="Enable to apply config to the config data frame">
+          <InlineSwitch value={options.applyToConfig} onChange={onApplyToConfigChange} />
+        </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Apply to" labelWidth={20}>
+        <InlineField label="Apply to matcher" labelWidth={20}>
           <Select onChange={onMatcherChange} options={matchers} value={currentMatcher.id} width={30} />
         </InlineField>
-        <InlineField label="Options" className={styles.matcherOptions}>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Matcher options" labelWidth={20} className={styles.matcherOptions}>
           <matcherUI.component
             matcher={matcherUI.matcher}
             data={input}
@@ -90,6 +107,6 @@ export const configFromQueryTransformRegistryItem: TransformerRegistryItem<Confi
 
 const getStyles = (theme: GrafanaTheme2) => ({
   matcherOptions: css`
-    min-width: 161px;
+    min-width: 261px;
   `,
 });
