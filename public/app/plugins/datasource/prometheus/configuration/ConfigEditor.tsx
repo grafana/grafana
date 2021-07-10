@@ -11,7 +11,7 @@ export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
 
   const azureSettings = {
-    azureAuthEnabled: true,
+    azureAuthEnabled: config.featureToggles['prometheus_azure_auth'] ?? false,
     azureSettingsUI: AzureAuthSettings,
   };
 
