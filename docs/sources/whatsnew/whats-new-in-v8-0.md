@@ -24,7 +24,7 @@ The new alerts in Grafana 8.0 are an opt-in feature that centralizes alerting in
 
 As part of the new alert changes, we have introduced a new data source, Alertmanager, which includes built-in support for Prometheus Alertmanager. It is presently in alpha and it not accessible unless alpha plugins are enabled in Grafana settings. For more information, refer to [Alertmanager data source]({{< relref "../datasources/alertmanager.md" >}}).
 
-> **Note:** Out of the box, Grafana still supports old Grafana alerts. They are legacy alerts at this time, and will be deprecated in a future release. 
+> **Note:** Out of the box, Grafana still supports old Grafana alerts. They are legacy alerts at this time, and will be deprecated in a future release.
 
 To learn more about the differences between new alerts and the legacy alerts, refer to [What's New with Grafana 8 Alerts]({{< relref "../alerting/difference-old-new.md" >}}).
 
@@ -100,7 +100,7 @@ The Time series is out of beta! We are removing the `Beta` tag and graduating th
 
 ### Node graph visualization updates
 
-You can now expand the node graph for the displayed trace when using the Trace to logs feature.. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service map based on the current trace.
+You can now expand the node graph for the displayed trace when using the Trace to logs feature. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service map based on the current trace.
 
 We also added a grid view and the ability to explore hidden nodes.
 
@@ -182,9 +182,9 @@ The Azure Monitor data source now supports Managed Identity for users hosting Gr
 
 Also, in addition to querying Log Analytics Workspaces, you can now query the logs for any individual [supported resource](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/metrics-supported), or for all resources in a subscription or resource group.
 
-> **Note:** In Grafana 7.5 we started the deprecation for separate Application Insights queries, in favor of querying Application Insights resources through Metrics and Logs. In Grafana 8.0 new Application Insights and Insights Analytics queries cannot be made, and existing queries have been made read-only. For more details, refer to the [Deprecating Application Insights]({{< relref "../datasources/azuremonitor.md#deprecating-application-insights" >}}.
+> **Note:** In Grafana 7.5 we started the deprecation for separate Application Insights queries, in favor of querying Application Insights resources through Metrics and Logs. In Grafana 8.0 new Application Insights and Insights Analytics queries cannot be made, and existing queries have been made read-only. For more details, refer to the [Deprecating Application Insights]({{< relref "../datasources/azuremonitor/_index.md#deprecating-application-insights" >}}.
 
-[Azure Monitor data source]({{< relref "../datasources/azuremonitor.md" >}}) was updated as a result of these changes.
+[Azure Monitor data source]({{< relref "../datasources/azuremonitor/_index.md" >}}) was updated as a result of these changes.
 
 #### Elasticsearch data source
 

@@ -91,6 +91,18 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
     });
   };
 
+  const onClearAzLogsCreds = () => {
+    updateOptions((options) => {
+      return {
+        ...options,
+        jsonData: {
+          ...options.jsonData,
+          azureLogAnalyticsSameAs: true,
+        },
+      };
+    });
+  };
+
   return (
     <>
       <h3 className="page-heading">Azure Monitor Logs</h3>
@@ -113,7 +125,9 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
             }}
             getSubscriptions={getSubscriptions}
             disabled={true}
-          />
+          >
+            <Button onClick={onClearAzLogsCreds}>Clear Azure Monitor Logs Credentials</Button>
+          </AzureCredentialsForm>
         </>
       )}
       <div className="gf-form-group">
@@ -130,6 +144,7 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
                 value={workspaces.find((opt) => opt.value === defaultWorkspace)}
                 options={workspaces}
                 onChange={onDefaultWorkspaceChange}
+                isDisabled={props.options.readOnly}
               />
             </div>
           </div>
@@ -142,7 +157,7 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
                 size="sm"
                 type="button"
                 onClick={onLoadWorkspaces}
-                disabled={!hasRequiredFields}
+                disabled={!hasRequiredFields || props.options.readOnly}
               >
                 Load Workspaces
               </Button>

@@ -553,6 +553,23 @@ describe('PrometheusDatasource', () => {
     });
   });
 
+  describe('interpolateVariablesInQueries', () => {
+    it('should call replace function 2 times', () => {
+      const query = {
+        expr: 'test{job="testjob"}',
+        format: 'time_series',
+        interval: '$Interval',
+        refId: 'A',
+      };
+      const interval = '10m';
+      templateSrvStub.replace.mockReturnValue(interval);
+
+      const queries = ds.interpolateVariablesInQueries([query], { Interval: { text: interval, value: interval } });
+      expect(templateSrvStub.replace).toBeCalledTimes(2);
+      expect(queries[0].interval).toBe(interval);
+    });
+  });
+
   describe('metricFindQuery', () => {
     beforeEach(() => {
       const query = 'query_result(topk(5,rate(http_request_duration_microseconds_count[$__interval])))';
