@@ -80,6 +80,7 @@ type FieldToConfigMapHandlerProcessor = (value: any, config: FieldConfig, contex
 export interface FieldToConfigMapHandler {
   key: string;
   targetProperty?: string;
+  name?: string;
   processor: FieldToConfigMapHandlerProcessor;
   defaultReducer?: ReducerID;
 }
@@ -136,6 +137,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'mappings.value',
+    name: 'Value mappings / Value',
     targetProperty: 'mappings',
     defaultReducer: ReducerID.allValues,
     processor: (value, config, context) => {
@@ -149,6 +151,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'mappings.color',
+    name: 'Value mappings / Color',
     targetProperty: 'mappings',
     defaultReducer: ReducerID.allValues,
     processor: (value, config, context) => {
@@ -162,6 +165,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'mappings.text',
+    name: 'Value mappings / Display text',
     targetProperty: 'mappings',
     defaultReducer: ReducerID.allValues,
     processor: (value, config, context) => {

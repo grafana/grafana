@@ -20,7 +20,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
   const styles = useStyles2(getStyles);
   const rows = getViewModelRows(frame, mappings);
   const configProps: Array<SelectableValue<string | undefined>> = configMapHandlers.map((def) => ({
-    label: capitalize(def.key),
+    label: def.name ?? capitalize(def.key),
     value: def.key,
   }));
 
