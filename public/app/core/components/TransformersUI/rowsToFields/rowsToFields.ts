@@ -8,7 +8,7 @@ import {
   FieldType,
   getFieldDisplayName,
 } from '@grafana/data';
-import { getFieldConfigFromFrame, FieldToConfigMapping } from './configFromFrame';
+import { getFieldConfigFromFrame, FieldToConfigMapping } from '../fieldToConfigMapping/fieldToConfigMapping';
 
 export interface RowToFieldsTransformOptions {
   nameField?: string;

@@ -11,7 +11,7 @@ import {
 export interface FieldToConfigMapping {
   fieldName: string;
   reducerId?: ReducerID;
-  configProperty: string;
+  configProperty: string | null;
 }
 
 /**
@@ -38,7 +38,8 @@ export function getFieldConfigFromFrame(
 
   for (const field of frame.fields) {
     const fieldName = getFieldDisplayName(field, frame);
-    const configDef = lookUpConfigMapDefinition(fieldName, mappings);
+    const handlerKey = getConfigHandlerKeyForField(fieldName, mappings);
+    const configDef = lookUpConfigHandler(handlerKey);
 
     if (!configDef) {
       continue;
@@ -138,17 +139,20 @@ function toNumericOrUndefined(value: any) {
   return numeric;
 }
 
-export function lookUpConfigMapDefinition(
-  fieldName: string,
-  mappings: FieldToConfigMapping[]
-): FieldConfigMapDefinition | null {
-  const index = getConfigMapHandlersIndex();
-
+export function getConfigHandlerKeyForField(fieldName: string, mappings: FieldToConfigMapping[]) {
   for (const map of mappings) {
     if (fieldName === map.fieldName) {
-      return index[map.configProperty];
+      return map.configProperty;
     }
   }
 
-  return index[fieldName] || index[fieldName.toLowerCase()];
+  return fieldName.toLowerCase();
+}
+
+export function lookUpConfigHandler(key: string | null): FieldConfigMapDefinition | null {
+  if (!key) {
+    return null;
+  }
+
+  return getConfigMapHandlersIndex()[key];
 }
