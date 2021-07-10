@@ -119,7 +119,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       border-right: 4px solid ${theme.colors.background.primary};
       border-bottom: 4px solid ${theme.colors.background.primary};
       white-space: nowrap;
-      min-width: 120px;
+      min-width: 158px;
     }
   `,
   headerCell: css`
