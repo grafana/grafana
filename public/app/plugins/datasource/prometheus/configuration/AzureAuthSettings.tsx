@@ -1,17 +1,12 @@
 import React, { FunctionComponent, useMemo } from 'react';
-import { DataSourceSettings } from '@grafana/data';
 import { InlineFormLabel, Input } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 import { KnownAzureClouds, AzureCredentials } from './AzureCredentials';
 import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
+import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
-export interface Props {
-  dataSourceConfig: DataSourceSettings<any, any>;
-  onChange: (config: DataSourceSettings) => void;
-}
-
-export const AzureAuthSettings: FunctionComponent<Props> = (props: Props) => {
+export const AzureAuthSettings: FunctionComponent<HttpSettingsBaseProps> = (props: HttpSettingsBaseProps) => {
   const { dataSourceConfig, onChange } = props;
 
   const credentials = useMemo(() => getCredentials(dataSourceConfig), [dataSourceConfig]);
@@ -29,7 +24,7 @@ export const AzureAuthSettings: FunctionComponent<Props> = (props: Props) => {
         azureCloudOptions={KnownAzureClouds}
         onCredentialsChange={onCredentialsChange}
       />
-      <h6>Azure Prometheus Configuration</h6>
+      <h6>Azure Configuration</h6>
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
