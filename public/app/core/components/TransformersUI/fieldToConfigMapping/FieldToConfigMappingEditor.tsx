@@ -30,17 +30,17 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
     if (value) {
       if (existingIdx !== -1) {
         const update = [...mappings];
-        update.splice(existingIdx, 1, { ...mappings[existingIdx], configProperty: value.value! });
+        update.splice(existingIdx, 1, { ...mappings[existingIdx], handlerKey: value.value! });
         onChange(update);
       } else {
-        onChange([...mappings, { fieldName: row.fieldName, configProperty: value.value! }]);
+        onChange([...mappings, { fieldName: row.fieldName, handlerKey: value.value! }]);
       }
     } else {
       if (existingIdx !== -1) {
         onChange(mappings.filter((x, index) => index !== existingIdx));
       } else {
         // mark it as ignored
-        onChange([...mappings, { fieldName: row.fieldName, configProperty: null }]);
+        onChange([...mappings, { fieldName: row.fieldName, handlerKey: null }]);
       }
     }
   };
@@ -53,7 +53,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
       update.splice(existingIdx, 1, { ...mappings[existingIdx], reducerId });
       onChange(update);
     } else {
-      onChange([...mappings, { fieldName: row.fieldName, configProperty: row.configHandlerKey, reducerId }]);
+      onChange([...mappings, { fieldName: row.fieldName, handlerKey: row.handlerKey, reducerId }]);
     }
   };
 
@@ -73,7 +73,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
             <td className={styles.selectCell}>
               <Select
                 options={configProps}
-                value={row.configHandlerKey}
+                value={row.handlerKey}
                 isClearable={true}
                 onChange={(value) => onChangeConfigProperty(row, value)}
               />
@@ -94,7 +94,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
 }
 
 interface FieldToConfigRowViewModel {
-  configHandlerKey: string | null;
+  handlerKey: string | null;
   fieldName: string;
   isAutomatic: boolean;
   missingInFrame?: boolean;
@@ -107,14 +107,14 @@ function getViewModelRows(frame: DataFrame, mappings: FieldToConfigMapping[]): F
   for (const field of frame.fields) {
     const fieldName = getFieldDisplayName(field, frame);
     const mapping = mappings.find((x) => x.fieldName === fieldName);
-    const key = mapping ? mapping.configProperty : fieldName.toLowerCase();
+    const key = mapping ? mapping.handlerKey : fieldName.toLowerCase();
     const handler = lookUpConfigHandler(key);
 
     rows[fieldName] = {
       fieldName,
       isAutomatic: mapping !== null,
-      configHandlerKey: handler?.key ?? null,
-      reducerId: mapping?.reducerId ?? ReducerID.lastNotNull,
+      handlerKey: handler?.key ?? null,
+      reducerId: mapping?.reducerId ?? handler?.defaultReducer ?? ReducerID.lastNotNull,
     };
   }
 
@@ -123,7 +123,7 @@ function getViewModelRows(frame: DataFrame, mappings: FieldToConfigMapping[]): F
     if (!rows[mapping.fieldName]) {
       rows[mapping.fieldName] = {
         fieldName: mapping.fieldName,
-        configHandlerKey: mapping.configProperty,
+        handlerKey: mapping.handlerKey,
         isAutomatic: false,
         missingInFrame: true,
         reducerId: mapping.reducerId ?? ReducerID.lastNotNull,

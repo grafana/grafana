@@ -39,7 +39,7 @@ describe('config from data', () => {
   it('With custom mappings', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
-      mappings: [{ fieldName: 'Min', configProperty: 'decimals' }],
+      mappings: [{ fieldName: 'Min', handlerKey: 'decimals' }],
     };
 
     const results = extractConfigFromQuery(options, [config, seriesA]);
@@ -50,7 +50,7 @@ describe('config from data', () => {
   it('With custom reducer', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
-      mappings: [{ fieldName: 'Max', configProperty: 'max', reducerId: ReducerID.min }],
+      mappings: [{ fieldName: 'Max', handlerKey: 'max', reducerId: ReducerID.min }],
     };
 
     const results = extractConfigFromQuery(options, [config, seriesA]);
@@ -61,7 +61,7 @@ describe('config from data', () => {
   it('With custom matcher and displayName mapping', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
-      mappings: [{ fieldName: 'Names', configProperty: 'displayName', reducerId: ReducerID.first }],
+      mappings: [{ fieldName: 'Names', handlerKey: 'displayName', reducerId: ReducerID.first }],
       applyTo: { id: 'byName', options: 'Value' },
     };
 
@@ -97,9 +97,9 @@ describe('value mapping from data', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'config',
       mappings: [
-        { fieldName: 'value', configProperty: 'mappings.value' },
-        { fieldName: 'color', configProperty: 'mappings.color' },
-        { fieldName: 'text', configProperty: 'mappings.text' },
+        { fieldName: 'value', handlerKey: 'mappings.value' },
+        { fieldName: 'color', handlerKey: 'mappings.color' },
+        { fieldName: 'text', handlerKey: 'mappings.text' },
       ],
     };
 

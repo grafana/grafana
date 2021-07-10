@@ -20,7 +20,7 @@ describe('Rows to fields', () => {
         mappings: [
           {
             fieldName: 'Miiin',
-            configProperty: 'min',
+            handlerKey: 'min',
           },
         ],
       },

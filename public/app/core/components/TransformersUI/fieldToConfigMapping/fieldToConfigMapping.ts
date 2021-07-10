@@ -15,7 +15,7 @@ import { isArray } from 'lodash';
 export interface FieldToConfigMapping {
   fieldName: string;
   reducerId?: ReducerID;
-  configProperty: string | null;
+  handlerKey: string | null;
 }
 
 /**
@@ -56,9 +56,9 @@ export function getFieldConfigFromFrame(
       continue;
     }
 
-    const newValue = configDef.handler(configValue, config, context);
+    const newValue = configDef.processor(configValue, config, context);
     if (newValue != null) {
-      (config as any)[configDef.key ?? configDef.configProperty] = newValue;
+      (config as any)[configDef.key ?? configDef.targetProperty] = newValue;
     }
   }
 
@@ -75,44 +75,44 @@ interface FieldToConfigContext {
   mappingTexts?: string[];
 }
 
-type FieldToConfigMapHandler = (value: any, config: FieldConfig, context: FieldToConfigContext) => any;
+type FieldToConfigMapHandlerProcessor = (value: any, config: FieldConfig, context: FieldToConfigContext) => any;
 
-export interface FieldConfigMapDefinition {
+export interface FieldToConfigMapHandler {
   key: string;
-  configProperty?: string;
-  handler: FieldToConfigMapHandler;
+  targetProperty?: string;
+  processor: FieldToConfigMapHandlerProcessor;
   defaultReducer?: ReducerID;
 }
 
-export const configMapHandlers: FieldConfigMapDefinition[] = [
+export const configMapHandlers: FieldToConfigMapHandler[] = [
   {
     key: 'max',
-    handler: toNumericOrUndefined,
+    processor: toNumericOrUndefined,
   },
   {
     key: 'min',
-    handler: toNumericOrUndefined,
+    processor: toNumericOrUndefined,
   },
   {
     key: 'unit',
-    handler: (value) => value.toString(),
+    processor: (value) => value.toString(),
   },
   {
     key: 'decimals',
-    handler: toNumericOrUndefined,
+    processor: toNumericOrUndefined,
   },
   {
     key: 'displayName',
-    handler: (value: any) => value.toString(),
+    processor: (value: any) => value.toString(),
   },
   {
     key: 'color',
-    handler: (value) => ({ fixedColor: value, mode: FieldColorModeId.Fixed }),
+    processor: (value) => ({ fixedColor: value, mode: FieldColorModeId.Fixed }),
   },
   {
     key: 'threshold1',
-    configProperty: 'thresholds',
-    handler: (value, config) => {
+    targetProperty: 'thresholds',
+    processor: (value, config) => {
       const numeric = anyToNumber(value);
 
       if (isNaN(numeric)) {
@@ -136,10 +136,9 @@ export const configMapHandlers: FieldConfigMapDefinition[] = [
   },
   {
     key: 'mappings.value',
-    configProperty: 'mappings',
+    targetProperty: 'mappings',
     defaultReducer: ReducerID.allValues,
-    handler: (value, config, context) => {
-      console.log('mappings.value', value);
+    processor: (value, config, context) => {
       if (!isArray(value)) {
         return;
       }
@@ -150,9 +149,9 @@ export const configMapHandlers: FieldConfigMapDefinition[] = [
   },
   {
     key: 'mappings.color',
-    configProperty: 'mappings',
+    targetProperty: 'mappings',
     defaultReducer: ReducerID.allValues,
-    handler: (value, config, context) => {
+    processor: (value, config, context) => {
       if (!isArray(value)) {
         return;
       }
@@ -163,9 +162,9 @@ export const configMapHandlers: FieldConfigMapDefinition[] = [
   },
   {
     key: 'mappings.text',
-    configProperty: 'mappings',
+    targetProperty: 'mappings',
     defaultReducer: ReducerID.allValues,
-    handler: (value, config, context) => {
+    processor: (value, config, context) => {
       if (!isArray(value)) {
         return;
       }
@@ -200,7 +199,7 @@ function combineValueMappings(context: FieldToConfigContext): ValueMapping[] {
   return [valueMap];
 }
 
-let configMapHandlersIndex: Record<string, FieldConfigMapDefinition> | null = null;
+let configMapHandlersIndex: Record<string, FieldToConfigMapHandler> | null = null;
 
 export function getConfigMapHandlersIndex() {
   if (configMapHandlersIndex === null) {
@@ -226,14 +225,14 @@ function toNumericOrUndefined(value: any) {
 export function getConfigHandlerKeyForField(fieldName: string, mappings: FieldToConfigMapping[]) {
   for (const map of mappings) {
     if (fieldName === map.fieldName) {
-      return map.configProperty;
+      return map.handlerKey;
     }
   }
 
   return fieldName.toLowerCase();
 }
 
-export function lookUpConfigHandler(key: string | null): FieldConfigMapDefinition | null {
+export function lookUpConfigHandler(key: string | null): FieldToConfigMapHandler | null {
   if (!key) {
     return null;
   }
