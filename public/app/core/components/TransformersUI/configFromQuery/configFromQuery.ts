@@ -12,7 +12,12 @@ import {
   reduceField,
   ReducerID,
 } from '@grafana/data';
-import { getFieldConfigFromFrame, FieldToConfigMapping } from '../fieldToConfigMapping/fieldToConfigMapping';
+import {
+  getFieldConfigFromFrame,
+  FieldToConfigMapping,
+  getConfigHandlerKeyForField,
+  lookUpConfigHandler,
+} from '../fieldToConfigMapping/fieldToConfigMapping';
 
 export interface ConfigFromQueryTransformOptions {
   configRefId: string;
@@ -93,7 +98,9 @@ function getFieldReducer(field: Field, frame: DataFrame, mappings: FieldToConfig
     }
   }
 
-  return ReducerID.lastNotNull;
+  const key = getConfigHandlerKeyForField(fieldName, mappings);
+  const handler = lookUpConfigHandler(key);
+  return handler?.defaultReducer ?? ReducerID.lastNotNull;
 }
 
 export const configFromDataTransformer: DataTransformerInfo<ConfigFromQueryTransformOptions> = {
