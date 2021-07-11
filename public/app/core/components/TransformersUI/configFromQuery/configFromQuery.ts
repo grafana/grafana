@@ -20,7 +20,7 @@ import {
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 
 export interface ConfigFromQueryTransformOptions {
-  configRefId: string;
+  configRefId?: string;
   mappings: FieldToConfigMapping[];
   applyTo?: MatcherConfig;
   applyToConfig?: boolean;

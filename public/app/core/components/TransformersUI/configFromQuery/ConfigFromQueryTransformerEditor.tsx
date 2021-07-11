@@ -19,7 +19,7 @@ import {
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
 import { css } from '@emotion/css';
 
-interface Props extends TransformerUIProps<ConfigFromQueryTransformOptions> {}
+export interface Props extends TransformerUIProps<ConfigFromQueryTransformOptions> {}
 
 export function ConfigFromQueryTransformerEditor({ input, onChange, options }: Props) {
   const styles = useStyles2(getStyles);
