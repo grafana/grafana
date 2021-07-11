@@ -250,9 +250,10 @@ export class PanelChrome extends Component<Props, State> {
       panel.runAllPanelQueries(this.props.dashboard.id, this.props.dashboard.getTimezone(), timeData, width);
     } else {
       // The panel should render on refresh as well if it doesn't have a query, like clock panel
-      this.setState((prevState) => ({
-        data: { ...prevState.data, timeRange: this.timeSrv.timeRange() },
-      }));
+      this.setState({
+        data: { ...this.state.data, timeRange: this.timeSrv.timeRange() },
+        renderCounter: this.state.renderCounter + 1,
+      });
     }
   };
 
