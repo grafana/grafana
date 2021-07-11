@@ -19,7 +19,14 @@ export interface TransformerRegistryItem<TOptions> extends RegistryItem {
    * Object describing transformer configuration
    */
   transformation: DataTransformerInfo<TOptions>;
+
+  /**
+   * Optional feature state
+   */
   state?: PluginState;
+
+  /** Markdown with more detailed description and help */
+  help?: string;
 
   /**
    * React component used as UI for the transformer

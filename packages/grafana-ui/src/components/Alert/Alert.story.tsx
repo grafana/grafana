@@ -6,6 +6,7 @@ import { Props } from './Alert';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from '../Alert/Alert.mdx';
 import { StoryExample } from '../../utils/storybook/StoryExample';
+import { renderMarkdown } from '../../../../grafana-data/src';
 
 const severities: AlertVariant[] = ['error', 'warning', 'info', 'success'];
 
@@ -63,6 +64,40 @@ export const Examples: Story<Props> = ({ severity, title, buttonContent }) => {
         </VerticalGroup>
       </StoryExample>
     </VerticalGroup>
+  );
+};
+
+export const LargeContent: Story<Props> = ({}) => {
+  const markdown = `# Examples  
+
+  With this transform you can for example transform 
+
+  Name    | Value | Max 
+  --------|-------|------
+  ServerA | 10    | 100
+  ServerB | 20    | 200
+
+  Into. 
+  
+  ServerA (max=100) | ServerB (max=200)
+  ------------------|------------------
+  10                | 20   
+  
+  # More examples
+
+  ServerA (max=100) | ServerB (max=200)
+  ------------------|------------------
+  10                | 20   
+  `;
+
+  const html = renderMarkdown(markdown);
+
+  return (
+    <StoryExample name="With large content">
+      <Alert title={'Transformation help'} severity={'info'} onRemove={action('Remove button clicked')}>
+        <div className="markdown-html" dangerouslySetInnerHTML={{ __html: html }} />;
+      </Alert>
+    </StoryExample>
   );
 };
 

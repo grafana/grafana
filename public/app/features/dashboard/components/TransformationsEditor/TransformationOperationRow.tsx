@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { DataFrame, DataTransformerConfig, TransformerRegistryItem } from '@grafana/data';
-import { HorizontalGroup } from '@grafana/ui';
+import React from 'react';
+import { DataFrame, DataTransformerConfig, renderMarkdown, TransformerRegistryItem } from '@grafana/data';
+import { Alert, HorizontalGroup } from '@grafana/ui';
 
 import { TransformationEditor } from './TransformationEditor';
 import {
@@ -10,6 +10,7 @@ import {
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { TransformationsEditorTransformation } from './types';
 import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
+import { useToggle } from 'react-use';
 
 interface TransformationOperationRowProps {
   id: string;
@@ -30,21 +31,17 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
   uiConfig,
   onChange,
 }) => {
-  const [showDebug, setShowDebug] = useState(false);
+  const [showDebug, toggleDebug] = useToggle(false);
+  const [showHelp, toggleHelp] = useToggle(false);
 
   const renderActions = ({ isOpen }: QueryOperationRowRenderProps) => {
     return (
       <HorizontalGroup align="center" width="auto">
         {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
-        <QueryOperationAction
-          title="Debug"
-          disabled={!isOpen}
-          icon="bug"
-          onClick={() => {
-            setShowDebug(!showDebug);
-          }}
-        />
-
+        {uiConfig.help && (
+          <QueryOperationAction title="Show/hide transform help guide" icon="info-circle" onClick={toggleHelp} />
+        )}
+        <QueryOperationAction title="Debug" disabled={!isOpen} icon="bug" onClick={toggleDebug} />
         <QueryOperationAction title="Remove" icon="trash-alt" onClick={() => onRemove(index)} />
       </HorizontalGroup>
     );
@@ -52,6 +49,11 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
 
   return (
     <QueryOperationRow id={id} index={index} title={uiConfig.name} draggable actions={renderActions}>
+      {showHelp && (
+        <Alert title="Help" onRemove={toggleHelp}>
+          {renderHelp(uiConfig.help!)}
+        </Alert>
+      )}
       <TransformationEditor
         debugMode={showDebug}
         index={index}
@@ -63,3 +65,8 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
     </QueryOperationRow>
   );
 };
+
+function renderHelp(help: string) {
+  const helpHtml = renderMarkdown(help);
+  return <div className="markdown-html" dangerouslySetInnerHTML={{ __html: helpHtml }} />;
+}
