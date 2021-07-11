@@ -1,6 +1,6 @@
 import React from 'react';
-import { DataFrame, DataTransformerConfig, renderMarkdown, TransformerRegistryItem } from '@grafana/data';
-import { Alert, HorizontalGroup } from '@grafana/ui';
+import { DataFrame, DataTransformerConfig, TransformerRegistryItem } from '@grafana/data';
+import { HelpBox, HorizontalGroup } from '@grafana/ui';
 
 import { TransformationEditor } from './TransformationEditor';
 import {
@@ -38,9 +38,7 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
     return (
       <HorizontalGroup align="center" width="auto">
         {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
-        {uiConfig.help && (
-          <QueryOperationAction title="Show/hide transform help guide" icon="info-circle" onClick={toggleHelp} />
-        )}
+        <QueryOperationAction title="Show/hide transform help" icon="info-circle" onClick={toggleHelp} />
         <QueryOperationAction title="Debug" disabled={!isOpen} icon="bug" onClick={toggleDebug} />
         <QueryOperationAction title="Remove" icon="trash-alt" onClick={() => onRemove(index)} />
       </HorizontalGroup>
@@ -49,11 +47,7 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
 
   return (
     <QueryOperationRow id={id} index={index} title={uiConfig.name} draggable actions={renderActions}>
-      {showHelp && (
-        <Alert title="Help" onRemove={toggleHelp}>
-          {renderHelp(uiConfig.help!)}
-        </Alert>
-      )}
+      {showHelp && <HelpBox heading="Transformation help" onRemove={toggleHelp} markdown={prepMarkdown(uiConfig)} />}
       <TransformationEditor
         debugMode={showDebug}
         index={index}
@@ -66,7 +60,12 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
   );
 };
 
-function renderHelp(help: string) {
-  const helpHtml = renderMarkdown(help);
-  return <div className="markdown-html" dangerouslySetInnerHTML={{ __html: helpHtml }} />;
+function prepMarkdown(uiConfig: TransformerRegistryItem<any>) {
+  let helpMarkdown = uiConfig.help ?? uiConfig.description;
+
+  return `
+${helpMarkdown}
+
+[Read more on the documentation site](https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana)
+`;
 }

@@ -383,20 +383,24 @@ export const calculateFieldTransformRegistryItem: TransformerRegistryItem<Calcul
   name: 'Add field from calculation',
   description: 'Use the row values to calculate a new field',
   help: `
-# Examples
-With this transform you can for example transform 
+With this transform you can do simple math across fields. 
 
 Name    | Value | Max 
 --------|-------|------
 ServerA | 10    | 100
 ServerB | 20    | 200
+ServerC | 30    | 300
 
-Into. 
+Can be transformed into
+
+ServerA (max=100) | ServerB (max=200) | ServerC (max=300) 
+------------------|------------------ | ------------------
+10                | 20                | 30         
+
+### More examples
 
 ServerA (max=100) | ServerB (max=200)
 ------------------|------------------
-10                | 20 
-
-The \`(max=100)\`  is not part of the field name but the field configuration. 
-  `,
+10                | 20   
+`,
 };

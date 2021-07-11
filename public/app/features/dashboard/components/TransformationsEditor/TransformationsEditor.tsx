@@ -11,6 +11,7 @@ import {
   IconButton,
   useStyles2,
   Card,
+  HelpBox,
 } from '@grafana/ui';
 import {
   DataFrame,
@@ -264,12 +265,11 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 }
 
                 return (
-                  <Alert
-                    title="Transformations"
+                  <HelpBox
+                    heading="Transformations"
                     onRemove={() => {
                       onDismiss(true);
                     }}
-                    severity="info"
                   >
                     <p>
                       Transformations allow you to join, calculate, re-order, hide, and rename your query results before
@@ -286,7 +286,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                     >
                       Read more
                     </a>
-                  </Alert>
+                  </HelpBox>
                 );
               }}
             </LocalStorageValueProvider>

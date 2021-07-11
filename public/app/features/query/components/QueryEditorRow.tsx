@@ -6,7 +6,7 @@ import { has, cloneDeep } from 'lodash';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { ErrorBoundaryAlert, HorizontalGroup, InfoBox } from '@grafana/ui';
+import { ErrorBoundaryAlert, HorizontalGroup, HelpBox } from '@grafana/ui';
 import {
   DataQuery,
   DataSourceApi,
@@ -354,12 +354,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           <div className={rowClasses}>
             <ErrorBoundaryAlert>
               {showingHelp && DatasourceCheatsheet && (
-                <InfoBox onDismiss={this.onToggleHelp}>
+                <HelpBox heading="Query help" onRemove={this.onToggleHelp}>
                   <DatasourceCheatsheet
                     onClickExample={(query) => this.onClickExample(query)}
                     datasource={datasource}
                   />
-                </InfoBox>
+                </HelpBox>
               )}
               {editor}
             </ErrorBoundaryAlert>

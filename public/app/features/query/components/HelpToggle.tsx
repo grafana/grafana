@@ -1,5 +1,5 @@
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, InfoBox, stylesFactory, useTheme } from '@grafana/ui';
+import { Icon, HelpBox, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import React, { useState } from 'react';
 
@@ -20,7 +20,11 @@ export const HelpToggle: React.FunctionComponent = ({ children }) => {
         Help
         <Icon name={isHelpVisible ? 'angle-down' : 'angle-right'} />
       </button>
-      {isHelpVisible && <InfoBox className={cx(styles.infoBox)}>{children}</InfoBox>}
+      {isHelpVisible && (
+        <HelpBox heading="Query help" className={cx(styles.infoBox)} onRemove={() => setIsHelpVisible(false)}>
+          {children}
+        </HelpBox>
+      )}
     </>
   );
 };
