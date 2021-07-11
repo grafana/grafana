@@ -293,7 +293,8 @@ export function SelectBase<T>({
             return (
               <Icon
                 name="times"
-                data-testid="select-clear-value"
+                role="button"
+                aria-label="select-clear-value"
                 className={styles.singleValueRemove}
                 onMouseDown={(e) => {
                   e.preventDefault();
