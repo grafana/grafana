@@ -293,6 +293,7 @@ export function SelectBase<T>({
             return (
               <Icon
                 name="times"
+                className={styles.singleValueRemove}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
