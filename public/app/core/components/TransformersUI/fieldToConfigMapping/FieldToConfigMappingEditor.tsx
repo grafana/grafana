@@ -78,7 +78,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
               />
             </td>
             {withReducers && (
-              <td data-testid={`${row.fieldName}-reducer`}>
+              <td data-testid={`${row.fieldName}-reducer`} className={styles.selectCell}>
                 <StatsPicker
                   stats={[row.reducerId]}
                   defaultStat={row.reducerId}
@@ -166,7 +166,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       border-right: 4px solid ${theme.colors.background.primary};
       border-bottom: 4px solid ${theme.colors.background.primary};
       white-space: nowrap;
-      min-width: 158px;
     }
     th {
       background: ${theme.colors.background.secondary};
@@ -182,8 +181,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     max-width: 400px;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 240px;
   `,
   selectCell: css`
     padding: 0;
+    min-width: 161px;
   `,
 });

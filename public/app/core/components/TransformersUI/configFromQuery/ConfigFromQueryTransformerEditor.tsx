@@ -108,6 +108,6 @@ export const configFromQueryTransformRegistryItem: TransformerRegistryItem<Confi
 
 const getStyles = (theme: GrafanaTheme2) => ({
   matcherOptions: css`
-    min-width: 261px;
+    min-width: 404px;
   `,
 });

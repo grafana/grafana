@@ -31,16 +31,18 @@ export function RowsToFieldsTransformerEditor({ input, options, onChange }: Prop
             options={fieldNames}
             value={options.nameField}
             placeholder="Auto (first string field)"
-            width={25}
+            width={30}
           />
         </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
         <InlineField label="Value field" labelWidth={15}>
           <Select
             onChange={onChangeValueField}
             options={fieldNames}
             value={options.valueField}
             placeholder="Auto (first number field)"
-            width={25}
+            width={30}
           />
         </InlineField>
       </InlineFieldRow>
