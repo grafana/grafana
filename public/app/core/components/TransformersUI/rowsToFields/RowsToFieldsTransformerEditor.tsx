@@ -5,7 +5,7 @@ import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfi
 import { InlineField, InlineFieldRow, InlineLabel, Select } from '@grafana/ui';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
-interface Props extends TransformerUIProps<RowToFieldsTransformOptions> {}
+export interface Props extends TransformerUIProps<RowToFieldsTransformOptions> {}
 
 export function RowsToFieldsTransformerEditor({ input, options, onChange }: Props) {
   const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
@@ -15,7 +15,7 @@ export function RowsToFieldsTransformerEditor({ input, options, onChange }: Prop
   };
 
   const onChangeValueField = (value: SelectableValue<string>) => {
-    onChange({ ...options, nameField: value.value });
+    onChange({ ...options, valueField: value.value });
   };
 
   if (input.length === 0) {
