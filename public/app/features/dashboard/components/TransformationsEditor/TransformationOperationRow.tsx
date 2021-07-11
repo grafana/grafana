@@ -9,6 +9,7 @@ import {
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { TransformationsEditorTransformation } from './types';
+import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
 
 interface TransformationOperationRowProps {
   id: string;
@@ -34,6 +35,7 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
   const renderActions = ({ isOpen }: QueryOperationRowRenderProps) => {
     return (
       <HorizontalGroup align="center" width="auto">
+        {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
         <QueryOperationAction
           title="Debug"
           disabled={!isOpen}

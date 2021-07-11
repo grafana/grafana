@@ -1,7 +1,7 @@
 import React, { FC, useContext } from 'react';
 import { css, cx } from '@emotion/css';
 import { ThemeContext } from '../../index';
-import { PluginState } from '@grafana/data';
+import { deprecationWarning, PluginState } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 
 export interface Props {
@@ -10,7 +10,9 @@ export interface Props {
   className?: string;
 }
 
+/** @deprecated Will be removed  in a future release */
 export const AlphaNotice: FC<Props> = ({ state, text, className }) => {
+  deprecationWarning('AlphaNotice', 'AlphaNotice');
   const tooltipContent = text || 'This feature is a work in progress and updates may include breaking changes';
   const theme = useContext(ThemeContext);
 
