@@ -37,7 +37,6 @@ describe('RowsToFieldsTransformerEditor', () => {
 
     let select = (await screen.findByText('Name field')).nextSibling!;
     await fireEvent.keyDown(select, { keyCode: 40 });
-    const scs = screen.getAllByLabelText('Select option');
     await userEvent.click(getByText(select as HTMLElement, 'Name'));
 
     expect(mockOnChange).toHaveBeenCalledWith(
@@ -52,7 +51,6 @@ describe('RowsToFieldsTransformerEditor', () => {
 
     let select = (await screen.findByText('Value field')).nextSibling!;
     await fireEvent.keyDown(select, { keyCode: 40 });
-    const scs = screen.getAllByLabelText('Select option');
     await userEvent.click(getByText(select as HTMLElement, 'Value'));
 
     expect(mockOnChange).toHaveBeenCalledWith(

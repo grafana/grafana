@@ -10,7 +10,7 @@ import {
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 import { capitalize } from 'lodash';
 
-interface Props {
+export interface Props {
   frame: DataFrame;
   mappings: FieldToConfigMapping[];
   onChange: (mappings: FieldToConfigMapping[]) => void;
@@ -69,7 +69,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
         {rows.map((row) => (
           <tr key={row.fieldName}>
             <td className={styles.labelCell}>{row.fieldName}</td>
-            <td className={styles.selectCell}>
+            <td className={styles.selectCell} data-testid={`${row.fieldName}-config-key`}>
               <Select
                 options={configProps}
                 value={row.configOption}
@@ -78,7 +78,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
               />
             </td>
             {withReducers && (
-              <td>
+              <td data-testid={`${row.fieldName}-reducer`}>
                 <StatsPicker
                   stats={[row.reducerId]}
                   defaultStat={row.reducerId}

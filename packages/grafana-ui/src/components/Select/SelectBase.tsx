@@ -293,6 +293,7 @@ export function SelectBase<T>({
             return (
               <Icon
                 name="times"
+                data-testid="select-clear-value"
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
