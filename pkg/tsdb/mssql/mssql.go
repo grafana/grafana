@@ -95,7 +95,7 @@ func generateConnectionString(dataSource *models.DataSource) (string, error) {
 	}
 
 	logger.Debug("Generating connection string", args...)
-	encrypt := dataSource.JsonData.Get("encrypt").MustString("false")
+	encrypt := dataSource.JsonData.Get("encrypt").MustString("true")
 	connStr := fmt.Sprintf("server=%s;database=%s;user id=%s;password=%s;",
 		addr.Host,
 		dataSource.Database,

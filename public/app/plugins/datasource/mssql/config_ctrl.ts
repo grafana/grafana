@@ -17,7 +17,7 @@ export class MssqlConfigCtrl {
   /** @ngInject */
   constructor($scope: any) {
     this.current = $scope.ctrl.current;
-    this.current.jsonData.encrypt = this.current.jsonData.encrypt || 'false';
+    this.current.jsonData.encrypt = this.current.jsonData.encrypt || 'true';
     this.current.jsonData.authenticationType = this.current.jsonData.authenticationType || 'SQL Server Authentication';
     this.onPasswordReset = createResetHandler(this, PasswordFieldEnum.Password);
     this.onPasswordChange = createChangeHandler(this, PasswordFieldEnum.Password);

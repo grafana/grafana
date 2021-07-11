@@ -23,7 +23,7 @@ To access data source settings, hover your mouse over the **Configuration** (gea
 | `Authentication` | Authentication mode. Either using SQL Server Authentication or Windows Authentication (single sign on for Windows users).             |
 | `User`           | Database user's login/username                                                                                                        |
 | `Password`       | Database user's password                                                                                                              |
-| `Encrypt`        | This option determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server, default `false`. |
+| `Encrypt`        | This option determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server, default `true`. |
 | `Max open`       | The maximum number of open connections to the database, default `unlimited`.                                                          |
 | `Max idle`       | The maximum number of connections in the idle connection pool, default `2`.                                                           |
 | `Max lifetime`   | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours.                                            |
