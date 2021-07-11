@@ -15,6 +15,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
+  AnnotationEventUIModel,
   DashboardCursorSync,
   EventFilterOptions,
   FieldConfigSource,
@@ -31,6 +32,8 @@ import { loadSnapshotData } from '../utils/loadSnapshotData';
 import { RefreshEvent, RenderEvent } from 'app/types/events';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
+import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
+import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -74,6 +77,10 @@ export class PanelChrome extends Component<Props, State> {
         eventBus,
         onSeriesColorChange: this.onSeriesColorChange,
         onToggleSeriesVisibility: this.onSeriesVisibilityChange,
+        onAnnotationCreate: this.onAnnotationCreate,
+        onAnnotationUpdate: this.onAnnotationUpdate,
+        onAnnotationDelete: this.onAnnotationDelete,
+        canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
       },
       data: this.getInitialPanelDataState(),
     };
@@ -243,9 +250,10 @@ export class PanelChrome extends Component<Props, State> {
       panel.runAllPanelQueries(this.props.dashboard.id, this.props.dashboard.getTimezone(), timeData, width);
     } else {
       // The panel should render on refresh as well if it doesn't have a query, like clock panel
-      this.setState((prevState) => ({
-        data: { ...prevState.data, timeRange: this.timeSrv.timeRange() },
-      }));
+      this.setState({
+        data: { ...this.state.data, timeRange: this.timeSrv.timeRange() },
+        renderCounter: this.state.renderCounter + 1,
+      });
     }
   };
 
@@ -266,6 +274,41 @@ export class PanelChrome extends Component<Props, State> {
     if (this.state.errorMessage !== message) {
       this.setState({ errorMessage: message });
     }
+  };
+
+  onAnnotationCreate = async (event: AnnotationEventUIModel) => {
+    const isRegion = event.from !== event.to;
+    await saveAnnotation({
+      dashboardId: this.props.dashboard.id,
+      panelId: this.props.panel.id,
+      isRegion,
+      time: event.from,
+      timeEnd: isRegion ? event.to : 0,
+      tags: event.tags,
+      text: event.description,
+    });
+    getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
+  };
+
+  onAnnotationDelete = async (id: string) => {
+    await deleteAnnotation({ id });
+    getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
+  };
+
+  onAnnotationUpdate = async (event: AnnotationEventUIModel) => {
+    const isRegion = event.from !== event.to;
+    await updateAnnotation({
+      id: event.id,
+      dashboardId: this.props.dashboard.id,
+      panelId: this.props.panel.id,
+      isRegion,
+      time: event.from,
+      timeEnd: isRegion ? event.to : 0,
+      tags: event.tags,
+      text: event.description,
+    });
+
+    getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
   };
 
   get hasPanelSnapshot() {

@@ -101,13 +101,13 @@ export async function checkOtherSegments(
  * Note: It's a bit hidden feature. After selecting one metric, and pressing down arrow the dropdown can be expanded.
  * But there's nothing indicating what's in focus and how to expand the dropdown.
  */
-export function setSegmentFocus(state: GraphiteQueryEditorState, segmentIndex: any): void {
+export function setSegmentFocus(state: GraphiteQueryEditorState, segmentIndex: number): void {
   each(state.segments, (segment, index) => {
     segment.focus = segmentIndex === index;
   });
 }
 
-export function spliceSegments(state: GraphiteQueryEditorState, index: any): void {
+export function spliceSegments(state: GraphiteQueryEditorState, index: number): void {
   state.segments = state.segments.splice(0, index);
   state.queryModel.segments = state.queryModel.segments.splice(0, index);
 }
@@ -180,13 +180,13 @@ export function handleTargetChanged(state: GraphiteQueryEditorState): void {
   const oldTarget = state.queryModel.target.target;
   state.queryModel.updateModelTarget(state.panelCtrl.panel.targets);
 
-  if (state.queryModel.target !== oldTarget && !state.paused) {
+  if (state.queryModel.target.target !== oldTarget && !state.paused) {
     state.panelCtrl.refresh();
   }
 }
 
 /**
- * When metrics autocomplete fails - the error is shown, by only once per page view
+ * When metrics autocomplete fails - the error is shown, but only once per page view
  */
 export function handleMetricsAutoCompleteError(
   state: GraphiteQueryEditorState,

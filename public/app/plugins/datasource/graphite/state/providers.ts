@@ -25,7 +25,7 @@ export async function getAltSegments(
   index: number,
   prefix: string
 ): Promise<GraphiteSegment[]> {
-  let query = prefix && prefix.length > 0 ? '*' + prefix + '*' : '*';
+  let query = prefix.length > 0 ? '*' + prefix + '*' : '*';
   if (index > 0) {
     query = state.queryModel.getSegmentPathUpTo(index) + '.' + query;
   }
@@ -101,7 +101,7 @@ export function getTagOperators(): AngularDropdownOptions[] {
 export async function getTags(
   state: GraphiteQueryEditorState,
   index: number,
-  tagPrefix: any
+  tagPrefix: string
 ): Promise<AngularDropdownOptions[]> {
   try {
     const tagExpressions = state.queryModel.renderTagExpressions(index);
@@ -148,7 +148,7 @@ export async function getTagValues(
   state: GraphiteQueryEditorState,
   tag: { key: any },
   index: number,
-  valuePrefix: any
+  valuePrefix: string
 ): Promise<AngularDropdownOptions[]> {
   const tagExpressions = state.queryModel.renderTagExpressions(index);
   const tagKey = tag.key;
@@ -172,7 +172,7 @@ export async function getFunctionsDefinitions(state: GraphiteQueryEditorState): 
 async function addAltTagSegments(
   state: GraphiteQueryEditorState,
   prefix: string,
-  altSegments: any[]
+  altSegments: GraphiteSegment[]
 ): Promise<GraphiteSegment[]> {
   let tagSegments = await getTagsAsSegments(state, prefix);
 
@@ -184,11 +184,11 @@ async function addAltTagSegments(
   return altSegments.concat(...tagSegments);
 }
 
-function removeTaggedEntry(altSegments: any[]) {
+function removeTaggedEntry(altSegments: GraphiteSegment[]) {
   remove(altSegments, (s) => s.value === '_tagged');
 }
 
-function mapToDropdownOptions(results: any[]) {
+function mapToDropdownOptions(results: string[]) {
   return map(results, (value) => {
     return { text: value, value: value };
   });
