@@ -64,6 +64,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       flex-direction: row;
       align-items: stretch;
       align-items: center;
+      height: ${theme.spacing(4)};
       background: ${theme.colors.background.secondary};
       font-weight: ${theme.typography.fontWeightMedium};
     `,

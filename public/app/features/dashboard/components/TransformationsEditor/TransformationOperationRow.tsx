@@ -66,6 +66,8 @@ function prepMarkdown(uiConfig: TransformerRegistryItem<any>) {
   return `
 ${helpMarkdown}
 
-[Read more on the documentation site](https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana)
+<a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
+Read more on the documentation site
+</a>
 `;
 }
