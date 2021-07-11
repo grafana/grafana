@@ -20,7 +20,7 @@ func newAPIClient(provider httpclient.Provider, dsInfo *models.DataSource, cfg *
 		if err != nil {
 			return nil, err
 		}
-		scopes, err := getAzureEndpointScopes(cfg, azureCredentials, dsInfo.Url)
+		scopes, err := getAzureEndpointScopes(dsInfo.JsonData)
 		if err != nil {
 			return nil, err
 		}
