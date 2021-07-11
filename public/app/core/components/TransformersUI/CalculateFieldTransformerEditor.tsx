@@ -9,6 +9,7 @@ import {
   FieldType,
   getFieldDisplayName,
   KeyValue,
+  PluginState,
   ReducerID,
   SelectableValue,
   standardTransformers,
@@ -382,6 +383,7 @@ export const calculateFieldTransformRegistryItem: TransformerRegistryItem<Calcul
   transformation: standardTransformers.calculateFieldTransformer,
   name: 'Add field from calculation',
   description: 'Use the row values to calculate a new field',
+  state: PluginState.beta,
   help: `
 With this transform you can do transform rows to fields. 
 
