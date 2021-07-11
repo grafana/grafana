@@ -30,7 +30,7 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     .map((x) => ({ label: x, value: x }));
 
   const currentRefId = options.configRefId || 'config';
-  const currentMatcher = options.applyTo ?? { id: FieldMatcherID.byType, options: 'numeric' };
+  const currentMatcher = options.applyTo ?? { id: FieldMatcherID.byType, options: 'number' };
   const matcherUI = fieldMatchersUI.get(currentMatcher.id);
   const configFrame = input.find((x) => x.refId === currentRefId);
 

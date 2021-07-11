@@ -4,8 +4,9 @@ import { Select, StatsPicker, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import {
   configMapHandlers,
+  FieldToConfigMapHandler,
   FieldToConfigMapping,
-  lookUpConfigHandler,
+  lookUpConfigHandler as findConfigHandlerFor,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 import { capitalize } from 'lodash';
 
@@ -19,12 +20,11 @@ interface Props {
 export function FieldToConfigMappingEditor({ frame, mappings, onChange, withReducers }: Props) {
   const styles = useStyles2(getStyles);
   const rows = getViewModelRows(frame, mappings);
-  const configProps: Array<SelectableValue<string | undefined>> = configMapHandlers.map((def) => ({
-    label: def.name ?? capitalize(def.key),
-    value: def.key,
-  }));
+  const configProps = configMapHandlers.map((def) => configHandlerToSelectOption(def, false)) as Array<
+    SelectableValue<string>
+  >;
 
-  const onChangeConfigProperty = (row: FieldToConfigRowViewModel, value: SelectableValue<string | undefined>) => {
+  const onChangeConfigProperty = (row: FieldToConfigRowViewModel, value: SelectableValue<string | null>) => {
     const existingIdx = mappings.findIndex((x) => x.fieldName === row.fieldName);
 
     if (value) {
@@ -39,7 +39,6 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
       if (existingIdx !== -1) {
         onChange(mappings.filter((x, index) => index !== existingIdx));
       } else {
-        // mark it as ignored
         onChange([...mappings, { fieldName: row.fieldName, handlerKey: null }]);
       }
     }
@@ -73,7 +72,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
             <td className={styles.selectCell}>
               <Select
                 options={configProps}
-                value={row.handlerKey}
+                value={row.configOption}
                 isClearable={true}
                 onChange={(value) => onChangeConfigProperty(row, value)}
               />
@@ -82,6 +81,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
               <td>
                 <StatsPicker
                   stats={[row.reducerId]}
+                  defaultStat={row.reducerId}
                   onChange={(stats: string[]) => onChangeReducer(row, stats[0] as ReducerID)}
                 />
               </td>
@@ -96,7 +96,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
 interface FieldToConfigRowViewModel {
   handlerKey: string | null;
   fieldName: string;
-  isAutomatic: boolean;
+  configOption: SelectableValue<string | null> | null;
   missingInFrame?: boolean;
   reducerId: string;
 }
@@ -108,11 +108,11 @@ function getViewModelRows(frame: DataFrame, mappings: FieldToConfigMapping[]): F
     const fieldName = getFieldDisplayName(field, frame);
     const mapping = mappings.find((x) => x.fieldName === fieldName);
     const key = mapping ? mapping.handlerKey : fieldName.toLowerCase();
-    const handler = lookUpConfigHandler(key);
+    const handler = findConfigHandlerFor(key);
 
     rows[fieldName] = {
       fieldName,
-      isAutomatic: mapping !== null,
+      configOption: configHandlerToSelectOption(handler, mapping == null),
       handlerKey: handler?.key ?? null,
       reducerId: mapping?.reducerId ?? handler?.defaultReducer ?? ReducerID.lastNotNull,
     };
@@ -121,10 +121,12 @@ function getViewModelRows(frame: DataFrame, mappings: FieldToConfigMapping[]): F
   // Add rows for mappings that have no matching field
   for (const mapping of mappings) {
     if (!rows[mapping.fieldName]) {
+      const handler = findConfigHandlerFor(mapping.handlerKey);
+
       rows[mapping.fieldName] = {
         fieldName: mapping.fieldName,
         handlerKey: mapping.handlerKey,
-        isAutomatic: false,
+        configOption: configHandlerToSelectOption(handler, false),
         missingInFrame: true,
         reducerId: mapping.reducerId ?? ReducerID.lastNotNull,
       };
@@ -132,6 +134,26 @@ function getViewModelRows(frame: DataFrame, mappings: FieldToConfigMapping[]): F
   }
 
   return Object.values(rows);
+}
+
+function configHandlerToSelectOption(
+  def: FieldToConfigMapHandler | null,
+  isAutomatic: boolean
+): SelectableValue<string> | null {
+  if (!def) {
+    return null;
+  }
+
+  let name = def.name ?? capitalize(def.key);
+
+  if (isAutomatic) {
+    name = `${name} (auto)`;
+  }
+
+  return {
+    label: name,
+    value: def.key,
+  };
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

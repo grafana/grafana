@@ -58,7 +58,7 @@ export function getFieldConfigFromFrame(
 
     const newValue = configDef.processor(configValue, config, context);
     if (newValue != null) {
-      (config as any)[configDef.key ?? configDef.targetProperty] = newValue;
+      (config as any)[configDef.targetProperty ?? configDef.key] = newValue;
     }
   }
 

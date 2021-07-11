@@ -36,6 +36,18 @@ describe('config from data', () => {
     expect(results[0].fields[1].config.min).toBe(5);
   });
 
+  it('With ignore mappings', () => {
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [{ fieldName: 'Min', handlerKey: null }],
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesA]);
+    expect(results.length).toBe(1);
+    expect(results[0].fields[1].config.min).toBe(undefined);
+    expect((results[0].fields[1].config as any).ignore).toBe(undefined);
+  });
+
   it('With custom mappings', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
