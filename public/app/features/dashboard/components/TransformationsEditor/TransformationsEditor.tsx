@@ -216,13 +216,15 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   renderTransformsPicker() {
     const { transformations, search } = this.state;
     let suffix: React.ReactNode = null;
-    let xforms = standardTransformersRegistry.list();
+    let xforms = standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
+
     if (search) {
       const lower = search.toLowerCase();
       const filtered = xforms.filter((t) => {
         const txt = (t.name + t.description).toLowerCase();
         return txt.indexOf(lower) >= 0;
       });
+
       suffix = (
         <>
           {filtered.length} / {xforms.length} &nbsp;&nbsp;
@@ -241,6 +243,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 
     const noTransforms = !transformations?.length;
     const showPicker = noTransforms || this.state.showPicker;
+
     if (!suffix && showPicker && !noTransforms) {
       suffix = (
         <IconButton
