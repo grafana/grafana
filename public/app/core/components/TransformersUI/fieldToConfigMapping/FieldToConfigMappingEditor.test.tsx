@@ -1,6 +1,6 @@
 import React from 'react';
 import { toDataFrame, FieldType } from '@grafana/data';
-import { fireEvent, render, screen, getByText, getByTestId } from '@testing-library/react';
+import { fireEvent, render, screen, getByText, getByLabelText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Props, FieldToConfigMappingEditor } from './FieldToConfigMappingEditor';
 
@@ -54,7 +54,7 @@ describe('FieldToConfigMappingEditor', () => {
     setup({ mappings: [{ fieldName: 'max', handlerKey: 'min' }] });
 
     const select = (await screen.findByTestId('max-config-key')).childNodes[0];
-    await userEvent.click(getByTestId(select as HTMLElement, 'select-clear-value'));
+    await userEvent.click(getByLabelText(select as HTMLElement, 'select-clear-value'));
 
     expect(mockOnChange).toHaveBeenCalledWith(expect.arrayContaining([]));
   });
@@ -63,7 +63,7 @@ describe('FieldToConfigMappingEditor', () => {
     setup({ mappings: [] });
 
     const select = (await screen.findByTestId('max-config-key')).childNodes[0];
-    await userEvent.click(getByTestId(select as HTMLElement, 'select-clear-value'));
+    await userEvent.click(getByLabelText(select as HTMLElement, 'select-clear-value'));
 
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.arrayContaining([

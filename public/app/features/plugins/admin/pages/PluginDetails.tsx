@@ -3,7 +3,6 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TabsBar, TabContent, Tab, Icon } from '@grafana/ui';
-import { useParams } from 'react-router-dom';
 
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
@@ -12,16 +11,19 @@ import { Page as PluginPage } from '../components/Page';
 import { Loader } from '../components/Loader';
 import { Page } from 'app/core/components/Page/Page';
 import { PluginLogo } from '../components/PluginLogo';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-export default function PluginDetails(): JSX.Element | null {
-  const { pluginId } = useParams<{ pluginId: string }>();
+type PluginDetailsProps = GrafanaRouteComponentProps<{ pluginId?: string }>;
+
+export default function PluginDetails({ match }: PluginDetailsProps): JSX.Element | null {
+  const { pluginId } = match.params;
 
   const [tabs, setTabs] = useState([
     { label: 'Overview', active: true },
     { label: 'Version history', active: false },
   ]);
 
-  const { isLoading, local, remote, remoteVersions } = usePlugin(pluginId);
+  const { isLoading, local, remote, remoteVersions } = usePlugin(pluginId!);
   const styles = useStyles2(getStyles);
 
   const description = remote?.description ?? local?.info?.description;

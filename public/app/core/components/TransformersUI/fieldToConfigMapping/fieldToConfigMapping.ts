@@ -104,6 +104,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'displayName',
+    name: 'Display name',
     processor: (value: any) => value.toString(),
   },
   {
