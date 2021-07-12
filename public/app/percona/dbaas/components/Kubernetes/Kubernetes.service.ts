@@ -1,6 +1,12 @@
 import { apiManagement } from 'app/percona/shared/helpers/api';
 import { CancelToken } from 'axios';
-import { Kubernetes, KubernetesListAPI, NewKubernetesCluster, NewKubernetesClusterAPI } from './Kubernetes.types';
+import {
+  CheckOperatorUpdateAPI,
+  Kubernetes,
+  KubernetesListAPI,
+  NewKubernetesCluster,
+  NewKubernetesClusterAPI,
+} from './Kubernetes.types';
 
 export const KubernetesService = {
   getKubernetes(token?: CancelToken) {
@@ -16,6 +22,14 @@ export const KubernetesService = {
     return apiManagement.post<NewKubernetesClusterAPI, any>(
       '/DBaaS/Kubernetes/Register',
       newClusterToApi(kubernetes),
+      false,
+      token
+    );
+  },
+  checkForOperatorUpdate(token?: CancelToken) {
+    return apiManagement.post<CheckOperatorUpdateAPI, any>(
+      '/DBaaS/Components/CheckForOperatorUpdate',
+      {},
       false,
       token
     );

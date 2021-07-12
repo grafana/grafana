@@ -1,41 +1,29 @@
-import React, { FC, useMemo } from 'react';
-import { cx } from 'emotion';
-import { useStyles, Icon } from '@grafana/ui';
-import { Messages } from 'app/percona/dbaas/DBaaS.messages';
+import React, { FC } from 'react';
+import { useStyles } from '@grafana/ui';
 import { getStyles } from './KubernetesOperatorStatus.styles';
 import { KubernetesOperatorStatus as Status, KubernetesOperatorStatusProps } from './KubernetesOperatorStatus.types';
-import { OPERATORS_DOCS_URL, STATUS_DATA_QA } from './KubernetesOperatorStatus.constants';
+import { getStatusLink } from './KubernetesOperatorStatus.utils';
+import { OperatorStatus } from './OperatorStatus/OperatorStatus';
 
-export const KubernetesOperatorStatus: FC<KubernetesOperatorStatusProps> = ({ status, databaseType }) => {
+export const KubernetesOperatorStatus: FC<KubernetesOperatorStatusProps> = ({ operator, databaseType }) => {
   const styles = useStyles(getStyles);
-  const statusStyles = useMemo(
-    () => ({
-      [styles.statusActive]: status === Status.ok,
-      [styles.statusFailed]: status === Status.invalid,
-      [styles.statusUnsupported]: status === Status.unsupported,
-      [styles.statusUnavailable]: status === Status.unavailable,
-    }),
-    [status]
-  );
+  const { status, availableVersion } = operator;
+  const showLink =
+    status === Status.unavailable || ((status === Status.ok || status === Status.unsupported) && !!availableVersion);
 
   return (
     <div className={styles.clusterStatusWrapper}>
-      {status === Status.unavailable ? (
+      {showLink ? (
         <a
-          href={OPERATORS_DOCS_URL[databaseType]}
+          href={getStatusLink(status, databaseType, availableVersion)}
           target="_blank"
           rel="noopener noreferrer"
-          data-qa="cluster-install-doc-link"
+          data-qa="cluster-link"
         >
-          <span className={cx(styles.status, statusStyles)} data-qa={`cluster-status-${STATUS_DATA_QA[status]}`}>
-            {Messages.kubernetes.operatorStatus[status]}
-            {status === Status.unavailable && <Icon name="external-link-alt" className={styles.InstallLinkIcon} />}
-          </span>
+          <OperatorStatus operator={operator} />
         </a>
       ) : (
-        <span className={cx(styles.status, statusStyles)} data-qa={`cluster-status-${STATUS_DATA_QA[status]}`}>
-          {Messages.kubernetes.operatorStatus[status]}
-        </span>
+        <OperatorStatus operator={operator} />
       )}
     </div>
   );

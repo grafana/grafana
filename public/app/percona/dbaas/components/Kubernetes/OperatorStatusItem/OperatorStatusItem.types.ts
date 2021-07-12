@@ -1,8 +1,8 @@
 import { Databases } from 'app/percona/shared/core';
-import { KubernetesOperatorStatus } from './KubernetesOperatorStatus/KubernetesOperatorStatus.types';
+import { Operator } from '../Kubernetes.types';
 
 export interface DBClusterConnectionItemProps {
   dataQa?: string;
   databaseType: Databases;
-  status: KubernetesOperatorStatus;
+  operator: Operator;
 }

@@ -43,11 +43,11 @@ export const KubernetesInventory: FC<KubernetesProps> = ({ kubernetes, deleteKub
       accessor: (element: Kubernetes) => <KubernetesClusterStatus status={element.status} />,
     },
     {
-      Header: Messages.kubernetes.table.operatorsStatusColumn,
+      Header: Messages.kubernetes.table.operatorsColumn,
       accessor: (element: Kubernetes) => (
         <div>
-          <OperatorStatusItem databaseType={Databases.mysql} status={element.operators.xtradb.status} />
-          <OperatorStatusItem databaseType={Databases.mongodb} status={element.operators.psmdb.status} />
+          <OperatorStatusItem databaseType={Databases.mysql} operator={element.operators.xtradb} />
+          <OperatorStatusItem databaseType={Databases.mongodb} operator={element.operators.psmdb} />
         </div>
       ),
     },
