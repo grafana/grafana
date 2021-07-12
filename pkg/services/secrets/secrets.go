@@ -24,7 +24,7 @@ import (
 var logger = log.New("secrets")
 
 type Secrets struct {
-	store *sqlstore.SqlStore `inject:""`
+	store *sqlstore.SQLStore `inject:""`
 	bus   bus.Bus            `inject:""`
 
 	defaultEncryptionKey string

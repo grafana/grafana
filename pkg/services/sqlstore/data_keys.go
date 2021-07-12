@@ -11,11 +11,11 @@ import (
 
 const dataKeysTable = "data_keys"
 
-func (ss *SqlStore) GetDataKey(ctx context.Context, name string) (*models.DataKey, error) {
+func (ss *SQLStore) GetDataKey(ctx context.Context, name string) (*models.DataKey, error) {
 	return getDataKey(ctx, name, ss.engine)
 }
 
-func (ss *SqlStore) CreateDataKey(ctx context.Context, dataKey models.DataKey) error {
+func (ss *SQLStore) CreateDataKey(ctx context.Context, dataKey models.DataKey) error {
 	dataKey.Created = time.Now()
 	dataKey.Updated = dataKey.Created
 
@@ -27,7 +27,7 @@ func (ss *SqlStore) CreateDataKey(ctx context.Context, dataKey models.DataKey) e
 	return err
 }
 
-func (ss *SqlStore) DeleteDataKey(ctx context.Context, name string) error {
+func (ss *SQLStore) DeleteDataKey(ctx context.Context, name string) error {
 	_, err := ss.engine.Context(ctx).Table(dataKeysTable).Delete(models.DataKey{Name: name})
 	return err
 }
