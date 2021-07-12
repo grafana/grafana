@@ -1,7 +1,7 @@
-import React from 'react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Dropzone } from '@grafana/ui';
 import { Meta, Story } from '@storybook/react';
+import React from 'react';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 export default {
   title: 'Forms/Dropzone',
@@ -26,5 +26,5 @@ export default {
 } as Meta;
 
 export const Basic: Story = (args) => {
-  return <Dropzone />;
+  return <Dropzone {...args} />;
 };

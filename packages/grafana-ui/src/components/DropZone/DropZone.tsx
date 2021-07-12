@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import React, { ReactNode } from 'react';
+import { uniqueId } from 'lodash';
+import React, { ReactNode, useCallback, useState } from 'react';
 import { DropzoneOptions, useDropzone } from 'react-dropzone';
 import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
+import { FileListItem } from './FileListItem';
 
 export interface DropzoneProps {
   children?: ReactNode;
@@ -11,9 +13,30 @@ export interface DropzoneProps {
 }
 
 export function Dropzone({ options, children }: DropzoneProps) {
-  const { getRootProps, getInputProps, isDragActive } = useDropzone(options);
+  const [files, setFiles] = useState<File[]>([]);
+
+  const onDrop = useCallback(
+    (acceptedFiles, rejectedFiles, event) => {
+      let newFiles = [...files, ...acceptedFiles];
+      if (options?.multiple === false) {
+        newFiles = acceptedFiles;
+      }
+      setFiles(newFiles);
+      options?.onDrop?.(newFiles, rejectedFiles, event);
+    },
+    [files, options]
+  );
+
+  const removeFile = (file: File) => {
+    const newFiles = [...files];
+    newFiles.splice(newFiles.indexOf(file), 1);
+    setFiles(newFiles);
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ ...options, onDrop });
   const theme = useTheme2();
   const styles = getStyles(theme, isDragActive);
+  const fileList = files.map((file) => <FileListItem key={uniqueId()} file={file} removeFile={removeFile} />);
 
   return (
     <div className={styles.container}>
@@ -29,6 +52,7 @@ export function Dropzone({ options, children }: DropzoneProps) {
           </div>
         )}
       </div>
+      {fileList}
     </div>
   );
 }
@@ -45,7 +69,7 @@ function getStyles(theme: GrafanaTheme2, isDragActive: boolean) {
       flex: 1;
       flex-direction: column;
       align-items: center;
-      padding: ${theme.spacing(10)};
+      padding: ${theme.spacing(6)};
       border-radius: 2px;
       border-width: 2px;
       border-style: dashed;
