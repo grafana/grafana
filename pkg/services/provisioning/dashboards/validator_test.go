@@ -45,13 +45,13 @@ func TestDuplicatesValidator(t *testing.T) {
 			Options: map[string]interface{}{"path": dashboardContainingUID},
 		}
 
-		reader1, err := NewDashboardFileReader(cfg1, logger)
+		reader1, err := NewDashboardFileReader(cfg1, logger, nil)
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger)
+		reader2, err := NewDashboardFileReader(cfg2, logger, nil)
 		require.NoError(t, err)
 
-		duplicateValidator := newDuplicateValidator([]*FileReader{reader1, reader2})
+		duplicateValidator := newDuplicateValidator(logger, []*FileReader{reader1, reader2})
 
 		err = reader1.walkDisk()
 		require.NoError(t, err)
@@ -71,7 +71,7 @@ func TestDuplicatesValidator(t *testing.T) {
 		sort.Strings(titleUsageReaders)
 		require.Equal(t, []string{"first", "second"}, titleUsageReaders)
 
-		duplicateValidator.validate(logger)
+		duplicateValidator.validate()
 		require.True(t, reader1.isDatabaseAccessRestricted())
 		require.True(t, reader2.isDatabaseAccessRestricted())
 	})
@@ -86,13 +86,13 @@ func TestDuplicatesValidator(t *testing.T) {
 			Options: map[string]interface{}{"path": defaultDashboards},
 		}
 
-		reader1, err := NewDashboardFileReader(cfg1, logger)
+		reader1, err := NewDashboardFileReader(cfg1, logger, nil)
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger)
+		reader2, err := NewDashboardFileReader(cfg2, logger, nil)
 		require.NoError(t, err)
 
-		duplicateValidator := newDuplicateValidator([]*FileReader{reader1, reader2})
+		duplicateValidator := newDuplicateValidator(logger, []*FileReader{reader1, reader2})
 
 		err = reader1.walkDisk()
 		require.NoError(t, err)
@@ -117,7 +117,7 @@ func TestDuplicatesValidator(t *testing.T) {
 		sort.Strings(titleUsageReaders)
 		require.Equal(t, []string{"first"}, titleUsageReaders)
 
-		duplicateValidator.validate(logger)
+		duplicateValidator.validate()
 		require.True(t, reader1.isDatabaseAccessRestricted())
 		require.False(t, reader2.isDatabaseAccessRestricted())
 	})

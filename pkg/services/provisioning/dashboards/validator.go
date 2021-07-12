@@ -48,11 +48,12 @@ func (d *duplicateEntries) InvolvedReaders() map[string]struct{} {
 }
 
 type duplicateValidator struct {
+	logger  log.Logger
 	readers []*FileReader
 }
 
-func newDuplicateValidator(readers []*FileReader) duplicateValidator {
-	return duplicateValidator{readers: readers}
+func newDuplicateValidator(logger log.Logger, readers []*FileReader) duplicateValidator {
+	return duplicateValidator{logger: logger, readers: readers}
 }
 
 func (c *duplicateValidator) getDuplicates() *duplicateEntries {
@@ -85,23 +86,23 @@ func (c *duplicateValidator) getDuplicates() *duplicateEntries {
 	return &duplicates
 }
 
-func (c *duplicateValidator) logWarnings(log log.Logger, duplicates *duplicateEntries) {
+func (c *duplicateValidator) logWarnings(duplicates *duplicateEntries) {
 	for uid, usage := range duplicates.UIDs {
 		if usage.Sum > 1 {
-			log.Warn("the same UID is used more than once", "uid", uid, "times", usage.Sum, "providers",
+			c.logger.Warn("the same UID is used more than once", "uid", uid, "times", usage.Sum, "providers",
 				keysToSlice(usage.InvolvedReaders))
 		}
 	}
 
 	for id, usage := range duplicates.Titles {
 		if usage.Sum > 1 {
-			log.Warn("dashboard title is not unique in folder", "title", id.title, "folderID", id.folderID, "times",
+			c.logger.Warn("dashboard title is not unique in folder", "title", id.title, "folderID", id.folderID, "times",
 				usage.Sum, "providers", keysToSlice(usage.InvolvedReaders))
 		}
 	}
 }
 
-func (c *duplicateValidator) takeAwayWritePermissions(log log.Logger, duplicates *duplicateEntries) {
+func (c *duplicateValidator) takeAwayWritePermissions(duplicates *duplicateEntries) {
 	involvedReaders := duplicates.InvolvedReaders()
 	for _, reader := range c.readers {
 		_, isReaderWithDuplicates := involvedReaders[reader.Cfg.Name]
@@ -109,28 +110,28 @@ func (c *duplicateValidator) takeAwayWritePermissions(log log.Logger, duplicates
 		reader.changeWritePermissions(isReaderWithDuplicates)
 
 		if isReaderWithDuplicates {
-			log.Warn("dashboards provisioning provider has no database write permissions because of duplicates", "provider", reader.Cfg.Name)
+			c.logger.Warn("dashboards provisioning provider has no database write permissions because of duplicates", "provider", reader.Cfg.Name)
 		}
 	}
 }
 
-func (c *duplicateValidator) Run(ctx context.Context, log log.Logger) {
+func (c *duplicateValidator) Run(ctx context.Context) {
 	ticker := time.NewTicker(30 * time.Second)
 	for {
 		select {
 		case <-ticker.C:
-			c.validate(log)
+			c.validate()
 		case <-ctx.Done():
 			return
 		}
 	}
 }
 
-func (c *duplicateValidator) validate(log log.Logger) {
+func (c *duplicateValidator) validate() {
 	duplicates := c.getDuplicates()
 
-	c.logWarnings(log, duplicates)
-	c.takeAwayWritePermissions(log, duplicates)
+	c.logWarnings(duplicates)
+	c.takeAwayWritePermissions(duplicates)
 }
 
 func keysToSlice(data map[string]struct{}) []string {

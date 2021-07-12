@@ -42,7 +42,7 @@ func New(configDirectory string, store dashboards.Store) (DashboardProvisioner, 
 		return nil, errutil.Wrap("Failed to read dashboards config", err)
 	}
 
-	fileReaders, err := getFileReaders(configs, logger)
+	fileReaders, err := getFileReaders(configs, logger, store)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to initialize file readers", err)
 	}
@@ -51,7 +51,7 @@ func New(configDirectory string, store dashboards.Store) (DashboardProvisioner, 
 		log:                logger,
 		fileReaders:        fileReaders,
 		configs:            configs,
-		duplicateValidator: newDuplicateValidator(fileReaders),
+		duplicateValidator: newDuplicateValidator(logger, fileReaders),
 	}
 
 	return d, nil
@@ -72,7 +72,7 @@ func (provider *Provisioner) Provision() error {
 		}
 	}
 
-	provider.duplicateValidator.validate(provider.log)
+	provider.duplicateValidator.validate()
 	return nil
 }
 
@@ -96,7 +96,7 @@ func (provider *Provisioner) PollChanges(ctx context.Context) {
 		go reader.pollChanges(ctx)
 	}
 
-	go provider.duplicateValidator.Run(ctx, provider.log)
+	go provider.duplicateValidator.Run(ctx)
 }
 
 // GetProvisionerResolvedPath returns resolved path for the specified provisioner name. Can be used to generate
@@ -120,13 +120,14 @@ func (provider *Provisioner) GetAllowUIUpdatesFromConfig(name string) bool {
 	return false
 }
 
-func getFileReaders(configs []*config, logger log.Logger) ([]*FileReader, error) {
+func getFileReaders(configs []*config, logger log.Logger, store dashboards.Store) ([]*FileReader, error) {
 	var readers []*FileReader
 
 	for _, config := range configs {
 		switch config.Type {
 		case "file":
-			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name))
+			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name),
+				store)
 			if err != nil {
 				return nil, errutil.Wrapf(err, "Failed to create file reader for config %v", config.Name)
 			}
