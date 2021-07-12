@@ -293,6 +293,9 @@ export function SelectBase<T>({
             return (
               <Icon
                 name="times"
+                role="button"
+                aria-label="select-clear-value"
+                className={styles.singleValueRemove}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
