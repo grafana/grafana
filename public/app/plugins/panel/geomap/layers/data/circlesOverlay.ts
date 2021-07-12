@@ -1,4 +1,4 @@
-import { MapLayerRegistryItem, MapLayerConfig, MapLayerHandler, PanelData, GrafanaTheme2, reduceField, ReducerID } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerConfig, MapLayerHandler, PanelData, GrafanaTheme2, reduceField, ReducerID, FieldCalcs } from '@grafana/data';
 import { dataFrameToPoints } from './utils'
 import { FieldMappingOptions, QueryFormat } from '../../types'
 import Map from 'ol/Map';
@@ -175,7 +175,7 @@ export const circlesLayer: MapLayerRegistryItem<CircleConfig> = {
 };
 
 // Scales the circle size depending on the current data and user defined configurations
-function calcCircleSize(calcs: any, value: number, minSize: number, maxSize: number) {
+function calcCircleSize(calcs: FieldCalcs, value: number, minSize: number, maxSize: number) {
   if (calcs.range === 0) {
     return maxSize;
   }
