@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from '../Icon/Icon';
 import RCCascader from 'rc-cascader';
+import { CascaderValueType } from 'rc-cascader/lib/Cascader';
 
 import { Select } from '../Select/Select';
 import { Input } from '../Input/Input';
@@ -116,7 +117,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   }
 
   //For rc-cascader
-  onChange = (value: string[], selectedOptions: CascaderOption[]) => {
+  onChange = (value: CascaderValueType, selectedOptions: CascaderOption[]) => {
     this.setState({
       rcValue: value,
       focusCascade: true,
