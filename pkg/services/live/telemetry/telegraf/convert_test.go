@@ -41,7 +41,7 @@ func checkTestData(tb testing.TB, file string) *backend.DataResponse {
 		dr.Frames = append(dr.Frames, w.Frame())
 	}
 
-	err = experimental.CheckGoldenDataResponse(filepath.Join("testdata", file+".golden.txt"), dr, true)
+	err = experimental.CheckGoldenDataResponse(filepath.Join("testdata", file+".golden.txt"), dr, *update)
 	require.NoError(tb, err)
 	return dr
 }
