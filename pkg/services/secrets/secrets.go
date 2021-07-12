@@ -124,7 +124,7 @@ func (s *Secrets) Encrypt(payload []byte) ([]byte, error) {
 
 func (s *Secrets) Decrypt(payload []byte) ([]byte, error) {
 	if len(payload) == 0 {
-		return []byte{}, nil
+		return []byte{}, nil // TODO: Not sure if it should return error like decrypt does (also see tests)
 	}
 
 	var dataKey []byte
