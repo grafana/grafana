@@ -45,9 +45,10 @@ export async function getTagValues(
   tagKey: string,
   measurement: string | undefined,
   policy: string | undefined,
+  tags: InfluxQueryTag[],
   datasource: InfluxDatasource
 ): Promise<string[]> {
-  const target = { tags: [], measurement, policy };
+  const target = { tags, measurement, policy };
   const data = await runExploreQuery('TAG_VALUES', tagKey, undefined, target, datasource);
   return data.map((item) => item.text);
 }
