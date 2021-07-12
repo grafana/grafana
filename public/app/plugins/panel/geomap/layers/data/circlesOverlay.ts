@@ -7,6 +7,8 @@ import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import * as style from 'ol/style';
 import tinycolor from 'tinycolor2';
+
+// Configuration options for Circle overlays
 export interface CircleConfig {
   queryFormat: QueryFormat,
   fieldMapping: FieldMappingOptions,
@@ -30,6 +32,9 @@ const defaultOptions: CircleConfig = {
   opacity: 0.4,
 };
 
+/**
+ * Map layer configuration for circle overlay
+ */
 export const circlesLayer: MapLayerRegistryItem<CircleConfig> = {
   id: 'circles',
   name: 'Circles',
@@ -58,6 +63,7 @@ export const circlesLayer: MapLayerRegistryItem<CircleConfig> = {
           return;
         };
 
+        // Retrieve the min, max and range of data values
         const calcs = reduceField({
           field: field,
           reducers: [
@@ -77,15 +83,20 @@ export const circlesLayer: MapLayerRegistryItem<CircleConfig> = {
 
           // Get circle size from user configuration
           const radius = calcCircleSize(calcs, field.values.get(i), config.minSize, config.maxSize);
-          
+
+          // Create a new Feature for each point returned from dataFrameToPoints
           const dot = new Feature({
               geometry: points[i],
           });
+
+          // Set the style of each feature dot
           dot.setStyle(new style.Style({
             image: new style.Circle({
+              // Stroke determines the outline color of the circle
               stroke: new style.Stroke({
                 color: color,
               }),
+              // Fill determines the color to fill the whole circle
               fill: new style.Fill({
                 color: tinycolor(fillColor).toString(),
               }),
@@ -95,6 +106,7 @@ export const circlesLayer: MapLayerRegistryItem<CircleConfig> = {
           features.push(dot);
         };
 
+        // Source reads the data and provides a set of features to visualize
         const vectorSource = new source.Vector({ features });
         vectorLayer.setSource(vectorSource);
       },
@@ -174,7 +186,11 @@ export const circlesLayer: MapLayerRegistryItem<CircleConfig> = {
   defaultOptions,
 };
 
-// Scales the circle size depending on the current data and user defined configurations
+/**
+ * Function that scales the circle size depending on the current data and user defined configurations
+ * Returns the scaled value in the range of min and max circle size
+ * Ex. If the minSize and maxSize were 5, 15: all values returned will be between 5~15
+ */
 function calcCircleSize(calcs: FieldCalcs, value: number, minSize: number, maxSize: number) {
   if (calcs.range === 0) {
     return maxSize;
