@@ -1,0 +1,18 @@
+{
+  "type": "panel",
+  "name": "Geomap",
+  "id": "geomap",
+  "state": "alpha",
+
+  "info": {
+    "description": "Geomap panel",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-geomap.svg",
+      "large": "img/icn-geomap.svg"
+    }
+  }
+}

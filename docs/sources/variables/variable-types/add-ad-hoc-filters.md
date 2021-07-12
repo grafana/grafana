@@ -8,7 +8,7 @@ weight = 700
 
 _Ad hoc filters_ allow you to add key/value filters that are automatically added to all metric queries that use the specified data source. Unlike other variables, you do not use ad hoc filters in queries. Instead, you use ad hoc filters to write filters for existing queries.
 
-> **Note:** Ad hoc filter variables only work with  InfluxDB, Prometheus, and Elasticsearch data sources.
+> **Note:** Ad hoc filter variables only work with Prometheus, Loki, InfluxDB, and Elasticsearch data sources.
 
 ## Enter General options
 

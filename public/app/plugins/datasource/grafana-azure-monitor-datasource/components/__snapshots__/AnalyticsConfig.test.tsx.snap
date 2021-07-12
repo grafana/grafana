@@ -284,6 +284,15 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
           </div>
         </div>
       </div>
+      <button
+        class="css-5tn967-button"
+      >
+        <span
+          class="css-1mhnkuh"
+        >
+          Clear Azure Monitor Logs Credentials
+        </span>
+      </button>
     </div>
     <div
       class="gf-form-group"

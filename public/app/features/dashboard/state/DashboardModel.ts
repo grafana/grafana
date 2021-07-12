@@ -1051,17 +1051,22 @@ export class DashboardModel {
     this.events.emit(CoreEvents.templateVariableValueUpdated);
   }
 
-  expandParentRowFor(panelId: number) {
+  getPanelByUrlId(panelUrlId: string) {
+    const panelId = parseInt(panelUrlId ?? '0', 10);
+
+    // First try to find it in a collapsed row and exand it
     for (const panel of this.panels) {
       if (panel.collapsed) {
         for (const rowPanel of panel.panels) {
           if (rowPanel.id === panelId) {
             this.toggleRow(panel);
-            return;
+            break;
           }
         }
       }
     }
+
+    return this.getPanelById(panelId);
   }
 
   toggleLegendsForAll() {
