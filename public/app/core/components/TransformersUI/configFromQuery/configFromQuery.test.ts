@@ -81,6 +81,18 @@ describe('config from data', () => {
     expect(results.length).toBe(1);
     expect(results[0].fields[1].config.displayName).toBe('first-name');
   });
+
+  it('Fields to labels', () => {
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [],
+      applyTo: { id: 'byName', options: 'Value' },
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesA]);
+    expect(results.length).toBe(1);
+    expect(results[0].fields[1].config.displayName).toBe('first-name');
+  });
 });
 
 describe('value mapping from data', () => {
