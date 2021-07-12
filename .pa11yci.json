@@ -1,0 +1,15 @@
+{
+  "urls": [
+    {
+      "url": "http://localhost:3000/login",
+      "timeout": 50000,
+      "actions": [
+        "set field input[name='user'] to admin",
+        "set field input[name='password'] to admin",
+        "click element button[aria-label='Login button']",
+        "click element button[aria-label='Skip change password button']",
+        "wait for url to be http://localhost:3000/?orgId=1"
+      ]
+    }
+  ]
+}
