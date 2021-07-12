@@ -105,7 +105,7 @@ function getFieldReducer(field: Field, frame: DataFrame, mappings: FieldToConfig
 
 export const configFromDataTransformer: DataTransformerInfo<ConfigFromQueryTransformOptions> = {
   id: DataTransformerID.configFromData,
-  name: 'Config from query',
+  name: 'Config from query results',
   description: 'Set unit, min, max and more from data',
   defaultOptions: {
     configRefId: 'config',

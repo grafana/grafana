@@ -36,6 +36,7 @@ describe('Rows to fields', () => {
               "min": 3,
               "unit": "degree",
             },
+            "labels": Object {},
             "name": "Temperature",
             "type": "number",
             "values": Array [
@@ -48,6 +49,7 @@ describe('Rows to fields', () => {
               "min": 100,
               "unit": "pressurebar",
             },
+            "labels": Object {},
             "name": "Pressure",
             "type": "number",
             "values": Array [
@@ -86,5 +88,27 @@ describe('Rows to fields', () => {
 
     const result = rowsToFields({}, input);
     expect(result.fields[0].config.thresholds?.steps[1].value).toBe(30);
+  });
+
+  it('Will extract other string fields to labels', () => {
+    const input = toDataFrame({
+      fields: [
+        { name: 'Name', type: FieldType.string, values: ['Temperature', 'Pressure'] },
+        { name: 'Value', type: FieldType.number, values: [10, 200] },
+        { name: 'City', type: FieldType.string, values: ['Stockholm', 'New York'] },
+      ],
+    });
+
+    const result = rowsToFields(
+      {
+        nameField: 'Name',
+        valueField: 'Value',
+        mappings: [],
+      },
+      input
+    );
+
+    expect(result.fields[0].labels).toEqual({ City: 'Stockholm' });
+    expect(result.fields[1].labels).toEqual({ City: 'New York' });
   });
 });

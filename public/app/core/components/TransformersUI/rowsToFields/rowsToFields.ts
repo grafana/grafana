@@ -7,8 +7,14 @@ import {
   Field,
   FieldType,
   getFieldDisplayName,
+  Labels,
 } from '@grafana/data';
-import { getFieldConfigFromFrame, FieldToConfigMapping } from '../fieldToConfigMapping/fieldToConfigMapping';
+import {
+  getFieldConfigFromFrame,
+  FieldToConfigMapping,
+  getConfigHandlerKeyForField,
+  lookUpConfigHandler,
+} from '../fieldToConfigMapping/fieldToConfigMapping';
 
 export interface RowToFieldsTransformOptions {
   nameField?: string;
@@ -74,12 +80,14 @@ export function rowsToFields(options: RowToFieldsTransformOptions, data: DataFra
     const name = nameField.values.get(index);
     const value = valueField.values.get(index);
     const config = getFieldConfigFromFrame(data, index, mappings);
+    const labels = getLabelsFromRow(data, index, mappings, nameField, valueField);
 
     const field: Field = {
       name: name,
       type: valueField.type,
       values: new ArrayVector([value]),
       config: config,
+      labels,
     };
 
     outFields.push(field);
@@ -89,4 +97,36 @@ export function rowsToFields(options: RowToFieldsTransformOptions, data: DataFra
     fields: outFields,
     length: 1,
   };
+}
+
+function getLabelsFromRow(
+  frame: DataFrame,
+  index: number,
+  mappings: FieldToConfigMapping[],
+  nameField: Field,
+  valueField: Field
+): Labels {
+  const labels = { ...valueField.labels };
+
+  for (let i = 0; i < frame.fields.length; i++) {
+    const field = frame.fields[i];
+    const fieldName = getFieldDisplayName(field, frame);
+
+    if (field === nameField || field === valueField || field.type !== FieldType.string) {
+      continue;
+    }
+
+    const handlerKey = getConfigHandlerKeyForField(fieldName, mappings);
+    const configDef = lookUpConfigHandler(handlerKey);
+    if (configDef) {
+      continue;
+    }
+
+    const value = field.values.get(index);
+    if (value != null) {
+      labels[fieldName] = value;
+    }
+  }
+
+  return labels;
 }
