@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-
+import { useMemo } from 'react';
+import { useAsync } from 'react-use';
 import { Plugin, LocalPlugin } from '../types';
 import { api } from '../api';
-import { useAsync } from 'react-use';
 
 export const usePlugins = () => {
   const result = useAsync(async () => {
@@ -83,17 +82,12 @@ type PluginState = {
 };
 
 export const usePlugin = (slug: string): PluginState => {
-  const [state, setState] = useState<PluginState>({
-    isLoading: true,
-  });
-
-  useEffect(() => {
-    const fetchPluginData = async () => {
-      const plugin = await api.getPlugin(slug);
-      setState({ ...plugin, isLoading: false });
-    };
-    fetchPluginData();
+  const { loading, value } = useAsync(async () => {
+    return await api.getPlugin(slug);
   }, [slug]);
 
-  return state;
+  return {
+    isLoading: loading,
+    ...value,
+  };
 };
