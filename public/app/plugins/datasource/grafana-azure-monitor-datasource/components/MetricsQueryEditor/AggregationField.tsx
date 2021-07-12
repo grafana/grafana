@@ -5,6 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { Field } from '../Field';
 import { findOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+import { setAggregation } from './setQueryValue';
 
 interface AggregationFieldProps extends AzureQueryEditorFieldProps {
   aggregationOptions: AzureMonitorOption[];
@@ -24,13 +25,8 @@ const AggregationField: React.FC<AggregationFieldProps> = ({
         return;
       }
 
-      onQueryChange({
-        ...query,
-        azureMonitor: {
-          ...query.azureMonitor,
-          aggregation: change.value,
-        },
-      });
+      const newQuery = setAggregation(query, change.value);
+      onQueryChange(newQuery);
     },
     [onQueryChange, query]
   );

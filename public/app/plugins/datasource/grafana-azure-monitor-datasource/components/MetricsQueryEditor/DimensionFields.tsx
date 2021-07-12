@@ -4,6 +4,7 @@ import { Button, Select, Input, HorizontalGroup, VerticalGroup, InlineLabel } fr
 import { Field } from '../Field';
 import { findOption } from '../../utils/common';
 import { AzureMetricDimension, AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types';
+import { setDimensionFilters as setQueryDimensionFilters } from './setQueryValue';
 
 interface DimensionFieldsProps extends AzureQueryEditorFieldProps {
   dimensionOptions: AzureMonitorOption[];
@@ -14,20 +15,13 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
     query.azureMonitor?.dimensionFilters,
   ]);
 
-  const setDimensionFilters = useCallback(
-    (newFilters: AzureMetricDimension[]) => {
-      onQueryChange({
-        ...query,
-        azureMonitor: {
-          ...query.azureMonitor,
-          dimensionFilters: newFilters,
-        },
-      });
-    },
-    [onQueryChange, query]
-  );
+  const setDimensionFilters = (newFilters: AzureMetricDimension[]) => {
+    const newQuery = setQueryDimensionFilters(query, newFilters);
+    onQueryChange(newQuery);
+  };
 
-  const addFilter = useCallback(() => {
+  const addFilter = () => {
+    // TODO: move this to setQueryValue
     setDimensionFilters([
       ...dimensionFilters,
       {
@@ -36,9 +30,10 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
         filter: '',
       },
     ]);
-  }, [dimensionFilters, setDimensionFilters]);
+  };
 
   const removeFilter = (index: number) => {
+    // TODO: move this to setQueryValue
     const newFilters = [...dimensionFilters];
     newFilters.splice(index, 1);
     setDimensionFilters(newFilters);

@@ -5,6 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { Field } from '../Field';
 import { findOption, toOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+import { setMetricName } from './setQueryValue';
 
 const ERROR_SOURCE = 'metrics-metricname';
 const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
@@ -44,13 +45,8 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
         return;
       }
 
-      onQueryChange({
-        ...query,
-        azureMonitor: {
-          ...query.azureMonitor,
-          metricName: change.value,
-        },
-      });
+      const newQuery = setMetricName(query, change.value);
+      onQueryChange(newQuery);
     },
     [onQueryChange, query]
   );

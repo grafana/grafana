@@ -5,6 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { Field } from '../Field';
 import { findOption, toOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+import { setResourceType } from './setQueryValue';
 
 const ERROR_SOURCE = 'resource-type';
 const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
@@ -37,19 +38,8 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
         return;
       }
 
-      onQueryChange({
-        ...query,
-        azureMonitor: {
-          ...query.azureMonitor,
-          metricDefinition: change.value,
-          resourceName: undefined,
-          metricNamespace: undefined,
-          metricName: undefined,
-          aggregation: undefined,
-          timeGrain: '',
-          dimensionFilters: [],
-        },
-      });
+      const newQuery = setResourceType(query, change.value);
+      onQueryChange(newQuery);
     },
     [onQueryChange, query]
   );
