@@ -44,7 +44,7 @@ async function getPluginVersions(id: string): Promise<any[]> {
 }
 
 async function getInstalledPlugins(): Promise<any> {
-  const installed = await getBackendSrv().get(`${API_ROOT}`);
+  const installed = await getBackendSrv().get(`${API_ROOT}`, { embedded: 0 });
   return installed;
 }
 
