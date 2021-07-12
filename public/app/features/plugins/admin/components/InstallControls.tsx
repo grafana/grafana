@@ -80,7 +80,7 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   const isEnterprise = remotePlugin?.status === 'enterprise';
   const hasPermission = isGrafanaAdmin();
 
-  if (isEnterprise) {
+  if (isEnterprise && !config.licenseInfo?.hasValidLicense) {
     return (
       <div className={styles.message}>
         Marketplace doesn&#39;t support installing Enterprise plugins yet. Stay tuned!
