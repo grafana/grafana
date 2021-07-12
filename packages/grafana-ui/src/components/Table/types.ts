@@ -5,6 +5,7 @@ import { CSSProperties, FC } from 'react';
 
 export interface TableFieldOptions {
   width: number;
+  minWidth: number;
   align: FieldTextAlignment;
   displayMode: TableCellDisplayMode;
   hidden?: boolean;
