@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/grafana/grafana/pkg/util"
@@ -16,6 +17,9 @@ const saltLength = 8
 
 // Decrypt decrypts a payload with a given secret.
 func decrypt(payload, secret []byte) ([]byte, error) {
+	if len(payload) < saltLength {
+		return nil, fmt.Errorf("unable to compute salt")
+	}
 	salt := payload[:saltLength]
 	key, err := encryptionKeyToBytes(secret, salt)
 	if err != nil {
