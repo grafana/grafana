@@ -8,15 +8,7 @@ import {
   TransformerUIProps,
 } from '@grafana/data';
 import { configFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
-import {
-  fieldMatchersUI,
-  InlineField,
-  InlineFieldRow,
-  InlineLabel,
-  InlineSwitch,
-  Select,
-  useStyles2,
-} from '@grafana/ui';
+import { fieldMatchersUI, InlineField, InlineFieldRow, InlineSwitch, Select, useStyles2 } from '@grafana/ui';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
 import { css } from '@emotion/css';
 
@@ -85,7 +77,6 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineLabel width={20}>Mappings</InlineLabel>
         {configFrame && (
           <FieldToConfigMappingEditor
             frame={configFrame}

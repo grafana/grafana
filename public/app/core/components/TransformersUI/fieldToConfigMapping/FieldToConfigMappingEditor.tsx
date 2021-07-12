@@ -62,9 +62,9 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
     <table className={styles.table}>
       <thead>
         <tr>
-          <th>Field name</th>
+          <th>Field mappings</th>
           <th>Use as</th>
-          {withReducers && <th>Reducer</th>}
+          {withReducers && <th>Select</th>}
         </tr>
       </thead>
       <tbody>
@@ -166,10 +166,9 @@ function configHandlerToSelectOption(
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  mappings: css`
-    flex-grow: 1;
-  `,
   table: css`
+    margin-top: ${theme.spacing(1)};
+
     td,
     th {
       border-right: 4px solid ${theme.colors.background.primary};
@@ -177,7 +176,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       white-space: nowrap;
     }
     th {
-      background: ${theme.colors.background.secondary};
       font-size: ${theme.typography.bodySmall.fontSize};
       line-height: ${theme.spacing(4)};
       padding: ${theme.spacing(0, 1)};
