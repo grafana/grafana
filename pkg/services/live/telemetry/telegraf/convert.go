@@ -132,6 +132,8 @@ func (c *Converter) convertWithLabelsColumn(metrics []influx.Metric) ([]telemetr
 	frameWrappers := make([]telemetry.FrameWrapper, 0, len(metricFrames))
 	for _, key := range frameKeyOrder {
 		frame := metricFrames[key]
+		// For all fields except labels and time fill columns with nulls in
+		// case of unequal length.
 		for i := 2; i < len(frame.fields); i++ {
 			if frame.fields[i].Len() < frame.fields[0].Len() {
 				numNulls := frame.fields[0].Len() - frame.fields[i].Len()
@@ -242,6 +244,8 @@ func (s *metricFrame) append(m influx.Metric) error {
 					v = nil
 				}
 			}
+			// If field does not have a desired length till this moment
+			// we fill it with nulls up to the currently processed index.
 			if field.Len() < s.fields[0].Len()-1 {
 				numNulls := s.fields[0].Len() - 1 - field.Len()
 				for i := 0; i < numNulls; i++ {
@@ -252,6 +256,8 @@ func (s *metricFrame) append(m influx.Metric) error {
 		} else {
 			field := data.NewFieldFromFieldType(ft, 0)
 			field.Name = f.Key
+			// If field appeared at the moment when we already filled some columns
+			// we fill it with nulls up to the currently processed index.
 			if field.Len() < s.fields[0].Len()-1 {
 				numNulls := s.fields[0].Len() - 1 - field.Len()
 				for i := 0; i < numNulls; i++ {
