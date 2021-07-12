@@ -47,6 +47,8 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
   );
 
   const renderActions = ({ isOpen }: QueryOperationRowRenderProps) => {
+    const disabled = configs[index].transformation.disabled;
+
     return (
       <HorizontalGroup align="center" width="auto">
         {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
@@ -59,9 +61,9 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
         <QueryOperationAction title="Debug" disabled={!isOpen} icon="bug" onClick={toggleDebug} active={showDebug} />
         <QueryOperationAction
           title="Disable/Enable transformation"
-          icon="eye"
+          icon={disabled ? 'eye-slash' : 'eye'}
           onClick={() => onDisableToggle(index)}
-          active={configs[index].transformation.disabled}
+          active={disabled}
         />
         <QueryOperationAction title="Remove" icon="trash-alt" onClick={() => onRemove(index)} />
       </HorizontalGroup>
