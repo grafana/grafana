@@ -75,8 +75,11 @@ async function rulerGetRequest<T>(url: string, empty: T): Promise<T> {
       .toPromise();
     return response.data;
   } catch (e) {
-    if (e?.status === 404 || e?.data?.message?.includes('group does not exist')) {
-      return empty;
+    if (e?.status === 404) {
+      if (e?.data?.message?.includes('group does not exist') || e?.data?.message?.includes('no rule groups found')) {
+        return empty;
+      }
+      throw new Error('404 from rules config endpoint. Perhaps ruler API is not enabled?');
     } else if (
       e?.status === 500 &&
       e?.data?.message?.includes('unexpected content type from upstream. expected YAML, got text/html')

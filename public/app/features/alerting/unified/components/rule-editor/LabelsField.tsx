@@ -41,6 +41,7 @@ const LabelsField: FC<Props> = ({ className }) => {
                                 required: { value: !!labels[index]?.value, message: 'Required.' },
                               })}
                               placeholder="key"
+                              data-testid={`label-key-${index}`}
                               defaultValue={field.key}
                             />
                           </Field>
@@ -55,6 +56,7 @@ const LabelsField: FC<Props> = ({ className }) => {
                                 required: { value: !!labels[index]?.key, message: 'Required.' },
                               })}
                               placeholder="value"
+                              data-testid={`label-value-${index}`}
                               defaultValue={field.value}
                             />
                           </Field>

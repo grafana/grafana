@@ -49,7 +49,12 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
 
   return (
     <div className={style.flexRow}>
-      <Field label="Namespace" error={errors.namespace?.message} invalid={!!errors.namespace?.message}>
+      <Field
+        data-testid="namespace-picker"
+        label="Namespace"
+        error={errors.namespace?.message}
+        invalid={!!errors.namespace?.message}
+      >
         <InputControl
           render={({ field: { onChange, ref, ...field } }) => (
             <SelectWithAdd
@@ -73,7 +78,7 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
           }}
         />
       </Field>
-      <Field label="Group" error={errors.group?.message} invalid={!!errors.group?.message}>
+      <Field data-testid="group-picker" label="Group" error={errors.group?.message} invalid={!!errors.group?.message}>
         <InputControl
           render={({ field: { ref, ...field } }) => (
             <SelectWithAdd {...field} options={groupOptions} width={42} custom={customGroup} className={style.input} />

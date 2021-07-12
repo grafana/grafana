@@ -13,6 +13,7 @@ import {
   createOrUpdateSilenceAction,
   fetchFolderAction,
   fetchAlertGroupsAction,
+  checkIfLotexSupportsEditingRulesAction,
 } from './actions';
 
 export const reducer = combineReducers({
@@ -39,6 +40,11 @@ export const reducer = combineReducers({
     'amAlertGroups',
     fetchAlertGroupsAction,
     (alertManagerSourceName) => alertManagerSourceName
+  ).reducer,
+  lotexSupportsRuleEditing: createAsyncMapSlice(
+    'lotexSupportsRuleEditing',
+    checkIfLotexSupportsEditingRulesAction,
+    (source) => source
   ).reducer,
 });
 

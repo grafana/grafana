@@ -37,6 +37,7 @@ const AnnotationsField: FC = () => {
                       className={styles.field}
                       invalid={!!errors.annotations?.[index]?.key?.message}
                       error={errors.annotations?.[index]?.key?.message}
+                      data-testid={`annotation-key-${index}`}
                     >
                       <InputControl
                         name={`annotations[${index}].key`}
@@ -53,6 +54,7 @@ const AnnotationsField: FC = () => {
                       error={errors.annotations?.[index]?.value?.message}
                     >
                       <ValueInputComponent
+                        data-testid={`annotation-value-${index}`}
                         className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
                         {...register(`annotations[${index}].value`)}
                         placeholder={isUrl ? 'https://' : `Text`}

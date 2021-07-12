@@ -1,32 +1,14 @@
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { FC, useMemo } from 'react';
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, Input, InputControl, Select, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
-
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { DataSourcePicker } from '@grafana/runtime';
-import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
 import { RuleFolderPicker } from './RuleFolderPicker';
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { contextSrv } from 'app/core/services/context_srv';
-
-const alertTypeOptions: SelectableValue[] = [
-  {
-    label: 'Grafana managed alert',
-    value: RuleFormType.grafana,
-    description: 'Classic Grafana alerts based on thresholds.',
-  },
-];
-
-if (contextSrv.isEditor) {
-  alertTypeOptions.push({
-    label: 'Cortex/Loki managed alert',
-    value: RuleFormType.cloud,
-    description: 'Alert based on a system or application behavior. Based on Prometheus.',
-  });
-}
+import { CloudRulesSourcePicker } from './CloudRulesSourcePicker';
 
 interface Props {
   editingExistingRule: boolean;
@@ -46,21 +28,25 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   const ruleFormType = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  useEffect(() => {}, [ruleFormType]);
+  const alertTypeOptions = useMemo((): SelectableValue[] => {
+    const result = [
+      {
+        label: 'Grafana managed alert',
+        value: RuleFormType.grafana,
+        description: 'Classic Grafana alerts based on thresholds.',
+      },
+    ];
 
-  const rulesSourcesWithRuler = useRulesSourcesWithRuler();
+    if (contextSrv.isEditor) {
+      result.push({
+        label: 'Cortex/Loki managed alert',
+        value: RuleFormType.cloud,
+        description: 'Alert based on a system or application behavior. Based on Prometheus.',
+      });
+    }
 
-  const dataSourceFilter = useCallback(
-    (ds: DataSourceInstanceSettings): boolean => {
-      if (ruleFormType === RuleFormType.grafana) {
-        return !!ds.meta.alerting;
-      } else {
-        // filter out only rules sources that support ruler and thus can have alerts edited
-        return !!rulesSourcesWithRuler.find(({ id }) => id === ds.id);
-      }
-    },
-    [ruleFormType, rulesSourcesWithRuler]
-  );
+    return result;
+  }, []);
 
   return (
     <RuleEditorSection stepNo={1} title="Alert type">
@@ -71,6 +57,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
         invalid={!!errors.name?.message}
       >
         <Input
+          id="name"
           {...register('name', { required: { value: true, message: 'Must enter an alert name' } })}
           autoFocus={true}
         />
@@ -82,25 +69,11 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           className={styles.formInput}
           error={errors.type?.message}
           invalid={!!errors.type?.message}
+          data-testid="alert-type-picker"
         >
           <InputControl
             render={({ field: { onChange, ref, ...field } }) => (
-              <Select
-                {...field}
-                options={alertTypeOptions}
-                onChange={(v: SelectableValue) => {
-                  const value = v?.value;
-                  // when switching to system alerts, null out data source selection if it's not a rules source with ruler
-                  if (
-                    value === RuleFormType.cloud &&
-                    dataSourceName &&
-                    !rulesSourcesWithRuler.find(({ name }) => name === dataSourceName)
-                  ) {
-                    setValue('dataSourceName', null);
-                  }
-                  onChange(value);
-                }}
-              />
+              <Select {...field} options={alertTypeOptions} onChange={(v: SelectableValue) => onChange(v?.value)} />
             )}
             name="type"
             control={control}
@@ -115,15 +88,12 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             label="Select data source"
             error={errors.dataSourceName?.message}
             invalid={!!errors.dataSourceName?.message}
+            data-testid="datasource-picker"
           >
             <InputControl
-              render={({ field: { onChange, ref, value, ...field } }) => (
-                <DataSourcePicker
+              render={({ field: { onChange, ref, ...field } }) => (
+                <CloudRulesSourcePicker
                   {...field}
-                  current={value}
-                  filter={dataSourceFilter}
-                  noDefault
-                  alerting
                   onChange={(ds: DataSourceInstanceSettings) => {
                     // reset location if switching data sources, as different rules source will have different groups and namespaces
                     setValue('location', undefined);
@@ -149,6 +119,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           className={styles.formInput}
           error={errors.folder?.message}
           invalid={!!errors.folder?.message}
+          data-testid="folder-picker"
         >
           <InputControl
             render={({ field: { ref, ...field } }) => (

@@ -6,13 +6,13 @@ import { useAsync } from 'react-use';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 
-interface Props {
+export interface ExpressionEditorProps {
   value?: string;
   onChange: (value: string) => void;
   dataSourceName: string; // will be a prometheus or loki datasource
 }
 
-export const ExpressionEditor: FC<Props> = ({ value, onChange, dataSourceName }) => {
+export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, dataSourceName }) => {
   const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
   const [query, setQuery] = useState(mapToQuery({ refId: 'A', hide: false }, value));
   const { error, loading, value: dataSource } = useAsync(() => {

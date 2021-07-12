@@ -37,7 +37,7 @@ import {
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
-import { withAppEvents, withSerializedError } from '../utils/redux';
+import { isFetchError, withAppEvents, withSerializedError } from '../utils/redux';
 import { formValuesToRulerAlertingRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
 import {
   isCloudRuleIdentifier,
@@ -542,4 +542,30 @@ export const fetchAlertGroupsAction = createAsyncThunk(
   (alertManagerSourceName: string): Promise<AlertmanagerGroup[]> => {
     return withSerializedError(fetchAlertGroups(alertManagerSourceName));
   }
+);
+
+export const checkIfLotexSupportsEditingRulesAction = createAsyncThunk(
+  'unifiedalerting/checkIfLotexRuleEditingSupported',
+  async (rulesSourceName: string): Promise<boolean> =>
+    withAppEvents(
+      (async () => {
+        try {
+          await fetchRulerRulesGroup(rulesSourceName, 'test', 'test');
+          return true;
+        } catch (e) {
+          if (
+            (isFetchError(e) &&
+              (e.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage
+                e.data.message?.includes('page not found'))) || // ruler api disabled
+            e.message?.includes('404 from rules config endpoint') // ruler api disabled
+          ) {
+            return false;
+          }
+          throw e;
+        }
+      })(),
+      {
+        errorMessage: `Failed to determine if "${rulesSourceName}" allows editing rules`,
+      }
+    )
 );
