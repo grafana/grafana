@@ -143,7 +143,7 @@ func TestGenerateConnectionString(t *testing.T) {
 }
 
 // To run this test, set runPostgresTests=true
-// Or from the commandline: GRAFANA_TEST_DB=postgres go test -v ./pkg/tsdb/postgres
+// Or from the commandline: GRAFANA_TEST_DB=postgres go test -tags=integration -v ./pkg/tsdb/postgres
 // The tests require a PostgreSQL db named grafanadstest and a user/password grafanatest/grafanatest!
 // Use the docker/blocks/postgres_tests/docker-compose.yaml to spin up a
 // preconfigured Postgres server suitable for running these tests.
@@ -222,7 +222,7 @@ func TestPostgres(t *testing.T) {
 
 		sql = `
 			INSERT INTO postgres_types VALUES(
-				1,2,3,
+				null,2,3,
 				4.5,6.7,1.1,1.2,
 				'char10','varchar10','text',
 
@@ -254,7 +254,7 @@ func TestPostgres(t *testing.T) {
 			require.Len(t, frames, 1)
 			require.Len(t, frames[0].Fields, 17)
 
-			require.Equal(t, int16(1), frames[0].Fields[0].At(0).(int16))
+			require.Nil(t, frames[0].Fields[0].At(0))
 			require.Equal(t, int32(2), *frames[0].Fields[1].At(0).(*int32))
 			require.Equal(t, int64(3), *frames[0].Fields[2].At(0).(*int64))
 

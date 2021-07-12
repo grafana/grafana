@@ -200,5 +200,24 @@ func (t *postgresQueryResultTransformer) GetConverterList() []sqlutil.StringConv
 				},
 			},
 		},
+		{
+			Name:           "handle INT2",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "INT2",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableInt16,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseInt(*in, 10, 16)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
 	}
 }
