@@ -2,6 +2,7 @@ import React from 'react';
 import {
   FieldMatcherID,
   GrafanaTheme2,
+  PluginState,
   SelectableValue,
   TransformerRegistryItem,
   TransformerUIProps,
@@ -104,6 +105,13 @@ export const configFromQueryTransformRegistryItem: TransformerRegistryItem<Confi
   transformation: configFromDataTransformer,
   name: configFromDataTransformer.name,
   description: configFromDataTransformer.description,
+  state: PluginState.beta,
+  help: `
+### Use cases 
+
+Can take a query result and extract properties like min and max and apply it to the other query results. 
+
+`,
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
