@@ -78,8 +78,7 @@ export const circlesLayer: MapLayerRegistryItem<CircleConfig> = {
           // Get the circle color for a specific data value depending on color scheme
           const color = frame.fields[0].display!(field.values.get(i)).color;
           // Set the opacity determined from user configuration
-          var fillColor = tinycolor(color).toRgb();
-          fillColor.a = config.opacity;
+          const fillColor = tinycolor(color).setAlpha(config.opacity).toRgbString();
 
           // Get circle size from user configuration
           const radius = calcCircleSize(calcs, field.values.get(i), config.minSize, config.maxSize);
