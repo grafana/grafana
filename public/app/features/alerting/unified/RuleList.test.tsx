@@ -368,6 +368,7 @@ describe('RuleList', () => {
                         labels: {
                           foo: 'buzz',
                           severity: 'error',
+                          region: 'EU',
                         },
                         value: '2e+10',
                         annotations: {
@@ -378,6 +379,7 @@ describe('RuleList', () => {
                         labels: {
                           foo: 'buzz',
                           severity: 'error',
+                          region: 'US',
                         },
                         value: '3e+11',
                         annotations: {
@@ -427,6 +429,11 @@ describe('RuleList', () => {
     userEvent.type(filterInput, '{foo=~"b.+"}');
     waitFor(() => expect(filterInput).toHaveTextContent('{foo=~"b.+"}'));
     expect(groups[0]).toBeVisible();
+    expect(groups[1]).toBeVisible();
+
+    userEvent.type(filterInput, '{region="US"}');
+    waitFor(() => expect(filterInput).toHaveTextContent('{region="US"}'));
+    waitFor(() => expect(groups[0]).not.toBeVisible());
     expect(groups[1]).toBeVisible();
   });
 });
