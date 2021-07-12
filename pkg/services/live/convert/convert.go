@@ -16,10 +16,11 @@ type Converter struct {
 func NewConverter() *Converter {
 	return &Converter{
 		telegrafConverterWide: telegraf.NewConverter(
+			telegraf.WithFrameType(telegraf.FrameTypeWide),
 			telegraf.WithFloat64Numbers(true),
 		),
 		telegrafConverterLabelsColumn: telegraf.NewConverter(
-			telegraf.WithUseLabelsColumn(true),
+			telegraf.WithFrameType(telegraf.FrameTypeLabelsColumn),
 			telegraf.WithFloat64Numbers(true),
 		),
 	}
