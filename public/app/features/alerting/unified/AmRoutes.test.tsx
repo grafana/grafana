@@ -13,6 +13,7 @@ import { mockDataSource, MockDataSourceSrv } from './mocks';
 import { getAllDataSources } from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -239,7 +240,7 @@ describe('AmRoutes', () => {
 
     // configure receiver & group by
     const receiverSelect = await ui.receiverSelect.find();
-    clickSelectOption(receiverSelect, 'critical');
+    await clickSelectOption(receiverSelect, 'critical');
 
     const groupSelect = ui.groupSelect.get();
     await userEvent.type(byRole('textbox').get(groupSelect), 'namespace{enter}');
@@ -298,7 +299,7 @@ describe('AmRoutes', () => {
 
     // configure receiver & group by
     const receiverSelect = await ui.receiverSelect.find();
-    clickSelectOption(receiverSelect, 'default');
+    await clickSelectOption(receiverSelect, 'default');
 
     const groupSelect = ui.groupSelect.get();
     await userEvent.type(byRole('textbox').get(groupSelect), 'severity{enter}');
@@ -343,7 +344,7 @@ describe('AmRoutes', () => {
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
   userEvent.click(byRole('textbox').get(selectElement));
-  userEvent.click(byText(optionText).get(selectElement));
+  await selectEvent.select(selectElement, optionText, { container: document.body });
 };
 
 const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit: string): Promise<void> => {
@@ -351,5 +352,5 @@ const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit:
   expect(inputs).toHaveLength(2);
   await userEvent.type(inputs[0], value);
   userEvent.click(inputs[1]);
-  userEvent.click(byText(timeUnit).get(selectElement));
+  await selectEvent.select(selectElement, timeUnit, { container: document.body });
 };

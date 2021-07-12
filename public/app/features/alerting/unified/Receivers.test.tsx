@@ -23,6 +23,7 @@ import userEvent from '@testing-library/user-event';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
+import selectEvent from 'react-select-event';
 
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
@@ -94,7 +95,7 @@ const ui = {
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
   userEvent.click(byRole('textbox').get(selectElement));
-  userEvent.click(byText(optionText).get(selectElement));
+  await selectEvent.select(selectElement, optionText, { container: document.body });
 };
 
 describe('Receivers', () => {
@@ -166,7 +167,7 @@ describe('Receivers', () => {
     await ui.inputs.name.find();
 
     // select hipchat
-    clickSelectOption(byTestId('items.0.type').get(), 'HipChat');
+    await clickSelectOption(byTestId('items.0.type').get(), 'HipChat');
 
     // check that email options are gone and hipchat options appear
     expect(ui.inputs.email.addresses.query()).not.toBeInTheDocument();
