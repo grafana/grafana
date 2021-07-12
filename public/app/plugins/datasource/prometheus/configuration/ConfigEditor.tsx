@@ -1,5 +1,5 @@
 import React from 'react';
-import { DataSourceHttpSettings } from '@grafana/ui';
+import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { PromSettings } from './PromSettings';
 import { PromOptions } from '../types';
@@ -17,6 +17,8 @@ export const ConfigEditor = (props: Props) => {
         onChange={onOptionsChange}
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
       />
+
+      <AlertingSettings<PromOptions> options={options} onOptionsChange={onOptionsChange} />
 
       <PromSettings options={options} onOptionsChange={onOptionsChange} />
     </>

@@ -51,6 +51,13 @@ const dataSources = {
     name: 'Prometheus',
     type: DataSourceType.Prometheus,
   }),
+  promdisabled: mockDataSource({
+    name: 'Prometheus-disabled',
+    type: DataSourceType.Prometheus,
+    jsonData: {
+      manageAlerts: false,
+    },
+  }),
   loki: mockDataSource({
     name: 'Loki',
     type: DataSourceType.Loki,

@@ -240,6 +240,16 @@ describe('RuleEditor', () => {
         },
         { alerting: true }
       ),
+      loki_disabled: mockDataSource(
+        {
+          type: DataSourceType.Loki,
+          name: 'loki disabled for alerting',
+          jsonData: {
+            manageAlerts: false,
+          },
+        },
+        { alerting: true }
+      ),
       // can edit rules
       prom: mockDataSource(
         {
@@ -311,6 +321,7 @@ describe('RuleEditor', () => {
     expect(byText('loki with local rule store').query(dataSourceSelect)).not.toBeInTheDocument();
     expect(byText('prom without ruler api').query(dataSourceSelect)).not.toBeInTheDocument();
     expect(byText('splunk').query(dataSourceSelect)).not.toBeInTheDocument();
+    expect(byText('loki disabled for alerting').query(dataSourceSelect)).not.toBeInTheDocument();
   });
 });
 
