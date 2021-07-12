@@ -214,7 +214,8 @@ func TestPostgres(t *testing.T) {
 				c13_time time without time zone,
 				c14_timetz time with time zone,
 				time date,
-				c15_interval interval
+				c15_interval interval,
+				c16_smallint smallint
 			);
 		`
 		_, err := sess.Exec(sql)
@@ -222,11 +223,12 @@ func TestPostgres(t *testing.T) {
 
 		sql = `
 			INSERT INTO postgres_types VALUES(
-				null,2,3,
+				1,2,3,
 				4.5,6.7,1.1,1.2,
 				'char10','varchar10','text',
 
-				now(),now(),now(),now(),now(),now(),'15m'::interval
+				now(),now(),now(),now(),now(),now(),'15m'::interval,
+				null
 			);
 		`
 		_, err = sess.Exec(sql)
@@ -252,9 +254,9 @@ func TestPostgres(t *testing.T) {
 
 			frames, _ := queryResult.Dataframes.Decoded()
 			require.Len(t, frames, 1)
-			require.Len(t, frames[0].Fields, 17)
+			require.Len(t, frames[0].Fields, 18)
 
-			require.Nil(t, frames[0].Fields[0].At(0))
+			require.Equal(t, int16(1), *frames[0].Fields[0].At(0).(*int16))
 			require.Equal(t, int32(2), *frames[0].Fields[1].At(0).(*int32))
 			require.Equal(t, int64(3), *frames[0].Fields[2].At(0).(*int64))
 
@@ -280,6 +282,7 @@ func TestPostgres(t *testing.T) {
 			_, ok = frames[0].Fields[15].At(0).(*time.Time)
 			require.True(t, ok)
 			require.Equal(t, "00:15:00", *frames[0].Fields[16].At(0).(*string))
+			require.Nil(t, frames[0].Fields[17].At(0))
 		})
 	})
 
