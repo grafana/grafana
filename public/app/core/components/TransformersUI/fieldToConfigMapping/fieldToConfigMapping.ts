@@ -87,15 +87,32 @@ export interface FieldToConfigMapHandler {
   defaultReducer?: ReducerID;
 }
 
+export enum FieldConfigHandlerKey {
+  Name = 'field.name',
+  Value = 'field.value',
+  Label = 'field.label',
+  Ignore = '__ignore',
+}
+
 export const configMapHandlers: FieldToConfigMapHandler[] = [
   {
-    key: 'field.name',
+    key: FieldConfigHandlerKey.Name,
     name: 'Field name',
     processor: () => {},
   },
   {
-    key: 'field.value',
+    key: FieldConfigHandlerKey.Value,
     name: 'Field value',
+    processor: () => {},
+  },
+  {
+    key: FieldConfigHandlerKey.Label,
+    name: 'Field label',
+    processor: () => {},
+  },
+  {
+    key: FieldConfigHandlerKey.Ignore,
+    name: 'Ignore',
     processor: () => {},
   },
   {
@@ -278,8 +295,8 @@ export function evaluteFieldMappings(
   };
 
   // Look up name and value field in mappings
-  let nameFieldMappping = mappings.find((x) => x.handlerKey === 'field.name');
-  let valueFieldMapping = mappings.find((x) => x.handlerKey === 'field.value');
+  let nameFieldMappping = mappings.find((x) => x.handlerKey === FieldConfigHandlerKey.Name);
+  let valueFieldMapping = mappings.find((x) => x.handlerKey === FieldConfigHandlerKey.Value);
 
   for (const field of frame.fields) {
     const fieldName = getFieldDisplayName(field, frame);
@@ -291,28 +308,33 @@ export function evaluteFieldMappings(
     if (withNameAndValue) {
       // If we have a handler it means manually specified field
       if (handler) {
-        if (handler.key === 'field.name') {
+        if (handler.key === FieldConfigHandlerKey.Name) {
           result.nameField = field;
         }
-        if (handler.key === 'field.value') {
+        if (handler.key === FieldConfigHandlerKey.Value) {
           result.valueField = field;
         }
       } else if (!mapping) {
         // We have no name field and no mapping for it, pick first string
         if (!result.nameField && !nameFieldMappping && field.type === FieldType.string) {
           result.nameField = field;
-          handler = lookUpConfigHandler('field.name');
+          handler = lookUpConfigHandler(FieldConfigHandlerKey.Name);
         }
 
         if (!result.valueField && !valueFieldMapping && field.type === FieldType.number) {
           result.valueField = field;
-          handler = lookUpConfigHandler('field.value');
+          handler = lookUpConfigHandler(FieldConfigHandlerKey.Value);
         }
       }
     }
 
+    // If no handle and when in name and value mode (Rows to fields) default to labels
+    if (!handler && withNameAndValue) {
+      handler = lookUpConfigHandler(FieldConfigHandlerKey.Label);
+    }
+
     result.index[fieldName] = {
-      automatic: mapping === null,
+      automatic: !mapping,
       handler: handler,
       reducerId: mapping?.reducerId ?? handler?.defaultReducer ?? ReducerID.lastNotNull,
     };

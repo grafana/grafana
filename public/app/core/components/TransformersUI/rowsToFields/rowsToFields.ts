@@ -13,6 +13,7 @@ import {
   FieldToConfigMapping,
   evaluteFieldMappings,
   EvaluatedMappingResult,
+  FieldConfigHandlerKey,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 
 export interface RowToFieldsTransformOptions {
@@ -80,7 +81,7 @@ function getLabelsFromRow(frame: DataFrame, index: number, mappingResult: Evalua
     const fieldName = getFieldDisplayName(field, frame);
     const fieldMapping = mappingResult.index[fieldName];
 
-    if (fieldMapping.handler && fieldMapping.handler.key !== 'field.labels') {
+    if (fieldMapping.handler && fieldMapping.handler.key !== FieldConfigHandlerKey.Label) {
       continue;
     }
 

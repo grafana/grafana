@@ -41,7 +41,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
       if (existingIdx !== -1) {
         onChange(mappings.filter((x, index) => index !== existingIdx));
       } else {
-        onChange([...mappings, { fieldName: row.fieldName, handlerKey: null }]);
+        onChange([...mappings, { fieldName: row.fieldName, handlerKey: '__ignore' }]);
       }
     }
   };
@@ -75,6 +75,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
               <Select
                 options={configProps}
                 value={row.configOption}
+                placeholder={row.placeholder}
                 isClearable={true}
                 onChange={(value) => onChangeConfigProperty(row, value)}
               />
@@ -99,6 +100,7 @@ interface FieldToConfigRowViewModel {
   handlerKey: string | null;
   fieldName: string;
   configOption: SelectableValue<string | null> | null;
+  placeholder?: string;
   missingInFrame?: boolean;
   reducerId: string;
 }
@@ -114,10 +116,12 @@ function getViewModelRows(
   for (const field of frame.fields) {
     const fieldName = getFieldDisplayName(field, frame);
     const mapping = mappingResult.index[fieldName];
+    const option = configHandlerToSelectOption(mapping.handler, mapping.automatic);
 
     rows.push({
       fieldName,
-      configOption: configHandlerToSelectOption(mapping.handler, mapping.automatic),
+      configOption: mapping.automatic ? null : option,
+      placeholder: mapping.automatic ? option?.label : 'Choose',
       handlerKey: mapping.handler?.key ?? null,
       reducerId: mapping.reducerId,
     });

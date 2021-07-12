@@ -35,27 +35,27 @@ describe('RowsToFieldsTransformerEditor', () => {
   it('Should be able to select name field', async () => {
     setup();
 
-    let select = (await screen.findByText('Name field')).nextSibling!;
+    const select = (await screen.findByTestId('Name-config-key')).childNodes[0];
     await fireEvent.keyDown(select, { keyCode: 40 });
-    await userEvent.click(getByText(select as HTMLElement, 'Name'));
+    await userEvent.click(getByText(select as HTMLElement, 'Field name'));
 
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        nameField: 'Name',
+        mappings: [{ fieldName: 'Name', handlerKey: 'field.name' }],
       })
     );
   });
 
-  it('Should be able to value field', async () => {
+  it('Should be able to select value field', async () => {
     setup();
 
-    let select = (await screen.findByText('Value field')).nextSibling!;
+    const select = (await screen.findByTestId('Value-config-key')).childNodes[0];
     await fireEvent.keyDown(select, { keyCode: 40 });
-    await userEvent.click(getByText(select as HTMLElement, 'Value'));
+    await userEvent.click(getByText(select as HTMLElement, 'Field value'));
 
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        valueField: 'Value',
+        mappings: [{ fieldName: 'Value', handlerKey: 'field.value' }],
       })
     );
   });

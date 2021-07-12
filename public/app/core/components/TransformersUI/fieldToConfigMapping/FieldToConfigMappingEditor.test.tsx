@@ -59,20 +59,11 @@ describe('FieldToConfigMappingEditor', () => {
     expect(mockOnChange).toHaveBeenCalledWith(expect.arrayContaining([]));
   });
 
-  it('Can clear automatic mapping', async () => {
+  it('Automatic mapping is shown as placeholder', async () => {
     setup({ mappings: [] });
 
-    const select = (await screen.findByTestId('max-config-key')).childNodes[0];
-    await userEvent.click(getByLabelText(select as HTMLElement, 'select-clear-value'));
-
-    expect(mockOnChange).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        {
-          fieldName: 'max',
-          handlerKey: null,
-        },
-      ])
-    );
+    const select = await screen.findByText('Max (auto)');
+    expect(select).toBeInTheDocument();
   });
 
   it('Should show correct default reducer', async () => {

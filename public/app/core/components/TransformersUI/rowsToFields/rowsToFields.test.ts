@@ -141,8 +141,8 @@ describe('Rows to fields', () => {
     const result = rowsToFields(
       {
         mappings: [
-          { fieldName: 'Name', handlerKey: null },
-          { fieldName: 'Value', handlerKey: null },
+          { fieldName: 'Name', handlerKey: '__ignore' },
+          { fieldName: 'Value', handlerKey: '__ignore' },
         ],
       },
       input

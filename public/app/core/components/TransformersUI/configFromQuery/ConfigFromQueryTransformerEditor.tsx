@@ -70,12 +70,12 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Apply to matcher" labelWidth={20}>
+        <InlineField label="Apply to" labelWidth={20}>
           <Select onChange={onMatcherChange} options={matchers} value={currentMatcher.id} width={30} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Matcher options" labelWidth={20} className={styles.matcherOptions}>
+        <InlineField label="Apply to options" labelWidth={20} className={styles.matcherOptions}>
           <matcherUI.component
             matcher={matcherUI.matcher}
             data={input}
