@@ -7,7 +7,7 @@ weight = 113
 # Overview of Grafana 8 alerts
 Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
 
->**Note:** This information is for the new, Grafana 8 Alerts. This is an [opt-in]({{< relref"./opt-in.md" >}}) feature released in Grafana 8.0. Grafana still supports [dashboard alerts]({{< relref "../old-alerting/_index.md" >}}) out of the box
+>**Note:** This information is for the new, Grafana 8 Alerts. This is an [opt-in]({{< relref"./opt-in.md" >}}) feature released in Grafana 8.0. Grafana still supports [legacy dashboard alerts]({{< relref "../old-alerting/_index.md" >}}) out of the box
 
 Alerts have four main components:
 
@@ -31,7 +31,7 @@ You can perform the following tasks for alerts:
 
 ## Clustering
 
-Currently alerting supports a limited form of high availability. Alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but no duplicate alert notifications are sent due to the deduping logic. Proper load balancing of alerts will be introduced in the future.
+The current alerting system doesn't support high availability. Alert notifications are not deduplicated and load balancing is not supported between instances e.g. silences from one instance will not appear in the other. The Grafana team aims to have this feature by Grafana version 8.1+.
 
 ## Alert evaluation
 

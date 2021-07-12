@@ -49,7 +49,7 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
     description: 'Max number of rows to display',
     category: valueOptionsCategory,
     settings: {
-      placeholder: '5000',
+      placeholder: '25',
       integer: true,
       min: 1,
       max: 5000,

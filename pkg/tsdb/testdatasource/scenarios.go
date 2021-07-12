@@ -30,6 +30,8 @@ const (
 	predictablePulseQuery             queryType = "predictable_pulse"
 	predictableCSVWaveQuery           queryType = "predictable_csv_wave"
 	streamingClientQuery              queryType = "streaming_client"
+	flightPath                        queryType = "flight_path"
+	usaQueryKey                       queryType = "usa"
 	liveQuery                         queryType = "live"
 	grafanaAPIQuery                   queryType = "grafana_api"
 	arrowQuery                        queryType = "arrow"
@@ -134,6 +136,18 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 		ID:      string(liveQuery),
 		Name:    "Grafana Live",
 		handler: p.handleClientSideScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(flightPath),
+		Name:    "Flight path",
+		handler: p.handleFlightPathScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(usaQueryKey),
+		Name:    "USA generated data",
+		handler: p.handleUSAScenario,
 	})
 
 	p.registerScenario(&Scenario{

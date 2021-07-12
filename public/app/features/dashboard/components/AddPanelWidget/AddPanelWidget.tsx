@@ -3,7 +3,7 @@ import { connect, MapDispatchToProps } from 'react-redux';
 import { css, cx, keyframes } from '@emotion/css';
 import { chain, cloneDeep, defaults, find, sortBy } from 'lodash';
 import tinycolor from 'tinycolor2';
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Icon, IconButton, styleMixins, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { GrafanaTheme } from '@grafana/data';
@@ -145,23 +145,48 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
           <LibraryPanelsSearch onClick={onAddLibraryPanel} variant={LibraryPanelsSearchVariant.Tight} showPanelFilter />
         ) : (
           <div className={styles.actionsWrapper}>
-            <div className={styles.actionsRow}>
-              <div onClick={() => onCreateNewPanel()} aria-label={selectors.pages.AddDashboard.addNewPanel}>
+            <div className={cx(styles.actionsRow, styles.columnGap)}>
+              <div
+                onClick={() => {
+                  reportInteraction('Create new panel');
+                  onCreateNewPanel();
+                }}
+                aria-label={selectors.pages.AddDashboard.addNewPanel}
+              >
                 <Icon name="file-blank" size="xl" />
                 Add an empty panel
               </div>
-              <div onClick={onCreateNewRow}>
+              <div
+                className={styles.rowGap}
+                onClick={() => {
+                  reportInteraction('Create new row');
+                  onCreateNewRow();
+                }}
+                aria-label={selectors.pages.AddDashboard.addNewRow}
+              >
                 <Icon name="wrap-text" size="xl" />
                 Add a new row
               </div>
             </div>
             <div className={styles.actionsRow}>
-              <div onClick={() => setAddPanelView(true)}>
+              <div
+                onClick={() => {
+                  reportInteraction('Add a panel from the panel library');
+                  setAddPanelView(true);
+                }}
+                aria-label={selectors.pages.AddDashboard.addNewPanelLibrary}
+              >
                 <Icon name="book-open" size="xl" />
                 Add a panel from the panel library
               </div>
               {copiedPanelPlugins.length === 1 && (
-                <div onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
+                <div
+                  className={styles.rowGap}
+                  onClick={() => {
+                    reportInteraction('Paste panel from clipboard');
+                    onPasteCopiedPanel(copiedPanelPlugins[0]);
+                  }}
+                >
                   <Icon name="clipboard-alt" size="xl" />
                   Paste panel from clipboard
                 </div>
@@ -227,10 +252,15 @@ const getStyles = (theme: GrafanaTheme) => {
       box-shadow: 0 0 0 2px black, 0 0 0px 4px #1f60c4;
       animation: ${pulsate} 2s ease infinite;
     `,
+    rowGap: css`
+      margin-left: ${theme.spacing.sm};
+    `,
+    columnGap: css`
+      margin-bottom: ${theme.spacing.sm};
+    `,
     actionsRow: css`
       display: flex;
       flex-direction: row;
-      column-gap: ${theme.spacing.sm};
       height: 100%;
 
       > div {
@@ -258,7 +288,6 @@ const getStyles = (theme: GrafanaTheme) => {
     actionsWrapper: css`
       display: flex;
       flex-direction: column;
-      row-gap: ${theme.spacing.sm};
       padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm};
       height: 100%;
     `,

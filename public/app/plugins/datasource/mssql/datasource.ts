@@ -8,6 +8,7 @@ import ResponseParser from './response_parser';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { MssqlQueryForInterpolation, MssqlQuery, MssqlOptions } from './types';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 
 export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOptions> {
   id: any;
@@ -111,6 +112,10 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
       .toPromise();
   }
 
+  filterQuery(query: MssqlQuery): boolean {
+    return !query.hide;
+  }
+
   metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
@@ -168,12 +173,7 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
       .pipe(
         mapTo({ status: 'success', message: 'Database Connection OK' }),
         catchError((err) => {
-          console.error(err);
-          if (err.data && err.data.message) {
-            return of({ status: 'error', message: err.data.message });
-          }
-
-          return of({ status: 'error', message: err.status });
+          return of(toTestingStatus(err));
         })
       )
       .toPromise();

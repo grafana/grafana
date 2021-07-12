@@ -70,20 +70,21 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
   componentDidUpdate(prevProps: SparklineProps, prevState: State) {
     const { alignedDataFrame } = this.state;
-    let stateUpdate = {};
+
+    if (!alignedDataFrame) {
+      return;
+    }
+
+    let rebuildConfig = false;
 
     if (prevProps.sparkline !== this.props.sparkline) {
-      if (!alignedDataFrame) {
-        return;
-      }
-      const hasStructureChanged = !compareDataFrameStructures(this.state.alignedDataFrame, prevState.alignedDataFrame);
-      if (hasStructureChanged) {
-        const configBuilder = this.prepareConfig(alignedDataFrame);
-        stateUpdate = { configBuilder };
-      }
+      rebuildConfig = !compareDataFrameStructures(this.state.alignedDataFrame, prevState.alignedDataFrame);
+    } else if (prevProps.config !== this.props.config) {
+      rebuildConfig = true;
     }
-    if (Object.keys(stateUpdate).length > 0) {
-      this.setState(stateUpdate);
+
+    if (rebuildConfig) {
+      this.setState({ configBuilder: this.prepareConfig(alignedDataFrame) });
     }
   }
 
@@ -142,6 +143,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         direction: ScaleDirection.Up,
         min: field.config.min,
         max: field.config.max,
+        getDataMinMax: () => field.state?.range,
       });
 
       builder.addAxis({
@@ -163,7 +165,6 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         lineInterpolation: customConfig.lineInterpolation,
         showPoints: pointsMode,
         pointSize: customConfig.pointSize,
-        pointColor: customConfig.pointColor ?? seriesColor,
         fillOpacity: customConfig.fillOpacity,
         fillColor: customConfig.fillColor ?? seriesColor,
       });
