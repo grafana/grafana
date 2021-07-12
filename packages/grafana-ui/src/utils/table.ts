@@ -14,6 +14,7 @@ export const getCellLinks = (field: Field, row: Row<any>) => {
     })[0];
   }
 
+  // Handle explicit `onClick` callbacks
   if (link && link.onClick) {
     onClick = (event) => {
       // Allow opening in new tab
