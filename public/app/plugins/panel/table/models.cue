@@ -28,7 +28,8 @@ Family: {
                     sortBy?: [...ui.TableSortByFieldState]
                 }
                 PanelFieldConfig: {
-                    width?: int 
+                    width?: int
+                    minWidth?: int
                     align?: string | *"auto"
                     displayMode?: string | *"auto" // TODO? TableCellDisplayMode
                     filterable?: bool

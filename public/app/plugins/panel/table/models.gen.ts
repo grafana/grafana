@@ -24,6 +24,7 @@ export const defaultPanelOptions: PanelOptions = {
 
 export interface PanelFieldConfig {
   width?: number;
+  minWidth?: number;
   align?: string;
   displayMode?: TableCellDisplayMode;
   filterable?: boolean;

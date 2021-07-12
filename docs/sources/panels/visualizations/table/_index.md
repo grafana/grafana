@@ -31,9 +31,15 @@ Show or hide column names imported from your data source.
 
 ## Column width
 
-By default, Grafana automatically calculates the column width based on the cell contents. In this field option, can override the setting and define the width for all columns in pixels.
+By default, Grafana automatically calculates the column width based on the table size and the minimum column width. This field option can override the setting and define the width for all columns in pixels.
 
 For example, if you enter `100` in the field, then when you click outside the field, all the columns will be set to 100 pixels wide.
+
+## Minimum column width
+
+By default, the minimum width of the table column is 150 pixels. This field option can override that default and will define the new minimum column width for the table panel in pixels.
+
+For example, if you enter `75` in the field, then when you click outside the field, all the columns will scale to no smaller than 75 pixels wide.
 
 ## Column alignment
 

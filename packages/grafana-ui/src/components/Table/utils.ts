@@ -78,18 +78,31 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       },
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
-      minWidth: 50,
+      minWidth: fieldTableOptions.minWidth || columnMinWidth,
       filter: memoizeOne(filterByValue(field)),
       justifyContent: getTextAlign(field),
     });
   }
 
+  // set columns that are at minimum width
+  let sharedWidth = availableWidth / fieldCountWithoutWidth;
+  for (let i = fieldCountWithoutWidth; i > 0; i--) {
+    for (const column of columns) {
+      if (!column.width && column.minWidth > sharedWidth) {
+        column.width = column.minWidth;
+        availableWidth -= column.width;
+        fieldCountWithoutWidth -= 1;
+        sharedWidth = availableWidth / fieldCountWithoutWidth;
+      }
+    }
+  }
+
   // divide up the rest of the space
-  const sharedWidth = availableWidth / fieldCountWithoutWidth;
   for (const column of columns) {
     if (!column.width) {
-      column.width = Math.max(sharedWidth, columnMinWidth);
+      column.width = sharedWidth;
     }
+    column.minWidth = 50;
   }
 
   return columns;
