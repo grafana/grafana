@@ -37,6 +37,7 @@ SilenceURL   | string    | Link to grafana silence for with labels for this aler
 DashboardURL | string    | Link to grafana dashboard, if alert rule belongs to one. Only for Grafana managed alerts.
 PanelURL     | string    | Link to grafana dashboard panel, if alert rule belongs to one. Only for Grafana managed alerts.
 Fingerprint  | string    | Fingerprint that can be used to identify the alert.
+ValueString  | string    | A string that contains the labels and value of each reduced expression in the alert.
 
 ## KeyValue
 
