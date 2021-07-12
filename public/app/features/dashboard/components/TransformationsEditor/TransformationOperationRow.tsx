@@ -34,6 +34,7 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
 }) => {
   const [showDebug, toggleDebug] = useToggle(false);
   const [showHelp, toggleHelp] = useToggle(false);
+  const disabled = configs[index].transformation.disabled;
 
   const onDisableToggle = useCallback(
     (index: number) => {
@@ -47,8 +48,6 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
   );
 
   const renderActions = ({ isOpen }: QueryOperationRowRenderProps) => {
-    const disabled = configs[index].transformation.disabled;
-
     return (
       <HorizontalGroup align="center" width="auto">
         {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
@@ -71,7 +70,14 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
   };
 
   return (
-    <QueryOperationRow id={id} index={index} title={uiConfig.name} draggable actions={renderActions}>
+    <QueryOperationRow
+      id={id}
+      index={index}
+      title={uiConfig.name}
+      draggable
+      actions={renderActions}
+      disabled={disabled}
+    >
       {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
       <TransformationEditor
         debugMode={showDebug}
