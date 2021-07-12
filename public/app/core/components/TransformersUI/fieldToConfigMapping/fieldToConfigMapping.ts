@@ -87,6 +87,10 @@ export interface FieldToConfigMapHandler {
 
 export const configMapHandlers: FieldToConfigMapHandler[] = [
   {
+    key: 'field.name',
+    processor: () => {},
+  },
+  {
     key: 'max',
     processor: toNumericOrUndefined,
   },

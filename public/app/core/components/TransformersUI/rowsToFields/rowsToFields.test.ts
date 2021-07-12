@@ -15,8 +15,6 @@ describe('Rows to fields', () => {
 
     const result = rowsToFields(
       {
-        nameField: 'Name',
-        valueField: 'Value',
         mappings: [
           {
             fieldName: 'Miiin',
@@ -60,6 +58,31 @@ describe('Rows to fields', () => {
         "length": 1,
       }
     `);
+  });
+
+  it('Can handle custom name and value field mapping', () => {
+    const input = toDataFrame({
+      fields: [
+        { name: 'Name', type: FieldType.string, values: ['Ignore'] },
+        { name: 'SensorName', type: FieldType.string, values: ['Temperature'] },
+        { name: 'Value', type: FieldType.number, values: [10] },
+        { name: 'SensorReading', type: FieldType.number, values: [100] },
+      ],
+    });
+
+    const result = rowsToFields(
+      {
+        mappings: [
+          { fieldName: 'SensorName', handlerKey: 'field.name' },
+          { fieldName: 'SensorReading', handlerKey: 'field.value' },
+        ],
+      },
+      input
+    );
+
+    expect(result.fields[0].name).toBe('Temperature');
+    expect(result.fields[0].config).toEqual({});
+    expect(result.fields[0].values.get(0)).toBe(100);
   });
 
   it('Can handle colors', () => {

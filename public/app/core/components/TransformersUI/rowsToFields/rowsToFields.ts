@@ -43,6 +43,10 @@ export const rowsToFieldsTransformer: DataTransformerInfo<RowToFieldsTransformOp
 export function rowsToFields(options: RowToFieldsTransformOptions, data: DataFrame): DataFrame {
   const mappings = options.mappings || [];
 
+  // Look up name and value field in mappings
+  let nameFieldName = mappings.find((x) => x.handlerKey === 'field.name')?.fieldName;
+  let valueFieldName = mappings.find((x) => x.handlerKey === 'field.value')?.fieldName;
+
   let nameField: Field | null = null;
   let valueField: Field | null = null;
 
@@ -51,20 +55,20 @@ export function rowsToFields(options: RowToFieldsTransformOptions, data: DataFra
 
     if (!nameField) {
       // When no name field defined default to first string field
-      if (options.nameField == null && field.type === FieldType.string) {
+      if (nameFieldName == null && field.type === FieldType.string) {
         nameField = field;
         continue;
-      } else if (fieldName === options.nameField) {
+      } else if (fieldName === nameFieldName) {
         nameField = field;
       }
     }
 
     if (!valueField) {
       // When no value field defined default to first number field
-      if (options.valueField == null && field.type === FieldType.number) {
+      if (valueFieldName == null && field.type === FieldType.number) {
         valueField = field;
         continue;
-      } else if (fieldName === options.valueField) {
+      } else if (fieldName === valueFieldName) {
         valueField = field;
       }
     }
