@@ -18,13 +18,13 @@ func TestEncryption(t *testing.T) {
 		assert.Len(t, key, 32)
 	})
 
-	encAlgorithms := []string{AesCfb}
+	encAlgorithms := []string{AesGcm, AesCfb}
 
 	t.Run("decrypting basic payload", func(t *testing.T) {
 		for _, algorithm := range encAlgorithms {
 			algorithm := algorithm
 
-			t.Run(string(algorithm), func(t *testing.T) {
+			t.Run(algorithm, func(t *testing.T) {
 				encrypted, err := Encrypt([]byte("grafana"), "1234", algorithm)
 				require.NoError(t, err)
 

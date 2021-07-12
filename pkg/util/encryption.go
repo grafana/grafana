@@ -15,6 +15,7 @@ import (
 const saltLength = 8
 
 const (
+	AesGcm = "aes-gcm"
 	AesCfb = "aes-cfb"
 )
 
@@ -35,9 +36,22 @@ func Decrypt(payload []byte, secret, alg string) ([]byte, error) {
 	}
 
 	switch alg {
+	case AesGcm:
+		return decryptGCM(block, payload)
 	default:
 		return decryptCFB(block, payload)
 	}
+}
+
+func decryptGCM(block cipher.Block, payload []byte) ([]byte, error) {
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce := payload[saltLength : saltLength+gcm.NonceSize()]
+	ciphertext := payload[saltLength+gcm.NonceSize():]
+	return gcm.Open(nil, nonce, ciphertext, nil)
 }
 
 func decryptCFB(block cipher.Block, payload []byte) ([]byte, error) {
@@ -75,9 +89,33 @@ func Encrypt(payload []byte, secret string, alg string) ([]byte, error) {
 	}
 
 	switch alg {
+	case AesGcm:
+		return encryptGCM(block, payload, salt)
 	default:
 		return encryptCFB(block, payload, salt)
 	}
+}
+
+func encryptGCM(block cipher.Block, payload []byte, salt string) ([]byte, error) {
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, err
+	}
+
+	ciphertext := gcm.Seal(nil, nonce, payload, nil)
+
+	result := make([]byte, saltLength+gcm.NonceSize()+len(ciphertext))
+
+	copy(result[:saltLength], salt)
+	copy(result[saltLength:saltLength+gcm.NonceSize()], nonce)
+	copy(result[saltLength+gcm.NonceSize():], ciphertext)
+
+	return result, nil
 }
 
 func encryptCFB(block cipher.Block, payload []byte, salt string) ([]byte, error) {
