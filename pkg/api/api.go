@@ -407,16 +407,16 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Get("/lookup", routing.Wrap(GetAlertNotificationLookup))
 		})
 
-		apiRoute.Get("/annotations", routing.Wrap(GetAnnotations))
+		apiRoute.Get("/annotations", authorize(reqOrgAdmin, accesscontrol.AnnotationRead, accesscontrol.ScopeUsersAll), routing.Wrap(GetAnnotations))
 		apiRoute.Post("/annotations/mass-delete", reqOrgAdmin, bind(dtos.DeleteAnnotationsCmd{}), routing.Wrap(DeleteAnnotations))
 
 		apiRoute.Group("/annotations", func(annotationsRoute routing.RouteRegister) {
-			annotationsRoute.Post("/", authorize(reqGrafanaAdmin, accesscontrol.AnnotationCreate), bind(dtos.PostAnnotationsCmd{}), routing.Wrap(PostAnnotation))
-			annotationsRoute.Delete("/:annotationId", authorize(reqGrafanaAdmin, accesscontrol.AnnotationDelete), routing.Wrap(DeleteAnnotationByID))
-			annotationsRoute.Put("/:annotationId", authorize(reqGrafanaAdmin, accesscontrol.AnnotationPut), bind(dtos.UpdateAnnotationsCmd{}), routing.Wrap(UpdateAnnotation))
-			annotationsRoute.Patch("/:annotationId", authorize(reqGrafanaAdmin, accesscontrol.AnnotationPatch), bind(dtos.PatchAnnotationsCmd{}), routing.Wrap(PatchAnnotation))
-			annotationsRoute.Post("/graphite", authorize(reqGrafanaAdmin, accesscontrol.AnnotationGraphiteCreate), reqEditorRole, bind(dtos.PostGraphiteAnnotationsCmd{}), routing.Wrap(PostGraphiteAnnotation))
-			annotationsRoute.Get("/tags", authorize(reqGrafanaAdmin, accesscontrol.AnnotationRead), routing.Wrap(GetAnnotationTags))
+			annotationsRoute.Post("/", authorize(reqGrafanaAdmin, accesscontrol.AnnotationCreate, accesscontrol.ScopeUsersAll), bind(dtos.PostAnnotationsCmd{}), routing.Wrap(PostAnnotation))
+			annotationsRoute.Delete("/:annotationId", authorize(reqGrafanaAdmin, accesscontrol.AnnotationDelete, accesscontrol.ScopeUsersAll), routing.Wrap(DeleteAnnotationByID))
+			annotationsRoute.Put("/:annotationId", authorize(reqGrafanaAdmin, accesscontrol.AnnotationUpdate, accesscontrol.ScopeUsersAll), bind(dtos.UpdateAnnotationsCmd{}), routing.Wrap(UpdateAnnotation))
+			annotationsRoute.Patch("/:annotationId", authorize(reqGrafanaAdmin, accesscontrol.AnnotationUpdate, accesscontrol.ScopeUsersAll), bind(dtos.PatchAnnotationsCmd{}), routing.Wrap(PatchAnnotation))
+			annotationsRoute.Post("/graphite", authorize(reqGrafanaAdmin, accesscontrol.AnnotationGraphiteCreate, accesscontrol.ScopeUsersAll), reqEditorRole, bind(dtos.PostGraphiteAnnotationsCmd{}), routing.Wrap(PostGraphiteAnnotation))
+			annotationsRoute.Get("/tags", authorize(reqGrafanaAdmin, accesscontrol.AnnotationRead, accesscontrol.ScopeUsersAll), routing.Wrap(GetAnnotationTags))
 		})
 
 		apiRoute.Post("/frontend-metrics", bind(metrics.PostFrontendMetricsCommand{}), routing.Wrap(hs.PostFrontendMetrics))
