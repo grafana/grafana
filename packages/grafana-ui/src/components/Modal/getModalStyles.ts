@@ -32,7 +32,6 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme2) => {
       right: 0;
       bottom: 0;
       left: 0;
-      z-index: ${theme.zIndex.modalBackdrop};
       background-color: ${theme.components.overlay.background};
       backdrop-filter: blur(1px);
     `,

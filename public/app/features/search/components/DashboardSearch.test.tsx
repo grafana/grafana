@@ -105,7 +105,7 @@ describe('DashboardSearch', () => {
     await waitFor(() => screen.getByLabelText('Tag filter'));
 
     const tagComponent = screen.getByLabelText('Tag filter');
-    await selectEvent.select(tagComponent, 'tag1');
+    await selectEvent.select(tagComponent, 'tag1', { container: document.body });
 
     expect(tagComponent).toBeInTheDocument();
 

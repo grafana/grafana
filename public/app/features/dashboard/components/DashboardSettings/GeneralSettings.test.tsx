@@ -1,8 +1,9 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
 
-import { byRole, byText } from 'testing-library-selector';
+import { byRole } from 'testing-library-selector';
 import { Props, GeneralSettingsUnconnected as GeneralSettings } from './GeneralSettings';
 import { DashboardModel } from '../../state';
 
@@ -45,11 +46,6 @@ const setupTestContext = (options: Partial<Props>) => {
   return { rerender, props };
 };
 
-const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
-  userEvent.click(byRole('textbox').get(selectElement));
-  userEvent.click(byText(optionText).get(selectElement));
-};
-
 describe('General Settings', () => {
   describe('when component is mounted with timezone', () => {
     it('should render correctly', () => {
@@ -66,7 +62,9 @@ describe('General Settings', () => {
     it('should call update function', async () => {
       const { props } = setupTestContext({});
       userEvent.click(screen.getByLabelText('Time zone picker select container'));
-      await clickSelectOption(screen.getByLabelText('Time zone picker select container'), 'Browser Time');
+      const timeZonePicker = screen.getByLabelText('Time zone picker select container');
+      userEvent.click(byRole('textbox').get(timeZonePicker));
+      await selectEvent.select(timeZonePicker, 'Browser Time', { container: document.body });
       expect(props.updateTimeZone).toHaveBeenCalledWith('browser');
       expect(props.dashboard.timezone).toBe('browser');
     });

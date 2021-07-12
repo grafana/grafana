@@ -57,7 +57,7 @@ describe('RawInfluxQLEditor', () => {
     const formatSelect = screen.getByLabelText('Format as');
     expect(formatSelect).toBeInTheDocument();
 
-    await select(formatSelect, 'Time series');
+    await select(formatSelect, 'Time series', { container: document.body });
 
     expect(onChange).toHaveBeenCalledWith({ ...query, resultFormat: 'time_series' });
   });

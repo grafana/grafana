@@ -336,7 +336,7 @@ export function SelectBase<T>({
           ...resetSelectStyles(),
           menuPortal: (base: any) => ({
             ...base,
-            zIndex: theme.zIndex.modal,
+            zIndex: theme.zIndex.selectPortal,
           }),
           //These are required for the menu positioning to function
           menu: ({ top, bottom, position }: any) => ({
@@ -344,7 +344,6 @@ export function SelectBase<T>({
             bottom,
             position,
             minWidth: '100%',
-            zIndex: theme.zIndex.dropdown,
           }),
           container: () => ({
             position: 'relative',

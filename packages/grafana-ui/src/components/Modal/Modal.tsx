@@ -71,6 +71,10 @@ export function Modal(props: PropsWithChildren<Props>) {
 
   return (
     <Portal>
+      <div
+        className={styles.modalBackdrop}
+        onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
+      />
       <div className={cx(styles.modal, className)}>
         <div className={headerClass}>
           {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
@@ -81,10 +85,6 @@ export function Modal(props: PropsWithChildren<Props>) {
         </div>
         <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
       </div>
-      <div
-        className={styles.modalBackdrop}
-        onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
-      />
     </Portal>
   );
 }

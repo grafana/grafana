@@ -108,6 +108,8 @@ export interface GrafanaThemeCommons {
     tooltip: number;
     modalBackdrop: number;
     modal: number;
+    portal: number;
+    selectPortal: number;
     typeahead: number;
   };
 }

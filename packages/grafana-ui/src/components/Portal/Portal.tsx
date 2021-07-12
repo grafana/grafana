@@ -1,5 +1,6 @@
 ﻿import React, { PureComponent } from 'react';
 import ReactDOM from 'react-dom';
+import { appZIndexes } from '../../themes/default';
 
 interface Props {
   className?: string;
@@ -19,6 +20,8 @@ export class Portal extends PureComponent<Props> {
       this.node.classList.add(className);
     }
 
+    this.node.style.position = 'relative';
+    this.node.style.zIndex = `${appZIndexes.portal}`;
     this.portalRoot = root;
     this.portalRoot.appendChild(this.node);
   }
@@ -29,12 +32,7 @@ export class Portal extends PureComponent<Props> {
 
   render() {
     // Default z-index is high to make sure
-    return ReactDOM.createPortal(
-      <div style={{ zIndex: 1051, position: 'relative' }} ref={this.props.forwardedRef}>
-        {this.props.children}
-      </div>,
-      this.node
-    );
+    return ReactDOM.createPortal(<div ref={this.props.forwardedRef}>{this.props.children}</div>, this.node);
   }
 }
 
