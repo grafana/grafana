@@ -24,7 +24,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { ExploreItemState, ExploreId } from 'app/types/explore';
 import { highlightLogsExpressionAction } from './state/explorePane';
 import { ErrorContainer } from './ErrorContainer';
-import { changeQuery, modifyQueries, removeQueryRowAction, runQueries, clearCache } from './state/query';
+import { changeQuery, modifyQueries, removeQueryRowAction, runQueries } from './state/query';
 import { HelpToggle } from '../query/components/HelpToggle';
 
 interface PropsFromParent {
@@ -48,7 +48,6 @@ export interface QueryRowProps extends PropsFromParent {
   queryResponse: PanelData;
   latency: number;
   exploreEvents: EventBusExtended;
-  clearCache: typeof clearCache;
 }
 
 interface QueryRowState {
@@ -65,8 +64,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
   onRunQuery = () => {
     const { exploreId } = this.props;
-    // We want to give user a chance tu re-run the query from editor even if it is saved in cache
-    this.props.clearCache(exploreId);
     this.props.runQueries(exploreId);
   };
 
@@ -227,7 +224,6 @@ const mapDispatchToProps = {
   modifyQueries,
   removeQueryRowAction,
   runQueries,
-  clearCache,
 };
 
 export default hot(module)(
