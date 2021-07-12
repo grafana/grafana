@@ -87,8 +87,9 @@ export class NewsPanel extends PureComponent<Props, State> {
                   target="_blank"
                   rel="noopener noreferrer"
                   className={cx(styles.socialImage, useWideLayout && styles.socialImageWide)}
+                  aria-hidden
                 >
-                  <img src={item.ogImage} />
+                  <img src={item.ogImage} alt={item.title} />
                 </a>
               )}
               <div className={styles.body}>
