@@ -68,7 +68,7 @@ type Result struct {
 	EvaluatedAt        time.Time
 	EvaluationDuration time.Duration
 
-	// EvaluationSring is a string representation of evaluation data such
+	// EvaluationString is a string representation of evaluation data such
 	// as EvalMatches (from "classic condition"), and in the future from operations
 	// like SSE "math".
 	EvaluationString string
@@ -76,7 +76,7 @@ type Result struct {
 	// Values contains the RefID and value of reduce and math expressions.
 	// It does not contain values for classic conditions as the values
 	// in classic conditions do not have a RefID.
-	Values map[string]*float64
+	Values map[string]NumberValueCapture
 }
 
 // State is an enum of the evaluation State for an alert instance.

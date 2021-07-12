@@ -51,28 +51,42 @@ func TestExtractValues(t *testing.T) {
 	cases := []struct {
 		desc    string
 		inFrame *data.Frame
-		values  map[string]*float64
+		values  map[string]NumberValueCapture
 	}{{
+		desc:    "No values in frame returns nil",
+		inFrame: newMetaFrame(nil, ptr.Float64(1)),
+		values:  nil,
+	}, {
+		desc: "Classic condition frame returns nil",
+		inFrame: newMetaFrame([]classic.EvalMatch{
+			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(1)},
+		}, ptr.Float64(1)),
+		values: nil,
+	}, {
 		desc: "Nil value",
 		inFrame: newMetaFrame([]NumberValueCapture{
 			{Var: "A", Labels: data.Labels{"host": "foo"}, Value: nil},
 		}, ptr.Float64(1)),
-		values: map[string]*float64{"A": nil},
+		values: map[string]NumberValueCapture{
+			"A": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: nil},
+		},
 	}, {
 		desc: "1 value",
 		inFrame: newMetaFrame([]NumberValueCapture{
 			{Var: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(1)},
 		}, ptr.Float64(1)),
-		values: map[string]*float64{"A": ptr.Float64(1)},
+		values: map[string]NumberValueCapture{
+			"A": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(1)},
+		},
 	}, {
 		desc: "2 values",
 		inFrame: newMetaFrame([]NumberValueCapture{
 			{Var: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(1)},
 			{Var: "B", Labels: nil, Value: ptr.Float64(2)},
 		}, ptr.Float64(1)),
-		values: map[string]*float64{
-			"A": ptr.Float64(1),
-			"B": ptr.Float64(2),
+		values: map[string]NumberValueCapture{
+			"A": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(1)},
+			"B": {Var: "B", Value: ptr.Float64(2)},
 		},
 	}}
 	for _, tc := range cases {
