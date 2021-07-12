@@ -31,7 +31,7 @@ func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error
 
 	calculator := interval.NewCalculator(interval.CalculatorOptions{})
 
-	i := calculator.CalculateSDK(queryContext.Queries[0].Interval, query.Interval)
+	i := calculator.CalculateSDK(queryContext.Queries[0].TimeRange.Duration(), query.Interval)
 
 	res = strings.ReplaceAll(res, "$timeFilter", query.renderTimeFilter(queryContext))
 	res = strings.ReplaceAll(res, "$interval", i.Text)

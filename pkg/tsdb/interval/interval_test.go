@@ -33,6 +33,28 @@ func TestIntervalCalculator_Calculate(t *testing.T) {
 	}
 }
 
+func TestIntervalCalculator_CalculateSDK(t *testing.T) {
+	calculator := NewCalculator(CalculatorOptions{})
+
+	testCases := []struct {
+		name      string
+		timeRange time.Duration
+		expected  string
+	}{
+		{"from 5m to now", 5 * time.Minute, "200ms"},
+		{"from 15m to now", 15 * time.Minute, "500ms"},
+		{"from 30m to now", 30 * time.Minute, "1s"},
+		{"from 1h to now", 1 * time.Hour, "2s"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			interval := calculator.CalculateSDK(tc.timeRange, time.Millisecond*1)
+			assert.Equal(t, tc.expected, interval.Text)
+		})
+	}
+}
+
 func TestRoundInterval(t *testing.T) {
 	testCases := []struct {
 		name     string

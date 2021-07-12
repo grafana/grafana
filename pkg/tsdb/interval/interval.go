@@ -66,7 +66,8 @@ func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, minInte
 	return Interval{Text: FormatDuration(rounded), Value: rounded}
 }
 
-func (ic *intervalCalculator) CalculateSDK(interval time.Duration, minInterval time.Duration) Interval {
+func (ic *intervalCalculator) CalculateSDK(duration time.Duration, minInterval time.Duration) Interval {
+	interval := time.Duration(duration.Nanoseconds() / defaultRes)
 	if interval < minInterval {
 		return Interval{Text: FormatDuration(minInterval), Value: minInterval}
 	}
