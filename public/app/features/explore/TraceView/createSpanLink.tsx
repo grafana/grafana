@@ -83,17 +83,17 @@ function getLokiQueryFromSpan(span: TraceSpan, keys?: string[]): string {
  */
 function getTimeRangeFromSpan(span: TraceSpan, traceToLogsOptions?: TraceToLogsOptions): TimeRange {
   const adjustedStartTime = traceToLogsOptions?.spanStartTimeShift
-    ? span.startTime / 1000 + rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-    : span.startTime / 1000;
+    ? Math.floor(span.startTime / 1000 + rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift))
+    : Math.floor(span.startTime / 1000);
   const from = dateTime(adjustedStartTime);
   const spanEndMs = (span.startTime + span.duration) / 1000;
   let adjustedEndTime = traceToLogsOptions?.spanEndTimeShift
-    ? spanEndMs + rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
-    : spanEndMs;
+    ? Math.floor(spanEndMs + rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift))
+    : Math.floor(spanEndMs);
 
-  // Because we can only pass milliseconds in the url we need to round it and check if they equal.
+  // Because we can only pass milliseconds in the url we need to check if they equal.
   // We need end time to be later than start time
-  if (Math.floor(adjustedStartTime) === Math.floor(adjustedEndTime)) {
+  if (adjustedStartTime === adjustedEndTime) {
     adjustedEndTime++;
   }
   const to = dateTime(adjustedEndTime);
