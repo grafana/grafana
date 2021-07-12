@@ -41,7 +41,6 @@ export interface SelectCommonProps<T> {
   minMenuHeight?: number;
   maxVisibleValues?: number;
   menuPlacement?: 'auto' | 'bottom' | 'top';
-  menuPortalTarget?: HTMLElement;
   menuPosition?: 'fixed' | 'absolute';
   /** The message to display when no options could be found */
   noOptionsMessage?: string;

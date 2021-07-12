@@ -6,9 +6,8 @@ import { Select } from '../Select/Select';
 import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 import { ComponentSize } from '../../types/size';
 import { selectors } from '@grafana/e2e-selectors';
-import { SelectCommonProps } from '../Select/types';
 
-export interface ValuePickerProps<T> extends SelectCommonProps<T> {
+export interface ValuePickerProps<T> {
   /** Label to display on the picker button */
   label: string;
   /** Icon to display on the picker button */
@@ -36,7 +35,6 @@ export function ValuePicker<T>({
   size = 'sm',
   isFullWidth = true,
   menuPlacement,
-  ...selectProps
 }: ValuePickerProps<T>) {
   const [isPicking, setIsPicking] = useState(false);
 
@@ -69,7 +67,6 @@ export function ValuePicker<T>({
               onChange(value);
             }}
             menuPlacement={menuPlacement}
-            {...selectProps}
           />
         </span>
       )}

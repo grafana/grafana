@@ -119,7 +119,6 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
         variant="secondary"
         size="md"
         icon="plus"
-        menuPortalTarget={document.body}
         menuPlacement="auto"
         isFullWidth={false}
         options={mappingTypes}

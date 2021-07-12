@@ -115,8 +115,7 @@ export function SelectBase<T>({
   maxMenuHeight = 300,
   minMenuHeight,
   maxVisibleValues,
-  menuPlacement = 'bottom',
-  menuPortalTarget,
+  menuPlacement = 'auto',
   menuPosition,
   noOptionsMessage = 'No options found',
   onBlur,
@@ -176,6 +175,10 @@ export function SelectBase<T>({
     backspaceRemovesValue,
     captureMenuScroll: false,
     closeMenuOnSelect,
+    // We don't want to close if we're actually scrolling the menu
+    // So only close if none of the parents are the select menu itself
+    closeMenuOnScroll: (scrollEvent: Event) =>
+      !scrollEvent.composedPath().some((pathItem) => (pathItem as Element).classList?.value.includes(styles.menu)),
     defaultValue,
     // Also passing disabled, as this is the new Select API, and I want to use this prop instead of react-select's one
     disabled,
@@ -198,7 +201,7 @@ export function SelectBase<T>({
     maxVisibleValues,
     menuIsOpen: isOpen,
     menuPlacement,
-    menuPortalTarget,
+    menuPortalTarget: document.body,
     menuPosition,
     menuShouldScrollIntoView: false,
     onBlur,
@@ -340,7 +343,6 @@ export function SelectBase<T>({
             top,
             bottom,
             position,
-            marginBottom: !!bottom ? '10px' : '0',
             minWidth: '100%',
             zIndex: theme.zIndex.dropdown,
           }),
