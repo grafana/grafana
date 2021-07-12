@@ -80,7 +80,7 @@ export class NewsPanel extends PureComponent<Props, State> {
       <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
         {news.map((item, index) => {
           return (
-            <div key={index} className={cx(styles.item, useWideLayout && styles.itemWide)}>
+            <article key={index} className={cx(styles.item, useWideLayout && styles.itemWide)}>
               {showImage && item.ogImage && (
                 <a
                   href={textUtil.sanitizeUrl(item.link)}
@@ -93,18 +93,20 @@ export class NewsPanel extends PureComponent<Props, State> {
                 </a>
               )}
               <div className={styles.body}>
-                <div className={styles.date}>{dateTimeFormat(item.date, { format: 'MMM DD' })} </div>
+                <time className={styles.date} dateTime={dateTimeFormat(item.date, { format: 'MMM DD' })}>
+                  {dateTimeFormat(item.date, { format: 'MMM DD' })}{' '}
+                </time>
                 <a
                   className={styles.link}
                   href={textUtil.sanitizeUrl(item.link)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <div className={styles.title}>{item.title}</div>
+                  <h3 className={styles.title}>{item.title}</h3>
                 </a>
                 <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(item.content) }} />
               </div>
-            </div>
+            </article>
           );
         })}
       </CustomScrollbar>
