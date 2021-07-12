@@ -314,7 +314,7 @@ export const runQueries = (
     // We always want to clear cache unless we explicitly pass preserveCache parameter
     const preserveCache = options?.preserveCache === true;
     if (!preserveCache) {
-      clearCache(exploreId);
+      dispatch(clearCache(exploreId));
     }
 
     const richHistory = getState().explore.richHistory;
