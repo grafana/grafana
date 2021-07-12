@@ -52,7 +52,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/grafana-aws-sdk v0.7.0
-	github.com/grafana/grafana-plugin-sdk-go v0.105.0
+	github.com/grafana/grafana-plugin-sdk-go v0.106.0
 	github.com/grafana/grafana/smithy/build/go/grafana v0.0.0-20210630135115-e45e0bd0c7ca
 	github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -127,3 +127,4 @@ replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
 replace github.com/grafana/grafana/smithy/build/go/grafana => ./smithy/build/go/grafana
 
 replace github.com/aws/smithy-go => ../smithy-go
+replace gopkg.in/macaron.v1 => ./pkg/macaron
