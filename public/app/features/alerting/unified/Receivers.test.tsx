@@ -56,12 +56,12 @@ const renderReceivers = (alertManagerSourceName?: string) => {
   );
 };
 
-const dataSources = {
-  alertManager: mockDataSource({
+const dataSources = [
+  mockDataSource({
     name: 'CloudManager',
     type: DataSourceType.Alertmanager,
   }),
-};
+];
 
 const ui = {
   newContactPointButton: byRole('link', { name: /new contact point/i }),

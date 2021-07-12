@@ -1,4 +1,4 @@
-import { DataQuery, rangeUtil, RelativeTimeRange } from '@grafana/data';
+import { DataQuery, DatasourceRef, rangeUtil, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNextRefIdChar } from 'app/core/utils/query';
@@ -163,7 +163,7 @@ const getDefaultExpression = (refId: string): AlertQuery => {
     refId,
     hide: false,
     type: ExpressionQueryType.classic,
-    datasource: ExpressionDatasourceID,
+    datasource: { type: ExpressionDatasourceID },
     conditions: [
       {
         type: 'query',
@@ -196,10 +196,10 @@ const getDefaultExpression = (refId: string): AlertQuery => {
 const dataQueriesToGrafanaQueries = (
   queries: DataQuery[],
   relativeTimeRange: RelativeTimeRange,
-  datasourceName?: string
+  datasourceRef?: DatasourceRef
 ): AlertQuery[] => {
   return queries.reduce<AlertQuery[]>((queries, target) => {
-    const dsName = target.datasource || datasourceName;
+    const dsName = target.datasource || datasourceRef;
     if (dsName) {
       // expressions
       if (dsName === ExpressionDatasourceID) {
@@ -213,7 +213,7 @@ const dataQueriesToGrafanaQueries = (
         return [...queries, newQuery];
         // queries
       } else {
-        const datasource = getDataSourceSrv().getInstanceSettings(target.datasource || datasourceName);
+        const datasource = getDataSourceSrv().getInstanceSettings(target.datasource || datasourceRef);
         if (datasource && datasource.meta.alerting) {
           const newQuery: AlertQuery = {
             refId: target.refId,
@@ -237,15 +237,22 @@ export const panelToRuleFormValues = (
   const { targets } = panel;
 
   // it seems if default datasource is selected, datasource=null, hah
-  const datasourceName =
-    panel.datasource === null ? getDatasourceSrv().getInstanceSettings('default')?.name : panel.datasource;
-
+  let datasourceRef = panel.datasource ?? undefined;
+  if (!datasourceRef) {
+    const s = getDatasourceSrv().getInstanceSettings('default');
+    if (s) {
+      datasourceRef = {
+        type: s.type,
+        uid: s.uid,
+      };
+    }
+  }
   if (!panel.editSourceId || !dashboard.uid) {
     return undefined;
   }
 
   const relativeTimeRange = rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(dashboard.time));
-  const queries = dataQueriesToGrafanaQueries(targets, relativeTimeRange, datasourceName);
+  const queries = dataQueriesToGrafanaQueries(targets, relativeTimeRange, datasourceRef);
 
   // if no alerting capable queries are found, can't create a rule
   if (!queries.length || !queries.find((query) => query.datasourceUid !== ExpressionDatasourceUID)) {

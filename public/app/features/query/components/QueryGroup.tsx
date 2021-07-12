@@ -115,11 +115,9 @@ export class QueryGroup extends PureComponent<Props, State> {
     // switching to mixed
     if (newSettings.meta.mixed) {
       for (const query of queries) {
-        if (query.datasource !== ExpressionDatasourceID) {
-          query.datasource = dsSettings?.name;
-          if (!query.datasource) {
-            query.datasource = config.defaultDatasource;
-          }
+        if (query.datasource?.type !== ExpressionDatasourceID) {
+          let uid = dsSettings?.uid ?? config.defaultDatasource;
+          query.datasource = { uid };
         }
       }
     } else if (dsSettings) {
@@ -144,6 +142,7 @@ export class QueryGroup extends PureComponent<Props, State> {
       dataSource: {
         name: newSettings.name,
         uid: newSettings.uid,
+        type: newSettings.meta.id,
         default: newSettings.isDefault,
       },
     });
@@ -168,7 +167,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     }
 
     return {
-      datasource: defaultDataSource?.name,
+      datasource: { uid: defaultDataSource?.uid },
     };
   }
 
@@ -206,7 +205,7 @@ export class QueryGroup extends PureComponent<Props, State> {
           <div className={styles.dataSourceRowItem}>
             <DataSourcePicker
               onChange={this.onChangeDataSource}
-              current={options.dataSource.name}
+              current={options.dataSource}
               metrics={true}
               mixed={true}
               dashboard={true}

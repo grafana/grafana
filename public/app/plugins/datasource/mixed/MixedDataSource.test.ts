@@ -27,9 +27,9 @@ describe('MixedDatasource', () => {
   describe('with no errors', () => {
     const requestMixed = getQueryOptions({
       targets: [
-        { refId: 'QA', datasource: 'A' }, // 1
-        { refId: 'QB', datasource: 'B' }, // 2
-        { refId: 'QC', datasource: 'C' }, // 3
+        { refId: 'QA', datasource: { uid: 'A' } }, // 1
+        { refId: 'QB', datasource: { uid: 'B' } }, // 2
+        { refId: 'QC', datasource: { uid: 'C' } }, // 3
       ],
     });
     const results: any[] = [];
@@ -59,11 +59,11 @@ describe('MixedDatasource', () => {
   describe('with errors', () => {
     const requestMixed = getQueryOptions({
       targets: [
-        { refId: 'QA', datasource: 'A' }, // 1
-        { refId: 'QD', datasource: 'D' }, // 2
-        { refId: 'QB', datasource: 'B' }, // 3
-        { refId: 'QE', datasource: 'E' }, // 4
-        { refId: 'QC', datasource: 'C' }, // 5
+        { refId: 'QA', datasource: { uid: 'A' } }, // 1
+        { refId: 'QD', datasource: { uid: 'D' } }, // 2
+        { refId: 'QB', datasource: { uid: 'B' } }, // 3
+        { refId: 'QE', datasource: { uid: 'E' } }, // 4
+        { refId: 'QC', datasource: { uid: 'C' } }, // 5
       ],
     });
     const results: any[] = [];

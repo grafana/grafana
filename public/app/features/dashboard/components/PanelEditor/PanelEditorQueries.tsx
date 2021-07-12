@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
 import { PanelModel } from '../../state';
 import { getLocationSrv } from '@grafana/runtime';
-import { QueryGroupOptions } from 'app/types';
+import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 import { DataQuery } from '@grafana/data';
 
 interface Props {
@@ -18,10 +18,17 @@ export class PanelEditorQueries extends PureComponent<Props> {
   }
 
   buildQueryOptions(panel: PanelModel): QueryGroupOptions {
+    const dataSource: QueryGroupDataSource = panel.datasource?.uid
+      ? {
+          default: false,
+          ...panel.datasource,
+        }
+      : {
+          default: true,
+        };
+
     return {
-      dataSource: {
-        name: panel.datasource,
-      },
+      dataSource,
       queries: panel.targets,
       maxDataPoints: panel.maxDataPoints,
       minInterval: panel.interval,
@@ -47,8 +54,8 @@ export class PanelEditorQueries extends PureComponent<Props> {
   onOptionsChange = (options: QueryGroupOptions) => {
     const { panel } = this.props;
 
-    const newDataSourceName = options.dataSource.default ? null : options.dataSource.name!;
-    const dataSourceChanged = newDataSourceName !== panel.datasource;
+    const newDataSourceID = options.dataSource.default ? null : options.dataSource.uid!;
+    const dataSourceChanged = newDataSourceID !== panel.datasource?.uid;
     panel.updateQueries(options);
 
     if (dataSourceChanged) {

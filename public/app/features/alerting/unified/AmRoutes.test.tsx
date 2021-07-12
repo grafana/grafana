@@ -52,12 +52,12 @@ const renderAmRoutes = () => {
   );
 };
 
-const dataSources = {
-  am: mockDataSource({
+const dataSources = [
+  mockDataSource({
     name: 'Alert Manager',
     type: DataSourceType.Alertmanager,
   }),
-};
+];
 
 const ui = {
   rootReceiver: byTestId('am-routes-root-receiver'),

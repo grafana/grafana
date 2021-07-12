@@ -39,7 +39,7 @@ describe('adhoc actions', () => {
   describe('when applyFilterFromTable is dispatched and filter already exist', () => {
     it('then correct actions are dispatched', async () => {
       const options: AdHocTableOptions = {
-        datasource: 'influxdb',
+        datasource: { uid: 'influxdb' },
         key: 'filter-key',
         value: 'filter-value',
         operator: '=',
@@ -76,7 +76,7 @@ describe('adhoc actions', () => {
   describe('when applyFilterFromTable is dispatched and previously no variable or filter exists', () => {
     it('then correct actions are dispatched', async () => {
       const options: AdHocTableOptions = {
-        datasource: 'influxdb',
+        datasource: { uid: 'influxdb' },
         key: 'filter-key',
         value: 'filter-value',
         operator: '=',
@@ -103,7 +103,7 @@ describe('adhoc actions', () => {
   describe('when applyFilterFromTable is dispatched and previously no filter exists', () => {
     it('then correct actions are dispatched', async () => {
       const options: AdHocTableOptions = {
-        datasource: 'influxdb',
+        datasource: { uid: 'influxdb' },
         key: 'filter-key',
         value: 'filter-value',
         operator: '=',
@@ -132,7 +132,7 @@ describe('adhoc actions', () => {
   describe('when applyFilterFromTable is dispatched and adhoc variable with other datasource exists', () => {
     it('then correct actions are dispatched', async () => {
       const options: AdHocTableOptions = {
-        datasource: 'influxdb',
+        datasource: { uid: 'influxdb' },
         key: 'filter-key',
         value: 'filter-value',
         operator: '=',
@@ -141,7 +141,7 @@ describe('adhoc actions', () => {
       const existing = adHocBuilder()
         .withId('elastic-filter')
         .withName('elastic-filter')
-        .withDatasource('elasticsearch')
+        .withDatasource({ uid: 'elasticsearch' })
         .build();
 
       const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource(options.datasource).build();
@@ -181,7 +181,7 @@ describe('adhoc actions', () => {
         .withId('elastic-filter')
         .withName('elastic-filter')
         .withFilters([existing])
-        .withDatasource('elasticsearch')
+        .withDatasource({ uid: 'elasticsearch' })
         .build();
 
       const update = { index: 0, filter: updated };
@@ -218,7 +218,7 @@ describe('adhoc actions', () => {
         .withId('elastic-filter')
         .withName('elastic-filter')
         .withFilters([existing])
-        .withDatasource('elasticsearch')
+        .withDatasource({ uid: 'elasticsearch' })
         .build();
 
       const tester = await reduxTester<RootReducerType>()
@@ -247,7 +247,7 @@ describe('adhoc actions', () => {
         .withId('elastic-filter')
         .withName('elastic-filter')
         .withFilters([])
-        .withDatasource('elasticsearch')
+        .withDatasource({ uid: 'elasticsearch' })
         .build();
 
       const tester = await reduxTester<RootReducerType>()
@@ -268,7 +268,7 @@ describe('adhoc actions', () => {
         .withId('elastic-filter')
         .withName('elastic-filter')
         .withFilters([])
-        .withDatasource('elasticsearch')
+        .withDatasource({ uid: 'elasticsearch' })
         .build();
 
       const tester = await reduxTester<RootReducerType>()
@@ -296,7 +296,7 @@ describe('adhoc actions', () => {
         .withId('elastic-filter')
         .withName('elastic-filter')
         .withFilters([filter])
-        .withDatasource('elasticsearch')
+        .withDatasource({ uid: 'elasticsearch' })
         .build();
 
       const tester = await reduxTester<RootReducerType>()
@@ -324,7 +324,7 @@ describe('adhoc actions', () => {
         .withId('elastic-filter')
         .withName('elastic-filter')
         .withFilters([existing])
-        .withDatasource('elasticsearch')
+        .withDatasource({ uid: 'elasticsearch' })
         .build();
 
       const fromUrl = [
@@ -382,9 +382,9 @@ describe('adhoc actions', () => {
 
   describe('when changeVariableDatasource is dispatched with unsupported datasource', () => {
     it('then correct actions are dispatched', async () => {
-      const datasource = 'mysql';
+      const datasource = { uid: 'mysql' };
       const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
-      const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource('influxdb').build();
+      const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource({ uid: 'influxdb' }).build();
 
       getDatasource.mockRestore();
       getDatasource.mockResolvedValue(null);
@@ -408,9 +408,9 @@ describe('adhoc actions', () => {
 
   describe('when changeVariableDatasource is dispatched with datasource', () => {
     it('then correct actions are dispatched', async () => {
-      const datasource = 'elasticsearch';
+      const datasource = { uid: 'elasticsearch' };
       const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
-      const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource('influxdb').build();
+      const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource({ uid: 'influxdb' }).build();
 
       getDatasource.mockRestore();
       getDatasource.mockResolvedValue({

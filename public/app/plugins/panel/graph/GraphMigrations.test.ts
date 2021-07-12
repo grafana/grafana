@@ -71,7 +71,7 @@ describe('Graph Panel Migrations', () => {
           refId: 'C',
           scenarioId: 'random_walk',
         },
-      ],
+      ] as any,
       thresholds: [],
       timeFrom: null,
       timeRegions: [],
