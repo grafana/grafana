@@ -26,7 +26,7 @@ func TestPluginProxy(t *testing.T) {
 		setting.SecretKey = "password"
 
 		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
-			key, err := util.Encrypt([]byte("123"), "password")
+			key, err := util.Encrypt([]byte("123"), "password", util.AesCfb)
 			if err != nil {
 				return err
 			}

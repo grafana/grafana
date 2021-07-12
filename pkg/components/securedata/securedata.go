@@ -8,9 +8,9 @@ import (
 type SecureData []byte
 
 func Encrypt(data []byte) (SecureData, error) {
-	return util.Encrypt(data, setting.SecretKey)
+	return util.Encrypt(data, setting.SecretKey, setting.EncryptionAlgorithm)
 }
 
 func (s SecureData) Decrypt() ([]byte, error) {
-	return util.Decrypt(s, setting.SecretKey)
+	return util.Decrypt(s, setting.SecretKey, setting.EncryptionAlgorithm)
 }

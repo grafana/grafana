@@ -92,6 +92,7 @@ var (
 
 	// Security settings.
 	SecretKey              string
+	EncryptionAlgorithm    string
 	DisableGravatar        bool
 	EmailCodeValidMinutes  int
 	DataProxyWhiteList     map[string]bool
@@ -1116,6 +1117,7 @@ func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
 func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	security := iniFile.Section("security")
 	SecretKey = valueAsString(security, "secret_key", "")
+	EncryptionAlgorithm = valueAsString(security, "encryption_algorithm", util.AesCfb)
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 
