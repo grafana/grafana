@@ -23,7 +23,7 @@ import { StoreState } from 'app/types/';
 import { DataSourceSettings } from '@grafana/data';
 import { Alert, Button, LinkButton } from '@grafana/ui';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from '../state/navModel';
-import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
+import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
 import { CloudInfoBox } from './CloudInfoBox';
@@ -229,7 +229,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           <div className="gf-form">
             <label className="gf-form-label width-10">Plugin state</label>
             <label className="gf-form-label gf-form-label--transparent">
-              <PluginStateinfo state={dataSourceMeta.state} />
+              <PluginStateInfo state={dataSourceMeta.state} />
             </label>
           </div>
         )}

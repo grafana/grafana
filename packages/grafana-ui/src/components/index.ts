@@ -1,5 +1,5 @@
 export { Icon } from './Icon/Icon';
-export { IconButton } from './IconButton/IconButton';
+export { IconButton, IconButtonVariant } from './IconButton/IconButton';
 export { ConfirmButton } from './ConfirmButton/ConfirmButton';
 export { DeleteButton } from './ConfirmButton/DeleteButton';
 export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
@@ -145,7 +145,6 @@ export {
   withErrorBoundary,
 } from './ErrorBoundary/ErrorBoundary';
 export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
-export { AlphaNotice } from './AlphaNotice/AlphaNotice';
 export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
 export { TLSAuthSettings } from './DataSourceSettings/TLSAuthSettings';
 export { CertificationKey } from './DataSourceSettings/CertificationKey';
