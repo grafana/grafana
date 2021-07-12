@@ -4,6 +4,7 @@ import { Select, StatsPicker, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import {
   configMapHandlers,
+  evaluteFieldMappings,
   FieldToConfigMapHandler,
   FieldToConfigMapping,
   lookUpConfigHandler as findConfigHandlerFor,
@@ -15,11 +16,12 @@ export interface Props {
   mappings: FieldToConfigMapping[];
   onChange: (mappings: FieldToConfigMapping[]) => void;
   withReducers?: boolean;
+  withNameAndValue?: boolean;
 }
 
-export function FieldToConfigMappingEditor({ frame, mappings, onChange, withReducers }: Props) {
+export function FieldToConfigMappingEditor({ frame, mappings, onChange, withReducers, withNameAndValue }: Props) {
   const styles = useStyles2(getStyles);
-  const rows = getViewModelRows(frame, mappings);
+  const rows = getViewModelRows(frame, mappings, withNameAndValue);
   const configProps = configMapHandlers.map((def) => configHandlerToSelectOption(def, false)) as Array<
     SelectableValue<string>
   >;
@@ -61,7 +63,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
       <thead>
         <tr>
           <th>Field name</th>
-          <th>Maps to config</th>
+          <th>Use as</th>
           {withReducers && <th>Reducer</th>}
         </tr>
       </thead>
@@ -101,35 +103,38 @@ interface FieldToConfigRowViewModel {
   reducerId: string;
 }
 
-function getViewModelRows(frame: DataFrame, mappings: FieldToConfigMapping[]): FieldToConfigRowViewModel[] {
-  const rows: Record<string, FieldToConfigRowViewModel> = {};
+function getViewModelRows(
+  frame: DataFrame,
+  mappings: FieldToConfigMapping[],
+  withNameAndValue?: boolean
+): FieldToConfigRowViewModel[] {
+  const rows: FieldToConfigRowViewModel[] = [];
+  const mappingResult = evaluteFieldMappings(frame, mappings ?? [], withNameAndValue);
 
   for (const field of frame.fields) {
     const fieldName = getFieldDisplayName(field, frame);
-    const mapping = mappings.find((x) => x.fieldName === fieldName);
-    const key = mapping ? mapping.handlerKey : fieldName.toLowerCase();
-    const handler = findConfigHandlerFor(key);
+    const mapping = mappingResult.index[fieldName];
 
-    rows[fieldName] = {
+    rows.push({
       fieldName,
-      configOption: configHandlerToSelectOption(handler, mapping == null),
-      handlerKey: handler?.key ?? null,
-      reducerId: mapping?.reducerId ?? handler?.defaultReducer ?? ReducerID.lastNotNull,
-    };
+      configOption: configHandlerToSelectOption(mapping.handler, mapping.automatic),
+      handlerKey: mapping.handler?.key ?? null,
+      reducerId: mapping.reducerId,
+    });
   }
 
   // Add rows for mappings that have no matching field
   for (const mapping of mappings) {
-    if (!rows[mapping.fieldName]) {
+    if (!rows.find((x) => x.fieldName === mapping.fieldName)) {
       const handler = findConfigHandlerFor(mapping.handlerKey);
 
-      rows[mapping.fieldName] = {
+      rows.push({
         fieldName: mapping.fieldName,
         handlerKey: mapping.handlerKey,
         configOption: configHandlerToSelectOption(handler, false),
         missingInFrame: true,
         reducerId: mapping.reducerId ?? ReducerID.lastNotNull,
-      };
+      });
     }
   }
 

@@ -4,19 +4,16 @@ import {
   DataFrame,
   DataTransformerID,
   DataTransformerInfo,
-  Field,
   FieldMatcherID,
   getFieldDisplayName,
   getFieldMatcher,
   MatcherConfig,
   reduceField,
-  ReducerID,
 } from '@grafana/data';
 import {
   getFieldConfigFromFrame,
   FieldToConfigMapping,
-  getConfigHandlerKeyForField,
-  lookUpConfigHandler,
+  evaluteFieldMappings,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 
 export interface ConfigFromQueryTransformOptions {
@@ -45,12 +42,15 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
     length: 1,
   };
 
+  const mappingResult = evaluteFieldMappings(configFrame, options.mappings ?? [], false);
+
   // reduce config frame
   for (const field of configFrame.fields) {
     const newField = { ...field };
-    const reducerId = getFieldReducer(field, configFrame, options.mappings);
-    const result = reduceField({ field, reducers: [reducerId] });
-    newField.values = new ArrayVector([result[reducerId]]);
+    const fieldName = getFieldDisplayName(field, configFrame);
+    const fieldMapping = mappingResult.index[fieldName];
+    const result = reduceField({ field, reducers: [fieldMapping.reducerId] });
+    newField.values = new ArrayVector([result[fieldMapping.reducerId]]);
     reducedConfigFrame.fields.push(newField);
   }
 
@@ -70,7 +70,7 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
 
     for (const field of frame.fields) {
       if (matcher(field, frame, data)) {
-        const dataConfig = getFieldConfigFromFrame(reducedConfigFrame, 0, options.mappings);
+        const dataConfig = getFieldConfigFromFrame(reducedConfigFrame, 0, mappingResult);
         outputFrame.fields.push({
           ...field,
           config: {
@@ -87,20 +87,6 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
   }
 
   return output;
-}
-
-function getFieldReducer(field: Field, frame: DataFrame, mappings: FieldToConfigMapping[]): ReducerID {
-  const fieldName = getFieldDisplayName(field, frame);
-
-  for (const mapping of mappings) {
-    if (fieldName === mapping.fieldName && mapping.reducerId) {
-      return mapping.reducerId;
-    }
-  }
-
-  const key = getConfigHandlerKeyForField(fieldName, mappings);
-  const handler = lookUpConfigHandler(key);
-  return handler?.defaultReducer ?? ReducerID.lastNotNull;
 }
 
 export const configFromDataTransformer: DataTransformerInfo<ConfigFromQueryTransformOptions> = {

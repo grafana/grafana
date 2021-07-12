@@ -9,6 +9,8 @@ import {
   ThresholdsMode,
   ValueMapping,
   ValueMap,
+  Field,
+  FieldType,
 } from '@grafana/data';
 import { isArray } from 'lodash';
 
@@ -36,17 +38,17 @@ export interface FieldToConfigMapping {
 export function getFieldConfigFromFrame(
   frame: DataFrame,
   rowIndex: number,
-  mappings: FieldToConfigMapping[]
+  evaluatedMappings: EvaluatedMappingResult
 ): FieldConfig {
   const config: FieldConfig = {};
   const context: FieldToConfigContext = {};
 
   for (const field of frame.fields) {
     const fieldName = getFieldDisplayName(field, frame);
-    const handlerKey = getConfigHandlerKeyForField(fieldName, mappings);
-    const configDef = lookUpConfigHandler(handlerKey);
+    const mapping = evaluatedMappings.index[fieldName];
+    const handler = mapping.handler;
 
-    if (!configDef) {
+    if (!handler) {
       continue;
     }
 
@@ -56,9 +58,9 @@ export function getFieldConfigFromFrame(
       continue;
     }
 
-    const newValue = configDef.processor(configValue, config, context);
+    const newValue = handler.processor(configValue, config, context);
     if (newValue != null) {
-      (config as any)[configDef.targetProperty ?? configDef.key] = newValue;
+      (config as any)[handler.targetProperty ?? handler.key] = newValue;
     }
   }
 
@@ -88,6 +90,12 @@ export interface FieldToConfigMapHandler {
 export const configMapHandlers: FieldToConfigMapHandler[] = [
   {
     key: 'field.name',
+    name: 'Field name',
+    processor: () => {},
+  },
+  {
+    key: 'field.value',
+    name: 'Field value',
     processor: () => {},
   },
   {
@@ -247,4 +255,68 @@ export function lookUpConfigHandler(key: string | null): FieldToConfigMapHandler
   }
 
   return getConfigMapHandlersIndex()[key];
+}
+
+export interface EvaluatedMapping {
+  automatic: boolean;
+  handler: FieldToConfigMapHandler | null;
+  reducerId: ReducerID;
+}
+export interface EvaluatedMappingResult {
+  index: Record<string, EvaluatedMapping>;
+  nameField?: Field;
+  valueField?: Field;
+}
+
+export function evaluteFieldMappings(
+  frame: DataFrame,
+  mappings: FieldToConfigMapping[],
+  withNameAndValue?: boolean
+): EvaluatedMappingResult {
+  const result: EvaluatedMappingResult = {
+    index: {},
+  };
+
+  // Look up name and value field in mappings
+  let nameFieldMappping = mappings.find((x) => x.handlerKey === 'field.name');
+  let valueFieldMapping = mappings.find((x) => x.handlerKey === 'field.value');
+
+  for (const field of frame.fields) {
+    const fieldName = getFieldDisplayName(field, frame);
+    const mapping = mappings.find((x) => x.fieldName === fieldName);
+    const key = mapping ? mapping.handlerKey : fieldName.toLowerCase();
+    let handler = lookUpConfigHandler(key);
+
+    // Name and value handlers are a special as their auto logic is based on first matching criteria
+    if (withNameAndValue) {
+      // If we have a handler it means manually specified field
+      if (handler) {
+        if (handler.key === 'field.name') {
+          result.nameField = field;
+        }
+        if (handler.key === 'field.value') {
+          result.valueField = field;
+        }
+      } else if (!mapping) {
+        // We have no name field and no mapping for it, pick first string
+        if (!result.nameField && !nameFieldMappping && field.type === FieldType.string) {
+          result.nameField = field;
+          handler = lookUpConfigHandler('field.name');
+        }
+
+        if (!result.valueField && !valueFieldMapping && field.type === FieldType.number) {
+          result.valueField = field;
+          handler = lookUpConfigHandler('field.value');
+        }
+      }
+    }
+
+    result.index[fieldName] = {
+      automatic: mapping === null,
+      handler: handler,
+      reducerId: mapping?.reducerId ?? handler?.defaultReducer ?? ReducerID.lastNotNull,
+    };
+  }
+
+  return result;
 }

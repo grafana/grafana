@@ -122,16 +122,33 @@ describe('Rows to fields', () => {
       ],
     });
 
+    const result = rowsToFields({}, input);
+
+    expect(result.fields[0].labels).toEqual({ City: 'Stockholm' });
+    expect(result.fields[1].labels).toEqual({ City: 'New York' });
+  });
+
+  it('Can ignore field as auto picked for value or name', () => {
+    const input = toDataFrame({
+      fields: [
+        { name: 'Name', type: FieldType.string, values: ['Temperature'] },
+        { name: 'Value', type: FieldType.number, values: [10] },
+        { name: 'City', type: FieldType.string, values: ['Stockholm'] },
+        { name: 'Value2', type: FieldType.number, values: [20] },
+      ],
+    });
+
     const result = rowsToFields(
       {
-        nameField: 'Name',
-        valueField: 'Value',
-        mappings: [],
+        mappings: [
+          { fieldName: 'Name', handlerKey: null },
+          { fieldName: 'Value', handlerKey: null },
+        ],
       },
       input
     );
 
-    expect(result.fields[0].labels).toEqual({ City: 'Stockholm' });
-    expect(result.fields[1].labels).toEqual({ City: 'New York' });
+    expect(result.fields[0].name).toEqual('Stockholm');
+    expect(result.fields[0].values.get(0)).toEqual(20);
   });
 });

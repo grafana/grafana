@@ -52,6 +52,7 @@ export function RowsToFieldsTransformerEditor({ input, options, onChange }: Prop
           frame={input[0]}
           mappings={options.mappings ?? []}
           onChange={(mappings) => onChange({ ...options, mappings })}
+          withNameAndValue={true}
         />
       </InlineFieldRow>
     </div>
