@@ -19,7 +19,14 @@ export const getCellLinks = (field: Field, row: Row<any>) => {
       // Allow opening in new tab
       if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
         event.preventDefault();
-        link!.onClick(event);
+        link!.onClick({
+          origin: {
+            field,
+            row: row.index,
+          },
+          e: event,
+          replaceVariables: (v) => v,
+        });
       }
     };
   }
