@@ -41,6 +41,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
         name: 'preventOverflow',
         enabled: true,
         options: {
+          altAxis: true,
           rootBoundary: 'viewport',
         },
       },
@@ -61,7 +62,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
       style={{
         ...popperStyles.popper,
         display: popperStyles.popper?.transform ? 'block' : 'none',
-        transition: 'all ease-out 0.5s',
+        transition: 'all ease-out 0.2s',
       }}
       {...attributes.popper}
       {...otherProps}
