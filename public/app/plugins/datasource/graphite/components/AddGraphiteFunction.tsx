@@ -25,7 +25,6 @@ export function AddGraphiteFunction({ dispatch, funcDefs }: Props) {
       options={options}
       onChange={onChange}
       inputWidth={150}
-      submitOnClickAway={false}
     ></Segment>
   );
 }
