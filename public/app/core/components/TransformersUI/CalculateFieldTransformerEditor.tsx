@@ -9,7 +9,6 @@ import {
   FieldType,
   getFieldDisplayName,
   KeyValue,
-  PluginState,
   ReducerID,
   SelectableValue,
   standardTransformers,
@@ -383,29 +382,4 @@ export const calculateFieldTransformRegistryItem: TransformerRegistryItem<Calcul
   transformation: standardTransformers.calculateFieldTransformer,
   name: 'Add field from calculation',
   description: 'Use the row values to calculate a new field',
-  state: PluginState.beta,
-  help: `
-With this transform you can do transform rows to fields. 
-
-* You need to select one field to use as the source of names for the new fields.
-* You need to select one field to use as the values for the fields.
-* You can optionally map extra fields to config properties like min and max.
-
-### Examples
-
-Input:
-
-Name    | Value | Max 
---------|-------|------
-ServerA | 10    | 100
-ServerB | 20    | 200
-ServerC | 30    | 300
-
-Output:
-
-ServerA (max=100) | ServerB (max=200) | ServerC (max=300) 
-------------------|------------------ | ------------------
-10                | 20                | 30         
-
-`,
 };

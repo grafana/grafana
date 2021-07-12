@@ -11,7 +11,6 @@ import {
   IconButton,
   useStyles2,
   Card,
-  HelpBox,
 } from '@grafana/ui';
 import {
   DataFrame,
@@ -265,8 +264,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 }
 
                 return (
-                  <HelpBox
-                    heading="Transformations"
+                  <Alert
+                    title="Transformations"
+                    severity="info"
                     onRemove={() => {
                       onDismiss(true);
                     }}
@@ -286,7 +286,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                     >
                       Read more
                     </a>
-                  </HelpBox>
+                  </Alert>
                 );
               }}
             </LocalStorageValueProvider>

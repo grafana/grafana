@@ -1,6 +1,6 @@
 import React from 'react';
 import { DataFrame, DataTransformerConfig, TransformerRegistryItem } from '@grafana/data';
-import { HelpBox, HorizontalGroup } from '@grafana/ui';
+import { HorizontalGroup } from '@grafana/ui';
 
 import { TransformationEditor } from './TransformationEditor';
 import {
@@ -11,6 +11,7 @@ import { QueryOperationAction } from 'app/core/components/QueryOperationRow/Quer
 import { TransformationsEditorTransformation } from './types';
 import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
 import { useToggle } from 'react-use';
+import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 
 interface TransformationOperationRowProps {
   id: string;
@@ -38,8 +39,13 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
     return (
       <HorizontalGroup align="center" width="auto">
         {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
-        <QueryOperationAction title="Show/hide transform help" icon="info-circle" onClick={toggleHelp} />
-        <QueryOperationAction title="Debug" disabled={!isOpen} icon="bug" onClick={toggleDebug} />
+        <QueryOperationAction
+          title="Show/hide transform help"
+          icon="info-circle"
+          onClick={toggleHelp}
+          active={showHelp}
+        />
+        <QueryOperationAction title="Debug" disabled={!isOpen} icon="bug" onClick={toggleDebug} active={showDebug} />
         <QueryOperationAction title="Remove" icon="trash-alt" onClick={() => onRemove(index)} />
       </HorizontalGroup>
     );
@@ -47,7 +53,7 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
 
   return (
     <QueryOperationRow id={id} index={index} title={uiConfig.name} draggable actions={renderActions}>
-      {showHelp && <HelpBox heading="Transformation help" onRemove={toggleHelp} markdown={prepMarkdown(uiConfig)} />}
+      {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
       <TransformationEditor
         debugMode={showDebug}
         index={index}
