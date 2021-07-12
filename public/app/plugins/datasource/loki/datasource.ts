@@ -545,14 +545,28 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   async annotationQuery(options: any): Promise<AnnotationEvent[]> {
-    const { expr, maxLines, instant, tagKeys = '', titleFormat = '', textFormat = '' } = options.annotation;
+    const {
+      expr,
+      maxLines,
+      instant,
+      stepInterval,
+      tagKeys = '',
+      titleFormat = '',
+      textFormat = '',
+    } = options.annotation;
 
     if (!expr) {
       return [];
     }
 
     const interpolatedExpr = this.templateSrv.replace(expr, {}, this.interpolateQueryExpr);
-    const query = { refId: `annotation-${options.annotation.name}`, expr: interpolatedExpr, maxLines, instant };
+    const query = {
+      refId: `annotation-${options.annotation.name}`,
+      expr: interpolatedExpr,
+      maxLines,
+      instant,
+      stepInterval,
+    };
     const { data } = instant
       ? await this.runInstantQuery(query, options as any).toPromise()
       : await this.runRangeQuery(query, options as any).toPromise();

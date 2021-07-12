@@ -90,12 +90,11 @@ describe('LokiDatasource', () => {
     });
 
     it('should use default intervalMs if one is not provided', () => {
-      const target = { expr: '{job="grafana"}', refId: 'B' };
+      const target = { expr: '{job="grafana"}', refId: 'B', stepInterval: '2s' };
       const raw = { from: 'now', to: 'now-1h' };
       const range = { from: dateTime(), to: dateTime(), raw: raw };
       const options = {
         range,
-        interval: '2s',
       };
 
       const req = ds.createRangeQuery(target, options as any, 1000);
@@ -105,29 +104,33 @@ describe('LokiDatasource', () => {
     });
 
     it('should use provided intervalMs', () => {
-      const target = { expr: '{job="grafana"}', refId: 'B' };
+      const target = { expr: '{job="grafana"}', refId: 'B', stepInterval: '2s' };
       const raw = { from: 'now', to: 'now-1h' };
       const range = { from: dateTime(), to: dateTime(), raw: raw };
       const options = {
         range,
         intervalMs: 2000,
-        interval: '2s',
       };
 
       const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
-      expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything(), expect.anything(), 0, expect.anything());
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(
+        2000,
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything()
+      );
     });
 
     it('should set the minimal step to 1ms', () => {
-      const target = { expr: '{job="grafana"}', refId: 'B' };
+      const target = { expr: '{job="grafana"}', refId: 'B', stepInterval: '1ms' };
       const raw = { from: 'now', to: 'now-1h' };
       const range = { from: dateTime('2020-10-14T00:00:00'), to: dateTime('2020-10-14T00:00:01'), raw: raw };
       const options = {
         range,
         intervalMs: 0.0005,
-        interval: '2s',
       };
 
       const req = ds.createRangeQuery(target, options as any, 1000);
@@ -489,7 +492,7 @@ describe('LokiDatasource', () => {
           status: 'success',
         },
       } as unknown) as FetchResponse;
-      const { promise } = getTestContext(response);
+      const { promise } = getTestContext(response, { stepInterval: '15s' });
 
       const res = await promise;
 
@@ -521,7 +524,7 @@ describe('LokiDatasource', () => {
       } as unknown) as FetchResponse;
       describe('When tagKeys is set', () => {
         it('should only include selected labels', async () => {
-          const { promise } = getTestContext(response, { tagKeys: 'label2,label3' });
+          const { promise } = getTestContext(response, { tagKeys: 'label2,label3', stepInterval: '15s' });
 
           const res = await promise;
 
@@ -532,7 +535,7 @@ describe('LokiDatasource', () => {
       });
       describe('When textFormat is set', () => {
         it('should fromat the text accordingly', async () => {
-          const { promise } = getTestContext(response, { textFormat: 'hello {{label2}}' });
+          const { promise } = getTestContext(response, { textFormat: 'hello {{label2}}', stepInterval: '15s' });
 
           const res = await promise;
 
@@ -542,7 +545,7 @@ describe('LokiDatasource', () => {
       });
       describe('When titleFormat is set', () => {
         it('should fromat the title accordingly', async () => {
-          const { promise } = getTestContext(response, { titleFormat: 'Title {{label2}}' });
+          const { promise } = getTestContext(response, { titleFormat: 'Title {{label2}}', stepInterval: '15s' });
 
           const res = await promise;
 
