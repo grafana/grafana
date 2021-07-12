@@ -27,9 +27,19 @@ func TestSecrets_Encrypt(t *testing.T) {
 		setting.SecretKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 	}
 
+	t.Run("getting encryption key", func(t *testing.T) {
+		key, err := encryptionKeyToBytes([]byte("secret"), []byte("salt"))
+		require.NoError(t, err)
+		assert.Len(t, key, 32)
+
+		key, err = encryptionKeyToBytes([]byte("a very long secret key that is larger then 32bytes"), []byte("salt"))
+		require.NoError(t, err)
+		assert.Len(t, key, 32)
+	})
+
 	plaintexts := [][]byte{
-		{},
 		[]byte("hello, world"),
+		[]byte("grafana"),
 	}
 
 	for _, plaintext := range plaintexts {
@@ -42,4 +52,11 @@ func TestSecrets_Encrypt(t *testing.T) {
 			assert.Equal(t, plaintext, decrypted)
 		})
 	}
+
+	t.Run("decrypting empty payload should not fail", func(t *testing.T) {
+		_, err := s.Decrypt([]byte(""))
+		require.Error(t, err)
+
+		assert.Equal(t, "unable to compute salt", err.Error())
+	})
 }
