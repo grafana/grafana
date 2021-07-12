@@ -121,7 +121,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	setting.OAuthAutoLogin = true
 
 	oauthError := errors.New("User not a member of one of the required organizations")
-	encryptedError, err := util.Encrypt([]byte(oauthError.Error()), setting.SecretKey)
+	encryptedError, err := util.Encrypt([]byte(oauthError.Error()))
 	require.NoError(t, err)
 	expCookiePath := "/"
 	if len(setting.AppSubUrl) > 0 {

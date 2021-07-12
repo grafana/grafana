@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -109,7 +108,7 @@ func updateRows(session *sqlstore.DBSession, rows []map[string][]byte, passwordF
 }
 
 func getUpdatedSecureJSONData(row map[string][]byte, passwordFieldName string) (map[string]interface{}, error) {
-	encryptedPassword, err := util.Encrypt(row[passwordFieldName], setting.SecretKey)
+	encryptedPassword, err := util.Encrypt(row[passwordFieldName])
 	if err != nil {
 		return nil, err
 	}

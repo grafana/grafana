@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -79,7 +78,7 @@ func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
 			return err
 		}
 		for key, data := range cmd.SecureJsonData {
-			encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
+			encryptedData, err := util.Encrypt([]byte(data))
 			if err != nil {
 				return err
 			}
