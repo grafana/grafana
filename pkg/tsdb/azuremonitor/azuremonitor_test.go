@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,14 +24,16 @@ func TestNewInstanceSettings(t *testing.T) {
 		{
 			name: "creates an instance",
 			settings: backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cloudName":"azuremonitor"}`),
+				JSONData:                []byte(`{"azureAuthType":"msi"}`),
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
 				ID:                      40,
 			},
 			expectedModel: datasourceInfo{
-				Settings:                azureMonitorSettings{CloudName: "azuremonitor"},
-				Routes:                  routes["azuremonitor"],
-				JSONData:                map[string]interface{}{"cloudName": string("azuremonitor")},
+				Cloud:                   setting.AzurePublic,
+				Credentials:             &azcredentials.AzureManagedIdentityCredentials{},
+				Settings:                azureMonitorSettings{},
+				Routes:                  routes[setting.AzurePublic],
+				JSONData:                map[string]interface{}{"azureAuthType": "msi"},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
 				Services:                map[string]datasourceService{},
@@ -39,9 +42,15 @@ func TestNewInstanceSettings(t *testing.T) {
 		},
 	}
 
+	cfg := &setting.Cfg{
+		Azure: setting.AzureSettings{
+			Cloud: setting.AzurePublic,
+		},
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			factory := NewInstanceSettings(&Service{})
+			factory := NewInstanceSettings(cfg, map[string]azDatasourceExecutor{})
 			instance, err := factory(tt.settings)
 			tt.Err(t, err)
 			if !cmp.Equal(instance, tt.expectedModel, cmpopts.IgnoreFields(datasourceInfo{}, "HTTPCliOpts")) {

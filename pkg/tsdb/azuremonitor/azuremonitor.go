@@ -12,12 +12,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 const (
@@ -51,20 +53,15 @@ type Service struct {
 }
 
 type azureMonitorSettings struct {
+	SubscriptionId               string `json:"subscriptionId"`
+	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
 	AppInsightsAppId             string `json:"appInsightsAppId"`
 	AzureLogAnalyticsSameAs      bool   `json:"azureLogAnalyticsSameAs"`
-	ClientId                     string `json:"clientId"`
-	CloudName                    string `json:"cloudName"`
-	LogAnalyticsClientId         string `json:"logAnalyticsClientId"`
-	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
-	LogAnalyticsSubscriptionId   string `json:"logAnalyticsSubscriptionId"`
-	LogAnalyticsTenantId         string `json:"logAnalyticsTenantId"`
-	SubscriptionId               string `json:"subscriptionId"`
-	TenantId                     string `json:"tenantId"`
-	AzureAuthType                string `json:"azureAuthType,omitempty"`
 }
 
 type datasourceInfo struct {
+	Cloud       string
+	Credentials azcredentials.AzureCredentials
 	Settings    azureMonitorSettings
 	Routes      map[string]azRoute
 	HTTPCliOpts httpclient.Options
@@ -99,10 +96,15 @@ func getDatasourceService(cfg *setting.Cfg, dsInfo datasourceInfo, routeName str
 	}, nil
 }
 
-func NewInstanceSettings(s *Service) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(cfg *setting.Cfg, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		jsonData := map[string]interface{}{}
-		err := json.Unmarshal(settings.JSONData, &jsonData)
+		jsonData, err := simplejson.NewJson(settings.JSONData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+
+		jsonDataObj := map[string]interface{}{}
+		err = json.Unmarshal(settings.JSONData, &jsonDataObj)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
@@ -112,28 +114,42 @@ func NewInstanceSettings(s *Service) datasource.InstanceFactoryFunc {
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
+
+		cloud, err := getAzureCloud(cfg, jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error getting credentials: %w", err)
+		}
+
+		credentials, err := getAzureCredentials(cfg, jsonData, settings.DecryptedSecureJSONData)
+		if err != nil {
+			return nil, fmt.Errorf("error getting credentials: %w", err)
+		}
+
 		httpCliOpts, err := settings.HTTPClientOptions()
 		if err != nil {
 			return nil, fmt.Errorf("error getting http options: %w", err)
 		}
 
 		model := datasourceInfo{
+			Cloud:                   cloud,
+			Credentials:             credentials,
 			Settings:                azMonitorSettings,
-			JSONData:                jsonData,
+			JSONData:                jsonDataObj,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			DatasourceID:            settings.ID,
-			Routes:                  routes[azMonitorSettings.CloudName],
+			Routes:                  routes[cloud],
 			HTTPCliOpts:             httpCliOpts,
 			Services:                map[string]datasourceService{},
 		}
 
-		for routeName := range s.executors {
-			service, err := getDatasourceService(s.Cfg, model, routeName)
+		for routeName := range executors {
+			service, err := getDatasourceService(cfg, model, routeName)
 			if err != nil {
 				return nil, err
 			}
 			model.Services[routeName] = service
 		}
+
 		return model, nil
 	}
 }
@@ -183,7 +199,7 @@ func (s *Service) Init() error {
 		insightsAnalytics:  &InsightsAnalyticsDatasource{proxy: proxy},
 		azureResourceGraph: &AzureResourceGraphDatasource{proxy: proxy},
 	}
-	s.im = datasource.NewInstanceManager(NewInstanceSettings(s))
+	s.im = datasource.NewInstanceManager(NewInstanceSettings(s.Cfg, s.executors))
 	mux := s.newMux()
 	resourceMux := http.NewServeMux()
 	s.registerRoutes(resourceMux)

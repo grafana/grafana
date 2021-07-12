@@ -504,7 +504,7 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 			am.Metrics.Resolved().Inc()
 		}
 
-		if err := alert.Validate(); err != nil {
+		if err := validateAlert(alert); err != nil {
 			if validationErr == nil {
 				validationErr = &AlertValidationError{}
 			}
@@ -528,6 +528,59 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 	return nil
 }
 
+// validateAlert is a.Validate() while additionally allowing
+// space for label and annotation names.
+func validateAlert(a *types.Alert) error {
+	if a.StartsAt.IsZero() {
+		return fmt.Errorf("start time missing")
+	}
+	if !a.EndsAt.IsZero() && a.EndsAt.Before(a.StartsAt) {
+		return fmt.Errorf("start time must be before end time")
+	}
+	if err := validateLabelSet(a.Labels); err != nil {
+		return fmt.Errorf("invalid label set: %s", err)
+	}
+	if len(a.Labels) == 0 {
+		return fmt.Errorf("at least one label pair required")
+	}
+	if err := validateLabelSet(a.Annotations); err != nil {
+		return fmt.Errorf("invalid annotations: %s", err)
+	}
+	return nil
+}
+
+// validateLabelSet is ls.Validate() while additionally allowing
+// space for label names.
+func validateLabelSet(ls model.LabelSet) error {
+	for ln, lv := range ls {
+		if !isValidLabelName(ln) {
+			return fmt.Errorf("invalid name %q", ln)
+		}
+		if !lv.IsValid() {
+			return fmt.Errorf("invalid value %q", lv)
+		}
+	}
+	return nil
+}
+
+// isValidLabelName is ln.IsValid() while additionally allowing spaces.
+// The regex for Prometheus data model is ^[a-zA-Z_][a-zA-Z0-9_]*$
+// while we will follow ^[a-zA-Z_][a-zA-Z0-9_ ]*$
+func isValidLabelName(ln model.LabelName) bool {
+	if len(ln) == 0 {
+		return false
+	}
+	for i, b := range ln {
+		if !((b >= 'a' && b <= 'z') ||
+			(b >= 'A' && b <= 'Z') ||
+			b == '_' ||
+			(i > 0 && (b == ' ' || (b >= '0' && b <= '9')))) {
+			return false
+		}
+	}
+	return true
+}
+
 // AlertValidationError is the error capturing the validation errors
 // faced on the alerts.
 type AlertValidationError struct {
@@ -538,7 +591,7 @@ type AlertValidationError struct {
 func (e AlertValidationError) Error() string {
 	errMsg := ""
 	if len(e.Errors) != 0 {
-		errMsg := e.Errors[0].Error()
+		errMsg = e.Errors[0].Error()
 		for _, e := range e.Errors[1:] {
 			errMsg += ";" + e.Error()
 		}

@@ -97,7 +97,7 @@ func Test_resourceHandler(t *testing.T) {
 		im: &fakeInstance{
 			services: map[string]datasourceService{
 				azureMonitor: {
-					URL:        routes[azureMonitorPublic][azureMonitor].URL,
+					URL:        routes[setting.AzurePublic][azureMonitor].URL,
 					HTTPClient: &http.Client{},
 				},
 			},

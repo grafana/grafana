@@ -214,6 +214,10 @@ a.external-link {
   }
 
   table {
+    margin-bottom: $line-height-base;
+  }
+
+  table {
     td,
     th {
       padding: $spacer * 0.5 $spacer;
