@@ -2,9 +2,10 @@ import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select, MultiSelect } from '@grafana/ui';
 
-import { AzureMonitorQuery, AzureQueryType, AzureQueryEditorFieldProps, AzureMonitorOption } from '../types';
+import { AzureMonitorQuery, AzureQueryEditorFieldProps, AzureMonitorOption } from '../types';
 import { findOption, findOptions } from '../utils/common';
 import { Field } from './Field';
+import { setSubscriptionId } from './MetricsQueryEditor/setQueryValue';
 
 interface SubscriptionFieldProps extends AzureQueryEditorFieldProps {
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
@@ -58,27 +59,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
         return;
       }
 
-      let newQuery: AzureMonitorQuery = {
-        ...query,
-        subscription: change.value,
-      };
-
-      if (query.queryType === AzureQueryType.AzureMonitor) {
-        // TODO: set the fields to undefined so we don't
-        // get "resource group select could not be found" errors
-        newQuery.azureMonitor = {
-          ...newQuery.azureMonitor,
-          resourceGroup: undefined,
-          metricDefinition: undefined,
-          metricNamespace: undefined,
-          resourceName: undefined,
-          metricName: undefined,
-          aggregation: undefined,
-          timeGrain: '',
-          dimensionFilters: [],
-        };
-      }
-
+      const newQuery = setSubscriptionId(query, change.value);
       onQueryChange(newQuery);
     },
     [query, onQueryChange]

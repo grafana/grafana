@@ -26,17 +26,19 @@ export enum AzureQueryType {
   AzureResourceGraph = 'Azure Resource Graph',
 }
 
+// Actually, everything on here is optional because the object is empty when a new panel
+// is created
 export interface AzureMonitorQuery extends DataQuery {
-  queryType: AzureQueryType;
-  format: string;
-  subscription: string;
-  subscriptions: string[];
+  queryType?: AzureQueryType;
+  // format?: string; // this is not used by the backend at all, and isnt set anywhere??
+  subscription?: string;
+  subscriptions?: string[];
 
-  azureMonitor: AzureMetricQuery;
-  azureLogAnalytics: AzureLogsQuery;
+  azureMonitor?: AzureMetricQuery;
+  azureLogAnalytics?: AzureLogsQuery;
   appInsights?: ApplicationInsightsQuery;
-  insightsAnalytics: InsightsAnalyticsQuery;
-  azureResourceGraph: AzureResourceGraphQuery;
+  insightsAnalytics?: InsightsAnalyticsQuery;
+  azureResourceGraph?: AzureResourceGraphQuery;
 }
 
 /**
@@ -109,23 +111,25 @@ export interface AzureMetricDimension {
 }
 
 export interface AzureMetricQuery {
-  resourceGroup: string | undefined;
-  resourceName: string | undefined;
-  metricDefinition: string | undefined;
-  metricNamespace: string | undefined;
-  metricName: string | undefined;
+  resourceGroup?: string | undefined;
+  resourceName?: string | undefined;
+  metricDefinition?: string | undefined;
+  metricNamespace?: string | undefined;
+  metricName?: string | undefined;
+  timeGrain?: string;
+  allowedTimeGrainsMs?: number[];
+  aggregation?: string | undefined;
+  dimensionFilters?: AzureMetricDimension[];
+  alias?: string;
+  top?: string;
+
+  /** @deprecated */
   timeGrainUnit?: string;
-  timeGrain: string;
-  allowedTimeGrainsMs: number[];
-  aggregation: string | undefined;
-  dimensionFilters: AzureMetricDimension[];
-  alias: string;
-  top: string;
 }
 
 export interface AzureLogsQuery {
-  query: string;
-  resultFormat: string;
+  query?: string;
+  resultFormat?: string;
   resource?: string;
 
   /** @deprecated Queries should be migrated to use Resource instead */
@@ -133,26 +137,29 @@ export interface AzureLogsQuery {
 }
 
 export interface AzureResourceGraphQuery {
-  query: string;
-  resultFormat: string;
+  query?: string;
+  resultFormat?: string;
 }
 
 export interface ApplicationInsightsQuery {
-  metricName: string;
-  timeGrain: string;
-  timeGrainCount: string;
-  timeGrainType: string;
-  timeGrainUnit: string;
-  aggregation: string;
-  dimension: string[]; // Was string before 7.1
+  metricName?: string;
+  timeGrain?: string;
+  timeGrainCount?: string;
+  timeGrainType?: string;
+  timeGrainUnit?: string;
+  aggregation?: string;
+  dimension?: string[]; // Was string before 7.1
   // dimensions: string[]; why is this metadata stored on the object!
-  dimensionFilter: string;
-  alias: string;
+  dimensionFilter?: string;
+  alias?: string;
 }
 
 export interface InsightsAnalyticsQuery {
-  query: string;
-  resultFormat: string;
+  query?: string;
+  resultFormat?: string;
+
+  /** @deprecated Migrate field to query  */
+  rawQueryString?: string;
 }
 
 // Represents an errors that come back from frontend requests.

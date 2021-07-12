@@ -172,11 +172,14 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return `${this.azurePortalUrl}/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/${timeContext}/ChartDefinition/${chartDef}`;
   }
 
-  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
     const item = target.azureMonitor;
+    if (!item) {
+      return target;
+    }
 
     // fix for timeGrainUnit which is a deprecated/removed field name
-    if (item.timeGrainUnit && item.timeGrain !== 'auto') {
+    if (item.timeGrain && item.timeGrainUnit && item.timeGrain !== 'auto') {
       item.timeGrain = TimegrainConverter.createISO8601Duration(item.timeGrain, item.timeGrainUnit);
     }
 
@@ -191,7 +194,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const aggregation = templateSrv.replace(item.aggregation, scopedVars);
     const top = templateSrv.replace(item.top || '', scopedVars);
 
-    const dimensionFilters = item.dimensionFilters
+    const dimensionFilters = (item.dimensionFilters ?? [])
       .filter((f) => f.dimension && f.dimension !== 'None')
       .map((f) => {
         const filter = templateSrv.replace(f.filter ?? '', scopedVars);
@@ -219,7 +222,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
         dimensionFilters,
         top: top || '10',
         alias: item.alias,
-        format: target.format,
       },
     };
   }
