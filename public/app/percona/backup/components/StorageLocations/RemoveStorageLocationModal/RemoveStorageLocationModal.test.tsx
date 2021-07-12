@@ -5,7 +5,7 @@ import { WarningBlock } from '../../../../shared/components/Elements/WarningBloc
 import { RemoveStorageLocationModal } from './RemoveStorageLocationModal';
 import { CheckboxField } from '@percona/platform-core';
 
-xdescribe('RemoveStorageLocationModal', () => {
+describe('RemoveStorageLocationModal', () => {
   it('should have a WarningBlock and CheckboxField', () => {
     const location: StorageLocation = {
       locationID: 'ID1',

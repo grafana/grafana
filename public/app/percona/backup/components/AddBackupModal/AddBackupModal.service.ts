@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { InventoryService } from 'app/percona/inventory/Inventory.service';
 import { Databases } from 'app/percona/shared/core';
-import { StorageLocationsService } from '../../StorageLocations/StorageLocations.service';
+import { StorageLocationsService } from '../StorageLocations/StorageLocations.service';
 import { SelectableService } from './AddBackupModal.types';
 
 export const AddBackupModalService = {
