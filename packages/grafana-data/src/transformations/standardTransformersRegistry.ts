@@ -1,5 +1,5 @@
 import React from 'react';
-import { DataFrame, DataTransformerInfo } from '../types';
+import { DataFrame, DataTransformerInfo, PluginState } from '../types';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 export interface TransformerUIProps<T> {
@@ -19,6 +19,15 @@ export interface TransformerRegistryItem<TOptions> extends RegistryItem {
    * Object describing transformer configuration
    */
   transformation: DataTransformerInfo<TOptions>;
+
+  /**
+   * Optional feature state
+   */
+  state?: PluginState;
+
+  /** Markdown with more detailed description and help */
+  help?: string;
+
   /**
    * React component used as UI for the transformer
    */

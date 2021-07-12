@@ -1,29 +1,50 @@
 import React, { FC } from 'react';
-import { AlphaNotice } from '@grafana/ui';
+import { Badge, BadgeProps } from '@grafana/ui';
 import { PluginState } from '@grafana/data';
 
 interface Props {
   state?: PluginState;
 }
 
-function getPluginStateInfoText(state?: PluginState): string | null {
-  switch (state) {
-    case PluginState.alpha:
-      return 'Alpha Plugin: This plugin is a work in progress and updates may include breaking changes';
-    case PluginState.beta:
-      return 'Beta Plugin: There could be bugs and minor breaking changes to this plugin';
-  }
-  return null;
-}
+export const PluginStateInfo: FC<Props> = (props) => {
+  const display = getFeatureStateInfo(props.state);
 
-const PluginStateinfo: FC<Props> = (props) => {
-  const text = getPluginStateInfoText(props.state);
-
-  if (!text) {
+  if (!display) {
     return null;
   }
 
-  return <AlphaNotice state={props.state} text={text} />;
+  return (
+    <Badge
+      color={display.color}
+      title={display.tooltip}
+      text={display.text}
+      icon={display.icon}
+      tooltip={display.tooltip}
+    />
+  );
 };
 
-export default PluginStateinfo;
+function getFeatureStateInfo(state?: PluginState): BadgeProps | null {
+  switch (state) {
+    case PluginState.deprecated:
+      return {
+        text: 'Deprecated',
+        color: 'red',
+        tooltip: `This feature is deprecated and will be removed in a future release`,
+      };
+    case PluginState.alpha:
+      return {
+        text: 'Alpha',
+        color: 'blue',
+        tooltip: `This feature is experimental and future updates might not be backward compatible`,
+      };
+    case PluginState.beta:
+      return {
+        text: 'Beta',
+        color: 'blue',
+        tooltip: `This feature is close to complete but not fully tested`,
+      };
+    default:
+      return null;
+  }
+}

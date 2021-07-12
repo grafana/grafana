@@ -156,6 +156,6 @@ export function getVariantStyles(variant: ThemeTypographyVariant) {
     font-weight: ${variant.fontWeight};
     letter-spacing: ${variant.letterSpacing};
     font-family: ${variant.fontFamily};
-    margin-bottom: 0.35em;
+    margin-bottom: 0.45em;
   `;
 }

@@ -5,6 +5,7 @@ import { getElementStyles } from './elements';
 import { getCardStyles } from './card';
 import { getAgularPanelStyles } from './angularPanelStyles';
 import { getPageStyles } from './page';
+import { getMarkdownStyles } from './markdownStyles';
 
 /** @internal */
 export function GlobalStyles() {
@@ -12,7 +13,13 @@ export function GlobalStyles() {
 
   return (
     <Global
-      styles={[getElementStyles(theme), getPageStyles(theme), getCardStyles(theme), getAgularPanelStyles(theme)]}
+      styles={[
+        getElementStyles(theme),
+        getPageStyles(theme),
+        getCardStyles(theme),
+        getAgularPanelStyles(theme),
+        getMarkdownStyles(theme),
+      ]}
     />
   );
 }
