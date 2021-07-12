@@ -194,7 +194,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/Kafka":                   {"Broker ID", "Cluster Name", "Topic"},
 	"AWS/Kinesis":                 {"ShardId", "StreamName"},
 	"AWS/KinesisAnalytics":        {"Application", "Flow", "Id"},
-	"AWS/KinesisVideo":            {},
+	"AWS/KinesisVideo":            {"StreamName"},
 	"AWS/Lambda":                  {"Alias", "ExecutedVersion", "FunctionName", "Resource"},
 	"AWS/Lex":                     {"BotAlias", "BotChannelName", "BotName", "BotVersion", "InputMode", "Operation", "Source"},
 	"AWS/Logs":                    {"DestinationType", "FilterName", "LogGroupName"},
