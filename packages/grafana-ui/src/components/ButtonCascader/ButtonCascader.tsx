@@ -5,7 +5,6 @@ import { css, cx } from '@emotion/css';
 
 // @ts-ignore
 import RCCascader from 'rc-cascader';
-import { CascaderValueType } from 'rc-cascader/lib/Cascader';
 import { CascaderOption } from '../Cascader/Cascader';
 import { onChangeCascader, onLoadDataCascader } from '../Cascader/optionMappings';
 import { stylesFactory, useTheme2 } from '../../themes';
@@ -19,7 +18,7 @@ export interface ButtonCascaderProps {
   value?: string[];
   fieldNames?: { label: string; value: string; children: string };
   loadData?: (selectedOptions: CascaderOption[]) => void;
-  onChange?: (value: CascaderValueType, selectedOptions: CascaderOption[]) => void;
+  onChange?: (value: string[], selectedOptions: CascaderOption[]) => void;
   onPopupVisibleChange?: (visible: boolean) => void;
   className?: string;
 }
