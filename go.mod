@@ -121,3 +121,4 @@ require (
 )
 
 replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
+
