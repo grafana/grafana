@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInfluxdbQueryBuilder(t *testing.T) {
-	Convey("Influxdb query builder", t, func() {
+	t.Run("Influxdb query builder", func(t *testing.T) {
 		qp1, _ := NewQueryPart("field", []string{"value"})
 		qp2, _ := NewQueryPart("mean", []string{})
 
@@ -38,7 +38,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			},
 		}
 
-		Convey("can build simple query", func() {
+		t.Run("can build simple query", func(t *testing.T) {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2}},
 				Measurement: "cpu",
@@ -48,11 +48,11 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			}
 
 			rawQuery, err := query.Build(queryContext)
-			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "policy"."cpu" WHERE time > 1596240000000ms and time < 1596240300000ms GROUP BY time(10s) fill(null)`)
+			require.NoError(t, err)
+			require.Equal(t, rawQuery, `SELECT mean("value") FROM "policy"."cpu" WHERE time > 1596240000000ms and time < 1596240300000ms GROUP BY time(10s) fill(null)`)
 		})
 
-		Convey("can build query with tz", func() {
+		t.Run("can build query with tz", func(t *testing.T) {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2}},
 				Measurement: "cpu",
@@ -62,11 +62,11 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			}
 
 			rawQuery, err := query.Build(queryContext)
-			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms GROUP BY time(5s) tz('Europe/Paris')`)
+			require.NoError(t, err)
+			require.Equal(t, rawQuery, `SELECT mean("value") FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms GROUP BY time(5s) tz('Europe/Paris')`)
 		})
 
-		Convey("can build query with group bys", func() {
+		t.Run("can build query with group bys", func(t *testing.T) {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2}},
 				Measurement: "cpu",
@@ -76,11 +76,11 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			}
 
 			rawQuery, err := query.Build(queryContext)
-			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE ("hostname" = 'server1' OR "hostname" = 'server2') AND time > 1596240000000ms and time < 1596240300000ms GROUP BY time(5s), "datacenter" fill(null)`)
+			require.NoError(t, err)
+			require.Equal(t, rawQuery, `SELECT mean("value") FROM "cpu" WHERE ("hostname" = 'server1' OR "hostname" = 'server2') AND time > 1596240000000ms and time < 1596240300000ms GROUP BY time(5s), "datacenter" fill(null)`)
 		})
 
-		Convey("can build query with math part", func() {
+		t.Run("can build query with math part", func(t *testing.T) {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2, *mathPartDivideBy100}},
 				Measurement: "cpu",
@@ -88,11 +88,11 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			}
 
 			rawQuery, err := query.Build(queryContext)
-			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") / 100 FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms`)
+			require.NoError(t, err)
+			require.Equal(t, rawQuery, `SELECT mean("value") / 100 FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms`)
 		})
 
-		Convey("can build query with math part using $__interval_ms variable", func() {
+		t.Run("can build query with math part using $__interval_ms variable", func(t *testing.T) {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2, *mathPartDivideByIntervalMs}},
 				Measurement: "cpu",
@@ -100,11 +100,11 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			}
 
 			rawQuery, err := query.Build(queryContext)
-			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") / 5000 FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms`)
+			require.NoError(t, err)
+			require.Equal(t, rawQuery, `SELECT mean("value") / 5000 FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms`)
 		})
 
-		Convey("can build query with old $interval variable", func() {
+		t.Run("can build query with old $interval variable", func(t *testing.T) {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2}},
 				Measurement: "cpu",
@@ -114,13 +114,13 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			}
 
 			rawQuery, err := query.Build(queryContext)
-			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms GROUP BY time(200ms)`)
+			require.NoError(t, err)
+			require.Equal(t, rawQuery, `SELECT mean("value") FROM "cpu" WHERE time > 1596240000000ms and time < 1596240300000ms GROUP BY time(200ms)`)
 		})
 
-		Convey("can render time range", func() {
+		t.Run("can render time range", func(t *testing.T) {
 			query := Query{}
-			Convey("render from: 2h to now-1h", func() {
+			t.Run("render from: 2h to now-1h", func(t *testing.T) {
 				query := Query{}
 				timeRange = backend.TimeRange{
 					From: time.Date(2020, 8, 1, 0, 0, 0, 0, time.UTC),
@@ -133,10 +133,10 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 						},
 					},
 				}
-				So(query.renderTimeFilter(queryContext), ShouldEqual, "time > 1596240000000ms and time < 1596243600000ms")
+				require.Equal(t, query.renderTimeFilter(queryContext), "time > 1596240000000ms and time < 1596243600000ms")
 			})
 
-			Convey("render from: 10m", func() {
+			t.Run("render from: 10m", func(t *testing.T) {
 				timeRange = backend.TimeRange{
 					From: time.Date(2020, 8, 1, 0, 0, 0, 0, time.UTC),
 					To:   time.Date(2020, 8, 1, 0, 10, 0, 0, time.UTC),
@@ -148,11 +148,11 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 						},
 					},
 				}
-				So(query.renderTimeFilter(queryContext), ShouldEqual, "time > 1596240000000ms and time < 1596240600000ms")
+				require.Equal(t, query.renderTimeFilter(queryContext), "time > 1596240000000ms and time < 1596240600000ms")
 			})
 		})
 
-		Convey("can build query from raw query", func() {
+		t.Run("can build query from raw query", func(t *testing.T) {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2}},
 				Measurement: "cpu",
@@ -164,68 +164,68 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			}
 
 			rawQuery, err := query.Build(queryContext)
-			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `Raw query`)
+			require.NoError(t, err)
+			require.Equal(t, rawQuery, `Raw query`)
 		})
 
-		Convey("can render normal tags without operator", func() {
+		t.Run("can render normal tags without operator", func(t *testing.T) {
 			query := &Query{Tags: []*Tag{{Operator: "", Value: `value`, Key: "key"}}}
 
-			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 'value'`)
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = 'value'`)
 		})
 
-		Convey("can render regex tags without operator", func() {
+		t.Run("can render regex tags without operator", func(t *testing.T) {
 			query := &Query{Tags: []*Tag{{Operator: "", Value: `/value/`, Key: "key"}}}
 
-			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" =~ /value/`)
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" =~ /value/`)
 		})
 
-		Convey("can render regex tags", func() {
+		t.Run("can render regex tags", func(t *testing.T) {
 			query := &Query{Tags: []*Tag{{Operator: "=~", Value: `/value/`, Key: "key"}}}
 
-			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" =~ /value/`)
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" =~ /value/`)
 		})
 
-		Convey("can render number tags", func() {
+		t.Run("can render number tags", func(t *testing.T) {
 			query := &Query{Tags: []*Tag{{Operator: "=", Value: "10001", Key: "key"}}}
 
-			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = '10001'`)
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = '10001'`)
 		})
 
-		Convey("can render numbers less then condition tags", func() {
+		t.Run("can render numbers less then condition tags", func(t *testing.T) {
 			query := &Query{Tags: []*Tag{{Operator: "<", Value: "10001", Key: "key"}}}
 
-			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" < 10001`)
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" < 10001`)
 		})
 
-		Convey("can render number greater then condition tags", func() {
+		t.Run("can render number greater then condition tags", func(t *testing.T) {
 			query := &Query{Tags: []*Tag{{Operator: ">", Value: "10001", Key: "key"}}}
 
-			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" > 10001`)
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" > 10001`)
 		})
 
-		Convey("can render string tags", func() {
+		t.Run("can render string tags", func(t *testing.T) {
 			query := &Query{Tags: []*Tag{{Operator: "=", Value: "value", Key: "key"}}}
 
-			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 'value'`)
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = 'value'`)
 		})
 
-		Convey("can escape backslashes when rendering string tags", func() {
+		t.Run("can escape backslashes when rendering string tags", func(t *testing.T) {
 			query := &Query{Tags: []*Tag{{Operator: "=", Value: `C:\test\`, Key: "key"}}}
 
-			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 'C:\\test\\'`)
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = 'C:\\test\\'`)
 		})
 
-		Convey("can render regular measurement", func() {
+		t.Run("can render regular measurement", func(t *testing.T) {
 			query := &Query{Measurement: `apa`, Policy: "policy"}
 
-			So(query.renderMeasurement(), ShouldEqual, ` FROM "policy"."apa"`)
+			require.Equal(t, query.renderMeasurement(), ` FROM "policy"."apa"`)
 		})
 
-		Convey("can render regexp measurement", func() {
+		t.Run("can render regexp measurement", func(t *testing.T) {
 			query := &Query{Measurement: `/apa/`, Policy: "policy"}
 
-			So(query.renderMeasurement(), ShouldEqual, ` FROM "policy"./apa/`)
+			require.Equal(t, query.renderMeasurement(), ` FROM "policy"./apa/`)
 		})
 	})
 }
