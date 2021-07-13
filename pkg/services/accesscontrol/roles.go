@@ -227,6 +227,7 @@ var FixedRoleGrants = map[string][]string{
 		usersOrgRead,
 	},
 	string(models.ROLE_ADMIN): {
+		datasourcesEditorRead,
 		usersOrgEdit,
 		usersOrgRead,
 	},
