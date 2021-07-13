@@ -61,6 +61,8 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     const deps = action.payload;
     deps.target.target = deps.target.target || '';
 
+    await deps.datasource.waitForFuncDefsLoaded();
+
     state = {
       ...state,
       ...deps,
@@ -71,7 +73,6 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
       funcDefs: [],
     };
 
-    state.funcDefs = await state.datasource.waitForFuncDefsLoaded();
     await buildSegments(state, false);
   }
   if (actions.segmentValueChanged.match(action)) {
