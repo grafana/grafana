@@ -3,6 +3,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
+  AlertmanagerGroup,
   Silence,
   SilenceCreatePayload,
 } from 'app/plugins/datasource/alertmanager/types';
@@ -19,6 +20,7 @@ import {
   expireSilence,
   fetchAlertManagerConfig,
   fetchAlerts,
+  fetchAlertGroups,
   fetchSilences,
   createOrUpdateSilence,
   updateAlertManagerConfig,
@@ -35,19 +37,18 @@ import {
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
-import { withAppEvents, withSerializedError } from '../utils/redux';
+import { isFetchError, withAppEvents, withSerializedError } from '../utils/redux';
 import { formValuesToRulerAlertingRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
 import {
-  getRuleIdentifier,
-  hashRulerRule,
+  isCloudRuleIdentifier,
   isGrafanaRuleIdentifier,
   isGrafanaRulerRule,
+  isPrometheusRuleIdentifier,
   isRulerNotSupportedResponse,
-  ruleWithLocationToRuleIdentifier,
-  stringifyRuleIdentifier,
 } from '../utils/rules';
 import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
 import { backendSrv } from 'app/core/services/backend_srv';
+import * as ruleId from '../utils/rule-id';
 import { isEmpty } from 'lodash';
 
 export const fetchPromRulesAction = createAsyncThunk(
@@ -122,7 +123,7 @@ export function fetchAllPromRulesAction(force = false): ThunkResult<void> {
   };
 }
 
-async function findExistingRule(ruleIdentifier: RuleIdentifier): Promise<RuleWithLocation | null> {
+async function findEditableRule(ruleIdentifier: RuleIdentifier): Promise<RuleWithLocation | null> {
   if (isGrafanaRuleIdentifier(ruleIdentifier)) {
     const namespaces = await fetchRulerRules(GRAFANA_RULES_SOURCE_NAME);
     // find namespace and group that contains the uid for the rule
@@ -141,28 +142,44 @@ async function findExistingRule(ruleIdentifier: RuleIdentifier): Promise<RuleWit
         }
       }
     }
-  } else {
-    const { ruleSourceName, namespace, groupName, ruleHash } = ruleIdentifier;
-    const group = await fetchRulerRulesGroup(ruleSourceName, namespace, groupName);
-    if (group) {
-      const rule = group.rules.find((rule) => hashRulerRule(rule) === ruleHash);
-      if (rule) {
-        return {
-          group,
-          ruleSourceName,
-          namespace,
-          rule,
-        };
-      }
-    }
   }
+
+  if (isCloudRuleIdentifier(ruleIdentifier)) {
+    const { ruleSourceName, namespace, groupName } = ruleIdentifier;
+    const group = await fetchRulerRulesGroup(ruleSourceName, namespace, groupName);
+
+    if (!group) {
+      return null;
+    }
+
+    const rule = group.rules.find((rule) => {
+      const identifier = ruleId.fromRulerRule(ruleSourceName, namespace, group.name, rule);
+      return ruleId.equal(identifier, ruleIdentifier);
+    });
+
+    if (!rule) {
+      return null;
+    }
+
+    return {
+      group,
+      ruleSourceName,
+      namespace,
+      rule,
+    };
+  }
+
+  if (isPrometheusRuleIdentifier(ruleIdentifier)) {
+    throw new Error('Native prometheus rules can not be edited in grafana.');
+  }
+
   return null;
 }
 
-export const fetchExistingRuleAction = createAsyncThunk(
-  'unifiedalerting/fetchExistingRule',
+export const fetchEditableRuleAction = createAsyncThunk(
+  'unifiedalerting/fetchEditableRule',
   (ruleIdentifier: RuleIdentifier): Promise<RuleWithLocation | null> =>
-    withSerializedError(findExistingRule(ruleIdentifier))
+    withSerializedError(findEditableRule(ruleIdentifier))
 );
 
 async function deleteRule(ruleWithLocation: RuleWithLocation): Promise<void> {
@@ -185,7 +202,10 @@ async function deleteRule(ruleWithLocation: RuleWithLocation): Promise<void> {
   });
 }
 
-export function deleteRuleAction(ruleIdentifier: RuleIdentifier): ThunkResult<void> {
+export function deleteRuleAction(
+  ruleIdentifier: RuleIdentifier,
+  options: { navigateTo?: string } = {}
+): ThunkResult<void> {
   /*
    * fetch the rules group from backend, delete group if it is found and+
    * reload ruler rules
@@ -193,7 +213,7 @@ export function deleteRuleAction(ruleIdentifier: RuleIdentifier): ThunkResult<vo
   return async (dispatch) => {
     withAppEvents(
       (async () => {
-        const ruleWithLocation = await findExistingRule(ruleIdentifier);
+        const ruleWithLocation = await findEditableRule(ruleIdentifier);
         if (!ruleWithLocation) {
           throw new Error('Rule not found.');
         }
@@ -201,6 +221,10 @@ export function deleteRuleAction(ruleIdentifier: RuleIdentifier): ThunkResult<vo
         // refetch rules for this rules source
         dispatch(fetchRulerRulesAction(ruleWithLocation.ruleSourceName));
         dispatch(fetchPromRulesAction(ruleWithLocation.ruleSourceName));
+
+        if (options.navigateTo) {
+          locationService.replace(options.navigateTo);
+        }
       })(),
       {
         successMessage: 'Rule deleted.',
@@ -216,7 +240,7 @@ async function saveLotexRule(values: RuleFormValues, existing?: RuleWithLocation
     // if we're updating a rule...
     if (existing) {
       // refetch it so we always have the latest greatest
-      const freshExisting = await findExistingRule(ruleWithLocationToRuleIdentifier(existing));
+      const freshExisting = await findEditableRule(ruleId.fromRuleWithLocation(existing));
       if (!freshExisting) {
         throw new Error('Rule not found.');
       }
@@ -232,7 +256,7 @@ async function saveLotexRule(values: RuleFormValues, existing?: RuleWithLocation
           ),
         };
         await setRulerRuleGroup(dataSourceName, namespace, payload);
-        return getRuleIdentifier(dataSourceName, namespace, group, formRule);
+        return ruleId.fromRulerRule(dataSourceName, namespace, group, formRule);
       }
     }
 
@@ -251,7 +275,7 @@ async function saveLotexRule(values: RuleFormValues, existing?: RuleWithLocation
         };
 
     await setRulerRuleGroup(dataSourceName, namespace, payload);
-    return getRuleIdentifier(dataSourceName, namespace, group, formRule);
+    return ruleId.fromRulerRule(dataSourceName, namespace, group, formRule);
   } else {
     throw new Error('Data source and location must be specified');
   }
@@ -264,7 +288,7 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
     // updating an existing rule...
     if (existing) {
       // refetch it to be sure we have the latest
-      const freshExisting = await findExistingRule(ruleWithLocationToRuleIdentifier(existing));
+      const freshExisting = await findEditableRule(ruleId.fromRuleWithLocation(existing));
       if (!freshExisting) {
         throw new Error('Rule not found.');
       }
@@ -345,7 +369,7 @@ export const saveRuleFormAction = createAsyncThunk(
             locationService.push(redirectOnSave);
           } else {
             // redirect to edit page
-            const newLocation = `/alerting/${encodeURIComponent(stringifyRuleIdentifier(identifier))}/edit`;
+            const newLocation = `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`;
             if (locationService.getLocation().pathname !== newLocation) {
               locationService.replace(newLocation);
             }
@@ -512,3 +536,36 @@ export const fetchFolderIfNotFetchedAction = (uid: string): ThunkResult<void> =>
     }
   };
 };
+
+export const fetchAlertGroupsAction = createAsyncThunk(
+  'unifiedalerting/fetchAlertGroups',
+  (alertManagerSourceName: string): Promise<AlertmanagerGroup[]> => {
+    return withSerializedError(fetchAlertGroups(alertManagerSourceName));
+  }
+);
+
+export const checkIfLotexSupportsEditingRulesAction = createAsyncThunk(
+  'unifiedalerting/checkIfLotexRuleEditingSupported',
+  async (rulesSourceName: string): Promise<boolean> =>
+    withAppEvents(
+      (async () => {
+        try {
+          await fetchRulerRulesGroup(rulesSourceName, 'test', 'test');
+          return true;
+        } catch (e) {
+          if (
+            (isFetchError(e) &&
+              (e.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage
+                e.data.message?.includes('page not found'))) || // ruler api disabled
+            e.message?.includes('404 from rules config endpoint') // ruler api disabled
+          ) {
+            return false;
+          }
+          throw e;
+        }
+      })(),
+      {
+        errorMessage: `Failed to determine if "${rulesSourceName}" allows editing rules`,
+      }
+    )
+);

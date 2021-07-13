@@ -3,7 +3,7 @@ import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
 import {
   fetchAlertManagerConfigAction,
   fetchAmAlertsAction,
-  fetchExistingRuleAction,
+  fetchEditableRuleAction,
   fetchGrafanaNotifiersAction,
   fetchPromRulesAction,
   fetchRulerRulesAction,
@@ -12,6 +12,8 @@ import {
   updateAlertManagerConfigAction,
   createOrUpdateSilenceAction,
   fetchFolderAction,
+  fetchAlertGroupsAction,
+  checkIfLotexSupportsEditingRulesAction,
 } from './actions';
 
 export const reducer = combineReducers({
@@ -26,7 +28,7 @@ export const reducer = combineReducers({
     .reducer,
   ruleForm: combineReducers({
     saveRule: createAsyncSlice('saveRule', saveRuleFormAction).reducer,
-    existingRule: createAsyncSlice('existingRule', fetchExistingRuleAction).reducer,
+    existingRule: createAsyncSlice('existingRule', fetchEditableRuleAction).reducer,
   }),
   grafanaNotifiers: createAsyncSlice('grafanaNotifiers', fetchGrafanaNotifiersAction).reducer,
   saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,
@@ -34,6 +36,16 @@ export const reducer = combineReducers({
   amAlerts: createAsyncMapSlice('amAlerts', fetchAmAlertsAction, (alertManagerSourceName) => alertManagerSourceName)
     .reducer,
   folders: createAsyncMapSlice('folders', fetchFolderAction, (uid) => uid).reducer,
+  amAlertGroups: createAsyncMapSlice(
+    'amAlertGroups',
+    fetchAlertGroupsAction,
+    (alertManagerSourceName) => alertManagerSourceName
+  ).reducer,
+  lotexSupportsRuleEditing: createAsyncMapSlice(
+    'lotexSupportsRuleEditing',
+    checkIfLotexSupportsEditingRulesAction,
+    (source) => source
+  ).reducer,
 });
 
 export type UnifiedAlertingState = ReturnType<typeof reducer>;

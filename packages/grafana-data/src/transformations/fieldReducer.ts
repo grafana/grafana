@@ -18,15 +18,13 @@ export enum ReducerID {
   diffperc = 'diffperc',
   delta = 'delta',
   step = 'step',
-
   firstNotNull = 'firstNotNull',
   lastNotNull = 'lastNotNull',
-
   changeCount = 'changeCount',
   distinctCount = 'distinctCount',
-
   allIsZero = 'allIsZero',
   allIsNull = 'allIsNull',
+  allValues = 'allValues',
 }
 
 // Internal function
@@ -129,7 +127,7 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
 export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   {
     id: ReducerID.lastNotNull,
-    name: 'Last (not null)',
+    name: 'Last *',
     description: 'Last non-null value',
     standard: true,
     aliasIds: ['current'],
@@ -138,14 +136,14 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   {
     id: ReducerID.last,
     name: 'Last',
-    description: 'Last Value',
+    description: 'Last value',
     standard: true,
     reduce: calculateLast,
   },
   { id: ReducerID.first, name: 'First', description: 'First Value', standard: true, reduce: calculateFirst },
   {
     id: ReducerID.firstNotNull,
-    name: 'First (not null)',
+    name: 'First',
     description: 'First non-null value',
     standard: true,
     reduce: calculateFirstNotNull,
@@ -231,6 +229,13 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: 'Difference percent',
     description: 'Percentage difference between first and last values',
     standard: true,
+  },
+  {
+    id: ReducerID.allValues,
+    name: 'All values',
+    description: 'Returns an array with all values',
+    standard: false,
+    reduce: (field: Field) => ({ allValues: field.values.toArray() }),
   },
 ]);
 

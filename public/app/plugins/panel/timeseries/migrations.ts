@@ -45,6 +45,7 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
       fieldConfig: prevFieldConfig,
     });
     panel.fieldConfig = fieldConfig; // Mutates the incoming panel
+    panel.alert = prevOptions.angular.alert;
     return options;
   }
 
@@ -112,9 +113,10 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
       if (!seriesOverride.alias) {
         continue; // the matcher config
       }
+      const aliasIsRegex = seriesOverride.alias.startsWith('/') && seriesOverride.alias.endsWith('/');
       const rule: ConfigOverrideRule = {
         matcher: {
-          id: FieldMatcherID.byName,
+          id: aliasIsRegex ? FieldMatcherID.byRegexp : FieldMatcherID.byName,
           options: seriesOverride.alias,
         },
         properties: [],

@@ -64,6 +64,9 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Res
 }
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response.Response {
+	if !c.HasUserRole(models.ROLE_EDITOR) {
+		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
+	}
 	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{}
 	if err := srv.store.GetLatestAlertmanagerConfiguration(&query); err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
@@ -149,6 +152,9 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Respo
 	if err != nil {
 		if errors.Is(err, notifier.ErrGetAlertsBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
+		}
+		if errors.Is(err, notifier.ErrGetAlertsUnavailable) {
+			return ErrResp(http.StatusServiceUnavailable, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error
 		return ErrResp(http.StatusInternalServerError, err, "")

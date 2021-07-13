@@ -117,6 +117,10 @@ type AlertExecCtx struct {
 func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (*expr.Request, error) {
 	req := &expr.Request{
 		OrgId: ctx.OrgID,
+		Headers: map[string]string{
+			// Some data sources check this in query method as sometimes alerting needs special considerations.
+			"FromAlert": "true",
+		},
 	}
 
 	for i := range data {
@@ -166,7 +170,7 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, data
 		return ExecutionResults{Error: err}
 	}
 
-	// eval captures for the '__value__' label.
+	// eval captures for the '__value_string__' annotation and the Value property of the API response.
 	captures := make([]NumberValueCapture, 0, len(execResp.Responses))
 
 	captureVal := func(refID string, labels data.Labels, value *float64) {
