@@ -24,7 +24,7 @@ export function interceptLinkClicks(e: MouseEvent) {
       // That is they where seen as being absolute from app root
       if (href[0] !== '/') {
         // if still contains protocol it's an absolute link to another domain or web application
-        if (href.indexOf('://')) {
+        if (href.indexOf('://') > 0) {
           window.location.href = href;
           return;
         } else {
