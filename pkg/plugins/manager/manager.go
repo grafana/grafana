@@ -66,13 +66,22 @@ type PluginManager struct {
 	grafanaHasUpdate              bool
 	pluginScanningErrors          map[string]plugins.PluginError
 
-	renderer     *plugins.RendererPlugin
-	dataSources  map[string]*plugins.DataSourcePlugin
-	plugins      map[string]*plugins.PluginBase
-	panels       map[string]*plugins.PanelPlugin
-	apps         map[string]*plugins.AppPlugin
-	staticRoutes []*plugins.PluginStaticRoute
-	pluginsMu    sync.RWMutex
+	renderer      *plugins.RendererPlugin
+	dataSources   map[string]*plugins.DataSourcePlugin
+	plugins       map[string]*plugins.PluginBase
+	panels        map[string]*plugins.PanelPlugin
+	apps          map[string]*plugins.AppPlugin
+	dashboardUIDs map[dashboardSlugKey]string
+	staticRoutes  []*plugins.PluginStaticRoute
+	pluginsMu     sync.RWMutex
+}
+
+// dashboardSlugKey is a compound look-up key for dashboard UIDs, since they
+// might be different for the same dashboard slug in different organisations
+// (i.e. when generated randomly).
+type dashboardSlugKey struct {
+	orgID int64
+	slug  string
 }
 
 func init() {
@@ -85,11 +94,12 @@ func init() {
 
 func newManager(cfg *setting.Cfg) *PluginManager {
 	return &PluginManager{
-		Cfg:         cfg,
-		dataSources: map[string]*plugins.DataSourcePlugin{},
-		plugins:     map[string]*plugins.PluginBase{},
-		panels:      map[string]*plugins.PanelPlugin{},
-		apps:        map[string]*plugins.AppPlugin{},
+		Cfg:           cfg,
+		dataSources:   map[string]*plugins.DataSourcePlugin{},
+		plugins:       map[string]*plugins.PluginBase{},
+		panels:        map[string]*plugins.PanelPlugin{},
+		apps:          map[string]*plugins.AppPlugin{},
+		dashboardUIDs: map[dashboardSlugKey]string{},
 	}
 }
 
@@ -843,4 +853,21 @@ func (pm *PluginManager) removeStaticRoute(pluginID string) {
 			return
 		}
 	}
+}
+
+func (pm *PluginManager) CacheDashboardUIDBySlug(orgID int64, slug string, uid string) {
+	pm.pluginsMu.Lock()
+	defer pm.pluginsMu.Unlock()
+	key := dashboardSlugKey{orgID, slug}
+	if uid != "" {
+		pm.dashboardUIDs[key] = uid
+	} else {
+		delete(pm.dashboardUIDs, key)
+	}
+}
+
+func (pm *PluginManager) GetDashboardUIDBySlug(orgID int64, slug string) string {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+	return pm.dashboardUIDs[dashboardSlugKey{orgID, slug}]
 }

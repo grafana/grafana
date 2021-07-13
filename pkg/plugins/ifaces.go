@@ -44,6 +44,10 @@ type Manager interface {
 	GetPluginDashboards(orgID int64, pluginID string) ([]*PluginDashboardInfoDTO, error)
 	// GetPluginMarkdown gets markdown for a certain plugin/name.
 	GetPluginMarkdown(pluginID string, name string) ([]byte, error)
+	// CacheDashboardUIDBySlug is used to map plugin dashboard slugs into UIDs without making additional database queries.
+	CacheDashboardUIDBySlug(orgID int64, slug string, uid string)
+	// GetDashboardUIDBySlug returns a plugin dashboard UID by dashboard slug.
+	GetDashboardUIDBySlug(orgID int64, slug string) string
 	// ImportDashboard imports a dashboard.
 	ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
 		overwrite bool, inputs []ImportDashboardInput, user *models.SignedInUser,

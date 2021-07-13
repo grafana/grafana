@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -84,8 +83,6 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			SortWeight: dtos.WeightPlugin,
 		}
 
-		var dashboards []*plugins.PluginDashboardInfoDTO
-
 		for _, include := range plugin.Includes {
 			if !c.HasUserRole(include.Role) {
 				continue
@@ -112,23 +109,14 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			}
 
 			if include.Type == "dashboard" && include.AddToNav {
-				if dashboards == nil {
-					if dashboards, err = hs.PluginManager.GetPluginDashboards(c.OrgId, plugin.Id); err != nil {
-						return nil, err
-					}
+				link := &dtos.NavLink{
+					Url:  hs.Cfg.AppSubURL + "/d/" + hs.PluginManager.GetDashboardUIDBySlug(c.OrgId, include.Slug),
+					Text: include.Name,
 				}
-				for _, dashboard := range dashboards {
-					if dashboard.ImportedUri == "db/"+include.Slug {
-						link := &dtos.NavLink{
-							Url:  hs.Cfg.AppSubURL + dashboard.ImportedUrl,
-							Text: include.Name,
-						}
-						if include.DefaultNav {
-							appLink.Url = link.Url
-						}
-						appLink.Children = append(appLink.Children, link)
-					}
+				if include.DefaultNav {
+					appLink.Url = link.Url
 				}
+				appLink.Children = append(appLink.Children, link)
 			}
 		}
 
