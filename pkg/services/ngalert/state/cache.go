@@ -123,7 +123,7 @@ func expandTemplate(name, text string, data map[string]string) (result string, r
 		}
 	}()
 
-	tmpl, err := text_template.New(name).Option("missingkey=zero").Parse(text)
+	tmpl, err := text_template.New(name).Option("missingkey=error").Parse(text)
 	if err != nil {
 		return "", fmt.Errorf("error parsing template %v: %s", name, err.Error())
 	}
