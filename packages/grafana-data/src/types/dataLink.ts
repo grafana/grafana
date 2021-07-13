@@ -58,7 +58,7 @@ export interface LinkModel<T = any> {
   origin: T;
 
   // When a click callback exists, this is passed the raw mouse|react event
-  onClick?: (e: any) => void;
+  onClick?: (e: any, origin?: any) => void;
 }
 
 /**
