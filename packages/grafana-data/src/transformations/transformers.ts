@@ -18,7 +18,6 @@ import { mergeTransformer } from './transformers/merge';
 import { renameByRegexTransformer } from './transformers/renameByRegex';
 import { filterByValueTransformer } from './transformers/filterByValue';
 import { histogramTransformer } from './transformers/histogram';
-import { stretchFramesTransformer } from './transformers/stretch';
 
 export const standardTransformers = {
   noopTransformer,
@@ -42,5 +41,4 @@ export const standardTransformers = {
   mergeTransformer,
   renameByRegexTransformer,
   histogramTransformer,
-  stretchFramesTransformer,
 };
