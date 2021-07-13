@@ -13,7 +13,7 @@ export const SearchField = ({ value, onSearch }: Props) => {
   const [query, setQuery] = useState(value);
   const styles = useStyles2(getStyles);
 
-  useDebounce(() => onSearch(query ?? ''), 600, [query]);
+  useDebounce(() => onSearch(query ?? ''), 500, [query]);
 
   return (
     <input
