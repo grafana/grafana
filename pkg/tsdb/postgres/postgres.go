@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
@@ -25,6 +26,12 @@ func init() {
 		Instance:     &PostgresService{},
 	})
 }
+
+const (
+	dateFormat      = "2006-01-02"
+	dateTimeFormat1 = "2006-01-02 15:04:05"
+	dateTimeFormat2 = "2006-01-02T15:04:05Z"
+)
 
 type PostgresService struct {
 	Cfg        *setting.Cfg `inject:""`
@@ -200,5 +207,40 @@ func (t *postgresQueryResultTransformer) GetConverterList() []sqlutil.StringConv
 				},
 			},
 		},
+		{
+			Name:           "handle TIMESTAMPTZ",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "TIMESTAMPTZ",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeString,
+				ReplaceFunc: parseTimestamp,
+			},
+		},
+		{
+			Name:           "handle TIMESTAMP",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "TIMESTAMP",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeString,
+				ReplaceFunc: parseTimestamp,
+			},
+		},
 	}
+}
+
+func parseTimestamp(in *string) (interface{}, error) {
+	if in == nil {
+		return nil, nil
+	}
+	v, err := time.Parse(dateTimeFormat1, *in)
+	if err == nil {
+		return v.Format(time.RFC3339), nil
+	}
+	v, err = time.Parse(dateTimeFormat2, *in)
+	if err == nil {
+		return v.Format(time.RFC3339), nil
+	}
+	return nil, err
 }
