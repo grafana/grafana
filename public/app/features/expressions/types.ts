@@ -6,6 +6,7 @@ export enum ExpressionQueryType {
   reduce = 'reduce',
   resample = 'resample',
   classic = 'classic_conditions',
+  selectMetric = 'select_metric',
 }
 
 export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
@@ -13,6 +14,7 @@ export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
   { value: ExpressionQueryType.reduce, label: 'Reduce' },
   { value: ExpressionQueryType.resample, label: 'Resample' },
   { value: ExpressionQueryType.classic, label: 'Classic condition' },
+  { value: ExpressionQueryType.selectMetric, label: 'Select Metric' },
 ];
 
 export const reducerTypes: Array<SelectableValue<string>> = [
@@ -47,6 +49,7 @@ export interface ExpressionQuery extends DataQuery {
   window?: string;
   downsampler?: string;
   upsampler?: string;
+  metricName?: string;
   conditions?: ClassicCondition[];
 }
 export interface ClassicCondition {

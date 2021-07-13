@@ -785,7 +785,7 @@ func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) ([]*dat
 		frame.Fields = fields
 		frame.Fields[1].Labels = parseLabelsString(subQ.Labels)
 		if subQ.Name != "" {
-			frame.Name = subQ.Name
+			frame.Fields[1].Name = subQ.Name
 		}
 		frames = append(frames, frame)
 	}

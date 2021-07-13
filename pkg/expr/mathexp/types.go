@@ -116,6 +116,10 @@ func NewNumber(name string, labels data.Labels) Number {
 	}
 }
 
+func (n Number) GetName() string {
+	return n.Frame.Fields[0].Name
+}
+
 func (n Number) GetMeta() interface{} {
 	return n.Frame.Meta.Custom
 }

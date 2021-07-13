@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
@@ -226,6 +227,68 @@ func (gr *ResampleCommand) Execute(ctx context.Context, vars mathexp.Vars) (math
 	return newRes, nil
 }
 
+// Select MetricCommand is an expresion for selecting a specific metric name from a response.
+// All labeled items matching the metric name are returned, so this for queries that not only return multiple
+// items that are differentiated not only by label name but also by metric name.
+type SelectMetricCommand struct {
+	InputVar   string
+	MetricName string
+	refID      string
+}
+
+// UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
+func UnmarshalSelectMetricCommand(rn *rawNode) (*SelectMetricCommand, error) {
+	smc := &SelectMetricCommand{
+		refID: rn.RefID,
+	}
+	rawInput, ok := rn.Query["expression"]
+	if !ok {
+		return nil, fmt.Errorf("no variable to select metric for refId %v", rn.RefID)
+	}
+	inputVar, ok := rawInput.(string)
+	if !ok {
+		return nil, fmt.Errorf("expected select metric input variable to be type string, but got type %T for refId %v", inputVar, rn.RefID)
+	}
+	smc.InputVar = strings.TrimPrefix(inputVar, "$")
+
+	rawMetricName, ok := rn.Query["metricName"]
+	if !ok {
+		return nil, fmt.Errorf("no metric name specificed for select metric in refId %v", rn.RefID)
+	}
+	smc.MetricName, ok = rawMetricName.(string)
+	if !ok {
+		return nil, fmt.Errorf("expected metric name in select metric to be a string, but got %T for refId %v", rawMetricName, rn.RefID)
+	}
+	return smc, nil
+}
+
+// Execute runs the command and returns the results or an error if the command
+// failed to execute.
+func (s *SelectMetricCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+	newRes := mathexp.Results{}
+	inputData := vars[s.InputVar]
+	for _, val := range inputData.Values {
+		switch v := val.(type) {
+		case mathexp.Series:
+			spew.Dump(v.GetName())
+			if v.GetName() == s.MetricName {
+				newRes.Values = append(newRes.Values, v)
+			}
+		case mathexp.Number:
+			if v.GetName() == s.MetricName {
+				newRes.Values = append(newRes.Values, v)
+			}
+		}
+	}
+	return newRes, nil
+}
+
+// NeedsVars returns the variable names (refIds) that are dependencies
+// to execute the command and allows the command to fulfill the Command interface.
+func (s *SelectMetricCommand) NeedsVars() []string {
+	return []string{s.InputVar}
+}
+
 // CommandType is the type of the expression command.
 type CommandType int
 
@@ -240,6 +303,8 @@ const (
 	TypeResample
 	// TypeClassicConditions is the CMDType for the classic condition operation.
 	TypeClassicConditions
+	// TypeSelectMetric is the CMDType for the select metric operation.
+	TypeSelectMetric
 )
 
 func (gt CommandType) String() string {
@@ -252,6 +317,8 @@ func (gt CommandType) String() string {
 		return "resample"
 	case TypeClassicConditions:
 		return "classic_conditions"
+	case TypeSelectMetric:
+		return "select_metric"
 	default:
 		return "unknown"
 	}
@@ -268,6 +335,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeResample, nil
 	case "classic_conditions":
 		return TypeClassicConditions, nil
+	case "select_metric":
+		return TypeSelectMetric, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}
