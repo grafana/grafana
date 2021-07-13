@@ -13,8 +13,9 @@ export const Grid = ({ children }: Props) => {
     <div
       className={css`
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
-        grid-gap: ${theme.spacing.gridSize}px;
+        grid-auto-rows: minmax(200px, 1fr);
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        grid-gap: ${theme.spacing(3)};
       `}
     >
       {children}
