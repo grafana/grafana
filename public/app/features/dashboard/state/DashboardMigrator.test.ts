@@ -1382,6 +1382,44 @@ describe('DashboardModel', () => {
       `);
     });
   });
+
+  describe('when migrating folded panel without fieldConfig.defaults', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        schemaVersion: 29,
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            panels: [
+              {
+                id: 2,
+                fieldConfig: {
+                  overrides: [
+                    {
+                      matcher: { id: 'byName', options: 'D-series' },
+                      properties: [
+                        {
+                          id: 'displayName',
+                          value: 'foobar',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('should ignore fieldConfig.defaults', () => {
+      expect(model.panels[0].panels[0].fieldConfig.defaults).toEqual(undefined);
+    });
+  });
 });
 
 function createRow(options: any, panelDescriptions: any[]) {
