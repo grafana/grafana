@@ -40,7 +40,7 @@ export function stretchFrames(data: DataFrame[]): DataFrame[] {
 
 export const stretchFramesTransformer: DataTransformerInfo<StretchFramesTransformerOptions> = {
   id: 'stretchFrames',
-  name: 'Stretch',
+  name: 'Stretch Frames',
   description: 'Stretch a set of data frames from wide to long',
   defaultOptions: {},
 

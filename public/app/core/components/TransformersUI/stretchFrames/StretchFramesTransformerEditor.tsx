@@ -10,6 +10,6 @@ export const stretchFrameTransformerRegistryItem: TransformerRegistryItem<Stretc
   id: stretchFramesTransformer.id,
   editor: StretchTransformerEditor,
   transformation: stretchFramesTransformer,
-  name: 'Stretch frames',
+  name: stretchFramesTransformer.name,
   description: `Will stretch data frames from the wide format into the long format. This is really helpful to be able to keep backwards compatability for panels not supporting the new wide format.`,
 };

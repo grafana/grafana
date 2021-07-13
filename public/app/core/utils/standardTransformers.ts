@@ -38,5 +38,6 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     stretchFrameTransformerRegistryItem,
     rowsToFieldsTransformRegistryItem,
     configFromQueryTransformRegistryItem,
+    stretchFrameTransformerRegistryItem,
   ];
 };
