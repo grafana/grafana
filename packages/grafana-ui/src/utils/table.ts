@@ -14,20 +14,13 @@ export const getCellLinks = (field: Field, row: Row<any>) => {
     })[0];
   }
 
-  // Handle explicit `onClick` callbacks
-  if (link && link.onClick) {
+  //const fieldLink = link?.onClick;
+  if (link?.onClick) {
     onClick = (event) => {
       // Allow opening in new tab
-      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
+      if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
         event.preventDefault();
-        link!.onClick({
-          origin: {
-            field,
-            row: row.index,
-          },
-          e: event,
-          replaceVariables: (v) => v,
-        });
+        link!.onClick!(event); // TODO -- get the row index in there somehow
       }
     };
   }
