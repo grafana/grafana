@@ -20,6 +20,7 @@ import {
   DrawStyle,
   GraphFieldConfig,
   GraphTresholdsStyleMode,
+  OHLCStyle,
   PointVisibility,
   ScaleDirection,
   ScaleOrientation,
@@ -31,6 +32,7 @@ const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 const defaultConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,
+  ohlcStyle: OHLCStyle.Candles,
   showPoints: PointVisibility.Auto,
   axisPlacement: AxisPlacement.Auto,
 };
@@ -116,9 +118,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   }
 
   if (compositeRenderers.size > 0) {
+    let ohlcStyle = frame.fields[0].config.custom.ohlcStyle ?? OHLCStyle.Candles;
+
     // drawAxes fires after the grid is drawn but before any other series are rendered
     builder.addHook('drawAxes', (u) => {
-      compositeRenderers.forEach((r) => r(u, frame));
+      compositeRenderers.forEach((r) => r(u, frame, ohlcStyle === OHLCStyle.Candles));
     });
   }
 

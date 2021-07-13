@@ -3,7 +3,7 @@ import { DataFrame } from '@grafana/data';
 import { CandlestickFieldID } from './types';
 
 // candlestick & volume renderer
-export function renderOHLCV(u: uPlot, frame: DataFrame) {
+export function renderOHLCV(u: uPlot, frame: DataFrame, candles = true) {
   let tIdx = 0,
     oIdx: number | null = null,
     hIdx: number | null = null,
@@ -44,10 +44,13 @@ export function renderOHLCV(u: uPlot, frame: DataFrame) {
 
   let zeroPx = vIdx != null ? Math.round(u.valToPos(0, u.series[vIdx!].scale!, true)) : null;
 
-  let barWidth = 10;
+  let [idx0, idx1] = u.series[0].idxs!;
+
+  let colWidth = u.bbox.width / (idx1 - idx0);
+  let barWidth = Math.round(0.6 * colWidth);
   let stickWidth = 2;
 
-  for (let i = u.series[0].idxs![0]; i <= u.series[0].idxs![1]; i++) {
+  for (let i = idx0; i <= idx1; i++) {
     let tPx = Math.round(u.valToPos(tData[i]!, 'x', true));
 
     // volume
@@ -63,13 +66,20 @@ export function renderOHLCV(u: uPlot, frame: DataFrame) {
     ctx.fillStyle = cData[i]! < oData[i]! ? '#F2495C' : '#73BF69';
     ctx.fillRect(tPx - stickWidth / 2, hPx, stickWidth, lPx - hPx);
 
-    // rect
     let oPx = Math.round(u.valToPos(oData[i]!, u.series[oIdx!].scale!, true));
     let cPx = Math.round(u.valToPos(cData[i]!, u.series[cIdx!].scale!, true));
-    let top = Math.min(oPx, cPx);
-    let btm = Math.max(oPx, cPx);
-    let hgt = btm - top;
     ctx.fillStyle = cData[i]! < oData[i]! ? '#F2495C' : '#73BF69';
-    ctx.fillRect(tPx - barWidth / 2, top, barWidth, hgt);
+
+    if (candles) {
+      // rect
+      let top = Math.min(oPx, cPx);
+      let btm = Math.max(oPx, cPx);
+      let hgt = btm - top;
+      ctx.fillRect(tPx - barWidth / 2, top, barWidth, hgt);
+    } else {
+      ctx.fillRect(tPx - barWidth / 2, oPx, barWidth / 2, stickWidth);
+      // prettier-ignore
+      ctx.fillRect(tPx,                cPx, barWidth / 2, stickWidth);
+    }
   }
 }
