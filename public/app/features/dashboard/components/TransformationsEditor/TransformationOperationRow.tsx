@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { DataFrame, DataTransformerConfig, TransformerRegistryItem } from '@grafana/data';
 import { HorizontalGroup } from '@grafana/ui';
 
@@ -34,6 +34,18 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
 }) => {
   const [showDebug, toggleDebug] = useToggle(false);
   const [showHelp, toggleHelp] = useToggle(false);
+  const disabled = configs[index].transformation.disabled;
+
+  const onDisableToggle = useCallback(
+    (index: number) => {
+      const current = configs[index].transformation;
+      onChange(index, {
+        ...current,
+        disabled: current.disabled ? undefined : true,
+      });
+    },
+    [onChange, configs]
+  );
 
   const renderActions = ({ isOpen }: QueryOperationRowRenderProps) => {
     return (
@@ -46,13 +58,26 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
           active={showHelp}
         />
         <QueryOperationAction title="Debug" disabled={!isOpen} icon="bug" onClick={toggleDebug} active={showDebug} />
+        <QueryOperationAction
+          title="Disable/Enable transformation"
+          icon={disabled ? 'eye-slash' : 'eye'}
+          onClick={() => onDisableToggle(index)}
+          active={disabled}
+        />
         <QueryOperationAction title="Remove" icon="trash-alt" onClick={() => onRemove(index)} />
       </HorizontalGroup>
     );
   };
 
   return (
-    <QueryOperationRow id={id} index={index} title={uiConfig.name} draggable actions={renderActions}>
+    <QueryOperationRow
+      id={id}
+      index={index}
+      title={uiConfig.name}
+      draggable
+      actions={renderActions}
+      disabled={disabled}
+    >
       {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
       <TransformationEditor
         debugMode={showDebug}
@@ -72,8 +97,8 @@ function prepMarkdown(uiConfig: TransformerRegistryItem<any>) {
   return `
 ${helpMarkdown}
 
-<a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
-Read more on the documentation site
-</a>
+Go the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
+transformation documentation
+</a> for more.
 `;
 }
