@@ -2,6 +2,7 @@ import React from 'react';
 import { toDataFrame, FieldType } from '@grafana/data';
 import { fireEvent, render, screen, getByText, getByLabelText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
 import { Props, FieldToConfigMappingEditor } from './FieldToConfigMappingEditor';
 
 beforeEach(() => {
@@ -45,7 +46,7 @@ describe('FieldToConfigMappingEditor', () => {
 
     const select = (await screen.findByTestId('Miiin-config-key')).childNodes[0];
     await fireEvent.keyDown(select, { keyCode: 40 });
-    await userEvent.click(getByText(select as HTMLElement, 'Min'));
+    await selectEvent.select(select as HTMLElement, 'Min', { container: document.body });
 
     expect(mockOnChange).toHaveBeenCalledWith(expect.arrayContaining([{ fieldName: 'Miiin', handlerKey: 'min' }]));
   });
@@ -80,7 +81,7 @@ describe('FieldToConfigMappingEditor', () => {
     const reducer = await (await screen.findByTestId('max-reducer')).childNodes[0];
 
     await fireEvent.keyDown(reducer, { keyCode: 40 });
-    await userEvent.click(getByText(reducer as HTMLElement, 'Last'));
+    await selectEvent.select(reducer as HTMLElement, 'Last', { container: document.body });
 
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.arrayContaining([{ fieldName: 'max', handlerKey: 'max', reducerId: 'last' }])
