@@ -5,17 +5,17 @@ weight = 300
 
 # Config from query results transform
 
-This transformation allow you select one query and from it extract [Standard options]({{< relref "./standard-options.md" >}}) like `Min`, `Max`, `Unit` and `Thresholds` and apply it to other query results. This enables dynamic query driven visualization configuration.
+This transformation allow you select one query and from it extract [Standard options]({{< relref "./standard-options.md" >}}) like **Min**, **Max**, **Unit** and **Thresholds** and apply it to other query results. This enables dynamic query driven visualization configuration.
 
 ### Options
 
-- **Config query**: Selet the query name that returns the data you want to use as configuration.
+- **Config query**: Selet the query that returns the data you want to use as configuration.
 - **Apply to**: Select what fields or series to apply the configuration to.
 - **Apply to options**: Usually a field type or field name regex depending on what option you selected in **Apply to**.
 
 ### Field mapping table
 
-Below the configuration listed above you will find the field table. Here all fields found in the data returned by the config query will be listed along with a `Use as` and `Select` option. This table give you control over what field should be mapped to which config property and if the config data has multiple rows which value to select.
+Below the configuration listed above you will find the field table. Here all fields found in the data returned by the config query will be listed along with a **Use as** and **Select** option. This table gives you control over what field should be mapped to which config property and if there are multiple rows which value to select.
 
 ## Example
 

@@ -29,19 +29,19 @@ Output:
 | ------------------------- | ------------------------- | ------------------------- |
 | 10                        | 20                        | 30                        |
 
-As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like `Min`, `Max`, `Unit` and `Thresholds` are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
+As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like **Min**, **Max**, **Unit** and **Thresholds** are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
 
 ## Configuration
 
-To do this transformation Grafana needs to know how to use each field in the input data. The UI options for this transform shows you all fields and `Use as` option to tell Grafana how to use the field.
+To do this transformation Grafana needs to know how to use each field in the input data. The UI options for this transform shows you all fields and **Use as** option to tell Grafana how to use the field.
 
 ### The name field (required)
 
-This transformation needs one field to use as the source of field names. By default the transform will use the first string field for this. But you can override this default behavior by selecting `Field name` in the `Use as` column for the field you want to use instead.
+This transformation needs one field to use as the source of field names. By default the transform will use the first string field for this. But you can override this default behavior by selecting **Field name** in the **Use as** column for the field you want to use instead.
 
 ### The value field (required)
 
-This transformation needs one field to use as the source of values. By default the transform will use the first number field for this. But you can override this default behavior by selecting `Field value` in the `Use as` column for the field you want to use instead.
+This transformation needs one field to use as the source of values. By default the transform will use the first number field for this. But you can override this default behavior by selecting **Field value** in the **Use as** column for the field you want to use instead.
 
 ### Map extra fields to config
 
