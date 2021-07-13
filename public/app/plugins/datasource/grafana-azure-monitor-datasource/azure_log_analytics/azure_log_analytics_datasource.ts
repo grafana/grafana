@@ -137,7 +137,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
         query,
         resource,
 
-        // Workspace is here for backwards compat
+        // Workspace was removed in Grafana 8, but remains for backwards compat
         workspace,
       },
     };
