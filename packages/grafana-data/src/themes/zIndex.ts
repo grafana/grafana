@@ -7,9 +7,8 @@ export const zIndex = {
   typeahead: 1030,
   tooltip: 1040,
   modalBackdrop: 1050,
-  portal: 1051,
   modal: 1060,
-  selectPortal: 1061,
+  portal: 1061,
 };
 
 /** @beta */
