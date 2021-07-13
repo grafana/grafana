@@ -69,6 +69,7 @@ export interface OptionsUIRegistryBuilderAPI<
    */
   addCustomEditor<TSettings, TValue>(config: OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue>): this;
 
+  remove(id: string): this;
   /**
    * Returns registry of option editors
    */
@@ -82,8 +83,18 @@ export abstract class OptionsUIRegistryBuilder<
 > implements OptionsUIRegistryBuilderAPI<TOptions, TEditorProps, T> {
   private properties: T[] = [];
 
+  constructor() {}
   addCustomEditor<TSettings, TValue>(config: T & OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue>): this {
     this.properties.push(config);
+    // if (this.onInvalidate) {
+    //   console.log('invalidate')
+    //   this.onInvalidate();
+    // }
+    return this;
+  }
+
+  remove(id: string): this {
+    this.properties = this.properties.filter((p) => p.id !== id);
     return this;
   }
 

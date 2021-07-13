@@ -100,6 +100,7 @@ export class PanelPlugin<
   };
 
   private _optionEditors?: PanelOptionEditorsRegistry;
+  private _optionsBuilder?: PanelOptionsEditorBuilder<TOptions>;
   private registerOptionEditors?: (builder: PanelOptionsEditorBuilder<TOptions>) => void;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
@@ -178,16 +179,32 @@ export class PanelPlugin<
   }
 
   get optionEditors(): PanelOptionEditorsRegistry {
+    console.log(this.optionsBuilder?.getRegistry().list().length, this._optionEditors?.list().length);
     if (!this._optionEditors) {
-      const builder = new PanelOptionsEditorBuilder<TOptions>();
+      const builder = new PanelOptionsEditorBuilder<TOptions>(() => {
+        this._optionEditors = undefined;
+      });
+
       this._optionEditors = builder.getRegistry();
 
       if (this.registerOptionEditors) {
         this.registerOptionEditors(builder);
       }
+      this._optionsBuilder = builder;
+    }
+
+    if (this._optionsBuilder?.getRegistry().list().length !== this._optionEditors.list().length) {
+      this._optionEditors = this._optionsBuilder!.getRegistry();
+      // if (this.registerOptionEditors) {
+      //   this.registerOptionEditors(this._optionsBuilder!);
+      // }
     }
 
     return this._optionEditors;
+  }
+
+  get optionsBuilder(): PanelOptionsEditorBuilder<TOptions> | undefined {
+    return this._optionsBuilder;
   }
 
   /**

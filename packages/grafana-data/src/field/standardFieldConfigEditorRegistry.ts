@@ -3,6 +3,7 @@ import { ComponentType } from 'react';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { DataFrame, InterpolateFunction, VariableSuggestionsScope, VariableSuggestion } from '../types';
 import { EventBus } from '../events';
+import { PanelOptionsEditorBuilder } from '../utils';
 
 export interface StandardEditorContext<TOptions> {
   data: DataFrame[]; // All results
@@ -11,6 +12,7 @@ export interface StandardEditorContext<TOptions> {
   getSuggestions?: (scope?: VariableSuggestionsScope) => VariableSuggestion[];
   options?: TOptions;
   isOverride?: boolean;
+  builder?: PanelOptionsEditorBuilder<TOptions>;
 }
 
 export interface StandardEditorProps<TValue = any, TSettings = any, TOptions = any> {
