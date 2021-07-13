@@ -314,23 +314,23 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   let barsPctLayout = [];
   let barsBuilder = uPlot.paths.bars!({
-    layout: (seriesIdx) => barsPctLayout[seriesIdx],
+    layout: (seriesIdx) => {
+      return barsPctLayout[seriesIdx];
+    },
     each: (seriesIdx, dataIdx, lft, top, wid, hgt) => {
       qt.add({ x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx });
     },
   });
 
-  const drawPoints = (u, sidx, i0, i1) => {
+  const drawPoints = (u: uPlot, sidx: number, i0: number, i1: number) => {
     u.ctx.font = Math.round(10 * devicePixelRatio) + 'px Arial';
     u.ctx.fillStyle = 'black';
 
-    console.log('drawPoints', sidx);
     uPlot.orient(
       u,
       sidx,
       (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
         const _dir = dir * (ori === ScaleOrientation.Horizontal ? 1 : -1);
-        console.log('drawPoints orient', sidx);
         const wid = Math.round(barsPctLayout[sidx].size[0] * xDim);
 
         barsPctLayout[sidx].offs.forEach((offs, ix) => {
@@ -372,6 +372,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       // @ts-ignore
       s._paths = null;
     });
+
+    barsPctLayout = [null].concat(distrTwo(u.data[0].length, u.data.length - 1));
   };
 
   // handle hover interaction with quadtree probing

@@ -158,5 +158,5 @@ export function findMidPointYPosition(u: uPlot, idx: number) {
 /** @internal */
 export const pluginLogger = createLogger('uPlot');
 export const pluginLog = pluginLogger.logger;
-// pluginLogger.enable();
+pluginLogger.enable();
 attachDebugger('graphng', undefined, pluginLogger);
