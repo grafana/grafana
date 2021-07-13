@@ -160,9 +160,6 @@ export interface StatsPickerConfigSettings {
 }
 
 export interface FieldNamePickerConfigSettings {
-  // The expected field name
-  defaultFieldName?: string;
-
   /**
    * Optionally return true for fields that should be skipped
    */
