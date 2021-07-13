@@ -115,8 +115,9 @@ func TestChannelRuleDelete(t *testing.T) {
 		Id:    id,
 		OrgId: 1,
 	}
-	err = storage.DeleteChannelRule(deleteCmd)
+	numDeleted, err := storage.DeleteChannelRule(deleteCmd)
 	require.NoError(t, err)
+	require.Equal(t, int64(1), numDeleted)
 
 	getCmd := models.GetLiveChannelRuleCommand{
 		OrgId: 1,

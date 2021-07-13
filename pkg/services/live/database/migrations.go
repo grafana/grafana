@@ -41,5 +41,5 @@ func AddLiveChannelRuleMigrations(mg *migrator.Migrator) {
 		},
 	}
 	mg.AddMigration("create live channel rule table", migrator.NewAddTableMigration(liveChannelRule))
-	mg.AddMigration("add index live_channel_rule.org_id_channel_unique", migrator.NewAddIndexMigration(liveChannelRule, liveChannelRule.Indices[0]))
+	mg.AddMigration("add index live_channel_rule.org_id_pattern_unique", migrator.NewAddIndexMigration(liveChannelRule, liveChannelRule.Indices[0]))
 }

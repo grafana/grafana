@@ -1,0 +1,4 @@
+apiVersion: 0
+
+channelRules:
+  - pattern: $TEST_VAR
