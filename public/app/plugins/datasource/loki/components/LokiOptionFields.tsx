@@ -45,7 +45,7 @@ const STEP_OPTIONS: Array<SelectableValue<StepType>> = [
   DEFAULT_STEP_OPTION,
   {
     value: 'max',
-    label: 'Maxmimum',
+    label: 'Maximum',
   },
   {
     value: 'exact',
@@ -175,14 +175,19 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
             }}
           />
         </InlineField>
-        <InlineField label="Step">
+        <InlineField
+          label="Step"
+          tooltip={
+            'Optionally, set the lower or upper bounds on the interval between data points, for example, set "minimum 1h" to hint that measurements were not taken more frequently. `$__interval` and `$__rate_interval` are supported.'
+          }
+        >
           <Select isSearchable={false} width={16} onChange={onStepModeChange} options={STEP_OPTIONS} value={stepMode} />
         </InlineField>
         <InlineField>
           <Input
-            className="width-7"
+            className="width-4"
             width={12}
-            placeholder="Example 15s"
+            placeholder="15s"
             min={0}
             onChange={onStepIntervalChange}
             onKeyDown={onReturnKeyDown}
