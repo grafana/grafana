@@ -14,7 +14,7 @@ export const linkModelToContextMenuItems: (links: () => LinkModel[]) => MenuItem
       url: link.href,
       target: link.target,
       icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,
-      onClick: link.onClick as any, // MouseEvent
+      onClick: link.onClick,
     };
   });
 };
