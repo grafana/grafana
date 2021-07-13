@@ -955,7 +955,12 @@ function upgradeValueMappingsForPanel(panel: PanelModel) {
     return panel;
   }
 
-  fieldConfig.defaults.mappings = upgradeValueMappings(fieldConfig.defaults.mappings, fieldConfig.defaults.thresholds);
+  if (fieldConfig.defaults) {
+    fieldConfig.defaults.mappings = upgradeValueMappings(
+      fieldConfig.defaults.mappings,
+      fieldConfig.defaults.thresholds
+    );
+  }
 
   for (const override of fieldConfig.overrides) {
     for (const prop of override.properties) {
