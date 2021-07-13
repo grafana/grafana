@@ -32,5 +32,5 @@ Fixed roles | Permissions | Descriptions
 Built-in roles | Associated roles | Descriptions
 --- | --- | ---
 Grafana Admin | `fixed:permissions:admin:edit`<br>`fixed:permissions:admin:read`<br>`fixed:reporting:admin:edit`<br>`fixed:reporting:admin:read`<br>`fixed:users:admin:edit`<br>`fixed:users:admin:read`<br>`fixed:users:org:edit`<br>`fixed:users:org:read`<br>`fixed:ldap:admin:edit`<br>`fixed:ldap:admin:read`<br>`fixed:server:admin:read`<br>`fixed:settings:admin:read`<br>`fixed:settings:admin:edit` | Allows access to resources which [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) has permissions by default.
-Admin | `fixed:datasource:editor:read`<br>`fixed:users:org:edit`<br>`fixed:users:org:read`<br>`fixed:reporting:admin:edit`<br>`fixed:reporting:admin:read` | Allows access to resource which [Admin]({{< relref "../../permissions/organization_roles.md" >}}) has permissions by default.
+Admin | `fixed:users:org:edit`<br>`fixed:users:org:read`<br>`fixed:reporting:admin:edit`<br>`fixed:reporting:admin:read` | Allows access to resource which [Admin]({{< relref "../../permissions/organization_roles.md" >}}) has permissions by default.
 Editor | `fixed:datasource:editor:read`
