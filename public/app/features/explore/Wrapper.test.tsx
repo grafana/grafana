@@ -255,9 +255,34 @@ describe('Wrapper', () => {
     await screen.findByText(`loki Editor input: { label="value"}`);
   });
 
-  it('changes the document title of the explore page', async () => {
-    setup({ datasources: [] });
-    await waitFor(() => expect(document.title).toEqual('Explore - Grafana'));
+  it('changes the document title of the explore page to include the datasource in use', async () => {
+    const query = {
+      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
+    };
+    const { datasources } = setup({ query });
+    (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
+    // This is mainly to wait for render so that the left pane state is initialized as that is needed for the title
+    // to include the datasource
+    await screen.findByText(`loki Editor input: { label="value"}`);
+
+    await waitFor(() => expect(document.title).toEqual('Explore - loki - Grafana'));
+  });
+  it('changes the document title to include the two datasources in use in split view mode', async () => {
+    const query = {
+      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
+    };
+    const { datasources, store } = setup({ query });
+    (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
+    (datasources.elastic.query as Mock).mockReturnValue(makeLogsQueryResponse());
+
+    // This is mainly to wait for render so that the left pane state is initialized as that is needed for splitOpen
+    // to work
+    await screen.findByText(`loki Editor input: { label="value"}`);
+
+    store.dispatch(
+      splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any
+    );
+    await waitFor(() => expect(document.title).toEqual('Explore - loki | elastic - Grafana'));
   });
 });
 
