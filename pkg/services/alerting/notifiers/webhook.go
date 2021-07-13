@@ -99,9 +99,9 @@ type WebhookNotifierBody struct {
 	DashboardID int64                 `json:"dashboardId"`
 	PanelID     int64                 `json:"panelId"`
 	Tags        map[string]string     `json:"tags"`
-	RuleURL     string                `json:"ruleUrl"`
-	ImageURL    string                `json:"imageUrl"`
-	Message     string                `json:"message"`
+	RuleURL     string                `json:"ruleUrl,omitempty"`
+	ImageURL    string                `json:"imageUrl,omitempty"`
+	Message     string                `json:"message,omitempty"`
 }
 
 // Notify send alert notifications as
