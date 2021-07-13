@@ -1,7 +1,8 @@
 import React, { FC, SyntheticEvent } from 'react';
-import { Tooltip, Form, Field, Input, VerticalGroup, Button } from '@grafana/ui';
+import { Tooltip, Form, Field, VerticalGroup, Button } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { submitButton } from '../Login/LoginForm';
+import { PasswordField } from '../PasswordField/PasswordField';
 interface Props {
   onSubmit: (pw: string) => void;
   onSkip?: (event?: SyntheticEvent) => void;
@@ -21,21 +22,19 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
       {({ errors, register, getValues }) => (
         <>
           <Field label="New password" invalid={!!errors.newPassword} error={errors?.newPassword?.message}>
-            <Input
-              autoFocus
+            <PasswordField
               id="new-password"
-              type="password"
-              {...register('newPassword', {
-                required: 'New password is required',
-              })}
+              autoFocus
+              autoComplete="new-password"
+              {...register('newPassword', { required: 'New Password is required' })}
             />
           </Field>
           <Field label="Confirm new password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
-            <Input
+            <PasswordField
               id="confirm-new-password"
-              type="password"
+              autoComplete="new-password"
               {...register('confirmNew', {
-                required: 'Confirmed password is required',
+                required: 'Confirmed Password is required',
                 validate: (v: string) => v === getValues().newPassword || 'Passwords must match!',
               })}
             />
