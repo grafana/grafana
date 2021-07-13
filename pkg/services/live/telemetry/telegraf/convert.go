@@ -131,7 +131,18 @@ func (c *Converter) convertWithLabelsColumn(metrics []influx.Metric) ([]telemetr
 
 	frameWrappers := make([]telemetry.FrameWrapper, 0, len(metricFrames))
 	for _, key := range frameKeyOrder {
-		frameWrappers = append(frameWrappers, metricFrames[key])
+		frame := metricFrames[key]
+		// For all fields except labels and time fill columns with nulls in
+		// case of unequal length.
+		for i := 2; i < len(frame.fields); i++ {
+			if frame.fields[i].Len() < frame.fields[0].Len() {
+				numNulls := frame.fields[0].Len() - frame.fields[i].Len()
+				for j := 0; j < numNulls; j++ {
+					frame.fields[i].Append(nil)
+				}
+			}
+		}
+		frameWrappers = append(frameWrappers, frame)
 	}
 
 	return frameWrappers, nil
@@ -233,11 +244,27 @@ func (s *metricFrame) append(m influx.Metric) error {
 					v = nil
 				}
 			}
+			// If field does not have a desired length till this moment
+			// we fill it with nulls up to the currently processed index.
+			if field.Len() < s.fields[0].Len()-1 {
+				numNulls := s.fields[0].Len() - 1 - field.Len()
+				for i := 0; i < numNulls; i++ {
+					field.Append(nil)
+				}
+			}
 			field.Append(v)
 		} else {
-			field := data.NewFieldFromFieldType(ft, 1)
+			field := data.NewFieldFromFieldType(ft, 0)
 			field.Name = f.Key
-			field.Set(0, v)
+			// If field appeared at the moment when we already filled some columns
+			// we fill it with nulls up to the currently processed index.
+			if field.Len() < s.fields[0].Len()-1 {
+				numNulls := s.fields[0].Len() - 1 - field.Len()
+				for i := 0; i < numNulls; i++ {
+					field.Append(nil)
+				}
+			}
+			field.Append(v)
 			s.fields = append(s.fields, field)
 			s.fieldCache[f.Key] = len(s.fields) - 1
 		}
