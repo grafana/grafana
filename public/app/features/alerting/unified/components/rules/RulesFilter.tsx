@@ -1,5 +1,5 @@
 import React, { FormEvent, useState } from 'react';
-import { Button, Icon, Input, Label, RadioButtonGroup, useStyles } from '@grafana/ui';
+import { Button, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles } from '@grafana/ui';
 import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { debounce } from 'lodash';
@@ -64,6 +64,8 @@ const RulesFilter = () => {
     setFilterKey(filterKey + 1);
   };
 
+  console.log({ queryStringKey });
+
   const searchIcon = <Icon name={'search'} />;
   return (
     <div className={styles.container}>
@@ -80,7 +82,19 @@ const RulesFilter = () => {
       <div className={cx(styles.flexRow, styles.spaceBetween)}>
         <div className={styles.flexRow}>
           <div className={styles.rowChild}>
-            <Label>Search by name or label</Label>
+            <Label>
+              <Tooltip
+                content={
+                  <div>
+                    Filter rules and alerts using label querying, ex:
+                    <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
+                  </div>
+                }
+              >
+                <Icon name="info-circle" />
+              </Tooltip>
+              Search by label
+            </Label>
             <Input
               key={queryStringKey}
               className={styles.inputWidth}
