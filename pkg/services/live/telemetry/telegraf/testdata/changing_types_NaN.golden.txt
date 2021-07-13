@@ -1,6 +1,6 @@
 🌟 This was machine generated.  Do not edit. 🌟
 
-Frame[0] 
+Frame[0]
 Name: system
 Dimensions: 5 Fields by 4 Rows
 +----------------+-------------------------------+------------------+-----------------+-----------------+
