@@ -77,9 +77,9 @@ func (c *Converter) Convert(body []byte) ([]telemetry.FrameWrapper, error) {
 	}
 	switch c.frameType {
 	case FrameTypeWide:
-		return c.convertWideFields(metrics)
+		return c.convertWide(metrics)
 	case FrameTypeLabelsColumn:
-		return c.convertWithLabelsColumn(metrics)
+		return c.convertLabelsColumn(metrics)
 	case FrameTypePrometheus:
 		return c.convertPrometheus(metrics)
 	default:
@@ -87,7 +87,7 @@ func (c *Converter) Convert(body []byte) ([]telemetry.FrameWrapper, error) {
 	}
 }
 
-func (c *Converter) convertWideFields(metrics []influx.Metric) ([]telemetry.FrameWrapper, error) {
+func (c *Converter) convertWide(metrics []influx.Metric) ([]telemetry.FrameWrapper, error) {
 	// maintain the order of frames as they appear in input.
 	var frameKeyOrder []string
 	metricFrames := make(map[string]*metricFrame)
@@ -120,7 +120,7 @@ func (c *Converter) convertWideFields(metrics []influx.Metric) ([]telemetry.Fram
 	return frameWrappers, nil
 }
 
-func (c *Converter) convertWithLabelsColumn(metrics []influx.Metric) ([]telemetry.FrameWrapper, error) {
+func (c *Converter) convertLabelsColumn(metrics []influx.Metric) ([]telemetry.FrameWrapper, error) {
 	// maintain the order of frames as they appear in input.
 	var frameKeyOrder []string
 	metricFrames := make(map[string]*metricFrame)

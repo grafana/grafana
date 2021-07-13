@@ -11,6 +11,7 @@ import (
 type Converter struct {
 	telegrafConverterWide         *telegraf.Converter
 	telegrafConverterLabelsColumn *telegraf.Converter
+	telegrafConverterPrometheus   *telegraf.Converter
 }
 
 func NewConverter() *Converter {
@@ -23,18 +24,24 @@ func NewConverter() *Converter {
 			telegraf.WithFrameType(telegraf.FrameTypeLabelsColumn),
 			telegraf.WithFloat64Numbers(true),
 		),
+		telegrafConverterPrometheus: telegraf.NewConverter(
+			telegraf.WithFrameType(telegraf.FrameTypePrometheus),
+			telegraf.WithFloat64Numbers(true),
+		),
 	}
 }
 
 var ErrUnsupportedFrameFormat = errors.New("unsupported frame format")
 
-func (c *Converter) Convert(data []byte, frameFormat string) ([]telemetry.FrameWrapper, error) {
+func (c *Converter) Convert(data []byte, frameFormat telegraf.ConverterFrameType) ([]telemetry.FrameWrapper, error) {
 	var converter telemetry.Converter
 	switch frameFormat {
-	case "wide":
+	case telegraf.FrameTypeWide:
 		converter = c.telegrafConverterWide
-	case "labels_column":
+	case telegraf.FrameTypeLabelsColumn:
 		converter = c.telegrafConverterLabelsColumn
+	case telegraf.FrameTypePrometheus:
+		converter = c.telegrafConverterPrometheus
 	default:
 		return nil, ErrUnsupportedFrameFormat
 	}

@@ -173,7 +173,11 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 		// TODO Grafana 8: decide which formats to use or keep all.
 		urlValues := r.URL.Query()
-		frameFormat := pushurl.FrameFormatFromValues(urlValues)
+		frameFormat, err := pushurl.FrameFormatFromValues(urlValues)
+		if err != nil {
+			logger.Error("Error detecting frame format", "error", err)
+			return
+		}
 
 		logger.Debug("Live Push request",
 			"protocol", "http",

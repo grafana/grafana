@@ -4,12 +4,18 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/live/telemetry/telegraf"
+
 	"github.com/stretchr/testify/require"
 )
 
 func TestFrameFormatFromValues(t *testing.T) {
 	values := url.Values{}
-	require.Equal(t, "labels_column", FrameFormatFromValues(values))
+	ff, err := FrameFormatFromValues(values)
+	require.NoError(t, err)
+	require.Equal(t, telegraf.FrameTypeLabelsColumn, ff)
 	values.Set(frameFormatParam, "wide")
-	require.Equal(t, "wide", FrameFormatFromValues(values))
+	ff, err = FrameFormatFromValues(values)
+	require.NoError(t, err)
+	require.Equal(t, telegraf.FrameTypeWide, ff)
 }

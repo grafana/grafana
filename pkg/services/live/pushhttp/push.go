@@ -55,9 +55,13 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 		return
 	}
 
-	// TODO Grafana 8: decide which formats to use or keep all.
 	urlValues := ctx.Req.URL.Query()
-	frameFormat := pushurl.FrameFormatFromValues(urlValues)
+	frameFormat, err := pushurl.FrameFormatFromValues(urlValues)
+	if err != nil {
+		logger.Error("Error detecting frame format", "error", err)
+		ctx.Resp.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	body, err := io.ReadAll(ctx.Req.Request.Body)
 	if err != nil {
