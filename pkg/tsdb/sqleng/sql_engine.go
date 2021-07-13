@@ -285,7 +285,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		}
 
 		// Make sure to name the time field 'Time' to be backward compatible with Grafana pre-v8.
-		frame.Fields[qm.timeIndex].Name = "Time"
+		frame.Fields[qm.timeIndex].Name = data.TimeSeriesTimeFieldName
 
 		for i := range qm.columnNames {
 			if i == qm.timeIndex || i == qm.metricIndex {
