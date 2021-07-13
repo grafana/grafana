@@ -96,7 +96,7 @@ type WebhookNotifierBody struct {
 	State       models.AlertStateType `json:"state"`
 	EvalMatches []*alerting.EvalMatch `json:"evalMatches"`
 	OrgID       int64                 `json:"orgId"`
-	DashboardID int64                 `json:"dashbaordId"`
+	DashboardID int64                 `json:"dashboardId"`
 	PanelID     int64                 `json:"panelId"`
 	Tags        map[string]string     `json:"tags"`
 	RuleURL     string                `json:"ruleUrl"`
