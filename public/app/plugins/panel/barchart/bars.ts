@@ -1,9 +1,9 @@
-import uPlot, { Axis, Series } from 'uplot';
+import uPlot, { Axis } from 'uplot';
 import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { BarValueVisibility, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
 import { CartesianCoords2D, GrafanaTheme2 } from '@grafana/data';
-import { calculateFontSize, measureText, PlotTooltipInterpolator, VizTextDisplayOptions } from '@grafana/ui';
+import { PlotTooltipInterpolator, VizTextDisplayOptions } from '@grafana/ui';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -52,222 +52,222 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   let qt: Quadtree;
   let labelsSizing: Array<LabelDescriptor | null> = [];
 
-  const drawBars: Series.PathBuilder = (u, sidx) => {
-    return uPlot.orient(
-      u,
-      sidx,
-      (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
-        const fill = new Path2D();
-        const stroke = new Path2D();
-
-        let numGroups = dataX.length;
-        let barsPerGroup = u.series.length - 1;
-
-        let y0Pos = valToPosY(0, scaleY, yDim, yOff);
-
-        const _dir = dir * (ori === 0 ? 1 : -1);
-
-        walkTwo(groupWidth, barWidth, sidx - 1, numGroups, barsPerGroup, xDim, null, (ix, x0, wid) => {
-          let left = Math.round(xOff + (_dir === 1 ? x0 : xDim - x0 - wid));
-          let barWid = Math.round(wid);
-          const canvas = u.over;
-          const bbox = canvas?.getBoundingClientRect();
-
-          if (dataY[ix] != null) {
-            let yPos = valToPosY(dataY[ix]!, scaleY, yDim, yOff);
-            let btm = Math.round(Math.max(yPos, y0Pos));
-            let top = Math.round(Math.min(yPos, y0Pos));
-            let barHgt = btm - top;
-            let strokeWidth = series.width || 0;
-
-            if (strokeWidth) {
-              rect(stroke, left + strokeWidth / 2, top + strokeWidth / 2, barWid - strokeWidth, barHgt - strokeWidth);
-            }
-
-            rect(fill, left, top, barWid, barHgt);
-
-            let x = ori === ScaleOrientation.Horizontal ? Math.round(left - xOff) : Math.round(top - yOff);
-            let y = ori === ScaleOrientation.Horizontal ? Math.round(top - yOff) : Math.round(left - xOff);
-            let width = ori === ScaleOrientation.Horizontal ? barWid : barHgt;
-            let height = ori === ScaleOrientation.Horizontal ? barHgt : barWid;
-
-            qt.add({ x, y, w: width, h: height, sidx: sidx, didx: ix });
-
-            // Collect labels sizes and placements
-            const value = formatValue(sidx, dataY[ix]);
-            let labelX = ori === ScaleOrientation.Horizontal ? Math.round(left) : Math.round(top);
-            let labelY = ori === ScaleOrientation.Horizontal ? Math.round(top) : Math.round(left);
-
-            let availableSpaceForText;
-
-            if (ori === ScaleOrientation.Horizontal) {
-              availableSpaceForText =
-                dataY[ix]! >= 0 ? y / devicePixelRatio : bbox!.height - (y + height) / devicePixelRatio;
-            } else {
-              availableSpaceForText =
-                dataY[ix]! >= 0 ? bbox!.width - (x + width) / devicePixelRatio : x / devicePixelRatio;
-            }
-
-            /**
-             * Snippet below is for debugging the available space for text. Leaving it for the future bugs...
-             */
-            // u.ctx.beginPath();
-            // u.ctx.strokeStyle = '#0000ff';
-
-            // if (dataY[ix]! >= 0) {
-            //   if (ori === ScaleOrientation.Horizontal) {
-            //     u.ctx.moveTo(left, top - availableSpaceForText * devicePixelRatio);
-            //     u.ctx.lineTo(left + width, top - availableSpaceForText * devicePixelRatio);
-            //     u.ctx.lineTo(left + width, top);
-            //     u.ctx.lineTo(left, top);
-            //   } else {
-            //     u.ctx.moveTo(top + width, left);
-            //     u.ctx.lineTo(top + width + availableSpaceForText * devicePixelRatio, left);
-            //     u.ctx.lineTo(top + width + availableSpaceForText * devicePixelRatio, left + height);
-            //     u.ctx.lineTo(top + width, left + height);
-            //   }
-            // } else {
-            //   if (ori === ScaleOrientation.Horizontal) {
-            //     u.ctx.moveTo(left, top + height + availableSpaceForText * devicePixelRatio);
-            //     u.ctx.lineTo(left + width, top + height + availableSpaceForText * devicePixelRatio);
-            //     u.ctx.lineTo(left + width, top + height);
-            //     u.ctx.lineTo(left, top + height);
-            //   } else {
-            //     u.ctx.moveTo(top, left);
-            //     u.ctx.lineTo(top - availableSpaceForText * devicePixelRatio, left);
-            //     u.ctx.lineTo(top - availableSpaceForText * devicePixelRatio, left + height);
-            //     u.ctx.lineTo(top, left + height);
-            //   }
-            // }
-            // u.ctx.closePath();
-            // u.ctx.stroke();
-
-            let fontSize = opts.text?.valueSize ?? VALUE_MIN_FONT_SIZE;
-
-            if (hasAutoValueSize) {
-              const size =
-                ori === ScaleOrientation.Horizontal
-                  ? calculateFontSize(
-                      value,
-                      (width / devicePixelRatio) * BAR_FONT_SIZE_RATIO,
-                      availableSpaceForText * BAR_FONT_SIZE_RATIO,
-                      1
-                    )
-                  : calculateFontSize(
-                      value,
-                      availableSpaceForText,
-                      (height * BAR_FONT_SIZE_RATIO) / devicePixelRatio,
-                      1
-                    );
-              fontSize = size > VALUE_MAX_FONT_SIZE ? VALUE_MAX_FONT_SIZE : size;
-            }
-
-            const textAlign = ori === ScaleOrientation.Horizontal ? 'center' : 'left';
-            const textBaseline = (ori === ScaleOrientation.Horizontal ? 'bottom' : 'alphabetic') as CanvasTextBaseline;
-            const textMeasurement = measureText(value, fontSize * devicePixelRatio);
-            let labelPosition: CartesianCoords2D = { x: labelX, y: labelY };
-
-            // Collect labels szes
-            labelsSizing.push({
-              formattedValue: value,
-              value: dataY[ix]!,
-              textAlign,
-              textBaseline,
-              fontSize: Math.floor(fontSize),
-              barWidth: width,
-              barHeight: height,
-              textWidth: textMeasurement.width,
-              ...labelPosition,
-            });
-          } else {
-            labelsSizing.push(null);
-          }
-        });
-
-        return {
-          stroke,
-          fill,
-        };
-      }
-    );
-  };
+  // const drawBars: Series.PathBuilder = (u, sidx) => {
+  //   return uPlot.orient(
+  //     u,
+  //     sidx,
+  //     (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
+  //       const fill = new Path2D();
+  //       const stroke = new Path2D();
+  //
+  //       let numGroups = dataX.length;
+  //       let barsPerGroup = u.series.length - 1;
+  //
+  //       let y0Pos = valToPosY(0, scaleY, yDim, yOff);
+  //
+  //       const _dir = dir * (ori === 0 ? 1 : -1);
+  //
+  //       walkTwo(groupWidth, barWidth, sidx - 1, numGroups, barsPerGroup, xDim, null, (ix, x0, wid) => {
+  //         let left = Math.round(xOff + (_dir === 1 ? x0 : xDim - x0 - wid));
+  //         let barWid = Math.round(wid);
+  //         const canvas = u.over;
+  //         const bbox = canvas?.getBoundingClientRect();
+  //
+  //         if (dataY[ix] != null) {
+  //           let yPos = valToPosY(dataY[ix]!, scaleY, yDim, yOff);
+  //           let btm = Math.round(Math.max(yPos, y0Pos));
+  //           let top = Math.round(Math.min(yPos, y0Pos));
+  //           let barHgt = btm - top;
+  //           let strokeWidth = series.width || 0;
+  //
+  //           if (strokeWidth) {
+  //             rect(stroke, left + strokeWidth / 2, top + strokeWidth / 2, barWid - strokeWidth, barHgt - strokeWidth);
+  //           }
+  //
+  //           rect(fill, left, top, barWid, barHgt);
+  //
+  //           let x = ori === ScaleOrientation.Horizontal ? Math.round(left - xOff) : Math.round(top - yOff);
+  //           let y = ori === ScaleOrientation.Horizontal ? Math.round(top - yOff) : Math.round(left - xOff);
+  //           let width = ori === ScaleOrientation.Horizontal ? barWid : barHgt;
+  //           let height = ori === ScaleOrientation.Horizontal ? barHgt : barWid;
+  //
+  //           qt.add({ x, y, w: width, h: height, sidx: sidx, didx: ix });
+  //
+  //           // Collect labels sizes and placements
+  //           const value = formatValue(sidx, dataY[ix]);
+  //           let labelX = ori === ScaleOrientation.Horizontal ? Math.round(left) : Math.round(top);
+  //           let labelY = ori === ScaleOrientation.Horizontal ? Math.round(top) : Math.round(left);
+  //
+  //           let availableSpaceForText;
+  //
+  //           if (ori === ScaleOrientation.Horizontal) {
+  //             availableSpaceForText =
+  //               dataY[ix]! >= 0 ? y / devicePixelRatio : bbox!.height - (y + height) / devicePixelRatio;
+  //           } else {
+  //             availableSpaceForText =
+  //               dataY[ix]! >= 0 ? bbox!.width - (x + width) / devicePixelRatio : x / devicePixelRatio;
+  //           }
+  //
+  //           /**
+  //            * Snippet below is for debugging the available space for text. Leaving it for the future bugs...
+  //            */
+  //           // u.ctx.beginPath();
+  //           // u.ctx.strokeStyle = '#0000ff';
+  //
+  //           // if (dataY[ix]! >= 0) {
+  //           //   if (ori === ScaleOrientation.Horizontal) {
+  //           //     u.ctx.moveTo(left, top - availableSpaceForText * devicePixelRatio);
+  //           //     u.ctx.lineTo(left + width, top - availableSpaceForText * devicePixelRatio);
+  //           //     u.ctx.lineTo(left + width, top);
+  //           //     u.ctx.lineTo(left, top);
+  //           //   } else {
+  //           //     u.ctx.moveTo(top + width, left);
+  //           //     u.ctx.lineTo(top + width + availableSpaceForText * devicePixelRatio, left);
+  //           //     u.ctx.lineTo(top + width + availableSpaceForText * devicePixelRatio, left + height);
+  //           //     u.ctx.lineTo(top + width, left + height);
+  //           //   }
+  //           // } else {
+  //           //   if (ori === ScaleOrientation.Horizontal) {
+  //           //     u.ctx.moveTo(left, top + height + availableSpaceForText * devicePixelRatio);
+  //           //     u.ctx.lineTo(left + width, top + height + availableSpaceForText * devicePixelRatio);
+  //           //     u.ctx.lineTo(left + width, top + height);
+  //           //     u.ctx.lineTo(left, top + height);
+  //           //   } else {
+  //           //     u.ctx.moveTo(top, left);
+  //           //     u.ctx.lineTo(top - availableSpaceForText * devicePixelRatio, left);
+  //           //     u.ctx.lineTo(top - availableSpaceForText * devicePixelRatio, left + height);
+  //           //     u.ctx.lineTo(top, left + height);
+  //           //   }
+  //           // }
+  //           // u.ctx.closePath();
+  //           // u.ctx.stroke();
+  //
+  //           let fontSize = opts.text?.valueSize ?? VALUE_MIN_FONT_SIZE;
+  //
+  //           if (hasAutoValueSize) {
+  //             const size =
+  //               ori === ScaleOrientation.Horizontal
+  //                 ? calculateFontSize(
+  //                     value,
+  //                     (width / devicePixelRatio) * BAR_FONT_SIZE_RATIO,
+  //                     availableSpaceForText * BAR_FONT_SIZE_RATIO,
+  //                     1
+  //                   )
+  //                 : calculateFontSize(
+  //                     value,
+  //                     availableSpaceForText,
+  //                     (height * BAR_FONT_SIZE_RATIO) / devicePixelRatio,
+  //                     1
+  //                   );
+  //             fontSize = size > VALUE_MAX_FONT_SIZE ? VALUE_MAX_FONT_SIZE : size;
+  //           }
+  //
+  //           const textAlign = ori === ScaleOrientation.Horizontal ? 'center' : 'left';
+  //           const textBaseline = (ori === ScaleOrientation.Horizontal ? 'bottom' : 'alphabetic') as CanvasTextBaseline;
+  //           const textMeasurement = measureText(value, fontSize * devicePixelRatio);
+  //           let labelPosition: CartesianCoords2D = { x: labelX, y: labelY };
+  //
+  //           // Collect labels szes
+  //           labelsSizing.push({
+  //             formattedValue: value,
+  //             value: dataY[ix]!,
+  //             textAlign,
+  //             textBaseline,
+  //             fontSize: Math.floor(fontSize),
+  //             barWidth: width,
+  //             barHeight: height,
+  //             textWidth: textMeasurement.width,
+  //             ...labelPosition,
+  //           });
+  //         } else {
+  //           labelsSizing.push(null);
+  //         }
+  //       });
+  //
+  //       return {
+  //         stroke,
+  //         fill,
+  //       };
+  //     }
+  //   );
+  // };
 
   // uPlot hook to draw the labels on the bar chart
-  const draw = (u: uPlot) => {
-    let minFontSize = labelsSizing.reduce((min, s) => (s && s.fontSize < min ? s.fontSize : min), Infinity);
-
-    if (minFontSize === Infinity) {
-      return;
-    }
-
-    for (let i = 0; i < labelsSizing.length; i++) {
-      const label = labelsSizing[i];
-      let x = 0,
-        y = 0;
-      if (label === null) {
-        continue;
-      }
-
-      const fontSize = hasAutoValueSize ? minFontSize : label.fontSize;
-
-      if (showValue === BarValueVisibility.Never) {
-        return;
-      }
-
-      if (showValue !== BarValueVisibility.Always) {
-        if (
-          hasAutoValueSize &&
-          ((ori === ScaleOrientation.Horizontal && label.textWidth > label.barWidth) ||
-            minFontSize < VALUE_MIN_FONT_SIZE)
-        ) {
-          return;
-        }
-      }
-
-      // Calculate final labels positions according to unified text size
-      const textMeasurement = measureText(label.formattedValue, fontSize * devicePixelRatio);
-
-      let actualLineHeight = textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent;
-
-      // fontBoundingBoxAscent is only supported in chrome & safari at the moment. (see: https://caniuse.com/?search=fontBoundingBoxAscent)
-      // @ts-ignore
-      if (textMeasurement.fontBoundingBoxAscent && textMeasurement.fontBoundingBoxDescent) {
-        // @ts-ignore
-        actualLineHeight = textMeasurement.fontBoundingBoxAscent + textMeasurement.fontBoundingBoxDescent;
-      }
-
-      if (ori === ScaleOrientation.Horizontal) {
-        x = label.x + label.barWidth / 2;
-        y = label.y + (label.value >= 0 ? 0 : label.barHeight + actualLineHeight);
-      } else {
-        x =
-          label.x +
-          (label.value >= 0
-            ? label.barWidth + HORIZONTAL_BAR_LABEL_OFFSET
-            : -textMeasurement.width - HORIZONTAL_BAR_LABEL_OFFSET);
-        y =
-          label.y +
-          (label.barHeight + textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent) / 2;
-      }
-
-      /**
-       * Snippet below is for debugging the available space for text. Leaving it for the future bugs...
-       */
-      // u.ctx.beginPath();
-      // u.ctx.fillStyle = '#0000ff';
-      // u.ctx.arc(label.x, label.y, 10, 0, Math.PI * 2, true);
-      // u.ctx.closePath();
-      // u.ctx.fill();
-
-      u.ctx.fillStyle = theme.colors.text.primary;
-      u.ctx.font = `${fontSize * devicePixelRatio}px ${theme.typography.fontFamily}`;
-      u.ctx.textAlign = label.textAlign;
-      u.ctx.textBaseline = label.textBaseline;
-      u.ctx.fillText(label.formattedValue, x, y);
-    }
-
-    return false;
-  };
+  // const draw = (u: uPlot) => {
+  //   let minFontSize = labelsSizing.reduce((min, s) => (s && s.fontSize < min ? s.fontSize : min), Infinity);
+  //
+  //   if (minFontSize === Infinity) {
+  //     return;
+  //   }
+  //
+  //   for (let i = 0; i < labelsSizing.length; i++) {
+  //     const label = labelsSizing[i];
+  //     let x = 0,
+  //       y = 0;
+  //     if (label === null) {
+  //       continue;
+  //     }
+  //
+  //     const fontSize = hasAutoValueSize ? minFontSize : label.fontSize;
+  //
+  //     if (showValue === BarValueVisibility.Never) {
+  //       return;
+  //     }
+  //
+  //     if (showValue !== BarValueVisibility.Always) {
+  //       if (
+  //         hasAutoValueSize &&
+  //         ((ori === ScaleOrientation.Horizontal && label.textWidth > label.barWidth) ||
+  //           minFontSize < VALUE_MIN_FONT_SIZE)
+  //       ) {
+  //         return;
+  //       }
+  //     }
+  //
+  //     // Calculate final labels positions according to unified text size
+  //     const textMeasurement = measureText(label.formattedValue, fontSize * devicePixelRatio);
+  //
+  //     let actualLineHeight = textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent;
+  //
+  //     // fontBoundingBoxAscent is only supported in chrome & safari at the moment. (see: https://caniuse.com/?search=fontBoundingBoxAscent)
+  //     // @ts-ignore
+  //     if (textMeasurement.fontBoundingBoxAscent && textMeasurement.fontBoundingBoxDescent) {
+  //       // @ts-ignore
+  //       actualLineHeight = textMeasurement.fontBoundingBoxAscent + textMeasurement.fontBoundingBoxDescent;
+  //     }
+  //
+  //     if (ori === ScaleOrientation.Horizontal) {
+  //       x = label.x + label.barWidth / 2;
+  //       y = label.y + (label.value >= 0 ? 0 : label.barHeight + actualLineHeight);
+  //     } else {
+  //       x =
+  //         label.x +
+  //         (label.value >= 0
+  //           ? label.barWidth + HORIZONTAL_BAR_LABEL_OFFSET
+  //           : -textMeasurement.width - HORIZONTAL_BAR_LABEL_OFFSET);
+  //       y =
+  //         label.y +
+  //         (label.barHeight + textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent) / 2;
+  //     }
+  //
+  //     /**
+  //      * Snippet below is for debugging the available space for text. Leaving it for the future bugs...
+  //      */
+  //     // u.ctx.beginPath();
+  //     // u.ctx.fillStyle = '#0000ff';
+  //     // u.ctx.arc(label.x, label.y, 10, 0, Math.PI * 2, true);
+  //     // u.ctx.closePath();
+  //     // u.ctx.fill();
+  //
+  //     u.ctx.fillStyle = theme.colors.text.primary;
+  //     u.ctx.font = `${fontSize * devicePixelRatio}px ${theme.typography.fontFamily}`;
+  //     u.ctx.textAlign = label.textAlign;
+  //     u.ctx.textBaseline = label.textBaseline;
+  //     u.ctx.fillText(label.formattedValue, x, y);
+  //   }
+  //
+  //   return false;
+  // };
 
   const xSplits: Axis.Splits = (u: uPlot) => {
     const dim = ori === 0 ? u.bbox.width : u.bbox.height;
@@ -295,6 +295,64 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   barMark.classList.add('bar-mark');
   barMark.style.position = 'absolute';
   barMark.style.background = 'rgba(255,255,255,0.4)';
+
+  let distrTwo = (groupCount: number, barCount: number) => {
+    let out = Array.from({ length: barCount }, () => ({
+      offs: Array(groupCount).fill(0),
+      size: Array(groupCount).fill(0),
+    }));
+
+    distribute(groupCount, groupWidth, groupDistr, null, (groupIdx, groupOffPct, groupDimPct) => {
+      distribute(barCount, barWidth, barDistr, null, (barIdx, barOffPct, barDimPct) => {
+        out[barIdx].offs[groupIdx] = groupOffPct + groupDimPct * barOffPct;
+        out[barIdx].size[groupIdx] = groupDimPct * barDimPct;
+      });
+    });
+
+    return out;
+  };
+
+  let barsPctLayout = [];
+  let barsBuilder = uPlot.paths.bars!({
+    layout: (seriesIdx) => barsPctLayout[seriesIdx],
+    each: (seriesIdx, dataIdx, lft, top, wid, hgt) => {
+      qt.add({ x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx });
+    },
+  });
+
+  const drawPoints = (u, sidx, i0, i1) => {
+    u.ctx.font = Math.round(10 * devicePixelRatio) + 'px Arial';
+    u.ctx.fillStyle = 'black';
+
+    console.log('drawPoints', sidx);
+    uPlot.orient(
+      u,
+      sidx,
+      (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
+        const _dir = dir * (ori === ScaleOrientation.Horizontal ? 1 : -1);
+        console.log('drawPoints orient', sidx);
+        const wid = Math.round(barsPctLayout[sidx].size[0] * xDim);
+
+        barsPctLayout[sidx].offs.forEach((offs, ix) => {
+          if (dataY[ix] != null) {
+            let x0 = xDim * offs;
+            let lft = Math.round(xOff + (_dir === ScaleDirection.Up ? x0 : xDim - x0 - wid));
+            let barWid = Math.round(wid);
+
+            let yPos = valToPosY(dataY[ix], scaleY, yDim, yOff);
+
+            let x = ori === ScaleOrientation.Horizontal ? Math.round(lft + barWid / 2) : Math.round(yPos);
+            let y = ori === ScaleOrientation.Horizontal ? Math.round(yPos) : Math.round(lft + barWid / 2);
+
+            u.ctx.textAlign = ori === ScaleOrientation.Horizontal ? 'center' : dataY[ix] >= 0 ? 'left' : 'right';
+            u.ctx.textBaseline = ori === ScaleOrientation.Vertical ? 'middle' : dataY[ix] >= 0 ? 'bottom' : 'top';
+
+            u.ctx.fillText(dataY[ix], x, y);
+          }
+        });
+      }
+    );
+  };
 
   const init = (u: uPlot) => {
     let over = u.over;
@@ -368,8 +426,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     xSplits,
 
     // pathbuilders
-    drawBars,
-    draw,
+    // drawBars,
+    // draw,
+    barsBuilder,
+    drawPoints,
 
     // hooks
     init,

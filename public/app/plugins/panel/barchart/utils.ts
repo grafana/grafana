@@ -80,7 +80,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
-  builder.addHook('draw', config.draw);
+  builder.addHook('drawPoints', config.drawPoints);
 
   builder.setTooltipInterpolator(config.interpolateTooltip);
 
@@ -127,7 +127,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
       fillOpacity: customConfig.fillOpacity,
       theme,
       colorMode,
-      pathBuilder: config.drawBars,
+      pathBuilder: config.barsBuilder,
+      pointsBuilder: config.drawPoints,
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
