@@ -1,4 +1,4 @@
-import { toDataFrame, ArrayVector, DataTransformerID, DataFrame, FieldType } from '@grafana/data';
+import { toDataFrame, ArrayVector, DataFrame, FieldType } from '@grafana/data';
 import { stretchFrames } from './stretchFrames';
 
 describe('Stretch frames transformer', () => {
