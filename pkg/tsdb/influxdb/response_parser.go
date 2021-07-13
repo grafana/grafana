@@ -47,10 +47,8 @@ func (rp *ResponseParser) Parse(buf io.ReadCloser, query *Query) *backend.QueryD
 			queryRes.Error = fmt.Errorf(result.Error)
 		}
 	}
+	queryRes.Frames = frames
 	resp.Responses["A"] = queryRes
-	res := resp.Responses["A"]
-	res.Frames = frames
-	resp.Responses["A"] = res
 
 	return resp
 }

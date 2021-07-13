@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	ds "github.com/grafana/grafana/pkg/tsdb/influxdb/datasource"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 )
@@ -21,7 +21,7 @@ func init() {
 }
 
 // Query builds flux queries, executes them, and returns the results.
-func Query(ctx context.Context, httpClientProvider httpclient.Provider, dsInfo *ds.Info, tsdbQuery backend.QueryDataRequest) (
+func Query(ctx context.Context, httpClientProvider httpclient.Provider, dsInfo *models.DatasourceInfo, tsdbQuery backend.QueryDataRequest) (
 	*backend.QueryDataResponse, error) {
 	tRes := backend.NewQueryDataResponse()
 	glog.Debug("Received a query", "query", tsdbQuery)
@@ -31,8 +31,9 @@ func Query(ctx context.Context, httpClientProvider httpclient.Provider, dsInfo *
 	}
 	defer r.client.Close()
 
+	timeRange := tsdbQuery.Queries[0].TimeRange
 	for _, query := range tsdbQuery.Queries {
-		qm, err := getQueryModelTSDB(query, tsdbQuery.Queries[0].TimeRange, dsInfo)
+		qm, err := getQueryModel(query, timeRange, dsInfo)
 		if err != nil {
 			tRes.Responses[query.RefID] = backend.DataResponse{Error: err}
 			continue
@@ -66,7 +67,7 @@ func (r *runner) runQuery(ctx context.Context, fluxQuery string) (*api.QueryTabl
 }
 
 // runnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
-func runnerFromDataSource(httpClientProvider httpclient.Provider, dsInfo *ds.Info) (*runner, error) {
+func runnerFromDataSource(httpClientProvider httpclient.Provider, dsInfo *models.DatasourceInfo) (*runner, error) {
 	org := dsInfo.Organization
 	if org == "" {
 		return nil, fmt.Errorf("missing organization in datasource configuration")

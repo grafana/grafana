@@ -1,10 +1,10 @@
-package datasource
+package models
 
 import (
 	"net/http"
 )
 
-type Info struct {
+type DatasourceInfo struct {
 	HTTPClient *http.Client
 	Token      string
 	URL        string

@@ -5,13 +5,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	ds "github.com/grafana/grafana/pkg/tsdb/influxdb/datasource"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 	"github.com/stretchr/testify/require"
 )
 
 func TestInfluxdbQueryParser_Parse(t *testing.T) {
 	parser := &InfluxdbQueryParser{}
-	dsInfo := &ds.Info{}
+	dsInfo := &models.DatasourceInfo{}
 
 	t.Run("can parse influxdb json model", func(t *testing.T) {
 		json := `

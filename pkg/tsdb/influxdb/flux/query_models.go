@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb/datasource"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 // queryOptions represents datasource configuration options
@@ -27,11 +27,10 @@ type queryModel struct {
 	Interval      time.Duration     `json:"-"`
 }
 
-// getQueryModelTSDB builds a queryModel from plugins.DataQuery information and datasource configuration (dsInfo).
-func getQueryModelTSDB(query backend.DataQuery, timeRange backend.TimeRange,
-	dsInfo *datasource.Info) (*queryModel, error) {
+func getQueryModel(query backend.DataQuery, timeRange backend.TimeRange,
+	dsInfo *models.DatasourceInfo) (*queryModel, error) {
 	model := &queryModel{}
-	if err := json.Unmarshal(query.JSON, &model); err != nil {
+	if err := json.Unmarshal(query.JSON, model); err != nil {
 		return nil, fmt.Errorf("error reading query: %w", err)
 	}
 	if model.Options.DefaultBucket == "" {

@@ -19,8 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
-	ds "github.com/grafana/grafana/pkg/tsdb/influxdb/datasource"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 )
@@ -75,7 +75,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		jsonData := ds.Info{}
+		jsonData := models.DatasourceInfo{}
 		err = json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
@@ -88,7 +88,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		if maxSeries == 0 {
 			maxSeries = 1000
 		}
-		model := ds.Info{
+		model := models.DatasourceInfo{
 			HTTPClient:    client,
 			URL:           settings.URL,
 			Database:      settings.Database,
@@ -158,7 +158,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return resp, nil
 }
 
-func (s *Service) getQuery(dsInfo *ds.Info, query *backend.QueryDataRequest) (*Query, error) {
+func (s *Service) getQuery(dsInfo *models.DatasourceInfo, query *backend.QueryDataRequest) (*Query, error) {
 	if len(query.Queries) == 0 {
 		return nil, fmt.Errorf("query request contains no queries")
 	}
@@ -172,7 +172,7 @@ func (s *Service) getQuery(dsInfo *ds.Info, query *backend.QueryDataRequest) (*Q
 	return s.QueryParser.Parse(model, dsInfo)
 }
 
-func (s *Service) createRequest(ctx context.Context, dsInfo *ds.Info, query string) (*http.Request, error) {
+func (s *Service) createRequest(ctx context.Context, dsInfo *models.DatasourceInfo, query string) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
@@ -218,13 +218,13 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *ds.Info, query stri
 	return req, nil
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*ds.Info, error) {
+func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*models.DatasourceInfo, error) {
 	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	instance, ok := i.(ds.Info)
+	instance, ok := i.(models.DatasourceInfo)
 	if !ok {
 		return nil, fmt.Errorf("failed to cast datsource info")
 	}

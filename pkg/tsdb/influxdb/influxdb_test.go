@@ -7,13 +7,13 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	ds "github.com/grafana/grafana/pkg/tsdb/influxdb/datasource"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestExecutor_createRequest(t *testing.T) {
-	datasource := &ds.Info{
+	datasource := &models.DatasourceInfo{
 		URL:      "http://awesome-influxdb:1337",
 		Database: "awesome-db",
 		HTTPMode: "GET",

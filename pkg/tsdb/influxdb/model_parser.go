@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	ds "github.com/grafana/grafana/pkg/tsdb/influxdb/datasource"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 type InfluxdbQueryParser struct{}
 
-func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *ds.Info) (*Query, error) {
+func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.DatasourceInfo) (*Query, error) {
 	policy := model.Get("policy").MustString("default")
 	rawQuery := model.Get("query").MustString("")
 	useRawQuery := model.Get("rawQuery").MustBool(false)
@@ -165,7 +165,7 @@ func (qp *InfluxdbQueryParser) parseGroupBy(model *simplejson.Json) ([]*QueryPar
 	return result, nil
 }
 
-func GetIntervalFrom(dsInfo *ds.Info, queryModel *simplejson.Json, defaultInterval time.Duration) (time.Duration, error) {
+func GetIntervalFrom(dsInfo *models.DatasourceInfo, queryModel *simplejson.Json, defaultInterval time.Duration) (time.Duration, error) {
 	interval := queryModel.Get("interval").MustString("")
 
 	// intervalMs field appears in the v2 plugins API and should be preferred

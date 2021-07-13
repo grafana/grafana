@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb/datasource"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xorcare/pointer"
@@ -222,7 +222,7 @@ func TestRealQuery(t *testing.T) {
 		json := simplejson.New()
 		json.Set("organization", "test-org")
 
-		dsInfo := &datasource.Info{
+		dsInfo := &models.DatasourceInfo{
 			URL: "http://localhost:9999", // NOTE! no api/v2
 		}
 
