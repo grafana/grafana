@@ -1,4 +1,4 @@
-import { DataLink, FieldOverrideContext, SelectableValue, ThresholdsConfig, ValueMapping } from '../../types';
+import { DataLink, Field, FieldOverrideContext, SelectableValue, ThresholdsConfig, ValueMapping } from '../../types';
 
 export const identityOverrideProcessor = <T>(value: T, _context: FieldOverrideContext, _settings: any) => {
   return value;
@@ -157,4 +157,19 @@ export interface StatsPickerConfigSettings {
    * Default stats to be use in the stats picker
    */
   defaultStat?: string;
+}
+
+export interface FieldNamePickerConfigSettings {
+  // The expected field name
+  defaultFieldName?: string;
+
+  /**
+   * Optionally return true for fields that should be skipped
+   */
+  filter?: (field: Field) => boolean;
+
+  /**
+   * Show this text when no values are found
+   */
+  noFieldsMessage?: string;
 }

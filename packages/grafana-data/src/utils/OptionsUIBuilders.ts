@@ -15,6 +15,7 @@ import {
   identityOverrideProcessor,
   UnitFieldConfigSettings,
   unitOverrideProcessor,
+  FieldNamePickerConfigSettings,
 } from '../field';
 
 /**
@@ -233,6 +234,16 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
       ...config,
       id: config.path,
       editor: standardEditorsRegistry.get('unit').editor as any,
+    });
+  }
+
+  addFieldNamePicker<TSettings = any>(
+    config: PanelOptionsEditorConfig<TOptions, TSettings & FieldNamePickerConfigSettings, string>
+  ): this {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('field-name').editor as any,
     });
   }
 }

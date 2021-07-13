@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { DataFrame, getFieldDisplayName, SelectableValue } from '@grafana/data';
+import { DataFrame, Field, getFieldDisplayName, SelectableValue } from '@grafana/data';
 
 /**
  * @internal
@@ -25,7 +25,7 @@ export function frameHasName(name: string | undefined, names: FrameFieldsDisplay
 /**
  * Retuns the distinct names in a set of frames
  */
-function getFrameFieldsDisplayNames(data: DataFrame[]): FrameFieldsDisplayNames {
+function getFrameFieldsDisplayNames(data: DataFrame[], filter?: (field: Field) => boolean): FrameFieldsDisplayNames {
   const names: FrameFieldsDisplayNames = {
     display: new Set<string>(),
     raw: new Set<string>(),
@@ -33,6 +33,9 @@ function getFrameFieldsDisplayNames(data: DataFrame[]): FrameFieldsDisplayNames 
 
   for (const frame of data) {
     for (const field of frame.fields) {
+      if (filter && filter(field)) {
+        continue;
+      }
       const disp = getFieldDisplayName(field, frame, data);
       names.display.add(disp);
       if (field.name && disp !== field.name) {
@@ -46,10 +49,10 @@ function getFrameFieldsDisplayNames(data: DataFrame[]): FrameFieldsDisplayNames 
 /**
  * @internal
  */
-export function useFieldDisplayNames(data: DataFrame[]): FrameFieldsDisplayNames {
+export function useFieldDisplayNames(data: DataFrame[], filter?: (field: Field) => boolean): FrameFieldsDisplayNames {
   return useMemo(() => {
-    return getFrameFieldsDisplayNames(data);
-  }, [data]);
+    return getFrameFieldsDisplayNames(data, filter);
+  }, [data, filter]);
 }
 
 /**

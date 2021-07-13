@@ -1,4 +1,4 @@
-import { MapLayerRegistryItem, MapLayerConfig, MapLayerHandler, PanelData, GrafanaTheme2, reduceField, ReducerID, FieldCalcs } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerConfig, MapLayerHandler, PanelData, GrafanaTheme2, reduceField, ReducerID, FieldCalcs, FieldType } from '@grafana/data';
 import { dataFrameToPoints } from './utils'
 import { FieldMappingOptions, QueryFormat } from '../../types'
 import Map from 'ol/Map';
@@ -133,31 +133,47 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           ],
         },
       })
-      .addTextInput({
+      .addFieldNamePicker({
         path: 'fieldMapping.latitudeField',
         name: 'Latitude Field',
         defaultValue: defaultOptions.fieldMapping.latitudeField,
+        settings: {
+          filter: (f) => f.type !== FieldType.number,
+          noFieldsMessage: 'No numeric fields found',
+        },
         showIf: (config) =>
           config.queryFormat.locationType === 'coordinates',
       })
-      .addTextInput({
+      .addFieldNamePicker({
         path: 'fieldMapping.longitudeField',
         name: 'Longitude Field',
         defaultValue: defaultOptions.fieldMapping.longitudeField,
+        settings: {
+          filter: (f) => f.type !== FieldType.number,
+          noFieldsMessage: 'No numeric fields found',
+        },
         showIf: (config) =>
           config.queryFormat.locationType === 'coordinates',
       })
-      .addTextInput({
+      .addFieldNamePicker({
         path: 'fieldMapping.geohashField',
         name: 'Geohash Field',
         defaultValue: defaultOptions.fieldMapping.geohashField,
+        settings: {
+          filter: (f) => f.type !== FieldType.string,
+          noFieldsMessage: 'No strings fields found',
+        },
         showIf: (config) =>
           config.queryFormat.locationType === 'geohash',
       })
-      .addTextInput({
+      .addFieldNamePicker({
         path: 'fieldMapping.metricField',
         name: 'Metric Field',
         defaultValue: defaultOptions.fieldMapping.metricField,
+        settings: {
+          filter: (f) => f.type !== FieldType.number,
+          noFieldsMessage: 'No numeric fields found',
+        },
       })
       .addNumberInput({
         path: 'minSize',
