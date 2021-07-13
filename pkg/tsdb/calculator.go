@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
@@ -66,13 +65,12 @@ func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval
 	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}
 }
 
-func GetIntervalFrom(interval, timeInterval string, queryModel *simplejson.Json, defaultInterval time.Duration) (time.Duration, error) {
+func GetIntervalFrom(interval, timeInterval string, queryIntervalMs int64, defaultInterval time.Duration) (time.Duration, error) {
 	// intervalMs field appears in the v2 plugins API and should be preferred
 	// if 'interval' isn't present.
 	if interval == "" {
-		intervalMS := queryModel.Get("intervalMs").MustInt(0)
-		if intervalMS != 0 {
-			return time.Duration(intervalMS) * time.Millisecond, nil
+		if queryIntervalMs != 0 {
+			return time.Duration(queryIntervalMs) * time.Millisecond, nil
 		}
 	}
 

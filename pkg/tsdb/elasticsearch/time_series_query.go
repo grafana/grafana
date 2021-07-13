@@ -66,7 +66,7 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 // nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to string,
 	result backend.QueryDataResponse) error {
-	minInterval, err := e.client.GetMinInterval(q.Interval)
+	minInterval, err := e.client.GetMinInterval(q.Interval, q.IntervalMs)
 	if err != nil {
 		return err
 	}
@@ -398,6 +398,7 @@ func (p *timeSeriesQueryParser) parse(tsdbQuery []backend.DataQuery) ([]*Query, 
 		}
 		alias := model.Get("alias").MustString("")
 		interval := model.Get("interval").MustString("")
+		intervalMs := model.Get("interval").MustInt64(0)
 
 		queries = append(queries, &Query{
 			TimeField:  timeField,
@@ -406,6 +407,7 @@ func (p *timeSeriesQueryParser) parse(tsdbQuery []backend.DataQuery) ([]*Query, 
 			Metrics:    metrics,
 			Alias:      alias,
 			Interval:   interval,
+			IntervalMs: intervalMs,
 			RefID:      q.RefID,
 		})
 	}

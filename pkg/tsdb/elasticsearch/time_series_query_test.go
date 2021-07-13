@@ -1111,7 +1111,7 @@ func (c *fakeClient) GetTimeField() string {
 	return c.timeField
 }
 
-func (c *fakeClient) GetMinInterval(queryInterval string) (time.Duration, error) {
+func (c *fakeClient) GetMinInterval(queryInterval string, queryIntervalMs int64) (time.Duration, error) {
 	return 15 * time.Second, nil
 }
 
