@@ -6,12 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
 var (
-	DefaultRes         int64 = 1500
+	defaultRes         int64 = 1500
 	defaultMinInterval       = time.Millisecond * 1
 	year                     = time.Hour * 24 * 365
 	day                      = time.Hour * 24
@@ -27,7 +28,7 @@ type intervalCalculator struct {
 }
 
 type Calculator interface {
-	Calculate(timeRange plugins.DataTimeRange, minInterval time.Duration) Interval
+	Calculate(timerange backend.TimeRange, minInterval time.Duration) Interval
 }
 
 type CalculatorOptions struct {
@@ -52,17 +53,17 @@ func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, minInterval time.Duration) Interval {
-	to := timerange.MustGetTo().UnixNano()
-	from := timerange.MustGetFrom().UnixNano()
-	interval := time.Duration((to - from) / DefaultRes)
+func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration) Interval {
+	to := timerange.To.Unix()
+	from := timerange.From.Unix()
+	intrvl := time.Duration((to - from) / defaultRes)
 
-	if interval < minInterval {
-		return Interval{Text: FormatDuration(minInterval), Value: minInterval}
+	if intrvl < minInterval {
+		return Interval{Text: interval.FormatDuration(minInterval), Value: minInterval}
 	}
 
-	rounded := RoundInterval(interval)
-	return Interval{Text: FormatDuration(rounded), Value: rounded}
+	rounded := roundInterval(intrvl)
+	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}
 }
 
 func GetIntervalFrom(interval, timeInterval string, queryModel *simplejson.Json, defaultInterval time.Duration) (time.Duration, error) {
@@ -132,7 +133,7 @@ func FormatDuration(inter time.Duration) string {
 }
 
 //nolint: gocyclo
-func RoundInterval(interval time.Duration) time.Duration {
+func roundInterval(interval time.Duration) time.Duration {
 	switch {
 	// 0.015s
 	case interval <= 15*time.Millisecond:

@@ -19,9 +19,7 @@ import (
 
 func TestNewClient(t *testing.T) {
 	t.Run("When no version set should return error", func(t *testing.T) {
-		ds := &DatasourceInfo{
-			JsonData: simplejson.NewFromAny(make(map[string]interface{})),
-		}
+		ds := &DatasourceInfo{}
 
 		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
 		require.Error(t, err)
@@ -29,9 +27,7 @@ func TestNewClient(t *testing.T) {
 
 	t.Run("When no time field name set should return error", func(t *testing.T) {
 		ds := &DatasourceInfo{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": 5,
-			}),
+			ESVersion: "5",
 		}
 
 		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
@@ -41,10 +37,8 @@ func TestNewClient(t *testing.T) {
 	t.Run("When using legacy version numbers", func(t *testing.T) {
 		t.Run("When unsupported version set should return error", func(t *testing.T) {
 			ds := &DatasourceInfo{
-				JsonData: simplejson.NewFromAny(map[string]interface{}{
-					"esVersion": 6,
-					"timeField": "@timestamp",
-				}),
+				ESVersion: "6",
+				TimeField: "@timestamp",
 			}
 
 			_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
@@ -53,10 +47,8 @@ func TestNewClient(t *testing.T) {
 
 		t.Run("When version 2 should return v2 client", func(t *testing.T) {
 			ds := &DatasourceInfo{
-				JsonData: simplejson.NewFromAny(map[string]interface{}{
-					"esVersion": 2,
-					"timeField": "@timestamp",
-				}),
+				ESVersion: "2",
+				TimeField: "@timestamp",
 			}
 
 			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
@@ -66,10 +58,8 @@ func TestNewClient(t *testing.T) {
 
 		t.Run("When version 5 should return v5 client", func(t *testing.T) {
 			ds := &DatasourceInfo{
-				JsonData: simplejson.NewFromAny(map[string]interface{}{
-					"esVersion": 5,
-					"timeField": "@timestamp",
-				}),
+				ESVersion: "5",
+				TimeField: "@timestamp",
 			}
 
 			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
@@ -79,10 +69,8 @@ func TestNewClient(t *testing.T) {
 
 		t.Run("When version 56 should return v5.6 client", func(t *testing.T) {
 			ds := &DatasourceInfo{
-				JsonData: simplejson.NewFromAny(map[string]interface{}{
-					"esVersion": 56,
-					"timeField": "@timestamp",
-				}),
+				ESVersion: "56",
+				TimeField: "@timestamp",
 			}
 
 			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
@@ -92,10 +80,8 @@ func TestNewClient(t *testing.T) {
 
 		t.Run("When version 60 should return v6.0 client", func(t *testing.T) {
 			ds := &DatasourceInfo{
-				JsonData: simplejson.NewFromAny(map[string]interface{}{
-					"esVersion": 60,
-					"timeField": "@timestamp",
-				}),
+				ESVersion: "60",
+				TimeField: "@timestamp",
 			}
 
 			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
@@ -105,10 +91,8 @@ func TestNewClient(t *testing.T) {
 
 		t.Run("When version 70 should return v7.0 client", func(t *testing.T) {
 			ds := &DatasourceInfo{
-				JsonData: simplejson.NewFromAny(map[string]interface{}{
-					"esVersion": 70,
-					"timeField": "@timestamp",
-				}),
+				ESVersion: "70",
+				TimeField: "@timestamp",
 			}
 
 			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
@@ -120,10 +104,8 @@ func TestNewClient(t *testing.T) {
 	t.Run("When version is a valid semver string should create a client", func(t *testing.T) {
 		version := "7.2.4"
 		ds := &DatasourceInfo{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": version,
-				"timeField": "@timestamp",
-			}),
+			ESVersion: version,
+			TimeField: "@timestamp",
 		}
 
 		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
@@ -134,10 +116,8 @@ func TestNewClient(t *testing.T) {
 	t.Run("When version is NOT a valid semver string should return error", func(t *testing.T) {
 		version := "7.NOT_VALID.4"
 		ds := &DatasourceInfo{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": version,
-				"timeField": "@timestamp",
-			}),
+			ESVersion: version,
+			TimeField: "@timestamp",
 		}
 
 		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
@@ -147,12 +127,10 @@ func TestNewClient(t *testing.T) {
 
 func TestClient_ExecuteMultisearch(t *testing.T) {
 	httpClientScenario(t, "Given a fake http client and a v2.x client with response", &DatasourceInfo{
-		Database: "[metrics-]YYYY.MM.DD",
-		JsonData: simplejson.NewFromAny(map[string]interface{}{
-			"esVersion": 2,
-			"timeField": "@timestamp",
-			"interval":  "Daily",
-		}),
+		Database:  "[metrics-]YYYY.MM.DD",
+		ESVersion: "2",
+		TimeField: "@timestamp",
+		Interval:  "Daily",
 	}, func(sc *scenarioContext) {
 		sc.responseBody = `{
 				"responses": [
@@ -197,13 +175,11 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 	})
 
 	httpClientScenario(t, "Given a fake http client and a v5.x client with response", &DatasourceInfo{
-		Database: "[metrics-]YYYY.MM.DD",
-		JsonData: simplejson.NewFromAny(map[string]interface{}{
-			"esVersion":                  5,
-			"maxConcurrentShardRequests": 100,
-			"timeField":                  "@timestamp",
-			"interval":                   "Daily",
-		}),
+		Database:                   "[metrics-]YYYY.MM.DD",
+		ESVersion:                  "5",
+		TimeField:                  "@timestamp",
+		Interval:                   "Daily",
+		MaxConcurrentShardRequests: 100,
 	}, func(sc *scenarioContext) {
 		sc.responseBody = `{
 				"responses": [
@@ -249,13 +225,11 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 	})
 
 	httpClientScenario(t, "Given a fake http client and a v5.6 client with response", &DatasourceInfo{
-		Database: "[metrics-]YYYY.MM.DD",
-		JsonData: simplejson.NewFromAny(map[string]interface{}{
-			"esVersion":                  56,
-			"maxConcurrentShardRequests": 100,
-			"timeField":                  "@timestamp",
-			"interval":                   "Daily",
-		}),
+		Database:                   "[metrics-]YYYY.MM.DD",
+		ESVersion:                  "56",
+		TimeField:                  "@timestamp",
+		Interval:                   "Daily",
+		MaxConcurrentShardRequests: 100,
 	}, func(sc *scenarioContext) {
 		sc.responseBody = `{
 				"responses": [
@@ -301,13 +275,11 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 	})
 
 	httpClientScenario(t, "Given a fake http client and a v7.0 client with response", &DatasourceInfo{
-		Database: "[metrics-]YYYY.MM.DD",
-		JsonData: simplejson.NewFromAny(map[string]interface{}{
-			"esVersion":                  70,
-			"maxConcurrentShardRequests": 6,
-			"timeField":                  "@timestamp",
-			"interval":                   "Daily",
-		}),
+		Database:                   "[metrics-]YYYY.MM.DD",
+		ESVersion:                  "70",
+		TimeField:                  "@timestamp",
+		Interval:                   "Daily",
+		MaxConcurrentShardRequests: 6,
 	}, func(sc *scenarioContext) {
 		sc.responseBody = `{
 				"responses": [
@@ -399,7 +371,7 @@ func httpClientScenario(t *testing.T, desc string, ds *DatasourceInfo, fn scenar
 			require.NoError(t, err)
 			rw.WriteHeader(sc.responseStatus)
 		}))
-		ds.Url = ts.URL
+		ds.URL = ts.URL
 
 		from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)

@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
 type timeSeriesQuery struct {
@@ -64,19 +63,6 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 	return rp.getTimeSeries()
 }
 
-func Calculate(timerange backend.TimeRange, minInterval time.Duration) tsdb.Interval {
-	to := timerange.To.Unix()
-	from := timerange.From.Unix()
-	intrvl := time.Duration((to - from) / interval.DefaultRes)
-
-	if intrvl < minInterval {
-		return tsdb.Interval{Text: interval.FormatDuration(minInterval), Value: minInterval}
-	}
-
-	rounded := interval.RoundInterval(intrvl)
-	return tsdb.Interval{Text: interval.FormatDuration(rounded), Value: rounded}
-}
-
 // nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to string,
 	result backend.QueryDataResponse) error {
@@ -84,7 +70,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	if err != nil {
 		return err
 	}
-	intrvl := Calculate(e.dataQueries[0].TimeRange, minInterval)
+	intrvl := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval)
 
 	b := ms.Search(intrvl)
 	b.Size(0)

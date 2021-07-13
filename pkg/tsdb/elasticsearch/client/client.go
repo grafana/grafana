@@ -25,11 +25,15 @@ import (
 )
 
 type DatasourceInfo struct {
-	Id          int64
-	HTTPCliOpts sdkhttpclient.Options
-	Url         string           `json:"url"`
-	JsonData    *simplejson.Json `json:"jsonData"`
-	Database    string
+	ID                         int64
+	HTTPClientOpts             sdkhttpclient.Options
+	URL                        string
+	Database                   string
+	ESVersion                  string
+	TimeField                  string
+	Interval                   string
+	TimeInterval               string
+	MaxConcurrentShardRequests int64
 }
 
 const loggerName = "tsdb.elasticsearch.client"
@@ -39,7 +43,7 @@ var (
 )
 
 var newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *DatasourceInfo) (*http.Client, error) {
-	return httpClientProvider.New(ds.HTTPCliOpts)
+	return httpClientProvider.New(ds.HTTPClientOpts)
 }
 
 // Client represents a client which can interact with elasticsearch api
@@ -52,51 +56,43 @@ type Client interface {
 	EnableDebug()
 }
 
-func coerceVersion(v *simplejson.Json) (*semver.Version, error) {
-	versionString, err := v.String()
-
+func coerceVersion(v string) (*semver.Version, error) {
+	versionNumber, err := strconv.Atoi(v)
 	if err != nil {
-		versionNumber, err := v.Int()
-		if err != nil {
-			return nil, err
-		}
-
-		// Legacy version numbers (before Grafana 8)
-		// valid values were 2,5,56,60,70
-		switch versionNumber {
-		case 2:
-			return semver.NewVersion("2.0.0")
-		case 5:
-			return semver.NewVersion("5.0.0")
-		case 56:
-			return semver.NewVersion("5.6.0")
-		case 60:
-			return semver.NewVersion("6.0.0")
-		case 70:
-			return semver.NewVersion("7.0.0")
-		default:
-			return nil, fmt.Errorf("elasticsearch version=%d is not supported", versionNumber)
-		}
+		return semver.NewVersion(v)
 	}
 
-	return semver.NewVersion(versionString)
+	// Legacy version numbers (before Grafana 8)
+	// valid values were 2,5,56,60,70
+	switch versionNumber {
+	case 2:
+		return semver.NewVersion("2.0.0")
+	case 5:
+		return semver.NewVersion("5.0.0")
+	case 56:
+		return semver.NewVersion("5.6.0")
+	case 60:
+		return semver.NewVersion("6.0.0")
+	case 70:
+		return semver.NewVersion("7.0.0")
+	default:
+		return nil, fmt.Errorf("elasticsearch version=%d is not supported", versionNumber)
+	}
 }
 
 // NewClient creates a new elasticsearch client
 var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider, ds *DatasourceInfo, timeRange backend.TimeRange) (Client, error) {
-	version, err := coerceVersion(ds.JsonData.Get("esVersion"))
+	version, err := coerceVersion(ds.ESVersion)
 
 	if err != nil {
 		return nil, fmt.Errorf("elasticsearch version is required, err=%v", err)
 	}
 
-	timeField, err := ds.JsonData.Get("timeField").String()
-	if err != nil {
+	if ds.TimeField == "" {
 		return nil, fmt.Errorf("elasticsearch time field name is required, err=%v", err)
 	}
 
-	indexInterval := ds.JsonData.Get("interval").MustString()
-	ip, err := newIndexPattern(indexInterval, ds.Database)
+	ip, err := newIndexPattern(ds.Interval, ds.Database)
 	if err != nil {
 		return nil, err
 	}
@@ -106,14 +102,14 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 		return nil, err
 	}
 
-	clientLog.Info("Creating new client", "version", version.String(), "timeField", timeField, "indices", strings.Join(indices, ", "))
+	clientLog.Info("Creating new client", "version", version.String(), "timeField", ds.TimeField, "indices", strings.Join(indices, ", "))
 
 	return &baseClientImpl{
 		ctx:                ctx,
 		httpClientProvider: httpClientProvider,
 		ds:                 ds,
 		version:            version,
-		timeField:          timeField,
+		timeField:          ds.TimeField,
 		indices:            indices,
 		timeRange:          timeRange,
 	}, nil
@@ -139,14 +135,10 @@ func (c *baseClientImpl) GetTimeField() string {
 }
 
 func (c *baseClientImpl) GetMinInterval(queryInterval string) (time.Duration, error) {
-	timeInterval := c.ds.JsonData.Get("timeInterval").MustString("")
+	timeInterval := c.ds.TimeInterval
 	return tsdb.GetIntervalFrom(queryInterval, timeInterval, simplejson.NewFromAny(map[string]interface{}{
 		"interval": queryInterval,
 	}), 5*time.Second)
-}
-
-func (c *baseClientImpl) getSettings() *simplejson.Json {
-	return c.ds.JsonData
 }
 
 type multiRequest struct {
@@ -194,7 +186,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 }
 
 func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body []byte) (*response, error) {
-	u, err := url.Parse(c.ds.Url)
+	u, err := url.Parse(c.ds.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +323,10 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 			allowedVersionRange, _ := semver.NewConstraint(">=5.6.0, <7.0.0")
 
 			if allowedVersionRange.Check(c.version) {
-				maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(256)
+				maxConcurrentShardRequests := c.ds.MaxConcurrentShardRequests
+				if maxConcurrentShardRequests == 0 {
+					maxConcurrentShardRequests = 256
+				}
 				mr.header["max_concurrent_shard_requests"] = maxConcurrentShardRequests
 			}
 		}
@@ -344,7 +339,10 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 	if c.version.Major() >= 7 {
-		maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(5)
+		maxConcurrentShardRequests := c.ds.MaxConcurrentShardRequests
+		if maxConcurrentShardRequests == 0 {
+			maxConcurrentShardRequests = 5
+		}
 		return fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests)
 	}
 

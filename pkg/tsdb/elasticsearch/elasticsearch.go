@@ -8,13 +8,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
@@ -31,18 +29,16 @@ func init() {
 
 type Service struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
 	HTTPClientProvider   httpclient.Provider   `inject:""`
 	intervalCalculator   tsdb.Calculator
 	im                   instancemgmt.InstanceManager
-	cfg                  *setting.Cfg
 }
 
 func (s *Service) Init() error {
 	eslog.Debug("initializing")
 	im := datasource.NewInstanceManager(newInstanceSettings())
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newService(im, s.Cfg, s.HTTPClientProvider),
+		QueryDataHandler: newService(im, s.HTTPClientProvider),
 	})
 	if err := s.BackendPluginManager.Register("elasticsearch", factory); err != nil {
 		eslog.Error("Failed to register plugin", "error", err)
@@ -51,10 +47,9 @@ func (s *Service) Init() error {
 }
 
 // newService creates a new executor func.
-func newService(im instancemgmt.InstanceManager, cfg *setting.Cfg, httpClientProvider httpclient.Provider) *Service {
+func newService(im instancemgmt.InstanceManager, httpClientProvider httpclient.Provider) *Service {
 	return &Service{
 		im:                 im,
-		cfg:                cfg,
 		HTTPClientProvider: httpClientProvider,
 		intervalCalculator: tsdb.NewCalculator(),
 	}
@@ -91,10 +86,14 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			return nil, fmt.Errorf("error getting http options: %w", err)
 		}
 		model := es.DatasourceInfo{
-			JsonData:    simplejson.NewFromAny(jsonData),
-			Id:          settings.ID,
-			Url:         settings.URL,
-			HTTPCliOpts: httpCliOpts,
+			ID:             settings.ID,
+			URL:            settings.URL,
+			HTTPClientOpts: httpCliOpts,
+			Database:       settings.Database,
+			ESVersion:      jsonData["esVersion"].(string),
+			TimeField:      jsonData["timeField"].(string),
+			Interval:       jsonData["interval"].(string),
+			TimeInterval:   jsonData["timeInterval"].(string),
 		}
 		return model, nil
 	}
