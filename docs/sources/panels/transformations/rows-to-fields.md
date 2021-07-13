@@ -29,7 +29,7 @@ Output:
 | ------------------------- | ------------------------- | ------------------------- |
 | 10                        | 20                        | 30                        |
 
-As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like min, max, unit and thresholds are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
+As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like `Min`, `Max`, `Unit` and `Thresholds` are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
 
 ## Configuration
 
