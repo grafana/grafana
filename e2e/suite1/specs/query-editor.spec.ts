@@ -12,9 +12,9 @@ e2e.scenario({
       .should('be.visible')
       .within(() => {
         e2e.components.Select.input().should('be.visible').click();
-
-        cy.contains('gdev-prometheus').scrollIntoView().should('be.visible').click();
       });
+
+    cy.contains('gdev-prometheus').scrollIntoView().should('be.visible').click();
     const queryText = 'http_requests_total';
 
     e2e.components.QueryField.container().should('be.visible').type(queryText).type('{backspace}');

@@ -47,9 +47,9 @@ e2e.scenario({
         e2e.components.Select.singleValue().should('be.visible').should('have.text', fromTimeZone);
 
         e2e.components.Select.input().should('be.visible').click();
-
-        e2e.components.Select.option().should('be.visible').contains(toTimeZone).click();
       });
+
+    e2e.components.Select.option().should('be.visible').contains(toTimeZone).click();
 
     // click to go back to the dashboard.
     e2e.components.BackButton.backArrow().click({ force: true }).wait(2000);

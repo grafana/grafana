@@ -13,9 +13,9 @@ const addDataSource = () => {
         .should('be.visible')
         .within(() => {
           e2e.components.Select.input().should('be.visible').click({ force: true });
-
-          e2e().contains('gdev-tempo').scrollIntoView().should('be.visible').click();
         });
+
+      e2e().contains('gdev-tempo').scrollIntoView().should('be.visible').click();
     },
   });
 };
