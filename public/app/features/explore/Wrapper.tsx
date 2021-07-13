@@ -18,6 +18,7 @@ interface OwnProps {}
 const mapStateToProps = (state: StoreState) => {
   return {
     navModel: getNavModel(state.navIndex, 'explore'),
+    exploreState: state.explore,
   };
 };
 
@@ -49,6 +50,16 @@ class WrapperUnconnected extends PureComponent<Props> {
     const richHistory = getRichHistory();
     this.props.richHistoryUpdatedAction({ richHistory });
     this.updatePageDocumentTitle(this.props.navModel);
+  }
+
+  componentDidUpdate() {
+    const { left, right } = this.props.queryParams;
+    const hasSplit = Boolean(left) && Boolean(right);
+    const datasourceTitle = hasSplit
+      ? `${this.props.exploreState.left.datasourceInstance?.name} | ${this.props.exploreState.right?.datasourceInstance?.name}`
+      : `${this.props.exploreState.left.datasourceInstance?.name}`;
+    const documentTitle = `${this.props.navModel.main.text} - ${datasourceTitle} - ${Branding.AppTitle}`;
+    document.title = documentTitle;
   }
 
   render() {

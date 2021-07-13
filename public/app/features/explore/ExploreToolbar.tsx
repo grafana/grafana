@@ -6,7 +6,7 @@ import { css } from '@emotion/css';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { Icon, IconButton, SetInterval, ToolbarButton, ToolbarButtonRow, Tooltip } from '@grafana/ui';
-import { DataSourceInstanceSettings, NavModel, RawTimeRange } from '@grafana/data';
+import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { StoreState } from 'app/types/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -22,16 +22,10 @@ import { LiveTailControls } from './useLiveTailControls';
 import { cancelQueries, clearQueries, runQueries, clearCache } from './state/query';
 import ReturnToDashboardButton from './ReturnToDashboardButton';
 import { isSplit } from './state/selectors';
-import { getNavModel } from '../../core/selectors/navModel';
-import { Branding } from 'app/core/components/Branding/Branding';
 
 interface OwnProps {
   exploreId: ExploreId;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
-}
-
-function setDatasourcePageTitle(dsName: string | undefined, navModel: NavModel) {
-  document.title = `${navModel.main.text} - ${dsName} - ${Branding.AppTitle}`;
 }
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
@@ -88,7 +82,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
-    setDatasourcePageTitle(this.props.datasourceName, this.props.navModel);
 
     return (
       <div className={splitted ? 'explore-toolbar splitted' : 'explore-toolbar'}>
@@ -243,7 +236,6 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
     isPaused,
     syncedTimes,
     containerWidth,
-    navModel: getNavModel(state.navIndex, 'explore'),
   };
 };
 
