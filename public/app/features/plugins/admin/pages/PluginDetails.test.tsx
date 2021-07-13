@@ -17,7 +17,9 @@ jest.mock('@grafana/runtime', () => {
           case `${GRAFANA_API_ROOT}/plugins/enterprise/versions`:
             return Promise.resolve([]);
           case API_ROOT:
-            return Promise.resolve([localPlugin()]);
+            return Promise.resolve([localPlugin(), corePlugin()]);
+          case `${GRAFANA_API_ROOT}/plugins/core`:
+            return Promise.resolve(corePlugin());
           case `${GRAFANA_API_ROOT}/plugins/not-installed`:
             return Promise.resolve(remotePlugin());
           case `${GRAFANA_API_ROOT}/plugins/enterprise`:
@@ -48,8 +50,7 @@ describe('Plugin details page', () => {
 
     const expected = 'Install';
 
-    await waitFor(() => getByText(expected));
-    expect(getByText(expected)).toBeInTheDocument();
+    await waitFor(() => expect(getByText(expected)).toBeInTheDocument());
   });
 
   it('should not display install button for enterprise plugins', async () => {
@@ -57,8 +58,12 @@ describe('Plugin details page', () => {
 
     const expected = "Marketplace doesn't support installing Enterprise plugins yet. Stay tuned!";
 
-    await waitFor(() => getByText(expected));
-    expect(getByText(expected)).toBeInTheDocument();
+    await waitFor(() => expect(getByText(expected)).toBeInTheDocument());
+  });
+
+  it('should not display install / uninstall buttons for core plugins', async () => {
+    const { queryByRole } = setup('core');
+    await waitFor(() => expect(queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument());
   });
 });
 
@@ -127,6 +132,38 @@ function localPlugin(plugin: Partial<LocalPlugin> = {}): LocalPlugin {
     state: 'alpha',
     type: 'datasource',
     dev: false,
+    ...plugin,
+  };
+}
+
+function corePlugin(plugin: Partial<LocalPlugin> = {}): LocalPlugin {
+  return {
+    category: 'sql',
+    defaultNavUrl: '/plugins/postgres/',
+    dev: false,
+    enabled: true,
+    hasUpdate: false,
+    id: 'core',
+    info: {
+      author: { name: 'Grafana Labs', url: 'https://grafana.com' },
+      build: {},
+      description: 'Data source for PostgreSQL and compatible databases',
+      links: [],
+      logos: {
+        small: 'public/app/plugins/datasource/postgres/img/postgresql_logo.svg',
+        large: 'public/app/plugins/datasource/postgres/img/postgresql_logo.svg',
+      },
+      updated: '',
+      version: '',
+    },
+    latestVersion: '',
+    name: 'PostgreSQL',
+    pinned: false,
+    signature: 'internal',
+    signatureOrg: '',
+    signatureType: '',
+    state: '',
+    type: 'datasource',
     ...plugin,
   };
 }
