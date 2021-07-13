@@ -49,4 +49,16 @@ export interface GeomapPanelOptions {
   controls: ControlsOptions;
   basemap: MapLayerConfig;
   layers: MapLayerConfig[];
+  fieldMapping: FieldMappingOptions;
+}
+
+export interface FieldMappingOptions {
+  metricField: string;
+  geohashField: string;
+  latitudeField: string;
+  longitudeField: string;
+}
+
+export interface QueryFormat {
+  locationType: string;
 }

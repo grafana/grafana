@@ -94,11 +94,24 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       padding: ${theme.spacing(0.25, 0, 0.25, 1)};
       color: ${theme.colors.text.primary};
       font-size: ${theme.typography.size.sm};
+
+      &:hover {
+        background: ${theme.colors.emphasize(theme.colors.background.secondary)};
+      }
     `,
     multiValueRemove: css`
       label: grafana-select-multi-value-remove;
       margin: ${theme.spacing(0, 0.5)};
       cursor: pointer;
+      svg {
+        margin-bottom: 0;
+      }
+    `,
+    singleValueRemove: css`
+      cursor: pointer;
+      &:hover {
+        color: ${theme.colors.text.primary};
+      }
     `,
   };
 });

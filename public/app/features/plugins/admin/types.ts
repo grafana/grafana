@@ -28,7 +28,7 @@ export interface Plugin {
     rel: string;
     href: string;
   }>;
-  json: {
+  json?: {
     dependencies: {
       grafanaDependency: string;
       grafanaVersion: string;
