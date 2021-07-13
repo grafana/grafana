@@ -1,12 +1,13 @@
 import { toDataFrame, FieldType, ReducerID } from '@grafana/data';
+import { FieldConfigHandlerKey } from '../fieldToConfigMapping/fieldToConfigMapping';
 import { extractConfigFromQuery, ConfigFromQueryTransformOptions } from './configFromQuery';
 
 describe('config from data', () => {
   const config = toDataFrame({
     fields: [
       { name: 'Time', type: FieldType.time, values: [1, 2] },
-      { name: 'Max', type: FieldType.string, values: [1, 10, 50] },
-      { name: 'Min', type: FieldType.string, values: [1, 10, 5] },
+      { name: 'Max', type: FieldType.number, values: [1, 10, 50] },
+      { name: 'Min', type: FieldType.number, values: [1, 10, 5] },
       { name: 'Names', type: FieldType.string, values: ['first-name', 'middle', 'last-name'] },
     ],
     refId: 'A',
@@ -36,16 +37,28 @@ describe('config from data', () => {
     expect(results[0].fields[1].config.min).toBe(5);
   });
 
+  it('Can apply to config frame if there is only one frame', () => {
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [],
+    };
+
+    const results = extractConfigFromQuery(options, [config]);
+    expect(results.length).toBe(1);
+    expect(results[0].fields[1].name).toBe('Max');
+    expect(results[0].fields[1].config.max).toBe(50);
+  });
+
   it('With ignore mappings', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
-      mappings: [{ fieldName: 'Min', handlerKey: null }],
+      mappings: [{ fieldName: 'Min', handlerKey: FieldConfigHandlerKey.Ignore }],
     };
 
     const results = extractConfigFromQuery(options, [config, seriesA]);
     expect(results.length).toBe(1);
-    expect(results[0].fields[1].config.min).toBe(undefined);
-    expect((results[0].fields[1].config as any).ignore).toBe(undefined);
+    expect(results[0].fields[1].config.min).toEqual(undefined);
+    expect(results[0].fields[1].config.max).toEqual(50);
   });
 
   it('With custom mappings', () => {

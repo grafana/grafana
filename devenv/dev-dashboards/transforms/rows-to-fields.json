@@ -20,7 +20,7 @@
     },
     "editable": true,
     "gnetId": null,
-    "graphTooltip": 0,    
+    "graphTooltip": 0,
     "links": [],
     "panels": [
       {
@@ -528,6 +528,69 @@
           }
         ],
         "type": "gauge"
+      },
+      {
+        "datasource": null,
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        },
+        "id": 13,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "none",
+          "justifyMode": "auto",
+          "orientation": "horizontal",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "text": {},
+          "textMode": "auto"
+        },
+        "pluginVersion": "8.1.0-pre",
+        "targets": [
+          {
+            "csvContent": "Name, City, Country, Value\nSensorA, Stockholm, Sweden, 20\nSensorB, London, England, 50\nSensorC, New York, USA,100",
+            "refId": "A",
+            "scenarioId": "csv_content"
+          }
+        ],
+        "title": "Extra string fields to labels",
+        "transformations": [
+          {
+            "id": "rowsToFields",
+            "options": {}
+          }
+        ],
+        "type": "stat"
       }
     ],
     "refresh": "",
@@ -548,5 +611,5 @@
     "timezone": "",
     "title": "Transforms - Rows to fields",
     "uid": "PMtIInink",
-    "version": 20
+    "version": 1
   }

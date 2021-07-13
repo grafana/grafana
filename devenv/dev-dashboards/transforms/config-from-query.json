@@ -21,7 +21,7 @@
     "description": "",
     "editable": true,
     "gnetId": null,
-    "graphTooltip": 0,    
+    "graphTooltip": 0,
     "links": [],
     "panels": [
       {
@@ -109,7 +109,7 @@
             "scenarioId": "csv_content"
           }
         ],
-        "title": "Min and max from separate query",
+        "title": "Min, max, threshold from separate query",
         "transformations": [
           {
             "id": "configFromData",
@@ -197,10 +197,6 @@
                   "configProperty": "unit",
                   "fieldName": "MyUnit",
                   "handlerKey": "unit"
-                },
-                {
-                  "configProperty": "color",
-                  "fieldName": "MyCololr"
                 },
                 {
                   "fieldName": "MyColor",
@@ -568,5 +564,5 @@
     "timezone": "",
     "title": "Transforms - Config from query",
     "uid": "Juj4_7ink",
-    "version": 31
+    "version": 1
   }

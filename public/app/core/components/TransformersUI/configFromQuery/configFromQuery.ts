@@ -20,7 +20,6 @@ export interface ConfigFromQueryTransformOptions {
   configRefId?: string;
   mappings: FieldToConfigMapping[];
   applyTo?: MatcherConfig;
-  applyToConfig?: boolean;
 }
 
 export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions, data: DataFrame[]) {
@@ -59,7 +58,7 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
 
   for (const frame of data) {
     // Skip config frame in output
-    if (!options.applyToConfig && frame === configFrame) {
+    if (frame === configFrame && data.length > 1) {
       continue;
     }
 

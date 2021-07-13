@@ -8,7 +8,7 @@ import {
   TransformerUIProps,
 } from '@grafana/data';
 import { configFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
-import { fieldMatchersUI, InlineField, InlineFieldRow, InlineSwitch, Select, useStyles2 } from '@grafana/ui';
+import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
 import { css } from '@emotion/css';
 
@@ -42,10 +42,6 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     onChange({ ...options, applyTo: { id: currentMatcher.id, options: matcherOption } });
   };
 
-  const onApplyToConfigChange = () => {
-    onChange({ ...options, applyToConfig: !options.applyToConfig });
-  };
-
   const matchers = fieldMatchersUI
     .list()
     .filter((o) => !o.excludeFromPicker)
@@ -56,9 +52,6 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
       <InlineFieldRow>
         <InlineField label="Config query" labelWidth={20}>
           <Select onChange={onRefIdChange} options={refIds} value={currentRefId} width={30} />
-        </InlineField>
-        <InlineField label="Apply to self" tooltip="Enable to apply config to the config data frame">
-          <InlineSwitch value={options.applyToConfig} onChange={onApplyToConfigChange} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>

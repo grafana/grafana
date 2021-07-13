@@ -188,7 +188,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     max-width: 400px;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-width: 240px;
+    min-width: 140px;
   `,
   selectCell: css`
     padding: 0;
