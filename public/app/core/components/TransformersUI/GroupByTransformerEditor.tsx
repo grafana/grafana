@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import {
   DataTransformerID,
@@ -8,7 +8,6 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { Select, StatsPicker, stylesFactory } from '@grafana/ui';
 
 import {
@@ -16,6 +15,7 @@ import {
   GroupByOperationID,
   GroupByTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/groupBy';
+import { useAllFieldNamesFromDataFrames } from './utils';
 
 interface FieldProps {
   fieldName: string;
@@ -28,7 +28,7 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
   options,
   onChange,
 }) => {
-  const fieldNames = useMemo(() => getAllFieldNamesFromDataFrames(input), [input]);
+  const fieldNames = useAllFieldNamesFromDataFrames(input);
 
   const onConfigChange = useCallback(
     (fieldName: string) => (config: GroupByFieldOptions) => {
@@ -47,7 +47,7 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
 
   return (
     <div>
-      {fieldNames.map((key: string) => (
+      {fieldNames.map((key) => (
         <GroupByFieldConfiguration
           onConfigChange={onConfigChange(key)}
           fieldName={key}

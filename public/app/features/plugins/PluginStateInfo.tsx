@@ -13,15 +13,7 @@ export const PluginStateInfo: FC<Props> = (props) => {
     return null;
   }
 
-  return (
-    <Badge
-      color={display.color}
-      title={display.tooltip}
-      text={display.text}
-      icon={display.icon}
-      tooltip={display.tooltip}
-    />
-  );
+  return <Badge color={display.color} title={display.tooltip} text={display.text} icon={display.icon} />;
 };
 
 function getFeatureStateInfo(state?: PluginState): BadgeProps | null {

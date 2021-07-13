@@ -18,15 +18,13 @@ export enum ReducerID {
   diffperc = 'diffperc',
   delta = 'delta',
   step = 'step',
-
   firstNotNull = 'firstNotNull',
   lastNotNull = 'lastNotNull',
-
   changeCount = 'changeCount',
   distinctCount = 'distinctCount',
-
   allIsZero = 'allIsZero',
   allIsNull = 'allIsNull',
+  allValues = 'allValues',
 }
 
 // Internal function
@@ -231,6 +229,13 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: 'Difference percent',
     description: 'Percentage difference between first and last values',
     standard: true,
+  },
+  {
+    id: ReducerID.allValues,
+    name: 'All values',
+    description: 'Returns an array with all values',
+    standard: false,
+    reduce: (field: Field) => ({ allValues: field.values.toArray() }),
   },
 ]);
 

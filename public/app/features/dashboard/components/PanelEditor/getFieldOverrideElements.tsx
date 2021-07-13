@@ -187,6 +187,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
           render: function renderAddPropertyButton() {
             return (
               <ValuePicker
+                key="Add override property"
                 label="Add override property"
                 variant="secondary"
                 isFullWidth={true}

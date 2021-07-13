@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import {
   DataTransformerID,
   SelectableValue,
@@ -6,18 +6,17 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { Select } from '@grafana/ui';
 
 import { SeriesToColumnsOptions } from '@grafana/data/src/transformations/transformers/seriesToColumns';
+import { useAllFieldNamesFromDataFrames } from './utils';
 
 export const SeriesToFieldsTransformerEditor: React.FC<TransformerUIProps<SeriesToColumnsOptions>> = ({
   input,
   options,
   onChange,
 }) => {
-  const fieldNames = useMemo(() => getAllFieldNamesFromDataFrames(input), [input]);
-  const fieldNameOptions = fieldNames.map((item: string) => ({ label: item, value: item }));
+  const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
 
   const onSelectField = useCallback(
     (value: SelectableValue<string>) => {
@@ -33,7 +32,7 @@ export const SeriesToFieldsTransformerEditor: React.FC<TransformerUIProps<Series
     <div className="gf-form-inline">
       <div className="gf-form gf-form--grow">
         <div className="gf-form-label width-8">Field name</div>
-        <Select options={fieldNameOptions} value={options.byField} onChange={onSelectField} isClearable />
+        <Select options={fieldNames} value={options.byField} onChange={onSelectField} isClearable />
       </div>
     </div>
   );
