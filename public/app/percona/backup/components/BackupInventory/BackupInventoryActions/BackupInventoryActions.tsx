@@ -34,7 +34,8 @@ export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({ backup
         type="delete"
         disabled={
           backup.status === BackupStatus.BACKUP_STATUS_IN_PROGRESS ||
-          backup.status === BackupStatus.BACKUP_STATUS_PENDING
+          backup.status === BackupStatus.BACKUP_STATUS_PENDING ||
+          backup.status === BackupStatus.BACKUP_STATUS_DELETING
         }
         data-qa="delete-backup-artifact-button"
         role="button"

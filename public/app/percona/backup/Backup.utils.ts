@@ -9,6 +9,8 @@ export const formatStatus = (status: BackupStatus | RestoreStatus): string => {
     [RestoreStatus.RESTORE_STATUS_INVALID]: statusMsg.invalid,
     [BackupStatus.BACKUP_STATUS_PENDING]: statusMsg.pending,
     [BackupStatus.BACKUP_STATUS_IN_PROGRESS]: statusMsg.inProgress,
+    [BackupStatus.BACKUP_STATUS_DELETING]: statusMsg.deleting,
+    [BackupStatus.BACKUP_STATUS_FAILED_TO_DELETE]: statusMsg.failedToDelete,
     [RestoreStatus.RESTORE_STATUS_IN_PROGRESS]: statusMsg.inProgress,
     [BackupStatus.BACKUP_STATUS_PAUSED]: statusMsg.paused,
     [BackupStatus.BACKUP_STATUS_SUCCESS]: statusMsg.success,
