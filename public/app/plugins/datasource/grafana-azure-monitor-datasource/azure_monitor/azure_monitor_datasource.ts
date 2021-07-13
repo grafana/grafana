@@ -77,6 +77,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   filterQuery(item: AzureMonitorQuery): boolean {
     return !!(
       item.hide !== true &&
+      item.azureMonitor &&
       item.azureMonitor.resourceGroup &&
       item.azureMonitor.resourceGroup !== defaultDropdownValue &&
       item.azureMonitor.resourceName &&
@@ -110,22 +111,24 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     if (res.data) {
       for (const df of res.data) {
         const metricQuery = metricQueries[df.refId];
-        if (metricQuery && metricQuery.azureMonitor) {
-          const url = this.buildAzurePortalUrl(
-            metricQuery.azureMonitor,
-            metricQuery.subscription,
-            this.timeSrv.timeRange()
-          );
+        if (!metricQuery.azureMonitor || !metricQuery.subscription) {
+          continue;
+        }
 
-          for (const field of df.fields) {
-            field.config.links = [
-              {
-                url: url,
-                title: 'View in Azure Portal',
-                targetBlank: true,
-              },
-            ];
-          }
+        const url = this.buildAzurePortalUrl(
+          metricQuery.azureMonitor,
+          metricQuery.subscription,
+          this.timeSrv.timeRange()
+        );
+
+        for (const field of df.fields) {
+          field.config.links = [
+            {
+              url: url,
+              title: 'View in Azure Portal',
+              targetBlank: true,
+            },
+          ];
         }
       }
     }

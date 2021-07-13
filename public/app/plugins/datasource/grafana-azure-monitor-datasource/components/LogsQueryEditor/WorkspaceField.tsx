@@ -53,7 +53,7 @@ const WorkspaceField: React.FC<AzureQueryEditorFieldProps> = ({
     <Field label="Workspace">
       <Select
         inputId="azure-monitor-logs-workspaces-field"
-        value={findOption(workspaces, query.azureLogAnalytics.workspace)}
+        value={findOption(workspaces, query.azureLogAnalytics?.workspace)}
         onChange={handleChange}
         options={options}
         width={38}

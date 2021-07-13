@@ -42,6 +42,5 @@ export default function createMockQuery(): AzureMonitorQuery {
     refId: 'A',
     subscription: '99999999-cccc-bbbb-aaaa-9106972f9572',
     subscriptions: ['99999999-cccc-bbbb-aaaa-9106972f9572'],
-    format: 'dunno lol', // unsure what this value should be. It's not there at runtime, but it's in the ts interface
   };
 }

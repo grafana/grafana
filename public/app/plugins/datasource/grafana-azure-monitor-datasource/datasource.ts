@@ -99,7 +99,12 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     }
 
     const observables: Array<Observable<DataQueryResponse>> = Array.from(byType.entries()).map(([queryType, req]) => {
-      return this.pseudoDatasource[queryType].query(req);
+      const ds = this.pseudoDatasource[queryType];
+      if (!ds) {
+        throw new Error('Data source not created for query type ' + queryType);
+      }
+
+      return ds.query(req);
     });
 
     // Single query can skip merge
@@ -268,12 +273,12 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   interpolateVariablesInQueries(queries: AzureMonitorQuery[], scopedVars: ScopedVars): AzureMonitorQuery[] {
     const mapped = queries.map((query) => {
-      if (query.queryType) {
-        const ds = this.pseudoDatasource[query.queryType];
-        return ds.applyTemplateVariables(query, scopedVars);
-      } else {
+      if (!query.queryType) {
         return query;
       }
+
+      const ds = this.pseudoDatasource[query.queryType];
+      return ds?.applyTemplateVariables(query, scopedVars) ?? query;
     });
 
     return mapped;
