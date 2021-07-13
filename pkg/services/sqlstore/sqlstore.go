@@ -109,6 +109,7 @@ func (ss *SQLStore) Init() error {
 	ss.addUserQueryAndCommandHandlers()
 	ss.addAlertNotificationUidByIdHandler()
 	ss.addPreferencesQueryAndCommandHandlers()
+	ss.addDashboardQueryAndCommandHandlers()
 
 	if err := ss.Reset(); err != nil {
 		return err

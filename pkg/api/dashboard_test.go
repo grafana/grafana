@@ -36,7 +36,7 @@ func TestGetHomeDashboard(t *testing.T) {
 		Cfg: cfg, Bus: bus.New(),
 		PluginManager: &fakePluginManager{},
 	}
-	hs.Bus.AddHandler(func(query *models.GetPreferencesWithDefaultsQuery) error {
+	hs.Bus.AddHandlerCtx(func(_ context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
 		query.Result = &models.Preferences{
 			HomeDashboardId: 0,
 		}
