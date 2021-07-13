@@ -4,12 +4,12 @@ import { transformDataFrame } from '../transformDataFrame';
 import { DataFrame, FieldType } from '../../types';
 import { DataTransformerID } from './ids';
 import { DataTransformerConfig } from '@grafana/data';
-import { stretchTransformer, StretchTransformerOptions } from './stretch';
+import { stretchFramesTransformer, StretchFramesTransformerOptions } from './stretch';
 import { ArrayVector } from '../../vector';
 
-describe('Stretch transformer', () => {
+describe('Stretch frames transformer', () => {
   beforeAll(() => {
-    mockTransformationsRegistry([stretchTransformer]);
+    mockTransformationsRegistry([stretchFramesTransformer]);
   });
 
   it('should stretch wide to long', async () => {
@@ -25,8 +25,8 @@ describe('Stretch transformer', () => {
       }),
     ];
 
-    const config: DataTransformerConfig<StretchTransformerOptions> = {
-      id: DataTransformerID.stretch,
+    const config: DataTransformerConfig<StretchFramesTransformerOptions> = {
+      id: DataTransformerID.stretchFrames,
       options: {},
     };
 
@@ -77,8 +77,8 @@ describe('Stretch transformer', () => {
       }),
     ];
 
-    const config: DataTransformerConfig<StretchTransformerOptions> = {
-      id: DataTransformerID.stretch,
+    const config: DataTransformerConfig<StretchFramesTransformerOptions> = {
+      id: DataTransformerID.stretchFrames,
       options: {},
     };
 
@@ -136,8 +136,8 @@ describe('Stretch transformer', () => {
       }),
     ];
 
-    const config: DataTransformerConfig<StretchTransformerOptions> = {
-      id: DataTransformerID.stretch,
+    const config: DataTransformerConfig<StretchFramesTransformerOptions> = {
+      id: DataTransformerID.stretchFrames,
       options: {},
     };
 
@@ -169,8 +169,8 @@ describe('Stretch transformer', () => {
       }),
     ];
 
-    const config: DataTransformerConfig<StretchTransformerOptions> = {
-      id: DataTransformerID.stretch,
+    const config: DataTransformerConfig<StretchFramesTransformerOptions> = {
+      id: DataTransformerID.stretchFrames,
       options: {},
     };
 
@@ -192,7 +192,7 @@ function toEquableDataFrame(source: any): DataFrame {
       };
     }),
     meta: {
-      transformations: [DataTransformerID.stretch],
+      transformations: [DataTransformerID.stretchFrames],
     },
   });
 }

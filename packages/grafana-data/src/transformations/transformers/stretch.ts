@@ -3,10 +3,10 @@ import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
 import { DataFrame, FieldType } from '../../types/dataFrame';
 
-export type StretchTransformerOptions = {};
+export type StretchFramesTransformerOptions = {};
 
-export const stretchTransformer: DataTransformerInfo<StretchTransformerOptions> = {
-  id: DataTransformerID.stretch,
+export const stretchFramesTransformer: DataTransformerInfo<StretchFramesTransformerOptions> = {
+  id: DataTransformerID.stretchFrames,
   name: 'Stretch',
   description: 'Stretch a set of data frames from wide to long',
   defaultOptions: {},
