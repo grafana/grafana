@@ -7,20 +7,22 @@ weight = 2
 
 Grafana comes with the following transformations:
 
-- [Reduce](#reduce)
-- [Merge](#merge)
-- [Filter data by name](#filter-data-by-name)
-- [Filter data by query](#filter-data-by-query)
-- [Organize fields](#organize-fields)
-- [Join by field (outer join)](#join-by-field-outer-join)
-- [Add field from calculation](#add-field-from-calculation)
-- [Labels to fields](#labels-to-fields)  
-- [Sort by](#sort-by)
-- [Group by](#group-by)
-- [Concatenate fields](#concatenate-fields)
-- [Series to rows](#series-to-rows)
-- [Filter data by value](#filter-data-by-value)
-- [Rename by regex](#rename-by-regex)
+- [Add field from calculation]({{< relref "./types-options.md#add-field-from-calculation" >}})
+- [Concatenate fields]({{< relref "./types-options.md#concatenate-fields" >}})
+- [Config from query results]({{< relref "./config-from-query.md" >}})
+- [Filter data by name]({{< relref "./types-options.md#filter-data-by-name" >}})
+- [Filter data by query]({{< relref "./types-options.md#filter-data-by-query" >}})
+- [Filter data by value]({{< relref "./types-options.md#filter-data-by-value" >}})
+- [Group by]({{< relref "./types-options.md#group-by" >}})
+- [Labels to fields]({{< relref "./types-options.md#labels-to-fields" >}})
+- [Merge]({{< relref "./types-options.md#merge" >}})
+- [Organize fields]({{< relref "./types-options.md#organize-fields" >}})
+- [Outer join]({{< relref "./types-options.md#join-by-field-outer-join" >}})
+- [Reduce]({{< relref "./types-options.md#reduce" >}})
+- [Rename by regex]({{< relref "./types-options.md#rename-by-regex" >}})
+- [Rows to fields]({{< relref "./rows-to-fields" >}})
+- [Series to rows]({{< relref "./types-options.md#series-to-rows" >}})
+- [Sort by]({{< relref "./types-options.md#sort-by" >}})
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
 

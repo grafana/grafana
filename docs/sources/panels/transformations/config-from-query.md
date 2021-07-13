@@ -5,7 +5,9 @@ weight = 300
 
 # Config from query results transform
 
-This transformation allow you select one query and from it extract [Standard options]({{< relref "./standard-options.md" >}}) like **Min**, **Max**, **Unit** and **Thresholds** and apply it to other query results. This enables dynamic query driven visualization configuration.
+This transformation allow you select one query and from it extract [standard options]({{< relref "./standard-options.md" >}}) like **Min**, **Max**, **Unit** and **Thresholds** and apply it to other query results. This enables dynamic query driven visualization configuration.
+
+If you want to extract a unique config for every row in the query then try the [Rows to fields]({{< relref "./rows-to-fields" >}}) transformation instead.
 
 ### Options
 

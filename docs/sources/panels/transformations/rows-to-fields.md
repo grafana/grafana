@@ -13,6 +13,8 @@ Useful when visualization data in:
 - Stat
 - Pie chart
 
+If you want to extract config from one query and appply it to another you should use the [Config from query results]({{< relref "./config-from-query.md" >}}) transformation instead.
+
 ## Example
 
 Input:
