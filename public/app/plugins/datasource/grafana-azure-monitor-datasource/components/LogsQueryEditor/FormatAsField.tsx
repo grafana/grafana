@@ -4,6 +4,7 @@ import { Select } from '@grafana/ui';
 import { AzureMonitorOption, AzureQueryEditorFieldProps, AzureResultFormat } from '../../types';
 import { findOption } from '../../utils/common';
 import { Field } from '../Field';
+import { setFormatAs } from './setQueryValue';
 
 const FORMAT_OPTIONS: Array<AzureMonitorOption<AzureResultFormat>> = [
   { label: 'Time series', value: 'time_series' },
@@ -20,13 +21,10 @@ const FormatAsField: React.FC<AzureQueryEditorFieldProps> = ({ query, variableOp
         return;
       }
 
-      onQueryChange({
-        ...query,
-        azureLogAnalytics: {
-          ...query.azureLogAnalytics,
-          resultFormat: value,
-        },
-      });
+      console.log('setting', { value });
+      const newQuery = setFormatAs(query, value);
+      console.log('new query', newQuery);
+      onQueryChange(newQuery);
     },
     [onQueryChange, query]
   );
