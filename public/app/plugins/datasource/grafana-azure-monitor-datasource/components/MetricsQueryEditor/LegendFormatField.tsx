@@ -5,7 +5,7 @@ import { Field } from '../Field';
 import { AzureQueryEditorFieldProps } from '../../types';
 
 const LegendFormatField: React.FC<AzureQueryEditorFieldProps> = ({ onQueryChange, query }) => {
-  const [value, setValue] = useState<string>(query.azureMonitor.alias ?? '');
+  const [value, setValue] = useState<string>(query.azureMonitor?.alias ?? '');
 
   // As calling onQueryChange initiates a the datasource refresh, we only want to call it once
   // the field loses focus
