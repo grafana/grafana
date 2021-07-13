@@ -9,34 +9,34 @@ import (
 )
 
 func httpClientProvider(route azRoute, model datasourceInfo, cfg *setting.Cfg) (*httpclient.Provider, error) {
-	var clientProvider *httpclient.Provider
+	middlewares := []httpclient.Middleware{}
 
 	if len(route.Scopes) > 0 {
 		tokenProvider, err := aztokenprovider.NewAzureAccessTokenProvider(cfg, model.Credentials)
 		if err != nil {
 			return nil, err
 		}
-
-		clientProvider = httpclient.NewProvider(httpclient.ProviderOptions{
-			Middlewares: []httpclient.Middleware{
-				aztokenprovider.AuthMiddleware(tokenProvider, route.Scopes),
-			},
-		})
-	} else {
-		clientProvider = httpclient.NewProvider()
+		middlewares = append(middlewares, aztokenprovider.AuthMiddleware(tokenProvider, route.Scopes))
 	}
 
-	return clientProvider, nil
+	if _, ok := model.DecryptedSecureJSONData["appInsightsApiKey"]; ok {
+		// Inject API-Key for AppInsights
+		apiKeyMiddleware := httpclient.MiddlewareFunc(func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
+			return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+				req.Header.Set("X-API-Key", model.DecryptedSecureJSONData["appInsightsApiKey"])
+				return next.RoundTrip(req)
+			})
+		})
+		middlewares = append(middlewares, apiKeyMiddleware)
+	}
+
+	return httpclient.NewProvider(httpclient.ProviderOptions{
+		Middlewares: middlewares,
+	}), nil
 }
 
 func newHTTPClient(route azRoute, model datasourceInfo, cfg *setting.Cfg) (*http.Client, error) {
 	model.HTTPCliOpts.Headers = route.Headers
-
-	// Inject API-Key for AppInsights
-	if _, ok := model.DecryptedSecureJSONData["appInsightsApiKey"]; ok {
-		model.HTTPCliOpts.Headers["X-API-Key"] = model.DecryptedSecureJSONData["appInsightsApiKey"]
-	}
-
 	clientProvider, err := httpClientProvider(route, model, cfg)
 	if err != nil {
 		return nil, err
