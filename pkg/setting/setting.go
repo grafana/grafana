@@ -147,8 +147,10 @@ var (
 	appliedEnvOverrides          []string
 
 	// analytics
-	GoogleAnalyticsId  string
-	GoogleTagManagerId string
+	GoogleAnalyticsId       string
+	GoogleTagManagerId      string
+	RudderstackDataPlaneUrl string
+	RudderstackWriteKey     string
 
 	// LDAP
 	LDAPEnabled           bool
@@ -873,10 +875,14 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	DataProxyTLSHandshakeTimeout = dataproxy.Key("tls_handshake_timeout_seconds").MustInt(10)
 	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
 	DataProxyMaxConnsPerHost = dataproxy.Key("max_conns_per_host").MustInt(0)
-	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt(100)
-	DataProxyMaxIdleConnsPerHost = dataproxy.Key("max_idle_connections_per_host").MustInt(2)
+	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt()
 	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
 	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
+
+	if val, err := dataproxy.Key("max_idle_connections_per_host").Int(); err == nil {
+		cfg.Logger.Warn("[Deprecated] the configuration setting 'max_idle_connections_per_host' is deprecated, please use 'max_idle_connections' instead")
+		DataProxyMaxIdleConns = val
+	}
 
 	if err := readSecuritySettings(iniFile, cfg); err != nil {
 		return err
@@ -913,6 +919,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
+	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
+	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
 	if len(cfg.ReportingDistributor) >= 100 {

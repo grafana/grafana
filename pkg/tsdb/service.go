@@ -32,12 +32,11 @@ func NewService(cfg *setting.Cfg, _ *cloudwatch.CloudWatchService,
 	pluginManager plugins.Manager, postgresService *postgres.PostgresService,
 	httpClientProvider httpclient.Provider, _ *testdatasource.TestDataPlugin,
 	backendPluginManager backendplugin.Manager, _ *opentsdb.Service,
-	oauthTokenService *oauthtoken.Service) *Service {
+	_ *graphite.Service, oauthTokenService *oauthtoken.Service) *Service {
 	s := newService(cfg, pluginManager, backendPluginManager, oauthTokenService)
 
 	// register backend data sources using legacy plugin
 	// contracts/non-SDK contracts
-	s.registry["graphite"] = graphite.New(httpClientProvider)
 	s.registry["prometheus"] = prometheus.New(httpClientProvider)
 	s.registry["influxdb"] = influxdb.New(httpClientProvider)
 	s.registry["mssql"] = mssql.NewExecutor

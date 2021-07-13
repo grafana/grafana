@@ -16,7 +16,7 @@ If this is your first time contributing to an open-source project on GitHub, mak
 To increase the chance of having your pull request accepted, make sure your pull request follows these guidelines:
 
 - Title and description matches the implementation.
-- Commits within the pull request follow the [Formatting guidelines](#Formatting-guidelines). 
+- Commits within the pull request follow the [Formatting guidelines](#Formatting-guidelines).
 - The pull request closes one related issue.
 - The pull request contains necessary tests that verify the intended behavior.
 - If your pull request has conflicts, rebase your branch onto the main branch.
@@ -47,6 +47,13 @@ Pull requests that add or modify unit tests that are written in Jest must adhere
 
 - Don't add snapshots tests. We are incrementally removing existing snapshot tests, we don't want more.
 - If an existing unit test is written in Enzyme, migrate it to RTL (React Testing Library), unless you’re fixing a bug. Bug fixes usually shouldn't include any bigger refactoring, so it’s ok to skip migrating the test to RTL.
+
+Pull requests that create new UI components or modify existing ones must adhere to the following accessibility guidelines:
+
+- Use semantic HTML.
+- Use ARIA roles, labels and other accessibility attributes correctly. Accessibility attributes should only be used when semantic HTML doesn't satisfy your use case.
+- Use the [Grafana theme palette](/contribute/style-guides/themes.md) for styling. It contains colors with good contrast which aids accessibility.
+- Use [RTL](https://testing-library.com/docs/dom-testing-library/api-accessibility/) for writing unit tests. It helps to create accessible components.
 
 ### Backend-specific guidelines
 
@@ -107,6 +114,6 @@ Make sure that the title for your pull request uses the same format as the subje
 
 If your PR includes configuration changes, all of the following files must be changed correspondingly:
 
-* conf/defaults.ini
-* conf/sample.ini
-* docs/sources/administration/configuration.md 
+- conf/defaults.ini
+- conf/sample.ini
+- docs/sources/administration/configuration.md

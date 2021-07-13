@@ -15,6 +15,7 @@ export interface TermCount {
 
 export interface Props {
   allowCustomValue?: boolean;
+  formatCreateLabel?: (input: string) => string;
   /** Do not show selected values inside Select. Useful when the values need to be shown in some other components */
   hideValues?: boolean;
   inputId?: string;
@@ -33,6 +34,7 @@ const filterOption = (option: any, searchQuery: string) => {
 
 export const TagFilter: FC<Props> = ({
   allowCustomValue = false,
+  formatCreateLabel,
   hideValues,
   inputId,
   isClearable,
@@ -65,6 +67,7 @@ export const TagFilter: FC<Props> = ({
 
   const selectOptions = {
     allowCustomValue,
+    formatCreateLabel,
     defaultOptions: true,
     filterOption,
     getOptionLabel: (i: any) => i.label,

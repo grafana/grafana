@@ -393,6 +393,22 @@ export const getLinksSupplier = (
       },
     };
 
+    if (link.onClick) {
+      return {
+        href: link.url,
+        title: replaceVariables(link.title || '', variables),
+        target: link.targetBlank ? '_blank' : undefined,
+        onClick: (evt, origin) => {
+          link.onClick!({
+            origin: origin ?? field,
+            e: evt,
+            replaceVariables: (v) => replaceVariables(v, variables),
+          });
+        },
+        origin: field,
+      };
+    }
+
     if (link.internal) {
       // For internal links at the moment only destination is Explore.
       return mapInternalLinkToExplore({
@@ -403,20 +419,19 @@ export const getLinksSupplier = (
         range: {} as any,
         replaceVariables,
       });
-    } else {
-      let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));
-      href = replaceVariables(href, variables);
-      href = locationUtil.processUrl(href);
-
-      const info: LinkModel<Field> = {
-        href,
-        title: replaceVariables(link.title || '', variables),
-        target: link.targetBlank ? '_blank' : undefined,
-        origin: field,
-      };
-
-      return info;
     }
+
+    let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));
+    href = replaceVariables(href, variables);
+    href = locationUtil.processUrl(href);
+
+    const info: LinkModel<Field> = {
+      href,
+      title: replaceVariables(link.title || '', variables),
+      target: link.targetBlank ? '_blank' : undefined,
+      origin: field,
+    };
+    return info;
   });
 };
 

@@ -22,7 +22,7 @@ var (
 )
 
 type SocialService struct {
-	Cfg *setting.Cfg
+	cfg *setting.Cfg
 
 	socialMap     map[string]SocialConnector
 	oAuthProvider map[string]*OAuthInfo
@@ -51,12 +51,13 @@ type OAuthInfo struct {
 
 func ProvideService(cfg *setting.Cfg) *SocialService {
 	ss := SocialService{
+		cfg:           cfg,
 		oAuthProvider: make(map[string]*OAuthInfo),
 		socialMap:     make(map[string]SocialConnector),
 	}
 
 	for _, name := range allOauthes {
-		sec := ss.Cfg.Raw.Section("auth." + name)
+		sec := cfg.Raw.Section("auth." + name)
 
 		info := &OAuthInfo{
 			ClientId:            sec.Key("client_id").String(),
@@ -104,7 +105,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 				TokenURL:  info.TokenUrl,
 				AuthStyle: oauth2.AuthStyleAutoDetect,
 			},
-			RedirectURL: strings.TrimSuffix(ss.Cfg.AppURL, "/") + SocialBaseUrl + name,
+			RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
 			Scopes:      info.Scopes,
 		}
 
@@ -141,7 +142,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 			ss.socialMap["azuread"] = &SocialAzureAD{
 				SocialBase:        newSocialBase(name, &config, info),
 				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
-				autoAssignOrgRole: ss.Cfg.AutoAssignOrgRole,
+				autoAssignOrgRole: cfg.AutoAssignOrgRole,
 			}
 		}
 
@@ -179,17 +180,17 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 				ClientID:     info.ClientId,
 				ClientSecret: info.ClientSecret,
 				Endpoint: oauth2.Endpoint{
-					AuthURL:   ss.Cfg.GrafanaComURL + "/oauth2/authorize",
-					TokenURL:  ss.Cfg.GrafanaComURL + "/api/oauth2/token",
+					AuthURL:   cfg.GrafanaComURL + "/oauth2/authorize",
+					TokenURL:  cfg.GrafanaComURL + "/api/oauth2/token",
 					AuthStyle: oauth2.AuthStyleInHeader,
 				},
-				RedirectURL: strings.TrimSuffix(ss.Cfg.AppURL, "/") + SocialBaseUrl + name,
+				RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
 				Scopes:      info.Scopes,
 			}
 
 			ss.socialMap[grafanaCom] = &SocialGrafanaCom{
 				SocialBase:           newSocialBase(name, &config, info),
-				url:                  ss.Cfg.GrafanaComURL,
+				url:                  cfg.GrafanaComURL,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
@@ -267,7 +268,7 @@ func newSocialBase(name string, config *oauth2.Config, info *OAuthInfo) *SocialB
 func (ss *SocialService) GetOAuthProviders() map[string]bool {
 	result := map[string]bool{}
 
-	if ss.Cfg == nil || ss.Cfg.Raw == nil {
+	if ss.cfg == nil || ss.cfg.Raw == nil {
 		return result
 	}
 
@@ -276,7 +277,7 @@ func (ss *SocialService) GetOAuthProviders() map[string]bool {
 			name = grafanaCom
 		}
 
-		sec := ss.Cfg.Raw.Section("auth." + name)
+		sec := ss.cfg.Raw.Section("auth." + name)
 		if sec == nil {
 			continue
 		}

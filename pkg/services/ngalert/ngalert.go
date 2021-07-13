@@ -70,7 +70,8 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		Notifier:      alertmanager,
 		Metrics:       m,
 	}
-	schedule := schedule.NewScheduler(schedCfg, dataService, cfg.AppURL)
+	stateManager := state.NewManager(logger, m, store, store)
+	schedule := schedule.NewScheduler(schedCfg, dataService, cfg.AppURL, stateManager)
 
 	ng := &AlertNG{
 		Cfg:             cfg,
@@ -83,7 +84,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		Metrics:         m,
 		Log:             logger,
 		Alertmanager:    alertmanager,
-		stateManager:    state.NewManager(logger, m),
+		stateManager:    stateManager,
 		schedule:        schedule,
 	}
 	api := api.API{
@@ -124,11 +125,11 @@ type AlertNG struct {
 // Run starts the scheduler.
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
-	ng.schedule.WarmStateCache(ng.stateManager)
+	ng.stateManager.Warm()
 
 	children, subCtx := errgroup.WithContext(ctx)
 	children.Go(func() error {
-		return ng.schedule.Ticker(subCtx, ng.stateManager)
+		return ng.schedule.Ticker(subCtx)
 	})
 	children.Go(func() error {
 		return ng.Alertmanager.Run(subCtx)

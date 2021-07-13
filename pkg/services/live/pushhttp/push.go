@@ -3,6 +3,7 @@ package pushhttp
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -55,7 +56,7 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 	urlValues := ctx.Req.URL.Query()
 	frameFormat := pushurl.FrameFormatFromValues(urlValues)
 
-	body, err := ctx.Req.Body().Bytes()
+	body, err := io.ReadAll(ctx.Req.Request.Body)
 	if err != nil {
 		logger.Error("Error reading body", "error", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
@@ -85,6 +86,7 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 	for _, mf := range metricFrames {
 		err := stream.Push(ctx.SignedInUser.OrgId, mf.Key(), mf.Frame())
 		if err != nil {
+			logger.Error("Error pushing frame", "error", err, "data", string(body))
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}

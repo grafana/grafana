@@ -20,6 +20,7 @@ var metricsLogger log.Logger = log.New("metrics")
 type UsageStats interface {
 	GetUsageReport(context.Context) (UsageReport, error)
 	RegisterMetricsFunc(MetricsFunc)
+	ShouldBeReported(string) bool
 }
 
 type MetricsFunc func() (map[string]interface{}, error)
