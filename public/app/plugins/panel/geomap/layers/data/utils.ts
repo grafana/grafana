@@ -3,9 +3,13 @@ import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
 import { FieldMappingOptions, QueryFormat } from '../../types'
 
- /**
-   * Function that formats dataframe into a Point[]
-   */
+/**
+ * Formats dataframe into Points
+ * @param frame queried data as a DataFrame
+ * @param fieldMapping mapping between location based fields and dataframe
+ * @param queryFormat details format of location data
+ * @returns Point[]
+ */
 export function dataFrameToPoints(frame: DataFrame, fieldMapping: FieldMappingOptions, queryFormat: QueryFormat): Point[] {
 
   let points: Point[] = [];
@@ -37,9 +41,12 @@ export function dataFrameToPoints(frame: DataFrame, fieldMapping: FieldMappingOp
   return points;
 }
 
- /**
-   * Function that decodes input geohash into latitude and longitude
-   */
+
+/**
+ * Function that decodes input geohash into latitude and longitude
+ * @param geohash short alphanumeric string
+ * @returns map of latitude and longitude
+ */
 export function decodeGeohash(geohash: string) {
   if (!geohash || geohash.length === 0) {
     throw new Error('Missing geohash value');
@@ -55,6 +62,7 @@ export function decodeGeohash(geohash: string) {
   lon[1] = 180.0;
   let base32Decoded: number;
 
+  // Enhance location for each character in geohash string
   geohash.split('').forEach((item: string) => {
     base32Decoded = BASE32.indexOf(item);
     BITS.forEach(mask => {
@@ -73,7 +81,14 @@ export function decodeGeohash(geohash: string) {
   return { latitude: latCenter, longitude: lonCenter };
 }
   
-function refineInterval(interval: any[], base32Decoded: number, mask: number) {
+/**
+ * Function that decodes input geohash into latitude and longitude
+ * @param interval coordinate interval
+ * @param base32Decoded trasnfer encoding using base32 set
+ * @param mask bitwise operation data
+ * @returns map of latitude and longitude
+ */
+function refineInterval(interval: number[], base32Decoded: number, mask: number) {
   /* tslint:disable no-bitwise*/
   if (base32Decoded & mask) {
     interval[0] = (interval[0] + interval[1]) / 2;
