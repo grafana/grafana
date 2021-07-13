@@ -62,7 +62,7 @@ export function FieldToConfigMappingEditor({ frame, mappings, onChange, withRedu
     <table className={styles.table}>
       <thead>
         <tr>
-          <th>Field mappings</th>
+          <th>Field</th>
           <th>Use as</th>
           {withReducers && <th>Select</th>}
         </tr>
