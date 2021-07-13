@@ -116,6 +116,49 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   // Circle overlay options
   registerOptionsUI: (builder) => {
     builder
+      .addSelect({
+        path: 'queryFormat.locationType',
+        name: 'Location source',
+        defaultValue: defaultOptions.queryFormat.locationType,
+        settings: {
+          options: [
+            {
+              value: 'coordinates',
+              label: 'Latitude/Longitude fields',
+            },
+            {
+              value: 'geohash',
+              label: 'Geohash field',
+            },
+          ],
+        },
+      })
+      .addTextInput({
+        path: 'fieldMapping.latitudeField',
+        name: 'Latitude Field',
+        defaultValue: defaultOptions.fieldMapping.latitudeField,
+        showIf: (config) =>
+          config.queryFormat.locationType === 'coordinates',
+      })
+      .addTextInput({
+        path: 'fieldMapping.longitudeField',
+        name: 'Longitude Field',
+        defaultValue: defaultOptions.fieldMapping.longitudeField,
+        showIf: (config) =>
+          config.queryFormat.locationType === 'coordinates',
+      })
+      .addTextInput({
+        path: 'fieldMapping.geohashField',
+        name: 'Geohash Field',
+        defaultValue: defaultOptions.fieldMapping.geohashField,
+        showIf: (config) =>
+          config.queryFormat.locationType === 'geohash',
+      })
+      .addTextInput({
+        path: 'fieldMapping.metricField',
+        name: 'Metric Field',
+        defaultValue: defaultOptions.fieldMapping.metricField,
+      })
       .addNumberInput({
         path: 'minSize',
         description: 'configures the min circle size',
@@ -138,49 +181,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           max: 1,
           step: 0.1,
         },
-      })
-      .addSelect({
-        path: 'queryFormat.locationType',
-        name: 'Query Format',
-        defaultValue: defaultOptions.queryFormat.locationType,
-        settings: {
-          options: [
-            {
-              value: 'coordinates',
-              label: 'Coordinates',
-            },
-            {
-              value: 'geohash',
-              label: 'Geohash',
-            },
-          ],
-        },
-      })
-      .addTextInput({
-        path: 'fieldMapping.metricField',
-        name: 'Metric Field',
-        defaultValue: defaultOptions.fieldMapping.metricField,
-      })
-      .addTextInput({
-        path: 'fieldMapping.latitudeField',
-        name: 'Latitude Field',
-        defaultValue: defaultOptions.fieldMapping.latitudeField,
-        showIf: (config) =>
-          config.queryFormat.locationType === 'coordinates',
-      })
-      .addTextInput({
-        path: 'fieldMapping.longitudeField',
-        name: 'Longitude Field',
-        defaultValue: defaultOptions.fieldMapping.longitudeField,
-        showIf: (config) =>
-          config.queryFormat.locationType === 'coordinates',
-      })
-      .addTextInput({
-        path: 'fieldMapping.geohashField',
-        name: 'Geohash Field',
-        defaultValue: defaultOptions.fieldMapping.geohashField,
-        showIf: (config) =>
-          config.queryFormat.locationType === 'geohash',
       });
   },
   // fill in the default values
