@@ -76,10 +76,10 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
           width={16}
         />
         <input
-          className="gf-form-input width-8"
+          className="gf-form-input width-4"
           onBlur={[Function]}
           onChange={[Function]}
-          placeholder="Example: 15s"
+          placeholder="15s"
           type="text"
           value=""
         />
