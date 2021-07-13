@@ -177,22 +177,20 @@ func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 	return err
 }
 
-// Uninstall removes the specified plugin from the provided plugins directory.
-func (i *Installer) Uninstall(ctx context.Context, pluginID, pluginPath string) error {
-	pluginDir := filepath.Join(pluginPath, pluginID)
-
+// Uninstall removes the specified plugin from the provided plugin directory.
+func (i *Installer) Uninstall(ctx context.Context, pluginDir string) error {
 	// verify it's a plugin directory
 	if _, err := os.Stat(filepath.Join(pluginDir, "plugin.json")); err != nil {
 		if os.IsNotExist(err) {
 			if _, err := os.Stat(filepath.Join(pluginDir, "dist", "plugin.json")); err != nil {
 				if os.IsNotExist(err) {
-					return fmt.Errorf("tried to remove %s, but it doesn't seem to be a plugin", pluginPath)
+					return fmt.Errorf("tried to remove %s, but it doesn't seem to be a plugin", pluginDir)
 				}
 			}
 		}
 	}
 
-	i.log.Infof("Uninstalling plugin %v", pluginID)
+	i.log.Infof("Uninstalling plugin %v", pluginDir)
 
 	return os.RemoveAll(pluginDir)
 }
