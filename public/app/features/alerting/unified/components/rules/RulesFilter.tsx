@@ -64,6 +64,8 @@ const RulesFilter = () => {
     setFilterKey(filterKey + 1);
   };
 
+  console.log({ queryStringKey });
+
   const searchIcon = <Icon name={'search'} />;
   return (
     <div className={styles.container}>
