@@ -40,7 +40,7 @@ export function dataFrameToPoints(frame: DataFrame, fieldMapping: FieldMappingOp
  /**
    * Function that decodes input geohash into latitude and longitude
    */
-function decodeGeohash(geohash: string) {
+export function decodeGeohash(geohash: string) {
   if (!geohash || geohash.length === 0) {
     throw new Error('Missing geohash value');
   }

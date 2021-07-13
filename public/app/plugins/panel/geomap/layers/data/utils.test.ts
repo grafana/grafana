@@ -1,194 +1,96 @@
-import { PanelModel, FieldConfigSource } from '@grafana/data';
-import { dataFrameToPoints } from './utils';
-import { Point } from 'ol/geom';
-
-import _ from 'lodash';
+import { DataFrame, toDataFrame, FieldType } from '@grafana/data';
+import { dataFrameToPoints, decodeGeohash } from './utils';
 
 describe('Format DataFrame into Points', () => {
-  let points: Point[] = [];
 
-  describe('when latitude and longitude are given in data and query type is coordinates', () => {
-    beforeEach(() => {
-      const config = {
-        queryFormat: {
-          locationType: 'coordinates',
-        },
-        fieldMapping: {
-          latitudeField: 'latitude',
-          longitudeField: 'longitude',
-        }
-      };
-      dataFormatter = new DataFormatter(ctrl);
-    });
+  describe('Query includes coordinate location data', () => {
+    it('creates a point with latitude and longitude coordinates', () => {
+      
+      const points = dataFrameToPoints(simpleCoordinateQuery, coordinateConfig.fieldMapping, coordinateConfig.queryFormat);
 
-    it('should use latitude and longitude coordinates', () => {
-      const data = [
-        [
-          {
-            latitude: 1,
-            longitude: 2
-          },
-          {
-            latitude: 3,
-            longitude: 4
-          }
-        ]
-      ];
-      const data: any[] = [];
-
-      dataFormatter.setTableValues(tableData, data);
-
-      expect(data[0].locationLatitude).toEqual(1);
-      expect(data[0].locationLongitude).toEqual(2);
-      expect(data[1].locationLatitude).toEqual(3);
-      expect(data[1].locationLongitude).toEqual(4);
+      // Check x-coordinates
+      expect(points[0].getCoordinates()[0]).toBeCloseTo(0);
+      expect(points[1].getCoordinates()[0]).toBeCloseTo(-8248774.27);
+      // Check y-coordinates
+      expect(points[0].getCoordinates()[1]).toBeCloseTo(0);
+      expect(points[1].getCoordinates()[1]).toBeCloseTo(4968191.93);
     });
   });
 
-  describe('when geohash in table data and query type is geohash', () => {
-    beforeEach(() => {
-      const ctrl = {
-        panel: {
-          tableQueryOptions: {
-            queryType: 'geohash',
-            geohashField: 'geohash',
-          }
-        }
-      };
-      dataFormatter = new DataFormatter(ctrl);
+  describe('Query includes geohash location data', () => {
+    it('creates a point with latitude and longitude coordinates', () => {
+      const points = dataFrameToPoints(simpleGeohashQuery, geohashConfig.fieldMapping, geohashConfig.queryFormat);
+
+      // Check x-coordinates
+      expect(points[0].getCoordinates()[0]).toBeCloseTo(-13582536.35);
+      expect(points[1].getCoordinates()[0]).toBeCloseTo(-8235638.57);
+      // Check y-coordinates
+      expect(points[0].getCoordinates()[1]).toBeCloseTo(4436319.41);
+      expect(points[1].getCoordinates()[1]).toBeCloseTo(4970394.68);
     });
-
-    it('should use the geohash field for the query', () => {
-      const tableData = [
-        [
-          {
-            latitude: 1,
-            longitude: 2,
-            geohash: 'stq4s3x' // 29.9796, 31.1345
-          },
-          {
-            latitude: 3,
-            longitude: 4,
-            geohash: 'p05010r' // -89.997, 139.273
-          }
-        ]
-      ];
-      const data: any[] = [];
-
-      dataFormatter.setTableValues(tableData, data);
-
-      expect(data[0].locationLatitude).toBeCloseTo(29.9796);
-      expect(data[0].locationLongitude).toBeCloseTo(31.1345);
-      expect(data[1].locationLatitude).toBeCloseTo(-89.998);
-      expect(data[1].locationLongitude).toBeCloseTo(139.272);
-    });
-  });
-
-describe('Worldmap Migrations', () => {
-  let prevFieldConfig: FieldConfigSource;
-
-  beforeEach(() => {
-    prevFieldConfig = {
-      defaults: {},
-      overrides: [],
-    };
-  });
-
-  it('simple worldmap', () => {
-    const old: any = {
-      angular: simpleWorldmapConfig,
-    };
-    const panel = {} as PanelModel;
-    panel.options = mapPanelChangedHandler(panel, 'grafana-worldmap-panel', old, prevFieldConfig);
-    expect(panel).toMatchInlineSnapshot(`
-      Object {
-        "fieldConfig": Object {
-          "defaults": Object {
-            "decimals": 3,
-            "thresholds": Object {
-              "mode": "absolute",
-              "steps": Array [
-                Object {
-                  "color": "#37872D",
-                  "value": -Infinity,
-                },
-                Object {
-                  "color": "#E0B400",
-                  "value": 0,
-                },
-                Object {
-                  "color": "#C4162A",
-                  "value": 50,
-                },
-                Object {
-                  "color": "#8F3BB8",
-                  "value": 100,
-                },
-              ],
-            },
-          },
-          "overrides": Array [],
-        },
-        "options": Object {
-          "basemap": Object {
-            "type": "default",
-          },
-          "controls": Object {
-            "mouseWheelZoom": true,
-            "showLegend": true,
-            "showZoom": true,
-          },
-          "layers": Array [],
-          "view": Object {
-            "center": Object {
-              "id": "europe",
-              "lat": 46,
-              "lon": 14,
-            },
-            "zoom": 6,
-          },
-        },
-      }
-    `);
   });
 });
 
-const simpleWorldmapConfig = {
-  id: 23763571993,
-  gridPos: {
-    h: 8,
-    w: 12,
-    x: 0,
-    y: 0,
+describe('Decode geohash', () => {
+  it('transforms a geohash to coordinates', () => {
+    const sampleGeohash1 = '9q94r';
+    const sampleGeohash2 = 'dr5rs14';
+    const decodedGeohash1 = decodeGeohash(sampleGeohash1);
+    const decodedGeohash2 = decodeGeohash(sampleGeohash2);
+
+    // Check longitudes
+    expect(decodedGeohash1.longitude).toBeCloseTo(-13582536.35);
+    expect(decodedGeohash2.longitude).toBeCloseTo(-8237697.98);
+    // Check latitudes
+    expect(decodedGeohash1.latitude).toBeCloseTo(4436319.41);
+    expect(decodedGeohash2.latitude).toBeCloseTo(4968118.51);
+  });
+});
+
+const coordinateConfig = {
+  queryFormat: {
+    locationType: 'geohash',
   },
-  type: 'grafana-worldmap-panel',
-  title: 'Panel Title',
-  thresholds: '0,50,100',
-  maxDataPoints: 1,
-  circleMaxSize: 30,
-  circleMinSize: 2,
-  colors: ['#37872D', '#E0B400', '#C4162A', '#8F3BB8'],
-  decimals: 3,
-  esMetric: 'Count',
-  hideEmpty: false,
-  hideZero: false,
-  initialZoom: '6',
-  locationData: 'countries',
-  mapCenter: 'Europe',
-  mapCenterLatitude: 46,
-  mapCenterLongitude: 14,
-  mouseWheelZoom: true,
-  showLegend: true,
-  stickyLabels: false,
-  tableQueryOptions: {
+  fieldMapping: {
+    metricField: 'metric',
     geohashField: 'geohash',
+    latitudeField: '',
+    longitudeField: '',
+  }
+};
+
+const geohashConfig = {
+  queryFormat: {
+    locationType: 'coordinates',
+  },
+  fieldMapping: {
+    metricField: 'metric',
+    geohashField: '',
     latitudeField: 'latitude',
     longitudeField: 'longitude',
-    metricField: 'metric',
-    queryType: 'geohash',
-  },
-  unitPlural: '',
-  unitSingle: '',
-  valueName: 'total',
-  datasource: null,
+  }
 };
+
+// Create data frame with coordinate location data
+const coordinateValues = [5, 10];
+const longitude = [0, -74.1];
+const latitude = [0, 40.7];
+const simpleCoordinateQuery: DataFrame = toDataFrame({
+    name: "simpleCoordinateQuery",
+    fields: [
+        { name: "metric", type: FieldType.number, values: coordinateValues },
+        { name: "latitude", type: FieldType.number, values: latitude },
+        { name: "longitude", type: FieldType.number, values: longitude }
+    ]
+});
+
+// Create data frame with geohash location data
+const geohashValues = [5, 10];
+const geohash = ['9q94r', 'dr5rs'];
+const simpleGeohashQuery: DataFrame = toDataFrame({
+  name: "simpleGeohashQuery",
+  fields: [
+      { name: "Time", type: FieldType.time, values: geohashValues },
+      { name: "geohash", type: FieldType.string, values: geohash }
+  ]
+});
