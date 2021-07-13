@@ -24,4 +24,6 @@ export enum DataTransformerID {
   sortBy = 'sortBy',
   histogram = 'histogram',
   stretchFrames = 'stretchFrames',
+  configFromData = 'configFromData',
+  rowsToFields = 'rowsToFields',
 }
