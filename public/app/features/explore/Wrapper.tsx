@@ -6,7 +6,6 @@ import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './st
 import { getRichHistory } from '../../core/utils/richHistory';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { NavModel } from '@grafana/data';
 import { Branding } from '../../core/components/Branding/Branding';
 
 import { getNavModel } from '../../core/selectors/navModel';
@@ -31,14 +30,6 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & RouteProps & ConnectedProps<typeof connector>;
 class WrapperUnconnected extends PureComponent<Props> {
-  updatePageDocumentTitle(navModel: NavModel) {
-    if (navModel) {
-      document.title = `${navModel.main.text} - ${Branding.AppTitle}`;
-    } else {
-      document.title = Branding.AppTitle;
-    }
-  }
-
   componentWillUnmount() {
     this.props.resetExploreAction({});
   }
@@ -49,7 +40,6 @@ class WrapperUnconnected extends PureComponent<Props> {
 
     const richHistory = getRichHistory();
     this.props.richHistoryUpdatedAction({ richHistory });
-    this.updatePageDocumentTitle(this.props.navModel);
   }
 
   componentDidUpdate() {
