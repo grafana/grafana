@@ -20,7 +20,10 @@ export const getCellLinks = (field: Field, row: Row<any>) => {
       // Allow opening in new tab
       if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
         event.preventDefault();
-        link!.onClick!(event); // TODO -- get the row index in there somehow
+        link!.onClick!(event, {
+          field,
+          rowIndex: row.index,
+        });
       }
     };
   }

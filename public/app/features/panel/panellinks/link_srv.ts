@@ -24,7 +24,6 @@ import {
   VariableSuggestionsScope,
 } from '@grafana/data';
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
-import React from '@visx/tooltip/node_modules/@types/react';
 
 const timeRangeVars = [
   {
@@ -318,20 +317,21 @@ export class LinkSrv implements LinkService {
       title: link.title ?? '',
       target: link.targetBlank ? '_blank' : undefined,
       origin,
-      onClick: link.onClick
-        ? (e: React.SyntheticEvent) => {
-            link.onClick!({
-              origin,
-              replaceVariables,
-              e,
-            });
-          }
-        : undefined,
     };
 
     if (replaceVariables) {
       info.href = replaceVariables(info.href);
       info.title = replaceVariables(link.title);
+    }
+
+    if (link.onClick) {
+      info.onClick = (e) => {
+        link.onClick!({
+          origin,
+          replaceVariables,
+          e,
+        });
+      };
     }
 
     info.href = getConfig().disableSanitizeHtml ? info.href : textUtil.sanitizeUrl(info.href);

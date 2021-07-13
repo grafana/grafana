@@ -395,14 +395,12 @@ export const getLinksSupplier = (
 
     if (link.onClick) {
       return {
-        href: '#',
+        href: link.url,
         title: replaceVariables(link.title || '', variables),
         target: link.targetBlank ? '_blank' : undefined,
-        onClick: (evt) => {
+        onClick: (evt, origin) => {
           link.onClick!({
-            origin: {
-              field,
-            },
+            origin: origin ?? field,
             e: evt,
             replaceVariables: (v) => replaceVariables(v, variables),
           });
