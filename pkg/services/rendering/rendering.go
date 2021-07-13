@@ -46,7 +46,6 @@ type RenderUser struct {
 
 type RenderingService struct {
 	log             log.Logger
-	pluginInfo      *plugins.RendererPlugin
 	renderAction    renderFunc
 	renderCSVAction renderCSVFunc
 	domain          string
@@ -90,7 +89,7 @@ func (rs *RenderingService) Init() error {
 }
 
 func (rs *RenderingService) pluginAvailable() bool {
-	return rs.PluginManager.Renderer() != nil || rs.PluginManagerV2.Renderer() != nil
+	return rs.PluginManager.Renderer() != nil
 }
 
 func (rs *RenderingService) remoteAvailable() bool {
@@ -181,27 +180,13 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	if rs.pluginAvailable() {
 		rs.log = pluginRendererLog
 
-		if rs.PluginManagerV2.Renderer() != nil {
-			renderer := rs.PluginManagerV2.Renderer()
-
-			if err := renderer.Start(ctx); err != nil {
-				return nil, err
-			}
-
-			rs.version = renderer.Info.Version
-			rs.renderAction = rs.renderViaPlugin
-			rs.renderCSVAction = rs.renderCSVViaPlugin
-		} else {
-			rs.pluginInfo = rs.PluginManager.Renderer()
-
-			if err := rs.startPlugin(ctx); err != nil {
-				return nil, err
-			}
-
-			rs.version = rs.pluginInfo.Info.Version
-			rs.renderAction = rs.renderViaPlugin
-			rs.renderCSVAction = rs.renderCSVViaPlugin
+		if err := rs.startPlugin(ctx); err != nil {
+			return nil, err
 		}
+
+		rs.version = rs.PluginManager.Renderer().Info.Version
+		rs.renderAction = rs.renderViaPlugin
+		rs.renderCSVAction = rs.renderCSVViaPlugin
 	}
 
 	rs.log.Debug("No image renderer found/installed. " +

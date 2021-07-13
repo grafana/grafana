@@ -215,6 +215,10 @@ func (m *manager) StartPlugin(ctx context.Context, pluginID string) error {
 		return errors.New("backend plugin is managed and cannot be manually started")
 	}
 
+	if !p.Exited() {
+		return backendplugin.ErrPluginAlreadyStarted
+	}
+
 	return startPluginAndRestartKilledProcesses(ctx, p)
 }
 

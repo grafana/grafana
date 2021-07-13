@@ -14,6 +14,8 @@ import (
 type Manager interface {
 	// Renderer gets the renderer plugin.
 	Renderer() *RendererPlugin
+	// StartRenderer starts the renderer plugin.
+	StartRenderer(ctx context.Context) error
 	// GetDataSource gets a data source plugin with a certain ID.
 	GetDataSource(id string) *DataSourcePlugin
 	// GetPlugin gets a plugin with a certain ID.

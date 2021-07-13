@@ -221,6 +221,23 @@ func (pm *PluginManager) Renderer() *plugins.RendererPlugin {
 	return rendererFromV2(pm.PluginManagerV2.Renderer())
 }
 
+func (pm *PluginManager) StartRenderer(ctx context.Context) error {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+
+	r := pm.renderer
+
+	if r != nil {
+		return r.Start(ctx)
+	}
+
+	if pm.PluginManagerV2.IsEnabled() {
+		return pm.PluginManagerV2.Renderer().Start(ctx)
+	}
+
+	return nil
+}
+
 func (pm *PluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
 	pm.pluginsMu.RLock()
 	defer pm.pluginsMu.RUnlock()

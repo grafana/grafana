@@ -11,4 +11,6 @@ var (
 	ErrPluginUnavailable = errors.New("plugin unavailable")
 	// ErrMethodNotImplemented error returned when plugin method not implemented.
 	ErrMethodNotImplemented = errors.New("method not implemented")
+	// ErrPluginAlreadyStarted error returned when attempting to start a plugin which has already been started.
+	ErrPluginAlreadyStarted = errors.New("plugin already started")
 )
