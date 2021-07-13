@@ -9,6 +9,7 @@ export const CSVFileEditor = ({ onChange, query }: EditorProps) => {
   };
 
   const files = [
+    'flight_info_by_state.csv',
     'population_by_state.csv',
     'gdp_per_capita.csv',
     'js_libraries.csv',
