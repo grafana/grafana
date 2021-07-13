@@ -64,6 +64,8 @@ import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { AwsUrl, encodeUrl } from './aws_url';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
+import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
+import config from 'app/core/config';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -126,8 +128,11 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length > 0) {
-      dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
-      //  dataQueryResponses.push(this.handleLogQueries(logQueries, options));
+      if (config.liveEnabled) {
+        dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
+      } else {
+        dataQueryResponses.push(this.handleLogQueries(logQueries, options));
+      }
     }
 
     if (metricsQueries.length > 0) {
@@ -874,17 +879,22 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     );
   }
 
-  testDatasource() {
+  async testDatasource() {
     // use billing metrics for test
     const region = this.defaultRegion;
     const namespace = 'AWS/Billing';
     const metricName = 'EstimatedCharges';
     const dimensions = {};
 
-    return this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions).then(() => ({
-      status: 'success',
-      message: 'Data source is working',
-    }));
+    try {
+      await this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions);
+      return {
+        status: 'success',
+        message: 'Data source is working',
+      };
+    } catch (error) {
+      return toTestingStatus(error);
+    }
   }
 
   awsRequest(url: string, data: MetricRequest): Observable<TSDBResponse> {

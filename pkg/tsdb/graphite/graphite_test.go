@@ -10,27 +10,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestFormatTimeRange(t *testing.T) {
-	testCases := []struct {
-		input    string
-		expected string
-	}{
-		{"now", "now"},
-		{"now-1m", "-1min"},
-		{"now-1M", "-1mon"},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.input, func(t *testing.T) {
-			tr := formatTimeRange(tc.input)
-			assert.Equal(t, tc.expected, tr)
-		})
-	}
-}
 
 func TestFixIntervalFormat(t *testing.T) {
 	testCases := []struct {
@@ -67,7 +50,7 @@ func TestFixIntervalFormat(t *testing.T) {
 		})
 	}
 
-	executor := &GraphiteExecutor{}
+	service := &Service{logger: log.New("tsdb.graphite")}
 
 	t.Run("Converts response to data frames", func(*testing.T) {
 		body := `
@@ -90,7 +73,7 @@ func TestFixIntervalFormat(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: ioutil.NopCloser(strings.NewReader(body))}
-		dataFrames, err := executor.toDataFrames(httpResponse)
+		dataFrames, err := service.toDataFrames(httpResponse)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {

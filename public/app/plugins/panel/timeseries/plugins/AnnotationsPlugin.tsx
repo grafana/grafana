@@ -1,7 +1,7 @@
-import { DataFrame, DataFrameFieldIndex, DataFrameView, getColorForTheme, TimeZone } from '@grafana/data';
+import { colorManipulator, DataFrame, DataFrameFieldIndex, DataFrameView, TimeZone } from '@grafana/data';
 import { EventsCanvas, UPlotConfigBuilder, usePlotContext, useTheme } from '@grafana/ui';
 import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import { AnnotationMarker } from './AnnotationMarker';
+import { AnnotationMarker } from './annotations/AnnotationMarker';
 
 interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
@@ -40,6 +40,22 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
       if (!ctx) {
         return;
       }
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+      ctx.clip();
+
+      const renderLine = (x: number, color: string) => {
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = color;
+        ctx.setLineDash([5, 5]);
+        ctx.moveTo(x, u.bbox.top);
+        ctx.lineTo(x, u.bbox.top + u.bbox.height);
+        ctx.stroke();
+        ctx.closePath();
+      };
+
       for (let i = 0; i < annotationsRef.current.length; i++) {
         const annotationsView = annotationsRef.current[i];
         for (let j = 0; j < annotationsView.length; j++) {
@@ -49,17 +65,23 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
             continue;
           }
 
-          const xpos = u.valToPos(annotation.time, 'x', true);
-          ctx.beginPath();
-          ctx.lineWidth = 2;
-          ctx.strokeStyle = getColorForTheme(annotation.color, theme);
-          ctx.setLineDash([5, 5]);
-          ctx.moveTo(xpos, u.bbox.top);
-          ctx.lineTo(xpos, u.bbox.top + u.bbox.height);
-          ctx.stroke();
-          ctx.closePath();
+          let x0 = u.valToPos(annotation.time, 'x', true);
+          const color = theme.visualization.getColorByName(annotation.color);
+
+          renderLine(x0, color);
+
+          if (annotation.isRegion && annotation.timeEnd) {
+            let x1 = u.valToPos(annotation.timeEnd, 'x', true);
+
+            renderLine(x1, color);
+
+            ctx.fillStyle = colorManipulator.alpha(color, 0.1);
+            ctx.rect(x0, u.bbox.top, x1 - x0, u.bbox.height);
+            ctx.fill();
+          }
         }
       }
+      ctx.restore();
       return;
     });
   }, [config, theme]);
@@ -72,9 +94,13 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
       if (!annotation.time || !plotInstance) {
         return undefined;
       }
+      let x = plotInstance.valToPos(annotation.time, 'x');
 
+      if (x < 0) {
+        x = 0;
+      }
       return {
-        x: plotInstance.valToPos(annotation.time, 'x'),
+        x,
         y: plotInstance.bbox.height / window.devicePixelRatio + 4,
       };
     },

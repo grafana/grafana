@@ -3,7 +3,7 @@ import { connect, MapDispatchToProps } from 'react-redux';
 import { css, cx, keyframes } from '@emotion/css';
 import { chain, cloneDeep, defaults, find, sortBy } from 'lodash';
 import tinycolor from 'tinycolor2';
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Icon, IconButton, styleMixins, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { GrafanaTheme } from '@grafana/data';
@@ -146,13 +146,22 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
         ) : (
           <div className={styles.actionsWrapper}>
             <div className={cx(styles.actionsRow, styles.columnGap)}>
-              <div onClick={() => onCreateNewPanel()} aria-label={selectors.pages.AddDashboard.addNewPanel}>
+              <div
+                onClick={() => {
+                  reportInteraction('Create new panel');
+                  onCreateNewPanel();
+                }}
+                aria-label={selectors.pages.AddDashboard.addNewPanel}
+              >
                 <Icon name="file-blank" size="xl" />
                 Add an empty panel
               </div>
               <div
                 className={styles.rowGap}
-                onClick={onCreateNewRow}
+                onClick={() => {
+                  reportInteraction('Create new row');
+                  onCreateNewRow();
+                }}
                 aria-label={selectors.pages.AddDashboard.addNewRow}
               >
                 <Icon name="wrap-text" size="xl" />
@@ -160,12 +169,24 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
               </div>
             </div>
             <div className={styles.actionsRow}>
-              <div onClick={() => setAddPanelView(true)} aria-label={selectors.pages.AddDashboard.addNewPanelLibrary}>
+              <div
+                onClick={() => {
+                  reportInteraction('Add a panel from the panel library');
+                  setAddPanelView(true);
+                }}
+                aria-label={selectors.pages.AddDashboard.addNewPanelLibrary}
+              >
                 <Icon name="book-open" size="xl" />
                 Add a panel from the panel library
               </div>
               {copiedPanelPlugins.length === 1 && (
-                <div className={styles.rowGap} onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
+                <div
+                  className={styles.rowGap}
+                  onClick={() => {
+                    reportInteraction('Paste panel from clipboard');
+                    onPasteCopiedPanel(copiedPanelPlugins[0]);
+                  }}
+                >
                   <Icon name="clipboard-alt" size="xl" />
                   Paste panel from clipboard
                 </div>

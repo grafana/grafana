@@ -1,5 +1,5 @@
 export { Icon } from './Icon/Icon';
-export { IconButton } from './IconButton/IconButton';
+export { IconButton, IconButtonVariant } from './IconButton/IconButton';
 export { ConfirmButton } from './ConfirmButton/ConfirmButton';
 export { DeleteButton } from './ConfirmButton/DeleteButton';
 export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
@@ -145,8 +145,8 @@ export {
   withErrorBoundary,
 } from './ErrorBoundary/ErrorBoundary';
 export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
-export { AlphaNotice } from './AlphaNotice/AlphaNotice';
 export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
+export { AlertingSettings } from './DataSourceSettings/AlertingSettings';
 export { TLSAuthSettings } from './DataSourceSettings/TLSAuthSettings';
 export { CertificationKey } from './DataSourceSettings/CertificationKey';
 export { Spinner } from './Spinner/Spinner';
@@ -245,7 +245,7 @@ export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
 export { usePlotContext } from './uPlot/context';
-export { PlotTooltipInterpolator } from './uPlot/types';
+export { PlotTooltipInterpolator, PlotSelection } from './uPlot/types';
 export { GraphNG, GraphNGProps, FIXED_UNIT } from './GraphNG/GraphNG';
 export { TimeSeries } from './TimeSeries/TimeSeries';
 export { useGraphNGContext } from './GraphNG/hooks';
