@@ -1,4 +1,4 @@
-import { PanelModel, PanelPlugin } from '@grafana/data';
+import { PanelModel, PanelOptionsEditorProps, PanelPlugin } from '@grafana/data';
 import { DashList } from './DashList';
 import { DashListOptions } from './types';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -61,7 +61,7 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
         name: 'Tags',
         description: '',
         defaultValue: [],
-        editor(props) {
+        editor(props: PanelOptionsEditorProps<string[]>) {
           return <TagsInput tags={props.value} onChange={props.onChange} />;
         },
       });

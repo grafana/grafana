@@ -7,6 +7,16 @@ export const BaseLayerEditor: FC<StandardEditorProps<MapLayerConfig, any, Geomap
   value,
   onChange,
   context,
+  item,
 }) => {
-  return <LayerEditor config={value} data={context.data} onChange={onChange} filter={(v) => Boolean(v.isBaseMap)} />;
+  return (
+    <LayerEditor
+      context={context}
+      item={item}
+      config={value}
+      data={context.data}
+      onChange={onChange}
+      filter={(v) => Boolean(v.isBaseMap)}
+    />
+  );
 };

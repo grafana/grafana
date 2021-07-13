@@ -81,26 +81,42 @@ export abstract class OptionsUIRegistryBuilder<
   TEditorProps,
   T extends OptionsEditorItem<TOptions, any, TEditorProps, any>
 > implements OptionsUIRegistryBuilderAPI<TOptions, TEditorProps, T> {
-  private properties: T[] = [];
+  private properties: Map<string, T> = new Map();
+  private changeHandler?: () => void;
 
-  constructor() {}
   addCustomEditor<TSettings, TValue>(config: T & OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue>): this {
-    this.properties.push(config);
-    // if (this.onInvalidate) {
-    //   console.log('invalidate')
-    //   this.onInvalidate();
-    // }
+    if (this.properties.has(config.id)) {
+      return this;
+    }
+
+    this.properties.set(config.id, config);
+    // this.properties.push(config);
+    this.onRegistryChange();
     return this;
   }
 
   remove(id: string): this {
-    this.properties = this.properties.filter((p) => p.id !== id);
+    this.properties.delete(id);
+    // this.properties = this.properties.filter((p) => p.id !== id);
+    this.onRegistryChange();
+
     return this;
+  }
+
+  setRegistryChangeHandler(cb: () => void) {
+    this.changeHandler = cb;
+    return this;
+  }
+
+  onRegistryChange() {
+    if (this.changeHandler) {
+      this.changeHandler();
+    }
   }
 
   getRegistry() {
     return new Registry(() => {
-      return this.properties;
+      return Array.from(this.properties.values());
     });
   }
 }

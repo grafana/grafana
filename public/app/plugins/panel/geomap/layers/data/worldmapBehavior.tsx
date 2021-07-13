@@ -45,7 +45,7 @@ export const worldmapBehaviorLayer: MapLayerRegistryItem<WorldmapConfig> = {
           for( let y=0; y<40; y+=10) {
             const dot = new Feature({
               geometry: new Point(fromLonLat([x,y])),
-            });  
+            });
             dot.setStyle(new style.Style({
               image: new style.Circle({
                 fill: new style.Fill({

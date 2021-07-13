@@ -62,14 +62,15 @@ export interface FieldOverrideContext extends StandardEditorContext<any> {
   dataFrameIndex?: number; // The index for the selected field frame
 }
 export interface FieldConfigEditorProps<TValue, TSettings>
-  extends Omit<StandardEditorProps<TValue, TSettings>, 'item'> {
+  extends Omit<StandardEditorProps<TValue, TSettings>, 'item' | 'context'> {
   item: FieldConfigPropertyItem<any, TValue, TSettings>; // The property info
   value: TValue;
   context: FieldOverrideContext;
   onChange: (value?: TValue) => void;
 }
 
-export interface FieldOverrideEditorProps<TValue, TSettings> extends Omit<StandardEditorProps<TValue>, 'item'> {
+export interface FieldOverrideEditorProps<TValue, TSettings>
+  extends Omit<StandardEditorProps<TValue>, 'item' | 'context'> {
   item: FieldConfigPropertyItem<TValue, TSettings>;
   context: FieldOverrideContext;
 }

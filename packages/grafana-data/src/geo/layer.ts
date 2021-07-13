@@ -5,6 +5,7 @@ import { PanelData } from '../types';
 import { GrafanaTheme2 } from '../themes';
 import { PanelOptionsEditorBuilder } from '../utils';
 import { ReactNode } from 'react';
+import { GeomapPanelOptions } from '../../../../public/app/plugins/panel/geomap/types';
 
 /**
  * This gets saved in panel json
@@ -43,7 +44,7 @@ export interface MapLayerHandler {
  *
  * @alpha
  */
-export interface MapLayerRegistryItem<TConfig = MapLayerConfig> extends RegistryItemWithOptions {
+export interface MapLayerRegistryItem<TConfig = any> extends RegistryItemWithOptions {
   /**
    * This layer can be used as a background
    */
@@ -63,5 +64,5 @@ export interface MapLayerRegistryItem<TConfig = MapLayerConfig> extends Registry
   /**
    * Show custom elements in the panel edit UI
    */
-  registerOptionsUI?: (builder: PanelOptionsEditorBuilder<TConfig>) => void;
+  registerOptionsUI?: (builder: PanelOptionsEditorBuilder<GeomapPanelOptions<TConfig>>, path: string) => void;
 }

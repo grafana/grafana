@@ -39,22 +39,27 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
     },
   }),
 
-  registerOptionsUI: (builder) => {
+  registerOptionsUI: (builder, path) => {
+    const category = ['Base Layer'];
     builder
       .addTextInput({
-        path: 'url',
+        path: `${path}.url`,
         name: 'URL template',
+        category,
         description: 'Must include {x}, {y} or {-y}, and {z} placeholders',
         settings: {
           placeholder: defaultXYZConfig.url,
         },
+        showIf: (o) => o.basemap.type === 'xyz',
       })
       .addTextInput({
-        path: 'attribution',
+        path: `${path}.attribution`,
         name: 'Attribution',
+        category,
         settings: {
           placeholder: defaultXYZConfig.attribution,
         },
+        showIf: (o) => o.basemap.type === 'xyz',
       });
   },
 };

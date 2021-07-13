@@ -133,7 +133,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
  */
 export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilder<
   TOptions,
-  StandardEditorProps,
+  StandardEditorProps<any, any, any, PanelOptionsEditorBuilder<TOptions>>,
   PanelOptionsEditorItem<TOptions>
 > {
   addNumberInput<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {

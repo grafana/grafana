@@ -29,10 +29,14 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   const styles = useStyles2(getStyles);
 
   const [panelFrameOptions, vizOptions, justOverrides] = useMemo(
-    () => [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)],
+    () => [
+      getPanelFrameCategory(props),
+      getVizualizationOptions(props, props.plugin.optionEditors),
+      getFieldOverrideCategories(props),
+    ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev, props.data]
+    [panel.configRev, props.data, props.plugin.optionEditors]
   );
 
   const mainBoxElements: React.ReactNode[] = [];

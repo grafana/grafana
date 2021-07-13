@@ -52,10 +52,11 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
     },
   }),
 
-  registerOptionsUI: (builder) => {
+  registerOptionsUI: (builder, path: string) => {
+    const category = ['Base Layer'];
     builder
       .addRadio({
-        path: 'theme',
+        path: `${path}.config.theme`,
         name: 'Theme',
         settings: {
           options: [
@@ -64,13 +65,17 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
             { value: LayerTheme.Dark, label: 'Dark' },
           ],
         },
+        category,
         defaultValue: defaultCartoConfig.theme!,
+        showIf: (o) => o.basemap.type === 'carto',
       })
       .addBooleanSwitch({
-        path: 'showLabels',
+        path: `${path}.config.showLabels`,
         name: 'Show labels',
+        category,
         description: '',
         defaultValue: defaultCartoConfig.showLabels,
+        showIf: (o) => o.basemap.type === 'carto',
       });
   },
 };

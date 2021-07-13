@@ -1,15 +1,25 @@
 import React from 'react';
-import { PanelOptionsEditorItem, StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
+import {
+  PanelOptionEditorsRegistry,
+  PanelOptionsEditorBuilder,
+  PanelOptionsEditorItem,
+  StandardEditorContext,
+  VariableSuggestionsScope,
+} from '@grafana/data';
 import { get as lodashGet } from 'lodash';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import { OptionPaneRenderProps } from './types';
 import { updateDefaultFieldConfigValue, setOptionImmutably } from './utils';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
+import { PanelOptionsChangedEvent } from '../../../../types/events';
 
 type categoryGetter = (categoryNames?: string[]) => OptionsPaneCategoryDescriptor;
 
-export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor[] {
+export function getVizualizationOptions(
+  props: OptionPaneRenderProps,
+  optionEditors: PanelOptionEditorsRegistry
+): OptionsPaneCategoryDescriptor[] {
   const { plugin, panel, onPanelOptionsChanged, onFieldConfigsChange, data, dashboard } = props;
   const currentOptions = panel.getOptions();
   const currentFieldConfig = panel.fieldConfig;
@@ -23,8 +33,12 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
     getSuggestions: (scope?: VariableSuggestionsScope) => {
       return data ? getDataLinksVariableSuggestions(data.series, scope) : [];
     },
-    builder: plugin.optionsBuilder,
   };
+
+  plugin.optionsBuilder?.setRegistryChangeHandler(() => {
+    // Publishing options change event when the options registry changes
+    panel.events.publish(new PanelOptionsChangedEvent());
+  });
 
   const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {
     const categoryName = (categoryNames && categoryNames[0]) ?? `${plugin.meta.name}`;
@@ -42,13 +56,13 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
 
   // Load the options into categories
   fillOptionsPaneItems(
-    plugin.optionEditors.list(),
+    optionEditors.list(),
     getOptionsPaneCategory,
     (path: string, value: any) => {
       const newOptions = setOptionImmutably(context.options, path, value);
       onPanelOptionsChanged(newOptions);
     },
-    context
+    { ...context, builder: plugin.optionsBuilder! }
   );
 
   /**
@@ -110,7 +124,7 @@ export function fillOptionsPaneItems(
   optionEditors: PanelOptionsEditorItem[],
   getOptionsPaneCategory: categoryGetter,
   onValueChanged: (path: string, value: any) => void,
-  context: StandardEditorContext<any>
+  context: StandardEditorContext<any> & { builder: PanelOptionsEditorBuilder<any> }
 ) {
   for (const pluginOption of optionEditors) {
     if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data)) {
@@ -134,7 +148,7 @@ export function fillOptionsPaneItems(
                 onValueChanged(pluginOption.path, value);
               }}
               item={pluginOption}
-              context={context}
+              context={{ ...context, path: pluginOption.path }}
             />
           );
         },

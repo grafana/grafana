@@ -71,31 +71,40 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
     },
   }),
 
-  registerOptionsUI: (builder) => {
+  registerOptionsUI: (builder, path) => {
+    const category = ['Base Layer'];
+
     builder
       .addSelect({
-        path: 'server',
+        path: `${path}.config.server`,
         name: 'Server instance',
+        category,
         settings: {
           options: publicServiceRegistry.selectOptions().options,
         },
+        defaultValue: DEFAULT_SERVICE,
+        showIf: (o) => o.basemap.type === 'esri-xyz',
       })
       .addTextInput({
-        path: 'url',
+        path: `${path}.config.url`,
         name: 'URL template',
+        category,
         description: 'Must include {x}, {y} or {-y}, and {z} placeholders',
         settings: {
           placeholder: defaultXYZConfig.url,
         },
-        showIf: (cfg) => cfg.server === CUSTOM_SERVICE,
+        showIf: (o) => {
+          return o.basemap.type === 'esri-xyz' && o.basemap.config?.server === CUSTOM_SERVICE;
+        },
       })
       .addTextInput({
-        path: 'attribution',
+        path: `${path}.config.attribution`,
         name: 'Attribution',
+        category,
         settings: {
           placeholder: defaultXYZConfig.attribution,
         },
-        showIf: (cfg) => cfg.server === CUSTOM_SERVICE,
+        showIf: (o) => o.basemap.type === 'esri-xyz' && o.basemap.config?.server === CUSTOM_SERVICE,
       });
   },
 

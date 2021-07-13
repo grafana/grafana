@@ -24,7 +24,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
   const theme = useTheme2();
   const styles = getStyles(theme, isHorizontal);
   const SliderWithTooltip = SliderComponent;
-  const [sliderValue, setSliderValue] = useState<number>(value || min);
+  const [sliderValue, setSliderValue] = useState<number>(value === undefined ? min : value);
 
   const onSliderChange = useCallback(
     (v: number) => {

@@ -8,10 +8,13 @@ export const DataLayersEditor: FC<StandardEditorProps<MapLayerConfig[], any, Geo
   value,
   onChange,
   context,
+  item,
 }) => {
   return (
     <LayerEditor
       config={value?.length ? value[0] : undefined}
+      context={context}
+      item={item}
       data={context.data}
       onChange={(cfg) => {
         console.log('Change overlays:', cfg);

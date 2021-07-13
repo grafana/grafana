@@ -44,9 +44,9 @@ export const defaultView: MapViewConfig = {
   zoom: 1,
 };
 
-export interface GeomapPanelOptions {
+export interface GeomapPanelOptions<TBaseLayerConfig = any, TLayerConfig = any> {
   view: MapViewConfig;
   controls: ControlsOptions;
-  basemap: MapLayerConfig;
-  layers: MapLayerConfig[];
+  basemap: MapLayerConfig<TBaseLayerConfig>;
+  layers: Array<MapLayerConfig<TLayerConfig>>;
 }

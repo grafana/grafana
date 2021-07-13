@@ -179,11 +179,8 @@ export class PanelPlugin<
   }
 
   get optionEditors(): PanelOptionEditorsRegistry {
-    console.log(this.optionsBuilder?.getRegistry().list().length, this._optionEditors?.list().length);
     if (!this._optionEditors) {
-      const builder = new PanelOptionsEditorBuilder<TOptions>(() => {
-        this._optionEditors = undefined;
-      });
+      const builder = new PanelOptionsEditorBuilder<TOptions>();
 
       this._optionEditors = builder.getRegistry();
 
@@ -195,9 +192,6 @@ export class PanelPlugin<
 
     if (this._optionsBuilder?.getRegistry().list().length !== this._optionEditors.list().length) {
       this._optionEditors = this._optionsBuilder!.getRegistry();
-      // if (this.registerOptionEditors) {
-      //   this.registerOptionEditors(this._optionsBuilder!);
-      // }
     }
 
     return this._optionEditors;
