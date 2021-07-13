@@ -7,7 +7,6 @@ import {
   DataFrame,
   DataLink,
   DataLinkBuiltInVars,
-  DataLinkClickEvent,
   deprecationWarning,
   Field,
   FieldType,
@@ -25,6 +24,7 @@ import {
   VariableSuggestionsScope,
 } from '@grafana/data';
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
+import React from '@visx/tooltip/node_modules/@types/react';
 
 const timeRangeVars = [
   {
@@ -313,30 +313,25 @@ export class LinkSrv implements LinkService {
       });
     }
 
-    let onClick: ((event: DataLinkClickEvent) => void) | undefined = undefined;
-
-    if (link.onClick) {
-      onClick = (e: DataLinkClickEvent) => {
-        if (link.onClick) {
-          link.onClick({
-            origin,
-            replaceVariables,
-            e,
-          });
-        }
-      };
-    }
-
     const info: LinkModel<T> = {
       href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
-      title: replaceVariables ? replaceVariables(link.title || '') : link.title,
+      title: link.title ?? '',
       target: link.targetBlank ? '_blank' : undefined,
       origin,
-      onClick,
+      onClick: link.onClick
+        ? (e: React.SyntheticEvent) => {
+            link.onClick!({
+              origin,
+              replaceVariables,
+              e,
+            });
+          }
+        : undefined,
     };
 
     if (replaceVariables) {
       info.href = replaceVariables(info.href);
+      info.title = replaceVariables(link.title);
     }
 
     info.href = getConfig().disableSanitizeHtml ? info.href : textUtil.sanitizeUrl(info.href);
