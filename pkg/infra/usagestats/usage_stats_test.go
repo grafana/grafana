@@ -534,6 +534,7 @@ type fakePluginManager struct {
 
 	dataSources map[string]*plugins.DataSourcePlugin
 	panels      map[string]*plugins.PanelPlugin
+	apps        map[string]*plugins.AppPlugin
 }
 
 func (pm *fakePluginManager) DataSourceCount() int {
@@ -546,6 +547,10 @@ func (pm *fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin 
 
 func (pm *fakePluginManager) PanelCount() int {
 	return len(pm.panels)
+}
+
+func (pm *fakePluginManager) AppCount() int {
+	return len(pm.apps)
 }
 
 func setupSomeDataSourcePlugins(t *testing.T, uss *UsageStatsService) {

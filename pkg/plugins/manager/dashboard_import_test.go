@@ -87,6 +87,8 @@ func pluginScenario(t *testing.T, desc string, fn func(*testing.T, *PluginManage
 				},
 			},
 		})
+		pm.PluginManagerV2 = &fakePluginManagerV2{}
+
 		err := pm.Init()
 		require.NoError(t, err)
 

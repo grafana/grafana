@@ -40,7 +40,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	pm := &manager.PluginManager{Cfg: cfg, SQLStore: sqlStore}
+	pm := &manager.PluginManager{Cfg: cfg, SQLStore: sqlStore, PluginManagerV2: &manager.PluginManagerV2{}}
 
 	r := &rendering.RenderingService{
 		Cfg:           cfg,

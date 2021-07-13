@@ -20,6 +20,7 @@ func TestGetPluginDashboards(t *testing.T) {
 			},
 		},
 	})
+	pm.PluginManagerV2 = &fakePluginManagerV2{}
 	err := pm.Init()
 	require.NoError(t, err)
 

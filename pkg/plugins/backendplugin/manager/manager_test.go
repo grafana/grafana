@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins"
+
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -250,6 +252,7 @@ func TestManager(t *testing.T) {
 					require.Equal(t, context.Canceled, runErr)
 					require.Equal(t, 0, ctx.plugin.startCount)
 					require.Equal(t, 1, ctx.plugin.stopCount)
+					require.True(t, ctx.plugin.Exited())
 				})
 
 				t.Run("Should be able to start unmanaged plugin and be restarted when process is killed", func(t *testing.T) {
@@ -337,6 +340,7 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 			PluginRequestValidator: validator,
 			logger:                 log.New("test"),
 			plugins:                map[string]backendplugin.Plugin{},
+			PluginManagerV2:        &fakePluginManagerV2{},
 		},
 	}
 
@@ -392,6 +396,7 @@ func (tp *testPlugin) Stop(ctx context.Context) error {
 	tp.mutex.Lock()
 	defer tp.mutex.Unlock()
 	tp.stopCount++
+	tp.exited = true
 	return nil
 }
 
@@ -513,3 +518,67 @@ type testPluginRequestValidator struct{}
 func (t *testPluginRequestValidator) Validate(string, *http.Request) error {
 	return nil
 }
+
+type fakePluginManagerV2 struct {
+}
+
+func (f *fakePluginManagerV2) IsEnabled() bool {
+	return false
+}
+
+func (f *fakePluginManagerV2) Plugin(pluginID string) *plugins.PluginV2 {
+	return nil
+}
+
+func (f *fakePluginManagerV2) PluginByType(pluginID string, pluginType plugins.PluginType) *plugins.PluginV2 {
+	return nil
+}
+
+func (f *fakePluginManagerV2) Plugins(pluginType ...plugins.PluginType) []*plugins.PluginV2 {
+	return nil
+}
+
+func (f *fakePluginManagerV2) Renderer() *plugins.PluginV2 {
+	return nil
+}
+
+func (f *fakePluginManagerV2) StaticRoutes() []*plugins.PluginStaticRoute {
+	return nil
+}
+
+func (f *fakePluginManagerV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return nil, nil
+}
+
+func (f *fakePluginManagerV2) CallResource(pCtx backend.PluginContext, ctx *models.ReqContext, path string) {
+}
+
+func (f *fakePluginManagerV2) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
+	return nil, nil
+}
+
+func (f *fakePluginManagerV2) CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error) {
+	return nil, nil
+}
+
+func (f *fakePluginManagerV2) IsSupported(pluginID string) bool {
+	return false
+}
+
+func (f *fakePluginManagerV2) IsRegistered(pluginID string) bool {
+	return false
+}
+
+func (f *fakePluginManagerV2) InitCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	return nil
+}
+
+func (f *fakePluginManagerV2) Install(ctx context.Context, pluginID, version string) error {
+	return nil
+}
+
+func (f *fakePluginManagerV2) Uninstall(ctx context.Context, pluginID string) error {
+	return nil
+}
+
+var _ plugins.ManagerV2 = &fakePluginManagerV2{}

@@ -702,6 +702,72 @@ func (f *fakePluginInstaller) Uninstall(ctx context.Context, pluginID, pluginPat
 	return nil
 }
 
+var _ plugins.PluginInstaller = &fakePluginInstaller{}
+
+type fakePluginManagerV2 struct {
+}
+
+func (f *fakePluginManagerV2) IsEnabled() bool {
+	return false
+}
+
+func (f *fakePluginManagerV2) Plugin(pluginID string) *plugins.PluginV2 {
+	return nil
+}
+
+func (f *fakePluginManagerV2) PluginByType(pluginID string, pluginType plugins.PluginType) *plugins.PluginV2 {
+	return nil
+}
+
+func (f *fakePluginManagerV2) Plugins(pluginType ...plugins.PluginType) []*plugins.PluginV2 {
+	return nil
+}
+
+func (f *fakePluginManagerV2) Renderer() *plugins.PluginV2 {
+	return nil
+}
+
+func (f *fakePluginManagerV2) StaticRoutes() []*plugins.PluginStaticRoute {
+	return nil
+}
+
+func (f *fakePluginManagerV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return nil, nil
+}
+
+func (f *fakePluginManagerV2) CallResource(pCtx backend.PluginContext, ctx *models.ReqContext, path string) {
+}
+
+func (f *fakePluginManagerV2) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
+	return nil, nil
+}
+
+func (f *fakePluginManagerV2) CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error) {
+	return nil, nil
+}
+
+func (f *fakePluginManagerV2) IsSupported(pluginID string) bool {
+	return false
+}
+
+func (f *fakePluginManagerV2) IsRegistered(pluginID string) bool {
+	return false
+}
+
+func (f *fakePluginManagerV2) InitCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	return nil
+}
+
+func (f *fakePluginManagerV2) Install(ctx context.Context, pluginID, version string) error {
+	return nil
+}
+
+func (f *fakePluginManagerV2) Uninstall(ctx context.Context, pluginID string) error {
+	return nil
+}
+
+var _ plugins.ManagerV2 = &fakePluginManagerV2{}
+
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
@@ -714,6 +780,7 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 		StaticRootPath: staticRootPath,
 	})
 	pm.BackendPluginManager = &fakeBackendPluginManager{}
+	pm.PluginManagerV2 = &fakePluginManagerV2{}
 	for _, cb := range cbs {
 		cb(pm)
 	}
