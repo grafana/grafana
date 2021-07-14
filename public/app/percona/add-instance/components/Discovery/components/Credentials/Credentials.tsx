@@ -7,12 +7,12 @@ import { SECURITY_CREDENTIALS_DOC_LINK } from './Credentials.constants';
 import { Messages } from './Credentials.messages';
 import { CredentialsForm, CredentialsProps } from './Credentials.types';
 
-const Credentials: FC<CredentialsProps> = ({ onSetCredentials, selectInstance }) => {
+const Credentials: FC<CredentialsProps> = ({ discover, selectInstance }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
   const onSubmit = useCallback((values: CredentialsForm) => {
-    onSetCredentials({ ...values });
+    discover(values);
   }, []);
 
   return (
