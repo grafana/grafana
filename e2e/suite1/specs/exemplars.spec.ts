@@ -4,7 +4,7 @@ const dataSourceName = 'PromExemplar';
 const addDataSource = () => {
   e2e.flows.addDataSource({
     type: 'Prometheus',
-    expectedAlertMessage: 'HTTP error Bad Gateway',
+    expectedAlertMessage: 'Bad Gateway',
     name: dataSourceName,
     form: () => {
       e2e.components.DataSource.Prometheus.configPage.exemplarsAddButton().click();
@@ -13,9 +13,9 @@ const addDataSource = () => {
         .should('be.visible')
         .within(() => {
           e2e.components.Select.input().should('be.visible').click({ force: true });
-
-          e2e().contains('gdev-tempo').scrollIntoView().should('be.visible').click();
         });
+
+      e2e().contains('gdev-tempo').scrollIntoView().should('be.visible').click();
     },
   });
 };
@@ -54,9 +54,8 @@ describe('Exemplars', () => {
       .should('be.visible')
       .within(() => {
         e2e.components.Select.input().should('be.visible').click();
-
-        e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
       });
+    e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
     e2e.components.TimePicker.openButton().click();
     e2e.components.TimePicker.fromField().clear().type('2021-05-11 19:30:00');
     e2e.components.TimePicker.toField().clear().type('2021-05-11 21:40:00');

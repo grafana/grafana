@@ -1,5 +1,6 @@
-﻿import React, { PureComponent } from 'react';
+﻿import React, { PropsWithChildren, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
+import { useTheme2 } from '../../themes';
 
 interface Props {
   className?: string;
@@ -7,37 +8,29 @@ interface Props {
   forwardedRef?: any;
 }
 
-export class Portal extends PureComponent<Props> {
-  node: HTMLElement = document.createElement('div');
-  portalRoot: HTMLElement;
+export function Portal(props: PropsWithChildren<Props>) {
+  const { children, className, root = document.body, forwardedRef } = props;
+  const theme = useTheme2();
+  const [node] = useState(document.createElement('div'));
+  const portalRoot = root;
 
-  constructor(props: Props) {
-    super(props);
-    const { className, root = document.body } = this.props;
-
-    if (className) {
-      this.node.classList.add(className);
-    }
-
-    this.portalRoot = root;
-    this.portalRoot.appendChild(this.node);
+  if (className) {
+    node.classList.add(className);
   }
+  node.style.position = 'relative';
+  node.style.zIndex = `${theme.zIndex.portal}`;
 
-  componentWillUnmount() {
-    this.portalRoot.removeChild(this.node);
-  }
+  useEffect(() => {
+    portalRoot.appendChild(node);
+    return () => {
+      portalRoot.removeChild(node);
+    };
+  }, [node, portalRoot]);
 
-  render() {
-    // Default z-index is high to make sure
-    return ReactDOM.createPortal(
-      <div style={{ zIndex: 1051, position: 'relative' }} ref={this.props.forwardedRef}>
-        {this.props.children}
-      </div>,
-      this.node
-    );
-  }
+  return ReactDOM.createPortal(<div ref={forwardedRef}>{children}</div>, node);
 }
 
 export const RefForwardingPortal = React.forwardRef<HTMLDivElement, Props>((props, ref) => {
   return <Portal {...props} forwardedRef={ref} />;
 });
+RefForwardingPortal.displayName = 'RefForwardingPortal';

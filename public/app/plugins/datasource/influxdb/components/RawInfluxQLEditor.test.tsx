@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { select } from 'react-select-event';
+import { selectOptionInTest } from '@grafana/ui';
 import { RawInfluxQLEditor } from './RawInfluxQLEditor';
 import { InfluxQuery } from '../types';
 
@@ -57,7 +57,7 @@ describe('RawInfluxQLEditor', () => {
     const formatSelect = screen.getByLabelText('Format as');
     expect(formatSelect).toBeInTheDocument();
 
-    await select(formatSelect, 'Time series');
+    await selectOptionInTest(formatSelect, 'Time series');
 
     expect(onChange).toHaveBeenCalledWith({ ...query, resultFormat: 'time_series' });
   });

@@ -15,9 +15,9 @@ export const smokeTestScenario = {
       .should('be.visible')
       .within(() => {
         e2e.components.Select.input().should('be.visible').click();
-
-        cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').click();
       });
+
+    cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').click();
 
     // Make sure the graph renders via checking legend
     e2e.components.VizLegend.seriesName('A-series').should('be.visible');

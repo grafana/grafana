@@ -15,9 +15,9 @@ e2e.scenario({
       .should('be.visible')
       .within(() => {
         e2e.components.Select.input().should('be.visible').click();
-
-        cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').click();
       });
+
+    cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').click();
 
     const canvases = e2e().get('canvas');
     canvases.should('have.length', 1);

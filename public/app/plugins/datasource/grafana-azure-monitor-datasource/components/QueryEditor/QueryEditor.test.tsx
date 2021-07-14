@@ -77,7 +77,7 @@ describe('Azure Monitor QueryEditor', () => {
     await waitFor(() => expect(screen.getByTestId('azure-monitor-query-editor')).toBeInTheDocument());
 
     const metrics = await screen.findByLabelText('Service');
-    await selectEvent.select(metrics, 'Logs');
+    await ui.selectOptionInTest(metrics, 'Logs');
 
     expect(onChange).toHaveBeenCalledWith({
       ...mockQuery,
@@ -127,7 +127,7 @@ describe('Azure Monitor QueryEditor', () => {
     expect(screen.queryByText('Application Insights')).toBeInTheDocument();
 
     const metrics = await screen.findByLabelText('Service');
-    await selectEvent.select(metrics, 'Logs');
+    await ui.selectOptionInTest(metrics, 'Logs');
 
     expect(screen.queryByText('Application Insights')).toBeInTheDocument();
   });

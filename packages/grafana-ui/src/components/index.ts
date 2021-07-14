@@ -186,6 +186,7 @@ export { InlineFieldRow } from './Forms/InlineFieldRow';
 export { FieldArray } from './Forms/FieldArray';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
+export { selectOptionInTest } from './Select/test-utils';
 export * from './Select/Select';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';

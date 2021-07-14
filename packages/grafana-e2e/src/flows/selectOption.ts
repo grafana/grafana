@@ -17,23 +17,22 @@ export const selectOption = (config: SelectOptionConfig): any => {
 
   const { clickToOpen, container, forceClickOption, optionText } = fullConfig;
 
-  return container.within(() => {
+  container.within(() => {
     if (clickToOpen) {
       e2e().get('[class$="-input-suffix"]').click();
     }
-
-    e2e.components.Select.option()
-      .filter((_, { textContent }) => {
-        if (textContent === null) {
-          return false;
-        } else if (typeof optionText === 'string') {
-          return textContent.includes(optionText);
-        } else {
-          return optionText.test(textContent);
-        }
-      })
-      .scrollIntoView()
-      .click({ force: forceClickOption });
-    e2e().root().scrollIntoView();
   });
+
+  return e2e.components.Select.option()
+    .filter((_, { textContent }) => {
+      if (textContent === null) {
+        return false;
+      } else if (typeof optionText === 'string') {
+        return textContent.includes(optionText);
+      } else {
+        return optionText.test(textContent);
+      }
+    })
+    .scrollIntoView()
+    .click({ force: forceClickOption });
 };

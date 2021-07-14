@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, screen, waitFor, act } from '@testing-library/react';
-import selectEvent from 'react-select-event';
+import { selectOptionInTest } from '@grafana/ui';
 import * as SearchSrv from 'app/core/services/search_srv';
 import * as MockSearchSrv from 'app/core/services/__mocks__/search_srv';
 import { DashboardSearch, Props } from './DashboardSearch';
@@ -105,7 +105,7 @@ describe('DashboardSearch', () => {
     await waitFor(() => screen.getByLabelText('Tag filter'));
 
     const tagComponent = screen.getByLabelText('Tag filter');
-    await selectEvent.select(tagComponent, 'tag1');
+    await selectOptionInTest(tagComponent, 'tag1');
 
     expect(tagComponent).toBeInTheDocument();
 

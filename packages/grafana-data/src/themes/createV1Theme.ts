@@ -98,15 +98,7 @@ export function createV1Theme(theme: Omit<GrafanaTheme2, 'v1'>): GrafanaTheme {
     },
     panelPadding: theme.components.panel.padding * theme.spacing.gridSize,
     panelHeaderHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
-    zIndex: {
-      navbarFixed: theme.zIndex.navbarFixed,
-      sidemenu: theme.zIndex.sidemenu,
-      dropdown: theme.zIndex.dropdown,
-      typeahead: theme.zIndex.typeahead,
-      tooltip: theme.zIndex.tooltip,
-      modalBackdrop: theme.zIndex.modalBackdrop,
-      modal: theme.zIndex.modal,
-    },
+    zIndex: theme.zIndex,
   };
 
   const basicColors = {

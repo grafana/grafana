@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import selectEvent from 'react-select-event';
+import { selectOptionInTest } from '@grafana/ui';
 
 import MetricsQueryEditor from './MetricsQueryEditor';
 
@@ -56,7 +56,7 @@ describe('Azure Monitor QueryEditor', () => {
     );
 
     const subscriptions = await screen.findByLabelText('Subscription');
-    await selectEvent.select(subscriptions, 'Another Subscription');
+    await selectOptionInTest(subscriptions, 'Another Subscription');
 
     expect(onChange).toHaveBeenCalledWith({
       ...mockQuery,
@@ -102,7 +102,7 @@ describe('Azure Monitor QueryEditor', () => {
     await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
 
     const metrics = await screen.findByLabelText('Metric');
-    await selectEvent.select(metrics, 'Metric B');
+    await selectOptionInTest(metrics, 'Metric B');
 
     expect(onChange).toHaveBeenLastCalledWith({
       ...mockQuery,
@@ -141,7 +141,7 @@ describe('Azure Monitor QueryEditor', () => {
     await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
 
     const metrics = await screen.findByLabelText('Metric');
-    await selectEvent.select(metrics, 'Metric B');
+    await selectOptionInTest(metrics, 'Metric B');
 
     expect(onChange).toHaveBeenLastCalledWith({
       ...mockQuery,
@@ -170,7 +170,7 @@ describe('Azure Monitor QueryEditor', () => {
     await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
 
     const aggregation = await screen.findByLabelText('Aggregation');
-    await selectEvent.select(aggregation, 'Maximum');
+    await selectOptionInTest(aggregation, 'Maximum');
 
     expect(onChange).toHaveBeenLastCalledWith({
       ...mockQuery,

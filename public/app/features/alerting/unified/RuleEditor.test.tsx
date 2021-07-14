@@ -6,6 +6,7 @@ import RuleEditor from './RuleEditor';
 import { Router, Route } from 'react-router-dom';
 import React from 'react';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+import { selectOptionInTest } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { mockDataSource, MockDataSourceSrv } from './mocks';
 import userEvent from '@testing-library/user-event';
@@ -124,13 +125,13 @@ describe('RuleEditor', () => {
 
     await renderRuleEditor();
     await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
-    clickSelectOption(ui.inputs.alertType.get(), /Cortex\/Loki managed alert/);
+    await clickSelectOption(ui.inputs.alertType.get(), /Cortex\/Loki managed alert/);
     const dataSourceSelect = ui.inputs.dataSource.get();
     userEvent.click(byRole('textbox').get(dataSourceSelect));
-    userEvent.click(await byText('Prom (default)').find(dataSourceSelect));
+    await clickSelectOption(dataSourceSelect, 'Prom (default)');
     await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
-    clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
-    clickSelectOption(ui.inputs.group.get(), 'group2');
+    await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
+    await clickSelectOption(ui.inputs.group.get(), 'group2');
 
     await userEvent.type(ui.inputs.expr.get(), 'up == 1');
 
@@ -192,10 +193,10 @@ describe('RuleEditor', () => {
     // fill out the form
     await renderRuleEditor();
     userEvent.type(await ui.inputs.name.find(), 'my great new rule');
-    clickSelectOption(ui.inputs.alertType.get(), /Classic Grafana alerts based on thresholds/);
+    await clickSelectOption(ui.inputs.alertType.get(), /Classic Grafana alerts based on thresholds/);
     const folderInput = await ui.inputs.folder.find();
     await waitFor(() => expect(searchFolderMock).toHaveBeenCalled());
-    clickSelectOption(folderInput, 'Folder A');
+    await clickSelectOption(folderInput, 'Folder A');
 
     await userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
     await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
@@ -308,7 +309,7 @@ describe('RuleEditor', () => {
     // render rule editor, select cortex/loki managed alerts
     await renderRuleEditor();
     await ui.inputs.name.find();
-    clickSelectOption(ui.inputs.alertType.get(), /Cortex\/Loki managed alert/);
+    await clickSelectOption(ui.inputs.alertType.get(), /Cortex\/Loki managed alert/);
 
     // wait for ui theck each datasource if it supports rule editing
     await waitFor(() => expect(mocks.api.fetchRulerRulesGroup).toHaveBeenCalledTimes(4));
@@ -316,16 +317,16 @@ describe('RuleEditor', () => {
     // check that only rules sources that have ruler available are there
     const dataSourceSelect = ui.inputs.dataSource.get();
     userEvent.click(byRole('textbox').get(dataSourceSelect));
-    expect(await byText('loki with ruler').find(dataSourceSelect)).toBeInTheDocument();
-    expect(byText('cortex with ruler').query(dataSourceSelect)).toBeInTheDocument();
-    expect(byText('loki with local rule store').query(dataSourceSelect)).not.toBeInTheDocument();
-    expect(byText('prom without ruler api').query(dataSourceSelect)).not.toBeInTheDocument();
-    expect(byText('splunk').query(dataSourceSelect)).not.toBeInTheDocument();
-    expect(byText('loki disabled for alerting').query(dataSourceSelect)).not.toBeInTheDocument();
+    expect(await byText('loki with ruler').query()).toBeInTheDocument();
+    expect(byText('cortex with ruler').query()).toBeInTheDocument();
+    expect(byText('loki with local rule store').query()).not.toBeInTheDocument();
+    expect(byText('prom without ruler api').query()).not.toBeInTheDocument();
+    expect(byText('splunk').query()).not.toBeInTheDocument();
+    expect(byText('loki disabled for alerting').query()).not.toBeInTheDocument();
   });
 });
 
-const clickSelectOption = (selectElement: HTMLElement, optionText: Matcher): void => {
+const clickSelectOption = async (selectElement: HTMLElement, optionText: Matcher): Promise<void> => {
   userEvent.click(byRole('textbox').get(selectElement));
-  userEvent.click(byText(optionText).get(selectElement));
+  await selectOptionInTest(selectElement, optionText as string);
 };
