@@ -265,3 +265,27 @@ GET /api/annotations/tags?tag=out HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+Query Parameters:
+
+- `tag`: string. Optional. Used to filter tags.
+- `limit`: number. Optional - default is 100. Max limit for results returned.
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+    "result": {
+        "tags": [
+            {
+                "tag": "outage",
+                "count": 1
+            }
+        ]
+    }
+}
+```
