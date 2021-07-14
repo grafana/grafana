@@ -13,7 +13,6 @@ export default function createMockQuery(): AzureMonitorQuery {
 
     azureResourceGraph: {
       query: 'Resources | summarize count()',
-      resultFormat: 'time_series',
     },
 
     azureMonitor: {

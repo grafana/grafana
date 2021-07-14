@@ -177,8 +177,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
     const item = target.azureMonitor;
+
     if (!item) {
-      return target;
+      // return target;
+      throw new Error('Query is not a valid Azure Monitor Metrics query');
     }
 
     // fix for timeGrainUnit which is a deprecated/removed field name
