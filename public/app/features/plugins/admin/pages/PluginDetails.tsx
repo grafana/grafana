@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
-
-import { GrafanaTheme2 } from '@grafana/data';
+import { AppPlugin, GrafanaTheme2, PluginType, PluginIncludeType } from '@grafana/data';
 import { useStyles2, TabsBar, TabContent, Tab, Icon } from '@grafana/ui';
-
+import { useAsync } from 'react-use';
+import { contextSrv } from '../../../../core/services/context_srv';
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
 import { usePlugin } from '../hooks/usePlugins';
@@ -12,18 +12,68 @@ import { Loader } from '../components/Loader';
 import { Page } from 'app/core/components/Page/Page';
 import { PluginLogo } from '../components/PluginLogo';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { loadPlugin } from '../../PluginPage';
+import { AppConfigCtrlWrapper } from '../../wrappers/AppConfigWrapper';
+import { PluginDashboards } from '../../PluginDashboards';
 
 type PluginDetailsProps = GrafanaRouteComponentProps<{ pluginId?: string }>;
+
+const useLoadPlugin = (pluginId: string) => {
+  const { loading, value, error } = useAsync(async () => {
+    const navItems = [];
+    const plugin = await loadPlugin(pluginId);
+    const isAdmin = contextSrv.hasRole('Admin');
+    if (isAdmin) {
+      if (plugin.meta.type === PluginType.app) {
+        if (plugin.angularConfigCtrl) {
+          navItems.push({
+            label: 'Config',
+            active: false,
+          });
+        }
+      }
+
+      if (plugin.configPages) {
+        for (const page of plugin.configPages) {
+          navItems.push({
+            label: page.title,
+            active: false,
+          });
+        }
+      }
+    }
+
+    if (plugin.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
+      navItems.push({
+        label: 'Dashboards',
+        active: false,
+      });
+    }
+
+    return {
+      plugin,
+      navItems,
+    };
+  }, [pluginId]);
+
+  return {
+    loading,
+    plugin: value?.plugin,
+    navItems: value?.navItems,
+    error,
+  };
+};
+
+const defaultTabs = [
+  { label: 'Overview', active: true },
+  { label: 'Version history', active: false },
+];
 
 export default function PluginDetails({ match }: PluginDetailsProps): JSX.Element | null {
   const { pluginId } = match.params;
 
-  const [tabs, setTabs] = useState([
-    { label: 'Overview', active: true },
-    { label: 'Version history', active: false },
-  ]);
-
   const { isLoading, local, remote, remoteVersions } = usePlugin(pluginId!);
+  const { loading, error, plugin, navItems } = useLoadPlugin(pluginId!);
   const styles = useStyles2(getStyles);
 
   const description = remote?.description ?? local?.info?.description;
@@ -31,6 +81,10 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
   const version = local?.info?.version || remote?.version;
   const links = (local?.info?.links || remote?.json?.info?.links) ?? [];
   const downloads = remote?.downloads;
+
+  const [tabs, setTabs] = useState(defaultTabs);
+
+  console.log(loading, error, plugin, navItems);
 
   if (isLoading) {
     return (
@@ -97,6 +151,18 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
             />
           )}
           {tabs.find((_) => _.label === 'Version history')?.active && <VersionList versions={remoteVersions ?? []} />}
+
+          {tabs.find((_) => _.label === 'Dashboards')?.active && plugin && <PluginDashboards plugin={plugin.meta} />}
+
+          {tabs.find((_) => _.label === 'Config')?.active && plugin?.angularConfigCtrl && (
+            <div
+              className={css`
+                padding: 40px;
+              `}
+            >
+              <AppConfigCtrlWrapper app={plugin as AppPlugin} />
+            </div>
+          )}
         </TabContent>
       </PluginPage>
     </Page>
