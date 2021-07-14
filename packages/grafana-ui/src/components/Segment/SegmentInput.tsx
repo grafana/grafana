@@ -22,20 +22,13 @@ export function SegmentInput<T>({
   className,
   placeholder,
   disabled,
-  inputMinWidth,
-  onExpandedChange,
   autofocus = false,
   ...rest
 }: React.PropsWithChildren<SegmentInputProps<T>>) {
   const ref = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState<number | string>(initialValue);
-
-  const measuredSize = measureText((initialValue || '').toString(), FONT_SIZE).width;
-  const [inputWidth, setInputWidth] = useState<number>(
-    inputMinWidth ? Math.max(inputMinWidth, measuredSize) : measuredSize
-  );
-
-  const [Label, , expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
+  const [inputWidth, setInputWidth] = useState<number>(measureText((initialValue || '').toString(), FONT_SIZE).width);
+  const [Label, , expanded, setExpanded] = useExpandableLabel(autofocus);
   const styles = useStyles(getSegmentStyles);
 
   useClickAway(ref, () => {
