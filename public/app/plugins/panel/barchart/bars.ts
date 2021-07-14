@@ -295,7 +295,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   barMark.style.background = 'rgba(255,255,255,0.4)';
 
   let distrTwo = (groupCount: number, barCount: number) => {
-    console.log('distrTwo', groupCount, barCount);
     let out = Array.from({ length: barCount }, () => ({
       offs: Array(groupCount).fill(0),
       size: Array(groupCount).fill(0),
@@ -321,11 +320,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       qt.add({ x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx });
     },
   });
-  console.log(barsBuilder);
 
   const drawPoints = (u: uPlot, sidx: number, i0: number, i1: number) => {
     u.ctx.font = Math.round(10 * devicePixelRatio) + 'px Arial';
-    u.ctx.fillStyle = 'black';
+    u.ctx.fillStyle = theme.colors.text.primary;
 
     uPlot.orient(
       u,
@@ -375,6 +373,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     });
 
     barsPctLayout = [null].concat(distrTwo(u.data[0].length, u.data.length - 1));
+    console.log(barsPctLayout);
   };
 
   // handle hover interaction with quadtree probing
