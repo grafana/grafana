@@ -1,5 +1,5 @@
 +++
-title = "Visualizations and panels"
+title = "Visualization panels"
 weight = 420
 +++
 
