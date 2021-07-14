@@ -60,11 +60,11 @@ Secondly Grafana also has a horizontal or vertical [Bar gauge]({{< relref "./bar
 
 ### Heatmaps
 
-To show value distribution over time use the [heatmap]({{< relref "./heatmap.md" >}}) visualization.
+To show value distribution over, time use the [heatmap]({{< relref "./heatmap.md" >}}) visualization.
 
 ### Table 
 
-To show data in table use the [Table]({{< relref "./table/_index.md" >}}) visualization.
+To show data in a table layout, use the [Table]({{< relref "./table/_index.md" >}}) visualization.
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="800px" lightbox="true" caption="Table visualization" >}}
 
