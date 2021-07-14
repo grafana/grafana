@@ -20,8 +20,9 @@ Grafana offers a variety of different visualizations to suit different use cases
   * [Gauge]({{< relref "./gauge-panel.md" >}}) is a normal radial gauge.  
   * [Bar gauge]({{< relref "./bar-gauge-panel.md" >}}) is a horizontal or vertical bar gauge. 
 * Misc
-  * [Table]({{< relref "./table/_index.md" >}}) is the main and only Table visualization.
-  * [Node Graph]({{< relref "./node-graph.md" >}}).
+  * [Table]({{< relref "./table/_index.md" >}}) is the main and only table visualization.
+  * [Logs]({{< relref "./logs-panel.md" >}}) is the main visualization for logs.
+  * [Node Graph]({{< relref "./node-graph.md" >}}) for directed graphs or networks.
 * Widgets
   * [Dashboard list]({{< relref "./dashboard-list-panel.md" >}}) can list dashboards.
   * [Alert list]({{< relref "./alert-list-panel.md" >}}) can list alert.
@@ -58,18 +59,26 @@ Secondly Grafana also has a horizontal or vertical [Bar gauge]({{< relref "./bar
 
 {{< figure src="/static/img/docs/v66/bar_gauge_lcd.png" max-width="700px" >}}
 
-### Heatmaps
-
-To show value distribution over, time use the [heatmap]({{< relref "./heatmap.md" >}}) visualization.
-
 ### Table 
 
 To show data in a table layout, use the [Table]({{< relref "./table/_index.md" >}}) visualization.
 
-{{< figure src="/static/img/docs/tables/table_visualization.png" max-width="800px" lightbox="true" caption="Table visualization" >}}
+{{< figure src="/static/img/docs/tables/table_visualization.png" max-width="700px" lightbox="true" caption="Table visualization" >}}
 
 ### Pie chart 
 
 Grafana now ships with an included [Pie chart]({{< relref "./pie-chart-panel.md" >}}) visualization.
 
 {{< figure src="/static/img/docs/pie-chart-panel/pie-chart-example.png" max-width="700px" lightbox="true" caption="Pie chart visualization" >}}
+
+### Heatmaps
+
+To show value distribution over, time use the [heatmap]({{< relref "./heatmap.md" >}}) visualization.
+
+{{< figure src="/static/img/docs/v43/heatmap_panel_cover.jpg" max-width="1000px" lightbox="true" caption="Heatmap" >}}
+
+### State timeline
+
+The state timeline panel visualization shows discrete state changes over time. When used with time series, the thresholds are used to turn the numerical values into discrete state regions.
+
+{{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="700px" caption="state timeline with string states" >}}
