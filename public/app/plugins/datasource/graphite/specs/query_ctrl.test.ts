@@ -280,10 +280,12 @@ describe('GraphiteQueryCtrl', () => {
 
   describe('targetChanged', () => {
     beforeEach(async () => {
+      const newQuery = 'aliasByNode(scaleToSeconds(test.prod.*, 1), 2)';
       ctx.ctrl.state.datasource.metricFindQuery = () => Promise.resolve([{ expandable: false }]);
-      await changeTarget(ctx, 'aliasByNode(scaleToSeconds(test.prod.*, 1), 2)');
-      ctx.ctrl.state.target.target = '';
-      await ctx.ctrl.targetChanged();
+      await changeTarget(ctx, newQuery);
+      await ctx.ctrl.targetTextChanged({
+        target: { value: newQuery },
+      } as any);
     });
 
     it('should rebuild target after expression model', () => {
@@ -321,7 +323,7 @@ describe('GraphiteQueryCtrl', () => {
         },
       ];
 
-      await ctx.ctrl.targetChanged();
+      await ctx.ctrl.targetTextChanged({ target: { value: 'nested.query.count' } } as any);
 
       expect(ctx.ctrl.state.target.target).toBe('scaleToSeconds(#A, 60)');
 
@@ -336,7 +338,7 @@ describe('GraphiteQueryCtrl', () => {
 
       ctx.ctrl.state.panelCtrl.panel.targets = [ctx.ctrl.target, { target: 'sumSeries(#A)', refId: 'B' }];
 
-      await ctx.ctrl.targetChanged();
+      await ctx.ctrl.targetTextChanged({ target: { value: 'metrics.a.count' } } as any);
     });
 
     it('targetFull of other query should update', () => {

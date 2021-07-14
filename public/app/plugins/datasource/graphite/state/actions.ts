@@ -25,7 +25,7 @@ const removeFunction = createAction<{ func: FuncInstance }>('remove-function');
 const moveFunction = createAction<{ func: FuncInstance; offset: number }>('move-function');
 
 // Text editor
-const targetChanged = createAction('target-changed');
+const updateQuery = createAction<{ query: string }>('update-query');
 const toggleEditorMode = createAction('toggle-editor');
 
 export const actions = {
@@ -37,6 +37,6 @@ export const actions = {
   addFunction,
   removeFunction,
   moveFunction,
-  targetChanged,
+  updateQuery,
   toggleEditorMode,
 };
