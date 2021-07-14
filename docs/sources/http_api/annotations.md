@@ -260,28 +260,8 @@ Find all the event tags created in the annotations
 
 **Example Request**:
 
-
 ```http
-GET /api/annotations/tags HTTP/1.1
+GET /api/annotations/tags?tag=out HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-    "result": {
-        "tags": [
-            {
-                "tag": "outage",
-                "count": 1
-            }
-        ]
-    }
-}
-```
