@@ -6,5 +6,5 @@ export interface SegmentProps<T> {
   allowCustomValue?: boolean;
   placeholder?: string;
   disabled?: boolean;
-  inputWidth?: number;
+  inputMinWidth?: number;
 }

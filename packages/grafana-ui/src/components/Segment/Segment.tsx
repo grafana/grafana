@@ -22,11 +22,11 @@ export function Segment<T>({
   allowCustomValue,
   placeholder,
   disabled,
-  inputWidth,
+  inputMinWidth,
   ...rest
 }: React.PropsWithChildren<SegmentSyncProps<T>>) {
   const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(false);
-  const width = !value && inputWidth ? inputWidth : labelWidth;
+  const width = inputMinWidth ? Math.max(inputMinWidth, labelWidth) : labelWidth;
   const styles = useStyles(getSegmentStyles);
 
   if (!expanded) {
