@@ -1,9 +1,9 @@
 +++
-title = "Visualizations"
+title = "Visualizations and panels"
 weight = 420
 +++
 
-# Visualizations panels
+# Visualization panels
 
 Grafana offers a variety of visualizations to support different use cases. This section of the documentation highlights the built-in panels, their options and typical usage. 
 
