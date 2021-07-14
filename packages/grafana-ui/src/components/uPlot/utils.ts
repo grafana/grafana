@@ -55,6 +55,9 @@ export function preparePlotData(frame: DataFrame): AlignedData {
       result.push(f.values.toArray());
       seriesIndex++;
       continue;
+    } else if (f.type === FieldType.string) {
+      result.push(Array.apply(null, { length: f.values.length } as []).map(Number.call, Number));
+      continue;
     }
 
     collectStackingGroups(f, stackingGroups, seriesIndex);
