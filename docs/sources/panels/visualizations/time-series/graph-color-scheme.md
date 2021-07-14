@@ -32,18 +32,18 @@ The **Gradient mode** option located under the **Graph styles** has a mode named
 
 If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme** then the line or bar color will change as they cross the thresholds defined. 
 
-{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_line.png" max-width="1200px" caption="Time series" >}}
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_line.png" max-width="1200px" caption="Colors scheme: From thresholds" >}}
 
 If you have enabled bars mode it would look like this:
 
-{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_bars.png" max-width="1200px" caption="Time series" >}}
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_bars.png" max-width="1200px" caption="Color scheme: From thresholds" >}}
 
 ### Gradient color schemes
 
 If you have a selected a **Color scheme** like **Green-Yellow-Red (by value)** then it would look like this:
 
-{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_line.png" max-width="1200px" caption="Time series" >}}
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_line.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
 
 If you have enabled bars mode it would look like this:
 
-{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Time series" >}}
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
