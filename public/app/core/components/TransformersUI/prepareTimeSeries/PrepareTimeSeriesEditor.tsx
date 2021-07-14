@@ -34,10 +34,8 @@ const manyInfo = {
 
 const formats: Array<SelectableValue<timeSeriesFormat>> = [wideInfo, manyInfo];
 
-export const PrepareTimeSeriesEditor: React.FC<TransformerUIProps<PrepareTimeSeriesOptions>> = ({
-  options,
-  onChange,
-}) => {
+export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSeriesOptions>): React.ReactElement {
+  const { options, onChange } = props;
   const styles = useStyles2(getStyles);
 
   const onSelectFormat = useCallback(
@@ -72,7 +70,7 @@ export const PrepareTimeSeriesEditor: React.FC<TransformerUIProps<PrepareTimeSer
       </InlineFieldRow>
     </>
   );
-};
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   info: css`
