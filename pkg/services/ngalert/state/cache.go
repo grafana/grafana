@@ -36,11 +36,8 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
-	labels := make(map[string]string)
 	// clone the labels so we don't change eval.Result
-	for k, v := range result.Instance {
-		labels[k] = v
-	}
+	labels := result.Instance.Copy()
 	attachRuleLabels(labels, alertRule)
 	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(alertRule, labels, result.Values)
 
@@ -110,7 +107,7 @@ func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, la
 }
 
 // templateCaptureValue represents each value in .Values in the annotations
-// and labels template
+// and labels template.
 type templateCaptureValue struct {
 	Labels map[string]string
 	Value  *float64

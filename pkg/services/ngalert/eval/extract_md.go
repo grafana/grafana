@@ -78,7 +78,7 @@ func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 		return nil
 	}
 	if caps, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
-		v := make(map[string]NumberValueCapture)
+		v := make(map[string]NumberValueCapture, len(caps))
 		for _, c := range caps {
 			v[c.Var] = c
 		}

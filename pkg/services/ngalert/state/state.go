@@ -42,7 +42,7 @@ type EvaluationValue struct {
 
 // NewEvaluationValues returns the labels and values for each RefID in the capture.
 func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]EvaluationValue {
-	result := make(map[string]EvaluationValue)
+	result := make(map[string]EvaluationValue, len(m))
 	for k, v := range m {
 		result[k] = EvaluationValue{
 			Labels: v.Labels,
