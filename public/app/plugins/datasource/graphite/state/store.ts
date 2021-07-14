@@ -149,6 +149,9 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     state.queryModel.moveFunction(func, offset);
     handleTargetChanged(state);
   }
+  if (actions.updateFunctionParam.match(action)) {
+    handleTargetChanged(state);
+  }
   if (actions.updateQuery.match(action)) {
     state.target.target = action.payload.query;
     handleTargetChanged(state);
