@@ -18,11 +18,6 @@ jest.mock('@grafana/ui', () => ({
   },
 }));
 
-const variableOptionGroup = {
-  label: 'Template variables',
-  options: [],
-};
-
 describe('Azure Monitor QueryEditor', () => {
   it('renders the Metrics query editor when the query type is Metrics', async () => {
     const mockDatasource = createMockDatasource();
@@ -31,14 +26,7 @@ describe('Azure Monitor QueryEditor', () => {
       queryType: AzureQueryType.AzureMonitor,
     };
 
-    render(
-      <QueryEditor
-        query={mockQuery}
-        datasource={mockDatasource}
-        variableOptionGroup={variableOptionGroup}
-        onChange={() => {}}
-      />
-    );
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
     await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
   });
 
@@ -49,14 +37,7 @@ describe('Azure Monitor QueryEditor', () => {
       queryType: AzureQueryType.LogAnalytics,
     };
 
-    render(
-      <QueryEditor
-        query={mockQuery}
-        datasource={mockDatasource}
-        variableOptionGroup={variableOptionGroup}
-        onChange={() => {}}
-      />
-    );
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
     await waitFor(() => expect(screen.queryByTestId('azure-monitor-logs-query-editor')).toBeInTheDocument());
   });
 
@@ -78,14 +59,7 @@ describe('Azure Monitor QueryEditor', () => {
       },
     };
 
-    render(
-      <QueryEditor
-        query={mockQuery}
-        datasource={mockDatasource}
-        variableOptionGroup={variableOptionGroup}
-        onChange={() => {}}
-      />
-    );
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
     await waitFor(() =>
       expect(screen.queryByTestId('azure-monitor-application-insights-query-editor')).toBeInTheDocument()
     );
@@ -99,14 +73,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockDatasource = createMockDatasource();
     const mockQuery = createMockQuery();
     const onChange = jest.fn();
-    render(
-      <QueryEditor
-        query={mockQuery}
-        datasource={mockDatasource}
-        variableOptionGroup={variableOptionGroup}
-        onChange={onChange}
-      />
-    );
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={onChange} onRunQuery={() => {}} />);
     await waitFor(() => expect(screen.getByTestId('azure-monitor-query-editor')).toBeInTheDocument());
 
     const metrics = await screen.findByLabelText('Service');
@@ -122,12 +89,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockDatasource = createMockDatasource();
     mockDatasource.azureMonitorDatasource.getSubscriptions = jest.fn().mockRejectedValue(invalidNamespaceError());
     render(
-      <QueryEditor
-        query={createMockQuery()}
-        datasource={mockDatasource}
-        variableOptionGroup={variableOptionGroup}
-        onChange={() => {}}
-      />
+      <QueryEditor query={createMockQuery()} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />
     );
     await waitFor(() => expect(screen.getByTestId('azure-monitor-query-editor')).toBeInTheDocument());
 
@@ -141,14 +103,7 @@ describe('Azure Monitor QueryEditor', () => {
       queryType: AzureQueryType.AzureMonitor,
     };
 
-    render(
-      <QueryEditor
-        query={mockQuery}
-        datasource={mockDatasource}
-        variableOptionGroup={variableOptionGroup}
-        onChange={() => {}}
-      />
-    );
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
     await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
 
     const metrics = await screen.findByLabelText('Service');
@@ -164,14 +119,7 @@ describe('Azure Monitor QueryEditor', () => {
       queryType: AzureQueryType.ApplicationInsights,
     };
 
-    render(
-      <QueryEditor
-        query={mockQuery}
-        datasource={mockDatasource}
-        variableOptionGroup={variableOptionGroup}
-        onChange={() => {}}
-      />
-    );
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
     await waitFor(() =>
       expect(screen.getByTestId('azure-monitor-application-insights-query-editor')).toBeInTheDocument()
     );

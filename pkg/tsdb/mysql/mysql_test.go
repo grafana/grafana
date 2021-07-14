@@ -373,6 +373,7 @@ func TestMySQL(t *testing.T) {
 
 			frames, _ := queryResult.Dataframes.Decoded()
 			require.Len(t, frames, 1)
+			require.Equal(t, data.TimeSeriesTimeFieldName, frames[0].Fields[0].Name)
 			require.Equal(t, 7, frames[0].Fields[0].Len())
 			require.Equal(t, 1.5, *frames[0].Fields[1].At(3).(*float64))
 		})
@@ -505,6 +506,7 @@ func TestMySQL(t *testing.T) {
 			frames, err := queryResult.Dataframes.Decoded()
 			require.NoError(t, err)
 			require.Len(t, frames, 1)
+			require.Equal(t, data.TimeSeriesTimeFieldName, frames[0].Fields[0].Name)
 			require.True(t, tInitial.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 		})
 
