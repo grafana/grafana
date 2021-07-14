@@ -120,7 +120,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
     builder.addSeries({
       scaleKey,
-      pxAlign: false,
+      pxAlign: true,
       lineWidth: customConfig.lineWidth,
       lineColor: seriesColor,
       fillOpacity: customConfig.fillOpacity,
