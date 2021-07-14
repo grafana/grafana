@@ -41,20 +41,23 @@ const (
 )
 
 var (
-	ErrPluginNotFound = errors.New("plugin not found")
-	reGitBuild        = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
+	reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 )
 
-type BadRequestError struct {
-	Message string
-	Status  string
+type Response4xxError struct {
+	Message    string
+	StatusCode int
+	SystemInfo string
 }
 
-func (e *BadRequestError) Error() string {
+func (e Response4xxError) Error() string {
 	if len(e.Message) > 0 {
-		return fmt.Sprintf("%s: %s", e.Status, e.Message)
+		if len(e.SystemInfo) > 0 {
+			return fmt.Sprintf("%s (%s)", e.Message, e.SystemInfo)
+		}
+		return fmt.Sprintf("%d: %s", e.StatusCode, e.Message)
 	}
-	return e.Status
+	return fmt.Sprintf("%d", e.StatusCode)
 }
 
 type ErrVersionUnsupported struct {
@@ -248,7 +251,7 @@ func (i *Installer) DownloadFile(pluginID string, tmpFile *os.File, url string, 
 	// slow network. As this is CLI operation hanging is not a big of an issue as user can just abort.
 	bodyReader, err := i.sendRequestWithoutTimeout(url)
 	if err != nil {
-		return errutil.Wrap("Failed to send request", err)
+		return err
 	}
 	defer func() {
 		if err := bodyReader.Close(); err != nil {
@@ -274,11 +277,7 @@ func (i *Installer) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL stri
 	i.log.Debugf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, pluginRepoURL)
 	body, err := i.sendRequestGetBytes(pluginRepoURL, "repo", pluginID)
 	if err != nil {
-		if errors.Is(err, ErrPluginNotFound) {
-			i.log.Errorf("failed to find plugin '%s' in plugin repository. Please check if plugin ID is correct", pluginID)
-			return Plugin{}, err
-		}
-		return Plugin{}, errutil.Wrap("Failed to send request", err)
+		return Plugin{}, err
 	}
 
 	var data Plugin
@@ -354,14 +353,6 @@ func (i *Installer) createRequest(URL string, subPaths ...string) (*http.Request
 }
 
 func (i *Installer) handleResponse(res *http.Response) (io.ReadCloser, error) {
-	if res.StatusCode == 404 {
-		return nil, ErrPluginNotFound
-	}
-
-	if res.StatusCode/100 != 2 && res.StatusCode/100 != 4 {
-		return nil, fmt.Errorf("API returned invalid status: %s", res.Status)
-	}
-
 	if res.StatusCode/100 == 4 {
 		body, err := ioutil.ReadAll(res.Body)
 		defer func() {
@@ -370,7 +361,7 @@ func (i *Installer) handleResponse(res *http.Response) (io.ReadCloser, error) {
 			}
 		}()
 		if err != nil || len(body) == 0 {
-			return nil, &BadRequestError{Status: res.Status}
+			return nil, Response4xxError{StatusCode: res.StatusCode}
 		}
 		var message string
 		var jsonBody map[string]string
@@ -380,7 +371,11 @@ func (i *Installer) handleResponse(res *http.Response) (io.ReadCloser, error) {
 		} else {
 			message = jsonBody["message"]
 		}
-		return nil, &BadRequestError{Status: res.Status, Message: message}
+		return nil, Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: i.fullSystemInfoString()}
+	}
+
+	if res.StatusCode/100 != 2 {
+		return nil, fmt.Errorf("API returned invalid status: %s", res.Status)
 	}
 
 	return res.Body, nil

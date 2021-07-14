@@ -387,8 +387,9 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPlugin
 		if errors.As(err, &versionNotFoundErr) {
 			return response.Error(http.StatusNotFound, "Plugin version not found", err)
 		}
-		if errors.Is(err, installer.ErrPluginNotFound) {
-			return response.Error(http.StatusNotFound, "Plugin not found", err)
+		var clientError installer.Response4xxError
+		if errors.As(err, &clientError) {
+			return response.Error(clientError.StatusCode, clientError.Message, err)
 		}
 		if errors.Is(err, plugins.ErrInstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)

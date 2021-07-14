@@ -42,6 +42,12 @@ export function worldmapToGeomapOptions(angular: any): { fieldConfig: FieldConfi
     layers: [
       // TODO? depends on current configs
     ],
+    fieldMapping: {
+      metricField: '',
+      geohashField: '',
+      latitudeField: '',
+      longitudeField: '',
+    },
   };
 
   let v = asNumber(angular.decimals);
