@@ -7,6 +7,7 @@ import {
   PanelOptionsEditorBuilder,
   StandardEditorContext,
   FrameGeometrySourceMode,
+  FieldType,
 } from '@grafana/data';
 import { geomapLayerRegistry } from '../layers/registry';
 import { defaultGrafanaThemedMap } from '../layers/basemaps';
@@ -40,19 +41,72 @@ export const LayerEditor: FC<LayerEditorProps> = ({ config, onChange, data, filt
     }
     const builder = new PanelOptionsEditorBuilder();
     if (layer.showLocation) {
-      builder.addRadio({
-        path: 'location.mode',
-        name: 'Location',
-        description: '',
-        defaultValue: FrameGeometrySourceMode.Auto,
-        settings: {
-          options: [
-            { value: FrameGeometrySourceMode.Auto, label: 'Audo' },
-            { value: FrameGeometrySourceMode.Coords, label: 'Coords' },
-            { value: FrameGeometrySourceMode.Geohash, label: 'Geohash' },
-          ],
-        },
-      });
+      builder
+        .addRadio({
+          path: 'location.mode',
+          name: 'Location',
+          description: '',
+          defaultValue: FrameGeometrySourceMode.Auto,
+          settings: {
+            options: [
+              { value: FrameGeometrySourceMode.Auto, label: 'Auto' },
+              { value: FrameGeometrySourceMode.Coords, label: 'Coords' },
+              { value: FrameGeometrySourceMode.Geohash, label: 'Geohash' },
+            ],
+          },
+        })
+        .addFieldNamePicker({
+          path: 'location.latitude',
+          name: 'Latitude Field',
+          settings: {
+            filter: (f) => f.type === FieldType.number,
+            noFieldsMessage: 'No numeric fields found',
+          },
+          showIf: (opts: MapLayerConfig) => opts.location?.mode === FrameGeometrySourceMode.Coords,
+        })
+        .addFieldNamePicker({
+          path: 'location.longitude',
+          name: 'Longitude Field',
+          settings: {
+            filter: (f) => f.type === FieldType.number,
+            noFieldsMessage: 'No numeric fields found',
+          },
+          showIf: (opts: MapLayerConfig) => opts.location?.mode === FrameGeometrySourceMode.Coords,
+        })
+        .addFieldNamePicker({
+          path: 'location.geohash',
+          name: 'Geohash Field',
+          settings: {
+            filter: (f) => f.type === FieldType.string,
+            noFieldsMessage: 'No strings fields found',
+          },
+          showIf: (opts: MapLayerConfig) => opts.location?.mode === FrameGeometrySourceMode.Geohash,
+          // eslint-disable-next-line react/display-name
+          // info: (props) => <div>HELLO</div>,
+        });
+      // .addFieldNamePicker({
+      //   path: 'fieldMapping.Field',
+      //   name: 'Longitude Field',
+      //   defaultValue: defaultOptions.fieldMapping.longitudeField,
+      //   settings: {
+      //     filter: (f) => f.type === FieldType.number,
+      //     noFieldsMessage: 'No numeric fields found',
+      //   },
+      //   showIf: (config) =>
+      //     config.queryFormat.locationType === 'coordinates',
+      // })
+      // .addFieldNamePicker({
+      //   path: 'fieldMapping.geohashField',
+      //   name: ' Field',
+      //   defaultValue: defaultOptions.fieldMapping.geohashField,
+      //   settings: {
+      //     filter: (f) => f.type === FieldType.string,
+      //     noFieldsMessage: 'No strings fields found',
+
+      //   },
+      //   showIf: (config) =>
+      //     config.queryFormat.locationType === 'geohash',
+      // })
     }
     layer.registerOptionsUI(builder);
     if (layer.showOpacity) {
