@@ -47,11 +47,7 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
 
     return {
       init: () => vectorLayer,
-<<<<<<< HEAD
-      update: (map: Map, data: PanelData) => {
-=======
       update: (data: PanelData) => {
->>>>>>> master
         const frame = data.series[0];
         if (frame && frame.length) {
           let lat: Field | undefined = undefined;
