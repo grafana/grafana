@@ -47,8 +47,8 @@ export const defaultView: MapViewConfig = {
 export interface GeomapPanelOptions {
   view: MapViewConfig;
   controls: ControlsOptions;
-  basemap: MapLayerConfig; // auto
-  layers: MapLayerConfig[]; // empty == auto
+  basemap: MapLayerConfig;
+  layers: MapLayerConfig[];
   fieldMapping: FieldMappingOptions;
   queryFormat: QueryFormat;
 }
