@@ -590,7 +590,6 @@ steps:
   commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.2.8/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -1031,7 +1030,6 @@ steps:
   commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.2.8/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -1523,7 +1521,6 @@ steps:
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
-  - .\grabpl.exe verify-drone
   depends_on:
   - clone
 
@@ -1976,7 +1973,6 @@ steps:
   commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.2.8/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -2462,7 +2458,6 @@ steps:
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
-  - .\grabpl.exe verify-drone
   depends_on:
   - clone
 
@@ -2890,7 +2885,6 @@ steps:
   commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.2.8/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -3375,7 +3369,6 @@ steps:
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
-  - .\grabpl.exe verify-drone
   depends_on:
   - clone
 
@@ -3503,6 +3496,6 @@ get:
 
 ---
 kind: signature
-hmac: 23ae969bde275e3f19150ede65879aa7413c551bbb2412010bfef81dc1a9c921
+hmac: fa16b4de5ce285e6e9495b3ed797383627ffd4d43539eab58186fe8cc227d3e7
 
 ...
