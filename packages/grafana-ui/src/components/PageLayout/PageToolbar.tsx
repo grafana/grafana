@@ -119,6 +119,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     overflow: hidden;
     max-width: 240px;
     border-radius: 2px;
+    margin: 0;
+    line-height: inherit;
 
     @media ${styleMixins.mediaUp(theme.v1.breakpoints.xl)} {
       max-width: unset;
