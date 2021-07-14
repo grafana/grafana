@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
-import { cx } from '@emotion/css';
-import { DataLink, PanelData } from '@grafana/data';
-import { Icon } from '@grafana/ui';
+import { cx, css } from '@emotion/css';
+import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
@@ -30,9 +30,10 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
   const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
   const title = panel.getDisplayTitle();
   const className = cx('panel-header', !(isViewing || isEditing) ? 'grid-drag-handle' : '');
+  const styles = useStyles2(panelStyles);
 
   return (
-    <>
+    <header>
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} />
       <div className={className}>
         <PanelHeaderCorner
@@ -57,7 +58,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                     size="sm"
                   />
                 ) : null}
-                <span className="panel-title-text">{title}</span>
+                <span className={styles.titleText}>{title}</span>
                 <Icon name="angle-down" className="panel-menu-toggle" />
                 <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} show={panelMenuOpen} onClose={closeMenu} />
                 {data.request && data.request.timeInfo && (
@@ -70,6 +71,26 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
           }}
         </PanelHeaderMenuTrigger>
       </div>
-    </>
+    </header>
   );
+};
+
+const panelStyles = (theme: GrafanaTheme2) => {
+  return {
+    titleText: css`
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      max-width: calc(100% - 38px);
+      cursor: pointer;
+      font-weight: $font-weight-semi-bold;
+
+      &:hover {
+        color: $link-hover-color;
+      }
+      .panel-has-alert & {
+        max-width: calc(100% - 54px);
+      }
+    `,
+  };
 };

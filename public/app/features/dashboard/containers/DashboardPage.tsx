@@ -343,9 +343,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             <div className={styles.dashboardContent}>
               {initError && <DashboardFailed />}
               {!editPanel && kioskMode === KioskMode.Off && (
-                <div aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+                <nav aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
                   <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
-                </div>
+                </nav>
               )}
 
               <DashboardGrid
