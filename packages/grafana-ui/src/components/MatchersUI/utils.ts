@@ -10,6 +10,9 @@ export interface FrameFieldsDisplayNames {
 
   // raw field names (that are explicitly not visible)
   raw: Set<string>;
+
+  // Field mappings (duplicates are not supported)
+  fields: Map<string, Field>;
 }
 
 /**
@@ -29,17 +32,20 @@ function getFrameFieldsDisplayNames(data: DataFrame[], filter?: (field: Field) =
   const names: FrameFieldsDisplayNames = {
     display: new Set<string>(),
     raw: new Set<string>(),
+    fields: new Map<string, Field>(),
   };
 
   for (const frame of data) {
     for (const field of frame.fields) {
-      if (filter && filter(field)) {
+      if (filter && !filter(field)) {
         continue;
       }
       const disp = getFieldDisplayName(field, frame, data);
       names.display.add(disp);
+      names.fields.set(disp, field);
       if (field.name && disp !== field.name) {
         names.raw.add(field.name);
+        names.fields.set(field.name, field);
       }
     }
   }

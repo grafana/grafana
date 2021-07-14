@@ -1,3 +1,4 @@
+import React from 'react';
 import { MapLayerRegistryItem, MapLayerConfig, MapLayerHandler, PanelData, GrafanaTheme2, reduceField, ReducerID, FieldCalcs, FieldType } from '@grafana/data';
 import { dataFrameToPoints } from './utils'
 import { FieldMappingOptions, QueryFormat } from '../../types'
@@ -138,7 +139,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         name: 'Latitude Field',
         defaultValue: defaultOptions.fieldMapping.latitudeField,
         settings: {
-          filter: (f) => f.type !== FieldType.number,
+          filter: (f) => f.type === FieldType.number,
           noFieldsMessage: 'No numeric fields found',
         },
         showIf: (config) =>
@@ -149,7 +150,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         name: 'Longitude Field',
         defaultValue: defaultOptions.fieldMapping.longitudeField,
         settings: {
-          filter: (f) => f.type !== FieldType.number,
+          filter: (f) => f.type === FieldType.number,
           noFieldsMessage: 'No numeric fields found',
         },
         showIf: (config) =>
@@ -160,8 +161,26 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         name: 'Geohash Field',
         defaultValue: defaultOptions.fieldMapping.geohashField,
         settings: {
-          filter: (f) => f.type !== FieldType.string,
+          filter: (f) => f.type === FieldType.string,
           noFieldsMessage: 'No strings fields found',
+          info: ({
+            name,
+            field,
+          }) => {
+            if(!name || !field) {
+              return <div>Select a field that contains <a href="https://en.wikipedia.org/wiki/Geohash">geohash</a> values in each row.</div>
+            }
+            const first = reduceField({field, reducers:[ReducerID.firstNotNull]})[ReducerID.firstNotNull] as string;
+            if(!first) {
+              return <div>No values found</div>
+            }
+            // const coords = decodeGeohash(first);
+            // if(coords) {
+            //   return <div>First value: {`${coords}`} // {new Date().toISOString()}</div>
+            // }
+            // return <div>Invalid first value: {`${first}`}</div>;
+            return null;
+          }
         },
         showIf: (config) =>
           config.queryFormat.locationType === 'geohash',
@@ -171,7 +190,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         name: 'Metric Field',
         defaultValue: defaultOptions.fieldMapping.metricField,
         settings: {
-          filter: (f) => f.type !== FieldType.number,
+          filter: (f) => f.type === FieldType.number,
           noFieldsMessage: 'No numeric fields found',
         },
       })

@@ -26,11 +26,14 @@ export const FieldNamePicker: React.FC<StandardEditorProps<string, FieldNamePick
 
   const selectedOption = selectOptions.find((v) => v.value === value);
   return (
-    <Select
-      value={selectedOption}
-      options={selectOptions}
-      onChange={onSelectChange}
-      noOptionsMessage={settings.noFieldsMessage}
-    />
+    <>
+      <Select
+        value={selectedOption}
+        options={selectOptions}
+        onChange={onSelectChange}
+        noOptionsMessage={settings.noFieldsMessage}
+      />
+      {settings.info && <settings.info name={value} field={names.fields.get(value)} />}
+    </>
   );
 };

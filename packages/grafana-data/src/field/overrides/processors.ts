@@ -1,3 +1,4 @@
+import { ComponentType } from 'react';
 import { DataLink, Field, FieldOverrideContext, SelectableValue, ThresholdsConfig, ValueMapping } from '../../types';
 
 export const identityOverrideProcessor = <T>(value: T, _context: FieldOverrideContext, _settings: any) => {
@@ -159,9 +160,15 @@ export interface StatsPickerConfigSettings {
   defaultStat?: string;
 }
 
+interface FieldNamePickerInfoProps {
+  name?: string;
+  field?: Field;
+}
+
 export interface FieldNamePickerConfigSettings {
   /**
-   * Optionally return true for fields that should be skipped
+   * Function is a predicate, to test each element of the array.
+   * Return a value that coerces to true to keep the field, or to false otherwise.
    */
   filter?: (field: Field) => boolean;
 
@@ -169,4 +176,10 @@ export interface FieldNamePickerConfigSettings {
    * Show this text when no values are found
    */
   noFieldsMessage?: string;
+
+  /**
+   * When a field is selected, this component can show aditional
+   * information, including validation etc
+   */
+  info?: ComponentType<FieldNamePickerInfoProps> | null;
 }
