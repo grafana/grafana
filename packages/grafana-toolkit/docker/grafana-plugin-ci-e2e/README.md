@@ -1,22 +1,18 @@
 # Using this docker image
 
-Currently tagged and uploaded to dockerhub as srclosson/integrations-ci-build 
-
-Based off of `circleci/node:12-browsers` 
-
 ## User
 The user will be `circleci`
 The home directory will be `/home/circleci`
 
 ## Node
-- node 12 is installed
+- node 14 is installed
 - yarn is installed globally
 - npm is installed globally
 
 ## Go
 - Go is installed in `/usr/local/bin/go`
 - golangci-lint is installed in `/usr/local/bin/golangci-lint`
-- mage is installed in `/home/circleci/go/bin/mage`
+- mage is installed in `/usr/local/bin/mage`
 
 All of the above directories are in the path, so there is no need to specify fully qualified paths.
 
@@ -45,7 +41,7 @@ To test, your CircleCI config will need a run section with something similar to 
 
 
 # Building
-To build, cd to `<srcroot>/packages/grafana-toolkit/docker/grafana-plugin-ci`
+To build, cd to `<srcroot>/packages/grafana-toolkit/docker/grafana-plugin-ci-e2e`
 ```
 ./build.sh
 ```
