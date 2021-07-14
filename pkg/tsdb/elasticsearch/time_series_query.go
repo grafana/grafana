@@ -398,7 +398,7 @@ func (p *timeSeriesQueryParser) parse(tsdbQuery []backend.DataQuery) ([]*Query, 
 		}
 		alias := model.Get("alias").MustString("")
 		interval := model.Get("interval").MustString("")
-		intervalMs := model.Get("interval").MustInt64(0)
+		intervalMs := model.Get("intervalMs").MustInt64(0)
 
 		queries = append(queries, &Query{
 			TimeField:  timeField,
