@@ -14,12 +14,16 @@ export const getCellLinks = (field: Field, row: Row<any>) => {
     })[0];
   }
 
-  if (link && link.onClick) {
+  //const fieldLink = link?.onClick;
+  if (link?.onClick) {
     onClick = (event) => {
       // Allow opening in new tab
-      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
+      if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
         event.preventDefault();
-        link!.onClick(event);
+        link!.onClick!(event, {
+          field,
+          rowIndex: row.index,
+        });
       }
     };
   }
