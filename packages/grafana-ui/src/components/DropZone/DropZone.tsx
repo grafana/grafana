@@ -10,9 +10,10 @@ import { FileListItem } from './FileListItem';
 export interface DropzoneProps {
   children?: ReactNode;
   options?: DropzoneOptions;
+  fileListComponent?: ReactNode;
 }
 
-export function Dropzone({ options, children }: DropzoneProps) {
+export function Dropzone({ options, children, fileListComponent }: DropzoneProps) {
   const [files, setFiles] = useState<File[]>([]);
 
   const onDrop = useCallback(
@@ -36,7 +37,8 @@ export function Dropzone({ options, children }: DropzoneProps) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ ...options, onDrop });
   const theme = useTheme2();
   const styles = getStyles(theme, isDragActive);
-  const fileList = files.map((file) => <FileListItem key={uniqueId()} file={file} removeFile={removeFile} />);
+  const fileList =
+    fileListComponent ?? files.map((file) => <FileListItem key={uniqueId()} file={file} removeFile={removeFile} />);
 
   return (
     <div className={styles.container}>

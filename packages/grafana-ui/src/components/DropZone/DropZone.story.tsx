@@ -1,6 +1,6 @@
 import { Dropzone } from '@grafana/ui';
 import { Meta, Story } from '@storybook/react';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 export default {
@@ -15,16 +15,28 @@ export default {
     //   exclude: ['className', 'onFileUpload'],
     // },
   },
-  // argTypes: {
-  //   size: {
-  //     control: {
-  //       type: 'select',
-  //     },
-  //     options: ['xs', 'sm', 'md', 'lg'],
-  //   },
-  // },
 } as Meta;
 
 export const Basic: Story = (args) => {
   return <Dropzone {...args} />;
+};
+
+export const WithFileReader = () => {
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    acceptedFiles.forEach((file) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const binaryStr = reader.result;
+        console.log(binaryStr);
+      };
+      reader.readAsText(file);
+    });
+  }, []);
+
+  return (
+    <>
+      <Dropzone options={{ onDrop }} />
+    </>
+  );
 };
