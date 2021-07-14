@@ -48,6 +48,9 @@ export function worldmapToGeomapOptions(angular: any): { fieldConfig: FieldConfi
       latitudeField: '',
       longitudeField: '',
     },
+    queryFormat: {
+      locationType: '',
+    },
   };
 
   let v = asNumber(angular.decimals);
