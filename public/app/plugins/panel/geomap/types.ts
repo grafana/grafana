@@ -50,6 +50,7 @@ export interface GeomapPanelOptions {
   basemap: MapLayerConfig;
   layers: MapLayerConfig[];
   fieldMapping: FieldMappingOptions;
+  queryFormat: QueryFormat;
 }
 
 export interface FieldMappingOptions {
