@@ -20,6 +20,11 @@ export interface CodeEditorProps {
   monacoOptions?: MonacoOptions;
 
   /**
+   * Callback before the editor has mounted that gives you raw access to monaco
+   */
+  onBeforeEditorMount?: (monaco: Monaco) => void;
+
+  /**
    * Callback after the editor has mounted that gives you raw access to monaco
    */
   onEditorDidMount?: (editor: MonacoEditor, monaco: Monaco) => void;
