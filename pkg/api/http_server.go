@@ -333,13 +333,13 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(middleware.RequestTracing())
 
-	m.Use(middleware.Logger(hs.Cfg))
+	m.UseLegacy(middleware.Logger(hs.Cfg))
 
 	if hs.Cfg.EnableGzip {
-		m.Use(middleware.Gziper())
+		m.UseLegacy(middleware.Gziper())
 	}
 
-	m.Use(middleware.Recovery(hs.Cfg))
+	m.UseLegacy(middleware.Recovery(hs.Cfg))
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public")
@@ -349,13 +349,13 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
 	}
 
-	m.Use(middleware.AddDefaultResponseHeaders(hs.Cfg))
+	m.UseLegacy(middleware.AddDefaultResponseHeaders(hs.Cfg))
 
 	if hs.Cfg.ServeFromSubPath && hs.Cfg.AppSubURL != "" {
 		m.SetURLPrefix(hs.Cfg.AppSubURL)
 	}
 
-	m.Use(macaron.Renderer(macaron.RenderOptions{
+	m.UseLegacy(macaron.Renderer(macaron.RenderOptions{
 		Directory:  filepath.Join(hs.Cfg.StaticRootPath, "views"),
 		IndentJSON: macaron.Env != macaron.PROD,
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
@@ -363,23 +363,23 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	// These endpoints are used for monitoring the Grafana instance
 	// and should not be redirected or rejected.
-	m.Use(hs.healthzHandler)
-	m.Use(hs.apiHealthHandler)
-	m.Use(hs.metricsEndpoint)
+	m.UseLegacy(hs.healthzHandler)
+	m.UseLegacy(hs.apiHealthHandler)
+	m.UseLegacy(hs.metricsEndpoint)
 
-	m.Use(hs.ContextHandler.Middleware)
-	m.Use(middleware.OrgRedirect(hs.Cfg))
+	m.UseLegacy(hs.ContextHandler.Middleware)
+	m.UseLegacy(middleware.OrgRedirect(hs.Cfg))
 
 	// needs to be after context handler
 	if hs.Cfg.EnforceDomain {
-		m.Use(middleware.ValidateHostHeader(hs.Cfg))
+		m.UseLegacy(middleware.ValidateHostHeader(hs.Cfg))
 	}
 
-	m.Use(middleware.HandleNoCacheHeader)
-	m.Use(middleware.AddCSPHeader(hs.Cfg, hs.log))
+	m.UseLegacy(middleware.HandleNoCacheHeader)
+	m.UseLegacy(middleware.AddCSPHeader(hs.Cfg, hs.log))
 
 	for _, mw := range hs.middlewares {
-		m.Use(mw)
+		m.UseLegacy(mw)
 	}
 }
 
@@ -469,7 +469,7 @@ func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, 
 		}
 	}
 
-	m.Use(httpstatic.Static(
+	m.UseLegacy(httpstatic.Static(
 		path.Join(rootDir, dir),
 		httpstatic.StaticOptions{
 			SkipLogging: true,
