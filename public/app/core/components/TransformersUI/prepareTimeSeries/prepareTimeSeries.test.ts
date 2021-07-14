@@ -1,8 +1,8 @@
-import { toDataFrame, ArrayVector, DataFrame, FieldType } from '@grafana/data';
-import { stretchFrames } from './stretchFrames';
+import { toDataFrame, ArrayVector, DataFrame, FieldType, toDataFrameDTO } from '@grafana/data';
+import { prepareTimeSeries, timeSeriesFormat } from './prepareTimeSeries';
 
 describe('Stretch frames transformer', () => {
-  it('should stretch wide to long', () => {
+  it('should stretch wide to many', () => {
     const source = [
       toDataFrame({
         name: 'wide',
@@ -10,34 +10,36 @@ describe('Stretch frames transformer', () => {
         fields: [
           { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
           { name: 'text', type: FieldType.string, values: ['a', 'z', 'b', 'x', 'c', 'b'] },
-          { name: 'count', type: FieldType.string, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'more', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
       }),
     ];
 
-    expect(stretchFrames(source)).toEqual([
+    // Note that the 'text' field was removed
+    expect(prepareTimeSeries(source, { format: timeSeriesFormat.TimeSeriesMany })).toEqual([
       toEquableDataFrame({
-        name: 'wide0',
-        refId: 'A0',
+        name: 'wide',
+        refId: 'A',
         fields: [
           { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'text', type: FieldType.string, values: ['a', 'z', 'b', 'x', 'c', 'b'] },
+          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
         ],
         length: 6,
       }),
       toEquableDataFrame({
-        name: 'wide1',
-        refId: 'A1',
+        name: 'wide',
+        refId: 'A',
         fields: [
           { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'count', type: FieldType.string, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'more', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
         length: 6,
       }),
     ]);
   });
 
-  it('should stretch all wide to long when mixed', () => {
+  it('should stretch all wide to many when mixed', () => {
     const source = [
       toDataFrame({
         name: 'wide',
@@ -45,35 +47,36 @@ describe('Stretch frames transformer', () => {
         fields: [
           { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
           { name: 'text', type: FieldType.string, values: ['a', 'z', 'b', 'x', 'c', 'b'] },
-          { name: 'count', type: FieldType.string, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'another', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
       }),
       toDataFrame({
         name: 'long',
         refId: 'B',
         fields: [
-          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'text', type: FieldType.string, values: ['a', 'z', 'b', 'x', 'c', 'b'] },
+          { name: 'time', type: FieldType.time, values: [100, 90, 80, 70, 60, 50] },
+          { name: 'value', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
       }),
     ];
 
-    expect(stretchFrames(source)).toEqual([
+    expect(prepareTimeSeries(source, { format: timeSeriesFormat.TimeSeriesMany })).toEqual([
       toEquableDataFrame({
-        name: 'wide0',
-        refId: 'A0',
+        name: 'wide',
+        refId: 'A',
         fields: [
           { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'text', type: FieldType.string, values: ['a', 'z', 'b', 'x', 'c', 'b'] },
+          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
         ],
         length: 6,
       }),
       toEquableDataFrame({
-        name: 'wide1',
-        refId: 'A1',
+        name: 'wide',
+        refId: 'A',
         fields: [
           { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'count', type: FieldType.string, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'another', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
         length: 6,
       }),
@@ -81,9 +84,10 @@ describe('Stretch frames transformer', () => {
         name: 'long',
         refId: 'B',
         fields: [
-          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'text', type: FieldType.string, values: ['a', 'z', 'b', 'x', 'c', 'b'] },
+          { name: 'time', type: FieldType.time, values: [100, 90, 80, 70, 60, 50] },
+          { name: 'value', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
+        length: 6,
       }),
     ]);
   });
@@ -95,7 +99,7 @@ describe('Stretch frames transformer', () => {
         refId: 'A',
         fields: [
           { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'text', type: FieldType.string, values: ['a', 'z', 'b', 'x', 'c', 'b'] },
+          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
         ],
       }),
       toDataFrame({
@@ -103,15 +107,16 @@ describe('Stretch frames transformer', () => {
         refId: 'B',
         fields: [
           { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'text', type: FieldType.string, values: ['a', 'z', 'b', 'x', 'c', 'b'] },
+          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
         ],
       }),
     ];
 
-    expect(stretchFrames(source)).toEqual(source);
+    const rsp = prepareTimeSeries(source, { format: timeSeriesFormat.TimeSeriesMany });
+    expect(rsp.map((f) => toDataFrameDTO(f))).toEqual(source.map((f) => toDataFrameDTO(f)));
   });
 
-  it('should stretch none when source only has wide frames without time field', () => {
+  it('should return empty array when no timeseries exist', () => {
     const source = [
       toDataFrame({
         name: 'wide',
@@ -133,12 +138,13 @@ describe('Stretch frames transformer', () => {
       }),
     ];
 
-    expect(stretchFrames(source)).toEqual(source);
+    expect(prepareTimeSeries(source, { format: timeSeriesFormat.TimeSeriesMany })).toEqual([]);
   });
 });
 
 function toEquableDataFrame(source: any): DataFrame {
   return toDataFrame({
+    meta: undefined,
     ...source,
     fields: source.fields.map((field: any) => {
       return {
