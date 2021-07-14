@@ -6,6 +6,28 @@ import { GrafanaTheme2 } from '../themes';
 import { PanelOptionsEditorBuilder } from '../utils';
 import { ReactNode } from 'react';
 
+export enum FrameGeometrySourceMode {
+  Auto = 'auto', // Will scan fields and find best match
+  Geohash = 'geohash',
+  Coords = 'coords', // lon field, lat field
+  Lookup = 'lookup', // keys > location
+  // H3 = 'h3',
+  // WKT = 'wkt,
+  // geojson? geometry text
+}
+
+export interface FrameGeometrySource {
+  mode: FrameGeometrySourceMode;
+
+  // Field mappings
+  geohash?: string;
+  latitude?: string;
+  longitude?: string;
+
+  // Lookup source
+  lookup?: string;
+}
+
 /**
  * @alpha
  */
