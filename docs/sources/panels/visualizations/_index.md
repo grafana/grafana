@@ -5,11 +5,7 @@ weight = 420
 
 # Visualizations
 
-Grafana offers a variety of different visualizations to suit different use cases. This section of the documentation lists the different visualizations available in Grafana and their unique options.
-
-You can add more panel types with [plugins]({{< relref "../../plugins/_index.md" >}}).
-
-## Index 
+Grafana offers a variety of different visualizations to suit different use cases. This section of the documentation lists the different visualizations available in Grafana, their unique options and use cases. You can add more panel types with [plugins]({{< relref "../../plugins/_index.md" >}}).
 
 * Graphs & charts 
   * [Time series]({{< relref "./time-series/_index.md" >}}) is the default and main Graph visualization.    
@@ -76,3 +72,4 @@ To show data in table use the [Table]({{< relref "./table/_index.md" >}}) visual
 
 Grafana now ships with an included [Pie chart]({{< relref "./pie-chart-panel.md" >}}) visualization.
 
+{{< figure src="/static/img/docs/pie-chart-panel/pie-chart-example.png" max-width="700px" lightbox="true" caption="Table visualization" >}}
