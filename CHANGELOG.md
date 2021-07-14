@@ -23,8 +23,7 @@
 * **Postgres:** Fix the handling of a null return value in query results. [#36648](https://github.com/grafana/grafana/pull/36648), [@idafurjes](https://github.com/idafurjes)
 * **Tempo:** Show hex strings instead of uints for IDs. [#36471](https://github.com/grafana/grafana/pull/36471), [@zoltanbedi](https://github.com/zoltanbedi)
 * **TimeSeries:** Improve tooltip positioning when tooltip overflows. [#36440](https://github.com/grafana/grafana/pull/36440), [@ashharrison90](https://github.com/ashharrison90)
-* **[v8.0.x] Transformations:** Add 'prepare time series' transformer. [#36748](https://github.com/grafana/grafana/pull/36748), [@mckn](https://github.com/mckn)
-* **[v8.0.x] Transformations:** add 'prepare time series' transformer. [#36747](https://github.com/grafana/grafana/pull/36747), [@mckn](https://github.com/mckn)
+* **Transformations:** Add 'prepare time series' transformer. [#36737](https://github.com/grafana/grafana/pull/36737), [@ryantxu](https://github.com/ryantxu)
 
 <!-- 8.0.6 END -->
 
