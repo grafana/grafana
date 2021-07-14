@@ -9,7 +9,7 @@ weight = 700
 
 > Only available in Grafana v6.7+
 
-The Azure AD authentication provides the possibility to use an Azure Active Directory tenant as an identity provider for Grafana. By using Azure AD Application Roles it is also possible to assign Users and Groups to Grafana roles from the Azure Portal.
+The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD Application Roles to assign users and groups to Grafana roles from the Azure Portal.
 
 ## Create the Azure AD application
 
@@ -23,22 +23,27 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
 
 1. Add the redirect URL `https://<grafana domain>/login/azuread`, then click **Register**.
 
-1. The app's **Overview** page is displayed. Note the **Application ID**, this is the OAuth client id.
+1. The app's **Overview** page is displayed. Note the **Application ID**. This is the OAuth client ID.
 
 1. Click **Endpoints** from the top menu.
 
-   - Note the **OAuth 2.0 authorization endpoint (v2)**, this is the auth URL.
-   - Note the **OAuth 2.0 token endpoint (v2)**, this is the token URL.
+   - Note the **OAuth 2.0 authorization endpoint (v2)**. This is the auth URL.
+   - Note the **OAuth 2.0 token endpoint (v2)**. This is the token URL.
 
-1. Click **Certificates & secrets** and add a new entry under Client secrets.
-    - Description: Grafana OAuth
-    - Expires: Never
+1. Click **Certificates & secrets** and then add a new entry under **Client secrets**.
 
-1. Click **Add**, then copy the key value. This is the OAuth client secret.
+   - Description: Grafana OAuth
+   - Expires: Never
+
+1. Click **Add**, and then copy the key value. This is the OAuth client secret.
 
 1. Click **Manifest**.
-   - Add definitions for the required Application Roles for Grafana (Viewer, Editor, Admin). Without this configuration, all users will be assigned the Viewer role.
-   - Every role requires a unique id. On Linux, this can be created with `uuidgen`. For example:
+
+   - Define the required Application Role values for Grafana: Viewer, Editor, Admin. Otherwise, all users will have the Viewer role.
+   - Every role requires a unique ID.
+   - Generate the unique ID on Linux with `uuidgen`, and on Windows through Microsoft
+   PowerShell with `New-Guid`.
+   - Include the unique ID in the configuration file:
 
         ```json
         "appRoles": [
@@ -103,25 +108,30 @@ allowed_domains =
 allowed_groups =
 ```
 
-> **Note:** Ensure that the [root_url]({{< relref "../administration/configuration/#root-url" >}}) in Grafana is set in your Azure Application Reply URLs (App -> Settings -> Reply URLs)
+**Note:** Ensure that the [root_url]({{< relref "../administration/configuration/#root-url" >}}) in Grafana is set in your Azure Application Reply URLs (**App** -> **Settings** -> **Reply URLs**)
 
-### Configure allowed groups and domains
+### Configure allowed groups
 
-To limit access to authenticated users that are members of one or more groups, set `allowed_groups`
-to a comma- or space-separated list of group Object Ids. Object Id for a specific group can be found on the Azure portal: go to Azure Active Directory -> Groups. For instance, if you want to
-only give access to members of the group `example` which has Id `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, set
+To limit access to authenticated users who are members of one or more groups, set `allowed_groups`
+to a comma- or space-separated list of group object IDs. You can find object IDs for a specific group on the Azure portal:
+
+1. Go to **Azure Active Directory -> Groups**.
+
+For example, if you want to only give access to members of the group `example` with an ID of `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, set the following:
 
 ```ini
 allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
 ```
 
-You'll need to ensure that you've [enabled group attributes](https://docs.microsoft.com/en-us/azure/active-directory/hybrid/how-to-connect-fed-group-claims#configure-the-azure-ad-application-registration-for-group-attributes) in your Azure AD Application Registration manifest file (Azure Portal -> Azure Active Directory -> Application Registrations -> Select Application -> Manifest)
+You'll need to ensure that you've [enabled group attributes](https://docs.microsoft.com/en-us/azure/active-directory/hybrid/how-to-connect-fed-group-claims#configure-the-azure-ad-application-registration-for-group-attributes) in your Azure AD Application Registration manifest file. Navigate to **Azure Portal** -> **Azure Active Directory** -> **Application Registrations** -> **Select Application** -> **Manifest**, and set the following:
 
 ```json
 "groupMembershipClaims": "ApplicationGroup, SecurityGroup"
 ```
 
-The `allowed_domains` option limits access to the users belonging to the specific domains. Domains should be separated by space or comma.
+### Configure allowed domains
+
+The `allowed_domains` option limits access to users who belong to specific domains. Separate domains with space or comma.
 
 ```ini
 allowed_domains = mycompany.com mycompany.org
@@ -134,6 +144,6 @@ allowed_domains = mycompany.com mycompany.org
 With Team Sync you can map your Azure AD groups to teams in Grafana so that your users will automatically be added to
 the correct teams.
 
-Azure AD groups can be referenced by group Object Id, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
+You can reference Azure AD groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
 
 [Learn more about Team Sync]({{< relref "team-sync.md" >}})
