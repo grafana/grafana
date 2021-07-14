@@ -6,11 +6,7 @@ export const SPACE_BETWEEN = 1;
 export const SPACE_AROUND = 2;
 export const SPACE_EVENLY = 3;
 
-const coord = (i: number, offs: number, iwid: number, gap: number) => {
-  const result = roundDec(offs + i * (iwid + gap), 6);
-  console.log(i, offs, iwid, gap, result);
-  return result;
-};
+const coord = (i: number, offs: number, iwid: number, gap: number) => roundDec(offs + i * (iwid + gap), 6);
 
 export type Each = (idx: number, offPct: number, dimPct: number) => void;
 
@@ -18,7 +14,6 @@ export type Each = (idx: number, offPct: number, dimPct: number) => void;
  * @internal
  */
 export function distribute(numItems: number, sizeFactor: number, justify: number, onlyIdx: number | null, each: Each) {
-  console.log('sizeFactor', sizeFactor);
   let space = 1 - sizeFactor;
 
   /* eslint-disable no-multi-spaces */
