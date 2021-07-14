@@ -257,11 +257,12 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 // GetPluginAssets returns public plugin assets (images, JS, etc.)
 //
 // /public/plugins/:pluginId/*
-func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 	pluginID := c.Params("pluginId")
 	plugin := hs.PluginManager.GetPlugin(pluginID)
 	if plugin == nil {
-		return response.Error(404, "Plugin not found", nil)
+		c.Handle(hs.Cfg, 404, "Plugin not found", nil)
+		return
 	}
 
 	requestedFile := filepath.Clean(c.Params("*"))
@@ -273,9 +274,11 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) response.Response {
 	f, err := os.Open(pluginFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return response.Error(404, "Plugin file not found", err)
+			c.Handle(hs.Cfg, 404, "Plugin file not found", err)
+			return
 		}
-		return response.Error(500, "Could not open plugin file", err)
+		c.Handle(hs.Cfg, 500, "Could not open plugin file", err)
+		return
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -285,26 +288,23 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) response.Response {
 
 	fi, err := f.Stat()
 	if err != nil {
-		return response.Error(500, "Plugin file exists but could not open", err)
+		c.Handle(hs.Cfg, 500, "Plugin file exists but could not open", err)
+		return
 	}
 
 	if shouldExclude(fi) {
-		return response.Error(403, "Plugin file access forbidden",
+		c.Handle(hs.Cfg, 403, "Plugin file access forbidden",
 			fmt.Errorf("access is forbidden to executable plugin file %s", pluginFilePath))
+		return
 	}
-
-	resp := response.CreateNormalResponse(
-		http.Header{"Cache-Control": []string{"public", "max-age=3600"}},
-		[]byte{},
-		200)
 
 	if hs.Cfg.Env == setting.Dev {
-		resp.SetHeader("Cache-Control", "max-age=0, must-revalidate, no-cache")
+		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+	} else {
+		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
-	http.ServeContent(resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
-
-	return resp
+	http.ServeContent(c.Resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
 }
 
 // CheckHealth returns the health of a plugin.
