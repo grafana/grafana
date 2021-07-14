@@ -23,6 +23,8 @@ const unpause = createAction('unpause');
 const addFunction = createAction<{ name: string }>('add-function');
 const removeFunction = createAction<{ func: FuncInstance }>('remove-function');
 const moveFunction = createAction<{ func: FuncInstance; offset: number }>('move-function');
+// TODO: at the moment parameters are modified directly, new value of the param will be passed in the action
+const updateFunctionParam = createAction<{ func: FuncInstance }>('update-function-param');
 
 // Text editor
 const updateQuery = createAction<{ query: string }>('update-query');
@@ -37,6 +39,7 @@ export const actions = {
   addFunction,
   removeFunction,
   moveFunction,
+  updateFunctionParam,
   updateQuery,
   toggleEditorMode,
 };

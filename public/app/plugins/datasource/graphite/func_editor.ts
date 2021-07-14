@@ -103,11 +103,10 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
         scheduledRelinkIfNeeded();
 
         $scope.$apply(() => {
-          // HACK: this is just to parse the target when a function is updated.
-          // Without it, a function parameter is rendered but not updated in the model.
-          // When it's migrated to React the component will not modify the state directly
-          // but dispatch an action to modify it and parsing will be handled by the reducer.
-          ctrl.targetTextChanged({ target: { value: ctrl.target.target } } as any);
+          // WIP: at the moment function params are mutated directly by func_editor
+          // after migrating to react it will be done by passing param value to
+          // updateFunctionParam action
+          ctrl.dispatch(actions.updateFunctionParam({ func }));
         });
 
         if ($link.hasClass('query-part__last') && newValue === '') {
