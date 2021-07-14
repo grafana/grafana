@@ -72,4 +72,4 @@ To show data in table use the [Table]({{< relref "./table/_index.md" >}}) visual
 
 Grafana now ships with an included [Pie chart]({{< relref "./pie-chart-panel.md" >}}) visualization.
 
-{{< figure src="/static/img/docs/pie-chart-panel/pie-chart-example.png" max-width="700px" lightbox="true" caption="Table visualization" >}}
+{{< figure src="/static/img/docs/pie-chart-panel/pie-chart-example.png" max-width="700px" lightbox="true" caption="Pie chart visualization" >}}
