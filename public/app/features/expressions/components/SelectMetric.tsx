@@ -23,17 +23,28 @@ export const SelectMetric: FC<Props> = ({ labelWidth, onChange, refIds, query })
     onChange({ ...query, isRegex: event.target.checked });
   };
 
+  const onLabelMatchersChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, labelMatchers: event.target.value });
+  };
+
   return (
-    <InlineFieldRow>
-      <InlineField label="Input" labelWidth={labelWidth}>
-        <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
-      </InlineField>
-      <InlineField label="Regex" labelWidth={labelWidth}>
-        <Checkbox onChange={onIsRegexChange} value={query.isRegex} />
-      </InlineField>
-      <InlineField label="Metric" labelWidth={labelWidth}>
-        <Input onChange={onMetricNameChange} value={query.metricName} width={20} />
-      </InlineField>
-    </InlineFieldRow>
+    <>
+      <InlineFieldRow>
+        <InlineField label="Input" labelWidth={labelWidth}>
+          <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
+        </InlineField>
+        <InlineField label="Regex" labelWidth={labelWidth}>
+          <Checkbox onChange={onIsRegexChange} value={query.isRegex} />
+        </InlineField>
+        <InlineField label="Metric" labelWidth={labelWidth}>
+          <Input onChange={onMetricNameChange} value={query.metricName} width={20} />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Label Matchers" labelWidth={labelWidth}>
+          <Input onChange={onLabelMatchersChange} value={query.labelMatchers} width={30} />
+        </InlineField>
+      </InlineFieldRow>
+    </>
   );
 };

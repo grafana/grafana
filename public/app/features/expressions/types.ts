@@ -51,6 +51,7 @@ export interface ExpressionQuery extends DataQuery {
   upsampler?: string;
   metricName?: string;
   isRegex?: boolean;
+  labelMatchers?: string; // can be replaced with prom matchers UI?
   conditions?: ClassicCondition[];
 }
 export interface ClassicCondition {
