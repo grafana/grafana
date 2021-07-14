@@ -36,7 +36,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
     const styles = getStyles(theme, size, variant);
 
     const button = (
-      <button ref={ref} {...restProps} className={cx(styles.button, className)}>
+      <button ref={ref} aria-label={tooltip} {...restProps} className={cx(styles.button, className)}>
         <Icon name={name} size={size} className={styles.icon} type={iconType} />
       </button>
     );
