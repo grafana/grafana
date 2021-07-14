@@ -61,14 +61,18 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
     };
   }
 
-  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
-    const item = target.appInsights!;
+  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
+    const item = target.appInsights;
+
+    if (!item) {
+      return target;
+    }
 
     const old: any = item;
     // fix for timeGrainUnit which is a deprecated/removed field name
     if (old.timeGrainCount) {
       item.timeGrain = TimegrainConverter.createISO8601Duration(old.timeGrainCount, item.timeGrainUnit);
-    } else if (item.timeGrainUnit && item.timeGrain !== 'auto') {
+    } else if (item.timeGrain && item.timeGrainUnit && item.timeGrain !== 'auto') {
       item.timeGrain = TimegrainConverter.createISO8601Duration(item.timeGrain, item.timeGrainUnit);
     }
 
@@ -95,9 +99,7 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
     const templateSrv = getTemplateSrv();
 
     return {
-      type: 'timeSeriesQuery',
       refId: target.refId,
-      format: target.format,
       queryType: AzureQueryType.ApplicationInsights,
       appInsights: {
         timeGrain: templateSrv.replace((item.timeGrain || '').toString(), scopedVars),
@@ -106,7 +108,6 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
         dimension: item.dimension.map((d) => templateSrv.replace(d, scopedVars)),
         dimensionFilter: templateSrv.replace(item.dimensionFilter, scopedVars),
         alias: item.alias,
-        format: target.format,
       },
     };
   }

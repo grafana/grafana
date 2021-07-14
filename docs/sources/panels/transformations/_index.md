@@ -9,9 +9,8 @@ Transformations process the result set of a query before it’s passed on for vi
 
 The transformations feature is accessible from the **Transform** tab of the Grafana panel editor.
 
-> **Note:** Transformations is a Grafana 7.0 beta feature. Topics in this section will be frequently updated as we work on this feature.
-
-Transformations sometimes result in data that cannot be graphed. When that happens, Grafana displays a suggestion on the visualization that you can click to switch to table visualization. This often helps you better understand what the transformation is doing to your data.
+Transformations sometimes result in data that cannot be graphed. When that happens, click the `Table view` toggle above the visualization to switch to a table view of the data. This can help you understand
+the final result of your transformations. 
 
 ## Order of transformations
 
@@ -23,13 +22,23 @@ The order in which transformations are applied can make a huge difference in how
 
 Before you can configure and apply transformations:
 
-- You must have entered a query and returned data from a data source. For more information on queries, refer to [Queries]({{< relref "../queries.md" >}}).
+- You must have entered a query that return data. For more information on queries, refer to [Queries]({{< relref "../queries.md" >}}).
 
-- You must have chosen a visualization that supports your query result and chosen transforms. Different transformations can result in a data structure that only some visualizations can render. For example, Graph visualization cannot show reduced data (that results from the Reduce transform). If your current visualization does not show you what you expect after applying a transform, switch to the Table visualization to check the result. For more information on the different types of visualizations, refer to:
-  - [Bar gauge]({{< relref "../visualizations/bar-gauge-panel.md" >}})
-  - [Gauge]({{< relref "../visualizations/gauge-panel.md" >}})
-  - [Graph]({{< relref "../visualizations/graph-panel.md" >}})
-  - [Heatmap]({{< relref "../visualizations/heatmap.md" >}})
-  - [Logs]({{< relref "../visualizations/logs-panel.md" >}})
-  - [Stat]({{< relref "../visualizations/stat-panel.md" >}})
-  - [Table]({{< relref "../visualizations/table/_index.md" >}})
+## List of transformations 
+
+- [Add field from calculation]({{< relref "./types-options.md#add-field-from-calculation" >}})
+- [Concatenate fields]({{< relref "./types-options.md#concatenate-fields" >}})
+- [Config from query results]({{< relref "./config-from-query.md" >}})
+- [Filter data by name]({{< relref "./types-options.md#filter-data-by-name" >}})
+- [Filter data by query]({{< relref "./types-options.md#filter-data-by-query" >}})
+- [Filter data by value]({{< relref "./types-options.md#filter-data-by-value" >}})
+- [Group by]({{< relref "./types-options.md#group-by" >}})
+- [Labels to fields]({{< relref "./types-options.md#labels-to-fields" >}})
+- [Merge]({{< relref "./types-options.md#merge" >}})
+- [Organize fields]({{< relref "./types-options.md#organize-fields" >}})
+- [Outer join]({{< relref "./types-options.md#join-by-field-outer-join" >}})
+- [Reduce]({{< relref "./types-options.md#reduce" >}})
+- [Rename by regex]({{< relref "./types-options.md#rename-by-regex" >}})
+- [Rows to fields]({{< relref "./rows-to-fields" >}})
+- [Series to rows]({{< relref "./types-options.md#series-to-rows" >}})
+- [Sort by]({{< relref "./types-options.md#sort-by" >}})

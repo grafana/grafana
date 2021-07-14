@@ -1,29 +1,28 @@
 +++
-title = "Transformation types and options"
-weight = 300
+title = "Types and options"
+weight = 2
 +++
 
 # Transformation types and options
 
 Grafana comes with the following transformations:
 
-- [Transformation types and options](#transformation-types-and-options)
-  - [Reduce](#reduce)
-  - [Merge](#merge)
-  - [Filter data by name](#filter-data-by-name)
-  - [Filter data by query](#filter-data-by-query)
-  - [Organize fields](#organize-fields)
-  - [Join by field (outer join)](#join-by-field-outer-join)
-  - [Add field from calculation](#add-field-from-calculation)
-  - [Labels to fields](#labels-to-fields)
-    - [Value field name](#value-field-name)
-    - [Merging behavior](#merging-behavior)
-  - [Sort by](#sort-by)
-  - [Group by](#group-by)
-  - [Concatenate fields](#concatenate-fields)
-  - [Series to rows](#series-to-rows)
-  - [Filter data by value](#filter-data-by-value)
-  - [Rename by regex](#rename-by-regex)
+- [Add field from calculation]({{< relref "./types-options.md#add-field-from-calculation" >}})
+- [Concatenate fields]({{< relref "./types-options.md#concatenate-fields" >}})
+- [Config from query results]({{< relref "./config-from-query.md" >}})
+- [Filter data by name]({{< relref "./types-options.md#filter-data-by-name" >}})
+- [Filter data by query]({{< relref "./types-options.md#filter-data-by-query" >}})
+- [Filter data by value]({{< relref "./types-options.md#filter-data-by-value" >}})
+- [Group by]({{< relref "./types-options.md#group-by" >}})
+- [Labels to fields]({{< relref "./types-options.md#labels-to-fields" >}})
+- [Merge]({{< relref "./types-options.md#merge" >}})
+- [Organize fields]({{< relref "./types-options.md#organize-fields" >}})
+- [Outer join]({{< relref "./types-options.md#join-by-field-outer-join" >}})
+- [Reduce]({{< relref "./types-options.md#reduce" >}})
+- [Rename by regex]({{< relref "./types-options.md#rename-by-regex" >}})
+- [Rows to fields]({{< relref "./rows-to-fields" >}})
+- [Series to rows]({{< relref "./types-options.md#series-to-rows" >}})
+- [Sort by]({{< relref "./types-options.md#sort-by" >}})
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
 
@@ -80,8 +79,6 @@ Query B:
 
 
 ## Merge
-
-> **Note:** This transformation is available in Grafana 7.1+.
 
 Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../visualizations/table/_index.md" >}}).
 
@@ -244,15 +241,11 @@ After merge:
 
 ## Sort by
 
-> **Note:** This transformation is available in Grafana 7.4+.
-
 This transformation will sort each frame by the configured field, When `reverse` is checked, the values will return in
 the opposite order.
 
 
 ## Group by
-
-> **Note:** This transformation is available in Grafana 7.2+.
 
 This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to the [List of calculations]({{< relref "../calculations-list.md" >}}).
 
@@ -311,8 +304,6 @@ We would then get :
 This transformation allows you to extract some key information out of your time series and display them in a convenient way.
 
 ## Concatenate fields
-
-> **Note:** This transformation is available in Grafana 7.3+.
 
 This transformation combines all fields from all frames into one result.  Consider:
 
@@ -374,8 +365,6 @@ Here is the result after applying the Series to rows transformation.
 
 ## Filter data by value
 
-> **Note:** This transformation is available in Grafana 7.4+.
-
 This transformation allows you to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
 
 This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
@@ -436,8 +425,6 @@ In the example above we chose **Match all** because we wanted to include the row
 Conditions that are invalid or incompletely configured are ignored.
 
 ## Rename by regex
-
-> **Note:** This transformation is available in Grafana 7.4+.
 
 Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 

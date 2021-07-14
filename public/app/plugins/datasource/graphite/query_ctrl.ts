@@ -14,6 +14,7 @@ import {
   GraphiteSegment,
   GraphiteTag,
 } from './types';
+import { ChangeEvent } from 'react';
 
 /**
  * @deprecated Moved to state/store
@@ -52,6 +53,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       // WIP: to be removed. It's not passed to ReactQueryEditor but it's used only to:
       // - get refId of the query (refId be passed in query property),
       // - and to refresh changes (this will be handled by onChange passed to ReactQueryEditor)
+      // - it's needed to get other targets to interpolate the query (this will be added in QueryRow)
       panelCtrl: this.panelCtrl,
 
       // WIP: to be replaced with query property passed to ReactQueryEditor
@@ -139,18 +141,12 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     // WIP: moved to state/helpers (the same name)
   }
 
-  targetTextChanged() {
-    // WIP: targetChanged() is used instead - it avoid double requests and checks for errors
+  async targetTextChanged(event: ChangeEvent<HTMLInputElement>) {
+    await this.dispatch(actions.updateQuery({ query: event.target.value }));
   }
 
   updateModelTarget() {
-    // WIP: removed. It was used in two places:
-    // - handleTargetChanged() -> the logic was moved directly there
-    // - targetTextChanged() -> this method was removed
-  }
-
-  async targetChanged() {
-    await this.dispatch(actions.targetChanged());
+    // WIP: moved to state/helpers as handleTargetChanged()
   }
 
   async addFunction(name: string) {
