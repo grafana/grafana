@@ -86,6 +86,7 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 	}
 
 	mContext.Req.Request = mContext.Req.WithContext(context.WithValue(mContext.Req.Context(), reqContextKey{}, reqContext))
+	mContext.Map(mContext.Req.Request)
 
 	traceID, exists := cw.ExtractTraceID(mContext.Req.Request.Context())
 	if exists {

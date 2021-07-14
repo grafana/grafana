@@ -26,30 +26,32 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-func Logger(cfg *setting.Cfg) macaron.Handler {
-	return func(res http.ResponseWriter, req *http.Request) {
-		c := macaron.FromContext(req.Context())
-		start := time.Now()
-		c.Data["perfmon.start"] = start
+func Logger(cfg *setting.Cfg) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			c := macaron.FromContext(req.Context())
+			start := time.Now()
+			c.Data["perfmon.start"] = start
 
-		rw := res.(macaron.ResponseWriter)
-		c.Next()
+			next.ServeHTTP(res, req)
 
-		timeTaken := time.Since(start) / time.Millisecond
+			timeTaken := time.Since(start) / time.Millisecond
 
-		if timer, ok := c.Data["perfmon.timer"]; ok {
-			timerTyped := timer.(prometheus.Summary)
-			timerTyped.Observe(float64(timeTaken))
-		}
+			if timer, ok := c.Data["perfmon.timer"]; ok {
+				timerTyped := timer.(prometheus.Summary)
+				timerTyped.Observe(float64(timeTaken))
+			}
 
-		status := rw.Status()
-		if status == 200 || status == 304 {
-			if !cfg.RouterLogging {
+			rw := res.(macaron.ResponseWriter)
+			status := rw.Status()
+			if !cfg.RouterLogging && (status == 200 || status == 304) {
 				return
 			}
-		}
 
-		if ctx, ok := c.Data["ctx"]; ok {
+			ctx, ok := c.Data["ctx"]
+			if !ok {
+				return
+			}
 			ctxTyped := ctx.(*models.ReqContext)
 
 			logParams := []interface{}{
@@ -62,8 +64,7 @@ func Logger(cfg *setting.Cfg) macaron.Handler {
 				"referer", req.Referer(),
 			}
 
-			traceID, exist := cw.ExtractTraceID(ctxTyped.Req.Request.Context())
-			if exist {
+			if traceID, exist := cw.ExtractTraceID(ctxTyped.Req.Request.Context()); exist {
 				logParams = append(logParams, "traceID", traceID)
 			}
 
@@ -72,6 +73,6 @@ func Logger(cfg *setting.Cfg) macaron.Handler {
 			} else {
 				ctxTyped.Logger.Info("Request Completed", logParams...)
 			}
-		}
+		})
 	}
 }
