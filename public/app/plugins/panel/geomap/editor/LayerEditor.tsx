@@ -6,6 +6,7 @@ import {
   MapLayerRegistryItem,
   PanelOptionsEditorBuilder,
   StandardEditorContext,
+  FrameGeometrySourceMode,
 } from '@grafana/data';
 import { geomapLayerRegistry } from '../layers/registry';
 import { defaultGrafanaThemedMap } from '../layers/basemaps';
@@ -38,7 +39,25 @@ export const LayerEditor: FC<LayerEditorProps> = ({ config, onChange, data, filt
       return null;
     }
     const builder = new PanelOptionsEditorBuilder();
+    if (layer.showLocation) {
+      builder.addRadio({
+        path: 'location.mode',
+        name: 'Location',
+        description: '',
+        defaultValue: FrameGeometrySourceMode.Auto,
+        settings: {
+          options: [
+            { value: FrameGeometrySourceMode.Auto, label: 'Audo' },
+            { value: FrameGeometrySourceMode.Coords, label: 'Coords' },
+            { value: FrameGeometrySourceMode.Geohash, label: 'Geohash' },
+          ],
+        },
+      });
+    }
     layer.registerOptionsUI(builder);
+    if (layer.showOpacity) {
+      // TODO -- add opacity check
+    }
     return builder;
   }, [config?.type]);
 

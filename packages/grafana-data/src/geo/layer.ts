@@ -6,6 +6,28 @@ import { GrafanaTheme2 } from '../themes';
 import { PanelOptionsEditorBuilder } from '../utils';
 import { ReactNode } from 'react';
 
+export enum FrameGeometrySourceMode {
+  Auto = 'auto', // Will scan fields and find best match
+  Geohash = 'geohash',
+  Coords = 'coords', // lon field, lat field
+  Lookup = 'lookup', // keys > location
+  // H3 = 'h3',
+  // WKT = 'wkt,
+  // geojson? geometry text
+}
+
+export interface FrameGeometrySource {
+  mode: FrameGeometrySourceMode;
+
+  // Field mappings
+  geohash?: string;
+  latitude?: string;
+  longitude?: string;
+
+  // Lookup source
+  lookup?: string;
+}
+
 /**
  * This gets saved in panel json
  *
@@ -20,13 +42,16 @@ export interface MapLayerConfig<TCustom = any> {
   type: string;
   name?: string; // configured display name
 
+  // Custom options depending on the type
+  config?: TCustom;
+
+  // Common method to define geometry fields
+  location?: FrameGeometrySource;
+
   // Common properties:
   // https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
   // Layer opacity (0-1)
   opacity?: number;
-
-  // Custom options depending on the type
-  config?: TCustom;
 }
 
 /**
@@ -50,9 +75,14 @@ export interface MapLayerRegistryItem<TConfig = MapLayerConfig> extends Registry
   isBaseMap?: boolean;
 
   /**
+   * Show location controls
+   */
+  showLocation?: boolean;
+
+  /**
    * Show transparency controls in UI (for non-basemaps)
    */
-  showTransparency?: boolean;
+  showOpacity?: boolean;
 
   /**
    * Function that configures transformation and returns a transformer
