@@ -5,7 +5,7 @@ import { InterpolateFunction } from '@grafana/data';
 const index: any = {};
 
 export interface FuncDef {
-  name: any;
+  name: string;
   category?: string;
   params?: any;
   defaultParams?: any;
@@ -970,7 +970,7 @@ function isVersionRelatedFunction(obj: { version: string }, graphiteVersion: str
 }
 
 export class FuncInstance {
-  def: any;
+  def: FuncDef;
   params: any;
   text: any;
   added: boolean;

@@ -102,13 +102,6 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
 
         scheduledRelinkIfNeeded();
 
-        $scope.$apply(() => {
-          // WIP: at the moment function params are mutated directly by func_editor
-          // after migrating to react it will be done by passing param value to
-          // updateFunctionParam action
-          ctrl.dispatch(actions.updateFunctionParam({ func }));
-        });
-
         if ($link.hasClass('query-part__last') && newValue === '') {
           $comma.addClass('query-part__last');
         } else {

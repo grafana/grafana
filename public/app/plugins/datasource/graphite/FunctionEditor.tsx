@@ -1,15 +1,31 @@
 import React, { useRef } from 'react';
-import { PopoverController, Popover, ClickOutsideWrapper, Icon, Tooltip, useTheme } from '@grafana/ui';
+import { PopoverController, Popover, ClickOutsideWrapper, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { FunctionDescriptor, FunctionEditorControls, FunctionEditorControlsProps } from './FunctionEditorControls';
 import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
 
 interface FunctionEditorProps extends FunctionEditorControlsProps {
   func: FunctionDescriptor;
 }
 
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    icon: css`
+      margin-right: ${theme.spacing(0.5)};
+    `,
+    label: css({
+      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.size.sm, // to match .gf-form-label
+      cursor: 'pointer',
+      display: 'inline-block',
+      paddingBottom: '2px',
+    }),
+  };
+};
+
 const FunctionEditor: React.FC<FunctionEditorProps> = ({ onMoveLeft, onMoveRight, func, ...props }) => {
   const triggerRef = useRef<HTMLSpanElement>(null);
-  const theme = useTheme();
+  const styles = useStyles2(getStyles);
 
   const renderContent = ({ updatePopperPosition }: any) => (
     <FunctionEditorControls
@@ -49,17 +65,10 @@ const FunctionEditor: React.FC<FunctionEditorProps> = ({ onMoveLeft, onMoveRight
                 }
               }}
             >
-              <span ref={triggerRef} onClick={popperProps.show ? hidePopper : showPopper} style={{ cursor: 'pointer' }}>
+              <span ref={triggerRef} onClick={popperProps.show ? hidePopper : showPopper} className={styles.label}>
                 {func.def.unknown && (
                   <Tooltip content={<TooltipContent />} placement="bottom">
-                    <Icon
-                      data-testid="warning-icon"
-                      name="exclamation-triangle"
-                      size="xs"
-                      className={css`
-                        margin-right: ${theme.spacing.xxs};
-                      `}
-                    />
+                    <Icon data-testid="warning-icon" name="exclamation-triangle" size="xs" className={styles.icon} />
                   </Tooltip>
                 )}
                 {func.def.name}

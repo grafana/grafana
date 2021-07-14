@@ -27,7 +27,7 @@ export function AddGraphiteFunction({ dispatch, funcDefs }: Props) {
       Component={<Button icon="plus" variant="secondary" className={cx(styles.button)} />}
       options={options}
       onChange={onChange}
-      inputWidth={150}
+      inputMinWidth={150}
     ></Segment>
   );
 }
