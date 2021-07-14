@@ -56,7 +56,6 @@ type azureMonitorSettings struct {
 	SubscriptionId               string `json:"subscriptionId"`
 	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
 	AppInsightsAppId             string `json:"appInsightsAppId"`
-	AzureLogAnalyticsSameAs      bool   `json:"azureLogAnalyticsSameAs"`
 }
 
 type datasourceInfo struct {

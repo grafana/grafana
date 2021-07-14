@@ -1,5 +1,6 @@
 import { CombinedRule, Rule, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { Annotations, Labels, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
   isAlertingRule,
   isAlertingRulerRule,
@@ -210,4 +211,8 @@ function hashRule(rule: Rule): number {
 
 function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
   return JSON.stringify(Object.entries(item || {}).sort((a, b) => a[0].localeCompare(b[0])));
+}
+
+export function ruleIdentifierToRuleSourceName(identifier: RuleIdentifier): string {
+  return isGrafanaRuleIdentifier(identifier) ? GRAFANA_RULES_SOURCE_NAME : identifier.ruleSourceName;
 }

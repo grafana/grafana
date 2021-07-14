@@ -28,7 +28,7 @@ func (p *testDataPlugin) handleCsvContentScenario(ctx context.Context, req *back
 		}
 
 		csvContent := model.Get("csvContent").MustString()
-		alias := model.Get("alias").MustString(q.RefID)
+		alias := model.Get("alias").MustString("")
 
 		frame, err := p.loadCsvContent(strings.NewReader(csvContent), alias)
 		if err != nil {
