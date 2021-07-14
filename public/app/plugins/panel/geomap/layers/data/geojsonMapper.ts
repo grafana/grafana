@@ -43,7 +43,11 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
     return {
       init: () => vectorLayer,
+<<<<<<< HEAD
       update: (map: Map, data: PanelData) => {
+=======
+      update: (data: PanelData) => {
+>>>>>>> master
         console.log( "todo... find values matching the ID and update");
 
         // Update each feature

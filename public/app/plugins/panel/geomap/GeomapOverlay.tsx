@@ -1,26 +1,27 @@
-import React, { Component } from 'react';
-import { Map } from 'ol';
+import React, { PureComponent } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { stylesFactory } from '@grafana/ui';
 import { css } from '@emotion/css';
 
-interface Props {
-  map: Map;
+export interface OverlayProps {
+  topRight?: React.ReactNode[];
+  bottomLeft?: React.ReactNode[];
 }
 
-export class GeomapOverlay extends Component<Props> {
+export class GeomapOverlay extends PureComponent<OverlayProps> {
   style = getStyles(config.theme);
 
-  constructor(props: Props) {
+  constructor(props: OverlayProps) {
     super(props);
   }
 
   render() {
+    const { topRight, bottomLeft } = this.props;
     return (
       <div className={this.style.overlay}>
-        <div className={this.style.TR}>TOP RIGHT</div>
-        <div className={this.style.BL}>Bottom Left</div>
+        {Boolean(topRight?.length) && <div className={this.style.TR}>{topRight}</div>}
+        {Boolean(bottomLeft?.length) && <div className={this.style.BL}>{bottomLeft}</div>}
       </div>
     );
   }
@@ -36,14 +37,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   TR: css`
     position: absolute;
-    border: 1px solid green;
     top: 8px;
     right: 8px;
     pointer-events: auto;
   `,
   BL: css`
     position: absolute;
-    border: 1px solid green;
     bottom: 8px;
     left: 8px;
     pointer-events: auto;

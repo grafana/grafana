@@ -294,14 +294,12 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) response.Response {
 	}
 
 	resp := response.CreateNormalResponse(
-		http.Header{"Content-Type": []string{"text/plain", "charset=utf-8"}},
+		http.Header{"Cache-Control": []string{"public", "max-age=3600"}},
 		[]byte{},
 		200)
 
 	if hs.Cfg.Env == setting.Dev {
 		resp.SetHeader("Cache-Control", "max-age=0, must-revalidate, no-cache")
-	} else {
-		resp.SetHeader("Cache-Control", "public, max-age=3600")
 	}
 
 	http.ServeContent(resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
@@ -389,8 +387,9 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPlugin
 		if errors.As(err, &versionNotFoundErr) {
 			return response.Error(http.StatusNotFound, "Plugin version not found", err)
 		}
-		if errors.Is(err, installer.ErrPluginNotFound) {
-			return response.Error(http.StatusNotFound, "Plugin not found", err)
+		var clientError installer.Response4xxError
+		if errors.As(err, &clientError) {
+			return response.Error(clientError.StatusCode, clientError.Message, err)
 		}
 		if errors.Is(err, plugins.ErrInstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)

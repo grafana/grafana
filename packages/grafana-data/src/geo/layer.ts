@@ -4,6 +4,7 @@ import Map from 'ol/Map';
 import { PanelData } from '../types';
 import { GrafanaTheme2 } from '../themes';
 import { PanelOptionsEditorBuilder } from '../utils';
+import { ReactNode } from 'react';
 
 /**
  * This gets saved in panel json
@@ -19,8 +20,10 @@ export interface MapLayerConfig<TCustom = any> {
   type: string;
   name?: string; // configured display name
 
-  // Layer transparency
-  transparency?: number;
+  // Common properties:
+  // https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
+  // Layer opacity (0-1)
+  opacity?: number;
 
   // Custom options depending on the type
   config?: TCustom;
@@ -31,7 +34,8 @@ export interface MapLayerConfig<TCustom = any> {
  */
 export interface MapLayerHandler {
   init: () => BaseLayer;
-  update?: (map: Map, data: PanelData) => void;
+  legend?: () => ReactNode;
+  update?: (data: PanelData) => void;
 }
 
 /**
@@ -44,6 +48,11 @@ export interface MapLayerRegistryItem<TConfig = MapLayerConfig> extends Registry
    * This layer can be used as a background
    */
   isBaseMap?: boolean;
+
+  /**
+   * Show transparency controls in UI (for non-basemaps)
+   */
+  showTransparency?: boolean;
 
   /**
    * Function that configures transformation and returns a transformer

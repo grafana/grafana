@@ -8,6 +8,8 @@ export const MapZoomEditor: FC<StandardEditorProps<number | undefined, any, Geom
   onChange,
   context,
 }) => {
+  // TODO:
+  // Somehow use context to get the current map and listen to zoom changes
   return (
     <div>
       <NumberInput value={value} min={1} max={30} onChange={onChange} />
