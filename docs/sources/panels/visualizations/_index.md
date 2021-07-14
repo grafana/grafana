@@ -3,9 +3,9 @@ title = "Visualizations"
 weight = 420
 +++
 
-# Visualizations
+# Visualizations panels
 
-Grafana offers a variety of different visualizations to suit different use cases. This section of the documentation lists the different visualizations available in Grafana, their unique options and use cases. You can add more panel types with [plugins]({{< relref "../../plugins/_index.md" >}}).
+Grafana offers a variety of visualizations to support different use cases. This section of the documentation highlights the built-in panels, their options and typical usage. 
 
 * Graphs & charts 
   * [Time series]({{< relref "./time-series/_index.md" >}}) is the default and main Graph visualization.    
@@ -29,6 +29,9 @@ Grafana offers a variety of different visualizations to suit different use cases
   * [Text panel]({{< relref "./alert-list-panel.md" >}}) can show markdown and html.
   * [News panel]({{< relref "./news-panel.md" >}}) can show RSS feeds.
 
+## Get more  
+
+You can add more visualization types by installing panel [panel plugins](https://grafana.com/grafana/plugins/?type=panel).
 ## Examples 
 
 Below you can find some good examples for how all the visualizations in Grafana can be configured. You can also explore [play.grafana.org](https://play.grafana.org) which has a large set of demo dashboards that showcase all the different visualizations.
