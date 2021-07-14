@@ -1,7 +1,7 @@
 import React from 'react';
 import { toDataFrame, FieldType } from '@grafana/data';
 import { fireEvent, render, screen } from '@testing-library/react';
-import selectEvent from 'react-select-event';
+import { selectOptionInTest } from '@grafana/ui';
 import { Props, RowsToFieldsTransformerEditor } from './RowsToFieldsTransformerEditor';
 
 beforeEach(() => {
@@ -37,7 +37,7 @@ describe('RowsToFieldsTransformerEditor', () => {
 
     const select = (await screen.findByTestId('Name-config-key')).childNodes[0];
     await fireEvent.keyDown(select, { keyCode: 40 });
-    await selectEvent.select(select as HTMLElement, 'Field name', { container: document.body });
+    await selectOptionInTest(select as HTMLElement, 'Field name');
 
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -51,7 +51,7 @@ describe('RowsToFieldsTransformerEditor', () => {
 
     const select = (await screen.findByTestId('Value-config-key')).childNodes[0];
     await fireEvent.keyDown(select, { keyCode: 40 });
-    await selectEvent.select(select as HTMLElement, 'Field value', { container: document.body });
+    await selectOptionInTest(select as HTMLElement, 'Field value');
 
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.objectContaining({

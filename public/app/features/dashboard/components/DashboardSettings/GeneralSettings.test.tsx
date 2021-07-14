@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event';
+import { selectOptionInTest } from '@grafana/ui';
 
 import { byRole } from 'testing-library-selector';
 import { Props, GeneralSettingsUnconnected as GeneralSettings } from './GeneralSettings';
@@ -64,7 +64,7 @@ describe('General Settings', () => {
       userEvent.click(screen.getByLabelText('Time zone picker select container'));
       const timeZonePicker = screen.getByLabelText('Time zone picker select container');
       userEvent.click(byRole('textbox').get(timeZonePicker));
-      await selectEvent.select(timeZonePicker, 'Browser Time', { container: document.body });
+      await selectOptionInTest(timeZonePicker, 'Browser Time');
       expect(props.updateTimeZone).toHaveBeenCalledWith('browser');
       expect(props.dashboard.timezone).toBe('browser');
     });

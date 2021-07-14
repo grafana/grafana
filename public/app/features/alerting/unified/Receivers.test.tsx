@@ -23,7 +23,7 @@ import userEvent from '@testing-library/user-event';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
-import selectEvent from 'react-select-event';
+import { selectOptionInTest } from '@grafana/ui';
 
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
@@ -95,7 +95,7 @@ const ui = {
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
   userEvent.click(byRole('textbox').get(selectElement));
-  await selectEvent.select(selectElement, optionText, { container: document.body });
+  await selectOptionInTest(selectElement, optionText);
 };
 
 describe('Receivers', () => {

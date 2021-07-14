@@ -6,7 +6,7 @@ import RuleEditor from './RuleEditor';
 import { Router, Route } from 'react-router-dom';
 import React from 'react';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
-import selectEvent from 'react-select-event';
+import { selectOptionInTest } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { mockDataSource, MockDataSourceSrv } from './mocks';
 import userEvent from '@testing-library/user-event';
@@ -328,5 +328,5 @@ describe('RuleEditor', () => {
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: Matcher): Promise<void> => {
   userEvent.click(byRole('textbox').get(selectElement));
-  await selectEvent.select(selectElement, optionText as string, { container: document.body });
+  await selectOptionInTest(selectElement, optionText as string);
 };
