@@ -86,7 +86,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   builder.addScale({
     scaleKey: 'x',
     isTime: false,
-    distribution: ScaleDistribution.Linear,
+    distribution: ScaleDistribution.Ordinal,
     orientation: vizOrientation.xOri,
     direction: vizOrientation.xDir,
   });
@@ -96,11 +96,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     isTime: false,
     placement: vizOrientation.xOri === 0 ? AxisPlacement.Bottom : AxisPlacement.Left,
     splits: config.xSplits,
+    values: config.xValues,
     grid: false,
     ticks: false,
     gap: 15,
     theme,
-    values: () => frame.fields[0].values.toArray(),
   });
 
   let seriesIndex = 0;
@@ -127,7 +127,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
       theme,
       colorMode,
       pathBuilder: config.barsBuilder,
-      pointsBuilder: config.drawPoints,
+      pathData: config.barsData,
+      //pointsBuilder: config.drawPoints,
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,

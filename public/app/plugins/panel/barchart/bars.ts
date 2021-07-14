@@ -1,4 +1,4 @@
-import uPlot, { Axis } from 'uplot';
+import uPlot, { Axis, Series } from 'uplot';
 import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { BarValueVisibility, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
@@ -289,6 +289,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   let hovered: Rect | undefined = undefined;
 
+  const xValues: Axis.Values = (u) => u.data[0].map((x) => formatValue(0, x));
+
   let barMark = document.createElement('div');
   barMark.classList.add('bar-mark');
   barMark.style.position = 'absolute';
@@ -311,12 +313,12 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   };
 
   let barsPctLayout: Array<{ offs: number[]; size: number[] }> = [];
+  let barsRenderData: Series.PathBuilderData[];
+
+  const barsData: Series.DataPreprocesor = (u, seriesIdx) => barsRenderData[seriesIdx];
 
   let barsBuilder = uPlot.paths.bars!({
-    layout: (seriesIdx) => {
-      return barsPctLayout[seriesIdx];
-    },
-    each: (seriesIdx, dataIdx, lft, top, wid, hgt) => {
+    each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
       qt.add({ x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx });
     },
   });
@@ -338,15 +340,15 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             let lft = Math.round(xOff + (_dir === ScaleDirection.Up ? x0 : xDim - x0 - wid));
             let barWid = Math.round(wid);
 
-            let yPos = valToPosY(dataY[ix], scaleY, yDim, yOff);
+            let yPos = valToPosY(dataY[ix]!, scaleY, yDim, yOff);
 
             let x = ori === ScaleOrientation.Horizontal ? Math.round(lft + barWid / 2) : Math.round(yPos);
             let y = ori === ScaleOrientation.Horizontal ? Math.round(yPos) : Math.round(lft + barWid / 2);
 
-            u.ctx.textAlign = ori === ScaleOrientation.Horizontal ? 'center' : dataY[ix] >= 0 ? 'left' : 'right';
-            u.ctx.textBaseline = ori === ScaleOrientation.Vertical ? 'middle' : dataY[ix] >= 0 ? 'bottom' : 'top';
+            u.ctx.textAlign = ori === ScaleOrientation.Horizontal ? 'center' : dataY[ix]! >= 0 ? 'left' : 'right';
+            u.ctx.textBaseline = ori === ScaleOrientation.Vertical ? 'middle' : dataY[ix]! >= 0 ? 'bottom' : 'top';
 
-            u.ctx.fillText(dataY[ix], x, y);
+            u.ctx.fillText(dataY[ix] as any, x, y);
           }
         });
       }
@@ -373,7 +375,28 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     });
 
     barsPctLayout = [null].concat(distrTwo(u.data[0].length, u.data.length - 1));
-    console.log(barsPctLayout);
+
+    let { min, max } = u.scales.x;
+    let dx = max! - min!;
+
+    barsRenderData = barsPctLayout.map((seriesLayout, i) => {
+      if (i > 0) {
+        let { offs, size } = seriesLayout;
+
+        return [
+          // x0 values
+          offs.map((pct) => dx * pct) as any[],
+          // y0 values
+          null,
+          // x1 values
+          size.map((pct, i) => dx * (pct + offs[i])) as any[],
+          // y1 values
+          null,
+        ];
+      }
+
+      return null;
+    });
   };
 
   // handle hover interaction with quadtree probing
@@ -424,12 +447,14 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       y: false,
     },
     // scale & axis opts
+    xValues,
     xSplits,
 
     // pathbuilders
     // drawBars,
     // draw,
     barsBuilder,
+    barsData,
     drawPoints,
 
     // hooks
