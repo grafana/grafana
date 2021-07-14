@@ -50,11 +50,12 @@ func (mr *MockChannelRuleStorageMockRecorder) CreateChannelRule(arg0 interface{}
 }
 
 // DeleteChannelRule mocks base method.
-func (m *MockChannelRuleStorage) DeleteChannelRule(arg0 models.DeleteLiveChannelRuleCommand) error {
+func (m *MockChannelRuleStorage) DeleteChannelRule(arg0 models.DeleteLiveChannelRuleCommand) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteChannelRule", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteChannelRule indicates an expected call of DeleteChannelRule.

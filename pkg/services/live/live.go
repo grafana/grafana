@@ -258,11 +258,13 @@ func (g *GrafanaLive) Init() error {
 		managedStreamRunner = managedstream.NewRunner(
 			g.Publish,
 			managedstream.NewRedisFrameCache(redisClient),
+			g.channelConfigCache,
 		)
 	} else {
 		managedStreamRunner = managedstream.NewRunner(
 			g.Publish,
 			managedstream.NewMemoryFrameCache(),
+			g.channelConfigCache,
 		)
 	}
 

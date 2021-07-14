@@ -105,17 +105,21 @@ type GetLiveMessageQuery struct {
 	Channel string
 }
 
+type RemoteWriteConfig struct {
+	// Enabled to enable remote write for a channel.
+	Enabled bool `json:"enabled,omitempty" yaml:"enabled"`
+	// Endpoint to send streaming frames to.
+	Endpoint string `json:"endpoint,omitempty" yaml:"endpoint"`
+	// User is a user for remote write request.
+	User string `json:"user,omitempty" yaml:"user"`
+	// SampleMilliseconds allow setting minimal time before
+	// different remote writes for a channel. 0 means no sampling interval.
+	SampleMilliseconds int64 `json:"sampleMilliseconds,omitempty" yaml:"sampleMilliseconds"`
+}
+
 // LiveChannelRulePlainConfig contains various channel configuration options.
 type LiveChannelRulePlainConfig struct {
-	// RemoteWriteEnabled to enable remote write for a channel.
-	RemoteWriteEnabled bool `json:"remoteWriteEnabled,omitempty"`
-	// RemoteWriteEndpoint to send streaming frames to.
-	RemoteWriteEndpoint string `json:"remoteWriteEndpoint,omitempty"`
-	// RemoteWriteUser is a user for remote write request.
-	RemoteWriteUser string `json:"remoteWriteUser,omitempty"`
-	// RemoteWriteSampleMilliseconds allow setting minimal time before
-	// different remote writes for a channel. 0 means no sampling interval.
-	RemoteWriteSampleMilliseconds int64 `json:"remoteWriteSampleMilliseconds,omitempty"`
+	RemoteWrite *RemoteWriteConfig `json:"remoteWrite,omitempty"  yaml:"remoteWrite"`
 }
 
 var (
@@ -161,8 +165,9 @@ type ListLiveChannelRuleCommand struct {
 
 // Also acts as api DTO.
 type GetLiveChannelRuleCommand struct {
-	Id    int64 `json:"id"`
-	OrgId int64 `json:"orgId"`
+	Id      int64  `json:"id"`
+	OrgId   int64  `json:"orgId"`
+	Pattern string `json:"pattern"`
 }
 
 // Also acts as api DTO.
@@ -185,12 +190,14 @@ type UpdateLiveChannelRuleCommand struct {
 
 // Also acts as api DTO.
 type DeleteLiveChannelRuleCommand struct {
-	Id    int64 `json:"id" binding:"Required"`
-	OrgId int64 `json:"orgId"`
+	Id      int64  `json:"id"`
+	Pattern string `json:"pattern"`
+	OrgId   int64  `json:"orgId"`
 }
 
 var (
 	ErrLiveChannelRuleExists             = errors.New("channel rule with the same pattern already exists")
 	ErrLiveChannelRuleUpdatingOldVersion = errors.New("trying to update old version of live channel rule")
 	ErrLiveChannelRuleNotFound           = errors.New("channel rule not found")
+	ErrLiveChannelRuleIdentifierNotSet   = errors.New("channel rule identifier not set")
 )

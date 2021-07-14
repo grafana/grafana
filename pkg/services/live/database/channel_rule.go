@@ -2,9 +2,8 @@ package database
 
 import (
 	"context"
-	"errors"
+	"database/sql"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
@@ -12,47 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-var Fixtures = []models.LiveChannelRule{
-	{
-		OrgId:   1,
-		Pattern: "stream/telegraf/*",
-		Config: models.LiveChannelRulePlainConfig{
-			RemoteWriteEndpoint:           os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-			RemoteWriteUser:               os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-			RemoteWriteSampleMilliseconds: 1000, // Write no frequently than once in a second.
-		},
-		Secure: securejsondata.GetEncryptedJsonData(map[string]string{
-			"remoteWritePassword": os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
-		}),
-	},
-}
-
 type ChannelRuleStorage struct {
 	store *sqlstore.SQLStore
 }
 
 func NewChannelRuleStorage(store *sqlstore.SQLStore) (*ChannelRuleStorage, error) {
-	s := &ChannelRuleStorage{store: store}
-	var err error
-	if os.Getenv("GF_LIVE_LOAD_FIXTURES") != "" {
-		err = s.loadFixtures()
-	}
-	return s, err
-}
-
-func (s *ChannelRuleStorage) loadFixtures() error {
-	for _, ch := range Fixtures {
-		_, err := s.CreateChannelRule(models.CreateLiveChannelRuleCommand{
-			OrgId:   ch.OrgId,
-			Pattern: ch.Pattern,
-			Config:  ch.Config,
-			Secure:  ch.Secure.Decrypt(),
-		})
-		if err != nil && !errors.Is(err, models.ErrLiveChannelRuleExists) {
-			return err
-		}
-	}
-	return nil
+	return &ChannelRuleStorage{store: store}, nil
 }
 
 func (s *ChannelRuleStorage) ListChannelRules(cmd models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error) {
@@ -125,18 +89,48 @@ func (s *ChannelRuleStorage) UpdateChannelRule(cmd models.UpdateLiveChannelRuleC
 	return result, err
 }
 
-func (s *ChannelRuleStorage) DeleteChannelRule(cmd models.DeleteLiveChannelRuleCommand) error {
+func (s *ChannelRuleStorage) DeleteChannelRule(cmd models.DeleteLiveChannelRuleCommand) (int64, error) {
+	var count int64
 	err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("DELETE FROM live_channel_rule WHERE id=? and org_id=?", cmd.Id, cmd.OrgId)
+		var err error
+		var res sql.Result
+		if cmd.OrgId == 0 {
+			return models.ErrDataSourceIdentifierNotSet
+		}
+		switch {
+		case cmd.Id > 0:
+			res, err = sess.Exec("DELETE FROM live_channel_rule WHERE id=? and org_id=?", cmd.Id, cmd.OrgId)
+		case cmd.Pattern != "":
+			res, err = sess.Exec("DELETE FROM live_channel_rule WHERE pattern=? and org_id=?", cmd.Pattern, cmd.OrgId)
+		default:
+			return models.ErrDataSourceIdentifierNotSet
+		}
+		if err != nil {
+			return err
+		}
+		count, err = res.RowsAffected()
 		return err
 	})
-	return err
+	return count, err
 }
 
 func (s *ChannelRuleStorage) GetChannelRule(cmd models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
-	ch := models.LiveChannelRule{OrgId: cmd.OrgId, Id: cmd.Id}
+	var ch models.LiveChannelRule
+	if cmd.Id > 0 {
+		ch = models.LiveChannelRule{OrgId: cmd.OrgId, Id: cmd.Id}
+	} else if cmd.Pattern != "" {
+		ch = models.LiveChannelRule{OrgId: cmd.OrgId, Pattern: cmd.Pattern}
+	} else {
+		return nil, models.ErrLiveChannelRuleIdentifierNotSet
+	}
 	err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		ok, err := sess.NoAutoCondition(true).Where("id=? AND org_id=?", cmd.Id, cmd.OrgId).Get(&ch)
+		var ok bool
+		var err error
+		if cmd.Id > 0 {
+			ok, err = sess.NoAutoCondition(true).Where("id=? AND org_id=?", cmd.Id, cmd.OrgId).Get(&ch)
+		} else {
+			ok, err = sess.NoAutoCondition(true).Where("pattern=? AND org_id=?", cmd.Pattern, cmd.OrgId).Get(&ch)
+		}
 		if err != nil {
 			return err
 		}

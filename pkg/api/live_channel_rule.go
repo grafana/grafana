@@ -16,7 +16,7 @@ type ChannelRuleStorage interface {
 	GetChannelRule(cmd models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error)
 	CreateChannelRule(cmd models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error)
 	UpdateChannelRule(cmd models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error)
-	DeleteChannelRule(cmd models.DeleteLiveChannelRuleCommand) error
+	DeleteChannelRule(cmd models.DeleteLiveChannelRuleCommand) (int64, error)
 }
 
 type channelRuleAPI struct {
@@ -179,7 +179,7 @@ func (a *channelRuleAPI) DeleteChannelRuleById(c *models.ReqContext) response.Re
 	}
 
 	cmd := models.DeleteLiveChannelRuleCommand{Id: id, OrgId: c.OrgId}
-	err = a.storage.DeleteChannelRule(cmd)
+	_, err = a.storage.DeleteChannelRule(cmd)
 	if err != nil {
 		return response.Error(500, "Failed to delete channel rule", err)
 	}

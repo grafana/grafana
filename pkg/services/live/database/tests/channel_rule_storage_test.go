@@ -23,7 +23,9 @@ func TestChannelRuleCreate(t *testing.T) {
 		OrgId:   1,
 		Pattern: "xxx/*",
 		Config: models.LiveChannelRulePlainConfig{
-			RemoteWriteEndpoint: "test_endpoint",
+			RemoteWrite: &models.RemoteWriteConfig{
+				Endpoint: "test_endpoint",
+			},
 		},
 		Secure: map[string]string{
 			"remoteWritePassword": "test_password",
@@ -33,7 +35,7 @@ func TestChannelRuleCreate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "xxx/*", result.Pattern)
 	require.NotZero(t, result.Id)
-	require.Equal(t, "test_endpoint", result.Config.RemoteWriteEndpoint)
+	require.Equal(t, "test_endpoint", result.Config.RemoteWrite.Endpoint)
 	encPassword, ok := result.Secure["remoteWritePassword"]
 	require.True(t, ok)
 	require.NotEqual(t, "test_password", string(encPassword))
@@ -49,7 +51,9 @@ func TestChannelRuleUpdate(t *testing.T) {
 		OrgId:   1,
 		Pattern: "xxx/*",
 		Config: models.LiveChannelRulePlainConfig{
-			RemoteWriteEndpoint: "test_endpoint",
+			RemoteWrite: &models.RemoteWriteConfig{
+				Endpoint: "test_endpoint",
+			},
 		},
 		Secure: map[string]string{
 			"remoteWritePassword": "test_password",
@@ -65,7 +69,9 @@ func TestChannelRuleUpdate(t *testing.T) {
 		OrgId:   1,
 		Pattern: "xxx_updated/*",
 		Config: models.LiveChannelRulePlainConfig{
-			RemoteWriteEndpoint: "test_endpoint_updated",
+			RemoteWrite: &models.RemoteWriteConfig{
+				Endpoint: "test_endpoint_updated",
+			},
 		},
 		Secure: map[string]string{
 			"remoteWritePassword": "test_password_updated",
@@ -79,7 +85,7 @@ func TestChannelRuleUpdate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "xxx_updated/*", result.Pattern)
 	require.NotZero(t, result.Id)
-	require.Equal(t, "test_endpoint_updated", result.Config.RemoteWriteEndpoint)
+	require.Equal(t, "test_endpoint_updated", result.Config.RemoteWrite.Endpoint)
 	password, ok := result.Secure.DecryptedValue("remoteWritePassword")
 	require.True(t, ok)
 	require.Equal(t, "test_password_updated", password)
@@ -92,7 +98,9 @@ func TestChannelRuleDelete(t *testing.T) {
 		OrgId:   1,
 		Pattern: "xxx/*",
 		Config: models.LiveChannelRulePlainConfig{
-			RemoteWriteEndpoint: "test_endpoint",
+			RemoteWrite: &models.RemoteWriteConfig{
+				Endpoint: "test_endpoint",
+			},
 		},
 		Secure: map[string]string{
 			"remoteWritePassword": "test_password",
@@ -107,8 +115,9 @@ func TestChannelRuleDelete(t *testing.T) {
 		Id:    id,
 		OrgId: 1,
 	}
-	err = storage.DeleteChannelRule(deleteCmd)
+	numDeleted, err := storage.DeleteChannelRule(deleteCmd)
 	require.NoError(t, err)
+	require.Equal(t, int64(1), numDeleted)
 
 	getCmd := models.GetLiveChannelRuleCommand{
 		OrgId: 1,
@@ -125,7 +134,9 @@ func TestChannelRuleList(t *testing.T) {
 		OrgId:   2,
 		Pattern: "xxx2/*",
 		Config: models.LiveChannelRulePlainConfig{
-			RemoteWriteEndpoint: "test_endpoint",
+			RemoteWrite: &models.RemoteWriteConfig{
+				Endpoint: "test_endpoint",
+			},
 		},
 		Secure: map[string]string{
 			"remoteWritePassword": "test_password",
@@ -138,7 +149,9 @@ func TestChannelRuleList(t *testing.T) {
 		OrgId:   3,
 		Pattern: "xxx3/*",
 		Config: models.LiveChannelRulePlainConfig{
-			RemoteWriteEndpoint: "test_endpoint",
+			RemoteWrite: &models.RemoteWriteConfig{
+				Endpoint: "test_endpoint",
+			},
 		},
 		Secure: map[string]string{
 			"remoteWritePassword": "test_password",
