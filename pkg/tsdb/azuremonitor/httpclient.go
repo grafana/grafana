@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/aztokenprovider"
 )
 
-func httpClientProvider(route azRoute, model datasourceInfo, cfg *setting.Cfg) (*httpclient.Provider, error) {
+func getMiddlewares(route azRoute, model datasourceInfo, cfg *setting.Cfg) ([]httpclient.Middleware, error) {
 	middlewares := []httpclient.Middleware{}
 
 	if len(route.Scopes) > 0 {
@@ -30,17 +30,16 @@ func httpClientProvider(route azRoute, model datasourceInfo, cfg *setting.Cfg) (
 		middlewares = append(middlewares, apiKeyMiddleware)
 	}
 
-	return httpclient.NewProvider(httpclient.ProviderOptions{
-		Middlewares: middlewares,
-	}), nil
+	return middlewares, nil
 }
 
-func newHTTPClient(route azRoute, model datasourceInfo, cfg *setting.Cfg) (*http.Client, error) {
+func newHTTPClient(route azRoute, model datasourceInfo, cfg *setting.Cfg, clientProvider httpclient.Provider) (*http.Client, error) {
 	model.HTTPCliOpts.Headers = route.Headers
-	clientProvider, err := httpClientProvider(route, model, cfg)
+	m, err := getMiddlewares(route, model, cfg)
 	if err != nil {
 		return nil, err
 	}
 
+	model.HTTPCliOpts.Middlewares = m
 	return clientProvider.New(model.HTTPCliOpts)
 }

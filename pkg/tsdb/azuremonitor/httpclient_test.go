@@ -59,13 +59,13 @@ func Test_httpCliProvider(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cli, err := httpClientProvider(tt.route, tt.model, cfg)
+			m, err := getMiddlewares(tt.route, tt.model, cfg)
 			require.NoError(t, err)
 
 			// Cannot test that the cli middleware works properly since the azcore sdk
 			// rejects the TLS certs (if provided)
-			if len(cli.Opts.Middlewares) != tt.expectedMiddlewares {
-				t.Errorf("Unexpected middlewares: %v", cli.Opts.Middlewares)
+			if len(m) != tt.expectedMiddlewares {
+				t.Errorf("Unexpected middlewares: %v", m)
 			}
 		})
 	}

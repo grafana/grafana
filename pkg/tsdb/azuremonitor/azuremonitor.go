@@ -48,6 +48,7 @@ type Service struct {
 	PluginManager        plugins.Manager       `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 	BackendPluginManager backendplugin.Manager `inject:""`
+	HTTPClientProvider   *httpclient.Provider  `inject:""`
 	im                   instancemgmt.InstanceManager
 	executors            map[string]azDatasourceExecutor
 }
@@ -77,7 +78,7 @@ type datasourceService struct {
 	HTTPClient *http.Client
 }
 
-func getDatasourceService(cfg *setting.Cfg, dsInfo datasourceInfo, routeName string) (datasourceService, error) {
+func getDatasourceService(cfg *setting.Cfg, clientProvider httpclient.Provider, dsInfo datasourceInfo, routeName string) (datasourceService, error) {
 	srv, ok := dsInfo.Services[routeName]
 	if ok && srv.HTTPClient != nil {
 		// If the service already exists, return it
@@ -85,7 +86,7 @@ func getDatasourceService(cfg *setting.Cfg, dsInfo datasourceInfo, routeName str
 	}
 
 	route := dsInfo.Routes[routeName]
-	client, err := newHTTPClient(route, dsInfo, cfg)
+	client, err := newHTTPClient(route, dsInfo, cfg, clientProvider)
 	if err != nil {
 		return datasourceService{}, err
 	}
@@ -95,7 +96,7 @@ func getDatasourceService(cfg *setting.Cfg, dsInfo datasourceInfo, routeName str
 	}, nil
 }
 
-func NewInstanceSettings(cfg *setting.Cfg, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(cfg *setting.Cfg, clientProvider httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData, err := simplejson.NewJson(settings.JSONData)
 		if err != nil {
@@ -142,7 +143,7 @@ func NewInstanceSettings(cfg *setting.Cfg, executors map[string]azDatasourceExec
 		}
 
 		for routeName := range executors {
-			service, err := getDatasourceService(cfg, model, routeName)
+			service, err := getDatasourceService(cfg, clientProvider, model, routeName)
 			if err != nil {
 				return nil, err
 			}
@@ -198,7 +199,7 @@ func (s *Service) Init() error {
 		insightsAnalytics:  &InsightsAnalyticsDatasource{proxy: proxy},
 		azureResourceGraph: &AzureResourceGraphDatasource{proxy: proxy},
 	}
-	s.im = datasource.NewInstanceManager(NewInstanceSettings(s.Cfg, s.executors))
+	s.im = datasource.NewInstanceManager(NewInstanceSettings(s.Cfg, *s.HTTPClientProvider, s.executors))
 	mux := s.newMux()
 	resourceMux := http.NewServeMux()
 	s.registerRoutes(resourceMux)
