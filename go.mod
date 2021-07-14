@@ -46,13 +46,15 @@ require (
 	github.com/go-stack/stack v1.8.0
 	github.com/gobwas/glob v0.2.3
 	github.com/gofrs/uuid v4.0.0+incompatible
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.5.0
+	github.com/golang/snappy v0.0.3
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/grafana-aws-sdk v0.7.0
-	github.com/grafana/grafana-plugin-sdk-go v0.105.1-0.20210707113908-95785c5b9e49
+	github.com/grafana/grafana-plugin-sdk-go v0.106.0
 	github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.0
@@ -122,3 +124,5 @@ require (
 )
 
 replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
+
+replace gopkg.in/macaron.v1 => ./pkg/macaron
