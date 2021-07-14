@@ -1,7 +1,14 @@
 import { Alert } from '@grafana/ui';
+import { QueryEditorProps } from '@grafana/data';
 import React from 'react';
-import Datasource from '../../datasource';
-import { AzureMonitorQuery, AzureQueryType, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
+import AzureMonitorDatasource from '../../datasource';
+import {
+  AzureMonitorQuery,
+  AzureQueryType,
+  AzureMonitorOption,
+  AzureMonitorErrorish,
+  AzureDataSourceJsonData,
+} from '../../types';
 import MetricsQueryEditor from '../MetricsQueryEditor';
 import QueryTypeField from './QueryTypeField';
 import useLastError from '../../utils/useLastError';
@@ -11,14 +18,13 @@ import ApplicationInsightsEditor from '../ApplicationInsightsEditor';
 import InsightsAnalyticsEditor from '../InsightsAnalyticsEditor';
 import { Space } from '../Space';
 
-interface BaseQueryEditorProps {
-  query: AzureMonitorQuery;
-  datasource: Datasource;
-  onChange: (newQuery: AzureMonitorQuery) => void;
-  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
-}
+export type AzureMonitorQueryEditorProps = QueryEditorProps<
+  AzureMonitorDatasource,
+  AzureMonitorQuery,
+  AzureDataSourceJsonData
+>;
 
-const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, onChange }) => {
+const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({ query, datasource, onChange }) => {
   const [errorMessage, setError] = useLastError();
   const subscriptionId = query.subscription || datasource.azureMonitorDatasource.defaultSubscriptionId;
   const variableOptionGroup = {
@@ -51,8 +57,9 @@ const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, onChan
   );
 };
 
-interface EditorForQueryTypeProps extends BaseQueryEditorProps {
+interface EditorForQueryTypeProps extends Omit<AzureMonitorQueryEditorProps, 'onRunQuery'> {
   subscriptionId?: string;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
 }
 
@@ -65,6 +72,7 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
   setError,
 }) => {
   switch (query.queryType) {
+    case undefined:
     case AzureQueryType.AzureMonitor:
       return (
         <MetricsQueryEditor

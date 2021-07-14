@@ -112,8 +112,11 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return transformMetadataToKustoSchema(metadata, resourceUri);
   }
 
-  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
     const item = target.azureLogAnalytics;
+    if (!item) {
+      return target;
+    }
 
     const templateSrv = getTemplateSrv();
     const resource = templateSrv.replace(item.resource, scopedVars);
@@ -123,21 +126,19 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       workspace = this.defaultOrFirstWorkspace;
     }
 
-    const subscriptionId = templateSrv.replace(target.subscription || this.defaultSubscriptionId, scopedVars);
     const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
 
     return {
       refId: target.refId,
-      format: target.format,
       queryType: AzureQueryType.LogAnalytics,
-      subscriptionId: subscriptionId,
+
       azureLogAnalytics: {
         resultFormat: item.resultFormat,
-        query: query,
+        query,
         resource,
 
-        // TODO: Workspace is deprecated and should be migrated to Resources
-        workspace: workspace,
+        // Workspace was removed in Grafana 8, but remains for backwards compat
+        workspace,
       },
     };
   }

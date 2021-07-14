@@ -9,20 +9,19 @@ export default class InsightsAnalyticsDatasource extends AppInsightsDatasource {
     super(instanceSettings);
   }
 
-  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
     const item = target.insightsAnalytics;
-
-    // Old name migrations
-    const old: any = item;
-    if (old.rawQueryString && !item.query) {
-      item.query = old.rawQueryString;
+    if (!item) {
+      return target;
     }
+
+    const query = item.rawQueryString && !item.query ? item.rawQueryString : item.query;
 
     return {
       refId: target.refId,
       queryType: AzureQueryType.InsightsAnalytics,
       insightsAnalytics: {
-        query: getTemplateSrv().replace(item.query, scopedVars),
+        query: getTemplateSrv().replace(query, scopedVars),
         resultFormat: item.resultFormat,
       },
     };

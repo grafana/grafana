@@ -44,7 +44,7 @@ const AggregationField: React.FC<AggregationFieldProps> = ({
     <Field label="Aggregation">
       <Select
         inputId="azure-monitor-metrics-aggregation-field"
-        value={findOption(aggregationOptions, query.azureMonitor.aggregation)}
+        value={findOption(aggregationOptions, query.azureMonitor?.aggregation)}
         onChange={handleChange}
         options={options}
         width={38}
