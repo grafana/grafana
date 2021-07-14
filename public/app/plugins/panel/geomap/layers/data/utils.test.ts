@@ -90,7 +90,7 @@ const geohash = ['9q94r', 'dr5rs'];
 const simpleGeohashQuery: DataFrame = toDataFrame({
   name: "simpleGeohashQuery",
   fields: [
-      { name: "Time", type: FieldType.time, values: geohashValues },
+      { name: "metric", type: FieldType.number, values: geohashValues },
       { name: "geohash", type: FieldType.string, values: geohash }
   ]
 });
