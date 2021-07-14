@@ -78,7 +78,7 @@ type PluginInstaller interface {
 	Install(ctx context.Context, pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error
 	// Uninstall removes the specified plugin from the provided plugins directory.
 	Uninstall(ctx context.Context, pluginID, pluginPath string) error
-	// GetPreInstallDetails checks if the requested plugin is supported on the running system
+	// GetPreInstallDetails checks if the requested plugin is supported on the running system.
 	GetPreInstallDetails(pluginID, version, pluginRepoURL string) (PreInstallDetails, error)
 }
 
