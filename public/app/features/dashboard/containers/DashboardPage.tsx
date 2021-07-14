@@ -317,7 +317,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return (
       <div className={containerClassNames}>
         {kioskMode !== KioskMode.Full && (
-          <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
+          <nav aria-label={selectors.pages.Dashboard.DashNav.nav}>
             <DashNav
               dashboard={dashboard}
               title={dashboard.title}
@@ -327,7 +327,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
               kioskMode={kioskMode}
               hideTimePicker={dashboard.timepicker.hidden}
             />
-          </div>
+          </nav>
         )}
 
         <DashboardPrompt dashboard={dashboard} />
