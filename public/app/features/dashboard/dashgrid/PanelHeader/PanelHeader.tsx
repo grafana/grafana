@@ -58,7 +58,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                     size="sm"
                   />
                 ) : null}
-                <span className={styles.titleText}>{title}</span>
+                <h2 className={styles.titleText}>{title}</h2>
                 <Icon name="angle-down" className="panel-menu-toggle" />
                 <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} show={panelMenuOpen} onClose={closeMenu} />
                 {data.request && data.request.timeInfo && (
@@ -83,10 +83,12 @@ const panelStyles = (theme: GrafanaTheme2) => {
       white-space: nowrap;
       max-width: calc(100% - 38px);
       cursor: pointer;
-      font-weight: $font-weight-semi-bold;
+      font-weight: ${theme.typography.fontWeightMedium};
+      font-size: ${theme.typography.body.fontSize};
+      margin: 0;
 
       &:hover {
-        color: $link-hover-color;
+        color: ${theme.colors.text.primary};
       }
       .panel-has-alert & {
         max-width: calc(100% - 54px);
