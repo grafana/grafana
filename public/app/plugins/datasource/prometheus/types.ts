@@ -10,7 +10,7 @@ export interface PromQuery extends DataQuery {
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;
-  stepMode?: StepType;
+  stepMode?: StepMode;
   legendFormat?: string;
   valueWithRefId?: boolean;
   requestId?: string;
@@ -18,7 +18,7 @@ export interface PromQuery extends DataQuery {
   showingTable?: boolean;
 }
 
-export type StepType = 'min' | 'max' | 'exact';
+export type StepMode = 'min' | 'max' | 'exact';
 
 export interface PromOptions extends DataSourceJsonData {
   timeInterval: string;
