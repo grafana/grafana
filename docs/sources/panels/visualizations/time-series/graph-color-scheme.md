@@ -6,7 +6,7 @@ weight = 400
 
 # Graph and color schemes 
 
-Under [Standard options]({{< relref "./standard-options.md" >}}) you find the [Color scheme]({{< relref "./standard-options.md#color-scheme" >}}) option. This option controls how fields and series gets their colors. 
+Under [Standard options]({{< relref "./standard-options.md" >}}) you will find the [Color scheme]({{< relref "./standard-options.md#color-scheme" >}}) option. This option controls how fields and series get their colors. 
 
 ## Classic palette 
 
