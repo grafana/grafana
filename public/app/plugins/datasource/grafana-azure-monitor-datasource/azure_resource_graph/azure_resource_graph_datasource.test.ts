@@ -75,7 +75,6 @@ describe('AzureResourceGraphDatasource', () => {
       };
       expect(ctx.ds.applyTemplateVariables(target)).toStrictEqual({
         azureResourceGraph: { query: 'Resources | var1-foo', resultFormat: 'table' },
-        format: undefined,
         queryType: 'Azure Resource Graph',
         refId: undefined,
         subscriptions: undefined,
@@ -94,7 +93,6 @@ describe('AzureResourceGraphDatasource', () => {
           query: `resources | where $__contains(name, 'var3-foo','var3-baz')`,
           resultFormat: 'table',
         },
-        format: undefined,
         queryType: 'Azure Resource Graph',
         refId: undefined,
         subscriptions: undefined,

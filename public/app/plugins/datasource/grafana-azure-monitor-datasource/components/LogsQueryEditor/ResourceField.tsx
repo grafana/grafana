@@ -25,7 +25,7 @@ function parseResourceDetails(resourceURI: string) {
 
 const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, onQueryChange }) => {
   const styles = useStyles2(getStyles);
-  const { resource } = query.azureLogAnalytics;
+  const { resource } = query.azureLogAnalytics ?? {};
 
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
 
@@ -58,7 +58,7 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
       <Modal className={styles.modal} title="Select a resource" isOpen={pickerIsOpen} onDismiss={closePicker}>
         <ResourcePicker
           resourcePickerData={datasource.resourcePickerData}
-          resourceURI={query.azureLogAnalytics.resource!}
+          resourceURI={resource}
           templateVariables={templateVariables}
           onApply={handleApply}
           onCancel={closePicker}

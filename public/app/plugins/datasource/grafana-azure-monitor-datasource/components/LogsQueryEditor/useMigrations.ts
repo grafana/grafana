@@ -8,7 +8,7 @@ async function migrateWorkspaceQueryToResourceQuery(
   query: AzureMonitorQuery,
   onChange: (newQuery: AzureMonitorQuery) => void
 ) {
-  if (query.azureLogAnalytics.workspace !== undefined && !query.azureLogAnalytics.resource) {
+  if (query.azureLogAnalytics?.workspace !== undefined && !query.azureLogAnalytics.resource) {
     const isWorkspaceGUID = isGUIDish(query.azureLogAnalytics.workspace);
     let resource: string;
 

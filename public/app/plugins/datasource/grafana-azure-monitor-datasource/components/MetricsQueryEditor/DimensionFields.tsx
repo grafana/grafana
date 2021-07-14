@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Button, Select, Input, HorizontalGroup, VerticalGroup, InlineLabel } from '@grafana/ui';
 
 import { Field } from '../Field';
@@ -10,6 +10,10 @@ interface DimensionFieldsProps extends AzureQueryEditorFieldProps {
 }
 
 const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptions, onQueryChange }) => {
+  const dimensionFilters = useMemo(() => query.azureMonitor?.dimensionFilters ?? [], [
+    query.azureMonitor?.dimensionFilters,
+  ]);
+
   const setDimensionFilters = useCallback(
     (newFilters: AzureMetricDimension[]) => {
       onQueryChange({
@@ -25,17 +29,17 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
 
   const addFilter = useCallback(() => {
     setDimensionFilters([
-      ...query.azureMonitor.dimensionFilters,
+      ...dimensionFilters,
       {
         dimension: '',
         operator: 'eq',
         filter: '',
       },
     ]);
-  }, [query.azureMonitor.dimensionFilters, setDimensionFilters]);
+  }, [dimensionFilters, setDimensionFilters]);
 
   const removeFilter = (index: number) => {
-    const newFilters = [...query.azureMonitor.dimensionFilters];
+    const newFilters = [...dimensionFilters];
     newFilters.splice(index, 1);
     setDimensionFilters(newFilters);
   };
@@ -45,7 +49,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
     fieldName: Key,
     value: AzureMetricDimension[Key]
   ) => {
-    const newFilters = [...query.azureMonitor.dimensionFilters];
+    const newFilters = [...dimensionFilters];
     const newFilter = newFilters[filterIndex];
     newFilter[fieldName] = value;
     setDimensionFilters(newFilters);
@@ -60,7 +64,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
   return (
     <Field label="Dimension">
       <VerticalGroup spacing="xs">
-        {query.azureMonitor.dimensionFilters.map((filter, index) => (
+        {dimensionFilters.map((filter, index) => (
           <HorizontalGroup key={index} spacing="xs">
             <Select
               placeholder="Field"

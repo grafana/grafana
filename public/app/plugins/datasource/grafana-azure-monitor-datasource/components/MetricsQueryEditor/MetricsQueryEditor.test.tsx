@@ -32,7 +32,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockDatasource = createMockDatasource();
     const onChange = jest.fn();
     const mockQuery = createMockQuery();
-    mockQuery.azureMonitor.metricName = undefined;
+    (mockQuery.azureMonitor ?? {}).metricName = undefined;
     mockDatasource.azureMonitorDatasource.getSubscriptions = jest.fn().mockResolvedValueOnce([
       {
         value: 'abc-123',
@@ -117,7 +117,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockDatasource = createMockDatasource();
     const onChange = jest.fn();
     const mockQuery = createMockQuery();
-    mockQuery.azureMonitor.aggregation = undefined;
+    (mockQuery.azureMonitor ?? {}).aggregation = undefined;
     mockDatasource.getMetricNames = jest.fn().mockResolvedValue([
       {
         value: 'metric-a',
