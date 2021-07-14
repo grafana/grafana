@@ -33,7 +33,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
   const styles = useStyles2(panelStyles);
 
   return (
-    <header>
+    <>
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} />
       <div className={className}>
         <PanelHeaderCorner
@@ -71,7 +71,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
           }}
         </PanelHeaderMenuTrigger>
       </div>
-    </header>
+    </>
   );
 };
 
