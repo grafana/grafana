@@ -398,6 +398,9 @@ The InfoBox & FeatureInfoBox are now deprecated please use the Alert component i
 * **TagsInput**: Add className to TagsInput. [#33944](https://github.com/grafana/grafana/pull/33944), [@Clarity-89](https://github.com/Clarity-89)
 * **VizLegend**: Move onSeriesColorChanged to PanelContext (breaking change). [#33611](https://github.com/grafana/grafana/pull/33611), [@ryantxu](https://github.com/ryantxu)
 
+### License update
+* **AGPL License:** Update license from Apache 2.0 to the GNU Affero General Public License (AGPL). [#33184](https://github.com/grafana/grafana/pull/33184)
+
 <!-- 8.0.0-beta1 END -->
 
 <!-- 7.5.9 START -->
