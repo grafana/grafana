@@ -237,7 +237,8 @@ export const FUNCTIONS = [
   {
     insertText: 'label_join',
     label: 'label_join',
-    detail: 'label_join(v instant-vector, dst_label string, separator string, src_label_1 string, src_label_2 string, ...)',
+    detail:
+      'label_join(v instant-vector, dst_label string, separator string, src_label_1 string, src_label_2 string, ...)',
     documentation:
       'For each timeseries in `v`, joins all the values of all the `src_labels` using `separator` and returns the timeseries with the label `dst_label` containing the joined value. There can be any number of `src_labels` in this function.',
   },
