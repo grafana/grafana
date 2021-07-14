@@ -7,6 +7,9 @@ platform:
   os: linux
   arch: amd64
 
+environment:
+  GRABPL_METRICS_PREFIX: grafana.ci.
+
 steps:
 - name: identify-runner
   image: alpine:3.13
@@ -17,9 +20,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/grabpl
   - chmod +x bin/grabpl
-  - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -38,62 +40,87 @@ steps:
 - name: shellcheck
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/grabpl shellcheck
+  - ./bin/grabpl --rusage=spellcheck. shellcheck | ./bin/grabpl publish-metrics
   depends_on:
   - initialize
+  environment:
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
 
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl --rusage=backend.test. test-backend --edition oss | ./bin/grabpl publish-metrics
+  - ./bin/grabpl --rusage=backend.integration. integration-tests --edition oss | ./bin/grabpl publish-metrics
   depends_on:
   - initialize
+  environment:
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
 
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/grabpl lint-backend --edition oss
-  environment:
-    CGO_ENABLED: 1
+  - ./bin/grabpl --rusage=backend.lint. lint-backend --edition oss | ./bin/grabpl publish-metrics
   depends_on:
   - initialize
   - test-backend
+  environment:
+    CGO_ENABLED: 1
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
   commands:
   - yarn run ci:test-frontend
-  environment:
-    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
+  environment:
+    TEST_MAX_WORKERS: 50%
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
 
 - name: build-backend
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
+  - ./bin/grabpl --rusage=backend.build. build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise | ./bin/grabpl publish-metrics
   depends_on:
   - initialize
   - lint-backend
   - test-backend
+  environment:
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
 
 - name: build-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  - ./bin/grabpl --rusage=frontend.build. build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise | ./bin/grabpl publish-metrics
   depends_on:
   - initialize
   - test-frontend
+  environment:
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
 
 - name: build-plugins
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
+  - ./bin/grabpl --rusage=plugins.build. build-plugins --jobs 8 --edition oss --no-install-deps | ./grabpl publish-metrics
   depends_on:
   - initialize
   - lint-backend
+  environment:
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
 
 - name: validate-scuemata
   image: grafana/build-container:1.4.1
@@ -136,7 +163,7 @@ steps:
   image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001
+  - ./bin/grabpl --rusage=e2e. e2e-tests --port 3001 | ./bin/grabpl publish-metrics
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -146,11 +173,14 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - yarn storybook:build
-  - ./bin/grabpl verify-storybook
-  environment:
-    NODE_OPTIONS: --max_old_space_size=4096
+  - ./bin/grabpl --rusage=storybook. verify-storybook | ./bin/grabpl publish-metrics
   depends_on:
   - package
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
 
 - name: build-frontend-docs
   image: grafana/build-container:1.4.1
@@ -194,11 +224,14 @@ steps:
   - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - ./bin/grabpl --rusage=testpostgres. integration-tests --database postgres | ./bin/grabpl publish-metrics
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
   depends_on:
   - test-backend
   - test-frontend
@@ -211,10 +244,12 @@ steps:
   - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - ./bin/grabpl --rusage=testmysql. integration-tests --database mysql | ./bin/grabpl publish-metrics
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
   depends_on:
   - test-backend
   - test-frontend
@@ -258,9 +293,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/grabpl
   - chmod +x bin/grabpl
-  - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -589,8 +623,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -639,9 +672,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/grabpl
   - chmod +x bin/grabpl
-  - ./bin/grabpl verify-drone
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
@@ -724,9 +756,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/grabpl
   - chmod +x bin/grabpl
-  - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -1030,8 +1061,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -1081,7 +1111,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -1100,7 +1130,6 @@ steps:
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
-  - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -1506,7 +1535,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout ${DRONE_TAG}
@@ -1523,7 +1552,6 @@ steps:
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
-  - .\grabpl.exe verify-drone
   depends_on:
   - clone
 
@@ -1575,9 +1603,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/grabpl
   - chmod +x bin/grabpl
-  - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
   environment:
     DOCKERIZE_VERSION: 0.6.1
@@ -1680,9 +1707,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/grabpl
   - chmod +x bin/grabpl
-  - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -1975,8 +2001,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -2026,7 +2051,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2045,7 +2070,6 @@ steps:
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
-  - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -2445,7 +2469,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout main
@@ -2462,7 +2486,6 @@ steps:
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
-  - .\grabpl.exe verify-drone
   depends_on:
   - clone
 
@@ -2514,9 +2537,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/grabpl
   - chmod +x bin/grabpl
-  - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
   environment:
     DOCKERIZE_VERSION: 0.6.1
@@ -2619,9 +2641,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/grabpl
   - chmod +x bin/grabpl
-  - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -2889,8 +2910,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -2936,7 +2956,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2955,7 +2975,6 @@ steps:
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
-  - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -3358,7 +3377,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/testrelease/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout $$env:DRONE_BRANCH
@@ -3375,7 +3394,6 @@ steps:
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
-  - .\grabpl.exe verify-drone
   depends_on:
   - clone
 
