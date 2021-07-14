@@ -27,4 +27,7 @@ module.exports = {
     '^react($|/.+)': '<rootDir>/node_modules/react$1',
   },
   watchPathIgnorePatterns: ['<rootDir>/node_modules/'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(ol)/)', // <- exclude the OL lib
+  ],
 };
