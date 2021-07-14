@@ -50,6 +50,7 @@ export interface ExpressionQuery extends DataQuery {
   downsampler?: string;
   upsampler?: string;
   metricName?: string;
+  isRegex?: boolean;
   conditions?: ClassicCondition[];
 }
 export interface ClassicCondition {

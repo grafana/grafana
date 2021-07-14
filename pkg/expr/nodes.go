@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/classic"
@@ -331,8 +330,7 @@ func extractNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
 			labels[key] = val.(string) // TODO check assertion / return error
 		}
 		for _, numericField := range numericFields {
-			val, err := frame.FloatAt(numericField, rowIdx)
-			spew.Dump(val, err)
+			val, _ := frame.FloatAt(numericField, rowIdx)
 			n := mathexp.NewNumber(frame.Fields[numericField].Name, labels)
 			n.SetValue(&val)
 			numbers = append(numbers, n)

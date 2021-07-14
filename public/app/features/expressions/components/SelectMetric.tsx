@@ -1,6 +1,6 @@
 import React, { ChangeEvent, FC } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { InlineField, InlineFieldRow, Select, Input } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select, Input, Checkbox } from '@grafana/ui';
 import { ExpressionQuery } from '../types';
 
 interface Props {
@@ -17,13 +17,19 @@ export const SelectMetric: FC<Props> = ({ labelWidth, onChange, refIds, query })
 
   const onMetricNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange({ ...query, metricName: event.target.value });
-    console.log(query);
+  };
+
+  const onIsRegexChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, isRegex: event.target.checked });
   };
 
   return (
     <InlineFieldRow>
       <InlineField label="Input" labelWidth={labelWidth}>
         <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
+      </InlineField>
+      <InlineField label="Regex" labelWidth={labelWidth}>
+        <Checkbox onChange={onIsRegexChange} value={query.isRegex} />
       </InlineField>
       <InlineField label="Metric" labelWidth={labelWidth}>
         <Input onChange={onMetricNameChange} value={query.metricName} width={20} />

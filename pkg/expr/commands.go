@@ -3,10 +3,10 @@ package expr
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
@@ -230,10 +230,13 @@ func (gr *ResampleCommand) Execute(ctx context.Context, vars mathexp.Vars) (math
 // Select MetricCommand is an expresion for selecting a specific metric name from a response.
 // All labeled items matching the metric name are returned, so this for queries that not only return multiple
 // items that are differentiated not only by label name but also by metric name.
+// If IsRegex is true, then Metric name must be a valid regular expression.
 type SelectMetricCommand struct {
 	InputVar   string
 	MetricName string
 	refID      string
+	IsRegex    bool
+	Regex      *regexp.Regexp
 }
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
@@ -241,6 +244,7 @@ func UnmarshalSelectMetricCommand(rn *rawNode) (*SelectMetricCommand, error) {
 	smc := &SelectMetricCommand{
 		refID: rn.RefID,
 	}
+
 	rawInput, ok := rn.Query["expression"]
 	if !ok {
 		return nil, fmt.Errorf("no variable to select metric for refId %v", rn.RefID)
@@ -259,6 +263,22 @@ func UnmarshalSelectMetricCommand(rn *rawNode) (*SelectMetricCommand, error) {
 	if !ok {
 		return nil, fmt.Errorf("expected metric name in select metric to be a string, but got %T for refId %v", rawMetricName, rn.RefID)
 	}
+
+	rawIsRegex, ok := rn.Query["isRegex"]
+	if !ok {
+		return smc, nil
+	}
+	smc.IsRegex, ok = rawIsRegex.(bool)
+	if !ok {
+		return nil, fmt.Errorf("expected isRegex in select metric to be a bool, but got %T for refId %v", rawMetricName, rn.RefID)
+	}
+
+	var err error
+	smc.Regex, err = regexp.Compile(smc.MetricName)
+	if err != nil {
+		return nil, fmt.Errorf("invalid regular expression in select metric for refId %v: %w", rn.RefID, err)
+	}
+
 	return smc, nil
 }
 
@@ -267,17 +287,27 @@ func UnmarshalSelectMetricCommand(rn *rawNode) (*SelectMetricCommand, error) {
 func (s *SelectMetricCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
 	newRes := mathexp.Results{}
 	inputData := vars[s.InputVar]
+
+	ifMatchAppend := func(metricName string, v mathexp.Value) {
+		var matched bool
+		if s.IsRegex {
+			matched = s.Regex.MatchString(metricName)
+		} else {
+			matched = metricName == s.MetricName
+		}
+		if matched {
+			newRes.Values = append(newRes.Values, v)
+		}
+	}
+
 	for _, val := range inputData.Values {
 		switch v := val.(type) {
 		case mathexp.Series:
-			spew.Dump(v.GetName())
-			if v.GetName() == s.MetricName {
-				newRes.Values = append(newRes.Values, v)
-			}
+			ifMatchAppend(v.GetName(), v)
 		case mathexp.Number:
-			if v.GetName() == s.MetricName {
-				newRes.Values = append(newRes.Values, v)
-			}
+			ifMatchAppend(v.GetName(), v)
+		default:
+			return newRes, fmt.Errorf("metric select input must be type Series or Number, but got type %s", v.Type())
 		}
 	}
 	return newRes, nil
