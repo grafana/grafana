@@ -62,6 +62,15 @@ func (h *ContextHandler) Init() error {
 	return nil
 }
 
+type reqContextKey struct{}
+
+func FromContext(c context.Context) *models.ReqContext {
+	if reqCtx, ok := c.Value(reqContextKey{}).(*models.ReqContext); ok {
+		return reqCtx
+	}
+	return nil
+}
+
 // Middleware provides a middleware to initialize the Macaron context.
 func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 	span, _ := opentracing.StartSpanFromContext(mContext.Req.Context(), "Auth - Middleware")
@@ -75,6 +84,8 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 		SkipCache:      false,
 		Logger:         log.New("context"),
 	}
+
+	mContext.Req.Request = mContext.Req.WithContext(context.WithValue(mContext.Req.Context(), reqContextKey{}, reqContext))
 
 	traceID, exists := cw.ExtractTraceID(mContext.Req.Request.Context())
 	if exists {

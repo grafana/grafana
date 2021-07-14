@@ -1,10 +1,12 @@
 package middleware
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/go-macaron/gzip"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"gopkg.in/macaron.v1"
 )
 
@@ -22,8 +24,9 @@ func Gziper() macaron.Handler {
 	gziperLogger := log.New("gziper")
 	gziper := gzip.Gziper()
 
-	return func(ctx *macaron.Context) {
-		requestPath := ctx.Req.URL.RequestURI()
+	return func(w http.ResponseWriter, r *http.Request) {
+		c := contexthandler.FromContext(r.Context())
+		requestPath := r.URL.RequestURI()
 
 		for _, pathPrefix := range gzipIgnoredPathPrefixes {
 			if strings.HasPrefix(requestPath, pathPrefix) {
@@ -36,7 +39,7 @@ func Gziper() macaron.Handler {
 			return
 		}
 
-		if _, err := ctx.Invoke(gziper); err != nil {
+		if _, err := c.Invoke(gziper); err != nil {
 			gziperLogger.Error("Invoking gzip handler failed", "err", err)
 		}
 	}

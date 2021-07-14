@@ -18,6 +18,7 @@
 package macaron // import "gopkg.in/macaron.v1"
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -151,6 +152,13 @@ func (m *Macaron) Handlers(handlers ...Handler) {
 // Macaron stops future process when it returns true.
 type BeforeHandler func(rw http.ResponseWriter, req *http.Request) bool
 
+// macaronContextKey is used to store/fetch macaron.Context inside context.Context
+type macaronContextKey struct{}
+
+func FromContext(c context.Context) *Context {
+	return c.Value(macaronContextKey{}).(*Context)
+}
+
 // Use adds a middleware Handler to the stack,
 // and panics if the handler is not a callable func.
 // Middleware Handlers are invoked in the order that they are added.
@@ -165,15 +173,16 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		handlers: m.handlers,
 		index:    0,
 		Router:   m.Router,
-		Req:      Request{req},
 		Resp:     NewResponseWriter(req.Method, rw),
 		Render:   &DummyRender{rw},
 		Data:     make(map[string]interface{}),
 	}
+	req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
 	c.SetParent(m)
 	c.Map(c)
 	c.MapTo(c.Resp, (*http.ResponseWriter)(nil))
 	c.Map(req)
+	c.Req = Request{req}
 	return c
 }
 

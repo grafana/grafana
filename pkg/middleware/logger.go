@@ -27,7 +27,8 @@ import (
 )
 
 func Logger(cfg *setting.Cfg) macaron.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		c := macaron.FromContext(req.Context())
 		start := time.Now()
 		c.Data["perfmon.start"] = start
 
