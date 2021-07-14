@@ -25,4 +25,5 @@ export enum DataTransformerID {
   histogram = 'histogram',
   configFromData = 'configFromData',
   rowsToFields = 'rowsToFields',
+  prepareTimeSeries = 'prepareTimeSeries',
 }
