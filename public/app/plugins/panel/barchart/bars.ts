@@ -287,8 +287,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     return _dir === 1 ? splits : splits.reverse();
   };
 
-  const xValues: Axis.Values = (u) => u.data[0].map((x) => formatValue(0, x));
-
   let hovered: Rect | undefined = undefined;
 
   let barMark = document.createElement('div');
@@ -297,6 +295,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   barMark.style.background = 'rgba(255,255,255,0.4)';
 
   let distrTwo = (groupCount: number, barCount: number) => {
+    console.log('distrTwo', groupCount, barCount);
     let out = Array.from({ length: barCount }, () => ({
       offs: Array(groupCount).fill(0),
       size: Array(groupCount).fill(0),
@@ -312,7 +311,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     return out;
   };
 
-  let barsPctLayout = [];
+  let barsPctLayout: Array<{ offs: number[]; size: number[] }> = [];
+
   let barsBuilder = uPlot.paths.bars!({
     layout: (seriesIdx) => {
       return barsPctLayout[seriesIdx];
@@ -321,6 +321,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       qt.add({ x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx });
     },
   });
+  console.log(barsBuilder);
 
   const drawPoints = (u: uPlot, sidx: number, i0: number, i1: number) => {
     u.ctx.font = Math.round(10 * devicePixelRatio) + 'px Arial';
@@ -424,7 +425,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       y: false,
     },
     // scale & axis opts
-    xValues,
     xSplits,
 
     // pathbuilders
@@ -438,32 +438,4 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     drawClear,
     interpolateTooltip,
   };
-}
-
-type WalkTwoCb = null | ((idx: number, offPx: number, dimPx: number) => void);
-
-function walkTwo(
-  groupWidth: number,
-  barWidth: number,
-  yIdx: number,
-  xCount: number,
-  yCount: number,
-  xDim: number,
-  xDraw?: WalkTwoCb,
-  yDraw?: WalkTwoCb
-) {
-  distribute(xCount, groupWidth, groupDistr, null, (ix, offPct, dimPct) => {
-    let groupOffPx = xDim * offPct;
-    let groupWidPx = xDim * dimPct;
-
-    xDraw && xDraw(ix, groupOffPx, groupWidPx);
-
-    yDraw &&
-      distribute(yCount, barWidth, barDistr, yIdx, (iy, offPct, dimPct) => {
-        let barOffPx = groupWidPx * offPct;
-        let barWidPx = groupWidPx * dimPct;
-
-        yDraw(ix, groupOffPx + barOffPx, barWidPx);
-      });
-  });
 }

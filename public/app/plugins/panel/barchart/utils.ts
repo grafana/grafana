@@ -80,7 +80,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
-  builder.addHook('drawPoints', config.drawPoints);
 
   builder.setTooltipInterpolator(config.interpolateTooltip);
 
@@ -97,11 +96,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     isTime: false,
     placement: vizOrientation.xOri === 0 ? AxisPlacement.Bottom : AxisPlacement.Left,
     splits: config.xSplits,
-    values: config.xValues,
     grid: false,
     ticks: false,
     gap: 15,
     theme,
+    values: () => frame.fields[0].values.toArray(),
   });
 
   let seriesIndex = 0;
