@@ -44,7 +44,7 @@ export const importDashboard = (dashboardToImport: Dashboard) => {
   e2e().wait(3000);
   e2e.components.PanelInspector.Json.content().contains('Panel JSON').click({ force: true });
   e2e().wait(3000);
-  e2e.components.PanelInspector.Json.content().contains('Data').click({ force: true });
+  e2e.components.Select.option().contains('Data').click({ force: true });
   e2e().wait(3000);
 
   // ensures that panel has loaded without knowingly hitting an error
