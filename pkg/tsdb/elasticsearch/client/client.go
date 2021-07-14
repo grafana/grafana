@@ -29,7 +29,7 @@ type DatasourceInfo struct {
 	HTTPClientOpts             sdkhttpclient.Options
 	URL                        string
 	Database                   string
-	ESVersion                  string
+	ESVersion                  *semver.Version
 	TimeField                  string
 	Interval                   string
 	TimeInterval               string
@@ -56,42 +56,8 @@ type Client interface {
 	EnableDebug()
 }
 
-func coerceVersion(v string) (*semver.Version, error) {
-	versionNumber, err := strconv.Atoi(v)
-	if err != nil {
-		return semver.NewVersion(v)
-	}
-
-	// Legacy version numbers (before Grafana 8)
-	// valid values were 2,5,56,60,70
-	switch versionNumber {
-	case 2:
-		return semver.NewVersion("2.0.0")
-	case 5:
-		return semver.NewVersion("5.0.0")
-	case 56:
-		return semver.NewVersion("5.6.0")
-	case 60:
-		return semver.NewVersion("6.0.0")
-	case 70:
-		return semver.NewVersion("7.0.0")
-	default:
-		return nil, fmt.Errorf("elasticsearch version=%d is not supported", versionNumber)
-	}
-}
-
 // NewClient creates a new elasticsearch client
 var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider, ds *DatasourceInfo, timeRange backend.TimeRange) (Client, error) {
-	version, err := coerceVersion(ds.ESVersion)
-
-	if err != nil {
-		return nil, fmt.Errorf("elasticsearch version is required, err=%v", err)
-	}
-
-	if ds.TimeField == "" {
-		return nil, fmt.Errorf("elasticsearch time field name is required, err=%v", err)
-	}
-
 	ip, err := newIndexPattern(ds.Interval, ds.Database)
 	if err != nil {
 		return nil, err
@@ -102,13 +68,13 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 		return nil, err
 	}
 
-	clientLog.Info("Creating new client", "version", version.String(), "timeField", ds.TimeField, "indices", strings.Join(indices, ", "))
+	clientLog.Info("Creating new client", "version", ds.ESVersion, "timeField", ds.TimeField, "indices", strings.Join(indices, ", "))
 
 	return &baseClientImpl{
 		ctx:                ctx,
 		httpClientProvider: httpClientProvider,
 		ds:                 ds,
-		version:            version,
+		version:            ds.ESVersion,
 		timeField:          ds.TimeField,
 		indices:            indices,
 		timeRange:          timeRange,

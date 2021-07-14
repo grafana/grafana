@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -18,36 +19,12 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
-	t.Run("When no version set should return error", func(t *testing.T) {
-		ds := &DatasourceInfo{}
-
-		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
-		require.Error(t, err)
-	})
-
-	t.Run("When no time field name set should return error", func(t *testing.T) {
-		ds := &DatasourceInfo{
-			ESVersion: "5",
-		}
-
-		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
-		require.Error(t, err)
-	})
-
 	t.Run("When using legacy version numbers", func(t *testing.T) {
-		t.Run("When unsupported version set should return error", func(t *testing.T) {
-			ds := &DatasourceInfo{
-				ESVersion: "6",
-				TimeField: "@timestamp",
-			}
-
-			_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
-			require.Error(t, err)
-		})
-
 		t.Run("When version 2 should return v2 client", func(t *testing.T) {
+			version, err := semver.NewVersion("2.0.0")
+			require.NoError(t, err)
 			ds := &DatasourceInfo{
-				ESVersion: "2",
+				ESVersion: version,
 				TimeField: "@timestamp",
 			}
 
@@ -57,8 +34,10 @@ func TestNewClient(t *testing.T) {
 		})
 
 		t.Run("When version 5 should return v5 client", func(t *testing.T) {
+			version, err := semver.NewVersion("5.0.0")
+			require.NoError(t, err)
 			ds := &DatasourceInfo{
-				ESVersion: "5",
+				ESVersion: version,
 				TimeField: "@timestamp",
 			}
 
@@ -68,8 +47,10 @@ func TestNewClient(t *testing.T) {
 		})
 
 		t.Run("When version 56 should return v5.6 client", func(t *testing.T) {
+			version, err := semver.NewVersion("5.6.0")
+			require.NoError(t, err)
 			ds := &DatasourceInfo{
-				ESVersion: "56",
+				ESVersion: version,
 				TimeField: "@timestamp",
 			}
 
@@ -79,8 +60,10 @@ func TestNewClient(t *testing.T) {
 		})
 
 		t.Run("When version 60 should return v6.0 client", func(t *testing.T) {
+			version, err := semver.NewVersion("6.0.0")
+			require.NoError(t, err)
 			ds := &DatasourceInfo{
-				ESVersion: "60",
+				ESVersion: version,
 				TimeField: "@timestamp",
 			}
 
@@ -90,8 +73,10 @@ func TestNewClient(t *testing.T) {
 		})
 
 		t.Run("When version 70 should return v7.0 client", func(t *testing.T) {
+			version, err := semver.NewVersion("7.0.0")
+			require.NoError(t, err)
 			ds := &DatasourceInfo{
-				ESVersion: "70",
+				ESVersion: version,
 				TimeField: "@timestamp",
 			}
 
@@ -102,7 +87,8 @@ func TestNewClient(t *testing.T) {
 	})
 
 	t.Run("When version is a valid semver string should create a client", func(t *testing.T) {
-		version := "7.2.4"
+		version, err := semver.NewVersion("7.2.4")
+		require.NoError(t, err)
 		ds := &DatasourceInfo{
 			ESVersion: version,
 			TimeField: "@timestamp",
@@ -110,25 +96,16 @@ func TestNewClient(t *testing.T) {
 
 		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
 		require.NoError(t, err)
-		assert.Equal(t, version, c.GetVersion().String())
-	})
-
-	t.Run("When version is NOT a valid semver string should return error", func(t *testing.T) {
-		version := "7.NOT_VALID.4"
-		ds := &DatasourceInfo{
-			ESVersion: version,
-			TimeField: "@timestamp",
-		}
-
-		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
-		require.Error(t, err)
+		assert.Equal(t, version.String(), c.GetVersion().String())
 	})
 }
 
 func TestClient_ExecuteMultisearch(t *testing.T) {
+	version, err := semver.NewVersion("2.0.0")
+	require.NoError(t, err)
 	httpClientScenario(t, "Given a fake http client and a v2.x client with response", &DatasourceInfo{
 		Database:  "[metrics-]YYYY.MM.DD",
-		ESVersion: "2",
+		ESVersion: version,
 		TimeField: "@timestamp",
 		Interval:  "Daily",
 	}, func(sc *scenarioContext) {
@@ -174,9 +151,11 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.Len(t, res.Responses, 1)
 	})
 
+	version, err = semver.NewVersion("5.0.0")
+	require.NoError(t, err)
 	httpClientScenario(t, "Given a fake http client and a v5.x client with response", &DatasourceInfo{
 		Database:                   "[metrics-]YYYY.MM.DD",
-		ESVersion:                  "5",
+		ESVersion:                  version,
 		TimeField:                  "@timestamp",
 		Interval:                   "Daily",
 		MaxConcurrentShardRequests: 100,
@@ -224,9 +203,11 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.Len(t, res.Responses, 1)
 	})
 
+	version, err = semver.NewVersion("5.6.0")
+	require.NoError(t, err)
 	httpClientScenario(t, "Given a fake http client and a v5.6 client with response", &DatasourceInfo{
 		Database:                   "[metrics-]YYYY.MM.DD",
-		ESVersion:                  "56",
+		ESVersion:                  version,
 		TimeField:                  "@timestamp",
 		Interval:                   "Daily",
 		MaxConcurrentShardRequests: 100,
@@ -274,9 +255,11 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.Len(t, res.Responses, 1)
 	})
 
+	version, err = semver.NewVersion("7.0.0")
+	require.NoError(t, err)
 	httpClientScenario(t, "Given a fake http client and a v7.0 client with response", &DatasourceInfo{
 		Database:                   "[metrics-]YYYY.MM.DD",
-		ESVersion:                  "70",
+		ESVersion:                  version,
 		TimeField:                  "@timestamp",
 		Interval:                   "Daily",
 		MaxConcurrentShardRequests: 6,
