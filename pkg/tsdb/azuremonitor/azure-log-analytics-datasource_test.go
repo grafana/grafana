@@ -222,7 +222,9 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 		Services: map[string]datasourceService{
 			azureLogAnalytics: {URL: "http://ds"},
 		},
-		Settings: azureMonitorSettings{AzureLogAnalyticsSameAs: false},
+		JSONData: map[string]interface{}{
+			"azureLogAnalyticsSameAs": false,
+		},
 	}
 	ctx := context.TODO()
 	query := &AzureLogAnalyticsQuery{

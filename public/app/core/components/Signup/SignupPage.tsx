@@ -6,6 +6,7 @@ import appEvents from 'app/core/app_events';
 import { AppEvents } from '@grafana/data';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { InnerBox, LoginLayout } from '../Login/LoginLayout';
+import { PasswordField } from '../PasswordField/PasswordField';
 
 interface SignupDTO {
   name?: string;
@@ -90,23 +91,21 @@ export const SignupPage: FC<Props> = (props) => {
                 </Field>
               )}
               <Field label="Password" invalid={!!errors.password} error={errors?.password?.message}>
-                <Input
+                <PasswordField
                   id="new-password"
-                  {...register('password', {
-                    required: 'Password is required',
-                  })}
                   autoFocus
-                  type="password"
+                  autoComplete="new-password"
+                  {...register('password', { required: 'Password is required' })}
                 />
               </Field>
               <Field label="Confirm password" invalid={!!errors.confirm} error={errors?.confirm?.message}>
-                <Input
+                <PasswordField
                   id="confirm-new-password"
+                  autoComplete="new-password"
                   {...register('confirm', {
                     required: 'Confirmed password is required',
                     validate: (v) => v === getValues().password || 'Passwords must match!',
                   })}
-                  type="password"
                 />
               </Field>
 

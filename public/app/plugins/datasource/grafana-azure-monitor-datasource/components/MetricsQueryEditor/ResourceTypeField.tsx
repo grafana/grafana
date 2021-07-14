@@ -18,7 +18,7 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   const [namespaces, setNamespaces] = useState<AzureMonitorOption[]>([]);
 
   useEffect(() => {
-    const { resourceGroup } = query.azureMonitor;
+    const { resourceGroup } = query.azureMonitor ?? {};
 
     if (!(subscriptionId && resourceGroup)) {
       namespaces.length && setNamespaces([]);
@@ -61,7 +61,7 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
       {/* It's expected that the label reads Resource type but the property is metricDefinition */}
       <Select
         inputId="azure-monitor-metrics-resource-type-field"
-        value={findOption(namespaces, query.azureMonitor.metricDefinition)}
+        value={findOption(namespaces, query.azureMonitor?.metricDefinition)}
         onChange={handleChange}
         options={options}
         width={38}
