@@ -23,9 +23,12 @@ export interface FrameGeometrySource {
   geohash?: string;
   latitude?: string;
   longitude?: string;
-
-  // Lookup source
+  h3?: string;
+  wkt?: string;
   lookup?: string;
+
+  // Path to a mappings file
+  lookupSrc: string;
 }
 
 /**

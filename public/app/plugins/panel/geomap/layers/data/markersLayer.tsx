@@ -1,12 +1,11 @@
-import React from 'react';
 import { MapLayerRegistryItem, MapLayerConfig, MapLayerHandler, PanelData, GrafanaTheme2, reduceField, ReducerID, FieldCalcs, FieldType } from '@grafana/data';
-import { dataFrameToPoints } from './utils'
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import * as style from 'ol/style';
 import tinycolor from 'tinycolor2';
+import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -39,17 +38,24 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    */
   create: (map: Map, options: MapLayerConfig<MarkersConfig>, theme: GrafanaTheme2): MapLayerHandler => {
     const config = { ...defaultOptions, ...options.config };
+    const matchers = getLocationMatchers(options.location);
 
     const vectorLayer = new layer.Vector({});
     return {
       init: () => vectorLayer,
       update: (data: PanelData) => {
-        const features: Feature[] = [];
-        const frame = data.series[0];
+        if(!data.series?.length) {
+          return; // ignore empty
+        }
 
-        // Get data values
-        const points = dataFrameToPoints(frame, config.fieldMapping, config.queryFormat);
-        const field = frame.fields.find(field => field.name === config.fieldMapping.metricField);
+        const frame = data.series[0];
+        const info = dataFrameToPoints(frame, matchers);
+        if(info.warning) {
+          console.log( 'WARN', info.warning);
+          return; // ???
+        }
+
+        const field = frame.fields.find(field => field.type === FieldType.number); // TODO!!!!
         // Return early if metric field is not matched
         if (field === undefined) {
           return;
@@ -65,6 +71,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           ]
         });
 
+        const features: Feature[] = [];
+
         // Map each data value into new points
         for (let i = 0; i < frame.length; i++) {
           // Get the circle color for a specific data value depending on color scheme
@@ -77,7 +85,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
           // Create a new Feature for each point returned from dataFrameToPoints
           const dot = new Feature({
-              geometry: points[i],
+              geometry: info.points[i],
           });
 
           // Set the style of each feature dot
@@ -106,15 +114,15 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   // Circle overlay options
   registerOptionsUI: (builder) => {
     builder
-      .addFieldNamePicker({
-        path: 'fieldMapping.metricField',
-        name: 'Metric Field',
-        defaultValue: defaultOptions.fieldMapping.metricField,
-        settings: {
-          filter: (f) => f.type === FieldType.number,
-          noFieldsMessage: 'No numeric fields found',
-        },
-      })
+      // .addFieldNamePicker({
+      //   path: 'fieldMapping.metricField',
+      //   name: 'Metric Field',
+      //   defaultValue: defaultOptions.fieldMapping.metricField,
+      //   settings: {
+      //     filter: (f) => f.type === FieldType.number,
+      //     noFieldsMessage: 'No numeric fields found',
+      //   },
+      // })
       .addNumberInput({
         path: 'minSize',
         description: 'configures the min circle size',
