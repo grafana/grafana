@@ -1,23 +1,25 @@
-import { toDataFrame, ArrayVector, DataFrame, FieldType, toDataFrameDTO } from '@grafana/data';
-import { prepareTimeSeries, timeSeriesFormat } from './prepareTimeSeries';
+import { toDataFrame, ArrayVector, DataFrame, FieldType, toDataFrameDTO, DataFrameDTO } from '@grafana/data';
+import { prepareTimeSeries, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
-describe('Stretch frames transformer', () => {
-  it('should stretch wide to many', () => {
+describe('Prepair time series transformer', () => {
+  it('should transform wide to many', () => {
     const source = [
       toDataFrame({
         name: 'wide',
         refId: 'A',
         fields: [
           { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
-          { name: 'text', type: FieldType.string, values: ['a', 'z', 'b', 'x', 'c', 'b'] },
           { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
           { name: 'more', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
       }),
     ];
 
-    // Note that the 'text' field was removed
-    expect(prepareTimeSeries(source, { format: timeSeriesFormat.TimeSeriesMany })).toEqual([
+    const config: PrepareTimeSeriesOptions = {
+      format: timeSeriesFormat.TimeSeriesMany,
+    };
+
+    expect(prepareTimeSeries(source, config)).toEqual([
       toEquableDataFrame({
         name: 'wide',
         refId: 'A',
@@ -39,7 +41,47 @@ describe('Stretch frames transformer', () => {
     ]);
   });
 
-  it('should stretch all wide to many when mixed', () => {
+  it('should remove string fields since time series format is expected to be time/number fields', () => {
+    const source = [
+      toDataFrame({
+        name: 'wide',
+        refId: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
+          { name: 'text', type: FieldType.string, values: ['a', 'z', 'b', 'x', 'c', 'b'] },
+          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
+          { name: 'more', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
+        ],
+      }),
+    ];
+
+    const config: PrepareTimeSeriesOptions = {
+      format: timeSeriesFormat.TimeSeriesMany,
+    };
+
+    expect(prepareTimeSeries(source, config)).toEqual([
+      toEquableDataFrame({
+        name: 'wide',
+        refId: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
+          { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
+        ],
+        length: 6,
+      }),
+      toEquableDataFrame({
+        name: 'wide',
+        refId: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
+          { name: 'more', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
+        ],
+        length: 6,
+      }),
+    ]);
+  });
+
+  it('should transform all wide to many when mixed', () => {
     const source = [
       toDataFrame({
         name: 'wide',
@@ -61,7 +103,11 @@ describe('Stretch frames transformer', () => {
       }),
     ];
 
-    expect(prepareTimeSeries(source, { format: timeSeriesFormat.TimeSeriesMany })).toEqual([
+    const config: PrepareTimeSeriesOptions = {
+      format: timeSeriesFormat.TimeSeriesMany,
+    };
+
+    expect(prepareTimeSeries(source, config)).toEqual([
       toEquableDataFrame({
         name: 'wide',
         refId: 'A',
@@ -92,7 +138,7 @@ describe('Stretch frames transformer', () => {
     ]);
   });
 
-  it('should stretch none when source only has long frames', () => {
+  it('should transform none when source only has long frames', () => {
     const source = [
       toDataFrame({
         name: 'long',
@@ -112,8 +158,11 @@ describe('Stretch frames transformer', () => {
       }),
     ];
 
-    const rsp = prepareTimeSeries(source, { format: timeSeriesFormat.TimeSeriesMany });
-    expect(rsp.map((f) => toDataFrameDTO(f))).toEqual(source.map((f) => toDataFrameDTO(f)));
+    const config: PrepareTimeSeriesOptions = {
+      format: timeSeriesFormat.TimeSeriesMany,
+    };
+
+    expect(toEquableDataFrames(prepareTimeSeries(source, config))).toEqual(toEquableDataFrames(source));
   });
 
   it('should return empty array when no timeseries exist', () => {
@@ -138,7 +187,11 @@ describe('Stretch frames transformer', () => {
       }),
     ];
 
-    expect(prepareTimeSeries(source, { format: timeSeriesFormat.TimeSeriesMany })).toEqual([]);
+    const config: PrepareTimeSeriesOptions = {
+      format: timeSeriesFormat.TimeSeriesMany,
+    };
+
+    expect(prepareTimeSeries(source, config)).toEqual([]);
   });
 });
 
@@ -154,4 +207,8 @@ function toEquableDataFrame(source: any): DataFrame {
       };
     }),
   });
+}
+
+function toEquableDataFrames(data: DataFrame[]): DataFrameDTO[] {
+  return data.map((frame) => toDataFrameDTO(frame));
 }
