@@ -1,8 +1,12 @@
 package state_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 
 	"github.com/stretchr/testify/require"
 
@@ -837,5 +841,67 @@ func TestProcessEvalResults(t *testing.T) {
 				assert.Equal(t, s, cachedState)
 			}
 		})
+	}
+}
+
+func TestStaleResultsHandler(t *testing.T) {
+	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
+	if err != nil {
+		t.Fatalf("error parsing date format: %s", err.Error())
+	}
+	dbstore := tests.SetupTestEnv(t, 1)
+
+	rule := tests.CreateTestAlertRule(t, dbstore, 600)
+
+	saveCmd1 := &models.SaveAlertInstanceCommand{
+		RuleOrgID:         rule.OrgID,
+		RuleUID:           rule.UID,
+		Labels:            models.InstanceLabels{"test1": "testValue1"},
+		State:             models.InstanceStateNormal,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+	}
+
+	_ = dbstore.SaveAlertInstance(saveCmd1)
+
+	saveCmd2 := &models.SaveAlertInstanceCommand{
+		RuleOrgID:         rule.OrgID,
+		RuleUID:           rule.UID,
+		Labels:            models.InstanceLabels{"test2": "testValue2"},
+		State:             models.InstanceStateFiring,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+	}
+	_ = dbstore.SaveAlertInstance(saveCmd2)
+
+	t.Cleanup(registry.ClearOverrides)
+
+	testCases := []struct {
+		desc        string
+		evalResults []eval.Results
+	}{
+		{
+			desc: "stale cache entries are removed",
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"test1": "testValue1"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime.Add(3 * time.Minute),
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		st := state.NewManager(log.New("test_stale_results_handler"), nilMetrics, dbstore, dbstore)
+		st.Warm()
+		for _, res := range tc.evalResults {
+			st.ProcessEvalResults(rule, res)
+		}
+		fmt.Println("**")
 	}
 }
