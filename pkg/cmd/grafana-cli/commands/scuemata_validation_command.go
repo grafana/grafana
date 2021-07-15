@@ -28,6 +28,7 @@ func (cmd Command) validateScuemataBasics(c utils.CommandLine) error {
 
 func (cmd Command) validateResources(c utils.CommandLine) error {
 	filename := c.String("dashboard")
+	baseonly := c.Bool("base-only")
 	if filename == "" {
 		return gerrors.New("must specify dashboard to validate with --dashboard")
 	}
@@ -37,26 +38,17 @@ func (cmd Command) validateResources(c utils.CommandLine) error {
 		return err
 	}
 
-	if err := validateResources(res, paths, load.BaseDashboardFamily); err != nil {
-		return err
+	var sch schema.VersionedCueSchema
+	if baseonly {
+		sch, err = load.BaseDashboardFamily(paths)
+	} else {
+		sch, err = load.DistDashboardFamily(paths)
 	}
-
-	if err := validateResources(res, paths, load.DistDashboardFamily); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// TODO remove this, it's costly to load the scuemata repeatedly and outside of that,
-// this is just an error-wrapped call to validate
-func validateResources(res schema.Resource, p load.BaseLoadPaths, loader func(p load.BaseLoadPaths) (schema.VersionedCueSchema, error)) error {
-	dash, err := loader(p)
 	if err != nil {
 		return fmt.Errorf("error while loading dashboard scuemata, err: %w", err)
 	}
 
-	err = dash.Validate(res)
+	err = sch.Validate(res)
 	if err != nil {
 		return gerrors.New(errors.Details(err, nil))
 	}
