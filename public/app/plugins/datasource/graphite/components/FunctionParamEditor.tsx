@@ -8,7 +8,7 @@ export type EditableParam = {
   value: string;
   optional: boolean;
   multiple: boolean;
-  options: string[];
+  options: Array<SelectableValue<string>>;
 };
 
 type FieldEditorProps = {
@@ -17,15 +17,6 @@ type FieldEditorProps = {
   onExpandedChange: (expanded: boolean) => void;
   autofocus: boolean;
 };
-
-function mapOptions(options: string[]): Array<SelectableValue<string>> {
-  return (options || []).map((option: string) => {
-    return {
-      value: option,
-      label: option,
-    };
-  });
-}
 
 export function FunctionParamEditor({ editableParam, onChange, onExpandedChange, autofocus }: FieldEditorProps) {
   const styles = useStyles2(getStyles);
@@ -36,7 +27,7 @@ export function FunctionParamEditor({ editableParam, onChange, onExpandedChange,
         autofocus={autofocus}
         value={editableParam.value}
         className={styles.segment}
-        options={mapOptions(editableParam.options)}
+        options={editableParam.options}
         placeholder={' +' + editableParam.name}
         onChange={(value) => {
           onChange(value.value || '');

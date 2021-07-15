@@ -990,6 +990,10 @@ export class FuncInstance {
   def: FuncDef;
   params: Array<string | number>;
   text: any;
+  /**
+   * True if this function was just added and not edited yet. It's used to focus on first
+   * function param to edit it straight away after adding a function.
+   */
   added: boolean;
   /**
    * Hidden functions are not displayed in UI but available in text editor

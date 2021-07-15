@@ -20,8 +20,9 @@ export function GraphiteFunctionEditor({ func, dispatch }: FunctionEditorProps) 
   const [mouseOver, setIsMouseOver] = useState(false);
   const [expanded, setIsExpanded] = useState(false);
 
-  const params = mapFuncInstanceToParams(func).filter((p: EditableParam, index: number) => {
-    return (index < func.def.params.length && !p.optional) || p.value || expanded || mouseOver;
+  let params = mapFuncInstanceToParams(func);
+  params = params.filter((p: EditableParam, index: number) => {
+    return (index < func.def.params.length && !p.optional) || func.added || p.value || expanded || mouseOver;
   });
 
   return (
