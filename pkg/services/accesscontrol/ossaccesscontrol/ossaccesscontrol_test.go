@@ -343,3 +343,45 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 		})
 	}
 }
+
+func TestOSSAccessControlService_AddFixedRoleRegistrations(t *testing.T) {
+	tests := []struct {
+		name          string
+		registrations []accesscontrol.RoleRegistration
+	}{
+		{
+			name:          "should work with nil",
+			registrations: nil,
+		},
+		{
+			name: "should register a role",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role: accesscontrol.RoleDTO{
+						Version: 1,
+						Name:    "fixed:test:test",
+					},
+					Grants: []string{"Viewer"},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ac := &OSSAccessControlService{
+				Cfg:           setting.NewCfg(),
+				UsageStats:    &usageStatsMock{t: t, metricsFuncs: make([]usagestats.MetricsFunc, 0)},
+				Log:           log.New("accesscontrol-test"),
+				registrations: accesscontrol.RegistrationList{},
+			}
+			ac.AddFixedRoleRegistrations(tt.registrations)
+
+			registrationCnt := 0
+			ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+				registrationCnt++
+				return true
+			})
+			assert.Equal(t, len(tt.registrations), registrationCnt)
+		})
+	}
+}
