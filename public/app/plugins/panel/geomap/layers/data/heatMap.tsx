@@ -35,6 +35,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
   name: 'Heatmap',
   description: 'visualizes a heatmap of the data',
   isBaseMap: false,
+  showLocation: true,
 
   /**
    * Function that configures transformation and returns a transformer
