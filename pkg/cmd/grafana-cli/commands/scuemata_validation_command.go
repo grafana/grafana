@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"cuelang.org/go/cue/errors"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/schema"
 	"github.com/grafana/grafana/pkg/schema/load"
@@ -47,13 +48,19 @@ func (cmd Command) validateResources(c utils.CommandLine) error {
 	return nil
 }
 
+// TODO remove this, it's costly to load the scuemata repeatedly and outside of that,
+// this is just an error-wrapped call to validate
 func validateResources(res schema.Resource, p load.BaseLoadPaths, loader func(p load.BaseLoadPaths) (schema.VersionedCueSchema, error)) error {
 	dash, err := loader(p)
 	if err != nil {
 		return fmt.Errorf("error while loading dashboard scuemata, err: %w", err)
 	}
 
-	return dash.Validate(res)
+	err = dash.Validate(res)
+	if err != nil {
+		return gerrors.New(errors.Details(err, nil))
+	}
+	return nil
 }
 
 func validateScuemata(p load.BaseLoadPaths, loader func(p load.BaseLoadPaths) (schema.VersionedCueSchema, error)) error {

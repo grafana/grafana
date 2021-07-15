@@ -131,7 +131,8 @@ func TestValidateDevenvDashboards(t *testing.T) {
 		BaseCueFS:       defaultBaseLoadPaths.BaseCueFS,
 		DistPluginCueFS: defaultBaseLoadPaths.DistPluginCueFS,
 	}
-	vcs, err := load.BaseDashboardFamily(baseLoadPaths)
+	base, err := load.BaseDashboardFamily(baseLoadPaths)
+	dist, err := load.DistDashboardFamily(baseLoadPaths)
 	require.NoError(t, err, "failed to load base dashboard family")
 
 	require.NoError(t, filepath.Walk("../../../../devenv/dev-dashboards/", func(path string, info os.FileInfo, err error) error {
@@ -144,13 +145,14 @@ func TestValidateDevenvDashboards(t *testing.T) {
 		// nolint:gosec
 		b, err := os.Open(path)
 		require.NoError(t, err, "failed to open resource file")
+
 		// Only try to validate dashboards with schemaVersion >= 30
 		jtree := make(map[string]interface{})
-		byt, err := io.ReadAll(b)
-		if err != nil {
-			t.Error(err)
+		if byt, err := io.ReadAll(b); err != nil {
+			t.Fatal(err)
+		} else {
+			json.Unmarshal(byt, &jtree)
 		}
-		json.Unmarshal(byt, &jtree)
 
 		if oldschemav, has := jtree["schemaVersion"]; !has {
 			t.Logf("no schemaVersion in %s", path)
@@ -158,21 +160,19 @@ func TestValidateDevenvDashboards(t *testing.T) {
 		} else {
 			if !(oldschemav.(float64) > 29) {
 				t.Logf("schemaVersion is %v, older than 30, skipping %s", oldschemav, path)
+				return nil
 			}
 		}
 
 		res := schema.Resource{Value: b, Name: path}
-		err = vcs.Validate(res)
+		err = base.Validate(res)
 		if err != nil {
-			t.Fatalf("failed validation: %s", errors.Details(err, nil))
+			t.Fatal(errors.Details(err, nil))
 		}
-
-		// err = validateResources(res, baseLoadPaths, load.BaseDashboardFamily)
-		// cueError := schema.WrapCUEError(err)
-		// require.NoError(t, cueError, "error while loading base dashboard scuemata")
-
-		// err = validateResources(res, baseLoadPaths, load.DistDashboardFamily)
-		// require.NoError(t, err, "error while loading dist dashboard scuemata")
+		err = dist.Validate(res)
+		if err != nil {
+			t.Fatal(errors.Details(err, nil))
+		}
 		return nil
 	}))
 }
