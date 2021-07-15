@@ -165,7 +165,7 @@ func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query plugins
 			// With exact stepMode - use passed interval value
 			adjustedIntervalValue = intervalValue
 		} else {
-			// With default stepMode - use interval calculator to get ideal interval based on time range and calculated value
+			// With default stepMode - use interval calculator to get ideal interval based on time range and passed value
 			adjustedIntervalValue = e.intervalCalculator.Calculate(*query.TimeRange, intervalValue).Value
 		}
 
