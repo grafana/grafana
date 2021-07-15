@@ -466,7 +466,7 @@ func TestMiddlewareContext(t *testing.T) {
 			cfg.AuthProxyAutoSignUp = true
 		})
 
-		middlewareScenario(t, "Should assign role from header to specified org", func(t *testing.T, sc *scenarioContext) {
+		middlewareScenario(t, "Should NOT assign role from header to non-default org", func(t *testing.T, sc *scenarioContext) {
 			var storedRoleInfo map[int64]models.RoleType = nil
 			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				if query.UserId > 0 {
@@ -491,7 +491,9 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.True(t, sc.context.IsSignedIn)
 			assert.Equal(t, userID, sc.context.UserId)
 			assert.Equal(t, orgID, sc.context.OrgId)
-			assert.Equal(t, orgRole, string(sc.context.OrgRole))
+
+			// For non-default org, the user role should be empty
+			assert.Equal(t, "", string(sc.context.OrgRole))
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 			cfg.LDAPEnabled = false

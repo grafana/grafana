@@ -282,18 +282,14 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		case "Groups":
 			extUser.Groups = util.SplitString(header)
 		case "Role":
-			// If Role header is specified, we update the role of the specified org, or the default org
+			// If Role header is specified, we update the user role of the default org
 			if header != "" {
 				rt := models.RoleType(header)
 				if rt.IsValid() {
 					extUser.OrgRoles = map[int64]models.RoleType{}
-					orgID := auth.orgID
-					if orgID == 0 {
-						if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
-							orgID = int64(setting.AutoAssignOrgId)
-						} else {
-							orgID = int64(1)
-						}
+					orgID := int64(1)
+					if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
+						orgID = int64(setting.AutoAssignOrgId)
 					}
 					extUser.OrgRoles[orgID] = rt
 				}
