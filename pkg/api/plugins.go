@@ -3,13 +3,12 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -262,7 +261,7 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 	pluginID := c.Params("pluginId")
 	plugin := hs.PluginManager.GetPlugin(pluginID)
 	if plugin == nil {
-		c.Handle(hs.Cfg, 404, "Plugin not found", nil)
+		c.JsonApiErr(404, "Plugin not found", nil)
 		return
 	}
 
@@ -275,10 +274,10 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 	f, err := os.Open(pluginFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			c.Handle(hs.Cfg, 404, "Could not find plugin file", err)
+			c.JsonApiErr(404, "Plugin file not found", err)
 			return
 		}
-		c.Handle(hs.Cfg, 500, "Could not open plugin file", err)
+		c.JsonApiErr(500, "Could not open plugin file", err)
 		return
 	}
 	defer func() {
@@ -289,26 +288,21 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 
 	fi, err := f.Stat()
 	if err != nil {
-		c.Handle(hs.Cfg, 500, "Plugin file exists but could not open", err)
+		c.JsonApiErr(500, "Plugin file exists but could not open", err)
 		return
 	}
 
 	if shouldExclude(fi) {
-		c.Handle(hs.Cfg, 404, "Plugin file not found", nil)
+		c.JsonApiErr(403, "Plugin file access forbidden",
+			fmt.Errorf("access is forbidden to executable plugin file %s", pluginFilePath))
 		return
 	}
 
-	headers := func(c *macaron.Context) {
+	if hs.Cfg.Env == setting.Dev {
+		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+	} else {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
-
-	if hs.Cfg.Env == setting.Dev {
-		headers = func(c *macaron.Context) {
-			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
-		}
-	}
-
-	headers(c.Context)
 
 	http.ServeContent(c.Resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
 }
@@ -393,8 +387,9 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPlugin
 		if errors.As(err, &versionNotFoundErr) {
 			return response.Error(http.StatusNotFound, "Plugin version not found", err)
 		}
-		if errors.Is(err, installer.ErrPluginNotFound) {
-			return response.Error(http.StatusNotFound, "Plugin not found", err)
+		var clientError installer.Response4xxError
+		if errors.As(err, &clientError) {
+			return response.Error(clientError.StatusCode, clientError.Message, err)
 		}
 		if errors.Is(err, plugins.ErrInstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)

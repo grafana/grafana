@@ -27,7 +27,7 @@ export function isGUIDish(input: string) {
 
 export function findRow(rows: ResourceRowGroup, id: string): ResourceRow | undefined {
   for (const row of rows) {
-    if (row.id === id) {
+    if (row.id.toLowerCase() === id.toLowerCase()) {
       return row;
     }
 

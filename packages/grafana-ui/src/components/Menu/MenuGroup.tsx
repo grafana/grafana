@@ -5,13 +5,13 @@ import { useStyles2 } from '../../themes';
 import { MenuItemProps } from './MenuItem';
 
 /** @internal */
-export interface MenuItemsGroup {
+export interface MenuItemsGroup<T = any> {
   /** Label for the menu items group */
   label?: string;
   /** Aria label for accessibility support */
   ariaLabel?: string;
   /** Items of the group */
-  items: MenuItemProps[];
+  items: Array<MenuItemProps<T>>;
 }
 /** @internal */
 export interface MenuGroupProps extends Partial<MenuItemsGroup> {

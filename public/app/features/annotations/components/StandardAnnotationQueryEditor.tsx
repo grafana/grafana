@@ -175,10 +175,12 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
           data={response?.panelData}
           range={getTimeSrv().timeRange()}
         />
-        {this.renderStatus()}
-
-        <AnnotationFieldMapper response={response} mappings={annotation.mappings} change={this.onMappingChange} />
-        <br />
+        {datasource.type !== 'datasource' && (
+          <>
+            {this.renderStatus()}
+            <AnnotationFieldMapper response={response} mappings={annotation.mappings} change={this.onMappingChange} />
+          </>
+        )}
       </>
     );
   }

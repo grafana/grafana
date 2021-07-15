@@ -31,14 +31,15 @@ var (
 )
 
 type DataSourceProxy struct {
-	ds             *models.DataSource
-	ctx            *models.ReqContext
-	targetUrl      *url.URL
-	proxyPath      string
-	route          *plugins.AppPluginRoute
-	plugin         *plugins.DataSourcePlugin
-	cfg            *setting.Cfg
-	clientProvider httpclient.Provider
+	ds                *models.DataSource
+	ctx               *models.ReqContext
+	targetUrl         *url.URL
+	proxyPath         string
+	route             *plugins.AppPluginRoute
+	plugin            *plugins.DataSourcePlugin
+	cfg               *setting.Cfg
+	clientProvider    httpclient.Provider
+	oAuthTokenService oauthtoken.OAuthTokenService
 }
 
 type handleResponseTransport struct {
@@ -71,20 +72,21 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 
 // NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
-	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider) (*DataSourceProxy, error) {
+	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider, oAuthTokenService oauthtoken.OAuthTokenService) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
 	if err != nil {
 		return nil, err
 	}
 
 	return &DataSourceProxy{
-		ds:             ds,
-		plugin:         plugin,
-		ctx:            ctx,
-		proxyPath:      proxyPath,
-		targetUrl:      targetURL,
-		cfg:            cfg,
-		clientProvider: clientProvider,
+		ds:                ds,
+		plugin:            plugin,
+		ctx:               ctx,
+		proxyPath:         proxyPath,
+		targetUrl:         targetURL,
+		cfg:               cfg,
+		clientProvider:    clientProvider,
+		oAuthTokenService: oAuthTokenService,
 	}, nil
 }
 
@@ -237,8 +239,8 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds, proxy.cfg)
 	}
 
-	if oauthtoken.IsOAuthPassThruEnabled(proxy.ds) {
-		if token := oauthtoken.GetCurrentOAuthToken(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser); token != nil {
+	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
+		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 		}
 	}
