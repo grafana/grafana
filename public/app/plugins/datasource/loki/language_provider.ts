@@ -32,6 +32,7 @@ const NS_IN_MS = 1000000;
 // @see public/app/plugins/datasource/prometheus/promql.ts
 const RATE_RANGES: CompletionItem[] = [
   { label: '$__interval', sortValue: '$__interval' },
+  { label: '$__range', sortValue: '$__range' },
   { label: '1m', sortValue: '00:01:00' },
   { label: '5m', sortValue: '00:05:00' },
   { label: '10m', sortValue: '00:10:00' },
@@ -442,7 +443,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabels = async (match: string): Promise<Record<string, string[]>> => {
     const url = '/loki/api/v1/series';
-    const { from: start, to: end } = this.datasource.getTimeRangeParams();
+    const { start, end } = this.datasource.getTimeRangeParams();
 
     const cacheKey = this.generateCacheKey(url, start, end, match);
     let value = this.seriesCache.get(cacheKey);
@@ -464,7 +465,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
     const url = '/loki/api/v1/series';
-    const { from: start, to: end } = this.datasource.getTimeRangeParams();
+    const { start, end } = this.datasource.getTimeRangeParams();
     const params = { match, start, end };
     return await this.request(url, params);
   };
@@ -489,7 +490,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   async fetchLabelValues(key: string): Promise<string[]> {
     const url = `/loki/api/v1/label/${key}/values`;
     const rangeParams = this.datasource.getTimeRangeParams();
-    const { from: start, to: end } = rangeParams;
+    const { start, end } = rangeParams;
 
     const cacheKey = this.generateCacheKey(url, start, end, key);
     const params = { start, end };

@@ -61,9 +61,7 @@ describe('Render', () => {
 
     render(<DataSourceSettingsPage {...mockProps} />);
 
-    expect(
-      screen.getByTitle('Beta Plugin: There could be bugs and minor breaking changes to this plugin')
-    ).toBeInTheDocument();
+    expect(screen.getByTitle('This feature is close to complete but not fully tested')).toBeInTheDocument();
   });
 
   it('should render alpha info text if plugin state is alpha', () => {
@@ -73,7 +71,7 @@ describe('Render', () => {
     render(<DataSourceSettingsPage {...mockProps} />);
 
     expect(
-      screen.getByTitle('Alpha Plugin: This plugin is a work in progress and updates may include breaking changes')
+      screen.getByTitle('This feature is experimental and future updates might not be backward compatible')
     ).toBeInTheDocument();
   });
 

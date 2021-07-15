@@ -202,15 +202,14 @@ Or redirect port 80 to the Grafana port using:
 $ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
 ```
 
-Another way is put a webserver like Nginx or Apache in front of Grafana and have them proxy requests to Grafana.
+Another way is to put a web server like Nginx or Apache in front of Grafana and have them proxy requests to Grafana.
 
 ### domain
 
-This setting is only used in as a part of the `root_url` setting (see below). Important if you use GitHub or Google OAuth.
 
 ### enforce_domain
 
-Redirect to correct domain if host header does not match domain. Prevents DNS rebinding attacks. Default is `false`.
+Redirect to correct domain if the host header does not match the domain. Prevents DNS rebinding attacks. Default is `false`.
 
 ### root_url
 
@@ -424,6 +423,7 @@ For more details check the [Transport.MaxConnsPerHost](https://golang.org/pkg/ne
 The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
 
 ### max_idle_connections_per_host
+[Deprecated - use max_idle_connections instead]
 
 The maximum number of idle connections per host that Grafana will maintain. Default is `2`. For more details check the [Transport.MaxIdleConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxIdleConnsPerHost) documentation.
 
@@ -586,7 +586,9 @@ As of Grafana v7.3, this also limits the refresh interval options in Explore.
 
 ### default_home_dashboard_path
 
-Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"
+Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json".
+
+>**Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 
 <hr />
 
@@ -1505,6 +1507,23 @@ The `max_connections` option specifies the maximum number of connections to the 
 Refer to [Grafana Live configuration documentation]({{< relref "../live/configure-grafana-live.md" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
 
 0 disables Grafana Live, -1 means unlimited connections.
+
+### allowed_origins
+
+> **Note**: Available in Grafana v8.0.4 and later versions.
+
+The `allowed_origins` option is a comma-separated list of additional origins (`Origin` header of HTTP Upgrade request during WebSocket connection establishment) that will be accepted by Grafana Live.
+
+If not set (default), then the origin is matched over [root_url]({{< relref "#root_url" >}}) which should be sufficient for most scenarios.
+
+Origin patterns support wildcard symbol "*".
+
+For example:
+
+```ini
+[live]
+allowed_origins = "https://*.example.com"
+```
 
 <hr>
 

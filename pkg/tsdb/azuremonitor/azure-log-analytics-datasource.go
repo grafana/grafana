@@ -135,7 +135,13 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return dataResponse
 	}
 
+	// If azureLogAnalyticsSameAs is defined and set to false, return an error
+	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok && !sameAs.(bool) {
+		return dataResponseErrorWithExecuted(fmt.Errorf("Log Analytics credentials are no longer supported. Go to the data source configuration to update Azure Monitor credentials")) //nolint:golint,stylecheck
+	}
+
 	req, err := e.createRequest(ctx, dsInfo)
+
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
@@ -206,6 +212,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 			}
 		}
 	}
+
 	dataResponse.Frames = data.Frames{frame}
 	return dataResponse
 }

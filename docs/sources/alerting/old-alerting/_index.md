@@ -15,7 +15,7 @@ Notification channel - How the alert is delivered. When the conditions of an ale
 
 Currently only the graph panel visualization supports alerts.
 
-Legacy aerts have two main components:
+Legacy alerts have two main components:
 
 - Alert rule - When the alert is triggered. Alert rules are defined by one or more conditions that are regularly evaluated by Grafana.
 - Notification channel -  How the alert is delivered. When the conditions of an alert rule are met, the Grafana notifies the channels configured for that alert.

@@ -61,9 +61,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size: IconSize, variant: 
   let iconColor = theme.colors.text.primary;
 
   if (variant === 'primary') {
-    iconColor = theme.colors.primary.main;
+    iconColor = theme.colors.primary.text;
   } else if (variant === 'destructive') {
-    iconColor = theme.colors.error.main;
+    iconColor = theme.colors.error.text;
   }
 
   return {

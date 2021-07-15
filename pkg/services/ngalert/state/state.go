@@ -30,7 +30,7 @@ type Evaluation struct {
 	EvaluationString string
 }
 
-func (a *State) resultNormal(result eval.Result) {
+func (a *State) resultNormal(alertRule *ngModels.AlertRule, result eval.Result) {
 	if a.State != eval.Normal {
 		a.EndsAt = result.EvaluatedAt
 		a.StartsAt = result.EvaluatedAt

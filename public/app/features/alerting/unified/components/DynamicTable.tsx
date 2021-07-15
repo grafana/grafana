@@ -28,10 +28,18 @@ export interface DynamicTableProps<T = unknown> {
   onExpand?: (item: DynamicTableItemProps<T>) => void;
   isExpanded?: (item: DynamicTableItemProps<T>) => boolean;
 
-  renderExpandedContent?: (item: DynamicTableItemProps<T>, index: number) => ReactNode;
+  renderExpandedContent?: (
+    item: DynamicTableItemProps<T>,
+    index: number,
+    items: Array<DynamicTableItemProps<T>>
+  ) => ReactNode;
   testIdGenerator?: (item: DynamicTableItemProps<T>, index: number) => string;
   renderPrefixHeader?: () => ReactNode;
-  renderPrefixCell?: (item: DynamicTableItemProps<T>, index: number) => ReactNode;
+  renderPrefixCell?: (
+    item: DynamicTableItemProps<T>,
+    index: number,
+    items: Array<DynamicTableItemProps<T>>
+  ) => ReactNode;
 }
 
 export const DynamicTable = <T extends object>({
@@ -84,7 +92,7 @@ export const DynamicTable = <T extends object>({
         const isItemExpanded = isExpanded ? isExpanded(item) : expandedIds.includes(item.id);
         return (
           <div className={styles.row} key={item.id} data-testid={testIdGenerator?.(item, index) ?? 'row'}>
-            {renderPrefixCell && renderPrefixCell(item, index)}
+            {renderPrefixCell && renderPrefixCell(item, index, items)}
             {isExpandable && (
               <div className={cx(styles.cell, styles.expandCell)}>
                 <IconButton
@@ -104,7 +112,7 @@ export const DynamicTable = <T extends object>({
             ))}
             {isItemExpanded && renderExpandedContent && (
               <div className={styles.expandedContentRow} data-testid="expanded-content">
-                {renderExpandedContent(item, index)}
+                {renderExpandedContent(item, index, items)}
               </div>
             )}
           </div>
@@ -223,6 +231,7 @@ const getStyles = <T extends unknown>(
     `,
     expandButton: css`
       margin-right: 0;
+      display: block;
     `,
   });
 };

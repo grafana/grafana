@@ -17,6 +17,7 @@ type Repository interface {
 	Update(item *Item) error
 	Find(query *ItemQuery) ([]*ItemDTO, error)
 	Delete(params *DeleteParams) error
+	FindTags(query *TagsQuery) (FindTagsResult, error)
 }
 
 // AnnotationCleaner is responsible for cleaning up old annotations
@@ -38,6 +39,37 @@ type ItemQuery struct {
 	MatchAny     bool     `json:"matchAny"`
 
 	Limit int64 `json:"limit"`
+}
+
+// TagsQuery is the query for a tags search.
+type TagsQuery struct {
+	OrgID int64  `json:"orgId"`
+	Tag   string `json:"tag"`
+
+	Limit int64 `json:"limit"`
+}
+
+// Tag is the DB result of a tags search.
+type Tag struct {
+	Key   string
+	Value string
+	Count int64
+}
+
+// TagsDTO is the frontend DTO for Tag.
+type TagsDTO struct {
+	Tag   string `json:"tag"`
+	Count int64  `json:"count"`
+}
+
+// FindTagsResult is the result of a tags search.
+type FindTagsResult struct {
+	Tags []*TagsDTO `json:"tags"`
+}
+
+// GetAnnotationTagsResponse is a response struct for FindTagsResult.
+type GetAnnotationTagsResponse struct {
+	Result FindTagsResult `json:"result"`
 }
 
 type DeleteParams struct {

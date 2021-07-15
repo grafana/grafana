@@ -3,6 +3,7 @@ package tempo
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/collector/consumer/pdata"
@@ -101,18 +102,12 @@ func resourceSpansToRows(rs pdata.ResourceSpans) ([][]interface{}, error) {
 }
 
 func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, resource pdata.Resource) ([]interface{}, error) {
-	traceID, err := traceIDToString(span.TraceID())
-	if err != nil {
-		return nil, err
-	}
+	traceID := span.TraceID().HexString()
+	traceID = strings.TrimLeft(traceID, "0")
 
-	spanID, err := spanIDToString(span.SpanID())
-	if err != nil {
-		return nil, err
-	}
+	spanID := span.SpanID().HexString()
 
-	// Should get error only if empty in which case we are ok with empty string
-	parentSpanID, _ := spanIDToString(span.ParentSpanID())
+	parentSpanID := span.ParentSpanID().HexString()
 	startTime := float64(span.StartTimestamp()) / 1_000_000
 	serviceName, serviceTags := resourceToProcess(resource)
 
@@ -151,23 +146,6 @@ func toJSONString(json []byte) string {
 		return ""
 	}
 	return s
-}
-
-// TraceID can be the size of 2 uint64 in OT but we just need a string
-func traceIDToString(traceID pdata.TraceID) (string, error) {
-	traceIDHigh, traceIDLow := tracetranslator.TraceIDToUInt64Pair(traceID)
-	if traceIDLow == 0 && traceIDHigh == 0 {
-		return "", fmt.Errorf("OC span has an all zeros trace ID")
-	}
-	return fmt.Sprintf("%d%d", traceIDHigh, traceIDLow), nil
-}
-
-func spanIDToString(spanID pdata.SpanID) (string, error) {
-	uSpanID := tracetranslator.SpanIDToUInt64(spanID)
-	if uSpanID == 0 {
-		return "", fmt.Errorf("OC span has an all zeros span ID")
-	}
-	return fmt.Sprintf("%d", uSpanID), nil
 }
 
 func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {

@@ -112,16 +112,23 @@ export interface CloudRuleIdentifier {
   ruleSourceName: string;
   namespace: string;
   groupName: string;
-  ruleHash: number;
-}
-
-export interface RuleFilterState {
-  queryString?: string;
-  dataSource?: string;
-  alertState?: string;
+  rulerRuleHash: number;
 }
 export interface GrafanaRuleIdentifier {
   uid: string;
 }
 
-export type RuleIdentifier = CloudRuleIdentifier | GrafanaRuleIdentifier;
+// Rule read directly from Prometheus without existing in the ruler API
+export interface PrometheusRuleIdentifier {
+  ruleSourceName: string;
+  namespace: string;
+  groupName: string;
+  ruleHash: number;
+}
+
+export type RuleIdentifier = CloudRuleIdentifier | GrafanaRuleIdentifier | PrometheusRuleIdentifier;
+export interface RuleFilterState {
+  queryString?: string;
+  dataSource?: string;
+  alertState?: string;
+}
