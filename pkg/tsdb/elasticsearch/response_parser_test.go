@@ -6,8 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,12 +46,11 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
-			require.NoError(t, err)
+			dataframes := queryRes.Frames
 			require.Len(t, dataframes, 1)
 
 			frame := dataframes[0]
@@ -99,11 +97,11 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 2)
 
@@ -168,9 +166,9 @@ func TestResponseParser(t *testing.T) {
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 2)
 
@@ -238,11 +236,11 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 4)
 
@@ -313,11 +311,11 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 2)
 
@@ -397,11 +395,11 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 6)
 
@@ -503,11 +501,11 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 3)
 
@@ -559,11 +557,11 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 1)
 		})
@@ -611,11 +609,11 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 2)
 
@@ -682,11 +680,11 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 2)
 
@@ -741,11 +739,11 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 1)
 
@@ -790,11 +788,11 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 1)
 
@@ -857,11 +855,11 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 3)
 
@@ -947,11 +945,11 @@ func TestResponseParser(t *testing.T) {
 			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
-			require.Len(t, result.Results, 1)
+			require.Len(t, result.Responses, 1)
 
-			queryRes := result.Results["A"]
+			queryRes := result.Responses["A"]
 			require.NotNil(t, queryRes)
-			dataframes, err := queryRes.Dataframes.Decoded()
+			dataframes := queryRes.Frames
 			require.NoError(t, err)
 			require.Len(t, dataframes, 1)
 
@@ -1021,11 +1019,11 @@ func TestResponseParser(t *testing.T) {
 		assert.Nil(t, err)
 		result, err := rp.getTimeSeries()
 		assert.Nil(t, err)
-		assert.Len(t, result.Results, 1)
+		assert.Len(t, result.Responses, 1)
 
-		queryRes := result.Results["A"]
+		queryRes := result.Responses["A"]
 		assert.NotNil(t, queryRes)
-		dataframes, err := queryRes.Dataframes.Decoded()
+		dataframes := queryRes.Frames
 		assert.NoError(t, err)
 		assert.Len(t, dataframes, 2)
 
@@ -1066,23 +1064,19 @@ func TestResponseParser(t *testing.T) {
 func newResponseParserForTest(tsdbQueries map[string]string, responseBody string) (*responseParser, error) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-	fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
-	toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
-	timeRange := plugins.NewDataTimeRange(fromStr, toStr)
-	tsdbQuery := plugins.DataQuery{
-		Queries:   []plugins.DataSubQuery{},
-		TimeRange: &timeRange,
+	timeRange := backend.TimeRange{
+		From: from,
+		To:   to,
+	}
+	tsdbQuery := backend.QueryDataRequest{
+		Queries: []backend.DataQuery{},
 	}
 
 	for refID, tsdbQueryBody := range tsdbQueries {
-		tsdbQueryJSON, err := simplejson.NewJson([]byte(tsdbQueryBody))
-		if err != nil {
-			return nil, err
-		}
-
-		tsdbQuery.Queries = append(tsdbQuery.Queries, plugins.DataSubQuery{
-			Model: tsdbQueryJSON,
-			RefID: refID,
+		tsdbQuery.Queries = append(tsdbQuery.Queries, backend.DataQuery{
+			TimeRange: timeRange,
+			RefID:     refID,
+			JSON:      json.RawMessage(tsdbQueryBody),
 		})
 	}
 
@@ -1093,7 +1087,7 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 	}
 
 	tsQueryParser := newTimeSeriesQueryParser()
-	queries, err := tsQueryParser.parse(tsdbQuery)
+	queries, err := tsQueryParser.parse(tsdbQuery.Queries)
 	if err != nil {
 		return nil, err
 	}

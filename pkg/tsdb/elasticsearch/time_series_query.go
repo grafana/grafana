@@ -4,58 +4,59 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
 type timeSeriesQuery struct {
 	client             es.Client
-	tsdbQuery          plugins.DataQuery
-	intervalCalculator interval.Calculator
+	dataQueries        []backend.DataQuery
+	intervalCalculator tsdb.Calculator
 }
 
-var newTimeSeriesQuery = func(client es.Client, dataQuery plugins.DataQuery,
-	intervalCalculator interval.Calculator) *timeSeriesQuery {
+var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery,
+	intervalCalculator tsdb.Calculator) *timeSeriesQuery {
 	return &timeSeriesQuery{
 		client:             client,
-		tsdbQuery:          dataQuery,
+		dataQueries:        dataQuery,
 		intervalCalculator: intervalCalculator,
 	}
 }
 
 // nolint:staticcheck // plugins.DataQueryResult deprecated
-func (e *timeSeriesQuery) execute() (plugins.DataResponse, error) {
+func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 	tsQueryParser := newTimeSeriesQueryParser()
-	queries, err := tsQueryParser.parse(e.tsdbQuery)
+	queries, err := tsQueryParser.parse(e.dataQueries)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return &backend.QueryDataResponse{}, err
 	}
 
 	ms := e.client.MultiSearch()
 
-	from := fmt.Sprintf("%d", e.tsdbQuery.TimeRange.GetFromAsMsEpoch())
-	to := fmt.Sprintf("%d", e.tsdbQuery.TimeRange.GetToAsMsEpoch())
-	result := plugins.DataResponse{
-		Results: make(map[string]plugins.DataQueryResult),
+	from := fmt.Sprintf("%d", e.dataQueries[0].TimeRange.From.UnixNano()/int64(time.Millisecond))
+	to := fmt.Sprintf("%d", e.dataQueries[0].TimeRange.To.UnixNano()/int64(time.Millisecond))
+	result := backend.QueryDataResponse{
+		Responses: backend.Responses{},
 	}
 	for _, q := range queries {
 		if err := e.processQuery(q, ms, from, to, result); err != nil {
-			return plugins.DataResponse{}, err
+			return &backend.QueryDataResponse{}, err
 		}
 	}
 
 	req, err := ms.Build()
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return &backend.QueryDataResponse{}, err
 	}
 
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return &backend.QueryDataResponse{}, err
 	}
 
 	rp := newResponseParser(res.Responses, queries, res.DebugInfo)
@@ -64,14 +65,14 @@ func (e *timeSeriesQuery) execute() (plugins.DataResponse, error) {
 
 // nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to string,
-	result plugins.DataResponse) error {
+	result backend.QueryDataResponse) error {
 	minInterval, err := e.client.GetMinInterval(q.Interval)
 	if err != nil {
 		return err
 	}
-	interval := e.intervalCalculator.Calculate(*e.tsdbQuery.TimeRange, minInterval)
+	intrvl := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval)
 
-	b := ms.Search(interval)
+	b := ms.Search(intrvl)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)
@@ -82,10 +83,8 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 	if len(q.BucketAggs) == 0 {
 		if len(q.Metrics) == 0 || q.Metrics[0].Type != "raw_document" {
-			result.Results[q.RefID] = plugins.DataQueryResult{
-				RefID:       q.RefID,
-				Error:       fmt.Errorf("invalid query, missing metrics and aggregations"),
-				ErrorString: "invalid query, missing metrics and aggregations",
+			result.Responses[q.RefID] = backend.DataResponse{
+				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
 			}
 			return nil
 		}
@@ -377,10 +376,13 @@ func newTimeSeriesQueryParser() *timeSeriesQueryParser {
 	return &timeSeriesQueryParser{}
 }
 
-func (p *timeSeriesQueryParser) parse(tsdbQuery plugins.DataQuery) ([]*Query, error) {
+func (p *timeSeriesQueryParser) parse(tsdbQuery []backend.DataQuery) ([]*Query, error) {
 	queries := make([]*Query, 0)
-	for _, q := range tsdbQuery.Queries {
-		model := q.Model
+	for _, q := range tsdbQuery {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			return nil, err
+		}
 		timeField, err := model.Get("timeField").String()
 		if err != nil {
 			return nil, err
