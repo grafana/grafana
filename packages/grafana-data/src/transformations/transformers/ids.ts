@@ -22,4 +22,5 @@ export enum DataTransformerID {
   ensureColumns = 'ensureColumns',
   groupBy = 'groupBy',
   sortBy = 'sortBy',
+  prepareTimeSeries = 'prepareTimeSeries',
 }
