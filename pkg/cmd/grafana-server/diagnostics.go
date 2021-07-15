@@ -8,7 +8,7 @@ import (
 
 const (
 	profilingEnabledEnvName = "GF_DIAGNOSTICS_PROFILING_ENABLED"
-	profilingAddrEnvName    = "GF_DIAGNOSTICS_PROFILING_ADDRESS"
+	profilingAddrEnvName    = "GF_DIAGNOSTICS_PROFILING_ADDR"
 	profilingPortEnvName    = "GF_DIAGNOSTICS_PROFILING_PORT"
 	tracingEnabledEnvName   = "GF_DIAGNOSTICS_TRACING_ENABLED"
 	tracingFileEnvName      = "GF_DIAGNOSTICS_TRACING_FILE"
