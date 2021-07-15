@@ -48,7 +48,7 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
     (rds as any).load(options.writeKey, options.dataPlaneUrl);
 
     if (options.user) {
-      (rds as any).identify(String(options.user.id), {
+      (rds as any).identify(options.user.email, {
         email: options.user.email,
         orgId: options.user.orgId,
       });
