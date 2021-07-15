@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"os"
 	"reflect"
-	"strconv"
 	"strings"
 )
 
@@ -129,16 +128,6 @@ func New() *Macaron {
 	return m
 }
 
-// Handlers sets the entire middleware stack with the given Handlers.
-// This will clear any current middleware handlers,
-// and panics if any of the handlers is not a callable function
-// func (m *Macaron) Handlers(handlers ...Handler) {
-// 	m.handlers = make([]Handler, 0)
-// 	for _, handler := range handlers {
-// 		m.Use(handler)
-// 	}
-// }
-
 // BeforeHandler represents a handler executes at beginning of every request.
 // Macaron stops future process when it returns true.
 type BeforeHandler func(rw http.ResponseWriter, req *http.Request) bool
@@ -214,18 +203,6 @@ func (m *Macaron) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 	m.Router.ServeHTTP(rw, req)
-}
-
-func getDefaultListenInfo() (string, int) {
-	host := os.Getenv("HOST")
-	if len(host) == 0 {
-		host = "0.0.0.0"
-	}
-	port, _ := strconv.Atoi(os.Getenv("PORT"))
-	if port == 0 {
-		port = 4000
-	}
-	return host, port
 }
 
 // SetURLPrefix sets URL prefix of router layer, so that it support suburl.
