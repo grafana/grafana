@@ -30,7 +30,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel).setPanelOptions((build
     })
     .addBooleanSwitch({
       path: 'prettifyLogMessage',
-      name: 'Prettify',
+      name: 'Prettify JSON',
       description: '',
       defaultValue: false,
     })
