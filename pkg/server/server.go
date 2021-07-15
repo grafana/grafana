@@ -41,6 +41,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/login/loginservice"
 	_ "github.com/grafana/grafana/pkg/services/ngalert"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/rendering"
 	_ "github.com/grafana/grafana/pkg/services/search"
@@ -131,8 +132,9 @@ type Server struct {
 
 	serviceRegistry serviceRegistry
 
-	HTTPServer    *api.HTTPServer             `inject:""`
-	AccessControl accesscontrol.AccessControl `inject:""`
+	HTTPServer          *api.HTTPServer                  `inject:""`
+	AccessControl       accesscontrol.AccessControl      `inject:""`
+	ProvisioningService provisioning.ProvisioningService `inject:""`
 }
 
 // init initializes the server and its services.
@@ -158,9 +160,6 @@ func (s *Server) init() error {
 		return err
 	}
 
-	// Loop through all registrations to register grafana fixed roles
-	s.AccessControl.RegisterFixedRoles()
-
 	if s.listener != nil {
 		for _, service := range services {
 			if httpS, ok := service.Instance.(*api.HTTPServer); ok {
@@ -172,7 +171,12 @@ func (s *Server) init() error {
 		}
 	}
 
-	return nil
+	// Perform all services registrations
+	if err := s.AccessControl.RegisterFixedRoles(); err != nil {
+		return err
+	}
+
+	return s.ProvisioningService.RunInitProvisioners()
 }
 
 // Run initializes and starts services. This will block until all services have
