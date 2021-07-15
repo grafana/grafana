@@ -88,7 +88,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		if maxSeries == 0 {
 			maxSeries = 1000
 		}
-		model := models.DatasourceInfo{
+		model := &models.DatasourceInfo{
 			HTTPClient:    client,
 			URL:           settings.URL,
 			Database:      settings.Database,
@@ -224,10 +224,10 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*models.Datasource
 		return nil, err
 	}
 
-	instance, ok := i.(models.DatasourceInfo)
+	instance, ok := i.(*models.DatasourceInfo)
 	if !ok {
 		return nil, fmt.Errorf("failed to cast datsource info")
 	}
 
-	return &instance, nil
+	return instance, nil
 }
