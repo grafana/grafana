@@ -171,16 +171,16 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 	t.Run("When deleting an external snapshot", func(t *testing.T) {
 		aclMockResp = []*models.DashboardAclInfoDTO{}
-		var writeErr error
 		loggedInUserScenarioWithRole(t,
 			"Should gracefully delete local snapshot when remote snapshot has already been removed when calling DELETE on",
 			"DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				mockSnapshotResult := setUpSnapshotTest(t)
 				mockSnapshotResult.UserId = testUserID
 
+				var writeErr error
 				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
-					_, writeErr = rw.Write([]byte(`{"message":"Failed to get dashboard snapshot"}`))
 					rw.WriteHeader(500)
+					_, writeErr = rw.Write([]byte(`{"message":"Failed to get dashboard snapshot"}`))
 				})
 
 				mockSnapshotResult.ExternalDeleteUrl = ts.URL
