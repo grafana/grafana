@@ -7,4 +7,5 @@
 
 # Run from root of grafana repo
 CMD=${CLI:-bin/darwin-amd64/grafana-cli}
-for DASH in $(grep -rl '"schemaVersion": 30' devenv); do echo $DASH; $CMD cue validate-resource --dashboard $DASH; done
+FILES=$(grep -rl '"schemaVersion": 30' devenv)
+for DASH in ${FILES}; do echo "${DASH}"; ${CMD} cue validate-resource --dashboard "${DASH}"; done
