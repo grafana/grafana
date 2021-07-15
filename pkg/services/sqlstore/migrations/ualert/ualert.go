@@ -54,8 +54,9 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
 		}
 		mg.AddMigration(migTitle, &migration{
-			seenChannelUIDs:  make(map[string]struct{}),
-			migratedChannels: make(map[*notificationChannel]struct{}),
+			seenChannelUIDs:     make(map[string]struct{}),
+			migratedChannels:    make(map[*notificationChannel]struct{}),
+			portedChannelGroups: make(map[string]string),
 		})
 	case !ngEnabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
@@ -74,9 +75,10 @@ type migration struct {
 	sess *xorm.Session
 	mg   *migrator.Migrator
 
-	seenChannelUIDs  map[string]struct{}
-	migratedChannels map[*notificationChannel]struct{}
-	silences         []*pb.MeshSilence
+	seenChannelUIDs     map[string]struct{}
+	migratedChannels    map[*notificationChannel]struct{}
+	silences            []*pb.MeshSilence
+	portedChannelGroups map[string]string // Channel group key -> receiver name.
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
