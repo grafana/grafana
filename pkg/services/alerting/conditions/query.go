@@ -11,12 +11,14 @@ import (
 
 	gocontext "context"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -108,6 +110,51 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler plug
 	}, nil
 }
 
+func getMinInterval(model *simplejson.Json, dsInfo *models.DataSource) (time.Duration, error) {
+	minIntervalString := ""
+
+	// if panel-min-interval exists, that is the min-interval we use.
+	// otherwise we use datasource-min-interval (if it exists)
+	panelMinIntervalString := model.Get("interval").MustString("")
+	if panelMinIntervalString != "" {
+		minIntervalString = panelMinIntervalString
+	} else {
+		dataSourceMinIntervalString := dsInfo.JsonData.Get("timeInterval").MustString("")
+		if dataSourceMinIntervalString != "" {
+			minIntervalString = dataSourceMinIntervalString
+		}
+	}
+
+	if minIntervalString == "" {
+		return time.Duration(0), nil
+	}
+
+	return tsdb.MinIntervalStringToDuration(minIntervalString)
+}
+
+func calculateInterval(timeRange plugins.DataTimeRange, model *simplejson.Json, dsInfo *models.DataSource) (time.Duration, error) {
+
+	minInterval, err := getMinInterval(model, dsInfo)
+
+	if err != nil {
+		return time.Duration(0), err
+	}
+
+	calc := tsdb.NewCalculator()
+
+	newFormatTimeRange := backend.TimeRange{
+		From: timeRange.MustGetFrom(),
+		To:   timeRange.MustGetTo(),
+	}
+
+	interval, err := calc.Calculate(newFormatTimeRange, minInterval, tsdb.Min)
+	if err != nil {
+		return time.Duration(0), err
+	}
+
+	return interval.Value, nil
+}
+
 func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange plugins.DataTimeRange,
 	requestHandler plugins.DataRequestHandler) (plugins.DataTimeSeriesSlice, error) {
 	getDsInfo := &models.GetDataSourceQuery{
@@ -124,7 +171,10 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange p
 		return nil, fmt.Errorf("access denied: %w", err)
 	}
 
-	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)
+	req, err := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)
+	if err != nil {
+		return nil, fmt.Errorf("interval calculation failed: %w", err)
+	}
 	result := make(plugins.DataTimeSeriesSlice, 0)
 
 	if context.IsDebug {
@@ -220,16 +270,24 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange p
 }
 
 func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, timeRange plugins.DataTimeRange,
-	debug bool) plugins.DataQuery {
+	debug bool) (plugins.DataQuery, error) {
 	queryModel := c.Query.Model
+
+	calculatedInterval, err := calculateInterval(timeRange, queryModel, datasource)
+	if err != nil {
+		return plugins.DataQuery{}, err
+	}
+
 	req := plugins.DataQuery{
 		TimeRange: &timeRange,
 		Queries: []plugins.DataSubQuery{
 			{
-				RefID:      "A",
-				Model:      queryModel,
-				DataSource: datasource,
-				QueryType:  queryModel.Get("queryType").MustString(""),
+				RefID:         "A",
+				Model:         queryModel,
+				DataSource:    datasource,
+				QueryType:     queryModel.Get("queryType").MustString(""),
+				MaxDataPoints: tsdb.DefaultRes,
+				IntervalMS:    calculatedInterval.Milliseconds(),
 			},
 		},
 		Headers: map[string]string{
@@ -238,7 +296,7 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, t
 		Debug: debug,
 	}
 
-	return req
+	return req, nil
 }
 
 func newQueryCondition(model *simplejson.Json, index int) (*QueryCondition, error) {

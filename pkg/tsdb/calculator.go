@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	defaultRes         int64 = 1500
+	DefaultRes         int64 = 1500
 	defaultMinInterval       = time.Millisecond * 1
 	year                     = time.Hour * 24 * 365
 	day                      = time.Hour * 24
@@ -65,7 +65,7 @@ func (i *Interval) Milliseconds() int64 {
 func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, intrvl time.Duration, intervalMode IntervalMode) (Interval, error) {
 	to := timerange.To.UnixNano()
 	from := timerange.From.UnixNano()
-	calculatedIntrvl := time.Duration((to - from) / defaultRes)
+	calculatedIntrvl := time.Duration((to - from) / DefaultRes)
 
 	switch intervalMode {
 	case Min:
@@ -113,7 +113,16 @@ func GetIntervalFrom(dsInterval, queryInterval string, queryIntervalMS int64, de
 	if interval == "" {
 		return defaultInterval, nil
 	}
-	interval = strings.Replace(strings.Replace(interval, "<", "", 1), ">", "", 1)
+
+	parsedInterval, err := MinIntervalStringToDuration(interval)
+	if err != nil {
+		return time.Duration(0), err
+	}
+	return parsedInterval, nil
+}
+
+func MinIntervalStringToDuration(text string) (time.Duration, error) {
+	interval := strings.Replace(strings.Replace(text, "<", "", 1), ">", "", 1)
 	isPureNum, err := regexp.MatchString(`^\d+$`, interval)
 	if err != nil {
 		return time.Duration(0), err
