@@ -214,13 +214,13 @@ a.external-link {
   }
 
   table {
-    margin-bottom: $line-height-base;
+    margin-bottom: $spacer;
   }
 
   table {
     td,
     th {
-      padding: $spacer * 0.5 $spacer;
+      padding: $space-xs $space-sm;
     }
     th {
       font-weight: $font-weight-semi-bold;

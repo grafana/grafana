@@ -153,6 +153,9 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Respo
 		if errors.Is(err, notifier.ErrGetAlertsBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
+		if errors.Is(err, notifier.ErrGetAlertsUnavailable) {
+			return ErrResp(http.StatusServiceUnavailable, err, "")
+		}
 		// any other error here should be an unexpected failure and thus an internal error
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}

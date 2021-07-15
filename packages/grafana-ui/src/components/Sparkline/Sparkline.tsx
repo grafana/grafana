@@ -143,6 +143,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         direction: ScaleDirection.Up,
         min: field.config.min,
         max: field.config.max,
+        getDataMinMax: () => field.state?.range,
       });
 
       builder.addAxis({

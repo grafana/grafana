@@ -47,12 +47,14 @@ export const updateTimeRange = (options: {
     const { syncedTimes } = getState().explore;
     if (syncedTimes) {
       dispatch(updateTime({ ...options, exploreId: ExploreId.left }));
-      dispatch(runQueries(ExploreId.left));
+      // When running query by updating time range, we want to preserve cache.
+      // Cached results are currently used in Logs pagination.
+      dispatch(runQueries(ExploreId.left, { preserveCache: true }));
       dispatch(updateTime({ ...options, exploreId: ExploreId.right }));
-      dispatch(runQueries(ExploreId.right));
+      dispatch(runQueries(ExploreId.right, { preserveCache: true }));
     } else {
       dispatch(updateTime({ ...options }));
-      dispatch(runQueries(options.exploreId));
+      dispatch(runQueries(options.exploreId, { preserveCache: true }));
     }
   };
 };

@@ -20,6 +20,10 @@ export interface DataTransformerConfig<TOptions = any> {
    */
   id: string;
   /**
+   * Disabled transformations are skipped
+   */
+  disabled?: boolean;
+  /**
    * Options to be passed to the transformer
    */
   options: TOptions;
