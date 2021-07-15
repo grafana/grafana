@@ -28,6 +28,7 @@ export function useMetricsMetadata(
     if (
       !(
         subscriptionId &&
+        query.azureMonitor &&
         query.azureMonitor.resourceGroup &&
         query.azureMonitor.metricDefinition &&
         query.azureMonitor.resourceName &&
@@ -53,10 +54,10 @@ export function useMetricsMetadata(
           azureMonitor: {
             ...query.azureMonitor,
             aggregation:
-              query.azureMonitor.aggregation && metadata.supportedAggTypes.includes(query.azureMonitor.aggregation)
+              query.azureMonitor?.aggregation && metadata.supportedAggTypes.includes(query.azureMonitor.aggregation)
                 ? query.azureMonitor.aggregation
                 : metadata.primaryAggType,
-            timeGrain: query.azureMonitor.timeGrain || 'auto',
+            timeGrain: query.azureMonitor?.timeGrain || 'auto', // TODO: move this default value somewhere better?
             allowedTimeGrainsMs: convertTimeGrainsToMs(metadata.supportedTimeGrains),
           },
         });
@@ -80,11 +81,11 @@ export function useMetricsMetadata(
       });
   }, [
     subscriptionId,
-    query.azureMonitor.resourceGroup,
-    query.azureMonitor.metricDefinition,
-    query.azureMonitor.resourceName,
-    query.azureMonitor.metricNamespace,
-    query.azureMonitor.metricName,
+    query.azureMonitor?.resourceGroup,
+    query.azureMonitor?.metricDefinition,
+    query.azureMonitor?.resourceName,
+    query.azureMonitor?.metricNamespace,
+    query.azureMonitor?.metricName,
     query,
     datasource,
     onQueryChange,
