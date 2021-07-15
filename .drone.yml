@@ -592,7 +592,6 @@ steps:
   commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.58/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -1034,7 +1033,6 @@ steps:
   commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.58/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -1491,7 +1489,6 @@ steps:
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
-  - .\grabpl.exe verify-drone
   depends_on:
   - clone
 
@@ -1942,7 +1939,6 @@ steps:
   commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.58/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -2393,7 +2389,6 @@ steps:
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
-  - .\grabpl.exe verify-drone
   depends_on:
   - clone
 
@@ -2819,7 +2814,6 @@ steps:
   commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.58/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -3269,7 +3263,6 @@ steps:
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
-  - .\grabpl.exe verify-drone
   depends_on:
   - clone
 

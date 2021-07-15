@@ -938,7 +938,6 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         init_cmds.extend([
             '$$ProgressPreference = "SilentlyContinue"',
             'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
-            '.\\grabpl.exe verify-drone',
         ])
     steps = [
         {
@@ -1042,7 +1041,6 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'rm -force grabpl.exe',
             'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise{}'.format(source_commit),
             'cp C:\\App\\grabpl.exe grabpl.exe',
-            '.\\grabpl.exe verify-drone',
         ])
 
     return steps
