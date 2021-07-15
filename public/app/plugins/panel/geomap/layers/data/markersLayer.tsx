@@ -1,63 +1,61 @@
-import { MapLayerRegistryItem, MapLayerConfig, MapLayerHandler, PanelData, GrafanaTheme2, reduceField, ReducerID, FieldCalcs } from '@grafana/data';
-import { dataFrameToPoints } from './utils'
-import { FieldMappingOptions, QueryFormat } from '../../types'
+import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, GrafanaTheme2, reduceField, ReducerID, FieldCalcs, FieldType } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import * as style from 'ol/style';
 import tinycolor from 'tinycolor2';
+import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 
 // Configuration options for Circle overlays
-export interface CircleConfig {
-  queryFormat: QueryFormat,
-  fieldMapping: FieldMappingOptions,
+export interface MarkersConfig {
   minSize: number,
   maxSize: number,
   opacity: number,
 }
 
-const defaultOptions: CircleConfig = {
-  queryFormat: {
-    locationType: 'coordinates',
-  },
-  fieldMapping: {
-    metricField: '',
-    geohashField: '',
-    latitudeField: '',
-    longitudeField: '',
-  },
+const defaultOptions: MarkersConfig = {
   minSize: 1,
   maxSize: 10,
   opacity: 0.4,
 };
 
+export const MARKERS_LAYER_ID = "markers";
+
 /**
  * Map layer configuration for circle overlay
  */
-export const circlesLayer: MapLayerRegistryItem<CircleConfig> = {
-  id: 'circles',
-  name: 'Circles',
-  description: 'creates circle overlays for data values',
+export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
+  id: MARKERS_LAYER_ID,
+  name: 'Markers',
+  description: 'use markers to render each data point',
   isBaseMap: false,
+  showLocation: true,
 
   /**
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerConfig<CircleConfig>, theme: GrafanaTheme2): MapLayerHandler => {
+  create: (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2): MapLayerHandler => {
     const config = { ...defaultOptions, ...options.config };
+    const matchers = getLocationMatchers(options.location);
 
     const vectorLayer = new layer.Vector({});
     return {
       init: () => vectorLayer,
       update: (data: PanelData) => {
-        const features: Feature[] = [];
-        const frame = data.series[0];
+        if(!data.series?.length) {
+          return; // ignore empty
+        }
 
-        // Get data values
-        const points = dataFrameToPoints(frame, config.fieldMapping, config.queryFormat);
-        const field = frame.fields.find(field => field.name === config.fieldMapping.metricField);
+        const frame = data.series[0];
+        const info = dataFrameToPoints(frame, matchers);
+        if(info.warning) {
+          console.log( 'WARN', info.warning);
+          return; // ???
+        }
+
+        const field = frame.fields.find(field => field.type === FieldType.number); // TODO!!!!
         // Return early if metric field is not matched
         if (field === undefined) {
           return;
@@ -73,6 +71,8 @@ export const circlesLayer: MapLayerRegistryItem<CircleConfig> = {
           ]
         });
 
+        const features: Feature[] = [];
+
         // Map each data value into new points
         for (let i = 0; i < frame.length; i++) {
           // Get the circle color for a specific data value depending on color scheme
@@ -85,7 +85,7 @@ export const circlesLayer: MapLayerRegistryItem<CircleConfig> = {
 
           // Create a new Feature for each point returned from dataFrameToPoints
           const dot = new Feature({
-              geometry: points[i],
+              geometry: info.points[i],
           });
 
           // Set the style of each feature dot
@@ -114,20 +114,29 @@ export const circlesLayer: MapLayerRegistryItem<CircleConfig> = {
   // Circle overlay options
   registerOptionsUI: (builder) => {
     builder
+      // .addFieldNamePicker({
+      //   path: 'fieldMapping.metricField',
+      //   name: 'Metric Field',
+      //   defaultValue: defaultOptions.fieldMapping.metricField,
+      //   settings: {
+      //     filter: (f) => f.type === FieldType.number,
+      //     noFieldsMessage: 'No numeric fields found',
+      //   },
+      // })
       .addNumberInput({
-        path: 'minSize',
+        path: 'config.minSize',
         description: 'configures the min circle size',
         name: 'Min Size',
         defaultValue: defaultOptions.minSize,
       })
       .addNumberInput({
-        path: 'maxSize',
+        path: 'config.maxSize',
         description: 'configures the max circle size',
         name: 'Max Size',
         defaultValue: defaultOptions.maxSize,
       })
       .addSliderInput({
-        path: 'opacity',
+        path: 'config.opacity',
         description: 'configures the amount of transparency',
         name: 'Opacity',
         defaultValue: defaultOptions.opacity,
@@ -136,49 +145,6 @@ export const circlesLayer: MapLayerRegistryItem<CircleConfig> = {
           max: 1,
           step: 0.1,
         },
-      })
-      .addSelect({
-        path: 'queryFormat.locationType',
-        name: 'Query Format',
-        defaultValue: defaultOptions.queryFormat.locationType,
-        settings: {
-          options: [
-            {
-              value: 'coordinates',
-              label: 'Coordinates',
-            },
-            {
-              value: 'geohash',
-              label: 'Geohash',
-            },
-          ],
-        },
-      })
-      .addTextInput({
-        path: 'fieldMapping.metricField',
-        name: 'Metric Field',
-        defaultValue: defaultOptions.fieldMapping.metricField,
-      })
-      .addTextInput({
-        path: 'fieldMapping.latitudeField',
-        name: 'Latitude Field',
-        defaultValue: defaultOptions.fieldMapping.latitudeField,
-        showIf: (config) =>
-          config.queryFormat.locationType === 'coordinates',
-      })
-      .addTextInput({
-        path: 'fieldMapping.longitudeField',
-        name: 'Longitude Field',
-        defaultValue: defaultOptions.fieldMapping.longitudeField,
-        showIf: (config) =>
-          config.queryFormat.locationType === 'coordinates',
-      })
-      .addTextInput({
-        path: 'fieldMapping.geohashField',
-        name: 'Geohash Field',
-        defaultValue: defaultOptions.fieldMapping.geohashField,
-        showIf: (config) =>
-          config.queryFormat.locationType === 'geohash',
       });
   },
   // fill in the default values
