@@ -79,12 +79,6 @@ type datasourceService struct {
 }
 
 func getDatasourceService(cfg *setting.Cfg, clientProvider httpclient.Provider, dsInfo datasourceInfo, routeName string) (datasourceService, error) {
-	srv, ok := dsInfo.Services[routeName]
-	if ok && srv.HTTPClient != nil {
-		// If the service already exists, return it
-		return dsInfo.Services[routeName], nil
-	}
-
 	route := dsInfo.Routes[routeName]
 	client, err := newHTTPClient(route, dsInfo, cfg, clientProvider)
 	if err != nil {
@@ -164,7 +158,10 @@ func (s *Service) getDataSourceFromPluginReq(req *backend.QueryDataRequest) (dat
 	if err != nil {
 		return datasourceInfo{}, err
 	}
-	dsInfo := i.(datasourceInfo)
+	dsInfo, ok := i.(datasourceInfo)
+	if !ok {
+		return datasourceInfo{}, fmt.Errorf("Unable to convert datasource from service instance")
+	}
 	dsInfo.OrgID = req.PluginContext.OrgID
 	return dsInfo, nil
 }

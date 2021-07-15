@@ -32,7 +32,7 @@ func Test_httpCliProvider(t *testing.T) {
 		{
 			name: "creates an HTTP client with a middleware due to an app key",
 			route: azRoute{
-				URL:    "http://route",
+				URL:    azAppInsights.URL,
 				Scopes: []string{},
 			},
 			model: datasourceInfo{

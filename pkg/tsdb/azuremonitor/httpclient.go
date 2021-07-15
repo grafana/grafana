@@ -19,7 +19,7 @@ func getMiddlewares(route azRoute, model datasourceInfo, cfg *setting.Cfg) ([]ht
 		middlewares = append(middlewares, aztokenprovider.AuthMiddleware(tokenProvider, route.Scopes))
 	}
 
-	if _, ok := model.DecryptedSecureJSONData["appInsightsApiKey"]; ok {
+	if _, ok := model.DecryptedSecureJSONData["appInsightsApiKey"]; ok && (route.URL == azAppInsights.URL || route.URL == azChinaAppInsights.URL) {
 		// Inject API-Key for AppInsights
 		apiKeyMiddleware := httpclient.MiddlewareFunc(func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
 			return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
@@ -34,12 +34,13 @@ func getMiddlewares(route azRoute, model datasourceInfo, cfg *setting.Cfg) ([]ht
 }
 
 func newHTTPClient(route azRoute, model datasourceInfo, cfg *setting.Cfg, clientProvider httpclient.Provider) (*http.Client, error) {
-	model.HTTPCliOpts.Headers = route.Headers
 	m, err := getMiddlewares(route, model, cfg)
 	if err != nil {
 		return nil, err
 	}
+	routeHTTPClient := model.HTTPCliOpts
+	routeHTTPClient.Headers = route.Headers
+	routeHTTPClient.Middlewares = m
 
-	model.HTTPCliOpts.Middlewares = m
-	return clientProvider.New(model.HTTPCliOpts)
+	return clientProvider.New(routeHTTPClient)
 }

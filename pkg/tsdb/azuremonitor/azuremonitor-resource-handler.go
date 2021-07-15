@@ -70,7 +70,19 @@ func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (datasourceInfo, e
 	if err != nil {
 		return datasourceInfo{}, nil
 	}
-	return i.(datasourceInfo), nil
+	ds, ok := i.(datasourceInfo)
+	if !ok {
+		return datasourceInfo{}, fmt.Errorf("Unable to convert datasource from service instance")
+	}
+	return ds, nil
+}
+
+func writeResponse(rw http.ResponseWriter, code int, msg string) {
+	rw.WriteHeader(http.StatusBadRequest)
+	_, err := rw.Write([]byte(msg))
+	if err != nil {
+		azlog.Error("Unable to write HTTP response", "error", err)
+	}
 }
 
 func (s *Service) resourceHandler(subDataSource string) func(rw http.ResponseWriter, req *http.Request) {
@@ -79,32 +91,20 @@ func (s *Service) resourceHandler(subDataSource string) func(rw http.ResponseWri
 
 		newPath, err := getTarget(req.URL.Path)
 		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			_, err := rw.Write([]byte(err.Error()))
-			if err != nil {
-				azlog.Error("Unable to write HTTP response", "error", err)
-			}
+			writeResponse(rw, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		dsInfo, err := s.getDataSourceFromHTTPReq(req)
 		if err != nil {
-			rw.WriteHeader(http.StatusInternalServerError)
-			_, err := rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
-			if err != nil {
-				azlog.Error("Unable to write HTTP response", "error", err)
-			}
+			writeResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
 			return
 		}
 
 		service := dsInfo.Services[subDataSource]
 		serviceURL, err := url.Parse(service.URL)
 		if err != nil {
-			rw.WriteHeader(http.StatusInternalServerError)
-			_, err := rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
-			if err != nil {
-				azlog.Error("Unable to write HTTP response", "error", err)
-			}
+			writeResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
 			return
 		}
 		req.URL.Path = newPath
