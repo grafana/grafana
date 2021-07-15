@@ -19,47 +19,45 @@ import { PluginDashboards } from '../../PluginDashboards';
 type PluginDetailsProps = GrafanaRouteComponentProps<{ pluginId?: string }>;
 
 const useLoadPlugin = (pluginId: string) => {
+  const [tabs, setTabs] = useState(defaultTabs);
   const { loading, value, error } = useAsync(async () => {
-    const navItems = [];
     const plugin = await loadPlugin(pluginId);
     const isAdmin = contextSrv.hasRole('Admin');
     if (isAdmin) {
       if (plugin.meta.type === PluginType.app) {
         if (plugin.angularConfigCtrl) {
-          navItems.push({
+          tabs.push({
             label: 'Config',
             active: false,
           });
         }
-      }
 
-      if (plugin.configPages) {
-        for (const page of plugin.configPages) {
-          navItems.push({
-            label: page.title,
+        if (plugin.configPages) {
+          for (const page of plugin.configPages) {
+            tabs.push({
+              label: page.title,
+              active: false,
+            });
+          }
+        }
+
+        if (plugin.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
+          tabs.push({
+            label: 'Dashboards',
             active: false,
           });
         }
       }
     }
 
-    if (plugin.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
-      navItems.push({
-        label: 'Dashboards',
-        active: false,
-      });
-    }
-
-    return {
-      plugin,
-      navItems,
-    };
+    return plugin;
   }, [pluginId]);
 
   return {
     loading,
-    plugin: value?.plugin,
-    navItems: value?.navItems,
+    plugin: value,
+    tabs,
+    setTabs,
     error,
   };
 };
@@ -73,7 +71,7 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
   const { pluginId } = match.params;
 
   const { isLoading, local, remote, remoteVersions } = usePlugin(pluginId!);
-  const { loading, error, plugin, navItems } = useLoadPlugin(pluginId!);
+  const { loading, error, plugin, tabs, setTabs } = useLoadPlugin(pluginId!);
   const styles = useStyles2(getStyles);
 
   const description = remote?.description ?? local?.info?.description;
@@ -82,9 +80,7 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
   const links = (local?.info?.links || remote?.json?.info?.links) ?? [];
   const downloads = remote?.downloads;
 
-  const [tabs, setTabs] = useState(defaultTabs);
-
-  console.log(loading, error, plugin, navItems);
+  console.log(loading, error, plugin, tabs);
 
   if (isLoading) {
     return (
