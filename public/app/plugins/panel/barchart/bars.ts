@@ -7,15 +7,13 @@ import { calculateFontSize, measureText, PlotTooltipInterpolator, VizTextDisplay
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
-
 // min.max font size for value label
 const VALUE_MIN_FONT_SIZE = 8;
 const VALUE_MAX_FONT_SIZE = 30;
 // % of width/height of the bar that value should fit in when measuring size
 const BAR_FONT_SIZE_RATIO = 0.65;
-// distance between label and a horizontal bar
-const HORIZONTAL_BAR_LABEL_OFFSET = 10;
-const LABEL_OFFSET = 10;
+// distance between label and a bar
+const LABEL_OFFSET = 5;
 
 /**
  * @internal
@@ -37,6 +35,7 @@ interface LabelDescriptor extends CartesianCoords2D {
   value: number | null;
   availableSpaceForText: number;
   barWidth: number;
+  barHeight: number;
   textAlign: CanvasTextAlign;
   textBaseline: CanvasTextBaseline;
 }
@@ -45,59 +44,23 @@ interface LabelDescriptor extends CartesianCoords2D {
  * @internal
  */
 export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
-  const { xOri: ori, xDir: dir, groupWidth, barWidth, formatValue, showValue } = opts;
+  const { xOri, xDir: dir, groupWidth, barWidth, formatValue, showValue } = opts;
+  const isScaleHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
-  let shouldSkipLabelsRendering = showValue === BarValueVisibility.Never;
   let fontSize = opts.text?.valueSize ?? VALUE_MAX_FONT_SIZE;
-  const textAlign = ori === ScaleOrientation.Horizontal ? 'center' : 'left';
-  const textBaseline = (ori === ScaleOrientation.Horizontal ? 'bottom' : 'middle') as CanvasTextBaseline;
 
   let qt: Quadtree;
   let labelsSizing: LabelDescriptor[] = [];
+  let hovered: Rect | undefined = undefined;
 
-  // uPlot hook to draw the labels on the bar chart
-  const draw = (u: uPlot) => {
-    let minFontSize = fontSize < VALUE_MIN_FONT_SIZE ? VALUE_MIN_FONT_SIZE : fontSize;
-
-    // const textMeasurement = measureText(formattedValue, fontSize * devicePixelRatio);
-    // let actualLineHeight = textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent;
-
-    // if (showValue === BarValueVisibility.Auto) {
-    //   if (ori === ScaleOrientation.Horizontal) {
-    //     if (actualLineHeight > availableSpaceForText || textMeasurement.width > width) {
-    //       shouldSkipLabelsRendering = true;
-    //     }
-    //   }
-    //
-    //   if (ori === ScaleOrientation.Vertical) {
-    //     if (
-    //       textMeasurement.width / devicePixelRatio > availableSpaceForText ||
-    //       actualLineHeight > height / devicePixelRatio
-    //     ) {
-    //       console.log('wider');
-    //       shouldSkipLabelsRendering = true;
-    //     }
-    //   }
-    // }
-    for (let i = 0; i < labelsSizing.length; i++) {
-      const label = labelsSizing[i];
-
-      if (shouldSkipLabelsRendering) {
-        return;
-      }
-      u.ctx.fillStyle = theme.colors.text.primary;
-      u.ctx.font = `${minFontSize * devicePixelRatio}px ${theme.typography.fontFamily}`;
-      u.ctx.textAlign = label.textAlign;
-      u.ctx.textBaseline = label.textBaseline;
-      u.ctx.fillText(label.formattedValue, label.x, label.y);
-    }
-
-    return false;
-  };
+  let barMark = document.createElement('div');
+  barMark.classList.add('bar-mark');
+  barMark.style.position = 'absolute';
+  barMark.style.background = 'rgba(255,255,255,0.4)';
 
   const xSplits: Axis.Splits = (u: uPlot) => {
-    const dim = ori === 0 ? u.bbox.width : u.bbox.height;
-    const _dir = dir * (ori === 0 ? 1 : -1);
+    const dim = isScaleHorizontal ? u.bbox.width : u.bbox.height;
+    const _dir = dir * (isScaleHorizontal ? 1 : -1);
 
     let splits: number[] = [];
 
@@ -113,14 +76,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     return _dir === 1 ? splits : splits.reverse();
   };
 
-  let hovered: Rect | undefined = undefined;
-
   const xValues: Axis.Values = (u) => u.data[0].map((x) => formatValue(0, x));
-
-  let barMark = document.createElement('div');
-  barMark.classList.add('bar-mark');
-  barMark.style.position = 'absolute';
-  barMark.style.background = 'rgba(255,255,255,0.4)';
 
   let distrTwo = (groupCount: number, barCount: number) => {
     let out = Array.from({ length: barCount }, () => ({
@@ -138,17 +94,17 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     return out;
   };
 
-  let barsPctLayout: Array<{ offs: number[]; size: number[] }> = [];
+  let barsPctLayout: Array<{ offs: number[]; size: number[] } | null> = [];
 
   let barsBuilder = uPlot.paths.bars!({
     disp: {
       x0: {
         unit: 2,
-        values: (u, seriesIdx, idx0, idx1) => barsPctLayout[seriesIdx].offs,
+        values: (u, seriesIdx) => barsPctLayout[seriesIdx]!.offs,
       },
       size: {
         unit: 2,
-        values: (u, seriesIdx, idx0, idx1) => barsPctLayout[seriesIdx].size,
+        values: (u, seriesIdx) => barsPctLayout[seriesIdx]!.size,
       },
     },
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
@@ -156,102 +112,13 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     },
   });
 
-  const drawPoints = (u: uPlot, sidx: number, i0: number, i1: number) => {
-    uPlot.orient(
-      u,
-      sidx,
-      (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
-        const _dir = dir * (ori === ScaleOrientation.Horizontal ? 1 : -1);
-        const wid = Math.round(barsPctLayout[sidx].size[0] * xDim);
-        let y0Pos = valToPosY(0, scaleY, yDim, yOff);
-
-        barsPctLayout[sidx].offs.forEach((offs, ix) => {
-          if (dataY[ix] != null) {
-            let x0 = xDim * offs;
-            let lft = Math.round(xOff + (_dir === ScaleDirection.Up ? x0 : xDim - x0 - wid));
-            let yPos = valToPosY(dataY[ix]!, scaleY, yDim, yOff);
-            let btm = Math.round(Math.max(yPos, y0Pos));
-            let top = Math.round(Math.min(yPos, y0Pos));
-            let barWid = Math.round(wid);
-            let barHgt = btm - top;
-
-            let x = ori === ScaleOrientation.Horizontal ? Math.round(lft + barWid / 2) : Math.round(yPos);
-            let y = ori === ScaleOrientation.Horizontal ? Math.round(yPos) : Math.round(lft + barWid / 2);
-
-            let width = ori === ScaleOrientation.Horizontal ? barWid : barHgt;
-            let height = ori === ScaleOrientation.Horizontal ? barHgt : barWid;
-
-            let availableSpaceForText;
-            if (ori === ScaleOrientation.Horizontal) {
-              availableSpaceForText =
-                (dataY[ix]! >= 0 ? y - u.bbox.top : u.bbox.top + u.bbox.height - y) / devicePixelRatio;
-            } else {
-              availableSpaceForText =
-                (dataY[ix]! >= 0 ? u.bbox!.width - x + u.bbox.left : x - u.bbox.left) / devicePixelRatio;
-            }
-
-            // availableSpaceForText -= LABEL_OFFSET;
-
-            const formattedValue = formatValue(sidx, dataY[ix]);
-
-            if (hasAutoValueSize) {
-              const size =
-                ori === ScaleOrientation.Horizontal
-                  ? calculateFontSize(
-                      formattedValue,
-                      (width / devicePixelRatio) * BAR_FONT_SIZE_RATIO,
-                      availableSpaceForText * BAR_FONT_SIZE_RATIO,
-                      1
-                    )
-                  : calculateFontSize(
-                      formattedValue,
-                      availableSpaceForText,
-                      (height * BAR_FONT_SIZE_RATIO) / devicePixelRatio,
-                      1
-                    );
-              if (size <= fontSize) {
-                fontSize = Math.round(size);
-              }
-            }
-
-            const textMeasurement = measureText(formattedValue, fontSize * devicePixelRatio);
-            let actualLineHeight = textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent;
-
-            console.log(textMeasurement);
-            // fontBoundingBoxAscent is only supported in chrome & safari at the moment. (see: https://caniuse.com/?search=fontBoundingBoxAscent)
-            // @ts-ignore
-            // if (textMeasurement.fontBoundingBoxAscent && textMeasurement.fontBoundingBoxDescent) {
-            // @ts-ignore
-            // actualLineHeight = textMeasurement.fontBoundingBoxAscent + textMeasurement.fontBoundingBoxDescent;
-            // }
-
-            const yOffset = dataY[ix] !== null && dataY[ix] < 0 ? actualLineHeight * 2 + LABEL_OFFSET : -LABEL_OFFSET;
-            const xOffset = dataY[ix] !== null && dataY[ix] < 0 ? textMeasurement.width + LABEL_OFFSET : -LABEL_OFFSET;
-
-            // Collect labels szes
-            labelsSizing.push({
-              value: dataY[ix],
-              barWidth: width,
-              formattedValue,
-              textAlign,
-              textBaseline,
-              availableSpaceForText,
-              x: ori === ScaleOrientation.Vertical ? x - xOffset : x,
-              y: ori === ScaleOrientation.Horizontal ? y + yOffset : y,
-            });
-          }
-        });
-      }
-    );
-    return undefined;
-  };
-
   const init = (u: uPlot) => {
     let over = u.over;
     over.style.overflow = 'hidden';
     over.appendChild(barMark);
   };
 
+  // Build bars
   const drawClear = (u: uPlot) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
 
@@ -265,7 +132,222 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       s._paths = null;
     });
 
-    barsPctLayout = [null].concat(distrTwo(u.data[0].length, u.data.length - 1));
+    barsPctLayout = ([null] as any).concat(distrTwo(u.data[0].length, u.data.length - 1));
+  };
+
+  // Collect label sizings
+  const drawPoints = (u: uPlot, sidx: number) => {
+    const textAlign = isScaleHorizontal ? 'center' : 'left';
+    let textBaseline;
+    uPlot.orient(u, sidx, (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
+      const _dir = dir * (isScaleHorizontal ? 1 : -1);
+      const wid = Math.round(barsPctLayout[sidx]!.size[0] * xDim);
+      let y0Pos = valToPosY(0, scaleY, yDim, yOff);
+
+      barsPctLayout[sidx]!.offs.forEach((offs, ix) => {
+        const value = dataY[ix];
+
+        if (value != null) {
+          const valueOffset = value < 0 ? LABEL_OFFSET : -LABEL_OFFSET;
+          let x0 = xDim * offs;
+          let lft = Math.round(xOff + (_dir === ScaleDirection.Up ? x0 : xDim - x0 - wid));
+          let yPos = valToPosY(value, scaleY, yDim, yOff);
+          let btm = Math.round(Math.max(yPos, y0Pos));
+          let top = Math.round(Math.min(yPos, y0Pos));
+          let barWid = Math.round(wid);
+          let barHgt = btm - top;
+
+          let x = isScaleHorizontal ? Math.round(lft + barWid / 2) : Math.round(yPos);
+          let y = isScaleHorizontal ? Math.round(yPos) : Math.round(lft + barWid / 2);
+
+          let width = isScaleHorizontal ? barWid : barHgt;
+          let height = isScaleHorizontal ? barHgt : barWid;
+
+          let availableSpaceForText;
+          if (isScaleHorizontal) {
+            availableSpaceForText =
+              -LABEL_OFFSET + (value! >= 0 ? y - u.bbox.top : u.bbox.top + u.bbox.height - y) / devicePixelRatio;
+          } else {
+            availableSpaceForText =
+              -LABEL_OFFSET + (value! >= 0 ? u.bbox!.width - x + u.bbox.left : x - u.bbox.left) / devicePixelRatio;
+          }
+
+          const formattedValue = formatValue(sidx, value);
+
+          if (hasAutoValueSize) {
+            const size = isScaleHorizontal
+              ? calculateFontSize(
+                  formattedValue,
+                  (width / devicePixelRatio) * BAR_FONT_SIZE_RATIO,
+                  availableSpaceForText * BAR_FONT_SIZE_RATIO,
+                  1
+                )
+              : calculateFontSize(
+                  formattedValue,
+                  availableSpaceForText,
+                  (height * BAR_FONT_SIZE_RATIO) / devicePixelRatio,
+                  1
+                );
+            if (size <= fontSize) {
+              fontSize = Math.round(size);
+            }
+          }
+
+          if (isScaleHorizontal) {
+            if (value < 0) {
+              textBaseline = 'top';
+            } else {
+              textBaseline = 'alphabetic';
+            }
+          } else {
+            textBaseline = 'alphabetic';
+          }
+
+          // Collect labels szes
+          labelsSizing.push({
+            value,
+            barWidth: width,
+            barHeight: height,
+            textBaseline: textBaseline as CanvasTextBaseline,
+            x: !isScaleHorizontal ? x - valueOffset * devicePixelRatio : x, // canvas px
+            y: isScaleHorizontal ? y + valueOffset * devicePixelRatio : y, // canvas px
+            availableSpaceForText, // in css px
+            formattedValue,
+            textAlign,
+          });
+        }
+      });
+    });
+    return undefined;
+  };
+
+  // uPlot hook to draw the labels on the bar chart.
+  // Uses label sizings collected in drawClear hook.
+  const draw = (u: uPlot) => {
+    let shouldSkipLabelsRendering = false;
+    let minFontSize = fontSize < VALUE_MIN_FONT_SIZE ? VALUE_MIN_FONT_SIZE : fontSize;
+    const textMeasurements = [];
+
+    if (showValue === BarValueVisibility.Never) {
+      return false;
+    }
+
+    // collect final text measurements
+    for (let i = 0; i < labelsSizing.length; i++) {
+      const label = labelsSizing[i];
+      const textMeasurement = measureText(label.formattedValue, minFontSize * devicePixelRatio);
+      let actualLineHeight = textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent;
+      textMeasurements.push(textMeasurement);
+
+      // in Auto value mode skip rendering if any of the label has no sufficient space available
+      if (showValue === BarValueVisibility.Auto) {
+        if (isScaleHorizontal) {
+          if (
+            actualLineHeight > label.availableSpaceForText * devicePixelRatio ||
+            textMeasurement.width > label.barWidth
+          ) {
+            shouldSkipLabelsRendering = true;
+            break;
+          }
+        } else {
+          if (
+            textMeasurement.width / devicePixelRatio > label.availableSpaceForText ||
+            actualLineHeight > label.barHeight
+          ) {
+            shouldSkipLabelsRendering = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if (shouldSkipLabelsRendering) {
+      return false;
+    }
+
+    // render labels
+    for (let i = 0; i < labelsSizing.length; i++) {
+      const label = labelsSizing[i];
+      if (!label.value) {
+        continue;
+      }
+
+      const textMeasurement = textMeasurements[i];
+      let actualLineHeight = textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent;
+      let textXPos = label.x;
+
+      if (!isScaleHorizontal && label.value < 0) {
+        textXPos = label.x - textMeasurements[i].width;
+      }
+
+      u.ctx.fillStyle = theme.colors.text.primary;
+      u.ctx.font = `${minFontSize * devicePixelRatio}px ${theme.typography.fontFamily}`;
+      u.ctx.textAlign = label.textAlign;
+      u.ctx.textBaseline = label.textBaseline;
+      u.ctx.fillText(label.formattedValue, textXPos, isScaleHorizontal ? label.y : label.y + actualLineHeight / 2);
+
+      // Sizing debug - will probably be useful in the future :)
+      // u.ctx.beginPath();
+      // u.ctx.strokeStyle = '#00ff00';
+      // if (isScaleHorizontal) {
+      //   u.ctx.moveTo(u.bbox.left, label.y);
+      //   u.ctx.lineTo(u.bbox.left + u.bbox.width, label.y);
+      // } else {
+      //   u.ctx.moveTo(u.bbox.left, label.y - actualLineHeight / 2);
+      //   u.ctx.lineTo(u.bbox.left + u.bbox.width, label.y - actualLineHeight / 2);
+      // }
+      // u.ctx.closePath();
+      // u.ctx.stroke();
+      //
+      // u.ctx.beginPath();
+      // u.ctx.strokeStyle = '#00ff00';
+      //
+      // if (isScaleHorizontal) {
+      //   u.ctx.moveTo(u.bbox.left, label.y + (label.value < 0 ? actualLineHeight : -actualLineHeight));
+      //   u.ctx.lineTo(u.bbox.left + u.bbox.width, label.y + (label.value < 0 ? actualLineHeight : -actualLineHeight));
+      // } else {
+      //   u.ctx.moveTo(u.bbox.left, label.y + actualLineHeight / 2);
+      //   u.ctx.lineTo(u.bbox.left + u.bbox.width, label.y + actualLineHeight / 2);
+      // }
+      // u.ctx.closePath();
+      // u.ctx.stroke();
+
+      // if (isScaleHorizontal) {
+      //   if (label.value < 0) {
+      //     u.ctx.beginPath();
+      //     u.ctx.strokeStyle = '#ffff00';
+      //     u.ctx.moveTo(label.x, label.y);
+      //     u.ctx.lineTo(label.x, label.y + label.availableSpaceForText * devicePixelRatio);
+      //     u.ctx.lineTo(label.x + 20, label.y + label.availableSpaceForText * devicePixelRatio);
+      //     u.ctx.stroke();
+      //   } else {
+      //     u.ctx.beginPath();
+      //     u.ctx.strokeStyle = '#ffff00';
+      //     u.ctx.moveTo(label.x, label.y);
+      //     u.ctx.lineTo(label.x, label.y - label.availableSpaceForText * devicePixelRatio);
+      //     u.ctx.lineTo(label.x - 20, label.y - label.availableSpaceForText * devicePixelRatio);
+      //     u.ctx.stroke();
+      //   }
+      // } else {
+      //   if (label.value < 0) {
+      //     u.ctx.beginPath();
+      //     u.ctx.strokeStyle = '#ffff00';
+      //     u.ctx.moveTo(label.x, label.y);
+      //     u.ctx.lineTo(label.x - label.availableSpaceForText * devicePixelRatio, label.y);
+      //     u.ctx.lineTo(label.x - label.availableSpaceForText * devicePixelRatio, label.y - 20);
+      //     u.ctx.stroke();
+      //   } else {
+      //     u.ctx.beginPath();
+      //     u.ctx.strokeStyle = '#ffff00';
+      //     u.ctx.moveTo(label.x, label.y);
+      //     u.ctx.lineTo(label.x + label.availableSpaceForText * devicePixelRatio, label.y);
+      //     u.ctx.lineTo(label.x + label.availableSpaceForText * devicePixelRatio, label.y - 20);
+      //     u.ctx.stroke();
+      //   }
+      // }
+    }
+
+    return false;
   };
 
   // handle hover interaction with quadtree probing
@@ -319,15 +401,13 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     xValues,
     xSplits,
 
-    // pathbuilders
-    // drawBars,
-    draw,
     barsBuilder,
-    drawPoints,
 
     // hooks
     init,
     drawClear,
+    drawPoints,
+    draw,
     interpolateTooltip,
   };
 }
