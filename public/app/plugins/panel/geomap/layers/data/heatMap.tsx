@@ -1,11 +1,10 @@
-import React from 'react';
 import {
   FieldCalcs,
   FieldType,
   getFieldColorModeForField,
   GrafanaTheme2,
-  MapLayerConfig,
   MapLayerHandler,
+  MapLayerOptions,
   MapLayerRegistryItem,
   PanelData,
   reduceField,
@@ -15,27 +14,15 @@ import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
-import { dataFrameToPoints } from './utils'
-import { FieldMappingOptions, QueryFormat } from '../../types'
+import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 
 // Configuration options for Heatmap overlays
 export interface HeatmapConfig {
-  queryFormat: QueryFormat
-  fieldMapping: FieldMappingOptions,
   blur: number;
   radius: number;
 }
 
 const defaultOptions: HeatmapConfig = {
-  queryFormat: {
-    locationType: 'coordinates',
-  },
-  fieldMapping: {
-    metricField: '',
-    geohashField: '',
-    latitudeField: '',
-    longitudeField: '',
-  },
   blur: 15,
   radius: 5,
 };
@@ -53,8 +40,10 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerConfig<HeatmapConfig>, theme: GrafanaTheme2): MapLayerHandler => {
+  create: (map: Map, options: MapLayerOptions<HeatmapConfig>, theme: GrafanaTheme2): MapLayerHandler => {
     const config = { ...defaultOptions, ...options.config };
+    const matchers = getLocationMatchers(options.location);
+
     const vectorSource = new source.Vector();
 
     // Create a new Heatmap layer
@@ -81,9 +70,14 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
         });
 
         // Get data points (latitude and longitude coordinates)
-        const points = dataFrameToPoints(frame, config.fieldMapping, config.queryFormat);
+        const info = dataFrameToPoints(frame, matchers);
+        if(info.warning) {
+          console.log( 'WARN', info.warning);
+          return; // ???
+        }
+
         // Get the field of data values
-        const field = frame.fields.find(field => field.name === config.fieldMapping.metricField);
+        const field = frame.fields.find(field => field.type === FieldType.number); // TODO!!!!
         // Return early if metric field is not matched
         if (field === undefined) {
           return;
@@ -98,13 +92,13 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
           ]
         });
         // Map each data value into new points
-        points.map((point, i) => {
+        for (let i = 0; i < frame.length; i++) {
           const cluster = new Feature({
-              geometry: point,
+              geometry: info.points[i],
               value: normalize(calcs, field.values.get(i)),
           });
           vectorSource.addFeature(cluster);
-        });
+        };
         vectorLayer.setSource(vectorSource);
 
         // Set gradient of heatmap
@@ -123,85 +117,8 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
     builder
-      .addSelect({
-        path: 'queryFormat.locationType',
-        name: 'Query Format',
-        defaultValue: defaultOptions.queryFormat.locationType,
-        settings: {
-          options: [
-            {
-              value: 'coordinates',
-              label: 'Coordinates',
-            },
-            {
-              value: 'geohash',
-              label: 'Geohash',
-            },
-          ],
-        },
-      })
-      .addFieldNamePicker({
-        path: 'fieldMapping.latitudeField',
-        name: 'Latitude Field',
-        defaultValue: defaultOptions.fieldMapping.latitudeField,
-        settings: {
-          filter: (f) => f.type === FieldType.number,
-          noFieldsMessage: 'No numeric fields found',
-        },
-        showIf: (config) =>
-          config.queryFormat.locationType === 'coordinates',
-      })
-      .addFieldNamePicker({
-        path: 'fieldMapping.longitudeField',
-        name: 'Longitude Field',
-        defaultValue: defaultOptions.fieldMapping.longitudeField,
-        settings: {
-          filter: (f) => f.type === FieldType.number,
-          noFieldsMessage: 'No numeric fields found',
-        },
-        showIf: (config) =>
-          config.queryFormat.locationType === 'coordinates',
-      })
-      .addFieldNamePicker({
-        path: 'fieldMapping.geohashField',
-        name: 'Geohash Field',
-        defaultValue: defaultOptions.fieldMapping.geohashField,
-        settings: {
-          filter: (f) => f.type === FieldType.string,
-          noFieldsMessage: 'No strings fields found',
-          info: ({
-            name,
-            field,
-          }) => {
-            if(!name || !field) {
-              return <div>Select a field that contains <a href="https://en.wikipedia.org/wiki/Geohash">geohash</a> values in each row.</div>
-            }
-            const first = reduceField({field, reducers:[ReducerID.firstNotNull]})[ReducerID.firstNotNull] as string;
-            if(!first) {
-              return <div>No values found</div>
-            }
-            // const coords = decodeGeohash(first);
-            // if(coords) {
-            //   return <div>First value: {`${coords}`} // {new Date().toISOString()}</div>
-            // }
-            // return <div>Invalid first value: {`${first}`}</div>;
-            return null;
-          }
-        },
-        showIf: (config) =>
-          config.queryFormat.locationType === 'geohash',
-      })
-      .addFieldNamePicker({
-        path: 'fieldMapping.metricField',
-        name: 'Metric Field',
-        defaultValue: defaultOptions.fieldMapping.metricField,
-        settings: {
-          filter: (f) => f.type === FieldType.number,
-          noFieldsMessage: 'No numeric fields found',
-        },
-      })
       .addSliderInput({
-        path: 'radius',
+        path: 'config.radius',
         description: 'configures the size of clusters',
         name: 'Radius',
         defaultValue: defaultOptions.radius,
@@ -212,7 +129,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
         },
       })
       .addSliderInput({
-        path: 'blur',
+        path: 'config.blur',
         description: 'configures the amount of blur of clusters',
         name: 'Blur',
         defaultValue: defaultOptions.blur,
@@ -223,7 +140,6 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
         },
       });
   },
-
   // fill in the default values
   defaultOptions,
 };
