@@ -36,7 +36,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
   // The options change with each layer type
   const optionsEditorBuilder = useMemo(() => {
     const layer = geomapLayerRegistry.getIfExists(options?.type);
-    if (!layer || !layer.registerOptionsUI) {
+    if (!layer || !(layer.registerOptionsUI || layer.showLocation || layer.showOpacity)) {
       return null;
     }
     const builder = new PanelOptionsEditorBuilder();
@@ -85,7 +85,9 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
           // info: (props) => <div>HELLO</div>,
         });
     }
-    layer.registerOptionsUI(builder);
+    if (layer.registerOptionsUI) {
+      layer.registerOptionsUI(builder);
+    }
     if (layer.showOpacity) {
       // TODO -- add opacity check
     }
