@@ -421,6 +421,7 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 // TODO this is a terrible way to do this, refactor
 type Resource struct {
 	Value interface{}
+	Name  string
 }
 
 // WrapCUEError is a wrapper for cueErrors that occur and are not self explanatory.

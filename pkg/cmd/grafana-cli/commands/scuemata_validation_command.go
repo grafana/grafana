@@ -1,6 +1,7 @@
 package commands
 
 import (
+	gerrors "errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -25,38 +26,34 @@ func (cmd Command) validateScuemataBasics(c utils.CommandLine) error {
 }
 
 func (cmd Command) validateResources(c utils.CommandLine) error {
-	resource := c.String("dashboard")
-	b, err := os.Open(filepath.Clean(resource))
+	filename := c.String("dashboard")
+	if filename == "" {
+		return gerrors.New("must specify dashboard to validate with --dashboard")
+	}
+	b, err := os.Open(filepath.Clean(filename))
+	res := schema.Resource{Value: b, Name: filename}
 	if err != nil {
 		return err
 	}
 
-	if err := validateResources(b, paths, load.BaseDashboardFamily); err != nil {
+	if err := validateResources(res, paths, load.BaseDashboardFamily); err != nil {
 		return err
 	}
 
-	if err := validateResources(b, paths, load.DistDashboardFamily); err != nil {
+	if err := validateResources(res, paths, load.DistDashboardFamily); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func validateResources(resource interface{}, p load.BaseLoadPaths, loader func(p load.BaseLoadPaths) (schema.VersionedCueSchema, error)) error {
+func validateResources(res schema.Resource, p load.BaseLoadPaths, loader func(p load.BaseLoadPaths) (schema.VersionedCueSchema, error)) error {
 	dash, err := loader(p)
 	if err != nil {
 		return fmt.Errorf("error while loading dashboard scuemata, err: %w", err)
 	}
 
-	// Validate checks that the resource is correct with respect to the schema.
-	if resource != nil {
-		err := dash.Validate(schema.Resource{Value: resource})
-		if err != nil {
-			return fmt.Errorf("failed validation: %w", err)
-		}
-	}
-
-	return nil
+	return dash.Validate(res)
 }
 
 func validateScuemata(p load.BaseLoadPaths, loader func(p load.BaseLoadPaths) (schema.VersionedCueSchema, error)) error {

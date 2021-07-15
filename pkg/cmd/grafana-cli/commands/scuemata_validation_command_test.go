@@ -1,12 +1,15 @@
 package commands
 
 import (
+	"encoding/json"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
 	"testing/fstest"
 
+	"cuelang.org/go/cue/errors"
 	"github.com/grafana/grafana/pkg/schema"
 	"github.com/grafana/grafana/pkg/schema/load"
 	"github.com/laher/mergefs"
@@ -98,11 +101,12 @@ func TestValidateScuemataBasics(t *testing.T) {
 				t.Run(path, func(t *testing.T) {
 					b, err := mergedFS.Open(path)
 					require.NoError(t, err, "failed to open dashboard file")
+					res := schema.Resource{Value: b, Name: path}
 
-					err = validateResources(b, baseLoadPaths, load.BaseDashboardFamily)
+					err = validateResources(res, baseLoadPaths, load.BaseDashboardFamily)
 					require.NoError(t, err, "error while loading base dashboard scuemata")
 
-					err = validateResources(b, baseLoadPaths, load.DistDashboardFamily)
+					err = validateResources(res, baseLoadPaths, load.DistDashboardFamily)
 					require.NoError(t, err, "error while loading dist dashboard scuemata")
 				})
 			}
@@ -110,8 +114,9 @@ func TestValidateScuemataBasics(t *testing.T) {
 				t.Run(path, func(t *testing.T) {
 					b, err := mergedFS.Open(path)
 					require.NoError(t, err, "failed to open dashboard file")
+					res := schema.Resource{Value: b, Name: path}
 
-					err = validateResources(b, baseLoadPaths, load.BaseDashboardFamily)
+					err = validateResources(res, baseLoadPaths, load.BaseDashboardFamily)
 					assert.EqualError(t, err, "failed validation: Family.lineages.0.0.panels.0.type: incomplete value !=\"\"")
 				})
 			}
@@ -119,29 +124,55 @@ func TestValidateScuemataBasics(t *testing.T) {
 			return nil
 		}))
 	})
+}
 
-	t.Run("Testing validate resources against devenv directory", func(t *testing.T) {
-		var baseLoadPaths = load.BaseLoadPaths{
-			BaseCueFS:       defaultBaseLoadPaths.BaseCueFS,
-			DistPluginCueFS: defaultBaseLoadPaths.DistPluginCueFS,
+func TestValidateDevenvDashboards(t *testing.T) {
+	var baseLoadPaths = load.BaseLoadPaths{
+		BaseCueFS:       defaultBaseLoadPaths.BaseCueFS,
+		DistPluginCueFS: defaultBaseLoadPaths.DistPluginCueFS,
+	}
+	vcs, err := load.BaseDashboardFamily(baseLoadPaths)
+	require.NoError(t, err, "failed to load base dashboard family")
+
+	require.NoError(t, filepath.Walk("../../../../devenv/dev-dashboards/", func(path string, info os.FileInfo, err error) error {
+		require.NoError(t, err)
+		if info.IsDir() {
+			return nil
 		}
 
-		require.NoError(t, filepath.Walk("../../../../devenv/dev-dashboards/", func(path string, info os.FileInfo, err error) error {
-			require.NoError(t, err)
-			if !info.IsDir() {
-				// Ignore gosec warning G304 since it's a test
-				// nolint:gosec
-				b, err := os.Open(path)
-				require.NoError(t, err, "failed to open resource file")
+		// Ignore gosec warning G304 since it's a test
+		// nolint:gosec
+		b, err := os.Open(path)
+		require.NoError(t, err, "failed to open resource file")
+		// Only try to validate dashboards with schemaVersion >= 30
+		jtree := make(map[string]interface{})
+		byt, err := io.ReadAll(b)
+		if err != nil {
+			t.Error(err)
+		}
+		json.Unmarshal(byt, &jtree)
 
-				err = validateResources(b, baseLoadPaths, load.BaseDashboardFamily)
-				cueError := schema.WrapCUEError(err)
-				require.NoError(t, cueError, "error while loading base dashboard scuemata")
-
-				err = validateResources(b, baseLoadPaths, load.DistDashboardFamily)
-				require.NoError(t, err, "error while loading dist dashboard scuemata")
-			}
+		if oldschemav, has := jtree["schemaVersion"]; !has {
+			t.Logf("no schemaVersion in %s", path)
 			return nil
-		}))
-	})
+		} else {
+			if !(oldschemav.(float64) > 29) {
+				t.Logf("schemaVersion is %v, older than 30, skipping %s", oldschemav, path)
+			}
+		}
+
+		res := schema.Resource{Value: b, Name: path}
+		err = vcs.Validate(res)
+		if err != nil {
+			t.Fatalf("failed validation: %s", errors.Details(err, nil))
+		}
+
+		// err = validateResources(res, baseLoadPaths, load.BaseDashboardFamily)
+		// cueError := schema.WrapCUEError(err)
+		// require.NoError(t, cueError, "error while loading base dashboard scuemata")
+
+		// err = validateResources(res, baseLoadPaths, load.DistDashboardFamily)
+		// require.NoError(t, err, "error while loading dist dashboard scuemata")
+		return nil
+	}))
 }
