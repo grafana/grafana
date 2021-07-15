@@ -56,9 +56,6 @@ describe('Worldmap Migrations', () => {
             "showZoom": true,
           },
           "layers": Array [],
-          "queryFormat": Object {
-            "locationType": "coordinates",
-          },
           "view": Object {
             "center": Object {
               "id": "europe",
