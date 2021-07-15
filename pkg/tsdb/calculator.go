@@ -53,8 +53,8 @@ func (i *Interval) Milliseconds() int64 {
 }
 
 func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration) Interval {
-	to := timerange.To.Unix()
-	from := timerange.From.Unix()
+	to := timerange.To.UnixNano()
+	from := timerange.From.UnixNano()
 	intrvl := time.Duration((to - from) / defaultRes)
 
 	if intrvl < minInterval {
