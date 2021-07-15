@@ -304,9 +304,18 @@ export function modifyQueries(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export const runQueries = (exploreId: ExploreId, options?: { replaceUrl?: boolean }): ThunkResult<void> => {
+export const runQueries = (
+  exploreId: ExploreId,
+  options?: { replaceUrl?: boolean; preserveCache?: boolean }
+): ThunkResult<void> => {
   return (dispatch, getState) => {
     dispatch(updateTime({ exploreId }));
+
+    // We always want to clear cache unless we explicitly pass preserveCache parameter
+    const preserveCache = options?.preserveCache === true;
+    if (!preserveCache) {
+      dispatch(clearCache(exploreId));
+    }
 
     const richHistory = getState().explore.richHistory;
     const exploreItemState = getState().explore[exploreId]!;

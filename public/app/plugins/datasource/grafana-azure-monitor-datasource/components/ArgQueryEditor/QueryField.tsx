@@ -18,7 +18,7 @@ const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, onQueryChange
 
   return (
     <CodeEditor
-      value={query.azureResourceGraph.query}
+      value={query.azureResourceGraph?.query ?? ''}
       language="kusto"
       height={200}
       width={1000}

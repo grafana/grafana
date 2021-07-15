@@ -1,19 +1,7 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { pluginLog } from '../utils';
-
-interface Selection {
-  min: number;
-  max: number;
-
-  // selection bounding box, relative to canvas
-  bbox: {
-    top: number;
-    left: number;
-    width: number;
-    height: number;
-  };
-}
+import { PlotSelection } from '../types';
 
 interface ZoomPluginProps {
   onZoom: (range: { from: number; to: number }) => void;
@@ -27,7 +15,7 @@ const MIN_ZOOM_DIST = 5;
  * @alpha
  */
 export const ZoomPlugin: React.FC<ZoomPluginProps> = ({ onZoom, config }) => {
-  const [selection, setSelection] = useState<Selection | null>(null);
+  const [selection, setSelection] = useState<PlotSelection | null>(null);
 
   useEffect(() => {
     if (selection) {

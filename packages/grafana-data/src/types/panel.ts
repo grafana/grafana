@@ -124,6 +124,7 @@ export interface PanelEditorProps<T = any> {
 export interface PanelModel<TOptions = any> {
   /** ID of the panel within the current dashboard */
   id: number;
+  alert?: any;
   /** Panel options */
   options: TOptions;
   /** Field options configuration */
