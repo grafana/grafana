@@ -1,27 +1,11 @@
 import React, { Suspense } from 'react';
 import { Icon, Tooltip } from '@grafana/ui';
-
-export interface FunctionDescriptor {
-  text: string;
-  params: string[];
-  def: {
-    category: string;
-    defaultParams: string[];
-    description?: string;
-    fake: boolean;
-    name: string;
-    params: string[];
-    /**
-     * True if the function was not found on the list of available function descriptions.
-     */
-    unknown?: boolean;
-  };
-}
+import { FuncInstance } from './gfunc';
 
 export interface FunctionEditorControlsProps {
-  onMoveLeft: (func: FunctionDescriptor) => void;
-  onMoveRight: (func: FunctionDescriptor) => void;
-  onRemove: (func: FunctionDescriptor) => void;
+  onMoveLeft: (func: FuncInstance) => void;
+  onMoveRight: (func: FuncInstance) => void;
+  onRemove: (func: FuncInstance) => void;
 }
 
 const FunctionDescription = React.lazy(async () => {
@@ -64,7 +48,7 @@ const FunctionHelpButton = (props: { description?: string; name: string }) => {
 
 export const FunctionEditorControls = (
   props: FunctionEditorControlsProps & {
-    func: FunctionDescriptor;
+    func: FuncInstance;
   }
 ) => {
   const { func, onMoveLeft, onMoveRight, onRemove } = props;

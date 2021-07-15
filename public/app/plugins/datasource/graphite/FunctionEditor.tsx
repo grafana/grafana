@@ -1,10 +1,11 @@
 import React, { useRef } from 'react';
 import { PopoverController, Popover, ClickOutsideWrapper, Icon, Tooltip, useTheme } from '@grafana/ui';
-import { FunctionDescriptor, FunctionEditorControls, FunctionEditorControlsProps } from './FunctionEditorControls';
+import { FunctionEditorControls, FunctionEditorControlsProps } from './FunctionEditorControls';
+import { FuncInstance } from './gfunc';
 import { css } from '@emotion/css';
 
 interface FunctionEditorProps extends FunctionEditorControlsProps {
-  func: FunctionDescriptor;
+  func: FuncInstance;
 }
 
 const FunctionEditor: React.FC<FunctionEditorProps> = ({ onMoveLeft, onMoveRight, func, ...props }) => {

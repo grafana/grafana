@@ -3,6 +3,7 @@ import { each, map } from 'lodash';
 import { dispatch } from '../../../../store/store';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { createErrorNotification } from '../../../../core/copy/appNotification';
+import { FuncInstance } from '../gfunc';
 
 /**
  * Helpers used by reducers and providers. They modify state object directly so should operate on a copy of the state.
@@ -134,10 +135,7 @@ export async function addSeriesByTagFunc(state: GraphiteQueryEditorState, tag: s
   await parseTarget(state);
 }
 
-export function smartlyHandleNewAliasByNode(
-  state: GraphiteQueryEditorState,
-  func: { def: { name: string }; params: number[]; added: boolean }
-): void {
+export function smartlyHandleNewAliasByNode(state: GraphiteQueryEditorState, func: FuncInstance): void {
   if (func.def.name !== 'aliasByNode') {
     return;
   }

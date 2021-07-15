@@ -13,6 +13,11 @@ describe('gfunc', () => {
   });
 
   it('marks function as unknown when it is not available in the index', () => {
-    expect(gfunc.getFuncDef('bar', INDEX)).toEqual({ name: 'bar', params: [{ multiple: true }], unknown: true });
+    expect(gfunc.getFuncDef('bar', INDEX)).toEqual({
+      name: 'bar',
+      params: [{ name: '', type: '', multiple: true }],
+      defaultParams: [''],
+      unknown: true,
+    });
   });
 });
