@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { FrameGeometrySourceMode, PanelPlugin } from '@grafana/data';
 import { BaseLayerEditor } from './editor/BaseLayerEditor';
 import { DataLayersEditor } from './editor/DataLayersEditor';
 import { GeomapPanel } from './GeomapPanel';
@@ -6,6 +6,8 @@ import { MapCenterEditor } from './editor/MapCenterEditor';
 import { defaultView, GeomapPanelOptions } from './types';
 import { MapZoomEditor } from './editor/MapZoomEditor';
 import { mapPanelChangedHandler } from './migrations';
+import { defaultGrafanaThemedMap } from './layers/basemaps';
+import { MARKERS_LAYER_ID } from './layers/data/markersLayer';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
@@ -46,6 +48,10 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       path: 'basemap',
       name: 'Base Layer',
       editor: BaseLayerEditor,
+      defaultValue: {
+        type: defaultGrafanaThemedMap.id,
+        config: defaultGrafanaThemedMap.defaultOptions,
+      },
     });
 
     builder.addCustomEditor({
@@ -54,6 +60,15 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       path: 'layers',
       name: 'Data Layer',
       editor: DataLayersEditor,
+      defaultValue: [
+        {
+          type: MARKERS_LAYER_ID,
+          config: {},
+          location: {
+            mode: FrameGeometrySourceMode.Auto,
+          },
+        },
+      ],
     });
 
     // The controls section

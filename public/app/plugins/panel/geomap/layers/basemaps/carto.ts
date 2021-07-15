@@ -1,4 +1,4 @@
-import { MapLayerRegistryItem, MapLayerConfig, GrafanaTheme2 } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
 import Map from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 import TileLayer from 'ol/layer/Tile';
@@ -31,7 +31,7 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerConfig<CartoConfig>, theme: GrafanaTheme2) => ({
+  create: (map: Map, options: MapLayerOptions<CartoConfig>, theme: GrafanaTheme2) => ({
     init: () => {
       const cfg = { ...defaultCartoConfig, ...options.config };
       let style = cfg.theme as string;
@@ -55,7 +55,7 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
   registerOptionsUI: (builder) => {
     builder
       .addRadio({
-        path: 'theme',
+        path: 'config.theme',
         name: 'Theme',
         settings: {
           options: [
@@ -67,7 +67,7 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
         defaultValue: defaultCartoConfig.theme!,
       })
       .addBooleanSwitch({
-        path: 'showLabels',
+        path: 'config.showLabels',
         name: 'Show labels',
         description: '',
         defaultValue: defaultCartoConfig.showLabels,
