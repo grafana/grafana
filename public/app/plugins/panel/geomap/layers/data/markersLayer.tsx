@@ -11,13 +11,15 @@ import { getScaledDimension, } from '../../dims/scale';
 import { getColorDimension, } from '../../dims/color';
 import { ScaleDimensionEditor } from '../../dims/editors/ScaleDimensionEditor';
 import { ColorDimensionEditor } from '../../dims/editors/ColorDimensionEditor';
-
+import { IconPickerEditor } from '../../editor/IconPickerEditor';
+import { shapes } from '../../utils/regularShapes';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
   size: ScaleDimensionConfig;
   color: ColorDimensionConfig;
   fillOpacity: number;
+  shape?: string;
 }
 
 const defaultOptions: MarkersConfig = {
@@ -30,6 +32,7 @@ const defaultOptions: MarkersConfig = {
     fixed: '#f00', 
   },
   fillOpacity: 0.4,
+  shape: ''
 };
 
 export const MARKERS_LAYER_ID = "markers";
@@ -89,21 +92,29 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           const dot = new Feature({
               geometry: info.points[i],
           });
-
+          // choose from dropdown of regular shapes
+          const shapesArr = shapes(fillColor)
+          if (config.icon) {
+            console.log('config icon', config.icon)
+            const shape = shapesArr.find(el => el.label === config.icon)
+            dot.setStyle(shape?.value)
+            // default as circle  
+          } else {
           // Set the style of each feature dot
-          dot.setStyle(new style.Style({
-            image: new style.Circle({
-              // Stroke determines the outline color of the circle
-              stroke: new style.Stroke({
-                color: color,
-              }),
-              // Fill determines the color to fill the whole circle
-              fill: new style.Fill({
-                color: tinycolor(fillColor).toString(),
-              }),
-              radius: radius,
-            })
-          }));
+            dot.setStyle(new style.Style({
+              image: new style.Circle({
+                // Stroke determines the outline color of the circle
+                stroke: new style.Stroke({
+                  color: color,
+                }),
+                // Fill determines the color to fill the whole circle
+                fill: new style.Fill({
+                  color: tinycolor(fillColor).toString(),
+                }),
+                radius: radius,
+              })
+            }));
+          }
           features.push(dot);
         };
 
@@ -150,7 +161,14 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             max: 1,
             step: 0.1,
           },
-        });
+      })
+      .addCustomEditor({
+        id: 'icon',
+        path: 'config.icon',
+        name: 'Icon',
+        editor: IconPickerEditor,
+        defaultValue: '',
+      });
   },
   // fill in the default values
   defaultOptions,

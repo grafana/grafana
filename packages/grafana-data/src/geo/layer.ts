@@ -38,37 +38,6 @@ export interface FrameGeometrySource {
 }
 
 /**
- * @alpha
- */
-export enum FrameGeometrySourceMode {
-  Auto = 'auto', // Will scan fields and find best match
-  Geohash = 'geohash',
-  Coords = 'coords', // lon field, lat field
-  Lookup = 'lookup', // keys > location
-  // H3 = 'h3',
-  // WKT = 'wkt,
-  // geojson? geometry text
-}
-
-/**
- * @alpha
- */
-export interface FrameGeometrySource {
-  mode: FrameGeometrySourceMode;
-
-  // Field mappings
-  geohash?: string;
-  latitude?: string;
-  longitude?: string;
-  h3?: string;
-  wkt?: string;
-  lookup?: string;
-
-  // Path to a mappings file
-  lookupSrc: string;
-}
-
-/**
  * This gets saved in panel json
  *
  * depending on the type, it may have additional config
