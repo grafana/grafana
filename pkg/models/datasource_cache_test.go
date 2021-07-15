@@ -312,14 +312,19 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 }
 
 func TestDataSource_getTimeout(t *testing.T) {
-	setting.DataProxyTimeout = 30
+	originalTimeout := sdkhttpclient.DefaultTimeoutOptions.Timeout
+	sdkhttpclient.DefaultTimeoutOptions.Timeout = 60 * time.Second
+	t.Cleanup(func() {
+		sdkhttpclient.DefaultTimeoutOptions.Timeout = originalTimeout
+	})
+
 	testCases := []struct {
 		jsonData        *simplejson.Json
 		expectedTimeout time.Duration
 	}{
-		{jsonData: simplejson.New(), expectedTimeout: 30 * time.Second},
-		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": nil}), expectedTimeout: 30 * time.Second},
-		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": 0}), expectedTimeout: 30 * time.Second},
+		{jsonData: simplejson.New(), expectedTimeout: 60 * time.Second},
+		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": nil}), expectedTimeout: 60 * time.Second},
+		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": 0}), expectedTimeout: 60 * time.Second},
 		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": 1}), expectedTimeout: time.Second},
 		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": "2"}), expectedTimeout: 2 * time.Second},
 	}
