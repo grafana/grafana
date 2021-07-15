@@ -21,7 +21,7 @@ function mapOptions(options: string[]): Array<SelectableValue<string>> {
   });
 }
 
-export function FieldEditor({
+export function FunctionParamEditor({
   name,
   value = undefined,
   options,
