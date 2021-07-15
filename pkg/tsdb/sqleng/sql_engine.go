@@ -69,6 +69,7 @@ type DataSourceInfo struct {
 	metricColumnTypes      []string
 	log                    log.Logger
 	cfg                    *setting.Cfg
+	jsonData               JsonData
 }
 
 type DataPluginConfiguration struct {
@@ -77,6 +78,16 @@ type DataPluginConfiguration struct {
 	ConnectionString  string
 	TimeColumnNames   []string
 	MetricColumnTypes []string
+}
+
+type JsonData struct {
+	maxOpenConns    int `json:"maxOpenConns"`
+	maxIdleConns    int `json:"maxIdleConns"`
+	connMaxLifetime int `json:"connMaxLifetime"`
+}
+
+type QueryJson struct {
+	rawSql string `json:"rawSql"`
 }
 
 func (e *DataSourceInfo) transformQueryError(err error) error {
@@ -95,12 +106,18 @@ func (e *DataSourceInfo) transformQueryError(err error) error {
 
 func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
 	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceInfo, error) {
+	jsonData := JsonData{maxOpenConns: 0, maxIdleConns: 2, connMaxLifetime: 14400}
+	err := json.Unmarshal(config.Datasource.JSONData, &jsonData)
+	if err != nil {
+		return nil, fmt.Errorf("error reading settings: %w", err)
+	}
 
 	dsInfo := DataSourceInfo{
 		queryResultTransformer: queryResultTransformer,
 		macroEngine:            macroEngine,
 		timeColumnNames:        []string{"time"},
 		log:                    log,
+		jsonData:               jsonData,
 	}
 
 	if len(config.TimeColumnNames) > 0 {
@@ -126,18 +143,6 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 		return nil, err
 	}
 
-	type JsonData struct {
-		maxOpenConns    int `json:"maxOpenConns"`
-		maxIdleConns    int `json:"maxIdleConns"`
-		connMaxLifetime int `json:"connMaxLifetime"`
-	}
-
-	jsonData := JsonData{maxOpenConns: 0, maxIdleConns: 2, connMaxLifetime: 14400}
-	err = json.Unmarshal(config.Datasource.JSONData, &jsonData)
-	if err != nil {
-		return nil, fmt.Errorf("error reading settings: %w", err)
-	}
-
 	engine.SetMaxOpenConns(jsonData.maxOpenConns)
 	engine.SetMaxIdleConns(jsonData.maxIdleConns)
 	engine.SetConnMaxLifetime(time.Duration(jsonData.connMaxLifetime) * time.Second)
@@ -145,7 +150,6 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 	engineCache.updates[config.Datasource.ID] = config.Datasource.Updated
 	engineCache.cache[config.Datasource.ID] = engine
 	dsInfo.engine = engine
-
 	return &dsInfo, nil
 }
 
@@ -158,13 +162,17 @@ func (e *DataSourceInfo) QueryData(ctx context.Context, req *backend.QueryDataRe
 	var wg sync.WaitGroup
 	// Execute each query in a goroutine and wait for them to finish afterwards
 	for _, query := range req.Queries {
-
-		if query.Model.Get("rawSql").MustString() == "" {
+		var queryjson QueryJson
+		err := json.Unmarshal(query.JSON, &queryjson)
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshal query json: %w", err)
+		}
+		if queryjson.rawSql == "" {
 			continue
 		}
 
 		wg.Add(1)
-		go e.executeQuery(query, &wg, ctx, ch)
+		go e.executeQuery(query, &wg, ctx, ch, queryjson)
 	}
 
 	wg.Wait()
@@ -180,9 +188,8 @@ func (e *DataSourceInfo) QueryData(ctx context.Context, req *backend.QueryDataRe
 }
 
 func (e *DataSourceInfo) executeQuery(query backend.DataQuery, wg *sync.WaitGroup, queryContext context.Context,
-	ch chan backend.DataResponse) {
+	ch chan backend.DataResponse, queryJson QueryJson) {
 	defer wg.Done()
-	query.RefID
 	queryResult := backend.DataResponse{
 		// RefID: query.RefID,
 	}
@@ -201,8 +208,7 @@ func (e *DataSourceInfo) executeQuery(query backend.DataQuery, wg *sync.WaitGrou
 		}
 	}()
 
-	rawSQL := query.Model.Get("rawSql").MustString()
-	if rawSQL == "" {
+	if queryJson.rawSql == "" {
 		panic("Query model property rawSql should not be empty at this point")
 	}
 
@@ -219,7 +225,7 @@ func (e *DataSourceInfo) executeQuery(query backend.DataQuery, wg *sync.WaitGrou
 	}
 
 	// global substitutions
-	interpolatedQuery, err := Interpolate(query, timeRange, rawSQL)
+	interpolatedQuery, err := Interpolate(query, timeRange, queryJson.rawSql)
 	if err != nil {
 		errAppendDebug("interpolation failed", e.transformQueryError(err), interpolatedQuery)
 		return
