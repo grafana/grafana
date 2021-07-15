@@ -43,6 +43,7 @@ type StartRendererFunc func(pluginID string, renderer pluginextensionv2.Renderer
 
 // PluginDescriptor is a descriptor used for registering backend plugins.
 type PluginDescriptor struct {
+	provider         string
 	pluginID         string
 	executablePath   string
 	managed          bool
@@ -58,6 +59,7 @@ func getV2PluginSet() goplugin.PluginSet {
 		"data":        &grpcplugin.DataGRPCPlugin{},
 		"stream":      &grpcplugin.StreamGRPCPlugin{},
 		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
+		"provider":    &pluginextensionv2.ProviderGRPCPlugin{},
 	}
 }
 
@@ -65,6 +67,18 @@ func getV2PluginSet() goplugin.PluginSet {
 func NewBackendPlugin(pluginID, executablePath string) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,
+		executablePath: executablePath,
+		managed:        true,
+		versionedPlugins: map[int]goplugin.PluginSet{
+			grpcplugin.ProtocolVersion: getV2PluginSet(),
+		},
+	})
+}
+
+// NewProviderPlugin creates a new provider plugin factory used for registering a provider plugin.
+func NewProviderPlugin(provider, executablePath string) backendplugin.PluginFactoryFunc {
+	return newPlugin(PluginDescriptor{
+		provider:       provider,
 		executablePath: executablePath,
 		managed:        true,
 		versionedPlugins: map[int]goplugin.PluginSet{

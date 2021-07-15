@@ -6,12 +6,34 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 )
+
+// ServeOpts options for serving core plugins.
+type ServeOpts struct {
+	Provider pluginextensionv2.ProviderServer
+
+	// CheckHealthHandler handler for health checks.
+	CheckHealthHandler backend.CheckHealthHandler
+
+	// CallResourceHandler handler for resource calls.
+	// Optional to implement.
+	CallResourceHandler backend.CallResourceHandler
+
+	// QueryDataHandler handler for data queries.
+	// Required to implement if data source.
+	QueryDataHandler backend.QueryDataHandler
+
+	// StreamHandler handler for streaming queries.
+	// This is EXPERIMENTAL and is a subject to change till Grafana 8.
+	StreamHandler backend.StreamHandler
+}
 
 // corePlugin represents a plugin that's part of Grafana core.
 type corePlugin struct {
 	pluginID string
 	logger   log.Logger
+	pluginextensionv2.ProviderServer
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.QueryDataHandler
@@ -19,11 +41,12 @@ type corePlugin struct {
 }
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
-func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
+func New(opts ServeOpts) backendplugin.PluginFactoryFunc {
 	return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
 		return &corePlugin{
 			pluginID:            pluginID,
 			logger:              logger,
+			ProviderServer:      opts.Provider,
 			CheckHealthHandler:  opts.CheckHealthHandler,
 			CallResourceHandler: opts.CallResourceHandler,
 			QueryDataHandler:    opts.QueryDataHandler,
@@ -62,6 +85,14 @@ func (cp *corePlugin) Decommission() error {
 
 func (cp *corePlugin) IsDecommissioned() bool {
 	return false
+}
+
+func (cp *corePlugin) ConfigureProvider(ctx context.Context, req *pluginextensionv2.ConfigureProviderRequest) (*pluginextensionv2.ConfigureProviderResponse, error) {
+	if cp.ProviderServer != nil {
+		return cp.ProviderServer.ConfigureProvider(ctx, req)
+	}
+
+	return nil, backendplugin.ErrMethodNotImplemented
 }
 
 func (cp *corePlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {

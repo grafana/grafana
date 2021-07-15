@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 )
 
 // Manager manages backend plugins.
@@ -30,6 +31,9 @@ type Manager interface {
 	CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string)
 	// Get plugin by its ID.
 	Get(pluginID string) (Plugin, bool)
+
+	// RegisterProviderDependency registers a dependency between plugin (pluginID) and provider (providerID).
+	RegisterPluginProviderDependency(ctx context.Context, pluginID, providerID string) error
 }
 
 // Plugin is the backend plugin interface.
@@ -47,4 +51,5 @@ type Plugin interface {
 	backend.QueryDataHandler
 	backend.CallResourceHandler
 	backend.StreamHandler
+	pluginextensionv2.ProviderServer
 }

@@ -13,7 +13,7 @@ import (
 
 func TestCorePlugin(t *testing.T) {
 	t.Run("New core plugin with empty opts should return expected values", func(t *testing.T) {
-		factory := coreplugin.New(backend.ServeOpts{})
+		factory := coreplugin.New(coreplugin.ServeOpts{})
 		p, err := factory("plugin", log.New("test"), nil)
 		require.NoError(t, err)
 		require.NotNil(t, p)
@@ -35,7 +35,7 @@ func TestCorePlugin(t *testing.T) {
 	t.Run("New core plugin with handlers set in opts should return expected values", func(t *testing.T) {
 		checkHealthCalled := false
 		callResourceCalled := false
-		factory := coreplugin.New(backend.ServeOpts{
+		factory := coreplugin.New(coreplugin.ServeOpts{
 			CheckHealthHandler: backend.CheckHealthHandlerFunc(func(ctx context.Context,
 				req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 				checkHealthCalled = true
