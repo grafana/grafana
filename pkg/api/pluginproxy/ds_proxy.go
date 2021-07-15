@@ -304,7 +304,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 }
 
 func (proxy *DataSourceProxy) logRequest() {
-	if !setting.DataProxyLogging {
+	if !proxy.cfg.DataProxyLogging {
 		return
 	}
 
