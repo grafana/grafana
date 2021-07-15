@@ -55,12 +55,6 @@ describe('Worldmap Migrations', () => {
             "showLegend": true,
             "showZoom": true,
           },
-          "fieldMapping": Object {
-            "geohashField": "",
-            "latitudeField": "",
-            "longitudeField": "",
-            "metricField": "",
-          },
           "layers": Array [],
           "queryFormat": Object {
             "locationType": "coordinates",
