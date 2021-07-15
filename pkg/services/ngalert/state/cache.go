@@ -3,6 +3,7 @@ package state
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	text_template "text/template"
@@ -35,12 +36,10 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
-	templateData := make(map[string]string, len(result.Instance)+3)
-	for k, v := range result.Instance {
-		templateData[k] = v
-	}
-	attachRuleLabels(templateData, alertRule)
-	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(alertRule, templateData)
+	// clone the labels so we don't change eval.Result
+	labels := result.Instance.Copy()
+	attachRuleLabels(labels, alertRule)
+	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(alertRule, labels, result.Values)
 
 	// if duplicate labels exist, alertRule label will take precedence
 	lbs := mergeLabels(ruleLabels, result.Instance)
@@ -89,11 +88,11 @@ func attachRuleLabels(m map[string]string, alertRule *ngModels.AlertRule) {
 	m[prometheusModel.AlertNameLabel] = alertRule.Title
 }
 
-func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, data map[string]string) (map[string]string, map[string]string) {
+func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, labels map[string]string, values map[string]eval.NumberValueCapture) (map[string]string, map[string]string) {
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
-			ev, err := expandTemplate(alertRule.Title, v, data)
+			ev, err := expandTemplate(alertRule.Title, v, labels, values)
 			expanded[k] = ev
 			if err != nil {
 				c.log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
@@ -104,13 +103,28 @@ func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, da
 
 		return expanded
 	}
-
 	return expand(alertRule.Labels), expand(alertRule.Annotations)
 }
 
-func expandTemplate(name, text string, data map[string]string) (result string, resultErr error) {
+// templateCaptureValue represents each value in .Values in the annotations
+// and labels template.
+type templateCaptureValue struct {
+	Labels map[string]string
+	Value  *float64
+}
+
+// String implements the Stringer interface to print the value of each RefID
+// in the template via {{ $values.A }} rather than {{ $values.A.Value }}.
+func (v templateCaptureValue) String() string {
+	if v.Value != nil {
+		return strconv.FormatFloat(*v.Value, 'f', -1, 64)
+	}
+	return "null"
+}
+
+func expandTemplate(name, text string, labels map[string]string, values map[string]eval.NumberValueCapture) (result string, resultErr error) {
 	name = "__alert_" + name
-	text = "{{- $labels := .Labels -}}" + text
+	text = "{{- $labels := .Labels -}}{{- $values := .Values -}}" + text
 	// It'd better to have no alert description than to kill the whole process
 	// if there's a bug in the template.
 	defer func() {
@@ -128,12 +142,22 @@ func expandTemplate(name, text string, data map[string]string) (result string, r
 		return "", fmt.Errorf("error parsing template %v: %s", name, err.Error())
 	}
 	var buffer bytes.Buffer
-	err = tmpl.Execute(&buffer, struct {
+	if err := tmpl.Execute(&buffer, struct {
 		Labels map[string]string
+		Values map[string]templateCaptureValue
 	}{
-		Labels: data,
-	})
-	if err != nil {
+		Labels: labels,
+		Values: func() map[string]templateCaptureValue {
+			m := make(map[string]templateCaptureValue)
+			for k, v := range values {
+				m[k] = templateCaptureValue{
+					Labels: v.Labels,
+					Value:  v.Value,
+				}
+			}
+			return m
+		}(),
+	}); err != nil {
 		return "", fmt.Errorf("error executing template %v: %s", name, err.Error())
 	}
 	return buffer.String(), nil
