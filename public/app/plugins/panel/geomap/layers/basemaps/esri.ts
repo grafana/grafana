@@ -74,14 +74,14 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
   registerOptionsUI: (builder) => {
     builder
       .addSelect({
-        path: 'server',
+        path: 'config.server',
         name: 'Server instance',
         settings: {
           options: publicServiceRegistry.selectOptions().options,
         },
       })
       .addTextInput({
-        path: 'url',
+        path: 'config.url',
         name: 'URL template',
         description: 'Must include {x}, {y} or {-y}, and {z} placeholders',
         settings: {
@@ -90,7 +90,7 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
         showIf: (cfg) => cfg.server === CUSTOM_SERVICE,
       })
       .addTextInput({
-        path: 'attribution',
+        path: 'config.attribution',
         name: 'Attribution',
         settings: {
           placeholder: defaultXYZConfig.attribution,

@@ -42,7 +42,7 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
   registerOptionsUI: (builder) => {
     builder
       .addTextInput({
-        path: 'url',
+        path: 'config.url',
         name: 'URL template',
         description: 'Must include {x}, {y} or {-y}, and {z} placeholders',
         settings: {
@@ -50,7 +50,7 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
         },
       })
       .addTextInput({
-        path: 'attribution',
+        path: 'config.attribution',
         name: 'Attribution',
         settings: {
           placeholder: defaultXYZConfig.attribution,

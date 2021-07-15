@@ -1,11 +1,10 @@
-import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, Field, GrafanaTheme2 } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, GrafanaTheme2 } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as style from 'ol/style';
 import * as source from 'ol/source';
 import * as layer from 'ol/layer';
-import Point from 'ol/geom/Point';
-import { fromLonLat } from 'ol/proj';
+import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 
 export interface LastPointConfig {
   icon?: string;
@@ -45,28 +44,21 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
       source: vectorSource,
     });
 
+    const matchers = getLocationMatchers(options.location);
     return {
       init: () => vectorLayer,
       update: (data: PanelData) => {
         const frame = data.series[0];
         if (frame && frame.length) {
-          let lat: Field | undefined = undefined;
-          let lng: Field | undefined = undefined;
-          for (const field of frame.fields) {
-            if (field.name === 'lat') {
-              lat = field;
-            } else if (field.name === 'lng') {
-              lng = field;
-            }
+          const info = dataFrameToPoints(frame, matchers);
+          if(info.warning) {
+            console.log( 'WARN', info.warning);
+            return; // ???
           }
 
-          if (lat && lng) {
-            const idx = lat.values.length - 1;
-            const latV = lat.values.get(idx);
-            const lngV = lng.values.get(idx);
-            if (latV != null && lngV != null) {
-              point.setGeometry(new Point(fromLonLat([lngV, latV])));
-            }
+          if(info.points?.length) {
+            const last = info.points[info.points.length-1];
+            point.setGeometry(last);
           }
         }
       },

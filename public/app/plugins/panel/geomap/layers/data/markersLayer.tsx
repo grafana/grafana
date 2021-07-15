@@ -124,19 +124,19 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       //   },
       // })
       .addNumberInput({
-        path: 'minSize',
+        path: 'config.minSize',
         description: 'configures the min circle size',
         name: 'Min Size',
         defaultValue: defaultOptions.minSize,
       })
       .addNumberInput({
-        path: 'maxSize',
+        path: 'config.maxSize',
         description: 'configures the max circle size',
         name: 'Max Size',
         defaultValue: defaultOptions.maxSize,
       })
       .addSliderInput({
-        path: 'opacity',
+        path: 'config.opacity',
         description: 'configures the amount of transparency',
         name: 'Opacity',
         defaultValue: defaultOptions.opacity,
