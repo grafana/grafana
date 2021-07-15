@@ -5176,7 +5176,7 @@
   dependencies:
     "@types/node" "*"
 
-"@types/geojson@*", "@types/geojson@^7946.0.7":
+"@types/geojson@*":
   version "7946.0.7"
   resolved "https://registry.yarnpkg.com/@types/geojson/-/geojson-7946.0.7.tgz#c8fa532b60a0042219cdf173ca21a975ef0666ad"
   integrity sha512-wE2v81i4C4Ol09RtsWFAqg3BUitWbHSpSlIo+bNdsCJijO9sjme+zm+73ZMCa/qMC8UEERxzGbvmr1cffo2SiQ==
@@ -17204,11 +17204,6 @@ octokit-pagination-methods@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/octokit-pagination-methods/-/octokit-pagination-methods-1.1.0.tgz#cf472edc9d551055f9ef73f6e42b4dbb4c80bea4"
   integrity sha512-fZ4qZdQ2nxJvtcasX7Ghl+WlWS/d9IgnBIwFZXVNNZUmzpno91SX5bc5vuxiuKoCtK78XxGGNuSCrDC7xYB3OQ==
-
-ol-layerswitcher@^3.8.3:
-  version "3.8.3"
-  resolved "https://registry.yarnpkg.com/ol-layerswitcher/-/ol-layerswitcher-3.8.3.tgz#c27c7a7152849a968941a6b7aae978fda8bdfea3"
-  integrity sha512-UwUhalf/sGXjz3rvr0EjwsaUVlJAhyJCfcIPciKk1QdNbMKq/2ZXNKGafOjwP2eDxiqhkvnhpIrDGD8+gQ19Cg==
 
 ol-mapbox-style@^6.1.1:
   version "6.3.2"

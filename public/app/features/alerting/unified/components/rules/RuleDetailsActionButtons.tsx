@@ -28,7 +28,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const leftButtons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];
 
-  const { isEditable } = useIsRuleEditable(rulerRule);
+  const { isEditable } = useIsRuleEditable(getRulesSourceName(rulesSource), rulerRule);
   const returnTo = location.pathname + location.search;
   const isViewMode = inViewMode(location.pathname);
 

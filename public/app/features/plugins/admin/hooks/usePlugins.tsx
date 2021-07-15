@@ -1,50 +1,37 @@
-import { useEffect, useMemo, useState } from 'react';
-
+import { useMemo } from 'react';
+import { useAsync } from 'react-use';
 import { Plugin, LocalPlugin } from '../types';
 import { api } from '../api';
 
-type PluginsState = {
-  isLoading: boolean;
-  items: Plugin[];
-  installedPlugins: any[];
-};
-
 export const usePlugins = () => {
-  const [state, setState] = useState<PluginsState>({ isLoading: true, items: [], installedPlugins: [] });
+  const result = useAsync(async () => {
+    const items = await api.getRemotePlugins();
+    const filteredPlugins = items.filter((plugin) => {
+      const isNotRenderer = plugin.typeCode !== 'renderer';
+      const isSigned = Boolean(plugin.versionSignatureType);
 
-  useEffect(() => {
-    const fetchPluginData = async () => {
-      const items = await api.getRemotePlugins();
-      const filteredPlugins = items.filter((plugin) => {
-        const isNotRenderer = plugin.typeCode !== 'renderer';
-        const isSigned = Boolean(plugin.versionSignatureType);
-        const isNotEnterprise = plugin.status !== 'enterprise';
+      return isNotRenderer && isSigned;
+    });
 
-        return isNotRenderer && isSigned && isNotEnterprise;
-      });
+    const installedPlugins = await api.getInstalledPlugins();
 
-      const installedPlugins = await api.getInstalledPlugins();
-
-      setState((state) => ({ ...state, items: filteredPlugins, installedPlugins, isLoading: false }));
-    };
-
-    fetchPluginData();
+    return { items: filteredPlugins, installedPlugins };
   }, []);
 
-  return state;
+  return result;
 };
 
 type FilteredPluginsState = {
   isLoading: boolean;
-  items: Plugin[];
+  items: Array<Plugin | LocalPlugin>;
 };
 
 export const usePluginsByFilter = (searchBy: string, filterBy: string): FilteredPluginsState => {
-  const plugins = usePlugins();
+  const { loading, value } = usePlugins();
   const all = useMemo(() => {
     const combined: Plugin[] = [];
-    Array.prototype.push.apply(combined, plugins.items);
-    Array.prototype.push.apply(combined, plugins.installedPlugins);
+    Array.prototype.push.apply(combined, value?.items ?? []);
+    Array.prototype.push.apply(combined, value?.installedPlugins ?? []);
 
     const bySlug = combined.reduce((unique: Record<string, Plugin>, plugin) => {
       unique[plugin.slug] = plugin;
@@ -52,17 +39,17 @@ export const usePluginsByFilter = (searchBy: string, filterBy: string): Filtered
     }, {});
 
     return Object.values(bySlug);
-  }, [plugins.items, plugins.installedPlugins]);
+  }, [value?.items, value?.installedPlugins]);
 
   if (filterBy === 'installed') {
     return {
-      isLoading: plugins.isLoading,
-      items: applySearchFilter(searchBy, plugins.installedPlugins ?? []),
+      isLoading: loading,
+      items: applySearchFilter(searchBy, value?.installedPlugins ?? []),
     };
   }
 
   return {
-    isLoading: plugins.isLoading,
+    isLoading: loading,
     items: applySearchFilter(searchBy, all),
   };
 };
@@ -95,17 +82,12 @@ type PluginState = {
 };
 
 export const usePlugin = (slug: string): PluginState => {
-  const [state, setState] = useState<PluginState>({
-    isLoading: true,
-  });
-
-  useEffect(() => {
-    const fetchPluginData = async () => {
-      const plugin = await api.getPlugin(slug);
-      setState({ ...plugin, isLoading: false });
-    };
-    fetchPluginData();
+  const { loading, value } = useAsync(async () => {
+    return await api.getPlugin(slug);
   }, [slug]);
 
-  return state;
+  return {
+    isLoading: loading,
+    ...value,
+  };
 };

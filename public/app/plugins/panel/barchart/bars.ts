@@ -287,7 +287,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     return _dir === 1 ? splits : splits.reverse();
   };
 
-  const xValues: Axis.Values = (u) => u.data[0];
+  const xValues: Axis.Values = (u) => u.data[0].map((x) => formatValue(0, x));
 
   let hovered: Rect | undefined = undefined;
 
