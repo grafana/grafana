@@ -4,22 +4,35 @@ import { InterpolateFunction } from '@grafana/data';
 
 const index: any = {};
 
+type ParamDef = {
+  name: string;
+  type: string;
+  options?: Array<string | number>;
+  multiple?: boolean;
+  optional?: boolean;
+  version?: string;
+};
+
 export interface FuncDef {
   name: any;
+  params: ParamDef[];
+  defaultParams: Array<string | number>;
   category?: string;
-  params?: any;
-  defaultParams?: any;
   shortName?: any;
   fake?: boolean;
   version?: string;
   description?: string;
+  /**
+   * True if the function was not found on the list of available function descriptions.
+   */
+  unknown?: boolean;
 }
 
 export type FuncDefs = {
   [functionName in string]: FuncDef;
 };
 
-function addFuncDef(funcDef: FuncDef) {
+function addFuncDef(funcDef: Partial<FuncDef>) {
   funcDef.params = funcDef.params || [];
   funcDef.defaultParams = funcDef.defaultParams || [];
 
@@ -974,8 +987,8 @@ function isVersionRelatedFunction(obj: { version?: string }, graphiteVersion: st
 }
 
 export class FuncInstance {
-  def: any;
-  params: any;
+  def: FuncDef;
+  params: Array<string | number>;
   text: any;
   added: boolean;
   /**
@@ -986,11 +999,11 @@ export class FuncInstance {
    */
   hidden?: boolean;
 
-  constructor(funcDef: any, options?: { withDefaultParams: any }) {
+  constructor(funcDef: FuncDef, options?: { withDefaultParams: any }) {
     this.def = funcDef;
     this.params = [];
 
-    if (options && options.withDefaultParams) {
+    if (options && options.withDefaultParams && funcDef.defaultParams) {
       this.params = funcDef.defaultParams.slice(0);
     }
 
@@ -1085,16 +1098,16 @@ export class FuncInstance {
   }
 }
 
-function createFuncInstance(funcDef: any, options?: { withDefaultParams: any }, idx?: any) {
+function createFuncInstance(funcDef: any, options?: { withDefaultParams: any }, idx?: any): FuncInstance {
   if (isString(funcDef)) {
     funcDef = getFuncDef(funcDef, idx);
   }
   return new FuncInstance(funcDef, options);
 }
 
-function getFuncDef(name: string, idx?: any) {
+function getFuncDef(name: string, idx?: any): FuncDef {
   if (!(idx || index)[name]) {
-    return { name: name, params: [{ multiple: true }], unknown: true };
+    return { name: name, params: [{ name: '', type: '', multiple: true }], defaultParams: [''], unknown: true };
   }
   return (idx || index)[name];
 }
@@ -1114,8 +1127,8 @@ function getFuncDefs(graphiteVersion: string, idx?: any): FuncDefs {
 }
 
 // parse response from graphite /functions endpoint into internal format
-function parseFuncDefs(rawDefs: any) {
-  const funcDefs: any = {};
+function parseFuncDefs(rawDefs: any): FuncDefs {
+  const funcDefs: FuncDefs = {};
 
   forEach(rawDefs || {}, (funcDef, funcName) => {
     // skip graphite graph functions

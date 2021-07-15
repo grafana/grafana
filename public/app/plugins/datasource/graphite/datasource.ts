@@ -5,23 +5,23 @@ import {
   DataQueryResponse,
   DataSourceApi,
   dateMath,
+  MetricFindValue,
   QueryResultMetaStat,
   ScopedVars,
-  toDataFrame,
   TimeRange,
-  MetricFindValue,
+  toDataFrame,
 } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
-import gfunc, { FuncDefs } from './gfunc';
+import gfunc, { FuncDefs, FuncInstance } from './gfunc';
 import { getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 // Types
 import {
+  GraphiteLokiMapping,
   GraphiteOptions,
   GraphiteQuery,
   GraphiteQueryImportConfiguration,
   GraphiteType,
-  GraphiteLokiMapping,
   MetricTankRequestMeta,
 } from './types';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
@@ -636,7 +636,7 @@ export class GraphiteDatasource extends DataSourceApi<
       .toPromise();
   }
 
-  createFuncInstance(funcDef: any, options?: any) {
+  createFuncInstance(funcDef: any, options?: any): FuncInstance {
     return gfunc.createFuncInstance(funcDef, options, this.funcDefs);
   }
 

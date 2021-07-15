@@ -4,10 +4,10 @@ import { FuncDefs } from '../gfunc';
 describe('Graphite components helpers', () => {
   it('converts function definitions to selectable options', function () {
     const functionDefs: FuncDefs = {
-      functionA1: { name: 'functionA1', category: 'A' },
-      functionB1: { name: 'functionB1', category: 'B' },
-      functionA2: { name: 'functionA2', category: 'A' },
-      functionB2: { name: 'functionB2', category: 'B' },
+      functionA1: { name: 'functionA1', category: 'A', params: [], defaultParams: [] },
+      functionB1: { name: 'functionB1', category: 'B', params: [], defaultParams: [] },
+      functionA2: { name: 'functionA2', category: 'A', params: [], defaultParams: [] },
+      functionB2: { name: 'functionB2', category: 'B', params: [], defaultParams: [] },
     };
     const options = mapFuncDefsToSelectables(functionDefs);
 
