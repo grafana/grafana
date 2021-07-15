@@ -400,6 +400,11 @@ type Cfg struct {
 
 	// Grafana.com URL
 	GrafanaComURL string
+
+	// GeoMaps plugin tile server
+	TileServerURL         string
+	TileServerAttribution string
+	BaseLayerDisabled     bool
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -965,6 +970,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		Name:    dbName,
 		ConnStr: connStr,
 	}
+	geomapSection := iniFile.Section("geomap")
+	cfg.TileServerURL = valueAsString(geomapSection, "tile_server_url", "")
+	cfg.TileServerAttribution = valueAsString(geomapSection, "tile_server_attribution", "")
+	cfg.BaseLayerDisabled = geomapSection.Key("disable_other_baselayers").MustBool(false)
 
 	cfg.readDateFormats()
 	cfg.readSentryConfig()
