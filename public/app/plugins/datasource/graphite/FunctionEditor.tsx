@@ -1,11 +1,12 @@
 import React, { useRef } from 'react';
 import { PopoverController, Popover, ClickOutsideWrapper, Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import { FunctionDescriptor, FunctionEditorControls, FunctionEditorControlsProps } from './FunctionEditorControls';
+import { FunctionEditorControls, FunctionEditorControlsProps } from './FunctionEditorControls';
+import { FuncInstance } from './gfunc';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
 interface FunctionEditorProps extends FunctionEditorControlsProps {
-  func: FunctionDescriptor;
+  func: FuncInstance;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
