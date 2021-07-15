@@ -192,7 +192,7 @@ type UpdateLiveChannelRuleCommand struct {
 type DeleteLiveChannelRuleCommand struct {
 	Id      int64  `json:"id"`
 	Pattern string `json:"pattern"`
-	OrgId   int64  `json:"orgId"`
+	OrgId   int64  `json:"orgId" binding:"Required"`
 }
 
 var (

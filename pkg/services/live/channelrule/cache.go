@@ -4,10 +4,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/fanyang01/radix"
 )
+
+var logger = log.New("channel-rule-cache")
 
 type Storage interface {
 	ListChannelRules(query models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error)
@@ -37,10 +40,12 @@ func (s *Cache) updatePeriodically() {
 		}
 		s.radixMu.Unlock()
 		for _, orgID := range orgIDs {
-			_ = s.fillOrg(orgID)
+			err := s.fillOrg(orgID)
+			if err != nil {
+				logger.Error("error filling orgId", "error", err.Error(), "orgId", orgID)
+			}
 		}
-		// TODO: make interval larger before merging.
-		time.Sleep(5 * time.Second)
+		time.Sleep(20 * time.Second)
 	}
 }
 

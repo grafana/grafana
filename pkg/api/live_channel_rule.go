@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -28,7 +29,7 @@ func (a *channelRuleAPI) ListChannelRules(c *models.ReqContext) response.Respons
 
 	result, err := a.storage.ListChannelRules(query)
 	if err != nil {
-		return response.Error(500, "Failed to query channel rules", err)
+		return response.Error(http.StatusInternalServerError, "Failed to query channel rules", err)
 	}
 
 	items := make([]dtos.LiveChannelRuleListItem, 0, len(result))
@@ -42,7 +43,7 @@ func (a *channelRuleAPI) ListChannelRules(c *models.ReqContext) response.Respons
 		}
 		items = append(items, item)
 	}
-	return response.JSON(200, &items)
+	return response.JSON(http.StatusOK, &items)
 }
 
 func liveChannelToDTO(ch *models.LiveChannelRule) dtos.LiveChannelRule {
@@ -71,12 +72,12 @@ func (a *channelRuleAPI) GetChannelRuleById(c *models.ReqContext) response.Respo
 	result, err := a.storage.GetChannelRule(query)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleNotFound) {
-			return response.Error(404, "Channel rule not found", nil)
+			return response.Error(http.StatusNotFound, "Channel rule not found", nil)
 		}
-		return response.Error(500, "Failed to query channel rule", err)
+		return response.Error(http.StatusInternalServerError, "Failed to query channel rule", err)
 	}
 	item := liveChannelToDTO(result)
-	return response.JSON(200, &item)
+	return response.JSON(http.StatusOK, &item)
 }
 
 func (a *channelRuleAPI) CreateChannelRule(c *models.ReqContext, cmd models.CreateLiveChannelRuleCommand) response.Response {
@@ -85,12 +86,12 @@ func (a *channelRuleAPI) CreateChannelRule(c *models.ReqContext, cmd models.Crea
 	result, err := a.storage.CreateChannelRule(cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleExists) {
-			return response.Error(409, err.Error(), err)
+			return response.Error(http.StatusConflict, err.Error(), err)
 		}
-		return response.Error(500, "Failed to create channel rule", err)
+		return response.Error(http.StatusInternalServerError, "Failed to create channel rule", err)
 	}
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message":     "channel rule added",
 		"id":          result.Id,
 		"channelRule": liveChannelToDTO(result),
@@ -103,7 +104,7 @@ func (a *channelRuleAPI) fillChannelRuleWithSecureJSONData(cmd *models.UpdateLiv
 	}
 
 	rule, err := a.storage.GetChannelRule(models.GetLiveChannelRuleCommand{
-		OrgId: cmd.Id,
+		OrgId: cmd.OrgId,
 		Id:    cmd.Id,
 	})
 	if err != nil {
@@ -125,18 +126,18 @@ func (a *channelRuleAPI) UpdateChannelRule(c *models.ReqContext, cmd models.Upda
 
 	err := a.fillChannelRuleWithSecureJSONData(&cmd)
 	if err != nil {
-		return response.Error(500, "Failed to update channel rule", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update channel rule", err)
 	}
 
 	_, err = a.storage.UpdateChannelRule(cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleNotFound) {
-			return response.Error(404, "Channel rule not found", nil)
+			return response.Error(http.StatusNotFound, "Channel rule not found", nil)
 		}
 		if errors.Is(err, models.ErrLiveChannelRuleUpdatingOldVersion) {
-			return response.Error(409, "Channel rule has already been updated by someone else. Please reload and try again", err)
+			return response.Error(http.StatusConflict, "Channel rule has already been updated by someone else. Please reload and try again", err)
 		}
-		return response.Error(500, "Failed to update channel rule", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update channel rule", err)
 	}
 
 	getCmd := models.GetLiveChannelRuleCommand{
@@ -147,12 +148,12 @@ func (a *channelRuleAPI) UpdateChannelRule(c *models.ReqContext, cmd models.Upda
 	result, err := a.storage.GetChannelRule(getCmd)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleNotFound) {
-			return response.Error(404, "Channel rule not found", nil)
+			return response.Error(http.StatusNotFound, "Channel rule not found", nil)
 		}
-		return response.Error(500, "Failed to query channel rule", err)
+		return response.Error(http.StatusInternalServerError, "Failed to query channel rule", err)
 	}
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message":     "channel rule updated",
 		"id":          cmd.Id,
 		"channelRule": liveChannelToDTO(result),
@@ -163,7 +164,7 @@ func (a *channelRuleAPI) DeleteChannelRuleById(c *models.ReqContext) response.Re
 	id := c.ParamsInt64(":id")
 
 	if id <= 0 {
-		return response.Error(400, "Missing valid channel rule id", nil)
+		return response.Error(http.StatusBadRequest, "Missing valid channel rule id", nil)
 	}
 
 	getCmd := models.GetLiveChannelRuleCommand{
@@ -173,15 +174,15 @@ func (a *channelRuleAPI) DeleteChannelRuleById(c *models.ReqContext) response.Re
 	_, err := a.storage.GetChannelRule(getCmd)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleNotFound) {
-			return response.Error(404, "Channel rule not found", nil)
+			return response.Error(http.StatusNotFound, "Channel rule not found", nil)
 		}
-		return response.Error(500, "Failed to query channel rule", err)
+		return response.Error(http.StatusInternalServerError, "Failed to query channel rule", err)
 	}
 
 	cmd := models.DeleteLiveChannelRuleCommand{Id: id, OrgId: c.OrgId}
 	_, err = a.storage.DeleteChannelRule(cmd)
 	if err != nil {
-		return response.Error(500, "Failed to delete channel rule", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete channel rule", err)
 	}
 	return response.Success("Channel rule deleted")
 }
