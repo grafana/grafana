@@ -318,6 +318,27 @@ func (s *SelectMetricCommand) Execute(ctx context.Context, vars mathexp.Vars) (m
 	newRes := mathexp.Results{}
 	inputData := vars[s.InputVar]
 
+	appendValue := func(v mathexp.Value) {
+		// new series/numbers need to be created for selection, but in this
+		// filtering case we duplicates pointers
+		switch val := v.(type) {
+		case mathexp.Number:
+			num := mathexp.NewNumber(s.refID, val.GetLabels())
+			num.SetValue(val.GetFloat64Value())
+			newRes.Values = append(newRes.Values, num)
+		case mathexp.Series:
+			s := mathexp.NewSeries(s.refID, val.GetLabels(), val.Len())
+			// Note: sharing a reference to a Field's values between fields
+			// is no possible since that slice is not exposed in data.Field,
+			// so must do a new slices.
+			for i := 0; i < val.Len(); i++ {
+				t, f := val.GetPoint(i)
+				s.SetPoint(i, t, f)
+			}
+			newRes.Values = append(newRes.Values, s)
+		}
+	}
+
 	ifMatchAppend := func(metricName string, dl data.Labels, v mathexp.Value) {
 		var matched bool
 		pl := labels.FromMap(dl)
@@ -343,7 +364,7 @@ func (s *SelectMetricCommand) Execute(ctx context.Context, vars mathexp.Vars) (m
 		}
 
 		if matched {
-			newRes.Values = append(newRes.Values, v)
+			appendValue(v)
 		}
 	}
 
