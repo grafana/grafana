@@ -65,26 +65,23 @@ func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval
 	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}
 }
 
-func GetIntervalFrom(interval, timeInterval string, queryIntervalMs int64, defaultInterval time.Duration) (time.Duration, error) {
-	// intervalMs field appears in the v2 plugins API and should be preferred
-	// if 'interval' isn't present.
-	if interval == "" {
-		if queryIntervalMs != 0 {
-			return time.Duration(queryIntervalMs) * time.Millisecond, nil
+// GetIntervalFrom returns the minimum interval.
+// dsInterval is the string representation of data source min interval, if configured.
+// queryInterval is the string representation of query interval (min interval), e.g. "10ms" or "10s".
+// queryIntervalMS is a pre-calculated numeric representation of the query interval in milliseconds.
+func GetIntervalFrom(dsInterval, queryInterval string, queryIntervalMS int64, defaultInterval time.Duration) (time.Duration, error) {
+	if queryInterval == "" {
+		if queryIntervalMS != 0 {
+			return time.Duration(queryIntervalMS) * time.Millisecond, nil
 		}
 	}
-
-	if interval == "" {
-		dsInterval := timeInterval
-		if dsInterval != "" {
-			interval = dsInterval
-		}
+	interval := queryInterval
+	if queryInterval == "" && dsInterval != "" {
+		interval = dsInterval
 	}
-
 	if interval == "" {
 		return defaultInterval, nil
 	}
-
 	interval = strings.Replace(strings.Replace(interval, "<", "", 1), ">", "", 1)
 	isPureNum, err := regexp.MatchString(`^\d+$`, interval)
 	if err != nil {
@@ -97,7 +94,6 @@ func GetIntervalFrom(interval, timeInterval string, queryIntervalMs int64, defau
 	if err != nil {
 		return time.Duration(0), err
 	}
-
 	return parsedInterval, nil
 }
 

@@ -50,7 +50,7 @@ var newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *D
 type Client interface {
 	GetVersion() *semver.Version
 	GetTimeField() string
-	GetMinInterval(queryInterval string, queryInterval64 int64) (time.Duration, error)
+	GetMinInterval(queryInterval string) (time.Duration, error)
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
 	MultiSearch() *MultiSearchRequestBuilder
 	EnableDebug()
@@ -100,9 +100,9 @@ func (c *baseClientImpl) GetTimeField() string {
 	return c.timeField
 }
 
-func (c *baseClientImpl) GetMinInterval(queryInterval string, queryIntervalMs int64) (time.Duration, error) {
+func (c *baseClientImpl) GetMinInterval(queryInterval string) (time.Duration, error) {
 	timeInterval := c.ds.TimeInterval
-	return tsdb.GetIntervalFrom(queryInterval, timeInterval, queryIntervalMs, 5*time.Second)
+	return tsdb.GetIntervalFrom(queryInterval, timeInterval, 0, 5*time.Second)
 }
 
 type multiRequest struct {

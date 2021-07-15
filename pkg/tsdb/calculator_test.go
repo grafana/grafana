@@ -1,7 +1,6 @@
 package tsdb
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -14,9 +13,6 @@ func TestIntervalCalculator_Calculate(t *testing.T) {
 	calculator := NewCalculator(CalculatorOptions{})
 
 	timeNow := time.Now()
-
-	fmt.Println(timeNow)
-	fmt.Println(timeNow.Add(5 * time.Minute))
 
 	testCases := []struct {
 		name      string
