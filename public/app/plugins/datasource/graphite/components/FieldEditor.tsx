@@ -9,6 +9,7 @@ type FieldEditorProps = {
   styles: { [name in 'segment' | 'input']: string };
   onChange: (value: string) => void;
   onExpandedChange: (expanded: boolean) => void;
+  autofocus: boolean;
 };
 
 function mapOptions(options: string[]): Array<SelectableValue<string>> {
@@ -27,10 +28,12 @@ export function FieldEditor({
   styles,
   onChange,
   onExpandedChange,
+  autofocus,
 }: FieldEditorProps) {
   if (options?.length > 0) {
     return (
       <Segment
+        autofocus={autofocus}
         value={value}
         className={styles.segment}
         options={mapOptions(options)}
@@ -46,6 +49,7 @@ export function FieldEditor({
   } else {
     return (
       <SegmentInput
+        autofocus={autofocus}
         className={styles.input}
         value={value || ''}
         placeholder={' +' + name}
@@ -53,7 +57,6 @@ export function FieldEditor({
           onChange(value.toString());
         }}
         onExpandedChange={onExpandedChange}
-        inputMinWidth={100}
         style={{ height: '28px', paddingTop: '2px', paddingLeft: '4px', fontSize: '12px' }}
       ></SegmentInput>
     );

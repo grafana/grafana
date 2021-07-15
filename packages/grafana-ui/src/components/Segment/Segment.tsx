@@ -24,9 +24,10 @@ export function Segment<T>({
   disabled,
   inputMinWidth,
   onExpandedChange,
+  autofocus = false,
   ...rest
 }: React.PropsWithChildren<SegmentSyncProps<T>>) {
-  const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(false, onExpandedChange);
+  const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
   const width = inputMinWidth ? Math.max(inputMinWidth, labelWidth) : labelWidth;
   const styles = useStyles(getSegmentStyles);
 

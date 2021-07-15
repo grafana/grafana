@@ -118,6 +118,7 @@ export function GraphiteFunctionEditor({ func, dispatch }: FunctionEditorProps) 
           return (
             <React.Fragment key={index}>
               <FieldEditor
+                autofocus={index === 0 && func.added}
                 value={param.value}
                 name={param.name}
                 options={param.options}

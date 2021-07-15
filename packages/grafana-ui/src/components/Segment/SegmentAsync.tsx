@@ -27,12 +27,13 @@ export function SegmentAsync<T>({
   disabled,
   placeholder,
   inputMinWidth,
+  autofocus = false,
   onExpandedChange,
   noOptionMessageHandler = mapStateToNoOptionsMessage,
   ...rest
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
   const [state, fetchOptions] = useAsyncFn(loadOptions, [loadOptions]);
-  const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(false, onExpandedChange);
+  const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
   const width = inputMinWidth ? Math.max(inputMinWidth, labelWidth) : labelWidth;
   const styles = useStyles(getSegmentStyles);
 

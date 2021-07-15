@@ -8,4 +8,5 @@ export interface SegmentProps<T> {
   disabled?: boolean;
   inputMinWidth?: number;
   onExpandedChange?: (expanded: boolean) => void;
+  autofocus?: boolean;
 }
