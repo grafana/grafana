@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { ValueMappingsEditorModal, Props } from './ValueMappingsEditorModal';
 import { MappingType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import selectEvent from 'react-select-event';
+import { selectOptionInTest } from '../Select/test-utils';
 
 const setup = (spy?: any, propOverrides?: object) => {
   const props: Props = {
@@ -79,7 +79,8 @@ describe('When adding and updating value mapp', () => {
 
     fireEvent.click(screen.getByLabelText(selectors.components.ValuePicker.button('Add a new mapping')));
     const selectComponent = await screen.findByLabelText(selectors.components.ValuePicker.select('Add a new mapping'));
-    await selectEvent.select(selectComponent, 'Value');
+
+    await selectOptionInTest(selectComponent, 'Value');
 
     const input = (await screen.findAllByPlaceholderText('Exact value to match'))[1];
 
@@ -123,7 +124,7 @@ describe('When adding and updating range map', () => {
 
     fireEvent.click(screen.getByLabelText(selectors.components.ValuePicker.button('Add a new mapping')));
     const selectComponent = await screen.findByLabelText(selectors.components.ValuePicker.select('Add a new mapping'));
-    await selectEvent.select(selectComponent, 'Range');
+    await selectOptionInTest(selectComponent, 'Range');
 
     fireEvent.change(screen.getByPlaceholderText('Range start'), { target: { value: '10' } });
     fireEvent.change(screen.getByPlaceholderText('Range end'), { target: { value: '20' } });
