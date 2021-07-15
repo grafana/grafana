@@ -317,11 +317,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   let barsBuilder = uPlot.paths.bars!({
     disp: {
       x0: {
-        unit: Series.BarsPathBuilderFacetUnit.PixelPercent,
+        unit: 2,
         values: (u, seriesIdx, idx0, idx1) => barsPctLayout[seriesIdx].offs,
       },
       size: {
-        unit: Series.BarsPathBuilderFacetUnit.PixelPercent,
+        unit: 2,
         values: (u, seriesIdx, idx0, idx1) => barsPctLayout[seriesIdx].size,
       },
     },
