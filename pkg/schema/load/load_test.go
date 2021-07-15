@@ -81,7 +81,7 @@ func TestDevenvDashboardValidity(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				json.Unmarshal(byt, &jtree)
+				require.NoError(t, json.Unmarshal(byt, &jtree))
 				if oldschemav, has := jtree["schemaVersion"]; !has {
 					t.Logf("no schemaVersion in %s", path)
 					return nil
