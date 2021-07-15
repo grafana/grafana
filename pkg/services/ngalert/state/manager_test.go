@@ -1,7 +1,6 @@
 package state_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -874,6 +873,7 @@ func TestStaleResultsHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error parsing date format: %s", err.Error())
 	}
+
 	dbstore := tests.SetupTestEnv(t, 1)
 
 	rule := tests.CreateTestAlertRule(t, dbstore, 600)
@@ -904,8 +904,11 @@ func TestStaleResultsHandler(t *testing.T) {
 	t.Cleanup(registry.ClearOverrides)
 
 	testCases := []struct {
-		desc        string
-		evalResults []eval.Results
+		desc               string
+		evalResults        []eval.Results
+		expectedStates     map[string]*state.State
+		startingStateCount int
+		finalStateCount    int
 	}{
 		{
 			desc: "stale cache entries are removed",
@@ -918,15 +921,53 @@ func TestStaleResultsHandler(t *testing.T) {
 					},
 				},
 			},
+			expectedStates: map[string]*state.State{
+				`[["__alert_rule_namespace_uid__","namespace"],["__alert_rule_uid__","` + rule.UID + `"],["alertname","` + rule.Title + `"],["test1","testValue1"]]`: {
+					AlertRuleUID: rule.UID,
+					OrgID:        1,
+					CacheId:      `[["__alert_rule_namespace_uid__","namespace"],["__alert_rule_uid__","` + rule.UID + `"],["alertname","` + rule.Title + `"],["test1","testValue1"]]`,
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "namespace",
+						"__alert_rule_uid__":           rule.UID,
+						"alertname":                    rule.Title,
+						"test1":                        "testValue1",
+					},
+					State: eval.Normal,
+					Results: []state.Evaluation{
+						{
+							EvaluationTime:  evaluationTime.Add(3 * time.Minute),
+							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
+						},
+					},
+					LastEvaluationTime: evaluationTime.Add(3 * time.Minute),
+					EvaluationDuration: 0,
+					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+				},
+			},
+			startingStateCount: 2,
+			finalStateCount:    1,
 		},
 	}
 
 	for _, tc := range testCases {
 		st := state.NewManager(log.New("test_stale_results_handler"), nilMetrics, dbstore, dbstore)
 		st.Warm()
+		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+
+		// We have loaded the expected number of entries from the db
+		assert.Equal(t, tc.startingStateCount, len(existingStatesForRule))
 		for _, res := range tc.evalResults {
 			st.ProcessEvalResults(rule, res)
+			for _, s := range tc.expectedStates {
+				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
+				require.NoError(t, err)
+				assert.Equal(t, s, cachedState)
+			}
 		}
-		fmt.Println("**")
+		existingStatesForRule = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+
+		// The expected number of state entries remains after results are processed
+		assert.Equal(t, tc.finalStateCount, len(existingStatesForRule))
 	}
 }
