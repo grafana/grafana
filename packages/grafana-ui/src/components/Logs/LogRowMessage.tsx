@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { isEqual } from 'lodash';
 import tinycolor from 'tinycolor2';
 import { css, cx } from '@emotion/css';
-import { LogRowModel, findHighlightChunksInText, GrafanaTheme, LogsParsers } from '@grafana/data';
+import { LogRowModel, findHighlightChunksInText, GrafanaTheme } from '@grafana/data';
 import memoizeOne from 'memoize-one';
 
 // @ts-ignore
@@ -80,8 +80,11 @@ function renderLogMessage(
 
 const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): string => {
   if (prettifyLogMessage) {
-    const parsedLine = LogsParsers.JSON.test(line);
-    return JSON.stringify(parsedLine, undefined, 2);
+    try {
+      return JSON.stringify(JSON.parse(line), undefined, 2);
+    } catch (error) {
+      return line;
+    }
   }
   return line;
 });
