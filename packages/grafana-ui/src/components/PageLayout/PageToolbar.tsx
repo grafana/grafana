@@ -77,8 +77,8 @@ export const PageToolbar: FC<Props> = React.memo(
             </>
           )}
           {titleHref && (
-            <h1 className={styles.titleText}>
-              <Link className={styles.titleLink} href={titleHref}>
+            <h1 className={styles.h1Styles}>
+              <Link className={cx(styles.titleText, styles.titleLink)} href={titleHref}>
                 {title}
               </Link>
             </h1>
@@ -119,8 +119,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     overflow: hidden;
     max-width: 240px;
     border-radius: 2px;
-    margin: 0;
-    line-height: inherit;
 
     @media ${styleMixins.mediaUp(theme.v1.breakpoints.xl)} {
       max-width: unset;
@@ -154,6 +152,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: hidden;
     `,
     navElement: css`
+      display: flex;
+    `,
+    h1Styles: css`
+      margin: 0;
+      line-height: inherit;
       display: flex;
     `,
     parentIcon: css`
