@@ -2,13 +2,11 @@ package postgres
 
 import (
 	"fmt"
-	"strconv"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,12 +15,12 @@ func TestMacroEngine(t *testing.T) {
 	engine := newPostgresMacroEngine(timescaledbEnabled)
 	timescaledbEnabled = true
 	engineTS := newPostgresMacroEngine(timescaledbEnabled)
-	query := plugins.DataSubQuery{}
+	query := &backend.DataQuery{}
 
 	t.Run("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func(t *testing.T) {
 		from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
 		to := from.Add(5 * time.Minute)
-		timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: to}
+		timeRange := backend.TimeRange{From: from, To: to}
 
 		t.Run("interpolate __time function", func(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "select $__time(time_column)")
@@ -151,9 +149,10 @@ func TestMacroEngine(t *testing.T) {
 	t.Run("Given a time range between 1960-02-01 07:00 and 1965-02-03 08:00", func(t *testing.T) {
 		from := time.Date(1960, 2, 1, 7, 0, 0, 0, time.UTC)
 		to := time.Date(1965, 2, 3, 8, 0, 0, 0, time.UTC)
-		timeRange := plugins.NewDataTimeRange(
-			strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10),
-			strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
+		timeRange := backend.TimeRange{
+			From: from,
+			To:   to,
+		}
 
 		t.Run("interpolate __timeFilter function", func(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
@@ -177,9 +176,10 @@ func TestMacroEngine(t *testing.T) {
 	t.Run("Given a time range between 1960-02-01 07:00 and 1980-02-03 08:00", func(t *testing.T) {
 		from := time.Date(1960, 2, 1, 7, 0, 0, 0, time.UTC)
 		to := time.Date(1980, 2, 3, 8, 0, 0, 0, time.UTC)
-		timeRange := plugins.NewDataTimeRange(
-			strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10),
-			strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
+		timeRange := backend.TimeRange{
+			From: from,
+			To:   to,
+		}
 
 		t.Run("interpolate __timeFilter function", func(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
@@ -203,9 +203,10 @@ func TestMacroEngine(t *testing.T) {
 	t.Run("Given a time range between 1960-02-01 07:00:00.5 and 1980-02-03 08:00:00.5", func(t *testing.T) {
 		from := time.Date(1960, 2, 1, 7, 0, 0, 500e6, time.UTC)
 		to := time.Date(1980, 2, 3, 8, 0, 0, 500e6, time.UTC)
-		timeRange := plugins.NewDataTimeRange(
-			strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10), strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
-
+		timeRange := backend.TimeRange{
+			From: from,
+			To:   to,
+		}
 		require.Equal(t, "1960-02-01T07:00:00.5Z", from.Format(time.RFC3339Nano))
 		require.Equal(t, "1980-02-03T08:00:00.5Z", to.Format(time.RFC3339Nano))
 
@@ -219,27 +220,27 @@ func TestMacroEngine(t *testing.T) {
 
 func TestMacroEngineConcurrency(t *testing.T) {
 	engine := newPostgresMacroEngine(false)
-	query1 := plugins.DataSubQuery{
-		Model: simplejson.New(),
+	query1 := backend.DataQuery{
+		JSON: []byte{},
 	}
-	query2 := plugins.DataSubQuery{
-		Model: simplejson.New(),
+	query2 := backend.DataQuery{
+		JSON: []byte{},
 	}
 	from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
 	to := from.Add(5 * time.Minute)
-	timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: to}
+	timeRange := backend.TimeRange{From: from, To: to}
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	go func(query plugins.DataSubQuery) {
+	go func(query backend.DataQuery) {
 		defer wg.Done()
-		_, err := engine.Interpolate(query, timeRange, "SELECT $__timeGroup(time_column,'5m')")
+		_, err := engine.Interpolate(&query, timeRange, "SELECT $__timeGroup(time_column,'5m')")
 		require.NoError(t, err)
 	}(query1)
 
-	go func(query plugins.DataSubQuery) {
-		_, err := engine.Interpolate(query, timeRange, "SELECT $__timeGroup(time_column,'5m')")
+	go func(query backend.DataQuery) {
+		_, err := engine.Interpolate(&query, timeRange, "SELECT $__timeGroup(time_column,'5m')")
 		require.NoError(t, err)
 		defer wg.Done()
 	}(query2)

@@ -26,7 +26,7 @@ func newMysqlMacroEngine(logger log.Logger) sqleng.SQLMacroEngine {
 	return &mySQLMacroEngine{SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase(), logger: logger}
 }
 
-func (m *mySQLMacroEngine) Interpolate(query backend.DataQuery, timeRange backend.TimeRange, sql string) (string, error) {
+func (m *mySQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backend.TimeRange, sql string) (string, error) {
 	matches := restrictedRegExp.FindAllStringSubmatch(sql, 1)
 	if len(matches) > 0 {
 		m.logger.Error("show grants, session_user(), current_user(), system_user() or user() not allowed in query")
@@ -57,7 +57,7 @@ func (m *mySQLMacroEngine) Interpolate(query backend.DataQuery, timeRange backen
 	return sql, nil
 }
 
-func (m *mySQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query backend.DataQuery, name string, args []string) (string, error) {
+func (m *mySQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *backend.DataQuery, name string, args []string) (string, error) {
 	switch name {
 	case "__timeEpoch", "__time":
 		if len(args) == 0 {
@@ -83,7 +83,7 @@ func (m *mySQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query back
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := sqleng.SetupFillmode(&query, interval, args[2])
+			err := sqleng.SetupFillmode(query, interval, args[2])
 			if err != nil {
 				return "", err
 			}
@@ -118,7 +118,7 @@ func (m *mySQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query back
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := sqleng.SetupFillmode(&query, interval, args[2])
+			err := sqleng.SetupFillmode(query, interval, args[2])
 			if err != nil {
 				return "", err
 			}

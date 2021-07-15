@@ -49,26 +49,47 @@ func (s *Service) Init() error {
 	return nil
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*sqleng.DataSourceInfo, error) {
+func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
 	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
-	instance := i.(sqleng.DataSourceInfo)
+	instance := i.(sqleng.DataSourceHandler)
 	return &instance, nil
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
-	return dsInfo.QueryData(ctx, req)
+	return dsHandler.QueryData(ctx, req)
 }
 
 func newInstanceSettings() datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		cnnstr, err := generateConnectionString(settings)
+		jsonData := sqleng.JsonData{
+			MaxOpenConns:    0,
+			MaxIdleConns:    2,
+			ConnMaxLifetime: 14400,
+			Encrypt:         "false",
+		}
+
+		err := json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+		dsInfo := sqleng.DataSourceInfo{
+			JsonData:                jsonData,
+			URL:                     settings.URL,
+			User:                    settings.User,
+			Database:                settings.Database,
+			ID:                      settings.ID,
+			Updated:                 settings.Updated,
+			UID:                     settings.UID,
+			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
+		}
+		cnnstr, err := generateConnectionString(dsInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -80,7 +101,7 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 		config := sqleng.DataPluginConfiguration{
 			DriverName:        "mssql",
 			ConnectionString:  cnnstr,
-			Datasource:        &settings,
+			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 		}
 
@@ -113,11 +134,11 @@ func ParseURL(u string) (*url.URL, error) {
 	}, nil
 }
 
-func generateConnectionString(settings backend.DataSourceInstanceSettings) (string, error) {
+func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 	const dfltPort = "0"
 	var addr util.NetworkAddress
-	if settings.URL != "" {
-		u, err := ParseURL(settings.URL)
+	if dsInfo.URL != "" {
+		u, err := ParseURL(dsInfo.URL)
 		if err != nil {
 			return "", err
 		}
@@ -133,33 +154,25 @@ func generateConnectionString(settings backend.DataSourceInstanceSettings) (stri
 	}
 
 	args := []interface{}{
-		"url", settings.URL, "host", addr.Host,
+		"url", dsInfo.URL, "host", addr.Host,
 	}
 	if addr.Port != "0" {
 		args = append(args, "port", addr.Port)
 	}
 
 	logger.Debug("Generating connection string", args...)
-	type JsonData struct {
-		encrypt string `json:"encrypt"`
-	}
-	jsonData := JsonData{encrypt: "false"}
-	err := json.Unmarshal(settings.JSONData, &jsonData)
-	if err != nil {
-		return "", fmt.Errorf("error reading settings: %w", err)
-	}
 	connStr := fmt.Sprintf("server=%s;database=%s;user id=%s;password=%s;",
 		addr.Host,
-		settings.Database,
-		settings.User,
-		settings.DecryptedSecureJSONData["password"],
+		dsInfo.Database,
+		dsInfo.User,
+		dsInfo.DecryptedSecureJSONData["password"],
 	)
 	// Port number 0 means to determine the port automatically, so we can let the driver choose
 	if addr.Port != "0" {
 		connStr += fmt.Sprintf("port=%s;", addr.Port)
 	}
-	if jsonData.encrypt != "false" {
-		connStr += fmt.Sprintf("encrypt=%s;", jsonData.encrypt)
+	if dsInfo.JsonData.Encrypt != "false" {
+		connStr += fmt.Sprintf("encrypt=%s;", dsInfo.JsonData.Encrypt)
 	}
 	return connStr, nil
 }

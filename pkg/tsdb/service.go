@@ -16,9 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
-	"github.com/grafana/grafana/pkg/tsdb/mssql"
-	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
 )
@@ -41,14 +38,13 @@ func init() {
 
 // Service handles data requests to data sources.
 type Service struct {
-	Cfg                    *setting.Cfg              `inject:""`
-	PostgresService        *postgres.PostgresService `inject:""`
-	CloudMonitoringService *cloudmonitoring.Service  `inject:""`
-	AzureMonitorService    *azuremonitor.Service     `inject:""`
-	PluginManager          plugins.Manager           `inject:""`
-	BackendPluginManager   backendplugin.Manager     `inject:""`
-	HTTPClientProvider     httpclient.Provider       `inject:""`
-	OAuthTokenService      *oauthtoken.Service       `inject:""`
+	Cfg                    *setting.Cfg             `inject:""`
+	CloudMonitoringService *cloudmonitoring.Service `inject:""`
+	AzureMonitorService    *azuremonitor.Service    `inject:""`
+	PluginManager          plugins.Manager          `inject:""`
+	BackendPluginManager   backendplugin.Manager    `inject:""`
+	HTTPClientProvider     httpclient.Provider      `inject:""`
+	OAuthTokenService      *oauthtoken.Service      `inject:""`
 
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
@@ -58,8 +54,6 @@ type Service struct {
 func (s *Service) Init() error {
 	s.registry["prometheus"] = prometheus.New(s.HTTPClientProvider)
 	s.registry["influxdb"] = influxdb.New(s.HTTPClientProvider)
-	s.registry["mssql"] = mssql.NewExecutor
-	s.registry["mysql"] = mysql.New(s.HTTPClientProvider)
 	s.registry["elasticsearch"] = elasticsearch.New(s.HTTPClientProvider)
 	s.registry["stackdriver"] = s.CloudMonitoringService.NewExecutor
 	s.registry["loki"] = loki.New(s.HTTPClientProvider)

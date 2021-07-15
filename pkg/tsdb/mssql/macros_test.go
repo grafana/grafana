@@ -1,15 +1,14 @@
 package mssql
 
 import (
+	"encoding/json"
 	"fmt"
-	"strconv"
 	"sync"
 	"testing"
 
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 )
@@ -17,16 +16,16 @@ import (
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
 		engine := &msSQLMacroEngine{}
-		query := plugins.DataSubQuery{
-			Model: simplejson.New(),
+		query := &backend.DataQuery{
+			JSON: []byte{},
 		}
 
-		dfltTimeRange := plugins.DataTimeRange{}
+		dfltTimeRange := backend.TimeRange{}
 
 		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
 			from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
 			to := from.Add(5 * time.Minute)
-			timeRange := plugins.DataTimeRange{From: "5m", Now: to, To: "now"}
+			timeRange := backend.TimeRange{From: from, To: to}
 
 			Convey("interpolate __time function", func() {
 				sql, err := engine.Interpolate(query, dfltTimeRange, "select $__time(time_column)")
@@ -92,28 +91,41 @@ func TestMacroEngine(t *testing.T) {
 
 			Convey("interpolate __timeGroup function with fill (value = NULL)", func() {
 				_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', NULL)")
-
-				fill := query.Model.Get("fill").MustBool()
-				fillMode := query.Model.Get("fillMode").MustString()
-				fillInterval := query.Model.Get("fillInterval").MustInt()
-
 				So(err, ShouldBeNil)
-				So(fill, ShouldBeTrue)
-				So(fillMode, ShouldEqual, "null")
-				So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
+				var queryJson map[string]interface{}
+				err = json.Unmarshal(query.JSON, &queryJson)
+				So(err, ShouldBeNil)
+				fill, exist := queryJson["fill"]
+				So(exist, ShouldBeTrue)
+				So(fill.(bool), ShouldBeTrue)
+
+				fillMode, exist := queryJson["fillMode"]
+				So(exist, ShouldBeTrue)
+				So(fillMode.(string), ShouldEqual, "null")
+
+				fillInterval, exist := queryJson["fillInterval"]
+				So(exist, ShouldBeTrue)
+				So(fillInterval.(int), ShouldEqual, 5*time.Minute.Seconds())
 			})
 
 			Convey("interpolate __timeGroup function with fill (value = previous)", func() {
 				_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', previous)")
-
-				fill := query.Model.Get("fill").MustBool()
-				fillMode := query.Model.Get("fillMode").MustString()
-				fillInterval := query.Model.Get("fillInterval").MustInt()
-
 				So(err, ShouldBeNil)
-				So(fill, ShouldBeTrue)
+				var queryJson map[string]interface{}
+				err = json.Unmarshal(query.JSON, &queryJson)
+				So(err, ShouldBeNil)
+
+				fill, exist := queryJson["fill"]
+				So(exist, ShouldBeTrue)
+				So(fill.(bool), ShouldBeTrue)
+
+				fillMode, exist := queryJson["fillMode"]
+				So(exist, ShouldBeTrue)
 				So(fillMode, ShouldEqual, "previous")
-				So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
+
+				fillInterval, exist := queryJson["fillInterval"]
+				So(exist, ShouldBeTrue)
+				So(fillInterval.(int), ShouldEqual, 5*time.Minute.Seconds())
 			})
 
 			Convey("interpolate __timeGroup function with fill (value = float)", func() {
@@ -170,9 +182,10 @@ func TestMacroEngine(t *testing.T) {
 		Convey("Given a time range between 1960-02-01 07:00 and 1965-02-03 08:00", func() {
 			from := time.Date(1960, 2, 1, 7, 0, 0, 0, time.UTC)
 			to := time.Date(1965, 2, 3, 8, 0, 0, 0, time.UTC)
-			timeRange := plugins.NewDataTimeRange(
-				strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10),
-				strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
+			timeRange := backend.TimeRange{
+				From: from,
+				To:   to,
+			}
 
 			Convey("interpolate __timeFilter function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
@@ -199,9 +212,10 @@ func TestMacroEngine(t *testing.T) {
 		Convey("Given a time range between 1960-02-01 07:00 and 1980-02-03 08:00", func() {
 			from := time.Date(1960, 2, 1, 7, 0, 0, 0, time.UTC)
 			to := time.Date(1980, 2, 3, 8, 0, 0, 0, time.UTC)
-			timeRange := plugins.NewDataTimeRange(
-				strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10),
-				strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
+			timeRange := backend.TimeRange{
+				From: from,
+				To:   to,
+			}
 
 			Convey("interpolate __timeFilter function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
@@ -229,27 +243,30 @@ func TestMacroEngine(t *testing.T) {
 
 func TestMacroEngineConcurrency(t *testing.T) {
 	engine := newMssqlMacroEngine()
-	query1 := plugins.DataSubQuery{
-		Model: simplejson.New(),
+	query1 := backend.DataQuery{
+		JSON: []byte{},
 	}
-	query2 := plugins.DataSubQuery{
-		Model: simplejson.New(),
+	query2 := backend.DataQuery{
+		JSON: []byte{},
 	}
 	from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
 	to := from.Add(5 * time.Minute)
-	timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: to}
+	timeRange := backend.TimeRange{
+		From: from,
+		To:   to,
+	}
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	go func(query plugins.DataSubQuery) {
+	go func(query backend.DataQuery) {
 		defer wg.Done()
-		_, err := engine.Interpolate(query, timeRange, "SELECT $__timeGroup(time_column,'5m')")
+		_, err := engine.Interpolate(&query, timeRange, "SELECT $__timeGroup(time_column,'5m')")
 		require.NoError(t, err)
 	}(query1)
 
-	go func(query plugins.DataSubQuery) {
-		_, err := engine.Interpolate(query, timeRange, "SELECT $__timeGroup(time_column,'5m')")
+	go func(query backend.DataQuery) {
+		_, err := engine.Interpolate(&query, timeRange, "SELECT $__timeGroup(time_column,'5m')")
 		require.NoError(t, err)
 		defer wg.Done()
 	}(query2)

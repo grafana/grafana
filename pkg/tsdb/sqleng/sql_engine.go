@@ -17,9 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/grafana/grafana/pkg/tsdb/calculator"
 	"xorm.io/core"
 	"xorm.io/xorm"
 )
@@ -32,7 +30,7 @@ var ErrConnectionFailed = errors.New("failed to connect to server - please inspe
 // SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
 type SQLMacroEngine interface {
-	Interpolate(query backend.DataQuery, timeRange backend.TimeRange, sql string) (string, error)
+	Interpolate(query *backend.DataQuery, timeRange backend.TimeRange, sql string) (string, error)
 }
 
 // SqlQueryResultTransformer transforms a query result row to RowValues with proper types.
@@ -53,7 +51,7 @@ var engineCache = engineCacheType{
 	updates: make(map[int64]time.Time),
 }
 
-var sqlIntervalCalculator = interval.NewCalculator()
+var sqlIntervalCalculator = calculator.NewCalculator()
 
 // NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
 //nolint:gocritic
@@ -61,36 +59,58 @@ var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engi
 	return xorm.NewEngine(driverName, connectionString)
 }
 
+type JsonData struct {
+	MaxOpenConns        int    `json:"maxOpenConns"`
+	MaxIdleConns        int    `json:"maxIdleConns"`
+	ConnMaxLifetime     int    `json:"connMaxLifetime"`
+	Timescaledb         bool   `json:"timescaledb"`
+	Mode                string `json:"sslmode"`
+	ConfigurationMethod string `json:"tlsConfigurationMethod"`
+	RootCertFile        string `json:"sslRootCertFile"`
+	CertFile            string `json:"sslCertFile"`
+	CertKeyFile         string `json:"sslKeyFile"`
+	Timezone            string `json:"timezone"`
+	Encrypt             string `json:"encrypt"`
+	TimeInterval        string `json:"timeInterval"`
+}
+
 type DataSourceInfo struct {
+	JsonData                JsonData
+	URL                     string
+	User                    string
+	Database                string
+	ID                      int64
+	Updated                 time.Time
+	UID                     string
+	DecryptedSecureJSONData map[string]string
+}
+
+type DataPluginConfiguration struct {
+	DriverName        string
+	DSInfo            DataSourceInfo
+	ConnectionString  string
+	TimeColumnNames   []string
+	MetricColumnTypes []string
+}
+type DataSourceHandler struct {
 	macroEngine            SQLMacroEngine
 	queryResultTransformer SqlQueryResultTransformer
 	engine                 *xorm.Engine
 	timeColumnNames        []string
 	metricColumnTypes      []string
 	log                    log.Logger
-	cfg                    *setting.Cfg
-	jsonData               JsonData
+	dsInfo                 DataSourceInfo
 }
-
-type DataPluginConfiguration struct {
-	DriverName        string
-	Datasource        *backend.DataSourceInstanceSettings
-	ConnectionString  string
-	TimeColumnNames   []string
-	MetricColumnTypes []string
-}
-
-type JsonData struct {
-	maxOpenConns    int `json:"maxOpenConns"`
-	maxIdleConns    int `json:"maxIdleConns"`
-	connMaxLifetime int `json:"connMaxLifetime"`
-}
-
 type QueryJson struct {
-	rawSql string `json:"rawSql"`
+	RawSql       string  `json:"rawSql"`
+	Fill         bool    `json:"fill"`
+	FillInterval float64 `json:"fillInterval"`
+	FillMode     string  `json:"fillMode"`
+	FillValue    float64 `json:"fillValue"`
+	Format       string  `json:"format"`
 }
 
-func (e *DataSourceInfo) transformQueryError(err error) error {
+func (e *DataSourceHandler) transformQueryError(err error) error {
 	// OpError is the error type usually returned by functions in the net
 	// package. It describes the operation, network type, and address of
 	// an error. We log this error rather than return it to the client
@@ -105,36 +125,31 @@ func (e *DataSourceInfo) transformQueryError(err error) error {
 }
 
 func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
-	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceInfo, error) {
-	jsonData := JsonData{maxOpenConns: 0, maxIdleConns: 2, connMaxLifetime: 14400}
-	err := json.Unmarshal(config.Datasource.JSONData, &jsonData)
-	if err != nil {
-		return nil, fmt.Errorf("error reading settings: %w", err)
-	}
+	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceHandler, error) {
 
-	dsInfo := DataSourceInfo{
+	queryDataHandler := DataSourceHandler{
 		queryResultTransformer: queryResultTransformer,
 		macroEngine:            macroEngine,
 		timeColumnNames:        []string{"time"},
 		log:                    log,
-		jsonData:               jsonData,
+		dsInfo:                 config.DSInfo,
 	}
 
 	if len(config.TimeColumnNames) > 0 {
-		dsInfo.timeColumnNames = config.TimeColumnNames
+		queryDataHandler.timeColumnNames = config.TimeColumnNames
 	}
 
 	if len(config.MetricColumnTypes) > 0 {
-		dsInfo.metricColumnTypes = config.MetricColumnTypes
+		queryDataHandler.metricColumnTypes = config.MetricColumnTypes
 	}
 
 	engineCache.Lock()
 	defer engineCache.Unlock()
 
-	if engine, present := engineCache.cache[config.Datasource.ID]; present {
-		if updateTime := engineCache.updates[config.Datasource.ID]; updateTime.Before(config.Datasource.Updated) {
-			dsInfo.engine = engine
-			return &dsInfo, nil
+	if engine, present := engineCache.cache[config.DSInfo.ID]; present {
+		if updateTime := engineCache.updates[config.DSInfo.ID]; updateTime.Before(config.DSInfo.Updated) {
+			queryDataHandler.engine = engine
+			return &queryDataHandler, nil
 		}
 	}
 
@@ -143,31 +158,38 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 		return nil, err
 	}
 
-	engine.SetMaxOpenConns(jsonData.maxOpenConns)
-	engine.SetMaxIdleConns(jsonData.maxIdleConns)
-	engine.SetConnMaxLifetime(time.Duration(jsonData.connMaxLifetime) * time.Second)
+	engine.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
+	engine.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
+	engine.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
-	engineCache.updates[config.Datasource.ID] = config.Datasource.Updated
-	engineCache.cache[config.Datasource.ID] = engine
-	dsInfo.engine = engine
-	return &dsInfo, nil
+	engineCache.updates[config.DSInfo.ID] = config.DSInfo.Updated
+	engineCache.cache[config.DSInfo.ID] = engine
+	queryDataHandler.engine = engine
+	return &queryDataHandler, nil
 }
 
 const rowLimit = 1000000
 
-func (e *DataSourceInfo) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	result := backend.NewQueryDataResponse()
+type DBDataResponse struct {
+	dataResponse backend.DataResponse
+	refID        string
+}
 
-	ch := make(chan backend.DataResponse, len(req.Queries))
+func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
+	ch := make(chan DBDataResponse, len(req.Queries))
 	var wg sync.WaitGroup
 	// Execute each query in a goroutine and wait for them to finish afterwards
 	for _, query := range req.Queries {
-		var queryjson QueryJson
+		queryjson := QueryJson{
+			Fill:   false,
+			Format: "time_series",
+		}
 		err := json.Unmarshal(query.JSON, &queryjson)
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshal query json: %w", err)
 		}
-		if queryjson.rawSql == "" {
+		if queryjson.RawSql == "" {
 			continue
 		}
 
@@ -181,34 +203,35 @@ func (e *DataSourceInfo) QueryData(ctx context.Context, req *backend.QueryDataRe
 	close(ch)
 	result.Responses = make(map[string]backend.DataResponse)
 	for queryResult := range ch {
-		result.Responses[queryContext.RefID] = queryResult
+		result.Responses[queryResult.refID] = queryResult.dataResponse
 	}
 
 	return result, nil
 }
 
-func (e *DataSourceInfo) executeQuery(query backend.DataQuery, wg *sync.WaitGroup, queryContext context.Context,
-	ch chan backend.DataResponse, queryJson QueryJson) {
+func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitGroup, queryContext context.Context,
+	ch chan DBDataResponse, queryJson QueryJson) {
 	defer wg.Done()
-	queryResult := backend.DataResponse{
-		// RefID: query.RefID,
+	queryResult := DBDataResponse{
+		dataResponse: backend.DataResponse{},
+		refID:        query.RefID,
 	}
 
 	defer func() {
 		if r := recover(); r != nil {
 			e.log.Error("executeQuery panic", "error", r, "stack", log.Stack(1))
 			if theErr, ok := r.(error); ok {
-				queryResult.Error = theErr
+				queryResult.dataResponse.Error = theErr
 			} else if theErrString, ok := r.(string); ok {
-				queryResult.Error = fmt.Errorf(theErrString)
+				queryResult.dataResponse.Error = fmt.Errorf(theErrString)
 			} else {
-				queryResult.Error = fmt.Errorf("unexpected error, see the server log for details")
+				queryResult.dataResponse.Error = fmt.Errorf("unexpected error, see the server log for details")
 			}
 			ch <- queryResult
 		}
 	}()
 
-	if queryJson.rawSql == "" {
+	if queryJson.RawSql == "" {
 		panic("Query model property rawSql should not be empty at this point")
 	}
 
@@ -219,20 +242,20 @@ func (e *DataSourceInfo) executeQuery(query backend.DataQuery, wg *sync.WaitGrou
 		emptyFrame.SetMeta(&data.FrameMeta{
 			ExecutedQueryString: query,
 		})
-		queryResult.Error = fmt.Errorf("%s: %w", frameErr, err)
-		queryResult.Frames = data.Frames{&emptyFrame}
+		queryResult.dataResponse.Error = fmt.Errorf("%s: %w", frameErr, err)
+		queryResult.dataResponse.Frames = data.Frames{&emptyFrame}
 		ch <- queryResult
 	}
 
 	// global substitutions
-	interpolatedQuery, err := Interpolate(query, timeRange, queryJson.rawSql)
+	interpolatedQuery, err := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
 	if err != nil {
 		errAppendDebug("interpolation failed", e.transformQueryError(err), interpolatedQuery)
 		return
 	}
 
 	// data source specific substitutions
-	interpolatedQuery, err = e.macroEngine.Interpolate(query, timeRange, interpolatedQuery)
+	interpolatedQuery, err = e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("interpolation failed", e.transformQueryError(err), interpolatedQuery)
 		return
@@ -253,7 +276,7 @@ func (e *DataSourceInfo) executeQuery(query backend.DataQuery, wg *sync.WaitGrou
 		}
 	}()
 
-	qm, err := e.newProcessCfg(query, queryContext, rows, interpolatedQuery)
+	qm, err := e.newProcessCfg(query, queryContext, rows, interpolatedQuery, queryJson)
 	if err != nil {
 		errAppendDebug("failed to get configurations", err, interpolatedQuery)
 		return
@@ -273,7 +296,7 @@ func (e *DataSourceInfo) executeQuery(query backend.DataQuery, wg *sync.WaitGrou
 
 	// If no rows were returned, no point checking anything else.
 	if frame.Rows() == 0 {
-		queryResult.Frames = data.Frames{frame}
+		queryResult.dataResponse.Frames = data.Frames{frame}
 		ch <- queryResult
 		return
 	}
@@ -346,13 +369,13 @@ func (e *DataSourceInfo) executeQuery(query backend.DataQuery, wg *sync.WaitGrou
 		}
 	}
 
-	queryResult.Frames = data.Frames{frame}
+	queryResult.dataResponse.Frames = data.Frames{frame}
 	ch <- queryResult
 }
 
 // Interpolate provides global macros/substitutions for all sql datasources.
-var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, sql string) (string, error) {
-	minInterval, err := interval.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
+var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
+	minInterval, err := calculator.GetIntervalFrom(timeInterval, query.Interval.String(), 0, time.Second*60)
 	if err != nil {
 		return "", err
 	}
@@ -367,8 +390,8 @@ var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, sql
 }
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
-func (e *DataSourceInfo) newProcessCfg(query plugins.DataSubQuery, queryContext plugins.DataQuery,
-	rows *core.Rows, interpolatedQuery string) (*dataQueryModel, error) {
+func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext context.Context,
+	rows *core.Rows, interpolatedQuery string, queryJson QueryJson) (*dataQueryModel, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -388,35 +411,32 @@ func (e *DataSourceInfo) newProcessCfg(query plugins.DataSubQuery, queryContext 
 		queryContext: queryContext,
 	}
 
-	if query.Model.Get("fill").MustBool(false) {
+	if queryJson.Fill {
 		qm.FillMissing = &data.FillMissing{}
-		qm.Interval = time.Duration(query.Model.Get("fillInterval").MustFloat64() * float64(time.Second))
-		switch strings.ToLower(query.Model.Get("fillMode").MustString()) {
+		qm.Interval = time.Duration(queryJson.FillInterval * float64(time.Second))
+		switch strings.ToLower(queryJson.FillMode) {
 		case "null":
 			qm.FillMissing.Mode = data.FillModeNull
 		case "previous":
 			qm.FillMissing.Mode = data.FillModePrevious
 		case "value":
 			qm.FillMissing.Mode = data.FillModeValue
-			qm.FillMissing.Value = query.Model.Get("fillValue").MustFloat64()
+			qm.FillMissing.Value = queryJson.FillValue
 		default:
 		}
 	}
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 
-	if queryContext.TimeRange != nil {
-		qm.TimeRange.From = queryContext.TimeRange.GetFromAsTimeUTC()
-		qm.TimeRange.To = queryContext.TimeRange.GetToAsTimeUTC()
-	}
+	qm.TimeRange.From = query.TimeRange.From.UTC()
+	qm.TimeRange.To = query.TimeRange.To.UTC()
 
-	format := query.Model.Get("format").MustString("time_series")
-	switch format {
+	switch queryJson.Format {
 	case "time_series":
 		qm.Format = dataQueryFormatSeries
 	case "table":
 		qm.Format = dataQueryFormatTable
 	default:
-		panic(fmt.Sprintf("Unrecognized query model format: %q", format))
+		panic(fmt.Sprintf("Unrecognized query model format: %q", queryJson.Format))
 	}
 
 	for i, col := range qm.columnNames {
@@ -467,7 +487,7 @@ type dataQueryModel struct {
 	metricIndex       int
 	rows              *core.Rows
 	metricPrefix      bool
-	queryContext      plugins.DataQuery
+	queryContext      context.Context
 }
 
 func convertInt64ToFloat64(origin *data.Field, newField *data.Field) {

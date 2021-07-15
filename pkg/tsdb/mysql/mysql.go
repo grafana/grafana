@@ -65,17 +65,38 @@ func (s *Service) Init() error {
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		jsonData := sqleng.JsonData{
+			MaxOpenConns:    0,
+			MaxIdleConns:    2,
+			ConnMaxLifetime: 14400,
+		}
+
+		err := json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+		dsInfo := sqleng.DataSourceInfo{
+			JsonData:                jsonData,
+			URL:                     settings.URL,
+			User:                    settings.User,
+			Database:                settings.Database,
+			ID:                      settings.ID,
+			Updated:                 settings.Updated,
+			UID:                     settings.UID,
+			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
+		}
+
 		protocol := "tcp"
-		if strings.HasPrefix(settings.URL, "/") {
+		if strings.HasPrefix(dsInfo.URL, "/") {
 			protocol = "unix"
 		}
 
 		cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
-			characterEscape(settings.User, ":"),
-			settings.DecryptedSecureJSONData["password"],
+			characterEscape(dsInfo.User, ":"),
+			dsInfo.DecryptedSecureJSONData["password"],
 			protocol,
-			characterEscape(settings.URL, ")"),
-			characterEscape(settings.Database, "?"),
+			characterEscape(dsInfo.URL, ")"),
+			characterEscape(dsInfo.Database, "?"),
 		)
 
 		opts, err := settings.HTTPClientOptions()
@@ -96,14 +117,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			cnnstr += "&tls=" + tlsConfigString
 		}
 
-		jsonData := map[string]interface{}{}
-		err = json.Unmarshal(settings.JSONData, &jsonData)
-		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
-		timezone, hasTimezone := jsonData["timezone"]
-		if hasTimezone && timezone.(string) != "" {
-			cnnstr += fmt.Sprintf("&time_zone='%s'", url.QueryEscape(timezone.(string)))
+		if dsInfo.JsonData.Timezone != "" {
+			cnnstr += fmt.Sprintf("&time_zone='%s'", url.QueryEscape(dsInfo.JsonData.Timezone))
 		}
 
 		if setting.Env == setting.Dev {
@@ -113,7 +128,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		config := sqleng.DataPluginConfiguration{
 			DriverName:        "mysql",
 			ConnectionString:  cnnstr,
-			Datasource:        &settings,
+			DSInfo:            dsInfo,
 			TimeColumnNames:   []string{"time", "time_sec"},
 			MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
 		}
@@ -126,21 +141,21 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*sqleng.DataSourceInfo, error) {
+func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
 	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
-	instance := i.(sqleng.DataSourceInfo)
+	instance := i.(sqleng.DataSourceHandler)
 	return &instance, nil
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
-	return dsInfo.QueryData(ctx, req)
+	return dsHandler.QueryData(ctx, req)
 }
 
 type mysqlQueryResultTransformer struct {
