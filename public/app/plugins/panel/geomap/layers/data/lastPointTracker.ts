@@ -19,6 +19,7 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
   name: 'Icon at last point',
   description: 'Show an icon at the last point',
   isBaseMap: false,
+  showLocation: true,
 
   /**
    * Function that configures transformation and returns a transformer
