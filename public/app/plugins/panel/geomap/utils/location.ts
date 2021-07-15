@@ -103,11 +103,11 @@ export interface LocationFields {
 
 export function getLocationFields(frame: DataFrame, location: LocationFieldMatchers): LocationFields {
   const fields: LocationFields = {
-    mode: location.mode,
+    mode: location.mode ?? FrameGeometrySourceMode.Auto,
   };
 
   // Find the best option
-  if (fields.mode === FrameGeometrySourceMode.Auto || !fields.mode) {
+  if (fields.mode === FrameGeometrySourceMode.Auto) {
     fields.latitude = location.latitude(frame);
     fields.longitude = location.longitude(frame);
     if (fields.latitude && fields.longitude) {
@@ -151,7 +151,7 @@ export function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatch
   const info: LocationInfo = {
     points: [],
   };
-  if (frame?.length) {
+  if (!frame?.length) {
     return info;
   }
   const fields = getLocationFields(frame, location);
