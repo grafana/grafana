@@ -41,12 +41,12 @@ export interface FrameGeometrySource {
  *
  * @alpha
  */
-export interface MapLayerConfig<TCustom = any> {
+export interface MapLayerOptions<TConfig = any> {
   type: string;
   name?: string; // configured display name
 
   // Custom options depending on the type
-  config?: TCustom;
+  config?: TConfig;
 
   // Common method to define geometry fields
   location?: FrameGeometrySource;
@@ -71,7 +71,7 @@ export interface MapLayerHandler {
  *
  * @alpha
  */
-export interface MapLayerRegistryItem<TConfig = MapLayerConfig> extends RegistryItemWithOptions {
+export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends RegistryItemWithOptions {
   /**
    * This layer can be used as a background
    */
@@ -91,7 +91,7 @@ export interface MapLayerRegistryItem<TConfig = MapLayerConfig> extends Registry
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerConfig<TConfig>, theme: GrafanaTheme2) => MapLayerHandler;
+  create: (map: Map, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2) => MapLayerHandler;
 
   /**
    * Show custom elements in the panel edit UI

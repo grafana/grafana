@@ -1,4 +1,4 @@
-import { MapLayerRegistryItem, MapLayerConfig, GrafanaTheme2 } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
 import Map from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 import TileLayer from 'ol/layer/Tile';
@@ -21,7 +21,7 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
   name: 'XYZ Tile layer',
   isBaseMap: true,
 
-  create: (map: Map, options: MapLayerConfig<XYZConfig>, theme: GrafanaTheme2) => ({
+  create: (map: Map, options: MapLayerOptions<XYZConfig>, theme: GrafanaTheme2) => ({
     init: () => {
       const cfg = { ...options.config };
       if (!cfg.url) {

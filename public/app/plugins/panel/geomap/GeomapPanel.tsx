@@ -8,7 +8,7 @@ import BaseLayer from 'ol/layer/Base';
 import { defaults as interactionDefaults } from 'ol/interaction';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 
-import { PanelData, MapLayerHandler, MapLayerConfig, PanelProps, GrafanaTheme } from '@grafana/data';
+import { PanelData, MapLayerHandler, MapLayerOptions, PanelProps, GrafanaTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { ControlsOptions, GeomapPanelOptions, MapViewConfig } from './types';
@@ -24,7 +24,7 @@ import { getGlobalStyles } from './globalStyles';
 import { Global } from '@emotion/react';
 
 interface MapLayerState {
-  config: MapLayerConfig;
+  config: MapLayerOptions;
   handler: MapLayerHandler;
   layer: BaseLayer; // used to add|remove
 }
@@ -145,7 +145,7 @@ export class GeomapPanel extends Component<Props> {
     this.forceUpdate(); // first render
   };
 
-  initBasemap(cfg: MapLayerConfig) {
+  initBasemap(cfg: MapLayerOptions) {
     if (!cfg) {
       cfg = { type: defaultGrafanaThemedMap.id };
     }
@@ -159,7 +159,7 @@ export class GeomapPanel extends Component<Props> {
     this.map.getLayers().insertAt(0, this.basemap);
   }
 
-  initLayers(layers: MapLayerConfig[]) {
+  initLayers(layers: MapLayerOptions[]) {
     // 1st remove existing layers
     for (const state of this.layers) {
       this.map.removeLayer(state.layer);

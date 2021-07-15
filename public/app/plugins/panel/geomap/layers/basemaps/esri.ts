@@ -1,4 +1,4 @@
-import { MapLayerRegistryItem, MapLayerConfig, GrafanaTheme2, RegistryItem, Registry } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, RegistryItem, Registry } from '@grafana/data';
 import Map from 'ol/Map';
 import { xyzTiles, defaultXYZConfig, XYZConfig } from './generic';
 
@@ -57,7 +57,7 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
   name: 'ArcGIS MapServer',
   isBaseMap: true,
 
-  create: (map: Map, options: MapLayerConfig<ESRIXYZConfig>, theme: GrafanaTheme2) => ({
+  create: (map: Map, options: MapLayerOptions<ESRIXYZConfig>, theme: GrafanaTheme2) => ({
     init: () => {
       const cfg = { ...options.config };
       const svc = publicServiceRegistry.getIfExists(cfg.server ?? DEFAULT_SERVICE)!;
