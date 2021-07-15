@@ -8,6 +8,7 @@ import {
   StandardEditorContext,
   FrameGeometrySourceMode,
   FieldType,
+  Field,
 } from '@grafana/data';
 import { geomapLayerRegistry } from '../layers/registry';
 import { defaultGrafanaThemedMap } from '../layers/basemaps';
@@ -59,7 +60,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
           path: 'location.latitude',
           name: 'Latitude Field',
           settings: {
-            filter: (f) => f.type === FieldType.number,
+            filter: (f: Field) => f.type === FieldType.number,
             noFieldsMessage: 'No numeric fields found',
           },
           showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Coords,
@@ -68,7 +69,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
           path: 'location.longitude',
           name: 'Longitude Field',
           settings: {
-            filter: (f) => f.type === FieldType.number,
+            filter: (f: Field) => f.type === FieldType.number,
             noFieldsMessage: 'No numeric fields found',
           },
           showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Coords,
@@ -77,7 +78,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
           path: 'location.geohash',
           name: 'Geohash Field',
           settings: {
-            filter: (f) => f.type === FieldType.string,
+            filter: (f: Field) => f.type === FieldType.string,
             noFieldsMessage: 'No strings fields found',
           },
           showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Geohash,

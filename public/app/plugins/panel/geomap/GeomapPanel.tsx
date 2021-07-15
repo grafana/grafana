@@ -36,11 +36,10 @@ type Props = PanelProps<GeomapPanelOptions>;
 export class GeomapPanel extends Component<Props> {
   globalCSS = getGlobalStyles(config.theme2);
 
-  map: Map;
-
-  basemap: BaseLayer;
+  map?: Map;
+  basemap?: BaseLayer;
   layers: MapLayerState[] = [];
-  mouseWheelZoom: MouseWheelZoom;
+  mouseWheelZoom?: MouseWheelZoom;
   style = getStyles(config.theme);
   overlayProps: OverlayProps = {};
 
@@ -78,7 +77,7 @@ export class GeomapPanel extends Component<Props> {
 
     if (options.view !== oldOptions.view) {
       console.log('View changed');
-      this.map.setView(this.initMapView(options.view));
+      this.map!.setView(this.initMapView(options.view));
     }
 
     if (options.controls !== oldOptions.controls) {
@@ -146,6 +145,9 @@ export class GeomapPanel extends Component<Props> {
   };
 
   initBasemap(cfg: MapLayerOptions) {
+    if (!this.map) {
+      return;
+    }
     if (!cfg) {
       cfg = { type: defaultGrafanaThemedMap.id };
     }
@@ -162,7 +164,7 @@ export class GeomapPanel extends Component<Props> {
   initLayers(layers: MapLayerOptions[]) {
     // 1st remove existing layers
     for (const state of this.layers) {
-      this.map.removeLayer(state.layer);
+      this.map!.removeLayer(state.layer);
       state.layer.dispose();
     }
 
@@ -178,9 +180,9 @@ export class GeomapPanel extends Component<Props> {
         continue; // TODO -- panel warning?
       }
 
-      const handler = item.create(this.map, overlay, config.theme2);
+      const handler = item.create(this.map!, overlay, config.theme2);
       const layer = handler.init();
-      this.map.addLayer(layer);
+      this.map!.addLayer(layer);
       this.layers.push({
         config: overlay,
         layer,
@@ -235,6 +237,9 @@ export class GeomapPanel extends Component<Props> {
   }
 
   initControls(options: ControlsOptions) {
+    if (!this.map) {
+      return;
+    }
     this.map.getControls().clear();
 
     if (options.showZoom) {
@@ -250,7 +255,7 @@ export class GeomapPanel extends Component<Props> {
       );
     }
 
-    this.mouseWheelZoom.setActive(Boolean(options.mouseWheelZoom));
+    this.mouseWheelZoom!.setActive(Boolean(options.mouseWheelZoom));
 
     if (options.showAttribution) {
       this.map.addControl(new Attribution({ collapsed: true, collapsible: true }));
