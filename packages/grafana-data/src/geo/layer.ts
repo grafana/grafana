@@ -6,6 +6,9 @@ import { GrafanaTheme2 } from '../themes';
 import { PanelOptionsEditorBuilder } from '../utils';
 import { ReactNode } from 'react';
 
+/**
+ * @alpha
+ */
 export enum FrameGeometrySourceMode {
   Auto = 'auto', // Will scan fields and find best match
   Geohash = 'geohash',
@@ -16,6 +19,9 @@ export enum FrameGeometrySourceMode {
   // geojson? geometry text
 }
 
+/**
+ * @alpha
+ */
 export interface FrameGeometrySource {
   mode: FrameGeometrySourceMode;
 
