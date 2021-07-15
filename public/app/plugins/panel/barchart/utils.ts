@@ -127,7 +127,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
       theme,
       colorMode,
       pathBuilder: config.barsBuilder,
-      pathData: config.barsData,
       //pointsBuilder: config.drawPoints,
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,

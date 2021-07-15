@@ -25,7 +25,6 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   colorMode?: FieldColorMode;
   drawStyle?: DrawStyle;
   pathBuilder?: Series.PathBuilder;
-  pathData?: Series.DataPreprocesor;
   pointsFilter?: Series.Points.Filter;
   pointsBuilder?: Series.Points.Show;
   show?: boolean;
@@ -38,7 +37,6 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     const {
       drawStyle,
       pathBuilder,
-      pathData,
       pointsBuilder,
       pointsFilter,
       lineInterpolation,
@@ -73,7 +71,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
         }
         lineConfig.dash = lineStyle.dash ?? [10, 10];
       }
-      lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number, data: Series.PathBuilderData) => {
+      lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
         let pathsBuilder = mapDrawStyleToPathBuilder(
           drawStyle,
           lineInterpolation,
@@ -81,7 +79,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
           barWidthFactor,
           barMaxWidth
         );
-        return pathsBuilder(self, seriesIdx, idx0, idx1, data);
+        return pathsBuilder(self, seriesIdx, idx0, idx1);
       };
     }
 
@@ -118,7 +116,6 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       spanGaps: typeof spanNulls === 'number' ? false : spanNulls,
       pxAlign,
       show,
-      data: pathData,
       fill: this.getFill(),
       ...lineConfig,
       ...pointsConfig,

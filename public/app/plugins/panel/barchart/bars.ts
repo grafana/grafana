@@ -313,11 +313,30 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   };
 
   let barsPctLayout: Array<{ offs: number[]; size: number[] }> = [];
-  let barsRenderData: Series.PathBuilderData[];
-
-  const barsData: Series.DataPreprocesor = (u, seriesIdx) => barsRenderData[seriesIdx];
 
   let barsBuilder = uPlot.paths.bars!({
+    disp: {
+      x0: {
+        unit: 2,
+        values: (u, seriesIdx, idx0, idx1) => barsPctLayout[seriesIdx].offs,
+      },
+      size: {
+        unit: 2,
+        values: (u, seriesIdx, idx0, idx1) => barsPctLayout[seriesIdx].size,
+      },
+      /*
+      // e.g. variable size via scale (will compute offsets from known values)
+      x1: {
+        units: 1,
+        values: (u, seriesIdx, idx0, idx1) => bucketEnds[idx],
+      },
+      fill: {
+        units: 3, // color
+        discr: true,
+        values: (u, seriesIdx, idx0, idx1) => colors[idx],
+      }
+      */
+    },
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
       qt.add({ x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx });
     },
@@ -375,28 +394,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     });
 
     barsPctLayout = [null].concat(distrTwo(u.data[0].length, u.data.length - 1));
-
-    let { min, max } = u.scales.x;
-    let dx = max! - min!;
-
-    barsRenderData = barsPctLayout.map((seriesLayout, i) => {
-      if (i > 0) {
-        let { offs, size } = seriesLayout;
-
-        return [
-          // x0 values
-          offs.map((pct) => dx * pct) as any[],
-          // y0 values
-          null,
-          // x1 values
-          size.map((pct, i) => dx * (pct + offs[i])) as any[],
-          // y1 values
-          null,
-        ];
-      }
-
-      return null;
-    });
   };
 
   // handle hover interaction with quadtree probing
@@ -454,7 +451,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     // drawBars,
     // draw,
     barsBuilder,
-    barsData,
     drawPoints,
 
     // hooks
