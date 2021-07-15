@@ -72,7 +72,7 @@ func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (datasourceInfo, e
 	}
 	ds, ok := i.(datasourceInfo)
 	if !ok {
-		return datasourceInfo{}, fmt.Errorf("Unable to convert datasource from service instance")
+		return datasourceInfo{}, fmt.Errorf("unable to convert datasource from service instance")
 	}
 	return ds, nil
 }

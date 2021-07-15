@@ -160,7 +160,7 @@ func (s *Service) getDataSourceFromPluginReq(req *backend.QueryDataRequest) (dat
 	}
 	dsInfo, ok := i.(datasourceInfo)
 	if !ok {
-		return datasourceInfo{}, fmt.Errorf("Unable to convert datasource from service instance")
+		return datasourceInfo{}, fmt.Errorf("unable to convert datasource from service instance")
 	}
 	dsInfo.OrgID = req.PluginContext.OrgID
 	return dsInfo, nil
