@@ -71,9 +71,6 @@ func Gziper() Middleware {
 			}
 
 			grw := &gzipResponseWriter{gzip.NewWriter(w), w.(macaron.ResponseWriter)}
-			ctx := macaron.FromContext(r.Context())
-			ctx.Resp = grw
-			ctx.MapTo(grw, (*http.ResponseWriter)(nil))
 			grw.Header().Set("Content-Encoding", "gzip")
 			grw.Header().Set("Vary", "Accept-Encoding")
 

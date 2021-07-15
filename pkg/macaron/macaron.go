@@ -150,19 +150,33 @@ func FromContext(c context.Context) *Context {
 	return c.Value(macaronContextKey{}).(*Context)
 }
 
-// Use adds a middleware Handler to the stack,
-// and panics if the handler is not a callable func.
-// Middleware Handlers are invoked in the order that they are added.
+// UseMiddleware is a traditional approach to writing middleware in Go.
+// A middleware is a function that has a reference to the next handler in the chain
+// and returns the actual middleware handler, that may do its job and optionally
+// call next.
+// Due to how Macaron handles/injects requests and responses we patch the macaron.Context
+// to use the new ResponseWriter and http.Request here. The caller may only call
+// `next.ServeHTTP(rw, req)` to pass a modified response writer and/or a request to the
+// further middlewares in the chain.
 func (m *Macaron) UseMiddleware(middleware func(http.Handler) http.Handler) {
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		c := FromContext(req.Context())
 		c.Req.Request = req
+		if mrw, ok := rw.(*responseWriter); ok {
+			c.Resp = mrw
+		} else {
+			c.Resp = NewResponseWriter(req.Method, rw)
+		}
 		c.Map(req)
+		c.MapTo(rw, (*http.ResponseWriter)(nil))
 		c.Next()
 	})
 	m.handlers = append(m.handlers, Handler(middleware(next)))
 }
 
+// Use adds a middleware Handler to the stack,
+// and panics if the handler is not a callable func.
+// Middleware Handlers are invoked in the order that they are added.
 func (m *Macaron) Use(middleware Handler) {
 	h := validateAndWrapHandler(middleware)
 	m.handlers = append(m.handlers, h)
