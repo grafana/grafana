@@ -147,8 +147,9 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
           }
 
           onChange({
+            ...options, // keep current options
             type: layer.id,
-            config: layer.defaultOptions, // clone?
+            config: { ...layer.defaultOptions }, // clone?
           });
         }}
       />
