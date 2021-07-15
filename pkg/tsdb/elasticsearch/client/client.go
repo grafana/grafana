@@ -34,6 +34,8 @@ type DatasourceInfo struct {
 	Interval                   string
 	TimeInterval               string
 	MaxConcurrentShardRequests int64
+	IncludeFrozen              bool
+	XPack                      bool
 }
 
 const loggerName = "tsdb.elasticsearch.client"
@@ -302,15 +304,23 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 }
 
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {
+	var qs []string
+
 	if c.version.Major() >= 7 {
 		maxConcurrentShardRequests := c.ds.MaxConcurrentShardRequests
 		if maxConcurrentShardRequests == 0 {
 			maxConcurrentShardRequests = 5
 		}
-		return fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests)
+		qs = append(qs, fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests))
 	}
 
-	return ""
+	allowedFrozenIndicesVersionRange, _ := semver.NewConstraint(">=6.6.0")
+
+	if (allowedFrozenIndicesVersionRange.Check(c.version)) && c.ds.IncludeFrozen && c.ds.XPack {
+		qs = append(qs, "ignore_throttled=false")
+	}
+
+	return strings.Join(qs, "&")
 }
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {

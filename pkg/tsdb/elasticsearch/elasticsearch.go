@@ -118,6 +118,16 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			maxConcurrentShardRequests = 256
 		}
 
+		includeFrozen, ok := jsonData["includeFrozen"].(bool)
+		if !ok {
+			includeFrozen = false
+		}
+
+		xpack, ok := jsonData["xpack"].(bool)
+		if !ok {
+			xpack = false
+		}
+
 		model := es.DatasourceInfo{
 			ID:                         settings.ID,
 			URL:                        settings.URL,
@@ -128,6 +138,8 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			TimeField:                  timeField,
 			Interval:                   interval,
 			TimeInterval:               timeInterval,
+			IncludeFrozen:              includeFrozen,
+			XPack:                      xpack,
 		}
 		return model, nil
 	}

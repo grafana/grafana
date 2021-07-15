@@ -211,6 +211,8 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		TimeField:                  "@timestamp",
 		Interval:                   "Daily",
 		MaxConcurrentShardRequests: 100,
+		IncludeFrozen:              true,
+		XPack:                      true,
 	}, func(sc *scenarioContext) {
 		sc.responseBody = `{
 				"responses": [
@@ -229,6 +231,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.NotNil(t, sc.request)
 		assert.Equal(t, http.MethodPost, sc.request.Method)
 		assert.Equal(t, "/_msearch", sc.request.URL.Path)
+		assert.NotContains(t, sc.request.URL.RawQuery, "ignore_throttled=")
 
 		require.NotNil(t, sc.requestBody)
 
@@ -263,6 +266,8 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		TimeField:                  "@timestamp",
 		Interval:                   "Daily",
 		MaxConcurrentShardRequests: 6,
+		IncludeFrozen:              true,
+		XPack:                      true,
 	}, func(sc *scenarioContext) {
 		sc.responseBody = `{
 				"responses": [
@@ -281,7 +286,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.NotNil(t, sc.request)
 		assert.Equal(t, http.MethodPost, sc.request.Method)
 		assert.Equal(t, "/_msearch", sc.request.URL.Path)
-		assert.Equal(t, "max_concurrent_shard_requests=6", sc.request.URL.RawQuery)
+		assert.Equal(t, "max_concurrent_shard_requests=6&ignore_throttled=false", sc.request.URL.RawQuery)
 
 		require.NotNil(t, sc.requestBody)
 
@@ -299,6 +304,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		assert.True(t, jHeader.Get("ignore_unavailable").MustBool(false))
 		assert.Equal(t, "query_then_fetch", jHeader.Get("search_type").MustString())
 		assert.Empty(t, jHeader.Get("max_concurrent_shard_requests"))
+		assert.False(t, jHeader.Get("ignore_throttled").MustBool())
 
 		assert.Equal(t, "15000*@hostname", jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString())
 
