@@ -49,6 +49,8 @@ public/css/*.min.css
 *.iml
 *.tmp
 .DS_Store
+.vscode/
+!.vscode/launch.json
 .vs/
 .eslintcache
 

@@ -51,6 +51,14 @@ export interface AnnotationEvent {
   source?: any; // source.type === 'dashboard'
 }
 
+export interface AnnotationEventUIModel {
+  id?: string;
+  from: number;
+  to: number;
+  tags: string[];
+  description: string;
+}
+
 /**
  * @alpha -- any value other than `field` is experimental
  */
