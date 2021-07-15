@@ -700,53 +700,41 @@ describe('LokiDatasource', () => {
     const ds = createLokiDSForTests();
     describe('when max step option is used', () => {
       it('should return the minimum interval', () => {
-        let intervalFactor = 1;
         let stepMode: StepType = 'max';
-        let interval = ds.adjustInterval(dynamicInterval, stepInterval, stepMode, range, intervalFactor);
-        expect(interval).toBe(dynamicInterval * intervalFactor);
-
-        intervalFactor = 3;
-        interval = ds.adjustInterval(dynamicInterval, stepInterval, stepMode, range, intervalFactor);
-        expect(interval).toBe(stepInterval);
+        let interval = ds.adjustInterval(dynamicInterval, stepInterval, stepMode, range);
+        expect(interval).toBe(dynamicInterval);
       });
     });
     describe('when min step option is used', () => {
       it('should return the maximum interval', () => {
-        let intervalFactor = 1;
         let stepMode: StepType = 'min';
-        let interval = ds.adjustInterval(dynamicInterval, stepInterval, stepMode, range, intervalFactor);
+        let interval = ds.adjustInterval(dynamicInterval, stepInterval, stepMode, range);
         expect(interval).toBe(stepInterval);
-
-        intervalFactor = 3;
-        interval = ds.adjustInterval(dynamicInterval, stepInterval, stepMode, range, intervalFactor);
-        expect(interval).toBe(dynamicInterval * intervalFactor);
       });
     });
     describe('when exact step option is used', () => {
-      it('should return the stepInterval * intervalFactor', () => {
-        let intervalFactor = 3;
+      it('should return the stepInterval', () => {
         let stepMode: StepType = 'exact';
-        let interval = ds.adjustInterval(dynamicInterval, stepInterval, stepMode, range, intervalFactor);
-        expect(interval).toBe(stepInterval * intervalFactor);
+        let interval = ds.adjustInterval(dynamicInterval, stepInterval, stepMode, range);
+        expect(interval).toBe(stepInterval);
       });
     });
     it('should not return a value less than the safe interval', () => {
       let newStepInterval = 0.13;
-      let intervalFactor = 1;
       let stepMode: StepType = 'min';
       let safeInterval = range / 11000;
       if (safeInterval > 1) {
         safeInterval = Math.ceil(safeInterval);
       }
-      let interval = ds.adjustInterval(dynamicInterval, newStepInterval, stepMode, range, intervalFactor);
+      let interval = ds.adjustInterval(dynamicInterval, newStepInterval, stepMode, range);
       expect(interval).toBeGreaterThanOrEqual(safeInterval);
 
       stepMode = 'max';
-      interval = ds.adjustInterval(dynamicInterval, newStepInterval, stepMode, range, intervalFactor);
+      interval = ds.adjustInterval(dynamicInterval, newStepInterval, stepMode, range);
       expect(interval).toBeGreaterThanOrEqual(safeInterval);
 
       stepMode = 'exact';
-      interval = ds.adjustInterval(dynamicInterval, newStepInterval, stepMode, range, intervalFactor);
+      interval = ds.adjustInterval(dynamicInterval, newStepInterval, stepMode, range);
       expect(interval).toBeGreaterThanOrEqual(safeInterval);
     });
   });

@@ -32,7 +32,6 @@ export interface LokiQuery extends DataQuery {
   maxLines?: number;
   stepInterval?: string;
   stepMode?: StepType;
-  resolution?: number;
   range?: boolean;
   instant?: boolean;
 }

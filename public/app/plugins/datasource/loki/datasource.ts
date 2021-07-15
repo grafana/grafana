@@ -182,15 +182,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       );
       const stepMode = target.stepMode || (DEFAULT_STEP_OPTION.value as StepType);
 
-      const resolution = target.resolution || 1;
-
       const adjustedInterval =
         this.adjustInterval(
           (options as DataQueryRequest<LokiQuery>).intervalMs || 1000,
           stepInterval,
           stepMode,
-          rangeMs,
-          resolution
+          rangeMs
         ) / 1000;
       // We want to ceil to 3 decimal places
       const step = Math.ceil(adjustedInterval * 1000) / 1000;
@@ -635,7 +632,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return error;
   }
 
-  adjustInterval(interval: number, stepInterval: number, stepMode: StepType, range: number, resolution: number) {
+  adjustInterval(interval: number, stepInterval: number, stepMode: StepType, range: number) {
     // Loki will drop queries that might return more than 11000 data points.
     // Calibrate interval if it is too small.
     let safeInterval = range / 11000;
@@ -645,14 +642,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     // The min interval is set to 1ms
     let adjustedInterval = safeInterval;
     if (stepMode === 'min') {
-      adjustedInterval = Math.max(interval * resolution, stepInterval, safeInterval);
+      adjustedInterval = Math.max(interval, stepInterval, safeInterval);
     } else if (stepMode === 'max') {
-      adjustedInterval = Math.min(interval * resolution, stepInterval);
+      adjustedInterval = Math.min(interval, stepInterval);
       if (adjustedInterval < safeInterval) {
         adjustedInterval = safeInterval;
       }
     } else if (stepMode === 'exact') {
-      adjustedInterval = Math.max(stepInterval * resolution, safeInterval);
+      adjustedInterval = Math.max(stepInterval, safeInterval);
     }
     return adjustedInterval;
   }

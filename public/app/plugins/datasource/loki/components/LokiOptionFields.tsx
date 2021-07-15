@@ -2,7 +2,6 @@
 import React, { memo } from 'react';
 import { css, cx } from '@emotion/css';
 import { LokiQuery, StepType } from '../types';
-import { map } from 'lodash';
 
 // Types
 import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
@@ -12,7 +11,6 @@ export interface LokiOptionFieldsProps {
   lineLimitValue: string;
   stepInterval: string;
   stepMode: StepType;
-  resolution: number;
   queryType: LokiQueryType;
   query: LokiQuery;
   onChange: (value: LokiQuery) => void;
@@ -30,11 +28,6 @@ const queryTypeOptions = [
     description: 'Run query against a single point in time. For this query, the "To" time is used.',
   },
 ];
-
-const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4, 5, 10], (value: number) => ({
-  value,
-  label: '1/' + value,
-}));
 
 export const DEFAULT_STEP_OPTION: SelectableValue<StepType> = {
   value: 'min',
@@ -54,17 +47,7 @@ const STEP_OPTIONS: Array<SelectableValue<StepType>> = [
 ];
 
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
-  const {
-    lineLimitValue,
-    stepInterval,
-    resolution,
-    stepMode,
-    queryType,
-    query,
-    onRunQuery,
-    runOnBlur,
-    onChange,
-  } = props;
+  const { lineLimitValue, stepInterval, stepMode, queryType, query, onRunQuery, runOnBlur, onChange } = props;
 
   function onChangeQueryLimit(value: string) {
     const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
@@ -114,11 +97,6 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
 
   function onStepModeChange(option: SelectableValue<StepType>) {
     const nextQuery = { ...query, stepMode: option.value };
-    onChange(nextQuery);
-  }
-
-  function onResolutionChange(option: SelectableValue<number>) {
-    const nextQuery = { ...query, resolution: option.value };
     onChange(nextQuery);
   }
 
@@ -197,14 +175,6 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
                 onRunQuery();
               }
             }}
-          />
-        </InlineField>
-        <InlineField label="Resolution">
-          <Select
-            isSearchable={false}
-            options={INTERVAL_FACTOR_OPTIONS}
-            onChange={onResolutionChange}
-            value={resolution}
           />
         </InlineField>
       </div>
