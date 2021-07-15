@@ -6,11 +6,9 @@ weight = 1200
 
 # Time series
 
-> **Note:** Time series panel visualization is going to replace the Graph panel visualization in a future release.
+{{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" caption="Time series" >}}
 
-Time series panel is a robust visualization to plot time series data. It can render as a line, a path of dots, or a series of bars. This type of graph is versatile enough to display almost any time-series data.
-
-For Time series panel examples, refer to the Grafana Play dashboard [New Features in v7.4](https://play.grafana.org/d/nP8rcffGk/new-features-in-v7-4?orgId=1).
+Time series visualization is the default and primary way to visualize time series data. It can render as a line, a path of dots, or a series of bars. It is versatile enough to display almost any time-series data. [ This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples for how this visualization can be configured and styled.
 
 > **Note:** You can migrate Graph panel visualizations to Time series visualizations. To migrate, open the panel and then select the  **Time series** visualization. Grafana transfers all applicable settings.
 
@@ -34,6 +32,7 @@ Use these options to choose how to display your time series data.
 - [Graph time series as bars]({{< relref "./graph-time-series-as-bars.md" >}})
 - [Graph time series as points]({{< relref "./graph-time-series-as-points.md" >}})
 - [Graph stacked time series]({{< relref "./graph-time-series-stacking.md" >}})
+- [Graph and color schemes]({{< relref "./graph-color-scheme.md" >}})
 
 ## Axis
 

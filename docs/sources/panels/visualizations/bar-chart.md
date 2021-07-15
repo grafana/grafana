@@ -9,8 +9,7 @@ weight = 170
 
 This panel visualization allows you to graph categorical data.
 
-{{< figure src="/static/img/docs/bar-chart-panel/bar-chart-example-v8-0.png" max-width="1025px" caption="Bar chart example" >}}
-
+{{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="1000px" caption="Bar chart" >}}
 ## Supported data formats
 
 Only one data frame is supported and it needs to have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.

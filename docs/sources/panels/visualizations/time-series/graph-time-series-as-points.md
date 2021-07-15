@@ -6,8 +6,6 @@ weight = 300
 
 # Graph time series as points
 
-> **Note:** This is a beta feature. Time series panel is going to replace the Graph panel in the future releases.
-
 This section explains how to use Time series field options to visualize time series data as points and illustrates what the options do.
 
 ## Create the panel
