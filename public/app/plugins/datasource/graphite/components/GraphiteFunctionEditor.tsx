@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { HorizontalGroup, InlineLabel, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { css } from '@emotion/css';
-import { FuncInstance } from '../gfunc';
+import { css, cx } from '@emotion/css';
+import { FuncInstance, ParamDef } from '../gfunc';
 import { FieldEditor } from './FieldEditor';
 import { actions } from '../state/actions';
 import { FunctionEditor } from '../FunctionEditor';
-import { FunctionDescriptor } from '../FunctionEditorControls';
 
 export type FunctionEditorProps = {
   func: FuncInstance;
@@ -20,6 +19,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginRight: theme.spacing(0.5),
     padding: `0 ${theme.spacing(1)}`,
   }),
+  error: css`
+    border: 1px solid ${theme.colors.error.main};
+  `,
   label: css({
     padding: 0,
     margin: 0,
@@ -38,25 +40,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-type ParamDef = {
+type ParamToShow = {
   optional: boolean;
   multiple: boolean;
   options: string[];
   name: string;
-  value?: string;
+  value: string;
 };
 
 export function GraphiteFunctionEditor({ func, dispatch }: FunctionEditorProps) {
   const styles = useStyles2(getStyles);
 
-  let params: ParamDef[] = func.def.params.map((paramDef: ParamDef, index: number) => {
+  let params: ParamToShow[] = func.def.params.map((paramDef: ParamDef, index: number) => {
     const value = func.params[index];
     return {
       name: paramDef.name,
-      value: value,
+      value: value.toString(),
       optional: !!paramDef.optional,
-      options: paramDef.options,
-      multiple: paramDef.multiple,
+      options: paramDef.options?.map((option) => option.toString()) || [],
+      multiple: !!paramDef.multiple,
     };
   });
   while (params.length < func.params.length) {
@@ -66,9 +68,9 @@ export function GraphiteFunctionEditor({ func, dispatch }: FunctionEditorProps) 
     params.push({
       name: paramDef.name,
       optional: !!paramDef.optional,
-      multiple: paramDef.multiple,
-      value: value,
-      options: paramDef.options,
+      multiple: !!paramDef.multiple,
+      value: value.toString(),
+      options: paramDef.options?.map((option) => option.toString()) || [],
     });
   }
 
@@ -78,9 +80,9 @@ export function GraphiteFunctionEditor({ func, dispatch }: FunctionEditorProps) 
     params.push({
       name: paramDef.name,
       optional: !!paramDef.optional,
-      multiple: paramDef.multiple,
+      multiple: !!paramDef.multiple,
       value: '',
-      options: paramDef.options,
+      options: paramDef.options?.map((option) => option.toString()) || [],
     });
   }
 
@@ -88,15 +90,19 @@ export function GraphiteFunctionEditor({ func, dispatch }: FunctionEditorProps) 
   const [expanded, setExpanded] = useState(false);
 
   params = params.filter(
-    (p: ParamDef, index: number) =>
+    (p: ParamToShow, index: number) =>
       (index < func.def.params.length && p.optional !== true) || p.value || expanded || mouseOver
   );
 
   return (
-    <div className={styles.container} onMouseOver={() => setMouseOver(true)} onMouseLeave={() => setMouseOver(false)}>
+    <div
+      className={cx(styles.container, { [styles.error]: func.def.unknown })}
+      onMouseOver={() => setMouseOver(true)}
+      onMouseLeave={() => setMouseOver(false)}
+    >
       <HorizontalGroup spacing="none">
         <FunctionEditor
-          func={(func as any) as FunctionDescriptor}
+          func={func}
           onMoveLeft={() => {
             dispatch(actions.moveFunction({ func, offset: -1 }));
           }}
@@ -108,7 +114,7 @@ export function GraphiteFunctionEditor({ func, dispatch }: FunctionEditorProps) 
           }}
         />
         <InlineLabel className={styles.label}>(</InlineLabel>
-        {params.map((param: ParamDef, index: number) => {
+        {params.map((param: ParamToShow, index: number) => {
           return (
             <React.Fragment key={index}>
               <FieldEditor

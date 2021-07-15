@@ -2,7 +2,7 @@ import { assign, each, filter, forEach, get, includes, isString, last, map, toSt
 import { isVersionGtOrEq } from 'app/core/utils/version';
 import { InterpolateFunction } from '@grafana/data';
 
-type ParamDef = {
+export type ParamDef = {
   name: string;
   type: string;
   options?: Array<string | number>;

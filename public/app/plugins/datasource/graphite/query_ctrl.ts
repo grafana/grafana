@@ -1,5 +1,3 @@
-import './func_editor';
-
 import GraphiteQuery from './graphite_query';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
