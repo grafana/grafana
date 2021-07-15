@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -117,7 +118,11 @@ func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[st
 			app.DefaultNavUrl = cfg.AppSubURL + "/plugins/" + app.Id + "/page/" + include.Slug
 		}
 		if include.Type == "dashboard" && include.DefaultNav {
-			app.DefaultNavUrl = cfg.AppSubURL + "/dashboard/db/" + include.Slug
+			if include.UID != "" {
+				app.DefaultNavUrl = cfg.AppSubURL + fmt.Sprintf("/d/%s/%s", include.UID, include.Slug)
+			} else {
+				app.DefaultNavUrl = cfg.AppSubURL + fmt.Sprintf("/plugins/%s/dashboards/slug/%s", app.Id, include.Slug)
+			}
 		}
 	}
 

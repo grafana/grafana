@@ -2,6 +2,7 @@
 package api
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/go-macaron/binding"
@@ -9,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -79,6 +81,21 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/plugins/:id/", reqSignedIn, hs.Index)
 	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index) // deprecated
 	r.Get("/plugins/:id/page/:page", reqSignedIn, hs.Index)
+	// replace with proper handler
+	r.Get("/plugins/:id/dashboards/slug/:slug", reqSignedIn, func(c *models.ReqContext) {
+		slug := c.Params("slug")
+		// replace with call to pluginManager.GetPluginDashboardBySlug()
+		query := &models.GetDashboardQuery{
+			OrgId: c.OrgId,
+			Slug:  slug,
+		}
+		if err := bus.DispatchCtx(c.Req.Context(), query); err != nil {
+			// do something
+			return
+		}
+
+		c.Redirect(query.Result.GetUrl(), http.StatusMovedPermanently)
+	}, hs.Index)
 	r.Get("/a/:id/*", reqSignedIn, hs.Index) // App Root Page
 	r.Get("/a/:id", reqSignedIn, hs.Index)
 
@@ -285,6 +302,8 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/plugins/:pluginId/health", routing.Wrap(hs.CheckHealth))
 		apiRoute.Any("/plugins/:pluginId/resources", hs.CallResource)
 		apiRoute.Any("/plugins/:pluginId/resources/*", hs.CallResource)
+		// replace with proper api handler using pluginManager.GetPluginDashboardBySlug
+		apiRoute.Any("/plugins/:pluginId/dashboards/slug/:slug", hs.GetDashboard)
 		apiRoute.Get("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
 
 		if hs.Cfg.PluginAdminEnabled {

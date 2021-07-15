@@ -70,8 +70,9 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 }
 
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
+	slug := c.Params(":slug")
 	uid := c.Params(":uid")
-	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, uid)
+	dash, rsp := getDashboardHelperInternal(c.Req.Context(), c.OrgId, 0, uid, slug)
 	if rsp != nil {
 		return rsp
 	}
@@ -198,12 +199,16 @@ func getUserLogin(ctx context.Context, userID int64) string {
 }
 
 func getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*models.Dashboard, response.Response) {
+	return getDashboardHelperInternal(ctx, orgID, id, uid, "")
+}
+
+func getDashboardHelperInternal(ctx context.Context, orgID int64, id int64, uid string, slug string) (*models.Dashboard, response.Response) {
 	var query models.GetDashboardQuery
 
 	if len(uid) > 0 {
 		query = models.GetDashboardQuery{Uid: uid, Id: id, OrgId: orgID}
 	} else {
-		query = models.GetDashboardQuery{Id: id, OrgId: orgID}
+		query = models.GetDashboardQuery{Slug: slug, Id: id, OrgId: orgID}
 	}
 
 	if err := bus.DispatchCtx(ctx, &query); err != nil {
