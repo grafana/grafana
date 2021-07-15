@@ -153,7 +153,7 @@ func FromContext(c context.Context) *Context {
 // Use adds a middleware Handler to the stack,
 // and panics if the handler is not a callable func.
 // Middleware Handlers are invoked in the order that they are added.
-func (m *Macaron) Use(middleware func(http.Handler) http.Handler) {
+func (m *Macaron) UseMiddleware(middleware func(http.Handler) http.Handler) {
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		c := FromContext(req.Context())
 		c.Req.Request = req
@@ -163,7 +163,7 @@ func (m *Macaron) Use(middleware func(http.Handler) http.Handler) {
 	m.handlers = append(m.handlers, Handler(middleware(next)))
 }
 
-func (m *Macaron) UseLegacy(middleware Handler) {
+func (m *Macaron) Use(middleware Handler) {
 	h := validateAndWrapHandler(middleware)
 	m.handlers = append(m.handlers, h)
 }
