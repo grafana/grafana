@@ -334,12 +334,23 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 }
 
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {
+	var qs []string
+
 	if c.version.Major() >= 7 {
 		maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(5)
-		return fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests)
+		qs = append(qs, fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests))
 	}
 
-	return ""
+	// Querying frozen indices was added in 6.6 with xpack
+	includeFrozen := c.getSettings().Get("includeFrozen").MustBool(false)
+	xpack := c.getSettings().Get("xpack").MustBool(false)
+	allowedFrozenIndicesVersionRange, _ := semver.NewConstraint(">=6.6.0")
+
+	if (allowedFrozenIndicesVersionRange.Check(c.version)) && includeFrozen && xpack {
+		qs = append(qs, "ignore_throttled=false")
+	}
+
+	return strings.Join(qs, "&")
 }
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {

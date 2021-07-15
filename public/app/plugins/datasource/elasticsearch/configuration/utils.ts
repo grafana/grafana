@@ -19,6 +19,7 @@ export const coerceOptions = (
         options.jsonData.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(esVersion),
       logMessageField: options.jsonData.logMessageField || '',
       logLevelField: options.jsonData.logLevelField || '',
+      includeFrozen: options.jsonData.includeFrozen ?? false,
     },
   };
 };

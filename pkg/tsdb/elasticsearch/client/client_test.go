@@ -253,10 +253,12 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 	httpClientScenario(t, "Given a fake http client and a v5.6 client with response", &models.DataSource{
 		Database: "[metrics-]YYYY.MM.DD",
 		JsonData: simplejson.NewFromAny(map[string]interface{}{
-			"esVersion":                  56,
+			"esVersion":                  "5.6.0",
 			"maxConcurrentShardRequests": 100,
 			"timeField":                  "@timestamp",
 			"interval":                   "Daily",
+			"includeFrozen":              true,
+			"xpack":                      true,
 		}),
 	}, func(sc *scenarioContext) {
 		sc.responseBody = `{
@@ -276,6 +278,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.NotNil(t, sc.request)
 		assert.Equal(t, http.MethodPost, sc.request.Method)
 		assert.Equal(t, "/_msearch", sc.request.URL.Path)
+		assert.NotContains(t, sc.request.URL.RawQuery, "ignore_throttled=")
 
 		require.NotNil(t, sc.requestBody)
 
@@ -305,10 +308,12 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 	httpClientScenario(t, "Given a fake http client and a v7.0 client with response", &models.DataSource{
 		Database: "[metrics-]YYYY.MM.DD",
 		JsonData: simplejson.NewFromAny(map[string]interface{}{
-			"esVersion":                  70,
+			"esVersion":                  "7.0.0",
 			"maxConcurrentShardRequests": 6,
 			"timeField":                  "@timestamp",
 			"interval":                   "Daily",
+			"includeFrozen":              true,
+			"xpack":                      true,
 		}),
 	}, func(sc *scenarioContext) {
 		sc.responseBody = `{
@@ -328,7 +333,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.NotNil(t, sc.request)
 		assert.Equal(t, http.MethodPost, sc.request.Method)
 		assert.Equal(t, "/_msearch", sc.request.URL.Path)
-		assert.Equal(t, "max_concurrent_shard_requests=6", sc.request.URL.RawQuery)
+		assert.Equal(t, "max_concurrent_shard_requests=6&ignore_throttled=false", sc.request.URL.RawQuery)
 
 		require.NotNil(t, sc.requestBody)
 
@@ -346,6 +351,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		assert.True(t, jHeader.Get("ignore_unavailable").MustBool(false))
 		assert.Equal(t, "query_then_fetch", jHeader.Get("search_type").MustString())
 		assert.Empty(t, jHeader.Get("max_concurrent_shard_requests"))
+		assert.False(t, jHeader.Get("ignore_throttled").MustBool())
 
 		assert.Equal(t, "15000*@hostname", jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString())
 

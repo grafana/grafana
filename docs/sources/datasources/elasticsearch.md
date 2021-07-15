@@ -80,6 +80,13 @@ number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 se
 | `s`        | second      |
 | `ms`       | millisecond |
 
+### X-Pack enabled
+
+Enables `X-Pack` specific features and options, providing the query editor with additional aggregations such as `Rate` and `Top Metrics`.
+
+#### Include frozen indices
+
+When `X-Pack enabled` is active and the configured Elasticsearch version is higher than `6.6.0`, you can configure Grafana to not ignore [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
 ### Logs
 
 There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determine
