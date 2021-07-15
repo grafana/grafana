@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -26,7 +27,7 @@ func newPostgresMacroEngine(timescaledb bool) sqleng.SQLMacroEngine {
 	}
 }
 
-func (m *postgresMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange,
+func (m *postgresMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange backend.TimeRange,
 	sql string) (string, error) {
 	// TODO: Handle error
 	rExp, _ := regexp.Compile(sExpr)

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -22,7 +23,7 @@ func newMssqlMacroEngine() sqleng.SQLMacroEngine {
 	return &msSQLMacroEngine{SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase()}
 }
 
-func (m *msSQLMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange,
+func (m *msSQLMacroEngine) Interpolate(query backend.DataQuery, timeRange backend.TimeRange,
 	sql string) (string, error) {
 	// TODO: Return any error
 	rExp, _ := regexp.Compile(sExpr)
