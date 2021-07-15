@@ -1,7 +1,7 @@
 import { FuncDefs, FuncInstance, ParamDef } from '../gfunc';
 import { forEach, sortBy } from 'lodash';
 import { SelectableValue } from '@grafana/data';
-import { EditableParam } from './GraphiteFunctionEditor';
+import { EditableParam } from './FunctionParamEditor';
 
 export function mapFuncDefsToSelectables(funcDefs: FuncDefs): Array<SelectableValue<string>> {
   const categories: any = {};
@@ -22,6 +22,10 @@ export function mapFuncDefsToSelectables(funcDefs: FuncDefs): Array<SelectableVa
   return sortBy(categories, 'label');
 }
 
+/**
+ * Create a list of params that can be edited in the function editor:
+ * - required params (defined in func.def) are always displayed even when the value is not specified
+ */
 export function mapFuncInstanceToParams(func: FuncInstance): EditableParam[] {
   let params: EditableParam[] = func.def.params.map((paramDef: ParamDef, index: number) => {
     const value = func.params[index];

@@ -3,7 +3,7 @@ import { HorizontalGroup, InlineLabel, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { FuncInstance } from '../gfunc';
-import { FunctionParamEditor } from './FunctionParamEditor';
+import { EditableParam, FunctionParamEditor } from './FunctionParamEditor';
 import { actions } from '../state/actions';
 import { FunctionEditor } from '../FunctionEditor';
 import { mapFuncInstanceToParams } from './helpers';
@@ -11,14 +11,6 @@ import { mapFuncInstanceToParams } from './helpers';
 export type FunctionEditorProps = {
   func: FuncInstance;
   dispatch: (action: any) => void;
-};
-
-export type EditableParam = {
-  optional: boolean;
-  multiple: boolean;
-  options: string[];
-  name: string;
-  value: string;
 };
 
 export function GraphiteFunctionEditor({ func, dispatch }: FunctionEditorProps) {
@@ -52,15 +44,12 @@ export function GraphiteFunctionEditor({ func, dispatch }: FunctionEditorProps) 
           }}
         />
         <InlineLabel className={styles.label}>(</InlineLabel>
-        {params.map((param: EditableParam, index: number) => {
+        {params.map((editableParam: EditableParam, index: number) => {
           return (
             <React.Fragment key={index}>
               <FunctionParamEditor
                 autofocus={index === 0 && func.added}
-                value={param.value}
-                name={param.name}
-                options={param.options}
-                styles={styles}
+                editableParam={editableParam}
                 onChange={(value) => {
                   dispatch(actions.updateFunctionParam({ func, index, value }));
                   setIsExpanded(false);
@@ -91,15 +80,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     padding: 0,
     margin: 0,
-  }),
-  segment: css({
-    margin: 0,
-    padding: 0,
-  }),
-  input: css({
-    margin: 0,
-    padding: 0,
-    height: theme.components.height.sm,
   }),
   button: css({
     padding: theme.spacing(0.5),

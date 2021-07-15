@@ -1,12 +1,18 @@
 import React from 'react';
-import { Segment, SegmentInput } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { Segment, SegmentInput, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { css } from '@emotion/css';
+
+export type EditableParam = {
+  name: string;
+  value: string;
+  optional: boolean;
+  multiple: boolean;
+  options: string[];
+};
 
 type FieldEditorProps = {
-  name: string;
-  value?: string;
-  options: string[];
-  styles: { [name in 'segment' | 'input']: string };
+  editableParam: EditableParam;
   onChange: (value: string) => void;
   onExpandedChange: (expanded: boolean) => void;
   autofocus: boolean;
@@ -21,23 +27,17 @@ function mapOptions(options: string[]): Array<SelectableValue<string>> {
   });
 }
 
-export function FunctionParamEditor({
-  name,
-  value = undefined,
-  options,
-  styles,
-  onChange,
-  onExpandedChange,
-  autofocus,
-}: FieldEditorProps) {
-  if (options?.length > 0) {
+export function FunctionParamEditor({ editableParam, onChange, onExpandedChange, autofocus }: FieldEditorProps) {
+  const styles = useStyles2(getStyles);
+
+  if (editableParam.options?.length > 0) {
     return (
       <Segment
         autofocus={autofocus}
-        value={value}
+        value={editableParam.value}
         className={styles.segment}
-        options={mapOptions(options)}
-        placeholder={' +' + name}
+        options={mapOptions(editableParam.options)}
+        placeholder={' +' + editableParam.name}
         onChange={(value) => {
           onChange(value.value || '');
         }}
@@ -51,8 +51,8 @@ export function FunctionParamEditor({
       <SegmentInput
         autofocus={autofocus}
         className={styles.input}
-        value={value || ''}
-        placeholder={' +' + name}
+        value={editableParam.value || ''}
+        placeholder={' +' + editableParam.name}
         onChange={(value) => {
           onChange(value.toString());
         }}
@@ -62,3 +62,15 @@ export function FunctionParamEditor({
     );
   }
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  segment: css({
+    margin: 0,
+    padding: 0,
+  }),
+  input: css({
+    margin: 0,
+    padding: 0,
+    height: theme.components.height.sm,
+  }),
+});
