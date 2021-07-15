@@ -123,6 +123,7 @@ func (a *channelRuleAPI) fillChannelRuleWithSecureJSONData(cmd *models.UpdateLiv
 
 func (a *channelRuleAPI) UpdateChannelRule(c *models.ReqContext, cmd models.UpdateLiveChannelRuleCommand) response.Response {
 	cmd.Id = c.ParamsInt64(":id")
+	cmd.OrgId = c.OrgId
 
 	err := a.fillChannelRuleWithSecureJSONData(&cmd)
 	if err != nil {
