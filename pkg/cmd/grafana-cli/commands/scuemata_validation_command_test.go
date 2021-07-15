@@ -132,15 +132,15 @@ func TestValidateDevenvDashboards(t *testing.T) {
 		DistPluginCueFS: defaultBaseLoadPaths.DistPluginCueFS,
 	}
 	base, err := load.BaseDashboardFamily(baseLoadPaths)
-	dist, err := load.DistDashboardFamily(baseLoadPaths)
 	require.NoError(t, err, "failed to load base dashboard family")
+	dist, err := load.DistDashboardFamily(baseLoadPaths)
+	require.NoError(t, err, "failed to load dist dashboard family")
 
 	require.NoError(t, filepath.Walk("../../../../devenv/dev-dashboards/", func(path string, info os.FileInfo, err error) error {
 		require.NoError(t, err)
 		if info.IsDir() {
 			return nil
 		}
-
 		// Ignore gosec warning G304 since it's a test
 		// nolint:gosec
 		b, err := os.Open(path)
@@ -148,11 +148,11 @@ func TestValidateDevenvDashboards(t *testing.T) {
 
 		// Only try to validate dashboards with schemaVersion >= 30
 		jtree := make(map[string]interface{})
-		if byt, err := io.ReadAll(b); err != nil {
+		byt, err := io.ReadAll(b)
+		if err != nil {
 			t.Fatal(err)
-		} else {
-			json.Unmarshal(byt, &jtree)
 		}
+		json.Unmarshal(byt, &jtree)
 
 		if oldschemav, has := jtree["schemaVersion"]; !has {
 			t.Logf("no schemaVersion in %s", path)
@@ -164,15 +164,19 @@ func TestValidateDevenvDashboards(t *testing.T) {
 			}
 		}
 
-		res := schema.Resource{Value: b, Name: path}
-		err = base.Validate(res)
-		if err != nil {
-			t.Fatal(errors.Details(err, nil))
-		}
-		err = dist.Validate(res)
-		if err != nil {
-			t.Fatal(errors.Details(err, nil))
-		}
+		t.Run(filepath.Base(path), func(t *testing.T) {
+			res := schema.Resource{Value: byt, Name: path}
+			err = base.Validate(res)
+			if err != nil {
+				t.Fatal(errors.Details(err, nil))
+			}
+			err = dist.Validate(res)
+			if err != nil {
+				t.Fatal(errors.Details(err, nil))
+			}
+			return
+		})
+
 		return nil
 	}))
 }
