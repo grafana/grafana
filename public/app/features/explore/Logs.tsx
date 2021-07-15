@@ -432,6 +432,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     logRows: css`
       overflow-x: scroll;
+      width: 100%;
     `,
     infoText: css`
       font-size: ${theme.typography.size.sm};

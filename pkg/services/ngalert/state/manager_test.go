@@ -74,6 +74,7 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 					},
 					LastEvaluationTime: evaluationTime,
@@ -126,6 +127,7 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 					},
 					LastEvaluationTime: evaluationTime,
@@ -148,6 +150,7 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Alerting,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 					},
 					StartsAt:           evaluationTime,
@@ -204,10 +207,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(1 * time.Minute),
 							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 					},
 					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
@@ -262,10 +267,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(1 * time.Minute),
 							EvaluationState: eval.Alerting,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 					},
 					StartsAt:           evaluationTime.Add(1 * time.Minute),
@@ -331,14 +338,17 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.Alerting,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(80 * time.Second),
 							EvaluationState: eval.Alerting,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 					},
 					StartsAt:           evaluationTime.Add(80 * time.Second),
@@ -396,10 +406,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.Alerting,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -457,10 +469,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Alerting,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.Alerting,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 					},
 					StartsAt:           evaluationTime,
@@ -518,10 +532,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.NoData,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -579,10 +595,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.NoData,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -640,10 +658,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.NoData,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -702,10 +722,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.NoData,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -764,10 +786,12 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
 							EvaluationState: eval.Error,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
@@ -819,6 +843,7 @@ func TestProcessEvalResults(t *testing.T) {
 						{
 							EvaluationTime:  evaluationTime,
 							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
 						},
 					},
 					LastEvaluationTime: evaluationTime,
