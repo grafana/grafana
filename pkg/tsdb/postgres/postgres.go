@@ -49,12 +49,12 @@ func (s *Service) Init() error {
 	return nil
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*sqleng.DataSourceInfo, error) {
+func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
 	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
-	instance := i.(sqleng.DataSourceInfo)
+	instance := i.(sqleng.DataSourceHandler)
 	return &instance, nil
 }
 
@@ -66,11 +66,38 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return dsInfo.QueryData(ctx, req)
 }
 
+func getDataSourceInfo(settings backend.DataSourceInstanceSettings) (*sqleng.DataSourceHandler, error) {
+
+	return nil, nil
+}
+
 func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		logger.Debug("Creating Postgres query endpoint")
+		jsonData := sqleng.JsonData{
+			MaxOpenConns:        0,
+			MaxIdleConns:        2,
+			ConnMaxLifetime:     14400,
+			Timescaledb:         false,
+			ConfigurationMethod: "file-path",
+		}
 
-		cnnstr, err := s.generateConnectionString(settings)
+		err := json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+		dsInfo := sqleng.DataSourceInfo{
+			JsonData:                jsonData,
+			URL:                     settings.URL,
+			User:                    settings.User,
+			Database:                settings.Database,
+			ID:                      settings.ID,
+			Updated:                 settings.Updated,
+			UID:                     settings.UID,
+			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
+		}
+
+		cnnstr, err := s.generateConnectionString(dsInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -82,7 +109,7 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 		config := sqleng.DataPluginConfiguration{
 			DriverName:        "postgres",
 			ConnectionString:  cnnstr,
-			Datasource:        &settings,
+			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
 		}
 
@@ -90,16 +117,7 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 			log: logger,
 		}
 
-		type JsonData struct {
-			timescaledb bool `json:"timescaledb"`
-		}
-		jsonData := JsonData{timescaledb: false}
-		err = json.Unmarshal(settings.JSONData, &jsonData)
-		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
-
-		handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newPostgresMacroEngine(jsonData.timescaledb),
+		handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
 			logger)
 		if err != nil {
 			logger.Error("Failed connecting to Postgres", "err", err)
@@ -116,14 +134,14 @@ func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
 }
 
-func (s *Service) generateConnectionString(settings backend.DataSourceInstanceSettings) (string, error) {
+func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 	var host string
 	var port int
-	if strings.HasPrefix(settings.URL, "/") {
-		host = settings.URL
+	if strings.HasPrefix(dsInfo.URL, "/") {
+		host = dsInfo.URL
 		logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
 	} else {
-		sp := strings.SplitN(settings.URL, ":", 2)
+		sp := strings.SplitN(dsInfo.URL, ":", 2)
 		host = sp[0]
 		if len(sp) > 1 {
 			var err error
@@ -139,7 +157,7 @@ func (s *Service) generateConnectionString(settings backend.DataSourceInstanceSe
 	}
 
 	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s'",
-		escape(settings.User), escape(settings.DecryptedSecureJSONData["password"]), escape(host), escape(settings.Database))
+		escape(dsInfo.User), escape(dsInfo.DecryptedSecureJSONData["password"]), escape(host), escape(dsInfo.Database))
 	if port > 0 {
 		connStr += fmt.Sprintf(" port=%d", port)
 	}

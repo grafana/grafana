@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"xorm.io/core"
 	"xorm.io/xorm"
 )
@@ -53,7 +53,7 @@ var engineCache = engineCacheType{
 	updates: make(map[int64]time.Time),
 }
 
-var sqlIntervalCalculator = interval.NewCalculator()
+var sqlIntervalCalculator = tsdb.NewCalculator()
 
 // NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
 //nolint:gocritic
@@ -61,7 +61,36 @@ var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engi
 	return xorm.NewEngine(driverName, connectionString)
 }
 
+type JsonData struct {
+	MaxOpenConns        int    `json:"maxOpenConns"`
+	MaxIdleConns        int    `json:"maxIdleConns"`
+	ConnMaxLifetime     int    `json:"connMaxLifetime"`
+	Timescaledb         bool   `json:"timescaledb"`
+	Mode                string `json:"sslmode"`
+	ConfigurationMethod string `json:"tlsConfigurationMethod"`
+	RootCertFile        string `json:"sslRootCertFile"`
+	CertFile            string `json:"sslCertFile"`
+	CertKeyFile         string `json:"sslKeyFile"`
+}
+
 type DataSourceInfo struct {
+	JsonData                JsonData
+	URL                     string
+	User                    string
+	Database                string
+	ID                      int64
+	Updated                 time.Time
+	UID                     string
+	DecryptedSecureJSONData map[string]string
+}
+type DataPluginConfiguration struct {
+	DriverName        string
+	DSInfo            DataSourceInfo
+	ConnectionString  string
+	TimeColumnNames   []string
+	MetricColumnTypes []string
+}
+type DataSourceHandler struct {
 	macroEngine            SQLMacroEngine
 	queryResultTransformer SqlQueryResultTransformer
 	engine                 *xorm.Engine
@@ -69,28 +98,13 @@ type DataSourceInfo struct {
 	metricColumnTypes      []string
 	log                    log.Logger
 	cfg                    *setting.Cfg
-	jsonData               JsonData
+	dsInfo                 DataSourceInfo
 }
-
-type DataPluginConfiguration struct {
-	DriverName        string
-	Datasource        *backend.DataSourceInstanceSettings
-	ConnectionString  string
-	TimeColumnNames   []string
-	MetricColumnTypes []string
-}
-
-type JsonData struct {
-	maxOpenConns    int `json:"maxOpenConns"`
-	maxIdleConns    int `json:"maxIdleConns"`
-	connMaxLifetime int `json:"connMaxLifetime"`
-}
-
 type QueryJson struct {
 	rawSql string `json:"rawSql"`
 }
 
-func (e *DataSourceInfo) transformQueryError(err error) error {
+func (e *DataSourceHandler) transformQueryError(err error) error {
 	// OpError is the error type usually returned by functions in the net
 	// package. It describes the operation, network type, and address of
 	// an error. We log this error rather than return it to the client
@@ -105,36 +119,31 @@ func (e *DataSourceInfo) transformQueryError(err error) error {
 }
 
 func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
-	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceInfo, error) {
-	jsonData := JsonData{maxOpenConns: 0, maxIdleConns: 2, connMaxLifetime: 14400}
-	err := json.Unmarshal(config.Datasource.JSONData, &jsonData)
-	if err != nil {
-		return nil, fmt.Errorf("error reading settings: %w", err)
-	}
+	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceHandler, error) {
 
-	dsInfo := DataSourceInfo{
+	queryDataHandler := DataSourceHandler{
 		queryResultTransformer: queryResultTransformer,
 		macroEngine:            macroEngine,
 		timeColumnNames:        []string{"time"},
 		log:                    log,
-		jsonData:               jsonData,
+		dsInfo:                 config.DSInfo,
 	}
 
 	if len(config.TimeColumnNames) > 0 {
-		dsInfo.timeColumnNames = config.TimeColumnNames
+		queryDataHandler.timeColumnNames = config.TimeColumnNames
 	}
 
 	if len(config.MetricColumnTypes) > 0 {
-		dsInfo.metricColumnTypes = config.MetricColumnTypes
+		queryDataHandler.metricColumnTypes = config.MetricColumnTypes
 	}
 
 	engineCache.Lock()
 	defer engineCache.Unlock()
 
-	if engine, present := engineCache.cache[config.Datasource.ID]; present {
-		if updateTime := engineCache.updates[config.Datasource.ID]; updateTime.Before(config.Datasource.Updated) {
-			dsInfo.engine = engine
-			return &dsInfo, nil
+	if engine, present := engineCache.cache[config.DSInfo.ID]; present {
+		if updateTime := engineCache.updates[config.DSInfo.ID]; updateTime.Before(config.DSInfo.Updated) {
+			queryDataHandler.engine = engine
+			return &queryDataHandler, nil
 		}
 	}
 
@@ -143,19 +152,19 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 		return nil, err
 	}
 
-	engine.SetMaxOpenConns(jsonData.maxOpenConns)
-	engine.SetMaxIdleConns(jsonData.maxIdleConns)
-	engine.SetConnMaxLifetime(time.Duration(jsonData.connMaxLifetime) * time.Second)
+	engine.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
+	engine.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
+	engine.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
-	engineCache.updates[config.Datasource.ID] = config.Datasource.Updated
-	engineCache.cache[config.Datasource.ID] = engine
-	dsInfo.engine = engine
-	return &dsInfo, nil
+	engineCache.updates[config.DSInfo.ID] = config.DSInfo.Updated
+	engineCache.cache[config.DSInfo.ID] = engine
+	queryDataHandler.engine = engine
+	return &queryDataHandler, nil
 }
 
 const rowLimit = 1000000
 
-func (e *DataSourceInfo) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	ch := make(chan backend.DataResponse, len(req.Queries))
@@ -187,7 +196,7 @@ func (e *DataSourceInfo) QueryData(ctx context.Context, req *backend.QueryDataRe
 	return result, nil
 }
 
-func (e *DataSourceInfo) executeQuery(query backend.DataQuery, wg *sync.WaitGroup, queryContext context.Context,
+func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitGroup, queryContext context.Context,
 	ch chan backend.DataResponse, queryJson QueryJson) {
 	defer wg.Done()
 	queryResult := backend.DataResponse{
@@ -352,7 +361,7 @@ func (e *DataSourceInfo) executeQuery(query backend.DataQuery, wg *sync.WaitGrou
 
 // Interpolate provides global macros/substitutions for all sql datasources.
 var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, sql string) (string, error) {
-	minInterval, err := interval.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
+	minInterval, err := tsdb.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
 	if err != nil {
 		return "", err
 	}
@@ -367,7 +376,7 @@ var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, sql
 }
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
-func (e *DataSourceInfo) newProcessCfg(query plugins.DataSubQuery, queryContext plugins.DataQuery,
+func (e *DataSourceHandler) newProcessCfg(query plugins.DataSubQuery, queryContext plugins.DataQuery,
 	rows *core.Rows, interpolatedQuery string) (*dataQueryModel, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {

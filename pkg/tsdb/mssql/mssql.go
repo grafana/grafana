@@ -49,12 +49,12 @@ func (s *Service) Init() error {
 	return nil
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*sqleng.DataSourceInfo, error) {
+func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
 	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
-	instance := i.(sqleng.DataSourceInfo)
+	instance := i.(sqleng.DataSourceHandler)
 	return &instance, nil
 }
 

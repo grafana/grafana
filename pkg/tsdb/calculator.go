@@ -1,4 +1,4 @@
-package interval
+package tsdb
 
 import (
 	"fmt"
@@ -6,9 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
 var (
@@ -28,7 +27,7 @@ type intervalCalculator struct {
 }
 
 type Calculator interface {
-	Calculate(timeRange plugins.DataTimeRange, minInterval time.Duration) Interval
+	Calculate(timerange backend.TimeRange, minInterval time.Duration) Interval
 }
 
 type CalculatorOptions struct {
@@ -53,42 +52,36 @@ func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, minInterval time.Duration) Interval {
-	to := timerange.MustGetTo().UnixNano()
-	from := timerange.MustGetFrom().UnixNano()
-	interval := time.Duration((to - from) / defaultRes)
+func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration) Interval {
+	to := timerange.To.UnixNano()
+	from := timerange.From.UnixNano()
+	intrvl := time.Duration((to - from) / defaultRes)
 
-	if interval < minInterval {
-		return Interval{Text: FormatDuration(minInterval), Value: minInterval}
+	if intrvl < minInterval {
+		return Interval{Text: interval.FormatDuration(minInterval), Value: minInterval}
 	}
 
-	rounded := roundInterval(interval)
-	return Interval{Text: FormatDuration(rounded), Value: rounded}
+	rounded := roundInterval(intrvl)
+	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}
 }
 
-func GetIntervalFrom(dsInfo *models.DataSource, queryModel *simplejson.Json, defaultInterval time.Duration) (time.Duration, error) {
-	interval := queryModel.Get("interval").MustString("")
-
-	// intervalMs field appears in the v2 plugins API and should be preferred
-	// if 'interval' isn't present.
-	if interval == "" {
-		intervalMS := queryModel.Get("intervalMs").MustInt(0)
-		if intervalMS != 0 {
-			return time.Duration(intervalMS) * time.Millisecond, nil
+// GetIntervalFrom returns the minimum interval.
+// dsInterval is the string representation of data source min interval, if configured.
+// queryInterval is the string representation of query interval (min interval), e.g. "10ms" or "10s".
+// queryIntervalMS is a pre-calculated numeric representation of the query interval in milliseconds.
+func GetIntervalFrom(dsInterval, queryInterval string, queryIntervalMS int64, defaultInterval time.Duration) (time.Duration, error) {
+	if queryInterval == "" {
+		if queryIntervalMS != 0 {
+			return time.Duration(queryIntervalMS) * time.Millisecond, nil
 		}
 	}
-
-	if interval == "" && dsInfo != nil && dsInfo.JsonData != nil {
-		dsInterval := dsInfo.JsonData.Get("timeInterval").MustString("")
-		if dsInterval != "" {
-			interval = dsInterval
-		}
+	interval := queryInterval
+	if queryInterval == "" && dsInterval != "" {
+		interval = dsInterval
 	}
-
 	if interval == "" {
 		return defaultInterval, nil
 	}
-
 	interval = strings.Replace(strings.Replace(interval, "<", "", 1), ">", "", 1)
 	isPureNum, err := regexp.MatchString(`^\d+$`, interval)
 	if err != nil {
@@ -101,7 +94,6 @@ func GetIntervalFrom(dsInfo *models.DataSource, queryModel *simplejson.Json, def
 	if err != nil {
 		return time.Duration(0), err
 	}
-
 	return parsedInterval, nil
 }
 
