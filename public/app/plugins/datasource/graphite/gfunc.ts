@@ -2,8 +2,6 @@ import { assign, each, filter, forEach, get, includes, isString, last, map, toSt
 import { isVersionGtOrEq } from 'app/core/utils/version';
 import { InterpolateFunction } from '@grafana/data';
 
-const index: any = {};
-
 type ParamDef = {
   name: string;
   type: string;
@@ -14,7 +12,7 @@ type ParamDef = {
 };
 
 export interface FuncDef {
-  name: any;
+  name: string;
   params: ParamDef[];
   defaultParams: Array<string | number>;
   category?: string;
@@ -32,13 +30,15 @@ export type FuncDefs = {
   [functionName in string]: FuncDef;
 };
 
-function addFuncDef(funcDef: Partial<FuncDef>) {
+const index: FuncDefs = {};
+
+function addFuncDef(funcDef: Partial<FuncDef> & { name: string; category: string }) {
   funcDef.params = funcDef.params || [];
   funcDef.defaultParams = funcDef.defaultParams || [];
 
-  index[funcDef.name] = funcDef;
+  index[funcDef.name] = funcDef as FuncDef;
   if (funcDef.shortName) {
-    index[funcDef.shortName] = funcDef;
+    index[funcDef.shortName] = funcDef as FuncDef;
   }
 }
 
