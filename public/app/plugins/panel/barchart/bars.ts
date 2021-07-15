@@ -317,25 +317,13 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   let barsBuilder = uPlot.paths.bars!({
     disp: {
       x0: {
-        unit: 2,
+        unit: Series.BarsPathBuilderFacetUnit.PixelPercent,
         values: (u, seriesIdx, idx0, idx1) => barsPctLayout[seriesIdx].offs,
       },
       size: {
-        unit: 2,
+        unit: Series.BarsPathBuilderFacetUnit.PixelPercent,
         values: (u, seriesIdx, idx0, idx1) => barsPctLayout[seriesIdx].size,
       },
-      /*
-      // e.g. variable size via scale (will compute offsets from known values)
-      x1: {
-        units: 1,
-        values: (u, seriesIdx, idx0, idx1) => bucketEnds[idx],
-      },
-      fill: {
-        units: 3, // color
-        discr: true,
-        values: (u, seriesIdx, idx0, idx1) => colors[idx],
-      }
-      */
     },
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
       qt.add({ x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx });
