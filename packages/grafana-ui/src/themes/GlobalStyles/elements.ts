@@ -121,7 +121,10 @@ export function getElementStyles(theme: GrafanaTheme2) {
       color: ${theme.colors.text.primary};
       text-decoration: none;
 
-      &:focus,
+      &:focus {
+        outline: none;
+      }
+
       &:focus-visible {
         ${getFocusStyles(theme)}
       }
