@@ -1,14 +1,15 @@
 import React, { useCallback, useMemo } from 'react';
 import { Button, Segment, useStyles2 } from '@grafana/ui';
-import { FuncDef } from '../gfunc';
-import { forEach, sortBy } from 'lodash';
+import { FuncDefs } from '../gfunc';
 import { actions } from '../state/actions';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
+import { mapFuncDefsToSelectables } from './helpers';
+import { Dispatch } from 'redux';
 
 type Props = {
-  dispatch: any;
-  funcDefs: FuncDef[];
+  dispatch: Dispatch;
+  funcDefs: FuncDefs;
 };
 
 export function AddGraphiteFunction({ dispatch, funcDefs }: Props) {
@@ -20,7 +21,7 @@ export function AddGraphiteFunction({ dispatch, funcDefs }: Props) {
   );
   const styles = useStyles2(getStyles);
 
-  const options = useMemo(() => createOptions(funcDefs), [funcDefs]);
+  const options = useMemo(() => mapFuncDefsToSelectables(funcDefs), [funcDefs]);
 
   return (
     <Segment
@@ -30,25 +31,6 @@ export function AddGraphiteFunction({ dispatch, funcDefs }: Props) {
       inputMinWidth={150}
     ></Segment>
   );
-}
-
-function createOptions(funcDefs: FuncDef[]) {
-  const categories: any = {};
-
-  forEach(funcDefs, (funcDef) => {
-    if (!funcDef.category) {
-      return;
-    }
-    if (!categories[funcDef.category]) {
-      categories[funcDef.category] = { label: funcDef.category, value: funcDef.category, options: [] };
-    }
-    categories[funcDef.category].options.push({
-      label: funcDef.name,
-      value: funcDef.name,
-    });
-  });
-
-  return sortBy(categories, 'label');
 }
 
 function getStyles(theme: GrafanaTheme2) {

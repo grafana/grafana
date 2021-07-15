@@ -1,10 +1,11 @@
 import React, { useCallback, useState } from 'react';
 import { QueryField } from '@grafana/ui';
 import { actions } from '../state/actions';
+import { Dispatch } from 'redux';
 
 type Props = {
   rawQuery: string;
-  dispatch: any;
+  dispatch: Dispatch;
 };
 
 export function GraphiteTextEditor({ rawQuery, dispatch }: Props) {

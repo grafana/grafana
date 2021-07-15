@@ -12,7 +12,7 @@ import {
   MetricFindValue,
 } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
-import gfunc from './gfunc';
+import gfunc, { FuncDefs } from './gfunc';
 import { getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 // Types
@@ -45,7 +45,7 @@ export class GraphiteDatasource extends DataSourceApi<
   rollupIndicatorEnabled: boolean;
   cacheTimeout: any;
   withCredentials: boolean;
-  funcDefs: any = null;
+  funcDefs: FuncDefs | null = null;
   funcDefsPromise: Promise<any> | null = null;
   _seriesRefLetters: string;
   private readonly metricMappings: GraphiteLokiMapping[];

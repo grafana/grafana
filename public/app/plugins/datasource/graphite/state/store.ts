@@ -18,7 +18,7 @@ import {
   smartlyHandleNewAliasByNode,
   spliceSegments,
 } from './helpers';
-import { FuncDef } from '../gfunc';
+import { FuncDefs } from '../gfunc';
 
 export type GraphiteQueryEditorState = {
   /**
@@ -38,7 +38,7 @@ export type GraphiteQueryEditorState = {
 
   target: { target: string; textEditor: boolean };
 
-  funcDefs: FuncDef[];
+  funcDefs: FuncDefs | null;
 
   segments: GraphiteSegment[];
   queryModel: GraphiteQuery;
@@ -158,10 +158,6 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     // handleTargetChanged() builds target from segments/tags/functions only,
     // it doesn't handle refresh when target is change explicitly
     state.panelCtrl.refresh();
-  }
-  if (actions.updateQuery.match(action)) {
-    state.target.target = action.payload.query;
-    handleTargetChanged(state);
   }
   if (actions.toggleEditorMode.match(action)) {
     state.target.textEditor = !state.target.textEditor;

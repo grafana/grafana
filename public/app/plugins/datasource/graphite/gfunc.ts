@@ -15,6 +15,10 @@ export interface FuncDef {
   description?: string;
 }
 
+export type FuncDefs = {
+  [functionName in string]: FuncDef;
+};
+
 function addFuncDef(funcDef: FuncDef) {
   funcDef.params = funcDef.params || [];
   funcDef.defaultParams = funcDef.defaultParams || [];
@@ -965,7 +969,7 @@ addFuncDef({
   version: '1.1',
 });
 
-function isVersionRelatedFunction(obj: { version: string }, graphiteVersion: string) {
+function isVersionRelatedFunction(obj: { version?: string }, graphiteVersion: string) {
   return !obj.version || isVersionGtOrEq(graphiteVersion, obj.version);
 }
 
@@ -1095,9 +1099,9 @@ function getFuncDef(name: string, idx?: any) {
   return (idx || index)[name];
 }
 
-function getFuncDefs(graphiteVersion: string, idx?: any) {
-  const funcs: any = {};
-  forEach(idx || index, (funcDef) => {
+function getFuncDefs(graphiteVersion: string, idx?: any): FuncDefs {
+  const funcs: FuncDefs = {};
+  forEach(idx || index, (funcDef: FuncDef) => {
     if (isVersionRelatedFunction(funcDef, graphiteVersion)) {
       funcs[funcDef.name] = assign({}, funcDef, {
         params: filter(funcDef.params, (param) => {
