@@ -1,5 +1,5 @@
 package process
 
-func IsServerProcessRunningAsRoot() (bool, error) {
-	return isServerRunningAsRoot()
+func IsRunningWithElevatedPrivileges() (bool, error) {
+	return elevatedPrivilegesCheck()
 }

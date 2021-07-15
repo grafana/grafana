@@ -73,7 +73,7 @@ func (p *grpcPlugin) Start(ctx context.Context) error {
 		return errors.New("no compatible plugin implementation found")
 	}
 
-	elevated, err := process.IsServerProcessRunningAsRoot()
+	elevated, err := process.IsRunningWithElevatedPrivileges()
 	if err != nil {
 		p.Logger().Debug("Error checking plugin process execution privilege", "err", err)
 	}

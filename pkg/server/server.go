@@ -308,7 +308,7 @@ func (s *Server) loadConfiguration() {
 		"compiled", time.Unix(setting.BuildStamp, 0),
 	)
 
-	elevated, err := process.IsServerProcessRunningAsRoot()
+	elevated, err := process.IsRunningWithElevatedPrivileges()
 	if err != nil {
 		s.log.Debug("Error checking server process execution privilege", "err", err)
 	}

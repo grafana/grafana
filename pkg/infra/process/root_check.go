@@ -8,10 +8,13 @@ import (
 	"os/user"
 )
 
-func isServerRunningAsRoot() (bool, error) {
-	serverProcessUser, err := user.Current()
+func elevatedPrivilegesCheck() (bool, error) {
+	u, err := user.Current()
 	if err != nil {
 		return false, fmt.Errorf("could not get current OS user to detect process privileges")
 	}
-	return (serverProcessUser != nil && serverProcessUser.Username == "root") || os.Geteuid() == 0, nil
+
+	return (u != nil && u.Username == "root") ||
+		os.Geteuid() != os.Getuid() ||
+		os.Geteuid() == 0, nil
 }
