@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"compress/gzip"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -71,9 +70,7 @@ func Gziper() Middleware {
 				return
 			}
 
-			log.Println("USE GZIP", requestPath)
 			grw := &gzipResponseWriter{gzip.NewWriter(w), w.(macaron.ResponseWriter)}
-			defer grw.w.Close()
 			ctx := macaron.FromContext(r.Context())
 			ctx.Resp = grw
 			ctx.MapTo(grw, (*http.ResponseWriter)(nil))
@@ -81,6 +78,8 @@ func Gziper() Middleware {
 			grw.Header().Set("Vary", "Accept-Encoding")
 
 			next.ServeHTTP(grw, r)
+			// We can't really handle close errors at this point and we can't report them to the caller
+			_ = grw.w.Close()
 		})
 	}
 }
