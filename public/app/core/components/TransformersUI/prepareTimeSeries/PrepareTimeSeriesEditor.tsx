@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react';
-import { GrafanaTheme2, SelectableValue, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
+import { css } from 'emotion';
+import { GrafanaTheme, SelectableValue, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
 import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
-import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
-import { css } from '@emotion/css';
+import { InlineField, InlineFieldRow, Select, useStyles } from '@grafana/ui';
 
 const wideInfo = {
   label: 'Wide time series',
@@ -36,7 +36,7 @@ const formats: Array<SelectableValue<timeSeriesFormat>> = [wideInfo, manyInfo];
 
 export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSeriesOptions>): React.ReactElement {
   const { options, onChange } = props;
-  const styles = useStyles2(getStyles);
+  const styles = useStyles(getStyles);
 
   const onSelectFormat = useCallback(
     (value: SelectableValue<timeSeriesFormat>) => {
@@ -72,7 +72,7 @@ export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSer
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme) => ({
   info: css`
     margin-left: 20px;
   `,
