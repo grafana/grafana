@@ -24,7 +24,7 @@ Grafana comes with the following transformations:
   - [Series to rows](#series-to-rows)
   - [Filter data by value](#filter-data-by-value)
   - [Rename by regex](#rename-by-regex)
-  - [Prepare-time-series]({{< relref "./types-options.md#prepare-time-series" >}})
+  - [Prepare-time-series](#prepare-time-series)
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
 
