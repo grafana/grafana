@@ -86,6 +86,7 @@ type PluginDependencies struct {
 }
 
 type PluginInclude struct {
+	UID        string          `json:"uid"`
 	Name       string          `json:"name"`
 	Path       string          `json:"path"`
 	Type       string          `json:"type"`

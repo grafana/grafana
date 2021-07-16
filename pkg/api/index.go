@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -109,8 +110,14 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			}
 
 			if include.Type == "dashboard" && include.AddToNav {
+				uid := include.UID
+				if uid == "" {
+					if uid, err = hs.getDashboardUIDBySlug(c.Req.Context(), c.OrgId, include.Slug); err != nil {
+						continue
+					}
+				}
 				link := &dtos.NavLink{
-					Url:  hs.Cfg.AppSubURL + "/dashboard/db/" + include.Slug,
+					Url:  hs.Cfg.AppSubURL + fmt.Sprintf("/d/%s/%s", uid, include.Slug),
 					Text: include.Name,
 				}
 				appLink.Children = append(appLink.Children, link)
@@ -123,6 +130,20 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 	}
 
 	return appLinks, nil
+}
+
+func (hs *HTTPServer) getDashboardUIDBySlug(c context.Context, orgID int64, slug string) (string, error) {
+	key := fmt.Sprintf("dashboard:%d:%s", orgID, slug)
+	if d, ok := hs.DashboardCache.Get(key); ok {
+		return d.(string), nil
+	}
+
+	query := models.GetDashboardQuery{Slug: slug, OrgId: orgID}
+	if err := bus.DispatchCtx(c, &query); err != nil {
+		return "", err
+	}
+	hs.DashboardCache.Set(key, query.Result.Uid, -1)
+	return query.Result.Uid, nil
 }
 
 func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dtos.NavLink, error) {
