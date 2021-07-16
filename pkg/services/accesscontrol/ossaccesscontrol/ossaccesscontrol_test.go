@@ -374,6 +374,7 @@ func TestOSSAccessControlService_AddFixedRoleRegistrations(t *testing.T) {
 				Log:           log.New("accesscontrol-test"),
 				registrations: accesscontrol.RegistrationList{},
 			}
+			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 			ac.AddFixedRoleRegistrations(tt.registrations...)
 
 			registrationCnt := 0
