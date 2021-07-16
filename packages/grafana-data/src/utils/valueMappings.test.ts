@@ -106,6 +106,8 @@ describe('Format value with value mappings', () => {
       ${'192.168'}     | ${undefined}
       ${'192.168.1'}   | ${undefined}
       ${'9.90'}        | ${{ id: 5, text: 'OK', type: MappingType.ValueToText, value: '9.9' }}
+      ${'0x12'}        | ${{ id: 6, text: 'mapped hexstring', type: MappingType.ValueToText, value: '0x12' }}
+      ${'0x15'}        | ${undefined}
     `('numeric-like text mapping, value:${value', ({ value, expected }) => {
       const valueMappings: ValueMapping[] = [
         { id: 1, text: 'mapped value 1', type: MappingType.ValueToText, value: '2/0/12' },
@@ -113,6 +115,7 @@ describe('Format value with value mappings', () => {
         { id: 3, text: 'mapped value 3', type: MappingType.ValueToText, value: '2:0' },
         { id: 4, text: 'mapped value ip', type: MappingType.ValueToText, value: '192.168.1.1' },
         { id: 5, text: 'OK', type: MappingType.ValueToText, value: '9.9' },
+        { id: 6, text: 'mapped hexstring', type: MappingType.ValueToText, value: '0x12' },
       ];
       expect(getMappedValue(valueMappings, value)).toEqual(expected);
     });

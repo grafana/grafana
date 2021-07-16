@@ -18,8 +18,13 @@ const addValueToTextMappingText = (
   let valueAsNumber, valueToTextMappingAsNumber;
 
   if (isNumeric(value as string) && isNumeric(valueToTextMapping.value)) {
-    valueAsNumber = parseFloat(value as string);
-    valueToTextMappingAsNumber = parseFloat(valueToTextMapping.value as string);
+    if (isHexString(value as string)) {
+      valueToTextMappingAsNumber = parseInt(valueToTextMapping.value as string, 16);
+      valueAsNumber = parseInt(value as string, 16);
+    } else {
+      valueAsNumber = parseFloat(value as string);
+      valueToTextMappingAsNumber = parseFloat(valueToTextMapping.value as string);
+    }
 
     if (valueAsNumber === valueToTextMappingAsNumber) {
       return allValueMappings.concat(valueToTextMapping);
@@ -101,4 +106,8 @@ const isNullValueMap = (mapping: ValueMap): boolean => {
 
 export function isNumeric(num: any) {
   return (typeof num === 'number' || (typeof num === 'string' && num.trim() !== '')) && !isNaN(num as number);
+}
+
+export function isHexString(num: any) {
+  return Boolean(typeof num === 'string' && num.match(/^0x[0-9a-f]+$/i));
 }
