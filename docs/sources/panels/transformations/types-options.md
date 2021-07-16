@@ -440,7 +440,7 @@ With the transformation applied, you can see we are left with just the remainder
 
 > **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
 
-You might end up in a situation where a data source returns time series data in a time series format that the panel you want to use does not support ([read more about the different data frame formats here]({{< relref "../../developers/plugins/data-frames.md" >}})).
+You might end up in a situation where a data source returns time series data in a format that isn't supported by the panel you want to use. [Read more about the different data frame formats here]({{< relref "../../developers/plugins/data-frames.md" >}}).
 
 This transformation will help you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
 
