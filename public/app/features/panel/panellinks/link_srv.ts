@@ -1,6 +1,6 @@
 import { chain } from 'lodash';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getTemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 import coreModule from 'app/core/core_module';
 import { getConfig } from 'app/core/config';
 import {
