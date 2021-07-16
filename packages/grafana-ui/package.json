@@ -42,7 +42,7 @@
     "d3": "5.15.0",
     "emotion": "10.0.27",
     "immutable": "3.8.2",
-    "jquery": "3.4.1",
+    "jquery": "3.5.0",
     "lodash": "4.17.21",
     "moment": "2.24.0",
     "papaparse": "5.2.0",
