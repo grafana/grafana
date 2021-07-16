@@ -164,13 +164,6 @@ export class RemovePanelEvent extends BusEventWithPayload<number> {
   static type = 'remove-panel';
 }
 
-/**
- * @deprecated use ShowModalReactEvent instead that has this capability built in
- */
-export class ShowModalEvent extends BusEventWithPayload<ShowModalPayload> {
-  static type = 'show-modal';
-}
-
 export class ShowConfirmModalEvent extends BusEventWithPayload<ShowConfirmModalPayload> {
   static type = 'show-confirm-modal';
 }
@@ -178,12 +171,8 @@ export class ShowConfirmModalEvent extends BusEventWithPayload<ShowConfirmModalP
 export class ShowModalReactEvent extends BusEventWithPayload<ShowModalReactPayload> {
   static type = 'show-react-modal';
 }
-
-/**
- * @deprecated use ShowModalReactEvent instead that has this capability built in
- */
-export class HideModalEvent extends BusEventBase {
-  static type = 'hide-modal';
+export class HideModalReactEvent extends BusEventBase {
+  static type = 'hide-react-modal';
 }
 
 export class DashboardSavedEvent extends BusEventBase {
