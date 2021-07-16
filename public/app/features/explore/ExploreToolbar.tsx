@@ -19,7 +19,7 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
-import { cancelQueries, clearQueries, runQueries, clearCache } from './state/query';
+import { cancelQueries, clearQueries, runQueries } from './state/query';
 import ReturnToDashboardButton from './ReturnToDashboardButton';
 import { isSplit } from './state/selectors';
 
@@ -40,12 +40,10 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
   };
 
   onRunQuery = (loading = false) => {
-    const { clearCache, runQueries, cancelQueries, exploreId } = this.props;
+    const { runQueries, cancelQueries, exploreId } = this.props;
     if (loading) {
       return cancelQueries(exploreId);
     } else {
-      // We want to give user a chance tu re-run the query even if it is saved in cache
-      clearCache(exploreId);
       return runQueries(exploreId);
     }
   };
@@ -249,7 +247,6 @@ const mapDispatchToProps = {
   split: splitOpen,
   syncTimes,
   onChangeTimeZone: updateTimeZoneForSession,
-  clearCache,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

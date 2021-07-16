@@ -104,8 +104,6 @@ type Alertmanager struct {
 
 	reloadConfigMtx sync.RWMutex
 	config          []byte
-
-	initialised bool
 }
 
 func New(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*Alertmanager, error) {
@@ -156,6 +154,16 @@ func New(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*Aler
 	}
 
 	return am, nil
+}
+
+func (am *Alertmanager) Ready() bool {
+	// We consider AM as ready only when the config has been
+	// applied at least once successfully. Until then, some objects
+	// can still be nil.
+	am.reloadConfigMtx.RLock()
+	defer am.reloadConfigMtx.RUnlock()
+
+	return len(am.config) > 0
 }
 
 func (am *Alertmanager) Run(ctx context.Context) error {
@@ -272,14 +280,6 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It is not safe to call concurrently.
 func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) (err error) {
-	defer func() {
-		if err == nil {
-			// We consider AM as initialised only when the config has been
-			// applied at least once successfully. Until then, some objects
-			// can still be nil.
-			am.initialised = true
-		}
-	}()
 	// First, let's make sure this config is not already loaded
 	var configChanged bool
 	if rawConfig == nil {
