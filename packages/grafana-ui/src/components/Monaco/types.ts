@@ -1,4 +1,4 @@
-// We use `import type` to guarentee it'll be erased from the JS and it doesnt accidently bundle monaco
+// We use `import type` to guarantee it'll be erased from the JS and it doesnt accidently bundle monaco
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 
 export type CodeEditorChangeHandler = (value: string) => void;

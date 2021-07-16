@@ -51,7 +51,13 @@ export default class InfluxSeries {
           }
         }
 
-        output.push({ target: seriesName, datapoints: datapoints, meta: this.meta, refId: this.refId });
+        output.push({
+          target: seriesName,
+          datapoints: datapoints,
+          tags: series.tags,
+          meta: this.meta,
+          refId: this.refId,
+        });
       }
     });
 

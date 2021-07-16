@@ -19,7 +19,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const { resourceGroup, metricDefinition, resourceName, metricNamespace } = query.azureMonitor;
+    const { resourceGroup, metricDefinition, resourceName, metricNamespace } = query.azureMonitor ?? {};
     if (!(subscriptionId && resourceGroup && metricDefinition && resourceName && metricNamespace)) {
       metricNames.length > 0 && setMetricNames([]);
       return;
@@ -61,7 +61,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
     <Field label="Metric">
       <Select
         inputId="azure-monitor-metrics-metric-field"
-        value={findOption(metricNames, query.azureMonitor.metricName)}
+        value={findOption(metricNames, query.azureMonitor?.metricName)}
         onChange={handleChange}
         options={options}
         width={38}

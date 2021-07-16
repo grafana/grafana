@@ -1,11 +1,19 @@
 import React from 'react';
-import { DataFrame, DisplayValue, fieldReducers, getFieldDisplayName, reduceField } from '@grafana/data';
+import {
+  DataFrame,
+  DisplayValue,
+  fieldReducers,
+  getFieldDisplayName,
+  getFieldSeriesColor,
+  reduceField,
+} from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { VizLegendItem } from '../VizLegend/types';
 import { VizLegendOptions } from '../VizLegend/models.gen';
 import { AxisPlacement } from './config';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { VizLegend } from '../VizLegend/VizLegend';
+import { useTheme2 } from '../../themes';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -22,6 +30,7 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
   displayMode,
   ...vizLayoutLegendProps
 }) => {
+  const theme = useTheme2();
   const legendItems = config
     .getSeries()
     .map<VizLegendItem | undefined>((s) => {
@@ -40,10 +49,13 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
       }
 
       const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!, data);
+      const scaleColor = getFieldSeriesColor(field, theme);
+      const seriesColor = scaleColor.color;
+
       return {
         disabled: !seriesConfig.show ?? false,
         fieldIndex,
-        color: seriesConfig.lineColor!,
+        color: seriesColor,
         label,
         yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
         getDisplayValues: () => {

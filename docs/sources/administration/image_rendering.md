@@ -158,13 +158,13 @@ libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 
 On Debian 9 (Stretch) the following dependencies have been confirmed as needed for the image rendering to function.
 
 ```bash
-libx11 libcairo bcairo2 libcairo2 libxtst6 libxcomposite1 libx11-xcb1 libxcursor1 libxdamage1 libnss3 libcups libcups2 libXss libXss1 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0
+libx11 libcairo bcairo2 libcairo2 libxtst6 libxcomposite1 libx11-xcb1 libxcursor1 libxdamage1 libnss3 libcups libcups2 libXss libXss1 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0 libgbm1
 ```
 
 On Debian 10 (Buster) the following dependencies have been confirmed as needed for the image rendering to function.
 
 ```bash
-libxdamage1 libxext6 libxi6 libxtst6 libnss3 libnss3 libcups2 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libpango-1.0-0 libcairo2 libatspi2.0-0 libgtk3.0-cil libgdk3.0-cil libx11-xcb-dev
+libxdamage1 libxext6 libxi6 libxtst6 libnss3 libnss3 libcups2 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libpango-1.0-0 libcairo2 libatspi2.0-0 libgtk3.0-cil libgdk3.0-cil libx11-xcb-dev libgbm1
 ```
 
 **Centos:**
@@ -208,5 +208,5 @@ instead of the pre-packaged version of Chromium.
 To override the path to the Chrome/Chromium executable, set an environment variable and make sure that it's available for the Grafana process. For example:
 
 ```bash
-export GF_RENDERER_PLUGIN_CHROME_BIN="/usr/bin/chromium-browser"
+export GF_PLUGIN_RENDERING_CHROME_BIN="/usr/bin/chromium-browser"
 ```

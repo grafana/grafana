@@ -99,8 +99,9 @@ export const testDataSource = (
 
         dispatch(testDataSourceSucceeded(result));
       } catch (err) {
-        const { statusText, message: errMessage, details } = err;
-        const message = statusText ? 'HTTP error ' + statusText : errMessage;
+        const { statusText, message: errMessage, details, data } = err;
+
+        const message = errMessage || data?.message || 'HTTP error ' + statusText;
 
         dispatch(testDataSourceFailed({ message, details }));
       }
