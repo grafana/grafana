@@ -45,7 +45,7 @@ interface LabelDescriptor extends CartesianCoords2D {
  */
 export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const { xOri, xDir: dir, groupWidth, barWidth, formatValue, showValue } = opts;
-  const isScaleHorizontal = xOri === ScaleOrientation.Horizontal;
+  const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
   let fontSize = opts.text?.valueSize ?? VALUE_MAX_FONT_SIZE;
 
@@ -59,8 +59,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   barMark.style.background = 'rgba(255,255,255,0.4)';
 
   const xSplits: Axis.Splits = (u: uPlot) => {
-    const dim = isScaleHorizontal ? u.bbox.width : u.bbox.height;
-    const _dir = dir * (isScaleHorizontal ? 1 : -1);
+    const dim = isXHorizontal ? u.bbox.width : u.bbox.height;
+    const _dir = dir * (isXHorizontal ? 1 : -1);
 
     let splits: number[] = [];
 
@@ -137,10 +137,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   // Collect label sizings
   const drawPoints = (u: uPlot, sidx: number) => {
-    const textAlign = isScaleHorizontal ? 'center' : 'left';
+    const textAlign = isXHorizontal ? 'center' : 'left';
     let textBaseline;
     uPlot.orient(u, sidx, (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
-      const _dir = dir * (isScaleHorizontal ? 1 : -1);
+      const _dir = dir * (isXHorizontal ? 1 : -1);
       const wid = Math.round(barsPctLayout[sidx]!.size[0] * xDim);
       let y0Pos = valToPosY(0, scaleY, yDim, yOff);
 
@@ -157,14 +157,14 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           let barWid = Math.round(wid);
           let barHgt = btm - top;
 
-          let x = isScaleHorizontal ? Math.round(lft + barWid / 2) : Math.round(yPos);
-          let y = isScaleHorizontal ? Math.round(yPos) : Math.round(lft + barWid / 2);
+          let x = isXHorizontal ? Math.round(lft + barWid / 2) : Math.round(yPos);
+          let y = isXHorizontal ? Math.round(yPos) : Math.round(lft + barWid / 2);
 
-          let width = isScaleHorizontal ? barWid : barHgt;
-          let height = isScaleHorizontal ? barHgt : barWid;
+          let width = isXHorizontal ? barWid : barHgt;
+          let height = isXHorizontal ? barHgt : barWid;
 
           let availableSpaceForText;
-          if (isScaleHorizontal) {
+          if (isXHorizontal) {
             availableSpaceForText =
               -LABEL_OFFSET + (value! >= 0 ? y - u.bbox.top : u.bbox.top + u.bbox.height - y) / devicePixelRatio;
           } else {
@@ -175,7 +175,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           const formattedValue = formatValue(sidx, value);
 
           if (hasAutoValueSize) {
-            const size = isScaleHorizontal
+            const size = isXHorizontal
               ? calculateFontSize(
                   formattedValue,
                   (width / devicePixelRatio) * BAR_FONT_SIZE_RATIO,
@@ -193,7 +193,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             }
           }
 
-          if (isScaleHorizontal) {
+          if (isXHorizontal) {
             if (value < 0) {
               textBaseline = 'top';
             } else {
@@ -209,8 +209,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             barWidth: width,
             barHeight: height,
             textBaseline: textBaseline as CanvasTextBaseline,
-            x: !isScaleHorizontal ? x - valueOffset * devicePixelRatio : x, // canvas px
-            y: isScaleHorizontal ? y + valueOffset * devicePixelRatio : y, // canvas px
+            x: !isXHorizontal ? x - valueOffset * devicePixelRatio : x, // canvas px
+            y: isXHorizontal ? y + valueOffset * devicePixelRatio : y, // canvas px
             availableSpaceForText, // in css px
             formattedValue,
             textAlign,
@@ -241,7 +241,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       // in Auto value mode skip rendering if any of the label has no sufficient space available
       if (showValue === BarValueVisibility.Auto) {
-        if (isScaleHorizontal) {
+        if (isXHorizontal) {
           if (
             actualLineHeight > label.availableSpaceForText * devicePixelRatio ||
             textMeasurement.width > label.barWidth
@@ -276,7 +276,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       let actualLineHeight = textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent;
       let textXPos = label.x;
 
-      if (!isScaleHorizontal && label.value < 0) {
+      if (!isXHorizontal && label.value < 0) {
         textXPos = label.x - textMeasurements[i].width;
       }
 
@@ -284,12 +284,12 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       u.ctx.font = `${minFontSize * devicePixelRatio}px ${theme.typography.fontFamily}`;
       u.ctx.textAlign = label.textAlign;
       u.ctx.textBaseline = label.textBaseline;
-      u.ctx.fillText(label.formattedValue, textXPos, isScaleHorizontal ? label.y : label.y + actualLineHeight / 2);
+      u.ctx.fillText(label.formattedValue, textXPos, isXHorizontal ? label.y : label.y + actualLineHeight / 2);
 
       // Sizing debug - will probably be useful in the future :)
       // u.ctx.beginPath();
       // u.ctx.strokeStyle = '#00ff00';
-      // if (isScaleHorizontal) {
+      // if (isXHorizontal) {
       //   u.ctx.moveTo(u.bbox.left, label.y);
       //   u.ctx.lineTo(u.bbox.left + u.bbox.width, label.y);
       // } else {
@@ -302,7 +302,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       // u.ctx.beginPath();
       // u.ctx.strokeStyle = '#00ff00';
       //
-      // if (isScaleHorizontal) {
+      // if (isXHorizontal) {
       //   u.ctx.moveTo(u.bbox.left, label.y + (label.value < 0 ? actualLineHeight : -actualLineHeight));
       //   u.ctx.lineTo(u.bbox.left + u.bbox.width, label.y + (label.value < 0 ? actualLineHeight : -actualLineHeight));
       // } else {
@@ -312,7 +312,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       // u.ctx.closePath();
       // u.ctx.stroke();
 
-      // if (isScaleHorizontal) {
+      // if (isXHorizontal) {
       //   if (label.value < 0) {
       //     u.ctx.beginPath();
       //     u.ctx.strokeStyle = '#ffff00';
