@@ -95,5 +95,14 @@ describe('Render', () => {
       const selects = wrapper.find(Select);
       selects.forEach((s) => expect(s.prop('isDisabled')).toBe(true));
     });
+
+    it('should render a children component', () => {
+      const wrapper = setup((props) => ({
+        ...props,
+        children: <button>click me</button>,
+      }));
+      const button = wrapper.find('button');
+      expect(button.text()).toBe('click me');
+    });
   });
 });

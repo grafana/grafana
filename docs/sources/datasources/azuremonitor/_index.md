@@ -14,11 +14,11 @@ Grafana includes built-in support for Azure Monitor, the Azure service to maximi
 - **Azure Monitor Logs** to collect log and performance data from your Azure account, and query using the powerful Kusto Language.
 - **Azure Resource Graph** to quickly query your Azure resources across subscriptions.
 
-This topic explains configuring, querying, and other options specific to the Azure Monitor data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana.
+This topic explains configuring, querying, and other options specific to the Azure Monitor data source. Refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana.
 
 ## Azure Monitor configuration
 
-To access Azure Monitor configuration, hover your mouse over the **Configuration** (gear) icon, click **Data Sources**, and then select the Azure Monitor data source. If you haven't already, you'll need to [add the Azure Monitor data source]({{< relref "add-a-data-source.md" >}}).
+To access Azure Monitor configuration, hover your mouse over the **Configuration** (gear) icon, click **Data Sources**, and then select the Azure Monitor data source. If you haven't already, you'll need to [add the Azure Monitor data source]({{< relref "../add-a-data-source.md" >}}).
 
 You must create an app registration and service principal in Azure AD to authenticate the data source. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in) for configuration details. Alternatively, if you are hosting Grafana in Azure (e.g. App Service, or Azure Virtual Machines) you can configure the Azure Monitor data source to use Managed Identity to securely authenticate without entering credentials into Grafana. Refer to [Configuring using Managed Identity](#configuring-using-managed-identity) for more details.
 
@@ -230,6 +230,28 @@ securityresources
 In Azure Resource Graph many nested properties (`properties.displayName`) are of a `dynamic` type, and should be cast to a string with `tostring()` to operate on them.
 
 The Azure documentation also hosts [many sample queries](https://docs.microsoft.com/en-gb/azure/governance/resource-graph/samples/starter) to help you get started
+
+### Azure Resource Graph macros
+
+You can use Grafana macros when constructing a query. Use the macros in the where clause of a query:
+
+- `$__timeFilter()` - Expands to
+  `timestamp ≥ datetime(2018-06-05T18:09:58.907Z) and`
+  `timestamp ≤ datetime(2018-06-05T20:09:58.907Z)` where the from and to datetimes are from the Grafana time picker.
+
+- `$__timeFilter(datetimeColumn)` - Expands to
+  `datetimeColumn ≥ datetime(2018-06-05T18:09:58.907Z) and`
+  `datetimeColumn ≤ datetime(2018-06-05T20:09:58.907Z)` where the from and to datetimes are from the Grafana time picker.
+
+- `$__timeFrom()` - Returns the From datetime from the Grafana picker. Example: `datetime(2018-06-05T18:09:58.907Z)`.
+
+- `$__timeTo()` - Returns the To datetime from the Grafana picker. Example: `datetime(2018-06-05T20:09:58.907Z)`.
+
+- `$__escapeMulti($myVar)` - Use with multi-value template variables that contain illegal characters. If `$myVar` has the two values as a string `'\\grafana-vm\Network(eth0)\Total','\\hello!'`, then it expands to: `@'\\grafana-vm\Network(eth0)\Total', @'\\hello!'`. If you are using single value variables, then there is no need for this macro, simply escape the variable inline instead - `@'\$myVar'`.
+
+- `$__contains(colName, $myVar)` - Use with multi-value template variables. If `$myVar` has the value `'value1','value2'`, the it expands to: `colName in ('value1','value2')`.
+
+  If using the `All` option, then check the `Include All Option` checkbox and in the `Custom all value` field type in the following value: `all`. If `$myVar` has value `all` then the macro will instead expand to `1 == 1`. For template variables with a lot of options, this will increase the query performance by not building a large "where..in" clause.
 
 ## Going further with Azure Monitor
 

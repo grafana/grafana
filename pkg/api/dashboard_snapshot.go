@@ -185,9 +185,12 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 	if err != nil {
 		return err
 	}
-	if err := response.Body.Close(); err != nil {
-		plog.Warn("Failed closing response body", "err", err)
-	}
+
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			plog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if response.StatusCode == 200 {
 		return nil

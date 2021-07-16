@@ -1,4 +1,4 @@
-import { EventBusSrv, EventBus, DashboardCursorSync } from '@grafana/data';
+import { EventBusSrv, EventBus, DashboardCursorSync, AnnotationEventUIModel } from '@grafana/data';
 import React from 'react';
 import { SeriesVisibilityChangeMode } from '.';
 
@@ -17,6 +17,11 @@ export interface PanelContext {
   onSeriesColorChange?: (label: string, color: string) => void;
 
   onToggleSeriesVisibility?: (label: string, mode: SeriesVisibilityChangeMode) => void;
+
+  canAddAnnotations?: () => boolean;
+  onAnnotationCreate?: (annotation: AnnotationEventUIModel) => void;
+  onAnnotationUpdate?: (annotation: AnnotationEventUIModel) => void;
+  onAnnotationDelete?: (id: string) => void;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({

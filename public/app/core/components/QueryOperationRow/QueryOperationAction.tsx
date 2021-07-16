@@ -1,7 +1,7 @@
-import { IconButton, IconName, stylesFactory, useTheme } from '@grafana/ui';
+import { IconButton, IconName, useStyles2 } from '@grafana/ui';
 import React from 'react';
-import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { css, cx } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 interface QueryOperationActionProps {
@@ -9,37 +9,55 @@ interface QueryOperationActionProps {
   title: string;
   onClick: (e: React.MouseEvent) => void;
   disabled?: boolean;
+  active?: boolean;
 }
 
-export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({ icon, disabled, title, ...otherProps }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({
+  icon,
+  active,
+  disabled,
+  title,
+  onClick,
+}) => {
+  const styles = useStyles2(getStyles);
 
-  const onClick = (e: React.MouseEvent) => {
-    if (!disabled) {
-      otherProps.onClick(e);
-    }
-  };
   return (
-    <IconButton
-      name={icon}
-      title={title}
-      className={styles.icon}
-      disabled={!!disabled}
-      onClick={onClick}
-      surface="header"
-      type="button"
-      aria-label={selectors.components.QueryEditorRow.actionButton(title)}
-    />
+    <div className={cx(styles.icon, active && styles.active)}>
+      <IconButton
+        name={icon}
+        title={title}
+        className={styles.icon}
+        disabled={!!disabled}
+        onClick={onClick}
+        surface="header"
+        type="button"
+        aria-label={selectors.components.QueryEditorRow.actionButton(title)}
+      />
+    </div>
   );
 };
 
 QueryOperationAction.displayName = 'QueryOperationAction';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     icon: css`
-      color: ${theme.colors.textWeak};
+      display: flex;
+      position: relative;
+      color: ${theme.colors.text.secondary};
+    `,
+    active: css`
+      &::before {
+        display: block;
+        content: ' ';
+        position: absolute;
+        left: -1px;
+        right: 2px;
+        height: 3px;
+        border-radius: 2px;
+        bottom: -8px;
+        background-image: ${theme.colors.gradients.brandHorizontal} !important;
+      }
     `,
   };
-});
+};

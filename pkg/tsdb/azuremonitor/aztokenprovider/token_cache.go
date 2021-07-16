@@ -19,14 +19,14 @@ type AccessToken struct {
 	ExpiresOn time.Time
 }
 
-type TokenCredential interface {
+type TokenRetriever interface {
 	GetCacheKey() string
 	Init() error
 	GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error)
 }
 
 type ConcurrentTokenCache interface {
-	GetAccessToken(ctx context.Context, credential TokenCredential, scopes []string) (string, error)
+	GetAccessToken(ctx context.Context, tokenRetriever TokenRetriever, scopes []string) (string, error)
 }
 
 func NewConcurrentTokenCache() ConcurrentTokenCache {
@@ -37,7 +37,7 @@ type tokenCacheImpl struct {
 	cache sync.Map // of *credentialCacheEntry
 }
 type credentialCacheEntry struct {
-	credential TokenCredential
+	retriever TokenRetriever
 
 	credInit  uint32
 	credMutex sync.Mutex
@@ -45,19 +45,19 @@ type credentialCacheEntry struct {
 }
 
 type scopesCacheEntry struct {
-	credential TokenCredential
-	scopes     []string
+	retriever TokenRetriever
+	scopes    []string
 
 	cond        *sync.Cond
 	refreshing  bool
 	accessToken *AccessToken
 }
 
-func (c *tokenCacheImpl) GetAccessToken(ctx context.Context, credential TokenCredential, scopes []string) (string, error) {
-	return c.getEntryFor(credential).getAccessToken(ctx, scopes)
+func (c *tokenCacheImpl) GetAccessToken(ctx context.Context, tokenRetriever TokenRetriever, scopes []string) (string, error) {
+	return c.getEntryFor(tokenRetriever).getAccessToken(ctx, scopes)
 }
 
-func (c *tokenCacheImpl) getEntryFor(credential TokenCredential) *credentialCacheEntry {
+func (c *tokenCacheImpl) getEntryFor(credential TokenRetriever) *credentialCacheEntry {
 	var entry interface{}
 	var ok bool
 
@@ -65,7 +65,7 @@ func (c *tokenCacheImpl) getEntryFor(credential TokenCredential) *credentialCach
 
 	if entry, ok = c.cache.Load(key); !ok {
 		entry, _ = c.cache.LoadOrStore(key, &credentialCacheEntry{
-			credential: credential,
+			retriever: credential,
 		})
 	}
 
@@ -87,8 +87,8 @@ func (c *credentialCacheEntry) ensureInitialized() error {
 		defer c.credMutex.Unlock()
 
 		if c.credInit == 0 {
-			// Initialize credential
-			err := c.credential.Init()
+			// Initialize retriever
+			err := c.retriever.Init()
 			if err != nil {
 				return err
 			}
@@ -108,9 +108,9 @@ func (c *credentialCacheEntry) getEntryFor(scopes []string) *scopesCacheEntry {
 
 	if entry, ok = c.cache.Load(key); !ok {
 		entry, _ = c.cache.LoadOrStore(key, &scopesCacheEntry{
-			credential: c.credential,
-			scopes:     scopes,
-			cond:       sync.NewCond(&sync.Mutex{}),
+			retriever: c.retriever,
+			scopes:    scopes,
+			cond:      sync.NewCond(&sync.Mutex{}),
 		})
 	}
 
@@ -155,7 +155,7 @@ func (c *scopesCacheEntry) getAccessToken(ctx context.Context) (string, error) {
 func (c *scopesCacheEntry) refreshAccessToken(ctx context.Context) (*AccessToken, error) {
 	var accessToken *AccessToken
 
-	// Safeguarding from panic caused by credential implementation
+	// Safeguarding from panic caused by retriever implementation
 	defer func() {
 		c.cond.L.Lock()
 
@@ -169,7 +169,7 @@ func (c *scopesCacheEntry) refreshAccessToken(ctx context.Context) (*AccessToken
 		c.cond.L.Unlock()
 	}()
 
-	token, err := c.credential.GetAccessToken(ctx, c.scopes)
+	token, err := c.retriever.GetAccessToken(ctx, c.scopes)
 	if err != nil {
 		return nil, err
 	}
