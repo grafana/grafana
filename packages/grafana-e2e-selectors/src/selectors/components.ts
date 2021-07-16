@@ -37,9 +37,9 @@ export const Components = {
   },
   Panels: {
     Panel: {
-      title: (title: string) => `Panel header title item ${title}`,
+      title: (title: string) => `Panel header ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
-      containerByTitle: (title: string) => `Panel container title ${title}`,
+      containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
     },
     Visualization: {
@@ -157,13 +157,13 @@ export const Components = {
   },
   PageToolbar: {
     container: () => '.page-toolbar',
-    item: (tooltip: string) => `Page toolbar button ${tooltip}`,
+    item: (tooltip: string) => `${tooltip}`,
   },
   QueryEditorToolbarItem: {
     button: (title: string) => `QueryEditor toolbar item button ${title}`,
   },
   BackButton: {
-    backArrow: 'Go Back button',
+    backArrow: 'Go Back',
   },
   OptionsGroup: {
     group: (title?: string) => (title ? `Options group ${title}` : 'Options group'),

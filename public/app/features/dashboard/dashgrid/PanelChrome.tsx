@@ -434,7 +434,10 @@ export class PanelChrome extends Component<Props, State> {
     });
 
     return (
-      <div className={containerClassNames} aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}>
+      <section
+        className={containerClassNames}
+        aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
+      >
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
@@ -456,7 +459,7 @@ export class PanelChrome extends Component<Props, State> {
             return this.renderPanel(width, height);
           }}
         </ErrorBoundary>
-      </div>
+      </section>
     );
   }
 }
