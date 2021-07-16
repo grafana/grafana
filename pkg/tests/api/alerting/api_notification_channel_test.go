@@ -122,6 +122,30 @@ func TestNotificationChannels(t *testing.T) {
 	mockChannel.matchesExpNotifications(t, expNonEmailNotifications)
 	require.Equal(t, expEmailNotifications, mockEmail.emails)
 	require.NoError(t, mockChannel.Close())
+
+	{
+		// Delete the configuration; so it returns the default configuration.
+		u := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
+		req, err := http.NewRequest(http.MethodDelete, u, nil)
+		require.NoError(t, err)
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, 202, resp.StatusCode)
+		require.JSONEq(t, `{"message":"configuration deleted; the default is applied"}`, string(b))
+
+		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
+		resp = getRequest(t, alertsURL, http.StatusOK) // nolint
+		b, err = ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.JSONEq(t, defaultAlertmanagerConfigJSON, string(b))
+	}
 }
 
 func getAlertmanagerConfig(channelAddr string) string {
