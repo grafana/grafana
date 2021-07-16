@@ -33,5 +33,3 @@ export const provision: MapLayerRegistryItem<XYZProvisioned> = {
     },
   }),
 };
-
-export const provisionLayer = [provision];
