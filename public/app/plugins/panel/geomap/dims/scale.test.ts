@@ -1,5 +1,3 @@
-import { toDataFrame, FieldType, FrameGeometrySourceMode } from '@grafana/data';
-import { toLonLat } from 'ol/proj';
 import { validateScaleConfig } from './scale';
 
 describe('scale dimensions', () => {

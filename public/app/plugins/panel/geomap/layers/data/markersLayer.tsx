@@ -6,7 +6,9 @@ import * as source from 'ol/source';
 import * as style from 'ol/style';
 import tinycolor from 'tinycolor2';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
-import { ColorDimensionConfig, getColorDimension, getScaledDimension, ScaleDimensionConfig, } from '../../dims/scale';
+import { ColorDimensionConfig, ScaleDimensionConfig, } from '../../dims/types';
+import { getScaledDimension, } from '../../dims/scale';
+import { getColorDimension, } from '../../dims/color';
 import { ScaleDimensionEditor } from '../../dims/editors/ScaleDimensionEditor';
 import { ColorDimensionEditor } from '../../dims/editors/ColorDimensionEditor';
 
@@ -66,7 +68,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         // Assert default values
         const config = {
           ...defaultOptions,
-          ...options.config,
+          ...options?.config,
         };
         const colorDim = getColorDimension(frame, config.color, theme);
         const sizeDim = getScaledDimension(frame, config.size);
