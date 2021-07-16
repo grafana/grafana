@@ -152,7 +152,6 @@ func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO,
 // RegisterFixedRoles launches all registrations of the service registration list
 func (ac *OSSAccessControlService) RegisterFixedRoles() error {
 	var err error
-	// TODO discuss with team the cases in which we want to error (duplicated roles)
 	ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
 		err = ac.registerFixedRole(registration.Role, registration.Grants)
 		return err != nil
