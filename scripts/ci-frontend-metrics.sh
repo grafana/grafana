@@ -2,6 +2,7 @@
 set -e
 
 ERROR_COUNT="$(./node_modules/.bin/tsc --project tsconfig.json --noEmit --strict true | grep -oP 'Found \K(\d+)')"
+ACCESSIBILITY_ERROR_COUNT="$(yarn test:accessibilty | jq '.errors')"
 DIRECTIVES="$(grep -r -o  directive public/app/ | wc -l)"
 CONTROLLERS="$(grep -r -oP 'class .*Ctrl' public/app/ | wc -l)"
 STORIES_COUNT="$(find ./packages/grafana-ui/src/components -name "*.story.tsx" | wc -l)"
@@ -19,6 +20,7 @@ MED_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '2p')"
 HIGH_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '3p')"
 
 echo -e "Typescript errors: $ERROR_COUNT"
+echo -e "Accessibility errors: $ACCESSIBILITY_ERROR_COUNT"
 echo -e "Directives: $DIRECTIVES"
 echo -e "Controllers: $CONTROLLERS"
 echo -e "Stories: $STORIES_COUNT"
@@ -38,6 +40,7 @@ echo "Metrics: {
   \"grafana.ci-code.grafana-ui.stories\": \"${STORIES_COUNT}\",
   \"grafana.ci-code.grafana-ui.mdx\": \"${MDX_COUNT}\",
   \"grafana.ci-code.legacyForms\": \"${LEGACY_FORMS}\",
+  \"grafana.ci-code.accessibilityErrors\": \"${ACCESSIBILITY_ERROR_COUNT}\",
   \"grafana.ci-code.strictLint.noExplicitAny\": \"${STRICT_LINT_EXPLICIT_ANY}\",
   \"grafana.ci-code.bundleFolderSize\": \"${TOTAL_BUNDLE}\",
   \"grafana.ci-code.dependencies.outdated\": \"${OUTDATED_DEPENDENCIES}\",
