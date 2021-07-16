@@ -151,6 +151,10 @@ func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO,
 
 // RegisterFixedRoles launches all registrations of the service registration list
 func (ac *OSSAccessControlService) RegisterFixedRoles() error {
+	// If accesscontrol is disabled no need to register roles
+	if ac.IsDisabled() {
+		return nil
+	}
 	var err error
 	ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
 		err = ac.registerFixedRole(registration.Role, registration.Grants)
@@ -161,5 +165,8 @@ func (ac *OSSAccessControlService) RegisterFixedRoles() error {
 
 // AddFixedRoleRegistrations allow the caller to declare, to the service, fixed roles and their assignments
 func (ac *OSSAccessControlService) AddFixedRoleRegistrations(registrations ...accesscontrol.RoleRegistration) {
-	ac.registrations.Append(registrations...)
+	// If accesscontrol is disabled no need to register roles
+	if !ac.IsDisabled() {
+		ac.registrations.Append(registrations...)
+	}
 }

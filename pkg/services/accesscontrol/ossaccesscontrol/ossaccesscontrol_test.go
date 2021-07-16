@@ -374,7 +374,7 @@ func TestOSSAccessControlService_AddFixedRoleRegistrations(t *testing.T) {
 				Log:           log.New("accesscontrol-test"),
 				registrations: accesscontrol.RegistrationList{},
 			}
-			ac.AddFixedRoleRegistrations(tt.registrations)
+			ac.AddFixedRoleRegistrations(tt.registrations...)
 
 			registrationCnt := 0
 			ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
