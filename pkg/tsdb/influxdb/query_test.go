@@ -43,7 +43,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := query.Build(queryContext)
 			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "policy"."cpu" WHERE time > now() - 5m GROUP BY time(10s) fill(null)`)
+			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "policy"."cpu" WHERE time > now() - 5m and time < now() GROUP BY time(10s) fill(null)`)
 		})
 
 		Convey("can build query with tz", func() {
@@ -57,7 +57,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := query.Build(queryContext)
 			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE time > now() - 5m GROUP BY time(5s) tz('Europe/Paris')`)
+			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE time > now() - 5m and time < now() GROUP BY time(5s) tz('Europe/Paris')`)
 		})
 
 		Convey("can build query with group bys", func() {
@@ -71,7 +71,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := query.Build(queryContext)
 			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE ("hostname" = 'server1' OR "hostname" = 'server2') AND time > now() - 5m GROUP BY time(5s), "datacenter" fill(null)`)
+			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE ("hostname" = 'server1' OR "hostname" = 'server2') AND time > now() - 5m and time < now() GROUP BY time(5s), "datacenter" fill(null)`)
 		})
 
 		Convey("can build query with math part", func() {
@@ -83,7 +83,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := query.Build(queryContext)
 			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") / 100 FROM "cpu" WHERE time > now() - 5m`)
+			So(rawQuery, ShouldEqual, `SELECT mean("value") / 100 FROM "cpu" WHERE time > now() - 5m and time < now()`)
 		})
 
 		Convey("can build query with math part using $__interval_ms variable", func() {
@@ -95,7 +95,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := query.Build(queryContext)
 			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") / 5000 FROM "cpu" WHERE time > now() - 5m`)
+			So(rawQuery, ShouldEqual, `SELECT mean("value") / 5000 FROM "cpu" WHERE time > now() - 5m and time < now()`)
 		})
 
 		Convey("can build query with old $interval variable", func() {
@@ -108,7 +108,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := query.Build(queryContext)
 			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE time > now() - 5m GROUP BY time(200ms)`)
+			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE time > now() - 5m and time < now() GROUP BY time(200ms)`)
 		})
 
 		Convey("can render time range", func() {
@@ -123,7 +123,13 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			Convey("render from: 10m", func() {
 				timeRange := plugins.NewDataTimeRange("10m", "now")
 				queryContext := plugins.DataQuery{TimeRange: &timeRange}
-				So(query.renderTimeFilter(queryContext), ShouldEqual, "time > now() - 10m")
+				So(query.renderTimeFilter(queryContext), ShouldEqual, "time > now() - 10m and time < now()")
+			})
+
+			Convey("render expression-style time-range", func() {
+				timeRange := plugins.NewDataTimeRange("1626420000000", "1626440000000")
+				queryContext := plugins.DataQuery{TimeRange: &timeRange}
+				So(query.renderTimeFilter(queryContext), ShouldEqual, " time > 1626420000000ms and time < 1626440000000ms ")
 			})
 		})
 
