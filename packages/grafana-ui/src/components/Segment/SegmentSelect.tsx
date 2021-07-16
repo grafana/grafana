@@ -1,5 +1,4 @@
 import React, { HTMLProps, useRef } from 'react';
-import useClickAway from 'react-use/lib/useClickAway';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { useTheme2 } from '../../themes/ThemeContext';
@@ -29,19 +28,6 @@ export function SegmentSelect<T>({
   const ref = useRef<HTMLDivElement>(null);
   const theme = useTheme2();
 
-  useClickAway(ref, () => {
-    if (ref && ref.current) {
-      // https://github.com/JedWatson/react-select/issues/188#issuecomment-279240292
-      // Unfortunately there's no other way of retrieving the (not yet) created new option
-      const input = ref.current.querySelector('input[id^="react-select-"]') as HTMLInputElement;
-      if (input && input.value) {
-        onChange({ value: input.value as any, label: input.value });
-      } else {
-        onClickOutside();
-      }
-    }
-  });
-
   let width = widthPixels > 0 ? widthPixels / theme.spacing.gridSize : undefined;
 
   return (
@@ -55,6 +41,18 @@ export function SegmentSelect<T>({
         onChange={onChange}
         options={options}
         value={value}
+        onCloseMenu={() => {
+          if (ref && ref.current) {
+            // https://github.com/JedWatson/react-select/issues/188#issuecomment-279240292
+            // Unfortunately there's no other way of retrieving the value (not yet) created new option
+            const input = ref.current.querySelector('input[id^="react-select-"]') as HTMLInputElement;
+            if (input && input.value) {
+              onChange({ value: input.value as any, label: input.value });
+            } else {
+              onClickOutside();
+            }
+          }
+        }}
         allowCustomValue={allowCustomValue}
       />
     </div>
