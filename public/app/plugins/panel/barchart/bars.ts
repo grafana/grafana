@@ -94,7 +94,11 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     return out;
   };
 
-  let barsPctLayout: Array<{ offs: number[]; size: number[] } | null> = [];
+  let barsPctLayout: Array<null | { offs: number[]; size: number[] }> = [];
+
+  // minimum available space for labels between bar end and plotting area bound (in canvas pixels)
+  let vSpace = Infinity;
+  let hSpace = Infinity;
 
   let barsBuilder = uPlot.paths.bars!({
     disp: {
@@ -108,6 +112,16 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       },
     },
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
+      let val = u.data[seriesIdx][dataIdx];
+
+      if (isXHorizontal) {
+        vSpace = Math.min(vSpace, val! < 0 ? u.bbox.top + u.bbox.height - (top + hgt) : top - u.bbox.top);
+        hSpace = wid;
+      } else {
+        vSpace = hgt;
+        hSpace = Math.min(hSpace, val! < 0 ? lft - u.bbox.left : u.bbox.left + u.bbox.width - (lft + wid));
+      }
+
       qt.add({ x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx });
     },
   });
@@ -133,6 +147,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     });
 
     barsPctLayout = ([null] as any).concat(distrTwo(u.data[0].length, u.data.length - 1));
+    vSpace = hSpace = Infinity;
   };
 
   // Collect label sizings
