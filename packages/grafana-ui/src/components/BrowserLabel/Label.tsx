@@ -1,12 +1,14 @@
 import React, { forwardRef, HTMLAttributes } from 'react';
 import { cx, css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '../../themes';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
+import { PartialHighlighter } from '../Typeahead/PartialHighlighter';
+import { HighlightPart } from '../../types';
 
 /**
- * @public
+ * @alpha
  */
 export type OnLabelClick = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => void;
 
@@ -17,11 +19,30 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   searchTerm?: string;
   value?: string;
   facets?: number;
+  title?: string;
+  highlightParts?: HighlightPart[];
   onClick?: OnLabelClick;
 }
 
-export const LokiLabel = forwardRef<HTMLElement, Props>(
-  ({ name, value, hidden, facets, onClick, className, loading, searchTerm, active, style, ...rest }, ref) => {
+export const Label = forwardRef<HTMLElement, Props>(
+  (
+    {
+      name,
+      value,
+      hidden,
+      facets,
+      onClick,
+      className,
+      loading,
+      searchTerm,
+      active,
+      style,
+      title,
+      highlightParts,
+      ...rest
+    },
+    ref
+  ) => {
     const theme = useTheme2();
     const styles = getLabelStyles(theme);
     const searchWords = searchTerm ? [searchTerm] : [];
@@ -43,7 +64,7 @@ export const LokiLabel = forwardRef<HTMLElement, Props>(
         ref={ref}
         onClick={onLabelClick}
         style={style}
-        title={text}
+        title={title || text}
         role="option"
         aria-selected={!!active}
         className={cx(
@@ -56,18 +77,23 @@ export const LokiLabel = forwardRef<HTMLElement, Props>(
         )}
         {...rest}
       >
-        <Highlighter
-          textToHighlight={text}
-          searchWords={searchWords}
-          autoEscape={true}
-          highlightClassName={styles.matchHighLight}
-        />
+        {typeof highlightParts !== 'undefined' ? (
+          <PartialHighlighter text={text} highlightClassName={styles.matchHighLight} highlightParts={highlightParts} />
+        ) : (
+          <Highlighter
+            textToHighlight={text}
+            searchWords={searchWords}
+            autoEscape
+            highlightClassName={styles.matchHighLight}
+          />
+        )}
       </span>
     );
   }
 );
 
-LokiLabel.displayName = 'LokiLabel';
+// TODO: Connor - Change display name?
+Label.displayName = 'Label';
 
 const getLabelStyles = (theme: GrafanaTheme2) => ({
   base: css`
