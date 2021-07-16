@@ -34,7 +34,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
       unsaved: false,
       appInsightsInitiallyConfigured: isAppInsightsConfigured(props.options),
     };
-    // TODO: Can I get resources from here?
     this.baseURL = `/api/datasources/${this.props.options.id}/resources/${routeNames.azureMonitor}/subscriptions`;
   }
 
