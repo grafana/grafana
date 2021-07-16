@@ -10,8 +10,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -111,5 +113,36 @@ func TestAzureResourceGraphCreateRequest(t *testing.T) {
 				t.Errorf("Unexpected HTTP headers: %v", cmp.Diff(req.Header, tt.expectedHeaders))
 			}
 		})
+	}
+}
+
+func TestAddConfigData(t *testing.T) {
+	field := data.Field{}
+	dataLink := data.DataLink{Title: "View in Azure Portal", TargetBlank: true, URL: "http://ds"}
+	frame := data.Frame{
+		Fields: []*data.Field{&field},
+	}
+	frameWithLink := addConfigData(frame, "http://ds")
+	assert.NotEmpty(t, frameWithLink.Fields)
+	assert.NotNil(t, frameWithLink.Fields[0].Config)
+	assert.NotEmpty(t, frameWithLink.Fields[0].Config.Links)
+	assert.Equal(t, frameWithLink.Fields[0].Config.Links[0], dataLink)
+}
+
+func TestGetAzurePortalUrl(t *testing.T) {
+	clouds := []string{"azuremonitor", "chinaazuremonitor", "govazuremonitor", "germanyazuremonitor"}
+	expectedAzurePortalUrl := map[string]interface{}{
+		"azuremonitor":        "https://portal.azure.com",
+		"chinaazuremonitor":   "https://portal.azure.cn",
+		"govazuremonitor":     "https://portal.azure.us",
+		"germanyazuremonitor": "https://portal.microsoftazure.de",
+	}
+
+	for _, cloud := range clouds {
+		azurePortalUrl, err := getAzurePortalUrl(cloud)
+		if err != nil {
+			t.Errorf("The cloud not supported")
+		}
+		assert.Equal(t, expectedAzurePortalUrl[cloud], azurePortalUrl)
 	}
 }
