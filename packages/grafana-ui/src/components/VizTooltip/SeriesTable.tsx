@@ -17,7 +17,7 @@ export interface SeriesTableRowProps {
 const getSeriesTableRowStyles = (theme: GrafanaTheme2) => {
   return {
     icon: css`
-      margin-right: ${theme.v1.spacing.xs};
+      margin-right: ${theme.spacing(1)};
       vertical-align: middle;
     `,
     seriesTable: css`
@@ -25,7 +25,7 @@ const getSeriesTableRowStyles = (theme: GrafanaTheme2) => {
     `,
     seriesTableRow: css`
       display: table-row;
-      font-size: ${theme.typography.size.sm};
+      font-size: ${theme.typography.bodySmall.fontSize};
     `,
     seriesTableCell: css`
       display: table-cell;
@@ -34,7 +34,7 @@ const getSeriesTableRowStyles = (theme: GrafanaTheme2) => {
       word-break: break-all;
     `,
     value: css`
-      padding-left: ${theme.v1.spacing.md};
+      padding-left: ${theme.spacing(2)};
     `,
     activeSeries: css`
       font-weight: ${theme.typography.fontWeightBold};
@@ -42,7 +42,7 @@ const getSeriesTableRowStyles = (theme: GrafanaTheme2) => {
     `,
     timestamp: css`
       font-weight: ${theme.typography.fontWeightBold};
-      font-size: ${theme.typography.size.sm};
+      font-size: ${theme.typography.bodySmall.fontSize};
     `,
   };
 };
