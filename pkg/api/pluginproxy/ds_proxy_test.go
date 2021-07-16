@@ -569,13 +569,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 		ds := &models.DataSource{Url: backend.URL, Type: models.DS_GRAPHITE}
 
-		responseRecorder := &closeNotifierResponseRecorder{
-			ResponseRecorder: httptest.NewRecorder(),
-		}
-		t.Cleanup(responseRecorder.Close)
-
-		responseWriter := macaron.NewResponseWriter("GET", responseRecorder)
-
+		responseWriter := macaron.NewResponseWriter("GET", httptest.NewRecorder())
 		// XXX: Really unsure why, but setting headers within the HTTP handler function doesn't stick,
 		// so doing it here instead
 		for _, cfg := range cfgs {
