@@ -1,11 +1,4 @@
-import {
-  DataFrame,
-  Field,
-  getFieldColorModeForField,
-  getFieldDisplayName,
-  getScaleCalculator,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { DataFrame, Field, getFieldDisplayName } from '@grafana/data';
 
 export function findField(frame: DataFrame, name?: string): Field | undefined {
   if (!name?.length) {
