@@ -6,18 +6,31 @@ import * as source from 'ol/source';
 import * as style from 'ol/style';
 import tinycolor from 'tinycolor2';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
+import { ColorDimension, ScaleDimension, ScaleDimensionConfig, ScaleDimensionOptions } from '../../dims/dimensions';
+import { ScaleDimensionEditor } from '../../dims/editors/ScaleDimensionEditor';
+
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
-  minSize: number,
-  maxSize: number,
-  opacity: number,
+  size: ScaleDimension;
+  color: ColorDimension;
+  fillOpacity: ScaleDimension;
 }
 
 const defaultOptions: MarkersConfig = {
-  minSize: 1,
-  maxSize: 10,
-  opacity: 0.4,
+  size: {
+    fixed: 5,
+    min: 5,
+    max: 10,
+  },
+  color: {
+    fixed: '#f00', 
+  },
+  fillOpacity: {
+    fixed: 0.4,
+    min: 0,
+    max: 1,
+  },
 };
 
 export const MARKERS_LAYER_ID = "markers";
@@ -123,29 +136,44 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       //     noFieldsMessage: 'No numeric fields found',
       //   },
       // })
-      .addNumberInput({
-        path: 'config.minSize',
-        description: 'configures the min circle size',
-        name: 'Min Size',
-        defaultValue: defaultOptions.minSize,
-      })
-      .addNumberInput({
-        path: 'config.maxSize',
-        description: 'configures the max circle size',
-        name: 'Max Size',
-        defaultValue: defaultOptions.maxSize,
-      })
-      .addSliderInput({
-        path: 'config.opacity',
-        description: 'configures the amount of transparency',
-        name: 'Opacity',
-        defaultValue: defaultOptions.opacity,
+      .addCustomEditor({
+        id: 'size',
+        path: 'config.size',
+        name: 'Marker Size',
+        editor: ScaleDimensionEditor,
         settings: {
-          min: 0,
-          max: 1,
-          step: 0.1,
+          min: 1,
+          max: 100, // possible in the UI
+        },
+        defaultValue: { // Configured values
+          fixed: 5,
+          min: 1,
+          max: 20,
         },
       });
+      // .addNumberInput({
+      //   path: 'config.minSize',
+      //   description: 'configures the min circle size',
+      //   name: 'Min Size',
+      //   defaultValue: defaultOptions.minSize,
+      // })
+      // .addNumberInput({
+      //   path: 'config.maxSize',
+      //   description: 'configures the max circle size',
+      //   name: 'Max Size',
+      //   defaultValue: defaultOptions.maxSize,
+      // })
+      // .addSliderInput({
+      //   path: 'config.opacity',
+      //   description: 'configures the amount of transparency',
+      //   name: 'Opacity',
+      //   defaultValue: defaultOptions.opacity,
+      //   settings: {
+      //     min: 0,
+      //     max: 1,
+      //     step: 0.1,
+      //   },
+      //});
   },
   // fill in the default values
   defaultOptions,
