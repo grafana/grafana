@@ -1,7 +1,63 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
-import { Plugin, LocalPlugin } from '../types';
+import { Plugin, LocalPlugin, CatalogPlugin } from '../types';
 import { api } from '../api';
+
+type CatalogPluginsState = {
+  loading: boolean;
+  error?: Error;
+  plugins: CatalogPlugin[];
+};
+
+export function useCatalogPlugins(): CatalogPluginsState {
+  const { loading, value, error } = useAsync(async () => {
+    const remote = await api.getRemotePlugins();
+    const installed = await api.getInstalledPlugins();
+    return { remote, installed };
+  }, []);
+
+  const plugins = useMemo(() => {
+    const installed = value?.installed || [];
+    const remote = value?.remote || [];
+    const unique: Record<string, CatalogPlugin> = {};
+
+    for (const plugin of installed) {
+      unique[plugin.id] = mapLocalToCatalog(plugin);
+    }
+
+    for (const plugin of remote) {
+      if (unique[plugin.slug]) {
+        continue;
+      }
+
+      if (plugin.typeCode === 'renderer') {
+        continue;
+      }
+
+      if (!Boolean(plugin.versionSignatureType)) {
+        continue;
+      }
+
+      unique[plugin.slug] = mapRemoteToCatalog(plugin);
+    }
+
+    return Object.values(unique);
+  }, [value?.installed, value?.remote]);
+
+  return {
+    loading,
+    error,
+    plugins,
+  };
+}
+
+function mapRemoteToCatalog(plugin: Plugin): CatalogPlugin {
+  return {} as CatalogPlugin;
+}
+
+function mapLocalToCatalog(plugin: LocalPlugin): CatalogPlugin {
+  return {} as CatalogPlugin;
+}
 
 export const usePlugins = () => {
   const result = useAsync(async () => {
