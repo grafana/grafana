@@ -90,7 +90,6 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
         left: 0,
         top: 0,
         transform: `translate(${placement.x}px, ${placement.y}px)`,
-        pointerEvents: 'none',
         transition: 'transform ease-out 0.1s',
       }}
       {...otherProps}

@@ -63,12 +63,15 @@ export function getFocusStyles(theme: GrafanaTheme2): CSSObject {
 }
 
 // max-width is set up based on .grafana-tooltip class that's used in dashboard
+// disabling pointer-events is to prevent the tooltip from flickering when moving left to right
+// see e.g. https://github.com/grafana/grafana/pull/33609
 export const getTooltipContainerStyles = (theme: GrafanaTheme2) => `
-  overflow: hidden;
   background: ${theme.colors.background.secondary};
+  border-radius: ${theme.shape.borderRadius()};
   box-shadow: ${theme.shadows.z2};
   max-width: 800px;
+  overflow: hidden;
   padding: ${theme.spacing(1)};
-  border-radius: ${theme.shape.borderRadius()};
+  pointer-events: none;
   z-index: ${theme.zIndex.tooltip};
 `;
