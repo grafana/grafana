@@ -17,7 +17,7 @@ import (
 
 var paths = load.GetDefaultLoadPaths()
 
-func (cmd Command) validateScuemataBasics(c utils.CommandLine) error {
+func (cmd Command) validateScuemata(c utils.CommandLine) error {
 	root := c.String("grafana-root")
 	if root == "" {
 		return gerrors.New("must provide path to the root of a Grafana repository checkout")
