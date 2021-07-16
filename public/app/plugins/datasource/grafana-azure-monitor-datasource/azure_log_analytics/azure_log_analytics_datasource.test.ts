@@ -3,14 +3,12 @@ import FakeSchemaData from './__mocks__/schema';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { AzureLogsVariable, DatasourceValidationResult } from '../types';
 import { toUtc } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
 
 const templateSrv = new TemplateSrv();
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  getBackendSrv: () => backendSrv,
   getTemplateSrv: () => templateSrv,
 }));
 
@@ -22,13 +20,6 @@ const makeResourceURI = (
   `/subscriptions/${subscriptionID}/resourceGroups/${resourceGroup}/providers/Microsoft.OperationalInsights/workspaces/${resourceName}`;
 
 describe('AzureLogAnalyticsDatasource', () => {
-  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    datasourceRequestMock.mockImplementation(jest.fn());
-  });
-
   const ctx: any = {};
 
   beforeEach(() => {
@@ -38,64 +29,6 @@ describe('AzureLogAnalyticsDatasource', () => {
     };
 
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
-  });
-
-  describe('When the config option "Same as Azure Monitor" has been chosen', () => {
-    const tableResponseWithOneColumn = {
-      tables: [
-        {
-          name: 'PrimaryResult',
-          columns: [
-            {
-              name: 'Category',
-              type: 'string',
-            },
-          ],
-          rows: [['Administrative'], ['Policy']],
-        },
-      ],
-    };
-
-    const workspaceResponse = {
-      value: [
-        {
-          name: 'aworkspace',
-          id: makeResourceURI('a-workspace'),
-          properties: {
-            source: 'Azure',
-            customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
-          },
-        },
-      ],
-    };
-
-    let workspacesUrl: string;
-    let azureLogAnalyticsUrl: string;
-
-    beforeEach(async () => {
-      ctx.instanceSettings.jsonData.subscriptionId = 'xxx';
-      ctx.instanceSettings.jsonData.tenantId = 'xxx';
-      ctx.instanceSettings.jsonData.clientId = 'xxx';
-      ctx.instanceSettings.jsonData.azureLogAnalyticsSameAs = true;
-      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
-
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        if (options.url.indexOf('Microsoft.OperationalInsights/workspaces?api-version') > -1) {
-          workspacesUrl = options.url;
-          return Promise.resolve({ data: workspaceResponse, status: 200 });
-        } else {
-          azureLogAnalyticsUrl = options.url;
-          return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
-        }
-      });
-    });
-
-    it('should use the loganalyticsazure plugin route', async () => {
-      await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
-
-      expect(workspacesUrl).toContain('azuremonitor');
-      expect(azureLogAnalyticsUrl).toContain('loganalyticsazure');
-    });
   });
 
   describe('When performing testDatasource', () => {
@@ -113,7 +46,7 @@ describe('AzureLogAnalyticsDatasource', () => {
 
       beforeEach(() => {
         ctx.instanceSettings.jsonData.azureAuthType = 'msi';
-        datasourceRequestMock.mockImplementation(() => Promise.reject(error));
+        ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockRejectedValue(error);
       });
 
       it('should return error status and a detailed error message', () => {
@@ -129,9 +62,9 @@ describe('AzureLogAnalyticsDatasource', () => {
 
   describe('When performing getSchema', () => {
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        expect(options.url).toContain('metadata');
-        return Promise.resolve({ data: FakeSchemaData.getlogAnalyticsFakeMetadata(), status: 200, ok: true });
+      ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        expect(path).toContain('metadata');
+        return Promise.resolve(FakeSchemaData.getlogAnalyticsFakeMetadata());
       });
     });
 
@@ -191,9 +124,9 @@ describe('AzureLogAnalyticsDatasource', () => {
 
     describe('and is the workspaces() macro', () => {
       beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('xxx');
-          return Promise.resolve({ data: workspacesResponse, status: 200 });
+        ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          expect(path).toContain('xxx');
+          return Promise.resolve(workspacesResponse);
         });
 
         queryResults = await ctx.ds.metricFindQuery('workspaces()');
@@ -209,9 +142,9 @@ describe('AzureLogAnalyticsDatasource', () => {
 
     describe('and is the workspaces() macro with the subscription parameter', () => {
       beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
-          return Promise.resolve({ data: workspacesResponse, status: 200 });
+        ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          expect(path).toContain('11112222-eeee-4949-9b2d-9106972f9123');
+          return Promise.resolve(workspacesResponse);
         });
 
         queryResults = await ctx.ds.metricFindQuery('workspaces(11112222-eeee-4949-9b2d-9106972f9123)');
@@ -227,9 +160,9 @@ describe('AzureLogAnalyticsDatasource', () => {
 
     describe('and is the workspaces() macro with the subscription parameter quoted', () => {
       beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
-          return Promise.resolve({ data: workspacesResponse, status: 200 });
+        ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          expect(path).toContain('11112222-eeee-4949-9b2d-9106972f9123');
+          return Promise.resolve(workspacesResponse);
         });
 
         queryResults = await ctx.ds.metricFindQuery('workspaces("11112222-eeee-4949-9b2d-9106972f9123")');
@@ -273,11 +206,11 @@ describe('AzureLogAnalyticsDatasource', () => {
       };
 
       beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          if (options.url.indexOf('OperationalInsights/workspaces?api-version=') > -1) {
-            return Promise.resolve({ data: workspaceResponse, status: 200 });
+        ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          if (path.indexOf('OperationalInsights/workspaces?api-version=') > -1) {
+            return Promise.resolve(workspaceResponse);
           } else {
-            return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
+            return Promise.resolve(tableResponseWithOneColumn);
           }
         });
       });
@@ -337,11 +270,11 @@ describe('AzureLogAnalyticsDatasource', () => {
     let annotationResults: any[];
 
     beforeEach(async () => {
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
-          return Promise.resolve({ data: workspaceResponse, status: 200 });
+      ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        if (path.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
+          return Promise.resolve(workspaceResponse);
         } else {
-          return Promise.resolve({ data: tableResponse, status: 200 });
+          return Promise.resolve(tableResponse);
         }
       });
 

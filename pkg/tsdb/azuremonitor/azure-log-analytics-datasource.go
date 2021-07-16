@@ -22,7 +22,9 @@ import (
 )
 
 // AzureLogAnalyticsDatasource calls the Azure Log Analytics API's
-type AzureLogAnalyticsDatasource struct{}
+type AzureLogAnalyticsDatasource struct {
+	proxy serviceProxy
+}
 
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
 // from the UI
@@ -36,11 +38,15 @@ type AzureLogAnalyticsQuery struct {
 	TimeRange    backend.TimeRange
 }
 
+func (e *AzureLogAnalyticsDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.proxy.Do(rw, req, cli)
+}
+
 // executeTimeSeriesQuery does the following:
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
+func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries, dsInfo)
@@ -49,7 +55,7 @@ func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url)
 	}
 
 	return result, nil
@@ -119,7 +125,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery, 
 	return azureLogAnalyticsQueries, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo datasourceInfo) backend.DataResponse {
+func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo datasourceInfo, client *http.Client, url string) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	dataResponseErrorWithExecuted := func(err error) backend.DataResponse {
@@ -140,8 +146,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return dataResponseErrorWithExecuted(fmt.Errorf("Log Analytics credentials are no longer supported. Go to the data source configuration to update Azure Monitor credentials")) //nolint:golint,stylecheck
 	}
 
-	req, err := e.createRequest(ctx, dsInfo)
-
+	req, err := e.createRequest(ctx, dsInfo, url)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
@@ -167,7 +172,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	}
 
 	azlog.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, dsInfo.Services[azureLogAnalytics].HTTPClient, req)
+	res, err := ctxhttp.Do(ctx, client, req)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -217,8 +222,8 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	return dataResponse
 }
 
-func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
-	req, err := http.NewRequest(http.MethodGet, dsInfo.Services[azureLogAnalytics].URL, nil)
+func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, url string) (*http.Request, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("failed to create request", err)
