@@ -745,20 +745,6 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 	}
 }
 
-type closeNotifierResponseRecorder struct {
-	*httptest.ResponseRecorder
-	closeChan chan bool
-}
-
-func (r *closeNotifierResponseRecorder) CloseNotify() <-chan bool {
-	r.closeChan = make(chan bool)
-	return r.closeChan
-}
-
-func (r *closeNotifierResponseRecorder) Close() {
-	close(r.closeChan)
-}
-
 // getDatasourceProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
 func getDatasourceProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.Cfg) *http.Request {
 	plugin := &plugins.DataSourcePlugin{}
