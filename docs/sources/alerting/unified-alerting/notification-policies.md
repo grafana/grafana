@@ -9,8 +9,9 @@ weight = 400
 
 Notification policies determine how alerts are routed to contact points. Policies have a tree structure, where each policy can have one or more child policies. Each policy except for the root policy can also match specific alert labels. Each alert enters policy tree at the root and then traverses each child policy. If `Continue matching subsequent sibling nodes` is not checked, it stops at the first matching node, otherwise, it continues matching it's siblings as well. If an alert does not match any children of a policy, the alert is handled based on the configuration settings of this policy and notified to the contact point configured on this policy. Alert that does not match any specific policy is handled by the root policy.
 
-Grafana alerting UI allows you to configure Grafana notification policies as well as notification policies (routes) for an [external Alertmanager if one is configured]({{< relref "../../datasources/alertmanager.md" >}}).
+Grafana alerting UI allows you to configure notification policies for the Grafana managed alerts (handled by the embedded Alertmanager) as well as notification policies for an [external Alertmanager if one is configured]({{< relref "../../datasources/alertmanager.md" >}}), using the Alertmanager dropdown.
 
+> **Note:** Currently the configuration of the embedded Alertmanager is shared across organisations. Therefore users are advised to use the new Grafana 8 Alerts only if they have one organisation otherwise notification policies for the Grafana managed alerts will be visible by all organizations.
 
 ## Edit notification policies
 

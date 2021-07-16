@@ -170,7 +170,7 @@ function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: 
   const yearRoundedToDay = Math.round(timeUnitSize.year / timeUnitSize.day) * timeUnitSize.day;
   const incrementRoundedToDay = Math.round(foundIncr / timeUnitSize.day) * timeUnitSize.day;
 
-  let format = systemDateFormats.interval.minute;
+  let format = systemDateFormats.interval.year;
 
   if (foundIncr < timeUnitSize.second) {
     format = systemDateFormats.interval.second.replace('ss', 'ss.SS');
