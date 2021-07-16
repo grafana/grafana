@@ -155,6 +155,7 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 		EvaluationTime:   result.EvaluatedAt,
 		EvaluationState:  result.State,
 		EvaluationString: result.EvaluationString,
+		Values:           NewEvaluationValues(result.Values),
 	})
 	currentState.TrimResults(alertRule)
 	oldState := currentState.State
