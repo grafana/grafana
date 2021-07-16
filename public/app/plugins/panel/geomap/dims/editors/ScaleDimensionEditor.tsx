@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useMemo } from 'react';
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { ScaleDimensionConfig, ScaleDimensionOptions } from '../types';
-import { Select, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Label, Select, useStyles2 } from '@grafana/ui';
 import {
   useFieldDisplayNames,
   useSelectOptions,
@@ -90,46 +90,46 @@ export const ScaleDimensionEditor: FC<StandardEditorProps<ScaleDimensionConfig, 
   const selectedOption = isFixed ? fixedValueOption : selectOptions.find((v) => v.value === fieldName);
   return (
     <>
-      <Select
-        value={selectedOption}
-        options={selectOptions}
-        onChange={onSelectChange}
-        noOptionsMessage="No fields found"
-      />
-      {isFixed ? (
-        <div>
-          <NumberInput value={value.fixed} {...minMaxStep} onChange={onValueChange} />
-        </div>
-      ) : (
-        <div>
-          <table className={styles.table}>
-            <tbody>
-              <tr>
-                <th className={styles.half}>Min</th>
-                <th className={styles.half}>Max</th>
-              </tr>
-              <tr>
-                <td>
-                  <NumberInput value={value.min} {...minMaxStep} onChange={onMinChange} />
-                </td>
-                <td>
-                  <NumberInput value={value.max} {...minMaxStep} onChange={onMaxChange} />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
+      <div>
+        <Select
+          value={selectedOption}
+          options={selectOptions}
+          onChange={onSelectChange}
+          noOptionsMessage="No fields found"
+        />
+      </div>
+      <div className={styles.range}>
+        {isFixed ? (
+          <InlineFieldRow>
+            <InlineField label="Value" labelWidth={8} grow={true}>
+              <NumberInput value={value.fixed} {...minMaxStep} onChange={onValueChange} />
+            </InlineField>
+          </InlineFieldRow>
+        ) : (
+          <>
+            <InlineFieldRow>
+              <InlineField label="Min" labelWidth={8} grow={true}>
+                <NumberInput value={value.min} {...minMaxStep} onChange={onMinChange} />
+              </InlineField>
+            </InlineFieldRow>
+            <InlineFieldRow>
+              <InlineField label="Max" labelWidth={8} grow={true}>
+                <NumberInput value={value.max} {...minMaxStep} onChange={onMaxChange} />
+              </InlineField>
+            </InlineFieldRow>
+          </>
+        )}
+      </div>
     </>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  table: css`
-    width: 100%;
-    margin-top: 8px;
+  range: css`
+    padding-top: 8px;
   `,
-  half: css`
-    width: 50%;
+  xxxx: css`
+    padding-top: 8px;
+    width: 200px;
   `,
 });
