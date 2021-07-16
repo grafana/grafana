@@ -27,7 +27,7 @@ export class UtilSrv {
   init() {
     appEvents.subscribe(ShowConfirmModalEvent, (e) => this.showConfirmModal(e.payload));
     appEvents.subscribe(ShowModalReactEvent, (e) => this.showModalReact(e.payload));
-    appEvents.subscribe(HideModalReactEvent, () => this.onReactModalDismiss());
+    appEvents.subscribe(HideModalReactEvent, this.onReactModalDismiss);
   }
 
   showModalReact(options: any) {
