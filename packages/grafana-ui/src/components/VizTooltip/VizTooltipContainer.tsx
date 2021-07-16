@@ -64,7 +64,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
 
   // Make sure tooltip does not overflow window
   useLayoutEffect(() => {
-    if (tooltipRef && tooltipRef.current && tooltipMeasurement.width && tooltipMeasurement.height) {
+    if (tooltipRef && tooltipRef.current) {
       const { x, y } = calculateTooltipPosition(
         positionX,
         positionY,
