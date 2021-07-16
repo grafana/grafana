@@ -3,6 +3,7 @@ import { isEqual } from 'lodash';
 import tinycolor from 'tinycolor2';
 import { css, cx } from '@emotion/css';
 import { LogRowModel, findHighlightChunksInText, GrafanaTheme } from '@grafana/data';
+import memoizeOne from 'memoize-one';
 
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
@@ -23,6 +24,7 @@ interface Props extends Themeable {
   hasMoreContextRows?: HasMoreContextRows;
   contextIsOpen: boolean;
   wrapLogMessage: boolean;
+  prettifyLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
   showContextToggle?: (row?: LogRowModel) => boolean;
@@ -47,9 +49,44 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     horizontalScroll: css`
       label: verticalScroll;
-      white-space: nowrap;
+      white-space: pre;
     `,
   };
+});
+
+function renderLogMessage(
+  hasAnsi: boolean,
+  entry: string,
+  highlights: string[] | undefined,
+  highlightClassName: string
+) {
+  const needsHighlighter =
+    highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;
+  if (needsHighlighter) {
+    return (
+      <Highlighter
+        textToHighlight={entry}
+        searchWords={highlights ?? []}
+        findChunks={findHighlightChunksInText}
+        highlightClassName={highlightClassName}
+      />
+    );
+  } else if (hasAnsi) {
+    return <LogMessageAnsi value={entry} />;
+  } else {
+    return entry;
+  }
+}
+
+const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): string => {
+  if (prettifyLogMessage) {
+    try {
+      return JSON.stringify(JSON.parse(line), undefined, 2);
+    } catch (error) {
+      return line;
+    }
+  }
+  return line;
 });
 
 class UnThemedLogRowMessage extends PureComponent<Props> {
@@ -70,16 +107,16 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       contextIsOpen,
       showContextToggle,
       wrapLogMessage,
+      prettifyLogMessage,
       onToggleContext,
     } = this.props;
 
     const style = getLogRowStyles(theme, row.logLevel);
-    const { entry, hasAnsi, raw } = row;
+    const { hasAnsi, raw } = row;
+    const restructuredEntry = restructureLog(raw, prettifyLogMessage);
 
     const previewHighlights = highlighterExpressions?.length && !isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
-    const needsHighlighter =
-      highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;
     const highlightClassName = previewHighlights
       ? cx([style.logsRowMatchHighLight, style.logsRowMatchHighLightPreview])
       : cx([style.logsRowMatchHighLight]);
@@ -103,18 +140,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             />
           )}
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
-            {needsHighlighter ? (
-              <Highlighter
-                textToHighlight={entry}
-                searchWords={highlights ?? []}
-                findChunks={findHighlightChunksInText}
-                highlightClassName={highlightClassName}
-              />
-            ) : hasAnsi ? (
-              <LogMessageAnsi value={raw} />
-            ) : (
-              entry
-            )}
+            {renderLogMessage(hasAnsi, restructuredEntry, highlights, highlightClassName)}
           </span>
           {showContextToggle?.(row) && (
             <span onClick={this.onContextToggle} className={cx('log-row-context', style.context)}>
