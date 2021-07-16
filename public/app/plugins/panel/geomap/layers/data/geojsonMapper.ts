@@ -1,4 +1,4 @@
-import { MapLayerRegistryItem, MapLayerConfig, MapLayerHandler, PanelData, GrafanaTheme2 } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, GrafanaTheme2 } from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
@@ -29,7 +29,7 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerConfig<GeoJSONMapperConfig>, theme: GrafanaTheme2): MapLayerHandler => {
+  create: (map: Map, options: MapLayerOptions<GeoJSONMapperConfig>, theme: GrafanaTheme2): MapLayerHandler => {
     const config = { ...defaultOptions, ...options.config };
 
     const source = new VectorSource({
