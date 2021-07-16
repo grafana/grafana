@@ -3,6 +3,7 @@ package httpclientprovider
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -17,6 +18,7 @@ var newProviderFunc = sdkhttpclient.NewProvider
 func New(cfg *setting.Cfg) *sdkhttpclient.Provider {
 	logger := log.New("httpclient")
 	userAgent := fmt.Sprintf("Grafana/%s", cfg.BuildVersion)
+
 	middlewares := []sdkhttpclient.Middleware{
 		TracingMiddleware(logger),
 		DataSourceMetricsMiddleware(),
@@ -28,6 +30,8 @@ func New(cfg *setting.Cfg) *sdkhttpclient.Provider {
 	if cfg.SigV4AuthEnabled {
 		middlewares = append(middlewares, SigV4Middleware())
 	}
+
+	setDefaultTimeoutOptions(cfg)
 
 	return newProviderFunc(sdkhttpclient.ProviderOptions{
 		Middlewares: middlewares,
@@ -54,4 +58,21 @@ func newConntrackRoundTripper(name string, transport *http.Transport) *http.Tran
 		conntrack.DialWithDialContextFunc(transport.DialContext),
 	)
 	return transport
+}
+
+// setDefaultTimeoutOptions overrides the default timeout options for the SDK.
+//
+// Note: Not optimal changing global state, but hard to not do in this case.
+func setDefaultTimeoutOptions(cfg *setting.Cfg) {
+	sdkhttpclient.DefaultTimeoutOptions = sdkhttpclient.TimeoutOptions{
+		Timeout:               time.Duration(cfg.DataProxyTimeout) * time.Second,
+		DialTimeout:           time.Duration(cfg.DataProxyDialTimeout) * time.Second,
+		KeepAlive:             time.Duration(cfg.DataProxyKeepAlive) * time.Second,
+		TLSHandshakeTimeout:   time.Duration(cfg.DataProxyTLSHandshakeTimeout) * time.Second,
+		ExpectContinueTimeout: time.Duration(cfg.DataProxyExpectContinueTimeout) * time.Second,
+		MaxConnsPerHost:       cfg.DataProxyMaxConnsPerHost,
+		MaxIdleConns:          cfg.DataProxyMaxIdleConns,
+		MaxIdleConnsPerHost:   cfg.DataProxyMaxIdleConns,
+		IdleConnTimeout:       time.Duration(cfg.DataProxyIdleConnTimeout) * time.Second,
+	}
 }

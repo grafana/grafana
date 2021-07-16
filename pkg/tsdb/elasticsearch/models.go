@@ -12,6 +12,7 @@ type Query struct {
 	Metrics    []*MetricAgg `json:"metrics"`
 	Alias      string       `json:"alias"`
 	Interval   string
+	IntervalMs int64
 	RefID      string
 }
 

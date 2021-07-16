@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -30,8 +31,7 @@ var (
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
-func ProvideService(cfg *setting.Cfg, pluginManager plugins.Manager, backendPluginManager backendplugin.Manager) *Service {
-	im := datasource.NewInstanceManager(NewInstanceSettings(cfg))
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, pluginManager plugins.Manager, backendPluginManager backendplugin.Manager) *Service {
 	executors := map[string]azDatasourceExecutor{
 		azureMonitor:       &AzureMonitorDatasource{},
 		appInsights:        &ApplicationInsightsDatasource{},
@@ -40,13 +40,21 @@ func ProvideService(cfg *setting.Cfg, pluginManager plugins.Manager, backendPlug
 		azureResourceGraph: &AzureResourceGraphDatasource{},
 	}
 
+	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, *httpClientProvider, executors))
+
 	s := &Service{
 		Cfg:           cfg,
 		PluginManager: pluginManager,
+		im:            im,
+		executors:     executors,
 	}
 
+	mux := s.newMux()
+	resourceMux := http.NewServeMux()
+	s.registerRoutes(resourceMux)
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newExecutor(im, cfg, executors),
+		QueryDataHandler:    mux,
+		CallResourceHandler: httpadapter.New(resourceMux),
 	})
 
 	if err := backendPluginManager.RegisterAndStart(context.Background(), dsName, factory); err != nil {
@@ -55,25 +63,29 @@ func ProvideService(cfg *setting.Cfg, pluginManager plugins.Manager, backendPlug
 	return s
 }
 
+type serviceProxy interface {
+	Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) http.ResponseWriter
+}
+
 type Service struct {
 	PluginManager plugins.Manager
 	Cfg           *setting.Cfg
+	im            instancemgmt.InstanceManager
+	executors     map[string]azDatasourceExecutor
 }
 
 type azureMonitorSettings struct {
 	SubscriptionId               string `json:"subscriptionId"`
 	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
 	AppInsightsAppId             string `json:"appInsightsAppId"`
-	AzureLogAnalyticsSameAs      bool   `json:"azureLogAnalyticsSameAs"`
 }
 
 type datasourceInfo struct {
 	Cloud       string
 	Credentials azcredentials.AzureCredentials
 	Settings    azureMonitorSettings
-	Services    map[string]datasourceService
 	Routes      map[string]azRoute
-	HTTPCliOpts httpclient.Options
+	Services    map[string]datasourceService
 
 	JSONData                map[string]interface{}
 	DecryptedSecureJSONData map[string]string
@@ -86,7 +98,19 @@ type datasourceService struct {
 	HTTPClient *http.Client
 }
 
-func NewInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
+func getDatasourceService(cfg *setting.Cfg, clientProvider httpclient.Provider, dsInfo datasourceInfo, routeName string) (datasourceService, error) {
+	route := dsInfo.Routes[routeName]
+	client, err := newHTTPClient(route, dsInfo, cfg, clientProvider)
+	if err != nil {
+		return datasourceService{}, err
+	}
+	return datasourceService{
+		URL:        dsInfo.Routes[routeName].URL,
+		HTTPClient: client,
+	}, nil
+}
+
+func NewInstanceSettings(cfg *setting.Cfg, clientProvider httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData, err := simplejson.NewJson(settings.JSONData)
 		if err != nil {
@@ -115,11 +139,6 @@ func NewInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
 
-		httpCliOpts, err := settings.HTTPClientOptions()
-		if err != nil {
-			return nil, fmt.Errorf("error getting http options: %w", err)
-		}
-
 		model := datasourceInfo{
 			Cloud:                   cloud,
 			Credentials:             credentials,
@@ -127,9 +146,16 @@ func NewInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			JSONData:                jsonDataObj,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			DatasourceID:            settings.ID,
-			Services:                map[string]datasourceService{},
 			Routes:                  routes[cloud],
-			HTTPCliOpts:             httpCliOpts,
+			Services:                map[string]datasourceService{},
+		}
+
+		for routeName := range executors {
+			service, err := getDatasourceService(cfg, clientProvider, model, routeName)
+			if err != nil {
+				return nil, err
+			}
+			model.Services[routeName] = service
 		}
 
 		return model, nil
@@ -137,35 +163,39 @@ func NewInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 }
 
 type azDatasourceExecutor interface {
-	executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error)
+	executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error)
+	resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client)
 }
 
-func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, executors map[string]azDatasourceExecutor) *datasource.QueryTypeMux {
+func (s *Service) getDataSourceFromPluginReq(req *backend.QueryDataRequest) (datasourceInfo, error) {
+	i, err := s.im.Get(req.PluginContext)
+	if err != nil {
+		return datasourceInfo{}, err
+	}
+	dsInfo, ok := i.(datasourceInfo)
+	if !ok {
+		return datasourceInfo{}, fmt.Errorf("unable to convert datasource from service instance")
+	}
+	dsInfo.OrgID = req.PluginContext.OrgID
+	return dsInfo, nil
+}
+
+func (s *Service) newMux() *datasource.QueryTypeMux {
 	mux := datasource.NewQueryTypeMux()
-	for dsType := range executors {
+	for dsType := range s.executors {
 		// Make a copy of the string to keep the reference after the iterator
 		dst := dsType
 		mux.HandleFunc(dsType, func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-			i, err := im.Get(req.PluginContext)
+			executor := s.executors[dst]
+			dsInfo, err := s.getDataSourceFromPluginReq(req)
 			if err != nil {
 				return nil, err
 			}
-			dsInfo := i.(datasourceInfo)
-			dsInfo.OrgID = req.PluginContext.OrgID
-			ds := executors[dst]
-			if _, ok := dsInfo.Services[dst]; !ok {
-				// Create an HTTP Client if it has not been created before
-				route := dsInfo.Routes[dst]
-				client, err := newHTTPClient(route, dsInfo, cfg)
-				if err != nil {
-					return nil, err
-				}
-				dsInfo.Services[dst] = datasourceService{
-					URL:        dsInfo.Routes[dst].URL,
-					HTTPClient: client,
-				}
+			service, ok := dsInfo.Services[dst]
+			if !ok {
+				return nil, fmt.Errorf("missing service for %s", dst)
 			}
-			return ds.executeTimeSeriesQuery(ctx, req.Queries, dsInfo)
+			return executor.executeTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL)
 		})
 	}
 	return mux

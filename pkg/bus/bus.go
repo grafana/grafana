@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -47,6 +49,7 @@ type Bus interface {
 
 // InProcBus defines the bus structure
 type InProcBus struct {
+	logger          log.Logger
 	handlers        map[string]HandlerFunc
 	handlersWithCtx map[string]HandlerFunc
 	listeners       map[string][]HandlerFunc
@@ -68,6 +71,7 @@ var globalBus = New()
 // New initialize the bus
 func New() *InProcBus {
 	return &InProcBus{
+		logger:          log.New("bus"),
 		handlers:        make(map[string]HandlerFunc),
 		handlersWithCtx: make(map[string]HandlerFunc),
 		listeners:       make(map[string][]HandlerFunc),
@@ -94,13 +98,22 @@ func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 
 	span.SetTag("msg", msgName)
 
+	withCtx := true
 	var handler = b.handlersWithCtx[msgName]
 	if handler == nil {
-		return ErrHandlerNotFound
+		withCtx = false
+		handler = b.handlers[msgName]
+		if handler == nil {
+			return ErrHandlerNotFound
+		}
 	}
 
 	var params = []reflect.Value{}
-	params = append(params, reflect.ValueOf(ctx))
+	if withCtx {
+		params = append(params, reflect.ValueOf(ctx))
+	} else if setting.Env == setting.Dev {
+		b.logger.Warn("DispatchCtx called with message handler registered using AddHandler and should be changed to use AddHandlerCtx", "msgName", msgName)
+	}
 	params = append(params, reflect.ValueOf(msg))
 
 	ret := reflect.ValueOf(handler).Call(params)
@@ -127,6 +140,9 @@ func (b *InProcBus) Dispatch(msg Msg) error {
 
 	var params = []reflect.Value{}
 	if withCtx {
+		if setting.Env == setting.Dev {
+			b.logger.Warn("Dispatch called with message handler registered using AddHandlerCtx and should be changed to use DispatchCtx", "msgName", msgName)
+		}
 		params = append(params, reflect.ValueOf(context.Background()))
 	}
 	params = append(params, reflect.ValueOf(msg))

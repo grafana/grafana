@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
@@ -42,7 +41,6 @@ func NewService(cfg *setting.Cfg, _ *cloudwatch.CloudWatchService,
 	s.registry["mssql"] = mssql.NewExecutor
 	s.registry["postgres"] = postgresService.NewExecutor
 	s.registry["mysql"] = mysql.New(httpClientProvider)
-	s.registry["elasticsearch"] = elasticsearch.New(httpClientProvider)
 	s.registry["stackdriver"] = cloudMonitoringService.NewExecutor
 	s.registry["loki"] = loki.New(httpClientProvider)
 	s.registry["tempo"] = tempo.New(httpClientProvider)
