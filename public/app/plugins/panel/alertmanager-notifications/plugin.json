@@ -1,0 +1,19 @@
+{
+  "type": "panel",
+  "name": "Alertmanager notifications",
+  "id": "alertmanager-notifications",
+
+  "skipDataQuery": true,
+
+  "info": {
+    "description": "Shows list of alertmanager alerts and their current status",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-singlestat-panel.svg",
+      "large": "img/icn-singlestat-panel.svg"
+    }
+  }
+}
