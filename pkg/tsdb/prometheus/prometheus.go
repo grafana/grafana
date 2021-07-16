@@ -143,6 +143,7 @@ func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query plugins
 
 		stepMode := queryModel.Model.Get("stepMode").MustString("min")
 		intervalFactor := queryModel.Model.Get("intervalFactor").MustInt64(1)
+		hasQueryInterval := queryModel.Model.Get("interval").MustString("") != ""
 		var adjustedIntervalValue time.Duration
 
 		// Calculate interval value from query or data source settings or use default value
@@ -151,7 +152,7 @@ func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query plugins
 			return nil, err
 		}
 
-		if stepMode == "max" {
+		if hasQueryInterval && stepMode == "max" {
 			// With max stepMode - use interval calculator to get ideal interval based on time range
 			rangeIntervalValue := e.intervalCalculator.Calculate(*query.TimeRange, 0).Value
 			// If rangeIntervalValue is smaller than max interval value, use it
@@ -161,7 +162,7 @@ func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query plugins
 			} else {
 				adjustedIntervalValue = intervalValue
 			}
-		} else if stepMode == "exact" {
+		} else if hasQueryInterval && stepMode == "exact" {
 			// With exact stepMode - use passed interval value
 			adjustedIntervalValue = intervalValue
 		} else {
