@@ -21,8 +21,8 @@ import (
 var eslog = log.New("tsdb.elasticsearch")
 
 type Service struct {
-	BackendPluginManager backendplugin.Manager `inject:""`
-	HTTPClientProvider   httpclient.Provider   `inject:""`
+	BackendPluginManager backendplugin.Manager
+	HTTPClientProvider   httpclient.Provider
 	intervalCalculator   tsdb.Calculator
 	im                   instancemgmt.InstanceManager
 }
