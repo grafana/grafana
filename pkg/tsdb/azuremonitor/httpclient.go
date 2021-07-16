@@ -38,9 +38,9 @@ func newHTTPClient(route azRoute, model datasourceInfo, cfg *setting.Cfg, client
 	if err != nil {
 		return nil, err
 	}
-	routeHTTPClient := model.HTTPCliOpts
-	routeHTTPClient.Headers = route.Headers
-	routeHTTPClient.Middlewares = m
 
-	return clientProvider.New(routeHTTPClient)
+	return clientProvider.New(httpclient.Options{
+		Headers:     route.Headers,
+		Middlewares: m,
+	})
 }

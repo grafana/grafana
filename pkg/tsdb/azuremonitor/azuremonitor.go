@@ -64,7 +64,6 @@ type datasourceInfo struct {
 	Credentials azcredentials.AzureCredentials
 	Settings    azureMonitorSettings
 	Routes      map[string]azRoute
-	HTTPCliOpts httpclient.Options
 	Services    map[string]datasourceService
 
 	JSONData                map[string]interface{}
@@ -119,11 +118,6 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider httpclient.Provider, e
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
 
-		httpCliOpts, err := settings.HTTPClientOptions()
-		if err != nil {
-			return nil, fmt.Errorf("error getting http options: %w", err)
-		}
-
 		model := datasourceInfo{
 			Cloud:                   cloud,
 			Credentials:             credentials,
@@ -132,7 +126,6 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider httpclient.Provider, e
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			DatasourceID:            settings.ID,
 			Routes:                  routes[cloud],
-			HTTPCliOpts:             httpCliOpts,
 			Services:                map[string]datasourceService{},
 		}
 

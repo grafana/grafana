@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -54,7 +53,7 @@ func TestNewInstanceSettings(t *testing.T) {
 			factory := NewInstanceSettings(cfg, httpclient.Provider{}, map[string]azDatasourceExecutor{})
 			instance, err := factory(tt.settings)
 			tt.Err(t, err)
-			if !cmp.Equal(instance, tt.expectedModel, cmpopts.IgnoreFields(datasourceInfo{}, "HTTPCliOpts")) {
+			if !cmp.Equal(instance, tt.expectedModel) {
 				t.Errorf("Unexpected instance: %v", cmp.Diff(instance, tt.expectedModel))
 			}
 		})
