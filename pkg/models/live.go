@@ -188,11 +188,11 @@ type UpdateLiveChannelRuleCommand struct {
 	Secure  map[string]string          `json:"secure"`
 }
 
-// Also acts as api DTO.
+// DeleteLiveChannelRuleCommand can delete either by id or by pattern.
 type DeleteLiveChannelRuleCommand struct {
 	Id      int64  `json:"id"`
 	Pattern string `json:"pattern"`
-	OrgId   int64  `json:"orgId" binding:"Required"`
+	OrgId   int64  `json:"orgId"`
 }
 
 var (
