@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -17,173 +17,147 @@ var (
 	mock     = &mockStorage{}
 )
 
-func TestChannelRuleAsConfig(t *testing.T) {
-	Convey("Testing channelRule as configuration", t, func() {
+func TestChannelRuleAsConfigNew(t *testing.T) {
+	bus.ClearBusHandlers()
+	bus.AddHandler("test", mockGetOrg)
+
+	t.Run("apply default values when missing", func(t *testing.T) {
 		fakeRepo = &fakeRepository{}
-		bus.ClearBusHandlers()
-		bus.AddHandler("test", mockGetOrg)
+		dc := newProvisioner(logger, mock)
+		err := dc.applyChanges("testdata/appliedDefaults")
+		require.NoError(t, err)
 
-		Convey("apply default values when missing", func() {
-			dc := newProvisioner(logger, mock)
-			err := dc.applyChanges("testdata/appliedDefaults")
-			if err != nil {
-				t.Fatalf("applyChanges return an error %v", err)
-			}
-			So(len(fakeRepo.inserted), ShouldEqual, 1)
-			So(fakeRepo.inserted[0].OrgId, ShouldEqual, 1)
-		})
+		require.Len(t, fakeRepo.inserted, 1)
+		require.Equal(t, int64(1), fakeRepo.inserted[0].OrgId)
+	})
 
-		Convey("One configured channelRule", func() {
-			Convey("no channelRule in database", func() {
-				dc := newProvisioner(logger, mock)
-				err := dc.applyChanges("testdata/two-channelRules")
-				if err != nil {
-					t.Fatalf("applyChanges return an error %v", err)
-				}
+	t.Run("no channelRule in database", func(t *testing.T) {
+		fakeRepo = &fakeRepository{}
+		dc := newProvisioner(logger, mock)
+		err := dc.applyChanges("testdata/two-channelRules")
+		require.NoError(t, err)
+		require.Len(t, fakeRepo.deleted, 0)
+		require.Len(t, fakeRepo.inserted, 2)
+		require.Len(t, fakeRepo.updated, 0)
+	})
 
-				So(len(fakeRepo.deleted), ShouldEqual, 0)
-				So(len(fakeRepo.inserted), ShouldEqual, 2)
-				So(len(fakeRepo.updated), ShouldEqual, 0)
-			})
+	t.Run("should update one channelRule", func(t *testing.T) {
+		fakeRepo = &fakeRepository{}
+		fakeRepo.loadAll = []*models.LiveChannelRule{
+			{Pattern: "Graphite", OrgId: 1, Id: 1},
+		}
+		dc := newProvisioner(logger, mock)
+		err := dc.applyChanges("testdata/two-channelRules")
+		require.NoError(t, err)
+		require.Len(t, fakeRepo.deleted, 0)
+		require.Len(t, fakeRepo.inserted, 1)
+		require.Len(t, fakeRepo.updated, 1)
+	})
 
-			Convey("One channelRule in database with same name", func() {
-				fakeRepo.loadAll = []*models.LiveChannelRule{
-					{Pattern: "Graphite", OrgId: 1, Id: 1},
-				}
+	t.Run("Multiple channelRules in different organizations", func(t *testing.T) {
+		fakeRepo = &fakeRepository{}
+		fakeRepo.loadAll = []*models.LiveChannelRule{
+			{Pattern: "Graphite", OrgId: 1, Id: 1},
+		}
+		dc := newProvisioner(logger, mock)
+		err := dc.applyChanges("testdata/multiple-org")
+		require.NoError(t, err)
+		require.Len(t, fakeRepo.inserted, 3)
+		require.Equal(t, int64(1), fakeRepo.inserted[0].OrgId)
+		require.Equal(t, int64(2), fakeRepo.inserted[2].OrgId)
+	})
 
-				Convey("should update one channelRule", func() {
-					dc := newProvisioner(logger, mock)
-					err := dc.applyChanges("testdata/two-channelRules")
-					if err != nil {
-						t.Fatalf("applyChanges return an error %v", err)
-					}
-					So(len(fakeRepo.deleted), ShouldEqual, 0)
-					So(len(fakeRepo.inserted), ShouldEqual, 1)
-					So(len(fakeRepo.updated), ShouldEqual, 1)
-				})
-			})
-		})
+	t.Run("Two configured channelRule and purge others", func(t *testing.T) {
+		fakeRepo = &fakeRepository{}
+		fakeRepo.loadAll = []*models.LiveChannelRule{
+			{Pattern: "old-graphite", OrgId: 1, Id: 1},
+			{Pattern: "old-graphite2", OrgId: 1, Id: 2},
+		}
+		dc := newProvisioner(logger, mock)
+		err := dc.applyChanges("testdata/insert-two-delete-two")
+		require.NoError(t, err)
+		require.Len(t, fakeRepo.deleted, 2)
+		require.Len(t, fakeRepo.inserted, 2)
+		require.Len(t, fakeRepo.updated, 0)
+	})
 
-		Convey("Multiple channelRules in different organizations", func() {
-			dc := newProvisioner(logger, mock)
-			err := dc.applyChanges("testdata/multiple-org")
-			Convey("should not raise error", func() {
-				So(err, ShouldBeNil)
-				So(len(fakeRepo.inserted), ShouldEqual, 4)
-				So(fakeRepo.inserted[0].OrgId, ShouldEqual, 1)
-				So(fakeRepo.inserted[2].OrgId, ShouldEqual, 2)
-			})
-		})
+	t.Run("Two configured channelRule and purge others = false", func(t *testing.T) {
+		fakeRepo = &fakeRepository{}
+		fakeRepo.loadAll = []*models.LiveChannelRule{
+			{Pattern: "Graphite", OrgId: 1, Id: 1},
+			{Pattern: "old-graphite2", OrgId: 1, Id: 2},
+		}
 
-		Convey("Two configured channelRule and purge others ", func() {
-			Convey("two other channelRules in database", func() {
-				fakeRepo.loadAll = []*models.LiveChannelRule{
-					{Pattern: "old-graphite", OrgId: 1, Id: 1},
-					{Pattern: "old-graphite2", OrgId: 1, Id: 2},
-				}
+		dc := newProvisioner(logger, mock)
+		err := dc.applyChanges("testdata/two-channelRules")
+		require.NoError(t, err)
 
-				Convey("should have two new channelRules", func() {
-					dc := newProvisioner(logger, mock)
-					err := dc.applyChanges("testdata/insert-two-delete-two")
-					if err != nil {
-						t.Fatalf("applyChanges return an error %v", err)
-					}
+		require.Len(t, fakeRepo.deleted, 0)
+		require.Len(t, fakeRepo.inserted, 1)
+		require.Len(t, fakeRepo.updated, 1)
+	})
 
-					So(len(fakeRepo.deleted), ShouldEqual, 2)
-					So(len(fakeRepo.inserted), ShouldEqual, 2)
-					So(len(fakeRepo.updated), ShouldEqual, 0)
-				})
-			})
-		})
+	t.Run("broken yaml should return error", func(t *testing.T) {
+		reader := &configReader{}
+		_, err := reader.readConfig("testdata/broken-yaml")
+		require.Error(t, err)
+	})
 
-		Convey("Two configured channelRule and purge others = false", func() {
-			Convey("two other channelRules in database", func() {
-				fakeRepo.loadAll = []*models.LiveChannelRule{
-					{Pattern: "Graphite", OrgId: 1, Id: 1},
-					{Pattern: "old-graphite2", OrgId: 1, Id: 2},
-				}
+	t.Run("skip invalid directory", func(t *testing.T) {
+		cfgProvider := &configReader{log: log.New("test logger")}
+		cfg, err := cfgProvider.readConfig("./invalid-directory")
+		require.NoError(t, err)
+		require.Len(t, cfg, 0)
+	})
 
-				Convey("should have two new channelRules", func() {
-					dc := newProvisioner(logger, mock)
-					err := dc.applyChanges("testdata/two-channelRules")
-					if err != nil {
-						t.Fatalf("applyChanges return an error %v", err)
-					}
+	t.Run("can read all properties from version 0", func(t *testing.T) {
+		_ = os.Setenv("TEST_VAR", "name")
+		cfgProvider := &configReader{log: log.New("test logger")}
+		cfg, err := cfgProvider.readConfig("testdata/all-properties")
+		_ = os.Unsetenv("TEST_VAR")
+		require.NoError(t, err)
+		require.Len(t, cfg, 3)
 
-					So(len(fakeRepo.deleted), ShouldEqual, 0)
-					So(len(fakeRepo.inserted), ShouldEqual, 1)
-					So(len(fakeRepo.updated), ShouldEqual, 1)
-				})
-			})
-		})
+		ruleCfg := cfg[0]
 
-		Convey("broken yaml should return error", func() {
-			reader := &configReader{}
-			_, err := reader.readConfig("testdata/broken-yaml")
-			So(err, ShouldNotBeNil)
-		})
+		require.Equal(t, int64(0), ruleCfg.APIVersion)
 
-		Convey("skip invalid directory", func() {
-			cfgProvider := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvider.readConfig("./invalid-directory")
-			if err != nil {
-				t.Fatalf("readConfig return an error %v", err)
-			}
+		validateChannelRule(t, ruleCfg)
+		validateDeleteChannelRules(t, ruleCfg)
 
-			So(len(cfg), ShouldEqual, 0)
-		})
+		ruleCount := 0
+		delRuleCount := 0
 
-		Convey("can read all properties from version 1", func() {
-			_ = os.Setenv("TEST_VAR", "name")
-			cfgProvider := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvider.readConfig("testdata/all-properties")
-			_ = os.Unsetenv("TEST_VAR")
-			if err != nil {
-				t.Fatalf("readConfig return an error %v", err)
-			}
+		for _, c := range cfg {
+			ruleCount += len(c.ChannelRules)
+			delRuleCount += len(c.DeleteChannelRules)
+		}
 
-			So(len(cfg), ShouldEqual, 3)
-
-			ruleCfg := cfg[0]
-
-			So(ruleCfg.APIVersion, ShouldEqual, 0)
-
-			validateChannelRule(ruleCfg)
-			validateDeleteChannelRules(ruleCfg)
-
-			ruleCount := 0
-			delRuleCount := 0
-
-			for _, c := range cfg {
-				ruleCount += len(c.ChannelRules)
-				delRuleCount += len(c.DeleteChannelRules)
-			}
-
-			So(ruleCount, ShouldEqual, 2)
-			So(delRuleCount, ShouldEqual, 1)
-		})
+		require.Equal(t, 2, ruleCount)
+		require.Equal(t, 1, delRuleCount)
 	})
 }
 
-func validateDeleteChannelRules(ruleCfg *configs) {
-	So(len(ruleCfg.DeleteChannelRules), ShouldEqual, 1)
+func validateDeleteChannelRules(t *testing.T, ruleCfg *configs) {
+	t.Helper()
+	require.Len(t, ruleCfg.DeleteChannelRules, 1)
 	deleteRule := ruleCfg.DeleteChannelRules[0]
-	So(deleteRule.Pattern, ShouldEqual, "old-graphite3")
-	So(deleteRule.OrgID, ShouldEqual, 2)
+	require.Equal(t, "old-graphite3", deleteRule.Pattern)
+	require.Equal(t, int64(2), deleteRule.OrgID)
 }
 
-func validateChannelRule(ruleCfg *configs) {
+func validateChannelRule(t *testing.T, ruleCfg *configs) {
+	t.Helper()
 	rule := ruleCfg.ChannelRules[0]
-	So(rule.Pattern, ShouldEqual, "name")
-	So(rule.Version, ShouldEqual, 10)
+	require.Equal(t, "name", rule.Pattern)
+	require.Equal(t, 10, rule.Version)
 
-	So(rule.Config.RemoteWrite.Enabled, ShouldEqual, true)
-	So(rule.Config.RemoteWrite.Endpoint, ShouldEqual, "endpoint")
-	So(rule.Config.RemoteWrite.User, ShouldEqual, "user")
-	So(rule.Config.RemoteWrite.SampleMilliseconds, ShouldEqual, 1000)
-
-	So(len(rule.Secure), ShouldBeGreaterThan, 0)
-	So(rule.Secure["remoteWritePassword"], ShouldEqual, "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA==")
+	require.True(t, rule.Config.RemoteWrite.Enabled)
+	require.Equal(t, "endpoint", rule.Config.RemoteWrite.Endpoint)
+	require.Equal(t, "user", rule.Config.RemoteWrite.User)
+	require.Equal(t, int64(1000), rule.Config.RemoteWrite.SampleMilliseconds)
+	require.True(t, len(rule.Secure) > 0)
+	require.Equal(t, "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA==", rule.Secure["remoteWritePassword"])
 }
 
 type fakeRepository struct {
