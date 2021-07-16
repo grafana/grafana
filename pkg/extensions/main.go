@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/setting"
 	_ "github.com/grafana/loki/pkg/logproto"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware"
 	_ "github.com/jung-kurt/gofpdf"
@@ -28,6 +29,7 @@ import (
 func init() {
 	registry.RegisterService(&licensing.OSSLicensingService{})
 	registry.RegisterService(&validations.OSSPluginRequestValidator{})
+	registry.RegisterService(&setting.OSSImpl{})
 }
 
 var IsEnterprise bool = false
