@@ -29,7 +29,7 @@ Keep reading for detailed descriptions of each type of transformation and the op
 
 ## Reduce
 
-The _Reduce_ transformation will apply a calculation to each field in the frame and return a single value. Time fields are removed when applying
+The _Reduce_ transformation applies a calculation to each field in the frame and return a single value. Time fields are removed when applying
 this transformation.
 
 Consider the input:
