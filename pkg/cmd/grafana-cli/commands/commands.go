@@ -142,12 +142,17 @@ var cueCommands = []*cli.Command{
 	},
 	{
 		Name:   "validate-resource",
-		Usage:  "validate *.cue files in the project",
+		Usage:  "validate resource files (e.g. dashboard JSON) against schema",
 		Action: runPluginCommand(cmd.validateResources),
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "dashboard",
 				Usage: "dashboard JSON file to validate",
+			},
+			&cli.BoolFlag{
+				Name:  "base-only",
+				Usage: "validate using only base schema, not dist (includes plugin schema)",
+				Value: false,
 			},
 		},
 	},

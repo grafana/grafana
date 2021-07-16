@@ -80,7 +80,6 @@ Family: scuemata.#Family & {
                 // synthetic Family to represent them in Go, for ease of generating
                 // e.g. JSON Schema.
                 #Panel: {
-                    ...
                     // The panel plugin type id. 
                     type: !=""
 
@@ -135,7 +134,6 @@ Family: scuemata.#Family & {
                     options: {...}
                     fieldConfig: {
                         defaults: {
-                            ...
                             // The display value for this field.  This supports template variables blank is auto
                             displayName?: string
 
@@ -189,7 +187,7 @@ Family: scuemata.#Family & {
                             // Can always exist. Valid fields within this are
                             // defined by the panel plugin - that's the
                             // PanelFieldConfig that comes from the plugin.
-                            custom?: {...}
+                            custom?: {}
                         }
                         overrides: [...{
                             matcher: {

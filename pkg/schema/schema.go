@@ -277,7 +277,11 @@ func Exact(maj, min int) SearchOption {
 // that are 1) missing in the Resource AND 2) specified by the schema,
 // filled with default values specified by the schema.
 func ApplyDefaults(r Resource, scue cue.Value) (Resource, error) {
-	rv, err := rt.Compile("resource", r.Value)
+	name := r.Name
+	if name == "" {
+		name = "resource"
+	}
+	rv, err := rt.Compile(name, r.Value)
 	if err != nil {
 		return r, err
 	}
@@ -306,7 +310,11 @@ func convertCUEValueToString(inputCUE cue.Value) (string, error) {
 // in the  where the values at those paths are the same as the default value
 // given in the schema.
 func TrimDefaults(r Resource, scue cue.Value) (Resource, error) {
-	rvInstance, err := rt.Compile("resource", r.Value)
+	name := r.Name
+	if name == "" {
+		name = "resource"
+	}
+	rvInstance, err := rt.Compile(name, r.Value)
 	if err != nil {
 		return r, err
 	}
@@ -329,7 +337,7 @@ func isCueValueEqual(inputdef cue.Value, input cue.Value) bool {
 func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, error) {
 	// To include all optional fields, we need to use inputdef for iteration,
 	// since the lookuppath with optional field doesn't work very well
-	rvInstance, err := rt.Compile("resource", []byte{})
+	rvInstance, err := rt.Compile("helper", []byte{})
 	if err != nil {
 		return input, false, err
 	}
@@ -421,6 +429,7 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 // TODO this is a terrible way to do this, refactor
 type Resource struct {
 	Value interface{}
+	Name  string
 }
 
 // WrapCUEError is a wrapper for cueErrors that occur and are not self explanatory.
@@ -430,7 +439,7 @@ func WrapCUEError(err error) error {
 	var cErr errs.Error
 	m := make(map[int]string)
 	if ok := errors.As(err, &cErr); ok {
-		for _, e := range errs.Errors(err) {
+		for _, e := range errs.Errors(cErr) {
 			if e.Position().File() != nil {
 				line := e.Position().Line()
 				m[line] = fmt.Sprintf("%q: in file %s", err, e.Position().File().Name())
