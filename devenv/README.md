@@ -57,13 +57,11 @@ Jaeger block runs both Jaeger and Loki container. Loki container sends traces to
 
 ## Troubleshooting
 
-### Containers fail to start (Mac OS)
+### Containers that read from log files fail to start (Mac OS)
+
+If you are running Mac OSX, containers that read from the log files (e.g. telegraf, fileabeat, promtail) sometimes fail to start. This is because default Docker for Mac does not have permission to create `grafana` folder at `var/log` location, as it runs as the current user. To solve this issue, manually create the folder `/var/log/grafana`, then try starting the containers again.
 
 ```
-ERROR: for <service_name> Cannot start service <service_name>: OCI runtime create failed: container_linux.go:349: starting container process caused "process_linux.go:449: container init caused \"rootfs_linux.go:58: mounting ... merged/var/log/grafana: operation not permitted\\\"\"": unknown
-ERROR: Encountered errors while bringing up the project.
+cd /
+mkdir var/log/grafana
 ```
-
-If running Mac OSX the above error might be encountered when starting certain Docker containers that mount `/var/log/`. When first run this causes Docker to try to create the folder `/var/log/grafana` however by default Docker for Mac does not have permission to create folders at this location as it runs as the current user. 
-
-To solve this issue manually create the folder `/var/log/grafana` and give your user write permissions then try starting the containers again.
