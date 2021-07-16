@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"path/filepath"
 	"testing"
 
@@ -25,10 +26,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/macaron.v1"
 )
 
 func TestGetHomeDashboard(t *testing.T) {
-	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}}
+	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
+	require.NoError(t, err)
+	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &macaron.Context{Req: macaron.Request{Request: httpReq}}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
 
@@ -36,7 +40,7 @@ func TestGetHomeDashboard(t *testing.T) {
 		Cfg: cfg, Bus: bus.New(),
 		PluginManager: &fakePluginManager{},
 	}
-	hs.Bus.AddHandler(func(query *models.GetPreferencesWithDefaultsQuery) error {
+	hs.Bus.AddHandlerCtx(func(_ context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
 		query.Result = &models.Preferences{
 			HomeDashboardId: 0,
 		}
