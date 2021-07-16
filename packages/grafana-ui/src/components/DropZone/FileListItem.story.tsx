@@ -2,26 +2,27 @@ import { Meta, Story } from '@storybook/react';
 import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { FileListItem as FileListItemComponent, FileListItemProps } from './FileListItem';
+import mdx from './FileListItem.mdx';
 
 export default {
   title: 'Forms/FileListItem',
   component: FileListItemComponent,
   decorators: [withCenteredStory],
   parameters: {
-    // docs: {
-    //   page: mdx,
-    // },
-    // controls: {
-    //   exclude: ['className', 'onFileUpload'],
-    // },
+    docs: {
+      page: mdx,
+    },
   },
   argTypes: {
-    cancelUpload: { action: 'cancelUpload' },
+    abortUpload: { action: 'abortUpload' },
+    retryUpload: { action: 'retryUpload' },
     removeFile: { action: 'removeFile' },
+  },
+  args: {
+    file: { file: { name: 'some-file.jpg', size: 123456 } as any, id: '1', error: new DOMException('error') },
   },
 } as Meta;
 
 export const FileListItem: Story<FileListItemProps> = (args) => {
-  const file = { name: 'some-file.jpg', size: 123456 };
-  return <FileListItemComponent {...args} file={file as any} />;
+  return <FileListItemComponent {...args} />;
 };

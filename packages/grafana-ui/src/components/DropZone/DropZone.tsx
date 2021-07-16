@@ -1,44 +1,144 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { uniqueId } from 'lodash';
 import React, { ReactNode, useCallback, useState } from 'react';
-import { DropzoneOptions, useDropzone } from 'react-dropzone';
+import { DropEvent, DropzoneOptions, FileRejection, useDropzone } from 'react-dropzone';
 import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { FileListItem } from './FileListItem';
 
 export interface DropzoneProps {
+  /**
+   * Use the children property to have custom dropzone view.
+   */
   children?: ReactNode;
+  /**
+   * Use this property to override the default behaviour for the react-dropzone options.
+   * @default {
+   *  maxSize: Infinity,
+   *  minSize: 0,
+   *  multiple: true,
+   *  maxFiles: 0,
+   * }
+   */
   options?: DropzoneOptions;
-  fileListComponent?: ReactNode;
+  /**
+   * Use this to change the FileReader's read.
+   */
+  readAs?: 'readAsArrayBuffer' | 'readAsText' | 'readAsBinaryString' | 'readAsDataURL';
+  /**
+   * Use the onLoad function to get the result from FileReader.
+   */
+  onLoad?: (result: string | ArrayBuffer | null) => void;
 }
 
-export function Dropzone({ options, children, fileListComponent }: DropzoneProps) {
-  const [files, setFiles] = useState<File[]>([]);
+export interface DropzoneFile {
+  file: File;
+  id: string;
+  error: DOMException | null;
+  progress?: number;
+  abortUpload?: () => void;
+  retryUpload?: () => void;
+}
 
-  const onDrop = useCallback(
-    (acceptedFiles, rejectedFiles, event) => {
-      let newFiles = [...files, ...acceptedFiles];
-      if (options?.multiple === false) {
-        newFiles = acceptedFiles;
-      }
-      setFiles(newFiles);
-      options?.onDrop?.(newFiles, rejectedFiles, event);
+export function Dropzone({ options, children, readAs, onLoad }: DropzoneProps) {
+  const [files, setFiles] = useState<DropzoneFile[]>([]);
+
+  const setFileProperty = useCallback(
+    (customFile: DropzoneFile, action: (customFileToModify: DropzoneFile) => void) => {
+      setFiles((oldFiles) => {
+        const newFiles = oldFiles.map((f) => {
+          if (f.id === customFile.id) {
+            action(f);
+            return f;
+          }
+          return f;
+        });
+        return newFiles;
+      });
     },
-    [files, options]
+    []
   );
 
-  const removeFile = (file: File) => {
+  const onDrop = useCallback(
+    (acceptedFiles: File[], rejectedFiles: FileRejection[], event: DropEvent) => {
+      let customFiles = acceptedFiles.map(mapToCustomFile);
+      if (options?.multiple === false) {
+        setFiles(customFiles);
+      } else {
+        setFiles((oldFiles) => [...oldFiles, ...customFiles]);
+      }
+
+      if (options?.onDrop) {
+        options.onDrop(acceptedFiles, rejectedFiles, event);
+      } else {
+        for (const customFile of customFiles) {
+          const reader = new FileReader();
+
+          const read = () => {
+            if (readAs) {
+              reader[readAs](customFile.file);
+            } else {
+              reader.readAsText(customFile.file);
+            }
+          };
+
+          // Set abort FileReader
+          setFileProperty(customFile, (fileToModify) => {
+            fileToModify.abortUpload = () => {
+              reader.abort();
+            };
+            fileToModify.retryUpload = () => {
+              setFileProperty(customFile, (fileToModify) => {
+                fileToModify.error = null;
+                fileToModify.progress = undefined;
+              });
+              read();
+            };
+          });
+
+          reader.onabort = () => {
+            setFileProperty(customFile, (fileToModify) => {
+              fileToModify.error = new DOMException('Aborted');
+            });
+          };
+
+          reader.onprogress = (event) => {
+            setFileProperty(customFile, (fileToModify) => {
+              fileToModify.progress = event.loaded;
+            });
+          };
+
+          reader.onload = () => {
+            onLoad?.(reader.result);
+          };
+
+          reader.onerror = () => {
+            setFileProperty(customFile, (fileToModify) => {
+              fileToModify.error = reader.error;
+            });
+          };
+
+          read();
+        }
+      }
+    },
+    [onLoad, options, readAs, setFileProperty]
+  );
+
+  const removeFile = (file: DropzoneFile) => {
     const newFiles = [...files];
-    newFiles.splice(newFiles.indexOf(file), 1);
+    newFiles.splice(
+      newFiles.findIndex((newFile) => file.id === newFile.id),
+      1
+    );
     setFiles(newFiles);
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ ...options, onDrop });
   const theme = useTheme2();
   const styles = getStyles(theme, isDragActive);
-  const fileList =
-    fileListComponent ?? files.map((file) => <FileListItem key={uniqueId()} file={file} removeFile={removeFile} />);
+  const fileList = files.map((file) => <FileListItem key={file.id} file={file} removeFile={removeFile} />);
 
   return (
     <div className={styles.container}>
@@ -54,9 +154,28 @@ export function Dropzone({ options, children, fileListComponent }: DropzoneProps
           </div>
         )}
       </div>
+      {options?.accept ? (
+        <small className={cx(styles.small, styles.acceptMargin)}>{getAcceptedFileTypeText(options)}</small>
+      ) : null}
       {fileList}
     </div>
   );
+}
+
+function getAcceptedFileTypeText(options: DropzoneOptions) {
+  if (Array.isArray(options.accept)) {
+    return `Accepted file types: ${options.accept.join(', ')}`;
+  }
+
+  return `Accepted file type: ${options.accept}`;
+}
+
+function mapToCustomFile(file: File): DropzoneFile {
+  return {
+    id: uniqueId('file'),
+    file,
+    error: null,
+  };
 }
 
 function getStyles(theme: GrafanaTheme2, isDragActive: boolean) {
@@ -82,6 +201,9 @@ function getStyles(theme: GrafanaTheme2, isDragActive: boolean) {
       display: flex;
       flex-direction: column;
       align-items: center;
+    `,
+    acceptMargin: css`
+      margin: ${theme.spacing(2, 0, 1)};
     `,
     small: css`
       color: ${theme.colors.text.secondary};

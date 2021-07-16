@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { round } from 'lodash';
 import React from 'react';
 import { GrafanaTheme2 } from '../../../../grafana-data/src';
 import { useStyles2 } from '../../themes';
@@ -7,17 +6,59 @@ import { formatFileSize, trimFileName } from '../../utils/file';
 import { Button } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
+import { DropzoneFile } from './Dropzone';
 
 export interface FileListItemProps {
-  file: File;
-  removeFile?: (file: File) => void;
-  progress?: number;
-  cancelUpload?: () => void;
-  error?: string;
+  file: DropzoneFile;
+  removeFile?: (file: DropzoneFile) => void;
 }
 
-export function FileListItem({ file, removeFile, progress, cancelUpload, error }: FileListItemProps) {
+export function FileListItem({ file: customFile, removeFile }: FileListItemProps) {
   const styles = useStyles2(getStyles);
+  const { file, progress, error, abortUpload, retryUpload } = customFile;
+
+  const renderRightSide = () => {
+    if (error) {
+      return (
+        <>
+          <span className={styles.error}>{error.message}</span>
+          {retryUpload ? (
+            <IconButton name="sync" tooltip="Retry" tooltipPlacement="top" onClick={() => retryUpload()} />
+          ) : null}
+          {removeFile ? (
+            <IconButton
+              className={retryUpload ? styles.marginLeft : ''}
+              name="trash-alt"
+              onClick={() => removeFile(customFile)}
+              tooltip="Remove"
+            />
+          ) : null}
+        </>
+      );
+    }
+
+    if (progress && file.size > progress) {
+      return (
+        <>
+          <progress className={styles.progressBar} max={file.size} value={progress} />
+          <span className={styles.paddingLeft}>{Math.round((progress / file.size) * 100)}%</span>
+          <Button
+            variant="secondary"
+            type="button"
+            fill="text"
+            onClick={() => {
+              abortUpload?.();
+            }}
+          >
+            Cancel
+          </Button>
+        </>
+      );
+    }
+    return removeFile ? (
+      <IconButton name="trash-alt" onClick={() => removeFile(customFile)} tooltip="Remove" tooltipPlacement="top" />
+    ) : null;
+  };
 
   return (
     <div className={styles.fileListContainer}>
@@ -26,20 +67,8 @@ export function FileListItem({ file, removeFile, progress, cancelUpload, error }
         <span className={styles.padding}>{trimFileName(file.name)}</span>
         <span>{formatFileSize(file.size)}</span>
       </span>
-      {progress && file.size > progress ? (
-        <div className={styles.fileNameWrapper}>
-          <progress className={styles.progressBar} max={file.size} value={progress} />
-          <span className={styles.paddingLeft}>{round(progress / file.size, 2) * 100}%</span>
-          <Button variant="secondary" type="button" fill="text" onClick={() => cancelUpload?.()}>
-            Cancel
-          </Button>
-        </div>
-      ) : removeFile ? (
-        <div className={styles.fileNameWrapper}>
-          {error ? <span className={styles.error}>{error}</span> : null}
-          <IconButton name="trash-alt" onClick={() => removeFile(file)} tooltip="Remove" />
-        </div>
-      ) : null}
+
+      <div className={styles.fileNameWrapper}>{renderRightSide()}</div>
     </div>
   );
 }
@@ -67,6 +96,9 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     paddingLeft: css`
       padding-left: ${theme.spacing(2)};
+    `,
+    marginLeft: css`
+      margin-left: ${theme.spacing(1)};
     `,
     error: css`
       padding-right: ${theme.spacing(2)};
