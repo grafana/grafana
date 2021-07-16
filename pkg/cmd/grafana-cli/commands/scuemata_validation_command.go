@@ -38,7 +38,9 @@ func (cmd Command) validateScuemataBasics(c utils.CommandLine) error {
 			if d.IsDir() {
 				return nil
 			}
-
+			// Ignore gosec warning G304. The input set here is necessarily
+			// constrained to files specified in embed.go
+			// nolint:gosec
 			b, err := os.Open(filepath.Join(root, join, path))
 			if err != nil {
 				return err
