@@ -160,6 +160,6 @@ func (ac *OSSAccessControlService) RegisterFixedRoles() error {
 }
 
 // AddFixedRoleRegistrations allow the caller to declare, to the service, fixed roles and their assignments
-func (ac *OSSAccessControlService) AddFixedRoleRegistrations(registrations []accesscontrol.RoleRegistration) {
+func (ac *OSSAccessControlService) AddFixedRoleRegistrations(registrations ...accesscontrol.RoleRegistration) {
 	ac.registrations.Append(registrations...)
 }

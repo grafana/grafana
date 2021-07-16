@@ -18,7 +18,7 @@ type AccessControl interface {
 
 	// AddFixedRoleRegistrations allow the caller to declare, to the
 	// service, fixed roles and their assignments
-	AddFixedRoleRegistrations([]RoleRegistration)
+	AddFixedRoleRegistrations(...RoleRegistration)
 
 	// RegisterFixedRoles launches all registrations of the
 	// service registration list
