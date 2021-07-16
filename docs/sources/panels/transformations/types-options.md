@@ -442,7 +442,7 @@ With the transformation applied, you can see we are left with just the remainder
 
 You might end up in a situation where a data source returns time series data in a format that isn't supported by the panel you want to use. [Read more about the different data frame formats here]({{< relref "../../developers/plugins/data-frames.md" >}}).
 
-This transformation will help you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
+This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
 
 Select the `Multi-frame time series` option to transform the time series data frame from the wide to the long format.
 
