@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { AppPlugin, GrafanaTheme2, PluginType, PluginIncludeType } from '@grafana/data';
 import { useStyles2, TabsBar, TabContent, Tab, Icon } from '@grafana/ui';
@@ -18,17 +18,27 @@ import { PluginDashboards } from '../../PluginDashboards';
 
 type PluginDetailsProps = GrafanaRouteComponentProps<{ pluginId?: string }>;
 
+const defaultTabs = [{ label: 'Overview' }, { label: 'Version history' }];
+
 const useLoadPlugin = (pluginId: string) => {
-  const [tabs, setTabs] = useState(defaultTabs);
-  const { loading, value, error } = useAsync(async () => {
+  const { loading, value: plugin, error } = useAsync(async () => {
     const plugin = await loadPlugin(pluginId);
+    return plugin;
+  }, [pluginId]);
+
+  const tabs = useMemo(() => {
     const isAdmin = contextSrv.hasRole('Admin');
+    const tabs: Array<{ label: string }> = [...defaultTabs];
+
+    if (!plugin) {
+      return tabs;
+    }
+
     if (isAdmin) {
       if (plugin.meta.type === PluginType.app) {
         if (plugin.angularConfigCtrl) {
           tabs.push({
             label: 'Config',
-            active: false,
           });
         }
 
@@ -36,7 +46,6 @@ const useLoadPlugin = (pluginId: string) => {
           for (const page of plugin.configPages) {
             tabs.push({
               label: page.title,
-              active: false,
             });
           }
         }
@@ -44,34 +53,28 @@ const useLoadPlugin = (pluginId: string) => {
         if (plugin.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
           tabs.push({
             label: 'Dashboards',
-            active: false,
           });
         }
       }
     }
 
-    return plugin;
-  }, [pluginId]);
+    return tabs;
+  }, [plugin]);
 
   return {
     loading,
-    plugin: value,
+    plugin,
     tabs,
-    setTabs,
     error,
   };
 };
 
-const defaultTabs = [
-  { label: 'Overview', active: true },
-  { label: 'Version history', active: false },
-];
-
 export default function PluginDetails({ match }: PluginDetailsProps): JSX.Element | null {
   const { pluginId } = match.params;
-
+  const [activeTab, setActiveTab] = useState(0);
   const { isLoading, local, remote, remoteVersions } = usePlugin(pluginId!);
-  const { loading, error, plugin, tabs, setTabs } = useLoadPlugin(pluginId!);
+  const { loading, error, plugin, tabs } = useLoadPlugin(pluginId!);
+  const tab = tabs[activeTab];
   const styles = useStyles2(getStyles);
 
   const description = remote?.description ?? local?.info?.description;
@@ -80,15 +83,15 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
   const links = (local?.info?.links || remote?.json?.info?.links) ?? [];
   const downloads = remote?.downloads;
 
-  console.log(loading, error, plugin, tabs);
-
-  if (isLoading) {
+  if (isLoading || loading) {
     return (
       <Page>
         <Loader />
       </Page>
     );
   }
+
+  // if error whadda we do????
 
   return (
     <Page>
@@ -128,29 +131,30 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
           </div>
         </div>
         <TabsBar>
-          {tabs.map((tab, key) => (
-            <Tab
-              key={key}
-              label={tab.label}
-              active={tab.active}
-              onChangeTab={() => {
-                setTabs(tabs.map((tab, index) => ({ ...tab, active: index === key })));
-              }}
-            />
+          {tabs.map((tab, idx) => (
+            <Tab key={tab.label} label={tab.label} active={idx === activeTab} onChangeTab={() => setActiveTab(idx)} />
           ))}
         </TabsBar>
         <TabContent>
-          {tabs.find((_) => _.label === 'Overview')?.active && (
+          {tab?.label === 'Overview' && (
             <div
               className={styles.readme}
               dangerouslySetInnerHTML={{ __html: readme ?? 'No plugin help or readme markdown file was found' }}
             />
           )}
-          {tabs.find((_) => _.label === 'Version history')?.active && <VersionList versions={remoteVersions ?? []} />}
+          {tab?.label === 'Version history' && <VersionList versions={remoteVersions ?? []} />}
 
-          {tabs.find((_) => _.label === 'Dashboards')?.active && plugin && <PluginDashboards plugin={plugin.meta} />}
+          {tab?.label === 'Dashboards' && plugin && (
+            <div
+              className={css`
+                padding: 40px;
+              `}
+            >
+              <PluginDashboards plugin={plugin.meta} />
+            </div>
+          )}
 
-          {tabs.find((_) => _.label === 'Config')?.active && plugin?.angularConfigCtrl && (
+          {tab?.label === 'Config' && plugin?.angularConfigCtrl && (
             <div
               className={css`
                 padding: 40px;
