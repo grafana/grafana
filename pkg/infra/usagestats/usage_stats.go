@@ -74,6 +74,10 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.alert_rules.count"] = statsQuery.Result.AlertRules
 	metrics["stats.library_panels.count"] = statsQuery.Result.LibraryPanels
 	metrics["stats.library_variables.count"] = statsQuery.Result.LibraryVariables
+	metrics["stats.dashboards_viewers_can_edit.count"] = statsQuery.Result.DashboardsViewersCanEdit
+	metrics["stats.dashboards_viewers_can_admin.count"] = statsQuery.Result.DashboardsViewersCanAdmin
+	metrics["stats.folders_viewers_can_edit.count"] = statsQuery.Result.FoldersViewersCanEdit
+	metrics["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
 	validLicCount := 0
 	if uss.License.HasValidLicense() {
 		validLicCount = 1

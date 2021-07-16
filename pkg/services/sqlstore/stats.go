@@ -73,6 +73,11 @@ func GetSystemStats(query *models.GetSystemStatsQuery) error {
 		WHERE d.is_folder = ?
 	) AS folder_permissions,`, dialect.BooleanStr(true))
 
+	sb.Write(viewersPermissionsCounterSQL("dashboards_viewers_can_edit", false, models.PERMISSION_EDIT))
+	sb.Write(viewersPermissionsCounterSQL("dashboards_viewers_can_admin", false, models.PERMISSION_ADMIN))
+	sb.Write(viewersPermissionsCounterSQL("folders_viewers_can_edit", true, models.PERMISSION_EDIT))
+	sb.Write(viewersPermissionsCounterSQL("folders_viewers_can_admin", true, models.PERMISSION_ADMIN))
+
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_version") + `) AS dashboard_versions,`)
@@ -110,6 +115,18 @@ func roleCounterSQL() string {
 			strconv.FormatInt(userStatsCache.active.Viewers, 10) + ` AS active_viewers`
 
 	return sqlQuery
+}
+
+func viewersPermissionsCounterSQL(statName string, isFolder bool, permission models.PermissionType) string {
+	return `(
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("dashboard_acl") + ` AS acl
+			INNER JOIN ` + dialect.Quote("dashboard") + ` AS d
+			ON d.id = acl.dashboard_id
+		WHERE acl.role = '` + string(models.ROLE_VIEWER) + `'
+			AND d.is_folder = ` + dialect.BooleanStr(isFolder) + `
+			AND acl.permission = ` + strconv.FormatInt(int64(permission), 10) + `
+	) AS ` + statName + `, `
 }
 
 func GetAdminStats(query *models.GetAdminStatsQuery) error {
