@@ -6,7 +6,7 @@ import { provision } from './provision';
 
 const settings = (window as any).grafanaBootData.settings;
 
-// For now just use carto
+// Use CartoDB if the tile server url is not set in defaults.ini
 export const defaultGrafanaThemedMap = settings.tileServerURL
   ? {
       ...provision,
@@ -21,6 +21,7 @@ export const defaultGrafanaThemedMap = settings.tileServerURL
 
 /**
  * Registry for layer handlers
+ * Remove all other base layers if BaseLayerDisabled is set to true in defaults.ini
  */
 export const basemapLayers = settings.BaseLayerDisabled
   ? [defaultGrafanaThemedMap]
