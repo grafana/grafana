@@ -11,7 +11,6 @@ as info on deprecations, breaking changes and plugin development read the [relea
 
 ## Grafana 8
 
-- [What's new in 8.1]({{< relref "whats-new-in-v8-1" >}})
 - [What's new in 8.0]({{< relref "whats-new-in-v8-0" >}})
 
 ## Grafana 7
