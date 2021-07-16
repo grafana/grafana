@@ -10,10 +10,11 @@ export interface XYZProvisioned {
 
 const settings = (window as any).grafanaBootData.settings;
 const url = settings.tileServerURL;
-const attribution = settings.tileServerAttribtuion;
+const attributionName = settings.tileServerAttribtuionName;
+const attributionLink = settings.tileServerAttribtuionLink;
 export const defaultXYZProvisioned: XYZProvisioned = {
   url: url,
-  attribution: `Tiles © <a href="${url}">${attribution}</a>`,
+  attribution: `Tiles © <a href="${attributionLink}">${attributionName}</a>`,
 };
 
 export const provision: MapLayerRegistryItem<XYZProvisioned> = {

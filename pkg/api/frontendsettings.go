@@ -259,9 +259,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"caching": map[string]bool{
 			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
-		"tileServerURL":         hs.Cfg.TileServerURL,
-		"tileServerAttribtuion": hs.Cfg.TileServerAttribution,
-		"BaseLayerDisabled":     hs.Cfg.BaseLayerDisabled,
+		"tileServerURL":             hs.Cfg.TileServerURL,
+		"tileServerAttribtuionName": hs.Cfg.TileServerAttributionName,
+		"tileServerAttribtuionLink": hs.Cfg.TileServerAttributionLink,
+		"BaseLayerDisabled":         hs.Cfg.BaseLayerDisabled,
 	}
 
 	return jsonObj, nil
