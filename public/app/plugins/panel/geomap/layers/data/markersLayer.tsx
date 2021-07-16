@@ -143,8 +143,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       })
       .addSliderInput({
           path: 'config.fillOpacity',
-          description: 'configures the amount of transparency',
-          name: 'Opacity',
+          name: 'Fill opacity',
           defaultValue: defaultOptions.fillOpacity,
           settings: {
             min: 0,

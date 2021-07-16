@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useMemo } from 'react';
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { ScaleDimensionConfig, ScaleDimensionOptions } from '../types';
-import { InlineField, InlineFieldRow, Label, Select, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import {
   useFieldDisplayNames,
   useSelectOptions,
@@ -127,9 +127,5 @@ export const ScaleDimensionEditor: FC<StandardEditorProps<ScaleDimensionConfig, 
 const getStyles = (theme: GrafanaTheme2) => ({
   range: css`
     padding-top: 8px;
-  `,
-  xxxx: css`
-    padding-top: 8px;
-    width: 200px;
   `,
 });
