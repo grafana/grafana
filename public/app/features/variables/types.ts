@@ -81,12 +81,21 @@ export interface TextBoxVariableModel extends VariableWithOptions {
 export interface ConstantVariableModel extends VariableWithOptions {}
 
 export interface VariableWithMultiSupport extends VariableWithOptions {
+  /**
+   *  Makes it possible to select multiple values.
+   */
   multi: boolean;
+  /**
+   *  Enables an "All" options, which makes it possible to select all value at once.
+   */
   includeAll: boolean;
   allValue?: string | null;
 }
 
 export interface VariableWithOptions extends VariableModel {
+  /**
+   *  The currently selected variable that shows up in the variable selector. Should be one of the options or the "All" option.
+   */
   current: VariableOption;
   options: VariableOption[];
   query: string;
