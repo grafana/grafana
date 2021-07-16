@@ -1,6 +1,7 @@
 package channelrule
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -29,10 +30,10 @@ type Provisioner struct {
 }
 
 type Storage interface {
-	GetChannelRule(cmd models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error)
-	CreateChannelRule(cmd models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error)
-	UpdateChannelRule(cmd models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error)
-	DeleteChannelRule(cmd models.DeleteLiveChannelRuleCommand) (int64, error)
+	GetChannelRule(ctx context.Context, cmd models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error)
+	CreateChannelRule(ctx context.Context, cmd models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error)
+	UpdateChannelRule(ctx context.Context, cmd models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error)
+	DeleteChannelRule(ctx context.Context, cmd models.DeleteLiveChannelRuleCommand) (int64, error)
 }
 
 func newProvisioner(log log.Logger, storage Storage) Provisioner {
@@ -49,7 +50,7 @@ func (dc *Provisioner) apply(cfg *configs) error {
 	}
 
 	for _, rule := range cfg.ChannelRules {
-		ruleInstance, err := dc.storage.GetChannelRule(models.GetLiveChannelRuleCommand{
+		ruleInstance, err := dc.storage.GetChannelRule(context.Background(), models.GetLiveChannelRuleCommand{
 			OrgId:   rule.OrgID,
 			Pattern: rule.Pattern,
 		})
@@ -59,7 +60,7 @@ func (dc *Provisioner) apply(cfg *configs) error {
 		if errors.Is(err, models.ErrLiveChannelRuleNotFound) {
 			dc.log.Info("inserting channel rule from configuration ", "pattern", rule.Pattern)
 			insertCmd := createInsertCommand(rule)
-			_, err := dc.storage.CreateChannelRule(insertCmd)
+			_, err := dc.storage.CreateChannelRule(context.Background(), insertCmd)
 			if err != nil {
 				return err
 			}
@@ -69,7 +70,7 @@ func (dc *Provisioner) apply(cfg *configs) error {
 			if updateCmd.Version == 0 {
 				updateCmd.Version = ruleInstance.Version + 1
 			}
-			_, err := dc.storage.UpdateChannelRule(updateCmd)
+			_, err := dc.storage.UpdateChannelRule(context.Background(), updateCmd)
 			if err != nil {
 				return err
 			}
@@ -97,7 +98,7 @@ func (dc *Provisioner) applyChanges(configPath string) error {
 func (dc *Provisioner) deleteChannelRules(dsToDelete []*deleteChannelRuleConfig) error {
 	for _, ds := range dsToDelete {
 		cmd := models.DeleteLiveChannelRuleCommand{OrgId: ds.OrgID, Pattern: ds.Pattern}
-		count, err := dc.storage.DeleteChannelRule(cmd)
+		count, err := dc.storage.DeleteChannelRule(context.Background(), cmd)
 		if err != nil {
 			return err
 		}

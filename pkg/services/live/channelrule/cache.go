@@ -1,6 +1,7 @@
 package channelrule
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 var logger = log.New("channel-rule-cache")
 
 type Storage interface {
-	ListChannelRules(query models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error)
+	ListChannelRules(ctx context.Context, cmd models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error)
 }
 
 type Cache struct {
@@ -50,7 +51,9 @@ func (s *Cache) updatePeriodically() {
 }
 
 func (s *Cache) fillOrg(orgID int64) error {
-	channels, err := s.storage.ListChannelRules(models.ListLiveChannelRuleCommand{
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	channels, err := s.storage.ListChannelRules(ctx, models.ListLiveChannelRuleCommand{
 		OrgId: orgID,
 	})
 	if err != nil {

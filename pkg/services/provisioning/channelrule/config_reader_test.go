@@ -1,6 +1,7 @@
 package channelrule
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -170,7 +171,7 @@ type fakeRepository struct {
 
 type mockStorage struct{}
 
-func (m mockStorage) GetChannelRule(cmd models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
+func (m mockStorage) GetChannelRule(_ context.Context, cmd models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 	for _, v := range fakeRepo.loadAll {
 		if cmd.Pattern == v.Pattern && cmd.OrgId == v.OrgId {
 			return v, nil
@@ -179,17 +180,17 @@ func (m mockStorage) GetChannelRule(cmd models.GetLiveChannelRuleCommand) (*mode
 	return nil, models.ErrLiveChannelRuleNotFound
 }
 
-func (m mockStorage) CreateChannelRule(cmd models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
+func (m mockStorage) CreateChannelRule(_ context.Context, cmd models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 	fakeRepo.inserted = append(fakeRepo.inserted, cmd)
 	return &models.LiveChannelRule{}, nil
 }
 
-func (m mockStorage) UpdateChannelRule(cmd models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
+func (m mockStorage) UpdateChannelRule(_ context.Context, cmd models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 	fakeRepo.updated = append(fakeRepo.updated, cmd)
 	return &models.LiveChannelRule{}, nil
 }
 
-func (m mockStorage) DeleteChannelRule(cmd models.DeleteLiveChannelRuleCommand) (int64, error) {
+func (m mockStorage) DeleteChannelRule(_ context.Context, cmd models.DeleteLiveChannelRuleCommand) (int64, error) {
 	fakeRepo.deleted = append(fakeRepo.deleted, cmd)
 	return 0, nil
 }

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -20,9 +21,9 @@ func TestChannelRuleList(t *testing.T) {
 
 	storageMock := NewMockChannelRuleStorage(mockCtrl)
 
-	storageMock.EXPECT().ListChannelRules(models.ListLiveChannelRuleCommand{
+	storageMock.EXPECT().ListChannelRules(context.Background(), models.ListLiveChannelRuleCommand{
 		OrgId: testOrgID,
-	}).DoAndReturn(func(_ models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error) {
+	}).DoAndReturn(func(ctx context.Context, _ models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error) {
 		return []*models.LiveChannelRule{
 			{
 				Id:      1,
@@ -64,10 +65,10 @@ func TestChannelRuleGet(t *testing.T) {
 
 	storageMock := NewMockChannelRuleStorage(mockCtrl)
 
-	storageMock.EXPECT().GetChannelRule(models.GetLiveChannelRuleCommand{
+	storageMock.EXPECT().GetChannelRule(context.Background(), models.GetLiveChannelRuleCommand{
 		Id:    1,
 		OrgId: testOrgID,
-	}).DoAndReturn(func(_ models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
+	}).DoAndReturn(func(ctx context.Context, _ models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 		return &models.LiveChannelRule{
 			Id:      1,
 			OrgId:   testOrgID,
@@ -115,7 +116,7 @@ func TestChannelRuleCreate(t *testing.T) {
 		},
 	}
 
-	storageMock.EXPECT().CreateChannelRule(testCmd).DoAndReturn(func(_ models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
+	storageMock.EXPECT().CreateChannelRule(context.Background(), testCmd).DoAndReturn(func(ctx context.Context, _ models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 		return &models.LiveChannelRule{
 			Id:      1,
 			OrgId:   testCmd.OrgId,
@@ -160,7 +161,7 @@ func TestChannelRuleUpdate(t *testing.T) {
 		},
 	}
 
-	storageMock.EXPECT().UpdateChannelRule(testCmd).DoAndReturn(func(_ models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
+	storageMock.EXPECT().UpdateChannelRule(context.Background(), testCmd).DoAndReturn(func(ctx context.Context, _ models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 		return &models.LiveChannelRule{
 			Id:      1,
 			OrgId:   testCmd.OrgId,
@@ -169,10 +170,10 @@ func TestChannelRuleUpdate(t *testing.T) {
 		}, nil
 	}).Times(1)
 
-	storageMock.EXPECT().GetChannelRule(models.GetLiveChannelRuleCommand{
+	storageMock.EXPECT().GetChannelRule(context.Background(), models.GetLiveChannelRuleCommand{
 		Id:    1,
 		OrgId: testOrgID,
-	}).DoAndReturn(func(_ models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
+	}).DoAndReturn(func(ctx context.Context, _ models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 		return &models.LiveChannelRule{
 			Id:      1,
 			OrgId:   testOrgID,

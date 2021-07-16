@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -13,11 +14,11 @@ import (
 //go:generate mockgen -destination=live_channel_rule_mock.go -package=api github.com/grafana/grafana/pkg/api ChannelRuleStorage
 
 type ChannelRuleStorage interface {
-	ListChannelRules(cmd models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error)
-	GetChannelRule(cmd models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error)
-	CreateChannelRule(cmd models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error)
-	UpdateChannelRule(cmd models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error)
-	DeleteChannelRule(cmd models.DeleteLiveChannelRuleCommand) (int64, error)
+	ListChannelRules(ctx context.Context, cmd models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error)
+	GetChannelRule(ctx context.Context, cmd models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error)
+	CreateChannelRule(ctx context.Context, cmd models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error)
+	UpdateChannelRule(ctx context.Context, cmd models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error)
+	DeleteChannelRule(ctx context.Context, cmd models.DeleteLiveChannelRuleCommand) (int64, error)
 }
 
 type channelRuleAPI struct {
@@ -27,7 +28,7 @@ type channelRuleAPI struct {
 func (a *channelRuleAPI) ListChannelRules(c *models.ReqContext) response.Response {
 	query := models.ListLiveChannelRuleCommand{OrgId: c.OrgId}
 
-	result, err := a.storage.ListChannelRules(query)
+	result, err := a.storage.ListChannelRules(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to query channel rules", err)
 	}
@@ -69,7 +70,7 @@ func (a *channelRuleAPI) GetChannelRuleById(c *models.ReqContext) response.Respo
 		OrgId: c.OrgId,
 	}
 
-	result, err := a.storage.GetChannelRule(query)
+	result, err := a.storage.GetChannelRule(c.Req.Context(), query)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleNotFound) {
 			return response.Error(http.StatusNotFound, "Channel rule not found", nil)
@@ -83,7 +84,7 @@ func (a *channelRuleAPI) GetChannelRuleById(c *models.ReqContext) response.Respo
 func (a *channelRuleAPI) CreateChannelRule(c *models.ReqContext, cmd models.CreateLiveChannelRuleCommand) response.Response {
 	cmd.OrgId = c.OrgId
 
-	result, err := a.storage.CreateChannelRule(cmd)
+	result, err := a.storage.CreateChannelRule(c.Req.Context(), cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleExists) {
 			return response.Error(http.StatusConflict, err.Error(), err)
@@ -98,12 +99,12 @@ func (a *channelRuleAPI) CreateChannelRule(c *models.ReqContext, cmd models.Crea
 	})
 }
 
-func (a *channelRuleAPI) fillChannelRuleWithSecureJSONData(cmd *models.UpdateLiveChannelRuleCommand) error {
+func (a *channelRuleAPI) fillChannelRuleWithSecureJSONData(ctx context.Context, cmd *models.UpdateLiveChannelRuleCommand) error {
 	if len(cmd.Secure) == 0 {
 		return nil
 	}
 
-	rule, err := a.storage.GetChannelRule(models.GetLiveChannelRuleCommand{
+	rule, err := a.storage.GetChannelRule(ctx, models.GetLiveChannelRuleCommand{
 		OrgId: cmd.OrgId,
 		Id:    cmd.Id,
 	})
@@ -125,12 +126,12 @@ func (a *channelRuleAPI) UpdateChannelRule(c *models.ReqContext, cmd models.Upda
 	cmd.Id = c.ParamsInt64(":id")
 	cmd.OrgId = c.OrgId
 
-	err := a.fillChannelRuleWithSecureJSONData(&cmd)
+	err := a.fillChannelRuleWithSecureJSONData(c.Req.Context(), &cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update channel rule", err)
 	}
 
-	_, err = a.storage.UpdateChannelRule(cmd)
+	_, err = a.storage.UpdateChannelRule(c.Req.Context(), cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleNotFound) {
 			return response.Error(http.StatusNotFound, "Channel rule not found", nil)
@@ -146,7 +147,7 @@ func (a *channelRuleAPI) UpdateChannelRule(c *models.ReqContext, cmd models.Upda
 		OrgId: c.OrgId,
 	}
 
-	result, err := a.storage.GetChannelRule(getCmd)
+	result, err := a.storage.GetChannelRule(c.Req.Context(), getCmd)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleNotFound) {
 			return response.Error(http.StatusNotFound, "Channel rule not found", nil)
@@ -172,7 +173,7 @@ func (a *channelRuleAPI) DeleteChannelRuleById(c *models.ReqContext) response.Re
 		Id:    id,
 		OrgId: c.OrgId,
 	}
-	_, err := a.storage.GetChannelRule(getCmd)
+	_, err := a.storage.GetChannelRule(c.Req.Context(), getCmd)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleNotFound) {
 			return response.Error(http.StatusNotFound, "Channel rule not found", nil)
@@ -181,7 +182,7 @@ func (a *channelRuleAPI) DeleteChannelRuleById(c *models.ReqContext) response.Re
 	}
 
 	cmd := models.DeleteLiveChannelRuleCommand{Id: id, OrgId: c.OrgId}
-	_, err = a.storage.DeleteChannelRule(cmd)
+	_, err = a.storage.DeleteChannelRule(c.Req.Context(), cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to delete channel rule", err)
 	}

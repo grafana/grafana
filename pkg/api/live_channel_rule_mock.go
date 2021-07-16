@@ -5,6 +5,7 @@
 package api
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -35,76 +36,76 @@ func (m *MockChannelRuleStorage) EXPECT() *MockChannelRuleStorageMockRecorder {
 }
 
 // CreateChannelRule mocks base method.
-func (m *MockChannelRuleStorage) CreateChannelRule(arg0 models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
+func (m *MockChannelRuleStorage) CreateChannelRule(arg0 context.Context, arg1 models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateChannelRule", arg0)
+	ret := m.ctrl.Call(m, "CreateChannelRule", arg0, arg1)
 	ret0, _ := ret[0].(*models.LiveChannelRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateChannelRule indicates an expected call of CreateChannelRule.
-func (mr *MockChannelRuleStorageMockRecorder) CreateChannelRule(arg0 interface{}) *gomock.Call {
+func (mr *MockChannelRuleStorageMockRecorder) CreateChannelRule(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateChannelRule", reflect.TypeOf((*MockChannelRuleStorage)(nil).CreateChannelRule), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateChannelRule", reflect.TypeOf((*MockChannelRuleStorage)(nil).CreateChannelRule), arg0, arg1)
 }
 
 // DeleteChannelRule mocks base method.
-func (m *MockChannelRuleStorage) DeleteChannelRule(arg0 models.DeleteLiveChannelRuleCommand) (int64, error) {
+func (m *MockChannelRuleStorage) DeleteChannelRule(arg0 context.Context, arg1 models.DeleteLiveChannelRuleCommand) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteChannelRule", arg0)
+	ret := m.ctrl.Call(m, "DeleteChannelRule", arg0, arg1)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DeleteChannelRule indicates an expected call of DeleteChannelRule.
-func (mr *MockChannelRuleStorageMockRecorder) DeleteChannelRule(arg0 interface{}) *gomock.Call {
+func (mr *MockChannelRuleStorageMockRecorder) DeleteChannelRule(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteChannelRule", reflect.TypeOf((*MockChannelRuleStorage)(nil).DeleteChannelRule), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteChannelRule", reflect.TypeOf((*MockChannelRuleStorage)(nil).DeleteChannelRule), arg0, arg1)
 }
 
 // GetChannelRule mocks base method.
-func (m *MockChannelRuleStorage) GetChannelRule(arg0 models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
+func (m *MockChannelRuleStorage) GetChannelRule(arg0 context.Context, arg1 models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetChannelRule", arg0)
+	ret := m.ctrl.Call(m, "GetChannelRule", arg0, arg1)
 	ret0, _ := ret[0].(*models.LiveChannelRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetChannelRule indicates an expected call of GetChannelRule.
-func (mr *MockChannelRuleStorageMockRecorder) GetChannelRule(arg0 interface{}) *gomock.Call {
+func (mr *MockChannelRuleStorageMockRecorder) GetChannelRule(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelRule", reflect.TypeOf((*MockChannelRuleStorage)(nil).GetChannelRule), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelRule", reflect.TypeOf((*MockChannelRuleStorage)(nil).GetChannelRule), arg0, arg1)
 }
 
 // ListChannelRules mocks base method.
-func (m *MockChannelRuleStorage) ListChannelRules(arg0 models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error) {
+func (m *MockChannelRuleStorage) ListChannelRules(arg0 context.Context, arg1 models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListChannelRules", arg0)
+	ret := m.ctrl.Call(m, "ListChannelRules", arg0, arg1)
 	ret0, _ := ret[0].([]*models.LiveChannelRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListChannelRules indicates an expected call of ListChannelRules.
-func (mr *MockChannelRuleStorageMockRecorder) ListChannelRules(arg0 interface{}) *gomock.Call {
+func (mr *MockChannelRuleStorageMockRecorder) ListChannelRules(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListChannelRules", reflect.TypeOf((*MockChannelRuleStorage)(nil).ListChannelRules), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListChannelRules", reflect.TypeOf((*MockChannelRuleStorage)(nil).ListChannelRules), arg0, arg1)
 }
 
 // UpdateChannelRule mocks base method.
-func (m *MockChannelRuleStorage) UpdateChannelRule(arg0 models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
+func (m *MockChannelRuleStorage) UpdateChannelRule(arg0 context.Context, arg1 models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateChannelRule", arg0)
+	ret := m.ctrl.Call(m, "UpdateChannelRule", arg0, arg1)
 	ret0, _ := ret[0].(*models.LiveChannelRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpdateChannelRule indicates an expected call of UpdateChannelRule.
-func (mr *MockChannelRuleStorageMockRecorder) UpdateChannelRule(arg0 interface{}) *gomock.Call {
+func (mr *MockChannelRuleStorageMockRecorder) UpdateChannelRule(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateChannelRule", reflect.TypeOf((*MockChannelRuleStorage)(nil).UpdateChannelRule), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateChannelRule", reflect.TypeOf((*MockChannelRuleStorage)(nil).UpdateChannelRule), arg0, arg1)
 }

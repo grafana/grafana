@@ -1,6 +1,7 @@
 package channelrule
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
@@ -11,7 +12,7 @@ import (
 
 type testStorage struct{}
 
-func (t testStorage) ListChannelRules(_ models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error) {
+func (t testStorage) ListChannelRules(_ context.Context, _ models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error) {
 	return []*models.LiveChannelRule{
 		{
 			OrgId:   1,

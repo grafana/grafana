@@ -19,17 +19,17 @@ func NewChannelRuleStorage(store *sqlstore.SQLStore) (*ChannelRuleStorage, error
 	return &ChannelRuleStorage{store: store}, nil
 }
 
-func (s *ChannelRuleStorage) ListChannelRules(cmd models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error) {
+func (s *ChannelRuleStorage) ListChannelRules(ctx context.Context, cmd models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error) {
 	var result []*models.LiveChannelRule
-	err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := s.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		return sess.Where("org_id=?", cmd.OrgId).Find(&result)
 	})
 	return result, err
 }
 
-func (s *ChannelRuleStorage) CreateChannelRule(cmd models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
+func (s *ChannelRuleStorage) CreateChannelRule(ctx context.Context, cmd models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 	var result *models.LiveChannelRule
-	err := s.store.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := s.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		ch := &models.LiveChannelRule{
 			Version: 1,
 			OrgId:   cmd.OrgId,
@@ -51,9 +51,9 @@ func (s *ChannelRuleStorage) CreateChannelRule(cmd models.CreateLiveChannelRuleC
 	return result, err
 }
 
-func (s *ChannelRuleStorage) UpdateChannelRule(cmd models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
+func (s *ChannelRuleStorage) UpdateChannelRule(ctx context.Context, cmd models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 	var result *models.LiveChannelRule
-	err := s.store.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := s.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		ch := &models.LiveChannelRule{
 			Id:      cmd.Id,
 			Version: cmd.Version,
@@ -89,9 +89,9 @@ func (s *ChannelRuleStorage) UpdateChannelRule(cmd models.UpdateLiveChannelRuleC
 	return result, err
 }
 
-func (s *ChannelRuleStorage) DeleteChannelRule(cmd models.DeleteLiveChannelRuleCommand) (int64, error) {
+func (s *ChannelRuleStorage) DeleteChannelRule(ctx context.Context, cmd models.DeleteLiveChannelRuleCommand) (int64, error) {
 	var count int64
-	err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := s.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		var res sql.Result
 		if cmd.OrgId == 0 {
@@ -114,7 +114,7 @@ func (s *ChannelRuleStorage) DeleteChannelRule(cmd models.DeleteLiveChannelRuleC
 	return count, err
 }
 
-func (s *ChannelRuleStorage) GetChannelRule(cmd models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
+func (s *ChannelRuleStorage) GetChannelRule(ctx context.Context, cmd models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 	var ch models.LiveChannelRule
 	if cmd.Id > 0 {
 		ch = models.LiveChannelRule{OrgId: cmd.OrgId, Id: cmd.Id}
@@ -123,7 +123,7 @@ func (s *ChannelRuleStorage) GetChannelRule(cmd models.GetLiveChannelRuleCommand
 	} else {
 		return nil, models.ErrLiveChannelRuleIdentifierNotSet
 	}
-	err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := s.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var ok bool
 		var err error
 		if cmd.Id > 0 {
