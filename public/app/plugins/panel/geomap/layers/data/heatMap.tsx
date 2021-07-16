@@ -118,7 +118,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
       .addCustomEditor({
         id: 'config.weight',
         path: 'config.weight',
-        name: 'Item weight',
+        name: 'Weight values',
         description: 'Scale the distribution for each row',
         editor: ScaleDimensionEditor,
         settings: {
