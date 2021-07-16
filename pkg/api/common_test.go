@@ -258,7 +258,6 @@ func (f *fakeAccessControl) RegisterFixedRoles() error {
 }
 
 func (f *fakeAccessControl) AddFixedRoleRegistrations(registrations []accesscontrol.RoleRegistration) {
-	return
 }
 
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
