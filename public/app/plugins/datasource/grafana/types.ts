@@ -1,4 +1,4 @@
-import { AnnotationQuery, DataQuery } from '@grafana/data';
+import { DataQuery } from '@grafana/data';
 import { LiveDataFilter } from '@grafana/runtime';
 
 //----------------------------------------------
@@ -8,6 +8,7 @@ import { LiveDataFilter } from '@grafana/runtime';
 export enum GrafanaQueryType {
   RandomWalk = 'randomWalk',
   LiveMeasurements = 'measurements',
+  Annotations = 'annotations',
 }
 
 export interface GrafanaQuery extends DataQuery {
@@ -31,7 +32,7 @@ export enum GrafanaAnnotationType {
   Tags = 'tags',
 }
 
-export interface GrafanaAnnotationQuery extends AnnotationQuery<GrafanaQuery> {
+export interface GrafanaAnnotationQuery extends GrafanaQuery {
   type: GrafanaAnnotationType; // tags
   limit: number; // 100
   tags?: string[];

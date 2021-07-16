@@ -66,6 +66,7 @@ Actions | Applicable scopes | Descriptions
 `settings:read` | `settings:**`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level)  | Read settings
 `settings:write` | `settings:**`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Update settings
 `server.stats:read` | n/a | Read server stats
+`datasources:explore` | n/a | Enable explore
 
 ## Scope definitions
 

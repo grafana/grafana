@@ -29,7 +29,7 @@ func (p *testDataPlugin) handleFlightPathScenario(ctx context.Context, req *back
 		maxPoints := q.MaxDataPoints * 2
 		f := cfg.initFields()
 		for i := int64(0); i < maxPoints && timeWalkerMs < to; i++ {
-			t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
+			t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6)).UTC()
 			f.append(cfg.getNextPoint(t))
 
 			timeWalkerMs += stepMillis
@@ -69,9 +69,9 @@ type flightConfig struct {
 
 func newFlightConfig() *flightConfig {
 	return &flightConfig{
-		centerLat:   37.773972, // San francisco
-		centerLng:   -122.431297,
-		radius:      0.1, // raw gps degrees
+		centerLat:   37.83, // San francisco
+		centerLng:   -122.42487,
+		radius:      0.01, // raw gps degrees
 		altitudeMin: 350,
 		altitudeMax: 400,
 		periodS:     10, //model.Get("period").MustFloat64(10),
@@ -128,7 +128,7 @@ func (f *flightConfig) getNextPoint(t time.Time) flightDataPoint {
 	return flightDataPoint{
 		time:     t,
 		lat:      f.centerLat + math.Sin(rad)*f.radius,
-		lng:      f.centerLng + math.Sin(rad+math.Pi)*f.radius,
+		lng:      f.centerLng + math.Cos(rad)*f.radius,
 		heading:  (rad * 180) / math.Pi,         // (math.Atanh(rad) * 180.0) / math.Pi, // in degrees
 		altitude: f.altitudeMin + (delta * per), // clif
 	}

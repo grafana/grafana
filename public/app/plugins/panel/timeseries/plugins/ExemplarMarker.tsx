@@ -169,6 +169,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       width: 8px;
       height: 8px;
       box-sizing: content-box;
+      transform: translate3d(-50%, 0, 0);
 
       &:hover {
         > svg {

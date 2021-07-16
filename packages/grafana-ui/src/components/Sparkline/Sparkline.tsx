@@ -143,6 +143,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         direction: ScaleDirection.Up,
         min: field.config.min,
         max: field.config.max,
+        getDataMinMax: () => field.state?.range,
       });
 
       builder.addAxis({
@@ -164,7 +165,6 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         lineInterpolation: customConfig.lineInterpolation,
         showPoints: pointsMode,
         pointSize: customConfig.pointSize,
-        pointColor: customConfig.pointColor ?? seriesColor,
         fillOpacity: customConfig.fillOpacity,
         fillColor: customConfig.fillColor ?? seriesColor,
       });

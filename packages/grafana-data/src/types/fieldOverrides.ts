@@ -34,7 +34,8 @@ export interface SystemConfigOverrideRule extends ConfigOverrideRule {
  */
 export function isSystemOverrideWithRef<T extends SystemConfigOverrideRule>(ref: string) {
   return (override: ConfigOverrideRule): override is T => {
-    return (override as T)?.__systemRef === ref;
+    const overrideAs = override as T;
+    return overrideAs.__systemRef === ref;
   };
 }
 

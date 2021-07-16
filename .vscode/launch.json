@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Server",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/pkg/cmd/grafana-server/",
+      "env": {},
+      "args": ["--homepath", "${workspaceFolder}", "--packaging", "dev"]
+    }
+  ]
+}

@@ -35,7 +35,6 @@ import {
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import {
   BucketAggregation,
-  BucketAggregationWithField,
   isBucketAggregationWithField,
 } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { generate, Observable, of, throwError } from 'rxjs';
@@ -74,6 +73,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
   languageProvider: LanguageProvider;
+  includeFrozen: boolean;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -100,6 +100,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     this.logMessageField = settingsData.logMessageField || '';
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
+    this.includeFrozen = settingsData.includeFrozen ?? false;
 
     if (this.logMessageField === '') {
       this.logMessageField = undefined;
@@ -391,23 +392,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       this.templateSrv.replace(JSON.stringify(expandedQueries), scopedVars)
     );
 
-    // FIXME: with 8.0 we introduced an undocumented breaking change on how we name frames fields.
-    // Although the introduced behavior is correct, it wasn't documented.
-    // The following lines will restore the previous behaviour for 8.0, to be removed with a proper
-    // changelog in 8.1 by returning `finalQueries` without any further modification
-    return finalQueries.map((q, queryIndex) => ({
-      ...q,
-      bucketAggs: q.bucketAggs?.map((bucketAgg, aggIndex) => {
-        if (isBucketAggregationWithField(bucketAgg)) {
-          return {
-            ...bucketAgg,
-            field: (queries[queryIndex].bucketAggs?.[aggIndex] as BucketAggregationWithField).field,
-          };
-        }
-
-        return bucketAgg;
-      }),
-    }));
+    return finalQueries;
   }
 
   testDatasource() {
@@ -778,11 +763,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   getMultiSearchUrl() {
+    const searchParams = new URLSearchParams();
+
     if (gte(this.esVersion, '7.0.0') && this.maxConcurrentShardRequests) {
-      return `_msearch?max_concurrent_shard_requests=${this.maxConcurrentShardRequests}`;
+      searchParams.append('max_concurrent_shard_requests', `${this.maxConcurrentShardRequests}`);
     }
 
-    return '_msearch';
+    if (gte(this.esVersion, '6.6.0') && this.xpack && this.includeFrozen) {
+      searchParams.append('ignore_throttled', 'false');
+    }
+
+    return ('_msearch?' + searchParams.toString()).replace(/\?$/, '');
   }
 
   metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {

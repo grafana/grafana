@@ -30,6 +30,32 @@ Labels:
 
 {{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}**Resolved**
 {{ template "__text_alert_list" .Alerts.Resolved }}{{ end }}{{ end }}
+
+
+{{ define "__teams_text_alert_list" }}{{ range . }}
+Labels:
+{{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
+{{ end }}
+Annotations:
+{{ range .Annotations.SortedPairs }} - {{ .Name }} = {{ .Value }}
+{{ end }}
+{{ if gt (len .GeneratorURL) 0 }}Source: {{ .GeneratorURL }}
+
+{{ end }}{{ if gt (len .SilenceURL) 0 }}Silence: {{ .SilenceURL }}
+
+{{ end }}{{ if gt (len .DashboardURL) 0 }}Dashboard: {{ .DashboardURL }}
+
+{{ end }}{{ if gt (len .PanelURL) 0 }}Panel: {{ .PanelURL }}
+
+{{ end }}
+{{ end }}{{ end }}
+
+
+{{ define "teams.default.message" }}{{ if gt (len .Alerts.Firing) 0 }}**Firing**
+{{ template "__teams_text_alert_list" .Alerts.Firing }}{{ if gt (len .Alerts.Resolved) 0 }}
+
+{{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}**Resolved**
+{{ template "__teams_text_alert_list" .Alerts.Resolved }}{{ end }}{{ end }}
 `
 
 // TemplateForTestsString is the template used for unit tests and integration tests.
@@ -56,6 +82,8 @@ Labels:
 
 {{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}**Resolved**
 {{ template "__text_alert_list" .Alerts.Resolved }}{{ end }}{{ end }}
+
+{{ define "teams.default.message" }}{{ template "default.message" . }}{{ end }}
 `
 
 func templateForTests(t *testing.T) *template.Template {
