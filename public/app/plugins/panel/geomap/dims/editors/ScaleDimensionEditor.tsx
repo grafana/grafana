@@ -99,13 +99,14 @@ export const ScaleDimensionEditor: FC<StandardEditorProps<ScaleDimensionConfig, 
         />
       </div>
       <div className={styles.range}>
-        {isFixed ? (
+        {isFixed && (
           <InlineFieldRow>
             <InlineField label="Value" labelWidth={8} grow={true}>
               <NumberInput value={value.fixed} {...minMaxStep} onChange={onValueChange} />
             </InlineField>
           </InlineFieldRow>
-        ) : (
+        )}
+        {!isFixed && !minMaxStep.hideRange && (
           <>
             <InlineFieldRow>
               <InlineField label="Min" labelWidth={8} grow={true}>

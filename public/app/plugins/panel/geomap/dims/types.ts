@@ -38,6 +38,7 @@ export interface ScaleDimensionOptions {
   min: number;
   max: number;
   step?: number;
+  hideRange?: boolean; // false
 }
 
 /** Use the color value from field configs */
