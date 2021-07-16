@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // SetupTestMessageStorage initializes a storage to used by the integration tests.
@@ -27,17 +27,7 @@ func SetupTestMessageStorage(t *testing.T) *database.MessageStorage {
 
 	// Hook for initialising the service after the Cfg is populated
 	// so that database migrations will run.
-	overrideServiceFunc := func(descriptor registry.Descriptor) (*registry.Descriptor, bool) {
-		if _, ok := descriptor.Instance.(*live.GrafanaLive); ok {
-			return &registry.Descriptor{
-				Name:         descriptor.Name,
-				Instance:     gLive,
-				InitPriority: descriptor.InitPriority,
-			}, true
-		}
-		return nil, false
-	}
-	registry.RegisterOverride(overrideServiceFunc)
+	testutil.OverrideServiceInRegistry(gLive)
 
 	// Now we can use sql.Store.
 	sqlStore := sqlstore.InitTestDB(t)
@@ -58,17 +48,7 @@ func SetupTestChannelRuleStorage(t *testing.T) *database.ChannelRuleStorage {
 
 	// Hook for initialising the service after the Cfg is populated
 	// so that database migrations will run.
-	overrideServiceFunc := func(descriptor registry.Descriptor) (*registry.Descriptor, bool) {
-		if _, ok := descriptor.Instance.(*live.GrafanaLive); ok {
-			return &registry.Descriptor{
-				Name:         descriptor.Name,
-				Instance:     gLive,
-				InitPriority: descriptor.InitPriority,
-			}, true
-		}
-		return nil, false
-	}
-	registry.RegisterOverride(overrideServiceFunc)
+	testutil.OverrideServiceInRegistry(gLive)
 
 	// Now we can use sql.Store.
 	sqlStore := sqlstore.InitTestDB(t)

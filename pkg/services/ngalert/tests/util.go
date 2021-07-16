@@ -7,22 +7,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/model"
-
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-
-	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-
-	"github.com/grafana/grafana/pkg/api/routing"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -45,29 +42,14 @@ func SetupTestEnv(t *testing.T, baseIntervalSeconds int64) *store.DBstore {
 	}
 }
 
-func overrideAlertNGInRegistry(t *testing.T, cfg *setting.Cfg) ngalert.AlertNG {
+func overrideAlertNGInRegistry(_ *testing.T, cfg *setting.Cfg) ngalert.AlertNG {
 	ng := ngalert.AlertNG{
 		Cfg:           cfg,
 		RouteRegister: routing.NewRouteRegister(),
 		Log:           log.New("ngalert-test"),
 		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
 	}
-
-	// hook for initialising the service after the Cfg is populated
-	// so that database migrations will run
-	overrideServiceFunc := func(descriptor registry.Descriptor) (*registry.Descriptor, bool) {
-		if _, ok := descriptor.Instance.(*ngalert.AlertNG); ok {
-			return &registry.Descriptor{
-				Name:         descriptor.Name,
-				Instance:     &ng,
-				InitPriority: descriptor.InitPriority,
-			}, true
-		}
-		return nil, false
-	}
-
-	registry.RegisterOverride(overrideServiceFunc)
-
+	testutil.OverrideServiceInRegistry(&ng)
 	return ng
 }
 
