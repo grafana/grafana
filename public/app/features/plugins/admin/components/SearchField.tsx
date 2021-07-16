@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
+import { useDebounce } from 'react-use';
 
 interface Props {
   value?: string;
@@ -11,6 +12,8 @@ interface Props {
 export const SearchField = ({ value, onSearch }: Props) => {
   const [query, setQuery] = useState(value);
   const styles = useStyles2(getStyles);
+
+  useDebounce(() => onSearch(query ?? ''), 500, [query]);
 
   return (
     <input

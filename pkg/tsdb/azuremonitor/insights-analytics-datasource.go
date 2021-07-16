@@ -17,7 +17,9 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 )
 
-type InsightsAnalyticsDatasource struct{}
+type InsightsAnalyticsDatasource struct {
+	proxy serviceProxy
+}
 
 type InsightsAnalyticsQuery struct {
 	RefID string
@@ -31,8 +33,12 @@ type InsightsAnalyticsQuery struct {
 	Target string
 }
 
+func (e *InsightsAnalyticsDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.proxy.Do(rw, req, cli)
+}
+
 func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
+	originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries, dsInfo)
@@ -41,7 +47,7 @@ func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url)
 	}
 
 	return result, nil
@@ -80,7 +86,7 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []backend.DataQuery, 
 	return iaQueries, nil
 }
 
-func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery, dsInfo datasourceInfo) backend.DataResponse {
+func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery, dsInfo datasourceInfo, client *http.Client, url string) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	dataResponseError := func(err error) backend.DataResponse {
@@ -88,7 +94,7 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 		return dataResponse
 	}
 
-	req, err := e.createRequest(ctx, dsInfo)
+	req, err := e.createRequest(ctx, dsInfo, url)
 	if err != nil {
 		return dataResponseError(err)
 	}
@@ -112,7 +118,7 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 	}
 
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, dsInfo.Services[appInsights].HTTPClient, req)
+	res, err := ctxhttp.Do(ctx, client, req)
 	if err != nil {
 		return dataResponseError(err)
 	}
@@ -168,15 +174,14 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 	return dataResponse
 }
 
-func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
+func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, url string) (*http.Request, error) {
 	appInsightsAppID := dsInfo.Settings.AppInsightsAppId
 
-	req, err := http.NewRequest(http.MethodGet, dsInfo.Services[insightsAnalytics].URL, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
-	req.Header.Set("X-API-Key", dsInfo.DecryptedSecureJSONData["appInsightsApiKey"])
 	req.URL.Path = fmt.Sprintf("/v1/apps/%s", appInsightsAppID)
 	return req, nil
 }
