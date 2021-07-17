@@ -8,7 +8,8 @@ type PluginLogoProps = {
 };
 
 export function PluginLogo({ plugin, className }: PluginLogoProps): React.ReactElement | null {
-  return <img src={getImageSrc(plugin)} className={className} />;
+  // @ts-ignore
+  return <img src={getImageSrc(plugin)} className={className} loading="lazy" />;
 }
 
 function getImageSrc(plugin: Plugin | LocalPlugin | undefined): string {
@@ -17,7 +18,7 @@ function getImageSrc(plugin: Plugin | LocalPlugin | undefined): string {
   }
 
   if (isLocalPlugin(plugin)) {
-    return plugin?.info?.logos?.large;
+    return plugin?.info?.logos?.small;
   }
 
   return `https://grafana.com/api/plugins/${plugin.slug}/versions/${plugin.version}/logos/small`;

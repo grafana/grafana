@@ -5,30 +5,19 @@ import { useStyles2 } from '@grafana/ui';
 
 interface Props {
   href: string;
-  text: React.ReactNode;
-  image: React.ReactNode;
-  layout?: 'horizontal' | 'vertical';
+  header: React.ReactNode;
+  content: React.ReactNode;
+  footer: React.ReactNode;
 }
 
-export const Card = ({ href, text, image, layout = 'vertical' }: Props) => {
+export const Card = ({ href, header, content, footer }: Props) => {
   const styles = useStyles2(getCardStyles);
 
   return (
     <a href={href} className={styles.root}>
-      <div
-        className={cx(styles.container, {
-          [styles.containerHorizontal]: layout === 'horizontal',
-        })}
-      >
-        <div
-          className={cx(styles.imgContainer, {
-            [styles.imgContainerHorizontal]: layout === 'horizontal',
-          })}
-        >
-          {image}
-        </div>
-        {text}
-      </div>
+      <div className={styles.spacer}>{header}</div>
+      <div className={cx(styles.spacer, styles.block)}>{content}</div>
+      <div>{footer}</div>
     </a>
   );
 };
@@ -38,6 +27,8 @@ const getCardStyles = (theme: GrafanaTheme2) => ({
     background-color: ${theme.colors.background.secondary};
     border-radius: ${theme.shape.borderRadius()};
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
     height: 100%;
     padding: ${theme.spacing(2)};
 
@@ -45,24 +36,10 @@ const getCardStyles = (theme: GrafanaTheme2) => ({
       background-color: ${theme.colors.action.hover};
     }
   `,
-  container: css`
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    height: 100%;
+  spacer: css`
+    margin-bottom: ${theme.spacing(2)};
   `,
-  containerHorizontal: css`
-    flex-direction: row;
-    justify-content: flex-start;
-  `,
-  imgContainer: css`
-    align-items: center;
-    display: flex;
+  block: css`
     flex-grow: 1;
-    justify-content: center;
-    padding: ${theme.spacing()} 0;
-  `,
-  imgContainerHorizontal: css`
-    flex-grow: 0;
   `,
 });
