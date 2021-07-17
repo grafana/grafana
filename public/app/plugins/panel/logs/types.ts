@@ -5,6 +5,7 @@ export interface Options {
   showCommonLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
+  prettifyLogMessage: boolean;
   enableLogDetails: boolean;
   sortOrder: LogsSortOrder;
   dedupStrategy: LogsDedupStrategy;
