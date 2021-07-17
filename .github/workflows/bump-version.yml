@@ -23,7 +23,7 @@ jobs:
           major.minor.patch or major.minor.patch-beta.number format. \
           example: 7.4.3 or 7.4.3-beta.1"
           exit 1
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
 
       - name: Set intermedia variables
         id: intermedia
@@ -48,7 +48,7 @@ jobs:
           exit 1
 
       - name: Checkout Actions
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
