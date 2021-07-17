@@ -1,4 +1,4 @@
-export type PluginTypeCode = 'app' | 'panel' | 'datasource';
+import { PluginType } from '@grafana/data';
 
 export interface Plugin {
   name: string;
@@ -73,7 +73,7 @@ export type LocalPlugin = {
   signatureOrg: string;
   signatureType: string;
   state: string;
-  type: string;
+  type: PluginType;
   dev: boolean | undefined;
 };
 

@@ -7,6 +7,7 @@ import { configureStore } from 'app/store/configureStore';
 import { Provider } from 'react-redux';
 import { LocalPlugin, Plugin } from '../types';
 import { API_ROOT, GRAFANA_API_ROOT } from '../constants';
+import { PluginType } from '../../../../../../packages/grafana-data/src';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as object),
@@ -111,7 +112,7 @@ const installed: LocalPlugin[] = [
     signatureOrg: '',
     signatureType: '',
     state: 'alpha',
-    type: 'datasource',
+    type: PluginType.datasource,
     dev: false,
   },
 ];

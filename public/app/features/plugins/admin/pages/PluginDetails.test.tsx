@@ -4,6 +4,7 @@ import PluginDetailsPage from './PluginDetails';
 import { API_ROOT, GRAFANA_API_ROOT } from '../constants';
 import { LocalPlugin, Plugin } from '../types';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { PluginType } from '../../../../../../packages/grafana-data/src';
 
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
@@ -130,7 +131,7 @@ function localPlugin(plugin: Partial<LocalPlugin> = {}): LocalPlugin {
     signatureOrg: '',
     signatureType: '',
     state: 'alpha',
-    type: 'datasource',
+    type: PluginType.datasource,
     dev: false,
     ...plugin,
   };
@@ -163,7 +164,7 @@ function corePlugin(plugin: Partial<LocalPlugin> = {}): LocalPlugin {
     signatureOrg: '',
     signatureType: '',
     state: '',
-    type: 'datasource',
+    type: PluginType.datasource,
     ...plugin,
   };
 }
