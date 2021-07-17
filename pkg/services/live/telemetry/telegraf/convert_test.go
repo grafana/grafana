@@ -32,7 +32,7 @@ func checkTestData(tb testing.TB, file string) *backend.DataResponse {
 	require.NoError(tb, err, "expected to be able to read file")
 	require.True(tb, len(content) > 0)
 
-	converter := NewConverter(WithUseLabelsColumn(true))
+	converter := NewConverter(WithFrameType(FrameTypeLabelsColumn))
 	frameWrappers, err := converter.Convert(content)
 	require.NoError(tb, err)
 
@@ -47,8 +47,8 @@ func checkTestData(tb testing.TB, file string) *backend.DataResponse {
 }
 
 func TestNewConverter(t *testing.T) {
-	c := NewConverter(WithUseLabelsColumn(true))
-	require.True(t, c.useLabelsColumn)
+	c := NewConverter(WithFrameType(FrameTypeLabelsColumn))
+	require.Equal(t, FrameTypeLabelsColumn, c.frameType)
 }
 
 func TestConverter_Convert(t *testing.T) {
@@ -104,7 +104,47 @@ func TestConverter_Convert_LabelsColumn(t *testing.T) {
 			if *pprint {
 				fmt.Println(string(testData))
 			}
-			converter := NewConverter(WithUseLabelsColumn(true))
+			converter := NewConverter(WithFrameType(FrameTypeLabelsColumn))
+			frameWrappers, err := converter.Convert(testData)
+			require.NoError(t, err)
+			require.Len(t, frameWrappers, tt.NumFrames)
+			for _, fw := range frameWrappers {
+				frame := fw.Frame()
+				if tt.NumFrames == 1 {
+					require.Len(t, frame.Fields, tt.NumFields)
+					require.Equal(t, tt.FieldLength, frame.Fields[0].Len())
+				}
+				_, err := data.FrameToJSON(frame, data.IncludeAll)
+				require.NoError(t, err)
+				if *pprint {
+					s, err := frame.StringTable(100, 100)
+					require.NoError(t, err)
+					fmt.Println(s)
+				}
+			}
+		})
+	}
+}
+
+func TestConverter_Convert_Prometheus(t *testing.T) {
+	testCases := []struct {
+		Name        string
+		NumFields   int
+		FieldLength int
+		NumFrames   int
+	}{
+		{Name: "incomplete_fields", NumFields: 3, FieldLength: 4, NumFrames: 1},
+		{Name: "incomplete_fields_2", NumFields: 3, FieldLength: 5, NumFrames: 1},
+		{Name: "incomplete_fields_full", NumFrames: 5},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.Name, func(t *testing.T) {
+			testData := loadTestData(t, tt.Name)
+			if *pprint {
+				fmt.Println(string(testData))
+			}
+			converter := NewConverter(WithFrameType(FrameTypePrometheus))
 			frameWrappers, err := converter.Convert(testData)
 			require.NoError(t, err)
 			require.Len(t, frameWrappers, tt.NumFrames)
@@ -198,7 +238,7 @@ func BenchmarkConverter_Convert_Wide(b *testing.B) {
 
 func BenchmarkConverter_Convert_LabelsColumn(b *testing.B) {
 	testData := loadTestData(b, "same_metrics_different_labels_same_time")
-	converter := NewConverter(WithUseLabelsColumn(true))
+	converter := NewConverter(WithFrameType(FrameTypeLabelsColumn))
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -211,7 +251,7 @@ func BenchmarkConverter_Convert_LabelsColumn(b *testing.B) {
 
 func TestConverter_Convert_NumFrameFields_LabelsColumn(t *testing.T) {
 	testData := loadTestData(t, "same_metrics_different_labels_same_time")
-	converter := NewConverter(WithUseLabelsColumn(true))
+	converter := NewConverter(WithFrameType(FrameTypeLabelsColumn))
 	frameWrappers, err := converter.Convert(testData)
 	require.NoError(t, err)
 	require.Len(t, frameWrappers, 1)
@@ -247,7 +287,7 @@ func TestConverter_Convert_MixedNumberTypes_OK(t *testing.T) {
 
 func TestConverter_Convert_MixedNumberTypes_OK_LabelsColumn(t *testing.T) {
 	testData := loadTestData(t, "mixed_number_types")
-	converter := NewConverter(WithUseLabelsColumn(true), WithFloat64Numbers(true))
+	converter := NewConverter(WithFrameType(FrameTypeLabelsColumn), WithFloat64Numbers(true))
 	frameWrappers, err := converter.Convert(testData)
 	require.NoError(t, err)
 	require.Len(t, frameWrappers, 1)
@@ -263,7 +303,7 @@ func TestConverter_Convert_PartInput(t *testing.T) {
 
 func TestConverter_Convert_PartInput_LabelsColumn(t *testing.T) {
 	testData := loadTestData(t, "part_metrics_different_labels_different_time")
-	converter := NewConverter(WithUseLabelsColumn(true))
+	converter := NewConverter(WithFrameType(FrameTypeLabelsColumn))
 	frameWrappers, err := converter.Convert(testData)
 	require.NoError(t, err)
 	require.Len(t, frameWrappers, 1)

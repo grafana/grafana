@@ -1,6 +1,7 @@
 package telegraf
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -18,20 +19,28 @@ var (
 
 var _ telemetry.Converter = (*Converter)(nil)
 
+type ConverterFrameType string
+
+const (
+	FrameTypeWide         ConverterFrameType = "wide"
+	FrameTypeLabelsColumn ConverterFrameType = "labels_column"
+	FrameTypePrometheus   ConverterFrameType = "prometheus"
+)
+
 // Converter converts Telegraf metrics to Grafana frames.
 type Converter struct {
 	parser            *influx.Parser
-	useLabelsColumn   bool
+	frameType         ConverterFrameType
 	useFloat64Numbers bool
 }
 
 // ConverterOption ...
 type ConverterOption func(*Converter)
 
-// WithUseLabelsColumn ...
-func WithUseLabelsColumn(enabled bool) ConverterOption {
+// WithFrameType ...
+func WithFrameType(frameType ConverterFrameType) ConverterOption {
 	return func(h *Converter) {
-		h.useLabelsColumn = enabled
+		h.frameType = frameType
 	}
 }
 
@@ -46,7 +55,8 @@ func WithFloat64Numbers(enabled bool) ConverterOption {
 // This converter generates one frame for each input metric name and time combination.
 func NewConverter(opts ...ConverterOption) *Converter {
 	c := &Converter{
-		parser: influx.NewParser(influx.NewMetricHandler()),
+		parser:    influx.NewParser(influx.NewMetricHandler()),
+		frameType: FrameTypeWide,
 	}
 	for _, opt := range opts {
 		opt(c)
@@ -65,13 +75,19 @@ func (c *Converter) Convert(body []byte) ([]telemetry.FrameWrapper, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error parsing metrics: %w", err)
 	}
-	if !c.useLabelsColumn {
-		return c.convertWideFields(metrics)
+	switch c.frameType {
+	case FrameTypeWide:
+		return c.convertWide(metrics)
+	case FrameTypeLabelsColumn:
+		return c.convertLabelsColumn(metrics)
+	case FrameTypePrometheus:
+		return c.convertPrometheus(metrics)
+	default:
+		return nil, errors.New("unsupported converter frame type")
 	}
-	return c.convertWithLabelsColumn(metrics)
 }
 
-func (c *Converter) convertWideFields(metrics []influx.Metric) ([]telemetry.FrameWrapper, error) {
+func (c *Converter) convertWide(metrics []influx.Metric) ([]telemetry.FrameWrapper, error) {
 	// maintain the order of frames as they appear in input.
 	var frameKeyOrder []string
 	metricFrames := make(map[string]*metricFrame)
@@ -104,7 +120,7 @@ func (c *Converter) convertWideFields(metrics []influx.Metric) ([]telemetry.Fram
 	return frameWrappers, nil
 }
 
-func (c *Converter) convertWithLabelsColumn(metrics []influx.Metric) ([]telemetry.FrameWrapper, error) {
+func (c *Converter) convertLabelsColumn(metrics []influx.Metric) ([]telemetry.FrameWrapper, error) {
 	// maintain the order of frames as they appear in input.
 	var frameKeyOrder []string
 	metricFrames := make(map[string]*metricFrame)
@@ -143,6 +159,44 @@ func (c *Converter) convertWithLabelsColumn(metrics []influx.Metric) ([]telemetr
 			}
 		}
 		frameWrappers = append(frameWrappers, frame)
+	}
+
+	return frameWrappers, nil
+}
+
+func (c *Converter) convertPrometheus(metrics []influx.Metric) ([]telemetry.FrameWrapper, error) {
+	// maintain the order of frames as they appear in input.
+	var frameKeyOrder []string
+	metricFrames := make(map[string]*data.Frame)
+
+	for _, m := range metrics {
+		var frame *data.Frame
+		var ok bool
+		if frame, ok = metricFrames[m.Name()]; !ok {
+			frame = data.NewFrame(
+				m.Name(),
+				data.NewField("labels", nil, []string{}),
+				data.NewField("time", nil, []time.Time{}),
+				data.NewField("value", nil, []float64{}),
+			)
+			metricFrames[m.Name()] = frame
+			frameKeyOrder = append(frameKeyOrder, m.Name())
+		}
+		fields := m.FieldList()
+		if len(fields) != 1 {
+			return nil, fmt.Errorf("expected 1 field in each metric")
+		}
+		labels := tagsToLabels(m.TagList())
+		labels["__name"] = fields[0].Key
+		frame.Fields[0].Append(labels.String()) // TODO, use labels.String()
+		frame.Fields[1].Append(m.Time())
+		frame.Fields[2].Append(fields[0].Value.(float64))
+	}
+
+	frameWrappers := make([]telemetry.FrameWrapper, 0, len(metricFrames))
+	for _, key := range frameKeyOrder {
+		frame := metricFrames[key]
+		frameWrappers = append(frameWrappers, prometheusMetricFrame{key, frame})
 	}
 
 	return frameWrappers, nil
@@ -187,6 +241,19 @@ func (s *metricFrame) Key() string {
 // Frame transforms metricFrame to Grafana data.Frame.
 func (s *metricFrame) Frame() *data.Frame {
 	return data.NewFrame(s.key, s.fields...)
+}
+
+type prometheusMetricFrame struct {
+	key   string
+	frame *data.Frame
+}
+
+func (p prometheusMetricFrame) Key() string {
+	return p.key
+}
+
+func (p prometheusMetricFrame) Frame() *data.Frame {
+	return p.frame
 }
 
 // extend existing metricFrame fields.
