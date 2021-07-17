@@ -75,6 +75,14 @@ export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
     options = sortBy(options, (opt) => {
       return toLower(opt.text);
     });
+  } else if (sortType === 4) {
+    options = _.sortBy(options, (opt) => {
+      if (!opt.text) {
+        return -1;
+      }
+
+      return opt.text.replace(/\d{1,15}/g, (n: number) => +n + Math.pow(10, 15));
+    });
   }
 
   if (reverseSort) {
