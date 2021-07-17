@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	_ "github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/auth"
 	_ "github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -40,7 +41,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/login/loginservice"
 	_ "github.com/grafana/grafana/pkg/services/ngalert"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
-	_ "github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/rendering"
 	_ "github.com/grafana/grafana/pkg/services/search"
 	_ "github.com/grafana/grafana/pkg/services/sqlstore"
@@ -130,7 +131,9 @@ type Server struct {
 
 	serviceRegistry serviceRegistry
 
-	HTTPServer *api.HTTPServer `inject:""`
+	HTTPServer          *api.HTTPServer                  `inject:""`
+	AccessControl       accesscontrol.AccessControl      `inject:""`
+	ProvisioningService provisioning.ProvisioningService `inject:""`
 }
 
 // init initializes the server and its services.
@@ -167,7 +170,12 @@ func (s *Server) init() error {
 		}
 	}
 
-	return nil
+	// Perform all services registrations
+	if err := s.AccessControl.RegisterFixedRoles(); err != nil {
+		return err
+	}
+
+	return s.ProvisioningService.RunInitProvisioners()
 }
 
 // Run initializes and starts services. This will block until all services have
