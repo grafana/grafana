@@ -2,8 +2,8 @@ import uPlot, { Axis } from 'uplot';
 import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { BarValueVisibility, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
-import { CartesianCoords2D, GrafanaTheme2 } from '@grafana/data';
-import { calculateFontSize, measureText, PlotTooltipInterpolator, VizTextDisplayOptions } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { calculateFontSize, PlotTooltipInterpolator, VizTextDisplayOptions } from '@grafana/ui';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -12,8 +12,12 @@ const VALUE_MIN_FONT_SIZE = 8;
 const VALUE_MAX_FONT_SIZE = 30;
 // % of width/height of the bar that value should fit in when measuring size
 const BAR_FONT_SIZE_RATIO = 0.65;
-// distance between label and a bar
-const LABEL_OFFSET = 5;
+// distance between label and a bar in % of bar width
+const LABEL_OFFSET_FACTOR_VT = 0.1;
+const LABEL_OFFSET_FACTOR_HZ = 0.2;
+// max distance
+const LABEL_OFFSET_MAX_VT = 5;
+const LABEL_OFFSET_MAX_HZ = 15;
 
 /**
  * @internal
@@ -30,16 +34,6 @@ export interface BarsOptions {
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
 }
 
-interface LabelDescriptor extends CartesianCoords2D {
-  formattedValue: string;
-  value: number | null;
-  availableSpaceForText: number;
-  barWidth: number;
-  barHeight: number;
-  textAlign: CanvasTextAlign;
-  textBaseline: CanvasTextBaseline;
-}
-
 /**
  * @internal
  */
@@ -47,10 +41,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const { xOri, xDir: dir, groupWidth, barWidth, formatValue, showValue } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
-  let fontSize = opts.text?.valueSize ?? VALUE_MAX_FONT_SIZE;
 
   let qt: Quadtree;
-  let labelsSizing: LabelDescriptor[] = [];
   let hovered: Rect | undefined = undefined;
 
   let barMark = document.createElement('div');
@@ -112,18 +104,22 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         values: (u, seriesIdx) => barsPctLayout[seriesIdx]!.size,
       },
     },
+    // collect rendered bar geometry
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
-      // collect bar geometry
+      // we get back raw canvas coords (included axes & padding)
+      // translate to the plotting area origin
+      lft -= u.bbox.left;
+      top -= u.bbox.top;
 
       let val = u.data[seriesIdx][dataIdx]!;
 
       // accum min space abvailable for labels
       if (isXHorizontal) {
-        vSpace = Math.min(vSpace, val < 0 ? u.bbox.top + u.bbox.height - (top + hgt) : top - u.bbox.top);
+        vSpace = Math.min(vSpace, val < 0 ? u.bbox.height - (top + hgt) : top);
         hSpace = wid;
       } else {
         vSpace = hgt;
-        hSpace = Math.min(hSpace, val < 0 ? lft - u.bbox.left : u.bbox.left + u.bbox.width - (lft + wid));
+        hSpace = Math.min(hSpace, val < 0 ? lft : u.bbox.width - (lft + wid));
       }
 
       let barRect = { x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx };
@@ -144,8 +140,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
     qt.clear();
 
-    labelsSizing = [];
-
     // clear the path cache to force drawBars() to rebuild new quadtree
     u.series.forEach((s) => {
       // @ts-ignore
@@ -157,45 +151,69 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     vSpace = hSpace = Infinity;
   };
 
-  // Collect label sizings
-  const drawPoints = (u: uPlot, sidx: number) => {};
+  const LABEL_OFFSET_FACTOR = isXHorizontal ? LABEL_OFFSET_FACTOR_VT : LABEL_OFFSET_FACTOR_HZ;
+  const LABEL_OFFSET_MAX = isXHorizontal ? LABEL_OFFSET_MAX_VT : LABEL_OFFSET_MAX_HZ;
 
   // uPlot hook to draw the labels on the bar chart.
-  // Uses label sizings collected in drawClear hook.
   const draw = (u: uPlot) => {
-    u.ctx.fillStyle = theme.colors.text.primary;
+    // pre-cache formatted labels
+    let texts = Array(barRects.length);
+    let labelOffset = LABEL_OFFSET_MAX;
 
-    barRects.forEach((r) => {
-      let value = u.data[r.sidx][r.didx];
-      let text = formatValue(r.sidx, value);
-
-      if (hasAutoValueSize) {
-        const size = calculateFontSize(
-          text,
-          hSpace * (isXHorizontal ? BAR_FONT_SIZE_RATIO : 1) - (isXHorizontal ? 0 : LABEL_OFFSET),
-          vSpace * (isXHorizontal ? 1 : BAR_FONT_SIZE_RATIO) - (isXHorizontal ? LABEL_OFFSET : 0),
-          1
-        );
-
-        if (size <= fontSize) {
-          fontSize = Math.round(size);
-        }
-      }
-
-      u.ctx.textAlign = isXHorizontal ? 'center' : value < 0 ? 'right' : 'left';
-      u.ctx.textBaseline = isXHorizontal ? (value < 0 ? 'top' : 'bottom') : 'middle';
-
-      let minFontSize = fontSize < VALUE_MIN_FONT_SIZE ? VALUE_MIN_FONT_SIZE : fontSize;
-      u.ctx.font = `${minFontSize * devicePixelRatio}px ${theme.typography.fontFamily}`;
-
-      u.ctx.fillText(
-        text,
-        u.bbox.left + (isXHorizontal ? r.x + r.w / 2 : value < 0 ? r.x - LABEL_OFFSET : r.x + r.w + LABEL_OFFSET),
-        u.bbox.top + (isXHorizontal ? (value < 0 ? r.y + r.h + LABEL_OFFSET : r.y - LABEL_OFFSET) : r.y + r.h / 2)
-      );
+    barRects.forEach((r, i) => {
+      texts[i] = formatValue(r.sidx, u.data[r.sidx][r.didx]);
+      labelOffset = Math.min(labelOffset, Math.round(LABEL_OFFSET_FACTOR * (isXHorizontal ? r.w : r.h)));
     });
 
-    return undefined;
+    let fontSize = opts.text?.valueSize ?? VALUE_MAX_FONT_SIZE;
+
+    if (hasAutoValueSize) {
+      for (let i = 0; i < barRects.length; i++) {
+        fontSize = Math.min(
+          fontSize,
+          VALUE_MAX_FONT_SIZE,
+          calculateFontSize(
+            texts[i],
+            hSpace * (isXHorizontal ? BAR_FONT_SIZE_RATIO : 1) - (isXHorizontal ? 0 : labelOffset),
+            vSpace * (isXHorizontal ? 1 : BAR_FONT_SIZE_RATIO) - (isXHorizontal ? labelOffset : 0),
+            1
+          )
+        );
+
+        if (fontSize < VALUE_MIN_FONT_SIZE && showValue !== BarValueVisibility.Always) {
+          return;
+        }
+      }
+    }
+
+    u.ctx.fillStyle = theme.colors.text.primary;
+    u.ctx.font = `${fontSize}px ${theme.typography.fontFamily}`;
+
+    let curAlign: CanvasTextAlign, curBaseline: CanvasTextBaseline;
+
+    barRects.forEach((r, i) => {
+      let value = u.data[r.sidx][r.didx];
+      let text = texts[i];
+
+      if (value != null) {
+        let align: CanvasTextAlign = isXHorizontal ? 'center' : value < 0 ? 'right' : 'left';
+        let baseline: CanvasTextBaseline = isXHorizontal ? (value < 0 ? 'top' : 'bottom') : 'middle';
+
+        if (align !== curAlign) {
+          u.ctx.textAlign = curAlign = align;
+        }
+
+        if (baseline !== curBaseline) {
+          u.ctx.textBaseline = curBaseline = baseline;
+        }
+
+        u.ctx.fillText(
+          text,
+          u.bbox.left + (isXHorizontal ? r.x + r.w / 2 : value < 0 ? r.x - labelOffset : r.x + r.w + labelOffset),
+          u.bbox.top + (isXHorizontal ? (value < 0 ? r.y + r.h + labelOffset : r.y - labelOffset) : r.y + r.h / 2)
+        );
+      }
+    });
   };
 
   // handle hover interaction with quadtree probing
@@ -254,7 +272,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     // hooks
     init,
     drawClear,
-    drawPoints,
     draw,
     interpolateTooltip,
   };
