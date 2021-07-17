@@ -32,6 +32,7 @@ import { getFrameDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { getTemplateProxyForField } from './templateProxies';
+import tinycolor from 'tinycolor2';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -209,6 +210,7 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
 
   return (value: any) => {
     let v = cache.get(value);
+
     if (!v) {
       // Don't grow too big
       if (cache.size === maxCacheSize) {
@@ -216,8 +218,20 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
       }
 
       v = disp(value);
+
+      // re-parse into hex string :(
+      if (v.color && v.color[0] !== '#') {
+        let color = tinycolor(v.color);
+
+        v = {
+          ...v,
+          color: color.getAlpha() < 1 ? color.toHex8String() : color.toHexString(),
+        };
+      }
+
       cache.set(value, v);
     }
+
     return v;
   };
 }
