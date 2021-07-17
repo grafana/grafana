@@ -1,7 +1,9 @@
 package contexthandler
 
 import (
+	"encoding/base64"
 	"errors"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/login"
@@ -10,12 +12,20 @@ import (
 
 const InvalidJWT = "Invalid JWT"
 
+// Sanitize JWT base64 strings to remove paddings everywhere
+func sanitizeJWT(jwtToken string) string {
+	// JWT can be compact, JSON flatened or JSON general
+	// In every cases, parts are base64 strings without padding
+	// The padding char (=) should never interfer with data
+	return strings.ReplaceAll(jwtToken, string(base64.StdPadding), "")
+}
+
 func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64) bool {
 	if !h.Cfg.JWTAuthEnabled || h.Cfg.JWTAuthHeaderName == "" {
 		return false
 	}
 
-	jwtToken := ctx.Req.Header.Get(h.Cfg.JWTAuthHeaderName)
+	jwtToken := sanitizeJWT(ctx.Req.Header.Get(h.Cfg.JWTAuthHeaderName))
 	if jwtToken == "" {
 		return false
 	}
