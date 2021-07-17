@@ -14,7 +14,7 @@ export const RulesDataSourceTypes: string[] = [DataSourceType.Loki, DataSourceTy
 
 export function getRulesDataSources() {
   return getAllDataSources()
-    .filter((ds) => RulesDataSourceTypes.includes(ds.type))
+    .filter((ds) => RulesDataSourceTypes.includes(ds.type) && ds.jsonData.manageAlerts !== false)
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
