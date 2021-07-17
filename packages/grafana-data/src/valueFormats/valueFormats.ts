@@ -41,53 +41,31 @@ let categories: ValueFormatCategory[] = [];
 const index: ValueFormatterIndex = {};
 let hasBuiltIndex = false;
 
+const RE_EXACT = /\.0+$/;
+const RE_EXPON = /e/;
+
 export function toFixed(value: number, decimals?: DecimalCount): string {
-  if (value === null) {
+  if (value == null) {
     return '';
   }
 
-  if (value === Number.NEGATIVE_INFINITY || value === Number.POSITIVE_INFINITY) {
+  if (!isFinite(value)) {
     return value.toLocaleString();
   }
 
-  if (decimals === null || decimals === undefined) {
-    decimals = getDecimalsForValue(value);
+  if (decimals == null) {
+    let valStr = value.toPrecision(3);
+
+    if (RE_EXACT.test(valStr) && +valStr === value) {
+      valStr = '' + value;
+    } else if (RE_EXPON.test(valStr)) {
+      valStr = '' + +valStr;
+    }
+
+    return valStr;
   }
 
-  const factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
-  const formatted = String(Math.round(value * factor) / factor);
-
-  // if exponent return directly
-  if (formatted.indexOf('e') !== -1 || value === 0) {
-    return formatted;
-  }
-
-  const decimalPos = formatted.indexOf('.');
-  const precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
-  if (precision < decimals) {
-    return (precision ? formatted : formatted + '.') + String(factor).substr(1, decimals - precision);
-  }
-
-  return formatted;
-}
-
-function getDecimalsForValue(value: number): number {
-  const log10 = Math.floor(Math.log(Math.abs(value)) / Math.LN10);
-  let dec = -log10 + 1;
-  const magn = Math.pow(10, -dec);
-  const norm = value / magn; // norm is between 1.0 and 10.0
-
-  // special case for 2.5, requires an extra decimal
-  if (norm > 2.25) {
-    ++dec;
-  }
-
-  if (value % 1 === 0) {
-    dec = 0;
-  }
-
-  const decimals = Math.max(0, dec);
-  return decimals;
+  return value.toFixed(Math.max(0, decimals));
 }
 
 export function toFixedScaled(value: number, decimals: DecimalCount, ext?: string): FormattedValue {
