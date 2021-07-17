@@ -88,6 +88,11 @@ const (
 	// Datasources actions
 	ActionDatasourcesExplore = "datasources:explore"
 
+	//API key actions
+	ActionApikeyList   = "apikey:list"
+	ActionApikeyAdd    = "apikey:add"
+	ActionApikeyRemove = "apikey:remove"
+
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"
 

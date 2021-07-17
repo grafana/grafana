@@ -254,10 +254,10 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// auth api keys
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
-			keysRoute.Get("/", routing.Wrap(GetAPIKeys))
-			keysRoute.Post("/", quota("api_key"), bind(models.AddApiKeyCommand{}), routing.Wrap(hs.AddAPIKey))
-			keysRoute.Delete("/:id", routing.Wrap(DeleteAPIKey))
-		}, reqOrgAdmin)
+			keysRoute.Get("/", authorize(reqOrgAdmin, accesscontrol.ActionApikeyList), routing.Wrap(GetAPIKeys))
+			keysRoute.Post("/", authorize(reqOrgAdmin, accesscontrol.ActionApikeyAdd), quota("api_key"), bind(models.AddApiKeyCommand{}), routing.Wrap(hs.AddAPIKey))
+			keysRoute.Delete("/:id", authorize(reqOrgAdmin, accesscontrol.ActionApikeyRemove), routing.Wrap(DeleteAPIKey))
+		})
 
 		// Preferences
 		apiRoute.Group("/preferences", func(prefRoute routing.RouteRegister) {

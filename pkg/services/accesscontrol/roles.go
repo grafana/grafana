@@ -158,6 +158,34 @@ var usersAdminEditRole = RoleDTO{
 	}),
 }
 
+var apikeyAdminReadRole = RoleDTO{
+	Version:     1,
+	Name:        apikeyAdminRead,
+	Description: "Gives access to list apikeys.",
+	Permissions: []Permission{
+		{
+			Action: ActionApikeyList,
+			Scope:  ScopeUsersAll,
+		},
+	},
+}
+
+var apikeyAdminEditRole = RoleDTO{
+	Version:     1,
+	Name:        apikeyAdminEdit,
+	Description: "Gives access to add and delete api keys.",
+	Permissions: ConcatPermissions(apikeyAdminReadRole.Permissions, []Permission{
+		{
+			Action: ActionApikeyAdd,
+			Scope:  ScopeUsersAll,
+		},
+		{
+			Action: ActionApikeyRemove,
+			Scope:  ScopeUsersAll,
+		},
+	}),
+}
+
 var provisioningAdminRole = RoleDTO{
 	Name:    provisioningAdmin,
 	Version: 1,
@@ -209,6 +237,9 @@ const (
 	ldapAdminEdit = "fixed:ldap:admin:edit"
 	ldapAdminRead = "fixed:ldap:admin:read"
 
+	apikeyAdminEdit = "fixed:apikey:admin:edit"
+	apikeyAdminRead = "fixed:apikey:admin:read"
+
 	provisioningAdmin = "fixed:provisioning:admin"
 )
 
@@ -227,6 +258,8 @@ var FixedRoleGrants = map[string][]string{
 		usersOrgRead,
 	},
 	string(models.ROLE_ADMIN): {
+		apikeyAdminEdit,
+		apikeyAdminRead,
 		usersOrgEdit,
 		usersOrgRead,
 	},
