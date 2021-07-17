@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
 
@@ -85,7 +87,9 @@ func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notifica
 		return err
 	}
 
-	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
+	if recv != nil {
+		amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
+	}
 	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, route)
 
 	return nil
@@ -95,9 +99,7 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 	receiverName := getMigratedReceiverNameFromRuleUID(ruleUid)
 
 	portedChannels := []*PostableGrafanaReceiver{}
-	receiver := &PostableApiReceiver{
-		Name: receiverName,
-	}
+	var receiver *PostableApiReceiver
 
 	addedChannels := map[*notificationChannel]struct{}{}
 
@@ -127,26 +129,40 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 		return nil
 	}
 
-	for _, n := range channelUids {
-		c, ok := allChannels[n]
-		if !ok {
-			continue
-		}
-
-		if err := addChannel(c); err != nil {
-			return nil, nil, err
-		}
+	chanKey, err := makeKeyForChannelGroup(channelUids)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	for _, c := range defaultChannels {
-		if _, ok := addedChannels[c]; !ok {
+	if rn, ok := m.portedChannelGroups[chanKey]; ok {
+		// We have ported these exact set of channels already. Re-use it.
+		receiverName = rn
+	} else {
+		for _, n := range channelUids {
+			c, ok := allChannels[n]
+			if !ok {
+				continue
+			}
+
 			if err := addChannel(c); err != nil {
 				return nil, nil, err
 			}
 		}
-	}
 
-	receiver.GrafanaManagedReceivers = portedChannels
+		for _, c := range defaultChannels {
+			if _, ok := addedChannels[c]; !ok {
+				if err := addChannel(c); err != nil {
+					return nil, nil, err
+				}
+			}
+		}
+
+		m.portedChannelGroups[chanKey] = receiverName
+		receiver = &PostableApiReceiver{
+			Name:                    receiverName,
+			GrafanaManagedReceivers: portedChannels,
+		}
+	}
 
 	n, v := getLabelForRouteMatching(ruleUid)
 	mat, err := labels.NewMatcher(labels.MatchEqual, n, v)
@@ -159,6 +175,25 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 	}
 
 	return receiver, route, nil
+}
+
+// makeKeyForChannelGroup generates a unique for this group of channels UIDs.
+func makeKeyForChannelGroup(channelUids []interface{}) (string, error) {
+	uids := make([]string, 0, len(channelUids))
+	for _, u := range channelUids {
+		switch uid := u.(type) {
+		case string:
+			uids = append(uids, uid)
+		case int:
+			uids = append(uids, fmt.Sprintf("%d", uid))
+		default:
+			// Should never happen.
+			return "", errors.New("unknown channel UID type")
+		}
+	}
+
+	sort.Strings(uids)
+	return strings.Join(uids, "::sep::"), nil
 }
 
 func (m *migration) updateDefaultAndUnmigratedChannels(amConfig *PostableUserConfig, allChannels map[interface{}]*notificationChannel, defaultChannels []*notificationChannel) error {
@@ -215,7 +250,9 @@ func (m *migration) updateDefaultAndUnmigratedChannels(amConfig *PostableUserCon
 
 	route.Matchers = nil // Don't need matchers for root route.
 	route.Routes = amConfig.AlertmanagerConfig.Route.Routes
-	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
+	if recv != nil {
+		amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
+	}
 	amConfig.AlertmanagerConfig.Route = route
 
 	return nil
