@@ -95,6 +95,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   };
 
   let barsPctLayout: Array<null | { offs: number[]; size: number[] }> = [];
+  let barRects: Rect[] = [];
 
   // minimum available space for labels between bar end and plotting area bound (in canvas pixels)
   let vSpace = Infinity;
@@ -112,17 +113,22 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       },
     },
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
-      let val = u.data[seriesIdx][dataIdx];
+      // collect bar geometry
 
+      let val = u.data[seriesIdx][dataIdx]!;
+
+      // accum min space abvailable for labels
       if (isXHorizontal) {
-        vSpace = Math.min(vSpace, val! < 0 ? u.bbox.top + u.bbox.height - (top + hgt) : top - u.bbox.top);
+        vSpace = Math.min(vSpace, val < 0 ? u.bbox.top + u.bbox.height - (top + hgt) : top - u.bbox.top);
         hSpace = wid;
       } else {
         vSpace = hgt;
-        hSpace = Math.min(hSpace, val! < 0 ? lft - u.bbox.left : u.bbox.left + u.bbox.width - (lft + wid));
+        hSpace = Math.min(hSpace, val < 0 ? lft - u.bbox.left : u.bbox.left + u.bbox.width - (lft + wid));
       }
 
-      qt.add({ x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx });
+      let barRect = { x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx };
+      qt.add(barRect);
+      barRects.push(barRect);
     },
   });
 
@@ -147,222 +153,49 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     });
 
     barsPctLayout = ([null] as any).concat(distrTwo(u.data[0].length, u.data.length - 1));
+    barRects.length = 0;
     vSpace = hSpace = Infinity;
   };
 
   // Collect label sizings
-  const drawPoints = (u: uPlot, sidx: number) => {
-    const textAlign = isXHorizontal ? 'center' : 'left';
-    let textBaseline;
-    uPlot.orient(u, sidx, (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
-      const _dir = dir * (isXHorizontal ? 1 : -1);
-      const wid = Math.round(barsPctLayout[sidx]!.size[0] * xDim);
-      let y0Pos = valToPosY(0, scaleY, yDim, yOff);
-
-      barsPctLayout[sidx]!.offs.forEach((offs, ix) => {
-        const value = dataY[ix];
-
-        if (value != null) {
-          const valueOffset = value < 0 ? LABEL_OFFSET : -LABEL_OFFSET;
-          let x0 = xDim * offs;
-          let lft = Math.round(xOff + (_dir === ScaleDirection.Up ? x0 : xDim - x0 - wid));
-          let yPos = valToPosY(value, scaleY, yDim, yOff);
-          let btm = Math.round(Math.max(yPos, y0Pos));
-          let top = Math.round(Math.min(yPos, y0Pos));
-          let barWid = Math.round(wid);
-          let barHgt = btm - top;
-
-          let x = isXHorizontal ? Math.round(lft + barWid / 2) : Math.round(yPos);
-          let y = isXHorizontal ? Math.round(yPos) : Math.round(lft + barWid / 2);
-
-          let width = isXHorizontal ? barWid : barHgt;
-          let height = isXHorizontal ? barHgt : barWid;
-
-          let availableSpaceForText;
-          if (isXHorizontal) {
-            availableSpaceForText =
-              -LABEL_OFFSET + (value! >= 0 ? y - u.bbox.top : u.bbox.top + u.bbox.height - y) / devicePixelRatio;
-          } else {
-            availableSpaceForText =
-              -LABEL_OFFSET + (value! >= 0 ? u.bbox!.width - x + u.bbox.left : x - u.bbox.left) / devicePixelRatio;
-          }
-
-          const formattedValue = formatValue(sidx, value);
-
-          if (hasAutoValueSize) {
-            const size = isXHorizontal
-              ? calculateFontSize(
-                  formattedValue,
-                  (width / devicePixelRatio) * BAR_FONT_SIZE_RATIO,
-                  availableSpaceForText * BAR_FONT_SIZE_RATIO,
-                  1
-                )
-              : calculateFontSize(
-                  formattedValue,
-                  availableSpaceForText,
-                  (height * BAR_FONT_SIZE_RATIO) / devicePixelRatio,
-                  1
-                );
-            if (size <= fontSize) {
-              fontSize = Math.round(size);
-            }
-          }
-
-          if (isXHorizontal) {
-            if (value < 0) {
-              textBaseline = 'top';
-            } else {
-              textBaseline = 'alphabetic';
-            }
-          } else {
-            textBaseline = 'alphabetic';
-          }
-
-          // Collect labels szes
-          labelsSizing.push({
-            value,
-            barWidth: width,
-            barHeight: height,
-            textBaseline: textBaseline as CanvasTextBaseline,
-            x: !isXHorizontal ? x - valueOffset * devicePixelRatio : x, // canvas px
-            y: isXHorizontal ? y + valueOffset * devicePixelRatio : y, // canvas px
-            availableSpaceForText, // in css px
-            formattedValue,
-            textAlign,
-          });
-        }
-      });
-    });
-    return undefined;
-  };
+  const drawPoints = (u: uPlot, sidx: number) => {};
 
   // uPlot hook to draw the labels on the bar chart.
   // Uses label sizings collected in drawClear hook.
   const draw = (u: uPlot) => {
-    let shouldSkipLabelsRendering = false;
-    let minFontSize = fontSize < VALUE_MIN_FONT_SIZE ? VALUE_MIN_FONT_SIZE : fontSize;
-    const textMeasurements = [];
+    u.ctx.fillStyle = theme.colors.text.primary;
 
-    if (showValue === BarValueVisibility.Never) {
-      return false;
-    }
+    barRects.forEach((r) => {
+      let value = u.data[r.sidx][r.didx];
+      let text = formatValue(r.sidx, value);
 
-    // collect final text measurements
-    for (let i = 0; i < labelsSizing.length; i++) {
-      const label = labelsSizing[i];
-      const textMeasurement = measureText(label.formattedValue, minFontSize * devicePixelRatio);
-      let actualLineHeight = textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent;
-      textMeasurements.push(textMeasurement);
+      if (hasAutoValueSize) {
+        const size = calculateFontSize(
+          text,
+          hSpace * (isXHorizontal ? BAR_FONT_SIZE_RATIO : 1) - (isXHorizontal ? 0 : LABEL_OFFSET),
+          vSpace * (isXHorizontal ? 1 : BAR_FONT_SIZE_RATIO) - (isXHorizontal ? LABEL_OFFSET : 0),
+          1
+        );
 
-      // in Auto value mode skip rendering if any of the label has no sufficient space available
-      if (showValue === BarValueVisibility.Auto) {
-        if (isXHorizontal) {
-          if (
-            actualLineHeight > label.availableSpaceForText * devicePixelRatio ||
-            textMeasurement.width > label.barWidth
-          ) {
-            shouldSkipLabelsRendering = true;
-            break;
-          }
-        } else {
-          if (
-            textMeasurement.width / devicePixelRatio > label.availableSpaceForText ||
-            actualLineHeight > label.barHeight
-          ) {
-            shouldSkipLabelsRendering = true;
-            break;
-          }
+        if (size <= fontSize) {
+          fontSize = Math.round(size);
         }
       }
-    }
 
-    if (shouldSkipLabelsRendering) {
-      return false;
-    }
+      u.ctx.textAlign = isXHorizontal ? 'center' : value < 0 ? 'right' : 'left';
+      u.ctx.textBaseline = isXHorizontal ? (value < 0 ? 'top' : 'bottom') : 'middle';
 
-    // render labels
-    for (let i = 0; i < labelsSizing.length; i++) {
-      const label = labelsSizing[i];
-      if (!label.value) {
-        continue;
-      }
-
-      const textMeasurement = textMeasurements[i];
-      let actualLineHeight = textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent;
-      let textXPos = label.x;
-
-      if (!isXHorizontal && label.value < 0) {
-        textXPos = label.x - textMeasurements[i].width;
-      }
-
-      u.ctx.fillStyle = theme.colors.text.primary;
+      let minFontSize = fontSize < VALUE_MIN_FONT_SIZE ? VALUE_MIN_FONT_SIZE : fontSize;
       u.ctx.font = `${minFontSize * devicePixelRatio}px ${theme.typography.fontFamily}`;
-      u.ctx.textAlign = label.textAlign;
-      u.ctx.textBaseline = label.textBaseline;
-      u.ctx.fillText(label.formattedValue, textXPos, isXHorizontal ? label.y : label.y + actualLineHeight / 2);
 
-      // Sizing debug - will probably be useful in the future :)
-      // u.ctx.beginPath();
-      // u.ctx.strokeStyle = '#00ff00';
-      // if (isXHorizontal) {
-      //   u.ctx.moveTo(u.bbox.left, label.y);
-      //   u.ctx.lineTo(u.bbox.left + u.bbox.width, label.y);
-      // } else {
-      //   u.ctx.moveTo(u.bbox.left, label.y - actualLineHeight / 2);
-      //   u.ctx.lineTo(u.bbox.left + u.bbox.width, label.y - actualLineHeight / 2);
-      // }
-      // u.ctx.closePath();
-      // u.ctx.stroke();
-      //
-      // u.ctx.beginPath();
-      // u.ctx.strokeStyle = '#00ff00';
-      //
-      // if (isXHorizontal) {
-      //   u.ctx.moveTo(u.bbox.left, label.y + (label.value < 0 ? actualLineHeight : -actualLineHeight));
-      //   u.ctx.lineTo(u.bbox.left + u.bbox.width, label.y + (label.value < 0 ? actualLineHeight : -actualLineHeight));
-      // } else {
-      //   u.ctx.moveTo(u.bbox.left, label.y + actualLineHeight / 2);
-      //   u.ctx.lineTo(u.bbox.left + u.bbox.width, label.y + actualLineHeight / 2);
-      // }
-      // u.ctx.closePath();
-      // u.ctx.stroke();
+      u.ctx.fillText(
+        text,
+        u.bbox.left + (isXHorizontal ? r.x + r.w / 2 : value < 0 ? r.x - LABEL_OFFSET : r.x + r.w + LABEL_OFFSET),
+        u.bbox.top + (isXHorizontal ? (value < 0 ? r.y + r.h + LABEL_OFFSET : r.y - LABEL_OFFSET) : r.y + r.h / 2)
+      );
+    });
 
-      // if (isXHorizontal) {
-      //   if (label.value < 0) {
-      //     u.ctx.beginPath();
-      //     u.ctx.strokeStyle = '#ffff00';
-      //     u.ctx.moveTo(label.x, label.y);
-      //     u.ctx.lineTo(label.x, label.y + label.availableSpaceForText * devicePixelRatio);
-      //     u.ctx.lineTo(label.x + 20, label.y + label.availableSpaceForText * devicePixelRatio);
-      //     u.ctx.stroke();
-      //   } else {
-      //     u.ctx.beginPath();
-      //     u.ctx.strokeStyle = '#ffff00';
-      //     u.ctx.moveTo(label.x, label.y);
-      //     u.ctx.lineTo(label.x, label.y - label.availableSpaceForText * devicePixelRatio);
-      //     u.ctx.lineTo(label.x - 20, label.y - label.availableSpaceForText * devicePixelRatio);
-      //     u.ctx.stroke();
-      //   }
-      // } else {
-      //   if (label.value < 0) {
-      //     u.ctx.beginPath();
-      //     u.ctx.strokeStyle = '#ffff00';
-      //     u.ctx.moveTo(label.x, label.y);
-      //     u.ctx.lineTo(label.x - label.availableSpaceForText * devicePixelRatio, label.y);
-      //     u.ctx.lineTo(label.x - label.availableSpaceForText * devicePixelRatio, label.y - 20);
-      //     u.ctx.stroke();
-      //   } else {
-      //     u.ctx.beginPath();
-      //     u.ctx.strokeStyle = '#ffff00';
-      //     u.ctx.moveTo(label.x, label.y);
-      //     u.ctx.lineTo(label.x + label.availableSpaceForText * devicePixelRatio, label.y);
-      //     u.ctx.lineTo(label.x + label.availableSpaceForText * devicePixelRatio, label.y - 20);
-      //     u.ctx.stroke();
-      //   }
-      // }
-    }
-
-    return false;
+    return undefined;
   };
 
   // handle hover interaction with quadtree probing

@@ -23353,9 +23353,9 @@ update-notifier@^2.5.0:
     semver-diff "^2.0.0"
     xdg-basedir "^3.0.0"
 
-uplot@leeoniya/uPlot#901d2985e9e110762d00d2185afc571c93d20697:
+uplot@leeoniya/uPlot#fecf43b4521e53eb2916a8b7eb3fd48d19f7ff7b:
   version "1.6.13"
-  resolved "https://codeload.github.com/leeoniya/uPlot/tar.gz/901d2985e9e110762d00d2185afc571c93d20697"
+  resolved "https://codeload.github.com/leeoniya/uPlot/tar.gz/fecf43b4521e53eb2916a8b7eb3fd48d19f7ff7b"
 
 upper-case@^1.1.1:
   version "1.1.3"
