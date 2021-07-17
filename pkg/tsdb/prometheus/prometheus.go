@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 	"github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 )
@@ -35,19 +35,9 @@ type PrometheusExecutor struct {
 }
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
-func New(provider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
+func New(provider httpclient.Provider, cfg *setting.Cfg) func(*models.DataSource) (plugins.DataPlugin, error) {
 	return func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-		transport, err := dsInfo.GetHTTPTransport(provider, customQueryParametersMiddleware(plog))
-		if err != nil {
-			return nil, err
-		}
-
-		cfg := api.Config{
-			Address:      dsInfo.Url,
-			RoundTripper: transport,
-		}
-
-		client, err := api.NewClient(cfg)
+		client, err := newAPIClient(provider, dsInfo, cfg)
 		if err != nil {
 			return nil, err
 		}
