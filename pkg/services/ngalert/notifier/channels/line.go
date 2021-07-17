@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
@@ -24,7 +23,7 @@ var (
 func NewLineNotifier(model *NotificationChannelConfig, t *template.Template) (*LineNotifier, error) {
 	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
 	if token == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find token in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find token in settings"}
 	}
 
 	return &LineNotifier{

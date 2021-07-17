@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestOpsgenieNotifier(t *testing.T) {
@@ -29,7 +28,7 @@ func TestOpsgenieNotifier(t *testing.T) {
 		settings     string
 		alerts       []*types.Alert
 		expMsg       string
-		expInitError error
+		expInitError string
 		expMsgError  error
 	}{
 		{
@@ -136,8 +135,7 @@ func TestOpsgenieNotifier(t *testing.T) {
 				"source": "Grafana",
 				"tags": ["alertname:alert1"]
 			}`,
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		},
 		{
 			name:     "Resolved is not sent when auto close is false",
@@ -155,7 +153,7 @@ func TestOpsgenieNotifier(t *testing.T) {
 		{
 			name:         "Error when incorrect settings",
 			settings:     `{}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find api key property in settings"},
+			expInitError: `failed to validate receiver "opsgenie_testing" of type "opsgenie": could not find api key property in settings`,
 		},
 	}
 
@@ -171,9 +169,9 @@ func TestOpsgenieNotifier(t *testing.T) {
 			}
 
 			pn, err := NewOpsgenieNotifier(m, tmpl)
-			if c.expInitError != nil {
+			if c.expInitError != "" {
 				require.Error(t, err)
-				require.Equal(t, c.expInitError.Error(), err.Error())
+				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)

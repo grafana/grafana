@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestVictoropsNotifier(t *testing.T) {
@@ -28,7 +27,7 @@ func TestVictoropsNotifier(t *testing.T) {
 		settings     string
 		alerts       []*types.Alert
 		expMsg       string
-		expInitError error
+		expInitError string
 		expMsgError  error
 	}{
 		{
@@ -50,8 +49,7 @@ func TestVictoropsNotifier(t *testing.T) {
 			  "monitoring_tool": "Grafana v",
 			  "state_message": "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n"
 			}`,
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name:     "Multiple alerts",
 			settings: `{"url": "http://localhost"}`,
@@ -76,12 +74,11 @@ func TestVictoropsNotifier(t *testing.T) {
 			  "monitoring_tool": "Grafana v",
 			  "state_message": "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\n\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2\n"
 			}`,
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name:         "Error in initing, no URL",
 			settings:     `{}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find victorops url property in settings"},
+			expInitError: `failed to validate receiver "victorops_testing" of type "victorops": could not find victorops url property in settings`,
 		},
 	}
 
@@ -97,9 +94,9 @@ func TestVictoropsNotifier(t *testing.T) {
 			}
 
 			pn, err := NewVictoropsNotifier(m, tmpl)
-			if c.expInitError != nil {
+			if c.expInitError != "" {
 				require.Error(t, err)
-				require.Equal(t, c.expInitError.Error(), err.Error())
+				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
