@@ -2,12 +2,12 @@ import React, { useCallback, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { LogRows, CustomScrollbar, LogLabels, useStyles2 } from '@grafana/ui';
 import { PanelProps, Field, Labels, GrafanaTheme2 } from '@grafana/data';
-import { Options } from './types';
+import { PanelOptions } from './models.gen';
 import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { COMMON_LABELS } from '../../../core/logs_model';
 
-interface LogsPanelProps extends PanelProps<Options> {}
+interface LogsPanelProps extends PanelProps<PanelOptions> {}
 
 export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   data,
