@@ -9,19 +9,25 @@ interface Props {
   onTimeZoneChange: (timeZone: TimeZone) => void;
   onRefreshIntervalChange: (interval: string[]) => void;
   onNowDelayChange: (nowDelay: string) => void;
+  onMaxTimeRangeChange: (maxTimeRange: string) => void;
+  onOldestFromChange: (oldestFrom: string) => void;
   onHideTimePickerChange: (hide: boolean) => void;
   refreshIntervals: string[];
   timePickerHidden: boolean;
   nowDelay: string;
+  maxTimeRange: string;
+  oldestFrom: string;
   timezone: TimeZone;
 }
 
 interface State {
   isNowDelayValid: boolean;
+  isMaxTimeRangeValid: boolean;
+  isOldestFromValid: boolean;
 }
 
 export class TimePickerSettings extends PureComponent<Props, State> {
-  state: State = { isNowDelayValid: true };
+  state: State = { isNowDelayValid: true, isMaxTimeRangeValid: true, isOldestFromValid: true };
 
   onNowDelayChange = (event: React.FormEvent<HTMLInputElement>) => {
     const value = event.currentTarget.value;
@@ -37,6 +43,38 @@ export class TimePickerSettings extends PureComponent<Props, State> {
     }
 
     this.setState({ isNowDelayValid: false });
+  };
+
+  onMaxTimeRangeChange = (event: React.FormEvent<HTMLInputElement>) => {
+    const value = event.currentTarget.value;
+
+    if (isEmpty(value)) {
+      this.setState({ isMaxTimeRangeValid: true });
+      return this.props.onMaxTimeRangeChange(value);
+    }
+
+    if (value.match(/^[1-9]\d*[yMwdhms]$/)) {
+      this.setState({ isMaxTimeRangeValid: true });
+      return this.props.onMaxTimeRangeChange(value);
+    }
+
+    this.setState({ isMaxTimeRangeValid: false });
+  };
+
+  onOldestFromChange = (event: React.FormEvent<HTMLInputElement>) => {
+    const value = event.currentTarget.value;
+
+    if (isEmpty(value)) {
+      this.setState({ isOldestFromValid: true });
+      return this.props.onOldestFromChange(value);
+    }
+
+    if (value.match(/^[1-9]\d*[yMwdhms]$/)) {
+      this.setState({ isOldestFromValid: true });
+      return this.props.onOldestFromChange(value);
+    }
+
+    this.setState({ isOldestFromValid: false });
   };
 
   onHideTimePickerChange = () => {
@@ -74,6 +112,26 @@ export class TimePickerSettings extends PureComponent<Props, State> {
             placeholder="0m"
             onChange={this.onNowDelayChange}
             defaultValue={this.props.nowDelay}
+          />
+        </Field>
+        <Field
+           label="Max time range"
+           description="Prevent users from choosing a time range larger than a specified time interval. The supported units are y(years), M(months), w(weeks), d(days), h(hours), m(minutes), s(seconds)."
+        >
+          <Input
+            invalid={!this.state.isMaxTimeRangeValid}
+            onChange={this.onMaxTimeRangeChange}
+            defaultValue={this.props.maxTimeRange}
+          />
+        </Field>
+        <Field
+           label="Oldest 'From' now -"
+           description="Limit how far back the start of the time range can go from now. The supported units are y(years), M(months), w(weeks), d(days), h(hours), m(minutes), s(seconds)."
+        >
+          <Input
+            invalid={!this.state.isOldestFromValid}
+            onChange={this.onOldestFromChange}
+            defaultValue={this.props.oldestFrom}
           />
         </Field>
         <Field label="Hide time picker">
