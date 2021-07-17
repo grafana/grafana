@@ -38,9 +38,11 @@ import {
   PromQueryRequest,
   PromScalarData,
   PromVectorData,
+  StepMode,
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
+import { DEFAULT_STEP_MODE } from './components/PromQueryEditor';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const EXEMPLARS_NOT_AVAILABLE = 'Exemplars for this data source are not available.';
@@ -410,11 +412,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       end: 0,
     };
     const range = Math.ceil(end - start);
-
+    // target.stepMode specifies whether to use min, max or exact step
+    const stepMode = target.stepMode || (DEFAULT_STEP_MODE.value as StepMode);
     // options.interval is the dynamically calculated interval
     let interval: number = rangeUtil.intervalToSeconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query, or same as interval otherwise.
-    const minInterval = rangeUtil.intervalToSeconds(
+    const stepInterval = rangeUtil.intervalToSeconds(
       this.templateSrv.replace(target.interval || options.interval, options.scopedVars)
     );
     // Scrape interval as specified for the query ("Min step") or otherwise taken from the datasource.
@@ -425,7 +428,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
-    const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
+    const adjustedInterval = this.adjustInterval(interval, stepInterval, range, intervalFactor, stepMode);
     let scopedVars = {
       ...options.scopedVars,
       ...this.getRangeScopedVars(options.range),
@@ -478,7 +481,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
   }
 
-  adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number) {
+  adjustInterval(
+    dynamicInterval: number,
+    stepInterval: number,
+    range: number,
+    intervalFactor: number,
+    stepMode: StepMode
+  ) {
     // Prometheus will drop queries that might return more than 11000 data points.
     // Calculate a safe interval as an additional minimum to take into account.
     // Fractional safeIntervals are allowed, however serve little purpose if the interval is greater than 1
@@ -487,7 +496,20 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     if (safeInterval > 1) {
       safeInterval = Math.ceil(safeInterval);
     }
-    return Math.max(interval * intervalFactor, minInterval, safeInterval);
+
+    //Calculate adjusted interval based on the current step option
+    let adjustedInterval = safeInterval;
+    if (stepMode === 'min') {
+      adjustedInterval = Math.max(dynamicInterval * intervalFactor, stepInterval, safeInterval);
+    } else if (stepMode === 'max') {
+      adjustedInterval = Math.min(dynamicInterval * intervalFactor, stepInterval);
+      if (adjustedInterval < safeInterval) {
+        adjustedInterval = safeInterval;
+      }
+    } else if (stepMode === 'exact') {
+      adjustedInterval = Math.max(stepInterval * intervalFactor, safeInterval);
+    }
+    return adjustedInterval;
   }
 
   performTimeSeriesQuery(query: PromQueryRequest, start: number, end: number) {
