@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/plugins"
 )
 
 type ResponseParser struct{}
@@ -23,19 +23,21 @@ func init() {
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$\s*([\@\/\w-]+?)*`)
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
-func (rp *ResponseParser) Parse(buf io.ReadCloser, query *Query) plugins.DataQueryResult {
-	var queryRes plugins.DataQueryResult
+func (rp *ResponseParser) Parse(buf io.ReadCloser, query *Query) *backend.QueryDataResponse {
+	resp := backend.NewQueryDataResponse()
+	queryRes := backend.DataResponse{}
 
 	response, jsonErr := parseJSON(buf)
 	if jsonErr != nil {
 		queryRes.Error = jsonErr
-		return queryRes
+		resp.Responses["A"] = queryRes
+		return resp
 	}
 
 	if response.Error != "" {
 		queryRes.Error = fmt.Errorf(response.Error)
-		return queryRes
+		resp.Responses["A"] = queryRes
+		return resp
 	}
 
 	frames := data.Frames{}
@@ -45,9 +47,10 @@ func (rp *ResponseParser) Parse(buf io.ReadCloser, query *Query) plugins.DataQue
 			queryRes.Error = fmt.Errorf(result.Error)
 		}
 	}
-	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
+	queryRes.Frames = frames
+	resp.Responses["A"] = queryRes
 
-	return queryRes
+	return resp
 }
 
 func parseJSON(buf io.ReadCloser) (Response, error) {
