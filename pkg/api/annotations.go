@@ -166,6 +166,7 @@ func UpdateAnnotation(c *models.ReqContext, cmd dtos.UpdateAnnotationsCmd) respo
 		EpochEnd: cmd.TimeEnd,
 		Text:     cmd.Text,
 		Tags:     cmd.Tags,
+		Data:     cmd.Data,
 	}
 
 	if err := repo.Update(&item); err != nil {
@@ -198,6 +199,7 @@ func PatchAnnotation(c *models.ReqContext, cmd dtos.PatchAnnotationsCmd) respons
 		EpochEnd: items[0].TimeEnd,
 		Text:     items[0].Text,
 		Tags:     items[0].Tags,
+		Data:     items[0].Data,
 	}
 
 	if cmd.Tags != nil {
@@ -214,6 +216,10 @@ func PatchAnnotation(c *models.ReqContext, cmd dtos.PatchAnnotationsCmd) respons
 
 	if cmd.TimeEnd > 0 && cmd.TimeEnd != existing.EpochEnd {
 		existing.EpochEnd = cmd.TimeEnd
+	}
+
+	if cmd.Data != nil {
+		existing.Data = cmd.Data
 	}
 
 	if err := repo.Update(&existing); err != nil {
