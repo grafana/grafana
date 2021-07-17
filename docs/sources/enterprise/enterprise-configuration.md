@@ -361,6 +361,19 @@ This value limits the size of a single cache value. If a cache value (or query r
 
 The default is `1`.
 
+## [caching.encryption]
+### enabled
+
+Setting 'enabled' to `true` allows users to encrypt the query values in the cache.
+
+This value is `false` by default.
+
+### encryption_key
+
+The string used to generate a key for encrypting the cache. In order for encrypted cache data to persist between Grafana restarts, the key must be specified. If left empty when encryption is enabled, the key will be automatically generated on startup and the cache will be cleared upon restarts.
+
+The default is `""`.
+
 ## [caching.memory]
 
 ### gc_interval
@@ -371,7 +384,7 @@ The default is `1m`.
 
 ### max_size_mb
 
-The maximum size of the in-memory cache in megabytes. Once this size is reached, new cache items are rejected. For more flexible control over cache eviction policies and size, use the Redis or Memcached backend. 
+The maximum size of the in-memory cache in megabytes. Once this size is reached, new cache items are rejected. For more flexible control over cache eviction policies and size, use the Redis or Memcached backend.
 
 To disable the maximum, set this value to `0`.
 
