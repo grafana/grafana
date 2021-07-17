@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	macaron "gopkg.in/macaron.v1"
@@ -20,6 +21,8 @@ var (
 	ReqEditorRole          = RoleAuth(models.ROLE_EDITOR, models.ROLE_ADMIN)
 	ReqOrgAdmin            = RoleAuth(models.ROLE_ADMIN)
 )
+
+type Middleware = func(next http.Handler) http.Handler
 
 func HandleNoCacheHeader(ctx *models.ReqContext) {
 	ctx.SkipCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
