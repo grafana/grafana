@@ -166,6 +166,17 @@ so must be recompiled to validate newly-added CUE files.`,
 			},
 		},
 	},
+	{
+		Name:   "cuetsy",
+		Usage:  "generate typeScript files from *.cue files in the project",
+		Action: runPluginCommand(cmd.generateDashboardTypeScripts),
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "dest",
+				Usage: "destination repository for typescript files",
+			},
+		},
+	},
 }
 
 var Commands = []*cli.Command{

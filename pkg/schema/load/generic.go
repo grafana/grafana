@@ -1,6 +1,7 @@
 package load
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"cuelang.org/go/cue"
@@ -88,8 +89,36 @@ func buildGenericScuemata(famval cue.Value) (schema.VersionedCueSchema, error) {
 		}
 		major++
 	}
-
+	if lastgvs.actual, err = prepare(lastgvs.actual); err != nil {
+		return nil, err
+	}
 	return first, nil
+}
+
+func prepare(iCUE cue.Value) (cue.Value, error) {
+	iter, err := iCUE.Fields(cue.Definitions(true))
+	if err != nil {
+		return iCUE, err
+	}
+	for iter.Next() {
+		a := iter.Value().Attribute("cuetsy")
+		_, found, err := a.Lookup(0, "targetType")
+		if a.Err() != nil || !found || err != nil {
+			inst, err := rt.Compile("intermedia", `_,@cuetsy(targetType="interface")`)
+			if err != nil {
+				return iCUE, err
+			}
+			iCUE = iCUE.FillPath(cue.ParsePath(iter.Label()), inst.Value())
+			b, _ := iter.Value().Unify(inst.Value()).MarshalJSON()
+			fmt.Println("<<<<<<<<<", string(b))
+		}
+		if err != nil {
+			return iCUE, err
+		}
+	}
+	b, _ := iCUE.MarshalJSON()
+	fmt.Println("<<<<<<<<<", string(b))
+	return iCUE, err
 }
 
 type genericVersionedSchema struct {
