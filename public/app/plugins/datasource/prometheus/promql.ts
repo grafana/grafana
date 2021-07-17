@@ -39,6 +39,11 @@ const AGGREGATION_OPERATORS: CompletionItem[] = [
     documentation: 'Calculate the average over dimensions',
   },
   {
+    label: 'group',
+    insertText: 'group',
+    documentation: 'All values in the resulting vector are 1',
+  },
+  {
     label: 'stddev',
     insertText: 'stddev',
     documentation: 'Calculate population standard deviation over dimensions',
@@ -91,6 +96,13 @@ export const FUNCTIONS = [
       'Returns an empty vector if the vector passed to it has any elements and a 1-element vector with the value 1 if the vector passed to it has no elements. This is useful for alerting on when no time series exist for a given metric name and label combination.',
   },
   {
+    insertText: 'absent_over_time',
+    label: 'absent_over_time',
+    detail: 'absent(v range-vector)',
+    documentation:
+      'Returns an empty vector if the range vector passed to it has any elements and a 1-element vector with the value 1 if the range vector passed to it has no elements.',
+  },
+  {
     insertText: 'ceil',
     label: 'ceil',
     detail: 'ceil(v instant-vector)',
@@ -102,6 +114,13 @@ export const FUNCTIONS = [
     detail: 'changes(v range-vector)',
     documentation:
       'For each input time series, `changes(v range-vector)` returns the number of times its value has changed within the provided time range as an instant vector.',
+  },
+  {
+    insertText: 'clamp',
+    label: 'clamp',
+    detail: 'clamp(v instant-vector, min scalar, max scalar)',
+    documentation:
+      'Clamps the sample values of all elements in `v` to have a lower limit of `min` and an upper limit of `max`.',
   },
   {
     insertText: 'clamp_max',
@@ -217,6 +236,14 @@ export const FUNCTIONS = [
       'Calculates the per-second instant rate of increase of the time series in the range vector. This is based on the last two data points. Breaks in monotonicity (such as counter resets due to target restarts) are automatically adjusted for.',
   },
   {
+    insertText: 'label_join',
+    label: 'label_join',
+    detail:
+      'label_join(v instant-vector, dst_label string, separator string, src_label_1 string, src_label_2 string, ...)',
+    documentation:
+      'For each timeseries in `v`, joins all the values of all the `src_labels` using `separator` and returns the timeseries with the label `dst_label` containing the joined value. There can be any number of `src_labels` in this function.',
+  },
+  {
     insertText: 'label_replace',
     label: 'label_replace',
     detail: 'label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)',
@@ -228,7 +255,7 @@ export const FUNCTIONS = [
     label: 'ln',
     detail: 'ln(v instant-vector)',
     documentation:
-      'calculates the natural logarithm for all elements in `v`.\nSpecial cases are:\n * `ln(+Inf) = +Inf`\n * `ln(0) = -Inf`\n * `ln(x < 0) = NaN`\n * `ln(NaN) = NaN`',
+      'Calculates the natural logarithm for all elements in `v`.\nSpecial cases are:\n * `ln(+Inf) = +Inf`\n * `ln(0) = -Inf`\n * `ln(x < 0) = NaN`\n * `ln(NaN) = NaN`',
   },
   {
     insertText: 'log2',
@@ -294,6 +321,13 @@ export const FUNCTIONS = [
       'Given a single-element input vector, `scalar(v instant-vector)` returns the sample value of that single element as a scalar. If the input vector does not have exactly one element, `scalar` will return `NaN`.',
   },
   {
+    insertText: 'sgn',
+    label: 'sgn',
+    detail: 'sgn(v instant-vector)',
+    documentation:
+      'Returns a vector with all sample values converted to their sign, defined as this: 1 if v is positive, -1 if v is negative and 0 if v is equal to zero.',
+  },
+  {
     insertText: 'sort',
     label: 'sort',
     detail: 'sort(v instant-vector)',
@@ -317,6 +351,13 @@ export const FUNCTIONS = [
     detail: 'time()',
     documentation:
       'Returns the number of seconds since January 1, 1970 UTC. Note that this does not actually return the current time, but the time at which the expression is to be evaluated.',
+  },
+  {
+    insertText: 'timestamp',
+    label: 'timestamp',
+    detail: 'timestamp(v instant-vector)',
+    documentation:
+      'Returns the timestamp of each of the samples of the given vector as the number of seconds since January 1, 1970 UTC.',
   },
   {
     insertText: 'vector',
@@ -377,6 +418,12 @@ export const FUNCTIONS = [
     label: 'stdvar_over_time',
     detail: 'stdvar_over_time(range-vector)',
     documentation: 'The population standard variance of the values in the specified interval.',
+  },
+  {
+    insertText: 'last_over_time',
+    label: 'last_over_time',
+    detail: 'last_over_time(range-vector)',
+    documentation: 'The most recent point value in specified interval.',
   },
 ];
 
