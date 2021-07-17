@@ -1,0 +1,17 @@
+apiVersion: 0
+
+channelRules:
+  - pattern: $TEST_VAR
+    config:
+      remoteWrite:
+        enabled: true
+        endpoint: "endpoint"
+        user: "user"
+        sampleMilliseconds: 1000
+    secure:
+      remoteWritePassword: "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA=="
+    version: 10
+
+deleteChannelRules:
+  - pattern: old-graphite3
+    orgId: 2

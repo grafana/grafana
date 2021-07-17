@@ -1,0 +1,4 @@
+purge_other_datasources: true
+channelRules:
+  - pattern: name2
+    orgId: 2

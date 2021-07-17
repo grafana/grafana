@@ -1,0 +1,11 @@
+# Should not be included
+
+apiVersion: 0
+
+#channelRules:
+#  - pattern: name
+#    version: 10
+#
+#deleteChannelRules:
+#  - pattern: old-graphite3
+#    orgId: 2

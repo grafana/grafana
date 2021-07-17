@@ -1,10 +1,15 @@
 package provisioning
 
-import "context"
+import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+)
 
 type Calls struct {
 	RunInitProvisioners                 []interface{}
 	ProvisionDatasources                []interface{}
+	ProvisionChannelRules               []interface{}
 	ProvisionPlugins                    []interface{}
 	ProvisionNotifications              []interface{}
 	ProvisionDashboards                 []interface{}
@@ -17,6 +22,7 @@ type ProvisioningServiceMock struct {
 	Calls                                   *Calls
 	RunInitProvisionersFunc                 func() error
 	ProvisionDatasourcesFunc                func() error
+	ProvisionChannelRulesFunc               func() error
 	ProvisionPluginsFunc                    func() error
 	ProvisionNotificationsFunc              func() error
 	ProvisionDashboardsFunc                 func() error
@@ -43,6 +49,14 @@ func (mock *ProvisioningServiceMock) ProvisionDatasources() error {
 	mock.Calls.ProvisionDatasources = append(mock.Calls.ProvisionDatasources, nil)
 	if mock.ProvisionDatasourcesFunc != nil {
 		return mock.ProvisionDatasourcesFunc()
+	}
+	return nil
+}
+
+func (mock *ProvisioningServiceMock) ProvisionChannelRules(_ *sqlstore.SQLStore) error {
+	mock.Calls.ProvisionChannelRules = append(mock.Calls.ProvisionChannelRules, nil)
+	if mock.ProvisionChannelRulesFunc != nil {
+		return mock.ProvisionChannelRulesFunc()
 	}
 	return nil
 }

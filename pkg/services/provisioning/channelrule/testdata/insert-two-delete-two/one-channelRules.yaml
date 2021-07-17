@@ -1,0 +1,4 @@
+channelRules:
+  - pattern: Prometheus
+deleteChannelRules:
+  - pattern: old-graphite

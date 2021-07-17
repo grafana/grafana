@@ -1,0 +1,11 @@
+apiVersion: 0
+
+channelRules:
+  - orgId: 1
+    pattern: prometheus
+  - pattern: Graphite
+  - orgId: 2
+    pattern: prometheus
+  - orgId: 2
+    pattern: Graphite
+

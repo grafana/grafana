@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/live/channelrule"
 	"github.com/grafana/grafana/pkg/services/live/database"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
@@ -72,7 +73,7 @@ type CoreGrafanaScope struct {
 }
 
 // GrafanaLive manages live real-time connections to Grafana (over WebSocket at this moment).
-// The main concept here is Channel. Connections can subscribe to many channels. Each channel
+// The main concept here is Pattern. Connections can subscribe to many channels. Each channel
 // can have different permissions and properties but once a connection subscribed to a channel
 // it starts receiving all messages published into this channel. Thus GrafanaLive is a PUB/SUB
 // server.
@@ -102,9 +103,11 @@ type GrafanaLive struct {
 
 	ManagedStreamRunner *managedstream.Runner
 
-	contextGetter    *liveplugin.ContextGetter
-	runStreamManager *runstream.Manager
-	storage          *database.Storage
+	runStreamManager   *runstream.Manager
+	messageStorage     *database.MessageStorage
+	channelRuleStorage *database.ChannelRuleStorage
+	channelConfigCache *channelrule.Cache
+	contextGetter      *liveplugin.ContextGetter
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
@@ -119,13 +122,22 @@ func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, e
 	return streamHandler, nil
 }
 
+func (g *GrafanaLive) MessageStorage() *database.MessageStorage {
+	return g.messageStorage
+}
+
+func (g *GrafanaLive) ChannelRuleStorage() *database.ChannelRuleStorage {
+	return g.channelRuleStorage
+}
+
 // AddMigration defines database migrations.
 // This is an implementation of registry.DatabaseMigrator.
 func (g *GrafanaLive) AddMigration(mg *migrator.Migrator) {
 	if g == nil || g.Cfg == nil || !g.Cfg.IsLiveConfigEnabled() {
 		return
 	}
-	database.AddLiveChannelMigrations(mg)
+	database.AddLiveMessageMigrations(mg)
+	database.AddLiveChannelRuleMigrations(mg)
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {
@@ -166,6 +178,13 @@ func (g *GrafanaLive) Init() error {
 	}
 	g.node = node
 
+	g.messageStorage = database.NewMessageStorage(g.SQLStore, g.CacheService)
+	g.channelRuleStorage, err = database.NewChannelRuleStorage(g.SQLStore)
+	if err != nil {
+		return err
+	}
+
+	g.channelConfigCache = channelrule.NewCache(g.channelRuleStorage)
 	if g.IsHA() {
 		// Configure HA with Redis. In this case Centrifuge nodes
 		// will be connected over Redis PUB/SUB. Presence will work
@@ -223,10 +242,9 @@ func (g *GrafanaLive) Init() error {
 		Publisher:   g.Publish,
 		ClientCount: g.ClientCount,
 	}
-	g.storage = database.NewStorage(g.SQLStore, g.CacheService)
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
-	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
+	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.messageStorage)
 
 	var managedStreamRunner *managedstream.Runner
 	if g.IsHA() {
@@ -240,11 +258,13 @@ func (g *GrafanaLive) Init() error {
 		managedStreamRunner = managedstream.NewRunner(
 			g.Publish,
 			managedstream.NewRedisFrameCache(redisClient),
+			g.channelConfigCache,
 		)
 	} else {
 		managedStreamRunner = managedstream.NewRunner(
 			g.Publish,
 			managedstream.NewMemoryFrameCache(),
+			g.channelConfigCache,
 		)
 	}
 

@@ -1,0 +1,4 @@
+channelRules:
+  - pattern: Graphite
+deleteChannelRules:
+  - pattern: old-graphite3
