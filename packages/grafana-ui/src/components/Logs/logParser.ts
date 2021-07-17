@@ -5,7 +5,7 @@ import { MAX_CHARACTERS } from './LogRowMessage';
 
 const memoizedGetParser = memoizeOne(getParser);
 
-type FieldDef = {
+export type FieldDef = {
   key: string;
   value: string;
   links?: Array<LinkModel<Field>>;
