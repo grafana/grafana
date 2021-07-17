@@ -100,7 +100,7 @@ require (
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210521203332-0cec03c779c1 // indirect
+	golang.org/x/sys v0.0.0-20210521203332-0cec03c779c1
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.org/x/tools v0.1.0
 	gonum.org/v1/gonum v0.9.1

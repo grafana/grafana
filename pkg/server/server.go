@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/process"
 	_ "github.com/grafana/grafana/pkg/infra/remotecache"
 	_ "github.com/grafana/grafana/pkg/infra/serverlock"
 	_ "github.com/grafana/grafana/pkg/infra/tracing"
@@ -306,6 +307,14 @@ func (s *Server) loadConfiguration() {
 		"branch", s.buildBranch,
 		"compiled", time.Unix(setting.BuildStamp, 0),
 	)
+
+	elevated, err := process.IsRunningWithElevatedPrivileges()
+	if err != nil {
+		s.log.Debug("Error checking server process execution privilege", "err", err)
+	}
+	if elevated {
+		s.log.Warn("Grafana server is running with elevated privileges. This is not recommended")
+	}
 
 	s.cfg.LogConfigSources()
 }
