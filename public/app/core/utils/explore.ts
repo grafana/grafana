@@ -180,7 +180,7 @@ enum ParseUrlStateIndex {
   SegmentsStart = 3,
 }
 
-export const safeParseJson = (text?: string): any | undefined => {
+export const safeParseJson = <T = any>(text?: string): T | undefined => {
   if (!text) {
     return;
   }
@@ -189,6 +189,7 @@ export const safeParseJson = (text?: string): any | undefined => {
     return JSON.parse(text);
   } catch (error) {
     console.error(error);
+    return;
   }
 };
 
@@ -207,13 +208,10 @@ export const safeStringifyValue = (value: any, space?: number) => {
 };
 
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
-  const parsed = safeParseJson(initial);
-  const errorResult: any = {
-    datasource: null,
+  const parsed = safeParseJson<ExploreUrlState>(initial);
+  const errorResult: ExploreUrlState = {
     queries: [],
     range: DEFAULT_RANGE,
-    mode: null,
-    originPanelId: null,
   };
 
   if (!parsed) {

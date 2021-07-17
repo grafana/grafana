@@ -1,12 +1,16 @@
 import { DataSourceSettings } from '@grafana/data';
 
-export const getMockDataSources = (amount: number) => {
-  const dataSources = [];
+export const getMockDataSources = (amount: number, props?: Partial<DataSourceSettings>) => {
+  const dataSources: DataSourceSettings[] = [];
 
   for (let i = 0; i < amount; i++) {
     dataSources.push({
+      uid: `uid${i}`,
       access: '',
       basicAuth: false,
+      basicAuthUser: '',
+      basicAuthPassword: '',
+      withCredentials: false,
       database: `database-${i}`,
       id: i,
       isDefault: false,
@@ -15,37 +19,17 @@ export const getMockDataSources = (amount: number) => {
       orgId: 1,
       password: '',
       readOnly: false,
+      typeName: 'Cloudwatch',
       type: 'cloudwatch',
       typeLogoUrl: 'public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png',
       url: '',
       user: '',
+      secureJsonFields: {},
+      ...props,
     });
   }
 
-  return dataSources as DataSourceSettings[];
+  return dataSources;
 };
 
-export const getMockDataSource = (): DataSourceSettings => {
-  return {
-    access: '',
-    basicAuth: false,
-    basicAuthUser: '',
-    basicAuthPassword: '',
-    withCredentials: false,
-    database: '',
-    id: 13,
-    uid: 'x',
-    isDefault: false,
-    jsonData: { authType: 'credentials', defaultRegion: 'eu-west-2' },
-    name: 'gdev-cloudwatch',
-    typeName: 'Cloudwatch',
-    orgId: 1,
-    password: '',
-    readOnly: false,
-    type: 'cloudwatch',
-    typeLogoUrl: 'public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png',
-    url: '',
-    user: '',
-    secureJsonFields: {},
-  };
-};
+export const getMockDataSource = () => getMockDataSources(1)[0];

@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import memoizeOne from 'memoize-one';
-import { DataQuery, ExploreUrlState, EventBusExtended, EventBusSrv } from '@grafana/data';
+import { DataQuery, EventBusExtended, EventBusSrv } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import store from 'app/core/store';
 import { lastSavedUrl, cleanupPaneAction } from './state/main';
@@ -100,7 +100,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
   const urlState = parseUrlState(props.urlQuery);
   const timeZone = getTimeZone(state.user);
 
-  const { datasource, queries, range: urlRange, originPanelId } = (urlState || {}) as ExploreUrlState;
+  const { datasource, queries, range: urlRange, originPanelId } = urlState || {};
   const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
   const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
   const initialRange = urlRange
