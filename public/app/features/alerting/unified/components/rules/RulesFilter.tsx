@@ -88,6 +88,7 @@ const RulesFilter = () => {
               onChange={handleQueryStringChange}
               defaultValue={queryString}
               placeholder="Search"
+              data-testid="search-query-input"
             />
           </div>
           <div className={styles.rowChild}>

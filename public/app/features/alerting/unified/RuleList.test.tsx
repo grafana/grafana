@@ -76,6 +76,7 @@ const ui = {
   rulesTable: byTestId('rules-table'),
   ruleRow: byTestId('row'),
   expandedContent: byTestId('expanded-content'),
+  rulesFilterInput: byTestId('search-query-input'),
 };
 
 describe('RuleList', () => {
@@ -298,5 +299,141 @@ describe('RuleList', () => {
     userEvent.click(ui.ruleCollapseToggle.getAll(ruleRows[1])[0]);
     userEvent.click(ui.groupCollapseToggle.get(groups[1]));
     expect(ui.rulesTable.query()).not.toBeInTheDocument();
+  });
+
+  it('filters rules and alerts by labels', async () => {
+    mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
+    setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
+
+    mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
+      if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+        return Promise.resolve([]);
+      } else {
+        return Promise.resolve([
+          mockPromRuleNamespace({
+            groups: [
+              mockPromRuleGroup({
+                name: 'group-1',
+                rules: [
+                  mockPromAlertingRule({
+                    name: 'alertingrule',
+                    labels: {
+                      severity: 'warning',
+                      foo: 'bar',
+                    },
+                    query: 'topk(5, foo)[5m]',
+                    annotations: {
+                      message: 'great alert',
+                    },
+                    alerts: [
+                      mockPromAlert({
+                        labels: {
+                          foo: 'bar',
+                          severity: 'warning',
+                        },
+                        value: '2e+10',
+                        annotations: {
+                          message: 'first alert message',
+                        },
+                      }),
+                      mockPromAlert({
+                        labels: {
+                          foo: 'baz',
+                          severity: 'error',
+                        },
+                        value: '3e+11',
+                        annotations: {
+                          message: 'first alert message',
+                        },
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              mockPromRuleGroup({
+                name: 'group-2',
+                rules: [
+                  mockPromAlertingRule({
+                    name: 'alertingrule2',
+                    labels: {
+                      severity: 'error',
+                      foo: 'buzz',
+                    },
+                    query: 'topk(5, foo)[5m]',
+                    annotations: {
+                      message: 'great alert',
+                    },
+                    alerts: [
+                      mockPromAlert({
+                        labels: {
+                          foo: 'buzz',
+                          severity: 'error',
+                          region: 'EU',
+                        },
+                        value: '2e+10',
+                        annotations: {
+                          message: 'alert message',
+                        },
+                      }),
+                      mockPromAlert({
+                        labels: {
+                          foo: 'buzz',
+                          severity: 'error',
+                          region: 'US',
+                        },
+                        value: '3e+11',
+                        annotations: {
+                          message: 'alert message',
+                        },
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ]);
+      }
+    });
+
+    await renderRuleList();
+    const groups = await ui.ruleGroup.findAll();
+    expect(groups).toHaveLength(2);
+
+    const filterInput = ui.rulesFilterInput.get();
+    userEvent.type(filterInput, '{foo="bar"}');
+
+    // Input is debounced so wait for it to be visible
+    waitFor(() => expect(filterInput).toHaveTextContent('{foo="bar"}'));
+    // Group doesn't contain matching labels
+    waitFor(() => expect(groups[1]).not.toBeVisible());
+    expect(groups[0]).toBeVisible();
+
+    userEvent.click(ui.groupCollapseToggle.get(groups[0]));
+
+    const ruleRows = ui.ruleRow.getAll(groups[0]);
+    expect(ruleRows).toHaveLength(1);
+
+    userEvent.click(ui.ruleCollapseToggle.get(ruleRows[0]));
+    const ruleDetails = ui.expandedContent.get(ruleRows[0]);
+
+    expect(ruleDetails).toHaveTextContent('Labelsseverity=warningfoo=bar');
+
+    // Check for different label matchers
+    userEvent.type(filterInput, '{foo!="bar"}');
+    waitFor(() => expect(filterInput).toHaveTextContent('{foo!="bar"}'));
+    // Group doesn't contain matching labels
+    waitFor(() => expect(groups[0]).not.toBeVisible());
+    expect(groups[1]).toBeVisible();
+
+    userEvent.type(filterInput, '{foo=~"b.+"}');
+    waitFor(() => expect(filterInput).toHaveTextContent('{foo=~"b.+"}'));
+    expect(groups[0]).toBeVisible();
+    expect(groups[1]).toBeVisible();
+
+    userEvent.type(filterInput, '{region="US"}');
+    waitFor(() => expect(filterInput).toHaveTextContent('{region="US"}'));
+    waitFor(() => expect(groups[0]).not.toBeVisible());
+    expect(groups[1]).toBeVisible();
   });
 });
