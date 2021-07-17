@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -246,8 +247,9 @@ func RemoveOrgUser(cmd *models.RemoveOrgUserCommand) error {
 		if err != nil {
 			return err
 		}
-
+		var logger = log.New("<<<<<<<<<<<<<<<<<<<<<<<<<")
 		if len(userOrgs) > 0 {
+			logger.Info("<<<<<<<<< I am here1111111")
 			hasCurrentOrgSet := false
 			for _, userOrg := range userOrgs {
 				if user.OrgId == userOrg.OrgId {
@@ -257,6 +259,8 @@ func RemoveOrgUser(cmd *models.RemoveOrgUserCommand) error {
 			}
 
 			if !hasCurrentOrgSet {
+
+				logger.Info("<<<<<<<<< I am here222222222")
 				err = setUsingOrgInTransaction(sess, user.Id, userOrgs[0].OrgId)
 				if err != nil {
 					return err
@@ -267,10 +271,14 @@ func RemoveOrgUser(cmd *models.RemoveOrgUserCommand) error {
 			if err := deleteUserInTransaction(sess, &models.DeleteUserCommand{UserId: user.Id}); err != nil {
 				return err
 			}
-
 			cmd.UserWasDeleted = true
+		} else {
+			err = setUsingOrgInTransaction(sess, user.Id, 0)
+			if err != nil {
+				return err
+			}
+			logger.Info("<<<<<<<<< I am here44444444")
 		}
-
 		return nil
 	})
 }

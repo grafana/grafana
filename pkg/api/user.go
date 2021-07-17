@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -22,6 +23,7 @@ func GetUserByID(c *models.ReqContext) response.Response {
 }
 
 func getUserUserProfile(userID int64) response.Response {
+	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>> here")
 	query := models.GetUserProfileQuery{UserId: userID}
 
 	if err := bus.Dispatch(&query); err != nil {
