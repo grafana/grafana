@@ -92,7 +92,7 @@ func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, la
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
-			ev, err := expandTemplate(alertRule.Title, v, labels, values)
+			ev, err := c.expandTemplate(alertRule.Title, v, labels, values)
 			expanded[k] = ev
 			if err != nil {
 				c.log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
@@ -122,7 +122,7 @@ func (v templateCaptureValue) String() string {
 	return "null"
 }
 
-func expandTemplate(name, text string, labels map[string]string, values map[string]eval.NumberValueCapture) (result string, resultErr error) {
+func (c *cache) expandTemplate(name, text string, labels map[string]string, values map[string]eval.NumberValueCapture) (result string, resultErr error) {
 	name = "__alert_" + name
 	text = "{{- $labels := .Labels -}}{{- $values := .Values -}}" + text
 	// It'd better to have no alert description than to kill the whole process
@@ -139,7 +139,7 @@ func expandTemplate(name, text string, labels map[string]string, values map[stri
 
 	tmpl, err := text_template.New(name).Option("missingkey=error").Parse(text)
 	if err != nil {
-		return "", fmt.Errorf("error parsing template %v: %s", name, err.Error())
+		c.log.Error("error parsing template", "name", name, "error", err.Error())
 	}
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, struct {
@@ -158,7 +158,7 @@ func expandTemplate(name, text string, labels map[string]string, values map[stri
 			return m
 		}(),
 	}); err != nil {
-		return "", fmt.Errorf("error executing template %v: %s", name, err.Error())
+		c.log.Error("error executing template", "name", name, "error", err.Error())
 	}
 	return buffer.String(), nil
 }
