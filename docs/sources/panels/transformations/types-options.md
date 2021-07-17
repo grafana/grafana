@@ -23,60 +23,60 @@ Grafana comes with the following transformations:
 - [Rows to fields]({{< relref "./rows-to-fields" >}})
 - [Series to rows]({{< relref "./types-options.md#series-to-rows" >}})
 - [Sort by]({{< relref "./types-options.md#sort-by" >}})
+- [Prepare-time-series]({{< relref "./types-options.md#prepare-time-series" >}})
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
 
 ## Reduce
 
-The _Reduce_ transformation will apply a calculation to each field in the frame and return a single value.  Time fields are removed when applying
+The _Reduce_ transformation applies a calculation to each field in the frame and return a single value. Time fields are removed when applying
 this transformation.
 
 Consider the input:
 
 Query A:
 
-| Time                | Temp    | Uptime  |
-| ------------------- | ------- | ------- |
-| 2020-07-07 11:34:20 | 12.3    | 256122  |
-| 2020-07-07 11:24:20 | 15.4    | 1230233 |
+| Time                | Temp | Uptime  |
+| ------------------- | ---- | ------- |
+| 2020-07-07 11:34:20 | 12.3 | 256122  |
+| 2020-07-07 11:24:20 | 15.4 | 1230233 |
 
 Query B:
 
-| Time                | AQI     | Errors |
-| ------------------- | ------- | ------ |
-| 2020-07-07 11:34:20 | 6.5     | 15     |
-| 2020-07-07 11:24:20 | 3.2     | 5      |
+| Time                | AQI | Errors |
+| ------------------- | --- | ------ |
+| 2020-07-07 11:34:20 | 6.5 | 15     |
+| 2020-07-07 11:24:20 | 3.2 | 5      |
 
 The reduce transformer has two modes:
+
 - **Series to rows -** Creates a row for each field and a column for each calculation.
 - **Reduce fields -** Keeps the existing frame structure, but collapses each field into a single value.
 
 For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then
 the result would be:
 
-| Field   | First   | Last    |
-| ------- | ------- | ------- |
-| Temp    | 12.3    | 15.4    |
-| Uptime  | 256122  | 1230233 |
-| AQI     | 6.5     | 3.2     |
-| Errors  | 15      | 5       |
+| Field  | First  | Last    |
+| ------ | ------ | ------- |
+| Temp   | 12.3   | 15.4    |
+| Uptime | 256122 | 1230233 |
+| AQI    | 6.5    | 3.2     |
+| Errors | 15     | 5       |
 
 The **Reduce fields** with the **Last** calculation,
 results in two frames, each with one row:
 
 Query A:
 
-| Temp    | Uptime  |
-| ------- | ------- |
-| 15.4    | 1230233 |
+| Temp | Uptime  |
+| ---- | ------- |
+| 15.4 | 1230233 |
 
 Query B:
 
-| AQI     | Errors |
-| ------- | ------ |
-| 3.2     | 5      |
-
-
+| AQI | Errors |
+| --- | ------ |
+| 3.2 | 5      |
 
 ## Merge
 
@@ -181,7 +181,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
   - **Binary option -** Apply basic math operation(sum, multiply, etc) on values in a single row from two selected fields.
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
 - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to the [Calculation list]({{< relref "../calculations-list.md" >}}).
-- **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you  to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
+- **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
 - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
@@ -195,8 +195,8 @@ This transformation changes time series results that include labels or tags into
 
 Given a query result of two time series:
 
-* Series 1: labels Server=Server A, Datacenter=EU
-* Series 2: labels Server=Server B, Datacenter=EU
+- Series 1: labels Server=Server A, Datacenter=EU
+- Series 2: labels Server=Server B, Datacenter=EU
 
 This would result in a table like this:
 
@@ -219,18 +219,18 @@ The labels to fields transformer is internally two separate transformations. The
 
 To illustrate this, here is an example where you have two queries that return time series with no overlapping labels.
 
-* Series 1: labels Server=ServerA
-* Series 2: labels Datacenter=EU
+- Series 1: labels Server=ServerA
+- Series 2: labels Datacenter=EU
 
 This will first result in these two tables:
 
 | Time                | Server  | Value |
 | ------------------- | ------- | ----- |
-| 2020-07-07 11:34:20 | ServerA | 10
+| 2020-07-07 11:34:20 | ServerA | 10    |
 
 | Time                | Datacenter | Value |
 | ------------------- | ---------- | ----- |
-| 2020-07-07 11:34:20 | EU         | 20
+| 2020-07-07 11:34:20 | EU         | 20    |
 
 After merge:
 
@@ -243,7 +243,6 @@ After merge:
 
 This transformation will sort each frame by the configured field, When `reverse` is checked, the values will return in
 the opposite order.
-
 
 ## Group by
 
@@ -305,26 +304,25 @@ This transformation allows you to extract some key information out of your time 
 
 ## Concatenate fields
 
-This transformation combines all fields from all frames into one result.  Consider:
+This transformation combines all fields from all frames into one result. Consider:
 
 Query A:
 
-| Temp    | Uptime  |
-| ------- | ------- |
-| 15.4    | 1230233 |
+| Temp | Uptime  |
+| ---- | ------- |
+| 15.4 | 1230233 |
 
 Query B:
 
-| AQI     | Errors |
-| ------- | ------ |
-| 3.2     | 5      |
-
+| AQI | Errors |
+| --- | ------ |
+| 3.2 | 5      |
 
 After you concatenate the fields, the data frame would be:
 
-| Temp    | Uptime  | AQI     | Errors |
-| ------- | ------- | ------- | ------ |
-| 15.4    | 1230233 | 3.2     | 5      |
+| Temp | Uptime  | AQI | Errors |
+| ---- | ------- | --- | ------ |
+| 15.4 | 1230233 | 3.2 | 5      |
 
 ## Series to rows
 
@@ -437,3 +435,15 @@ In the following example, we are stripping the prefix from event types. In the b
 With the transformation applied, you can see we are left with just the remainder of the string.
 
 {{< figure src="/static/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+## Prepare time series
+
+> **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
+
+Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. [Read more about the different data frame formats here]({{< relref "../../developers/plugins/data-frames.md" >}}).
+
+This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
+
+Select the `Multi-frame time series` option to transform the time series data frame from the wide to the long format.
+
+Select the `Wide time series` option to transform the time series data frame from the long to the wide format.
