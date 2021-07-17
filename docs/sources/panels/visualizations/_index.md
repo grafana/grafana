@@ -10,7 +10,7 @@ Grafana offers a variety of visualizations to support different use cases. This 
 * Graphs & charts 
   * [Time series]({{< relref "./time-series/_index.md" >}}) is the default and main Graph visualization.    
   * [State timeline]({{< relref "./state-timeline.md" >}}) for state changes over time.   
-  * [Status history]({{< relref "./state-timeline.md" >}}) for periodic state over time. 
+  * [Status history]({{< relref "./status-history.md" >}}) for periodic state over time. 
   * [Bar chart]({{< relref "./bar-chart.md" >}}) shows any categorical data.
   * [Histogram]({{< relref "./histogram.md" >}}) calculates and shows value distribution in a bar chart.
   * [Heatmap]({{< relref "./heatmap.md" >}}).  
