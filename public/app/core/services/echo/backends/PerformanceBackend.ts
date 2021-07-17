@@ -36,8 +36,6 @@ export class PerformanceBackend implements EchoBackend<PerformanceEvent, Perform
       console.log('PerformanceBackend flushing:', this.buffer);
     }
 
-    console.log('performance', this.buffer);
-
     backendSrv.post('/api/frontend-metrics', {
       events: this.buffer,
     });
