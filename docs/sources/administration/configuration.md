@@ -509,7 +509,7 @@ Sets the `SameSite` cookie attribute and prevents the browser from sending this 
 
 When `false`, the HTTP header `X-Frame-Options: deny` will be set in Grafana HTTP responses which will instruct
 browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`. The main goal is to
-mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking). Default is `false`.
+mitigate the risk of [Clickjacking](https://owasp.org/www-community/attacks/Clickjacking). Default is `false`.
 
 ### strict_transport_security
 
