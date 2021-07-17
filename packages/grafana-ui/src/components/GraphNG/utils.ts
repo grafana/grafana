@@ -18,7 +18,9 @@ function applySpanNullsThresholds(frame: DataFrame) {
       let spanNulls = field.config.custom?.spanNulls;
 
       if (typeof spanNulls === 'number') {
-        field.values = new ArrayVector(nullToUndefThreshold(refValues, field.values.toArray(), spanNulls));
+        if (spanNulls !== -1) {
+          field.values = new ArrayVector(nullToUndefThreshold(refValues, field.values.toArray(), spanNulls));
+        }
       }
     }
   }
