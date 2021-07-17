@@ -94,6 +94,7 @@ type PluginInclude struct {
 	AddToNav   bool            `json:"addToNav"`
 	DefaultNav bool            `json:"defaultNav"`
 	Slug       string          `json:"slug"`
+	UID        string          `json:"uid"`
 	Icon       string          `json:"icon"`
 
 	Id string `json:"-"`
