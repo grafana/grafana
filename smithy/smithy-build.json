@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "plugins": {
+    "go-codegen": {
+      "service": "grafana#Grafana",
+      "module": "github.com/grafana/grafana/smithy/build/go/grafana",
+      "moduleVersion": "0.1.0"
+    },
+    "openapi": {
+      "service": "grafana#Grafana",
+      "protocol": "aws.protocols#restJson1",
+      "tags": true
+    }
+  }
+}

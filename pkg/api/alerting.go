@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/smithy/build/go/grafana"
+	"github.com/grafana/grafana/smithy/build/go/grafana/types"
 )
 
 func ValidateOrgAlert(c *models.ReqContext) {
@@ -121,11 +123,31 @@ func GetAlerts(c *models.ReqContext) response.Response {
 		return response.Error(500, "List alerts failed", err)
 	}
 
+	summaries := make([]types.AlertSummary, 0, len(query.Result))
 	for _, alert := range query.Result {
-		alert.Url = models.GetDashboardUrl(alert.DashboardUid, alert.DashboardSlug)
+		id := string(alert.Id)
+		u := models.GetDashboardUrl(alert.DashboardUid, alert.DashboardSlug)
+		panelID := string(alert.PanelId)
+		summaries = append(summaries, types.AlertSummary{
+			Id:            &id,
+			DashboardId:   alert.DashboardId,
+			DashboardSlug: &alert.DashboardSlug,
+			DashboardUid:  &alert.DashboardUid,
+			// TODO
+			// EvalData:      alert.EvalData,
+			EvalDate:     &alert.EvalDate,
+			Name:         &alert.Name,
+			NewStateDate: &alert.NewStateDate,
+			PanelId:      &panelID,
+			Url:          &u,
+		})
 	}
 
-	return response.JSON(200, query.Result)
+	rslt := grafana.ListAlertsOutput{
+		Items: summaries,
+	}
+
+	return response.JSON(200, &rslt)
 }
 
 // POST /api/alerts/test
@@ -177,7 +199,25 @@ func GetAlert(c *models.ReqContext) response.Response {
 		return response.Error(500, "List alerts failed", err)
 	}
 
-	return response.JSON(200, &query.Result)
+	alertID := strconv.FormatInt(query.Result.Id, 10)
+	panelID := strconv.FormatInt(query.Result.PanelId, 10)
+	state := string(query.Result.State)
+	rslt := grafana.GetAlertOutput{
+		Created:     &query.Result.Created,
+		DashboardId: query.Result.DashboardId,
+		For:         int64(query.Result.For.Seconds()),
+		Frequency:   query.Result.Frequency,
+		Id:          &alertID,
+		Message:     &query.Result.Message,
+		Name:        &query.Result.Name,
+		OrgId:       query.Result.OrgId,
+		PanelId:     &panelID,
+		Silenced:    query.Result.Silenced,
+		State:       &state,
+		Version:     query.Result.Version,
+		Updated:     &query.Result.Updated,
+	}
+	return response.JSON(200, &rslt)
 }
 
 func GetAlertNotifiers(ngalertEnabled bool) func(*models.ReqContext) response.Response {
