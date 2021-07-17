@@ -18,8 +18,13 @@ import {
 
 import { makeValue, SCHEMA, CompletionItemGroup, TypeaheadOutput, TypeaheadInput, SuggestionsState } from '../..';
 import { selectors } from '@grafana/e2e-selectors';
+import { css } from '@emotion/css';
+import { stylesFactory, withTheme2 } from '../../themes';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Themeable2 } from '../../types';
+import { getFocusStyles } from '../../themes/mixins';
 
-export interface QueryFieldProps {
+export interface QueryFieldProps extends Themeable2 {
   additionalPlugins?: Plugin[];
   cleanText?: (text: string) => string;
   disabled?: boolean;
@@ -46,6 +51,11 @@ export interface QueryFieldState {
   typeaheadPrefix: string;
   typeaheadText: string;
   value: Value;
+  /**
+   * Check if anything has been written. Used to manage keyboard navigation.
+   * */
+  dirty: boolean;
+  focused: boolean;
 }
 
 /**
@@ -54,7 +64,7 @@ export interface QueryFieldState {
  * This component can only process strings. Internally it uses Slate Value.
  * Implement props.onTypeahead to use suggestions, see PromQueryField.tsx as an example.
  */
-export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldState> {
+class UnthemedQueryField extends React.PureComponent<QueryFieldProps, QueryFieldState> {
   plugins: Plugin[];
   runOnChangeDebounced: Function;
   lastExecutedValue: Value | null = null;
@@ -88,6 +98,8 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       typeaheadPrefix: '',
       typeaheadText: '',
       value: makeValue(props.query || '', props.syntax),
+      dirty: false,
+      focused: false,
     };
   }
 
@@ -119,12 +131,37 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   }
 
+  onKeyDown = (keyEvent: Event, editor: CoreEditor, next: Function) => {
+    const event = keyEvent as KeyboardEvent;
+    if (event.key === 'Esc' || (event.key === 'Tab' && !this.state.dirty)) {
+      editor.blur(); // This doesn't run handleBlur
+    } else if (event.key !== 'Tab') {
+      this.setState({
+        dirty: true,
+      });
+    }
+
+    return next();
+  };
+
+  onFocus = (event: Event, editor: CoreEditor, next: Function) => {
+    // https://github.com/ianstormtaylor/slate/issues/2434
+    setTimeout(
+      () =>
+        this.setState({
+          focused: true,
+        }),
+      0
+    );
+    return next();
+  };
   /**
    * Update local state, propagate change upstream and optionally run the query afterwards.
    */
   onChange = (value: Value, runQuery?: boolean) => {
     const documentChanged = value.document !== this.state.value.document;
     const prevValue = this.state.value;
+
     if (this.props.onRichValueChange) {
       this.props.onRichValueChange(value);
     }
@@ -187,6 +224,15 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
         this.runOnChangeAndRunQuery();
       }
     }
+
+    setTimeout(
+      () =>
+        this.setState({
+          focused: false,
+          dirty: false,
+        }),
+      0
+    );
     return next();
   };
 
@@ -197,22 +243,29 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 
   render() {
-    const { disabled } = this.props;
-    const wrapperClassName = classnames('slate-query-field__wrapper', {
+    const { disabled, theme } = this.props;
+    const { focused } = this.state;
+
+    const styles = getStyles(theme);
+    const wrapperClassName = classnames(!focused || styles.focusStyle, 'slate-query-field__wrapper', {
       'slate-query-field__wrapper--disabled': disabled,
     });
+    const DESCRIPTION = 'Edit your queries. Press escape to stop editing.';
 
     return (
       <div className={wrapperClassName}>
         <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
           <Editor
+            //@ts-ignore
+            title={DESCRIPTION}
             ref={(editor) => (this.editor = editor!)}
             schema={SCHEMA}
             autoCorrect={false}
             readOnly={this.props.disabled}
+            onFocus={this.onFocus}
             onBlur={this.handleBlur}
             onClick={this.props.onClick}
-            // onKeyDown={this.onKeyDown}
+            onKeyDown={this.onKeyDown}
             onChange={(change: { value: Value }) => {
               this.onChange(change.value, false);
             }}
@@ -227,4 +280,11 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 }
 
-export default QueryField;
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+  focusStyle: css`
+    ${getFocusStyles(theme)}
+  `,
+}));
+
+export const QueryField = withTheme2(UnthemedQueryField);
+export default UnthemedQueryField;
