@@ -625,6 +625,12 @@ options are `Admin` and `Editor`. e.g.:
 
 `auto_assign_org_role = Viewer`
 
+### skip_org_role_update_sync
+
+Skip forced assignment of OrgID `1` or `auto_assign_org_id` for external logins. Default is `false`.
+Use this setting to distribute users with an external login to multiple organizations.
+Otherwise, the users' organization would get reset on every new login, for example, via AzureAD.
+
 ### verify_email_enabled
 
 Require email validation before sign up completes. Default is `false`.
