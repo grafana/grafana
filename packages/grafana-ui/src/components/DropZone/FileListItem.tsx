@@ -6,7 +6,7 @@ import { formatFileSize, trimFileName } from '../../utils/file';
 import { Button } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
-import { DropzoneFile } from './Dropzone';
+import { DropzoneFile } from './DropZone';
 
 export interface FileListItemProps {
   file: DropzoneFile;
