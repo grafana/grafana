@@ -59,6 +59,8 @@ export interface IntervalVariableModel extends VariableWithOptions {
   refresh: VariableRefresh;
 }
 
+export interface DateTimeVariableModel extends VariableWithOptions {}
+
 export interface CustomVariableModel extends VariableWithMultiSupport {}
 
 export interface DataSourceVariableModel extends VariableWithMultiSupport {
