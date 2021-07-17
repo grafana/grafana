@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -115,7 +116,7 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader.walkDisk()
+				err = reader.walkDisk(context.Background())
 				So(err, ShouldBeNil)
 
 				folders := 0
@@ -146,7 +147,7 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader.walkDisk()
+				err = reader.walkDisk(context.Background())
 				So(err, ShouldBeNil)
 
 				So(len(fakeService.inserted), ShouldEqual, 1)
@@ -181,7 +182,7 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader.walkDisk()
+				err = reader.walkDisk(context.Background())
 				So(err, ShouldBeNil)
 				So(len(fakeService.inserted), ShouldEqual, 0)
 			})
@@ -207,7 +208,7 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader.walkDisk()
+				err = reader.walkDisk(context.Background())
 				So(err, ShouldBeNil)
 				So(len(fakeService.inserted), ShouldEqual, 1)
 			})
@@ -241,7 +242,7 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader.walkDisk()
+				err = reader.walkDisk(context.Background())
 				So(err, ShouldBeNil)
 				So(len(fakeService.inserted), ShouldEqual, 0)
 			})
@@ -267,7 +268,7 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader.walkDisk()
+				err = reader.walkDisk(context.Background())
 				So(err, ShouldBeNil)
 				So(len(fakeService.inserted), ShouldEqual, 1)
 			})
@@ -278,7 +279,7 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader.walkDisk()
+				err = reader.walkDisk(context.Background())
 				So(err, ShouldBeNil)
 
 				So(len(fakeService.inserted), ShouldEqual, 1)
@@ -291,7 +292,7 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader.walkDisk()
+				err = reader.walkDisk(context.Background())
 				So(err, ShouldBeNil)
 
 				So(len(fakeService.inserted), ShouldEqual, 5)
@@ -350,13 +351,13 @@ func TestDashboardFileReader(t *testing.T) {
 				reader1, err := NewDashboardFileReader(cfg1, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader1.walkDisk()
+				err = reader1.walkDisk(context.Background())
 				So(err, ShouldBeNil)
 
 				reader2, err := NewDashboardFileReader(cfg2, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader2.walkDisk()
+				err = reader2.walkDisk(context.Background())
 				So(err, ShouldBeNil)
 
 				var folderCount int
@@ -385,7 +386,7 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			_, err := getOrCreateFolderID(cfg, fakeService, cfg.Folder)
+			_, err := getOrCreateFolderID(context.Background(), cfg, fakeService, cfg.Folder)
 			So(err, ShouldEqual, ErrFolderNameMissing)
 		})
 
@@ -400,7 +401,7 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			folderID, err := getOrCreateFolderID(cfg, fakeService, cfg.Folder)
+			folderID, err := getOrCreateFolderID(context.Background(), cfg, fakeService, cfg.Folder)
 			So(err, ShouldBeNil)
 			inserted := false
 			for _, d := range fakeService.inserted {
@@ -460,7 +461,7 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader.walkDisk()
+				err = reader.walkDisk(context.Background())
 				So(err, ShouldBeNil)
 
 				So(len(fakeService.provisioned["Default"]), ShouldEqual, 1)
@@ -471,7 +472,7 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader.walkDisk()
+				err = reader.walkDisk(context.Background())
 				So(err, ShouldBeNil)
 
 				So(len(fakeService.provisioned["Default"]), ShouldEqual, 1)

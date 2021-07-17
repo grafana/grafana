@@ -16,7 +16,7 @@ import (
 
 func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folders, err := s.GetFolders(c.QueryInt64("limit"))
+	folders, err := s.GetFolders(c.Req.Context(), c.QueryInt64("limit"))
 
 	if err != nil {
 		return ToFolderErrorResponse(err)
@@ -37,7 +37,7 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folder, err := s.GetFolderByUID(c.Params(":uid"))
+	folder, err := s.GetFolderByUID(c.Req.Context(), c.Params(":uid"))
 	if err != nil {
 		return ToFolderErrorResponse(err)
 	}
@@ -48,7 +48,7 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folder, err := s.GetFolderByID(c.ParamsInt64(":id"))
+	folder, err := s.GetFolderByID(c.Req.Context(), c.ParamsInt64(":id"))
 	if err != nil {
 		return ToFolderErrorResponse(err)
 	}
@@ -59,13 +59,13 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolderCommand) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folder, err := s.CreateFolder(cmd.Title, cmd.Uid)
+	folder, err := s.CreateFolder(c.Req.Context(), cmd.Title, cmd.Uid)
 	if err != nil {
 		return ToFolderErrorResponse(err)
 	}
 
 	if hs.Cfg.EditorsCanAdmin {
-		if err := s.MakeUserAdmin(c.OrgId, c.SignedInUser.UserId, folder.Id, true); err != nil {
+		if err := s.MakeUserAdmin(c.Req.Context(), c.OrgId, c.SignedInUser.UserId, folder.Id, true); err != nil {
 			hs.log.Error("Could not make user admin", "folder", folder.Title, "user",
 				c.SignedInUser.UserId, "error", err)
 		}
@@ -77,7 +77,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolder
 
 func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	err := s.UpdateFolder(c.Params(":uid"), &cmd)
+	err := s.UpdateFolder(c.Req.Context(), c.Params(":uid"), &cmd)
 	if err != nil {
 		return ToFolderErrorResponse(err)
 	}
@@ -96,7 +96,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 		return ToFolderErrorResponse(err)
 	}
 
-	f, err := s.DeleteFolder(c.Params(":uid"))
+	f, err := s.DeleteFolder(c.Req.Context(), c.Params(":uid"))
 	if err != nil {
 		return ToFolderErrorResponse(err)
 	}

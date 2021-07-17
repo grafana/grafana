@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -13,14 +14,14 @@ import (
 
 // FolderService is a service for operating on folders.
 type FolderService interface {
-	GetFolders(limit int64) ([]*models.Folder, error)
-	GetFolderByID(id int64) (*models.Folder, error)
-	GetFolderByUID(uid string) (*models.Folder, error)
-	GetFolderByTitle(title string) (*models.Folder, error)
-	CreateFolder(title, uid string) (*models.Folder, error)
-	UpdateFolder(uid string, cmd *models.UpdateFolderCommand) error
-	DeleteFolder(uid string) (*models.Folder, error)
-	MakeUserAdmin(orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
+	GetFolders(ctx context.Context, limit int64) ([]*models.Folder, error)
+	GetFolderByID(ctx context.Context, id int64) (*models.Folder, error)
+	GetFolderByUID(ctx context.Context, uid string) (*models.Folder, error)
+	GetFolderByTitle(ctx context.Context, title string) (*models.Folder, error)
+	CreateFolder(ctx context.Context, title, uid string) (*models.Folder, error)
+	UpdateFolder(ctx context.Context, uid string, cmd *models.UpdateFolderCommand) error
+	DeleteFolder(ctx context.Context, uid string) (*models.Folder, error)
+	MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
 }
 
 // NewFolderService is a factory for creating a new folder service.
@@ -32,7 +33,7 @@ var NewFolderService = func(orgID int64, user *models.SignedInUser, store dashbo
 	}
 }
 
-func (dr *dashboardServiceImpl) GetFolders(limit int64) ([]*models.Folder, error) {
+func (dr *dashboardServiceImpl) GetFolders(ctx context.Context, limit int64) ([]*models.Folder, error) {
 	searchQuery := search.Query{
 		SignedInUser: dr.user,
 		DashboardIds: make([]int64, 0),
@@ -60,12 +61,12 @@ func (dr *dashboardServiceImpl) GetFolders(limit int64) ([]*models.Folder, error
 	return folders, nil
 }
 
-func (dr *dashboardServiceImpl) GetFolderByID(id int64) (*models.Folder, error) {
+func (dr *dashboardServiceImpl) GetFolderByID(ctx context.Context, id int64) (*models.Folder, error) {
 	if id == 0 {
 		return &models.Folder{Id: id, Title: "General"}, nil
 	}
 	query := models.GetDashboardQuery{OrgId: dr.orgId, Id: id}
-	dashFolder, err := getFolder(query)
+	dashFolder, err := getFolder(ctx, query)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
@@ -81,9 +82,9 @@ func (dr *dashboardServiceImpl) GetFolderByID(id int64) (*models.Folder, error) 
 	return dashToFolder(dashFolder), nil
 }
 
-func (dr *dashboardServiceImpl) GetFolderByUID(uid string) (*models.Folder, error) {
+func (dr *dashboardServiceImpl) GetFolderByUID(ctx context.Context, uid string) (*models.Folder, error) {
 	query := models.GetDashboardQuery{OrgId: dr.orgId, Uid: uid}
-	dashFolder, err := getFolder(query)
+	dashFolder, err := getFolder(ctx, query)
 
 	if err != nil {
 		return nil, toFolderError(err)
@@ -100,7 +101,7 @@ func (dr *dashboardServiceImpl) GetFolderByUID(uid string) (*models.Folder, erro
 	return dashToFolder(dashFolder), nil
 }
 
-func (dr *dashboardServiceImpl) GetFolderByTitle(title string) (*models.Folder, error) {
+func (dr *dashboardServiceImpl) GetFolderByTitle(ctx context.Context, title string) (*models.Folder, error) {
 	dashFolder, err := dr.dashboardStore.GetFolderByTitle(dr.orgId, title)
 	if err != nil {
 		return nil, toFolderError(err)
@@ -117,7 +118,7 @@ func (dr *dashboardServiceImpl) GetFolderByTitle(title string) (*models.Folder, 
 	return dashToFolder(dashFolder), nil
 }
 
-func (dr *dashboardServiceImpl) CreateFolder(title, uid string) (*models.Folder, error) {
+func (dr *dashboardServiceImpl) CreateFolder(ctx context.Context, title, uid string) (*models.Folder, error) {
 	dashFolder := models.NewDashboardFolder(title)
 	dashFolder.OrgId = dr.orgId
 	dashFolder.SetUid(strings.TrimSpace(uid))
@@ -146,7 +147,7 @@ func (dr *dashboardServiceImpl) CreateFolder(title, uid string) (*models.Folder,
 	}
 
 	query := models.GetDashboardQuery{OrgId: dr.orgId, Id: dash.Id}
-	dashFolder, err = getFolder(query)
+	dashFolder, err = getFolder(ctx, query)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
@@ -154,9 +155,9 @@ func (dr *dashboardServiceImpl) CreateFolder(title, uid string) (*models.Folder,
 	return dashToFolder(dashFolder), nil
 }
 
-func (dr *dashboardServiceImpl) UpdateFolder(existingUid string, cmd *models.UpdateFolderCommand) error {
+func (dr *dashboardServiceImpl) UpdateFolder(ctx context.Context, existingUid string, cmd *models.UpdateFolderCommand) error {
 	query := models.GetDashboardQuery{OrgId: dr.orgId, Uid: existingUid}
-	dashFolder, err := getFolder(query)
+	dashFolder, err := getFolder(ctx, query)
 	if err != nil {
 		return toFolderError(err)
 	}
@@ -181,7 +182,7 @@ func (dr *dashboardServiceImpl) UpdateFolder(existingUid string, cmd *models.Upd
 	}
 
 	query = models.GetDashboardQuery{OrgId: dr.orgId, Id: dash.Id}
-	dashFolder, err = getFolder(query)
+	dashFolder, err = getFolder(ctx, query)
 	if err != nil {
 		return toFolderError(err)
 	}
@@ -191,9 +192,9 @@ func (dr *dashboardServiceImpl) UpdateFolder(existingUid string, cmd *models.Upd
 	return nil
 }
 
-func (dr *dashboardServiceImpl) DeleteFolder(uid string) (*models.Folder, error) {
+func (dr *dashboardServiceImpl) DeleteFolder(ctx context.Context, uid string) (*models.Folder, error) {
 	query := models.GetDashboardQuery{OrgId: dr.orgId, Uid: uid}
-	dashFolder, err := getFolder(query)
+	dashFolder, err := getFolder(ctx, query)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
@@ -214,8 +215,8 @@ func (dr *dashboardServiceImpl) DeleteFolder(uid string) (*models.Folder, error)
 	return dashToFolder(dashFolder), nil
 }
 
-func getFolder(query models.GetDashboardQuery) (*models.Dashboard, error) {
-	if err := bus.Dispatch(&query); err != nil {
+func getFolder(ctx context.Context, query models.GetDashboardQuery) (*models.Dashboard, error) {
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
 		return nil, toFolderError(err)
 	}
 

@@ -46,8 +46,8 @@ type RuleStore interface {
 	GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error
 	GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error
-	GetNamespaceByTitle(string, int64, *models.SignedInUser, bool) (*models.Folder, error)
-	GetNamespaceByUID(string, int64, *models.SignedInUser) (*models.Folder, error)
+	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
+	GetNamespaceByUID(context.Context, string, int64, *models.SignedInUser) (*models.Folder, error)
 	GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules([]UpsertRule) error
 	UpdateRuleGroup(UpdateRuleGroupCmd) error
@@ -360,9 +360,9 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 }
 
 // GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByTitle(namespace string, orgID int64, user *models.SignedInUser, withCanSave bool) (*models.Folder, error) {
+func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user *models.SignedInUser, withCanSave bool) (*models.Folder, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
-	folder, err := s.GetFolderByTitle(namespace)
+	folder, err := s.GetFolderByTitle(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -381,9 +381,9 @@ func (st DBstore) GetNamespaceByTitle(namespace string, orgID int64, user *model
 }
 
 // GetNamespaceByUID is a handler for retrieving namespace by its UID.
-func (st DBstore) GetNamespaceByUID(UID string, orgID int64, user *models.SignedInUser) (*models.Folder, error) {
+func (st DBstore) GetNamespaceByUID(ctx context.Context, UID string, orgID int64, user *models.SignedInUser) (*models.Folder, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
-	folder, err := s.GetFolderByUID(UID)
+	folder, err := s.GetFolderByUID(ctx, UID)
 	if err != nil {
 		return nil, err
 	}

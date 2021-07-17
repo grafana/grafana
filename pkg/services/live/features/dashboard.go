@@ -47,7 +47,7 @@ func (h *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler
 }
 
 // OnSubscribe for now allows anyone to subscribe to any dashboard
-func (h *DashboardHandler) OnSubscribe(_ context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	parts := strings.Split(e.Path, "/")
 	if parts[0] == "gitops" {
 		// gitops gets all changes for everything, so lets make sure it is an admin user
@@ -62,7 +62,7 @@ func (h *DashboardHandler) OnSubscribe(_ context.Context, user *models.SignedInU
 	// make sure can view this dashboard
 	if len(parts) == 2 && parts[0] == "uid" {
 		query := models.GetDashboardQuery{Uid: parts[1], OrgId: user.OrgId}
-		if err := bus.Dispatch(&query); err != nil {
+		if err := bus.DispatchCtx(ctx, &query); err != nil {
 			logger.Error("Error getting dashboard", "query", query, "error", err)
 			return models.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
 		}
@@ -109,7 +109,7 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInU
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("ignore???")
 		}
 		query := models.GetDashboardQuery{Uid: parts[1], OrgId: user.OrgId}
-		if err := bus.Dispatch(&query); err != nil {
+		if err := bus.DispatchCtx(ctx, &query); err != nil {
 			logger.Error("Unknown dashboard", "query", query)
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 		}

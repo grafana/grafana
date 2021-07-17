@@ -14,7 +14,7 @@ import (
 
 func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folder, err := s.GetFolderByUID(c.Params(":uid"))
+	folder, err := s.GetFolderByUID(c.Req.Context(), c.Params(":uid"))
 
 	if err != nil {
 		return ToFolderErrorResponse(err)
@@ -62,7 +62,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.
 	}
 
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folder, err := s.GetFolderByUID(c.Params(":uid"))
+	folder, err := s.GetFolderByUID(c.Req.Context(), c.Params(":uid"))
 	if err != nil {
 		return ToFolderErrorResponse(err)
 	}

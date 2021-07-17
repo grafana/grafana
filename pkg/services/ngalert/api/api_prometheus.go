@@ -77,7 +77,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			continue
 		}
 		groupId, namespaceUID, namespace := r[0], r[1], r[2]
-		if _, err := srv.store.GetNamespaceByUID(namespaceUID, c.SignedInUser.OrgId, c.SignedInUser); err != nil {
+		if _, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.SignedInUser.OrgId, c.SignedInUser); err != nil {
 			if errors.Is(err, models.ErrFolderAccessDenied) {
 				// do not include it in the response
 				continue
