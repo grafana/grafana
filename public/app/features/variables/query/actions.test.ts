@@ -706,6 +706,7 @@ function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableMode
     label: '',
     hide: VariableHide.dontHide,
     skipUrlSync: false,
+    verifyOptionFromUrl: false,
     index: 0,
     datasource: 'datasource',
     definition: '',

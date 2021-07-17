@@ -353,8 +353,17 @@ export const setOptionFromUrl = (
       }
 
       // It is possible that we did not match the value to any existing option. In that case the URL value will be
-      // used anyway for both text and value.
-      option = { text: defaultText, value: defaultValue, selected: false };
+      // used anyway for both text and value if verifyOptionFromUrl is false, otherwise the first option or empty
+      // value will be used.
+      if (variableFromState.verifyOptionFromUrl) {
+        if (variableFromState.options.length > 0) {
+          option = variableFromState.options[0];
+        } else {
+          option = { text: '', value: '', selected: false };
+        }
+      } else {
+        option = { text: defaultText, value: defaultValue, selected: false };
+      }
     }
 
     if (isMulti(variableFromState)) {
