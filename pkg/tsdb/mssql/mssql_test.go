@@ -1242,7 +1242,7 @@ func TestGenerateConnectionString(t *testing.T) {
 				User:     "user",
 				JsonData: simplejson.NewFromAny(map[string]interface{}{}),
 			},
-			expConnStr: "server=localhost;database=database;user id=user;password=;port=1001;",
+			expConnStr: "server=localhost;database=database;user id=user;password=;port=1001;encrypt=true;",
 		},
 		// When no port is specified, the driver should be allowed to choose
 		{
@@ -1253,7 +1253,7 @@ func TestGenerateConnectionString(t *testing.T) {
 				User:     "user",
 				JsonData: simplejson.NewFromAny(map[string]interface{}{}),
 			},
-			expConnStr: "server=localhost;database=database;user id=user;password=;",
+			expConnStr: "server=localhost;database=database;user id=user;password=;encrypt=true;",
 		},
 		// Port 0 should be equivalent to not specifying a port, i.e. let the driver choose
 		{
@@ -1264,7 +1264,7 @@ func TestGenerateConnectionString(t *testing.T) {
 				User:     "user",
 				JsonData: simplejson.NewFromAny(map[string]interface{}{}),
 			},
-			expConnStr: "server=localhost;database=database;user id=user;password=;",
+			expConnStr: "server=localhost;database=database;user id=user;password=;encrypt=true;",
 		},
 		{
 			desc: "Defaults",
@@ -1273,7 +1273,7 @@ func TestGenerateConnectionString(t *testing.T) {
 				User:     "user",
 				JsonData: simplejson.NewFromAny(map[string]interface{}{}),
 			},
-			expConnStr: "server=localhost;database=database;user id=user;password=;",
+			expConnStr: "server=localhost;database=database;user id=user;password=;encrypt=true;",
 		},
 	}
 	for _, tc := range testCases {
