@@ -43,7 +43,7 @@ async function getPluginVersions(id: string): Promise<any[]> {
   }
 }
 
-async function getInstalledPlugins(): Promise<any> {
+async function getInstalledPlugins(): Promise<LocalPlugin[]> {
   const installed = await getBackendSrv().get(`${API_ROOT}`, { embedded: 0 });
   return installed;
 }
