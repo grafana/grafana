@@ -97,7 +97,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 			},
 			To:          en.Addresses,
 			SingleEmail: en.SingleEmail,
-			Template:    "ng_alert_notification.html",
+			Template:    "ng_alert_notification",
 		},
 	}
 
