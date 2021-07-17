@@ -3,7 +3,7 @@ import { LegacyForms, VerticalGroup } from '@grafana/ui';
 import { DataQuery, PanelData, SelectableValue } from '@grafana/data';
 import { css } from '@emotion/css';
 
-import { DashboardQuery, ResultInfo, SHARED_DASHBODARD_QUERY } from './types';
+import { DashboardQuery, ResultInfo, SHARED_DASHBOARD_QUERY } from './types';
 import config from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -141,7 +141,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
         continue;
       }
 
-      if (panel.targets && panel.datasource !== SHARED_DASHBODARD_QUERY) {
+      if (panel.targets && panel.datasource !== SHARED_DASHBOARD_QUERY) {
         const item = {
           value: panel.id,
           label: panel.title ? panel.title : 'Panel ' + panel.id,

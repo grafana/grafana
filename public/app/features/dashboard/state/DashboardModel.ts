@@ -43,6 +43,7 @@ import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
 import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent, TimeRangeUpdatedEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -439,6 +440,11 @@ export class DashboardModel {
     for (const panel of this.panels) {
       if (panel.id === id) {
         return panel;
+      } else if (panel.type === 'row') {
+        const rowPanel: any = panel.panels?.find((p: any) => p.id === id);
+        if (rowPanel) {
+          return new PanelModel(rowPanel);
+        }
       }
     }
 
@@ -868,6 +874,7 @@ export class DashboardModel {
 
   toggleRow(row: PanelModel) {
     const rowIndex = indexOf(this.panels, row);
+    let sharedPanelsToRefresh = new Set<PanelModel>();
 
     if (row.collapsed) {
       row.collapsed = false;
@@ -893,6 +900,14 @@ export class DashboardModel {
           // update insert post and y max
           insertPos += 1;
           yMax = Math.max(yMax, panel.gridPos.y + panel.gridPos.h);
+
+          const sharedDashboardPanels = this.panels.filter(
+            (p) => p.datasource === SHARED_DASHBOARD_QUERY && p.targets.some((t: any) => t.panelId === panel.id)
+          );
+
+          for (const sharedPanel of sharedDashboardPanels) {
+            sharedPanelsToRefresh.add(sharedPanel);
+          }
         }
 
         const pushDownAmount = yMax - row.gridPos.y - 1;
@@ -907,6 +922,8 @@ export class DashboardModel {
         if (hasRepeat) {
           this.processRowRepeats(row);
         }
+
+        sharedPanelsToRefresh.forEach((p) => p.refresh());
       }
 
       // sort panels
