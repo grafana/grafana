@@ -136,12 +136,14 @@ func (r *SQLAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 			annotation.data,
 			annotation.created,
 			annotation.updated,
+			dashboard.uid as dashboard_uid,
 			usr.email,
 			usr.login,
 			alert.name as alert_name
 		FROM annotation
 		LEFT OUTER JOIN ` + dialect.Quote("user") + ` as usr on usr.id = annotation.user_id
 		LEFT OUTER JOIN alert on alert.id = annotation.alert_id
+		LEFT OUTER JOIN dashboard on dashboard.id = annotation.dashboard_id
 		INNER JOIN (
 			SELECT a.id from annotation a
 		`)
