@@ -71,7 +71,10 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 
 func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
 	data templateData) (accessTokenProvider, error) {
-	authType := pluginRoute.AuthType
+	authType, err := interpolateString(pluginRoute.AuthType, data)
+	if err != nil {
+		return nil, err
+	}
 
 	// Plugin can override authentication type specified in route configuration
 	if authTypeOverride := ds.JsonData.Get("authenticationType").MustString(); authTypeOverride != "" {
@@ -107,6 +110,10 @@ func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSour
 		}
 		provider := newJwtAccessTokenProvider(ctx, ds, pluginRoute, jwtTokenAuth)
 		return provider, nil
+
+	case "none":
+		// No token-based authentication
+		return nil, nil
 
 	case "":
 		// Fallback to authentication methods when authentication type isn't explicitly configured

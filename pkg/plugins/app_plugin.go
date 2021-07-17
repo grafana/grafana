@@ -28,6 +28,7 @@ type AppPlugin struct {
 // AppPluginRoute describes a plugin route that is defined in
 // the plugin.json file for a plugin.
 type AppPluginRoute struct {
+	Host         string                   `json:"host"`
 	Path         string                   `json:"path"`
 	Method       string                   `json:"method"`
 	ReqRole      models.RoleType          `json:"reqRole"`
