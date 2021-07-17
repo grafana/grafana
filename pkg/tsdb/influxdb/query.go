@@ -102,7 +102,7 @@ func (query *Query) renderTimeFilter(queryContext plugins.DataQuery) string {
 
 	// else from dashboard alerting
 	from := "now() - " + queryContext.TimeRange.From
-	to := ""
+	to := " and time < now()"
 
 	if queryContext.TimeRange.To != "now" && queryContext.TimeRange.To != "" {
 		to = " and time < now() - " + strings.Replace(queryContext.TimeRange.To, "now-", "", 1)
