@@ -9,11 +9,11 @@ import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveD
 import { locationService } from '@grafana/runtime';
 import { exitKioskMode, toggleKioskMode } from '../navigation/kiosk';
 import {
-  HideModalEvent,
+  HideModalReactEvent,
   RemovePanelEvent,
   ShiftTimeEvent,
   ShiftTimeEventPayload,
-  ShowModalEvent,
+  ShowConfirmModalEvent,
   ShowModalReactEvent,
   ZoomOutEvent,
 } from '../../types/events';
@@ -28,7 +28,8 @@ export class KeybindingSrv {
   modalOpen = false;
 
   constructor() {
-    appEvents.subscribe(ShowModalEvent, () => (this.modalOpen = true));
+    appEvents.subscribe(ShowConfirmModalEvent, () => (this.modalOpen = true));
+    appEvents.subscribe(ShowModalReactEvent, () => (this.modalOpen = true));
   }
 
   reset() {
@@ -102,7 +103,7 @@ export class KeybindingSrv {
   }
 
   private exit() {
-    appEvents.publish(new HideModalEvent());
+    appEvents.publish(new HideModalReactEvent());
 
     if (this.modalOpen) {
       this.modalOpen = false;
