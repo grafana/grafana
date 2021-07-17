@@ -1,5 +1,6 @@
 import { css } from '@emotion/react';
 import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
+import { getFocusStyles } from '../mixins';
 
 export function getElementStyles(theme: GrafanaTheme2) {
   return css`
@@ -122,6 +123,10 @@ export function getElementStyles(theme: GrafanaTheme2) {
 
       &:focus {
         outline: none;
+      }
+
+      &:focus-visible {
+        ${getFocusStyles(theme)}
       }
 
       &: [disabled] {
