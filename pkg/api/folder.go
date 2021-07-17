@@ -96,7 +96,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 		return ToFolderErrorResponse(err)
 	}
 
-	f, err := s.DeleteFolder(c.Params(":uid"))
+	f, err := s.DeleteFolder(c.Params(":uid"), c.QueryBool("forceDeleteRules"))
 	if err != nil {
 		return ToFolderErrorResponse(err)
 	}
@@ -149,7 +149,8 @@ func ToFolderErrorResponse(err error) response.Response {
 	if errors.Is(err, models.ErrFolderTitleEmpty) ||
 		errors.Is(err, models.ErrDashboardTypeMismatch) ||
 		errors.Is(err, models.ErrDashboardInvalidUid) ||
-		errors.Is(err, models.ErrDashboardUidTooLong) {
+		errors.Is(err, models.ErrDashboardUidTooLong) ||
+		errors.Is(err, models.ErrFolderContainsAlertRules) {
 		return response.Error(400, err.Error(), nil)
 	}
 
