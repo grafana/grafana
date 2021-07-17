@@ -12,34 +12,28 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:     "PluginContextProvider",
-		Instance: newProvider(),
-	})
-}
-
-func newProvider() *Provider {
-	return &Provider{}
+func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginManager plugins.Manager,
+	dataSourceCache datasources.CacheService) *Provider {
+	return &Provider{
+		Bus:             bus,
+		CacheService:    cacheService,
+		PluginManager:   pluginManager,
+		DataSourceCache: dataSourceCache,
+	}
 }
 
 type Provider struct {
-	Bus             bus.Bus                  `inject:""`
-	CacheService    *localcache.CacheService `inject:""`
-	PluginManager   plugins.Manager          `inject:""`
-	DatasourceCache datasources.CacheService `inject:""`
+	Bus             bus.Bus
+	CacheService    *localcache.CacheService
+	PluginManager   plugins.Manager
+	DataSourceCache datasources.CacheService
 }
 
-func (p *Provider) Init() error {
-	return nil
-}
-
-// Get allows getting plugin context by its id. If datasourceUID is not empty string
+// Get allows getting plugin context by its ID. If datasourceUID is not empty string
 // then PluginContext.DataSourceInstanceSettings will be resolved and appended to
 // returned context.
 func (p *Provider) Get(pluginID string, datasourceUID string, user *models.SignedInUser, skipCache bool) (backend.PluginContext, bool, error) {
@@ -81,7 +75,7 @@ func (p *Provider) Get(pluginID string, datasourceUID string, user *models.Signe
 	}
 
 	if datasourceUID != "" {
-		ds, err := p.DatasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
+		ds, err := p.DataSourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to get datasource", err)
 		}

@@ -21,13 +21,9 @@ import (
 )
 
 var (
-	plog         log.Logger
+	plog                        = log.New("tsdb.prometheus")
 	legendFormat *regexp.Regexp = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
-
-func init() {
-	plog = log.New("tsdb.prometheus")
-}
 
 type PrometheusExecutor struct {
 	client             apiv1.API

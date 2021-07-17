@@ -17,14 +17,12 @@ func TestEmailIntegrationTest(t *testing.T) {
 
 		ns := &NotificationService{}
 		ns.Bus = bus.New()
-		ns.Cfg = setting.NewCfg()
-		ns.Cfg.Smtp.Enabled = true
-		ns.Cfg.Smtp.TemplatesPattern = "emails/*.html"
-		ns.Cfg.Smtp.FromAddress = "from@address.com"
-		ns.Cfg.Smtp.FromName = "Grafana Admin"
+		cfg := setting.NewCfg()
 
-		err := ns.Init()
-		So(err, ShouldBeNil)
+		cfg.Smtp.Enabled = true
+		cfg.Smtp.TemplatesPattern = "emails/*.html"
+		cfg.Smtp.FromAddress = "from@address.com"
+		cfg.Smtp.FromName = "Grafana Admin"
 
 		Convey("When sending reset email password", func() {
 			cmd := &models.SendEmailCommand{

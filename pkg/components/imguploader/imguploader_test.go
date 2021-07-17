@@ -12,7 +12,7 @@ func TestImageUploaderFactory(t *testing.T) {
 	t.Run("Can create image uploader for ", func(t *testing.T) {
 		t.Run("S3ImageUploader config", func(t *testing.T) {
 			cfg := setting.NewCfg()
-			err := cfg.Load(&setting.CommandLineArgs{
+			err := cfg.Load(setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
 			require.NoError(t, err)
@@ -85,7 +85,7 @@ func TestImageUploaderFactory(t *testing.T) {
 
 		t.Run("Webdav uploader", func(t *testing.T) {
 			cfg := setting.NewCfg()
-			err := cfg.Load(&setting.CommandLineArgs{
+			err := cfg.Load(setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
 			require.NoError(t, err)
@@ -113,7 +113,7 @@ func TestImageUploaderFactory(t *testing.T) {
 
 		t.Run("GCS uploader", func(t *testing.T) {
 			cfg := setting.NewCfg()
-			err := cfg.Load(&setting.CommandLineArgs{
+			err := cfg.Load(setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
 			require.NoError(t, err)
@@ -138,7 +138,7 @@ func TestImageUploaderFactory(t *testing.T) {
 
 		t.Run("AzureBlobUploader config", func(t *testing.T) {
 			cfg := setting.NewCfg()
-			err := cfg.Load(&setting.CommandLineArgs{
+			err := cfg.Load(setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
 			require.NoError(t, err)
@@ -168,7 +168,7 @@ func TestImageUploaderFactory(t *testing.T) {
 
 		t.Run("Local uploader", func(t *testing.T) {
 			cfg := setting.NewCfg()
-			err := cfg.Load(&setting.CommandLineArgs{
+			err := cfg.Load(setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
 			require.NoError(t, err)

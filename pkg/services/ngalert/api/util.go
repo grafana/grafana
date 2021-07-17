@@ -83,7 +83,7 @@ func replacedResponseWriter(ctx *models.ReqContext) (*models.ReqContext, *respon
 }
 
 type AlertingProxy struct {
-	DataProxy *datasourceproxy.DatasourceProxyService
+	DataProxy *datasourceproxy.DataSourceProxyService
 }
 
 // withReq proxies a different request

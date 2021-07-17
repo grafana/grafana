@@ -4,10 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -19,16 +17,8 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 
 	cfg := setting.NewCfg()
 	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
-
-	ac := OSSAccessControlService{
-		Cfg:        cfg,
-		UsageStats: &usageStatsMock{metricsFuncs: make([]usagestats.MetricsFunc, 0)},
-		Log:        log.New("accesscontrol-test"),
-	}
-
-	err := ac.Init()
-	require.NoError(t, err)
-	return &ac
+	ac := ProvideService(cfg, &usageStatsMock{metricsFuncs: make([]usagestats.MetricsFunc, 0)})
+	return ac
 }
 
 type usageStatsMock struct {
@@ -106,7 +96,6 @@ func TestEvaluatingPermissions(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			ac := setupTestEnv(t)
-			t.Cleanup(registry.ClearOverrides)
 
 			user := &models.SignedInUser{
 				UserId:         1,
@@ -150,15 +139,7 @@ func TestUsageMetrics(t *testing.T) {
 				cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 			}
 
-			s := &OSSAccessControlService{
-				Cfg:        cfg,
-				UsageStats: &usageStatsMock{t: t, metricsFuncs: make([]usagestats.MetricsFunc, 0)},
-				Log:        log.New("accesscontrol-test"),
-			}
-
-			err := s.Init()
-			assert.Nil(t, err)
-
+			s := ProvideService(cfg, &usageStatsMock{t: t, metricsFuncs: make([]usagestats.MetricsFunc, 0)})
 			report, err := s.UsageStats.GetUsageReport(context.Background())
 			assert.Nil(t, err)
 

@@ -13,8 +13,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -368,33 +366,18 @@ func scenario(t *testing.T, desc string, fn scenarioFunc, cbs ...configureFunc) 
 }
 
 func initAuthService(t *testing.T, cbs ...configureFunc) (*AuthService, error) {
-	sqlStore := sqlstore.InitTestDB(t)
-	remoteCacheSvc := &remotecache.RemoteCache{}
+	t.Helper()
+
 	cfg := setting.NewCfg()
 	cfg.JWTAuthEnabled = true
 	cfg.JWTAuthExpectClaims = "{}"
-	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{Name: "database"}
+
 	for _, cb := range cbs {
 		cb(t, cfg)
 	}
 
-	service := &AuthService{}
-
-	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
-		{
-			Name:     sqlstore.ServiceName,
-			Instance: sqlStore,
-		},
-		{
-			Name:     remotecache.ServiceName,
-			Instance: remoteCacheSvc,
-		},
-		{
-			Name:     ServiceName,
-			Instance: service,
-		},
-	})
-
+	service := newService(cfg, remotecache.NewFakeStore(t))
+	err := service.init()
 	return service, err
 }
 

@@ -14,24 +14,15 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/tsdb"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
 var eslog = log.New("tsdb.elasticsearch")
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "ElasticSearchService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
-	})
-}
-
 type Service struct {
-	BackendPluginManager backendplugin.Manager `inject:""`
-	HTTPClientProvider   httpclient.Provider   `inject:""`
+	BackendPluginManager backendplugin.Manager
+	HTTPClientProvider   httpclient.Provider
 	intervalCalculator   tsdb.Calculator
 	im                   instancemgmt.InstanceManager
 }

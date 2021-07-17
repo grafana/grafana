@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"golang.org/x/oauth2"
 )
 
@@ -16,12 +15,8 @@ var (
 	logger = log.New("oauthtoken")
 )
 
-func init() {
-	registry.RegisterService(&Service{})
-}
-
 type Service struct {
-	SocialService social.Service `inject:""`
+	SocialService social.Service
 }
 
 type OAuthTokenService interface {
@@ -29,8 +24,10 @@ type OAuthTokenService interface {
 	IsOAuthPassThruEnabled(*models.DataSource) bool
 }
 
-func (o *Service) Init() error {
-	return nil
+func ProvideService(socialService social.Service) *Service {
+	return &Service{
+		SocialService: socialService,
+	}
 }
 
 // GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.

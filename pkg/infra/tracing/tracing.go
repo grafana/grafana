@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 
 	opentracing "github.com/opentracing/opentracing-go"
@@ -21,8 +20,20 @@ const (
 	envJaegerAgentPort = "JAEGER_AGENT_PORT"
 )
 
-func init() {
-	registry.RegisterService(&TracingService{})
+func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
+	ts := &TracingService{
+		Cfg: cfg,
+		log: log.New("tracing"),
+	}
+	if err := ts.parseSettings(); err != nil {
+		return nil, err
+	}
+
+	if ts.enabled {
+		return ts, ts.initGlobalTracer()
+	}
+
+	return ts, nil
 }
 
 type TracingService struct {
@@ -37,20 +48,7 @@ type TracingService struct {
 	zipkinPropagation        bool
 	disableSharedZipkinSpans bool
 
-	Cfg *setting.Cfg `inject:""`
-}
-
-func (ts *TracingService) Init() error {
-	ts.log = log.New("tracing")
-	if err := ts.parseSettings(); err != nil {
-		return err
-	}
-
-	if ts.enabled {
-		return ts.initGlobalTracer()
-	}
-
-	return nil
+	Cfg *setting.Cfg
 }
 
 func (ts *TracingService) parseSettings() error {

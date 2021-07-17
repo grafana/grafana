@@ -17,8 +17,8 @@ func TestCSVFileScenario(t *testing.T) {
 	cfg.DataPath = t.TempDir()
 	cfg.StaticRootPath = "../../../public"
 
-	p := &testDataPlugin{
-		Cfg: cfg,
+	p := &TestDataPlugin{
+		cfg: cfg,
 	}
 
 	t.Run("loadCsvFile", func(t *testing.T) {

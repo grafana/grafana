@@ -49,12 +49,12 @@ func createTimeLimitCode(data string, minutes int, startInf interface{}) (string
 }
 
 // verify time limit code
-func validateUserEmailCode(user *models.User, code string) (bool, error) {
+func validateUserEmailCode(cfg *setting.Cfg, user *models.User, code string) (bool, error) {
 	if len(code) <= 18 {
 		return false, nil
 	}
 
-	minutes := setting.EmailCodeValidMinutes
+	minutes := cfg.EmailCodeValidMinutes
 	code = code[:timeLimitCodeLength]
 
 	// split code
@@ -94,8 +94,8 @@ func getLoginForEmailCode(code string) string {
 	return string(b)
 }
 
-func createUserEmailCode(u *models.User, startInf interface{}) (string, error) {
-	minutes := setting.EmailCodeValidMinutes
+func createUserEmailCode(cfg *setting.Cfg, u *models.User, startInf interface{}) (string, error) {
+	minutes := cfg.EmailCodeValidMinutes
 	data := com.ToStr(u.Id) + u.Email + u.Login + u.Password + u.Rands
 	code, err := createTimeLimitCode(data, minutes, startInf)
 	if err != nil {

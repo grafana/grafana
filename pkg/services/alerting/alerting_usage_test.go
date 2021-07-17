@@ -55,9 +55,6 @@ func TestAlertingUsageStats(t *testing.T) {
 		return nil
 	})
 
-	err := ae.Init()
-	require.NoError(t, err, "Init should not return error")
-
 	result, err := ae.QueryUsageStats()
 	require.NoError(t, err, "getAlertingUsage should not return error")
 
@@ -106,8 +103,6 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 	}
 
 	ae := &AlertEngine{}
-	err := ae.Init()
-	require.NoError(t, err, "Init should not return an error")
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {

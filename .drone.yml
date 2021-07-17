@@ -45,6 +45,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition oss
   - ./bin/grabpl integration-tests --edition oss
@@ -298,6 +299,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition oss
   - ./bin/grabpl integration-tests --edition oss
@@ -752,6 +754,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition oss --tries 5
   - ./bin/grabpl integration-tests --edition oss --tries 5
@@ -1127,6 +1130,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition enterprise --tries 5
   - ./bin/grabpl integration-tests --edition enterprise --tries 5
@@ -1193,6 +1197,7 @@ steps:
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition enterprise2 --tries 5
   - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
@@ -1706,6 +1711,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition oss --tries 5
   - ./bin/grabpl integration-tests --edition oss --tries 5
@@ -2070,6 +2076,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition enterprise --tries 5
   - ./bin/grabpl integration-tests --edition enterprise --tries 5
@@ -2136,6 +2143,7 @@ steps:
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition enterprise2 --tries 5
   - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
@@ -2642,6 +2650,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition oss
   - ./bin/grabpl integration-tests --edition oss
@@ -2977,6 +2986,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition enterprise
   - ./bin/grabpl integration-tests --edition enterprise
@@ -3040,6 +3050,7 @@ steps:
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition enterprise2
   - ./bin/grabpl integration-tests --edition enterprise2

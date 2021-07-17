@@ -36,14 +36,10 @@ func New(httpClientProvider httpclient.Provider) func(*models.DataSource) (plugi
 }
 
 var (
-	glog log.Logger
+	glog = log.New("tsdb.influxdb")
 )
 
 var ErrInvalidHttpMode error = errors.New("'httpMode' should be either 'GET' or 'POST'")
-
-func init() {
-	glog = log.New("tsdb.influxdb")
-}
 
 //nolint: staticcheck // plugins.DataResponse deprecated
 func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (

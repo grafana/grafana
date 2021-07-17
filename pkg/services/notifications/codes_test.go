@@ -10,10 +10,11 @@ import (
 
 func TestEmailCodes(t *testing.T) {
 	Convey("When generating code", t, func() {
-		setting.EmailCodeValidMinutes = 120
+		cfg := setting.NewCfg()
+		cfg.EmailCodeValidMinutes = 120
 
 		user := &models.User{Id: 10, Email: "t@a.com", Login: "asd", Password: "1", Rands: "2"}
-		code, err := createUserEmailCode(user, nil)
+		code, err := createUserEmailCode(cfg, user, nil)
 		So(err, ShouldBeNil)
 
 		Convey("getLoginForCode should return login", func() {
@@ -22,14 +23,14 @@ func TestEmailCodes(t *testing.T) {
 		})
 
 		Convey("Can verify valid code", func() {
-			isValid, err := validateUserEmailCode(user, code)
+			isValid, err := validateUserEmailCode(cfg, user, code)
 			So(err, ShouldBeNil)
 			So(isValid, ShouldBeTrue)
 		})
 
 		Convey("Cannot verify in-valid code", func() {
 			code = "ASD"
-			isValid, err := validateUserEmailCode(user, code)
+			isValid, err := validateUserEmailCode(cfg, user, code)
 			So(err, ShouldBeNil)
 			So(isValid, ShouldBeFalse)
 		})

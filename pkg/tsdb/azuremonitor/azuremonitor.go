@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
@@ -32,12 +31,36 @@ var (
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "AzureMonitorService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, pluginManager plugins.Manager, backendPluginManager backendplugin.Manager) *Service {
+	executors := map[string]azDatasourceExecutor{
+		azureMonitor:       &AzureMonitorDatasource{},
+		appInsights:        &ApplicationInsightsDatasource{},
+		azureLogAnalytics:  &AzureLogAnalyticsDatasource{},
+		insightsAnalytics:  &InsightsAnalyticsDatasource{},
+		azureResourceGraph: &AzureResourceGraphDatasource{},
+	}
+
+	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, *httpClientProvider, executors))
+
+	s := &Service{
+		Cfg:           cfg,
+		PluginManager: pluginManager,
+		im:            im,
+		executors:     executors,
+	}
+
+	mux := s.newMux()
+	resourceMux := http.NewServeMux()
+	s.registerRoutes(resourceMux)
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler:    mux,
+		CallResourceHandler: httpadapter.New(resourceMux),
 	})
+
+	if err := backendPluginManager.RegisterAndStart(context.Background(), dsName, factory); err != nil {
+		azlog.Error("Failed to register plugin", "error", err)
+	}
+	return s
 }
 
 type serviceProxy interface {
@@ -45,12 +68,10 @@ type serviceProxy interface {
 }
 
 type Service struct {
-	PluginManager        plugins.Manager       `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
-	BackendPluginManager backendplugin.Manager `inject:""`
-	HTTPClientProvider   *httpclient.Provider  `inject:""`
-	im                   instancemgmt.InstanceManager
-	executors            map[string]azDatasourceExecutor
+	PluginManager plugins.Manager
+	Cfg           *setting.Cfg
+	im            instancemgmt.InstanceManager
+	executors     map[string]azDatasourceExecutor
 }
 
 type azureMonitorSettings struct {
@@ -178,28 +199,4 @@ func (s *Service) newMux() *datasource.QueryTypeMux {
 		})
 	}
 	return mux
-}
-
-func (s *Service) Init() error {
-	proxy := &httpServiceProxy{}
-	s.executors = map[string]azDatasourceExecutor{
-		azureMonitor:       &AzureMonitorDatasource{proxy: proxy},
-		appInsights:        &ApplicationInsightsDatasource{proxy: proxy},
-		azureLogAnalytics:  &AzureLogAnalyticsDatasource{proxy: proxy},
-		insightsAnalytics:  &InsightsAnalyticsDatasource{proxy: proxy},
-		azureResourceGraph: &AzureResourceGraphDatasource{proxy: proxy},
-	}
-	s.im = datasource.NewInstanceManager(NewInstanceSettings(s.Cfg, *s.HTTPClientProvider, s.executors))
-	mux := s.newMux()
-	resourceMux := http.NewServeMux()
-	s.registerRoutes(resourceMux)
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler:    mux,
-		CallResourceHandler: httpadapter.New(resourceMux),
-	})
-
-	if err := s.BackendPluginManager.Register(dsName, factory); err != nil {
-		azlog.Error("Failed to register plugin", "error", err)
-	}
-	return nil
 }

@@ -13,7 +13,7 @@ import (
 )
 
 // nolint:staticcheck // plugins.DataQuery deprecated
-func dataPluginQueryAdapter(pluginID string, handler backend.QueryDataHandler, oAuthService *oauthtoken.Service) plugins.DataPluginFunc {
+func dataPluginQueryAdapter(pluginID string, handler backend.QueryDataHandler, oAuthService oauthtoken.OAuthTokenService) plugins.DataPluginFunc {
 	return plugins.DataPluginFunc(func(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
 		instanceSettings, err := modelToInstanceSettings(ds)
 		if err != nil {

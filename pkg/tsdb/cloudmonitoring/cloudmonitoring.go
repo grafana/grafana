@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -30,7 +29,7 @@ import (
 )
 
 var (
-	slog log.Logger
+	slog = log.New("tsdb.cloudMonitoring")
 )
 
 var (
@@ -67,22 +66,16 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "CloudMonitoringService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
-	})
+func ProvideService(pluginManager plugins.Manager) *Service {
+	return &Service{
+		PluginManager: pluginManager,
+	}
 }
 
 type Service struct {
-	PluginManager      plugins.Manager     `inject:""`
-	HTTPClientProvider httpclient.Provider `inject:""`
-	Cfg                *setting.Cfg        `inject:""`
-}
-
-func (s *Service) Init() error {
-	return nil
+	PluginManager      plugins.Manager
+	HTTPClientProvider httpclient.Provider
+	Cfg                *setting.Cfg
 }
 
 // Executor executes queries for the CloudMonitoring datasource.
@@ -107,10 +100,6 @@ func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, er
 		pluginManager: s.PluginManager,
 		cfg:           s.Cfg,
 	}, nil
-}
-
-func init() {
-	slog = log.New("tsdb.cloudMonitoring")
 }
 
 // Query takes in the frontend queries, parses them into the CloudMonitoring query format

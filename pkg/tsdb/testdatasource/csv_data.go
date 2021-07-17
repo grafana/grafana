@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-func (p *testDataPlugin) handleCsvContentScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleCsvContentScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -43,7 +43,7 @@ func (p *testDataPlugin) handleCsvContentScenario(ctx context.Context, req *back
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleCsvFileScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleCsvFileScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -72,14 +72,14 @@ func (p *testDataPlugin) handleCsvFileScenario(ctx context.Context, req *backend
 	return resp, nil
 }
 
-func (p *testDataPlugin) loadCsvFile(fileName string) (*data.Frame, error) {
+func (p *TestDataPlugin) loadCsvFile(fileName string) (*data.Frame, error) {
 	validFileName := regexp.MustCompile(`([\w_]+)\.csv`)
 
 	if !validFileName.MatchString(fileName) {
 		return nil, fmt.Errorf("invalid csv file name: %q", fileName)
 	}
 
-	filePath := filepath.Join(p.Cfg.StaticRootPath, "testdata", fileName)
+	filePath := filepath.Join(p.cfg.StaticRootPath, "testdata", fileName)
 
 	// Can ignore gosec G304 here, because we check the file pattern above
 	// nolint:gosec
@@ -97,7 +97,7 @@ func (p *testDataPlugin) loadCsvFile(fileName string) (*data.Frame, error) {
 	return p.loadCsvContent(fileReader, fileName)
 }
 
-func (p *testDataPlugin) loadCsvContent(ioReader io.Reader, name string) (*data.Frame, error) {
+func (p *TestDataPlugin) loadCsvContent(ioReader io.Reader, name string) (*data.Frame, error) {
 	reader := csv.NewReader(ioReader)
 
 	// Read the header records

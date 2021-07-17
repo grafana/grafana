@@ -14,12 +14,8 @@ import (
 )
 
 var (
-	glog log.Logger
-)
-
-func init() {
 	glog = log.New("tsdb.influx_flux")
-}
+)
 
 // Query builds flux queries, executes them, and returns the results.
 //nolint: staticcheck // plugins.DataQuery deprecated
