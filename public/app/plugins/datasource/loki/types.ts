@@ -31,11 +31,13 @@ export interface LokiQuery extends DataQuery {
   valueWithRefId?: boolean;
   maxLines?: number;
   range?: boolean;
+  direction?: 'BACKWARD' | 'FORWARD';
   instant?: boolean;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
+  direction?: 'BACKWARD' | 'FORWARD';
   derivedFields?: DerivedFieldConfig[];
 }
 

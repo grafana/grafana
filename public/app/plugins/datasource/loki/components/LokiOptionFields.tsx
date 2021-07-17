@@ -8,12 +8,20 @@ import { InlineFormLabel, RadioButtonGroup, InlineField, Input } from '@grafana/
 
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;
+  queryDirection: LokiDirectionType;
   queryType: LokiQueryType;
   query: LokiQuery;
   onChange: (value: LokiQuery) => void;
   onRunQuery: () => void;
   runOnBlur?: boolean;
 }
+
+type LokiDirectionType = 'FORWARD' | 'BACKWARD';
+
+const queryDirectionOptions = [
+  { value: 'FORWARD', label: 'Forward', description: 'Run query forward in time.' },
+  { value: 'BACKWARD', label: 'Backward', description: 'Run query backward in time.' },
+];
 
 type LokiQueryType = 'instant' | 'range';
 
@@ -27,7 +35,7 @@ const queryTypeOptions = [
 ];
 
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
-  const { lineLimitValue, queryType, query, onRunQuery, runOnBlur, onChange } = props;
+  const { lineLimitValue, queryDirection, queryType, query, onRunQuery, runOnBlur, onChange } = props;
 
   function onChangeQueryLimit(value: string) {
     const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
@@ -41,6 +49,12 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
     } else {
       nextQuery = { ...query, instant: false, range: true };
     }
+    onChange(nextQuery);
+  }
+
+  function onQueryDirectionChange(value: LokiDirectionType) {
+    let nextQuery;
+    nextQuery = { ...query, direction: value };
     onChange(nextQuery);
   }
 
@@ -123,6 +137,30 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
             }}
           />
         </InlineField>
+      </div>
+      {/*Query direction field*/}
+      <div
+        data-testid="queryDirectionField"
+        className={cx(
+          'gf-form explore-input-margin',
+          css`
+            flex-wrap: nowrap;
+          `
+        )}
+        aria-label="Query direction field"
+      >
+        <InlineFormLabel width="auto">Query direction</InlineFormLabel>
+
+        <RadioButtonGroup
+          options={queryDirectionOptions}
+          value={queryDirection}
+          onChange={(direction: LokiDirectionType) => {
+            onQueryDirectionChange(direction);
+            if (runOnBlur) {
+              onRunQuery();
+            }
+          }}
+        />
       </div>
     </div>
   );
