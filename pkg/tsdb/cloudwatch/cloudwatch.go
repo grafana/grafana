@@ -46,6 +46,19 @@ type datasourceInfo struct {
 	datasourceID int64
 }
 
+type RequestError struct {
+	requestError error
+	statusCode   int
+}
+
+func (rE *RequestError) Error() string {
+	return rE.requestError.Error()
+}
+
+func (rE *RequestError) StatusCode() int {
+	return rE.statusCode
+}
+
 const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
 const defaultRegion = "default"
 
