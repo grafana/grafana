@@ -62,6 +62,5 @@ Jaeger block runs both Jaeger and Loki container. Loki container sends traces to
 If you are running Mac OSX, containers that read from the log files (e.g. telegraf, fileabeat, promtail) sometimes fail to start. This is because default Docker for Mac does not have permission to create `grafana` folder at `/var/log` location, as it runs as the current user. To solve this issue, manually create the folder `/var/log/grafana`, then try starting the containers again.
 
 ```
-cd /
-mkdir var/log/grafana
+sudo mkdir /var/log/grafana
 ```
