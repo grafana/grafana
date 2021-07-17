@@ -95,7 +95,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           // choose from dropdown of regular shapes
           const shapesArr = shapes(fillColor)
           if (config.icon) {
-            console.log('config icon', config.icon)
             const shape = shapesArr.find(el => el.label === config.icon)
             dot.setStyle(shape?.value)
             // default as circle  

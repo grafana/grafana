@@ -33,11 +33,44 @@ const triangle = (color: string) =>
       angle: 0,
     }),
   });
+const star = (color: string) =>
+  new Style({
+    image: new RegularShape({
+      fill: new Fill({ color: color }),
+      stroke: new Stroke({ color: color, width: 1 }),
+      points: 5,
+      radius: 10,
+      radius2: 4,
+      angle: 0,
+    }),
+  });
+const cross = (color: string) =>
+  new Style({
+    image: new RegularShape({
+      fill: new Fill({ color: color }),
+      stroke: new Stroke({ color: color, width: 1 }),
+      points: 4,
+      radius: 10,
+      radius2: 0,
+      angle: 0,
+    }),
+  });
+const x = (color: string) =>
+  new Style({
+    image: new RegularShape({
+      fill: new Fill({ color: color }),
+      stroke: new Stroke({ color: color, width: 1 }),
+      points: 4,
+      radius: 10,
+      radius2: 0,
+      angle: Math.PI / 4,
+    }),
+  });
 interface Shapes {
   label: string;
   value: Style;
 }
-export const shapes = (color: string): Shapes[] => [
+export const shapes = (color: any): Shapes[] => [
   {
     label: 'square',
     value: square(color),
@@ -49,5 +82,17 @@ export const shapes = (color: string): Shapes[] => [
   {
     label: 'triangle',
     value: triangle(color),
+  },
+  {
+    label: 'star',
+    value: star(color),
+  },
+  {
+    label: 'cross',
+    value: cross(color),
+  },
+  {
+    label: 'x',
+    value: x(color),
   },
 ];
