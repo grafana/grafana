@@ -34,6 +34,14 @@ export enum DrawStyle {
 /**
  * @alpha
  */
+export enum OHLCStyle {
+  Candles = 'candles', // default
+  Bars = 'bars',
+}
+
+/**
+ * @alpha
+ */
 export enum LineInterpolation {
   Linear = 'linear',
   Smooth = 'smooth',
@@ -231,6 +239,7 @@ export interface GraphFieldConfig
     StackableFieldConfig,
     HideableFieldConfig {
   drawStyle?: DrawStyle;
+  ohlcStyle?: OHLCStyle;
   gradientMode?: GraphGradientMode;
   thresholdsStyle?: GraphThresholdsStyleConfig;
 }
@@ -244,6 +253,11 @@ export const graphFieldOptions = {
     { label: 'Bars', value: DrawStyle.Bars },
     { label: 'Points', value: DrawStyle.Points },
   ] as Array<SelectableValue<DrawStyle>>,
+
+  ohlcStyle: [
+    { label: 'Candles', value: OHLCStyle.Candles },
+    { label: 'Bars', value: OHLCStyle.Bars },
+  ] as Array<SelectableValue<OHLCStyle>>,
 
   lineInterpolation: [
     { description: 'Linear', value: LineInterpolation.Linear, icon: 'gf-interpolation-linear' },

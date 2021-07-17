@@ -18,6 +18,7 @@ import {
   StackingMode,
   commonOptionsBuilder,
   GraphTresholdsStyleMode,
+  OHLCStyle,
 } from '@grafana/ui';
 import { LineStyleEditor } from './LineStyleEditor';
 import { FillBellowToEditor } from './FillBelowToEditor';
@@ -26,6 +27,7 @@ import { ThresholdsStyleEditor } from './ThresholdsStyleEditor';
 
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,
+  ohlcStyle: OHLCStyle.Candles,
   lineInterpolation: LineInterpolation.Linear,
   lineWidth: 1,
   fillOpacity: 0,
@@ -62,6 +64,15 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           defaultValue: cfg.drawStyle,
           settings: {
             options: graphFieldOptions.drawStyle,
+          },
+        })
+        .addRadio({
+          path: 'ohlcStyle',
+          name: 'OHLC style',
+          category: categoryStyles,
+          defaultValue: cfg.ohlcStyle,
+          settings: {
+            options: graphFieldOptions.ohlcStyle,
           },
         })
         .addRadio({
