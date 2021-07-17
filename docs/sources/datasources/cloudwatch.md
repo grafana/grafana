@@ -442,7 +442,7 @@ datasources:
   - name: CloudWatch
     type: cloudwatch
     jsonData:
-      authType: default
+      authType: arn
       assumeRoleArn: arn:aws:iam::123456789012:root
       defaultRegion: eu-west-2
 ```
