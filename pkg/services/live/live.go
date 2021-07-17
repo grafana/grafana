@@ -402,9 +402,17 @@ func checkAllowedOrigin(origin string, appURL *url.URL, originGlobs []glob.Glob)
 		logger.Warn("Failed to parse request origin", "error", err, "origin", origin)
 		return false, err
 	}
-	if strings.EqualFold(originURL.Scheme, appURL.Scheme) && strings.EqualFold(originURL.Host, appURL.Host) {
-		return true, nil
+	// Try to match over configured [server] root_url first.
+	if originURL.Port() == "" {
+		if strings.EqualFold(originURL.Scheme, appURL.Scheme) && strings.EqualFold(originURL.Host, appURL.Hostname()) {
+			return true, nil
+		}
+	} else {
+		if strings.EqualFold(originURL.Scheme, appURL.Scheme) && strings.EqualFold(originURL.Host, appURL.Host) {
+			return true, nil
+		}
 	}
+	// If there is still no match try [live] allowed_origins patterns.
 	for _, pattern := range originGlobs {
 		if pattern.Match(origin) {
 			return true, nil

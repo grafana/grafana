@@ -76,6 +76,12 @@ func TestCheckOrigin(t *testing.T) {
 			success: true,
 		},
 		{
+			name:    "valid_origin_no_port",
+			origin:  "https://www.example.com",
+			appURL:  "https://www.example.com:443/grafana/",
+			success: true,
+		},
+		{
 			name:    "unauthorized_origin",
 			origin:  "http://localhost:8000",
 			appURL:  "http://localhost:3000/",
