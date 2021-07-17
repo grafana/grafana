@@ -68,6 +68,9 @@ export const useInspectTabs = (
     if (dashboard.meta.canEdit && supportsDataQuery(plugin)) {
       tabs.push({ label: 'Query', value: InspectTab.Query });
     }
+
+    tabs.push({ label: 'Bug report', value: InspectTab.BugReport });
+
     return tabs;
   }, [panel, plugin, metaDs, dashboard, error]);
 };

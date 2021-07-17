@@ -18,6 +18,7 @@ import { getExploreUrl } from '../../../core/utils/explore';
 import { getTimeSrv } from '../services/TimeSrv';
 import { PanelCtrl } from '../../panel/panel_ctrl';
 import config from 'app/core/config';
+import { InspectTab } from '../../inspector/types';
 
 export function getPanelMenu(
   dashboard: DashboardModel,
@@ -142,6 +143,11 @@ export function getPanelMenu(
   inspectMenu.push({
     text: 'Panel JSON',
     onClick: (e: React.MouseEvent<any>) => onInspectPanel('json'),
+  });
+
+  inspectMenu.push({
+    text: 'Bug report',
+    onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.BugReport),
   });
 
   menu.push({

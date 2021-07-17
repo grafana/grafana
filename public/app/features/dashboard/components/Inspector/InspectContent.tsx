@@ -14,6 +14,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { DashboardModel, PanelModel } from '../../state';
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { InspectActionsTab } from './PanelInspectActions';
+import { InspectBugReportTab } from 'app/features/inspector/InspectBugReportTab';
 
 interface Props {
   dashboard: DashboardModel;
@@ -99,6 +100,7 @@ export const InspectContent: React.FC<Props> = ({
             <QueryInspector panel={panel} data={data.series} onRefreshQuery={() => panel.refresh()} />
           )}
           {activeTab === InspectTab.Actions && <InspectActionsTab panel={panel} data={data} />}
+          {data && activeTab === InspectTab.BugReport && <InspectBugReportTab dashboard={dashboard} panel={panel} />}
         </TabContent>
       </CustomScrollbar>
     </Drawer>
