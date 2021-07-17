@@ -90,6 +90,7 @@ func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, err
 	}
 
 	all := make(map[string]schema.VersionedCueSchema)
+
 	err = fs.WalkDir(p.DistPluginCueFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -110,6 +111,7 @@ func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, err
 		if err != nil {
 			return err
 		}
+
 		b, err := ioutil.ReadAll(fi)
 		if err != nil {
 			return err
@@ -158,6 +160,7 @@ func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, err
 		all[id] = fam
 		return nil
 	})
+
 	if err != nil {
 		return nil, err
 	}

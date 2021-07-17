@@ -3,8 +3,11 @@ package schemaloader
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
+	"path/filepath"
+	"sync"
+	"testing/fstest"
 
-	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/schema"
 	"github.com/grafana/grafana/pkg/schema/load"
@@ -23,33 +26,71 @@ func init() {
 
 const ServiceName = "SchemaLoader"
 
-var baseLoadPath load.BaseLoadPaths = load.BaseLoadPaths{
-	BaseCueFS:       grafana.CoreSchema,
-	DistPluginCueFS: grafana.PluginSchema,
-}
-
 type RenderUser struct {
 	OrgID   int64
 	UserID  int64
 	OrgRole string
 }
-
 type SchemaLoaderService struct {
-	log        log.Logger
-	DashFamily schema.VersionedCueSchema
-	Cfg        *setting.Cfg `inject:""`
+	log          log.Logger
+	DashFamily   schema.VersionedCueSchema
+	Cfg          *setting.Cfg `inject:""`
+	pluginFolder string
+	baseLoadPath load.BaseLoadPaths
+}
+
+type ScueVFS struct {
+	sync.Mutex
+	fs.FS
+	// fstest.MapFS
+}
+
+func (r *ScueVFS) SetInstanceFile(key, content string) {
+	r.Lock()
+	defer r.Unlock()
+	r.FS.(fstest.MapFS)[key] = &fstest.MapFile{Data: []byte(content)}
+}
+
+func (r *ScueVFS) RemoveInstanceFile(key string) {
+	r.Lock()
+	defer r.Unlock()
+	delete(r.FS.(fstest.MapFS), key)
+}
+
+func (rs *SchemaLoaderService) LoadNewPanelPluginSchema(name, content string) error {
+	cueFile := filepath.Join(rs.pluginFolder, name+".cue")
+	rs.log.Info("Write file into virtual file system", "file", cueFile)
+	rs.baseLoadPath.InstanceCueFS.(*ScueVFS).SetInstanceFile(cueFile, content)
+	return nil
+}
+
+func (rs *SchemaLoaderService) RemovePanelPluginSchema(name string) error {
+	cueFile := filepath.Join(rs.pluginFolder, name+".cue")
+	rs.log.Info("Delete file from virtual file system", "file", cueFile)
+	rs.baseLoadPath.InstanceCueFS.(*ScueVFS).RemoveInstanceFile(cueFile)
+	return nil
 }
 
 func (rs *SchemaLoaderService) Init() error {
+	defaultLoadPaths := load.GetDefaultLoadPaths()
+	rs.pluginFolder = filepath.Join("public", "app", "plugins")
+	rs.baseLoadPath = load.BaseLoadPaths{
+		BaseCueFS:       defaultLoadPaths.BaseCueFS,
+		DistPluginCueFS: defaultLoadPaths.DistPluginCueFS,
+		InstanceCueFS:   new(ScueVFS),
+	}
+	rs.baseLoadPath.InstanceCueFS.(*ScueVFS).FS.(fstest.MapFS)[rs.pluginFolder] = &fstest.MapFile{Mode: fs.ModeDir}
+
 	rs.log = log.New("schemaloader")
 	var err error
-	rs.DashFamily, err = load.BaseDashboardFamily(baseLoadPath)
+	rs.DashFamily, err = load.BaseDashboardFamily(rs.baseLoadPath)
 
 	if err != nil {
-		return fmt.Errorf("failed to load dashboard cue schema from path %q: %w", baseLoadPath, err)
+		return fmt.Errorf("failed to load dashboard cue schema from path %q: %w", rs.baseLoadPath, err)
 	}
 	return nil
 }
+
 func (rs *SchemaLoaderService) IsDisabled() bool {
 	if rs.Cfg == nil {
 		return true
@@ -82,7 +123,7 @@ func (rs *SchemaLoaderService) DashboardTrimDefaults(input simplejson.Json) (sim
 	if err != nil {
 		return input, err
 	}
-	// spew.Dump(dsSchema)
+
 	result, err := schema.TrimDefaults(schema.Resource{Value: data}, dsSchema.CUE())
 	if err != nil {
 		return input, err
@@ -97,14 +138,12 @@ func (rs *SchemaLoaderService) DashboardTrimDefaults(input simplejson.Json) (sim
 func removeNils(initialMap map[string]interface{}) map[string]interface{} {
 	withoutNils := map[string]interface{}{}
 	for key, value := range initialMap {
-		_, ok := value.(map[string]interface{})
-		if ok {
+		if _, ok := value.(map[string]interface{}); ok {
 			value = removeNils(value.(map[string]interface{}))
 			withoutNils[key] = value
 			continue
 		}
-		_, ok = value.([]interface{})
-		if ok {
+		if _, ok := value.([]interface{}); ok {
 			value = removeNilArray(value.([]interface{}))
 			withoutNils[key] = value
 			continue
@@ -124,14 +163,12 @@ func removeNils(initialMap map[string]interface{}) map[string]interface{} {
 func removeNilArray(initialArray []interface{}) []interface{} {
 	withoutNils := []interface{}{}
 	for _, value := range initialArray {
-		_, ok := value.(map[string]interface{})
-		if ok {
+		if _, ok := value.(map[string]interface{}); ok {
 			value = removeNils(value.(map[string]interface{}))
 			withoutNils = append(withoutNils, value)
 			continue
 		}
-		_, ok = value.([]interface{})
-		if ok {
+		if _, ok := value.([]interface{}); ok {
 			value = removeNilArray(value.([]interface{}))
 			withoutNils = append(withoutNils, value)
 			continue
