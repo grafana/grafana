@@ -18,7 +18,7 @@ import {
   prometheusRegularEscape,
   prometheusSpecialRegexEscape,
 } from './datasource';
-import { PromOptions, PromQuery } from './types';
+import { PromOptions, PromQuery, StepMode } from './types';
 import { VariableHide } from '../../../features/variables/types';
 import { describe } from '../../../../test/lib/common';
 import { QueryOptions } from 'app/types';
@@ -1683,6 +1683,60 @@ describe('PrometheusDatasource', () => {
       ds.createQuery({ ...target, interval: '$int' }, { interval: '15s' } as any, 0, 300);
       expect(templateSrvStub.replace.mock.calls).toHaveLength(3);
       templateSrvStub.replace = jest.fn((a: string) => a);
+    });
+  });
+
+  describe('adjustInterval', () => {
+    const dynamicInterval = 15;
+    const stepInterval = 35;
+    const range = 1642;
+    describe('when max step option is used', () => {
+      it('should return the minimum interval', () => {
+        let intervalFactor = 1;
+        let interval = ds.adjustInterval(dynamicInterval, stepInterval, range, intervalFactor, 'max');
+        expect(interval).toBe(dynamicInterval * intervalFactor);
+
+        intervalFactor = 3;
+        interval = ds.adjustInterval(dynamicInterval, stepInterval, range, intervalFactor, 'max');
+        expect(interval).toBe(stepInterval);
+      });
+    });
+    describe('when min step option is used', () => {
+      it('should return the maximum interval', () => {
+        let intervalFactor = 1;
+        let interval = ds.adjustInterval(dynamicInterval, stepInterval, range, intervalFactor, 'min');
+        expect(interval).toBe(stepInterval);
+
+        intervalFactor = 3;
+        interval = ds.adjustInterval(dynamicInterval, stepInterval, range, intervalFactor, 'min');
+        expect(interval).toBe(dynamicInterval * intervalFactor);
+      });
+    });
+    describe('when exact step option is used', () => {
+      it('should return the stepInterval * intervalFactor', () => {
+        let intervalFactor = 3;
+        let interval = ds.adjustInterval(dynamicInterval, stepInterval, range, intervalFactor, 'exact');
+        expect(interval).toBe(stepInterval * intervalFactor);
+      });
+    });
+    it('should not return a value less than the safe interval', () => {
+      let newStepInterval = 0.13;
+      let intervalFactor = 1;
+      let stepMode: StepMode = 'min';
+      let safeInterval = range / 11000;
+      if (safeInterval > 1) {
+        safeInterval = Math.ceil(safeInterval);
+      }
+      let interval = ds.adjustInterval(dynamicInterval, newStepInterval, range, intervalFactor, stepMode);
+      expect(interval).toBeGreaterThanOrEqual(safeInterval);
+
+      stepMode = 'max';
+      interval = ds.adjustInterval(dynamicInterval, newStepInterval, range, intervalFactor, stepMode);
+      expect(interval).toBeGreaterThanOrEqual(safeInterval);
+
+      stepMode = 'exact';
+      interval = ds.adjustInterval(dynamicInterval, newStepInterval, range, intervalFactor, stepMode);
+      expect(interval).toBeGreaterThanOrEqual(safeInterval);
     });
   });
 });

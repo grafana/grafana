@@ -10,12 +10,15 @@ export interface PromQuery extends DataQuery {
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;
+  stepMode?: StepMode;
   legendFormat?: string;
   valueWithRefId?: boolean;
   requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
 }
+
+export type StepMode = 'min' | 'max' | 'exact';
 
 export interface PromOptions extends DataSourceJsonData {
   timeInterval: string;

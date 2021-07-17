@@ -31,8 +31,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         <FormLabel
           tooltip={
             <React.Fragment>
-              An additional lower limit for the step parameter of the Prometheus query and for the
-               
+              Use 'Minimum' or 'Maximum' step mode to set the lower or upper bounds respectively on the interval between data points. For example, set "minimum 1h" to hint that measurements were not taken more frequently. Use the 'Exact' step mode to set an exact interval between data points. 
               <code>
                 $__interval
               </code>
@@ -40,18 +39,46 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
               <code>
                 $__rate_interval
               </code>
-               variables. The limit is absolute and not modified by the "Resolution" setting.
+               are supported.
             </React.Fragment>
           }
-          width={7}
+          width={5}
         >
-          Min step
+          Step
         </FormLabel>
+        <Select
+          className="select-container"
+          isSearchable={false}
+          onChange={[Function]}
+          options={
+            Array [
+              Object {
+                "label": "Minimum",
+                "value": "min",
+              },
+              Object {
+                "label": "Maximum",
+                "value": "max",
+              },
+              Object {
+                "label": "Exact",
+                "value": "exact",
+              },
+            ]
+          }
+          value={
+            Object {
+              "label": "Minimum",
+              "value": "min",
+            }
+          }
+          width={16}
+        />
         <input
-          className="gf-form-input width-8"
+          className="gf-form-input width-4"
           onBlur={[Function]}
           onChange={[Function]}
-          placeholder=""
+          placeholder="15s"
           type="text"
           value=""
         />
@@ -112,6 +139,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
           Format
         </div>
         <Select
+          className="select-container"
           isSearchable={false}
           onChange={[Function]}
           options={
