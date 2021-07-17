@@ -120,6 +120,7 @@ describe('LokiLabelBrowser', () => {
     userEvent.click(clearBtn);
   });
 
+  // TODO: Connor - Fix tests
   it('renders and loader shows when empty, and then first set of labels', async () => {
     const props = setupProps();
     render(<UnthemedLokiLabelBrowser {...props} />);

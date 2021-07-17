@@ -254,3 +254,5 @@ export { preparePlotFrame } from './GraphNG/utils';
 export { GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
+export { Label as BrowserLabel } from './BrowserLabel/Label';
+export { SearchFunctionMap } from '../utils/searchFunctions';

@@ -1,12 +1,20 @@
 import React, { ChangeEvent } from 'react';
-import { Button, HorizontalGroup, Input, Label, LoadingPlaceholder, stylesFactory, withTheme } from '@grafana/ui';
+import {
+  Button,
+  HorizontalGroup,
+  Input,
+  Label,
+  LoadingPlaceholder,
+  stylesFactory,
+  withTheme,
+  BrowserLabel as PromLabel,
+} from '@grafana/ui';
 import PromQlLanguageProvider from '../language_provider';
 import { css, cx } from '@emotion/css';
 import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme } from '@grafana/data';
-import { Label as PromLabel } from './Label';
 
 // Hard limit on labels to render
 const MAX_LABEL_COUNT = 10000;
