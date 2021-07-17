@@ -17,6 +17,9 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
       <LinkButton variant="secondary" fill="outline" href={`${config.appSubUrl}/datasources`}>
         Back
       </LinkButton>
+      <LinkButton variant="secondary" fill="solid" href={`${config.appSubUrl}/explore`}>
+        Explore your data
+      </LinkButton>
       <Button
         type="button"
         variant="destructive"

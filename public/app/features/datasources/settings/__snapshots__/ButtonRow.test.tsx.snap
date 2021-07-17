@@ -11,6 +11,13 @@ exports[`Render should render component 1`] = `
   >
     Back
   </LinkButton>
+  <LinkButton
+    fill="solid"
+    href="/explore"
+    variant="secondary"
+  >
+    Explore your data
+  </LinkButton>
   <Button
     aria-label="Data source settings page Delete button"
     disabled={true}
@@ -40,6 +47,13 @@ exports[`Render should render with buttons enabled 1`] = `
     variant="secondary"
   >
     Back
+  </LinkButton>
+  <LinkButton
+    fill="solid"
+    href="/explore"
+    variant="secondary"
+  >
+    Explore your data
   </LinkButton>
   <Button
     aria-label="Data source settings page Delete button"
