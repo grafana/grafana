@@ -4,7 +4,7 @@ import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeS
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 
 import LokiDatasource from './datasource';
-import { LokiQuery, LokiResponse, LokiResultType } from './types';
+import { LokiQuery, LokiResponse, LokiResultType, StepType } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -102,7 +102,7 @@ describe('LokiDatasource', () => {
     });
 
     it('should use default intervalMs if one is not provided', () => {
-      const target = { expr: '{job="grafana"}', refId: 'B' };
+      const target = { expr: '{job="grafana"}', refId: 'B', stepInterval: '2s' };
       const raw = { from: 'now', to: 'now-1h' };
       const range = { from: dateTime(), to: dateTime(), raw: raw };
       const options = {
@@ -112,11 +112,11 @@ describe('LokiDatasource', () => {
       const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
-      expect(adjustIntervalSpy).toHaveBeenCalledWith(1000, expect.anything());
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(1000, 2000, expect.anything(), 0, expect.anything());
     });
 
     it('should use provided intervalMs', () => {
-      const target = { expr: '{job="grafana"}', refId: 'B' };
+      const target = { expr: '{job="grafana"}', refId: 'B', stepInterval: '2s' };
       const raw = { from: 'now', to: 'now-1h' };
       const range = { from: dateTime(), to: dateTime(), raw: raw };
       const options = {
@@ -127,11 +127,17 @@ describe('LokiDatasource', () => {
       const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
-      expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(
+        2000,
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything()
+      );
     });
 
     it('should set the minimal step to 1ms', () => {
-      const target = { expr: '{job="grafana"}', refId: 'B' };
+      const target = { expr: '{job="grafana"}', refId: 'B', stepInterval: '1ms' };
       const raw = { from: 'now', to: 'now-1h' };
       const range = { from: dateTime('2020-10-14T00:00:00'), to: dateTime('2020-10-14T00:00:01'), raw: raw };
       const options = {
@@ -142,7 +148,13 @@ describe('LokiDatasource', () => {
       const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
-      expect(adjustIntervalSpy).toHaveBeenCalledWith(0.0005, expect.anything());
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(
+        0.0005,
+        expect.anything(),
+        expect.anything(),
+        1000,
+        expect.anything()
+      );
       // Step is in seconds (1 ms === 0.001 s)
       expect(req.step).toEqual(0.001);
     });
@@ -581,7 +593,7 @@ describe('LokiDatasource', () => {
           status: 'success',
         },
       } as unknown) as FetchResponse;
-      const { promise } = getTestContext(response);
+      const { promise } = getTestContext(response, { stepInterval: '15s' });
 
       const res = await promise;
 
@@ -613,7 +625,7 @@ describe('LokiDatasource', () => {
       } as unknown) as FetchResponse;
       describe('When tagKeys is set', () => {
         it('should only include selected labels', async () => {
-          const { promise } = getTestContext(response, { tagKeys: 'label2,label3' });
+          const { promise } = getTestContext(response, { tagKeys: 'label2,label3', stepInterval: '15s' });
 
           const res = await promise;
 
@@ -624,7 +636,7 @@ describe('LokiDatasource', () => {
       });
       describe('When textFormat is set', () => {
         it('should fromat the text accordingly', async () => {
-          const { promise } = getTestContext(response, { textFormat: 'hello {{label2}}' });
+          const { promise } = getTestContext(response, { textFormat: 'hello {{label2}}', stepInterval: '15s' });
 
           const res = await promise;
 
@@ -634,7 +646,7 @@ describe('LokiDatasource', () => {
       });
       describe('When titleFormat is set', () => {
         it('should fromat the title accordingly', async () => {
-          const { promise } = getTestContext(response, { titleFormat: 'Title {{label2}}' });
+          const { promise } = getTestContext(response, { titleFormat: 'Title {{label2}}', stepInterval: '15s' });
 
           const res = await promise;
 
@@ -779,6 +791,52 @@ describe('LokiDatasource', () => {
           });
         });
       });
+    });
+  });
+
+  describe('adjustInterval', () => {
+    const dynamicInterval = 15;
+    const stepInterval = 35;
+    const range = 1642;
+    const ds = createLokiDSForTests();
+    describe('when max step option is used', () => {
+      it('should return the minimum interval', () => {
+        let stepMode: StepType = 'max';
+        let interval = ds.adjustInterval(dynamicInterval, stepInterval, stepMode, range);
+        expect(interval).toBe(dynamicInterval);
+      });
+    });
+    describe('when min step option is used', () => {
+      it('should return the maximum interval', () => {
+        let stepMode: StepType = 'min';
+        let interval = ds.adjustInterval(dynamicInterval, stepInterval, stepMode, range);
+        expect(interval).toBe(stepInterval);
+      });
+    });
+    describe('when exact step option is used', () => {
+      it('should return the stepInterval', () => {
+        let stepMode: StepType = 'exact';
+        let interval = ds.adjustInterval(dynamicInterval, stepInterval, stepMode, range);
+        expect(interval).toBe(stepInterval);
+      });
+    });
+    it('should not return a value less than the safe interval', () => {
+      let newStepInterval = 0.13;
+      let stepMode: StepType = 'min';
+      let safeInterval = range / 11000;
+      if (safeInterval > 1) {
+        safeInterval = Math.ceil(safeInterval);
+      }
+      let interval = ds.adjustInterval(dynamicInterval, newStepInterval, stepMode, range);
+      expect(interval).toBeGreaterThanOrEqual(safeInterval);
+
+      stepMode = 'max';
+      interval = ds.adjustInterval(dynamicInterval, newStepInterval, stepMode, range);
+      expect(interval).toBeGreaterThanOrEqual(safeInterval);
+
+      stepMode = 'exact';
+      interval = ds.adjustInterval(dynamicInterval, newStepInterval, stepMode, range);
+      expect(interval).toBeGreaterThanOrEqual(safeInterval);
     });
   });
 });
