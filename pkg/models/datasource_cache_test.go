@@ -65,7 +65,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 
-		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
+		tlsCaCert, err := util.Encrypt([]byte(caCert), "password", util.AesCfb)
 		require.NoError(t, err)
 		ds := DataSource{
 			Id:             1,
@@ -111,9 +111,9 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsAuth", true)
 
-		tlsClientCert, err := util.Encrypt([]byte(clientCert), "password")
+		tlsClientCert, err := util.Encrypt([]byte(clientCert), "password", util.AesCfb)
 		require.NoError(t, err)
-		tlsClientKey, err := util.Encrypt([]byte(clientKey), "password")
+		tlsClientKey, err := util.Encrypt([]byte(clientKey), "password", util.AesCfb)
 		require.NoError(t, err)
 
 		ds := DataSource{
@@ -151,7 +151,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		json.Set("tlsAuthWithCACert", true)
 		json.Set("serverName", "server-name")
 
-		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
+		tlsCaCert, err := util.Encrypt([]byte(caCert), "password", util.AesCfb)
 		require.NoError(t, err)
 
 		ds := DataSource{
@@ -215,7 +215,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		json := simplejson.NewFromAny(map[string]interface{}{
 			"httpHeaderName1": "Authorization",
 		})
-		encryptedData, err := util.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), setting.SecretKey)
+		encryptedData, err := util.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), setting.SecretKey, setting.EncryptionAlgorithm)
 		if err != nil {
 			log.Fatal(err.Error())
 		}

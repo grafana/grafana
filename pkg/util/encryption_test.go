@@ -18,20 +18,34 @@ func TestEncryption(t *testing.T) {
 		assert.Len(t, key, 32)
 	})
 
+	encAlgorithms := []string{AesGcm, AesCfb}
+
 	t.Run("decrypting basic payload", func(t *testing.T) {
-		encrypted, err := Encrypt([]byte("grafana"), "1234")
-		require.NoError(t, err)
+		for _, algorithm := range encAlgorithms {
+			algorithm := algorithm
 
-		decrypted, err := Decrypt(encrypted, "1234")
-		require.NoError(t, err)
+			t.Run(algorithm, func(t *testing.T) {
+				encrypted, err := Encrypt([]byte("grafana"), "1234", algorithm)
+				require.NoError(t, err)
 
-		assert.Equal(t, []byte("grafana"), decrypted)
+				decrypted, err := Decrypt(encrypted, "1234", algorithm)
+				require.NoError(t, err)
+
+				assert.Equal(t, []byte("grafana"), decrypted)
+			})
+		}
 	})
 
 	t.Run("decrypting empty payload should not fail", func(t *testing.T) {
-		_, err := Decrypt([]byte(""), "1234")
-		require.Error(t, err)
+		for _, algorithm := range encAlgorithms {
+			algorithm := algorithm
 
-		assert.Equal(t, "unable to compute salt", err.Error())
+			t.Run(algorithm, func(t *testing.T) {
+				_, err := Decrypt([]byte(""), "1234", algorithm)
+				require.Error(t, err)
+
+				assert.Equal(t, "unable to compute salt", err.Error())
+			})
+		}
 	})
 }

@@ -271,7 +271,7 @@ func DeleteAuthInfo(cmd *models.DeleteAuthInfoCommand) error {
 // decodeAndDecrypt will decode the string with the standard bas64 decoder
 // and then decrypt it with grafana's secretKey
 func decodeAndDecrypt(s string) (string, error) {
-	// Bail out if empty string since it'll cause a segfault in util.Decrypt
+	// Bail out if empty string since it'll cause a segfault in util.DecryptCFB
 	if s == "" {
 		return "", nil
 	}
@@ -279,7 +279,7 @@ func decodeAndDecrypt(s string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	decrypted, err := util.Decrypt(decoded, setting.SecretKey)
+	decrypted, err := util.Decrypt(decoded, setting.SecretKey, setting.EncryptionAlgorithm)
 	if err != nil {
 		return "", err
 	}
@@ -289,7 +289,7 @@ func decodeAndDecrypt(s string) (string, error) {
 // encryptAndEncode will encrypt a string with grafana's secretKey, and
 // then encode it with the standard bas64 encoder
 func encryptAndEncode(s string) (string, error) {
-	encrypted, err := util.Encrypt([]byte(s), setting.SecretKey)
+	encrypted, err := util.Encrypt([]byte(s), setting.SecretKey, setting.EncryptionAlgorithm)
 	if err != nil {
 		return "", err
 	}
