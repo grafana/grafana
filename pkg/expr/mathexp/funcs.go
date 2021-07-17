@@ -102,9 +102,7 @@ func perFloat(e *State, val Value, floatF func(x float64) float64) (Value, error
 			if f != nil {
 				nF = floatF(*f)
 			}
-			if err := newSeries.SetPoint(i, t, &nF); err != nil {
-				return newSeries, err
-			}
+			newSeries.SetPoint(i, t, &nF)
 		}
 		newVal = newSeries
 	default:

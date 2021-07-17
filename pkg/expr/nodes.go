@@ -115,6 +115,8 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 		node.Command, err = UnmarshalResampleCommand(rn)
 	case TypeClassicConditions:
 		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
+	case TypeSelectMetric:
+		node.Command, err = UnmarshalSelectMetricCommand(rn)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in '%v' not implemented", commandType, rn.RefID)
 	}
@@ -298,27 +300,26 @@ func isNumberTable(frame *data.Frame) bool {
 			otherCount++
 		}
 	}
-	return numericCount == 1 && otherCount == 0
+	return numericCount >= 1 && otherCount == 0
 }
 
 func extractNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
-	numericField := 0
+	numericFields := []int{}
 	stringFieldIdxs := []int{}
 	stringFieldNames := []string{}
 	for i, field := range frame.Fields {
 		fType := field.Type()
 		switch {
 		case fType.Numeric():
-			numericField = i
+			numericFields = append(numericFields, i)
 		case fType == data.FieldTypeString || fType == data.FieldTypeNullableString:
 			stringFieldIdxs = append(stringFieldIdxs, i)
 			stringFieldNames = append(stringFieldNames, field.Name)
 		}
 	}
-	numbers := make([]mathexp.Number, frame.Rows())
+	numbers := []mathexp.Number{}
 
 	for rowIdx := 0; rowIdx < frame.Rows(); rowIdx++ {
-		val, _ := frame.FloatAt(numericField, rowIdx)
 		var labels data.Labels
 		for i := 0; i < len(stringFieldIdxs); i++ {
 			if i == 0 {
@@ -328,11 +329,14 @@ func extractNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
 			val, _ := frame.ConcreteAt(stringFieldIdxs[i], rowIdx)
 			labels[key] = val.(string) // TODO check assertion / return error
 		}
-
-		n := mathexp.NewNumber("", labels)
-		n.SetValue(&val)
-		numbers[rowIdx] = n
+		for _, numericField := range numericFields {
+			val, _ := frame.FloatAt(numericField, rowIdx)
+			n := mathexp.NewNumber(frame.Fields[numericField].Name, labels)
+			n.SetValue(&val)
+			numbers = append(numbers, n)
+		}
 	}
+
 	return numbers, nil
 }
 

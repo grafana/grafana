@@ -3,11 +3,15 @@ package expr
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/prometheus/prometheus/pkg/labels"
+	"github.com/prometheus/prometheus/promql/parser"
 )
 
 // Command is an interface for all expression commands.
@@ -226,6 +230,163 @@ func (gr *ResampleCommand) Execute(ctx context.Context, vars mathexp.Vars) (math
 	return newRes, nil
 }
 
+// Select MetricCommand is an expresion for selecting a specific metric name from a response.
+// All labeled items matching the metric name are returned, so this for queries that not only return multiple
+// items that are differentiated not only by label name but also by metric name.
+// If IsRegex is true, then Metric name must be a valid regular expression.
+type SelectMetricCommand struct {
+	refID string
+
+	InputVar string
+
+	MetricName string
+
+	LabelMatchers string
+	matchers      []*labels.Matcher
+
+	IsRegex bool
+	re      *regexp.Regexp
+}
+
+// UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
+func UnmarshalSelectMetricCommand(rn *rawNode) (*SelectMetricCommand, error) {
+	smc := &SelectMetricCommand{
+		refID: rn.RefID,
+	}
+
+	rawInput, ok := rn.Query["expression"]
+	if !ok {
+		return nil, fmt.Errorf("no variable to select metric for refId %v", rn.RefID)
+	}
+	inputVar, ok := rawInput.(string)
+	if !ok {
+		return nil, fmt.Errorf("expected select metric input variable to be type string, but got type %T for refId %v", inputVar, rn.RefID)
+	}
+	smc.InputVar = strings.TrimPrefix(inputVar, "$")
+
+	var gotMetric, gotMatcher bool
+
+	rawMetricName, ok := rn.Query["metricName"]
+	if ok {
+		smc.MetricName, ok = rawMetricName.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected metric name in select metric to be a string, but got %T for refId %v", rawMetricName, rn.RefID)
+		}
+		gotMetric = smc.MetricName != ""
+	}
+
+	rawLabelMatchers, ok := rn.Query["labelMatchers"]
+	if ok {
+		labelMatchersString, ok := rawLabelMatchers.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected labelMatchers in select metric to be a string, but got %T for refId %v", rawLabelMatchers, rn.RefID)
+		}
+		var err error
+		if labelMatchersString != "" {
+			smc.matchers, err = parser.ParseMetricSelector(fmt.Sprintf("{%v}", labelMatchersString))
+			if err != nil {
+				return nil, fmt.Errorf("invalid label matching string in select metric for refId %v: %w", rn.RefID, err)
+			}
+			gotMatcher = labelMatchersString != ""
+		}
+	}
+
+	if !gotMatcher && !gotMetric {
+		return nil, fmt.Errorf("no metric name or labels matcher specificed for select metric in refId %v", rn.RefID)
+	}
+
+	rawIsRegex, ok := rn.Query["isRegex"]
+	if ok {
+		smc.IsRegex, ok = rawIsRegex.(bool)
+		if !ok {
+			return nil, fmt.Errorf("expected isRegex in select metric to be a bool, but got %T for refId %v", rawMetricName, rn.RefID)
+		}
+
+		var err error
+		smc.re, err = regexp.Compile(smc.MetricName)
+		if err != nil {
+			return nil, fmt.Errorf("invalid regular expression in select metric for refId %v: %w", rn.RefID, err)
+		}
+	}
+
+	return smc, nil
+}
+
+// Execute runs the command and returns the results or an error if the command
+// failed to execute.
+func (s *SelectMetricCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+	newRes := mathexp.Results{}
+	inputData := vars[s.InputVar]
+
+	appendValue := func(v mathexp.Value) {
+		// new series/numbers need to be created for selection, but in this
+		// filtering case we duplicates pointers
+		switch val := v.(type) {
+		case mathexp.Number:
+			num := mathexp.NewNumber(s.refID, val.GetLabels())
+			num.SetValue(val.GetFloat64Value())
+			newRes.Values = append(newRes.Values, num)
+		case mathexp.Series:
+			s := mathexp.NewSeries(s.refID, val.GetLabels(), val.Len())
+			// Note: sharing a reference to a Field's values between fields
+			// is no possible since that slice is not exposed in data.Field,
+			// so must do a new slices.
+			for i := 0; i < val.Len(); i++ {
+				t, f := val.GetPoint(i)
+				s.SetPoint(i, t, f)
+			}
+			newRes.Values = append(newRes.Values, s)
+		}
+	}
+
+	ifMatchAppend := func(metricName string, dl data.Labels, v mathexp.Value) {
+		var matched bool
+		pl := labels.FromMap(dl)
+		if metricName != "" {
+			if s.IsRegex {
+				matched = s.re.MatchString(metricName)
+			} else {
+				matched = metricName == s.MetricName
+			}
+		}
+		if len(s.matchers) > 0 {
+			if labels.Selector(s.matchers).Matches(pl) {
+				if s.MetricName != "" && !matched {
+					matched = false
+				} else {
+					matched = true
+				}
+			} else {
+				if s.MetricName != "" && matched {
+					matched = false
+				}
+			}
+		}
+
+		if matched {
+			appendValue(v)
+		}
+	}
+
+	for _, val := range inputData.Values {
+		switch v := val.(type) {
+		case mathexp.Series:
+			ifMatchAppend(v.GetName(), v.GetLabels(), v)
+		case mathexp.Number:
+			ifMatchAppend(v.GetName(), v.GetLabels(), v)
+		default:
+			return newRes, fmt.Errorf("metric select input must be type Series or Number, but got type %s in refId %v", v.Type(), s.refID)
+		}
+	}
+	return newRes, nil
+}
+
+// NeedsVars returns the variable names (refIds) that are dependencies
+// to execute the command and allows the command to fulfill the Command interface.
+func (s *SelectMetricCommand) NeedsVars() []string {
+	return []string{s.InputVar}
+}
+
 // CommandType is the type of the expression command.
 type CommandType int
 
@@ -240,6 +401,8 @@ const (
 	TypeResample
 	// TypeClassicConditions is the CMDType for the classic condition operation.
 	TypeClassicConditions
+	// TypeSelectMetric is the CMDType for the select metric operation.
+	TypeSelectMetric
 )
 
 func (gt CommandType) String() string {
@@ -252,6 +415,8 @@ func (gt CommandType) String() string {
 		return "resample"
 	case TypeClassicConditions:
 		return "classic_conditions"
+	case TypeSelectMetric:
+		return "select_metric"
 	default:
 		return "unknown"
 	}
@@ -268,6 +433,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeResample, nil
 	case "classic_conditions":
 		return TypeClassicConditions, nil
+	case "select_metric":
+		return TypeSelectMetric, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}
