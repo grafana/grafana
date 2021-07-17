@@ -67,6 +67,12 @@ const (
 	ActionUsersQuotasList        = "users.quotas:list"
 	ActionUsersQuotasUpdate      = "users.quotas:update"
 
+	// Annotation actions
+	AnnotationCreate         = "annotate.users:create"
+	AnnotationDelete         = "annotate.users:delete"
+	AnnotationUpdate         = "annotate.users:update"
+	AnnotationGraphiteCreate = "annotate.graphite.users:create"
+	AnnotationRead           = "annotate.users:read"
 	// Org actions
 	ActionOrgUsersRead       = "org.users:read"
 	ActionOrgUsersAdd        = "org.users:add"
