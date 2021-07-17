@@ -1,6 +1,6 @@
 import { chain } from 'lodash';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv } from '@grafana/runtime';
 import coreModule from 'app/core/core_module';
 import { getConfig } from 'app/core/config';
 import {
@@ -263,15 +263,14 @@ export interface LinkService {
 }
 
 export class LinkSrv implements LinkService {
-  /** @ngInject */
-  constructor(private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {}
+  constructor() {}
 
   getLinkUrl(link: any) {
-    let url = locationUtil.assureBaseUrl(this.templateSrv.replace(link.url || ''));
+    let url = locationUtil.assureBaseUrl(getTemplateSrv().replace(link.url || ''));
     let params: { [key: string]: any } = {};
 
     if (link.keepTime) {
-      const range = this.timeSrv.timeRangeForUrl();
+      const range = getTimeSrv().timeRangeForUrl();
       params['from'] = range.from;
       params['to'] = range.to;
     }
@@ -288,10 +287,11 @@ export class LinkSrv implements LinkService {
   }
 
   getAnchorInfo(link: any) {
+    const templateSrv = getTemplateSrv();
     const info: any = {};
     info.href = this.getLinkUrl(link);
-    info.title = this.templateSrv.replace(link.title || '');
-    info.tooltip = this.templateSrv.replace(link.tooltip || '');
+    info.title = templateSrv.replace(link.title || '');
+    info.tooltip = templateSrv.replace(link.tooltip || '');
     return info;
   }
 
