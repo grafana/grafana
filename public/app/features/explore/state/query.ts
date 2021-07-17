@@ -383,7 +383,7 @@ export const runQueries = (
 
       const datasourceName = datasourceInstance.name;
       const timeZone = getTimeZone(getState().user);
-      const transaction = buildQueryTransaction(queries, queryOptions, range, scanning, timeZone);
+      const transaction = buildQueryTransaction(exploreId, queries, queryOptions, range, scanning, timeZone);
 
       let firstResponse = true;
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
