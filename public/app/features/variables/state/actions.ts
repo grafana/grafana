@@ -327,6 +327,9 @@ export const setOptionFromUrl = (
     });
 
     if (!option && isMulti(variableFromState)) {
+      if (!stringUrlValue) {
+        option = variableFromState.options[0];
+      }
       if (variableFromState.allValue && stringUrlValue === variableFromState.allValue) {
         option = { text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false };
       }
