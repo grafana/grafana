@@ -54,15 +54,15 @@ func (s *Service) updateAppDashboards() {
 		}
 
 		if pluginDef := s.PluginManager.GetPlugin(pluginSetting.PluginId); pluginDef != nil {
-			if pluginDef.Info.Version != pluginSetting.PluginVersion {
-				s.syncPluginDashboards(pluginDef, pluginSetting.OrgId)
-			}
+			s.syncPluginDashboards(pluginDef, pluginSetting.OrgId)
 		}
 	}
 }
 
 func (s *Service) syncPluginDashboards(pluginDef *plugins.PluginBase, orgID int64) {
 	s.logger.Info("Syncing plugin dashboards to DB", "pluginId", pluginDef.Id)
+
+	app := s.PluginManager.GetApp(pluginDef.Id)
 
 	// Get plugin dashboards
 	dashboards, err := s.PluginManager.GetPluginDashboards(orgID, pluginDef.Id)
@@ -76,6 +76,8 @@ func (s *Service) syncPluginDashboards(pluginDef *plugins.PluginBase, orgID int6
 		// remove removed ones
 		if dash.Removed {
 			s.logger.Info("Deleting plugin dashboard", "pluginId", pluginDef.Id, "dashboard", dash.Slug)
+
+			s.PluginManager.CacheDashboardUIDBySlug(orgID, dash.Slug, "")
 
 			deleteCmd := models.DeleteDashboardCommand{OrgId: orgID, Id: dash.DashboardId}
 			if err := bus.Dispatch(&deleteCmd); err != nil {
@@ -91,6 +93,13 @@ func (s *Service) syncPluginDashboards(pluginDef *plugins.PluginBase, orgID int6
 			if err := s.autoUpdateAppDashboard(dash, orgID); err != nil {
 				s.logger.Error("Failed to auto update app dashboard", "pluginId", pluginDef.Id, "error", err)
 				return
+			}
+		}
+
+		for _, include := range app.Includes {
+			if dash.ImportedUri == "db/"+include.Slug {
+				s.PluginManager.CacheDashboardUIDBySlug(orgID, include.Slug, dash.DashboardUid)
+				break
 			}
 		}
 	}
