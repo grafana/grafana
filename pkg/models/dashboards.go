@@ -331,6 +331,7 @@ type ValidateDashboardBeforeSaveResult struct {
 //
 
 type SaveDashboardCommand struct {
+	// required: true
 	Dashboard    *simplejson.Json `json:"dashboard" binding:"Required"`
 	UserId       int64            `json:"userId"`
 	Overwrite    bool             `json:"overwrite"`
@@ -340,10 +341,14 @@ type SaveDashboardCommand struct {
 	PluginId     string           `json:"-"`
 	FolderId     int64            `json:"folderId"`
 	FolderUid    string           `json:"folderUid"`
-	IsFolder     bool             `json:"isFolder"`
 
+	// swagger:ignore
+	IsFolder bool `json:"isFolder"`
+
+	// swagger:ignore
 	UpdatedAt time.Time
 
+	// swagger:ignore
 	Result *Dashboard
 }
 

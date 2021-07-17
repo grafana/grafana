@@ -17,6 +17,10 @@ func Version() string {
 	return "0.5.0"
 }
 
+// Json
+//
+// swagger:model Json
+// swagger:type object
 type Json struct {
 	data interface{}
 }
