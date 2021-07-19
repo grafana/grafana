@@ -1,4 +1,4 @@
-import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, GrafanaTheme2 } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as style from 'ol/style';
@@ -20,6 +20,7 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
   description: 'Show an icon at the last point',
   isBaseMap: false,
   showLocation: true,
+  state: PluginState.alpha,
 
   /**
    * Function that configures transformation and returns a transformer
