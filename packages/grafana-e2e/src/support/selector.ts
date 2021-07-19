@@ -6,6 +6,6 @@ export interface SelectorApi {
 
 export const Selector: SelectorApi = {
   fromAriaLabel: (selector: string) => `[aria-label="${selector}"]`,
-  fromDataTestId: (selector: string) => `[data-test-id="${selector}"]`,
+  fromDataTestId: (selector: string) => `[data-testid="${selector}"]`,
   fromSelector: (selector: string) => selector,
 };
