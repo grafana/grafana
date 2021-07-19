@@ -4,10 +4,10 @@ import { fromBaseUrl, getDashboardUid } from '../support/url';
 
 type Panel = {
   title: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
-type Dashboard = { title: string; panels: Panel[]; [key: string]: any };
+type Dashboard = { title: string; panels: Panel[]; [key: string]: unknown };
 
 /**
  * Smoke test a datasource by quickly importing a test dashboard for it
@@ -30,9 +30,9 @@ export const importDashboard = (dashboardToImport: Dashboard) => {
     .then((url: string) => {
       const uid = getDashboardUid(url);
 
-      e2e.getScenarioContext().then(({ addedDashboards }: any) => {
+      e2e.getScenarioContext().then(({ addedDashboards }: { addedDashboards: DeleteDashboardConfig[] }) => {
         e2e.setScenarioContext({
-          addedDashboards: [...addedDashboards, { title: dashboardToImport.title, uid } as DeleteDashboardConfig],
+          addedDashboards: [...addedDashboards, { title: dashboardToImport.title, uid }],
         });
       });
     });

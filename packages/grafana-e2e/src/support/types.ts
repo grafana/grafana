@@ -100,8 +100,8 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
         }
 
         // the input can only be (text, options)
-        if (arguments.length === 2) {
-          const text = textOrOptions as string;
+        if (arguments.length === 2 && typeof textOrOptions === 'string') {
+          const text = textOrOptions;
           const selectorText = value(text);
           const selector = text.startsWith('data-test-id')
             ? Selector.fromDataTestId(selectorText)
