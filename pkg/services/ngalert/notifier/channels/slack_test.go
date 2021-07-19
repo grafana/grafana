@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestSlackNotifier(t *testing.T) {
@@ -30,7 +29,7 @@ func TestSlackNotifier(t *testing.T) {
 		settings     string
 		alerts       []*types.Alert
 		expMsg       *slackMessage
-		expInitError error
+		expInitError string
 		expMsgError  error
 	}{
 		{
@@ -66,8 +65,7 @@ func TestSlackNotifier(t *testing.T) {
 					},
 				},
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		},
 		{
 			name: "Correct config with webhook",
@@ -102,8 +100,7 @@ func TestSlackNotifier(t *testing.T) {
 					},
 				},
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		},
 		{
 			name: "Correct config with multiple alerts and template",
@@ -145,20 +142,19 @@ func TestSlackNotifier(t *testing.T) {
 					},
 				},
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name: "Missing token",
 			settings: `{
 				"recipient": "#testchannel"
 			}`,
-			expInitError: alerting.ValidationError{Reason: "token must be specified when using the Slack chat API"},
+			expInitError: `failed to validate receiver "slack_testing" of type "slack": token must be specified when using the Slack chat API`,
 		}, {
 			name: "Missing recipient",
 			settings: `{
 				"token": "1234"
 			}`,
-			expInitError: alerting.ValidationError{Reason: "recipient must be specified when using the Slack chat API"},
+			expInitError: `failed to validate receiver "slack_testing" of type "slack": recipient must be specified when using the Slack chat API`,
 		},
 	}
 
@@ -174,9 +170,9 @@ func TestSlackNotifier(t *testing.T) {
 			}
 
 			pn, err := NewSlackNotifier(m, tmpl)
-			if c.expInitError != nil {
+			if c.expInitError != "" {
 				require.Error(t, err)
-				require.Equal(t, c.expInitError.Error(), err.Error())
+				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
