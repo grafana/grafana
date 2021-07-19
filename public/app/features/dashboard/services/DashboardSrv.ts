@@ -3,7 +3,7 @@ import { appEvents } from 'app/core/app_events';
 import { DashboardModel } from '../state/DashboardModel';
 import { removePanel } from '../utils/panel';
 import { DashboardMeta } from 'app/types';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
 import { RemovePanelEvent } from '../../../types/events';
 
@@ -45,6 +45,7 @@ export class DashboardSrv {
   }
 
   starDashboard(dashboardId: string, isStarred: any) {
+    const backendSrv = getBackendSrv();
     let promise;
 
     if (isStarred) {
