@@ -51,14 +51,9 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
     isOpen: false,
   };
 
-  selectButtonRef: Ref<HTMLButtonElement> = React.createRef();
-
   onChange = (timeRange: TimeRange) => {
     this.props.onChange(timeRange);
     this.setState({ isOpen: false });
-    if (this.selectButtonRef) {
-      console.log(this.selectButtonRef);
-    }
   };
 
   onOpen = (event: FormEvent<HTMLButtonElement>) => {
@@ -94,7 +89,15 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
 
     return (
       <ButtonGroup className={styles.container}>
-        {hasAbsolute && <ToolbarButton variant={variant} onClick={onMoveBackward} icon="angle-left" narrow />}
+        {hasAbsolute && (
+          <ToolbarButton
+            aria-label="Move time range backwards"
+            variant={variant}
+            onClick={onMoveBackward}
+            icon="angle-left"
+            narrow
+          />
+        )}
 
         <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
           <ToolbarButton
@@ -103,7 +106,6 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
             icon="clock-nine"
             isOpen={isOpen}
             variant={variant}
-            ref={this.selectButtonRef}
           >
             <TimePickerButtonLabel {...this.props} />
           </ToolbarButton>
@@ -126,7 +128,15 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
 
         {timeSyncButton}
 
-        {hasAbsolute && <ToolbarButton onClick={onMoveForward} icon="angle-right" narrow variant={variant} />}
+        {hasAbsolute && (
+          <ToolbarButton
+            aria-label="Move time range forwards"
+            onClick={onMoveForward}
+            icon="angle-right"
+            narrow
+            variant={variant}
+          />
+        )}
 
         <Tooltip content={ZoomOutTooltip} placement="bottom">
           <ToolbarButton aria-label="Zoom out time range" onClick={onZoom} icon="search-minus" variant={variant} />
