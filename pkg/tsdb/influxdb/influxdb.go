@@ -24,35 +24,35 @@ import (
 )
 
 type Service struct {
-	HTTPClientProvider   httpclient.Provider   `inject:""`
-	BackendPluginManager backendplugin.Manager `inject:""`
-	QueryParser          *InfluxdbQueryParser
-	ResponseParser       *ResponseParser
+	QueryParser    *InfluxdbQueryParser
+	ResponseParser *ResponseParser
+	glog           log.Logger
 
 	im instancemgmt.InstanceManager
 }
 
-var (
-	glog = log.New("tsdb.influxdb")
-)
+var ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
 
-var ErrInvalidHttpMode error = errors.New("'httpMode' should be either 'GET' or 'POST'")
-
-func (s *Service) Init() error {
-	glog = log.New("tsdb.influxdb")
-	s.QueryParser = &InfluxdbQueryParser{}
-	s.ResponseParser = &ResponseParser{}
-	s.im = datasource.NewInstanceManager(newInstanceSettings(s.HTTPClientProvider))
+func ProvideService(httpClient httpclient.Provider, backendPluginManager backendplugin.Manager) (*Service, error) {
+	glog := log.New("tsdb.influxdb")
+	im := datasource.NewInstanceManager(newInstanceSettings(httpClient))
+	s := &Service{
+		QueryParser:    &InfluxdbQueryParser{},
+		ResponseParser: &ResponseParser{},
+		glog:           glog,
+		im:             im,
+	}
 
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
 
-	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "influxdb", factory); err != nil {
+	if err := backendPluginManager.RegisterAndStart(context.Background(), "influxdb", factory); err != nil {
 		glog.Error("Failed to register plugin", "error", err)
+		return nil, err
 	}
 
-	return nil
+	return s, nil
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -97,7 +97,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	glog.Debug("Received a query request", "numQueries", len(req.Queries))
+	s.glog.Debug("Received a query request", "numQueries", len(req.Queries))
 
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
@@ -108,7 +108,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return flux.Query(ctx, dsInfo, *req)
 	}
 
-	glog.Debug("Making a non-Flux type query")
+	s.glog.Debug("Making a non-Flux type query")
 
 	// NOTE: the following path is currently only called from alerting queries
 	// In dashboards, the request runs through proxy and are managed in the frontend
@@ -124,7 +124,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	if setting.Env == setting.Dev {
-		glog.Debug("Influxdb query", "raw query", rawQuery)
+		s.glog.Debug("Influxdb query", "raw query", rawQuery)
 	}
 
 	request, err := s.createRequest(ctx, dsInfo, rawQuery)
@@ -138,7 +138,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			glog.Warn("Failed to close response body", "err", err)
+			s.glog.Warn("Failed to close response body", "err", err)
 		}
 	}()
 	if res.StatusCode/100 != 2 {
@@ -206,7 +206,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *models.DatasourceIn
 
 	req.URL.RawQuery = params.Encode()
 
-	glog.Debug("Influxdb request", "url", req.URL.String())
+	s.glog.Debug("Influxdb request", "url", req.URL.String())
 	return req, nil
 }
 
