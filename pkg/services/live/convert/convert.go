@@ -21,6 +21,7 @@ func NewConverter() *Converter {
 		telegrafConverterLabelsColumn: telegraf.NewConverter(
 			telegraf.WithUseLabelsColumn(true),
 			telegraf.WithFloat64Numbers(true),
+			telegraf.WithUseHistory(true), // Not good for HA?
 		),
 	}
 }

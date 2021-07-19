@@ -1,10 +1,13 @@
 package telegraf
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -267,4 +270,70 @@ func TestConverter_Convert_PartInput_LabelsColumn(t *testing.T) {
 	frameWrappers, err := converter.Convert(testData)
 	require.NoError(t, err)
 	require.Len(t, frameWrappers, 1)
+}
+
+func TestConvertToCSV(t *testing.T) {
+	t.Skip()
+
+	testData, err := ioutil.ReadFile("/home/ryan/Downloads/data_motor_fb.log")
+	require.NoError(t, err)
+	converter := NewConverter(WithUseLabelsColumn(true), WithUseHistory(true))
+	frameWrappers, err := converter.Convert(testData)
+	require.NoError(t, err)
+	dr := backend.DataResponse{}
+	for _, fw := range frameWrappers {
+		frame := fw.Frame()
+		dr.Frames = append(dr.Frames, frame)
+
+		f, err := os.Create("tttttt.txt")
+		require.NoError(t, err)
+		defer f.Close()
+
+		err = frameToCSV(frame, f, true, true)
+		require.NoError(t, err)
+	}
+
+	_ = experimental.CheckGoldenDataResponse("aaa.txt", &dr, true)
+	//require.NoError(t, err)
+}
+
+func frameToCSV(frame *data.Frame, writer io.Writer, showNames bool, showTypes bool) error {
+	w := csv.NewWriter(writer)
+	width := len(frame.Fields)
+	rows := frame.Rows()
+	line := make([]string, width)
+	if showNames {
+		for i, f := range frame.Fields {
+			line[i] = f.Name
+		}
+		if err := w.Write(line); err != nil {
+			return err
+		}
+	}
+	if showTypes {
+		for i, f := range frame.Fields {
+			line[i] = f.Type().ItemTypeString()
+		}
+		if err := w.Write(line); err != nil {
+			return err
+		}
+	}
+
+	for row := 0; row < rows; row++ {
+		for i, f := range frame.Fields {
+			str := ""
+			val, ok := f.ConcreteAt(row)
+			if val != nil && ok {
+				str = fmt.Sprintf("%v", val)
+			}
+			line[i] = str
+		}
+		if err := w.Write(line); err != nil {
+			return err
+		}
+	}
+
+	// Fulsh values and write
+	w.Flush()
+	return w.Error()
 }

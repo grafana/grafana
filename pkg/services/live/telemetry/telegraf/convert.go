@@ -3,6 +3,7 @@ package telegraf
 import (
 	"fmt"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -23,6 +24,10 @@ type Converter struct {
 	parser            *influx.Parser
 	useLabelsColumn   bool
 	useFloat64Numbers bool
+
+	// keep state between packets
+	history   map[string]*metricFrame
+	historyMu sync.Mutex
 }
 
 // ConverterOption ...
@@ -39,6 +44,17 @@ func WithUseLabelsColumn(enabled bool) ConverterOption {
 func WithFloat64Numbers(enabled bool) ConverterOption {
 	return func(h *Converter) {
 		h.useFloat64Numbers = enabled
+	}
+}
+
+// WithFloat64Numbers will convert all numbers met to float64 type.
+func WithUseHistory(enabled bool) ConverterOption {
+	return func(h *Converter) {
+		if enabled {
+			h.history = make(map[string]*metricFrame)
+		} else {
+			h.history = nil
+		}
 	}
 }
 
@@ -64,6 +80,9 @@ func (c *Converter) Convert(body []byte) ([]telemetry.FrameWrapper, error) {
 	metrics, err := c.parser.Parse(body)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing metrics: %w", err)
+	}
+	if c.history != nil {
+		return c.convertWithHistory(metrics)
 	}
 	if !c.useLabelsColumn {
 		return c.convertWideFields(metrics)
@@ -104,10 +123,29 @@ func (c *Converter) convertWideFields(metrics []influx.Metric) ([]telemetry.Fram
 	return frameWrappers, nil
 }
 
+func (c *Converter) convertWithHistory(metrics []influx.Metric) ([]telemetry.FrameWrapper, error) {
+	c.historyMu.Lock()
+	defer c.historyMu.Unlock()
+
+	if c.history == nil {
+		c.history = make(map[string]*metricFrame)
+	} else {
+		// Clear the history values
+		for _, m := range c.history {
+			m.fields = m.Frame().EmptyCopy().Fields
+		}
+	}
+	return convertWithLabelsColumn(c.history, metrics, c.useFloat64Numbers)
+}
+
 func (c *Converter) convertWithLabelsColumn(metrics []influx.Metric) ([]telemetry.FrameWrapper, error) {
+	metricFrames := make(map[string]*metricFrame)
+	return convertWithLabelsColumn(metricFrames, metrics, c.useFloat64Numbers)
+}
+
+func convertWithLabelsColumn(metricFrames map[string]*metricFrame, metrics []influx.Metric, useFloat64Numbers bool) ([]telemetry.FrameWrapper, error) {
 	// maintain the order of frames as they appear in input.
 	var frameKeyOrder []string
-	metricFrames := make(map[string]*metricFrame)
 
 	for _, m := range metrics {
 		frameKey := m.Name()
@@ -120,7 +158,7 @@ func (c *Converter) convertWithLabelsColumn(metrics []influx.Metric) ([]telemetr
 			}
 		} else {
 			frameKeyOrder = append(frameKeyOrder, frameKey)
-			frame = newMetricFrameLabelsColumn(m, c.useFloat64Numbers)
+			frame = newMetricFrameLabelsColumn(m, useFloat64Numbers)
 			err := frame.append(m)
 			if err != nil {
 				return nil, err
