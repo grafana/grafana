@@ -93,7 +93,7 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
 
         <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
           <ToolbarButton
-            aria-label="TimePicker Open Button"
+            aria-label={`Time range editor ${formattedRange(value, timeZone)}`}
             onClick={this.onOpen}
             icon="clock-nine"
             isOpen={isOpen}
@@ -123,7 +123,7 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
         {hasAbsolute && <ToolbarButton onClick={onMoveForward} icon="angle-right" narrow variant={variant} />}
 
         <Tooltip content={ZoomOutTooltip} placement="bottom">
-          <ToolbarButton onClick={onZoom} icon="search-minus" variant={variant} />
+          <ToolbarButton aria-label="Zoom out time range" onClick={onZoom} icon="search-minus" variant={variant} />
         </Tooltip>
       </ButtonGroup>
     );
