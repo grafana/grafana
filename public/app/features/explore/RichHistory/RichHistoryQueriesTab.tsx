@@ -161,7 +161,7 @@ export function RichHistoryQueriesTab(props: Props) {
       filterAndSortQueries(
         queries,
         sortOrder,
-        datasourceFilters?.map((d) => d.value) as string[] | null,
+        datasourceFilters.map((d) => d.value),
         debouncedSearchInput,
         timeFilter
       )
