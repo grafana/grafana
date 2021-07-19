@@ -1,43 +1,24 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, toOption } from '../../utils/common';
+import { findOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { setResourceName } from './setQueryValue';
 
-const ERROR_SOURCE = 'metrics-resource';
-const ResourceNameField: React.FC<AzureQueryEditorFieldProps> = ({
+interface ResourceNameFieldProps extends AzureQueryEditorFieldProps {
+  resourceNames: AzureMonitorOption[];
+}
+
+const ResourceNameField: React.FC<ResourceNameFieldProps> = ({
+  resourceNames,
   query,
-  datasource,
-  subscriptionId,
   variableOptionGroup,
   onQueryChange,
-  setError,
 }) => {
-  const [resourceNames, setResourceNames] = useState<AzureMonitorOption[]>([]);
-
-  useEffect(() => {
-    const { resourceGroup, metricDefinition } = query.azureMonitor ?? {};
-
-    if (!(subscriptionId && resourceGroup && metricDefinition)) {
-      resourceNames.length > 0 && setResourceNames([]);
-      return;
-    }
-
-    datasource
-      .getResourceNames(subscriptionId, resourceGroup, metricDefinition)
-      .then((results) => setResourceNames(results.map(toOption)))
-      .catch((err) => setError(ERROR_SOURCE, err));
-  }, [datasource, query.azureMonitor, resourceNames.length, setError, subscriptionId]);
-
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
-      if (!change.value) {
-        return;
-      }
-
       const newQuery = setResourceName(query, change.value);
       onQueryChange(newQuery);
     },

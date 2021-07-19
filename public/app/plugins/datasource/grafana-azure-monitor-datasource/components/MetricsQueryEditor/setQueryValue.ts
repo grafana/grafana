@@ -7,7 +7,7 @@ export function setSubscriptionId(query: AzureMonitorQuery, subscriptionId: stri
   };
 }
 
-export function setResourceGroup(query: AzureMonitorQuery, resourceGroupId: string): AzureMonitorQuery {
+export function setResourceGroup(query: AzureMonitorQuery, resourceGroupId: string | undefined): AzureMonitorQuery {
   return {
     ...query,
     azureMonitor: {
@@ -28,7 +28,7 @@ export function setResourceType(query: AzureMonitorQuery, resourceType: string):
   };
 }
 
-export function setResourceName(query: AzureMonitorQuery, resourceName: string): AzureMonitorQuery {
+export function setResourceName(query: AzureMonitorQuery, resourceName: string | undefined): AzureMonitorQuery {
   return {
     ...query,
     azureMonitor: {

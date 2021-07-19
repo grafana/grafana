@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import Datasource from '../../datasource';
 import { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
@@ -15,6 +15,7 @@ import DimensionFields from './DimensionFields';
 import TopField from './TopField';
 import LegendFormatField from './LegendFormatField';
 import { InlineFieldRow } from '@grafana/ui';
+import { toOption } from '../../utils/common';
 
 interface MetricsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -25,6 +26,23 @@ interface MetricsQueryEditorProps {
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
 }
 
+function useAsyncState<T>(asyncFn: () => Promise<T>, setError: Function, dependencies: unknown[]) {
+  const [errorSource] = useState(() => Math.random());
+  const [value, setValue] = useState<T>();
+
+  useEffect(() => {
+    asyncFn()
+      .then((results) => {
+        setValue(results);
+        setError(errorSource, undefined);
+      })
+      .catch((err) => setError(errorSource, err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, dependencies);
+
+  return value;
+}
+
 const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
   query,
   datasource,
@@ -33,12 +51,110 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
   onChange,
   setError,
 }) => {
+  const { resourceGroup, metricDefinition, resourceName, metricNamespace } = query.azureMonitor ?? {};
+
   const metricsMetadata = useMetricsMetadata(datasource, query, subscriptionId, onChange);
+
+  const subscriptions = useAsyncState(
+    async () => {
+      console.log('* datasource.getSubscriptions effect running');
+      const results = await datasource.azureMonitorDatasource.getSubscriptions();
+      return results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
+    },
+    setError,
+    []
+  );
+
+  const resourceGroups = useAsyncState(
+    async () => {
+      if (!subscriptionId) {
+        return;
+      }
+
+      console.log('* datasource.getResourceGroups effect running');
+      const results = await datasource.getResourceGroups(subscriptionId);
+      return results.map(toOption);
+    },
+    setError,
+    [subscriptionId]
+  );
+
+  const resourceTypes = useAsyncState(
+    async () => {
+      if (!(subscriptionId && resourceGroup)) {
+        return;
+      }
+
+      console.log('* datasource.getMetricDefinitions effect running');
+      const results = await datasource.getMetricDefinitions(subscriptionId, resourceGroup);
+      return results.map(toOption);
+    },
+    setError,
+    [subscriptionId, resourceGroup]
+  );
+
+  const resourceNames = useAsyncState(
+    async () => {
+      if (!(subscriptionId && resourceGroup && metricDefinition)) {
+        return;
+      }
+
+      console.log('* datasource.getResourceNames effect running');
+      const results = await datasource.getResourceNames(subscriptionId, resourceGroup, metricDefinition);
+      return results.map(toOption);
+    },
+    setError,
+    [subscriptionId, resourceGroup, metricDefinition]
+  );
+
+  // TODO: Should set a default namespace when the results come back
+  const metricNamespaces = useAsyncState(
+    async () => {
+      if (!(subscriptionId && resourceGroup && metricDefinition && resourceName)) {
+        return;
+      }
+
+      console.log('* datasource.getMetricNamespaces effect running');
+      const results = await datasource.getMetricNamespaces(
+        subscriptionId,
+        resourceGroup,
+        metricDefinition,
+        resourceName
+      );
+      return results.map(toOption);
+    },
+    setError,
+    [subscriptionId, resourceGroup, metricDefinition, resourceName]
+  );
+
+  const metricNames = useAsyncState(
+    async () => {
+      if (!(subscriptionId && resourceGroup && metricDefinition && resourceName && metricNamespace)) {
+        return;
+      }
+
+      console.log('* datasource.getMetricNames effect running');
+      const results = await datasource.getMetricNames(
+        subscriptionId,
+        resourceGroup,
+        metricDefinition,
+        resourceName,
+        metricNamespace
+      );
+
+      return results.map(toOption);
+    },
+    setError,
+    [subscriptionId, resourceGroup, metricDefinition, resourceName, metricNamespace]
+  );
+
+  // console.log({ subscriptions, resourceGroups, resourceTypes, resourceNames, metricNamespaces });
 
   return (
     <div data-testid="azure-monitor-metrics-query-editor">
       <InlineFieldRow>
         <SubscriptionField
+          subscriptions={subscriptions ?? []}
           query={query}
           datasource={datasource}
           subscriptionId={subscriptionId}
@@ -48,6 +164,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
         />
 
         <ResourceGroupsField
+          resourceGroups={resourceGroups ?? []}
           query={query}
           datasource={datasource}
           subscriptionId={subscriptionId}
@@ -59,6 +176,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
 
       <InlineFieldRow>
         <ResourceTypeField
+          resourceTypes={resourceTypes ?? []}
           query={query}
           datasource={datasource}
           subscriptionId={subscriptionId}
@@ -67,6 +185,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           setError={setError}
         />
         <ResourceNameField
+          resourceNames={resourceNames ?? []}
           query={query}
           datasource={datasource}
           subscriptionId={subscriptionId}
@@ -78,6 +197,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
 
       <InlineFieldRow>
         <MetricNamespaceField
+          metricNamespaces={metricNamespaces ?? []}
           query={query}
           datasource={datasource}
           subscriptionId={subscriptionId}
@@ -86,6 +206,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           setError={setError}
         />
         <MetricNameField
+          metricNames={metricNames ?? []}
           query={query}
           datasource={datasource}
           subscriptionId={subscriptionId}

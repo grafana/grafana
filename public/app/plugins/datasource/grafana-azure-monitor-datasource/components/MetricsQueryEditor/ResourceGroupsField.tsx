@@ -1,44 +1,25 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, toOption } from '../../utils/common';
+import { findOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { setResourceGroup } from './setQueryValue';
 
-const ERROR_SOURCE = 'metrics-resourcegroups';
-const ResourceGroupsField: React.FC<AzureQueryEditorFieldProps> = ({
+interface ResourceGroupsFieldProps extends AzureQueryEditorFieldProps {
+  resourceGroups: AzureMonitorOption[];
+}
+
+const ResourceGroupsField: React.FC<ResourceGroupsFieldProps> = ({
   query,
-  datasource,
-  subscriptionId,
+  resourceGroups,
   variableOptionGroup,
   onQueryChange,
   setError,
 }) => {
-  const [resourceGroups, setResourceGroups] = useState<AzureMonitorOption[]>([]);
-
-  useEffect(() => {
-    if (!subscriptionId) {
-      resourceGroups.length > 0 && setResourceGroups([]);
-      return;
-    }
-
-    datasource
-      .getResourceGroups(subscriptionId)
-      .then((results) => {
-        setResourceGroups(results.map(toOption));
-        setError(ERROR_SOURCE, undefined);
-      })
-      .catch((err) => setError(ERROR_SOURCE, err));
-  }, [datasource, resourceGroups.length, setError, subscriptionId]);
-
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
-      if (!change.value) {
-        return;
-      }
-
       const newQuery = setResourceGroup(query, change.value);
       onQueryChange(newQuery);
     },

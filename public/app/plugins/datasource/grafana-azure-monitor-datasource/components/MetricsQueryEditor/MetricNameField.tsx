@@ -1,44 +1,17 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, toOption } from '../../utils/common';
+import { findOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { setMetricName } from './setQueryValue';
 
-const ERROR_SOURCE = 'metrics-metricname';
-const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
-  query,
-  datasource,
-  subscriptionId,
-  variableOptionGroup,
-  onQueryChange,
-  setError,
-}) => {
-  const [metricNames, setMetricNames] = useState<AzureMonitorOption[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+interface MetricNameProps extends AzureQueryEditorFieldProps {
+  metricNames: AzureMonitorOption[];
+}
 
-  useEffect(() => {
-    const { resourceGroup, metricDefinition, resourceName, metricNamespace } = query.azureMonitor ?? {};
-    if (!(subscriptionId && resourceGroup && metricDefinition && resourceName && metricNamespace)) {
-      metricNames.length > 0 && setMetricNames([]);
-      return;
-    }
-    setIsLoading(true);
-
-    datasource
-      .getMetricNames(subscriptionId, resourceGroup, metricDefinition, resourceName, metricNamespace)
-      .then((results) => {
-        setMetricNames(results.map(toOption));
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        setError(ERROR_SOURCE, err);
-        setIsLoading(false);
-      });
-  }, [datasource, metricNames.length, query.azureMonitor, setError, subscriptionId]);
-
+const MetricName: React.FC<MetricNameProps> = ({ metricNames, query, variableOptionGroup, onQueryChange }) => {
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
       if (!change.value) {
@@ -61,7 +34,6 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
         onChange={handleChange}
         options={options}
         width={38}
-        isLoading={isLoading}
       />
     </Field>
   );
