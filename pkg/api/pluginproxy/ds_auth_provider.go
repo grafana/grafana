@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/tokenprovider"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -65,7 +64,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		}
 	}
 
-	if setting.DataProxyLogging {
+	if cfg.DataProxyLogging {
 		logger.Debug("Requesting", "url", req.URL.String())
 	}
 }
@@ -93,8 +92,7 @@ func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSour
 		if tokenAuth == nil {
 			return nil, fmt.Errorf("'tokenAuth' not configured for authentication type '%s'", authType)
 		}
-		provider := tokenprovider.NewAzureAccessTokenProvider(ctx, cfg, tokenAuth)
-		return provider, nil
+		return newAzureAccessTokenProvider(ctx, cfg, tokenAuth)
 
 	case "gce":
 		if jwtTokenAuth == nil {

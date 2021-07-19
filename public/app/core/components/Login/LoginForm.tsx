@@ -4,6 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { FormModel } from './LoginCtrl';
 import { Button, Form, Input, Field } from '@grafana/ui';
 import { css } from '@emotion/css';
+import { PasswordField } from '../PasswordField/PasswordField';
 
 interface Props {
   children: ReactElement;
@@ -39,11 +40,11 @@ export const LoginForm: FC<Props> = ({ children, onSubmit, isLoggingIn, password
               />
             </Field>
             <Field label="Password" invalid={!!errors.password} error={errors.password?.message}>
-              <Input
+              <PasswordField
+                id="current-password"
+                autoComplete="current-password"
+                passwordHint={passwordHint}
                 {...register('password', { required: 'Password is required' })}
-                type="password"
-                placeholder={passwordHint}
-                aria-label={selectors.pages.Login.password}
               />
             </Field>
             <Button aria-label={selectors.pages.Login.submit} className={submitButton} disabled={isLoggingIn}>

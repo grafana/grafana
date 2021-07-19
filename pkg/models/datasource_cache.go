@@ -11,7 +11,6 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func (ds *DataSource) getTimeout() time.Duration {
@@ -27,8 +26,9 @@ func (ds *DataSource) getTimeout() time.Duration {
 		}
 	}
 	if timeout <= 0 {
-		timeout = setting.DataProxyTimeout
+		return sdkhttpclient.DefaultTimeoutOptions.Timeout
 	}
+
 	return time.Duration(timeout) * time.Second
 }
 
@@ -84,19 +84,20 @@ func (ds *DataSource) GetHTTPTransport(provider httpclient.Provider, customMiddl
 
 func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 	tlsOptions := ds.TLSOptions()
+	timeouts := &sdkhttpclient.TimeoutOptions{
+		Timeout:               ds.getTimeout(),
+		DialTimeout:           sdkhttpclient.DefaultTimeoutOptions.DialTimeout,
+		KeepAlive:             sdkhttpclient.DefaultTimeoutOptions.KeepAlive,
+		TLSHandshakeTimeout:   sdkhttpclient.DefaultTimeoutOptions.TLSHandshakeTimeout,
+		ExpectContinueTimeout: sdkhttpclient.DefaultTimeoutOptions.ExpectContinueTimeout,
+		MaxConnsPerHost:       sdkhttpclient.DefaultTimeoutOptions.MaxConnsPerHost,
+		MaxIdleConns:          sdkhttpclient.DefaultTimeoutOptions.MaxIdleConns,
+		MaxIdleConnsPerHost:   sdkhttpclient.DefaultTimeoutOptions.MaxIdleConnsPerHost,
+		IdleConnTimeout:       sdkhttpclient.DefaultTimeoutOptions.IdleConnTimeout,
+	}
 	opts := sdkhttpclient.Options{
-		Timeouts: &sdkhttpclient.TimeoutOptions{
-			Timeout:               ds.getTimeout(),
-			DialTimeout:           time.Duration(setting.DataProxyDialTimeout) * time.Second,
-			KeepAlive:             time.Duration(setting.DataProxyKeepAlive) * time.Second,
-			TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
-			ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
-			MaxConnsPerHost:       setting.DataProxyMaxConnsPerHost,
-			MaxIdleConns:          setting.DataProxyMaxIdleConns,
-			MaxIdleConnsPerHost:   setting.DataProxyMaxIdleConnsPerHost,
-			IdleConnTimeout:       time.Duration(setting.DataProxyIdleConnTimeout) * time.Second,
-		},
-		Headers: getCustomHeaders(ds.JsonData, ds.DecryptedValues()),
+		Timeouts: timeouts,
+		Headers:  getCustomHeaders(ds.JsonData, ds.DecryptedValues()),
 		Labels: map[string]string{
 			"datasource_name": ds.Name,
 			"datasource_uid":  ds.Uid,

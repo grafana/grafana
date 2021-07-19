@@ -23,7 +23,9 @@ import (
 )
 
 // AzureResourceGraphDatasource calls the Azure Resource Graph API's
-type AzureResourceGraphDatasource struct{}
+type AzureResourceGraphDatasource struct {
+	proxy serviceProxy
+}
 
 // AzureResourceGraphQuery is the query request that is built from the saved values for
 // from the UI
@@ -39,11 +41,15 @@ type AzureResourceGraphQuery struct {
 const argAPIVersion = "2021-03-01"
 const argQueryProviderName = "/providers/Microsoft.ResourceGraph/resources"
 
+func (e *AzureResourceGraphDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.proxy.Do(rw, req, cli)
+}
+
 // executeTimeSeriesQuery does the following:
 // 1. builds the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
+func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
 	result := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{},
 	}
@@ -54,7 +60,7 @@ func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Contex
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url)
 	}
 
 	return result, nil
@@ -96,7 +102,7 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery,
 	return azureResourceGraphQueries, nil
 }
 
-func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo datasourceInfo) backend.DataResponse {
+func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo datasourceInfo, client *http.Client, dsURL string) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	params := url.Values{}
@@ -133,7 +139,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return dataResponse
 	}
 
-	req, err := e.createRequest(ctx, dsInfo, reqBody)
+	req, err := e.createRequest(ctx, dsInfo, reqBody, dsURL)
 
 	if err != nil {
 		dataResponse.Error = err
@@ -160,7 +166,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	}
 
 	azlog.Debug("AzureResourceGraph", "Request ApiURL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, dsInfo.Services[azureResourceGraph].HTTPClient, req)
+	res, err := ctxhttp.Do(ctx, client, req)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -175,7 +181,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return dataResponseErrorWithExecuted(err)
 	}
 
-	azurePortalUrl, err := getAzurePortalUrl(dsInfo.Settings.CloudName)
+	azurePortalUrl, err := getAzurePortalUrl(dsInfo.Cloud)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -207,8 +213,8 @@ func addConfigData(frame data.Frame, dl string) data.Frame {
 	return frame
 }
 
-func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, reqBody []byte) (*http.Request, error) {
-	req, err := http.NewRequest(http.MethodPost, dsInfo.Services[azureResourceGraph].URL, bytes.NewBuffer(reqBody))
+func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, reqBody []byte, url string) (*http.Request, error) {
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("failed to create request", err)
@@ -250,13 +256,13 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 
 func getAzurePortalUrl(azureCloud string) (string, error) {
 	switch azureCloud {
-	case "azuremonitor":
+	case "AzureCloud":
 		return "https://portal.azure.com", nil
-	case "chinaazuremonitor":
+	case "AzureChinaCloud":
 		return "https://portal.azure.cn", nil
-	case "govazuremonitor":
+	case "AzureUSGovernment":
 		return "https://portal.azure.us", nil
-	case "germanyazuremonitor":
+	case "AzureGermanCloud":
 		return "https://portal.microsoftazure.de", nil
 	default:
 		return "", fmt.Errorf("the cloud is not supported")

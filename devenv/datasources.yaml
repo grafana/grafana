@@ -84,6 +84,14 @@ datasources:
       tsdbResolution: 1
       tsdbVersion: 1
 
+  - name: gdev-opentsdb-v2.3
+    type: opentsdb
+    access: proxy
+    url: http://localhost:4242
+    jsonData:
+      tsdbResolution: 1
+      tsdbVersion: 3
+
   - name: gdev-elasticsearch-v2-metrics
     type: elasticsearch
     access: proxy

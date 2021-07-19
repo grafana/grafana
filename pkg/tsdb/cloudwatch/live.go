@@ -241,6 +241,11 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 
 	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
 	if err != nil {
+		responseChannel <- &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				query.RefID: {Error: err},
+			},
+		}
 		return err
 	}
 

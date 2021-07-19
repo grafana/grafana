@@ -8,8 +8,9 @@ export default {
   title: 'Forms/Field',
   component: Field,
   argTypes: {
-    children: { control: { disable: true } },
-    className: { control: { disable: true } },
+    label: { control: { type: 'text' } },
+    description: { control: { type: 'text' } },
+    error: { control: { type: 'text' } },
   },
   parameters: {
     docs: {
@@ -17,6 +18,9 @@ export default {
     },
     knobs: {
       disabled: true,
+    },
+    controls: {
+      exclude: ['children', 'className'],
     },
   },
 };

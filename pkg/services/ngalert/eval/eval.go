@@ -68,10 +68,15 @@ type Result struct {
 	EvaluatedAt        time.Time
 	EvaluationDuration time.Duration
 
-	// EvaluationSring is a string representation of evaluation data such
+	// EvaluationString is a string representation of evaluation data such
 	// as EvalMatches (from "classic condition"), and in the future from operations
 	// like SSE "math".
 	EvaluationString string
+
+	// Values contains the RefID and value of reduce and math expressions.
+	// It does not contain values for classic conditions as the values
+	// in classic conditions do not have a RefID.
+	Values map[string]NumberValueCapture
 }
 
 // State is an enum of the evaluation State for an alert instance.
@@ -117,6 +122,10 @@ type AlertExecCtx struct {
 func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (*expr.Request, error) {
 	req := &expr.Request{
 		OrgId: ctx.OrgID,
+		Headers: map[string]string{
+			// Some data sources check this in query method as sometimes alerting needs special considerations.
+			"FromAlert": "true",
+		},
 	}
 
 	for i := range data {
@@ -342,6 +351,7 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 			EvaluatedAt:        ts,
 			EvaluationDuration: time.Since(ts),
 			EvaluationString:   extractEvalString(f),
+			Values:             extractValues(f),
 		}
 
 		switch {

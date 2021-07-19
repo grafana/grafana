@@ -4,6 +4,7 @@ import 'regenerator-runtime/runtime';
 
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'abortcontroller-polyfill/dist/polyfill-patch-fetch'; // fetch polyfill needed for PhantomJs rendering
+import './polyfills/old-mediaquerylist'; // Safari < 14 does not have mql.addEventListener()
 import 'file-saver';
 import 'jquery';
 
@@ -46,6 +47,8 @@ import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 import { contextSrv } from './core/services/context_srv';
+import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
+import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -157,6 +160,24 @@ function initEchoSrv() {
         ...config.sentry,
         user: config.bootData.user,
         buildInfo: config.buildInfo,
+      })
+    );
+  }
+
+  if ((config as any).googleAnalyticsId) {
+    registerEchoBackend(
+      new GAEchoBackend({
+        googleAnalyticsId: (config as any).googleAnalyticsId,
+      })
+    );
+  }
+
+  if ((config as any).rudderstackWriteKey && (config as any).rudderstackDataPlaneUrl) {
+    registerEchoBackend(
+      new RudderstackBackend({
+        writeKey: (config as any).rudderstackWriteKey,
+        dataPlaneUrl: (config as any).rudderstackDataPlaneUrl,
+        user: config.bootData.user,
       })
     );
   }

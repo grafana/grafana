@@ -50,8 +50,8 @@ export default class BottomNavLinks extends PureComponent<Props, State> {
       <div className="sidemenu-item dropdown dropup">
         <Link href={link.url} className="sidemenu-link" target={link.target}>
           <span className="icon-circle sidemenu-icon">
-            {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-            {link.img && <img src={link.img} />}
+            {link.icon && <Icon name={link.icon as IconName} size="xl" title="Help icon" />}
+            {link.img && <img src={link.img} alt="Profile picture" />}
           </span>
         </Link>
         <ul className="dropdown-menu dropdown-menu--sidemenu" role="menu">

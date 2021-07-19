@@ -5,7 +5,7 @@ import mdx from './DatePicker.mdx';
 import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 
 export default {
-  title: 'Pickers And Editors/DatePicker',
+  title: 'Pickers and Editors/TimePickers/Pickers And Editors/DatePicker',
   component: DatePicker,
   decorators: [withCenteredStory],
   parameters: {

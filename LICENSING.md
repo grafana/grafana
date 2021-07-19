@@ -6,7 +6,7 @@ The default license for this project is [AGPL-3.0-only](LICENSE).
 
 ## Apache-2.0
 
-The following folders and their subfolders are licensed under Apache-2.0:
+The following directories and their subdirectories are licensed under Apache-2.0:
 
 ```
 packages/grafana-data/
@@ -19,4 +19,10 @@ packages/jaeger-ui-components/
 packaging/
 grafana-mixin/
 cue/
+```
+
+The following directories and their subdirectories are the original upstream licenses:
+
+```
+public/vendor/
 ```
