@@ -9,6 +9,8 @@ import { mapPanelChangedHandler } from './migrations';
 import { defaultGrafanaThemedMap } from './layers/basemaps';
 import { MARKERS_LAYER_ID } from './layers/data/markersLayer';
 
+const settings = (window as any).grafanaBootData.settings;
+
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
   .setPanelChangeHandler(mapPanelChangedHandler)
@@ -42,17 +44,19 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
     });
 
     // Nested
-    builder.addCustomEditor({
-      category: ['Base Layer'],
-      id: 'basemap',
-      path: 'basemap',
-      name: 'Base Layer',
-      editor: BaseLayerEditor,
-      defaultValue: {
-        type: defaultGrafanaThemedMap.id,
-        config: defaultGrafanaThemedMap.defaultOptions,
-      },
-    });
+    if (!settings.geomapDisableCustomBaseLayer) {
+      builder.addCustomEditor({
+        category: ['Base Layer'],
+        id: 'basemap',
+        path: 'basemap',
+        name: 'Base Layer',
+        editor: BaseLayerEditor,
+        defaultValue: {
+          type: defaultGrafanaThemedMap.id,
+          config: defaultGrafanaThemedMap.defaultOptions,
+        },
+      });
+    }
 
     builder.addCustomEditor({
       category: ['Data Layer'],
