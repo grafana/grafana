@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -10,55 +11,57 @@ import (
 
 func (ss *SQLStore) addPreferencesQueryAndCommandHandlers() {
 	bus.AddHandler("sql", GetPreferences)
-	bus.AddHandler("sql", ss.GetPreferencesWithDefaults)
+	bus.AddHandlerCtx("sql", ss.GetPreferencesWithDefaults)
 	bus.AddHandler("sql", SavePreferences)
 }
 
-func (ss *SQLStore) GetPreferencesWithDefaults(query *models.GetPreferencesWithDefaultsQuery) error {
-	params := make([]interface{}, 0)
-	filter := ""
+func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		params := make([]interface{}, 0)
+		filter := ""
 
-	if len(query.User.Teams) > 0 {
-		filter = "(org_id=? AND team_id IN (?" + strings.Repeat(",?", len(query.User.Teams)-1) + ")) OR "
+		if len(query.User.Teams) > 0 {
+			filter = "(org_id=? AND team_id IN (?" + strings.Repeat(",?", len(query.User.Teams)-1) + ")) OR "
+			params = append(params, query.User.OrgId)
+			for _, v := range query.User.Teams {
+				params = append(params, v)
+			}
+		}
+
+		filter += "(org_id=? AND user_id=? AND team_id=0) OR (org_id=? AND team_id=0 AND user_id=0)"
 		params = append(params, query.User.OrgId)
-		for _, v := range query.User.Teams {
-			params = append(params, v)
+		params = append(params, query.User.UserId)
+		params = append(params, query.User.OrgId)
+		prefs := make([]*models.Preferences, 0)
+		err := dbSession.Where(filter, params...).
+			OrderBy("user_id ASC, team_id ASC").
+			Find(&prefs)
+
+		if err != nil {
+			return err
 		}
-	}
 
-	filter += "(org_id=? AND user_id=? AND team_id=0) OR (org_id=? AND team_id=0 AND user_id=0)"
-	params = append(params, query.User.OrgId)
-	params = append(params, query.User.UserId)
-	params = append(params, query.User.OrgId)
-	prefs := make([]*models.Preferences, 0)
-	err := x.Where(filter, params...).
-		OrderBy("user_id ASC, team_id ASC").
-		Find(&prefs)
-
-	if err != nil {
-		return err
-	}
-
-	res := &models.Preferences{
-		Theme:           ss.Cfg.DefaultTheme,
-		Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
-		HomeDashboardId: 0,
-	}
-
-	for _, p := range prefs {
-		if p.Theme != "" {
-			res.Theme = p.Theme
+		res := &models.Preferences{
+			Theme:           ss.Cfg.DefaultTheme,
+			Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
+			HomeDashboardId: 0,
 		}
-		if p.Timezone != "" {
-			res.Timezone = p.Timezone
-		}
-		if p.HomeDashboardId != 0 {
-			res.HomeDashboardId = p.HomeDashboardId
-		}
-	}
 
-	query.Result = res
-	return nil
+		for _, p := range prefs {
+			if p.Theme != "" {
+				res.Theme = p.Theme
+			}
+			if p.Timezone != "" {
+				res.Timezone = p.Timezone
+			}
+			if p.HomeDashboardId != 0 {
+				res.HomeDashboardId = p.HomeDashboardId
+			}
+		}
+
+		query.Result = res
+		return nil
+	})
 }
 
 func GetPreferences(query *models.GetPreferencesQuery) error {

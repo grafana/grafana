@@ -1,5 +1,6 @@
 import { markersLayer } from './markersLayer';
 import { geojsonMapper } from './geojsonMapper';
+import { heatmapLayer } from './heatMap';
 import { lastPointTracker } from './lastPointTracker';
 
 /**
@@ -7,6 +8,7 @@ import { lastPointTracker } from './lastPointTracker';
  */
 export const dataLayers = [
     markersLayer,
+    heatmapLayer,
     lastPointTracker,
     geojsonMapper, // dummy for now
 ];

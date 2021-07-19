@@ -1,7 +1,7 @@
 import React from 'react';
 import { toDataFrame, FieldType } from '@grafana/data';
-import { fireEvent, render, screen, getByText } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { selectOptionInTest } from '@grafana/ui';
 import { Props, ConfigFromQueryTransformerEditor } from './ConfigFromQueryTransformerEditor';
 
 beforeEach(() => {
@@ -40,7 +40,7 @@ describe('ConfigFromQueryTransformerEditor', () => {
 
     let select = (await screen.findByText('Config query')).nextSibling!;
     await fireEvent.keyDown(select, { keyCode: 40 });
-    await userEvent.click(getByText(select as HTMLElement, 'A'));
+    await selectOptionInTest(select as HTMLElement, 'A');
 
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.objectContaining({
