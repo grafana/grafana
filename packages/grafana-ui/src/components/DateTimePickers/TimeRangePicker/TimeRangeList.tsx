@@ -46,12 +46,12 @@ export const TimeRangeList: React.FC<Props> = (props) => {
   }
 
   return (
-    <>
+    <section aria-label={title}>
       <div className={styles.title}>
         <TimePickerTitle>{title}</TimePickerTitle>
       </div>
       <Options {...props} />
-    </>
+    </section>
   );
 };
 
@@ -60,7 +60,7 @@ const Options: React.FC<Props> = ({ options, value, onChange }) => {
 
   return (
     <>
-      <div>
+      <ul role="listbox" aria-roledescription="Time range selection">
         {options.map((option, index) => (
           <TimeRangeOption
             key={keyForOption(option, index)}
@@ -69,7 +69,7 @@ const Options: React.FC<Props> = ({ options, value, onChange }) => {
             onSelect={onChange}
           />
         ))}
-      </div>
+      </ul>
       <div className={styles.grow} />
     </>
   );

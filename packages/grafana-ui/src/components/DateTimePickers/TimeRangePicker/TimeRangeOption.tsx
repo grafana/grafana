@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, TimeOption } from '@grafana/data';
 import { useStyles2 } from '../../../themes/ThemeContext';
+import { getFocusStyles } from '../../../themes/mixins';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -14,6 +15,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       &:hover {
         background: ${theme.colors.action.hover};
         cursor: pointer;
+      }
+      &:focus-visible {
+        ${getFocusStyles(theme)}
       }
     `,
     selected: css`    
@@ -33,9 +37,15 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false 
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={cx(styles.container, selected && styles.selected)} onClick={() => onSelect(value)} tabIndex={-1}>
-      <span>{value.display}</span>
-    </div>
+    <li
+      role="option"
+      className={cx(styles.container, selected && styles.selected)}
+
+      //tabIndex={-1}
+    >
+      <input checked={selected} type="radio" name={value.display} onChange={() => onSelect(value)} />
+      <label htmlFor={value.display}>{value.display}</label>
+    </li>
   );
 });
 
