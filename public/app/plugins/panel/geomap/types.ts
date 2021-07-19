@@ -28,6 +28,8 @@ export interface MapViewConfig {
   lat?: number;
   lon?: number;
   zoom?: number;
+  minZoom?: number;
+  maxZoom?: number;
   shared?: boolean;
 }
 

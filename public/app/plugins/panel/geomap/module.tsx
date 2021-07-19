@@ -18,7 +18,8 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       category,
       id: 'view',
       path: 'view',
-      name: category[0], // don't show it
+      name: 'Initial view', // don't show it
+      description: 'This location will show when the panel first loads',
       editor: MapViewEditor,
       defaultValue: defaultView,
     });

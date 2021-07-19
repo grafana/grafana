@@ -112,7 +112,7 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
 
       <VerticalGroup>
         <Button variant="secondary" size="sm" fullWidth onClick={onSetCurrentView}>
-          <span>Use current view</span>
+          <span>Use current map settings</span>
         </Button>
       </VerticalGroup>
     </>

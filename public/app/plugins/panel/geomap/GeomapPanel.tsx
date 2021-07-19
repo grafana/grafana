@@ -228,12 +228,12 @@ export class GeomapPanel extends Component<Props> {
       }
     }
 
-    // if (config.maxZoom) {
-    //   view.setMaxZoom(config.maxZoom);
-    // }
-    // if (config.minZoom) {
-    //   view.setMaxZoom(config.minZoom);
-    // }
+    if (config.maxZoom) {
+      view.setMaxZoom(config.maxZoom);
+    }
+    if (config.minZoom) {
+      view.setMaxZoom(config.minZoom);
+    }
     if (config.zoom) {
       view.setZoom(config.zoom);
     }
