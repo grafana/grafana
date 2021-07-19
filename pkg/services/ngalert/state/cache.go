@@ -140,6 +140,7 @@ func (c *cache) expandTemplate(name, text string, labels map[string]string, valu
 	tmpl, err := text_template.New(name).Option("missingkey=error").Parse(text)
 	if err != nil {
 		c.log.Error("error parsing template", "name", name, "error", err.Error())
+		return
 	}
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, struct {
@@ -159,6 +160,7 @@ func (c *cache) expandTemplate(name, text string, labels map[string]string, valu
 		}(),
 	}); err != nil {
 		c.log.Error("error executing template", "name", name, "error", err.Error())
+		return
 	}
 	return buffer.String(), nil
 }
