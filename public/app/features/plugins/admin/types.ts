@@ -11,6 +11,7 @@ export interface CatalogPlugin {
   updatedAt: string;
   publishedAt: string;
   info: CatalogPluginInfo;
+  isInstalled: boolean;
 }
 
 export interface CatalogPluginInfo {

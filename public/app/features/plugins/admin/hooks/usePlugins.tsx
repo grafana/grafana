@@ -52,11 +52,47 @@ export function useCatalogPlugins(): CatalogPluginsState {
 }
 
 function mapRemoteToCatalog(plugin: Plugin): CatalogPlugin {
-  return {} as CatalogPlugin;
+  const { name, description, version, orgName, popularity, downloads, updatedAt } = plugin;
+  const catalogPlugin = {
+    description,
+    downloads,
+    id: plugin.slug,
+    info: {
+      logos: {
+        small: `https://grafana.com/api/plugins/${plugin.slug}/versions/${plugin.version}/logos/small`,
+        large: `https://grafana.com/api/plugins/${plugin.slug}/versions/${plugin.version}/logos/large`,
+      },
+    },
+    name,
+    orgName,
+    popularity,
+    publishedAt: plugin.createdAt,
+    updatedAt,
+    version,
+    isInstalled: false,
+  };
+  return catalogPlugin;
 }
 
 function mapLocalToCatalog(plugin: LocalPlugin): CatalogPlugin {
-  return {} as CatalogPlugin;
+  const {
+    name,
+    info: { description, version, logos, updated, author },
+    id,
+  } = plugin;
+  return {
+    description,
+    downloads: 0,
+    id,
+    info: { logos },
+    name,
+    orgName: author.name,
+    popularity: 0,
+    publishedAt: '',
+    updatedAt: updated,
+    version,
+    isInstalled: true,
+  };
 }
 
 export const usePlugins = () => {
@@ -110,7 +146,10 @@ export const usePluginsByFilter = (searchBy: string, filterBy: string): Filtered
   };
 };
 
-function applySearchFilter(searchBy: string | undefined, plugins: Plugin[]): Plugin[] {
+function applySearchFilter(
+  searchBy: string | undefined,
+  plugins: Array<Plugin | LocalPlugin>
+): Array<Plugin | LocalPlugin> {
   if (!searchBy) {
     return plugins;
   }
