@@ -7,10 +7,12 @@ import {
   DataFrame,
   Field,
   getFieldDisplayName,
+  LookupGeometrySource,
 } from '@grafana/data';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
 import { decodeGeohash } from './geohash';
+//import find from 'lodash/find';
 
 export type FieldFinder = (frame: DataFrame) => Field | undefined;
 
@@ -50,6 +52,9 @@ export interface LocationFieldMatchers {
   h3: FieldFinder;
   wkt: FieldFinder;
   lookup: FieldFinder;
+
+  // Path to mappings file
+  lookupSrc: string;
 }
 
 const defaultMatchers: LocationFieldMatchers = {
@@ -60,6 +65,7 @@ const defaultMatchers: LocationFieldMatchers = {
   h3: matchLowerNames(new Set(['h3'])),
   wkt: matchLowerNames(new Set(['wkt'])),
   lookup: matchLowerNames(new Set(['lookup'])),
+  lookupSrc: LookupGeometrySource.Countries,
 };
 
 export function getLocationMatchers(src?: FrameGeometrySource): LocationFieldMatchers {
@@ -76,6 +82,7 @@ export function getLocationMatchers(src?: FrameGeometrySource): LocationFieldMat
     case FrameGeometrySourceMode.Lookup:
       if (src?.lookup) {
         info.lookup = getFieldFinder(getFieldMatcher({ id: FieldMatcherID.byName, options: src.lookup }));
+        info.lookupSrc = src.lookupSrc;
       }
       break;
     case FrameGeometrySourceMode.Coords:
@@ -99,6 +106,9 @@ export interface LocationFields {
   h3?: Field;
   wkt?: Field;
   lookup?: Field;
+
+  // Path to mappings file
+  lookupSrc?: string;
 }
 
 export function getLocationFields(frame: DataFrame, location: LocationFieldMatchers): LocationFields {
@@ -119,7 +129,7 @@ export function getLocationFields(frame: DataFrame, location: LocationFieldMatch
       fields.mode = FrameGeometrySourceMode.Geohash;
       return fields;
     }
-    fields.lookup = location.geohash(frame);
+    fields.lookup = location.lookup(frame);
     if (fields.lookup) {
       fields.mode = FrameGeometrySourceMode.Lookup;
       return fields;
@@ -136,6 +146,7 @@ export function getLocationFields(frame: DataFrame, location: LocationFieldMatch
       break;
     case FrameGeometrySourceMode.Lookup:
       fields.lookup = location.lookup(frame);
+      fields.lookupSrc = location.lookupSrc;
       break;
   }
 
@@ -172,6 +183,15 @@ export function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatch
       }
       break;
 
+    case FrameGeometrySourceMode.Lookup:
+      if (fields.lookup) {
+        const locationData = require('./keyMapping/' + fields.lookupSrc + '.json');
+        info.points = getPointsFromLookup(fields.lookup, locationData);
+      } else {
+        info.warning = 'Missing lookup field';
+      }
+      break;
+
     case FrameGeometrySourceMode.Auto:
       info.warning = 'Unable to find location fields';
   }
@@ -195,6 +215,19 @@ function getPointsFromGeohash(field: Field<string>): Point[] {
     const coords = decodeGeohash(field.values.get(i));
     if (coords) {
       points[i] = new Point(fromLonLat(coords));
+    }
+  }
+  return points;
+}
+
+function getPointsFromLookup(field: Field<string>, locationData: any): Point[] {
+  const count = field.values.length;
+  const points = new Array<Point>(count);
+  for (let i = 0; i < count; i++) {
+    const target = field.values.get(i);
+    const location = locationData.filter((loc: any) => loc.key.toUpperCase() === target.toUpperCase())[0];
+    if (location) {
+      points[i] = new Point(fromLonLat([location.longitude, location.latitude]));
     }
   }
   return points;

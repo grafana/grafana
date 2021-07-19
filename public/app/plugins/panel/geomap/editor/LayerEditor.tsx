@@ -9,6 +9,7 @@ import {
   FrameGeometrySourceMode,
   FieldType,
   Field,
+  LookupGeometrySource,
 } from '@grafana/data';
 import { geomapLayerRegistry } from '../layers/registry';
 import { defaultGrafanaThemedMap } from '../layers/basemaps';
@@ -53,6 +54,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
               { value: FrameGeometrySourceMode.Auto, label: 'Auto' },
               { value: FrameGeometrySourceMode.Coords, label: 'Coords' },
               { value: FrameGeometrySourceMode.Geohash, label: 'Geohash' },
+              { value: FrameGeometrySourceMode.Lookup, label: 'Lookup' },
             ],
           },
         })
@@ -84,6 +86,28 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
           showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Geohash,
           // eslint-disable-next-line react/display-name
           // info: (props) => <div>HELLO</div>,
+        })
+        .addFieldNamePicker({
+          path: 'location.lookup',
+          name: 'Lookup Field',
+          settings: {
+            filter: (f: Field) => f.type === FieldType.string,
+            noFieldsMessage: 'No string fields found',
+          },
+          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
+        })
+        .addSelect({
+          path: 'location.lookupSrc',
+          name: 'Lookup Source',
+          settings: {
+            options: [
+              { value: LookupGeometrySource.Countries, label: 'Countries' },
+              { value: LookupGeometrySource.Countries_3Letter, label: 'Countries (3 Letter)' },
+              { value: LookupGeometrySource.Probes, label: 'Probes' },
+              { value: LookupGeometrySource.States, label: 'States' },
+            ],
+          },
+          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
         });
     }
     if (layer.registerOptionsUI) {

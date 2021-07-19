@@ -1,0 +1,128 @@
+[
+  {
+    "key": "amsterdam",
+    "latitude": 52.3702,
+    "longitude": 4.8952,
+    "name": "Amsterdam"
+  },
+  {
+    "key": "charleroi",
+    "latitude": 50.4108,
+    "longitude": 4.4446,
+    "name": "Charleroi"
+  },
+  {
+    "key": "chicago",
+    "latitude": 41.881832,
+    "longitude": -87.623177,
+    "name": "Chicago"
+  },
+  {
+    "key": "dallas",
+    "latitude": 32.7767,
+    "longitude": -97.040443,
+    "name": "Dallas"
+  },
+  {
+    "key": "frankfurt",
+    "latitude": 50.110924,
+    "longitude": 8.682127,
+    "name": "Frankfurt"
+  },
+  {
+    "key": "london",
+    "latitude": 51.503399,
+    "longitude": -0.119519,
+    "name": "London"
+  },
+  {
+    "key": "los-angeles",
+    "latitude": 34.052235,
+    "longitude": -118.243683,
+    "name": "Los Angeles"
+  },
+  {
+    "key": "miami",
+    "latitude": 25.76643,
+    "longitude": -80.189888,
+    "name": "Miami"
+  },
+  {
+    "key": "new-jersey",
+    "latitude": 39.833851,
+    "longitude": -74.871826,
+    "name": "New Jersey"
+  },
+  {
+    "key": "new-york",
+    "latitude": 40.73061,
+    "longitude": -73.935242,
+    "name": "New York"
+  },
+  {
+    "key": "omaha",
+    "latitude": 41.25716,
+    "longitude": -95.995102,
+    "name": "Omaha"
+  },
+  {
+    "key": "paris",
+    "latitude": 48.864716,
+    "longitude": 2.349014,
+    "name": "Paris"
+  },
+  {
+    "key": "portland",
+    "latitude": 45.512794,
+    "longitude": -122.679565,
+    "name": "Portland"
+  },
+  {
+    "key": "san-francisco",
+    "latitude": 37.733795,
+    "longitude": -122.446747,
+    "name": "San Francisco"
+  },
+  {
+    "key": "seattle",
+    "latitude": 47.608013,
+    "longitude": -122.335167,
+    "name": "Seattle"
+  },
+  {
+    "key": "silicon-valley",
+    "latitude": 37.362517,
+    "longitude": -122.03476,
+    "name": "Silicon Valley"
+  },
+  {
+    "key": "singapore",
+    "latitude": 1.29027,
+    "longitude": 103.851959,
+    "name": "Singapore"
+  },
+  {
+    "key": "south-carolina",
+    "latitude": 33.836082,
+    "longitude": -81.163727,
+    "name": "South Carolina"
+  },
+  {
+    "key": "sydney",
+    "latitude": -33.865143,
+    "longitude": 151.2099,
+    "name": "Sydney"
+  },
+  {
+    "key": "taipei",
+    "latitude": 25.105497,
+    "longitude": 121.597366,
+    "name": "Taipei"
+  },
+  {
+    "key": "tokyo",
+    "latitude": 35.652832,
+    "longitude": 139.839478,
+    "name": "Tokyo"
+  }
+]

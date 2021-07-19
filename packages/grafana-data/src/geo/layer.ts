@@ -19,6 +19,13 @@ export enum FrameGeometrySourceMode {
   // geojson? geometry text
 }
 
+export enum LookupGeometrySource {
+  Countries = 'countries',
+  Countries_3Letter = 'countries_3letter',
+  Probes = 'probes',
+  States = 'states',
+}
+
 /**
  * @alpha
  */
