@@ -1079,6 +1079,6 @@ def validate_scuemata():
             'build-backend',
         ],
         'commands': [
-            './bin/linux-amd64/grafana-cli cue validate-schema',
+            './bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .',
         ],
     }
