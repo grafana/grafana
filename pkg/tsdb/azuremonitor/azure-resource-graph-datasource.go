@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -256,13 +257,13 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 
 func getAzurePortalUrl(azureCloud string) (string, error) {
 	switch azureCloud {
-	case "AzureCloud":
+	case azidentity.AzurePublicCloud:
 		return "https://portal.azure.com", nil
-	case "AzureChinaCloud":
+	case azidentity.AzureChina:
 		return "https://portal.azure.cn", nil
-	case "AzureUSGovernment":
+	case azidentity.AzureGovernment:
 		return "https://portal.azure.us", nil
-	case "AzureGermanCloud":
+	case azidentity.AzureGermany:
 		return "https://portal.microsoftazure.de", nil
 	default:
 		return "", fmt.Errorf("the cloud is not supported")
