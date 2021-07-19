@@ -41,6 +41,8 @@ export function SegmentSelect<T>({
         onChange={onChange}
         options={options}
         value={value}
+        // disable close menu on select to avoid calling onChange() in onCloseMenu() when a value is selected
+        closeMenuOnSelect={false}
         onCloseMenu={() => {
           if (ref && ref.current) {
             // https://github.com/JedWatson/react-select/issues/188#issuecomment-279240292
