@@ -4,13 +4,13 @@ import { css } from '@emotion/css';
 import { Card } from '../components/Card';
 import { Grid } from '../components/Grid';
 
-import { Plugin } from '../types';
+import { Plugin, LocalPlugin } from '../types';
 import { GrafanaTheme2 } from '@grafana/data';
 import { isLocalPlugin } from '../guards';
 import { PluginLogo } from './PluginLogo';
 
 interface Props {
-  plugins: Plugin[];
+  plugins: Array<Plugin | LocalPlugin>;
 }
 
 export const PluginList = ({ plugins }: Props) => {
@@ -19,11 +19,13 @@ export const PluginList = ({ plugins }: Props) => {
   return (
     <Grid>
       {plugins.map((plugin) => {
-        const { name, orgName, typeCode } = plugin;
+        const id = getPluginId(plugin);
+        const { name } = plugin;
+
         return (
           <Card
-            key={`${orgName}-${name}-${typeCode}`}
-            href={`/plugins/${getPluginId(plugin)}`}
+            key={`${id}`}
+            href={`/plugins/${id}`}
             image={
               <PluginLogo
                 plugin={plugin}
@@ -35,7 +37,7 @@ export const PluginList = ({ plugins }: Props) => {
             text={
               <>
                 <div className={styles.name}>{name}</div>
-                <div className={styles.orgName}>{orgName}</div>
+                <div className={styles.orgName}>{getOrgName(plugin)}</div>
               </>
             }
           />
@@ -45,11 +47,18 @@ export const PluginList = ({ plugins }: Props) => {
   );
 };
 
-function getPluginId(plugin: Plugin): string {
+function getPluginId(plugin: Plugin | LocalPlugin): string {
   if (isLocalPlugin(plugin)) {
     return plugin.id;
   }
   return plugin.slug;
+}
+
+function getOrgName(plugin: Plugin | LocalPlugin): string | undefined {
+  if (isLocalPlugin(plugin)) {
+    return plugin.info?.author?.name;
+  }
+  return plugin.orgName;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

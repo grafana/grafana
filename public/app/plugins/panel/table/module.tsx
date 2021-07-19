@@ -12,6 +12,18 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
     useCustomConfig: (builder) => {
       builder
         .addNumberInput({
+          path: 'minWidth',
+          name: 'Minimum column width',
+          description: 'The minimum width for column auto resizing',
+          settings: {
+            placeholder: '150',
+            min: 50,
+            max: 500,
+          },
+          shouldApply: () => true,
+          defaultValue: defaultPanelFieldConfig.minWidth,
+        })
+        .addNumberInput({
           path: 'width',
           name: 'Column width',
           settings: {

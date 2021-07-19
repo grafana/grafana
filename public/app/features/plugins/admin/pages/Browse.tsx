@@ -39,7 +39,7 @@ export default function Browse(): ReactElement {
   };
 
   const onSearch = (q: any) => {
-    history.push({ query: { filterBy: null, q } });
+    history.push({ query: { filterBy: 'all', q } });
   };
 
   return (
