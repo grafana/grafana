@@ -702,8 +702,8 @@ func (f *fakePluginInstaller) Uninstall(ctx context.Context, pluginID, pluginPat
 	return nil
 }
 
-func (f *fakePluginInstaller) GetPreInstallDetails(pluginID, version, pluginRepoURL string) (plugins.PreInstallDetails, error) {
-	return plugins.PreInstallDetails{}, nil
+func (f *fakePluginInstaller) GetUpdateInfo(pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
+	return plugins.UpdateInfo{}, nil
 }
 
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {

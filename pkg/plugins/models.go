@@ -150,6 +150,6 @@ type EnabledPlugins struct {
 	Apps        []*AppPlugin
 }
 
-type PreInstallDetails struct {
+type UpdateInfo struct {
 	PluginZipURL string
 }

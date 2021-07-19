@@ -740,13 +740,13 @@ func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) 
 			}
 		}
 
-		// Perform plugin update pre-check to confirm if upgrading is possible
-		preInstallDetails, err := pm.pluginInstaller.GetPreInstallDetails(pluginID, version, grafanaComURL)
+		// get plugin update information to confirm if upgrading is possible
+		updateInfo, err := pm.pluginInstaller.GetUpdateInfo(pluginID, version, grafanaComURL)
 		if err != nil {
 			return err
 		}
 
-		pluginZipURL = preInstallDetails.PluginZipURL
+		pluginZipURL = updateInfo.PluginZipURL
 
 		// remove existing installation of plugin
 		err = pm.Uninstall(context.Background(), plugin.Id)
