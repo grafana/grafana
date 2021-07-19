@@ -14,8 +14,10 @@ export function mapRemoteToCatalog(plugin: Plugin): CatalogPlugin {
     orgName,
     popularity,
     downloads,
+    typeCode,
     updatedAt,
     createdAt: publishedAt,
+    status,
   } = plugin;
   const catalogPlugin = {
     description,
@@ -33,7 +35,12 @@ export function mapRemoteToCatalog(plugin: Plugin): CatalogPlugin {
     publishedAt,
     updatedAt,
     version,
+    hasUpdate: false,
     isInstalled: false,
+    isCore: plugin.internal,
+    isDev: false,
+    isEnterprise: status === 'enterprise',
+    type: typeCode,
   };
   return catalogPlugin;
 }
@@ -43,6 +50,9 @@ export function mapLocalToCatalog(plugin: LocalPlugin): CatalogPlugin {
     name,
     info: { description, version, logos, updated, author },
     id,
+    signature,
+    dev,
+    type,
   } = plugin;
   return {
     description,
@@ -55,7 +65,12 @@ export function mapLocalToCatalog(plugin: LocalPlugin): CatalogPlugin {
     publishedAt: '',
     updatedAt: updated,
     version,
+    hasUpdate: false,
     isInstalled: true,
+    isCore: signature === 'internal',
+    isDev: Boolean(dev),
+    isEnterprise: false,
+    type,
   };
 }
 

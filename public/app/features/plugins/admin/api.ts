@@ -1,5 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { PluginMeta } from '@grafana/data';
+import { gt } from 'semver';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
 import { Plugin, PluginDetails, CatalogPluginDetails, Org, LocalPlugin } from './types';
 
@@ -26,9 +26,7 @@ async function getPlugin(slug: string): Promise<PluginDetails> {
 
 async function getCatalogPlugin(slug: string): Promise<CatalogPluginDetails> {
   const installed = await getInstalledPlugins();
-
   const local = installed?.find((plugin: LocalPlugin) => plugin.id === slug);
-
   const [remote, versions] = await Promise.all([getRemotePlugin(slug, local), getPluginVersions(slug)]);
 
   const version = remote?.version || local?.info.version || '';
@@ -50,11 +48,16 @@ async function getCatalogPlugin(slug: string): Promise<CatalogPluginDetails> {
   const plugin = {
     description: (remote?.description ?? local?.info?.description) || '',
     downloads: remote?.downloads || 0,
+    grafanaDependency: remote?.json?.dependencies.grafanaDependency,
     id: (remote?.slug ?? local?.id) || '',
     info: {
       logos,
     },
+    isCore: remote?.internal || local?.signature === 'internal',
+    isDev: Boolean(local?.dev),
+    isEnterprise: remote?.status === 'enterprise',
     isInstalled: Boolean(local),
+    hasUpdate: Boolean(remote?.version && local?.info.version && gt(remote?.version!, local?.info.version!)),
     name: (remote?.name ?? local?.name) || '',
     orgName: (remote?.orgName ?? local?.info.author.name) || '',
     popularity: remote?.popularity || 0,
@@ -62,7 +65,8 @@ async function getCatalogPlugin(slug: string): Promise<CatalogPluginDetails> {
     updatedAt: remote?.updatedAt || local?.info.updated || '',
     version: remote?.version || local?.info.version || '',
     readme: remote?.readme || 'No plugin help or readme markdown file was found',
-    links: (local?.info?.links || remote?.json?.info?.links) ?? [],
+    links: (remote?.json?.info?.links || local?.info?.links) ?? [],
+    type: (remote?.typeCode ?? local?.type) || '',
     versions,
   };
 
@@ -108,16 +112,6 @@ async function uninstallPlugin(id: string) {
   return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
 }
 
-async function updatePlugin(pluginId: string, data: Partial<PluginMeta>) {
-  const response = await getBackendSrv().datasourceRequest({
-    url: `/api/plugins/${pluginId}/settings`,
-    method: 'POST',
-    data,
-  });
-
-  return response?.data;
-}
-
 export const api = {
   getRemotePlugins,
   getPlugin,
@@ -126,5 +120,4 @@ export const api = {
   getOrg,
   installPlugin,
   uninstallPlugin,
-  updatePlugin,
 };

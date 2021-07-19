@@ -6,7 +6,7 @@ import { useStyles2, TabsBar, TabContent, Tab, Icon } from '@grafana/ui';
 
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
-import { useCatalogPlugin, usePlugin } from '../hooks/usePlugins';
+import { useCatalogPlugin } from '../hooks/usePlugins';
 import { Page as PluginPage } from '../components/Page';
 import { Loader } from '../components/Loader';
 import { Page } from 'app/core/components/Page/Page';
@@ -69,7 +69,7 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
                 {plugin.version && <span>{plugin.version}</span>}
               </div>
               <p>{plugin.description}</p>
-              {/* {remote && <InstallControls localPlugin={local} remotePlugin={remote} />} */}
+              <InstallControls plugin={plugin} />
             </div>
           </div>
           <TabsBar>
@@ -138,9 +138,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     headerOrgName: css`
       font-size: ${theme.typography.h4.fontSize};
-    `,
-    message: css`
-      color: ${theme.colors.text.secondary};
     `,
     readme: css`
       padding: ${theme.spacing(3, 4)};
