@@ -229,11 +229,11 @@ export const Components = {
     container: 'Code editor container',
   },
   DashboardImportPage: {
-    textarea: 'data-test-id-import-dashboard-textarea',
-    submit: 'data-test-id-load-dashboard',
+    textarea: 'data-testid-import-dashboard-textarea',
+    submit: 'data-testid-load-dashboard',
   },
   ImportDashboardForm: {
-    name: 'data-test-id-import-dashboard-title',
-    submit: 'data-test-id-import-dashboard-submit',
+    name: 'data-testid-import-dashboard-title',
+    submit: 'data-testid-import-dashboard-submit',
   },
 };

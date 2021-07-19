@@ -62,7 +62,7 @@ export const ImportDashboardForm: FC<Props> = ({
             validate: async (v: string) => await validateTitle(v, getValues().folder.id),
           })}
           type="text"
-          data-test-id={selectors.components.ImportDashboardForm.name}
+          data-testid={selectors.components.ImportDashboardForm.name}
         />
       </Field>
       <Field label="Folder">
@@ -139,7 +139,7 @@ export const ImportDashboardForm: FC<Props> = ({
       <HorizontalGroup>
         <Button
           type="submit"
-          data-test-id={selectors.components.ImportDashboardForm.submit}
+          data-testid={selectors.components.ImportDashboardForm.submit}
           variant={getButtonVariant(errors)}
           onClick={() => {
             setSubmitted(true);
