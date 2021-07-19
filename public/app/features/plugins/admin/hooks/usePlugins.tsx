@@ -52,21 +52,31 @@ export function useCatalogPlugins(): CatalogPluginsState {
 }
 
 function mapRemoteToCatalog(plugin: Plugin): CatalogPlugin {
-  const { name, description, version, orgName, popularity, downloads, updatedAt } = plugin;
+  const {
+    name,
+    slug: id,
+    description,
+    version,
+    orgName,
+    popularity,
+    downloads,
+    updatedAt,
+    createdAt: publishedAt,
+  } = plugin;
   const catalogPlugin = {
     description,
     downloads,
-    id: plugin.slug,
+    id,
     info: {
       logos: {
-        small: `https://grafana.com/api/plugins/${plugin.slug}/versions/${plugin.version}/logos/small`,
-        large: `https://grafana.com/api/plugins/${plugin.slug}/versions/${plugin.version}/logos/large`,
+        small: `https://grafana.com/api/plugins/${id}/versions/${version}/logos/small`,
+        large: `https://grafana.com/api/plugins/${id}/versions/${version}/logos/large`,
       },
     },
     name,
     orgName,
     popularity,
-    publishedAt: plugin.createdAt,
+    publishedAt,
     updatedAt,
     version,
     isInstalled: false,
