@@ -3,7 +3,10 @@ import { SelectableValue } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { useTheme2 } from '../../themes/ThemeContext';
 
-/** @internal */
+/** @internal
+ * Should be used only internally by Segment/SegmentAsync which can guarantee that SegmentSelect is hidden
+ * when a value is selected. See comment below on closeMenuOnSelect()
+ */
 export interface Props<T> extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: SelectableValue<T>;
   options: Array<SelectableValue<T>>;
@@ -41,6 +44,10 @@ export function SegmentSelect<T>({
         onChange={onChange}
         options={options}
         value={value}
+        // Disable "close menu on select" option to avoid calling onChange() in onCloseMenu() when a value is selected.
+        // Once the value is selected the Select component (with the menu) will be hidden anyway by the parent component:
+        // Segment or SegmentAsync - hence setting this option has no UX effect.
+        closeMenuOnSelect={false}
         onCloseMenu={() => {
           if (ref && ref.current) {
             // https://github.com/JedWatson/react-select/issues/188#issuecomment-279240292
