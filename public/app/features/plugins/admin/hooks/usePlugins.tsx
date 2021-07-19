@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
-import { Plugin, LocalPlugin, CatalogPlugin } from '../types';
+import { Plugin, LocalPlugin, CatalogPlugin, CatalogPluginDetails } from '../types';
 import { api } from '../api';
 import { mapLocalToCatalog, mapRemoteToCatalog, applySearchFilter } from '../helpers';
 
@@ -103,5 +103,21 @@ export const usePlugin = (slug: string): PluginState => {
   return {
     isLoading: loading,
     ...value,
+  };
+};
+
+type CatalogPluginState = {
+  isLoading: boolean;
+  plugin?: CatalogPluginDetails;
+};
+
+export const useCatalogPlugin = (id: string): CatalogPluginState => {
+  const { loading, value } = useAsync(async () => {
+    return await api.getCatalogPlugin(id);
+  }, [id]);
+
+  return {
+    isLoading: loading,
+    plugin: value,
   };
 };

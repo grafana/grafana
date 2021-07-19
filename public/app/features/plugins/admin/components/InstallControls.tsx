@@ -6,12 +6,9 @@ import { config } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 
+import appEvents from 'app/core/app_events';
 import { LocalPlugin, Plugin } from '../types';
 import { api } from '../api';
-
-// This isn't exported in the sdk yet
-// @ts-ignore
-import appEvents from 'app/core/app_events';
 import { isGrafanaAdmin } from '../helpers';
 
 interface Props {

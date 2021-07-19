@@ -1,17 +1,26 @@
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
 export interface CatalogPlugin {
-  id: string;
-  name: string;
   description: string;
-  version: string;
-  orgName: string;
-  popularity: number;
   downloads: number;
-  updatedAt: string;
-  publishedAt: string;
+  id: string;
   info: CatalogPluginInfo;
   isInstalled: boolean;
+  name: string;
+  orgName: string;
+  popularity: number;
+  publishedAt: string;
+  updatedAt: string;
+  version: string;
+}
+
+export interface CatalogPluginDetails extends CatalogPlugin {
+  readme: string;
+  versions: Version[];
+  links: Array<{
+    name: string;
+    url: string;
+  }>;
 }
 
 export interface CatalogPluginInfo {
