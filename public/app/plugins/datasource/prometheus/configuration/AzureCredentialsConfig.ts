@@ -1,32 +1,11 @@
 import { DataSourceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AzureAuthType, AzureCloud, AzureCredentials, ConcealedSecret } from './AzureCredentials';
+import { AzureCloud, AzureCredentials, ConcealedSecret } from './AzureCredentials';
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
 
-function getAuthType(options: DataSourceSettings<any, any>): AzureAuthType {
-  if (!options.jsonData.azureAuthType) {
-    // For newly created datasource with no configuration, managed identity is the default authentication type
-    // if they are enabled in Grafana config
-    return config.azure.managedIdentityEnabled ? 'msi' : 'clientsecret';
-  }
-
-  return options.jsonData.azureAuthType;
-}
-
 function getDefaultAzureCloud(): string {
   return config.azure.cloud || AzureCloud.Public;
-}
-
-export function getAzureCloud(options: DataSourceSettings<any, any>): string {
-  const authType = getAuthType(options);
-  switch (authType) {
-    case 'msi':
-      // In case of managed identity, the cloud is always same as where Grafana is hosted
-      return getDefaultAzureCloud();
-    case 'clientsecret':
-      return options.jsonData.azureCloud || getDefaultAzureCloud();
-  }
 }
 
 function getSecret(options: DataSourceSettings<any, any>): undefined | string | ConcealedSecret {
@@ -40,8 +19,18 @@ function getSecret(options: DataSourceSettings<any, any>): undefined | string | 
 }
 
 export function getCredentials(options: DataSourceSettings<any, any>): AzureCredentials {
-  const authType = getAuthType(options);
-  switch (authType) {
+  const credentials = options.jsonData.azureCredentials as AzureCredentials | undefined;
+
+  // If no credentials saved, then return empty credentials
+  // of type based on whether the managed identity enabled
+  if (!credentials) {
+    return {
+      authType: config.azure.managedIdentityEnabled ? 'msi' : 'clientsecret',
+      azureCloud: getDefaultAzureCloud(),
+    };
+  }
+
+  switch (credentials.authType) {
     case 'msi':
       if (config.azure.managedIdentityEnabled) {
         return {
@@ -58,9 +47,9 @@ export function getCredentials(options: DataSourceSettings<any, any>): AzureCred
     case 'clientsecret':
       return {
         authType: 'clientsecret',
-        azureCloud: options.jsonData.azureCloud || getDefaultAzureCloud(),
-        tenantId: options.jsonData.azureTenantId,
-        clientId: options.jsonData.azureClientId,
+        azureCloud: credentials.azureCloud || getDefaultAzureCloud(),
+        tenantId: credentials.tenantId,
+        clientId: credentials.clientId,
         clientSecret: getSecret(options),
       };
   }
@@ -80,7 +69,9 @@ export function updateCredentials(
         ...options,
         jsonData: {
           ...options.jsonData,
-          azureAuthType: 'msi',
+          azureCredentials: {
+            authType: 'msi',
+          },
         },
       };
 
@@ -91,10 +82,12 @@ export function updateCredentials(
         ...options,
         jsonData: {
           ...options.jsonData,
-          azureAuthType: 'clientsecret',
-          azureCloud: credentials.azureCloud || getDefaultAzureCloud(),
-          azureTenantId: credentials.tenantId,
-          azureClientId: credentials.clientId,
+          azureCredentials: {
+            authType: 'clientsecret',
+            azureCloud: credentials.azureCloud || getDefaultAzureCloud(),
+            tenantId: credentials.tenantId,
+            clientId: credentials.clientId,
+          },
         },
         secureJsonData: {
           ...options.secureJsonData,

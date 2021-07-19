@@ -32,11 +32,11 @@ export const AzureAuthSettings: FunctionComponent<HttpSettingsBaseProps> = (prop
             <div className="width-15">
               <Input
                 className="width-30"
-                value={dataSourceConfig.jsonData.azurePrometheusResourceId || ''}
+                value={dataSourceConfig.jsonData.azureEndpointResourceId || ''}
                 onChange={(event) =>
                   onChange({
                     ...dataSourceConfig,
-                    jsonData: { ...dataSourceConfig.jsonData, azurePrometheusResourceId: event.currentTarget.value },
+                    jsonData: { ...dataSourceConfig.jsonData, azureEndpointResourceId: event.currentTarget.value },
                   })
                 }
               />
