@@ -97,11 +97,10 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
 
         // Set heatmap gradient colors
         let colors = ['#00f', '#0ff', '#0f0', '#ff0', '#f00'];
-        let field = weightDim.field;
-        if(!field) { // Use the first nummeric field color scheme
-          field = frame.fields.find(field => field.type === FieldType.number);
-        }
-        if(field) {
+
+        // Either the configured field or the first numeric field value
+        const field = weightDim.field ?? frame.fields.find(field => field.type === FieldType.number);
+        if (field) {
           const colorMode = getFieldColorModeForField(field);
           if (colorMode.isContinuous && colorMode.getColors) {
             // getColors return an array of color string from the color scheme chosen
