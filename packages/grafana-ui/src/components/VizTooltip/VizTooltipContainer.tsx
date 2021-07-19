@@ -88,6 +88,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
       style={{
         position: 'fixed',
         left: 0,
+        pointerEvents: 'none',
         top: 0,
         transform: `translate(${placement.x}px, ${placement.y}px)`,
         transition: 'transform ease-out 0.1s',

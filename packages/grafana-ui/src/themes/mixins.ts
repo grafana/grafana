@@ -72,6 +72,5 @@ export const getTooltipContainerStyles = (theme: GrafanaTheme2) => `
   max-width: 800px;
   overflow: hidden;
   padding: ${theme.spacing(1)};
-  pointer-events: none;
   z-index: ${theme.zIndex.tooltip};
 `;
