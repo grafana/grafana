@@ -8,7 +8,7 @@ import { StoreState } from '../../../../types';
 
 export interface Props {
   repeat?: string | null;
-  onChange: (name: string) => void;
+  onChange: (name: string | null) => void;
 }
 
 export const RepeatRowSelect: FC<Props> = ({ repeat, onChange }) => {
@@ -34,7 +34,7 @@ export const RepeatRowSelect: FC<Props> = ({ repeat, onChange }) => {
     return options;
   }, [variables]);
 
-  const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value), [onChange]);
+  const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value!), [onChange]);
 
   return <Select value={repeat} onChange={onSelectChange} options={variableOptions} />;
 };
