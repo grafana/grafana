@@ -92,16 +92,15 @@ export const Label = forwardRef<HTMLElement, Props>(
   }
 );
 
-// TODO: Connor - Change display name?
 Label.displayName = 'Label';
 
 const getLabelStyles = (theme: GrafanaTheme2) => ({
   base: css`
+    display: inline-block;
     cursor: pointer;
     font-size: ${theme.typography.size.sm};
     line-height: ${theme.typography.bodySmall.lineHeight};
     background-color: ${theme.colors.background.secondary};
-    vertical-align: baseline;
     color: ${theme.colors.text};
     white-space: nowrap;
     text-shadow: none;

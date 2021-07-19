@@ -1,7 +1,6 @@
 import React, { ChangeEvent } from 'react';
 import {
   Button,
-  CompletionItem,
   HighlightPart,
   HorizontalGroup,
   Input,
@@ -9,7 +8,6 @@ import {
   LoadingPlaceholder,
   withTheme2,
   BrowserLabel as LokiLabel,
-  SearchFunctionMap,
 } from '@grafana/ui';
 import LokiLanguageProvider from '../language_provider';
 import PromQlLanguageProvider from '../../prometheus/language_provider';
@@ -17,6 +15,7 @@ import { css, cx } from '@emotion/css';
 import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
 import { GrafanaTheme2 } from '@grafana/data';
+import { fuzzyMatch } from '../../../../../../packages/grafana-ui/src/slate-plugins/fuzzy';
 import { sortBy } from 'lodash';
 
 // Hard limit on labels to render
@@ -48,6 +47,7 @@ interface FacettableValue {
   name: string;
   selected?: boolean;
   highlightParts?: HighlightPart[];
+  order?: number;
 }
 
 export interface SelectableLabel {
@@ -395,25 +395,25 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
 
     let selectedLabels = labels.filter((label) => label.selected && label.values);
     if (searchTerm) {
-      const searchFunction = SearchFunctionMap['Fuzzy'];
-      selectedLabels = this.state.labels.map((label) => {
-        let items = searchFunction(
-          label.values
-            ? label.values.map((l) => ({
-                label: l.name,
-              }))
-            : [],
-          searchTerm
-        );
-        items = sortBy(items, (item: CompletionItem) => (item.sortValue !== undefined ? item.sortValue : item.label));
-        // TODO: Connor - Always return selected values?
+      selectedLabels = selectedLabels.map((label) => {
+        const searchResults = label.values!.filter((value) => {
+          // Always return selected values
+          if (value.selected) {
+            value.highlightParts = undefined;
+            return true;
+          }
+          const fuzzyMatchResult = fuzzyMatch(value.name.toLowerCase(), searchTerm.toLowerCase());
+          if (fuzzyMatchResult.found) {
+            value.highlightParts = fuzzyMatchResult.ranges;
+            value.order = fuzzyMatchResult.distance;
+            return true;
+          } else {
+            return false;
+          }
+        });
         return {
           ...label,
-          values: items.map((item) => ({
-            name: item.label,
-            highlightParts: label.selected ? undefined : item.highlightParts,
-            selected: label.values?.find((v) => v.name === item.label)?.selected,
-          })),
+          values: sortBy(searchResults, (value) => (value.selected ? -Infinity : value.order)),
         };
       });
     } else {
@@ -445,11 +445,6 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
           </div>
         </div>
         <div className={styles.section}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-            {/* TODO: Connor - Remove debugging output */}
-            <pre>{JSON.stringify(labels, null, 2)}</pre>
-            <pre>{JSON.stringify(selectedLabels, null, 2)}</pre>
-          </div>
           <Label description="Choose the label values that you would like to use for the query. Use the search field to find values across selected labels.">
             2. Find values for the selected labels
           </Label>
