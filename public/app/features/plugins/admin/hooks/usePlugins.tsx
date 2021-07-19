@@ -125,41 +125,41 @@ export const usePlugins = () => {
 
 type FilteredPluginsState = {
   isLoading: boolean;
-  items: Array<Plugin | LocalPlugin>;
+  error: Error | undefined;
+  plugins: CatalogPlugin[];
 };
 
 export const usePluginsByFilter = (searchBy: string, filterBy: string): FilteredPluginsState => {
-  const { loading, value } = usePlugins();
-  const all = useMemo(() => {
-    const combined: Plugin[] = [];
-    Array.prototype.push.apply(combined, value?.items ?? []);
-    Array.prototype.push.apply(combined, value?.installedPlugins ?? []);
+  const { loading, error, plugins } = useCatalogPlugins();
 
-    const bySlug = combined.reduce((unique: Record<string, Plugin>, plugin) => {
-      unique[plugin.slug] = plugin;
-      return unique;
-    }, {});
-
-    return Object.values(bySlug);
-  }, [value?.items, value?.installedPlugins]);
+  const [installed, all] = useMemo(
+    () =>
+      plugins.reduce<[CatalogPlugin[], CatalogPlugin[]]>(
+        (result, plugin) => {
+          result[plugin.isInstalled ? 0 : 1].push(plugin);
+          return result;
+        },
+        [[], []]
+      ),
+    [plugins]
+  );
 
   if (filterBy === 'installed') {
     return {
       isLoading: loading,
-      items: applySearchFilter(searchBy, value?.installedPlugins ?? []),
+      error,
+      plugins: applySearchFilter(searchBy, installed),
     };
   }
 
   return {
     isLoading: loading,
-    items: applySearchFilter(searchBy, all),
+    error,
+    plugins: applySearchFilter(searchBy, all),
   };
 };
 
-function applySearchFilter(
-  searchBy: string | undefined,
-  plugins: Array<Plugin | LocalPlugin>
-): Array<Plugin | LocalPlugin> {
+function applySearchFilter(searchBy: string | undefined, plugins: CatalogPlugin[]): CatalogPlugin[] {
   if (!searchBy) {
     return plugins;
   }
