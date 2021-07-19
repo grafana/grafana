@@ -307,4 +307,44 @@ describe('AzureLogAnalyticsDatasource', () => {
       expect(annotationResults[1].tags[0]).toBe('tag2');
     });
   });
+
+  describe('When performing getWorkspaces', () => {
+    beforeEach(() => {
+      ctx.ds.azureLogAnalyticsDatasource.getWorkspaceList = jest
+        .fn()
+        .mockResolvedValue({ value: [{ name: 'foobar', id: 'foo', properties: { customerId: 'bar' } }] });
+    });
+
+    it('should return the workspace id', async () => {
+      const workspaces = await ctx.ds.azureLogAnalyticsDatasource.getWorkspaces('sub');
+      expect(workspaces).toEqual([{ text: 'foobar', value: 'foo' }]);
+    });
+
+    it('should return the customer id if specified', async () => {
+      const workspaces = await ctx.ds.azureLogAnalyticsDatasource.getWorkspaces('sub', true);
+      expect(workspaces).toEqual([{ text: 'foobar', value: 'bar' }]);
+    });
+  });
+
+  describe('When performing getFirstWorkspace', () => {
+    beforeEach(() => {
+      ctx.ds.azureLogAnalyticsDatasource.getDefaultOrFirstSubscription = jest.fn().mockResolvedValue('foo');
+      ctx.ds.azureLogAnalyticsDatasource.getWorkspaces = jest
+        .fn()
+        .mockResolvedValue([{ text: 'foobar', value: 'foo' }]);
+      ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = undefined;
+    });
+
+    it('should return the stored workspace', async () => {
+      ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = 'bar';
+      const workspace = await ctx.ds.azureLogAnalyticsDatasource.getFirstWorkspace();
+      expect(workspace).toEqual('bar');
+      expect(ctx.ds.azureLogAnalyticsDatasource.getDefaultOrFirstSubscription).not.toHaveBeenCalled();
+    });
+
+    it('should return the first workspace', async () => {
+      const workspace = await ctx.ds.azureLogAnalyticsDatasource.getFirstWorkspace();
+      expect(workspace).toEqual('foo');
+    });
+  });
 });

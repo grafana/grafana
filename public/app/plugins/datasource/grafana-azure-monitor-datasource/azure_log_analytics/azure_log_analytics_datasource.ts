@@ -39,7 +39,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   defaultSubscriptionId?: string;
 
   azureMonitorPath: string;
-  defaultOrFirstWorkspace: string;
+  firstWorkspace?: string;
   cache: Map<string, any>;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
@@ -52,7 +52,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     this.azurePortalUrl = getAzurePortalUrl(cloud);
 
     this.defaultSubscriptionId = this.instanceSettings.jsonData.subscriptionId || '';
-    this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
   }
 
   isConfigured(): boolean {
@@ -71,12 +70,15 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     });
   }
 
-  async getWorkspaces(subscription: string): Promise<AzureLogsVariable[]> {
+  async getWorkspaces(subscription: string, returnCustomerID?: boolean): Promise<AzureLogsVariable[]> {
     const response = await this.getWorkspaceList(subscription);
 
     return (
       map(response.value, (val: any) => {
-        return { text: val.name, value: val.id };
+        return {
+          text: val.name,
+          value: returnCustomerID && val.properties?.customerId ? val.properties.customerId : val.id,
+        };
       }) || []
     );
   }
@@ -112,8 +114,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const resource = templateSrv.replace(item.resource, scopedVars);
     let workspace = templateSrv.replace(item.workspace, scopedVars);
 
-    if (!workspace && !resource && this.defaultOrFirstWorkspace) {
-      workspace = this.defaultOrFirstWorkspace;
+    if (!workspace && !resource && this.firstWorkspace) {
+      workspace = this.firstWorkspace;
     }
 
     const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
@@ -238,7 +240,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     // Execute the query as KQL to the default or first workspace
-    return this.getDefaultOrFirstWorkspace().then((resourceURI) => {
+    return this.getFirstWorkspace().then((resourceURI) => {
       if (!resourceURI) {
         return [];
       }
@@ -322,9 +324,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return subscriptions[0]?.value;
   }
 
-  async getDefaultOrFirstWorkspace(): Promise<string | undefined> {
-    if (this.defaultOrFirstWorkspace) {
-      return this.defaultOrFirstWorkspace;
+  async getFirstWorkspace(): Promise<string | undefined> {
+    if (this.firstWorkspace) {
+      return this.firstWorkspace;
     }
 
     const subscriptionId = await this.getDefaultOrFirstSubscription();
@@ -332,11 +334,11 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return undefined;
     }
 
-    const workspaces = await this.getWorkspaces(subscriptionId);
+    const workspaces = await this.getWorkspaces(subscriptionId, true);
     const workspace = workspaces[0]?.value;
 
     if (workspace) {
-      this.defaultOrFirstWorkspace = workspace;
+      this.firstWorkspace = workspace;
     }
 
     return workspace;
@@ -384,7 +386,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     let resourceOrWorkspace: string;
     try {
-      const result = await this.getDefaultOrFirstWorkspace();
+      const result = await this.getFirstWorkspace();
       if (!result) {
         return {
           status: 'error',
