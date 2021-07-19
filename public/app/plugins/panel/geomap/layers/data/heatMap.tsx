@@ -1,5 +1,4 @@
 import {
-  FieldCalcs,
   FieldType,
   getFieldColorModeForField,
   GrafanaTheme2,
@@ -7,22 +6,29 @@ import {
   MapLayerOptions,
   MapLayerRegistryItem,
   PanelData,
-  reduceField,
-  ReducerID,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
+import { ScaleDimensionConfig, } from '../../dims/types';
+import { ScaleDimensionEditor } from '../../dims/editors/ScaleDimensionEditor';
+import { getScaledDimension } from '../../dims/scale';
 
 // Configuration options for Heatmap overlays
 export interface HeatmapConfig {
+  weight: ScaleDimensionConfig;
   blur: number;
   radius: number;
 }
 
 const defaultOptions: HeatmapConfig = {
+  weight: {
+    fixed: 1,
+    min: 0, 
+    max: 1,
+  },
   blur: 15,
   radius: 5,
 };
@@ -77,47 +83,54 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
           return; // ???
         }
 
-        // Get the field of data values
-        const field = frame.fields.find(field => field.type === FieldType.number); // TODO!!!!
-        // Return early if metric field is not matched
-        if (field === undefined) {
-          return;
-        };
+        const weightDim = getScaledDimension(frame, config.weight);
 
-        // Retrieve the min, max and range of data values
-        const calcs = reduceField({
-          field: field,
-          reducers: [
-            ReducerID.min,
-            ReducerID.range,
-          ]
-        });
         // Map each data value into new points
         for (let i = 0; i < frame.length; i++) {
           const cluster = new Feature({
               geometry: info.points[i],
-              value: normalize(calcs, field.values.get(i)),
+              value: weightDim.get(i),
           });
           vectorSource.addFeature(cluster);
         };
         vectorLayer.setSource(vectorSource);
 
-        // Set gradient of heatmap
-        const colorMode = getFieldColorModeForField(field);
-        if (colorMode.isContinuous && colorMode.getColors) {
-          // getColors return an array of color string from the color scheme chosen
-          const colors = colorMode.getColors(theme);
-          vectorLayer.setGradient(colors);
-        } else {
-          // Set the gradient back to default if threshold or single color is chosen
-          vectorLayer.setGradient(['#00f', '#0ff', '#0f0', '#ff0', '#f00']);
+        // Set heatmap gradient colors
+        let colors = ['#00f', '#0ff', '#0f0', '#ff0', '#f00'];
+
+        // Either the configured field or the first numeric field value
+        const field = weightDim.field ?? frame.fields.find(field => field.type === FieldType.number);
+        if (field) {
+          const colorMode = getFieldColorModeForField(field);
+          if (colorMode.isContinuous && colorMode.getColors) {
+            // getColors return an array of color string from the color scheme chosen
+            colors = colorMode.getColors(theme);
+          }
         }
+        vectorLayer.setGradient(colors);
       },
     };
   },
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
     builder
+      .addCustomEditor({
+        id: 'config.weight',
+        path: 'config.weight',
+        name: 'Weight values',
+        description: 'Scale the distribution for each row',
+        editor: ScaleDimensionEditor,
+        settings: {
+          min: 0, // no contribution
+          max: 1,
+          hideRange: true, // Don't show the scale factor
+        },
+        defaultValue: { // Configured values
+          fixed: 1,
+          min: 0,
+          max: 1,
+        },
+      })
       .addSliderInput({
         path: 'config.radius',
         description: 'configures the size of clusters',
@@ -143,18 +156,4 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
   },
   // fill in the default values
   defaultOptions,
-};
-
-/**
- * Function that normalize the data values to a range between 0.1 and 1
- * Returns the weights for each value input
- */
-function normalize(calcs: FieldCalcs, value: number) {
-  // If all data values are the same, it should return the largest weight
-  if (calcs.range == 0) {
-    return 1;
-  };
-  // Normalize value in range of [0.1,1]
-  const norm = 0.1 + ((value - calcs.min) / calcs.range) * 0.9
-  return norm;
 };

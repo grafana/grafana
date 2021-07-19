@@ -66,11 +66,15 @@ export function useFieldDisplayNames(data: DataFrame[], filter?: (field: Field) 
  */
 export function useSelectOptions(
   displayNames: FrameFieldsDisplayNames,
-  currentName?: string
+  currentName?: string,
+  firstItem?: SelectableValue<string>
 ): Array<SelectableValue<string>> {
   return useMemo(() => {
     let found = false;
     const options: Array<SelectableValue<string>> = [];
+    if (firstItem) {
+      options.push(firstItem);
+    }
     for (const name of displayNames.display) {
       if (!found && name === currentName) {
         found = true;
