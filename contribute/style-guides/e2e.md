@@ -160,3 +160,41 @@ describe('List test', () => {
   });
 });
 ```
+
+## Aria-Labels vs data-testid
+Our selectors are set up to work with both aria-labels and data-testid attributes. Aria-labels help assistive technologies such as screenreaders identify interactive elements of a page for our users. 
+
+A good example of a time to use an aria-label might be if you have a button with an X to close:
+```
+<button aria-label="close">X<button>
+```
+It might be clear visually that the X closes the modal, but audibly it would not be clear for example.
+```
+<button aria-label="close">Close<button>
+```
+The above example for example might read aloud to a user "Close, Close" or something similar. 
+
+However adding aria-labels to elements that are already clearly labeled or not interactive can be confusing and redundant for users with assistive technologies.
+
+In such cases rather than adding unnecessary aria-labels to components so as to make them selectable for testing, it is preferable to use a data attribute that would not be read aloud with an assistive technology for example:
+
+```
+<button data-testid="modal-close-button">Close<button>
+```
+
+We have added support for this in our selectors, to use:
+
+Prefix your selector string with "data-testid":
+```typescript
+export const Components = {
+  Login: {
+    openButton: "data-testid-open", // this would look for a data-testid
+    closeButton: "close-button" // this would look for an aria-label
+  },
+};
+```
+
+and in your component, import the selectors and add the data test id:
+```
+<button data-testid={Selectors.Components.Login.openButton}>
+```
