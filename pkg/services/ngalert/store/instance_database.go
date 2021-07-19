@@ -14,7 +14,7 @@ type InstanceStore interface {
 	ListAlertInstances(cmd *models.ListAlertInstancesQuery) error
 	SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error
 	FetchOrgIds() ([]int64, error)
-	DeleteAlertInstance(orgID int64, ruleUID string, labels models.InstanceLabels) error
+	DeleteAlertInstance(orgID int64, ruleUID, labelsHash string) error
 }
 
 // GetAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
@@ -144,13 +144,9 @@ func (st DBstore) FetchOrgIds() ([]int64, error) {
 	return orgIds, err
 }
 
-func (st DBstore) DeleteAlertInstance(orgID int64, ruleUID string, labels models.InstanceLabels) error {
+func (st DBstore) DeleteAlertInstance(orgID int64, ruleUID, labelsHash string) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		labelTupleJSON, labelsHash, err := labels.StringAndHash()
-		if err != nil {
-			return err
-		}
-		_, err = sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ? AND labels = ? AND labels_hash = ?", orgID, ruleUID, labelTupleJSON, labelsHash)
+		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ? AND labels_hash = ?", orgID, ruleUID, labelsHash)
 		if err != nil {
 			return err
 		}

@@ -272,10 +272,16 @@ func (st *Manager) staleResultsHandler(alertRule *ngModels.AlertRule, states map
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	for _, s := range allStates {
 		_, ok := states[s.CacheId]
-		if !ok && isItStale(s.LastEvaluationTime, time.Duration(alertRule.IntervalSeconds)) {
+		if !ok && isItStale(s.LastEvaluationTime, alertRule.IntervalSeconds) {
 			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheId)
-			err := st.instanceStore.DeleteAlertInstance(s.OrgID, s.AlertRuleUID, ngModels.InstanceLabels(s.Labels))
+			ilbs := ngModels.InstanceLabels(s.Labels)
+			_, labelsHash, err := ilbs.StringAndHash()
+			if err != nil {
+				st.log.Error("unable to get labelsHash", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID)
+			}
+
+			err = st.instanceStore.DeleteAlertInstance(s.OrgID, s.AlertRuleUID, labelsHash)
 			if err != nil {
 				st.log.Error("unable to delete stale instance from database", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			}
@@ -283,6 +289,6 @@ func (st *Manager) staleResultsHandler(alertRule *ngModels.AlertRule, states map
 	}
 }
 
-func isItStale(lastEval time.Time, interval time.Duration) bool {
-	return lastEval.Add(2 * interval * time.Second).Before(time.Now())
+func isItStale(lastEval time.Time, intervalSeconds int64) bool {
+	return lastEval.Add(2 * time.Duration(intervalSeconds)).Before(time.Now())
 }
