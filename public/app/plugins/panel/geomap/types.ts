@@ -23,14 +23,10 @@ export interface ControlsOptions {
   showDebug?: boolean;
 }
 
-export interface MapCenterConfig {
+export interface MapViewConfig {
   id: string; // placename > lookup
   lat?: number;
   lon?: number;
-}
-
-export interface MapViewConfig {
-  center: MapCenterConfig;
   zoom?: number;
   minZoom?: number;
   maxZoom?: number;
@@ -38,9 +34,9 @@ export interface MapViewConfig {
 }
 
 export const defaultView: MapViewConfig = {
-  center: {
-    id: MapCenterID.Zero,
-  },
+  id: MapCenterID.Zero,
+  lat: 0,
+  lon: 0,
   zoom: 1,
 };
 
