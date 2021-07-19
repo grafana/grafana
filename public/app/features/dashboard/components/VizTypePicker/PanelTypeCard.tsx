@@ -1,8 +1,9 @@
 import React, { MouseEventHandler } from 'react';
 import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
-import { Badge, BadgeProps, IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
+import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
 
 interface Props {
   isCurrent: boolean;
@@ -142,42 +143,11 @@ interface PanelPluginBadgeProps {
 }
 
 const PanelPluginBadge: React.FC<PanelPluginBadgeProps> = ({ plugin }) => {
-  const display = getPanelStateBadgeDisplayModel(plugin);
-
   if (isUnsignedPluginSignature(plugin.signature)) {
     return <PluginSignatureBadge status={plugin.signature} />;
   }
 
-  if (!display) {
-    return null;
-  }
-
-  return <Badge color={display.color} text={display.text} icon={display.icon} tooltip={display.tooltip} />;
+  return <PluginStateInfo state={plugin.state} />;
 };
-
-function getPanelStateBadgeDisplayModel(panel: PanelPluginMeta): BadgeProps | null {
-  switch (panel.state) {
-    case PluginState.deprecated:
-      return {
-        text: 'Deprecated',
-        color: 'red',
-        tooltip: `${panel.name} Panel is deprecated`,
-      };
-    case PluginState.alpha:
-      return {
-        text: 'Alpha',
-        color: 'blue',
-        tooltip: `${panel.name} Panel is experimental`,
-      };
-    case PluginState.beta:
-      return {
-        text: 'Beta',
-        color: 'blue',
-        tooltip: `${panel.name} Panel is in beta`,
-      };
-    default:
-      return null;
-  }
-}
 
 PanelPluginBadge.displayName = 'PanelPluginBadge';

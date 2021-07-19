@@ -6,8 +6,6 @@ weight = 400
 
 # Graph stacked time series
 
-> **Note:** This is a beta feature. Time series panel is going to replace the Graph panel in a future release.
-
 This section explains how to use Time series panel field options to control the stacking of the series and illustrates what the stacking options do.
 
 _Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. You can read more on why stacking may be not the best approach here: [Stacked Area Graphs Are Not Your Friend](https://everydayanalytics.ca/2014/08/stacked-area-graphs-are-not-your-friend.html).

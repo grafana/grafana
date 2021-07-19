@@ -109,6 +109,7 @@ func (ss *SQLStore) Init() error {
 	ss.addUserQueryAndCommandHandlers()
 	ss.addAlertNotificationUidByIdHandler()
 	ss.addPreferencesQueryAndCommandHandlers()
+	ss.addDashboardQueryAndCommandHandlers()
 
 	if err := ss.Reset(); err != nil {
 		return err
@@ -236,7 +237,8 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 		}
 
 		if isolation := ss.dbCfg.IsolationLevel; isolation != "" {
-			cnnstr += "&tx_isolation=" + isolation
+			val := url.QueryEscape(fmt.Sprintf("'%s'", isolation))
+			cnnstr += fmt.Sprintf("&tx_isolation=%s", val)
 		}
 
 		cnnstr += ss.buildExtraConnectionString('&')

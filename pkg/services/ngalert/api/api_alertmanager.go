@@ -45,8 +45,15 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSile
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) response.Response {
-	// not implemented
-	return NotImplementedResp
+	if !c.HasUserRole(models.ROLE_EDITOR) {
+		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
+	}
+	if err := srv.am.SaveAndApplyDefaultConfig(); err != nil {
+		srv.log.Error("unable to save and apply default alertmanager configuration", "err", err)
+		return ErrResp(http.StatusInternalServerError, err, "failed to save and apply default Alertmanager configuration")
+	}
+
+	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration deleted; the default is applied"})
 }
 
 func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Response {
@@ -152,6 +159,9 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Respo
 	if err != nil {
 		if errors.Is(err, notifier.ErrGetAlertsBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
+		}
+		if errors.Is(err, notifier.ErrGetAlertsUnavailable) {
+			return ErrResp(http.StatusServiceUnavailable, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error
 		return ErrResp(http.StatusInternalServerError, err, "")

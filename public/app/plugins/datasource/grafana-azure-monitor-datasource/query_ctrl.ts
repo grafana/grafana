@@ -206,7 +206,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     if (this.target.azureMonitor.timeGrainUnit) {
       if (this.target.azureMonitor.timeGrain !== 'auto') {
         this.target.azureMonitor.timeGrain = TimegrainConverter.createISO8601Duration(
-          this.target.azureMonitor.timeGrain,
+          this.target.azureMonitor.timeGrain ?? 'auto',
           this.target.azureMonitor.timeGrainUnit
         );
       }
@@ -372,7 +372,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   getAzureMonitorAutoInterval() {
-    return this.generateAutoUnits(this.target.azureMonitor.timeGrain, (this.target.azureMonitor as any).timeGrains);
+    return this.generateAutoUnits(
+      this.target.azureMonitor.timeGrain ?? 'auto',
+      (this.target.azureMonitor as any).timeGrains
+    );
   }
 
   getApplicationInsightAutoInterval() {
@@ -380,6 +383,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   azureMonitorAddDimensionFilter() {
+    this.target.azureMonitor = this.target.azureMonitor ?? {};
+    this.target.azureMonitor.dimensionFilters = this.target.azureMonitor.dimensionFilters ?? [];
+
     this.target.azureMonitor.dimensionFilters.push({
       dimension: '',
       operator: 'eq',
@@ -388,6 +394,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   azureMonitorRemoveDimensionFilter(index: number) {
+    this.target.azureMonitor = this.target.azureMonitor ?? {};
+    this.target.azureMonitor.dimensionFilters = this.target.azureMonitor.dimensionFilters ?? [];
+
     this.target.azureMonitor.dimensionFilters.splice(index, 1);
     this.refresh();
   }
