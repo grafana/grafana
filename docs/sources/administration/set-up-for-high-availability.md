@@ -26,7 +26,7 @@ Currently alerting supports a limited form of high availability. [Alert notifica
 
 ## Grafana Live
 
-Grafana Live works with limitations in highly available setup, see details in [Grafana Live docs]({{< relref "../live/live-ha-setup.md" >}}).
+Grafana Live works with limitations in highly available setup. For details, refer to the [Grafana Live documentation]({{< relref "../live/live-ha-setup.md" >}}).
 
 ## User sessions
 
