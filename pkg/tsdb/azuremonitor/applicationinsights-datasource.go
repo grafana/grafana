@@ -20,7 +20,9 @@ import (
 )
 
 // ApplicationInsightsDatasource calls the application insights query API.
-type ApplicationInsightsDatasource struct{}
+type ApplicationInsightsDatasource struct {
+	proxy serviceProxy
+}
 
 // ApplicationInsightsQuery is the model that holds the information
 // needed to make a metrics query to Application Insights, and the information
@@ -41,8 +43,12 @@ type ApplicationInsightsQuery struct {
 	aggregation string
 }
 
+func (e *ApplicationInsightsDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.proxy.Do(rw, req, cli)
+}
+
 func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
+	originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries)
@@ -51,7 +57,7 @@ func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Conte
 	}
 
 	for _, query := range queries {
-		queryRes, err := e.executeQuery(ctx, query, dsInfo)
+		queryRes, err := e.executeQuery(ctx, query, dsInfo, client, url)
 		if err != nil {
 			return nil, err
 		}
@@ -122,11 +128,11 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []backend.DataQuery
 	return applicationInsightsQueries, nil
 }
 
-func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery, dsInfo datasourceInfo) (
+func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery, dsInfo datasourceInfo, client *http.Client, url string) (
 	backend.DataResponse, error) {
 	dataResponse := backend.DataResponse{}
 
-	req, err := e.createRequest(ctx, dsInfo)
+	req, err := e.createRequest(ctx, dsInfo, url)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse, nil
@@ -154,7 +160,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	}
 
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, dsInfo.Services[appInsights].HTTPClient, req)
+	res, err := ctxhttp.Do(ctx, client, req)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse, nil
@@ -193,16 +199,14 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	return dataResponse, nil
 }
 
-func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
+func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, url string) (*http.Request, error) {
 	appInsightsAppID := dsInfo.Settings.AppInsightsAppId
 
-	req, err := http.NewRequest(http.MethodGet, dsInfo.Services[appInsights].URL, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
-	req.Header.Set("X-API-Key", dsInfo.DecryptedSecureJSONData["appInsightsApiKey"])
-
 	req.URL.Path = fmt.Sprintf("/v1/apps/%s", appInsightsAppID)
 
 	return req, nil
