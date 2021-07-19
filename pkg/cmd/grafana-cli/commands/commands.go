@@ -137,8 +137,18 @@ var adminCommands = []*cli.Command{
 var cueCommands = []*cli.Command{
 	{
 		Name:   "validate-schema",
-		Usage:  "validate *.cue files in the project",
-		Action: runPluginCommand(cmd.validateScuemataBasics),
+		Usage:  "validate known *.cue files in the Grafana project",
+		Action: runPluginCommand(cmd.validateScuemata),
+		Description: `validate-schema checks that all CUE schema files are valid with respect
+to basic standards - valid CUE, valid scuemata, etc. Note that this
+command checks only paths that existed when grafana-cli was compiled,
+so must be recompiled to validate newly-added CUE files.`,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "grafana-root",
+				Usage: "path to the root of a Grafana repository to validate",
+			},
+		},
 	},
 	{
 		Name:   "validate-resource",
