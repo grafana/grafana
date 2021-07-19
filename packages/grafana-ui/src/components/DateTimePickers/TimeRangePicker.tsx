@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent, memo, FormEvent } from 'react';
+import React, { PureComponent, memo, FormEvent, Ref } from 'react';
 import { css } from '@emotion/css';
 
 // Components
@@ -51,9 +51,14 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
     isOpen: false,
   };
 
+  selectButtonRef: Ref<HTMLButtonElement> = React.createRef();
+
   onChange = (timeRange: TimeRange) => {
     this.props.onChange(timeRange);
     this.setState({ isOpen: false });
+    if (this.selectButtonRef) {
+      console.log(this.selectButtonRef);
+    }
   };
 
   onOpen = (event: FormEvent<HTMLButtonElement>) => {
@@ -98,6 +103,7 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
             icon="clock-nine"
             isOpen={isOpen}
             variant={variant}
+            ref={this.selectButtonRef}
           >
             <TimePickerButtonLabel {...this.props} />
           </ToolbarButton>
