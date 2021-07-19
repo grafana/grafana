@@ -2,7 +2,7 @@
 
 package process
 
-func isServerRunningAsRoot() (bool, error) {
+func elevatedPrivilegesCheck() (bool, error) {
 	// TODO implement Windows process root check
 	return false, nil
 }
