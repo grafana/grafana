@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
@@ -34,7 +33,7 @@ type TelegramNotifier struct {
 // NewTelegramNotifier is the constructor for the Telegram notifier
 func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template) (*TelegramNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	botToken := model.DecryptedValue("bottoken", model.Settings.Get("bottoken").MustString())
@@ -42,11 +41,11 @@ func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template)
 	message := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
 
 	if botToken == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find Bot Token in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find Bot Token in settings"}
 	}
 
 	if chatID == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find Chat Id in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find Chat Id in settings"}
 	}
 
 	return &TelegramNotifier{

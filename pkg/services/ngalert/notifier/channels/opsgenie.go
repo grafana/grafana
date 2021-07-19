@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
@@ -50,7 +49,7 @@ func NewOpsgenieNotifier(model *NotificationChannelConfig, t *template.Template)
 	apiKey := model.DecryptedValue("apiKey", model.Settings.Get("apiKey").MustString())
 	apiURL := model.Settings.Get("apiUrl").MustString()
 	if apiKey == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find api key property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find api key property in settings"}
 	}
 	if apiURL == "" {
 		apiURL = OpsgenieAlertURL
@@ -58,8 +57,8 @@ func NewOpsgenieNotifier(model *NotificationChannelConfig, t *template.Template)
 
 	sendTagsAs := model.Settings.Get("sendTagsAs").MustString(OpsgenieSendTags)
 	if sendTagsAs != OpsgenieSendTags && sendTagsAs != OpsgenieSendDetails && sendTagsAs != OpsgenieSendBoth {
-		return nil, alerting.ValidationError{
-			Reason: fmt.Sprintf("Invalid value for sendTagsAs: %q", sendTagsAs),
+		return nil, receiverInitError{Cfg: *model,
+			Reason: fmt.Sprintf("invalid value for sendTagsAs: %q", sendTagsAs),
 		}
 	}
 
