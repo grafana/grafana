@@ -870,17 +870,16 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 			expectedStates: map[string]*state.State{
-				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["cluster","us-central-1"],["job",""],["label","test"]]`: {
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["cluster","us-central-1"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid",
 					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["cluster","us-central-1"],["job",""],["label","test"]]`,
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["cluster","us-central-1"],["label","test"]]`,
 					Labels: data.Labels{
 						"__alert_rule_namespace_uid__": "test_namespace_uid",
 						"__alert_rule_uid__":           "test_alert_rule_uid",
 						"alertname":                    "test_title",
 						"cluster":                      "us-central-1",
 						"label":                        "test",
-						"job":                          "",
 					},
 					State: eval.Normal,
 					Results: []state.Evaluation{
@@ -892,7 +891,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					LastEvaluationTime: evaluationTime,
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"summary": ""},
+					Annotations:        map[string]string{},
 				},
 			},
 		},

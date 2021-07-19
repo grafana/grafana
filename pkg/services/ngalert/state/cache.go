@@ -93,6 +93,9 @@ func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, la
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
 			ev, err := c.expandTemplate(alertRule.Title, v, labels, values)
+			if ev == "" {
+				continue
+			}
 			expanded[k] = ev
 			if err != nil {
 				c.log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
@@ -254,9 +257,15 @@ func (c *cache) recordMetrics() {
 func mergeLabels(a, b data.Labels) data.Labels {
 	newLbs := data.Labels{}
 	for k, v := range a {
+		if v == "" {
+			continue
+		}
 		newLbs[k] = v
 	}
 	for k, v := range b {
+		if v == "" {
+			continue
+		}
 		if _, ok := newLbs[k]; !ok {
 			newLbs[k] = v
 		}
