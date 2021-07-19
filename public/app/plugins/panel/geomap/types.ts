@@ -1,4 +1,4 @@
-import { MapLayerConfig } from '@grafana/data';
+import { MapLayerOptions } from '@grafana/data';
 import Units from 'ol/proj/Units';
 import { MapCenterID } from './view';
 
@@ -47,18 +47,6 @@ export const defaultView: MapViewConfig = {
 export interface GeomapPanelOptions {
   view: MapViewConfig;
   controls: ControlsOptions;
-  basemap: MapLayerConfig;
-  layers: MapLayerConfig[];
-  fieldMapping: FieldMappingOptions;
-}
-
-export interface FieldMappingOptions {
-  metricField: string;
-  geohashField: string;
-  latitudeField: string;
-  longitudeField: string;
-}
-
-export interface QueryFormat {
-  locationType: string;
+  basemap: MapLayerOptions;
+  layers: MapLayerOptions[];
 }

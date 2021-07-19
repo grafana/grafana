@@ -1,7 +1,7 @@
 import { FieldType, locationUtil, toDataFrame, VariableOrigin } from '@grafana/data';
 import { setTemplateSrv } from '@grafana/runtime';
 import { getDataFrameVars, LinkSrv } from '../link_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTimeSrv, setTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createQueryVariableAdapter } from 'app/features/variables/query/adapter';
@@ -17,6 +17,7 @@ jest.mock('app/core/core', () => ({
 describe('linkSrv', () => {
   let linkSrv: LinkSrv;
   let templateSrv: TemplateSrv;
+  let originalTimeService: TimeSrv;
 
   function initLinkSrv() {
     const _dashboard: any = {
@@ -29,6 +30,7 @@ describe('linkSrv', () => {
     timeSrv.init(_dashboard);
     timeSrv.setTime({ from: 'now-1h', to: 'now' });
     _dashboard.refresh = false;
+    setTimeSrv(timeSrv);
 
     templateSrv = initTemplateSrv([
       { type: 'query', name: 'home', current: { value: '127.0.0.1' } },
@@ -37,10 +39,11 @@ describe('linkSrv', () => {
 
     setTemplateSrv(templateSrv);
 
-    linkSrv = new LinkSrv(templateSrv, timeSrv);
+    linkSrv = new LinkSrv();
   }
 
   beforeAll(() => {
+    originalTimeService = getTimeSrv();
     variableAdapters.register(createQueryVariableAdapter());
   });
 
@@ -48,6 +51,10 @@ describe('linkSrv', () => {
     initLinkSrv();
 
     jest.resetAllMocks();
+  });
+
+  afterAll(() => {
+    setTimeSrv(originalTimeService);
   });
 
   describe('getDataLinkUIModel', () => {

@@ -431,6 +431,16 @@ The InfoBox & FeatureInfoBox are now deprecated please use the Alert component i
 
 <!-- 8.0.0-beta1 END -->
 
+<!-- 7.5.10 START -->
+
+# 7.5.10 (2021-07-15)
+
+### Bug fixes
+
+* **[v7.5.x] Transformations:** add 'prepare time series' transformer. [#36749](https://github.com/grafana/grafana/pull/36749), [@mckn](https://github.com/mckn)
+
+<!-- 7.5.10 END -->
+
 <!-- 7.5.9 START -->
 
 # 7.5.9 (2021-06-23)
