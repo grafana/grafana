@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
@@ -45,12 +44,12 @@ type PagerdutyNotifier struct {
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
 func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template) (*PagerdutyNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	key := model.DecryptedValue("integrationKey", model.Settings.Get("integrationKey").MustString())
 	if key == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find integration key property in settings"}
 	}
 
 	return &PagerdutyNotifier{

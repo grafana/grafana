@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestKafkaNotifier(t *testing.T) {
@@ -28,7 +27,7 @@ func TestKafkaNotifier(t *testing.T) {
 		settings       string
 		alerts         []*types.Alert
 		expUrl, expMsg string
-		expInitError   error
+		expInitError   string
 		expMsgError    error
 	}{
 		{
@@ -60,8 +59,7 @@ func TestKafkaNotifier(t *testing.T) {
 					}
 				  ]
 				}`,
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name: "Multiple alerts",
 			settings: `{
@@ -96,16 +94,15 @@ func TestKafkaNotifier(t *testing.T) {
 					}
 				  ]
 				}`,
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name:         "Endpoint missing",
 			settings:     `{"kafkaTopic": "sometopic"}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find kafka rest proxy endpoint property in settings"},
+			expInitError: `failed to validate receiver "kafka_testing" of type "kafka": could not find kafka rest proxy endpoint property in settings`,
 		}, {
 			name:         "Topic missing",
 			settings:     `{"kafkaRestProxy": "http://localhost"}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find kafka topic property in settings"},
+			expInitError: `failed to validate receiver "kafka_testing" of type "kafka": could not find kafka topic property in settings`,
 		},
 	}
 
@@ -121,9 +118,9 @@ func TestKafkaNotifier(t *testing.T) {
 			}
 
 			pn, err := NewKafkaNotifier(m, tmpl)
-			if c.expInitError != nil {
+			if c.expInitError != "" {
 				require.Error(t, err)
-				require.Equal(t, c.expInitError.Error(), err.Error())
+				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
