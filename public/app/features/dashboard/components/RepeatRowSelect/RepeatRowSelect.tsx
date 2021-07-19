@@ -7,8 +7,8 @@ import { getVariables } from '../../../variables/state/selectors';
 import { StoreState } from '../../../../types';
 
 export interface Props {
-  repeat: string | undefined | null;
-  onChange: (name: string | null | undefined) => void;
+  repeat?: string | null;
+  onChange: (name: string) => void;
 }
 
 export const RepeatRowSelect: FC<Props> = ({ repeat, onChange }) => {
