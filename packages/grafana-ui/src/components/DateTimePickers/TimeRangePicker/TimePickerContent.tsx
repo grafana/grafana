@@ -233,9 +233,9 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
       </div>
       {!collapsed && (
         <div className={styles.body}>
-          <div className={styles.form}>
+          <section aria-label="Absolute time ranges" className={styles.form}>
             <TimeRangeForm value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
-          </div>
+          </section>
           {showHistory && (
             <TimeRangeList
               title="Recently used absolute ranges"
@@ -260,8 +260,8 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
 
   return (
     <>
-      <div className={styles.container}>
-        <div aria-label="TimePicker absolute time range" className={styles.title}>
+      <section aria-label="Absolute time range" className={styles.container}>
+        <div className={styles.title}>
           <TimePickerTitle>Absolute time range</TimePickerTitle>
         </div>
         <TimeRangeForm
@@ -271,7 +271,7 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
           isFullscreen={true}
           isReversed={props.isReversed}
         />
-      </div>
+      </section>
       {props.showHistory && (
         <div className={styles.recent}>
           <TimeRangeList

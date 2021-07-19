@@ -37,12 +37,7 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false 
   const styles = useStyles2(getStyles);
 
   return (
-    <li
-      role="option"
-      className={cx(styles.container, selected && styles.selected)}
-
-      //tabIndex={-1}
-    >
+    <li role="option" className={cx(styles.container, selected && styles.selected)} onClick={() => onSelect(value)}>
       <input checked={selected} type="radio" name={value.display} onChange={() => onSelect(value)} />
       <label htmlFor={value.display}>{value.display}</label>
     </li>
