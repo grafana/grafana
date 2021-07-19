@@ -29,6 +29,7 @@ async function getCatalogPlugin(slug: string): Promise<CatalogPluginDetails> {
   const local = installed?.find((plugin: LocalPlugin) => plugin.id === slug);
   const [remote, versions] = await Promise.all([getRemotePlugin(slug, local), getPluginVersions(slug)]);
 
+  // TODO: none of the following should live in the api layer. Move to a helper.
   const version = remote?.version || local?.info.version || '';
 
   let logos = {
