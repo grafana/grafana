@@ -25,7 +25,6 @@ type Handler struct {
 	managedStreamRunner *managedstream.Runner
 	config              Config
 	upgrade             *websocket.Upgrader
-	converter           *convert.Converter
 }
 
 // Config represents config for Handler.
@@ -65,7 +64,6 @@ func NewHandler(managedStreamRunner *managedstream.Runner, c Config) *Handler {
 		managedStreamRunner: managedStreamRunner,
 		config:              c,
 		upgrade:             upgrade,
-		converter:           convert.NewConverter(),
 	}
 }
 
@@ -159,6 +157,9 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// This will keep the same fields alive while the connection is open
+	converter := convert.NewConverterWithHistory()
+
 	for {
 		_, body, err := conn.ReadMessage()
 		if err != nil {
@@ -182,7 +183,7 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			"frameFormat", frameFormat,
 		)
 
-		metricFrames, err := s.converter.Convert(body, frameFormat)
+		metricFrames, err := converter.Convert(body, frameFormat)
 		if err != nil {
 			logger.Error("Error converting metrics", "error", err, "frameFormat", frameFormat)
 			continue
