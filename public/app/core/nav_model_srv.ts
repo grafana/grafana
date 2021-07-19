@@ -6,7 +6,6 @@ import { NavModel } from '@grafana/data';
 export class NavModelSrv {
   navItems: any;
 
-  /** @ngInject */
   constructor() {
     this.navItems = config.bootData.navTree;
   }

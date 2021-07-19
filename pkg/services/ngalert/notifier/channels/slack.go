@@ -20,7 +20,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -52,7 +51,7 @@ var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 // NewSlackNotifier is the constructor for the Slack notifier
 func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template) (*SlackNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	slackURL := model.DecryptedValue("url", model.Settings.Get("url").MustString())
@@ -61,24 +60,24 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template) (*
 	}
 	apiURL, err := url.Parse(slackURL)
 	if err != nil {
-		return nil, alerting.ValidationError{Reason: fmt.Sprintf("invalid URL %q: %s", slackURL, err)}
+		return nil, receiverInitError{Cfg: *model, Reason: fmt.Sprintf("invalid URL %q", slackURL), Err: err}
 	}
 
 	recipient := strings.TrimSpace(model.Settings.Get("recipient").MustString())
 	if recipient != "" {
 		if !reRecipient.MatchString(recipient) {
-			return nil, alerting.ValidationError{Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
+			return nil, receiverInitError{Cfg: *model, Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
 		}
 	} else if apiURL.String() == SlackAPIEndpoint {
-		return nil, alerting.ValidationError{
+		return nil, receiverInitError{Cfg: *model,
 			Reason: "recipient must be specified when using the Slack chat API",
 		}
 	}
 
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
 	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
-		return nil, alerting.ValidationError{
-			Reason: fmt.Sprintf("Invalid value for mentionChannel: %q", mentionChannel),
+		return nil, receiverInitError{Cfg: *model,
+			Reason: fmt.Sprintf("invalid value for mentionChannel: %q", mentionChannel),
 		}
 	}
 
@@ -102,7 +101,7 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template) (*
 
 	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
 	if token == "" && apiURL.String() == SlackAPIEndpoint {
-		return nil, alerting.ValidationError{
+		return nil, receiverInitError{Cfg: *model,
 			Reason: "token must be specified when using the Slack chat API",
 		}
 	}
