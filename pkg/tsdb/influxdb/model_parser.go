@@ -1,12 +1,11 @@
 package influxdb
 
 import (
-	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
@@ -41,7 +40,9 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.Data
 		return nil, err
 	}
 
-	parsedInterval, err := GetIntervalFrom(dsInfo, model, time.Millisecond*1)
+	queryInterval := model.Get("interval").MustString("")
+	intervalMS := model.Get("intervalMs").MustInt(0)
+	parsedInterval, err := tsdb.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, int64(intervalMS), time.Millisecond*1)
 	if err != nil {
 		return nil, err
 	}
@@ -163,43 +164,4 @@ func (qp *InfluxdbQueryParser) parseGroupBy(model *simplejson.Json) ([]*QueryPar
 	}
 
 	return result, nil
-}
-
-func GetIntervalFrom(dsInfo *models.DatasourceInfo, queryModel *simplejson.Json, defaultInterval time.Duration) (time.Duration, error) {
-	interval := queryModel.Get("interval").MustString("")
-
-	// intervalMs field appears in the v2 plugins API and should be preferred
-	// if 'interval' isn't present.
-	if interval == "" {
-		intervalMS := queryModel.Get("intervalMs").MustInt(0)
-		if intervalMS != 0 {
-			return time.Duration(intervalMS) * time.Millisecond, nil
-		}
-	}
-
-	if interval == "" && dsInfo != nil && dsInfo.TimeInterval != "" {
-		dsInterval := dsInfo.TimeInterval
-		if dsInterval != "" {
-			interval = dsInterval
-		}
-	}
-
-	if interval == "" {
-		return defaultInterval, nil
-	}
-
-	interval = strings.Replace(strings.Replace(interval, "<", "", 1), ">", "", 1)
-	isPureNum, err := regexp.MatchString(`^\d+$`, interval)
-	if err != nil {
-		return time.Duration(0), err
-	}
-	if isPureNum {
-		interval += "s"
-	}
-	parsedInterval, err := time.ParseDuration(interval)
-	if err != nil {
-		return time.Duration(0), err
-	}
-
-	return parsedInterval, nil
 }

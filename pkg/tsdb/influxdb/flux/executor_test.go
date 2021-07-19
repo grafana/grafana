@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -226,7 +225,7 @@ func TestRealQuery(t *testing.T) {
 			URL: "http://localhost:9999", // NOTE! no api/v2
 		}
 
-		runner, err := runnerFromDataSource(httpclient.NewProvider(), dsInfo)
+		runner, err := runnerFromDataSource(dsInfo)
 		require.NoError(t, err)
 
 		dr := executeQuery(context.Background(), queryModel{

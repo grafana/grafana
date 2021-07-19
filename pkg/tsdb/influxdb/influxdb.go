@@ -50,6 +50,8 @@ func init() {
 
 func (s *Service) Init() error {
 	glog = log.New("tsdb.influxdb")
+	s.QueryParser = &InfluxdbQueryParser{}
+	s.ResponseParser = &ResponseParser{}
 	s.im = datasource.NewInstanceManager(newInstanceSettings(s.HTTPClientProvider))
 
 	factory := coreplugin.New(backend.ServeOpts{
@@ -113,7 +115,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 	version := dsInfo.Version
 	if version == "Flux" {
-		return flux.Query(ctx, s.HTTPClientProvider, dsInfo, *req)
+		return flux.Query(ctx, dsInfo, *req)
 	}
 
 	glog.Debug("Making a non-Flux type query")
