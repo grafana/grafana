@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 import { Plugin, LocalPlugin, CatalogPlugin } from '../types';
 import { api } from '../api';
+import { mapLocalToCatalog, mapRemoteToCatalog, applySearchFilter } from '../helpers';
 
 type CatalogPluginsState = {
   loading: boolean;
@@ -51,81 +52,9 @@ export function useCatalogPlugins(): CatalogPluginsState {
   };
 }
 
-function mapRemoteToCatalog(plugin: Plugin): CatalogPlugin {
-  const {
-    name,
-    slug: id,
-    description,
-    version,
-    orgName,
-    popularity,
-    downloads,
-    updatedAt,
-    createdAt: publishedAt,
-  } = plugin;
-  const catalogPlugin = {
-    description,
-    downloads,
-    id,
-    info: {
-      logos: {
-        small: `https://grafana.com/api/plugins/${id}/versions/${version}/logos/small`,
-        large: `https://grafana.com/api/plugins/${id}/versions/${version}/logos/large`,
-      },
-    },
-    name,
-    orgName,
-    popularity,
-    publishedAt,
-    updatedAt,
-    version,
-    isInstalled: false,
-  };
-  return catalogPlugin;
-}
-
-function mapLocalToCatalog(plugin: LocalPlugin): CatalogPlugin {
-  const {
-    name,
-    info: { description, version, logos, updated, author },
-    id,
-  } = plugin;
-  return {
-    description,
-    downloads: 0,
-    id,
-    info: { logos },
-    name,
-    orgName: author.name,
-    popularity: 0,
-    publishedAt: '',
-    updatedAt: updated,
-    version,
-    isInstalled: true,
-  };
-}
-
-export const usePlugins = () => {
-  const result = useAsync(async () => {
-    const items = await api.getRemotePlugins();
-    const filteredPlugins = items.filter((plugin) => {
-      const isNotRenderer = plugin.typeCode !== 'renderer';
-      const isSigned = Boolean(plugin.versionSignatureType);
-
-      return isNotRenderer && isSigned;
-    });
-
-    const installedPlugins = await api.getInstalledPlugins();
-
-    return { items: filteredPlugins, installedPlugins };
-  }, []);
-
-  return result;
-};
-
 type FilteredPluginsState = {
   isLoading: boolean;
-  error: Error | undefined;
+  error?: Error;
   plugins: CatalogPlugin[];
 };
 
@@ -158,26 +87,6 @@ export const usePluginsByFilter = (searchBy: string, filterBy: string): Filtered
     plugins: applySearchFilter(searchBy, all),
   };
 };
-
-function applySearchFilter(searchBy: string | undefined, plugins: CatalogPlugin[]): CatalogPlugin[] {
-  if (!searchBy) {
-    return plugins;
-  }
-
-  return plugins.filter((plugin) => {
-    const fields: String[] = [];
-
-    if (plugin.name) {
-      fields.push(plugin.name.toLowerCase());
-    }
-
-    if (plugin.orgName) {
-      fields.push(plugin.orgName.toLowerCase());
-    }
-
-    return fields.some((f) => f.includes(searchBy.toLowerCase()));
-  });
-}
 
 type PluginState = {
   isLoading: boolean;
