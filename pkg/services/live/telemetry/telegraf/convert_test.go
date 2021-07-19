@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -268,29 +267,4 @@ func TestConverter_Convert_PartInput_LabelsColumn(t *testing.T) {
 	frameWrappers, err := converter.Convert(testData)
 	require.NoError(t, err)
 	require.Len(t, frameWrappers, 1)
-}
-
-func TestConvertToCSV(t *testing.T) {
-	t.Skip()
-
-	testData, err := ioutil.ReadFile("/home/ryan/Downloads/data_motor_fb.log")
-	require.NoError(t, err)
-	converter := NewConverter(WithUseLabelsColumn(true), WithUseHistory(true))
-	frameWrappers, err := converter.Convert(testData)
-	require.NoError(t, err)
-	dr := backend.DataResponse{}
-	for _, fw := range frameWrappers {
-		frame := fw.Frame()
-		dr.Frames = append(dr.Frames, frame)
-
-		f, err := os.Create("tttttt.txt")
-		require.NoError(t, err)
-		defer f.Close()
-
-		err = frameToCSV(frame, f, true, true)
-		require.NoError(t, err)
-	}
-
-	_ = experimental.CheckGoldenDataResponse("aaa.txt", &dr, true)
-	//require.NoError(t, err)
 }
