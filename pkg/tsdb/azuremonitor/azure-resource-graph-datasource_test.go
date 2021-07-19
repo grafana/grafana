@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -128,12 +128,12 @@ func TestAddConfigData(t *testing.T) {
 }
 
 func TestGetAzurePortalUrl(t *testing.T) {
-	clouds := []string{azidentity.AzurePublicCloud, azidentity.AzureChina, azidentity.AzureGovernment, azidentity.AzureGermany}
+	clouds := []string{setting.AzurePublic, setting.AzureChina, setting.AzureUSGovernment, setting.AzureGermany}
 	expectedAzurePortalUrl := map[string]interface{}{
-		azidentity.AzurePublicCloud: "https://portal.azure.com",
-		azidentity.AzureChina:       "https://portal.azure.cn",
-		azidentity.AzureGovernment:  "https://portal.azure.us",
-		azidentity.AzureGermany:     "https://portal.microsoftazure.de",
+		setting.AzurePublic:       "https://portal.azure.com",
+		setting.AzureChina:        "https://portal.azure.cn",
+		setting.AzureUSGovernment: "https://portal.azure.us",
+		setting.AzureGermany:      "https://portal.microsoftazure.de",
 	}
 
 	for _, cloud := range clouds {

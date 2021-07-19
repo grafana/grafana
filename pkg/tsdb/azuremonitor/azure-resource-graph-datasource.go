@@ -2,7 +2,6 @@ package azuremonitor
 
 import (
 	"bytes"
-	"strings"
 	"time"
 
 	"context"
@@ -13,7 +12,6 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -186,9 +184,8 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
-	frameLink := strings.ReplaceAll(query.InterpolatedQuery, "/", "%2F")
-	frameLink = strings.ReplaceAll(frameLink, "\n", "%0A")
-	url := azurePortalUrl + "/#blade/HubsExtension/ArgQueryBlade/query/" + frameLink
+
+	url := azurePortalUrl + "/#blade/HubsExtension/ArgQueryBlade/query/" + url.PathEscape(query.InterpolatedQuery)
 	frameWithLink := addConfigData(*frame, url)
 	if frameWithLink.Meta == nil {
 		frameWithLink.Meta = &data.FrameMeta{}
@@ -257,13 +254,13 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 
 func getAzurePortalUrl(azureCloud string) (string, error) {
 	switch azureCloud {
-	case azidentity.AzurePublicCloud:
+	case setting.AzurePublic:
 		return "https://portal.azure.com", nil
-	case azidentity.AzureChina:
+	case setting.AzureChina:
 		return "https://portal.azure.cn", nil
-	case azidentity.AzureGovernment:
+	case setting.AzureUSGovernment:
 		return "https://portal.azure.us", nil
-	case azidentity.AzureGermany:
+	case setting.AzureGermany:
 		return "https://portal.microsoftazure.de", nil
 	default:
 		return "", fmt.Errorf("the cloud is not supported")
