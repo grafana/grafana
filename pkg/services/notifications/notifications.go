@@ -18,9 +18,9 @@ import (
 )
 
 var mailTemplates *template.Template
-var tmplResetPassword = "reset_password.html"
-var tmplSignUpStarted = "signup_started.html"
-var tmplWelcomeOnSignUp = "welcome_on_signup.html"
+var tmplResetPassword = "reset_password"
+var tmplSignUpStarted = "signup_started"
+var tmplWelcomeOnSignUp = "welcome_on_signup"
 
 func ProvideService(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, error) {
 	ns := &NotificationService{
@@ -46,10 +46,12 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, error)
 		"Subject": subjectTemplateFunc,
 	})
 
-	templatePattern := filepath.Join(ns.Cfg.StaticRootPath, ns.Cfg.Smtp.TemplatesPattern)
-	_, err := mailTemplates.ParseGlob(templatePattern)
-	if err != nil {
-		return nil, err
+	for _, pattern := range ns.Cfg.Smtp.TemplatesPatterns {
+		templatePattern := filepath.Join(ns.Cfg.StaticRootPath, pattern)
+		_, err := mailTemplates.ParseGlob(templatePattern)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if !util.IsEmail(ns.Cfg.Smtp.FromAddress) {

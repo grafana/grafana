@@ -11,14 +11,18 @@ import (
 )
 
 func TestNotificationService(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.StaticRootPath = "../../../public/"
-	cfg.Smtp.Enabled = true
-	cfg.Smtp.TemplatesPattern = "emails/*.html"
-	cfg.Smtp.FromAddress = "from@address.com"
-	cfg.Smtp.FromName = "Grafana Admin"
+	ns := &NotificationService{
+		Cfg: setting.NewCfg(),
+	}
+	ns.Cfg.StaticRootPath = "../../../public/"
+	ns.Cfg.Smtp.Enabled = true
+	ns.Cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
+	ns.Cfg.Smtp.FromAddress = "from@address.com"
+	ns.Cfg.Smtp.FromName = "Grafana Admin"
+	ns.Cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
+	ns.Bus = bus.New()
 
-	ns, err := ProvideService(bus.New(), cfg)
+	ns, err := ProvideService(bus.New(), ns.Cfg)
 	require.NoError(t, err)
 
 	t.Run("When sending reset email password", func(t *testing.T) {
@@ -26,8 +30,10 @@ func TestNotificationService(t *testing.T) {
 		require.NoError(t, err)
 
 		sentMsg := <-ns.mailQueue
-		assert.Contains(t, sentMsg.Body, "body")
+		assert.Contains(t, sentMsg.Body["text/html"], "body")
+		assert.NotContains(t, sentMsg.Body["text/plain"], "body")
 		assert.Equal(t, "Reset your Grafana password - asd@asd.com", sentMsg.Subject)
-		assert.NotContains(t, sentMsg.Body, "Subject")
+		assert.NotContains(t, sentMsg.Body["text/html"], "Subject")
+		assert.NotContains(t, sentMsg.Body["text/plain"], "Subject")
 	})
 }

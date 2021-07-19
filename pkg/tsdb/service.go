@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
@@ -37,7 +36,6 @@ func NewService(cfg *setting.Cfg, _ *cloudwatch.CloudWatchService,
 	// register backend data sources using legacy plugin
 	// contracts/non-SDK contracts
 	s.registry["prometheus"] = prometheus.New(httpClientProvider)
-	s.registry["influxdb"] = influxdb.New(httpClientProvider)
 	s.registry["mssql"] = mssql.NewExecutor
 	s.registry["postgres"] = postgresService.NewExecutor
 	s.registry["mysql"] = mysql.New(httpClientProvider)
