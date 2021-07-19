@@ -10,7 +10,7 @@ export type Props = DataSourcePluginOptionsEditorProps<PromOptions>;
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
 
-  const azureSettings = {
+  const azureAuthSettings = {
     azureAuthEnabled: config.featureToggles['prometheus_azure_auth'] ?? false,
     azureSettingsUI: AzureAuthSettings,
   };
@@ -23,7 +23,7 @@ export const ConfigEditor = (props: Props) => {
         showAccessOptions={true}
         onChange={onOptionsChange}
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
-        azureSettings={azureSettings}
+        azureAuthSettings={azureAuthSettings}
       />
 
       <AlertingSettings<PromOptions> options={options} onOptionsChange={onOptionsChange} />

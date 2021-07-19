@@ -1,7 +1,7 @@
 import React from 'react';
 import { DataSourceSettings } from '@grafana/data';
 
-export interface AzureSettings {
+export interface AzureAuthSettings {
   azureAuthEnabled: boolean;
   azureSettingsUI?: React.ComponentType<HttpSettingsBaseProps>;
 }
@@ -20,6 +20,6 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   showAccessOptions?: boolean;
   /** Show the SigV4 auth toggle option */
   sigV4AuthToggleEnabled?: boolean;
-  /** Azure settings **/
-  azureSettings?: AzureSettings;
+  /** Azure authentication settings **/
+  azureAuthSettings?: AzureAuthSettings;
 }

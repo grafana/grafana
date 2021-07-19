@@ -56,7 +56,14 @@ const HttpAccessHelp = () => (
 );
 
 export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
-  const { defaultUrl, dataSourceConfig, onChange, showAccessOptions, sigV4AuthToggleEnabled, azureSettings } = props;
+  const {
+    defaultUrl,
+    dataSourceConfig,
+    onChange,
+    showAccessOptions,
+    sigV4AuthToggleEnabled,
+    azureAuthSettings,
+  } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
   const theme = useTheme();
@@ -207,7 +214,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             />
           </div>
 
-          {azureSettings?.azureAuthEnabled && (
+          {azureAuthSettings?.azureAuthEnabled && (
             <div className="gf-form-inline">
               <Switch
                 label="Azure Authentication"
@@ -254,9 +261,11 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
           </>
         )}
 
-        {azureSettings?.azureAuthEnabled && azureSettings?.azureSettingsUI && dataSourceConfig.jsonData.azureAuth && (
-          <azureSettings.azureSettingsUI dataSourceConfig={dataSourceConfig} onChange={onChange} />
-        )}
+        {azureAuthSettings?.azureAuthEnabled &&
+          azureAuthSettings?.azureSettingsUI &&
+          dataSourceConfig.jsonData.azureAuth && (
+            <azureAuthSettings.azureSettingsUI dataSourceConfig={dataSourceConfig} onChange={onChange} />
+          )}
 
         {dataSourceConfig.jsonData.sigV4Auth && <SigV4AuthSettings {...props} />}
 
