@@ -1,11 +1,9 @@
 package telegraf
 
 import (
-	"encoding/csv"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -295,45 +293,4 @@ func TestConvertToCSV(t *testing.T) {
 
 	_ = experimental.CheckGoldenDataResponse("aaa.txt", &dr, true)
 	//require.NoError(t, err)
-}
-
-func frameToCSV(frame *data.Frame, writer io.Writer, showNames bool, showTypes bool) error {
-	w := csv.NewWriter(writer)
-	width := len(frame.Fields)
-	rows := frame.Rows()
-	line := make([]string, width)
-	if showNames {
-		for i, f := range frame.Fields {
-			line[i] = f.Name
-		}
-		if err := w.Write(line); err != nil {
-			return err
-		}
-	}
-	if showTypes {
-		for i, f := range frame.Fields {
-			line[i] = f.Type().ItemTypeString()
-		}
-		if err := w.Write(line); err != nil {
-			return err
-		}
-	}
-
-	for row := 0; row < rows; row++ {
-		for i, f := range frame.Fields {
-			str := ""
-			val, ok := f.ConcreteAt(row)
-			if val != nil && ok {
-				str = fmt.Sprintf("%v", val)
-			}
-			line[i] = str
-		}
-		if err := w.Write(line); err != nil {
-			return err
-		}
-	}
-
-	// Fulsh values and write
-	w.Flush()
-	return w.Error()
 }

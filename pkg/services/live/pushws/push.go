@@ -176,7 +176,7 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		frameFormat := pushurl.FrameFormatFromValues(urlValues)
 
 		logger.Debug("Live Push request",
-			"protocol", "http",
+			"protocol", "ws",
 			"streamId", streamID,
 			"bodyLength", len(body),
 			"frameFormat", frameFormat,

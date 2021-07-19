@@ -129,13 +129,26 @@ func (c *Converter) convertWithHistory(metrics []influx.Metric) ([]telemetry.Fra
 
 	if c.history == nil {
 		c.history = make(map[string]*metricFrame)
-	} else {
-		// Clear the history values
-		for _, m := range c.history {
-			m.fields = m.Frame().EmptyCopy().Fields
-		}
 	}
-	return convertWithLabelsColumn(c.history, metrics, c.useFloat64Numbers)
+
+	shared, err := convertWithLabelsColumn(c.history, metrics, c.useFloat64Numbers)
+	if err != nil {
+		return nil, err
+	}
+
+	rsp := make([]telemetry.FrameWrapper, len(shared))
+	for i, wrap := range shared {
+		frame := wrap.Frame()
+		rsp[i] = &simpleWrapper{
+			key:   wrap.Key(),
+			frame: frame,
+		}
+
+		// Clear history on the shared copy
+		metricFrame := wrap.(*metricFrame)
+		metricFrame.fields = frame.EmptyCopy().Fields
+	}
+	return rsp, nil
 }
 
 func (c *Converter) convertWithLabelsColumn(metrics []influx.Metric) ([]telemetry.FrameWrapper, error) {
@@ -145,6 +158,7 @@ func (c *Converter) convertWithLabelsColumn(metrics []influx.Metric) ([]telemetr
 
 func convertWithLabelsColumn(metricFrames map[string]*metricFrame, metrics []influx.Metric, useFloat64Numbers bool) ([]telemetry.FrameWrapper, error) {
 	// maintain the order of frames as they appear in input.
+	frameNames := make(map[string]bool, 2)
 	var frameKeyOrder []string
 
 	for _, m := range metrics {
@@ -157,7 +171,6 @@ func convertWithLabelsColumn(metricFrames map[string]*metricFrame, metrics []inf
 				return nil, err
 			}
 		} else {
-			frameKeyOrder = append(frameKeyOrder, frameKey)
 			frame = newMetricFrameLabelsColumn(m, useFloat64Numbers)
 			err := frame.append(m)
 			if err != nil {
@@ -165,9 +178,16 @@ func convertWithLabelsColumn(metricFrames map[string]*metricFrame, metrics []inf
 			}
 			metricFrames[frameKey] = frame
 		}
+
+		// Keep track for the frame order within this request
+		exists, ok := frameNames[frameKey]
+		if !ok || !exists {
+			frameKeyOrder = append(frameKeyOrder, frameKey)
+			frameNames[frameKey] = true
+		}
 	}
 
-	frameWrappers := make([]telemetry.FrameWrapper, 0, len(metricFrames))
+	frameWrappers := make([]telemetry.FrameWrapper, 0, len(frameKeyOrder))
 	for _, key := range frameKeyOrder {
 		frame := metricFrames[key]
 		// For all fields except labels and time fill columns with nulls in
@@ -387,4 +407,19 @@ func getConvertFunc(ft data.FieldType) (func(v interface{}) (interface{}, error)
 		return nil, false
 	}
 	return convert, true
+}
+
+type simpleWrapper struct {
+	key   string
+	frame *data.Frame
+}
+
+// Key returns a key which describes Frame metrics.
+func (s *simpleWrapper) Key() string {
+	return s.key
+}
+
+// Frame transforms metricFrame to Grafana data.Frame.
+func (s *simpleWrapper) Frame() *data.Frame {
+	return s.frame
 }
