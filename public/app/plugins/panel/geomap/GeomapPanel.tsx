@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { geomapLayerRegistry } from './layers/registry';
+import { createLayerHandler } from './layers/registry';
 import { Map, View } from 'ol';
 import Attribution from 'ol/control/Attribution';
 import Zoom from 'ol/control/Zoom';
@@ -156,8 +156,11 @@ export class GeomapPanel extends Component<Props> {
     if (!cfg) {
       cfg = { type: defaultGrafanaThemedMap.id };
     }
-    const item = geomapLayerRegistry.getIfExists(cfg.type) ?? defaultGrafanaThemedMap;
-    const layer = item.create(this.map, cfg, config.theme2).init();
+    let handler = createLayerHandler(this.map!, cfg);
+    if (!handler) {
+      handler = defaultGrafanaThemedMap.create(this.map, cfg, config.theme2);
+    }
+    const layer = handler.init();
     if (this.basemap) {
       this.map.removeLayer(this.basemap);
       this.basemap.dispose();
@@ -179,13 +182,12 @@ export class GeomapPanel extends Component<Props> {
 
     this.layers = [];
     for (const overlay of layers) {
-      const item = geomapLayerRegistry.getIfExists(overlay.type);
-      if (!item) {
+      const handler = createLayerHandler(this.map!, overlay);
+      if (!handler) {
         console.warn('unknown layer type: ', overlay);
         continue; // TODO -- panel warning?
       }
 
-      const handler = item.create(this.map!, overlay, config.theme2);
       const layer = handler.init();
       this.map!.addLayer(layer);
       this.layers.push({

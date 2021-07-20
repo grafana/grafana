@@ -23,8 +23,8 @@ export interface MarkersConfig {
 const defaultOptions: MarkersConfig = {
   size: {
     fixed: 5,
-    min: 5,
-    max: 10,
+    min: 2,
+    max: 15,
   },
   color: {
     fixed: '#f00', 
@@ -51,6 +51,12 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   create: (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2): MapLayerHandler => {
     const matchers = getLocationMatchers(options.location);
     const vectorLayer = new layer.Vector({});
+    // Assert default values
+    const config = {
+      ...defaultOptions,
+      ...options?.config,
+    };
+    
     return {
       init: () => vectorLayer,
       update: (data: PanelData) => {
@@ -65,11 +71,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           return; // ???
         }
 
-        // Assert default values
-        const config = {
-          ...defaultOptions,
-          ...options?.config,
-        };
         const colorDim = getColorDimension(frame, config.color, theme);
         const sizeDim = getScaledDimension(frame, config.size);
         const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
