@@ -1,3 +1,9 @@
+// NOTE: by default Component string selectors are set up to be aria-labels,
+// however there are many cases where your component may not need an aria-label
+// (a <button> with clear text, for example, does not need an aria-label as it's already labeled)
+// but you still might need to select it for testing,
+// in that case please add the attribute data-test-id={selector} in the component and
+// prefix your selector string with 'data-test-id' so that when create the selectors we know to search for it on the right attribute
 export const Components = {
   TimePicker: {
     openButton: 'TimePicker Open Button',
@@ -221,5 +227,13 @@ export const Components = {
   },
   CodeEditor: {
     container: 'Code editor container',
+  },
+  DashboardImportPage: {
+    textarea: 'data-testid-import-dashboard-textarea',
+    submit: 'data-testid-load-dashboard',
+  },
+  ImportDashboardForm: {
+    name: 'data-testid-import-dashboard-title',
+    submit: 'data-testid-import-dashboard-submit',
   },
 };
