@@ -144,7 +144,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 					newGroup.LastEvaluation = alertState.LastEvaluationTime
 				}
 
-				alertingRule.Duration = alertState.EvaluationDuration.Seconds()
 				newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
 
 				switch alertState.State {
