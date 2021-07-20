@@ -486,6 +486,52 @@ func TestPostgres(t *testing.T) {
 		})
 	})
 
+	t.Run("Given a table with one data point", func(t *testing.T) {
+
+		type metric struct {
+			Time  time.Time
+			Value int64
+		}
+
+		startTime := time.Now().UTC().Add(-time.Minute * 5)
+		series := []*metric{
+			{
+				Time:  startTime,
+				Value: 33,
+			},
+		}
+
+		_, err = sess.InsertMulti(series)
+		require.NoError(t, err)
+
+		t.Run("querying fwith time group with default value", func(t *testing.T) {
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
+					{
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"rawSql": "WITH data AS (SELECT now()-'3m'::interval AS ts, 42 AS n) SELECT $__timeGroup(ts, '1m', 0), n FROM data",
+							"format": "time_series",
+						}),
+						RefID: "A",
+					},
+				},
+				TimeRange: &plugins.DataTimeRange{
+					From: fmt.Sprintf("%v", startTime.Unix()*1000),
+					To:   fmt.Sprintf("%v", startTime.Add(5*time.Minute).Unix()*1000),
+				},
+			}
+
+			resp, err := exe.DataQuery(context.Background(), nil, query)
+			require.NoError(t, err)
+			queryResult := resp.Results["A"]
+			require.NoError(t, queryResult.Error)
+
+			frames, _ := queryResult.Dataframes.Decoded()
+			require.Equal(t, 1, len(frames))
+			require.Equal(t, float64(0), *frames[0].Fields[1].At(4).(*float64))
+		})
+	})
+
 	t.Run("When doing a metric query using timeGroup with previous fill enabled", func(t *testing.T) {
 		query := plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{

@@ -110,7 +110,7 @@ func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
 				return f, fmt.Errorf("time point is nil")
 			}
 
-			if t.(time.Time).After(currentTime) {
+			if !t.(time.Time).Before(currentTime) {
 				nextTime := currentTime.Add(qm.Interval)
 				if t.(time.Time).Before(nextTime) {
 					intermediateRows = append(intermediateRows, initialRowIdx)
@@ -120,7 +120,6 @@ func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
 				break
 			}
 
-			intermediateRows = append(intermediateRows, initialRowIdx)
 			lastSeenRowIdx = initialRowIdx
 			initialRowIdx++
 		}

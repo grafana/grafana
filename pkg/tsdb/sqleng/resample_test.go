@@ -230,14 +230,14 @@ func TestResampleWide(t *testing.T) {
 					time.Date(2020, 1, 2, 3, 4, 26, 0, time.UTC),
 				}),
 				data.NewField("Values Ints", nil, []*int64{
-					pointer.Int64(12),
+					pointer.Int64(10),
 					nil,
 					nil,
 					pointer.Int64(15),
 					nil,
 				}),
 				data.NewField(`Values Floats`, data.Labels{"Animal Factor": "sloth"}, []*float64{
-					pointer.Float64(12.5),
+					pointer.Float64(10.5),
 					nil,
 					nil,
 					pointer.Float64(15.0),
