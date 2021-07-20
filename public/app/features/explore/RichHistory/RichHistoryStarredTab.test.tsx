@@ -11,7 +11,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     queries: [],
     sortOrder: SortOrder.Ascending,
     activeDatasourceOnly: false,
-    datasourceFilters: null,
+    datasourceFilters: [],
     exploreId: ExploreId.left,
     onChangeSortOrder: jest.fn(),
     onSelectDatasourceFilters: jest.fn(),
