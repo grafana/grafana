@@ -9,7 +9,7 @@ import { config } from 'app/core/config';
 // Array of base map options to search through
 const baseMapOptions = [carto, esriXYZTiles, xyzTiles, standard];
 
-// Default base layer
+// Default base layer depending on the server setting
 // Use CartoDB if the default base layer is not set in defaults.ini
 export const defaultBaseLayer: MapLayerRegistryItem<any> = {
   id: 'default',
@@ -18,6 +18,7 @@ export const defaultBaseLayer: MapLayerRegistryItem<any> = {
 
   create: (map: Map, options: MapLayerOptions, theme: GrafanaTheme2) => ({
     init: () => {
+      // Config options set on the server side
       const cfg = config.geomapDefaultBaseLayer.config;
       let defaultMap;
 
