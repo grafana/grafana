@@ -1,7 +1,10 @@
 import React from 'react';
+import { css } from '@emotion/css';
+import { Portal } from '../Portal/Portal';
 import { Dimensions, TimeZone } from '@grafana/data';
 import { FlotPosition } from '../Graph/types';
 import { VizTooltipContainer } from './VizTooltipContainer';
+import { useStyles } from '../../themes';
 import { TooltipDisplayMode } from './models.gen';
 
 // Describes active dimensions user interacts with
@@ -46,14 +49,30 @@ export interface VizTooltipProps {
  * @public
  */
 export const VizTooltip: React.FC<VizTooltipProps> = ({ content, position, offset }) => {
+  const styles = useStyles(getStyles);
   if (position) {
     return (
-      <VizTooltipContainer position={position} offset={offset || { x: 0, y: 0 }}>
-        {content}
-      </VizTooltipContainer>
+      <Portal className={styles.portal}>
+        <VizTooltipContainer position={position} offset={offset || { x: 0, y: 0 }}>
+          {content}
+        </VizTooltipContainer>
+      </Portal>
     );
   }
   return null;
 };
 
 VizTooltip.displayName = 'VizTooltip';
+
+const getStyles = () => {
+  return {
+    portal: css`
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      width: 100%;
+      height: 100%;
+    `,
+  };
+};
