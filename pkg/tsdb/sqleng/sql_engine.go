@@ -173,7 +173,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	return result, nil
 }
 
-//nolint: staticcheck // plugins.DataQueryResult deprecated
+//nolint: staticcheck,gocyclo // plugins.DataQueryResult deprecated
 func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup, queryContext plugins.DataQuery,
 	ch chan plugins.DataQueryResult) {
 	defer wg.Done()
@@ -289,6 +289,10 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 
 		for i := range qm.columnNames {
 			if i == qm.timeIndex || i == qm.metricIndex {
+				continue
+			}
+
+			if t := frame.Fields[i].Type(); t == data.FieldTypeString || t == data.FieldTypeNullableString {
 				continue
 			}
 
@@ -892,7 +896,7 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 	default:
 		convertUnknownToZero(frame.Fields[Index], newField)
 		frame.Fields[Index] = newField
-		return frame, fmt.Errorf("metricIndex %d type can't be converted to float", Index)
+		return frame, fmt.Errorf("metricIndex %d type %s can't be converted to float", Index, valueType)
 	}
 	frame.Fields[Index] = newField
 
