@@ -30,6 +30,7 @@ import { css } from '@emotion/css';
 import { useComponentInstanceId } from '@grafana/ui/src/utils/useComponetInstanceId';
 import { getTooltipContainerStyles } from '@grafana/ui/src/themes/mixins';
 import { selectors } from '@grafana/e2e-selectors';
+import { darken, lighten } from '@grafana/data/src/themes/colorManipulator';
 
 /**
  * @beta
@@ -344,17 +345,11 @@ function getLabelPos(arc: PieArcDatum<FieldDisplay>, outerRadius: number, innerR
 }
 
 function getGradientColorFrom(color: string, theme: GrafanaTheme2) {
-  return tinycolor(color)
-    .darken(20 * (theme.isDark ? 1 : -0.7))
-    .spin(8)
-    .toRgbString();
+  return theme.isDark ? darken(color, 0.3) : lighten(color, 0.3);
 }
 
 function getGradientColorTo(color: string, theme: GrafanaTheme2) {
-  return tinycolor(color)
-    .darken(10 * (theme.isDark ? 1 : -0.7))
-    .spin(-8)
-    .toRgbString();
+  return theme.isDark ? darken(color, 0.1) : lighten(color, 0.1);
 }
 
 interface PieLayout {
