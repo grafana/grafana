@@ -13,7 +13,7 @@ import (
 
 // FolderService is a service for operating on folders.
 type FolderService interface {
-	GetFolders(limit int64) ([]*models.Folder, error)
+	GetFolders(limit int64, page int64) ([]*models.Folder, error)
 	GetFolderByID(id int64) (*models.Folder, error)
 	GetFolderByUID(uid string) (*models.Folder, error)
 	GetFolderByTitle(title string) (*models.Folder, error)
@@ -32,7 +32,7 @@ var NewFolderService = func(orgID int64, user *models.SignedInUser, store dashbo
 	}
 }
 
-func (dr *dashboardServiceImpl) GetFolders(limit int64) ([]*models.Folder, error) {
+func (dr *dashboardServiceImpl) GetFolders(limit int64, page int64) ([]*models.Folder, error) {
 	searchQuery := search.Query{
 		SignedInUser: dr.user,
 		DashboardIds: make([]int64, 0),
@@ -41,6 +41,7 @@ func (dr *dashboardServiceImpl) GetFolders(limit int64) ([]*models.Folder, error
 		OrgId:        dr.orgId,
 		Type:         "dash-folder",
 		Permission:   models.PERMISSION_VIEW,
+		Page:         page,
 	}
 
 	if err := bus.Dispatch(&searchQuery); err != nil {

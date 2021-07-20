@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -46,6 +47,7 @@ type RuleStore interface {
 	GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error
 	GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error
+	GetNamespaces(int64, *models.SignedInUser) (map[string]string, error)
 	GetNamespaceByTitle(string, int64, *models.SignedInUser, bool) (*models.Folder, error)
 	GetNamespaceByUID(string, int64, *models.SignedInUser) (*models.Folder, error)
 	GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error
@@ -320,7 +322,19 @@ func (st DBstore) GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertRules := make([]*ngmodels.AlertRule, 0)
 		q := "SELECT * FROM alert_rule WHERE org_id = ?"
-		if err := sess.SQL(q, query.OrgID).Find(&alertRules); err != nil {
+		params := []interface{}{query.OrgID}
+
+		if len(query.NamespaceUIDs) > 0 {
+			placeholders := make([]string, 0, len(query.NamespaceUIDs))
+			for _, folderUID := range query.NamespaceUIDs {
+				params = append(params, folderUID)
+				placeholders = append(placeholders, "?")
+			}
+			q = fmt.Sprintf("%s AND namespace_uid IN (%s)", q, strings.Join(placeholders, ","))
+
+		}
+
+		if err := sess.SQL(q, params...).Find(&alertRules); err != nil {
 			return err
 		}
 
@@ -357,6 +371,30 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 		query.Result = alertRules
 		return nil
 	})
+}
+
+// GetNamespaces returns the folders that are visible to the user
+func (st DBstore) GetNamespaces(orgID int64, user *models.SignedInUser) (map[string]string, error) {
+	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
+	namespaceMap := make(map[string]string)
+	var page int64 = 1
+	for {
+		// if limit is negative; it fetches at most 1000
+		folders, err := s.GetFolders(-1, page)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(folders) == 0 {
+			break
+		}
+
+		for _, f := range folders {
+			namespaceMap[f.Uid] = f.Title
+		}
+		page += 1
+	}
+	return namespaceMap, nil
 }
 
 // GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.

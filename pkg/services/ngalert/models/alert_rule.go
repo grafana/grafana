@@ -133,7 +133,8 @@ type GetAlertRuleByUIDQuery struct {
 
 // ListAlertRulesQuery is the query for listing alert rules
 type ListAlertRulesQuery struct {
-	OrgID int64
+	OrgID         int64
+	NamespaceUIDs []string
 
 	Result []*AlertRule
 }
