@@ -42,9 +42,11 @@ can still show them if you add a new **Annotation Query** and filter by tags. Bu
 ### Query by tag
 
 
-You can create new annotation queries that fetch annotations from the native annotation store via the `-- Grafana --` data source and by setting *Filter by* to `Tags`. In Grafana v8.1+ it's possible to get typeahead support of existing tags, you should specify at least one tag.
+You can create new queries to fetch annotations from the native annotation store via the `-- Grafana --` data source by setting *Filter by* to `Tags`. 
 
-For example create an annotation query name `outages` and specify a tag named `outage`. This query will show all annotations you create (from any dashboard or via API) that have the `outage` tag. By default, if you add multiple tags in the annotation query, Grafana will only show annotations that have all the tags you supplied. You can invert the behavior by enabling `Match any` which means that Grafana will show annotations that contains at least one of the tags you supplied.
+Grafana v8.1 and later versions also support typeahead of existing tags provided you have defined at least one tag.
+
+For example, create an annotation query name `outages` and specify a tag `outage`. This query will show all annotations (from any dashboard or via API) with the `outage` tag. If multiple tags are defined in an annotation query, then Grafana will only show annotations matching all the tags. To modify the behavior, enable `Match any`, and Grafana will show annotations that contain any one of the tags you provided.
 
 {{< figure src="/static/img/docs/annotations/annotations_typeahead_support.png" max-width="600px" >}}
 

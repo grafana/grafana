@@ -256,7 +256,7 @@ Content-Type: application/json
 
 `GET /api/annotations/tags`
 
-Find all the event tags created in the annotations
+Find all the event tags created in the annotations.
 
 **Example Request**:
 
@@ -269,8 +269,8 @@ Authorization: Basic YWRtaW46YWRtaW4=
 
 Query Parameters:
 
-- `tag`: string. Optional. Used to filter tags.
-- `limit`: number. Optional - default is 100. Max limit for results returned.
+- `tag`: Optional. A string that you can use to filter tags.
+- `limit`: Optional. A number, where the default is 100. Max limit for results returned.
 
 **Example Response**:
 
