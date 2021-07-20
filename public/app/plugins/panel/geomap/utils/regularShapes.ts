@@ -1,97 +1,108 @@
 import { Fill, RegularShape, Stroke, Style, Circle } from 'ol/style';
+import { Registry, RegistryItem } from '@grafana/data';
 
-type markerCreator = (color: string, fillColor: string, radius: number) => Style;
-const square: markerCreator = (color: string, fillColor: string, radius: number) =>
-  new Style({
-    image: new RegularShape({
-      fill: new Fill({ color: fillColor }),
-      stroke: new Stroke({ color: color, width: 1 }),
-      points: 4,
-      radius: radius,
-      angle: Math.PI / 4,
-    }),
-  });
-const circle = (color: string, fillColor: string, radius: number) =>
-  new Style({
-    image: new Circle({
-      // Stroke determines the outline color of the circle
-      stroke: new Stroke({ color: color }),
-      // Fill determines the color to fill the whole circle
-      fill: new Fill({ color: fillColor }),
-      radius: radius,
-    }),
-  });
-const triangle = (color: string, fillColor: string, radius: number) =>
-  new Style({
-    image: new RegularShape({
-      fill: new Fill({ color: fillColor }),
-      stroke: new Stroke({ color: color, width: 1 }),
-      points: 3,
-      radius: radius,
-      rotation: Math.PI / 4,
-      angle: 0,
-    }),
-  });
-const star = (color: string, fillColor: string, radius: number) =>
-  new Style({
-    image: new RegularShape({
-      fill: new Fill({ color: fillColor }),
-      stroke: new Stroke({ color: color, width: 1 }),
-      points: 5,
-      radius: radius,
-      radius2: 4,
-      angle: 0,
-    }),
-  });
-const cross = (color: string, fillColor: string, radius: number) =>
-  new Style({
-    image: new RegularShape({
-      fill: new Fill({ color: fillColor }),
-      stroke: new Stroke({ color: color, width: 1 }),
-      points: 4,
-      radius: radius,
-      radius2: 0,
-      angle: 0,
-    }),
-  });
-const x = (color: string, fillColor: string, radius: number) =>
-  new Style({
-    image: new RegularShape({
-      fill: new Fill({ color: fillColor }),
-      stroke: new Stroke({ color: color, width: 1 }),
-      points: 4,
-      radius: radius,
-      radius2: 0,
-      angle: Math.PI / 4,
-    }),
-  });
-interface Shapes {
-  label: string;
-  value: Style;
+interface MarkerMaker extends RegistryItem {
+  make: (color: string, fillColor: string, radius: number) => Style;
+  hasFill: boolean;
 }
-export const shapes = (color: string, fillColor: string, radius: number): Shapes[] => [
+
+export const markerMakers = new Registry<MarkerMaker>(() => [
   {
-    label: 'circle',
-    value: circle(color, fillColor, radius),
+    id: 'circle',
+    name: 'Circle',
+    hasFill: true,
+    make: (color: string, fillColor: string, radius: number) => {
+      return new Style({
+        image: new Circle({
+          stroke: new Stroke({ color: color }),
+          fill: new Fill({ color: fillColor }),
+          radius: radius,
+        }),
+      });
+    },
   },
   {
-    label: 'square',
-    value: square(color, fillColor, radius),
+    id: 'square',
+    name: 'Square',
+    hasFill: true,
+    make: (color: string, fillColor: string, radius: number) => {
+      return new Style({
+        image: new RegularShape({
+          fill: new Fill({ color: fillColor }),
+          stroke: new Stroke({ color: color, width: 1 }),
+          points: 4,
+          radius: radius,
+          angle: Math.PI / 4,
+        }),
+      });
+    },
   },
   {
-    label: 'triangle',
-    value: triangle(color, fillColor, radius),
+    id: 'triangle',
+    name: 'Triangle',
+    hasFill: true,
+    make: (color: string, fillColor: string, radius: number) => {
+      return new Style({
+        image: new RegularShape({
+          fill: new Fill({ color: fillColor }),
+          stroke: new Stroke({ color: color, width: 1 }),
+          points: 3,
+          radius: radius,
+          rotation: Math.PI / 4,
+          angle: 0,
+        }),
+      });
+    },
   },
   {
-    label: 'star',
-    value: star(color, fillColor, radius),
+    id: 'star',
+    name: 'Star',
+    hasFill: true,
+    make: (color: string, fillColor: string, radius: number) => {
+      return new Style({
+        image: new RegularShape({
+          fill: new Fill({ color: fillColor }),
+          stroke: new Stroke({ color: color, width: 1 }),
+          points: 5,
+          radius: radius,
+          radius2: radius * 0.4,
+          angle: 0,
+        }),
+      });
+    },
   },
   {
-    label: 'cross',
-    value: cross(color, fillColor, radius),
+    id: 'cross',
+    name: 'Cross',
+    hasFill: false,
+    make: (color: string, fillColor: string, radius: number) => {
+      return new Style({
+        image: new RegularShape({
+          fill: new Fill({ color: fillColor }),
+          stroke: new Stroke({ color: color, width: 1 }),
+          points: 4,
+          radius: radius,
+          radius2: 0,
+          angle: 0,
+        }),
+      });
+    },
   },
   {
-    label: 'x',
-    value: x(color, fillColor, radius),
+    id: 'x',
+    name: 'X',
+    hasFill: false,
+    make: (color: string, fillColor: string, radius: number) => {
+      return new Style({
+        image: new RegularShape({
+          fill: new Fill({ color: fillColor }),
+          stroke: new Stroke({ color: color, width: 1 }),
+          points: 4,
+          radius: radius,
+          radius2: 0,
+          angle: Math.PI / 4,
+        }),
+      });
+    },
   },
-];
+]);

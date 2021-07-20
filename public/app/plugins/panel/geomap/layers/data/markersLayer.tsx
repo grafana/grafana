@@ -11,8 +11,7 @@ import { getScaledDimension, } from '../../dims/scale';
 import { getColorDimension, } from '../../dims/color';
 import { ScaleDimensionEditor } from '../../dims/editors/ScaleDimensionEditor';
 import { ColorDimensionEditor } from '../../dims/editors/ColorDimensionEditor';
-import { IconPickerEditor } from '../../editor/IconPickerEditor';
-import { shapes } from '../../utils/regularShapes';
+import { markerMakers } from '../../utils/regularShapes';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -29,10 +28,10 @@ const defaultOptions: MarkersConfig = {
     max: 15,
   },
   color: {
-    fixed: '#f00', 
+    fixed: 'dark-green', // picked from theme 
   },
   fillOpacity: 0.4,
-  shape: ''
+  shape: 'circle',
 };
 
 export const MARKERS_LAYER_ID = "markers";
@@ -68,6 +67,11 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       ...defaultOptions,
       ...options?.config,
     };
+
+    let shape = markerMakers.getIfExists(config.shape);
+    if (!shape) {
+      shape = markerMakers.get('circle');
+    }
     
     return {
       init: () => vectorLayer,
@@ -101,10 +105,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           const dot = new Feature({
               geometry: info.points[i],
           });
-          // choose from dropdown of regular shapes
-          const shapesArr = shapes(color, fillColor, radius);
-          const shape = shapesArr.find(el => el.label === config.shape);
-          dot.setStyle(shape?.value);
+
+          dot.setStyle(shape!.make(color, fillColor, radius));
           features.push(dot);
         };
 
@@ -142,22 +144,24 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           max: 20,
         },
       })
-      .addSliderInput({
-          path: 'config.fillOpacity',
-          name: 'Fill opacity',
-          defaultValue: defaultOptions.fillOpacity,
-          settings: {
-            min: 0,
-            max: 1,
-            step: 0.1,
-          },
-      })
-      .addCustomEditor({
-        id: 'shape',
+      .addSelect({
         path: 'config.shape',
-        name: 'Shape',
-        editor: IconPickerEditor,
+        name: 'Marker Shape',
+        settings: {
+          options: markerMakers.selectOptions().options,
+        },
         defaultValue: 'circle',
+      })
+      .addSliderInput({
+        path: 'config.fillOpacity',
+        name: 'Fill opacity',
+        defaultValue: defaultOptions.fillOpacity,
+        settings: {
+          min: 0,
+          max: 1,
+          step: 0.1,
+        },
+        showIf: (cfg) => (markerMakers.getIfExists((cfg as any).config?.shape)?.hasFill),
       });
   },
 
