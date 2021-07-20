@@ -977,7 +977,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		cfg.DefaultBaseLayer = make(map[string]interface{})
 		err = json.Unmarshal([]byte(basemapJSON), &cfg.DefaultBaseLayer)
 		if err != nil {
-			cfg.Logger.Error("Error parsing JSON string: %s", err)
+			cfg.Logger.Error(fmt.Sprintf("Error parsing JSON string: %s", err))
 			cfg.DefaultBaseLayer = nil
 		}
 	}
