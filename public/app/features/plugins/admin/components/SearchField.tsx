@@ -1,19 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { css } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useDebounce } from 'react-use';
+// import { useDebounce } from 'react-use';
 
 interface Props {
   value?: string;
   onSearch: (value: string) => void;
 }
 
+const useDebounceWithoutFirstRender = (callBack: Function, delay?: number, deps: React.DependencyList = []) => {
+  const isFirstRender = useRef(true);
+  const debounceDeps = [...deps, isFirstRender];
+
+  return useDebounce(
+    () => {
+      if (isFirstRender.current) {
+        isFirstRender.current = false;
+        return;
+      }
+      return callBack();
+    },
+    delay,
+    debounceDeps
+  );
+};
+
 export const SearchField = ({ value, onSearch }: Props) => {
   const [query, setQuery] = useState(value);
   const styles = useStyles2(getStyles);
 
-  useDebounce(() => onSearch(query ?? ''), 500, [query]);
+  useDebounceWithoutFirstRender(() => onSearch(query ?? ''), 500, [query]);
 
   return (
     <input
