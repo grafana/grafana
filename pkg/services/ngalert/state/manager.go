@@ -290,5 +290,5 @@ func (st *Manager) staleResultsHandler(alertRule *ngModels.AlertRule, states map
 }
 
 func isItStale(lastEval time.Time, intervalSeconds int64) bool {
-	return lastEval.Add(2 * time.Duration(intervalSeconds)).Before(time.Now())
+	return lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).Before(time.Now())
 }
