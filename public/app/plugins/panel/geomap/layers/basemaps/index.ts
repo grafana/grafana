@@ -4,7 +4,6 @@ import { genericLayers } from './generic';
 import { osmLayers } from './osm';
 import { defaultBaseLayer } from './default';
 
-// Use CartoDB if the tile server url is not set in defaults.ini
 export const defaultGrafanaThemedMap = {
   ...defaultBaseLayer,
   id: 'default',
