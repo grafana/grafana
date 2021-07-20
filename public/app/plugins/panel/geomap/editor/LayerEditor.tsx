@@ -40,6 +40,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
     if (!layer || !(layer.registerOptionsUI || layer.showLocation || layer.showOpacity)) {
       return null;
     }
+
     const builder = new PanelOptionsEditorBuilder();
     if (layer.showLocation) {
       builder
@@ -112,7 +113,13 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
       options: options,
     };
 
-    const currentOptions = { ...options, config: { ...layer.defaultOptions, ...options?.config } };
+    const currentOptions = { ...options, type: layer.id, config: { ...layer.defaultOptions, ...options?.config } };
+
+    // Update the panel options if not set
+    if (!options || (layer.defaultOptions && !options.config)) {
+      onChange(currentOptions as any);
+    }
+
     const reg = optionsEditorBuilder.getRegistry();
 
     // Load the options into categories
