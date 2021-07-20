@@ -31,6 +31,7 @@ async function getCatalogPlugin(slug: string): Promise<CatalogPluginDetails> {
 
   // TODO: none of the following should live in the api layer. Move to a helper.
   const version = remote?.version || local?.info.version || '';
+  const hasUpdate = Boolean(remote?.version && local?.info.version && gt(remote?.version, local?.info.version));
 
   let logos = {
     small: 'https://grafana.com/api/plugins/404notfound/versions/none/logos/small',
@@ -47,27 +48,27 @@ async function getCatalogPlugin(slug: string): Promise<CatalogPluginDetails> {
   }
 
   const plugin = {
-    description: (remote?.description ?? local?.info?.description) || '',
+    description: remote?.description || local?.info.description || '',
     downloads: remote?.downloads || 0,
-    grafanaDependency: remote?.json?.dependencies.grafanaDependency,
-    id: (remote?.slug ?? local?.id) || '',
+    grafanaDependency: remote?.json?.dependencies?.grafanaDependency || '',
+    hasUpdate,
+    id: remote?.slug || local?.id || '',
     info: {
       logos,
     },
-    isCore: remote?.internal || local?.signature === 'internal',
+    isCore: Boolean(remote?.internal || local?.signature === 'internal'),
     isDev: Boolean(local?.dev),
-    isEnterprise: remote?.status === 'enterprise',
+    isEnterprise: remote?.status === 'enterprise' || false,
     isInstalled: Boolean(local),
-    hasUpdate: Boolean(remote?.version && local?.info.version && gt(remote?.version!, local?.info.version!)),
-    name: (remote?.name ?? local?.name) || '',
-    orgName: (remote?.orgName ?? local?.info.author.name) || '',
+    links: remote?.json?.info.links || local?.info.links || [],
+    name: remote?.name || local?.name || '',
+    orgName: remote?.orgName || local?.info.author.name || '',
     popularity: remote?.popularity || 0,
     publishedAt: remote?.createdAt || '',
-    updatedAt: remote?.updatedAt || local?.info.updated || '',
-    version: remote?.version || local?.info.version || '',
     readme: remote?.readme || 'No plugin help or readme markdown file was found',
-    links: (remote?.json?.info?.links || local?.info?.links) ?? [],
-    type: (remote?.typeCode ?? local?.type) || '',
+    type: remote?.typeCode || local?.type || '',
+    updatedAt: remote?.updatedAt || local?.info.updated || '',
+    version,
     versions,
   };
 
