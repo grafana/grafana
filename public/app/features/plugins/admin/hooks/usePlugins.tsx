@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
-import { Plugin, LocalPlugin, CatalogPlugin, CatalogPluginDetails } from '../types';
+import { CatalogPlugin, CatalogPluginDetails } from '../types';
 import { api } from '../api';
-import { mapLocalToCatalog, mapRemoteToCatalog, applySearchFilter } from '../helpers';
+import { mapLocalToCatalog, mapRemoteToCatalog, getCatalogPluginDetails, applySearchFilter } from '../helpers';
 
 type CatalogPluginsState = {
   loading: boolean;
@@ -10,7 +10,7 @@ type CatalogPluginsState = {
   plugins: CatalogPlugin[];
 };
 
-export function useCatalogPlugins(): CatalogPluginsState {
+export function usePlugins(): CatalogPluginsState {
   const { loading, value, error } = useAsync(async () => {
     const remote = await api.getRemotePlugins();
     const installed = await api.getInstalledPlugins();
@@ -59,7 +59,7 @@ type FilteredPluginsState = {
 };
 
 export const usePluginsByFilter = (searchBy: string, filterBy: string): FilteredPluginsState => {
-  const { loading, error, plugins } = useCatalogPlugins();
+  const { loading, error, plugins } = usePlugins();
 
   const [installed, all] = useMemo(
     () =>
@@ -93,9 +93,7 @@ export const usePluginsByFilter = (searchBy: string, filterBy: string): Filtered
 
 type PluginState = {
   isLoading: boolean;
-  remote?: Plugin;
-  remoteVersions?: Array<{ version: string; createdAt: string }>;
-  local?: LocalPlugin;
+  plugin?: CatalogPluginDetails;
 };
 
 export const usePlugin = (slug: string): PluginState => {
@@ -103,24 +101,10 @@ export const usePlugin = (slug: string): PluginState => {
     return await api.getPlugin(slug);
   }, [slug]);
 
-  return {
-    isLoading: loading,
-    ...value,
-  };
-};
-
-type CatalogPluginState = {
-  isLoading: boolean;
-  plugin?: CatalogPluginDetails;
-};
-
-export const useCatalogPlugin = (id: string): CatalogPluginState => {
-  const { loading, value } = useAsync(async () => {
-    return await api.getCatalogPlugin(id);
-  }, [id]);
+  const plugin = getCatalogPluginDetails(value?.local, value?.remote, value?.remoteVersions);
 
   return {
     isLoading: loading,
-    plugin: value,
+    plugin,
   };
 };

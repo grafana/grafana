@@ -6,7 +6,7 @@ import { useStyles2, TabsBar, TabContent, Tab, Icon } from '@grafana/ui';
 
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
-import { useCatalogPlugin } from '../hooks/usePlugins';
+import { usePlugin } from '../hooks/usePlugins';
 import { Page as PluginPage } from '../components/Page';
 import { Loader } from '../components/Loader';
 import { Page } from 'app/core/components/Page/Page';
@@ -23,7 +23,7 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
     { label: 'Version history', active: false },
   ]);
 
-  const { isLoading, plugin } = useCatalogPlugin(pluginId!);
+  const { isLoading, plugin } = usePlugin(pluginId!);
   const styles = useStyles2(getStyles);
 
   if (isLoading) {
