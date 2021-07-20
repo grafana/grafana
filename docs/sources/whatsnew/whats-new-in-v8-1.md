@@ -60,11 +60,11 @@ We have added timezone support. As a result, you can now specify the time zone u
 
 ### Trace to logs improvements
 
-We have updated the default behavior from creating a one (1) hour span Loki query to only query at the exact time the trace span started for the duration of it. For more fine grained control over this you can shift this time in the tracing data source settings. It is now possible to to shift the start time and end time of the Loki query by the set amount. For more information, refer to [Trace to logs]({{< relref "../datasources/tempo.md" >}}).
+We have updated the default behavior from creating a one (1) hour span Loki query to only query at the exact time the trace span started for the duration of it. For more fine grained control over this you can shift this time in the tracing data source settings. It is now possible to to shift the start time and end time of the Loki query by the set amount. For more information, refer to [Trace to logs]({{< relref "../datasources/tempo.md#trace-to-logs" >}}).
 
 #### Documentation updates
 
-New panel summaries and preview on the top level [Visualizations]({{< relref "../panels/vizualizations/_index.md" >}}) page to help users pick or learn about specific visualizations more easily.
+New panel summaries and preview on the top level [Visualizations]({{< relref "../panels/visualizations/_index.md" >}}) page to help users pick or learn about specific visualizations more easily.
 
 ## Enterprise features
 
