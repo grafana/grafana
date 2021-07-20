@@ -38,7 +38,6 @@ func (a *channelRuleAPI) ListChannelRules(c *models.ReqContext) response.Respons
 	for _, ch := range result {
 		item := dtos.LiveChannelRuleListItem{
 			Id:      ch.Id,
-			OrgId:   ch.OrgId,
 			Version: ch.Version,
 			Pattern: ch.Pattern,
 		}
@@ -50,7 +49,6 @@ func (a *channelRuleAPI) ListChannelRules(c *models.ReqContext) response.Respons
 func liveChannelToDTO(ch *models.LiveChannelRule) dtos.LiveChannelRule {
 	item := dtos.LiveChannelRule{
 		Id:               ch.Id,
-		OrgId:            ch.OrgId,
 		Version:          ch.Version,
 		Pattern:          ch.Pattern,
 		Config:           ch.Config,

@@ -4,7 +4,7 @@
 
 -include local/Makefile
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go golangci-lint test-go test-js test run run-frontend clean devenv devenv-down protobuf drone help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go generate-go golangci-lint test-go test-js test run run-frontend clean devenv devenv-down protobuf drone help
 
 GO = go
 GO_FILES ?= ./pkg/...
@@ -86,6 +86,12 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 	@docker run --rm -v "$$PWD:/mnt" koalaman/shellcheck:stable \
 	$(SH_FILES) -e SC1071 -e SC2162
 
+##@ Code generation
+
+generate-go: ## Generate Go code.
+	@echo "Generate Go code"
+	$(GO) generate -v ./pkg/...
+
 ##@ Docker
 
 build-docker-dev: ## Build Docker image for development (fast).
@@ -141,7 +147,7 @@ clean: ## Clean up intermediate build artifacts.
 	rm -rf public/build
 
 # This repository's configuration is protected (https://readme.drone.io/signature/).
-# Use this make target to regenerate the configuration YAML files when 
+# Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
 drone:
 	drone starlark

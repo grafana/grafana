@@ -17,7 +17,6 @@ type LivePublishResponse struct {
 type LiveChannelRule struct {
 	Id               int64                             `json:"id"`
 	Version          int                               `json:"version"`
-	OrgId            int64                             `json:"orgId"`
 	Pattern          string                            `json:"pattern"`
 	Config           models.LiveChannelRulePlainConfig `json:"config"`
 	SecureJsonFields map[string]bool                   `json:"secureJsonFields"`
@@ -26,6 +25,5 @@ type LiveChannelRule struct {
 type LiveChannelRuleListItem struct {
 	Id      int64  `json:"id"`
 	Version int    `json:"version"`
-	OrgId   int64  `json:"orgId"`
 	Pattern string `json:"pattern"`
 }
