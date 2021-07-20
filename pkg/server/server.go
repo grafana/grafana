@@ -32,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	_ "github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/auth"
 	_ "github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -72,6 +71,12 @@ func (r *globalServiceRegistry) IsDisabled(srv registry.Service) bool {
 
 func (r *globalServiceRegistry) GetServices() []*registry.Descriptor {
 	return registry.GetServices()
+}
+
+type roleRegistry interface {
+	// RegisterFixedRoles launches all registrations of the
+	// service registration list
+	RegisterFixedRoles() error
 }
 
 // New returns a new instance of Server.
@@ -132,7 +137,7 @@ type Server struct {
 	serviceRegistry serviceRegistry
 
 	HTTPServer          *api.HTTPServer                  `inject:""`
-	AccessControl       accesscontrol.AccessControl      `inject:""`
+	AccessControl       roleRegistry                     `inject:""`
 	ProvisioningService provisioning.ProvisioningService `inject:""`
 }
 

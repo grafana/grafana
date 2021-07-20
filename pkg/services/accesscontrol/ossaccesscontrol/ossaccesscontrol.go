@@ -132,16 +132,6 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 
 // RegisterFixedRole saves a fixed role and assigns it to built-in roles
 func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) error {
-	err := accesscontrol.ValidateFixedRole(role)
-	if err != nil {
-		return err
-	}
-
-	err = accesscontrol.ValidateBuiltInRoles(builtInRoles)
-	if err != nil {
-		return err
-	}
-
 	ac.saveFixedRole(role)
 
 	ac.assignFixedRole(role, builtInRoles)
@@ -163,10 +153,26 @@ func (ac *OSSAccessControlService) RegisterFixedRoles() error {
 	return err
 }
 
-// AddFixedRoleRegistrations allow the caller to declare, to the service, fixed roles and their assignments
-func (ac *OSSAccessControlService) AddFixedRoleRegistrations(registrations ...accesscontrol.RoleRegistration) {
+// AddFixedRoles allow the caller to declare, to the service, fixed roles and their assignments
+func (ac *OSSAccessControlService) AddFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
 	// If accesscontrol is disabled no need to register roles
-	if !ac.IsDisabled() {
-		ac.registrations.Append(registrations...)
+	if ac.IsDisabled() {
+		return nil
 	}
+
+	for _, r := range registrations {
+		err := accesscontrol.ValidateFixedRole(r.Role)
+		if err != nil {
+			return err
+		}
+
+		err = accesscontrol.ValidateBuiltInRoles(r.Grants)
+		if err != nil {
+			return err
+		}
+
+		ac.registrations.Append(r)
+	}
+
+	return nil
 }

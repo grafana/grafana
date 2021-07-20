@@ -344,7 +344,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 	}
 }
 
-func TestOSSAccessControlService_AddFixedRoleRegistrations(t *testing.T) {
+func TestOSSAccessControlService_AddFixedRoles(t *testing.T) {
 	tests := []struct {
 		name          string
 		registrations []accesscontrol.RoleRegistration
@@ -375,7 +375,8 @@ func TestOSSAccessControlService_AddFixedRoleRegistrations(t *testing.T) {
 				registrations: accesscontrol.RegistrationList{},
 			}
 			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
-			ac.AddFixedRoleRegistrations(tt.registrations...)
+			err := ac.AddFixedRoles(tt.registrations...)
+			require.NoError(t, err)
 
 			registrationCnt := 0
 			ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
