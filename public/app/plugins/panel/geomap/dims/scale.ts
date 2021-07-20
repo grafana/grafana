@@ -83,7 +83,7 @@ export function validateScaleConfig(copy: ScaleDimensionConfig, options: ScaleDi
   }
 
   if (copy.fixed == null) {
-    copy.fixed = copy.min = (copy.max - copy.min) / 2.0;
+    copy.fixed = copy.min + (copy.max - copy.min) / 2.0;
   }
 
   // Make sure the field value is within the absolute range

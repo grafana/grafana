@@ -1,4 +1,4 @@
-import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, GrafanaTheme2 } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, GrafanaTheme2, FrameGeometrySourceMode } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
@@ -25,8 +25,8 @@ export interface MarkersConfig {
 const defaultOptions: MarkersConfig = {
   size: {
     fixed: 5,
-    min: 5,
-    max: 10,
+    min: 2,
+    max: 15,
   },
   color: {
     fixed: '#f00', 
@@ -36,6 +36,15 @@ const defaultOptions: MarkersConfig = {
 };
 
 export const MARKERS_LAYER_ID = "markers";
+
+// Used by default when nothing is configured
+export const defaultMarkersConfig:MapLayerOptions<MarkersConfig> = {
+  type: MARKERS_LAYER_ID,
+  config: defaultOptions,
+  location: {
+    mode: FrameGeometrySourceMode.Auto,
+  }
+}
 
 /**
  * Map layer configuration for circle overlay
@@ -54,19 +63,18 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   create: (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2): MapLayerHandler => {
     const matchers = getLocationMatchers(options.location);
     const vectorLayer = new layer.Vector({});
-    let legend: React.ReactNode =  null;
+    // Assert default values
+    const config = {
+      ...defaultOptions,
+      ...options?.config,
+    };
+    
     return {
       init: () => vectorLayer,
-      // TODO: going to leave it here in case we want to go down
-      // this path of implementing legend
-      legend: () => {
-        return legend;
-      },
       update: (data: PanelData) => {
         if(!data.series?.length) {
           return; // ignore empty
         }
-
         const frame = data.series[0];
         const info = dataFrameToPoints(frame, matchers);
         if(info.warning) {
@@ -74,11 +82,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           return; // ???
         }
 
-        // Assert default values
-        const config = {
-          ...defaultOptions,
-          ...options?.config,
-        };
         const colorDim = getColorDimension(frame, config.color, theme);
         const sizeDim = getScaledDimension(frame, config.size);
         const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
@@ -157,6 +160,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         defaultValue: 'circle',
       });
   },
+
   // fill in the default values
   defaultOptions,
 };
