@@ -31,14 +31,18 @@ interface Props {
   value: TimeOption;
   selected?: boolean;
   onSelect: (option: TimeOption) => void;
+  /**
+   *  Input identifier. This should be the same for all options in a group.
+   */
+  name: string;
 }
 
-export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false }) => {
+export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false, name }) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <li role="option" className={cx(styles.container, selected && styles.selected)} onClick={() => onSelect(value)}>
-      <input checked={selected} type="radio" name={value.display} onChange={() => onSelect(value)} />
+    <li className={cx(styles.container, selected && styles.selected)}>
+      <input checked={selected} name={name} type="radio" id={value.display} onChange={() => onSelect(value)} />
       <label htmlFor={value.display}>{value.display}</label>
     </li>
   );

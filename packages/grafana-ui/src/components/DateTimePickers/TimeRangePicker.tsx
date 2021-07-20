@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent, memo, FormEvent, Ref } from 'react';
+import React, { PureComponent, memo, FormEvent } from 'react';
 import { css } from '@emotion/css';
 
 // Components
@@ -102,6 +102,7 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
         <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
           <ToolbarButton
             aria-label={`Time range editor ${formattedRange(value, timeZone)}`}
+            aria-controls="TimePickerContent"
             onClick={this.onOpen}
             icon="clock-nine"
             isOpen={isOpen}

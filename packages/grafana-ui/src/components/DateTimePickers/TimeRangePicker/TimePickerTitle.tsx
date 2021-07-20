@@ -17,7 +17,7 @@ export const TimePickerTitle = memo<PropsWithChildren<{}>>(({ children }) => {
   const theme = useTheme();
   const styles = getStyle(theme);
 
-  return <span className={styles.text}>{children}</span>;
+  return <legend className={styles.text}>{children}</legend>;
 });
 
 TimePickerTitle.displayName = 'TimePickerTitle';
