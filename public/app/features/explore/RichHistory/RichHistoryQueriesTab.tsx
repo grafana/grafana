@@ -6,7 +6,7 @@ import { uniqBy } from 'lodash';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
 // Utils
-import { stylesFactory, useTheme, RangeSlider, Select } from '@grafana/ui';
+import { stylesFactory, useTheme, RangeSlider, MultiSelect, Select } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 import {
@@ -27,7 +27,7 @@ export interface Props {
   queries: RichHistoryQuery[];
   sortOrder: SortOrder;
   activeDatasourceOnly: boolean;
-  datasourceFilters: SelectableValue[] | null;
+  datasourceFilters: SelectableValue[];
   retentionPeriod: number;
   exploreId: ExploreId;
   height: number;
@@ -161,7 +161,7 @@ export function RichHistoryQueriesTab(props: Props) {
       filterAndSortQueries(
         queries,
         sortOrder,
-        datasourceFilters?.map((d) => d.value) as string[] | null,
+        datasourceFilters.map((d) => d.value),
         debouncedSearchInput,
         timeFilter
       )
@@ -199,8 +199,7 @@ export function RichHistoryQueriesTab(props: Props) {
         <div className={styles.selectors}>
           {!activeDatasourceOnly && (
             <div aria-label="Filter datasources" className={styles.multiselect}>
-              <Select
-                isMulti={true}
+              <MultiSelect
                 options={listOfDatasources}
                 value={datasourceFilters}
                 placeholder="Filter queries for data sources(s)"

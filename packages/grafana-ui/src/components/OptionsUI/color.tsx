@@ -10,7 +10,7 @@ import { ColorSwatch } from '../ColorPicker/ColorSwatch';
  * */
 export interface ColorValueEditorProps {
   value?: string;
-  onChange: (value?: string) => void;
+  onChange: (value: string) => void;
 }
 
 /**
