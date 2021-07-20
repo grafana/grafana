@@ -18,6 +18,7 @@ import {
   smartlyHandleNewAliasByNode,
   spliceSegments,
 } from './helpers';
+import { Action } from 'redux';
 
 export type GraphiteQueryEditorState = {
   /**
@@ -44,11 +45,6 @@ export type GraphiteQueryEditorState = {
 
   tagsAutoCompleteErrorShown: boolean;
   metricAutoCompleteErrorShown: boolean;
-};
-
-type Action = {
-  type: string;
-  payload: any;
 };
 
 const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise<GraphiteQueryEditorState> => {
