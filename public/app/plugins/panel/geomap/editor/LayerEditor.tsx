@@ -98,7 +98,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
           showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
         })
         .addSelect({
-          path: 'location.lookupSrc.mode',
+          path: 'location.lookupSrc.type',
           name: 'Lookup Source Option',
           settings: {
             options: [
