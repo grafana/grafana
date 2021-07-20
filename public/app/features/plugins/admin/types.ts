@@ -1,5 +1,41 @@
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
+export interface CatalogPlugin {
+  description: string;
+  downloads: number;
+  hasUpdate: boolean;
+  id: string;
+  info: CatalogPluginInfo;
+  isDev: boolean;
+  isCore: boolean;
+  isEnterprise: boolean;
+  isInstalled: boolean;
+  name: string;
+  orgName: string;
+  popularity: number;
+  publishedAt: string;
+  type: string;
+  updatedAt: string;
+  version: string;
+}
+
+export interface CatalogPluginDetails extends CatalogPlugin {
+  readme: string;
+  versions: Version[];
+  links: Array<{
+    name: string;
+    url: string;
+  }>;
+  grafanaDependency?: string;
+}
+
+export interface CatalogPluginInfo {
+  logos: {
+    large: string;
+    small: string;
+  };
+}
+
 export interface Plugin {
   name: string;
   description: string;

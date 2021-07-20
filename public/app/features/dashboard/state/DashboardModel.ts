@@ -752,7 +752,7 @@ export class DashboardModel {
     const maxPos = maxBy(positions, (pos: GridPos) => {
       return pos.y + pos.h;
     });
-    return maxPos.y + maxPos.h - rowYPos;
+    return maxPos!.y + maxPos!.h - rowYPos;
   }
 
   removePanel(panel: PanelModel) {
