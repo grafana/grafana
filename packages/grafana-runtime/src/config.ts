@@ -87,6 +87,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   caching = {
     enabled: false,
   };
+  geomapDefaultBaseLayer: any;
+  geomapDisableCustomBaseLayer = false;
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

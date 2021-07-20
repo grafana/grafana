@@ -8,8 +8,7 @@ import { MapZoomEditor } from './editor/MapZoomEditor';
 import { mapPanelChangedHandler } from './migrations';
 import { defaultGrafanaThemedMap } from './layers/basemaps';
 import { MARKERS_LAYER_ID } from './layers/data/markersLayer';
-
-const settings = (window as any).grafanaBootData.settings;
+import { config } from 'app/core/config';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
@@ -44,7 +43,7 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
     });
 
     // Nested
-    if (!settings.geomapDisableCustomBaseLayer) {
+    if (!config.geomapDisableCustomBaseLayer) {
       builder.addCustomEditor({
         category: ['Base Layer'],
         id: 'basemap',
