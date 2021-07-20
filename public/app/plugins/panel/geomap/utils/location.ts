@@ -72,7 +72,6 @@ export function getLocationMatchers(src?: FrameGeometrySource): LocationFieldMat
     ...defaultMatchers,
     mode: src?.mode ?? FrameGeometrySourceMode.Auto,
   };
-  console.log(src);
   switch (info.mode) {
     case FrameGeometrySourceMode.Coords:
       if (src?.latitude) {
@@ -182,7 +181,6 @@ export function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatch
       break;
 
     case FrameGeometrySourceMode.Lookup:
-      console.log(fields);
       if (fields.lookup && location.lookupSrc) {
         const locationData = require('./keyMapping/' + location.lookupSrc + '.json');
         info.points = getPointsFromLookup(fields.lookup, locationData);
