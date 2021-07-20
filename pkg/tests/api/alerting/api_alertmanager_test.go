@@ -709,7 +709,6 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		})
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		fmt.Println(">>>>", string(b))
 		require.Equal(t, 200, resp.StatusCode)
 		require.JSONEq(t, `{"id":1,"message":"Folder default deleted","title":"default"}`, string(b))
 	}
