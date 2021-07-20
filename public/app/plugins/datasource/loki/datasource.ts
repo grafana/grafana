@@ -87,6 +87,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const baseUrl = this.instanceSettings.url;
     const params = data ? serializeParams(data) : '';
     const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
+    if (this.instanceSettings.withCredentials || this.instanceSettings.basicAuth) {
+      options = { ...options, withCredentials: true };
+      if (this.instanceSettings.basicAuth) {
+        options.headers = { ...options.headers, Authorization: this.instanceSettings.basicAuth };
+      }
+    }
     const req = {
       ...options,
       url,
