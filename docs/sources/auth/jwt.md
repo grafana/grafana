@@ -44,7 +44,12 @@ username_claim = sub
 
 # Specify a claim to use as an email to sign in.
 email_claim = sub
+
+# auto-create users if they are not already matched
+# auto_sign_up = true
 ```
+
+If `auto_sign_up` is enabled, the `sub` claim will be used as the "external Auth ID" and (if present) the `name` claim will be used as the user's full name.
 
 ## Signature verification
 
