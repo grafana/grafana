@@ -1,5 +1,12 @@
-import { mapFuncDefsToSelectables } from './helpers';
-import { FuncDefs } from '../gfunc';
+import { mapFuncDefsToSelectables, mapFuncInstanceToParams } from './helpers';
+import { FuncDef, FuncDefs, FuncInstance } from '../gfunc';
+import { EditableParam } from './FunctionParamEditor';
+
+function createFunctionInstance(funcDef: FuncDef, currentParams: string[]): FuncInstance {
+  let funcInstance: FuncInstance = new FuncInstance(funcDef);
+  funcInstance.params = currentParams;
+  return funcInstance;
+}
 
 describe('Graphite components helpers', () => {
   it('converts function definitions to selectable options', function () {
@@ -27,5 +34,180 @@ describe('Graphite components helpers', () => {
         ],
       },
     ]);
+  });
+
+  describe('mapFuncInstanceToParams', () => {
+    let funcDef: FuncDef;
+
+    function assertFunctionInstance(definition: FuncDef, params: string[], expected: EditableParam[]): void {
+      expect(mapFuncInstanceToParams(createFunctionInstance(definition, params))).toMatchObject(expected);
+    }
+
+    describe('when all parameters are required and no multiple values are allowed', () => {
+      beforeEach(() => {
+        funcDef = {
+          name: 'allRequiredNoMultiple',
+          category: 'A',
+          params: [
+            { name: 'a', type: 'any', optional: false, multiple: false },
+            { name: 'b', type: 'any', optional: false, multiple: false },
+          ],
+          defaultParams: [],
+        };
+      });
+
+      it('creates required params', () => {
+        assertFunctionInstance(
+          funcDef,
+          [],
+          [
+            { name: 'a', multiple: false, optional: false, options: [], value: '' },
+            { name: 'b', multiple: false, optional: false, options: [], value: '' },
+          ]
+        );
+      });
+
+      it('fills in provided parameters', () => {
+        assertFunctionInstance(
+          funcDef,
+          ['a', 'b'],
+          [
+            { name: 'a', multiple: false, optional: false, options: [], value: 'a' },
+            { name: 'b', multiple: false, optional: false, options: [], value: 'b' },
+          ]
+        );
+      });
+    });
+
+    describe('when all parameters are required and multiple values are allowed', () => {
+      beforeEach(() => {
+        funcDef = {
+          name: 'allRequiredWithMultiple',
+          category: 'A',
+          params: [
+            { name: 'a', type: 'any', optional: false, multiple: false },
+            { name: 'b', type: 'any', optional: false, multiple: true },
+          ],
+          defaultParams: [],
+        };
+      });
+
+      it('does not add extra param to add multiple values if not all params are filled in', () => {
+        assertFunctionInstance(
+          funcDef,
+          [],
+          [
+            { name: 'a', multiple: false, optional: false, options: [], value: '' },
+            { name: 'b', multiple: true, optional: false, options: [], value: '' },
+          ]
+        );
+
+        assertFunctionInstance(
+          funcDef,
+          ['a'],
+          [
+            { name: 'a', multiple: false, optional: false, options: [], value: 'a' },
+            { name: 'b', multiple: true, optional: false, options: [], value: '' },
+          ]
+        );
+      });
+
+      it('adds an extra param to add multiple values if all params are filled in', () => {
+        assertFunctionInstance(
+          funcDef,
+          ['a', 'b'],
+          [
+            { name: 'a', multiple: false, optional: false, options: [], value: 'a' },
+            { name: 'b', multiple: true, optional: false, options: [], value: 'b' },
+            { name: 'b', multiple: true, optional: false, options: [], value: '' },
+          ]
+        );
+      });
+    });
+
+    describe('when there are optional parameters but no multiple values are allowed', () => {
+      beforeEach(() => {
+        funcDef = {
+          name: 'twoOptionalNoMultiple',
+          category: 'A',
+          params: [
+            { name: 'a', type: 'any', optional: false, multiple: false },
+            { name: 'b', type: 'any', optional: false, multiple: false },
+            { name: 'c', type: 'any', optional: true, multiple: false },
+            { name: 'd', type: 'any', optional: true, multiple: false },
+          ],
+          defaultParams: [],
+        };
+      });
+
+      it('creates non-required parameters', () => {
+        assertFunctionInstance(
+          funcDef,
+          [],
+          [
+            { name: 'a', multiple: false, optional: false, options: [], value: '' },
+            { name: 'b', multiple: false, optional: false, options: [], value: '' },
+            { name: 'c', multiple: false, optional: true, options: [], value: '' },
+            { name: 'd', multiple: false, optional: true, options: [], value: '' },
+          ]
+        );
+      });
+
+      it('fills in provided parameters', () => {
+        assertFunctionInstance(
+          funcDef,
+          ['a', 'b', 'c', 'd'],
+          [
+            { name: 'a', multiple: false, optional: false, options: [], value: 'a' },
+            { name: 'b', multiple: false, optional: false, options: [], value: 'b' },
+            { name: 'c', multiple: false, optional: true, options: [], value: 'c' },
+            { name: 'd', multiple: false, optional: true, options: [], value: 'd' },
+          ]
+        );
+      });
+    });
+
+    describe('when there are optional parameters and multiple values are allowed', () => {
+      beforeEach(() => {
+        funcDef = {
+          name: 'twoOptionalWithMultiple',
+          category: 'A',
+          params: [
+            { name: 'a', type: 'any', optional: false, multiple: false },
+            { name: 'b', type: 'any', optional: false, multiple: false },
+            { name: 'c', type: 'any', optional: true, multiple: false },
+            { name: 'd', type: 'any', optional: true, multiple: true },
+          ],
+          defaultParams: [],
+        };
+      });
+
+      it('does not add extra param to add multiple values if not all params are filled in', () => {
+        assertFunctionInstance(
+          funcDef,
+          ['a', 'b', 'c'],
+          [
+            { name: 'a', multiple: false, optional: false, options: [], value: 'a' },
+            { name: 'b', multiple: false, optional: false, options: [], value: 'b' },
+            { name: 'c', multiple: false, optional: true, options: [], value: 'c' },
+            { name: 'd', multiple: true, optional: true, options: [], value: '' },
+          ]
+        );
+      });
+
+      it('adds an extra param to add multiple values if all params are filled in', () => {
+        assertFunctionInstance(
+          funcDef,
+          ['a', 'b', 'c', 'd'],
+          [
+            { name: 'a', multiple: false, optional: false, options: [], value: 'a' },
+            { name: 'b', multiple: false, optional: false, options: [], value: 'b' },
+            { name: 'c', multiple: false, optional: true, options: [], value: 'c' },
+            { name: 'd', multiple: true, optional: true, options: [], value: 'd' },
+            { name: 'd', multiple: true, optional: true, options: [], value: '' },
+          ]
+        );
+      });
+    });
   });
 });

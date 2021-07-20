@@ -193,6 +193,7 @@ export default class GraphiteQuery {
       }
     }
 
+    // clean-up added param
     this.functions.forEach((func) => (func.added = false));
   }
 

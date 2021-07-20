@@ -14,7 +14,7 @@ export const useExpandableLabel = (
   const [expanded, setExpanded] = useState<boolean>(initialExpanded);
   const [width, setWidth] = useState(0);
 
-  const setExpandedFunction = (expanded: boolean) => {
+  const setExpandedWrapper = (expanded: boolean) => {
     setExpanded(expanded);
     if (onExpandedChange) {
       onExpandedChange(expanded);
@@ -28,7 +28,7 @@ export const useExpandableLabel = (
         disabled
           ? undefined
           : () => {
-              setExpandedFunction(true);
+              setExpandedWrapper(true);
               if (ref && ref.current) {
                 setWidth(ref.current.clientWidth * 1.25);
               }
@@ -42,5 +42,5 @@ export const useExpandableLabel = (
     </div>
   );
 
-  return [Label, width, expanded, setExpandedFunction];
+  return [Label, width, expanded, setExpandedWrapper];
 };
