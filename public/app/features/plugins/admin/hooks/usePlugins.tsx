@@ -61,20 +61,7 @@ type FilteredPluginsState = {
 export const usePluginsByFilter = (searchBy: string, filterBy: string): FilteredPluginsState => {
   const { loading, error, plugins } = usePlugins();
 
-  const [installed, all] = useMemo(
-    () =>
-      plugins.reduce<[CatalogPlugin[], CatalogPlugin[]]>(
-        (result, plugin) => {
-          if (plugin.isInstalled) {
-            result[0].push(plugin);
-          }
-          result[1].push(plugin);
-          return result;
-        },
-        [[], []]
-      ),
-    [plugins]
-  );
+  const installed = useMemo(() => plugins.filter((plugin) => plugin.isInstalled), [plugins]);
 
   if (filterBy === 'installed') {
     return {
@@ -87,7 +74,7 @@ export const usePluginsByFilter = (searchBy: string, filterBy: string): Filtered
   return {
     isLoading: loading,
     error,
-    plugins: applySearchFilter(searchBy, all),
+    plugins: applySearchFilter(searchBy, plugins),
   };
 };
 
