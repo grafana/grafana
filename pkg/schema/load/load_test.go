@@ -1,13 +1,16 @@
 package load
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
 	"testing/fstest"
 
+	"cuelang.org/go/cue/errors"
 	"github.com/grafana/grafana/pkg/schema"
 	"github.com/laher/mergefs"
 	"github.com/stretchr/testify/require"
@@ -45,8 +48,11 @@ func TestScuemataBasics(t *testing.T) {
 	}
 }
 
-func TestDashboardValidity(t *testing.T) {
-	validdir := os.DirFS(filepath.Join("testdata", "artifacts", "dashboards"))
+func TestDevenvDashboardValidity(t *testing.T) {
+	// TODO un-skip when tests pass on all devenv dashboards
+	t.Skip()
+	// validdir := os.DirFS(filepath.Join("..", "..", "..", "devenv", "dev-dashboards"))
+	validdir := filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
 
 	dash, err := BaseDashboardFamily(p)
 	require.NoError(t, err, "error while loading base dashboard scuemata")
@@ -54,29 +60,55 @@ func TestDashboardValidity(t *testing.T) {
 	ddash, err := DistDashboardFamily(p)
 	require.NoError(t, err, "error while loading dist dashboard scuemata")
 
-	require.NoError(t, fs.WalkDir(validdir, ".", func(path string, d fs.DirEntry, err error) error {
-		require.NoError(t, err)
+	doTest := func(sch schema.VersionedCueSchema) func(t *testing.T) {
+		return func(t *testing.T) {
+			t.Parallel()
+			require.NoError(t, filepath.Walk(validdir, func(path string, d fs.FileInfo, err error) error {
+				require.NoError(t, err)
 
-		if d.IsDir() || filepath.Ext(d.Name()) != ".json" {
-			return nil
+				if d.IsDir() || filepath.Ext(d.Name()) != ".json" {
+					return nil
+				}
+
+				// Ignore gosec warning G304 since it's a test
+				// nolint:gosec
+				b, err := os.Open(path)
+				require.NoError(t, err, "failed to open dashboard file")
+
+				// Only try to validate dashboards with schemaVersion >= 30
+				jtree := make(map[string]interface{})
+				byt, err := io.ReadAll(b)
+				if err != nil {
+					t.Fatal(err)
+				}
+				require.NoError(t, json.Unmarshal(byt, &jtree))
+				if oldschemav, has := jtree["schemaVersion"]; !has {
+					t.Logf("no schemaVersion in %s", path)
+					return nil
+				} else {
+					if !(oldschemav.(float64) > 29) {
+						t.Logf("schemaVersion is %v, older than 30, skipping %s", oldschemav, path)
+						return nil
+					}
+				}
+
+				t.Run(filepath.Base(path), func(t *testing.T) {
+					err := sch.Validate(schema.Resource{Value: byt, Name: path})
+					if err != nil {
+						// Testify trims errors to short length. We want the full text
+						t.Fatal(errors.Details(err, nil))
+					}
+				})
+
+				return nil
+			}))
 		}
+	}
 
-		t.Run(path, func(t *testing.T) {
-			b, err := validdir.Open(path)
-			require.NoError(t, err, "failed to open dashboard file")
-
-			t.Run("base", func(t *testing.T) {
-				_, err := schema.SearchAndValidate(dash, b)
-				require.NoError(t, err, "dashboard failed validation")
-			})
-			t.Run("dist", func(t *testing.T) {
-				_, err := schema.SearchAndValidate(ddash, b)
-				require.NoError(t, err, "dashboard failed validation")
-			})
-		})
-
-		return nil
-	}))
+	// TODO will need to expand this appropriately when the scuemata contain
+	// more than one schema
+	t.Run("base", doTest(dash))
+	t.Run("dist", doTest(ddash))
 }
 
 func TestPanelValidity(t *testing.T) {

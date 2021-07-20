@@ -47,13 +47,6 @@ export interface FeatureToggles {
   ngalert: boolean;
   trimDefaults: boolean;
   accesscontrol: boolean;
-
-  /**
-   * @remarks
-   * Available only in Grafana Enterprise
-   */
-  meta: boolean;
-  reportVariables: boolean;
 }
 
 /**

@@ -9,7 +9,8 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { Annotation } from '../../utils/constants';
 import { RuleState } from './RuleState';
 import { RuleHealth } from './RuleHealth';
-import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 
 type RuleTableColumnProps = DynamicTableColumnProps<CombinedRule>;
 type RuleTableItemProps = DynamicTableItemProps<CombinedRule>;
@@ -50,7 +51,7 @@ export const RulesTable: FC<Props> = ({
     });
   }, [rules]);
 
-  const columns = useColumns(showSummaryColumn, showGroupColumn, showGuidelines, items.length);
+  const columns = useColumns(showSummaryColumn, showGroupColumn);
 
   if (!rules.length) {
     return <div className={cx(wrapperClass, styles.emptyMessage)}>{emptyMessage}</div>;
@@ -58,39 +59,11 @@ export const RulesTable: FC<Props> = ({
 
   return (
     <div className={wrapperClass} data-testid="rules-table">
-      <DynamicTable
+      <DynamicTableWithGuidelines
         cols={columns}
         isExpandable={true}
         items={items}
-        renderExpandedContent={({ data: rule }, index) => (
-          <>
-            {!(index === rules.length - 1) && showGuidelines ? (
-              <div className={cx(styles.ruleContentGuideline, styles.guideline)} />
-            ) : null}
-            <RuleDetails rule={rule} />
-          </>
-        )}
-        renderPrefixHeader={
-          showGuidelines
-            ? () => (
-                <div className={styles.relative}>
-                  <div className={cx(styles.headerGuideline, styles.guideline)} />
-                </div>
-              )
-            : undefined
-        }
-        renderPrefixCell={
-          showGuidelines
-            ? (_, index) => (
-                <div className={styles.relative}>
-                  <div className={cx(styles.ruleTopGuideline, styles.guideline)} />
-                  {!(index === rules.length - 1) && (
-                    <div className={cx(styles.ruleBottomGuideline, styles.guideline)} />
-                  )}
-                </div>
-              )
-            : undefined
-        }
+        renderExpandedContent={({ data: rule }) => <RuleDetails rule={rule} />}
       />
     </div>
   );
@@ -131,46 +104,13 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   evenRow: css`
     background-color: ${theme.colors.background.primary};
   `,
-  relative: css`
-    position: relative;
-    height: 100%;
-  `,
-  guideline: css`
-    left: -19px;
-    border-left: 1px solid ${theme.colors.border.medium};
-    position: absolute;
-
-    ${theme.breakpoints.down('md')} {
-      display: none;
-    }
-  `,
-  ruleTopGuideline: css`
-    width: 18px;
-    border-bottom: 1px solid ${theme.colors.border.medium};
-    top: 0;
-    bottom: 50%;
-  `,
-  ruleBottomGuideline: css`
-    top: 50%;
-    bottom: 0;
-  `,
-  ruleContentGuideline: css`
-    top: 0;
-    bottom: 0;
-    left: -49px !important;
-  `,
-  headerGuideline: css`
-    top: -24px;
-    bottom: 0;
-  `,
   state: css`
     width: 110px;
   `,
 });
 
-function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showGuidelines: boolean, totalRules: number) {
+function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
   const hasRuler = useHasRuler();
-  const styles = useStyles2(getStyles);
 
   return useMemo((): RuleTableColumnProps[] => {
     const columns: RuleTableColumnProps[] = [
@@ -178,25 +118,13 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showGu
         id: 'state',
         label: 'State',
         // eslint-disable-next-line react/display-name
-        renderCell: ({ data: rule }, ruleIdx) => {
+        renderCell: ({ data: rule }) => {
           const { namespace } = rule;
           const { rulesSource } = namespace;
           const { promRule, rulerRule } = rule;
           const isDeleting = !!(hasRuler(rulesSource) && promRule && !rulerRule);
           const isCreating = !!(hasRuler(rulesSource) && rulerRule && !promRule);
-          return (
-            <>
-              {showGuidelines && (
-                <>
-                  <div className={cx(styles.ruleTopGuideline, styles.guideline)} />
-                  {!(ruleIdx === totalRules - 1) && (
-                    <div className={cx(styles.ruleBottomGuideline, styles.guideline)} />
-                  )}
-                </>
-              )}
-              <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} />
-            </>
-          );
+          return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} />;
         },
         size: '165px',
       },
@@ -238,5 +166,5 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showGu
       });
     }
     return columns;
-  }, [hasRuler, showSummaryColumn, showGroupColumn, showGuidelines, totalRules, styles]);
+  }, [hasRuler, showSummaryColumn, showGroupColumn]);
 }

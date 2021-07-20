@@ -118,6 +118,77 @@ func TestAMConfigAccess(t *testing.T) {
 		}
 	})
 
+	t.Run("when retrieve alertmanager configuration", func(t *testing.T) {
+		cfgBody := `
+		{
+			"template_files": null,
+			"alertmanager_config": {
+				"route": {
+					"receiver": "grafana-default-email"
+				},
+				"templates": null,
+				"receivers": [{
+					"name": "grafana-default-email",
+					"grafana_managed_receiver_configs": [{
+						"disableResolveMessage": false,
+						"uid": "",
+						"name": "email receiver",
+						"type": "email",
+						"secureFields": {},
+						"settings": {
+							"addresses": "<example@email.com>"
+						}
+					}]
+				}]
+			}
+		}
+		`
+		testCases := []testCase{
+			{
+				desc:      "un-authenticated request should fail",
+				url:       "http://%s/api/alertmanager/grafana/config/api/v1/alerts",
+				expStatus: http.StatusUnauthorized,
+				expBody:   `{"message": "Unauthorized"}`,
+			},
+			{
+				desc:      "viewer request should fail",
+				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
+				expStatus: http.StatusForbidden,
+				expBody:   `{"message": "permission denied"}`,
+			},
+			{
+				desc:      "editor request should succeed",
+				url:       "http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts",
+				expStatus: http.StatusOK,
+				expBody:   cfgBody,
+			},
+			{
+				desc:      "admin request should succeed",
+				url:       "http://admin:admin@%s/api/alertmanager/grafana/config/api/v1/alerts",
+				expStatus: http.StatusOK,
+				expBody:   cfgBody,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				resp, err := http.Get(fmt.Sprintf(tc.url, grafanaListedAddr))
+				t.Cleanup(func() {
+					require.NoError(t, resp.Body.Close())
+				})
+				require.NoError(t, err)
+				require.Equal(t, tc.expStatus, resp.StatusCode)
+				b, err := ioutil.ReadAll(resp.Body)
+				if tc.expStatus == http.StatusOK {
+					re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
+					b = re.ReplaceAll(b, []byte(`"uid":""`))
+				}
+				require.NoError(t, err)
+				require.JSONEq(t, tc.expBody, string(b))
+			})
+		}
+	})
+
 	t.Run("when creating silence", func(t *testing.T) {
 		body := `
 		{
