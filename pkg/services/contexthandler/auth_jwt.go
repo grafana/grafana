@@ -39,7 +39,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 	}
 	extUser := &models.ExternalUserInfo{
 		AuthModule: "jwt",
-		AuthId: sub,
+		AuthId:     sub,
 	}
 
 	if key := h.Cfg.JWTAuthUsernameClaim; key != "" {

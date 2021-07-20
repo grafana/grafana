@@ -41,7 +41,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
 			verifiedToken = token
 			return models.JWTClaims{
-				"sub": myUsername,
+				"sub":          myUsername,
 				"foo-username": myUsername,
 			}, nil
 		}
@@ -69,7 +69,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
 			verifiedToken = token
 			return models.JWTClaims{
-				"sub": myEmail,
+				"sub":       myEmail,
 				"foo-email": myEmail,
 			}, nil
 		}
@@ -97,8 +97,8 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
 			verifiedToken = token
 			return models.JWTClaims{
-				"sub": myEmail,
-				"name": "Vladimir Example",
+				"sub":       myEmail,
+				"name":      "Vladimir Example",
 				"foo-email": myEmail,
 			}, nil
 		}
@@ -118,8 +118,8 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
 			verifiedToken = token
 			return models.JWTClaims{
-				"sub": myEmail,
-				"name": "Vladimir Example",
+				"sub":       myEmail,
+				"name":      "Vladimir Example",
 				"foo-email": myEmail,
 			}, nil
 		}
@@ -132,9 +132,9 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 			return nil
 		})
 		bus.AddHandlerCtx("upsert-user", func(ctx context.Context, command *models.UpsertUserCommand) error {
-			command.Result = &models.User {
-				Id: id,
-				Name: command.ExternalUser.Name,
+			command.Result = &models.User{
+				Id:    id,
+				Name:  command.ExternalUser.Name,
 				Email: command.ExternalUser.Email,
 			}
 			return nil
