@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -18,12 +17,12 @@ import (
 // NewAlertmanagerNotifier returns a new Alertmanager notifier.
 func NewAlertmanagerNotifier(model *NotificationChannelConfig, t *template.Template) (*AlertmanagerNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No settings supplied"}
+		return nil, receiverInitError{Reason: "no settings supplied"}
 	}
 
 	urlStr := model.Settings.Get("url").MustString()
 	if urlStr == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
+		return nil, receiverInitError{Reason: "could not find url property in settings", Cfg: *model}
 	}
 
 	var urls []*url.URL
@@ -36,7 +35,7 @@ func NewAlertmanagerNotifier(model *NotificationChannelConfig, t *template.Templ
 		uS = strings.TrimSuffix(uS, "/") + "/api/v1/alerts"
 		u, err := url.Parse(uS)
 		if err != nil {
-			return nil, alerting.ValidationError{Reason: "Invalid url property in settings"}
+			return nil, receiverInitError{Reason: "invalid url property in settings", Cfg: *model, Err: err}
 		}
 
 		urls = append(urls, u)
