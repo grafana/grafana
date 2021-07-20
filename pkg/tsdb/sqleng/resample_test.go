@@ -257,16 +257,19 @@ func TestResampleWide(t *testing.T) {
 					time.Date(2020, 1, 2, 3, 4, 19, 0, time.UTC),
 					time.Date(2020, 1, 2, 3, 4, 20, 0, time.UTC),
 					time.Date(2020, 1, 2, 3, 4, 24, 0, time.UTC),
+					time.Date(2020, 1, 2, 3, 4, 27, 0, time.UTC),
 				}),
 				data.NewField("Values Ints", nil, []*int64{
 					pointer.Int64(10),
 					pointer.Int64(12),
 					pointer.Int64(15),
+					pointer.Int64(18),
 				}),
 				data.NewField(`Values Floats`, data.Labels{"Animal Factor": "sloth"}, []*float64{
 					pointer.Float64(10.5),
 					pointer.Float64(12.5),
 					pointer.Float64(15.0),
+					pointer.Float64(17.5),
 				})),
 			output: data.NewFrame("wide_test",
 				data.NewField("Time", nil, []time.Time{
