@@ -348,22 +348,73 @@ func TestOSSAccessControlService_AddFixedRoles(t *testing.T) {
 	tests := []struct {
 		name          string
 		registrations []accesscontrol.RoleRegistration
+		wantErr       bool
+		err           error
 	}{
 		{
-			name:          "should work with nil",
-			registrations: nil,
+			name:    "should work with empty list",
+			wantErr: false,
 		},
 		{
-			name: "should register a role",
+			name: "should add registration",
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
 						Version: 1,
 						Name:    "fixed:test:test",
 					},
-					Grants: []string{"Viewer"},
+					Grants: []string{"Admin"},
 				},
 			},
+			wantErr: false,
+		},
+		{
+			name: "should fail registration invalid role name",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role: accesscontrol.RoleDTO{
+						Version: 1,
+						Name:    "custom:test:test",
+					},
+					Grants: []string{"Admin"},
+				},
+			},
+			wantErr: true,
+			err:     accesscontrol.ErrFixedRolePrefixMissing,
+		},
+		{
+			name: "should fail registration invalid builtin role assignment",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role: accesscontrol.RoleDTO{
+						Version: 1,
+						Name:    "fixed:test:test",
+					},
+					Grants: []string{"WrongAdmin"},
+				},
+			},
+			wantErr: true,
+			err:     accesscontrol.ErrInvalidBuiltinRole,
+		},
+		{
+			name: "should add multiple registrations at once",
+			registrations: []accesscontrol.RoleRegistration{
+				{
+					Role: accesscontrol.RoleDTO{
+						Version: 1,
+						Name:    "fixed:test:test",
+					},
+					Grants: []string{"Admin"},
+				},
+				{
+					Role: accesscontrol.RoleDTO{
+						Version: 1,
+						Name:    "fixed:test2:test2",
+					},
+					Grants: []string{"Admin"},
+				},
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
@@ -375,7 +426,14 @@ func TestOSSAccessControlService_AddFixedRoles(t *testing.T) {
 				registrations: accesscontrol.RegistrationList{},
 			}
 			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+
+			// Test
 			err := ac.AddFixedRoles(tt.registrations...)
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.ErrorIs(t, err, tt.err)
+				return
+			}
 			require.NoError(t, err)
 
 			registrationCnt := 0
@@ -383,7 +441,8 @@ func TestOSSAccessControlService_AddFixedRoles(t *testing.T) {
 				registrationCnt++
 				return true
 			})
-			assert.Equal(t, len(tt.registrations), registrationCnt)
+			assert.Equal(t, len(tt.registrations), registrationCnt,
+				"expected service registration list to contain all test registrations")
 		})
 	}
 }
