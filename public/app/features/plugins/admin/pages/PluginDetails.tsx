@@ -40,7 +40,7 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
         <PluginPage>
           <div className={styles.headerContainer}>
             <PluginLogo
-              src={plugin.info.logos.large}
+              src={plugin.info.logos.small}
               className={css`
                 object-fit: cover;
                 width: 100%;
