@@ -1,0 +1,33 @@
+{
+  "defaults": {
+    "concurrency": 1,
+    "runners": [
+      "axe"
+    ]
+  },
+  "urls": [
+    {
+      "url": "http://localhost:3000/login",
+      "actions": [
+        "set field input[name='user'] to admin",
+        "set field input[name='password'] to admin",
+        "click element button[aria-label='Login button']",
+        "wait for element [aria-label='Skip change password button'] to be visible"
+      ]
+    },
+    {
+      "url": "http://localhost:3000/?orgId=1"
+    },
+    {
+      "url": "http://localhost:3000/d/O6f11TZWk/panel-tests-bar-gauge",
+      "hideElements": ".sidemenu"
+    },
+    {
+      "url": "http://localhost:3000/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings",
+      "rootElement": ".dashboard-settings"
+    },
+    {
+      "url": "http://localhost:3000/?orgId=1&search=open"
+    }
+  ]
+}
