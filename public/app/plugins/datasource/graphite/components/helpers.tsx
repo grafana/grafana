@@ -40,7 +40,6 @@ function createEditableParam(paramDef: ParamDef, value: string | number): Editab
  * Create a list of params that can be edited in the function editor:
  * - required params (defined in func.def) are always displayed even when the value is not specified
  */
-// CODE: TEST
 export function mapFuncInstanceToParams(func: FuncInstance): EditableParam[] {
   let params: EditableParam[] = func.def.params.map((paramDef: ParamDef, index: number) =>
     createEditableParam(paramDef, func.params[index])
