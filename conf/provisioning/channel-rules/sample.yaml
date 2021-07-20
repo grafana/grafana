@@ -1,13 +1,13 @@
-# # config file version
-apiVersion: 0
-
-# # list of channel rules that should be deleted from the database
+## config file version
+#apiVersion: 0
+#
+## list of channel rules that should be deleted from the database
 #deleteChannelRules:
 #   - pattern: stream/*
 #     orgId: 1
-
- # list of channel rules to insert/update depending
- # on what's available in the database
+#
+## list of channel rules to insert/update depending
+## on what's available in the database
 #channelRules:
 #   # <string, required> pattern of the channel rule. Required
 # - pattern: stream/*
