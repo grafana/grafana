@@ -18,7 +18,7 @@ const (
 	ScopeServicesNotifications = "services:notifications"
 )
 
-// GetFixedRoleRegistrations returns the list of fixed roles and their grants to organization roles
+// AddFixedRoleRegistrations registers fixed roles and their grants to organization roles
 // ("Viewer", "Editor", "Admin") or "Grafana Admin" that HTTPServer needs
 func (hs *HTTPServer) AddFixedRoleRegistrations() {
 	registration := accesscontrol.RoleRegistration{
