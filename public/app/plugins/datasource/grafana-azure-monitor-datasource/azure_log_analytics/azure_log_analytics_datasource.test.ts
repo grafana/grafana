@@ -231,7 +231,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         tables: [],
       };
 
-      beforeEach(async () => {
+      it('should substitute macros', async () => {
         ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
           const params = new URLSearchParams(path.split('?')[1]);
           const query = params.get('query');
@@ -240,10 +240,7 @@ describe('AzureLogAnalyticsDatasource', () => {
           );
           return Promise.resolve(queryResponse);
         });
-        ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = 'foo';
-      });
-
-      it('should substitute macros', async () => {
+        ctx.ds.azureLogAnalyticsDatasource.defaultOrFirstWorkspace = 'foo';
         await ctx.ds.metricFindQuery('Perf| where TimeGenerated >= $__timeFrom() and TimeGenerated <= $__timeTo()', {
           range: {
             from: new Date('2021-01-01 00:01:00'),
