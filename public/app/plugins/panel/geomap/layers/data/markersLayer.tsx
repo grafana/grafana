@@ -3,7 +3,7 @@ import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
-import * as style from 'ol/style';
+
 import tinycolor from 'tinycolor2';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 import { ColorDimensionConfig, ScaleDimensionConfig, } from '../../dims/types';
@@ -54,8 +54,14 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   create: (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2): MapLayerHandler => {
     const matchers = getLocationMatchers(options.location);
     const vectorLayer = new layer.Vector({});
+    let legend: React.ReactNode =  null;
     return {
       init: () => vectorLayer,
+      // TODO: going to leave it here in case we want to go down
+      // this path of implementing legend
+      legend: () => {
+        return legend;
+      },
       update: (data: PanelData) => {
         if(!data.series?.length) {
           return; // ignore empty
@@ -93,27 +99,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               geometry: info.points[i],
           });
           // choose from dropdown of regular shapes
-          const shapesArr = shapes(fillColor)
-          if (config.icon) {
-            const shape = shapesArr.find(el => el.label === config.icon)
-            dot.setStyle(shape?.value)
-            // default as circle  
-          } else {
-          // Set the style of each feature dot
-            dot.setStyle(new style.Style({
-              image: new style.Circle({
-                // Stroke determines the outline color of the circle
-                stroke: new style.Stroke({
-                  color: color,
-                }),
-                // Fill determines the color to fill the whole circle
-                fill: new style.Fill({
-                  color: tinycolor(fillColor).toString(),
-                }),
-                radius: radius,
-              })
-            }));
-          }
+          const shapesArr = shapes(color, fillColor, radius);
+          const shape = shapesArr.find(el => el.label === config.shape);
+          dot.setStyle(shape?.value);
           features.push(dot);
         };
 
@@ -162,11 +150,11 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           },
       })
       .addCustomEditor({
-        id: 'icon',
-        path: 'config.icon',
-        name: 'Icon',
+        id: 'shape',
+        path: 'config.shape',
+        name: 'Shape',
         editor: IconPickerEditor,
-        defaultValue: '',
+        defaultValue: 'circle',
       });
   },
   // fill in the default values

@@ -86,7 +86,7 @@ export class GeomapPanel extends Component<Props> {
     }
 
     if (options.controls !== oldOptions.controls) {
-      console.log('Crontrols changed');
+      console.log('Controls changed');
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
     }
 
