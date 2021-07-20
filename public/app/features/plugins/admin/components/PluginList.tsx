@@ -26,7 +26,7 @@ export const PluginList = ({ plugins }: Props) => {
             href={`/plugins/${id}`}
             image={
               <PluginLogo
-                src={plugin.info.logos.large}
+                src={plugin.info.logos.small}
                 className={css`
                   max-height: 64px;
                 `}
