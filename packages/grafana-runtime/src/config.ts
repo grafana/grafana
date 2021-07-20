@@ -87,8 +87,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   caching = {
     enabled: false,
   };
-  defaultBaseLayer: any;
-  disableCustomBaseLayer = false;
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

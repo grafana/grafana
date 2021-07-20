@@ -259,8 +259,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"caching": map[string]bool{
 			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
-		"defaultBaseLayer":       hs.Cfg.DefaultBaseLayer,
-		"disableCustomBaseLayer": hs.Cfg.DisableCustomBaseLayers,
+		"geomapDefaultBaseLayer":       hs.Cfg.DefaultBaseLayer,
+		"geomapDisableCustomBaseLayer": hs.Cfg.DisableCustomBaseLayers,
 	}
 
 	return jsonObj, nil

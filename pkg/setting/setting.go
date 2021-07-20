@@ -972,11 +972,14 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	geomapSection := iniFile.Section("geomap")
-	cfg.DefaultBaseLayer = make(map[string]interface{})
 	basemapJSON := valueAsString(geomapSection, "default_baselayer", "")
-	err = json.Unmarshal([]byte(basemapJSON), &cfg.DefaultBaseLayer)
-	if err != nil {
-		fmt.Printf("Error parsing JSON string - %s", err)
+	if basemapJSON != "" {
+		cfg.DefaultBaseLayer = make(map[string]interface{})
+		err = json.Unmarshal([]byte(basemapJSON), &cfg.DefaultBaseLayer)
+		if err != nil {
+			cfg.Logger.Error("Error parsing JSON string: %s", err)
+			cfg.DefaultBaseLayer = nil
+		}
 	}
 	cfg.DisableCustomBaseLayers = geomapSection.Key("disable_custom_baselayers").MustBool(false)
 
