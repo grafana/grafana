@@ -148,7 +148,7 @@ func (ac *OSSAccessControlService) RegisterFixedRoles() error {
 	var err error
 	ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
 		err = ac.registerFixedRole(registration.Role, registration.Grants)
-		return err != nil
+		return err == nil
 	})
 	return err
 }
