@@ -18,6 +18,8 @@ If you just want to explore your data and do not want to create a dashboard, the
 
 ## Start exploring
 
+> Refer to [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can manage Explore with fine-grained permissions.
+
 In order to access Explore, you must have an editor or an administrator role. Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information on what each role has access to.
 
 To access Explore:
