@@ -15,7 +15,8 @@ import DimensionFields from './DimensionFields';
 import TopField from './TopField';
 import LegendFormatField from './LegendFormatField';
 import { InlineFieldRow } from '@grafana/ui';
-import { toOption } from '../../utils/common';
+import { findOption, toOption } from '../../utils/common';
+import { setMetricNamespace } from './setQueryValue';
 
 interface MetricsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -121,11 +122,33 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
         metricDefinition,
         resourceName
       );
+
+      // if (query.metricNamespace is not in results){
+      //   onChange(setMetricNamespace(query, undefined));
+      // }
+
+      // if (metricNamespaces?.length === 1) {
+      //   console.log('# metric namespace has only one option, so setting that');
+      //   onChange(setMetricNamespace(query, metricNamespaces[0].value));
+      // }
+
       return results.map(toOption);
     },
     setError,
     [subscriptionId, resourceGroup, metricDefinition, resourceName]
   );
+
+  useEffect(() => {
+    if (metricNamespace && !findOption(metricNamespaces ?? [], metricNamespace)) {
+      console.log('# metric namespace does not exist within options, so clearing it');
+      onChange(setMetricNamespace(query, undefined));
+    }
+
+    if (metricNamespaces?.length === 1) {
+      console.log('# metric namespace has only one option, so setting that');
+      onChange(setMetricNamespace(query, metricNamespaces[0].value));
+    }
+  }, [metricNamespaces, metricNamespace, onChange, query]);
 
   const metricNames = useAsyncState(
     async () => {
@@ -147,8 +170,6 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
     setError,
     [subscriptionId, resourceGroup, metricDefinition, resourceName, metricNamespace]
   );
-
-  // console.log({ subscriptions, resourceGroups, resourceTypes, resourceNames, metricNamespaces });
 
   return (
     <div data-testid="azure-monitor-metrics-query-editor">

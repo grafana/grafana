@@ -38,7 +38,7 @@ export function setResourceName(query: AzureMonitorQuery, resourceName: string |
   };
 }
 
-export function setMetricNamespace(query: AzureMonitorQuery, metricNamespace: string): AzureMonitorQuery {
+export function setMetricNamespace(query: AzureMonitorQuery, metricNamespace: string | undefined): AzureMonitorQuery {
   return {
     ...query,
     azureMonitor: {
