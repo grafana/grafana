@@ -9,7 +9,7 @@ import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { useHistory } from '../hooks/useHistory';
-import { Plugin } from '../types';
+import { CatalogPlugin } from '../types';
 import { Page as PluginPage } from '../components/Page';
 import { Page } from 'app/core/components/Page/Page';
 import { usePluginsByFilter } from '../hooks/usePlugins';
@@ -17,7 +17,7 @@ import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 import { getNavModel } from 'app/core/selectors/navModel';
 
-export default function Browse(): ReactElement {
+export default function Browse(): ReactElement | null {
   const location = useLocation();
   const query = locationSearchToObject(location.search);
   const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, 'plugins'));
@@ -26,8 +26,8 @@ export default function Browse(): ReactElement {
   const filterBy = (query.filterBy as string) ?? 'installed';
   const sortBy = (query.sortBy as string) ?? 'name';
 
-  const plugins = usePluginsByFilter(q, filterBy);
-  const sortedPlugins = plugins.items.sort(sorters[sortBy]);
+  const { plugins, isLoading, error } = usePluginsByFilter(q, filterBy);
+  const sortedPlugins = plugins.sort(sorters[sortBy]);
   const history = useHistory();
 
   const onSortByChange = (value: SelectableValue<string>) => {
@@ -42,6 +42,12 @@ export default function Browse(): ReactElement {
     history.push({ query: { filterBy: 'all', q } });
   };
 
+  // How should we handle errors?
+  if (error) {
+    console.error(error.message);
+    return null;
+  }
+
   return (
     <Page navModel={navModel}>
       <Page.Contents>
@@ -49,7 +55,7 @@ export default function Browse(): ReactElement {
           <SearchField value={q} onSearch={onSearch} />
           <HorizontalGroup>
             <div>
-              {plugins.isLoading ? (
+              {isLoading ? (
                 <LoadingPlaceholder
                   className={css`
                     margin-bottom: 0;
@@ -87,17 +93,19 @@ export default function Browse(): ReactElement {
             </Field>
           </HorizontalGroup>
 
-          {!plugins.isLoading && <PluginList plugins={sortedPlugins} />}
+          {!isLoading && <PluginList plugins={sortedPlugins} />}
         </PluginPage>
       </Page.Contents>
     </Page>
   );
 }
 
-const sorters: { [name: string]: (a: Plugin, b: Plugin) => number } = {
-  name: (a: Plugin, b: Plugin) => a.name.localeCompare(b.name),
-  updated: (a: Plugin, b: Plugin) => dateTimeParse(b.updatedAt).valueOf() - dateTimeParse(a.updatedAt).valueOf(),
-  published: (a: Plugin, b: Plugin) => dateTimeParse(b.createdAt).valueOf() - dateTimeParse(a.createdAt).valueOf(),
-  downloads: (a: Plugin, b: Plugin) => b.downloads - a.downloads,
-  popularity: (a: Plugin, b: Plugin) => b.popularity - a.popularity,
+const sorters: { [name: string]: (a: CatalogPlugin, b: CatalogPlugin) => number } = {
+  name: (a: CatalogPlugin, b: CatalogPlugin) => a.name.localeCompare(b.name),
+  updated: (a: CatalogPlugin, b: CatalogPlugin) =>
+    dateTimeParse(b.updatedAt).valueOf() - dateTimeParse(a.updatedAt).valueOf(),
+  published: (a: CatalogPlugin, b: CatalogPlugin) =>
+    dateTimeParse(b.publishedAt).valueOf() - dateTimeParse(a.publishedAt).valueOf(),
+  downloads: (a: CatalogPlugin, b: CatalogPlugin) => b.downloads - a.downloads,
+  popularity: (a: CatalogPlugin, b: CatalogPlugin) => b.popularity - a.popularity,
 };

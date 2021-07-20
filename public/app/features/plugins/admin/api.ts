@@ -1,5 +1,4 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { PluginMeta } from '@grafana/data';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
 import { Plugin, PluginDetails, Org, LocalPlugin } from './types';
 
@@ -43,7 +42,7 @@ async function getPluginVersions(id: string): Promise<any[]> {
   }
 }
 
-async function getInstalledPlugins(): Promise<any> {
+async function getInstalledPlugins(): Promise<LocalPlugin[]> {
   const installed = await getBackendSrv().get(`${API_ROOT}`, { embedded: 0 });
   return installed;
 }
@@ -63,16 +62,6 @@ async function uninstallPlugin(id: string) {
   return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
 }
 
-async function updatePlugin(pluginId: string, data: Partial<PluginMeta>) {
-  const response = await getBackendSrv().datasourceRequest({
-    url: `/api/plugins/${pluginId}/settings`,
-    method: 'POST',
-    data,
-  });
-
-  return response?.data;
-}
-
 export const api = {
   getRemotePlugins,
   getPlugin,
@@ -80,5 +69,4 @@ export const api = {
   getOrg,
   installPlugin,
   uninstallPlugin,
-  updatePlugin,
 };
