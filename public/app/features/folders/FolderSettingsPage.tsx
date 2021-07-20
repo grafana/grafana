@@ -67,13 +67,7 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
     evt.stopPropagation();
     evt.preventDefault();
 
-    let confirmationText = `Do you want to delete this folder and all its dashboards (with their alerts)`;
-    let ngalertText = '';
-    if (config.featureToggles.ngalert) {
-      ngalertText = ' and its Grafana 8 Alerts';
-    }
-    confirmationText += `${ngalertText}?`;
-
+    const confirmationText = `Do you want to delete this folder and all its dashboards${config.featureToggles.ngalert ? ' and its Grafana 8 Alerts' : ''}?`;
     appEvents.publish(
       new ShowConfirmModalEvent({
         title: 'Delete',

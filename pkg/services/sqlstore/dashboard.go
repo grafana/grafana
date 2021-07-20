@@ -474,8 +474,8 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 		}
 
 		if cmd.ForceDeleteFolderRules {
-			// clean ngalert tables
-			ngalertDeletes := []string{
+			// Delete all rules under this folder.
+			deleteNGAlertsByFolder := []string{
 				"DELETE FROM alert_rule WHERE namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
 				"DELETE FROM alert_rule_version WHERE rule_namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
 			}
