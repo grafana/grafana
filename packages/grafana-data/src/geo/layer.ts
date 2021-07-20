@@ -19,7 +19,7 @@ export enum FrameGeometrySourceMode {
   // geojson? geometry text
 }
 
-export enum LookupSourceOptions {
+export enum LookupSourceType {
   File = 'file',
   JSON = 'json',
   JSONP = 'jsonp',
@@ -33,17 +33,18 @@ export enum LookupSourceFiles {
 }
 
 export interface LookupSource {
-  mode: string;
+  // Type of lookup source
+  type: string;
 
-  // Path to lookup mapping
-  lookupSrcPath?: string;
+  // File path
+  filePath?: string;
 
-  // Json endpoint to lookup mapping
-  lookupSrcJson?: string;
+  // Json endpoint
+  jsonEndpoint?: string;
 
-  // Jsonp endpoint to lookup mapping
-  lookupSrcJsonp?: string;
-  lookupSrcCallback?: string;
+  // Jsonp endpoint and callback
+  jsonpEndpoint?: string;
+  jsonpCallback?: string;
 }
 
 /**
@@ -60,12 +61,8 @@ export interface FrameGeometrySource {
   wkt?: string;
   lookup?: string;
 
-  // Lookup Source mappings
-  lookupSrcMode?: string;
-  lookupSrcPath?: string;
-  lookupSrcJson?: string;
-  lookupSrcJsonp?: string;
-  lookupSrcCallback?: string;
+  // Lookup source details
+  lookupSrc?: LookupSource;
 }
 
 /**
