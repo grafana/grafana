@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
@@ -18,18 +19,70 @@ func TestFilterItems(t *testing.T) {
 		out   mathexp.Values
 	}{
 		{
-			name: "filter number items based on name",
+			name: "filter number items based on exact name",
 			fiCmd: FilterItems{
 				InputVar:   inputVar,
-				MetricName: "A1",
-				refID:      "B",
+				MetricName: "idle",
+				refID:      "iNamedItIdle",
 			},
 			in: []mathexp.Value{
-				mathexp.NewNumber("A1", nil).SetValue(ptr.Float64(1)),
-				mathexp.NewNumber("B2", nil).SetValue(ptr.Float64(2)),
+				mathexp.NewNumber("idle", nil).SetValue(ptr.Float64(1)),
+				mathexp.NewNumber("sys", nil).SetValue(ptr.Float64(2)),
 			},
 			out: []mathexp.Value{
-				mathexp.NewNumber("B", nil).SetValue(ptr.Float64(1)),
+				mathexp.NewNumber("iNamedItIdle", nil).SetValue(ptr.Float64(1)),
+			},
+		},
+		{
+			name: "filter number items based on regex name",
+			fiCmd: FilterItems{
+				InputVar:   inputVar,
+				IsRegex:    true,
+				MetricName: "dl",
+				refID:      "iNamedItIdle",
+			},
+			in: []mathexp.Value{
+				mathexp.NewNumber("idle", nil).SetValue(ptr.Float64(1)),
+				mathexp.NewNumber("sys", nil).SetValue(ptr.Float64(2)),
+			},
+			out: []mathexp.Value{
+				mathexp.NewNumber("iNamedItIdle", nil).SetValue(ptr.Float64(1)),
+			},
+		},
+		{
+			name: "filter number items based on label matches only",
+			fiCmd: FilterItems{
+				InputVar:      inputVar,
+				refID:         "iNamedItHostA",
+				LabelMatchers: `metric="idle"`,
+			},
+			in: []mathexp.Value{
+				mathexp.NewNumber("", data.Labels{"host": "a", "metric": "idle"}).SetValue(ptr.Float64(1)),
+				mathexp.NewNumber("", data.Labels{"host": "a", "metric": "sys"}).SetValue(ptr.Float64(2)),
+				mathexp.NewNumber("", data.Labels{"host": "b", "metric": "idle"}).SetValue(ptr.Float64(3)),
+				mathexp.NewNumber("", data.Labels{"host": "b", "metric": "sys"}).SetValue(ptr.Float64(4)),
+			},
+			out: []mathexp.Value{
+				mathexp.NewNumber("iNamedItHostA", data.Labels{"host": "a", "metric": "idle"}).SetValue(ptr.Float64(1)),
+				mathexp.NewNumber("iNamedItHostA", data.Labels{"host": "b", "metric": "idle"}).SetValue(ptr.Float64(3)),
+			},
+		},
+		{
+			name: "filter number items based on label matchers and name",
+			fiCmd: FilterItems{
+				InputVar:      inputVar,
+				refID:         "iNamedIt🦉",
+				LabelMatchers: `metric="idle"`,
+				MetricName:    "🦥",
+			},
+			in: []mathexp.Value{
+				mathexp.NewNumber("🦥", data.Labels{"host": "a", "metric": "idle"}).SetValue(ptr.Float64(1)),
+				mathexp.NewNumber("🦥", data.Labels{"host": "a", "metric": "sys"}).SetValue(ptr.Float64(2)),
+				mathexp.NewNumber("", data.Labels{"host": "b", "metric": "idle"}).SetValue(ptr.Float64(3)),
+				mathexp.NewNumber("", data.Labels{"host": "b", "metric": "sys"}).SetValue(ptr.Float64(4)),
+			},
+			out: []mathexp.Value{
+				mathexp.NewNumber("iNamedIt🦉", data.Labels{"host": "a", "metric": "idle"}).SetValue(ptr.Float64(1)),
 			},
 		},
 	}
