@@ -292,7 +292,7 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	if hs.shouldExclude(fi, plugin) {
+	if shouldExclude(fi) {
 		c.JsonApiErr(403, "Plugin file access forbidden",
 			fmt.Errorf("access is forbidden to executable plugin file %s", pluginFilePath))
 		return
@@ -441,25 +441,11 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	return response.Error(500, "Plugin request failed", err)
 }
 
-func (hs *HTTPServer) shouldExclude(fi os.FileInfo, p *plugins.PluginBase) bool {
+func shouldExclude(fi os.FileInfo) bool {
 	normalizedFilename := strings.ToLower(fi.Name())
 
-	var backendBinary string
-	switch p.Type {
-	case "datasource":
-		ds := hs.PluginManager.GetDataSource(p.Id)
-		backendBinary = ds.Executable
-	case "app":
-		app := hs.PluginManager.GetApp(p.Id)
-		backendBinary = app.Executable
-	case "renderer":
-		r := hs.PluginManager.Renderer()
-		backendBinary = r.Executable
-	}
-
-	isBackendPluginBinary := strings.HasPrefix(normalizedFilename, backendBinary)
 	isWindowsExecutable := strings.HasSuffix(normalizedFilename, ".exe")
 	isScript := strings.HasSuffix(normalizedFilename, ".sh")
 
-	return isBackendPluginBinary || isWindowsExecutable || isScript
+	return isWindowsExecutable || isScript
 }
