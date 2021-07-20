@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -359,6 +360,27 @@ func jwkCachingScenario(t *testing.T, desc string, fn cachingScenarioFunc, cbs .
 
 		runner(t)
 	})
+}
+
+func TestBase64Paddings(t *testing.T) {
+	subject := "foo-subj"
+
+	key := rsaKeys[0]
+
+	scenario(t, "verifies a token with base64 padding (non compliant rfc7515#section-2 but accepted)", func(t *testing.T, sc scenarioContext) {
+		token := sign(t, key, jwt.Claims{
+			Subject: subject,
+		})
+		var tokenParts []string
+		for i, part := range strings.Split(token, ".") {
+			// Create parts with different padding numbers to test multiple cases.
+			tokenParts = append(tokenParts, part+strings.Repeat("=", i))
+		}
+		token = strings.Join(tokenParts, ".")
+		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
+		require.NoError(t, err)
+		assert.Equal(t, verifiedClaims["sub"], subject)
+	}, configurePKIXPublicKeyFile)
 }
 
 func scenario(t *testing.T, desc string, fn scenarioFunc, cbs ...configureFunc) {
