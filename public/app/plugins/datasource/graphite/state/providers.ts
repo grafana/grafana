@@ -84,7 +84,7 @@ export async function getAltSegments(
       return altSegments;
     }
   } catch (err) {
-    await handleMetricsAutoCompleteError(state, err);
+    handleMetricsAutoCompleteError(state, err);
   }
 
   return [];
@@ -110,7 +110,7 @@ export async function getTags(
     altTags.splice(0, 0, state.removeTagValue);
     return mapToDropdownOptions(altTags);
   } catch (err) {
-    await handleTagsAutoCompleteError(state, err);
+    handleTagsAutoCompleteError(state, err);
   }
 
   return [];
@@ -137,7 +137,7 @@ export async function getTagsAsSegments(
     });
   } catch (err) {
     tagsAsSegments = [];
-    await handleTagsAutoCompleteError(state, err);
+    handleTagsAutoCompleteError(state, err);
   }
 
   return tagsAsSegments;
