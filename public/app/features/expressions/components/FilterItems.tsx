@@ -10,7 +10,7 @@ interface Props {
   onChange: (query: ExpressionQuery) => void;
 }
 
-export const SelectMetric: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
+export const FilterItems: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
   const onRefIdChange = (value: SelectableValue<string>) => {
     onChange({ ...query, expression: value.value });
   };

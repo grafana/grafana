@@ -6,7 +6,7 @@ import { Resample } from './components/Resample';
 import { Reduce } from './components/Reduce';
 import { Math } from './components/Math';
 import { ClassicConditions } from './components/ClassicConditions';
-import { SelectMetric } from './components/SelectMetric';
+import { FilterItems } from './components/FilterItems';
 import { getDefaults } from './utils/expressionTypes';
 import { ExpressionQuery, ExpressionQueryType, gelTypes } from './types';
 
@@ -37,8 +37,8 @@ export class ExpressionQueryEditor extends PureComponent<Props> {
       case ExpressionQueryType.classic:
         return <ClassicConditions onChange={onChange} query={query} refIds={refIds} />;
 
-      case ExpressionQueryType.selectMetric:
-        return <SelectMetric onChange={onChange} query={query} refIds={refIds} labelWidth={labelWidth} />;
+      case ExpressionQueryType.filterItems:
+        return <FilterItems onChange={onChange} query={query} refIds={refIds} labelWidth={labelWidth} />;
     }
   }
 

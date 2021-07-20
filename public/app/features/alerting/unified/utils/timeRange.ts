@@ -32,7 +32,7 @@ const getReferencedIds = (model: ExpressionQuery, queries: AlertQuery[]): string
     case ExpressionQueryType.resample:
     case ExpressionQueryType.reduce:
       return getReferencedIdsForReduce(model);
-    case ExpressionQueryType.selectMetric:
+    case ExpressionQueryType.filterItems:
       return getReferencedIdsForReduce(model);
   }
 };

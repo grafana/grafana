@@ -234,7 +234,7 @@ func (gr *ResampleCommand) Execute(ctx context.Context, vars mathexp.Vars) (math
 // All labeled items matching the metric name are returned, so this for queries that not only return multiple
 // items that are differentiated not only by label name but also by metric name.
 // If IsRegex is true, then Metric name must be a valid regular expression.
-type SelectMetricCommand struct {
+type FilterItems struct {
 	refID string
 
 	InputVar string
@@ -249,8 +249,8 @@ type SelectMetricCommand struct {
 }
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
-func UnmarshalSelectMetricCommand(rn *rawNode) (*SelectMetricCommand, error) {
-	smc := &SelectMetricCommand{
+func UnmarshalFilterItemsCommand(rn *rawNode) (*FilterItems, error) {
+	smc := &FilterItems{
 		refID: rn.RefID,
 	}
 
@@ -314,7 +314,7 @@ func UnmarshalSelectMetricCommand(rn *rawNode) (*SelectMetricCommand, error) {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (s *SelectMetricCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (s *FilterItems) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
 	newRes := mathexp.Results{}
 	inputData := vars[s.InputVar]
 
@@ -383,7 +383,7 @@ func (s *SelectMetricCommand) Execute(ctx context.Context, vars mathexp.Vars) (m
 
 // NeedsVars returns the variable names (refIds) that are dependencies
 // to execute the command and allows the command to fulfill the Command interface.
-func (s *SelectMetricCommand) NeedsVars() []string {
+func (s *FilterItems) NeedsVars() []string {
 	return []string{s.InputVar}
 }
 
@@ -401,8 +401,8 @@ const (
 	TypeResample
 	// TypeClassicConditions is the CMDType for the classic condition operation.
 	TypeClassicConditions
-	// TypeSelectMetric is the CMDType for the select metric operation.
-	TypeSelectMetric
+	// TypeFilterItems is the CMDType for the select metric operation.
+	TypeFilterItems
 )
 
 func (gt CommandType) String() string {
@@ -415,8 +415,8 @@ func (gt CommandType) String() string {
 		return "resample"
 	case TypeClassicConditions:
 		return "classic_conditions"
-	case TypeSelectMetric:
-		return "select_metric"
+	case TypeFilterItems:
+		return "filter_items"
 	default:
 		return "unknown"
 	}
@@ -433,8 +433,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeResample, nil
 	case "classic_conditions":
 		return TypeClassicConditions, nil
-	case "select_metric":
-		return TypeSelectMetric, nil
+	case "filter_items":
+		return TypeFilterItems, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}

@@ -6,7 +6,7 @@ export enum ExpressionQueryType {
   reduce = 'reduce',
   resample = 'resample',
   classic = 'classic_conditions',
-  selectMetric = 'select_metric',
+  filterItems = 'filter_items',
 }
 
 export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
@@ -14,7 +14,7 @@ export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
   { value: ExpressionQueryType.reduce, label: 'Reduce' },
   { value: ExpressionQueryType.resample, label: 'Resample' },
   { value: ExpressionQueryType.classic, label: 'Classic condition' },
-  { value: ExpressionQueryType.selectMetric, label: 'Select Metric' },
+  { value: ExpressionQueryType.filterItems, label: 'Filter Items' },
 ];
 
 export const reducerTypes: Array<SelectableValue<string>> = [
