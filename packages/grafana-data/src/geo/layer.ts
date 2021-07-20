@@ -41,7 +41,7 @@ export interface FrameGeometrySource {
   lookup?: string;
 
   // Path to a mappings file
-  lookupSrc: string;
+  lookupSrc?: string;
 }
 
 /**
