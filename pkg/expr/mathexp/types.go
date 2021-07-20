@@ -97,9 +97,10 @@ func (n Number) SetLabels(ls data.Labels) { n.Frame.Fields[0].Labels = ls }
 // AsDataFrame returns the underlying *data.Frame.
 func (n Number) AsDataFrame() *data.Frame { return n.Frame }
 
-// SetValue sets the value of the Number to float64 pointer f
-func (n Number) SetValue(f *float64) {
+// SetValue sets the value of the Number to float64 pointer f and also returns n for chaining.
+func (n Number) SetValue(f *float64) Number {
 	n.Frame.Set(0, 0, f)
+	return n
 }
 
 // GetFloat64Value retrieves the single scalar value from the data

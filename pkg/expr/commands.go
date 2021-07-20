@@ -250,7 +250,7 @@ type FilterItems struct {
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
 func UnmarshalFilterItemsCommand(rn *rawNode) (*FilterItems, error) {
-	smc := &FilterItems{
+	fi := &FilterItems{
 		refID: rn.RefID,
 	}
 
@@ -262,72 +262,77 @@ func UnmarshalFilterItemsCommand(rn *rawNode) (*FilterItems, error) {
 	if !ok {
 		return nil, fmt.Errorf("expected select metric input variable to be type string, but got type %T for refId %v", inputVar, rn.RefID)
 	}
-	smc.InputVar = strings.TrimPrefix(inputVar, "$")
-
-	var gotMetric, gotMatcher bool
+	fi.InputVar = strings.TrimPrefix(inputVar, "$")
 
 	rawMetricName, ok := rn.Query["metricName"]
 	if ok {
-		smc.MetricName, ok = rawMetricName.(string)
+		fi.MetricName, ok = rawMetricName.(string)
 		if !ok {
 			return nil, fmt.Errorf("expected metric name in select metric to be a string, but got %T for refId %v", rawMetricName, rn.RefID)
 		}
-		gotMetric = smc.MetricName != ""
 	}
 
 	rawLabelMatchers, ok := rn.Query["labelMatchers"]
 	if ok {
-		labelMatchersString, ok := rawLabelMatchers.(string)
+		fi.LabelMatchers, ok = rawLabelMatchers.(string)
 		if !ok {
 			return nil, fmt.Errorf("expected labelMatchers in select metric to be a string, but got %T for refId %v", rawLabelMatchers, rn.RefID)
 		}
-		var err error
-		if labelMatchersString != "" {
-			smc.matchers, err = parser.ParseMetricSelector(fmt.Sprintf("{%v}", labelMatchersString))
-			if err != nil {
-				return nil, fmt.Errorf("invalid label matching string in select metric for refId %v: %w", rn.RefID, err)
-			}
-			gotMatcher = labelMatchersString != ""
-		}
 	}
 
-	if !gotMatcher && !gotMetric {
+	if fi.LabelMatchers == "" && fi.MetricName == "" {
 		return nil, fmt.Errorf("no metric name or labels matcher specificed for select metric in refId %v", rn.RefID)
 	}
 
 	rawIsRegex, ok := rn.Query["isRegex"]
 	if ok {
-		smc.IsRegex, ok = rawIsRegex.(bool)
+		fi.IsRegex, ok = rawIsRegex.(bool)
 		if !ok {
 			return nil, fmt.Errorf("expected isRegex in select metric to be a bool, but got %T for refId %v", rawMetricName, rn.RefID)
 		}
-
-		var err error
-		smc.re, err = regexp.Compile(smc.MetricName)
-		if err != nil {
-			return nil, fmt.Errorf("invalid regular expression in select metric for refId %v: %w", rn.RefID, err)
-		}
 	}
 
-	return smc, nil
+	if err := fi.buildFilters(); err != nil {
+		return nil, err
+	}
+
+	return fi, nil
+}
+
+func (fi *FilterItems) buildFilters() error {
+	if fi.LabelMatchers != "" {
+		var err error
+		fi.matchers, err = parser.ParseMetricSelector(fmt.Sprintf("{%v}", fi.LabelMatchers))
+		if err != nil {
+			return fmt.Errorf("invalid label matching string in select metric for refId %v: %w", fi.refID, err)
+		}
+	}
+	if fi.IsRegex {
+		var err error
+		fi.re, err = regexp.Compile(fi.MetricName)
+		if err != nil {
+			return fmt.Errorf("invalid regular expression in select metric for refId %v: %w", fi.refID, err)
+		}
+	}
+	return nil
 }
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (s *FilterItems) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (fi *FilterItems) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
 	newRes := mathexp.Results{}
-	inputData := vars[s.InputVar]
+	inputData := vars[fi.InputVar]
 
 	appendValue := func(v mathexp.Value) {
 		// new series/numbers need to be created for selection, but in this
 		// filtering case we duplicates pointers
 		switch val := v.(type) {
 		case mathexp.Number:
-			num := mathexp.NewNumber(s.refID, val.GetLabels())
+			num := mathexp.NewNumber(fi.refID, val.GetLabels())
 			num.SetValue(val.GetFloat64Value())
 			newRes.Values = append(newRes.Values, num)
 		case mathexp.Series:
-			s := mathexp.NewSeries(s.refID, val.GetLabels(), val.Len())
+			s := mathexp.NewSeries(fi.refID, val.GetLabels(), val.Len())
 			// Note: sharing a reference to a Field's values between fields
 			// is no possible since that slice is not exposed in data.Field,
 			// so must do a new slices.
@@ -343,21 +348,21 @@ func (s *FilterItems) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.R
 		var matched bool
 		pl := labels.FromMap(dl)
 		if metricName != "" {
-			if s.IsRegex {
-				matched = s.re.MatchString(metricName)
+			if fi.IsRegex {
+				matched = fi.re.MatchString(metricName)
 			} else {
-				matched = metricName == s.MetricName
+				matched = metricName == fi.MetricName
 			}
 		}
-		if len(s.matchers) > 0 {
-			if labels.Selector(s.matchers).Matches(pl) {
-				if s.MetricName != "" && !matched {
+		if len(fi.matchers) > 0 {
+			if labels.Selector(fi.matchers).Matches(pl) {
+				if fi.MetricName != "" && !matched {
 					matched = false
 				} else {
 					matched = true
 				}
 			} else {
-				if s.MetricName != "" && matched {
+				if fi.MetricName != "" && matched {
 					matched = false
 				}
 			}
@@ -375,7 +380,7 @@ func (s *FilterItems) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.R
 		case mathexp.Number:
 			ifMatchAppend(v.GetName(), v.GetLabels(), v)
 		default:
-			return newRes, fmt.Errorf("metric select input must be type Series or Number, but got type %s in refId %v", v.Type(), s.refID)
+			return newRes, fmt.Errorf("metric select input must be type Series or Number, but got type %s in refId %v", v.Type(), fi.refID)
 		}
 	}
 	return newRes, nil
@@ -383,8 +388,8 @@ func (s *FilterItems) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.R
 
 // NeedsVars returns the variable names (refIds) that are dependencies
 // to execute the command and allows the command to fulfill the Command interface.
-func (s *FilterItems) NeedsVars() []string {
-	return []string{s.InputVar}
+func (fi *FilterItems) NeedsVars() []string {
+	return []string{fi.InputVar}
 }
 
 // CommandType is the type of the expression command.
