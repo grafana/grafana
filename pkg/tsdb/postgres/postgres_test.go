@@ -152,7 +152,7 @@ func TestGenerateConnectionString(t *testing.T) {
 // devenv/README.md for setup instructions.
 func TestPostgres(t *testing.T) {
 	// change to true to run the PostgreSQL tests
-	const runPostgresTests = false
+	const runPostgresTests = true
 
 	if !(sqlstore.IsTestDbPostgres() || runPostgresTests) {
 		t.Skip()
@@ -487,7 +487,6 @@ func TestPostgres(t *testing.T) {
 	})
 
 	t.Run("Given a table with one data point", func(t *testing.T) {
-
 		type metric struct {
 			Time  time.Time
 			Value int64
@@ -504,7 +503,7 @@ func TestPostgres(t *testing.T) {
 		_, err = sess.InsertMulti(series)
 		require.NoError(t, err)
 
-		t.Run("querying fwith time group with default value", func(t *testing.T) {
+		t.Run("querying with time group with default value", func(t *testing.T) {
 			query := plugins.DataQuery{
 				Queries: []plugins.DataSubQuery{
 					{
@@ -528,7 +527,14 @@ func TestPostgres(t *testing.T) {
 
 			frames, _ := queryResult.Dataframes.Decoded()
 			require.Equal(t, 1, len(frames))
+			require.Equal(t, "Time", frames[0].Fields[0].Name)
+			require.Equal(t, "n", frames[0].Fields[1].Name)
+			require.Equal(t, float64(0), *frames[0].Fields[1].At(0).(*float64))
+			require.Equal(t, float64(0), *frames[0].Fields[1].At(1).(*float64))
+			require.Equal(t, float64(42), *frames[0].Fields[1].At(2).(*float64))
+			require.Equal(t, float64(0), *frames[0].Fields[1].At(3).(*float64))
 			require.Equal(t, float64(0), *frames[0].Fields[1].At(4).(*float64))
+			require.Equal(t, float64(0), *frames[0].Fields[1].At(5).(*float64))
 		})
 	})
 
