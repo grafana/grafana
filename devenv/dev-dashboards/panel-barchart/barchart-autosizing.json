@@ -450,7 +450,7 @@
       },
       "targets": [
         {
-          "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, 5\nLondon, 10, 1\nLong value, 15,10",
+          "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, -5\nLondon, 10, 1\nLong value, 15,10",
           "refId": "A",
           "scenarioId": "csv_content"
         }
@@ -551,5 +551,5 @@
   "timezone": "",
   "title": "BarChart - Panel Tests - Value sizing",
   "uid": "WFlOM-jM1",
-  "version": 4
+  "version": 9
 }

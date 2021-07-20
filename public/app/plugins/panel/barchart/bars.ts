@@ -14,10 +14,15 @@ const VALUE_MAX_FONT_SIZE = 30;
 const BAR_FONT_SIZE_RATIO = 0.65;
 // distance between label and a bar in % of bar width
 const LABEL_OFFSET_FACTOR_VT = 0.1;
-const LABEL_OFFSET_FACTOR_HZ = 0.2;
+const LABEL_OFFSET_FACTOR_HZ = 0.15;
 // max distance
 const LABEL_OFFSET_MAX_VT = 5;
-const LABEL_OFFSET_MAX_HZ = 15;
+const LABEL_OFFSET_MAX_HZ = 10;
+
+// text baseline middle runs through the middle of lowercase letters
+// since bar values are numbers and uppercase-like, we want the middle of uppercase
+// this is a cheap fudge factor that skips expensive and inconsistent cross-browser measuring
+const MIDDLE_BASELINE_SHIFT = 0.1;
 
 /**
  * @internal
@@ -169,14 +174,16 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
     if (hasAutoValueSize) {
       for (let i = 0; i < barRects.length; i++) {
-        fontSize = Math.min(
-          fontSize,
-          VALUE_MAX_FONT_SIZE,
-          calculateFontSize(
-            texts[i],
-            hSpace * (isXHorizontal ? BAR_FONT_SIZE_RATIO : 1) - (isXHorizontal ? 0 : labelOffset),
-            vSpace * (isXHorizontal ? 1 : BAR_FONT_SIZE_RATIO) - (isXHorizontal ? labelOffset : 0),
-            1
+        fontSize = Math.round(
+          Math.min(
+            fontSize,
+            VALUE_MAX_FONT_SIZE,
+            calculateFontSize(
+              texts[i],
+              hSpace * (isXHorizontal ? BAR_FONT_SIZE_RATIO : 1) - (isXHorizontal ? 0 : labelOffset),
+              vSpace * (isXHorizontal ? 1 : BAR_FONT_SIZE_RATIO) - (isXHorizontal ? labelOffset : 0),
+              1
+            )
           )
         );
 
@@ -189,6 +196,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     u.ctx.fillStyle = theme.colors.text.primary;
     u.ctx.font = `${fontSize}px ${theme.typography.fontFamily}`;
 
+    let middleShift = isXHorizontal ? 0 : -Math.round(MIDDLE_BASELINE_SHIFT * fontSize);
+
     let curAlign: CanvasTextAlign, curBaseline: CanvasTextBaseline;
 
     barRects.forEach((r, i) => {
@@ -197,7 +206,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       if (value != null) {
         let align: CanvasTextAlign = isXHorizontal ? 'center' : value < 0 ? 'right' : 'left';
-        let baseline: CanvasTextBaseline = isXHorizontal ? (value < 0 ? 'top' : 'bottom') : 'middle';
+        let baseline: CanvasTextBaseline = isXHorizontal ? (value < 0 ? 'top' : 'alphabetic') : 'middle';
 
         if (align !== curAlign) {
           u.ctx.textAlign = curAlign = align;
@@ -210,7 +219,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         u.ctx.fillText(
           text,
           u.bbox.left + (isXHorizontal ? r.x + r.w / 2 : value < 0 ? r.x - labelOffset : r.x + r.w + labelOffset),
-          u.bbox.top + (isXHorizontal ? (value < 0 ? r.y + r.h + labelOffset : r.y - labelOffset) : r.y + r.h / 2)
+          u.bbox.top +
+            (isXHorizontal ? (value < 0 ? r.y + r.h + labelOffset : r.y - labelOffset) : r.y + r.h / 2 - middleShift)
         );
       }
     });
