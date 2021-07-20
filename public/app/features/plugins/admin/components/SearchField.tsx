@@ -10,6 +10,8 @@ interface Props {
   onSearch: (value: string) => void;
 }
 
+// useDebounce has a bug which causes it to fire on first render. This wrapper prevents that.
+// https://github.com/streamich/react-use/issues/759
 const useDebounceWithoutFirstRender = (callBack: Function, delay?: number, deps: React.DependencyList = []) => {
   const isFirstRender = useRef(true);
   const debounceDeps = [...deps, isFirstRender];
