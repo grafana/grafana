@@ -5,6 +5,7 @@ import { dataFrameToPoints, getLocationFields, getLocationMatchers } from './loc
 const longitude = [0, -74.1];
 const latitude = [0, 40.7];
 const geohash = ['9q94r', 'dr5rs'];
+const lookup = ['US', 'AO'];
 const names = ['A', 'B'];
 
 describe('handle location parsing', () => {
@@ -59,6 +60,31 @@ describe('handle location parsing', () => {
         Array [
           -74.1,
           40.69999999999999,
+        ],
+      ]
+    `);
+  });
+
+  it('auto should find lookup fields', () => {
+    const frame = toDataFrame({
+      name: 'simple',
+      fields: [
+        { name: 'name', type: FieldType.string, values: names },
+        { name: 'lookup', type: FieldType.number, values: lookup },
+      ],
+    });
+
+    const matchers = getLocationMatchers();
+    const info = dataFrameToPoints(frame, matchers);
+    expect(info.points.map((p) => toLonLat(p.getCoordinates()))).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          -95.712891,
+          37.09023999999998,
+        ],
+        Array [
+          17.873887,
+          -11.202691999999999,
         ],
       ]
     `);
