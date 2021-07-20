@@ -28,7 +28,7 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 		res = apimodels.GettableAlerts{}
 	)
 
-	if !am.initialised {
+	if !am.Ready() {
 		return res, ErrGetAlertsUnavailable
 	}
 
