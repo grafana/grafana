@@ -42,7 +42,7 @@ interface RichHistoryState {
   retentionPeriod: number;
   starredTabAsFirstTab: boolean;
   activeDatasourceOnly: boolean;
-  datasourceFilters: SelectableValue[] | null;
+  datasourceFilters: SelectableValue[];
 }
 
 class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistoryState> {
@@ -50,7 +50,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     super(props);
     this.state = {
       sortOrder: SortOrder.Descending,
-      datasourceFilters: store.getObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, null),
+      datasourceFilters: store.getObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, []),
       retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7),
       starredTabAsFirstTab: store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false),
       activeDatasourceOnly: store.getBool(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, true),
@@ -80,7 +80,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     store.set(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, activeDatasourceOnly);
   };
 
-  onSelectDatasourceFilters = (value: SelectableValue[] | null) => {
+  onSelectDatasourceFilters = (value: SelectableValue[]) => {
     try {
       store.setObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, value);
     } catch (error) {

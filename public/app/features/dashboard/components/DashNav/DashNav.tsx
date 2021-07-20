@@ -114,9 +114,10 @@ class DashNav extends PureComponent<Props> {
     }
 
     if (canStar) {
+      let desc = isStarred ? 'Unmark as favorite' : 'Mark as favorite';
       buttons.push(
         <DashNavButton
-          tooltip="Mark as favorite"
+          tooltip={desc}
           icon={isStarred ? 'favorite' : 'star'}
           iconType={isStarred ? 'mono' : 'default'}
           iconSize="lg"
@@ -127,11 +128,12 @@ class DashNav extends PureComponent<Props> {
     }
 
     if (canShare) {
+      let desc = 'Share dashboard or panel';
       buttons.push(
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
             <DashNavButton
-              tooltip="Share dashboard or panel"
+              tooltip={desc}
               icon="share-alt"
               iconSize="lg"
               onClick={() => {

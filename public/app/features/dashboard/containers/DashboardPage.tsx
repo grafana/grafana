@@ -317,7 +317,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return (
       <div className={containerClassNames}>
         {kioskMode !== KioskMode.Full && (
-          <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
+          <header aria-label={selectors.pages.Dashboard.DashNav.nav}>
             <DashNav
               dashboard={dashboard}
               title={dashboard.title}
@@ -327,7 +327,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
               kioskMode={kioskMode}
               hideTimePicker={dashboard.timepicker.hidden}
             />
-          </div>
+          </header>
         )}
 
         <DashboardPrompt dashboard={dashboard} />
@@ -343,9 +343,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             <div className={styles.dashboardContent}>
               {initError && <DashboardFailed />}
               {!editPanel && kioskMode === KioskMode.Off && (
-                <div aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+                <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
                   <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
-                </div>
+                </section>
               )}
 
               <DashboardGrid
