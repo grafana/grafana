@@ -65,7 +65,10 @@ export const usePluginsByFilter = (searchBy: string, filterBy: string): Filtered
     () =>
       plugins.reduce<[CatalogPlugin[], CatalogPlugin[]]>(
         (result, plugin) => {
-          result[plugin.isInstalled ? 0 : 1].push(plugin);
+          if (plugin.isInstalled) {
+            result[0].push(plugin);
+          }
+          result[1].push(plugin);
           return result;
         },
         [[], []]
