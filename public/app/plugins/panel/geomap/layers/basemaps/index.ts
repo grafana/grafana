@@ -12,7 +12,6 @@ export const defaultGrafanaThemedMap = {
 
 /**
  * Registry for layer handlers
- * Remove all other base layers if BaseLayerDisabled is set to true in defaults.ini
  */
 export const basemapLayers = [
   defaultGrafanaThemedMap,

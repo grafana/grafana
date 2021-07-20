@@ -23,7 +23,10 @@ export const defaultBaseLayer: MapLayerRegistryItem<any> = {
 
       // If default base layer is set, create the default base map with its corresponding config
       if (config.geomapDefaultBaseLayer) {
-        defaultMap = baseMapOptions.find((baseLayer) => baseLayer.id === config.geomapDefaultBaseLayer.type)!;
+        defaultMap = baseMapOptions.find((baseLayer) => baseLayer.id === config.geomapDefaultBaseLayer.type);
+        if (defaultMap === undefined) {
+          throw new Error('Invalid default base map');
+        }
       } else {
         defaultMap = carto;
       }
