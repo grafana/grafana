@@ -47,9 +47,8 @@ type RuleStore interface {
 	GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error
 	GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error
-	GetNamespaces(int64, *models.SignedInUser) (map[string]string, error)
+	GetNamespaces(int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(string, int64, *models.SignedInUser, bool) (*models.Folder, error)
-	GetNamespaceByUID(string, int64, *models.SignedInUser) (*models.Folder, error)
 	GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules([]UpsertRule) error
 	UpdateRuleGroup(UpdateRuleGroupCmd) error
@@ -373,9 +372,9 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 }
 
 // GetNamespaces returns the folders that are visible to the user
-func (st DBstore) GetNamespaces(orgID int64, user *models.SignedInUser) (map[string]string, error) {
+func (st DBstore) GetNamespaces(orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
-	namespaceMap := make(map[string]string)
+	namespaceMap := make(map[string]*models.Folder)
 	var page int64 = 1
 	for {
 		// if limit is negative; it fetches at most 1000
@@ -389,7 +388,7 @@ func (st DBstore) GetNamespaces(orgID int64, user *models.SignedInUser) (map[str
 		}
 
 		for _, f := range folders {
-			namespaceMap[f.Uid] = f.Title
+			namespaceMap[f.Uid] = f
 		}
 		page += 1
 	}
@@ -412,17 +411,6 @@ func (st DBstore) GetNamespaceByTitle(namespace string, orgID int64, user *model
 			}
 			return nil, ngmodels.ErrCannotEditNamespace
 		}
-	}
-
-	return folder, nil
-}
-
-// GetNamespaceByUID is a handler for retrieving namespace by its UID.
-func (st DBstore) GetNamespaceByUID(UID string, orgID int64, user *models.SignedInUser) (*models.Folder, error) {
-	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
-	folder, err := s.GetFolderByUID(UID)
-	if err != nil {
-		return nil, err
 	}
 
 	return folder, nil

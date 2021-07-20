@@ -167,20 +167,12 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 
 	configs := make(map[string]map[string]apimodels.GettableRuleGroupConfig)
 	for _, r := range q.Result {
-		namespace, ok := namespaceMap[r.NamespaceUID]
+		folder, ok := namespaceMap[r.NamespaceUID]
 		if !ok {
 			// this should never happen
 			continue
 		}
-		folder, err := srv.store.GetNamespaceByUID(r.NamespaceUID, c.SignedInUser.OrgId, c.SignedInUser)
-		if err != nil {
-			if errors.Is(err, models.ErrFolderAccessDenied) {
-				// do not fail if used does not have access to a specific namespace
-				// just do not include it in the response
-				continue
-			}
-			return toNamespaceErrorResponse(err)
-		}
+		namespace := folder.Title
 		_, ok = configs[namespace]
 		if !ok {
 			ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
