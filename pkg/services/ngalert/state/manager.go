@@ -281,8 +281,7 @@ func (st *Manager) staleResultsHandler(alertRule *ngModels.AlertRule, states map
 				st.log.Error("unable to get labelsHash", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID)
 			}
 
-			err = st.instanceStore.DeleteAlertInstance(s.OrgID, s.AlertRuleUID, labelsHash)
-			if err != nil {
+			if err = st.instanceStore.DeleteAlertInstance(s.OrgID, s.AlertRuleUID, labelsHash); err != nil {
 				st.log.Error("unable to delete stale instance from database", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			}
 		}
