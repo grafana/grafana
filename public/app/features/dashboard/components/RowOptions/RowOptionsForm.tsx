@@ -3,10 +3,10 @@ import { Button, Field, Form, Modal, Input } from '@grafana/ui';
 
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
-export type OnRowOptionsUpdate = (title: string | null, repeat: string | null | undefined) => void;
+export type OnRowOptionsUpdate = (title: string, repeat?: string | null) => void;
 
 export interface Props {
-  title: string | null;
+  title: string;
   repeat?: string | null;
   onUpdate: OnRowOptionsUpdate;
   onCancel: () => void;
@@ -14,12 +14,12 @@ export interface Props {
 
 export const RowOptionsForm: FC<Props> = ({ repeat, title, onUpdate, onCancel }) => {
   const [newRepeat, setNewRepeat] = useState<string | null | undefined>(repeat);
-  const onChangeRepeat = useCallback((name: string) => setNewRepeat(name), [setNewRepeat]);
+  const onChangeRepeat = useCallback((name?: string | null) => setNewRepeat(name), [setNewRepeat]);
 
   return (
     <Form
       defaultValues={{ title }}
-      onSubmit={(formData: { title: string | null }) => {
+      onSubmit={(formData: { title: string }) => {
         onUpdate(formData.title, newRepeat);
       }}
     >

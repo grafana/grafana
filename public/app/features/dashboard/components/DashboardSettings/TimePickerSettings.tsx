@@ -43,7 +43,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
     this.props.onHideTimePickerChange(!this.props.timePickerHidden);
   };
 
-  onTimeZoneChange = (timeZone: string) => {
+  onTimeZoneChange = (timeZone?: string) => {
     if (typeof timeZone !== 'string') {
       return;
     }

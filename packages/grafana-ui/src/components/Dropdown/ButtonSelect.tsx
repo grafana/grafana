@@ -22,7 +22,7 @@ export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
  * @internal
  * A temporary component until we have a proper dropdown component
  */
-export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
+const ButtonSelectComponent = <T,>(props: Props<T>) => {
   const { className, options, value, onChange, narrow, variant, ...restProps } = props;
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const styles = useStyles2(getStyles);
@@ -73,9 +73,11 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
       )}
     </ButtonGroup>
   );
-});
+};
 
-ButtonSelect.displayName = 'ButtonSelect';
+ButtonSelectComponent.displayName = 'ButtonSelect';
+
+export const ButtonSelect = React.memo(ButtonSelectComponent) as typeof ButtonSelectComponent;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

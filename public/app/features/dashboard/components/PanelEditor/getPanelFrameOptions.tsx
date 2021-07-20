@@ -110,7 +110,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
               return (
                 <RepeatRowSelect
                   repeat={panel.repeat}
-                  onChange={(value: string | null) => {
+                  onChange={(value?: string | null) => {
                     onPanelConfigChange('repeat', value);
                   }}
                 />

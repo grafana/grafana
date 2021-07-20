@@ -19,7 +19,7 @@ const matchersToArrayFieldMatchers = (matchers: Record<string, string> | undefin
         isEqual: true,
       },
     ],
-    []
+    [] as Matcher[]
   );
 
 const intervalToValueAndType = (strValue: string | undefined): [string, string] => {
