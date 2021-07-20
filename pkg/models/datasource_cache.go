@@ -11,6 +11,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 func (ds *DataSource) getTimeout() time.Duration {
@@ -118,6 +119,19 @@ func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 		opts.BasicAuth = &sdkhttpclient.BasicAuthOptions{
 			User:     ds.User,
 			Password: ds.DecryptedPassword(),
+		}
+	}
+
+	if ds.JsonData != nil && ds.JsonData.Get("azureAuth").MustBool() {
+		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), ds.DecryptedValues())
+		if err == nil {
+			// Enable Azure authentication only when credentials are not invalid
+			// Absence of credentials is considered as default (valid) credentials (e.g. managed identity)
+			opts.CustomOptions["azureAuth"] = true
+			opts.CustomOptions["azureEndpointResourceId"] = ds.JsonData.Get("azureEndpointResourceId").MustString()
+			if credentials != nil {
+				opts.CustomOptions["azureCredentials"] = credentials
+			}
 		}
 	}
 
