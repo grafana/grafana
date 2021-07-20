@@ -77,7 +77,7 @@ export const Label = forwardRef<HTMLElement, Props>(
         )}
         {...rest}
       >
-        {typeof highlightParts !== 'undefined' ? (
+        {highlightParts !== undefined ? (
           <PartialHighlighter text={text} highlightClassName={styles.matchHighLight} highlightParts={highlightParts} />
         ) : (
           <Highlighter

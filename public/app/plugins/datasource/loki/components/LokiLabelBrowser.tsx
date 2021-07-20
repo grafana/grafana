@@ -418,10 +418,12 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       });
     } else {
       // Clear highlight parts when searchTerm is cleared
-      selectedLabels = this.state.labels.map((label) => ({
-        ...label,
-        values: label?.values ? label.values.map((value) => ({ ...value, highlightParts: undefined })) : [],
-      }));
+      selectedLabels = this.state.labels
+        .filter((label) => label.selected && label.values)
+        .map((label) => ({
+          ...label,
+          values: label?.values ? label.values.map((value) => ({ ...value, highlightParts: undefined })) : [],
+        }));
     }
 
     return (

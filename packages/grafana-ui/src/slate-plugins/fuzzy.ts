@@ -24,6 +24,9 @@ type FuzzyMatch = {
 export function fuzzyMatch(stack: string, needle: string): FuzzyMatch {
   let distance = 0,
     searchIndex = stack.indexOf(needle);
+  // Remove whitespace from needle as a temporary solution to treat separate string
+  // queries as 'AND'
+  needle = needle.replace(/\s/g, '');
 
   const ranges: HighlightPart[] = [];
 
