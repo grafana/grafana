@@ -1,4 +1,4 @@
-import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, GrafanaTheme2 } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, GrafanaTheme2, FrameGeometrySourceMode } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
@@ -34,6 +34,15 @@ const defaultOptions: MarkersConfig = {
 
 export const MARKERS_LAYER_ID = "markers";
 
+// Used by default when nothing is configured
+export const defaultMarkersConfig:MapLayerOptions<MarkersConfig> = {
+  type: MARKERS_LAYER_ID,
+  config: defaultOptions,
+  location: {
+    mode: FrameGeometrySourceMode.Auto,
+  }
+}
+
 /**
  * Map layer configuration for circle overlay
  */
@@ -63,7 +72,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         if(!data.series?.length) {
           return; // ignore empty
         }
-
         const frame = data.series[0];
         const info = dataFrameToPoints(frame, matchers);
         if(info.warning) {
@@ -153,6 +161,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           },
         });
   },
+
   // fill in the default values
   defaultOptions,
 };

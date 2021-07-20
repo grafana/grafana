@@ -126,10 +126,9 @@ export function fillOptionsPaneItems(
         title: pluginOption.name,
         description: pluginOption.description,
         render: function renderEditor() {
-          const value = lodashGet(context.options, pluginOption.path);
           return (
             <Editor
-              value={value == null ? pluginOption.defaultValue : value}
+              value={lodashGet(context.options, pluginOption.path)}
               onChange={(value: any) => {
                 onValueChanged(pluginOption.path, value);
               }}
