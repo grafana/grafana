@@ -98,7 +98,7 @@ export const PieChart: FC<PieChartProps> = ({
                 key={color}
                 id={getGradientId(color)}
                 from={getGradientColorFrom(color, theme)}
-                to={getGradientColorTo(color, theme)}
+                to={color}
                 fromOffset={layout.gradientFromOffset}
                 toOffset="1"
                 gradientUnits="userSpaceOnUse"
@@ -164,7 +164,7 @@ export const PieChart: FC<PieChartProps> = ({
                         innerRadius={layout.innerRadius}
                         displayLabels={displayLabels}
                         total={total}
-                        color={theme.colors.text.primary}
+                        color={theme.colors.text.maxContrast}
                       />
                     );
                   })}
@@ -346,10 +346,6 @@ function getLabelPos(arc: PieArcDatum<FieldDisplay>, outerRadius: number, innerR
 
 function getGradientColorFrom(color: string, theme: GrafanaTheme2) {
   return theme.isDark ? darken(color, 0.3) : lighten(color, 0.3);
-}
-
-function getGradientColorTo(color: string, theme: GrafanaTheme2) {
-  return theme.isDark ? darken(color, 0.1) : lighten(color, 0.1);
 }
 
 interface PieLayout {
