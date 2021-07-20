@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
+	"path"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,8 +39,7 @@ func AzureMiddleware(cfg *setting.Cfg) httpclient.Middleware {
 			return errorResponse(err)
 		}
 
-		middleware := aztokenprovider.AuthMiddleware(tokenProvider, scopes)
-		return middleware.CreateMiddleware(opts, next)
+		return aztokenprovider.ApplyAuth(tokenProvider, scopes, next)
 	})
 }
 
@@ -82,20 +81,33 @@ func getDefaultAzureCredentials(cfg *setting.Cfg) azcredentials.AzureCredentials
 	}
 }
 
-func getAzureEndpointScopes(customOptions map[string]interface{}) ([]string, error) {
+func getAzureEndpointResourceId(customOptions map[string]interface{}) (*url.URL, error) {
+	var value string
 	if untypedValue, ok := customOptions["azureEndpointResourceId"]; !ok {
 		err := fmt.Errorf("the field 'azureEndpointResourceId' should be set")
 		return nil, err
-	} else if value, ok := untypedValue.(string); !ok {
+	} else if value, ok = untypedValue.(string); !ok {
 		err := fmt.Errorf("the field 'azureEndpointResourceId' should be a string")
 		return nil, err
-	} else if resourceId, err := url.Parse(value); err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
+	}
+
+	resourceId, err := url.Parse(value)
+	if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
 		err := fmt.Errorf("invalid endpoint Resource ID URL '%s'", resourceId)
 		return nil, err
-	} else {
-		resourceId.Path = strings.TrimRight(resourceId.Path, "/") + "/.default"
-		scopes := []string{resourceId.String()}
-
-		return scopes, nil
 	}
+
+	return resourceId, nil
+}
+
+func getAzureEndpointScopes(customOptions map[string]interface{}) ([]string, error) {
+	resourceId, err := getAzureEndpointResourceId(customOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	resourceId.Path = path.Join(resourceId.Path, ".default")
+	scopes := []string{resourceId.String()}
+
+	return scopes, nil
 }
