@@ -7,7 +7,9 @@ import {
   DataFrame,
   Field,
   getFieldDisplayName,
-  LookupGeometrySource,
+  LookupSourceOptions,
+  LookupSourceFiles,
+  LookupSource,
 } from '@grafana/data';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -52,9 +54,14 @@ export interface LocationFieldMatchers {
   wkt: FieldFinder;
   lookup: FieldFinder;
 
-  // Path to lookup mapping
-  lookupSrc: string;
+  // Field mapping parameters
+  lookupSrc: LookupSource;
 }
+
+const defaultLookupSource: LookupSource = {
+  mode: LookupSourceOptions.File,
+  lookupSrcPath: LookupSourceFiles.Countries,
+};
 
 const defaultMatchers: LocationFieldMatchers = {
   mode: FrameGeometrySourceMode.Auto,
@@ -64,7 +71,7 @@ const defaultMatchers: LocationFieldMatchers = {
   h3: matchLowerNames(new Set(['h3'])),
   wkt: matchLowerNames(new Set(['wkt'])),
   lookup: matchLowerNames(new Set(['lookup', 'target'])),
-  lookupSrc: LookupGeometrySource.Countries,
+  lookupSrc: defaultLookupSource,
 };
 
 export function getLocationMatchers(src?: FrameGeometrySource): LocationFieldMatchers {
@@ -90,8 +97,39 @@ export function getLocationMatchers(src?: FrameGeometrySource): LocationFieldMat
       if (src?.lookup) {
         info.lookup = getFieldFinder(getFieldMatcher({ id: FieldMatcherID.byName, options: src.lookup }));
       }
-      if (src?.lookupSrc) {
-        info.lookupSrc = src.lookupSrc;
+      // Lookup Source is file data
+      if (src?.lookupSrcMode === LookupSourceOptions.File) {
+        if (src?.lookupSrcPath) {
+          info.lookupSrc = {
+            mode: src.lookupSrcMode,
+            lookupSrcPath: src.lookupSrcPath,
+          };
+        } else {
+          throw new Error('Json endpoint not defined');
+        }
+      }
+      // Lookup Source is a json endpoint
+      else if (src?.lookupSrcMode === LookupSourceOptions.JSON) {
+        if (src?.lookupSrcJson) {
+          info.lookupSrc = {
+            mode: src.lookupSrcMode,
+            lookupSrcJson: src.lookupSrcJson,
+          };
+        } else {
+          throw new Error('Json endpoint not defined');
+        }
+      }
+      // Lookup Source is a jsonp endpoint
+      else if (src?.lookupSrcMode === LookupSourceOptions.JSONP) {
+        if (src?.lookupSrcJsonp && src?.lookupSrcCallback) {
+          info.lookupSrc = {
+            mode: src.lookupSrcMode,
+            lookupSrcJsonp: src.lookupSrcJsonp,
+            lookupSrcCallback: src.lookupSrcCallback,
+          };
+        } else {
+          throw new Error('Jsonp endpoint not defined');
+        }
       }
       break;
   }
@@ -150,6 +188,27 @@ export function getLocationFields(frame: DataFrame, location: LocationFieldMatch
   return fields;
 }
 
+function getLocationJson(lookupSrc: LookupSource): any {
+  // built-in file
+  if (lookupSrc.mode === LookupSourceOptions.File) {
+    if (lookupSrc.lookupSrcPath) {
+      return require('./keyMapping/' + lookupSrc.lookupSrcPath + '.json');
+    }
+  }
+  // json endpoint
+  else if (lookupSrc.mode === LookupSourceOptions.JSON) {
+    if (lookupSrc.lookupSrcJson) {
+      console.log('json');
+    }
+  }
+  // jsonp endpoint
+  else {
+    if (lookupSrc.lookupSrcJsonp && lookupSrc.lookupSrcCallback) {
+      console.log('jsonp');
+    }
+  }
+}
+
 export interface LocationInfo {
   warning?: string;
   points: Point[];
@@ -182,7 +241,7 @@ export function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatch
 
     case FrameGeometrySourceMode.Lookup:
       if (fields.lookup && location.lookupSrc) {
-        const locationData = require('./keyMapping/' + location.lookupSrc + '.json');
+        const locationData = getLocationJson(location.lookupSrc);
         info.points = getPointsFromLookup(fields.lookup, locationData);
       } else {
         info.warning = 'Missing lookup/lookupSrc field';
