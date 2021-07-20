@@ -467,14 +467,14 @@ func (e *State) biSeriesSeries(labels data.Labels, op string, aSeries, bSeries S
 			continue
 		}
 		if aF == nil || bF == nil {
-			newSeries.AppendPoint(aIdx, aTime, nil)
+			newSeries.AppendPoint(aTime, nil)
 			continue
 		}
 		nF, err := binaryOp(op, *aF, *bF)
 		if err != nil {
 			return newSeries, err
 		}
-		newSeries.AppendPoint(aIdx, aTime, &nF)
+		newSeries.AppendPoint(aTime, &nF)
 	}
 	return newSeries, nil
 }

@@ -172,10 +172,11 @@ func (s Series) SetPoint(pointIdx int, t time.Time, f *float64) {
 	s.Frame.Fields[seriesTypeValIdx].Set(pointIdx, f)
 }
 
-// AppendPoint appends a point (time/value).
-func (s Series) AppendPoint(pointIdx int, t time.Time, f *float64) {
+// AppendPoint appends a point (time/value) and also returns s for chaining.
+func (s Series) AppendPoint(t time.Time, f *float64) Series {
 	s.Frame.Fields[seriesTypeTimeIdx].Append(t)
 	s.Frame.Fields[seriesTypeValIdx].Append(f)
+	return s
 }
 
 // Len returns the length of the series.

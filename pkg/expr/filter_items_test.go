@@ -3,6 +3,7 @@ package expr
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
@@ -83,6 +84,21 @@ func TestFilterItems(t *testing.T) {
 			},
 			out: []mathexp.Value{
 				mathexp.NewNumber("iNamedIt🦉", data.Labels{"host": "a", "metric": "idle"}).SetValue(ptr.Float64(1)),
+			},
+		},
+		{
+			name: "filter series items based on exact name",
+			fiCmd: FilterItems{
+				InputVar:   inputVar,
+				MetricName: "idle",
+				refID:      "iNamedItIdle",
+			},
+			in: []mathexp.Value{
+				mathexp.NewSeries("idle", nil, 1).AppendPoint(time.Time{}, ptr.Float64(1)),
+				mathexp.NewSeries("sys", nil, 1).AppendPoint(time.Time{}, ptr.Float64(2)),
+			},
+			out: []mathexp.Value{
+				mathexp.NewSeries("iNamedItIdle", nil, 1).AppendPoint(time.Time{}, ptr.Float64(1)),
 			},
 		},
 	}
