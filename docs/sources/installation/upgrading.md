@@ -331,11 +331,11 @@ Grafana now requires all plugins to be signed. If a plugin is not signed Grafana
 
 Grafana now maintains persistent WebSocket connections for real-time messaging needs.
 
-During WebSocket connection establishment Grafana checks request Origin header due to security reasons (to prevent hijacking of WebSocket connection). If you have a properly defined public URL (`root_url` server option) then origin check should successfully pass for WebSocket requests originating from public URL pages. In case of unsuccessful origin check Grafana returns 403. It's also possible to add a list of additional origin patterns for the origin check.
+When WebSocket connection is established, Grafana checks the request Origin header due to security reasons (for example, to prevent hijacking of WebSocket connection). If you have a properly defined public URL (`root_url` server option) then the origin check should successfully pass for WebSocket requests originating from public URL pages. In case of an unsuccessful origin check, Grafana returns a 403 error. It's also possible to add a list of additional origin patterns for the origin check.
 
-To handle many concurrent WebSocket connections you may need to tune your OS settings or infrastructure. Grafana Live enabled by default and supports 100 concurrent WebSocket connections max to avoid possible problems with file descriptor OS limit. As soon as your setup meets requirements to scale number of persistent connections this limit can be increased. You also have an option to disable Grafana Live.
+To handle many concurrent WebSocket connections you may need to tune your OS settings or infrastructure. Grafana Live is enabled by default and supports 100 concurrent WebSocket connections max to avoid possible problems with the file descriptor OS limit. As soon as your setup meets the requirements to scale the number of persistent connections this limit can be increased. You also have an option to disable Grafana Live.
 
-Refer to [Grafana Live configuration]({{< relref "../live/configure-grafana-live.md" >}}) for more information regarding mentioned things.
+Refer to [Grafana Live configuration]({{< relref "../live/configure-grafana-live.md" >}}) documentation for more information.
 
 ### Postgres, MySQL, Microsoft SQL Server data sources
 
