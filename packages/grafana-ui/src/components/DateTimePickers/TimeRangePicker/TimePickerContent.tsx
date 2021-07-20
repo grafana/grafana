@@ -163,7 +163,7 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
   };
 
   return (
-    <div className={cx(styles.container, className)}>
+    <div id="TimePickerContent" className={cx(styles.container, className)}>
       <div className={styles.body}>
         {isFullscreen && (
           <div className={styles.leftSide}>

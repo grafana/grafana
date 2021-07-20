@@ -9,6 +9,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: css`
       display: flex;
       align-items: center;
+      flex-direction: row-reverse;
       justify-content: space-between;
       padding: 7px 9px 7px 9px;
 
@@ -16,14 +17,21 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: ${theme.colors.action.hover};
         cursor: pointer;
       }
-      &:focus-visible {
-        ${getFocusStyles(theme)}
+    `,
+    selected: css`
+      background: ${theme.colors.action.selected};
+      font-weight: ${theme.typography.fontWeightMedium};
+    `,
+    radio: css`
+      opacity: 0;
+
+      &:focus-visible + label {
+        ${getFocusStyles(theme)};
       }
     `,
-    selected: css`    
-      background: ${theme.colors.action.selected};    
-    }
-  `,
+    label: css`
+      cursor: pointer;
+    `,
   };
 };
 
@@ -42,8 +50,17 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
 
   return (
     <li className={cx(styles.container, selected && styles.selected)}>
-      <input checked={selected} name={name} type="radio" id={value.display} onChange={() => onSelect(value)} />
-      <label htmlFor={value.display}>{value.display}</label>
+      <input
+        className={styles.radio}
+        checked={selected}
+        name={name}
+        type="radio"
+        id={value.display}
+        onChange={() => onSelect(value)}
+      />
+      <label className={styles.label} htmlFor={value.display}>
+        {value.display}
+      </label>
     </li>
   );
 });
