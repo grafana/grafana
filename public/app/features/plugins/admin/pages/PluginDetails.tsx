@@ -6,19 +6,20 @@ import { useStyles2, TabsBar, TabContent, Tab, Icon, Alert } from '@grafana/ui';
 
 import { AppNotificationSeverity } from 'app/types';
 import { InstallControls } from '../components/InstallControls';
-import { usePluginDetails, ActionTypes } from '../hooks/usePluginDetails';
+import { usePluginDetails } from '../hooks/usePluginDetails';
 import { Page as PluginPage } from '../components/Page';
 import { Loader } from '../components/Loader';
 import { Page } from 'app/core/components/Page/Page';
 import { PluginLogo } from '../components/PluginLogo';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { ActionTypes } from '../types';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 
 type PluginDetailsProps = GrafanaRouteComponentProps<{ pluginId?: string }>;
 
 export default function PluginDetails({ match }: PluginDetailsProps): JSX.Element | null {
   const { pluginId } = match.params;
-  const [state, dispatch] = usePluginDetails(pluginId!);
+  const { state, dispatch } = usePluginDetails(pluginId!);
   const {
     loading,
     error,

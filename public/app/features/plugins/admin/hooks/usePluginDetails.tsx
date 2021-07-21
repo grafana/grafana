@@ -3,19 +3,7 @@ import { PluginType, PluginIncludeType } from '@grafana/data';
 import { api } from '../api';
 import { loadPlugin } from '../../PluginPage';
 import { getCatalogPluginDetails, isGrafanaAdmin } from '../helpers';
-
-export enum ActionTypes {
-  LOADING,
-  INFLIGHT,
-  INSTALLED,
-  UNINSTALLED,
-  UPDATED,
-  ERROR,
-  FETCHED_PLUGIN,
-  FETCHED_PLUGIN_CONFIG,
-  UPDATE_TABS,
-  SET_ACTIVE_TAB,
-}
+import { ActionTypes, PluginDetailsActions, PluginDetailsState } from '../types';
 
 const defaultTabs = [{ label: 'Overview' }, { label: 'Version history' }];
 
@@ -26,13 +14,14 @@ const initialState = {
   isInstalled: false,
   isInflight: false,
   loading: false,
-  plugin: null,
-  pluginConfig: null,
+  error: undefined,
+  plugin: undefined,
+  pluginConfig: undefined,
   tabs: defaultTabs,
   activeTab: 0,
 };
 
-const reducer = (state, action) => {
+const reducer = (state: PluginDetailsState, action: PluginDetailsActions) => {
   switch (action.type) {
     case ActionTypes.LOADING: {
       return { ...state, loading: true };
@@ -125,7 +114,7 @@ export const usePluginDetails = (id: string) => {
         }
       } else {
         // reset tabs
-        dispatch({ type: ActionTypes.FETCHED_PLUGIN_CONFIG, payload: null });
+        dispatch({ type: ActionTypes.FETCHED_PLUGIN_CONFIG, payload: undefined });
         dispatch({ type: ActionTypes.SET_ACTIVE_TAB, payload: 0 });
       }
     };
@@ -162,5 +151,5 @@ export const usePluginDetails = (id: string) => {
     dispatch({ type: ActionTypes.UPDATE_TABS, payload: tabs });
   }, [state.isAdmin, state.pluginConfig, id]);
 
-  return [state, dispatch];
+  return { state, dispatch };
 };

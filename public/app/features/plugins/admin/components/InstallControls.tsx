@@ -7,8 +7,7 @@ import { Button, HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
-import { CatalogPluginDetails } from '../types';
-import { ActionTypes } from '../hooks/usePluginDetails';
+import { CatalogPluginDetails, ActionTypes } from '../types';
 import { api } from '../api';
 import { isGrafanaAdmin } from '../helpers';
 
