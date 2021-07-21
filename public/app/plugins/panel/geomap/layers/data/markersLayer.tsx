@@ -5,7 +5,7 @@ import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 
 import tinycolor from 'tinycolor2';
-import { dataFrameToPoints, getLocationMatchers, LocationInfo } from '../../utils/location';
+import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 import { ColorDimensionConfig, ScaleDimensionConfig, } from '../../dims/types';
 import { getScaledDimension, } from '../../dims/scale';
 import { getColorDimension, } from '../../dims/color';
@@ -80,41 +80,40 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           return; // ignore empty
         }
         const frame = data.series[0];
-        const promiseInfo = dataFrameToPoints(frame, matchers);
-        promiseInfo.then((info: LocationInfo) => {
-          if(info.warning) {
-            console.log( 'WARN', info.warning);
-            return; // ???
-          }
+        const info = dataFrameToPoints(frame, matchers);
 
-          const colorDim = getColorDimension(frame, config.color, theme);
-          const sizeDim = getScaledDimension(frame, config.size);
-          const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
+        if(info.warning) {
+          console.log( 'WARN', info.warning);
+          return; // ???
+        }
 
-          const features: Feature[] = [];
+        const colorDim = getColorDimension(frame, config.color, theme);
+        const sizeDim = getScaledDimension(frame, config.size);
+        const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
 
-          // Map each data value into new points
-          for (let i = 0; i < frame.length; i++) {
-            // Get the circle color for a specific data value depending on color scheme
-            const color = colorDim.get(i);
-            // Set the opacity determined from user configuration
-            const fillColor = tinycolor(color).setAlpha(opacity).toRgbString();
-            // Get circle size from user configuration
-            const radius = sizeDim.get(i);
+        const features: Feature[] = [];
 
-            // Create a new Feature for each point returned from dataFrameToPoints
-            const dot = new Feature({
-                geometry: info.points[i],
-            });
+        // Map each data value into new points
+        for (let i = 0; i < frame.length; i++) {
+          // Get the circle color for a specific data value depending on color scheme
+          const color = colorDim.get(i);
+          // Set the opacity determined from user configuration
+          const fillColor = tinycolor(color).setAlpha(opacity).toRgbString();
+          // Get circle size from user configuration
+          const radius = sizeDim.get(i);
 
-            dot.setStyle(shape!.make(color, fillColor, radius));
-            features.push(dot);
-          };
+          // Create a new Feature for each point returned from dataFrameToPoints
+          const dot = new Feature({
+              geometry: info.points[i],
+          });
 
-          // Source reads the data and provides a set of features to visualize
-          const vectorSource = new source.Vector({ features });
-          vectorLayer.setSource(vectorSource);
-        });
+          dot.setStyle(shape!.make(color, fillColor, radius));
+          features.push(dot);
+        };
+
+        // Source reads the data and provides a set of features to visualize
+        const vectorSource = new source.Vector({ features });
+        vectorLayer.setSource(vectorSource);
       },
     };
   },

@@ -11,7 +11,7 @@ import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
-import { dataFrameToPoints, getLocationMatchers, LocationInfo } from '../../utils/location';
+import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 import { ScaleDimensionConfig, } from '../../dims/types';
 import { ScaleDimensionEditor } from '../../dims/editors/ScaleDimensionEditor';
 import { getScaledDimension } from '../../dims/scale';
@@ -77,39 +77,37 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
         });
         
         // Get data points (latitude and longitude coordinates)
-        const promiseInfo = dataFrameToPoints(frame, matchers);
-        promiseInfo.then((info: LocationInfo) => {
-          if(info.warning) {
-            console.log( 'WARN', info.warning);
-            return; // ???
+        const info = dataFrameToPoints(frame, matchers);
+        if(info.warning) {
+          console.log( 'WARN', info.warning);
+          return; // ???
+        }
+
+        const weightDim = getScaledDimension(frame, config.weight);
+
+        // Map each data value into new points
+        for (let i = 0; i < frame.length; i++) {
+          const cluster = new Feature({
+              geometry: info.points[i],
+              value: weightDim.get(i),
+          });
+          vectorSource.addFeature(cluster);
+        };
+        vectorLayer.setSource(vectorSource);
+
+        // Set heatmap gradient colors
+        let colors = ['#00f', '#0ff', '#0f0', '#ff0', '#f00'];
+
+        // Either the configured field or the first numeric field value
+        const field = weightDim.field ?? frame.fields.find(field => field.type === FieldType.number);
+        if (field) {
+          const colorMode = getFieldColorModeForField(field);
+          if (colorMode.isContinuous && colorMode.getColors) {
+            // getColors return an array of color string from the color scheme chosen
+            colors = colorMode.getColors(theme);
           }
-
-          const weightDim = getScaledDimension(frame, config.weight);
-
-          // Map each data value into new points
-          for (let i = 0; i < frame.length; i++) {
-            const cluster = new Feature({
-                geometry: info.points[i],
-                value: weightDim.get(i),
-            });
-            vectorSource.addFeature(cluster);
-          };
-          vectorLayer.setSource(vectorSource);
-
-          // Set heatmap gradient colors
-          let colors = ['#00f', '#0ff', '#0f0', '#ff0', '#f00'];
-
-          // Either the configured field or the first numeric field value
-          const field = weightDim.field ?? frame.fields.find(field => field.type === FieldType.number);
-          if (field) {
-            const colorMode = getFieldColorModeForField(field);
-            if (colorMode.isContinuous && colorMode.getColors) {
-              // getColors return an array of color string from the color scheme chosen
-              colors = colorMode.getColors(theme);
-            }
-          }
-          vectorLayer.setGradient(colors);
-        });
+        }
+        vectorLayer.setGradient(colors);
       },
     };
   },

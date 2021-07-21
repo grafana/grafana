@@ -4,7 +4,7 @@ import Feature from 'ol/Feature';
 import * as style from 'ol/style';
 import * as source from 'ol/source';
 import * as layer from 'ol/layer';
-import { dataFrameToPoints, getLocationMatchers, LocationInfo } from '../../utils/location';
+import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
 
 export interface LastPointConfig {
   icon?: string;
@@ -53,18 +53,17 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
         const frame = data.series[0];
         if (frame && frame.length) {
           
-          const promiseInfo = dataFrameToPoints(frame, matchers);
-          promiseInfo.then((info: LocationInfo) => {
-            if(info.warning) {
-              console.log( 'WARN', info.warning);
-              return; // ???
-            }
+          const info = dataFrameToPoints(frame, matchers);
+          
+          if(info.warning) {
+            console.log( 'WARN', info.warning);
+            return; // ???
+          }
 
-            if(info.points?.length) {
-              const last = info.points[info.points.length-1];
-              point.setGeometry(last);
-            }
-          });
+          if(info.points?.length) {
+            const last = info.points[info.points.length-1];
+            point.setGeometry(last);
+          }
         }
       },
     };
