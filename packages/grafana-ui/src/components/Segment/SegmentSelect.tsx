@@ -20,11 +20,13 @@ export interface Props<T> extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onC
    * will work as canceling and using the previous value
    */
   allowEmptyValue?: boolean;
+  placeholder?: string;
 }
 
 /** @internal */
 export function SegmentSelect<T>({
   value,
+  placeholder = '',
   options = [],
   onChange,
   onClickOutside,
@@ -44,7 +46,7 @@ export function SegmentSelect<T>({
       <Select
         width={width}
         noOptionsMessage={noOptionsMessage}
-        placeholder=""
+        placeholder={placeholder}
         autoFocus={true}
         isOpen={true}
         onChange={onChange}

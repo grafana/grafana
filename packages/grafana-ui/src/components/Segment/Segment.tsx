@@ -11,6 +11,7 @@ export interface SegmentSyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTM
   value?: T | SelectableValue<T>;
   onChange: (item: SelectableValue<T>) => void;
   options: Array<SelectableValue<T>>;
+  inputMinWidth?: number;
 }
 
 export function Segment<T>({
@@ -24,6 +25,7 @@ export function Segment<T>({
   placeholder,
   disabled,
   inputMinWidth,
+  inputPlaceholder,
   onExpandedChange,
   autofocus = false,
   ...rest
@@ -62,6 +64,7 @@ export function Segment<T>({
     <SegmentSelect
       {...rest}
       value={value && !isObject(value) ? { value } : value}
+      placeholder={inputPlaceholder}
       options={options}
       width={width}
       onClickOutside={() => setExpanded(false)}

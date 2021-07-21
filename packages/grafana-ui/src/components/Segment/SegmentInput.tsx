@@ -20,6 +20,7 @@ export function SegmentInput<T>({
   Component,
   className,
   placeholder,
+  inputPlaceholder,
   disabled,
   autofocus = false,
   onExpandedChange,
@@ -71,6 +72,7 @@ export function SegmentInput<T>({
       autoFocus
       className={cx(`gf-form gf-form-input`, inputWidthStyle)}
       value={value}
+      placeholder={inputPlaceholder}
       onChange={(item) => {
         const { width } = measureText(item.target.value, FONT_SIZE);
         setInputWidth(width);

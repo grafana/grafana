@@ -15,6 +15,7 @@ export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HT
   loadOptions: (query?: string) => Promise<Array<SelectableValue<T>>>;
   onChange: (item: SelectableValue<T>) => void;
   noOptionMessageHandler?: (state: AsyncState<Array<SelectableValue<T>>>) => string;
+  inputMinWidth?: number;
 }
 
 export function SegmentAsync<T>({
@@ -28,6 +29,7 @@ export function SegmentAsync<T>({
   disabled,
   placeholder,
   inputMinWidth,
+  inputPlaceholder,
   autofocus = false,
   onExpandedChange,
   noOptionMessageHandler = mapStateToNoOptionsMessage,
@@ -69,6 +71,7 @@ export function SegmentAsync<T>({
     <SegmentSelect
       {...rest}
       value={value && !isObject(value) ? { value } : value}
+      placeholder={inputPlaceholder}
       options={state.value ?? []}
       width={width}
       noOptionsMessage={noOptionMessageHandler(state)}

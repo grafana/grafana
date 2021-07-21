@@ -26,6 +26,7 @@ export function FunctionParamEditor({ editableParam, onChange, onExpandedChange,
       <Segment
         autofocus={autofocus}
         value={editableParam.value}
+        inputPlaceholder={editableParam.name}
         className={styles.segment}
         options={editableParam.options}
         placeholder={' +' + editableParam.name}
@@ -33,7 +34,7 @@ export function FunctionParamEditor({ editableParam, onChange, onExpandedChange,
           onChange(value.value || '');
         }}
         onExpandedChange={onExpandedChange}
-        inputMinWidth={100}
+        inputMinWidth={150}
         allowCustomValue={true}
         allowEmptyValue={true}
       ></Segment>
@@ -45,11 +46,13 @@ export function FunctionParamEditor({ editableParam, onChange, onExpandedChange,
         className={styles.input}
         value={editableParam.value || ''}
         placeholder={' +' + editableParam.name}
+        inputPlaceholder={editableParam.name}
         onChange={(value) => {
           onChange(value.toString());
         }}
         onExpandedChange={onExpandedChange}
-        style={{ height: '28px', paddingTop: '2px', paddingLeft: '4px', fontSize: '12px' }}
+        // input style
+        style={{ height: '25px', paddingTop: '2px', marginTop: '2px', paddingLeft: '4px', minWidth: '100px' }}
       ></SegmentInput>
     );
   }
@@ -60,9 +63,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: 0,
     padding: 0,
   }),
-  input: css({
-    margin: 0,
-    padding: 0,
-    height: theme.components.height.sm,
-  }),
+  input: css`
+    margin: 0;
+    padding: 0;
+    input {
+      height: 25px;
+    },
+  `,
 });
