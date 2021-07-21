@@ -12,6 +12,9 @@ import { getColorDimension, } from '../../dims/color';
 import { ScaleDimensionEditor } from '../../dims/editors/ScaleDimensionEditor';
 import { ColorDimensionEditor } from '../../dims/editors/ColorDimensionEditor';
 import { markerMakers } from '../../utils/regularShapes';
+import React from 'react';
+import { MapLegend } from '../../components/MapLegend';
+import { ReplaySubject } from 'rxjs';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -59,7 +62,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2): MapLayerHandler => {
+  create: (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2, showLegend: boolean): MapLayerHandler => {
     const matchers = getLocationMatchers(options.location);
     const vectorLayer = new layer.Vector({});
     // Assert default values
@@ -72,9 +75,12 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     if (!shape) {
       shape = markerMakers.get('circle');
     }
-    
+
+    const dataCollection = new ReplaySubject(1);
+    const legend = showLegend && <MapLegend data={dataCollection}/>;
     return {
       init: () => vectorLayer,
+      legend: legend,
       update: (data: PanelData) => {
         if(!data.series?.length) {
           return; // ignore empty
@@ -91,6 +97,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
 
         const features: Feature[] = [];
+        const fieldObj = {color: colorDim};
+        dataCollection.next(fieldObj);
 
         // Map each data value into new points
         for (let i = 0; i < frame.length; i++) {

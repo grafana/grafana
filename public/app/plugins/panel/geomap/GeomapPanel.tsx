@@ -98,7 +98,7 @@ export class GeomapPanel extends Component<Props> {
 
     if (options.layers !== oldOptions.layers) {
       console.log('layers changed');
-      this.initLayers(options.layers ?? []);
+      this.initLayers(options.layers ?? [], options.controls?.showLegend);
       layersChanged = true;
     }
     return layersChanged;
@@ -108,16 +108,11 @@ export class GeomapPanel extends Component<Props> {
    * Called when PanelData changes (query results etc)
    */
   dataChanged(data: PanelData, showLegend?: boolean) {
-    const legends: React.ReactNode[] = [];
     for (const state of this.layers) {
       if (state.handler.update) {
         state.handler.update(data);
       }
-      if (showLegend && state.handler.legend) {
-        legends.push(state.handler.legend());
-      }
     }
-    this.overlayProps.bottomLeft = legends;
   }
 
   initMapRef = (div: HTMLDivElement) => {
@@ -144,8 +139,8 @@ export class GeomapPanel extends Component<Props> {
     this.map.addInteraction(this.mouseWheelZoom);
     this.initControls(options.controls);
     this.initBasemap(options.basemap);
-    this.initLayers(options.layers);
-    this.dataChanged(this.props.data, options.controls.showLegend);
+    this.initLayers(options.layers, options.controls.showLegend);
+    this.dataChanged(this.props.data);
     this.forceUpdate(); // first render
   };
 
@@ -166,7 +161,7 @@ export class GeomapPanel extends Component<Props> {
     this.map.getLayers().insertAt(0, this.basemap);
   }
 
-  initLayers(layers: MapLayerOptions[]) {
+  initLayers(layers: MapLayerOptions[], showLegend?: boolean) {
     // 1st remove existing layers
     for (const state of this.layers) {
       this.map!.removeLayer(state.layer);
@@ -177,6 +172,7 @@ export class GeomapPanel extends Component<Props> {
       layers = [];
     }
 
+    const legends: React.ReactNode[] = [];
     this.layers = [];
     for (const overlay of layers) {
       const item = geomapLayerRegistry.getIfExists(overlay.type);
@@ -185,7 +181,7 @@ export class GeomapPanel extends Component<Props> {
         continue; // TODO -- panel warning?
       }
 
-      const handler = item.create(this.map!, overlay, config.theme2);
+      const handler = item.create(this.map!, overlay, config.theme2, showLegend);
       const layer = handler.init();
       this.map!.addLayer(layer);
       this.layers.push({
@@ -193,7 +189,11 @@ export class GeomapPanel extends Component<Props> {
         layer,
         handler,
       });
+      if (handler.legend) {
+        legends.push(<div key={handler.legend.toString()}>{handler.legend}</div>);
+      }
     }
+    this.overlayProps.bottomLeft = legends;
   }
 
   initMapView(config: MapViewConfig): View {

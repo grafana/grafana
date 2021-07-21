@@ -34,37 +34,6 @@ export interface FrameGeometrySource {
   lookup?: string;
 
   // Path to a mappings file
-  lookupSrc: string;
-}
-
-/**
- * @alpha
- */
-export enum FrameGeometrySourceMode {
-  Auto = 'auto', // Will scan fields and find best match
-  Geohash = 'geohash',
-  Coords = 'coords', // lon field, lat field
-  Lookup = 'lookup', // keys > location
-  // H3 = 'h3',
-  // WKT = 'wkt,
-  // geojson? geometry text
-}
-
-/**
- * @alpha
- */
-export interface FrameGeometrySource {
-  mode: FrameGeometrySourceMode;
-
-  // Field mappings
-  geohash?: string;
-  latitude?: string;
-  longitude?: string;
-  h3?: string;
-  wkt?: string;
-  lookup?: string;
-
-  // Path to a mappings file
   lookupSrc?: string;
 }
 
@@ -99,7 +68,8 @@ export interface MapLayerOptions<TConfig = any> {
  */
 export interface MapLayerHandler {
   init: () => BaseLayer;
-  legend?: () => ReactNode;
+  // legend should be created on init
+  legend?: ReactNode;
   update?: (data: PanelData) => void;
 }
 
@@ -128,7 +98,7 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2) => MapLayerHandler;
+  create: (map: Map, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2, showLegend?: boolean) => MapLayerHandler;
 
   /**
    * Show custom elements in the panel edit UI

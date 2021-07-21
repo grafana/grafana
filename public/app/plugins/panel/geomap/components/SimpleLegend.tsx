@@ -1,13 +1,13 @@
 import React, { PureComponent } from 'react';
 import { stylesFactory } from '@grafana/ui';
-import { FieldType, formattedValueToString, GrafanaTheme, PanelData, ThresholdsConfig } from '@grafana/data';
+import { FieldType, formattedValueToString, GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import tinycolor from 'tinycolor2';
+import { DimensionSupplier } from '../dims/types';
 
 interface Props {
-  txt: string;
-  data?: PanelData;
+  color?: DimensionSupplier<string>;
 }
 
 interface State {}
@@ -21,24 +21,20 @@ export class SimpleLegend extends PureComponent<Props, State> {
   }
 
   render() {
-    let fmt = (v: any) => `${v}`;
-    let thresholds: ThresholdsConfig | undefined;
-    const series = this.props.data?.series;
-    if (series) {
-      for (const frame of series) {
-        for (const field of frame.fields) {
-          if (field.type === FieldType.number && field.config.thresholds) {
-            thresholds = field.config.thresholds;
-            fmt = (v: any) => `${formattedValueToString(field.display!(v))}`;
-            break;
-          }
-        }
-      }
+    const { color } = this.props;
+    // fixed color option
+    if (color?.field?.type !== FieldType.number || !color?.field?.config?.thresholds) {
+      return <div></div>;
+    }
+
+    const thresholds = color.field.config.thresholds;
+    let fmt = Function();
+    if (color.field) {
+      fmt = (v: any) => `${formattedValueToString(color.field!.display!(v))}`;
     }
 
     return (
       <div className={this.style.infoWrap}>
-        <div>{this.props.txt}</div>
         {thresholds && (
           <div className={this.style.legend}>
             {thresholds.steps.map((step, idx) => {
