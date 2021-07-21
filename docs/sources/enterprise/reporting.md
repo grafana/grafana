@@ -8,9 +8,7 @@ weight = 800
 
 # Reporting
 
-Reporting allows you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule.
-
-> Only available in Grafana Enterprise v6.4+.
+Reporting allows you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule. This is available in Grafana Cloud and in Grafana Enterprise.
 
 > If you have [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some actions you would need to have relevant permissions.
 Refer to specific guides to understand what permissions are required.
