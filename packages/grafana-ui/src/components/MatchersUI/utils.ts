@@ -103,5 +103,5 @@ export function useSelectOptions(
       });
     }
     return options;
-  }, [displayNames, currentName]);
+  }, [displayNames, currentName, firstItem]);
 }
