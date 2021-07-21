@@ -1,10 +1,10 @@
-import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, GrafanaTheme2 } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, GrafanaTheme2, PluginState } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as style from 'ol/style';
 import * as source from 'ol/source';
 import * as layer from 'ol/layer';
-import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
+import { dataFrameToPoints, getLocationMatchers, LocationInfo } from '../../utils/location';
 
 export interface LastPointConfig {
   icon?: string;
@@ -20,6 +20,7 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
   description: 'Show an icon at the last point',
   isBaseMap: false,
   showLocation: true,
+  state: PluginState.alpha,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -51,16 +52,18 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
       update: (data: PanelData) => {
         const frame = data.series[0];
         if (frame && frame.length) {
-          const info = dataFrameToPoints(frame, matchers);
-          if(info.warning) {
-            console.log( 'WARN', info.warning);
-            return; // ???
-          }
+          const promiseInfo = dataFrameToPoints(frame, matchers);
+          promiseInfo.then((info: LocationInfo) => {
+            if(info.warning) {
+              console.log( 'WARN', info.warning);
+              return; // ???
+            }
 
-          if(info.points?.length) {
-            const last = info.points[info.points.length-1];
-            point.setGeometry(last);
-          }
+            if(info.points?.length) {
+              const last = info.points[info.points.length-1];
+              point.setGeometry(last);
+            }
+          });
         }
       },
     };
