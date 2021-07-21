@@ -9,6 +9,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import appEvents from 'app/core/app_events';
 import { AnnotationListItem } from './AnnotationListItem';
 import { AnnotationListItemTags } from './AnnotationListItemTags';
+import { CustomScrollbar } from '@grafana/ui';
 
 interface UserInfo {
   id?: number;
@@ -200,7 +201,6 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   };
 
   render() {
-    const { height } = this.props;
     const { loaded, annotations, queryUser, queryTags } = this.state;
     if (!loaded) {
       return <div>loading...</div>;
@@ -214,9 +214,8 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     // )}
 
     const hasFilter = queryUser || queryTags.length > 0;
-
     return (
-      <div style={{ height, overflow: 'scroll' }}>
+      <CustomScrollbar autoHeightMin="100%">
         {hasFilter && (
           <div>
             <b>Filter: &nbsp; </b>
@@ -231,15 +230,8 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
         {annotations.length < 1 && <div className="panel-alert-list__no-alerts">No Annotations Found</div>}
 
-        <AbstractList
-          items={annotations}
-          renderItem={this.renderItem}
-          getItemKey={(item) => {
-            return item.id + '';
-          }}
-          className="dashlist"
-        />
-      </div>
+        <AbstractList items={annotations} renderItem={this.renderItem} getItemKey={(item) => `${item.id}`} />
+      </CustomScrollbar>
     );
   }
 }
