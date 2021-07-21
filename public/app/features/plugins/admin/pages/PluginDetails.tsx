@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -6,8 +6,7 @@ import { useStyles2, TabsBar, TabContent, Tab, Icon, Alert } from '@grafana/ui';
 
 import { AppNotificationSeverity } from 'app/types';
 import { InstallControls } from '../components/InstallControls';
-import { usePlugin } from '../hooks/usePlugins';
-import { useLoadPluginConfig } from '../hooks/useLoadPluginConfig';
+import { usePluginDetails, ActionTypes } from '../hooks/usePluginDetails';
 import { Page as PluginPage } from '../components/Page';
 import { Loader } from '../components/Loader';
 import { Page } from 'app/core/components/Page/Page';
@@ -19,13 +18,23 @@ type PluginDetailsProps = GrafanaRouteComponentProps<{ pluginId?: string }>;
 
 export default function PluginDetails({ match }: PluginDetailsProps): JSX.Element | null {
   const { pluginId } = match.params;
-  const [activeTab, setActiveTab] = useState(0);
-  const { isLoading, plugin } = usePlugin(pluginId!);
-  const { loading, error, pluginConfig, tabs } = useLoadPluginConfig(pluginId!, Boolean(plugin?.isInstalled));
+  const [state, dispatch] = usePluginDetails(pluginId!);
+  const {
+    loading,
+    error,
+    plugin,
+    pluginConfig,
+    tabs,
+    activeTab,
+    isInflight,
+    hasUpdate,
+    isInstalled,
+    hasInstalledPanel,
+  } = state;
   const tab = tabs[activeTab];
   const styles = useStyles2(getStyles);
 
-  if (isLoading || loading) {
+  if (loading) {
     return (
       <Page>
         <Loader />
@@ -68,12 +77,24 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
                 {plugin.version && <span>{plugin.version}</span>}
               </div>
               <p>{plugin.description}</p>
-              <InstallControls plugin={plugin} />
+              <InstallControls
+                plugin={plugin}
+                isInflight={isInflight}
+                hasUpdate={hasUpdate}
+                isInstalled={isInstalled}
+                hasInstalledPanel={hasInstalledPanel}
+                dispatch={dispatch}
+              />
             </div>
           </div>
           <TabsBar>
-            {tabs.map((tab, idx) => (
-              <Tab key={tab.label} label={tab.label} active={idx === activeTab} onChangeTab={() => setActiveTab(idx)} />
+            {tabs.map((tab: { label: string }, idx: number) => (
+              <Tab
+                key={tab.label}
+                label={tab.label}
+                active={idx === activeTab}
+                onChangeTab={() => dispatch({ type: ActionTypes.SET_ACTIVE_TAB, payload: idx })}
+              />
             ))}
           </TabsBar>
           <TabContent>
