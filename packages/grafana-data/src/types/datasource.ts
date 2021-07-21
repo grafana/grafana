@@ -534,6 +534,14 @@ export interface DataSourceJsonData {
 }
 
 /**
+ * Extra options for alerting ui enabled datasource. Prom & Loki currently
+ **/
+export interface AlertingUIDataSourceJsonData extends DataSourceJsonData {
+  useCustomRulerURL?: boolean;
+  ruler?: Record<string, any>;
+}
+
+/**
  * Data Source instance edit model.  This is returned from:
  *  /api/datasources
  */

@@ -64,6 +64,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
     sigV4AuthToggleEnabled,
     showForwardOAuthIdentityOption,
     azureAuthSettings,
+    title,
   } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
@@ -131,7 +132,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
   return (
     <div className="gf-form-group">
       <>
-        <h3 className="page-heading">HTTP</h3>
+        <h3 className="page-heading">{title || 'HTTP'}</h3>
         <div className="gf-form-group">
           <div className="gf-form">
             <FormField label="URL" labelWidth={13} tooltip={urlTooltip} inputEl={urlInput} />

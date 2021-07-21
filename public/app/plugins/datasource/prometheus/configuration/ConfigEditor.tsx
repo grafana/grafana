@@ -36,6 +36,7 @@ export const ConfigEditor = (props: Props) => {
 
       <AlertingSettings<PromOptions>
         alertmanagerDataSources={alertmanagers}
+        sigV4AuthEnabled={config.sigV4AuthEnabled}
         options={options}
         onOptionsChange={onOptionsChange}
       />

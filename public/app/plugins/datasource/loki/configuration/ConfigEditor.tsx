@@ -41,6 +41,7 @@ export const ConfigEditor = (props: Props) => {
         alertmanagerDataSources={alertmanagers}
         options={options}
         onOptionsChange={onOptionsChange}
+        sigV4AuthEnabled={false}
       />
 
       <div className="gf-form-group">
