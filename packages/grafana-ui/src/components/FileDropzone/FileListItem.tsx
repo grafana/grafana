@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
+import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import React from 'react';
-import { GrafanaTheme2 } from '../../../../grafana-data/src';
 import { useStyles2 } from '../../themes';
-import { formatFileSize, trimFileName } from '../../utils/file';
+import { trimFileName } from '../../utils/file';
 import { Button } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
@@ -23,7 +23,7 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
         <>
           <span className={styles.error}>{error.message}</span>
           {retryUpload ? (
-            <IconButton name="sync" tooltip="Retry" tooltipPlacement="top" onClick={() => retryUpload()} />
+            <IconButton aria-label="Retry" name="sync" tooltip="Retry" tooltipPlacement="top" onClick={retryUpload} />
           ) : null}
           {removeFile ? (
             <IconButton
@@ -31,6 +31,7 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
               name="trash-alt"
               onClick={() => removeFile(customFile)}
               tooltip="Remove"
+              aria-label="Remove"
             />
           ) : null}
         </>
@@ -42,30 +43,33 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
         <>
           <progress className={styles.progressBar} max={file.size} value={progress} />
           <span className={styles.paddingLeft}>{Math.round((progress / file.size) * 100)}%</span>
-          <Button
-            variant="secondary"
-            type="button"
-            fill="text"
-            onClick={() => {
-              abortUpload?.();
-            }}
-          >
-            Cancel
-          </Button>
+          {abortUpload ? (
+            <Button variant="secondary" type="button" fill="text" onClick={abortUpload}>
+              Cancel
+            </Button>
+          ) : null}
         </>
       );
     }
     return removeFile ? (
-      <IconButton name="trash-alt" onClick={() => removeFile(customFile)} tooltip="Remove" tooltipPlacement="top" />
+      <IconButton
+        name="trash-alt"
+        onClick={() => removeFile(customFile)}
+        tooltip="Remove"
+        aria-label="Remove"
+        tooltipPlacement="top"
+      />
     ) : null;
   };
+
+  const valueFormat = getValueFormat('decbytes')(file.size);
 
   return (
     <div className={styles.fileListContainer}>
       <span className={styles.fileNameWrapper}>
         <Icon name="file-blank" size="lg" />
         <span className={styles.padding}>{trimFileName(file.name)}</span>
-        <span>{formatFileSize(file.size)}</span>
+        <span>{formattedValueToString(valueFormat)}</span>
       </span>
 
       <div className={styles.fileNameWrapper}>{renderRightSide()}</div>
