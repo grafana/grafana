@@ -25,7 +25,9 @@ func TestProvisionedSymlinkedFolder(t *testing.T) {
 	}
 
 	reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil)
-	require.NoError(t, err)
+	if err != nil {
+		t.Error("expected err to be nil")
+	}
 
 	want, err := filepath.Abs(containingID)
 	require.NoError(t, err)
