@@ -7,6 +7,7 @@ import { defaultView, GeomapPanelOptions } from './types';
 import { mapPanelChangedHandler } from './migrations';
 import { defaultGrafanaThemedMap } from './layers/basemaps';
 import { defaultMarkersConfig } from './layers/data/markersLayer';
+import { config } from 'app/core/config';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
@@ -33,17 +34,19 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
     });
 
     // Nested
-    builder.addCustomEditor({
-      category: ['Base Layer'],
-      id: 'basemap',
-      path: 'basemap',
-      name: 'Base Layer',
-      editor: BaseLayerEditor,
-      defaultValue: {
-        type: defaultGrafanaThemedMap.id,
-        config: defaultGrafanaThemedMap.defaultOptions,
-      },
-    });
+    if (!config.geomapDisableCustomBaseLayer) {
+      builder.addCustomEditor({
+        category: ['Base Layer'],
+        id: 'basemap',
+        path: 'basemap',
+        name: 'Base Layer',
+        editor: BaseLayerEditor,
+        defaultValue: {
+          type: defaultGrafanaThemedMap.id,
+          config: defaultGrafanaThemedMap.defaultOptions,
+        },
+      });
+    }
 
     builder.addCustomEditor({
       category: ['Data Layer'],
