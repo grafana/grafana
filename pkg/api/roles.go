@@ -25,7 +25,7 @@ func (hs *HTTPServer) addFixedRoles() error {
 		Role: accesscontrol.RoleDTO{
 			Version:     1,
 			Name:        "fixed:provisioning:admin",
-			Description: "Reload provisioning services",
+			Description: "Reload provisioning configurations",
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
