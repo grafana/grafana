@@ -346,7 +346,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 	}
 }
 
-func TestOSSAccessControlService_AddFixedRoles(t *testing.T) {
+func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 	tests := []struct {
 		name          string
 		registrations []accesscontrol.RoleRegistration
@@ -430,7 +430,7 @@ func TestOSSAccessControlService_AddFixedRoles(t *testing.T) {
 			ac.Cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 
 			// Test
-			err := ac.AddFixedRoles(tt.registrations...)
+			err := ac.DeclareFixedRoles(tt.registrations...)
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.ErrorIs(t, err, tt.err)

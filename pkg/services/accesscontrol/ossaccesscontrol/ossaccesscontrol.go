@@ -112,8 +112,6 @@ func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {
 
 func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
 	for _, builtInRole := range builtInRoles {
-		assignments := []string{}
-
 		// Only record new assignments
 		alreadyAssigned := false
 		assignments, ok := accesscontrol.FixedRoleGrants[builtInRole]
@@ -140,7 +138,7 @@ func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO,
 	return nil
 }
 
-// RegisterFixedRoles launches all registrations of the service registration list
+// RegisterFixedRoles registers all declared roles in RAM
 func (ac *OSSAccessControlService) RegisterFixedRoles() error {
 	// If accesscontrol is disabled no need to register roles
 	if ac.IsDisabled() {
@@ -154,8 +152,9 @@ func (ac *OSSAccessControlService) RegisterFixedRoles() error {
 	return err
 }
 
-// AddFixedRoles allow the caller to declare, to the service, fixed roles and their assignments
-func (ac *OSSAccessControlService) AddFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
+// DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their assignments
+// to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+func (ac *OSSAccessControlService) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
 	// If accesscontrol is disabled no need to register roles
 	if ac.IsDisabled() {
 		return nil

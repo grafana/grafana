@@ -18,9 +18,10 @@ const (
 	ScopeProvisionersNotifications = "provisioners:notifications"
 )
 
-// addFixedRoles registers fixed roles and their grants to organization roles
-// ("Viewer", "Editor", "Admin") or "Grafana Admin" that HTTPServer needs
-func (hs *HTTPServer) addFixedRoles() error {
+// declareFixedRoles declares to the AccessControl service fixed roles and their
+// grants to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+// that HTTPServer needs
+func (hs *HTTPServer) declareFixedRoles() error {
 	registration := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Version:     1,
@@ -36,5 +37,5 @@ func (hs *HTTPServer) addFixedRoles() error {
 		Grants: []string{accesscontrol.RoleGrafanaAdmin},
 	}
 
-	return hs.AccessControl.AddFixedRoles(registration)
+	return hs.AccessControl.DeclareFixedRoles(registration)
 }

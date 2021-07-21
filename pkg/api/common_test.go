@@ -253,7 +253,7 @@ func (f *fakeAccessControl) IsDisabled() bool {
 	return f.isDisabled
 }
 
-func (f *fakeAccessControl) AddFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
+func (f *fakeAccessControl) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
 	return nil
 }
 

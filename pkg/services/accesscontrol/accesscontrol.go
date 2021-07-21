@@ -16,9 +16,9 @@ type AccessControl interface {
 	// Middleware checks if service disabled or not to switch to fallback authorization.
 	IsDisabled() bool
 
-	// AddFixedRoles allows the caller to declare, to the service,
-	// fixed roles and their assignments
-	AddFixedRoles(...RoleRegistration) error
+	// DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their
+	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+	DeclareFixedRoles(...RoleRegistration) error
 }
 
 func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, permission string, scopes ...string) bool {

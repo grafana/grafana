@@ -74,8 +74,7 @@ func (r *globalServiceRegistry) GetServices() []*registry.Descriptor {
 }
 
 type roleRegistry interface {
-	// RegisterFixedRoles launches all registrations of the
-	// service registration list
+	// RegisterFixedRoles registers all declared roles
 	RegisterFixedRoles() error
 }
 
