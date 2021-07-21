@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { css, cx } from '@emotion/css';
 import { satisfies } from 'semver';
 
@@ -7,19 +7,20 @@ import { Button, HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
-import { CatalogPluginDetails } from '../types';
+import { CatalogPluginDetails, ActionTypes } from '../types';
 import { api } from '../api';
 import { isGrafanaAdmin } from '../helpers';
 
 interface Props {
   plugin: CatalogPluginDetails;
+  isInflight: boolean;
+  hasUpdate: boolean;
+  hasInstalledPanel: boolean;
+  isInstalled: boolean;
+  dispatch: React.Dispatch<any>;
 }
 
-export const InstallControls = ({ plugin }: Props) => {
-  const [loading, setLoading] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(plugin.isInstalled || false);
-  const [shouldUpdate, setShouldUpdate] = useState(plugin.hasUpdate || false);
-  const [hasInstalledPanel, setHasInstalledPanel] = useState(false);
+export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, hasInstalledPanel, dispatch }: Props) => {
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
   const externalManageLink = getExternalManageLink(plugin);
 
@@ -30,39 +31,35 @@ export const InstallControls = ({ plugin }: Props) => {
   }
 
   const onInstall = async () => {
-    setLoading(true);
+    dispatch({ type: ActionTypes.INFLIGHT });
     try {
       await api.installPlugin(plugin.id, plugin.version);
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
-      setLoading(false);
-      setIsInstalled(true);
-      setHasInstalledPanel(plugin.type === 'panel');
+      dispatch({ type: ActionTypes.INSTALLED, payload: plugin.type === 'panel' });
     } catch (error) {
-      setLoading(false);
+      dispatch({ type: ActionTypes.ERROR, payload: { error } });
     }
   };
 
   const onUninstall = async () => {
-    setLoading(true);
+    dispatch({ type: ActionTypes.INFLIGHT });
     try {
       await api.uninstallPlugin(plugin.id);
       appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${plugin.name}`]);
-      setLoading(false);
-      setIsInstalled(false);
+      dispatch({ type: ActionTypes.UNINSTALLED });
     } catch (error) {
-      setLoading(false);
+      dispatch({ type: ActionTypes.ERROR, payload: error });
     }
   };
 
   const onUpdate = async () => {
-    setLoading(true);
+    dispatch({ type: ActionTypes.INFLIGHT });
     try {
       await api.installPlugin(plugin.id, plugin.version);
       appEvents.emit(AppEvents.alertSuccess, [`Updated ${plugin.name}`]);
-      setLoading(false);
-      setShouldUpdate(false);
+      dispatch({ type: ActionTypes.UPDATED });
     } catch (error) {
-      setLoading(false);
+      dispatch({ type: ActionTypes.ERROR, payload: error });
     }
   };
 
@@ -100,14 +97,14 @@ export const InstallControls = ({ plugin }: Props) => {
   if (isInstalled) {
     return (
       <HorizontalGroup height="auto">
-        {shouldUpdate &&
+        {hasUpdate &&
           (isExternallyManaged ? (
             <LinkButton href={externalManageLink} target="_blank" rel="noopener noreferrer">
               {'Update via grafana.com'}
             </LinkButton>
           ) : (
-            <Button disabled={loading || !hasPermission} onClick={onUpdate}>
-              {loading ? 'Updating' : 'Update'}
+            <Button disabled={isInflight || !hasPermission} onClick={onUpdate}>
+              {isInflight ? 'Updating' : 'Update'}
             </Button>
           ))}
 
@@ -117,8 +114,8 @@ export const InstallControls = ({ plugin }: Props) => {
           </LinkButton>
         ) : (
           <>
-            <Button variant="destructive" disabled={loading || !hasPermission} onClick={onUninstall}>
-              {loading && !shouldUpdate ? 'Uninstalling' : 'Uninstall'}
+            <Button variant="destructive" disabled={isInflight || !hasPermission} onClick={onUninstall}>
+              {isInflight && !hasUpdate ? 'Uninstalling' : 'Uninstall'}
             </Button>
             {hasInstalledPanel && (
               <div className={cx(styles.message, styles.messageMargin)}>
@@ -149,8 +146,8 @@ export const InstallControls = ({ plugin }: Props) => {
         </LinkButton>
       ) : (
         <>
-          <Button disabled={loading || !hasPermission} onClick={onInstall}>
-            {loading ? 'Installing' : 'Install'}
+          <Button disabled={isInflight || !hasPermission} onClick={onInstall}>
+            {isInflight ? 'Installing' : 'Install'}
           </Button>
           {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
         </>
