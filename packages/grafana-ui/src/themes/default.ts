@@ -131,6 +131,7 @@ const theme: GrafanaThemeCommons = {
     tooltip: 1040,
     modalBackdrop: 1050,
     modal: 1060,
+    portal: 1061,
   },
 };
 
