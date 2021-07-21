@@ -6,7 +6,7 @@ import {
   handleMetricsAutoCompleteError,
   handleTagsAutoCompleteError,
 } from './helpers';
-import { AngularDropdownOptions, GraphiteSegment } from '../types';
+import { AngularDropdownOptions, GraphiteSegment, GraphiteTag } from '../types';
 
 /**
  * Providers are hooks for views to provide temporal data for autocomplete. They don't modify the state.
@@ -84,7 +84,7 @@ export async function getAltSegments(
       return altSegments;
     }
   } catch (err) {
-    await handleMetricsAutoCompleteError(state, err);
+    handleMetricsAutoCompleteError(state, err);
   }
 
   return [];
@@ -110,7 +110,7 @@ export async function getTags(
     altTags.splice(0, 0, state.removeTagValue);
     return mapToDropdownOptions(altTags);
   } catch (err) {
-    await handleTagsAutoCompleteError(state, err);
+    handleTagsAutoCompleteError(state, err);
   }
 
   return [];
@@ -137,7 +137,7 @@ export async function getTagsAsSegments(
     });
   } catch (err) {
     tagsAsSegments = [];
-    await handleTagsAutoCompleteError(state, err);
+    handleTagsAutoCompleteError(state, err);
   }
 
   return tagsAsSegments;
@@ -145,7 +145,7 @@ export async function getTagsAsSegments(
 
 export async function getTagValues(
   state: GraphiteQueryEditorState,
-  tag: { key: any },
+  tag: GraphiteTag,
   index: number,
   valuePrefix: string
 ): Promise<AngularDropdownOptions[]> {

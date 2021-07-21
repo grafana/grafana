@@ -64,7 +64,7 @@ export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, 
         />
         {isFixed && (
           <div className={styles.picker}>
-            <ColorPicker color={value?.fixed ?? 'grey'} onChange={onColorChange} />
+            <ColorPicker color={value?.fixed ?? 'grey'} onChange={onColorChange} enableNamedColors={true} />
           </div>
         )}
       </div>
