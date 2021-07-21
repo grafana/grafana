@@ -1,19 +1,28 @@
 import './add_graphite_func';
 import './func_editor';
 
-import { each, eachRight, map, remove } from 'lodash';
-import GraphiteQuery, { GraphiteTagOperator } from './graphite_query';
+import GraphiteQuery from './graphite_query';
 import { QueryCtrl } from 'app/plugins/sdk';
-import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 import { auto } from 'angular';
 import { TemplateSrv } from '@grafana/runtime';
-import { dispatch } from 'app/store/store';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
+import { actions } from './state/actions';
+import { getAltSegments, getTagOperators, getTags, getTagsAsSegments, getTagValues } from './state/providers';
+import { createStore, GraphiteQueryEditorState } from './state/store';
+import {
+  AngularDropdownOptions,
+  GraphiteActionDispatcher,
+  GraphiteQueryEditorAngularDependencies,
+  GraphiteSegment,
+  GraphiteTag,
+} from './types';
+import { ChangeEvent } from 'react';
 
-const GRAPHITE_TAG_OPERATORS = ['=', '!=', '=~', '!=~'];
-const TAG_PREFIX = 'tag: ';
-
+/**
+ * @deprecated Moved to state/store
+ *
+ * Note: methods marked with WIP are kept for easier diffing with previous changes. They will be removed when
+ * GraphiteQueryCtrl is replaced with a react component.
+ */
 export class GraphiteQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
@@ -24,437 +33,227 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   supportsTags = false;
   paused = false;
 
-  // to avoid error flooding, these errors are shown only once per session
-  private _tagsAutoCompleteErrorShown = false;
-  private _metricAutoCompleteErrorShown = false;
+  private state: GraphiteQueryEditorState;
+  private readonly dispatch: GraphiteActionDispatcher;
 
   /** @ngInject */
   constructor(
     $scope: any,
     $injector: auto.IInjectorService,
     private uiSegmentSrv: any,
-    private templateSrv: TemplateSrv,
-    $timeout: any
+    private templateSrv: TemplateSrv
   ) {
     super($scope, $injector);
-    this.supportsTags = this.datasource.supportsTags;
-    this.paused = false;
-    this.target.target = this.target.target || '';
 
-    this.datasource.waitForFuncDefsLoaded().then(() => {
-      this.queryModel = new GraphiteQuery(this.datasource, this.target, templateSrv);
-      this.buildSegments(false);
+    // This controller will be removed once it's root partial (query.editor.html) renders only React components.
+    // All component will be wrapped in ReactQueryEditor receiving DataSourceApi in QueryRow.renderQueryEditor
+    // The init() action will be removed and the store will be created in ReactQueryEditor. Note that properties
+    // passed to React component in QueryRow.renderQueryEditor are different than properties passed to Angular editor
+    // and will be mapped/provided in a way described below:
+    const deps = {
+      // WIP: to be removed. It's not passed to ReactQueryEditor but it's used only to:
+      // - get refId of the query (refId be passed in query property),
+      // - and to refresh changes (this will be handled by onChange passed to ReactQueryEditor)
+      // - it's needed to get other targets to interpolate the query (this will be added in QueryRow)
+      panelCtrl: this.panelCtrl,
+
+      // WIP: to be replaced with query property passed to ReactQueryEditor
+      target: this.target,
+
+      // WIP: same object will be passed to ReactQueryEditor
+      datasource: this.datasource,
+
+      // This is used to create view models for Angular <metric-segment> component (view models are MetricSegment objects)
+      // It will be simplified to produce data needed by React <SegmentAsync/> component
+      uiSegmentSrv: this.uiSegmentSrv,
+
+      // WIP: will be replaced with:
+      // import { getTemplateSrv } from 'app/features/templating/template_srv';
+      templateSrv: this.templateSrv,
+    };
+
+    const [dispatch, state] = createStore((state) => {
+      this.state = state;
+      // HACK: inefficient but not invoked frequently. It's needed to inform angular watcher about state changes
+      // for state shared between React/AngularJS. Actions invoked from React component will not mark the scope
+      // as dirty and the view won't be updated. It has to happen manually on each state change.
+      this.$scope.$digest();
     });
 
-    this.removeTagValue = '-- remove tag --';
+    this.state = state;
+    this.dispatch = dispatch;
+
+    this.dispatch(actions.init(deps as GraphiteQueryEditorAngularDependencies));
   }
 
   parseTarget() {
-    this.queryModel.parseTarget();
-    this.buildSegments();
+    // WIP: moved to state/helpers (the same name)
   }
 
-  toggleEditorMode() {
-    this.target.textEditor = !this.target.textEditor;
-    this.parseTarget();
+  async toggleEditorMode() {
+    await this.dispatch(actions.toggleEditorMode());
   }
 
   buildSegments(modifyLastSegment = true) {
-    this.segments = map(this.queryModel.segments, (segment) => {
-      return this.uiSegmentSrv.newSegment(segment);
-    });
-
-    const checkOtherSegmentsIndex = this.queryModel.checkOtherSegmentsIndex || 0;
-
-    promiseToDigest(this.$scope)(this.checkOtherSegments(checkOtherSegmentsIndex, modifyLastSegment));
-
-    if (this.queryModel.seriesByTagUsed) {
-      this.fixTagSegments();
-    }
+    // WIP: moved to state/helpers (the same name)
   }
 
   addSelectMetricSegment() {
-    this.queryModel.addSelectMetricSegment();
-    this.segments.push(this.uiSegmentSrv.newSelectMetric());
+    // WIP: moved to state/helpers (the same name)
   }
 
   checkOtherSegments(fromIndex: number, modifyLastSegment = true) {
-    if (this.queryModel.segments.length === 1 && this.queryModel.segments[0].type === 'series-ref') {
-      return Promise.resolve();
-    }
-
-    if (fromIndex === 0) {
-      this.addSelectMetricSegment();
-      return Promise.resolve();
-    }
-
-    const path = this.queryModel.getSegmentPathUpTo(fromIndex + 1);
-    if (path === '') {
-      return Promise.resolve();
-    }
-
-    return this.datasource
-      .metricFindQuery(path)
-      .then((segments: any) => {
-        if (segments.length === 0) {
-          if (path !== '' && modifyLastSegment) {
-            this.queryModel.segments = this.queryModel.segments.splice(0, fromIndex);
-            this.segments = this.segments.splice(0, fromIndex);
-            this.addSelectMetricSegment();
-          }
-        } else if (segments[0].expandable) {
-          if (this.segments.length === fromIndex) {
-            this.addSelectMetricSegment();
-          } else {
-            return this.checkOtherSegments(fromIndex + 1);
-          }
-        }
-      })
-      .catch((err: any) => {
-        this.handleMetricsAutoCompleteError(err);
-      });
+    // WIP: moved to state/helpers (the same name)
   }
 
   setSegmentFocus(segmentIndex: any) {
-    each(this.segments, (segment, index) => {
-      segment.focus = segmentIndex === index;
-    });
+    // WIP: moved to state/helpers (the same name)
   }
 
-  getAltSegments(index: number, prefix: string) {
-    let query = prefix && prefix.length > 0 ? '*' + prefix + '*' : '*';
-    if (index > 0) {
-      query = this.queryModel.getSegmentPathUpTo(index) + '.' + query;
-    }
-    const options = {
-      range: this.panelCtrl.range,
-      requestId: 'get-alt-segments',
-    };
-
-    return this.datasource
-      .metricFindQuery(query, options)
-      .then((segments: any[]) => {
-        const altSegments = map(segments, (segment) => {
-          return this.uiSegmentSrv.newSegment({
-            value: segment.text,
-            expandable: segment.expandable,
-          });
-        });
-
-        if (index > 0 && altSegments.length === 0) {
-          return altSegments;
-        }
-
-        // add query references
-        if (index === 0) {
-          eachRight(this.panelCtrl.panel.targets, (target) => {
-            if (target.refId === this.queryModel.target.refId) {
-              return;
-            }
-
-            altSegments.unshift(
-              this.uiSegmentSrv.newSegment({
-                type: 'series-ref',
-                value: '#' + target.refId,
-                expandable: false,
-              })
-            );
-          });
-        }
-
-        // add template variables
-        eachRight(this.templateSrv.getVariables(), (variable) => {
-          altSegments.unshift(
-            this.uiSegmentSrv.newSegment({
-              type: 'template',
-              value: '$' + variable.name,
-              expandable: true,
-            })
-          );
-        });
-
-        // add wildcard option
-        altSegments.unshift(this.uiSegmentSrv.newSegment('*'));
-
-        if (this.supportsTags && index === 0) {
-          this.removeTaggedEntry(altSegments);
-          return this.addAltTagSegments(prefix, altSegments);
-        } else {
-          return altSegments;
-        }
-      })
-      .catch((err: any): any[] => {
-        this.handleMetricsAutoCompleteError(err);
-        return [];
-      });
+  /**
+   * Get list of options for an empty segment or a segment with metric when it's clicked/opened.
+   *
+   * This is used for new segments and segments with metrics selected.
+   */
+  async getAltSegments(index: number, text: string): Promise<GraphiteSegment[]> {
+    return await getAltSegments(this.state, index, text);
   }
 
   addAltTagSegments(prefix: string, altSegments: any[]) {
-    return this.getTagsAsSegments(prefix).then((tagSegments: any[]) => {
-      tagSegments = map(tagSegments, (segment) => {
-        segment.value = TAG_PREFIX + segment.value;
-        return segment;
-      });
-      return altSegments.concat(...tagSegments);
-    });
+    // WIP: moved to state/providers (the same name)
   }
 
   removeTaggedEntry(altSegments: any[]) {
-    altSegments = remove(altSegments, (s) => s.value === '_tagged');
+    // WIP: moved to state/providers (the same name)
   }
 
-  segmentValueChanged(segment: { type: string; value: string; expandable: any }, segmentIndex: number) {
-    this.error = null;
-    this.queryModel.updateSegmentValue(segment, segmentIndex);
-
-    if (this.queryModel.functions.length > 0 && this.queryModel.functions[0].def.fake) {
-      this.queryModel.functions = [];
-    }
-
-    if (segment.type === 'tag') {
-      const tag = removeTagPrefix(segment.value);
-      this.pause();
-      this.addSeriesByTagFunc(tag);
-      return null;
-    }
-
-    if (segment.expandable) {
-      return promiseToDigest(this.$scope)(
-        this.checkOtherSegments(segmentIndex + 1).then(() => {
-          this.setSegmentFocus(segmentIndex + 1);
-          this.targetChanged();
-        })
-      );
-    } else {
-      this.spliceSegments(segmentIndex + 1);
-    }
-
-    this.setSegmentFocus(segmentIndex + 1);
-    this.targetChanged();
-
-    return null;
+  /**
+   * Apply changes to a given metric segment
+   */
+  async segmentValueChanged(segment: GraphiteSegment, index: number) {
+    await this.dispatch(actions.segmentValueChanged({ segment, index }));
   }
 
   spliceSegments(index: any) {
-    this.segments = this.segments.splice(0, index);
-    this.queryModel.segments = this.queryModel.segments.splice(0, index);
+    // WIP: moved to state/helpers (the same name)
   }
 
   emptySegments() {
-    this.queryModel.segments = [];
-    this.segments = [];
+    // WIP: moved to state/helpers (the same name)
   }
 
-  targetTextChanged() {
-    this.updateModelTarget();
-    this.refresh();
+  async targetTextChanged(event: ChangeEvent<HTMLInputElement>) {
+    await this.dispatch(actions.updateQuery({ query: event.target.value }));
   }
 
   updateModelTarget() {
-    this.queryModel.updateModelTarget(this.panelCtrl.panel.targets);
+    // WIP: moved to state/helpers as handleTargetChanged()
   }
 
-  targetChanged() {
-    if (this.queryModel.error) {
-      return;
-    }
-
-    const oldTarget = this.queryModel.target.target;
-    this.updateModelTarget();
-
-    if (this.queryModel.target !== oldTarget && !this.paused) {
-      this.panelCtrl.refresh();
-    }
-  }
-
-  addFunction(funcDef: any) {
-    const newFunc = this.datasource.createFuncInstance(funcDef, {
-      withDefaultParams: true,
-    });
-    newFunc.added = true;
-    this.queryModel.addFunction(newFunc);
-    this.smartlyHandleNewAliasByNode(newFunc);
-
-    if (this.segments.length === 1 && this.segments[0].fake) {
-      this.emptySegments();
-    }
-
-    if (!newFunc.params.length && newFunc.added) {
-      this.targetChanged();
-    }
-
-    if (newFunc.def.name === 'seriesByTag') {
-      this.parseTarget();
-    }
+  async addFunction(name: string) {
+    await this.dispatch(actions.addFunction({ name }));
   }
 
   removeFunction(func: any) {
-    this.queryModel.removeFunction(func);
-    this.targetChanged();
+    // WIP: converted to "removeFunction" action  and handled in state/store reducer
+    // It's now dispatched in func_editor
   }
 
   moveFunction(func: any, offset: any) {
-    this.queryModel.moveFunction(func, offset);
-    this.targetChanged();
+    // WIP: converted to "moveFunction" action and handled in state/store reducer
+    // It's now dispatched in func_editor
   }
 
   addSeriesByTagFunc(tag: string) {
-    const newFunc = this.datasource.createFuncInstance('seriesByTag', {
-      withDefaultParams: false,
-    });
-    const tagParam = `${tag}=`;
-    newFunc.params = [tagParam];
-    this.queryModel.addFunction(newFunc);
-    newFunc.added = true;
-
-    this.emptySegments();
-    this.targetChanged();
-    this.parseTarget();
+    // WIP: moved to state/helpers (the same name)
+    // It's now dispatched in func_editor
   }
 
   smartlyHandleNewAliasByNode(func: { def: { name: string }; params: number[]; added: boolean }) {
-    if (func.def.name !== 'aliasByNode') {
-      return;
-    }
-
-    for (let i = 0; i < this.segments.length; i++) {
-      if (this.segments[i].value.indexOf('*') >= 0) {
-        func.params[0] = i;
-        func.added = false;
-        this.targetChanged();
-        return;
-      }
-    }
+    // WIP: moved to state/helpers (the same name)
   }
 
   getAllTags() {
-    return this.datasource.getTags().then((values: any[]) => {
-      const altTags = map(values, 'text');
-      altTags.splice(0, 0, this.removeTagValue);
-      return mapToDropdownOptions(altTags);
-    });
+    // WIP: removed. It was not used.
   }
 
-  getTags(index: number, tagPrefix: any) {
-    const tagExpressions = this.queryModel.renderTagExpressions(index);
-    return this.datasource
-      .getTagsAutoComplete(tagExpressions, tagPrefix)
-      .then((values: any) => {
-        const altTags = map(values, 'text');
-        altTags.splice(0, 0, this.removeTagValue);
-        return mapToDropdownOptions(altTags);
-      })
-      .catch((err: any) => {
-        this.handleTagsAutoCompleteError(err);
-      });
+  /**
+   * Get list of tags for editing exiting tag with <gf-form-dropdown>
+   */
+  async getTags(index: number, query: string): Promise<AngularDropdownOptions[]> {
+    return await getTags(this.state, index, query);
   }
 
-  getTagsAsSegments(tagPrefix: string) {
-    const tagExpressions = this.queryModel.renderTagExpressions();
-    return this.datasource
-      .getTagsAutoComplete(tagExpressions, tagPrefix)
-      .then((values: any) => {
-        return map(values, (val) => {
-          return this.uiSegmentSrv.newSegment({
-            value: val.text,
-            type: 'tag',
-            expandable: false,
-          });
-        });
-      })
-      .catch((err: any) => {
-        this.handleTagsAutoCompleteError(err);
-      });
+  /**
+   * Get tag list when adding a new tag with <metric-segment>
+   */
+  async getTagsAsSegments(query: string): Promise<GraphiteSegment[]> {
+    return await getTagsAsSegments(this.state, query);
   }
 
-  getTagOperators() {
-    return mapToDropdownOptions(GRAPHITE_TAG_OPERATORS);
+  /**
+   * Get list of available tag operators
+   */
+  getTagOperators(): AngularDropdownOptions[] {
+    return getTagOperators();
   }
 
   getAllTagValues(tag: { key: any }) {
-    const tagKey = tag.key;
-    return this.datasource.getTagValues(tagKey).then((values: any[]) => {
-      const altValues = map(values, 'text');
-      return mapToDropdownOptions(altValues);
-    });
+    // WIP: removed. It was not used.
   }
 
-  getTagValues(tag: { key: any }, index: number, valuePrefix: any) {
-    const tagExpressions = this.queryModel.renderTagExpressions(index);
-    const tagKey = tag.key;
-    return this.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix).then((values: any[]) => {
-      const altValues = map(values, 'text');
-      // Add template variables as additional values
-      eachRight(this.templateSrv.getVariables(), (variable) => {
-        altValues.push('${' + variable.name + ':regex}');
-      });
-      return mapToDropdownOptions(altValues);
-    });
+  /**
+   * Get list of available tag values
+   */
+  async getTagValues(tag: GraphiteTag, index: number, query: string): Promise<AngularDropdownOptions[]> {
+    return await getTagValues(this.state, tag, index, query);
   }
 
-  tagChanged(tag: any, tagIndex: any) {
-    this.queryModel.updateTag(tag, tagIndex);
-    this.targetChanged();
+  /**
+   * Apply changes when a tag is changed
+   */
+  async tagChanged(tag: GraphiteTag, index: number) {
+    await this.dispatch(actions.tagChanged({ tag, index }));
   }
 
-  addNewTag(segment: { value: any }) {
-    const newTagKey = segment.value;
-    const newTag = { key: newTagKey, operator: '=' as GraphiteTagOperator, value: '' };
-    this.queryModel.addTag(newTag);
-    this.targetChanged();
-    this.fixTagSegments();
+  async addNewTag(segment: GraphiteSegment) {
+    await this.dispatch(actions.addNewTag({ segment }));
   }
 
   removeTag(index: any) {
-    this.queryModel.removeTag(index);
-    this.targetChanged();
+    // WIP: removed. It was not used.
+    // Tags are removed by selecting the segment called "-- remove tag --"
   }
 
   fixTagSegments() {
-    // Adding tag with the same name as just removed works incorrectly if single segment is used (instead of array)
-    this.addTagSegments = [this.uiSegmentSrv.newPlusButton()];
+    // WIP: moved to state/helpers (the same name)
   }
 
   showDelimiter(index: number) {
-    return index !== this.queryModel.tags.length - 1;
+    // WIP: removed. It was not used because of broken syntax in the template. The logic has been moved directly to the template
   }
 
   pause() {
-    this.paused = true;
+    // WIP: moved to state/helpers (the same name)
   }
 
-  unpause() {
-    this.paused = false;
-    this.panelCtrl.refresh();
+  async unpause() {
+    await this.dispatch(actions.unpause());
   }
 
   getCollapsedText() {
-    return this.target.target;
+    // WIP: removed. It was not used.
   }
 
-  private handleTagsAutoCompleteError(error: Error): void {
-    console.error(error);
-    if (!this._tagsAutoCompleteErrorShown) {
-      this._tagsAutoCompleteErrorShown = true;
-      dispatch(notifyApp(createErrorNotification(`Fetching tags failed: ${error.message}.`)));
-    }
+  handleTagsAutoCompleteError(error: Error): void {
+    // WIP: moved to state/helpers (the same name)
   }
 
-  private handleMetricsAutoCompleteError(error: Error): void {
-    console.error(error);
-    if (!this._metricAutoCompleteErrorShown) {
-      this._metricAutoCompleteErrorShown = true;
-      dispatch(notifyApp(createErrorNotification(`Fetching metrics failed: ${error.message}.`)));
-    }
+  handleMetricsAutoCompleteError(error: Error): void {
+    // WIP: moved to state/helpers (the same name)
   }
 }
 
-function mapToDropdownOptions(results: any[]) {
-  return map(results, (value) => {
-    return { text: value, value: value };
-  });
-}
-
-function removeTagPrefix(value: string): string {
-  return value.replace(TAG_PREFIX, '');
-}
+// WIP: moved to state/providers (the same names)
+// function mapToDropdownOptions(results: any[]) {}
+// function removeTagPrefix(value: string): string {}

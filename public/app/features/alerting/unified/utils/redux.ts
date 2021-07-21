@@ -126,7 +126,7 @@ export function withAppEvents<T>(
     });
 }
 
-function isFetchError(e: unknown): e is FetchError {
+export function isFetchError(e: unknown): e is FetchError {
   return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
 }
 

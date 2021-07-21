@@ -79,6 +79,8 @@ export enum EchoEventType {
   Performance = 'performance',
   MetaAnalytics = 'meta-analytics',
   Sentry = 'sentry',
+  Pageview = 'pageview',
+  Interaction = 'interaction',
 }
 
 /**

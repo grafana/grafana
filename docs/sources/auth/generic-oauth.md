@@ -15,6 +15,7 @@ You can configure many different OAuth2 authentication services with Grafana usi
   - [Set up OAuth2 with OneLogin](#set-up-oauth2-with-onelogin)
   - [JMESPath examples](#jmespath-examples)
     - [Role mapping](#role-mapping)
+    - [Groups mapping](#groups-mapping)
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the suffixed path of `/login/generic_oauth`.
 
@@ -64,6 +65,10 @@ Grafana will attempt to determine the user's e-mail address by querying the OAut
 Grafana will also attempt to do role mapping through OAuth as described below.
 
 Check for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
+
+Grafana also attempts to map teams through OAuth as described below.
+
+Check for the presence of groups using the [JMESPath](http://jmespath.org/examples.html) specified via the `groups_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. After evaluating the `groups_attribute_path` JMESPath expression, the result should be a string array of groups.
 
 See [JMESPath examples](#jmespath-examples) for more information.
 
@@ -215,7 +220,7 @@ role_attribute_path = role
 
 **Advanced example:**
 
-In the following example user will get `Admin` as role when authenticating since it has a group `admin`. If a user has a group `editor` it will get `Editor` as role, otherwise `Viewer`.
+In the following example user will get `Admin` as role when authenticating since it has a role `admin`. If a user has a role `editor` it will get `Editor` as role, otherwise `Viewer`.
 
 Payload:
 ```json
@@ -223,7 +228,7 @@ Payload:
     ...
     "info": {
         ...
-        "groups": [
+        "roles": [
             "engineer",
             "admin",
         ],
@@ -235,5 +240,38 @@ Payload:
 
 Config:
 ```bash
-role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || contains(info.groups[*], 'editor') && 'Editor' || 'Viewer'
+role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
+```
+
+
+### Groups mapping
+
+>  Available in Grafana Enterprise v8.1 and later versions.
+
+With Team Sync you can map your Generic OAuth groups to teams in Grafana so that the users are automatically added to the correct teams.
+
+Generic OAuth groups can be referenced by group ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
+
+[Learn more about Team Sync]({{< relref "team-sync.md" >}})
+
+Config:
+
+```bash
+groups_attribute_path = info.groups
+```
+
+Payload:
+```json
+{
+    ...
+    "info": {
+        ...
+        "groups": [
+            "engineers",
+            "analysts",
+        ],
+        ...
+    },
+    ...
+}
 ```

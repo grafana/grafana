@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -76,6 +77,13 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			continue
 		}
 		groupId, namespaceUID, namespace := r[0], r[1], r[2]
+		if _, err := srv.store.GetNamespaceByUID(namespaceUID, c.SignedInUser.OrgId, c.SignedInUser); err != nil {
+			if errors.Is(err, models.ErrFolderAccessDenied) {
+				// do not include it in the response
+				continue
+			}
+			return toNamespaceErrorResponse(err)
+		}
 		alertRuleQuery := ngmodels.ListRuleGroupAlertRulesQuery{OrgID: c.SignedInUser.OrgId, NamespaceUID: namespaceUID, RuleGroup: groupId}
 		if err := srv.store.GetRuleGroupAlertRules(&alertRuleQuery); err != nil {
 			ruleResponse.DiscoveryBase.Status = "error"
@@ -136,7 +144,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 					newGroup.LastEvaluation = alertState.LastEvaluationTime
 				}
 
-				alertingRule.Duration = alertState.EvaluationDuration.Seconds()
 				newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
 
 				switch alertState.State {

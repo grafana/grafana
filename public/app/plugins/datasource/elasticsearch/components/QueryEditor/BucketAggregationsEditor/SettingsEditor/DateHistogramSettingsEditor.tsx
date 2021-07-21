@@ -1,4 +1,4 @@
-import React, { ComponentProps, useState } from 'react';
+import React, { ComponentProps } from 'react';
 import { InlineField, Input, Select } from '@grafana/ui';
 import { DateHistogram } from '../aggregations';
 import { bucketAggregationConfig } from '../utils';
@@ -7,8 +7,9 @@ import { SelectableValue } from '@grafana/data';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { inlineFieldProps } from '.';
 import { uniqueId } from 'lodash';
+import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
 
-type IntervalOption = SelectableValue<string>;
+type IntervalOption = Required<Pick<SelectableValue<string>, 'label' | 'value'>>;
 
 const defaultIntervalOptions: IntervalOption[] = [
   { label: 'auto', value: 'auto' },
@@ -42,43 +43,23 @@ interface Props {
   bucketAgg: DateHistogram;
 }
 
-const getInitialState = (initialValue?: string): IntervalOption[] => {
-  return defaultIntervalOptions.concat(
-    defaultIntervalOptions.some(hasValue(initialValue))
-      ? []
-      : {
-          value: initialValue,
-          label: initialValue,
-        }
-  );
-};
-
 export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
   const dispatch = useDispatch();
-
-  const [intervalOptions, setIntervalOptions] = useState<IntervalOption[]>(
-    getInitialState(bucketAgg.settings?.interval)
-  );
-
-  const addIntervalOption = (value: string) => setIntervalOptions([...intervalOptions, { value, label: value }]);
 
   const handleIntervalChange = (v: string) => dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', v));
 
   return (
     <>
       <InlineField label="Interval" {...inlineFieldProps}>
-        <Select<string>
+        <Select
           inputId={uniqueId('es-date_histogram-interval')}
-          onChange={(e) => handleIntervalChange(e.value!)}
-          options={intervalOptions}
-          value={bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval}
-          allowCustomValue
           isValidNewOption={isValidNewOption}
           filterOption={optionStartsWithValue}
-          onCreateOption={(value) => {
-            addIntervalOption(value);
-            handleIntervalChange(value);
-          }}
+          {...useCreatableSelectPersistedBehaviour({
+            options: defaultIntervalOptions,
+            value: bucketAgg.settings?.interval || bucketAggregationConfig.date_histogram.defaultSettings?.interval,
+            onChange: handleIntervalChange,
+          })}
         />
       </InlineField>
 
@@ -86,7 +67,7 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
         <Input
           onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
           defaultValue={
-            bucketAgg.settings?.min_doc_count || bucketAggregationConfig[bucketAgg.type].defaultSettings?.min_doc_count
+            bucketAgg.settings?.min_doc_count || bucketAggregationConfig.date_histogram.defaultSettings?.min_doc_count
           }
         />
       </InlineField>
@@ -95,7 +76,7 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
         <Input
           onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'trimEdges', e.target.value!))}
           defaultValue={
-            bucketAgg.settings?.trimEdges || bucketAggregationConfig[bucketAgg.type].defaultSettings?.trimEdges
+            bucketAgg.settings?.trimEdges || bucketAggregationConfig.date_histogram.defaultSettings?.trimEdges
           }
         />
       </InlineField>
@@ -107,7 +88,7 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
       >
         <Input
           onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'offset', e.target.value!))}
-          defaultValue={bucketAgg.settings?.offset || bucketAggregationConfig[bucketAgg.type].defaultSettings?.offset}
+          defaultValue={bucketAgg.settings?.offset || bucketAggregationConfig.date_histogram.defaultSettings?.offset}
         />
       </InlineField>
     </>

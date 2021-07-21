@@ -121,13 +121,20 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	found := false
 	for i := 0; i < 20; i++ {
 		rootDir = filepath.Join(rootDir, "..")
-		exists, err := fs.Exists(filepath.Join(rootDir, "public", "views"))
+
+		dir, err := filepath.Abs(rootDir)
 		require.NoError(t, err)
+
+		exists, err := fs.Exists(filepath.Join(dir, "public", "views"))
+		require.NoError(t, err)
+
 		if exists {
+			rootDir = dir
 			found = true
 			break
 		}
 	}
+
 	require.True(t, found, "Couldn't detect project root directory")
 
 	cfgDir := filepath.Join(tmpDir, "conf")
