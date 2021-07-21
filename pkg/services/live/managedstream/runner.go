@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
@@ -121,6 +122,7 @@ type ManagedStream struct {
 	remoteWrite       chan *remoteWriteRequest
 	remoteWriteTime   map[string]time.Time
 	remoteWriteTimeMu sync.Mutex
+	decryptedValues   map[string]string
 }
 
 // NewManagedStream creates new ManagedStream.
@@ -133,6 +135,7 @@ func NewManagedStream(id string, publisher models.ChannelPublisher, frameCache F
 		ruleCache:       ruleCache,
 		remoteWrite:     make(chan *remoteWriteRequest, 128),
 		remoteWriteTime: map[string]time.Time{},
+		decryptedValues: map[string]string{},
 	}
 	go s.processRemoteWrite()
 	return s
@@ -244,6 +247,24 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 	return s.publisher(orgID, channel, frameJSON)
 }
 
+func (s *ManagedStream) decryptValue(secureSettings securejsondata.SecureJsonData, key string) (string, bool) {
+	// Cache decrypted values to reduce CPU usage.
+	encryptedValue, ok := secureSettings[key]
+	if !ok {
+		return "", false
+	}
+	if v, ok := s.decryptedValues[string(encryptedValue)]; !ok {
+		decryptedValue, ok := secureSettings.DecryptedValue(key)
+		if !ok {
+			return "", false
+		}
+		s.decryptedValues[string(encryptedValue)] = decryptedValue
+		return decryptedValue, true
+	} else {
+		return v, true
+	}
+}
+
 func (s *ManagedStream) remoteWriteFrame(orgID int64, channel string, rule models.LiveChannelRule, frame *data.Frame) error {
 	remoteWriteConfig := *rule.Settings.RemoteWrite
 	s.remoteWriteTimeMu.Lock()
@@ -264,7 +285,7 @@ func (s *ManagedStream) remoteWriteFrame(orgID int64, channel string, rule model
 	if err != nil {
 		logger.Error("Error serializing to remote write format", "error", err)
 	} else {
-		password, ok := rule.SecureSettings.DecryptedValue("remoteWritePassword")
+		password, ok := s.decryptValue(rule.SecureSettings, "remoteWritePassword")
 		if !ok {
 			logger.Warn("No password set for channel remote write", "orgId", orgID, "channel", channel)
 		}
