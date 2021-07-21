@@ -75,12 +75,12 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     
     return {
       init: () => vectorLayer,
-      update: (data: PanelData) => {
+      update: async (data: PanelData) => {
         if(!data.series?.length) {
           return; // ignore empty
         }
         const frame = data.series[0];
-        const info = dataFrameToPoints(frame, matchers);
+        const info = await dataFrameToPoints(frame, matchers);
         if(info.warning) {
           console.log( 'WARN', info.warning);
           return; // ???

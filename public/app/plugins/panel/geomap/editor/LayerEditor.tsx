@@ -9,6 +9,7 @@ import {
   FrameGeometrySourceMode,
   FieldType,
   Field,
+  LookupSourceOptions,
 } from '@grafana/data';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -53,6 +54,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
               { value: FrameGeometrySourceMode.Auto, label: 'Auto' },
               { value: FrameGeometrySourceMode.Coords, label: 'Coords' },
               { value: FrameGeometrySourceMode.Geohash, label: 'Geohash' },
+              { value: FrameGeometrySourceMode.Lookup, label: 'Lookup' },
             ],
           },
         })
@@ -84,6 +86,36 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
           showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Geohash,
           // eslint-disable-next-line react/display-name
           // info: (props) => <div>HELLO</div>,
+        })
+        .addFieldNamePicker({
+          path: 'location.lookup',
+          name: 'Lookup field',
+          settings: {
+            filter: (f: Field) => f.type === FieldType.string,
+            noFieldsMessage: 'No string fields found',
+          },
+          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
+        })
+        .addSelect({
+          path: 'location.lookupSrc',
+          name: 'Lookup source option',
+          settings: {
+            options: [
+              { value: LookupSourceOptions.Countries, label: 'Countries' },
+              { value: LookupSourceOptions.Countries_3Letter, label: 'Countries (3 Letter)' },
+              { value: LookupSourceOptions.States, label: 'States' },
+              { value: LookupSourceOptions.Probes, label: 'Probes' },
+              { value: LookupSourceOptions.JSONEndpoint, label: 'JSON Endpoint' },
+            ],
+          },
+          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
+        })
+        .addTextInput({
+          path: 'location.lookupSrcEndpoint',
+          name: 'JSON endpoint',
+          showIf: (opts: MapLayerOptions) =>
+            opts.location?.mode === FrameGeometrySourceMode.Lookup &&
+            opts.location?.lookupSrc === LookupSourceOptions.JSONEndpoint,
         });
     }
     if (layer.registerOptionsUI) {

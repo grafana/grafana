@@ -1,0 +1,23 @@
+{
+  "AMSTERDAM": { "name": "Amsterdam", "latitude": 52.3702, "longitude": 4.8952 },
+  "CHARLEROI": { "name": "Charleroi", "latitude": 50.4108, "longitude": 4.4446 },
+  "CHICAGO": { "name": "Chicago", "latitude": 41.881832, "longitude": -87.623177 },
+  "DALLAS": { "name": "Dallas", "latitude": 32.7767, "longitude": -97.040443 },
+  "FRANKFURT": { "name": "Frankfurt", "latitude": 50.110924, "longitude": 8.682127 },
+  "LONDON": { "name": "London", "latitude": 51.503399, "longitude": -0.119519 },
+  "LOS-ANGELES": { "name": "Los Angeles", "latitude": 34.052235, "longitude": -118.243683 },
+  "MIAMI": { "name": "Miami", "latitude": 25.76643, "longitude": -80.189888 },
+  "NEW-JERSEY": { "name": "New Jersey", "latitude": 39.833851, "longitude": -74.871826 },
+  "NEW-YORK": { "name": "New York", "latitude": 40.73061, "longitude": -73.935242 },
+  "OMAHA": { "name": "Omaha", "latitude": 41.25716, "longitude": -95.995102 },
+  "PARIS": { "name": "Paris", "latitude": 48.864716, "longitude": 2.349014 },
+  "PORTLAND": { "name": "Portland", "latitude": 45.512794, "longitude": -122.679565 },
+  "SAN-FRANCISCO": { "name": "San Francisco", "latitude": 37.733795, "longitude": -122.446747 },
+  "SEATTLE": { "name": "Seattle", "latitude": 47.608013, "longitude": -122.335167 },
+  "SILICON-VALLEY": { "name": "Silicon Valley", "latitude": 37.362517, "longitude": -122.03476 },
+  "SINGAPORE": { "name": "Singapore", "latitude": 1.29027, "longitude": 103.851959 },
+  "SOUTH-CAROLINA": { "name": "South Carolina", "latitude": 33.836082, "longitude": -81.163727 },
+  "SYDNEY": { "name": "Sydney", "latitude": -33.865143, "longitude": 151.2099 },
+  "TAIPEI": { "name": "Taipei", "latitude": 25.105497, "longitude": 121.597366 },
+  "TOKYO": { "name": "Tokyo", "latitude": 35.652832, "longitude": 139.839478 }
+}
