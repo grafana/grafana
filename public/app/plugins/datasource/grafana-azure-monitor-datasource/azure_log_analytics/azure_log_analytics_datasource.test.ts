@@ -299,13 +299,13 @@ describe('AzureLogAnalyticsDatasource', () => {
       };
 
       it('should substitute macros', async () => {
-        ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const params = new URLSearchParams(path.split('?')[1]);
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
+          const params = new URLSearchParams(options.url.split('?')[1]);
           const query = params.get('query');
           expect(query).toEqual(
             'Perf| where TimeGenerated >= datetime(2021-01-01T05:01:00.000Z) and TimeGenerated <= datetime(2021-01-01T05:02:00.000Z)'
           );
-          return Promise.resolve(queryResponse);
+          return Promise.resolve({ data: queryResponse, status: 200 });
         });
         ctx.ds.azureLogAnalyticsDatasource.defaultOrFirstWorkspace = 'foo';
         await ctx.ds.metricFindQuery('Perf| where TimeGenerated >= $__timeFrom() and TimeGenerated <= $__timeTo()', {
