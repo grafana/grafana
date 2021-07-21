@@ -3,6 +3,7 @@ title = "Alert notifications"
 description = "Alerting notifications guide"
 keywords = ["Grafana", "alerting", "guide", "notifications"]
 weight = 100
+aliases = ["/docs/grafana/latest/alerting/notifications/"]
 +++
 
 # Alert notifications
@@ -222,8 +223,8 @@ In DingTalk PC Client:
 
 ### Discord
 
-To set up Discord, you must create a Discord channel webhook. For instructions on how to create the channel, refer to 
-[Intro to Webhooks](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) f.
+To set up Discord, you must create a Discord channel webhook. For instructions on how to create the channel, refer to
+[Intro to Webhooks](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
 
 Setting | Description
 ---------- | -----------
