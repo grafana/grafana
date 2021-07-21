@@ -37,17 +37,15 @@ func removeRoleHelper(role string) {
 
 	// Compute new grants removing any appearance of the role in the list
 	replaceGrants := map[string][]string{}
+
 	for builtInRole, grants := range accesscontrol.FixedRoleGrants {
-		n := len(grants)
-		for i := 0; i < n; i++ {
-			r := grants[i]
-			if r == role {
-				copy(grants[i:], grants[i+1:])
-				n--
-				grants = grants[:n]
+		newGrants := make([]string, len(grants))
+		for _, r := range grants {
+			if r != role {
+				newGrants = append(newGrants, r)
 			}
 		}
-		replaceGrants[builtInRole] = grants
+		replaceGrants[builtInRole] = newGrants
 	}
 
 	// Replace grants
