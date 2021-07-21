@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -400,6 +401,10 @@ type Cfg struct {
 
 	// Grafana.com URL
 	GrafanaComURL string
+
+	// Geomap plugin tile server
+	DefaultBaseLayer        map[string]interface{}
+	DisableCustomBaseLayers bool
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -965,6 +970,18 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		Name:    dbName,
 		ConnStr: connStr,
 	}
+
+	geomapSection := iniFile.Section("geomap")
+	basemapJSON := valueAsString(geomapSection, "default_baselayer", "")
+	cfg.DefaultBaseLayer = make(map[string]interface{})
+	if basemapJSON != "" {
+		err = json.Unmarshal([]byte(basemapJSON), &cfg.DefaultBaseLayer)
+		if err != nil {
+			cfg.Logger.Error(fmt.Sprintf("Error parsing JSON string: %s", err))
+			cfg.DefaultBaseLayer = nil
+		}
+	}
+	cfg.DisableCustomBaseLayers = geomapSection.Key("disable_custom_baselayers").MustBool(false)
 
 	cfg.readDateFormats()
 	cfg.readSentryConfig()
