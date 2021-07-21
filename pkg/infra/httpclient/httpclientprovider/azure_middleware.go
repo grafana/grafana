@@ -50,7 +50,7 @@ func errorResponse(err error) http.RoundTripper {
 }
 
 func isAzureAuthenticationEnabled(customOptions map[string]interface{}) (bool, error) {
-	if untypedValue, ok := customOptions["azureAuth"]; !ok {
+	if untypedValue, ok := customOptions["_azureAuth"]; !ok {
 		return false, nil
 	} else if value, ok := untypedValue.(bool); !ok {
 		err := fmt.Errorf("the field 'azureAuth' should be a bool")
@@ -61,7 +61,7 @@ func isAzureAuthenticationEnabled(customOptions map[string]interface{}) (bool, e
 }
 
 func getAzureCredentials(customOptions map[string]interface{}) (azcredentials.AzureCredentials, error) {
-	if untypedValue, ok := customOptions["azureCredentials"]; !ok {
+	if untypedValue, ok := customOptions["_azureCredentials"]; !ok {
 		return nil, nil
 	} else if value, ok := untypedValue.(azcredentials.AzureCredentials); !ok {
 		err := fmt.Errorf("the field 'azureCredentials' should be a valid credentials object")
@@ -83,7 +83,7 @@ func getDefaultAzureCredentials(cfg *setting.Cfg) azcredentials.AzureCredentials
 
 func getAzureEndpointResourceId(customOptions map[string]interface{}) (*url.URL, error) {
 	var value string
-	if untypedValue, ok := customOptions["azureEndpointResourceId"]; !ok {
+	if untypedValue, ok := customOptions["_azureEndpointResourceId"]; !ok {
 		err := fmt.Errorf("the field 'azureEndpointResourceId' should be set")
 		return nil, err
 	} else if value, ok = untypedValue.(string); !ok {

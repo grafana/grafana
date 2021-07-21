@@ -127,10 +127,10 @@ func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 		if err == nil {
 			// Enable Azure authentication only when credentials are not invalid
 			// Absence of credentials is considered as default (valid) credentials (e.g. managed identity)
-			opts.CustomOptions["azureAuth"] = true
-			opts.CustomOptions["azureEndpointResourceId"] = ds.JsonData.Get("azureEndpointResourceId").MustString()
+			opts.CustomOptions["_azureAuth"] = true
+			opts.CustomOptions["_azureEndpointResourceId"] = ds.JsonData.Get("azureEndpointResourceId").MustString()
 			if credentials != nil {
-				opts.CustomOptions["azureCredentials"] = credentials
+				opts.CustomOptions["_azureCredentials"] = credentials
 			}
 		}
 	}
