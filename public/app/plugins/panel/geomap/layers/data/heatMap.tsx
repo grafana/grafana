@@ -75,7 +75,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
         features.forEach((feature) => {
           vectorLayer.getSource().removeFeature(feature);
         });
-
+        
         // Get data points (latitude and longitude coordinates)
         const promiseInfo = dataFrameToPoints(frame, matchers);
         promiseInfo.then((info: LocationInfo) => {

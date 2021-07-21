@@ -52,6 +52,7 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
       update: (data: PanelData) => {
         const frame = data.series[0];
         if (frame && frame.length) {
+          
           const promiseInfo = dataFrameToPoints(frame, matchers);
           promiseInfo.then((info: LocationInfo) => {
             if(info.warning) {
