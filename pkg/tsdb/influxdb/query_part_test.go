@@ -3,7 +3,7 @@ package influxdb
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 func TestInfluxdbQueryPart(t *testing.T) {
@@ -27,8 +27,7 @@ func TestInfluxdbQueryPart(t *testing.T) {
 		{mode: "non_negative_difference", params: []string{}, input: "max(value)", expected: `non_negative_difference(max(value))`},
 	}
 
-	timeRange := plugins.NewDataTimeRange("5m", "now")
-	queryContext := plugins.DataQuery{TimeRange: &timeRange}
+	queryContext := &backend.QueryDataRequest{}
 	query := &Query{}
 
 	for _, tc := range tcs {

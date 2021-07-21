@@ -325,7 +325,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             </InlineField>
             <InlineField label="Dedup" transparent>
               <RadioButtonGroup
-                options={Object.keys(LogsDedupStrategy).map((dedupType: LogsDedupStrategy) => ({
+                options={Object.values(LogsDedupStrategy).map((dedupType) => ({
                   label: capitalize(dedupType),
                   value: dedupType,
                   description: LogsDedupDescription[dedupType],
