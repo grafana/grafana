@@ -240,7 +240,7 @@ func ConcatPermissions(permissions ...[]Permission) []Permission {
 	return perms
 }
 
-// ValidateFixedRole errors when a fixed role does match expected pattern
+// ValidateFixedRole errors when a fixed role does not match expected pattern
 func ValidateFixedRole(role RoleDTO) error {
 	if !strings.HasPrefix(role.Name, FixedRolePrefix) {
 		return ErrFixedRolePrefixMissing
