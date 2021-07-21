@@ -93,7 +93,7 @@ func getAzureEndpointResourceId(customOptions map[string]interface{}) (*url.URL,
 
 	resourceId, err := url.Parse(value)
 	if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
-		err := fmt.Errorf("invalid endpoint Resource ID URL '%s'", resourceId)
+		err := fmt.Errorf("invalid endpoint Resource ID URL '%s'", value)
 		return nil, err
 	}
 
