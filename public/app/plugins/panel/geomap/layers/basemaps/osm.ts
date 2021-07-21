@@ -3,7 +3,7 @@ import Map from 'ol/Map';
 import OSM from 'ol/source/OSM';
 import TileLayer from 'ol/layer/Tile';
 
-const standard: MapLayerRegistryItem = {
+export const standard: MapLayerRegistryItem = {
   id: 'osm-standard',
   name: 'Open Street Map',
   isBaseMap: true,
