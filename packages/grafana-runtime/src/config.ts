@@ -88,7 +88,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   caching = {
     enabled: false,
   };
-  geomapDefaultBaseLayer?: MapLayerOptions;
+  geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
 
   constructor(options: GrafanaBootConfig) {

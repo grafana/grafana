@@ -10,8 +10,7 @@ import {
   FieldType,
   Field,
 } from '@grafana/data';
-import { geomapLayerRegistry } from '../layers/registry';
-import { defaultGrafanaThemedMap } from '../layers/basemaps';
+import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVizualizationOptions';
@@ -29,7 +28,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
     return geomapLayerRegistry.selectOptions(
       options?.type // the selected value
         ? [options.type] // as an array
-        : [defaultGrafanaThemedMap.id],
+        : [DEFAULT_BASEMAP_CONFIG.type],
       filter
     );
   }, [options?.type, filter]);

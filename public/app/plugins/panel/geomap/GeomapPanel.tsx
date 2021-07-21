@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { geomapLayerRegistry } from './layers/registry';
+import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry, defaultBaseLayer } from './layers/registry';
 import { Map, View } from 'ol';
 import Attribution from 'ol/control/Attribution';
 import Zoom from 'ol/control/Zoom';
@@ -12,7 +12,6 @@ import { PanelData, MapLayerHandler, MapLayerOptions, PanelProps, GrafanaTheme }
 import { config } from '@grafana/runtime';
 
 import { ControlsOptions, GeomapPanelOptions, MapViewConfig } from './types';
-import { defaultGrafanaThemedMap } from './layers/basemaps';
 import { centerPointRegistry, MapCenterID } from './view';
 import { fromLonLat } from 'ol/proj';
 import { Coordinate } from 'ol/coordinate';
@@ -153,10 +152,11 @@ export class GeomapPanel extends Component<Props> {
     if (!this.map) {
       return;
     }
-    if (!cfg) {
-      cfg = { type: defaultGrafanaThemedMap.id };
+
+    if (!cfg?.type || config.geomapDisableCustomBaseLayer) {
+      cfg = DEFAULT_BASEMAP_CONFIG;
     }
-    const item = geomapLayerRegistry.getIfExists(cfg.type) ?? defaultGrafanaThemedMap;
+    const item = geomapLayerRegistry.getIfExists(cfg.type) ?? defaultBaseLayer;
     const layer = item.create(this.map, cfg, config.theme2).init();
     if (this.basemap) {
       this.map.removeLayer(this.basemap);
