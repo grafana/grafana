@@ -6,6 +6,10 @@ import { AzureMonitorOption } from '../types';
 export const findOption = (options: AzureMonitorOption[], value: string | undefined) =>
   value ? options.find((v) => v.value === value) ?? { value, label: value } : null;
 
+// TODO: need to test for template variables
+// Don't merge this in!!!!
+export const hasOption = (options: AzureMonitorOption[], value: string) => options.some((v) => v.value === value);
+
 export const findOptions = (options: AzureMonitorOption[], values: string[] = []) => {
   if (values.length === 0) {
     return [];

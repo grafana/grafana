@@ -31,7 +31,8 @@ export default function useLastError() {
 
   const errorMessage = useMemo(() => {
     const recentError = errors[0];
-    return recentError && messageFromError(recentError[1]);
+    const msg = recentError && messageFromError(recentError[1]);
+    return msg ? `${recentError[0]}: ${msg}` : msg;
   }, [errors]);
 
   return [errorMessage, addError] as const;
