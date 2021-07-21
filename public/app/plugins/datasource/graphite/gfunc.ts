@@ -973,7 +973,7 @@ export class FuncInstance {
   def: any;
   params: any;
   text: any;
-  added: boolean;
+  declare added: boolean;
   /**
    * Hidden functions are not displayed in UI but available in text editor
    * This is used for seriesByTagUsed function which when used switches

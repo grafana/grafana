@@ -65,7 +65,7 @@ class GraphElement {
   eventManager: EventManager;
   thresholdManager?: ThresholdManager;
   timeRegionManager: TimeRegionManager;
-  legendElem: HTMLElement;
+  legendElem: HTMLElement | undefined;
 
   constructor(private scope: any, private elem: JQuery, private timeSrv: TimeSrv) {
     this.ctrl = scope.ctrl;
@@ -117,7 +117,7 @@ class GraphElement {
     updateLegendValues(this.data, this.panel, graphHeight);
 
     if (!this.panel.legend.show) {
-      if (this.legendElem.hasChildNodes()) {
+      if (this.legendElem?.hasChildNodes()) {
         ReactDOM.unmountComponentAtNode(this.legendElem);
       }
       this.renderPanel();
