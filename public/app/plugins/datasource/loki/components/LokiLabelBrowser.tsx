@@ -8,6 +8,7 @@ import {
   LoadingPlaceholder,
   withTheme2,
   BrowserLabel as LokiLabel,
+  fuzzyMatch,
 } from '@grafana/ui';
 import LokiLanguageProvider from '../language_provider';
 import PromQlLanguageProvider from '../../prometheus/language_provider';
@@ -15,7 +16,6 @@ import { css, cx } from '@emotion/css';
 import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
 import { GrafanaTheme2 } from '@grafana/data';
-import { fuzzyMatch } from '../../../../../../packages/grafana-ui/src/slate-plugins/fuzzy';
 import { sortBy } from 'lodash';
 
 // Hard limit on labels to render
@@ -470,7 +470,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
                 <FixedSizeList
                   height={200}
                   itemCount={label.values?.length || 0}
-                  itemSize={25}
+                  itemSize={28}
                   itemKey={(i) => (label.values as FacettableValue[])[i].name}
                   width={200}
                   className={styles.valueList}

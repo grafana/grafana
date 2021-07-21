@@ -20,6 +20,8 @@ type FuzzyMatch = {
  *
  * @param stack - main text to be searched
  * @param needle - partial text to find in the stack
+ *
+ * @internal
  */
 export function fuzzyMatch(stack: string, needle: string): FuzzyMatch {
   let distance = 0,
