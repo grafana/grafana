@@ -1,128 +1,23 @@
-[
-  {
-    "key": "AMSTERDAM",
-    "latitude": 52.3702,
-    "longitude": 4.8952,
-    "name": "Amsterdam"
-  },
-  {
-    "key": "CHARLEROI",
-    "latitude": 50.4108,
-    "longitude": 4.4446,
-    "name": "Charleroi"
-  },
-  {
-    "key": "CHICAGO",
-    "latitude": 41.881832,
-    "longitude": -87.623177,
-    "name": "Chicago"
-  },
-  {
-    "key": "DALLAS",
-    "latitude": 32.7767,
-    "longitude": -97.040443,
-    "name": "Dallas"
-  },
-  {
-    "key": "FRANKFURT",
-    "latitude": 50.110924,
-    "longitude": 8.682127,
-    "name": "Frankfurt"
-  },
-  {
-    "key": "LONDON",
-    "latitude": 51.503399,
-    "longitude": -0.119519,
-    "name": "London"
-  },
-  {
-    "key": "LOS-ANGELES",
-    "latitude": 34.052235,
-    "longitude": -118.243683,
-    "name": "Los Angeles"
-  },
-  {
-    "key": "MIAMI",
-    "latitude": 25.76643,
-    "longitude": -80.189888,
-    "name": "Miami"
-  },
-  {
-    "key": "NEW-JERSEY",
-    "latitude": 39.833851,
-    "longitude": -74.871826,
-    "name": "New Jersey"
-  },
-  {
-    "key": "NEW-YORK",
-    "latitude": 40.73061,
-    "longitude": -73.935242,
-    "name": "New York"
-  },
-  {
-    "key": "OMAHA",
-    "latitude": 41.25716,
-    "longitude": -95.995102,
-    "name": "Omaha"
-  },
-  {
-    "key": "PARIS",
-    "latitude": 48.864716,
-    "longitude": 2.349014,
-    "name": "Paris"
-  },
-  {
-    "key": "PORTLAND",
-    "latitude": 45.512794,
-    "longitude": -122.679565,
-    "name": "Portland"
-  },
-  {
-    "key": "SAN-FRANCISCO",
-    "latitude": 37.733795,
-    "longitude": -122.446747,
-    "name": "San Francisco"
-  },
-  {
-    "key": "SEATTLE",
-    "latitude": 47.608013,
-    "longitude": -122.335167,
-    "name": "Seattle"
-  },
-  {
-    "key": "SILICON-VALLEY",
-    "latitude": 37.362517,
-    "longitude": -122.03476,
-    "name": "Silicon Valley"
-  },
-  {
-    "key": "SINGAPORE",
-    "latitude": 1.29027,
-    "longitude": 103.851959,
-    "name": "Singapore"
-  },
-  {
-    "key": "SOUTH-CAROLINA",
-    "latitude": 33.836082,
-    "longitude": -81.163727,
-    "name": "South Carolina"
-  },
-  {
-    "key": "SYDNEY",
-    "latitude": -33.865143,
-    "longitude": 151.2099,
-    "name": "Sydney"
-  },
-  {
-    "key": "TAIPEI",
-    "latitude": 25.105497,
-    "longitude": 121.597366,
-    "name": "Taipei"
-  },
-  {
-    "key": "TOKYO",
-    "latitude": 35.652832,
-    "longitude": 139.839478,
-    "name": "Tokyo"
-  }
-]
+{
+  "AMSTERDAM": { "name": "Amsterdam", "latitude": 4.8952, "longitude": 52.3702 },
+  "CHARLEROI": { "name": "Charleroi", "latitude": 4.4446, "longitude": 50.4108 },
+  "CHICAGO": { "name": "Chicago", "latitude": -87.623177, "longitude": 41.881832 },
+  "DALLAS": { "name": "Dallas", "latitude": -97.040443, "longitude": 32.7767 },
+  "FRANKFURT": { "name": "Frankfurt", "latitude": 8.682127, "longitude": 50.110924 },
+  "LONDON": { "name": "London", "latitude": -0.119519, "longitude": 51.503399 },
+  "LOS-ANGELES": { "name": "Los Angeles", "latitude": -118.243683, "longitude": 34.052235 },
+  "MIAMI": { "name": "Miami", "latitude": -80.189888, "longitude": 25.76643 },
+  "NEW-JERSEY": { "name": "New Jersey", "latitude": -74.871826, "longitude": 39.833851 },
+  "NEW-YORK": { "name": "New York", "latitude": -73.935242, "longitude": 40.73061 },
+  "OMAHA": { "name": "Omaha", "latitude": -95.995102, "longitude": 41.25716 },
+  "PARIS": { "name": "Paris", "latitude": 2.349014, "longitude": 48.864716 },
+  "PORTLAND": { "name": "Portland", "latitude": -122.679565, "longitude": 45.512794 },
+  "SAN-FRANCISCO": { "name": "San Francisco", "latitude": -122.446747, "longitude": 37.733795 },
+  "SEATTLE": { "name": "Seattle", "latitude": -122.335167, "longitude": 47.608013 },
+  "SILICON-VALLEY": { "name": "Silicon Valley", "latitude": -122.03476, "longitude": 37.362517 },
+  "SINGAPORE": { "name": "Singapore", "latitude": 103.851959, "longitude": 1.29027 },
+  "SOUTH-CAROLINA": { "name": "South Carolina", "latitude": -81.163727, "longitude": 33.836082 },
+  "SYDNEY": { "name": "Sydney", "latitude": 151.2099, "longitude": -33.865143 },
+  "TAIPEI": { "name": "Taipei", "latitude": 121.597366, "longitude": 25.105497 },
+  "TOKYO": { "name": "Tokyo", "latitude": 139.839478, "longitude": 35.652832 }
+}
