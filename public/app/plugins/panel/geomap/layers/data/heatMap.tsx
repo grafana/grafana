@@ -67,7 +67,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
 
     return {
       init: () => vectorLayer,
-      update: (data: PanelData) => {
+      update: async (data: PanelData) => {
         const frame = data.series[0];
 
         // Remove previous data before updating
@@ -77,7 +77,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
         });
 
         // Get data points (latitude and longitude coordinates)
-        const info = dataFrameToPoints(frame, matchers);
+        const info = await dataFrameToPoints(frame, matchers);
         if(info.warning) {
           console.log( 'WARN', info.warning);
           return; // ???

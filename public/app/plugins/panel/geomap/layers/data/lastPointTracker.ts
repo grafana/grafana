@@ -49,10 +49,10 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
     const matchers = getLocationMatchers(options.location);
     return {
       init: () => vectorLayer,
-      update: (data: PanelData) => {
+      update: async (data: PanelData) => {
         const frame = data.series[0];
         if (frame && frame.length) {
-          const info = dataFrameToPoints(frame, matchers);
+          const info = await dataFrameToPoints(frame, matchers);
           if(info.warning) {
             console.log( 'WARN', info.warning);
             return; // ???

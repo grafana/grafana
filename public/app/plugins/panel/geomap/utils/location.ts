@@ -147,12 +147,12 @@ export interface LocationInfo {
   points: Point[];
 }
 
-export function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatchers): LocationInfo {
+export async function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatchers): Promise<LocationInfo> {
   const info: LocationInfo = {
     points: [],
   };
   if (!frame?.length) {
-    return info;
+    return Promise.resolve(info);
   }
   const fields = getLocationFields(frame, location);
   switch (fields.mode) {
@@ -176,7 +176,7 @@ export function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatch
       info.warning = 'Unable to find location fields';
   }
 
-  return info;
+  return Promise.resolve(info);
 }
 
 function getPointsFromLonLat(lon: Field<number>, lat: Field<number>): Point[] {
