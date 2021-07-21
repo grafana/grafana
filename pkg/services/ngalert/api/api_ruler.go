@@ -169,7 +169,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	for _, r := range q.Result {
 		folder, ok := namespaceMap[r.NamespaceUID]
 		if !ok {
-			// this should never happen
+			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserId, "namespace", r.NamespaceUID, "rule", r.UID)
 			continue
 		}
 		namespace := folder.Title
