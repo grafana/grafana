@@ -250,7 +250,7 @@ describe('AzureLogAnalyticsDatasource', () => {
           );
           return Promise.resolve(queryResponse);
         });
-        ctx.ds.azureLogAnalyticsDatasource.defaultOrFirstWorkspace = 'foo';
+        ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = 'foo';
         await ctx.ds.metricFindQuery('Perf| where TimeGenerated >= $__timeFrom() and TimeGenerated <= $__timeTo()', {
           range: {
             from: new Date('2021-01-01 00:01:00'),
