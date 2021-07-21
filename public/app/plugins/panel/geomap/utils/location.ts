@@ -13,6 +13,7 @@ import {
 import { getBackendSrv } from '@grafana/runtime';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
+import { StringDecoder } from 'string_decoder';
 import { decodeGeohash } from './geohash';
 
 export type FieldFinder = (frame: DataFrame) => Field | undefined;
@@ -173,11 +174,23 @@ export interface LocationInfo {
   points: Point[];
 }
 
-export interface LocationKey {
-  key: string;
-  latitude: number;
-  longitude: number;
+export interface Location {
   name: string;
+  longitude: number;
+  latitude: number;
+}
+
+export function convertLocationJson(locationJson: Location[]): Map<string, Location> {
+  let map = new Map<string, Location>();
+  for (var value in locationJson) {
+    let internal: Location = {
+      name: locationJson[value].name,
+      longitude: locationJson[value].longitude,
+      latitude: locationJson[value].latitude,
+    };
+    map.set(value, internal);
+  }
+  return map;
 }
 
 export async function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatchers): Promise<LocationInfo> {
@@ -208,8 +221,10 @@ export async function dataFrameToPoints(frame: DataFrame, location: LocationFiel
     case FrameGeometrySourceMode.Lookup:
       if (fields.lookup && location.lookupSrcEndpoint) {
         // TODO: Get response from http request
-        const locationData = await getBackendSrv().get(location.lookupSrcEndpoint);
-        info.points = getPointsFromLookup(fields.lookup, locationData);
+        const locationJson = await getBackendSrv().get(location.lookupSrcEndpoint);
+        const locationMap = convertLocationJson(locationJson);
+
+        info.points = getPointsFromLookup(fields.lookup, locationMap);
       } else {
         info.warning = 'Missing lookup/lookupSrc field';
       }
@@ -242,12 +257,12 @@ function getPointsFromGeohash(field: Field<string>): Point[] {
   return points;
 }
 
-function getPointsFromLookup(field: Field<string>, locationData: LocationKey[]): Point[] {
+export function getPointsFromLookup(field: Field<string>, locationData: Map<string, Location>): Point[] {
   const count = field.values.length;
   const points = new Array<Point>(count);
   for (let i = 0; i < count; i++) {
     const target = field.values.get(i);
-    const location = locationData.filter((loc: LocationKey) => loc.key.toUpperCase() === target.toUpperCase())[0];
+    const location = locationData.get(target.toUpperCase());
     if (location) {
       points[i] = new Point(fromLonLat([location.longitude, location.latitude]));
     }
