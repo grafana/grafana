@@ -7,7 +7,7 @@ import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { FileListItem } from './FileListItem';
 
-export interface DropzoneProps {
+export interface FileDropzoneProps {
   /**
    * Use the children property to have custom dropzone view.
    */
@@ -41,7 +41,7 @@ export interface DropzoneFile {
   retryUpload?: () => void;
 }
 
-export function Dropzone({ options, children, readAs, onLoad }: DropzoneProps) {
+export function FileDropzone({ options, children, readAs, onLoad }: FileDropzoneProps) {
   const [files, setFiles] = useState<DropzoneFile[]>([]);
 
   const setFileProperty = useCallback(
