@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -97,7 +98,7 @@ func GetIntervalFrom(dsInfo *models.DataSource, queryModel *simplejson.Json, def
 	if isPureNum {
 		interval += "s"
 	}
-	parsedInterval, err := time.ParseDuration(interval)
+	parsedInterval, err := gtime.ParseDuration(interval)
 	if err != nil {
 		return time.Duration(0), err
 	}
