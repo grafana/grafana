@@ -292,6 +292,30 @@ describe('AzureLogAnalyticsDatasource', () => {
         expect(results[1].value).toBe('Policy');
       });
     });
+
+    describe('and contain options', () => {
+      const queryResponse = {
+        tables: [],
+      };
+
+      it('should substitute macros', async () => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
+          const params = new URLSearchParams(options.url.split('?')[1]);
+          const query = params.get('query');
+          expect(query).toEqual(
+            'Perf| where TimeGenerated >= datetime(2021-01-01T05:01:00.000Z) and TimeGenerated <= datetime(2021-01-01T05:02:00.000Z)'
+          );
+          return Promise.resolve({ data: queryResponse, status: 200 });
+        });
+        ctx.ds.azureLogAnalyticsDatasource.defaultOrFirstWorkspace = 'foo';
+        await ctx.ds.metricFindQuery('Perf| where TimeGenerated >= $__timeFrom() and TimeGenerated <= $__timeTo()', {
+          range: {
+            from: new Date('2021-01-01 00:01:00'),
+            to: new Date('2021-01-01 00:02:00'),
+          },
+        });
+      });
+    });
   });
 
   describe('When performing annotationQuery', () => {

@@ -233,7 +233,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
    * And some of the azure internal data sources return null in this function, which the
    * external interface does not support
    */
-  metricFindQueryInternal(query: string): Promise<MetricFindValue[]> {
+  metricFindQueryInternal(query: string, optionalOptions?: unknown): Promise<MetricFindValue[]> {
     // workspaces() - Get workspaces in the default subscription
     const workspacesQuery = query.match(/^workspaces\(\)/i);
     if (workspacesQuery) {
@@ -258,7 +258,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
         return [];
       }
 
-      const queries = this.buildQuery(query, null, resourceURI);
+      const queries = this.buildQuery(query, optionalOptions, resourceURI);
       const promises = this.doQueries(queries);
 
       return Promise.all(promises)
