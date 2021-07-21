@@ -48,7 +48,7 @@ export interface FrameGeometrySource {
   wkt?: string;
   lookup?: string;
 
-  // Lookup source endpoint
+  // Path to a mappings file
   lookupSrc?: string;
   lookupSrcEndpoint?: string;
 }

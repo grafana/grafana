@@ -98,7 +98,7 @@ steps:
 - name: validate-scuemata
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
   - build-backend
 
@@ -354,7 +354,7 @@ steps:
 - name: validate-scuemata
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
   - build-backend
 
@@ -811,7 +811,7 @@ steps:
 - name: validate-scuemata
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
   - build-backend
 
@@ -1186,7 +1186,7 @@ steps:
 - name: validate-scuemata
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
   - build-backend
 
@@ -1765,7 +1765,7 @@ steps:
 - name: validate-scuemata
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
   - build-backend
 
@@ -2129,7 +2129,7 @@ steps:
 - name: validate-scuemata
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
   - build-backend
 
@@ -2698,7 +2698,7 @@ steps:
 - name: validate-scuemata
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
   - build-backend
 
@@ -3033,7 +3033,7 @@ steps:
 - name: validate-scuemata
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
   depends_on:
   - build-backend
 

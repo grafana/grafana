@@ -1369,7 +1369,7 @@ var expEmailNotifications = []*models.SendEmailCommandSync{
 		SendEmailCommand: models.SendEmailCommand{
 			To:          []string{"test@email.com"},
 			SingleEmail: true,
-			Template:    "ng_alert_notification.html",
+			Template:    "ng_alert_notification",
 			Subject:     "[FIRING:1] EmailAlert ",
 			Data: map[string]interface{}{
 				"Title":   "[FIRING:1] EmailAlert ",
