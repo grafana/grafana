@@ -34,7 +34,7 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
     });
 
     // Nested
-    if (!config.disableCustomBaseLayer) {
+    if (!config.geomapDisableCustomBaseLayer) {
       builder.addCustomEditor({
         category: ['Base Layer'],
         id: 'basemap',

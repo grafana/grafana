@@ -19,12 +19,12 @@ export const defaultBaseLayer: MapLayerRegistryItem<any> = {
   create: (map: Map, options: MapLayerOptions, theme: GrafanaTheme2) => ({
     init: () => {
       // Config options set on the server side
-      const cfg = config.defaultBaseLayer.config;
+      const cfg = config.geomapDefaultBaseLayer!.config;
       let defaultMap;
 
       // If default base layer is set, create the default base map with its corresponding config
-      if (config.defaultBaseLayer.type) {
-        defaultMap = baseMapOptions.find((baseLayer) => baseLayer.id === config.defaultBaseLayer.type);
+      if (config.geomapDefaultBaseLayer!.type) {
+        defaultMap = baseMapOptions.find((baseLayer) => baseLayer.id === config.geomapDefaultBaseLayer!.type);
         if (defaultMap === undefined) {
           throw new Error('Invalid default base map');
         }
