@@ -1,32 +1,41 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, TabsBar, TabContent, Tab, Icon } from '@grafana/ui';
+import { useStyles2, TabsBar, TabContent, Tab, Icon, Alert } from '@grafana/ui';
 
-import { VersionList } from '../components/VersionList';
+import { AppNotificationSeverity } from 'app/types';
 import { InstallControls } from '../components/InstallControls';
-import { usePlugin } from '../hooks/usePlugins';
+import { usePluginDetails } from '../hooks/usePluginDetails';
 import { Page as PluginPage } from '../components/Page';
 import { Loader } from '../components/Loader';
 import { Page } from 'app/core/components/Page/Page';
 import { PluginLogo } from '../components/PluginLogo';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { ActionTypes } from '../types';
+import { PluginDetailsBody } from '../components/PluginDetailsBody';
 
 type PluginDetailsProps = GrafanaRouteComponentProps<{ pluginId?: string }>;
 
 export default function PluginDetails({ match }: PluginDetailsProps): JSX.Element | null {
   const { pluginId } = match.params;
-
-  const [tabs, setTabs] = useState([
-    { label: 'Overview', active: true },
-    { label: 'Version history', active: false },
-  ]);
-
-  const { isLoading, plugin } = usePlugin(pluginId!);
+  const { state, dispatch } = usePluginDetails(pluginId!);
+  const {
+    loading,
+    error,
+    plugin,
+    pluginConfig,
+    tabs,
+    activeTab,
+    isInflight,
+    hasUpdate,
+    isInstalled,
+    hasInstalledPanel,
+  } = state;
+  const tab = tabs[activeTab];
   const styles = useStyles2(getStyles);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Page>
         <Loader />
@@ -69,33 +78,41 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
                 {plugin.version && <span>{plugin.version}</span>}
               </div>
               <p>{plugin.description}</p>
-              <InstallControls plugin={plugin} />
+              <InstallControls
+                plugin={plugin}
+                isInflight={isInflight}
+                hasUpdate={hasUpdate}
+                isInstalled={isInstalled}
+                hasInstalledPanel={hasInstalledPanel}
+                dispatch={dispatch}
+              />
             </div>
           </div>
           <TabsBar>
-            {tabs.map((tab, key) => (
+            {tabs.map((tab: { label: string }, idx: number) => (
               <Tab
-                key={key}
+                key={tab.label}
                 label={tab.label}
-                active={tab.active}
-                onChangeTab={() => {
-                  setTabs(tabs.map((tab, index) => ({ ...tab, active: index === key })));
-                }}
+                active={idx === activeTab}
+                onChangeTab={() => dispatch({ type: ActionTypes.SET_ACTIVE_TAB, payload: idx })}
               />
             ))}
           </TabsBar>
           <TabContent>
-            {tabs.find((_) => _.label === 'Overview')?.active && (
-              <div
-                className={styles.readme}
-                dangerouslySetInnerHTML={{
-                  __html: plugin?.readme ?? 'No plugin help or readme markdown file was found',
-                }}
-              />
+            {error && (
+              <Alert severity={AppNotificationSeverity.Error} title="Error Loading Plugin">
+                <>
+                  Check the server startup logs for more information. <br />
+                  If this plugin was loaded from git, make sure it was compiled.
+                </>
+              </Alert>
             )}
-            {tabs.find((_) => _.label === 'Version history')?.active && (
-              <VersionList versions={plugin?.versions ?? []} />
-            )}
+            <PluginDetailsBody
+              tab={tab}
+              plugin={pluginConfig}
+              remoteVersions={plugin.versions}
+              readme={plugin.readme}
+            />
           </TabContent>
         </PluginPage>
       </Page>
@@ -138,31 +155,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     headerOrgName: css`
       font-size: ${theme.typography.h4.fontSize};
-    `,
-    readme: css`
-      padding: ${theme.spacing(3, 4)};
-
-      & img {
-        max-width: 100%;
-      }
-
-      h1,
-      h2,
-      h3 {
-        margin-top: ${theme.spacing(3)};
-        margin-bottom: ${theme.spacing(2)};
-      }
-
-      *:first-child {
-        margin-top: 0;
-      }
-
-      li {
-        margin-left: ${theme.spacing(2)};
-        & > p {
-          margin: ${theme.spacing()} 0;
-        }
-      }
     `,
   };
 };
