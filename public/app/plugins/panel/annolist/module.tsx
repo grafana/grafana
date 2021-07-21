@@ -3,23 +3,34 @@ import { PanelModel, PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 import { AnnoListPanel } from './AnnoListPanel';
 import { AnnoOptions } from './types';
+import { truncate } from '@sentry/utils';
 
 export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
   .setPanelOptions((builder) => {
     builder
-      .addBooleanSwitch({
+      .addRadio({
         category: ['Annotation query'],
         path: 'onlyFromThisDashboard',
-        name: 'This dashboard',
-        description: 'Only return annotations on this dashboard',
+        name: 'Query filter',
         defaultValue: false,
+        settings: {
+          options: [
+            { value: false, label: 'All dashboards' },
+            { value: true, label: 'This dashboard' },
+          ] as any, // does not like boolean, but works fine!
+        },
       })
-      .addBooleanSwitch({
+      .addRadio({
         category: ['Annotation query'],
         path: 'onlyInTimeRange',
-        name: 'Within Time Range',
-        description: 'Show annotations that match the dashboard time range',
+        name: 'Time range',
         defaultValue: false,
+        settings: {
+          options: [
+            { value: false, label: 'None' },
+            { value: true, label: 'This dashboard' },
+          ] as any, // does not like boolean, but works fine!
+        },
       })
       .addCustomEditor({
         category: ['Annotation query'],
@@ -55,6 +66,18 @@ export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
         name: 'Show tags',
         defaultValue: true,
       })
+      .addRadio({
+        category: ['Link behavior'],
+        path: 'navigateToPanel',
+        name: 'Link target',
+        defaultValue: truncate,
+        settings: {
+          options: [
+            { value: true, label: 'Panel' },
+            { value: false, label: 'Dashboard' },
+          ] as any, // does not like boolean, but works fine!
+        },
+      })
       .addTextInput({
         category: ['Link behavior'],
         path: 'navigateBefore',
@@ -68,13 +91,6 @@ export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
         name: 'Time after',
         defaultValue: '10m',
         description: '',
-      })
-      .addBooleanSwitch({
-        category: ['Link behavior'],
-        path: 'navigateToPanel',
-        name: 'Link to panel',
-        description: '',
-        defaultValue: true,
       });
   })
   // TODO, we should support this directly in the plugin infrastructure
