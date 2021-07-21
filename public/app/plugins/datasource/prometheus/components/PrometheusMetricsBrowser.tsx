@@ -599,7 +599,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                     <FixedSizeList
                       height={Math.min(200, LIST_ITEM_SIZE * (label.values?.length || 0))}
                       itemCount={label.values?.length || 0}
-                      itemSize={25}
+                      itemSize={28}
                       itemKey={(i) => (label.values as FacettableValue[])[i].name}
                       width={200}
                       className={styles.valueList}
