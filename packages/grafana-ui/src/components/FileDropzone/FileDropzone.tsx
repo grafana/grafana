@@ -47,14 +47,13 @@ export function FileDropzone({ options, children, readAs, onLoad }: FileDropzone
   const setFileProperty = useCallback(
     (customFile: DropzoneFile, action: (customFileToModify: DropzoneFile) => void) => {
       setFiles((oldFiles) => {
-        const newFiles = oldFiles.map((f) => {
-          if (f.id === customFile.id) {
-            action(f);
-            return f;
+        return oldFiles.map((oldFile) => {
+          if (oldFile.id === customFile.id) {
+            action(oldFile);
+            return oldFile;
           }
-          return f;
+          return oldFile;
         });
-        return newFiles;
       });
     },
     []
@@ -127,11 +126,7 @@ export function FileDropzone({ options, children, readAs, onLoad }: FileDropzone
   );
 
   const removeFile = (file: DropzoneFile) => {
-    const newFiles = [...files];
-    newFiles.splice(
-      newFiles.findIndex((newFile) => file.id === newFile.id),
-      1
-    );
+    const newFiles = files.filter((f) => file.id !== f.id);
     setFiles(newFiles);
   };
 
