@@ -70,14 +70,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     });
   }
 
-  async getWorkspaces(subscription: string, returnCustomerID?: boolean): Promise<AzureLogsVariable[]> {
+  async getWorkspaces(subscription: string): Promise<AzureLogsVariable[]> {
     const response = await this.getWorkspaceList(subscription);
 
     return (
       map(response.value, (val: any) => {
         return {
           text: val.name,
-          value: returnCustomerID && val.properties?.customerId ? val.properties.customerId : val.id,
+          value: val.id,
         };
       }) || []
     );
@@ -334,7 +334,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return undefined;
     }
 
-    const workspaces = await this.getWorkspaces(subscriptionId, true);
+    const workspaces = await this.getWorkspaces(subscriptionId);
     const workspace = workspaces[0]?.value;
 
     if (workspace) {
@@ -405,7 +405,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     try {
       const path = isGUIDish(resourceOrWorkspace)
         ? `${this.resourcePath}/v1/workspaces/${resourceOrWorkspace}/metadata`
-        : `${this.resourcePath}/v1/${resourceOrWorkspace}/metadata`;
+        : `${this.resourcePath}/v1${resourceOrWorkspace}/metadata`;
 
       return await this.getResource(path).then<DatasourceValidationResult>((response: any) => {
         return {

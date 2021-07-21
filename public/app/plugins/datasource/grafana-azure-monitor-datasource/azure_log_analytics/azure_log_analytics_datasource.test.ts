@@ -32,6 +32,10 @@ describe('AzureLogAnalyticsDatasource', () => {
   });
 
   describe('When performing testDatasource', () => {
+    beforeEach(() => {
+      ctx.instanceSettings.jsonData.azureAuthType = 'msi';
+    });
+
     describe('and an error is returned', () => {
       const error = {
         data: {
@@ -45,7 +49,6 @@ describe('AzureLogAnalyticsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
         ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockRejectedValue(error);
       });
 
@@ -57,6 +60,13 @@ describe('AzureLogAnalyticsDatasource', () => {
           );
         });
       });
+    });
+
+    it('should not include double slashes when getting the resource', async () => {
+      ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = '/foo/bar';
+      ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockResolvedValue(true);
+      await ctx.ds.azureLogAnalyticsDatasource.testDatasource();
+      expect(ctx.ds.azureLogAnalyticsDatasource.getResource).toHaveBeenCalledWith('loganalytics/v1/foo/bar/metadata');
     });
   });
 
@@ -318,11 +328,6 @@ describe('AzureLogAnalyticsDatasource', () => {
     it('should return the workspace id', async () => {
       const workspaces = await ctx.ds.azureLogAnalyticsDatasource.getWorkspaces('sub');
       expect(workspaces).toEqual([{ text: 'foobar', value: 'foo' }]);
-    });
-
-    it('should return the customer id if specified', async () => {
-      const workspaces = await ctx.ds.azureLogAnalyticsDatasource.getWorkspaces('sub', true);
-      expect(workspaces).toEqual([{ text: 'foobar', value: 'bar' }]);
     });
   });
 
