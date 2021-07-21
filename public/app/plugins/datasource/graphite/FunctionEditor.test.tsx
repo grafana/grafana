@@ -1,28 +1,25 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { FunctionEditor } from './FunctionEditor';
-import { FunctionDescriptor } from './FunctionEditorControls';
+import { FuncInstance } from './gfunc';
 
-function mockFunctionDescriptor(name: string, unknown?: boolean): FunctionDescriptor {
-  return {
-    text: '',
+function mockFunctionInstance(name: string, unknown?: boolean): FuncInstance {
+  const def = {
+    category: 'category',
+    defaultParams: [],
+    fake: false,
+    name: name,
     params: [],
-    def: {
-      category: 'category',
-      defaultParams: [],
-      fake: false,
-      name: name,
-      params: [],
-      unknown: unknown,
-    },
+    unknown: unknown,
   };
+  return new FuncInstance(def);
 }
 
 describe('FunctionEditor', () => {
   it('should display a defined function with name and no icon', () => {
     render(
       <FunctionEditor
-        func={mockFunctionDescriptor('foo')}
+        func={mockFunctionInstance('foo')}
         onMoveLeft={() => {}}
         onMoveRight={() => {}}
         onRemove={() => {}}
@@ -36,7 +33,7 @@ describe('FunctionEditor', () => {
   it('should display an unknown function with name and warning icon', () => {
     render(
       <FunctionEditor
-        func={mockFunctionDescriptor('bar', true)}
+        func={mockFunctionInstance('bar', true)}
         onMoveLeft={jest.fn()}
         onMoveRight={jest.fn()}
         onRemove={jest.fn()}
