@@ -19,32 +19,19 @@ export enum FrameGeometrySourceMode {
   // geojson? geometry text
 }
 
-export enum LookupSourceType {
-  File = 'file',
-  JSON = 'json',
-  JSONP = 'jsonp',
-}
-
-export enum LookupSourceFiles {
+export enum LookupSourceOptions {
   Countries = 'countries',
   Countries_3Letter = 'countries_3letter',
   Probes = 'probes',
   States = 'states',
+  JSONEndpoint = 'jsonEndpoint',
 }
 
-export interface LookupSource {
-  // Type of lookup source
-  type: string;
-
-  // File path
-  filePath?: string;
-
-  // Json endpoint
-  jsonEndpoint?: string;
-
-  // Jsonp endpoint and callback
-  jsonpEndpoint?: string;
-  jsonpCallback?: string;
+export enum LookupSourceEndpoints {
+  Countries = 'public/app/plugins/panel/geomap/utils/keyMapping/countries.json',
+  Countries_3Letter = 'public/app/plugins/panel/geomap/utils/keyMapping/countries_3letter.json',
+  Probes = 'public/app/plugins/panel/geomap/utils/keyMapping/probes.json',
+  States = 'public/app/plugins/panel/geomap/utils/keyMapping/states.json',
 }
 
 /**
@@ -61,8 +48,9 @@ export interface FrameGeometrySource {
   wkt?: string;
   lookup?: string;
 
-  // Lookup source details
-  lookupSrc?: LookupSource;
+  // Lookup source endpoint
+  lookupSrc?: string;
+  lookupSrcEndpoint?: string;
 }
 
 /**

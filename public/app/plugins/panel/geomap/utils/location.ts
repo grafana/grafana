@@ -7,10 +7,10 @@ import {
   DataFrame,
   Field,
   getFieldDisplayName,
-  LookupSourceType,
-  LookupSourceFiles,
-  LookupSource,
+  LookupSourceOptions,
+  LookupSourceEndpoints,
 } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
 import { decodeGeohash } from './geohash';
@@ -54,14 +54,9 @@ export interface LocationFieldMatchers {
   wkt: FieldFinder;
   lookup: FieldFinder;
 
-  // Field mapping parameters
-  lookupSrc: LookupSource;
+  // Lookup Source Endpoint
+  lookupSrcEndpoint: string;
 }
-
-const defaultLookupSource: LookupSource = {
-  type: LookupSourceType.File,
-  filePath: LookupSourceFiles.Countries,
-};
 
 const defaultMatchers: LocationFieldMatchers = {
   mode: FrameGeometrySourceMode.Auto,
@@ -71,7 +66,7 @@ const defaultMatchers: LocationFieldMatchers = {
   h3: matchLowerNames(new Set(['h3'])),
   wkt: matchLowerNames(new Set(['wkt'])),
   lookup: matchLowerNames(new Set(['lookup', 'target'])),
-  lookupSrc: defaultLookupSource,
+  lookupSrcEndpoint: LookupSourceEndpoints.Countries,
 };
 
 export function getLocationMatchers(src?: FrameGeometrySource): LocationFieldMatchers {
@@ -97,41 +92,18 @@ export function getLocationMatchers(src?: FrameGeometrySource): LocationFieldMat
       if (src?.lookup) {
         info.lookup = getFieldFinder(getFieldMatcher({ id: FieldMatcherID.byName, options: src.lookup }));
       }
-      // Lookup Source is file data
-      if (src?.lookupSrc?.type === LookupSourceType.File) {
-        if (src?.lookupSrc.filePath) {
-          info.lookupSrc = {
-            type: src.lookupSrc.type,
-            filePath: src.lookupSrc.filePath,
-          };
-        } else {
-          throw new Error('Json endpoint not defined');
-        }
+      // Set lookup source endpoint
+      if (src?.lookupSrc === LookupSourceOptions.Countries) {
+        info.lookupSrcEndpoint = LookupSourceEndpoints.Countries;
+      } else if (src?.lookupSrc === LookupSourceOptions.Countries_3Letter) {
+        info.lookupSrcEndpoint = LookupSourceEndpoints.Countries_3Letter;
+      } else if (src?.lookupSrc === LookupSourceOptions.States) {
+        info.lookupSrcEndpoint = LookupSourceEndpoints.States;
+      } else if (src?.lookupSrc === LookupSourceOptions.Probes) {
+        info.lookupSrcEndpoint = LookupSourceEndpoints.Probes;
+      } else if (src?.lookupSrc === LookupSourceOptions.JSONEndpoint && src?.lookupSrcEndpoint) {
+        info.lookupSrcEndpoint = src.lookupSrcEndpoint;
       }
-      // Lookup Source is a json endpoint
-      else if (src?.lookupSrc?.type === LookupSourceType.JSON) {
-        if (src?.lookupSrc.jsonEndpoint) {
-          info.lookupSrc = {
-            type: src.lookupSrc.type,
-            jsonEndpoint: src.lookupSrc.jsonEndpoint,
-          };
-        } else {
-          throw new Error('Json endpoint not defined');
-        }
-      }
-      // Lookup Source is a jsonp endpoint
-      else if (src?.lookupSrc?.type === LookupSourceType.JSONP) {
-        if (src?.lookupSrc.jsonpEndpoint && src?.lookupSrc.jsonpCallback) {
-          info.lookupSrc = {
-            type: src.lookupSrc.type,
-            jsonpEndpoint: src.lookupSrc.jsonpEndpoint,
-            jsonpCallback: src.lookupSrc.jsonpCallback,
-          };
-        } else {
-          throw new Error('Jsonp endpoint/callback not defined');
-        }
-      }
-      break;
   }
   return info;
 }
@@ -188,33 +160,19 @@ export function getLocationFields(frame: DataFrame, location: LocationFieldMatch
   return fields;
 }
 
-function getLocationJson(lookupSrc: LookupSource): any {
-  // built-in file
-  if (lookupSrc.type === LookupSourceType.File) {
-    if (lookupSrc.filePath) {
-      return require('./keyMapping/' + lookupSrc.filePath + '.json');
-    }
-  }
-  // json endpoint
-  else if (lookupSrc.type === LookupSourceType.JSON) {
-    if (lookupSrc.jsonEndpoint) {
-      console.log('json');
-    }
-  }
-  // jsonp endpoint
-  else {
-    if (lookupSrc.jsonpEndpoint && lookupSrc.jsonpCallback) {
-      console.log('jsonp');
-    }
-  }
-}
-
 export interface LocationInfo {
   warning?: string;
   points: Point[];
 }
 
-export function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatchers): LocationInfo {
+export interface LocationKey {
+  key: string;
+  latitude: number;
+  longitude: number;
+  name: string;
+}
+
+export async function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatchers): Promise<LocationInfo> {
   const info: LocationInfo = {
     points: [],
   };
@@ -240,8 +198,9 @@ export function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatch
       break;
 
     case FrameGeometrySourceMode.Lookup:
-      if (fields.lookup && location.lookupSrc) {
-        const locationData = getLocationJson(location.lookupSrc);
+      if (fields.lookup && location.lookupSrcEndpoint) {
+        // TODO: Get response from http request
+        const locationData = await getBackendSrv().get(location.lookupSrcEndpoint);
         info.points = getPointsFromLookup(fields.lookup, locationData);
       } else {
         info.warning = 'Missing lookup/lookupSrc field';
@@ -251,7 +210,6 @@ export function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatch
     case FrameGeometrySourceMode.Auto:
       info.warning = 'Unable to find location fields';
   }
-
   return info;
 }
 
@@ -276,12 +234,12 @@ function getPointsFromGeohash(field: Field<string>): Point[] {
   return points;
 }
 
-function getPointsFromLookup(field: Field<string>, locationData: any): Point[] {
+function getPointsFromLookup(field: Field<string>, locationData: LocationKey[]): Point[] {
   const count = field.values.length;
   const points = new Array<Point>(count);
   for (let i = 0; i < count; i++) {
     const target = field.values.get(i);
-    const location = locationData.filter((loc: any) => loc.key.toUpperCase() === target.toUpperCase())[0];
+    const location = locationData.filter((loc: LocationKey) => loc.key.toUpperCase() === target.toUpperCase())[0];
     if (location) {
       points[i] = new Point(fromLonLat([location.longitude, location.latitude]));
     }

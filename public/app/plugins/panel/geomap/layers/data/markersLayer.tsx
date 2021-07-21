@@ -5,7 +5,7 @@ import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import * as style from 'ol/style';
 import tinycolor from 'tinycolor2';
-import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
+import { dataFrameToPoints, getLocationMatchers, LocationInfo } from '../../utils/location';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -47,67 +47,69 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         if(!data.series?.length) {
           return; // ignore empty
         }
-
         const frame = data.series[0];
-        const info = dataFrameToPoints(frame, matchers);
-        if(info.warning) {
-          console.log( 'WARN', info.warning);
-          return; // ???
-        }
+        
+        const promiseInfo = dataFrameToPoints(frame, matchers);
+        promiseInfo.then((info: LocationInfo) => {
+          if (info.warning) {
+            console.log( 'WARN', info.warning);
+            return; // ???
+          }
 
-        const field = frame.fields.find(field => field.type === FieldType.number); // TODO!!!!
-        // Return early if metric field is not matched
-        if (field === undefined) {
-          return;
-        };
+          const field = frame.fields.find(field => field.type === FieldType.number); // TODO!!!!
+          // Return early if metric field is not matched
+          if (field === undefined) {
+            return;
+          };
 
-        // Retrieve the min, max and range of data values
-        const calcs = reduceField({
-          field: field,
-          reducers: [
-            ReducerID.min,
-            ReducerID.max,
-            ReducerID.range,
-          ]
-        });
-
-        const features: Feature[] = [];
-
-        // Map each data value into new points
-        for (let i = 0; i < frame.length; i++) {
-          // Get the circle color for a specific data value depending on color scheme
-          const color = frame.fields[0].display!(field.values.get(i)).color;
-          // Set the opacity determined from user configuration
-          const fillColor = tinycolor(color).setAlpha(config.opacity).toRgbString();
-
-          // Get circle size from user configuration
-          const radius = calcCircleSize(calcs, field.values.get(i), config.minSize, config.maxSize);
-
-          // Create a new Feature for each point returned from dataFrameToPoints
-          const dot = new Feature({
-              geometry: info.points[i],
+          // Retrieve the min, max and range of data values
+          const calcs = reduceField({
+            field: field,
+            reducers: [
+              ReducerID.min,
+              ReducerID.max,
+              ReducerID.range,
+            ]
           });
 
-          // Set the style of each feature dot
-          dot.setStyle(new style.Style({
-            image: new style.Circle({
-              // Stroke determines the outline color of the circle
-              stroke: new style.Stroke({
-                color: color,
-              }),
-              // Fill determines the color to fill the whole circle
-              fill: new style.Fill({
-                color: tinycolor(fillColor).toString(),
-              }),
-              radius: radius,
-            })
-          }));
-          features.push(dot);
-        };
+          const features: Feature[] = [];
 
-        // Source reads the data and provides a set of features to visualize
-        const vectorSource = new source.Vector({ features });
-        vectorLayer.setSource(vectorSource);
+          // Map each data value into new points
+          for (let i = 0; i < frame.length; i++) {
+            // Get the circle color for a specific data value depending on color scheme
+            const color = frame.fields[0].display!(field.values.get(i)).color;
+            // Set the opacity determined from user configuration
+            const fillColor = tinycolor(color).setAlpha(config.opacity).toRgbString();
+
+            // Get circle size from user configuration
+            const radius = calcCircleSize(calcs, field.values.get(i), config.minSize, config.maxSize);
+
+            // Create a new Feature for each point returned from dataFrameToPoints
+            const dot = new Feature({
+                geometry: info.points[i],
+            });
+
+            // Set the style of each feature dot
+            dot.setStyle(new style.Style({
+              image: new style.Circle({
+                // Stroke determines the outline color of the circle
+                stroke: new style.Stroke({
+                  color: color,
+                }),
+                // Fill determines the color to fill the whole circle
+                fill: new style.Fill({
+                  color: tinycolor(fillColor).toString(),
+                }),
+                radius: radius,
+              })
+            }));
+            features.push(dot);
+          };
+
+          // Source reads the data and provides a set of features to visualize
+          const vectorSource = new source.Vector({ features });
+          vectorLayer.setSource(vectorSource);
+        });
       },
     };
   },

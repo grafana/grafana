@@ -1,6 +1,6 @@
 import { toDataFrame, FieldType, FrameGeometrySourceMode } from '@grafana/data';
 import { toLonLat } from 'ol/proj';
-import { dataFrameToPoints, getLocationFields, getLocationMatchers } from './location';
+import { dataFrameToPoints, getLocationFields, getLocationMatchers, LocationInfo } from './location';
 
 const longitude = [0, -74.1];
 const latitude = [0, 40.7];
@@ -24,8 +24,9 @@ describe('handle location parsing', () => {
     expect(fields.geohash).toBeDefined();
     expect(fields.geohash?.name).toEqual('geohash');
 
-    const info = dataFrameToPoints(frame, matchers);
-    expect(info.points.map((p) => toLonLat(p.getCoordinates()))).toMatchInlineSnapshot(`
+    const promiseInfo = dataFrameToPoints(frame, matchers);
+    promiseInfo.then((info: LocationInfo) => {
+      expect(info.points.map((p) => toLonLat(p.getCoordinates()))).toMatchInlineSnapshot(`
         Array [
           Array [
             -122.01416015625001,
@@ -37,6 +38,7 @@ describe('handle location parsing', () => {
           ],
         ]
       `);
+    });
   });
 
   it('auto should find coordinate fields', () => {
@@ -50,19 +52,21 @@ describe('handle location parsing', () => {
     });
 
     const matchers = getLocationMatchers();
-    const info = dataFrameToPoints(frame, matchers);
-    expect(info.points.map((p) => toLonLat(p.getCoordinates()))).toMatchInlineSnapshot(`
-      Array [
+    const promiseInfo = dataFrameToPoints(frame, matchers);
+    promiseInfo.then((info: LocationInfo) => {
+      expect(info.points.map((p) => toLonLat(p.getCoordinates()))).toMatchInlineSnapshot(`
         Array [
-          0,
-          0,
-        ],
-        Array [
-          -74.1,
-          40.69999999999999,
-        ],
-      ]
-    `);
+          Array [
+            0,
+            0,
+          ],
+          Array [
+            -74.1,
+            40.69999999999999,
+          ],
+        ]
+      `);
+    });
   });
 
   it('auto should find lookup fields', () => {
@@ -75,18 +79,20 @@ describe('handle location parsing', () => {
     });
 
     const matchers = getLocationMatchers();
-    const info = dataFrameToPoints(frame, matchers);
-    expect(info.points.map((p) => toLonLat(p.getCoordinates()))).toMatchInlineSnapshot(`
-      Array [
-        Array [
-          -95.712891,
-          37.09023999999998,
-        ],
-        Array [
-          17.873887,
-          -11.202691999999999,
-        ],
-      ]
-    `);
+    const promiseInfo = dataFrameToPoints(frame, matchers);
+    promiseInfo.then((info: LocationInfo) => {
+      expect(info.points.map((p) => toLonLat(p.getCoordinates()))).toMatchInlineSnapshot(`
+          Array [
+            Array [
+              -95.712891,
+              37.09023999999998,
+            ],
+            Array [
+              17.873887,
+              -11.202691999999999,
+            ],
+          ]
+      `);
+    });
   });
 });
