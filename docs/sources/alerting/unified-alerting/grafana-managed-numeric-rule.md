@@ -20,9 +20,11 @@ This feature is supported with backend data sources that query tabular data:
 A query with Grafana managed alerts or SSE is considered numeric with these data sources, if:
 
 - The "Format AS" option is set to "Table" in the data source query.
-- The table response returned to Grafana from the query includes only one numeric (e.g. int, double, float) column, and optionally additional string columns.
+- The table response returned to Grafana from the query includes at least one numeric (e.g. int, double, float) column, and optionally additional string columns.
 
 If there are string columns then those columns become labels. The name of column becomes the label name, and the value for each row becomes the value of the corresponding label. If multiple rows are returned, then each row should be uniquely identified their labels.
+
+If multiple metrics are returned because more than one numeric column is selected, then the [Filter Items SSE operation]({{< relref "../../panels/expressions.md#filter-items" >}}) must be used to select specific metrics.
 
 ## Example
 

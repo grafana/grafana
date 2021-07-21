@@ -151,3 +151,18 @@ Resample changes the time stamps in each time series to have a consistent time i
   - **pad** fills with the last know value
   - **backfill** with next known value
   - **fillna** to fill empty sample windows with NaNs
+
+### Filter Items
+
+Filter items selects series or numbers from another query based on name and/or labels.
+
+The main use case is to be able to work with responses that contain multiple metrics that that are differentiated by more than labels and extract single metrics from them. For example if a response has [`os.cpu {host=a}`, `os.cpu {host=b}`, `os.mem {host=a}`, `os.mem {host=a}`] this can be used to select all the two os.cpu metrics from the response. In particular this is useful when [Alerting on Numeric Data]({{< relref "../alerting/unified-alerting/grafana-managed-numeric-rule.md" >}}).
+
+**Fields:**
+
+- **Input -** The variable of the query to filter items from
+- **Regex -** Controls if the metric field is an exact match or a regular expression
+- **Metric -** A string or regular expression to match against the metric name
+- **Label Matchers-** [Prometheus style label matchers](https://prometheus.io/docs/prometheus/latest/querying/basics/#instant-vector-selectors) to filter based on labels. For example `host="A",loc="LGA"` matches series that contain both of those labels.
+
+Required fields are Input in addition to Metric and/or Label Matchers. If both the Metric and Label Matchers fields are provided, both must be true for a match.
