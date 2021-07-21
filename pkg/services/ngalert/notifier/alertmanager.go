@@ -201,6 +201,37 @@ func (am *Alertmanager) StopAndWait() error {
 	return nil
 }
 
+// SaveAndApplyDefaultConfig saves the default configuration the database and applies the configuration to the Alertmanager.
+// It rollbacks the save if we fail to apply the configuration.
+func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
+	am.reloadConfigMtx.Lock()
+	defer am.reloadConfigMtx.Unlock()
+
+	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
+		Default:                   true,
+		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+	}
+
+	cfg, err := Load([]byte(alertmanagerDefaultConfiguration))
+	if err != nil {
+		return err
+	}
+
+	err = am.Store.SaveAlertmanagerConfigurationWithCallback(cmd, func() error {
+		if err := am.applyConfig(cfg, []byte(alertmanagerDefaultConfiguration)); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	am.Metrics.ActiveConfigurations.Set(1)
+
+	return nil
+}
+
 // SaveAndApplyConfig saves the configuration the database and applies the configuration to the Alertmanager.
 // It rollbacks the save if we fail to apply the configuration.
 func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
