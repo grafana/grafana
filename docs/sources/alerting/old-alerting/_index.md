@@ -1,6 +1,5 @@
 +++
 title = "Legacy Grafana Alerts"
-aliases = ["/docs/grafana/latest/alerting/rules/", "/docs/grafana/latest/alerting/metrics/"]
 weight = 114
 +++
 
