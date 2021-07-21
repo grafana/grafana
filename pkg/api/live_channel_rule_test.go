@@ -26,12 +26,12 @@ func TestChannelRuleList(t *testing.T) {
 	}).DoAndReturn(func(ctx context.Context, _ models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error) {
 		return []*models.LiveChannelRule{
 			{
-				Id:      1,
+				Uid:     "1",
 				OrgId:   testOrgID,
 				Pattern: "x/y/*",
 			},
 			{
-				Id:      2,
+				Uid:     "2",
 				OrgId:   testOrgID,
 				Pattern: "x/z/*",
 			},
@@ -66,11 +66,11 @@ func TestChannelRuleGet(t *testing.T) {
 	storageMock := NewMockChannelRuleStorage(mockCtrl)
 
 	storageMock.EXPECT().GetChannelRule(context.Background(), models.GetLiveChannelRuleCommand{
-		Id:    1,
+		Uid:   "1",
 		OrgId: testOrgID,
 	}).DoAndReturn(func(ctx context.Context, _ models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 		return &models.LiveChannelRule{
-			Id:      1,
+			Uid:     "1",
 			OrgId:   testOrgID,
 			Pattern: "x/y/*",
 		}, nil
@@ -84,17 +84,17 @@ func TestChannelRuleGet(t *testing.T) {
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		sc.context = c
 		sc.context.SignedInUser = &models.SignedInUser{OrgId: testOrgID, UserId: testUserID}
-		return api.GetChannelRuleById(c)
+		return api.GetChannelRuleByUid(c)
 	})
 
-	sc.m.Get("/api/channel-rules/:id", sc.defaultHandler)
+	sc.m.Get("/api/channel-rules/:uid", sc.defaultHandler)
 	sc.fakeReq(http.MethodGet, sc.url).exec()
 	require.Equal(t, http.StatusOK, sc.resp.Code)
 	var rule *dtos.LiveChannelRule
 	err := json.NewDecoder(sc.resp.Body).Decode(&rule)
 	require.NoError(t, err)
 	require.Equal(t, "x/y/*", rule.Pattern)
-	require.Equal(t, int64(1), rule.Id)
+	require.Equal(t, "1", rule.Uid)
 }
 
 func TestChannelRuleCreate(t *testing.T) {
@@ -106,22 +106,22 @@ func TestChannelRuleCreate(t *testing.T) {
 	testCmd := models.CreateLiveChannelRuleCommand{
 		OrgId:   testOrgID,
 		Pattern: "x/y/*",
-		Config: models.LiveChannelRulePlainConfig{
+		Settings: models.LiveChannelRuleSettings{
 			RemoteWrite: &models.RemoteWriteConfig{
 				Endpoint: "test",
 			},
 		},
-		Secure: map[string]string{
+		SecureSettings: map[string]string{
 			"remoteWritePassword": "test",
 		},
 	}
 
 	storageMock.EXPECT().CreateChannelRule(context.Background(), testCmd).DoAndReturn(func(ctx context.Context, _ models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 		return &models.LiveChannelRule{
-			Id:      1,
-			OrgId:   testCmd.OrgId,
-			Pattern: testCmd.Pattern,
-			Config:  testCmd.Config,
+			Uid:      "1",
+			OrgId:    testCmd.OrgId,
+			Pattern:  testCmd.Pattern,
+			Settings: testCmd.Settings,
 		}, nil
 	}).Times(1)
 
@@ -148,34 +148,34 @@ func TestChannelRuleUpdate(t *testing.T) {
 	storageMock := NewMockChannelRuleStorage(mockCtrl)
 
 	testCmd := models.UpdateLiveChannelRuleCommand{
-		Id:      1,
+		Uid:     "1",
 		OrgId:   testOrgID,
 		Pattern: "x/y/*",
-		Config: models.LiveChannelRulePlainConfig{
+		Settings: models.LiveChannelRuleSettings{
 			RemoteWrite: &models.RemoteWriteConfig{
 				Endpoint: "test",
 			},
 		},
-		Secure: map[string]string{
+		SecureSettings: map[string]string{
 			"remoteWritePassword": "test",
 		},
 	}
 
 	storageMock.EXPECT().UpdateChannelRule(context.Background(), testCmd).DoAndReturn(func(ctx context.Context, _ models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 		return &models.LiveChannelRule{
-			Id:      1,
-			OrgId:   testCmd.OrgId,
-			Pattern: testCmd.Pattern,
-			Config:  testCmd.Config,
+			Uid:      "1",
+			OrgId:    testCmd.OrgId,
+			Pattern:  testCmd.Pattern,
+			Settings: testCmd.Settings,
 		}, nil
 	}).Times(1)
 
 	storageMock.EXPECT().GetChannelRule(context.Background(), models.GetLiveChannelRuleCommand{
-		Id:    1,
+		Uid:   "1",
 		OrgId: testOrgID,
 	}).DoAndReturn(func(ctx context.Context, _ models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 		return &models.LiveChannelRule{
-			Id:      1,
+			Uid:     "1",
 			OrgId:   testOrgID,
 			Pattern: "x/y/*",
 		}, nil
@@ -192,7 +192,7 @@ func TestChannelRuleUpdate(t *testing.T) {
 		return api.UpdateChannelRule(c, testCmd)
 	})
 
-	sc.m.Put("/api/channel-rules/:id", sc.defaultHandler)
+	sc.m.Put("/api/channel-rules/:uid", sc.defaultHandler)
 	sc.fakeReq(http.MethodPut, sc.url).exec()
 	require.Equal(t, http.StatusOK, sc.resp.Code)
 }

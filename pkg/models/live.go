@@ -117,17 +117,17 @@ type RemoteWriteConfig struct {
 	SampleMilliseconds int64 `json:"sampleMilliseconds,omitempty" yaml:"sampleMilliseconds"`
 }
 
-// LiveChannelRulePlainConfig contains various channel configuration options.
-type LiveChannelRulePlainConfig struct {
+// LiveChannelRuleSettings contains various channel configuration options.
+type LiveChannelRuleSettings struct {
 	RemoteWrite *RemoteWriteConfig `json:"remoteWrite,omitempty"  yaml:"remoteWrite"`
 }
 
 var (
-	_ driver.Valuer = LiveChannelRulePlainConfig{}
-	_ sql.Scanner   = &LiveChannelRulePlainConfig{}
+	_ driver.Valuer = LiveChannelRuleSettings{}
+	_ sql.Scanner   = &LiveChannelRuleSettings{}
 )
 
-func (a LiveChannelRulePlainConfig) Value() (driver.Value, error) {
+func (a LiveChannelRuleSettings) Value() (driver.Value, error) {
 	d, err := json.Marshal(a)
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func (a LiveChannelRulePlainConfig) Value() (driver.Value, error) {
 	return string(d), nil
 }
 
-func (a *LiveChannelRulePlainConfig) Scan(value interface{}) error {
+func (a *LiveChannelRuleSettings) Scan(value interface{}) error {
 	switch v := value.(type) {
 	case string:
 		return json.Unmarshal([]byte(v), &a)
@@ -148,49 +148,50 @@ func (a *LiveChannelRulePlainConfig) Scan(value interface{}) error {
 
 // LiveChannelRule represents channel rules saved in database.
 type LiveChannelRule struct {
-	Id      int64                         `json:"id"`
-	OrgId   int64                         `json:"orgId"`
-	Version int                           `json:"version"`
-	Pattern string                        `json:"pattern"`
-	Created time.Time                     `json:"-"`
-	Updated time.Time                     `json:"-"`
-	Config  LiveChannelRulePlainConfig    `json:"config"`
-	Secure  securejsondata.SecureJsonData `json:"secure"`
+	Uid            string                        `json:"uid"`
+	OrgId          int64                         `json:"orgId"`
+	Version        int                           `json:"version"`
+	Pattern        string                        `json:"pattern"`
+	Created        time.Time                     `json:"-"`
+	Updated        time.Time                     `json:"-"`
+	Settings       LiveChannelRuleSettings       `json:"settings"`
+	SecureSettings securejsondata.SecureJsonData `json:"secureSettings"`
 }
 
-// Also acts as api DTO.
+// ListLiveChannelRuleCommand to get all rules in org.
 type ListLiveChannelRuleCommand struct {
 	OrgId int64 `json:"orgId"`
 }
 
-// Also acts as api DTO.
+// GetLiveChannelRuleCommand allows getting single channel rule.
 type GetLiveChannelRuleCommand struct {
-	Id      int64  `json:"id"`
 	OrgId   int64  `json:"orgId"`
+	Uid     string `json:"uid"`
 	Pattern string `json:"pattern"`
 }
 
 // Also acts as api DTO.
 type CreateLiveChannelRuleCommand struct {
-	OrgId   int64                      `json:"orgId" binding:"Required"`
-	Pattern string                     `json:"pattern" binding:"Required"`
-	Config  LiveChannelRulePlainConfig `json:"config"`
-	Secure  map[string]string          `json:"secure"`
+	Uid            string                  `json:"uid"`
+	OrgId          int64                   `json:"orgId"`
+	Pattern        string                  `json:"pattern" binding:"Required"`
+	Settings       LiveChannelRuleSettings `json:"settings"`
+	SecureSettings map[string]string       `json:"secureSettings"`
 }
 
 // Also acts as api DTO.
 type UpdateLiveChannelRuleCommand struct {
-	Id      int64                      `json:"id" binding:"Required"`
-	OrgId   int64                      `json:"orgId" binding:"Required"`
-	Version int                        `json:"version"`
-	Pattern string                     `json:"pattern"`
-	Config  LiveChannelRulePlainConfig `json:"config"`
-	Secure  map[string]string          `json:"secure"`
+	Uid            string                  `json:"uid" binding:"Required"`
+	OrgId          int64                   `json:"orgId"`
+	Version        int                     `json:"version"`
+	Pattern        string                  `json:"pattern"`
+	Settings       LiveChannelRuleSettings `json:"settings"`
+	SecureSettings map[string]string       `json:"secureSettings"`
 }
 
-// DeleteLiveChannelRuleCommand can delete either by id or by pattern.
+// DeleteLiveChannelRuleCommand can delete either by uid or by pattern.
 type DeleteLiveChannelRuleCommand struct {
-	Id      int64  `json:"id"`
+	Uid     string `json:"uid"`
 	Pattern string `json:"pattern"`
 	OrgId   int64  `json:"orgId"`
 }
@@ -200,4 +201,5 @@ var (
 	ErrLiveChannelRuleUpdatingOldVersion = errors.New("trying to update old version of live channel rule")
 	ErrLiveChannelRuleNotFound           = errors.New("channel rule not found")
 	ErrLiveChannelRuleIdentifierNotSet   = errors.New("channel rule identifier not set")
+	ErrLiveChannelRuleFailedGenerateUid  = errors.New("failed to generate channel rule uid")
 )

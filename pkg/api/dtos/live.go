@@ -15,15 +15,15 @@ type LivePublishResponse struct {
 }
 
 type LiveChannelRule struct {
-	Id               int64                             `json:"id"`
-	Version          int                               `json:"version"`
-	Pattern          string                            `json:"pattern"`
-	Config           models.LiveChannelRulePlainConfig `json:"config"`
-	SecureJsonFields map[string]bool                   `json:"secureJsonFields"`
+	Uid              string                         `json:"uid"`
+	Version          int                            `json:"version"`
+	Pattern          string                         `json:"pattern"`
+	Config           models.LiveChannelRuleSettings `json:"config"`
+	SecureJsonFields map[string]bool                `json:"secureJsonFields"`
 }
 
 type LiveChannelRuleListItem struct {
-	Id      int64  `json:"id"`
+	Uid     string `json:"uid"`
 	Version int    `json:"version"`
 	Pattern string `json:"pattern"`
 }

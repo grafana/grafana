@@ -15,32 +15,33 @@ func TestChannelRuleCreate(t *testing.T) {
 
 	getCmd := models.GetLiveChannelRuleCommand{
 		OrgId: 1,
-		Id:    200,
+		Uid:   "200",
 	}
 	_, err := storage.GetChannelRule(context.Background(), getCmd)
 	require.Equal(t, models.ErrLiveChannelRuleNotFound, err)
 
 	createCmd := models.CreateLiveChannelRuleCommand{
+		Uid:     "200",
 		OrgId:   1,
 		Pattern: "xxx/*",
-		Config: models.LiveChannelRulePlainConfig{
+		Settings: models.LiveChannelRuleSettings{
 			RemoteWrite: &models.RemoteWriteConfig{
 				Endpoint: "test_endpoint",
 			},
 		},
-		Secure: map[string]string{
+		SecureSettings: map[string]string{
 			"remoteWritePassword": "test_password",
 		},
 	}
 	result, err := storage.CreateChannelRule(context.Background(), createCmd)
 	require.NoError(t, err)
 	require.Equal(t, "xxx/*", result.Pattern)
-	require.NotZero(t, result.Id)
-	require.Equal(t, "test_endpoint", result.Config.RemoteWrite.Endpoint)
-	encPassword, ok := result.Secure["remoteWritePassword"]
+	require.Equal(t, "200", result.Uid)
+	require.Equal(t, "test_endpoint", result.Settings.RemoteWrite.Endpoint)
+	encPassword, ok := result.SecureSettings["remoteWritePassword"]
 	require.True(t, ok)
 	require.NotEqual(t, "test_password", string(encPassword))
-	password, ok := result.Secure.DecryptedValue("remoteWritePassword")
+	password, ok := result.SecureSettings.DecryptedValue("remoteWritePassword")
 	require.True(t, ok)
 	require.Equal(t, "test_password", password)
 }
@@ -51,30 +52,31 @@ func TestChannelRuleUpdate(t *testing.T) {
 	createCmd := models.CreateLiveChannelRuleCommand{
 		OrgId:   1,
 		Pattern: "xxx/*",
-		Config: models.LiveChannelRulePlainConfig{
+		Settings: models.LiveChannelRuleSettings{
 			RemoteWrite: &models.RemoteWriteConfig{
 				Endpoint: "test_endpoint",
 			},
 		},
-		Secure: map[string]string{
+		SecureSettings: map[string]string{
 			"remoteWritePassword": "test_password",
 		},
 	}
 	result, err := storage.CreateChannelRule(context.Background(), createCmd)
 	require.NoError(t, err)
 
-	id := result.Id
+	uid := result.Uid
+	require.NotZero(t, uid)
 
 	updateCmd := models.UpdateLiveChannelRuleCommand{
-		Id:      id,
+		Uid:     uid,
 		OrgId:   1,
 		Pattern: "xxx_updated/*",
-		Config: models.LiveChannelRulePlainConfig{
+		Settings: models.LiveChannelRuleSettings{
 			RemoteWrite: &models.RemoteWriteConfig{
 				Endpoint: "test_endpoint_updated",
 			},
 		},
-		Secure: map[string]string{
+		SecureSettings: map[string]string{
 			"remoteWritePassword": "test_password_updated",
 		},
 	}
@@ -85,9 +87,9 @@ func TestChannelRuleUpdate(t *testing.T) {
 	result, err = storage.UpdateChannelRule(context.Background(), updateCmd)
 	require.NoError(t, err)
 	require.Equal(t, "xxx_updated/*", result.Pattern)
-	require.NotZero(t, result.Id)
-	require.Equal(t, "test_endpoint_updated", result.Config.RemoteWrite.Endpoint)
-	password, ok := result.Secure.DecryptedValue("remoteWritePassword")
+	require.NotZero(t, result.Uid)
+	require.Equal(t, "test_endpoint_updated", result.Settings.RemoteWrite.Endpoint)
+	password, ok := result.SecureSettings.DecryptedValue("remoteWritePassword")
 	require.True(t, ok)
 	require.Equal(t, "test_password_updated", password)
 }
@@ -98,22 +100,22 @@ func TestChannelRuleDelete(t *testing.T) {
 	createCmd := models.CreateLiveChannelRuleCommand{
 		OrgId:   1,
 		Pattern: "xxx/*",
-		Config: models.LiveChannelRulePlainConfig{
+		Settings: models.LiveChannelRuleSettings{
 			RemoteWrite: &models.RemoteWriteConfig{
 				Endpoint: "test_endpoint",
 			},
 		},
-		Secure: map[string]string{
+		SecureSettings: map[string]string{
 			"remoteWritePassword": "test_password",
 		},
 	}
 	result, err := storage.CreateChannelRule(context.Background(), createCmd)
 	require.NoError(t, err)
 
-	id := result.Id
+	uid := result.Uid
 
 	deleteCmd := models.DeleteLiveChannelRuleCommand{
-		Id:    id,
+		Uid:   uid,
 		OrgId: 1,
 	}
 	numDeleted, err := storage.DeleteChannelRule(context.Background(), deleteCmd)
@@ -122,7 +124,7 @@ func TestChannelRuleDelete(t *testing.T) {
 
 	getCmd := models.GetLiveChannelRuleCommand{
 		OrgId: 1,
-		Id:    id,
+		Uid:   uid,
 	}
 	_, err = storage.GetChannelRule(context.Background(), getCmd)
 	require.Equal(t, models.ErrLiveChannelRuleNotFound, err)
@@ -134,12 +136,12 @@ func TestChannelRuleList(t *testing.T) {
 	createCmd := models.CreateLiveChannelRuleCommand{
 		OrgId:   2,
 		Pattern: "xxx2/*",
-		Config: models.LiveChannelRulePlainConfig{
+		Settings: models.LiveChannelRuleSettings{
 			RemoteWrite: &models.RemoteWriteConfig{
 				Endpoint: "test_endpoint",
 			},
 		},
-		Secure: map[string]string{
+		SecureSettings: map[string]string{
 			"remoteWritePassword": "test_password",
 		},
 	}
@@ -149,12 +151,12 @@ func TestChannelRuleList(t *testing.T) {
 	createCmd = models.CreateLiveChannelRuleCommand{
 		OrgId:   3,
 		Pattern: "xxx3/*",
-		Config: models.LiveChannelRulePlainConfig{
+		Settings: models.LiveChannelRuleSettings{
 			RemoteWrite: &models.RemoteWriteConfig{
 				Endpoint: "test_endpoint",
 			},
 		},
-		Secure: map[string]string{
+		SecureSettings: map[string]string{
 			"remoteWritePassword": "test_password",
 		},
 	}

@@ -283,9 +283,9 @@ func (hs *HTTPServer) registerRoutes() {
 			apiRoute.Group("/channel-rules", func(channelsRoute routing.RouteRegister) {
 				channelsRoute.Get("/", routing.Wrap(channelRule.ListChannelRules))
 				channelsRoute.Post("/", bind(models.CreateLiveChannelRuleCommand{}), routing.Wrap(channelRule.CreateChannelRule))
-				channelsRoute.Put("/:id", bind(models.UpdateLiveChannelRuleCommand{}), routing.Wrap(channelRule.UpdateChannelRule))
-				channelsRoute.Delete("/:id", routing.Wrap(channelRule.DeleteChannelRuleById))
-				channelsRoute.Get("/:id", routing.Wrap(channelRule.GetChannelRuleById))
+				channelsRoute.Put("/:uid", bind(models.UpdateLiveChannelRuleCommand{}), routing.Wrap(channelRule.UpdateChannelRule))
+				channelsRoute.Delete("/:uid", routing.Wrap(channelRule.DeleteChannelRuleById))
+				channelsRoute.Get("/:uid", routing.Wrap(channelRule.GetChannelRuleByUid))
 			}, reqOrgAdmin)
 		}
 

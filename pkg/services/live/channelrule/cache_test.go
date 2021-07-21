@@ -17,28 +17,28 @@ func (t testStorage) ListChannelRules(_ context.Context, _ models.ListLiveChanne
 		{
 			OrgId:   1,
 			Pattern: "stream/telegraf/*",
-			Config: models.LiveChannelRulePlainConfig{
+			Settings: models.LiveChannelRuleSettings{
 				RemoteWrite: &models.RemoteWriteConfig{
 					Endpoint:           "test_endpoint",
 					User:               "test_user",
 					SampleMilliseconds: 1000, // Write no frequently than once in a second.
 				},
 			},
-			Secure: securejsondata.GetEncryptedJsonData(map[string]string{
+			SecureSettings: securejsondata.GetEncryptedJsonData(map[string]string{
 				"remoteWritePassword": "test_password",
 			}),
 		},
 		{
 			OrgId:   2,
 			Pattern: "stream/*/cpu",
-			Config: models.LiveChannelRulePlainConfig{
+			Settings: models.LiveChannelRuleSettings{
 				RemoteWrite: &models.RemoteWriteConfig{
 					Endpoint:           "test_endpoint",
 					User:               "test_user",
 					SampleMilliseconds: 1000, // Write no frequently than once in a second.
 				},
 			},
-			Secure: securejsondata.GetEncryptedJsonData(map[string]string{
+			SecureSettings: securejsondata.GetEncryptedJsonData(map[string]string{
 				"remoteWritePassword": "test_password",
 			}),
 		},

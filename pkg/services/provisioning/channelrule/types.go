@@ -26,7 +26,7 @@ type upsertChannelRuleFromConfig struct {
 	OrgID   int64
 	Version int
 	Pattern string
-	Config  models.LiveChannelRulePlainConfig
+	Config  models.LiveChannelRuleSettings
 	Secure  map[string]string
 }
 
@@ -43,11 +43,11 @@ type deleteChannelRuleConfigV0 struct {
 }
 
 type upsertChannelRuleFromConfigV0 struct {
-	OrgID   values.Int64Value                 `json:"orgId" yaml:"orgId"`
-	Version values.IntValue                   `json:"version" yaml:"version"`
-	Pattern values.StringValue                `json:"pattern" yaml:"pattern"`
-	Config  models.LiveChannelRulePlainConfig `json:"config" yaml:"config"`
-	Secure  values.StringMapValue             `json:"secure" yaml:"secure"`
+	OrgID   values.Int64Value              `json:"orgId" yaml:"orgId"`
+	Version values.IntValue                `json:"version" yaml:"version"`
+	Pattern values.StringValue             `json:"pattern" yaml:"pattern"`
+	Config  models.LiveChannelRuleSettings `json:"config" yaml:"config"`
+	Secure  values.StringMapValue          `json:"secure" yaml:"secure"`
 }
 
 func (cfg *configsV0) mapToChannelRuleFromConfig(apiVersion int64) *configs {
@@ -81,20 +81,20 @@ func (cfg *configsV0) mapToChannelRuleFromConfig(apiVersion int64) *configs {
 
 func createInsertCommand(ds *upsertChannelRuleFromConfig) models.CreateLiveChannelRuleCommand {
 	return models.CreateLiveChannelRuleCommand{
-		OrgId:   ds.OrgID,
-		Pattern: ds.Pattern,
-		Config:  ds.Config,
-		Secure:  ds.Secure,
+		OrgId:          ds.OrgID,
+		Pattern:        ds.Pattern,
+		Settings:       ds.Config,
+		SecureSettings: ds.Secure,
 	}
 }
 
-func createUpdateCommand(ds *upsertChannelRuleFromConfig, id int64) models.UpdateLiveChannelRuleCommand {
+func createUpdateCommand(ds *upsertChannelRuleFromConfig, uid string) models.UpdateLiveChannelRuleCommand {
 	return models.UpdateLiveChannelRuleCommand{
-		Id:      id,
-		OrgId:   ds.OrgID,
-		Pattern: ds.Pattern,
-		Config:  ds.Config,
-		Secure:  ds.Secure,
-		Version: ds.Version,
+		Uid:            uid,
+		OrgId:          ds.OrgID,
+		Pattern:        ds.Pattern,
+		Settings:       ds.Config,
+		SecureSettings: ds.Secure,
+		Version:        ds.Version,
 	}
 }

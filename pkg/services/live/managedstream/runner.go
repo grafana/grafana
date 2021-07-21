@@ -233,7 +233,7 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 	if err != nil {
 		return fmt.Errorf("error getting channel rule from cache: %w", err)
 	}
-	if ok && rule.Config.RemoteWrite != nil && rule.Config.RemoteWrite.Enabled {
+	if ok && rule.Settings.RemoteWrite != nil && rule.Settings.RemoteWrite.Enabled {
 		err := s.remoteWriteFrame(orgID, channel, *rule, frame)
 		if err != nil {
 			return fmt.Errorf("error during remote write: %w", err)
@@ -245,7 +245,7 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 }
 
 func (s *ManagedStream) remoteWriteFrame(orgID int64, channel string, rule models.LiveChannelRule, frame *data.Frame) error {
-	remoteWriteConfig := *rule.Config.RemoteWrite
+	remoteWriteConfig := *rule.Settings.RemoteWrite
 	s.remoteWriteTimeMu.Lock()
 	orgChannel := orgchannel.PrependOrgID(orgID, channel)
 	if t, ok := s.remoteWriteTime[orgChannel]; ok && remoteWriteConfig.SampleMilliseconds > 0 {
@@ -264,7 +264,7 @@ func (s *ManagedStream) remoteWriteFrame(orgID int64, channel string, rule model
 	if err != nil {
 		logger.Error("Error serializing to remote write format", "error", err)
 	} else {
-		password, ok := rule.Secure.DecryptedValue("remoteWritePassword")
+		password, ok := rule.SecureSettings.DecryptedValue("remoteWritePassword")
 		if !ok {
 			logger.Warn("No password set for channel remote write", "orgId", orgID, "channel", channel)
 		}

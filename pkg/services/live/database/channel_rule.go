@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type ChannelRuleStorage struct {
@@ -27,17 +28,40 @@ func (s *ChannelRuleStorage) ListChannelRules(ctx context.Context, cmd models.Li
 	return result, err
 }
 
+func generateNewDatasourceUid(sess *sqlstore.DBSession, orgId int64) (string, error) {
+	for i := 0; i < 3; i++ {
+		uid := util.GenerateShortUID()
+		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&models.LiveChannelRule{})
+		if err != nil {
+			return "", err
+		}
+		if !exists {
+			return uid, nil
+		}
+	}
+	return "", models.ErrLiveChannelRuleFailedGenerateUid
+}
+
 func (s *ChannelRuleStorage) CreateChannelRule(ctx context.Context, cmd models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 	var result *models.LiveChannelRule
 	err := s.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if cmd.Uid == "" {
+			uid, err := generateNewDatasourceUid(sess, cmd.OrgId)
+			if err != nil {
+				return fmt.Errorf("failed to generate UID for channel rule %s: %w", cmd.Pattern, err)
+			}
+			cmd.Uid = uid
+		}
+
 		ch := &models.LiveChannelRule{
-			Version: 1,
-			OrgId:   cmd.OrgId,
-			Pattern: cmd.Pattern,
-			Config:  cmd.Config,
-			Secure:  securejsondata.GetEncryptedJsonData(cmd.Secure),
-			Created: time.Now(),
-			Updated: time.Now(),
+			Uid:            cmd.Uid,
+			Version:        1,
+			OrgId:          cmd.OrgId,
+			Pattern:        cmd.Pattern,
+			Settings:       cmd.Settings,
+			SecureSettings: securejsondata.GetEncryptedJsonData(cmd.SecureSettings),
+			Created:        time.Now(),
+			Updated:        time.Now(),
 		}
 		if _, err := sess.Insert(ch); err != nil {
 			if s.store.Dialect.IsUniqueConstraintViolation(err) {
@@ -55,16 +79,16 @@ func (s *ChannelRuleStorage) UpdateChannelRule(ctx context.Context, cmd models.U
 	var result *models.LiveChannelRule
 	err := s.store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		ch := &models.LiveChannelRule{
-			Id:      cmd.Id,
-			Version: cmd.Version,
-			OrgId:   cmd.OrgId,
-			Pattern: cmd.Pattern,
-			Config:  cmd.Config,
-			Secure:  securejsondata.GetEncryptedJsonData(cmd.Secure),
-			Updated: time.Now(),
+			Uid:            cmd.Uid,
+			Version:        cmd.Version,
+			OrgId:          cmd.OrgId,
+			Pattern:        cmd.Pattern,
+			Settings:       cmd.Settings,
+			SecureSettings: securejsondata.GetEncryptedJsonData(cmd.SecureSettings),
+			Updated:        time.Now(),
 		}
 
-		updateSession := sess.Where("id=? and org_id=? and version < ?", cmd.Id, cmd.OrgId, cmd.Version)
+		updateSession := sess.Where("org_id=? and uid=? and version < ?", cmd.OrgId, cmd.Uid, cmd.Version)
 
 		affected, err := updateSession.Update(ch)
 		if err != nil {
@@ -73,7 +97,7 @@ func (s *ChannelRuleStorage) UpdateChannelRule(ctx context.Context, cmd models.U
 
 		if affected == 0 {
 			var getCh models.LiveChannelRule
-			ok, err := sess.NoAutoCondition(true).Where("id=? AND org_id=?", cmd.Id, cmd.OrgId).Get(&getCh)
+			ok, err := sess.NoAutoCondition(true).Where("org_id=? and uid=?", cmd.OrgId, cmd.Uid).Get(&getCh)
 			if err != nil {
 				return fmt.Errorf("error getting rule: %w", err)
 			}
@@ -98,10 +122,10 @@ func (s *ChannelRuleStorage) DeleteChannelRule(ctx context.Context, cmd models.D
 			return models.ErrDataSourceIdentifierNotSet
 		}
 		switch {
-		case cmd.Id > 0:
-			res, err = sess.Exec("DELETE FROM live_channel_rule WHERE id=? and org_id=?", cmd.Id, cmd.OrgId)
+		case cmd.Uid != "":
+			res, err = sess.Exec("DELETE FROM live_channel_rule WHERE org_id=? and uid=?", cmd.OrgId, cmd.Uid)
 		case cmd.Pattern != "":
-			res, err = sess.Exec("DELETE FROM live_channel_rule WHERE pattern=? and org_id=?", cmd.Pattern, cmd.OrgId)
+			res, err = sess.Exec("DELETE FROM live_channel_rule WHERE org_id=? and pattern=?", cmd.OrgId, cmd.Pattern)
 		default:
 			return models.ErrDataSourceIdentifierNotSet
 		}
@@ -116,8 +140,8 @@ func (s *ChannelRuleStorage) DeleteChannelRule(ctx context.Context, cmd models.D
 
 func (s *ChannelRuleStorage) GetChannelRule(ctx context.Context, cmd models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error) {
 	var ch models.LiveChannelRule
-	if cmd.Id > 0 {
-		ch = models.LiveChannelRule{OrgId: cmd.OrgId, Id: cmd.Id}
+	if cmd.Uid != "" {
+		ch = models.LiveChannelRule{OrgId: cmd.OrgId, Uid: cmd.Uid}
 	} else if cmd.Pattern != "" {
 		ch = models.LiveChannelRule{OrgId: cmd.OrgId, Pattern: cmd.Pattern}
 	} else {
@@ -126,10 +150,10 @@ func (s *ChannelRuleStorage) GetChannelRule(ctx context.Context, cmd models.GetL
 	err := s.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var ok bool
 		var err error
-		if cmd.Id > 0 {
-			ok, err = sess.NoAutoCondition(true).Where("id=? AND org_id=?", cmd.Id, cmd.OrgId).Get(&ch)
+		if cmd.Uid != "" {
+			ok, err = sess.NoAutoCondition(true).Where("org_id=? and uid=?", cmd.OrgId, cmd.Uid).Get(&ch)
 		} else {
-			ok, err = sess.NoAutoCondition(true).Where("pattern=? AND org_id=?", cmd.Pattern, cmd.OrgId).Get(&ch)
+			ok, err = sess.NoAutoCondition(true).Where("org_id=? and pattern=?", cmd.OrgId, cmd.Pattern).Get(&ch)
 		}
 		if err != nil {
 			return err

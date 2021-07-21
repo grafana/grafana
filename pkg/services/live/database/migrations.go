@@ -11,7 +11,7 @@ func AddLiveMessageMigrations(_ *migrator.Migrator) {
 	//		{Name: "id", Type: migrator.DB_BigInt, Nullable: false, IsPrimaryKey: true, IsAutoIncrement: true},
 	//		{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
 	//		{Name: "channel", Type: migrator.DB_NVarchar, Length: 189, Nullable: false},
-	//		{Name: "data", Type: migrator.DB_Text, Nullable: false},
+	//		{Name: "data", Type: migrator.DB_MediumText, Nullable: false},
 	//		{Name: "published", Type: migrator.DB_DateTime, Nullable: false},
 	//	},
 	//	Indices: []*migrator.Index{
@@ -28,18 +28,21 @@ func AddLiveChannelRuleMigrations(mg *migrator.Migrator) {
 		Name: "live_channel_rule",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, Nullable: false, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "uid", Type: migrator.DB_NVarchar, Nullable: false},
 			{Name: "version", Type: migrator.DB_Int, Nullable: false},
 			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "pattern", Type: migrator.DB_NVarchar, Length: 189, Nullable: false},
-			{Name: "config", Type: migrator.DB_Text, Nullable: false},
-			{Name: "secure", Type: migrator.DB_Text, Nullable: false},
+			{Name: "settings", Type: migrator.DB_MediumText, Nullable: false},
+			{Name: "secure_settings", Type: migrator.DB_MediumText, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"org_id", "pattern"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"org_id", "uid"}, Type: migrator.UniqueIndex},
 		},
 	}
 	mg.AddMigration("create live channel rule table", migrator.NewAddTableMigration(liveChannelRule))
 	mg.AddMigration("add index live_channel_rule.org_id_pattern_unique", migrator.NewAddIndexMigration(liveChannelRule, liveChannelRule.Indices[0]))
+	mg.AddMigration("add index live_channel_rule.org_id_uid_unique", migrator.NewAddIndexMigration(liveChannelRule, liveChannelRule.Indices[1]))
 }

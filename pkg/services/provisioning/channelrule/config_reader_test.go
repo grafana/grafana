@@ -45,7 +45,7 @@ func TestChannelRuleAsConfigNew(t *testing.T) {
 	t.Run("should update one channelRule", func(t *testing.T) {
 		fakeRepo = &fakeRepository{}
 		fakeRepo.loadAll = []*models.LiveChannelRule{
-			{Pattern: "Graphite", OrgId: 1, Id: 1},
+			{Pattern: "Graphite", OrgId: 1, Uid: "1"},
 		}
 		dc := newProvisioner(logger, mock)
 		err := dc.applyChanges("testdata/two-channelRules")
@@ -58,7 +58,7 @@ func TestChannelRuleAsConfigNew(t *testing.T) {
 	t.Run("Multiple channelRules in different organizations", func(t *testing.T) {
 		fakeRepo = &fakeRepository{}
 		fakeRepo.loadAll = []*models.LiveChannelRule{
-			{Pattern: "Graphite", OrgId: 1, Id: 1},
+			{Pattern: "Graphite", OrgId: 1, Uid: "1"},
 		}
 		dc := newProvisioner(logger, mock)
 		err := dc.applyChanges("testdata/multiple-org")
@@ -71,8 +71,8 @@ func TestChannelRuleAsConfigNew(t *testing.T) {
 	t.Run("Two configured channelRule and purge others", func(t *testing.T) {
 		fakeRepo = &fakeRepository{}
 		fakeRepo.loadAll = []*models.LiveChannelRule{
-			{Pattern: "old-graphite", OrgId: 1, Id: 1},
-			{Pattern: "old-graphite2", OrgId: 1, Id: 2},
+			{Pattern: "old-graphite", OrgId: 1, Uid: "1"},
+			{Pattern: "old-graphite2", OrgId: 1, Uid: "2"},
 		}
 		dc := newProvisioner(logger, mock)
 		err := dc.applyChanges("testdata/insert-two-delete-two")
@@ -85,8 +85,8 @@ func TestChannelRuleAsConfigNew(t *testing.T) {
 	t.Run("Two configured channelRule and purge others = false", func(t *testing.T) {
 		fakeRepo = &fakeRepository{}
 		fakeRepo.loadAll = []*models.LiveChannelRule{
-			{Pattern: "Graphite", OrgId: 1, Id: 1},
-			{Pattern: "old-graphite2", OrgId: 1, Id: 2},
+			{Pattern: "Graphite", OrgId: 1, Uid: "1"},
+			{Pattern: "old-graphite2", OrgId: 1, Uid: "2"},
 		}
 
 		dc := newProvisioner(logger, mock)

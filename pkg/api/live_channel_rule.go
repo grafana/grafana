@@ -37,7 +37,7 @@ func (a *channelRuleAPI) ListChannelRules(c *models.ReqContext) response.Respons
 
 	for _, ch := range result {
 		item := dtos.LiveChannelRuleListItem{
-			Id:      ch.Id,
+			Uid:     ch.Uid,
 			Version: ch.Version,
 			Pattern: ch.Pattern,
 		}
@@ -48,13 +48,13 @@ func (a *channelRuleAPI) ListChannelRules(c *models.ReqContext) response.Respons
 
 func liveChannelToDTO(ch *models.LiveChannelRule) dtos.LiveChannelRule {
 	item := dtos.LiveChannelRule{
-		Id:               ch.Id,
+		Uid:              ch.Uid,
 		Version:          ch.Version,
 		Pattern:          ch.Pattern,
-		Config:           ch.Config,
+		Config:           ch.Settings,
 		SecureJsonFields: map[string]bool{},
 	}
-	for k, v := range ch.Secure {
+	for k, v := range ch.SecureSettings {
 		if len(v) > 0 {
 			item.SecureJsonFields[k] = true
 		}
@@ -62,9 +62,9 @@ func liveChannelToDTO(ch *models.LiveChannelRule) dtos.LiveChannelRule {
 	return item
 }
 
-func (a *channelRuleAPI) GetChannelRuleById(c *models.ReqContext) response.Response {
+func (a *channelRuleAPI) GetChannelRuleByUid(c *models.ReqContext) response.Response {
 	query := models.GetLiveChannelRuleCommand{
-		Id:    c.ParamsInt64(":id"),
+		Uid:   c.Params(":uid"),
 		OrgId: c.OrgId,
 	}
 
@@ -92,28 +92,28 @@ func (a *channelRuleAPI) CreateChannelRule(c *models.ReqContext, cmd models.Crea
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message":     "channel rule added",
-		"id":          result.Id,
+		"uid":         result.Uid,
 		"channelRule": liveChannelToDTO(result),
 	})
 }
 
 func (a *channelRuleAPI) fillChannelRuleWithSecureJSONData(ctx context.Context, cmd *models.UpdateLiveChannelRuleCommand) error {
-	if len(cmd.Secure) == 0 {
+	if len(cmd.SecureSettings) == 0 {
 		return nil
 	}
 
 	rule, err := a.storage.GetChannelRule(ctx, models.GetLiveChannelRuleCommand{
 		OrgId: cmd.OrgId,
-		Id:    cmd.Id,
+		Uid:   cmd.Uid,
 	})
 	if err != nil {
 		return err
 	}
 
-	secureJSONData := rule.Secure.Decrypt()
+	secureJSONData := rule.SecureSettings.Decrypt()
 	for k, v := range secureJSONData {
-		if _, ok := cmd.Secure[k]; !ok {
-			cmd.Secure[k] = v
+		if _, ok := cmd.SecureSettings[k]; !ok {
+			cmd.SecureSettings[k] = v
 		}
 	}
 
@@ -121,7 +121,7 @@ func (a *channelRuleAPI) fillChannelRuleWithSecureJSONData(ctx context.Context, 
 }
 
 func (a *channelRuleAPI) UpdateChannelRule(c *models.ReqContext, cmd models.UpdateLiveChannelRuleCommand) response.Response {
-	cmd.Id = c.ParamsInt64(":id")
+	cmd.Uid = c.Params(":uid")
 	cmd.OrgId = c.OrgId
 
 	err := a.fillChannelRuleWithSecureJSONData(c.Req.Context(), &cmd)
@@ -141,7 +141,7 @@ func (a *channelRuleAPI) UpdateChannelRule(c *models.ReqContext, cmd models.Upda
 	}
 
 	getCmd := models.GetLiveChannelRuleCommand{
-		Id:    cmd.Id,
+		Uid:   cmd.Uid,
 		OrgId: c.OrgId,
 	}
 
@@ -155,20 +155,20 @@ func (a *channelRuleAPI) UpdateChannelRule(c *models.ReqContext, cmd models.Upda
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message":     "channel rule updated",
-		"id":          cmd.Id,
+		"uid":         cmd.Uid,
 		"channelRule": liveChannelToDTO(result),
 	})
 }
 
 func (a *channelRuleAPI) DeleteChannelRuleById(c *models.ReqContext) response.Response {
-	id := c.ParamsInt64(":id")
+	uid := c.Params(":uid")
 
-	if id <= 0 {
-		return response.Error(http.StatusBadRequest, "Missing valid channel rule id", nil)
+	if uid == "" {
+		return response.Error(http.StatusBadRequest, "Missing channel rule uid", nil)
 	}
 
 	getCmd := models.GetLiveChannelRuleCommand{
-		Id:    id,
+		Uid:   uid,
 		OrgId: c.OrgId,
 	}
 	_, err := a.storage.GetChannelRule(c.Req.Context(), getCmd)
@@ -179,7 +179,7 @@ func (a *channelRuleAPI) DeleteChannelRuleById(c *models.ReqContext) response.Re
 		return response.Error(http.StatusInternalServerError, "Failed to query channel rule", err)
 	}
 
-	cmd := models.DeleteLiveChannelRuleCommand{Id: id, OrgId: c.OrgId}
+	cmd := models.DeleteLiveChannelRuleCommand{Uid: uid, OrgId: c.OrgId}
 	_, err = a.storage.DeleteChannelRule(c.Req.Context(), cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to delete channel rule", err)
