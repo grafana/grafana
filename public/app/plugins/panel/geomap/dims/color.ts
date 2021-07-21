@@ -13,7 +13,7 @@ export function getColorDimension(
 ): DimensionSupplier<string> {
   const field = findField(frame, config.field);
   if (!field) {
-    const v = config.fixed ?? 'grey';
+    const v = theme.visualization.getColorByName(config.fixed) ?? 'grey';
     return {
       isAssumed: Boolean(config.field?.length) || !config.fixed,
       fixed: v,
