@@ -98,7 +98,7 @@ const RulesFilter = () => {
             <Label>View as</Label>
             <RadioButtonGroup
               options={ViewOptions}
-              value={String(queryParams['view'] ?? 'group')}
+              value={String(queryParams['view'] || 'group')}
               onChange={handleViewChange}
             />
           </div>

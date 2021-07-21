@@ -9,7 +9,7 @@ import { isUndefined, omitBy } from 'lodash';
 const defaultValueAndType: [string, string] = ['', timeOptions[0].value];
 
 const matchersToArrayFieldMatchers = (matchers: Record<string, string> | undefined, isRegex: boolean): Matcher[] =>
-  Object.entries(matchers ?? {}).reduce(
+  Object.entries(matchers ?? {}).reduce<Matcher[]>(
     (acc, [name, value]) => [
       ...acc,
       {

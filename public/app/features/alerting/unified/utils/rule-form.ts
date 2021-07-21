@@ -106,7 +106,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         condition: ga.condition,
         annotations: listifyLabelsOrAnnotations(rule.annotations),
         labels: listifyLabelsOrAnnotations(rule.labels),
-        folder: { title: namespace, id: -1 },
+        folder: { title: namespace, id: ga.namespace_id },
       };
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');

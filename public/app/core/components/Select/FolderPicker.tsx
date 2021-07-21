@@ -58,7 +58,7 @@ export class FolderPicker extends PureComponent<Props, State> {
   };
 
   getOptions = async (query: string) => {
-    const { rootName, enableReset, initialTitle, permissionLevel, showRoot } = this.props;
+    const { rootName, enableReset, initialTitle, permissionLevel, initialFolderId, showRoot } = this.props;
     const params = {
       query,
       type: 'dash-folder',
@@ -74,8 +74,13 @@ export class FolderPicker extends PureComponent<Props, State> {
       options.unshift({ label: rootName, value: 0 });
     }
 
-    if (enableReset && query === '' && initialTitle !== '') {
-      options.unshift({ label: initialTitle, value: undefined });
+    if (
+      enableReset &&
+      query === '' &&
+      initialTitle !== '' &&
+      !options.find((option) => option.label === initialTitle)
+    ) {
+      options.unshift({ label: initialTitle, value: initialFolderId });
     }
 
     return options;
@@ -122,9 +127,8 @@ export class FolderPicker extends PureComponent<Props, State> {
       folder = options.find((option) => option.value === initialFolderId) || null;
     } else if (enableReset && initialTitle) {
       folder = resetFolder;
-    } else if (initialTitle && initialFolderId === -1) {
-      // @TODO temporary, we don't know the id for alerting rule folder in some cases
-      folder = options.find((option) => option.label === initialTitle) || null;
+    } else if (initialFolderId) {
+      folder = options.find((option) => option.id === initialFolderId) || null;
     }
 
     if (!folder && !this.props.allowEmpty) {
