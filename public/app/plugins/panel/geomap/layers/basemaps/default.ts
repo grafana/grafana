@@ -7,31 +7,32 @@ import { standard } from './osm';
 import { config } from 'app/core/config';
 
 // Array of base map options to search through
-const baseMapOptions = [carto, esriXYZTiles, xyzTiles, standard];
+const baseLayers = [carto, esriXYZTiles, xyzTiles, standard];
+
+// Configured base map from the server side
+const defaultBaseLayer = config.geomapDefaultBaseLayer;
 
 // Default base layer depending on the server setting
-// Use CartoDB if the default base layer is not set in defaults.ini
-export const defaultBaseLayer: MapLayerRegistryItem<any> = {
+export const defaultLayers: MapLayerRegistryItem<any> = {
   id: 'default',
   name: 'Default base layer',
   isBaseMap: true,
 
   create: (map: Map, options: MapLayerOptions, theme: GrafanaTheme2) => ({
     init: () => {
-      // Config options set on the server side
-      const cfg = config.geomapDefaultBaseLayer!.config;
-      let defaultMap;
+      let baseLayer;
 
       // If default base layer is set, create the default base map with its corresponding config
-      if (config.geomapDefaultBaseLayer!.type) {
-        defaultMap = baseMapOptions.find((baseLayer) => baseLayer.id === config.geomapDefaultBaseLayer!.type);
-        if (defaultMap === undefined) {
+      if (defaultBaseLayer) {
+        baseLayer = baseLayers.find((baseLayer) => baseLayer.id === defaultBaseLayer.type);
+        if (baseLayer === undefined) {
           throw new Error('Invalid default base map');
         }
+        return baseLayer.create(map, { ...options, config: defaultBaseLayer.config }, theme).init();
       } else {
-        defaultMap = carto;
+        // Use CartoDB if the default base layer is not set in defaults.ini
+        return carto.create(map, options, theme).init();
       }
-      return defaultMap.create(map, { ...options, config: cfg }, theme).init();
     },
   }),
 };

@@ -2,10 +2,10 @@ import { cartoLayers } from './carto';
 import { esriLayers } from './esri';
 import { genericLayers } from './generic';
 import { osmLayers } from './osm';
-import { defaultBaseLayer } from './default';
+import { defaultLayers } from './default';
 
 export const defaultGrafanaThemedMap = {
-  ...defaultBaseLayer,
+  ...defaultLayers,
   id: 'default',
   name: 'Default base layer',
 };
