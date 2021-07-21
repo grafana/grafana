@@ -68,30 +68,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return ResponseParser.parseSubscriptionsForSelect(result);
   };
 
-  private getLogAnalyticsSubscriptions = async (): Promise<Array<SelectableValue<string>>> => {
-    await this.saveOptions();
-
-    const query = `?api-version=2019-03-01`;
-    const result = await getBackendSrv().datasourceRequest({
-      url: this.baseURL + query,
-      method: 'GET',
-    });
-
-    return ResponseParser.parseSubscriptionsForSelect(result);
-  };
-
-  private getWorkspaces = async (subscriptionId: string): Promise<Array<SelectableValue<string>>> => {
-    await this.saveOptions();
-
-    const workspaceURL = `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
-    const result = await getBackendSrv().datasourceRequest({
-      url: this.baseURL + workspaceURL,
-      method: 'GET',
-    });
-
-    return ResponseParser.parseWorkspacesForSelect(result);
-  };
-
   // TODO: Used only by InsightsConfig
   private onUpdateJsonDataOption = (key: keyof AzureDataSourceJsonData) => (
     event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
@@ -117,14 +93,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return (
       <>
         <MonitorConfig options={options} updateOptions={this.updateOptions} getSubscriptions={this.getSubscriptions} />
-
-        <AnalyticsConfig
-          options={options}
-          updateOptions={this.updateOptions}
-          getSubscriptions={this.getLogAnalyticsSubscriptions}
-          getWorkspaces={this.getWorkspaces}
-        />
-
+        <AnalyticsConfig options={options} updateOptions={this.updateOptions} />
         {this.state.appInsightsInitiallyConfigured && (
           <InsightsConfig
             options={options}
