@@ -92,16 +92,24 @@ export function getLocationMatchers(src?: FrameGeometrySource): LocationFieldMat
       if (src?.lookup) {
         info.lookup = getFieldFinder(getFieldMatcher({ id: FieldMatcherID.byName, options: src.lookup }));
       }
-      // Set lookup source endpoint
+      // Lookup source endpoint is Countries
       if (src?.lookupSrc === LookupSourceOptions.Countries) {
         info.lookupSrcEndpoint = LookupSourceEndpoints.Countries;
-      } else if (src?.lookupSrc === LookupSourceOptions.Countries_3Letter) {
+      }
+      // Lookup source endpoint is Countries (3 Letter)
+      else if (src?.lookupSrc === LookupSourceOptions.Countries_3Letter) {
         info.lookupSrcEndpoint = LookupSourceEndpoints.Countries_3Letter;
-      } else if (src?.lookupSrc === LookupSourceOptions.States) {
+      }
+      // Lookup source endpoint is States
+      else if (src?.lookupSrc === LookupSourceOptions.States) {
         info.lookupSrcEndpoint = LookupSourceEndpoints.States;
-      } else if (src?.lookupSrc === LookupSourceOptions.Probes) {
+      }
+      // Lookup source endpoint is Probes
+      else if (src?.lookupSrc === LookupSourceOptions.Probes) {
         info.lookupSrcEndpoint = LookupSourceEndpoints.Probes;
-      } else if (src?.lookupSrc === LookupSourceOptions.JSONEndpoint && src?.lookupSrcEndpoint) {
+      }
+      // Lookup source endpoint is JSON Endpoint
+      else if (src?.lookupSrc === LookupSourceOptions.JSONEndpoint && src?.lookupSrcEndpoint) {
         info.lookupSrcEndpoint = src.lookupSrcEndpoint;
       }
   }
