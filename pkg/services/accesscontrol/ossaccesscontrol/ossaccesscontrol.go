@@ -116,7 +116,8 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 
 		// Only record new assignments
 		alreadyAssigned := false
-		if assignments, ok := accesscontrol.FixedRoleGrants[builtInRole]; ok {
+		assignments, ok := accesscontrol.FixedRoleGrants[builtInRole]
+		if ok {
 			for _, assignedRole := range assignments {
 				if assignedRole == role.Name {
 					alreadyAssigned = true
