@@ -90,7 +90,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
         })
         .addFieldNamePicker({
           path: 'location.lookup',
-          name: 'Lookup Field',
+          name: 'Lookup field',
           settings: {
             filter: (f: Field) => f.type === FieldType.string,
             noFieldsMessage: 'No string fields found',
@@ -99,7 +99,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
         })
         .addSelect({
           path: 'location.lookupSrc',
-          name: 'Lookup Source Option',
+          name: 'Lookup source option',
           settings: {
             options: [
               { value: LookupSourceOptions.Countries, label: 'Countries' },
@@ -113,7 +113,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
         })
         .addTextInput({
           path: 'location.lookupSrcEndpoint',
-          name: 'JSON Endpoint',
+          name: 'JSON endpoint',
           showIf: (opts: MapLayerOptions) =>
             opts.location?.mode === FrameGeometrySourceMode.Lookup &&
             opts.location?.lookupSrc === LookupSourceOptions.JSONEndpoint,
