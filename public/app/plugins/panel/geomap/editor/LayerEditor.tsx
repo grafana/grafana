@@ -9,8 +9,7 @@ import {
   FrameGeometrySourceMode,
   FieldType,
   Field,
-  LookupSourceType,
-  LookupSourceFiles,
+  LookupSourceOptions,
 } from '@grafana/data';
 import { geomapLayerRegistry } from '../layers/registry';
 import { defaultGrafanaThemedMap } from '../layers/basemaps';
@@ -98,52 +97,25 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
           showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
         })
         .addSelect({
-          path: 'location.lookupSrc.type',
+          path: 'location.lookupSrc',
           name: 'Lookup Source Option',
           settings: {
             options: [
-              { value: LookupSourceType.File, label: 'Built-in File' },
-              { value: LookupSourceType.JSON, label: 'JSON Endpoint' },
-              { value: LookupSourceType.JSONP, label: 'JSONP Endpoint' },
+              { value: LookupSourceOptions.Countries, label: 'Countries' },
+              { value: LookupSourceOptions.Countries_3Letter, label: 'Countries (3 Letter)' },
+              { value: LookupSourceOptions.States, label: 'States' },
+              { value: LookupSourceOptions.Probes, label: 'Probes' },
+              { value: LookupSourceOptions.JSONEndpoint, label: 'JSON Endpoint' },
             ],
           },
           showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
         })
-        .addSelect({
-          path: 'location.lookupSrc.filePath',
-          name: 'Lookup Source File',
-          settings: {
-            options: [
-              { value: LookupSourceFiles.Countries, label: 'Countries' },
-              { value: LookupSourceFiles.Countries_3Letter, label: 'Countries (3 Letter)' },
-              { value: LookupSourceFiles.States, label: 'States' },
-              { value: LookupSourceFiles.Probes, label: 'Probes' },
-            ],
-          },
-          showIf: (opts: MapLayerOptions) =>
-            opts.location?.mode === FrameGeometrySourceMode.Lookup &&
-            opts.location?.lookupSrc?.type === LookupSourceType.File,
-        })
         .addTextInput({
-          path: 'location.lookupSrc.jsonEndpoint',
+          path: 'location.lookupSrcEndpoint',
           name: 'JSON Endpoint',
           showIf: (opts: MapLayerOptions) =>
             opts.location?.mode === FrameGeometrySourceMode.Lookup &&
-            opts.location?.lookupSrc?.type === LookupSourceType.JSON,
-        })
-        .addTextInput({
-          path: 'location.lookupSrc.jsonpEndpoint',
-          name: 'JSONP Endpoint',
-          showIf: (opts: MapLayerOptions) =>
-            opts.location?.mode === FrameGeometrySourceMode.Lookup &&
-            opts.location?.lookupSrc?.type === LookupSourceType.JSONP,
-        })
-        .addTextInput({
-          path: 'location.lookupSrc.jsonpCallback',
-          name: 'JSONP Callback',
-          showIf: (opts: MapLayerOptions) =>
-            opts.location?.mode === FrameGeometrySourceMode.Lookup &&
-            opts.location?.lookupSrc?.type === LookupSourceType.JSONP,
+            opts.location?.lookupSrc === LookupSourceOptions.JSONEndpoint,
         });
     }
     if (layer.registerOptionsUI) {
