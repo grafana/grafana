@@ -34,13 +34,16 @@ import { catchError, map } from 'rxjs/operators';
 
 // we detect the field type based on the value-array
 function getFieldType(values: unknown[]): FieldType {
-  if (values.length === 0) {
-    // if we get called with an empty value-array,
-    // we will assume the values are numbers
+  // the values-array may contain a lot of nulls.
+  // we need the first not-null item
+  const firstNotNull = values.find((v) => v !== null);
+
+  if (firstNotNull === undefined) {
+    // we could not find any not-null values
     return FieldType.number;
   }
 
-  const valueType = typeof values[0];
+  const valueType = typeof firstNotNull;
 
   switch (valueType) {
     case 'string':
