@@ -55,21 +55,24 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         | order by subscriptionURI asc
     `;
 
-    let resourceResponse = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(query);
-    if (!resourceResponse.data.length) {
-      throw new Error('unable to fetch resource details');
-    }
-    let resources = resourceResponse.data;
-
-    while (resourceResponse.$skipToken) {
-      // The response include several pages
-      resourceResponse = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(query, 1, {
-        $skipToken: resourceResponse.$skipToken,
-      });
+    let resources: RawAzureResourceGroupItem[] = [];
+    let allFetched = false;
+    let $skipToken = undefined;
+    while (!allFetched) {
+      // The response may include several pages
+      let options: Partial<AzureResourceGraphOptions> = {};
+      if ($skipToken) {
+        options = {
+          $skipToken,
+        };
+      }
+      const resourceResponse = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(query, 1, options);
       if (!resourceResponse.data.length) {
         throw new Error('unable to fetch resource details');
       }
       resources = resources.concat(resourceResponse.data);
+      $skipToken = resourceResponse.$skipToken;
+      allFetched = !$skipToken;
     }
 
     return formatResourceGroupData(resources);

@@ -115,7 +115,9 @@ const ResourcePicker = ({
   return (
     <div>
       {isLoading ? (
-        <LoadingPlaceholder text={'Loading resources...'} />
+        <div className={styles.loadingWrapper}>
+          <LoadingPlaceholder text={'Loading resources...'} />
+        </div>
       ) : (
         <>
           <NestedResourceTable
@@ -162,5 +164,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     bottom: 0,
     background: theme.colors.background.primary,
     paddingTop: theme.spacing(2),
+  }),
+  loadingWrapper: css({
+    textAlign: 'center',
+    paddingTop: theme.spacing(2),
+    paddingBottom: theme.spacing(2),
+    color: theme.colors.text.secondary,
   }),
 });
