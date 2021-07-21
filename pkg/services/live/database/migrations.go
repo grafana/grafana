@@ -28,7 +28,7 @@ func AddLiveChannelRuleMigrations(mg *migrator.Migrator) {
 		Name: "live_channel_rule",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, Nullable: false, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "uid", Type: migrator.DB_NVarchar, Nullable: false},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "version", Type: migrator.DB_Int, Nullable: false},
 			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "pattern", Type: migrator.DB_NVarchar, Length: 189, Nullable: false},
