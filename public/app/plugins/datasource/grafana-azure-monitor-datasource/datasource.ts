@@ -136,7 +136,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     return this.azureLogAnalyticsDatasource.annotationQuery(options);
   }
 
-  async metricFindQuery(query: string, optionalOptions?: any) {
+  async metricFindQuery(query: string, optionalOptions?: unknown) {
     if (!query) {
       return Promise.resolve([]);
     }
