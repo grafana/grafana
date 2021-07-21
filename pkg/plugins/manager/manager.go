@@ -786,7 +786,7 @@ func (pm *PluginManager) Uninstall(ctx context.Context, pluginID string) error {
 		return err
 	}
 
-	return pm.pluginInstaller.Uninstall(ctx, pluginID, pm.Cfg.PluginsPath)
+	return pm.pluginInstaller.Uninstall(ctx, plugin.PluginDir)
 }
 
 func (pm *PluginManager) unregister(plugin *plugins.PluginBase) error {

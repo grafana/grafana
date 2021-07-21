@@ -4,13 +4,12 @@ import { css } from '@emotion/css';
 import { Card } from '../components/Card';
 import { Grid } from '../components/Grid';
 
-import { Plugin } from '../types';
+import { CatalogPlugin } from '../types';
 import { GrafanaTheme2 } from '@grafana/data';
-import { isLocalPlugin } from '../guards';
 import { PluginLogo } from './PluginLogo';
 
 interface Props {
-  plugins: Plugin[];
+  plugins: CatalogPlugin[];
 }
 
 export const PluginList = ({ plugins }: Props) => {
@@ -19,14 +18,15 @@ export const PluginList = ({ plugins }: Props) => {
   return (
     <Grid>
       {plugins.map((plugin) => {
-        const { name, orgName, typeCode } = plugin;
+        const { name, id, orgName } = plugin;
+
         return (
           <Card
-            key={`${orgName}-${name}-${typeCode}`}
-            href={`/plugins/${getPluginId(plugin)}`}
+            key={`${id}`}
+            href={`/plugins/${id}`}
             image={
               <PluginLogo
-                plugin={plugin}
+                src={plugin.info.logos.small}
                 className={css`
                   max-height: 64px;
                 `}
@@ -44,13 +44,6 @@ export const PluginList = ({ plugins }: Props) => {
     </Grid>
   );
 };
-
-function getPluginId(plugin: Plugin): string {
-  if (isLocalPlugin(plugin)) {
-    return plugin.id;
-  }
-  return plugin.slug;
-}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   name: css`

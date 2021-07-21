@@ -1,12 +1,14 @@
+import { markersLayer } from './markersLayer';
 import { geojsonMapper } from './geojsonMapper';
+import { heatmapLayer } from './heatMap';
 import { lastPointTracker } from './lastPointTracker';
-import { worldmapBehaviorLayer } from './worldmapBehavior';
 
 /**
  * Registry for layer handlers
  */
 export const dataLayers = [
-    worldmapBehaviorLayer, // mimic the existing worldmap
+    markersLayer,
+    heatmapLayer,
     lastPointTracker,
     geojsonMapper, // dummy for now
 ];

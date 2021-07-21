@@ -10,6 +10,7 @@ import {
   Input,
   IconButton,
   useStyles2,
+  Card,
 } from '@grafana/ui';
 import {
   DataFrame,
@@ -19,8 +20,8 @@ import {
   PanelData,
   SelectableValue,
   standardTransformersRegistry,
+  TransformerRegistryItem,
 } from '@grafana/data';
-import { Card, CardProps } from '../../../../core/components/Card/Card';
 import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 import { Unsubscribable } from 'rxjs';
@@ -32,6 +33,7 @@ import { TransformationsEditorTransformation } from './types';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 import { AppNotificationSeverity } from '../../../../types';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
 
 const LOCAL_STORAGE_KEY = 'dashboard.components.TransformationEditor.featureInfoBox.isDismissed';
 
@@ -214,13 +216,15 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   renderTransformsPicker() {
     const { transformations, search } = this.state;
     let suffix: React.ReactNode = null;
-    let xforms = standardTransformersRegistry.list();
+    let xforms = standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
+
     if (search) {
       const lower = search.toLowerCase();
       const filtered = xforms.filter((t) => {
         const txt = (t.name + t.description).toLowerCase();
         return txt.indexOf(lower) >= 0;
       });
+
       suffix = (
         <>
           {filtered.length} / {xforms.length} &nbsp;&nbsp;
@@ -239,6 +243,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 
     const noTransforms = !transformations?.length;
     const showPicker = noTransforms || this.state.showPicker;
+
     if (!suffix && showPicker && !noTransforms) {
       suffix = (
         <IconButton
@@ -264,10 +269,10 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 return (
                   <Alert
                     title="Transformations"
+                    severity="info"
                     onRemove={() => {
                       onDismiss(true);
                     }}
-                    severity="info"
                   >
                     <p>
                       Transformations allow you to join, calculate, re-order, hide, and rename your query results before
@@ -306,10 +311,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
               return (
                 <TransformationCard
                   key={t.name}
-                  title={t.name}
-                  description={t.description}
-                  actions={<Button>Select</Button>}
-                  ariaLabel={selectors.components.TransformTab.newTransform(t.name)}
+                  transform={t}
                   onClick={() => {
                     this.onTransformationAdd({ value: t.id });
                   }}
@@ -363,28 +365,37 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   }
 }
 
-const TransformationCard: React.FC<CardProps> = (props) => {
+interface TransformationCardProps {
+  transform: TransformerRegistryItem<any>;
+  onClick: () => void;
+}
+
+function TransformationCard({ transform, onClick }: TransformationCardProps) {
   const styles = useStyles2(getStyles);
-  return <Card {...props} className={styles.card} />;
-};
+  return (
+    <Card
+      className={styles.card}
+      heading={transform.name}
+      aria-label={selectors.components.TransformTab.newTransform(transform.name)}
+      onClick={onClick}
+    >
+      <Card.Meta>{transform.description}</Card.Meta>
+      {transform.state && (
+        <Card.Tags>
+          <PluginStateInfo state={transform.state} />
+        </Card.Tags>
+      )}
+    </Card>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     card: css`
-      background: ${theme.colors.background.secondary};
-      width: 100%;
-      border: none;
-      padding: ${theme.spacing(1)};
+      margin: 0;
 
-      // hack because these cards use classes from a very different card for some reason
-      .add-data-source-item-text {
-        font-size: ${theme.typography.size.md};
-      }
-
-      &:hover {
-        background: ${theme.colors.action.hover};
-        box-shadow: none;
-        border: none;
+      > div {
+        padding: ${theme.spacing(1)};
       }
     `,
   };

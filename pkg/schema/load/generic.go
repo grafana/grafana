@@ -102,7 +102,11 @@ type genericVersionedSchema struct {
 
 // Validate checks that the resource is correct with respect to the schema.
 func (gvs *genericVersionedSchema) Validate(r schema.Resource) error {
-	rv, err := rt.Compile("resource", r.Value)
+	name := r.Name
+	if name == "" {
+		name = "resource"
+	}
+	rv, err := rt.Compile(name, r.Value)
 	if err != nil {
 		return err
 	}

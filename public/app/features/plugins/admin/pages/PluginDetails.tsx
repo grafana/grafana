@@ -3,7 +3,6 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TabsBar, TabContent, Tab, Icon } from '@grafana/ui';
-import { useParams } from 'react-router-dom';
 
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
@@ -12,23 +11,20 @@ import { Page as PluginPage } from '../components/Page';
 import { Loader } from '../components/Loader';
 import { Page } from 'app/core/components/Page/Page';
 import { PluginLogo } from '../components/PluginLogo';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-export default function PluginDetails(): JSX.Element | null {
-  const { pluginId } = useParams<{ pluginId: string }>();
+type PluginDetailsProps = GrafanaRouteComponentProps<{ pluginId?: string }>;
+
+export default function PluginDetails({ match }: PluginDetailsProps): JSX.Element | null {
+  const { pluginId } = match.params;
 
   const [tabs, setTabs] = useState([
     { label: 'Overview', active: true },
     { label: 'Version history', active: false },
   ]);
 
-  const { isLoading, local, remote, remoteVersions } = usePlugin(pluginId);
+  const { isLoading, plugin } = usePlugin(pluginId!);
   const styles = useStyles2(getStyles);
-
-  const description = remote?.description ?? local?.info?.description;
-  const readme = remote?.readme;
-  const version = local?.info?.version || remote?.version;
-  const links = (local?.info?.links || remote?.json?.info?.links) ?? [];
-  const downloads = remote?.downloads;
 
   if (isLoading) {
     return (
@@ -38,67 +34,75 @@ export default function PluginDetails(): JSX.Element | null {
     );
   }
 
-  return (
-    <Page>
-      <PluginPage>
-        <div className={styles.headerContainer}>
-          <PluginLogo
-            plugin={remote ?? local}
-            className={css`
-              object-fit: cover;
-              width: 100%;
-              height: 68px;
-              max-width: 68px;
-            `}
-          />
+  if (plugin) {
+    return (
+      <Page>
+        <PluginPage>
+          <div className={styles.headerContainer}>
+            <PluginLogo
+              src={plugin.info.logos.small}
+              className={css`
+                object-fit: cover;
+                width: 100%;
+                height: 68px;
+                max-width: 68px;
+              `}
+            />
 
-          <div className={styles.headerWrapper}>
-            <h1>{remote?.name ?? local?.name}</h1>
-            <div className={styles.headerLinks}>
-              <a className={styles.headerOrgName} href={'/plugins'}>
-                {remote?.orgName ?? local?.info?.author?.name}
-              </a>
-              {links.map((link: any) => (
-                <a key={link.name} href={link.url}>
-                  {link.name}
+            <div className={styles.headerWrapper}>
+              <h1>{plugin.name}</h1>
+              <div className={styles.headerLinks}>
+                <a className={styles.headerOrgName} href={'/plugins'}>
+                  {plugin.orgName}
                 </a>
-              ))}
-              {downloads && (
-                <span>
-                  <Icon name="cloud-download" />
-                  {` ${new Intl.NumberFormat().format(downloads)}`}{' '}
-                </span>
-              )}
-              {version && <span>{version}</span>}
+                {plugin.links.map((link: any) => (
+                  <a key={link.name} href={link.url}>
+                    {link.name}
+                  </a>
+                ))}
+                {plugin.downloads > 0 && (
+                  <span>
+                    <Icon name="cloud-download" />
+                    {` ${new Intl.NumberFormat().format(plugin.downloads)}`}{' '}
+                  </span>
+                )}
+                {plugin.version && <span>{plugin.version}</span>}
+              </div>
+              <p>{plugin.description}</p>
+              <InstallControls plugin={plugin} />
             </div>
-            <p>{description}</p>
-            {remote && <InstallControls localPlugin={local} remotePlugin={remote} />}
           </div>
-        </div>
-        <TabsBar>
-          {tabs.map((tab, key) => (
-            <Tab
-              key={key}
-              label={tab.label}
-              active={tab.active}
-              onChangeTab={() => {
-                setTabs(tabs.map((tab, index) => ({ ...tab, active: index === key })));
-              }}
-            />
-          ))}
-        </TabsBar>
-        <TabContent>
-          {tabs.find((_) => _.label === 'Overview')?.active && (
-            <div
-              className={styles.readme}
-              dangerouslySetInnerHTML={{ __html: readme ?? 'No plugin help or readme markdown file was found' }}
-            />
-          )}
-          {tabs.find((_) => _.label === 'Version history')?.active && <VersionList versions={remoteVersions ?? []} />}
-        </TabContent>
-      </PluginPage>
-    </Page>
-  );
+          <TabsBar>
+            {tabs.map((tab, key) => (
+              <Tab
+                key={key}
+                label={tab.label}
+                active={tab.active}
+                onChangeTab={() => {
+                  setTabs(tabs.map((tab, index) => ({ ...tab, active: index === key })));
+                }}
+              />
+            ))}
+          </TabsBar>
+          <TabContent>
+            {tabs.find((_) => _.label === 'Overview')?.active && (
+              <div
+                className={styles.readme}
+                dangerouslySetInnerHTML={{
+                  __html: plugin?.readme ?? 'No plugin help or readme markdown file was found',
+                }}
+              />
+            )}
+            {tabs.find((_) => _.label === 'Version history')?.active && (
+              <VersionList versions={plugin?.versions ?? []} />
+            )}
+          </TabContent>
+        </PluginPage>
+      </Page>
+    );
+  }
+
+  return null;
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
@@ -134,9 +138,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     headerOrgName: css`
       font-size: ${theme.typography.h4.fontSize};
-    `,
-    message: css`
-      color: ${theme.colors.text.secondary};
     `,
     readme: css`
       padding: ${theme.spacing(3, 4)};

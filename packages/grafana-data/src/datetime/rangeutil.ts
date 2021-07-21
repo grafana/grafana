@@ -276,7 +276,7 @@ export function calculateInterval(range: TimeRange, resolution: number, lowLimit
   };
 }
 
-const interval_regex = /(\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
+const interval_regex = /(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
 // histogram & trends
 const intervals_in_seconds = {
   y: 31536000,
