@@ -20,6 +20,7 @@ export function Segment<T>({
   Component,
   className,
   allowCustomValue,
+  allowEmptyValue,
   placeholder,
   disabled,
   inputMinWidth,
@@ -65,6 +66,7 @@ export function Segment<T>({
       width={width}
       onClickOutside={() => setExpanded(false)}
       allowCustomValue={allowCustomValue}
+      allowEmptyValue={allowEmptyValue}
       onChange={(item) => {
         setExpanded(false);
         onChange(item);

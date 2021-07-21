@@ -24,6 +24,7 @@ export function SegmentAsync<T>({
   Component,
   className,
   allowCustomValue,
+  allowEmptyValue,
   disabled,
   placeholder,
   inputMinWidth,
@@ -72,6 +73,7 @@ export function SegmentAsync<T>({
       width={width}
       noOptionsMessage={noOptionMessageHandler(state)}
       allowCustomValue={allowCustomValue}
+      allowEmptyValue={allowEmptyValue}
       onClickOutside={() => {
         setExpanded(false);
       }}

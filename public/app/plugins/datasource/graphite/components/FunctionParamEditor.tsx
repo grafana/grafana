@@ -35,6 +35,7 @@ export function FunctionParamEditor({ editableParam, onChange, onExpandedChange,
         onExpandedChange={onExpandedChange}
         inputMinWidth={100}
         allowCustomValue={true}
+        allowEmptyValue={true}
       ></Segment>
     );
   } else {
