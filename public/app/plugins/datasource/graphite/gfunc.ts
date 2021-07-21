@@ -974,6 +974,13 @@ export class FuncInstance {
   params: any;
   text: any;
   added: boolean;
+  /**
+   * Hidden functions are not displayed in UI but available in text editor
+   * This is used for seriesByTagUsed function which when used switches
+   * the editor to tag-only mode. Defined tags are provided to seriesByTagUsed
+   * as parameters.
+   */
+  hidden?: boolean;
 
   constructor(funcDef: any, options?: { withDefaultParams: any }) {
     this.def = funcDef;

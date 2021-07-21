@@ -2,6 +2,7 @@ import { assign, clone, each, last, map, partial } from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { actions } from './state/actions';
 
 /** @ngInject */
 export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
@@ -28,15 +29,15 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
       let cancelBlur: any = null;
 
       ctrl.handleRemoveFunction = (func: any) => {
-        ctrl.removeFunction(func);
+        ctrl.dispatch(actions.removeFunction({ func }));
       };
 
       ctrl.handleMoveLeft = (func: any) => {
-        ctrl.moveFunction(func, -1);
+        ctrl.dispatch(actions.moveFunction({ func, offset: -1 }));
       };
 
       ctrl.handleMoveRight = (func: any) => {
-        ctrl.moveFunction(func, 1);
+        ctrl.dispatch(actions.moveFunction({ func, offset: 1 }));
       };
 
       function clickFuncParam(this: any, paramIndex: any) {
@@ -102,7 +103,10 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
         scheduledRelinkIfNeeded();
 
         $scope.$apply(() => {
-          ctrl.targetChanged();
+          // WIP: at the moment function params are mutated directly by func_editor
+          // after migrating to react it will be done by passing param value to
+          // updateFunctionParam action
+          ctrl.dispatch(actions.updateFunctionParam({ func }));
         });
 
         if ($link.hasClass('query-part__last') && newValue === '') {
