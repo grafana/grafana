@@ -86,7 +86,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     });
   };
 
-  onMappingChange = (mappings: AnnotationEventMappings) => {
+  onMappingChange = (mappings?: AnnotationEventMappings) => {
     this.props.onChange({
       ...this.props.annotation,
       mappings,

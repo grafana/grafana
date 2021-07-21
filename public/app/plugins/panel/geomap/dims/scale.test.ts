@@ -8,9 +8,9 @@ describe('scale dimensions', () => {
     });
     expect(out).toMatchInlineSnapshot(`
       Object {
-        "fixed": 2.5,
+        "fixed": 7.5,
         "max": 10,
-        "min": 2.5,
+        "min": 5,
       }
     `);
   });
@@ -29,7 +29,7 @@ describe('scale dimensions', () => {
     );
     expect(out).toMatchInlineSnapshot(`
       Object {
-        "fixed": 7,
+        "fixed": 10,
         "max": 7,
         "min": 5,
       }
