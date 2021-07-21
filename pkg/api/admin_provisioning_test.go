@@ -30,7 +30,7 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
-					Scope:  ScopeServicesDashboards,
+					Scope:  ScopeProvisionersDashboards,
 				},
 			},
 			url: "/api/admin/provisioning/dashboards/reload",
@@ -45,7 +45,7 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
-					Scope:  ScopeServicesAll,
+					Scope:  ScopeProvisionersAll,
 				},
 			},
 			url: "/api/admin/provisioning/dashboards/reload",
@@ -78,7 +78,7 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
-					Scope:  ScopeServicesNotifications,
+					Scope:  ScopeProvisionersNotifications,
 				},
 			},
 			url: "/api/admin/provisioning/notifications/reload",
@@ -99,7 +99,7 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
-					Scope:  ScopeServicesDatasources,
+					Scope:  ScopeProvisionersDatasources,
 				},
 			},
 			url: "/api/admin/provisioning/datasources/reload",
@@ -120,7 +120,7 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
-					Scope:  ScopeServicesPlugins,
+					Scope:  ScopeProvisionersPlugins,
 				},
 			},
 			url: "/api/admin/provisioning/plugins/reload",

@@ -11,11 +11,11 @@ const (
 
 // API related scopes
 const (
-	ScopeServicesAll           = "services:*"
-	ScopeServicesDashboards    = "services:dashboards"
-	ScopeServicesPlugins       = "services:plugins"
-	ScopeServicesDatasources   = "services:datasources"
-	ScopeServicesNotifications = "services:notifications"
+	ScopeProvisionersAll           = "provisioners:*"
+	ScopeProvisionersDashboards    = "provisioners:dashboards"
+	ScopeProvisionersPlugins       = "provisioners:plugins"
+	ScopeProvisionersDatasources   = "provisioners:datasources"
+	ScopeProvisionersNotifications = "provisioners:notifications"
 )
 
 // addFixedRoles registers fixed roles and their grants to organization roles
@@ -29,7 +29,7 @@ func (hs *HTTPServer) addFixedRoles() error {
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: ActionProvisioningReload,
-					Scope:  ScopeServicesAll,
+					Scope:  ScopeProvisionersAll,
 				},
 			},
 		},
