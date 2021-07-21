@@ -1,44 +1,42 @@
 import React, { useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { gt, satisfies } from 'semver';
+import { satisfies } from 'semver';
 
 import { config } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 
-import { LocalPlugin, Plugin } from '../types';
-import { api } from '../api';
-
-// This isn't exported in the sdk yet
-// @ts-ignore
 import appEvents from 'app/core/app_events';
+import { CatalogPluginDetails } from '../types';
+import { api } from '../api';
 import { isGrafanaAdmin } from '../helpers';
 
 interface Props {
-  localPlugin?: LocalPlugin;
-  remotePlugin: Plugin;
+  plugin: CatalogPluginDetails;
 }
 
-export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
+export const InstallControls = ({ plugin }: Props) => {
   const [loading, setLoading] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(Boolean(localPlugin));
-  const [shouldUpdate, setShouldUpdate] = useState(
-    remotePlugin?.version && localPlugin?.info.version && gt(remotePlugin?.version!, localPlugin?.info.version!)
-  );
+  const [isInstalled, setIsInstalled] = useState(plugin.isInstalled || false);
+  const [shouldUpdate, setShouldUpdate] = useState(plugin.hasUpdate || false);
   const [hasInstalledPanel, setHasInstalledPanel] = useState(false);
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
-  const externalManageLink = getExternalManageLink(remotePlugin);
+  const externalManageLink = getExternalManageLink(plugin);
 
   const styles = useStyles2(getStyles);
+
+  if (!plugin) {
+    return null;
+  }
 
   const onInstall = async () => {
     setLoading(true);
     try {
-      await api.installPlugin(remotePlugin.slug, remotePlugin.version);
-      appEvents.emit(AppEvents.alertSuccess, [`Installed ${remotePlugin?.name}`]);
+      await api.installPlugin(plugin.id, plugin.version);
+      appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
       setLoading(false);
       setIsInstalled(true);
-      setHasInstalledPanel(remotePlugin.typeCode === 'panel');
+      setHasInstalledPanel(plugin.type === 'panel');
     } catch (error) {
       setLoading(false);
     }
@@ -47,8 +45,8 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   const onUninstall = async () => {
     setLoading(true);
     try {
-      await api.uninstallPlugin(remotePlugin.slug);
-      appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${remotePlugin?.name}`]);
+      await api.uninstallPlugin(plugin.id);
+      appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${plugin.name}`]);
       setLoading(false);
       setIsInstalled(false);
     } catch (error) {
@@ -59,8 +57,8 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   const onUpdate = async () => {
     setLoading(true);
     try {
-      await api.installPlugin(remotePlugin.slug, remotePlugin.version);
-      appEvents.emit(AppEvents.alertSuccess, [`Updated ${remotePlugin?.name}`]);
+      await api.installPlugin(plugin.id, plugin.version);
+      appEvents.emit(AppEvents.alertSuccess, [`Updated ${plugin.name}`]);
       setLoading(false);
       setShouldUpdate(false);
     } catch (error) {
@@ -68,7 +66,7 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
     }
   };
 
-  const grafanaDependency = remotePlugin?.json?.dependencies?.grafanaDependency;
+  const grafanaDependency = plugin.grafanaDependency;
   const unsupportedGrafanaVersion = grafanaDependency
     ? !satisfies(config.buildInfo.version, grafanaDependency, {
         // needed for when running against master
@@ -76,9 +74,9 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
       })
     : false;
 
-  const isDevelopmentBuild = Boolean(localPlugin?.dev);
-  const isEnterprise = remotePlugin?.status === 'enterprise';
-  const isCore = remotePlugin?.internal || localPlugin?.signature === 'internal';
+  const isDevelopmentBuild = Boolean(plugin.isDev);
+  const isEnterprise = plugin.isEnterprise;
+  const isCore = plugin.isCore;
   const hasPermission = isGrafanaAdmin();
 
   if (isCore) {
@@ -161,8 +159,8 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   );
 };
 
-function getExternalManageLink(plugin: Plugin): string {
-  return `https://grafana.com/grafana/plugins/${plugin.slug}`;
+function getExternalManageLink(plugin: CatalogPluginDetails): string {
+  return `https://grafana.com/grafana/plugins/${plugin.id}`;
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
@@ -172,27 +170,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     messageMargin: css`
       margin-left: ${theme.spacing()};
-    `,
-    readme: css`
-      margin: ${theme.spacing(3)} 0;
-
-      & img {
-        max-width: 100%;
-      }
-
-      h1,
-      h2,
-      h3 {
-        margin-top: ${theme.spacing(3)};
-        margin-bottom: ${theme.spacing(2)};
-      }
-
-      li {
-        margin-left: ${theme.spacing(2)};
-        & > p {
-          margin: ${theme.spacing()} 0;
-        }
-      }
     `,
   };
 };
