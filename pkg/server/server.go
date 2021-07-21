@@ -74,7 +74,7 @@ func (r *globalServiceRegistry) GetServices() []*registry.Descriptor {
 }
 
 type roleRegistry interface {
-	// RegisterFixedRoles registers all declared roles
+	// RegisterFixedRoles registers all roles declared to AccessControl
 	RegisterFixedRoles() error
 }
 
