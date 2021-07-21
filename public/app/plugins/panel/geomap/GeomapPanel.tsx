@@ -58,7 +58,7 @@ export class GeomapPanel extends Component<Props> {
       this.map.updateSize();
     }
 
-    // External configuraiton changed
+    // External configuration changed
     let layersChanged = false;
     if (this.props.options !== nextProps.options) {
       layersChanged = this.optionsChanged(nextProps.options);
@@ -86,7 +86,7 @@ export class GeomapPanel extends Component<Props> {
     }
 
     if (options.controls !== oldOptions.controls) {
-      console.log('Crontrols changed');
+      console.log('Controls changed');
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
     }
 
