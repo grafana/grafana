@@ -13,15 +13,20 @@ export type FunctionEditorProps = {
   dispatch: (action: any) => void;
 };
 
+/**
+ * Allows editing function params and removing/moving a function (note: editing function name is not supported)
+ */
 export function GraphiteFunctionEditor({ func, dispatch }: FunctionEditorProps) {
   const styles = useStyles2(getStyles);
 
   // keep track of mouse over and isExpanded state to display buttons for adding optional/multiple params
+  // only when the user mouse over over the function editor OR any param editor is expanded.
   const [mouseOver, setIsMouseOver] = useState(false);
   const [expanded, setIsExpanded] = useState(false);
 
   let params = mapFuncInstanceToParams(func);
   params = params.filter((p: EditableParam, index: number) => {
+    // func.added is set for newly added functions - see autofocus below
     return (index < func.def.params.length && !p.optional) || func.added || p.value || expanded || mouseOver;
   });
 

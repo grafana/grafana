@@ -18,6 +18,9 @@ type FieldEditorProps = {
   autofocus: boolean;
 };
 
+/**
+ * Render a function parameter with a segment dropdown for multiple options or simple input.
+ */
 export function FunctionParamEditor({ editableParam, onChange, onExpandedChange, autofocus }: FieldEditorProps) {
   const styles = useStyles2(getStyles);
 

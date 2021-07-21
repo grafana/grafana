@@ -37,20 +37,22 @@ function createEditableParam(paramDef: ParamDef, value: string | number): Editab
 }
 
 /**
- * Create a list of params that can be edited in the function editor:
- * - required params (defined in func.def) are always displayed even when the value is not specified
+ * Create a list of params that can be edited in the function editor.
  */
 export function mapFuncInstanceToParams(func: FuncInstance): EditableParam[] {
+  // list of required parameters (from func.def)
   let params: EditableParam[] = func.def.params.map((paramDef: ParamDef, index: number) =>
     createEditableParam(paramDef, func.params[index])
   );
 
+  // list of additional (multiple or optional) params entered by the user
   while (params.length < func.params.length) {
     const paramDef = func.def.params[func.def.params.length - 1];
     const value = func.params[params.length];
     params.push(createEditableParam(paramDef, value));
   }
 
+  // extra "fake" param to allow adding more multiple values at the end
   if (params.length && params[params.length - 1].value && params[params.length - 1]?.multiple) {
     const paramDef = func.def.params[func.def.params.length - 1];
     params.push(createEditableParam(paramDef, ''));
