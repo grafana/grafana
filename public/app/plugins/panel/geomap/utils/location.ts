@@ -13,7 +13,6 @@ import {
 import { getBackendSrv } from '@grafana/runtime';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
-import { StringDecoder } from 'string_decoder';
 import { decodeGeohash } from './geohash';
 
 export type FieldFinder = (frame: DataFrame) => Field | undefined;

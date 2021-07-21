@@ -1,5 +1,4 @@
 import { toDataFrame, FieldType, FrameGeometrySourceMode } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
 import { toLonLat } from 'ol/proj';
 import {
   convertLocationJson,
@@ -73,6 +72,31 @@ describe('handle location parsing', () => {
           40.69999999999999,
         ],
       ]
+    `);
+  });
+
+  it('auto should find lookup fields', async () => {
+    const frame = toDataFrame({
+      name: 'simple',
+      fields: [
+        { name: 'name', type: FieldType.string, values: names },
+        { name: 'lookup', type: FieldType.number, values: lookup },
+      ],
+    });
+
+    const matchers = getLocationMatchers();
+    const info = await dataFrameToPoints(frame, matchers);
+    expect(info.points.map((p) => toLonLat(p.getCoordinates()))).toMatchInlineSnapshot(`
+        Array [
+          Array [
+            -95.712891,
+            37.09023999999998,
+          ],
+          Array [
+            17.873887,
+            -11.202691999999999,
+          ],
+        ]
     `);
   });
 
