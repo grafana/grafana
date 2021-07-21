@@ -83,7 +83,7 @@ func getDefaultAzureCredentials(cfg *setting.Cfg) azcredentials.AzureCredentials
 
 func getAzureEndpointResourceId(customOptions map[string]interface{}) (*url.URL, error) {
 	var value string
-	if untypedValue, ok := customOptions["_azureEndpointResourceId"]; !ok {
+	if untypedValue, ok := customOptions["azureEndpointResourceId"]; !ok {
 		err := fmt.Errorf("the field 'azureEndpointResourceId' should be set")
 		return nil, err
 	} else if value, ok = untypedValue.(string); !ok {
