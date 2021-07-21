@@ -31,6 +31,9 @@ Grafana 8.1 introduces the foundation for our new map panel. This new panel leve
 
 For more information, refer to [issue 36585](https://github.com/grafana/grafana/issues/36585). For documentation, refer to ...
 
+### Annotation panel
+
+This section is for the new panel...
 
 ### Transformations improvements
 
