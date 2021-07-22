@@ -190,7 +190,7 @@ export class GeomapPanel extends Component<Props> {
         handler,
       });
       if (handler.legend) {
-        legends.push(<div key={handler.legend.toString()}>{handler.legend}</div>);
+        legends.push(<div key={`${this.layers.length}/${overlay.type}`}>{handler.legend}</div>);
       }
     }
     this.overlayProps.bottomLeft = legends;

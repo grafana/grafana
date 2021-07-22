@@ -68,9 +68,8 @@ export interface MapLayerOptions<TConfig = any> {
  */
 export interface MapLayerHandler {
   init: () => BaseLayer;
-  // legend should be created on init
-  legend?: ReactNode;
   update?: (data: PanelData) => void;
+  legend?: ReactNode;
 }
 
 /**
@@ -98,7 +97,12 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2, showLegend?: boolean) => MapLayerHandler;
+  create: (
+    map: Map,
+    options: MapLayerOptions<TConfig>,
+    theme: GrafanaTheme2,
+    createLegend?: boolean
+  ) => MapLayerHandler;
 
   /**
    * Show custom elements in the panel edit UI

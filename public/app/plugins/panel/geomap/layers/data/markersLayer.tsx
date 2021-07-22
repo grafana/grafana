@@ -13,8 +13,10 @@ import { ScaleDimensionEditor } from '../../dims/editors/ScaleDimensionEditor';
 import { ColorDimensionEditor } from '../../dims/editors/ColorDimensionEditor';
 import { markerMakers } from '../../utils/regularShapes';
 import React from 'react';
-import { MapLegend } from '../../components/MapLegend';
+import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { ReplaySubject } from 'rxjs';
+import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
+import { ReactNode } from 'react';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -62,7 +64,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2, showLegend: boolean): MapLayerHandler => {
+  create: (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2, createLegend: boolean): MapLayerHandler => {
     const matchers = getLocationMatchers(options.location);
     const vectorLayer = new layer.Vector({});
     // Assert default values
@@ -76,8 +78,16 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       shape = markerMakers.get('circle');
     }
 
-    const dataCollection = new ReplaySubject(1);
-    const legend = showLegend && <MapLegend data={dataCollection}/>;
+    const legendProps= new ReplaySubject<MarkersLegendProps>(1);
+    let legend:ReactNode = null;
+    if (createLegend) {
+      legend = <ObservablePropsWrapper 
+        watch={legendProps}  
+        initialSubProps={{}}  
+        child={MarkersLegend}
+          />
+    }
+
     return {
       init: () => vectorLayer,
       legend: legend,
@@ -97,8 +107,14 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
 
         const features: Feature[] = [];
-        const fieldObj = {color: colorDim};
-        dataCollection.next(fieldObj);
+
+        // Post updates to the legend component
+        if (legend) {
+          legendProps.next({
+            color: colorDim,
+            size: sizeDim,
+          });
+        }
 
         // Map each data value into new points
         for (let i = 0; i < frame.length; i++) {
