@@ -86,6 +86,14 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         },
         defaultValue: BarValueVisibility.Auto,
       })
+      .addRadio({
+        path: 'stacking',
+        name: 'Stacking',
+        settings: {
+          options: graphFieldOptions.stacking,
+        },
+        defaultValue: StackingMode.None,
+      })
       .addSliderInput({
         path: 'groupWidth',
         name: 'Group width',

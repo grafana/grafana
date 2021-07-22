@@ -20,7 +20,7 @@ export interface BarChartProps
   extends BarChartOptions,
     Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme'> {}
 
-const propsToDiff: string[] = ['orientation', 'barWidth', 'groupWidth', 'showValue', 'text'];
+const propsToDiff: string[] = ['orientation', 'barWidth', 'groupWidth', 'stacking', 'showValue', 'text'];
 
 export const BarChart: React.FC<BarChartProps> = (props) => {
   const theme = useTheme2();
