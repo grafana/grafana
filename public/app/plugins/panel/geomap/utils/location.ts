@@ -10,6 +10,7 @@ import {
 } from '@grafana/data';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
+import { getGazetteer, Gazetteer } from '../gazetteer/lookup';
 import { decodeGeohash } from './geohash';
 
 export type FieldFinder = (frame: DataFrame) => Field | undefined;
@@ -50,6 +51,7 @@ export interface LocationFieldMatchers {
   h3: FieldFinder;
   wkt: FieldFinder;
   lookup: FieldFinder;
+  gazetteer?: Gazetteer;
 }
 
 const defaultMatchers: LocationFieldMatchers = {
@@ -77,6 +79,7 @@ export function getLocationMatchers(src?: FrameGeometrySource): LocationFieldMat
       if (src?.lookup) {
         info.lookup = getFieldFinder(getFieldMatcher({ id: FieldMatcherID.byName, options: src.lookup }));
       }
+      info.gazetteer = getGazetteer(src?.gazetteer);
       break;
     case FrameGeometrySourceMode.Coords:
       if (src?.latitude) {

@@ -53,6 +53,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
               { value: FrameGeometrySourceMode.Auto, label: 'Auto' },
               { value: FrameGeometrySourceMode.Coords, label: 'Coords' },
               { value: FrameGeometrySourceMode.Geohash, label: 'Geohash' },
+              { value: FrameGeometrySourceMode.Lookup, label: 'Lookup' },
             ],
           },
         })
@@ -84,6 +85,23 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
           showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Geohash,
           // eslint-disable-next-line react/display-name
           // info: (props) => <div>HELLO</div>,
+        })
+        .addFieldNamePicker({
+          path: 'location.lookup',
+          name: 'Lookup Field',
+          settings: {
+            filter: (f: Field) => f.type === FieldType.string,
+            noFieldsMessage: 'No strings fields found',
+          },
+          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
+        })
+        .addTextInput({
+          path: 'location.placenames',
+          name: 'Gazetteer',
+          settings: {
+            placeholder: 'url?',
+          },
+          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
         });
     }
     if (layer.registerOptionsUI) {

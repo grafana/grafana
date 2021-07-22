@@ -33,8 +33,8 @@ export interface FrameGeometrySource {
   wkt?: string;
   lookup?: string;
 
-  // Path to a mappings file
-  lookupSrc?: string;
+  // Path to Gazetteer
+  gazetteer?: string;
 }
 
 /**
