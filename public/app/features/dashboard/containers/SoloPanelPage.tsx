@@ -14,7 +14,7 @@ export interface DashboardPageRouteParams {
   slug?: string;
 }
 
-type Props = GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> &
+export type Props = GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> &
   ConnectedProps<typeof connector>;
 
 export interface State {

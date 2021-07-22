@@ -22,7 +22,7 @@ import {
 } from './state/selectors';
 import { setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/reducers';
 
-type Props = ConnectedProps<typeof connector>;
+export type Props = ConnectedProps<typeof connector>;
 
 const emptyListModel = {
   title: 'No data sources defined',
