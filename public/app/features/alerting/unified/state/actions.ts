@@ -582,8 +582,8 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
   'unifiedalerting/deleteAlertManagerConfig',
   async (alertManagerSourceName: string): Promise<void> => {
     return withAppEvents(withSerializedError(deleteAlertManagerConfig(alertManagerSourceName)), {
-      errorMessage: 'Failed to reset alert manager configuration',
-      successMessage: 'Alert manager configuration reset.',
+      errorMessage: 'Failed to reset Alertmanager configuration',
+      successMessage: 'Alertmanager configuration reset.',
     });
   }
 );

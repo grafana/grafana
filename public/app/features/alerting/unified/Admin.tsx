@@ -27,17 +27,17 @@ export default function Admin(): JSX.Element {
       {alertManagerSourceName && (
         <>
           <Button disabled={loading} variant="destructive" onClick={() => setShowConfirmDeleteAMConfig(true)}>
-            Reset alert manager configuration
+            Reset Alertmanager configuration
           </Button>
           {!!showConfirmDeleteAMConfig && (
             <ConfirmModal
               isOpen={true}
-              title="Reset alert manager configuration"
+              title="Reset Alertmanager configuration"
               body={`Are you sure you want to reset configuration ${
                 alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME
-                  ? 'for the Grafana alert manager'
+                  ? 'for the Grafana Alertmanager'
                   : `for "${alertManagerSourceName}"`
-              }?`}
+              }? Contact points and notification policies will be reset to their defaults.`}
               confirmText="Yes, reset configuration"
               onConfirm={resetConfig}
               onDismiss={() => setShowConfirmDeleteAMConfig(false)}

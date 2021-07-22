@@ -55,7 +55,7 @@ const dataSources = {
 
 const ui = {
   confirmButton: byRole('button', { name: /Confirm Modal Danger Button/ }),
-  resetButton: byRole('button', { name: /Reset alert manager configuration/ }),
+  resetButton: byRole('button', { name: /Reset Alertmanager configuration/ }),
 };
 
 describe('Alerting Admin', () => {
@@ -67,7 +67,7 @@ describe('Alerting Admin', () => {
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
   });
 
-  it('Reset alert manager config', async () => {
+  it('Reset alertmanager config', async () => {
     mocks.api.fetchConfig.mockResolvedValue({
       template_files: {
         foo: 'bar',
