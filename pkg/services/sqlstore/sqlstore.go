@@ -132,11 +132,13 @@ func (ss *SQLStore) Sync() error {
 // Reset resets database state.
 // If default org and user creation is enabled, it will be ensured they exist in the database.
 func (ss *SQLStore) Reset() error {
-	if ss.skipEnsureDefaultOrgAndUser {
-		return nil
+	if !ss.skipEnsureDefaultOrgAndUser {
+		if err := ss.ensureMainOrgAndAdminUser(); err != nil {
+			return err
+		}
 	}
 
-	return ss.ensureMainOrgAndAdminUser()
+	return ss.ensureDashboardACLDefaults()
 }
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
@@ -179,6 +181,60 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 		}
 
 		ss.log.Info("Created default organization")
+		return nil
+	})
+
+	return err
+}
+
+func (ss *SQLStore) ensureDashboardACLDefaults() error {
+	ctx := context.Background()
+
+	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+		ss.log.Debug("Ensuring default dashboard ACL records exist")
+
+		result := struct {
+			Count int64
+		}{}
+
+		rawSQL := `SELECT COUNT(id) AS count
+FROM dashboard_acl
+WHERE
+	org_id = -1 AND
+	dashboard_id = -1 AND
+	permission IN (1,2) AND
+	role IN ('Viewer', 'Editor')`
+		if _, err := sess.SQL(rawSQL).Get(&result); err != nil {
+			return fmt.Errorf("could not determine existence of default dashboard_acl entries: %w", err)
+		}
+
+		if result.Count > 0 {
+			return nil
+		}
+
+		ss.log.Debug("Creating default dashboard_acl records")
+
+		rtEditor := models.ROLE_EDITOR
+		rtViewer := models.ROLE_VIEWER
+
+		if _, err := sess.Exec(`INSERT INTO dashboard_acl (
+	org_id,
+	dashboard_id,
+	permission,
+	role,
+	created,
+	updated
+)
+VALUES
+(?,?,?,?,?,?),
+(?,?,?,?,?,?)`,
+			-1, -1, models.PERMISSION_VIEW, rtViewer, time.Now(), time.Now(),
+			-1, -1, models.PERMISSION_EDIT, rtEditor, time.Now(), time.Now(),
+		); err != nil {
+			return fmt.Errorf("failed to create default dashboard_acl records: %w", err)
+		}
+
+		ss.log.Info("Created default dashboard_acl records")
 		return nil
 	})
 
