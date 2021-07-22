@@ -116,11 +116,7 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         path: 'stacking',
         name: 'Stacking',
         settings: {
-          options: [
-            { value: StackingMode.None, label: 'None' },
-            { value: StackingMode.Normal, label: 'Normal' },
-            { value: StackingMode.Percent, label: '100%' }, // can comment out if not ready yet
-          ],
+          options: graphFieldOptions.stacking,
         },
         defaultValue: StackingMode.None,
       });

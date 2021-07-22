@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { PanelProps, TimeRange, VizOrientation } from '@grafana/data';
-import { TooltipPlugin } from '@grafana/ui';
+import { StackingMode, TooltipDisplayMode, TooltipPlugin } from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
 import { prepareGraphableFrames } from './utils';
@@ -23,6 +23,14 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     return options.orientation;
   }, [width, height, options.orientation]);
 
+  // Force 'multi' tooltip setting or stacking mode
+  const tooltip = useMemo(() => {
+    if (options.stacking === StackingMode.Normal || options.stacking === StackingMode.Percent) {
+      return { ...options.tooltip, mode: TooltipDisplayMode.Multi };
+    }
+    return options.tooltip;
+  }, [options.tooltip, options.stacking]);
+
   if (!frames || warn) {
     return (
       <div className="panel-empty">
@@ -41,6 +49,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       height={height}
       {...options}
       orientation={orientation}
+      tooltip={tooltip}
     >
       {(config, alignedFrame) => {
         return <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />;
