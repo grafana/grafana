@@ -24,8 +24,8 @@ export class PanelCtrl {
   $injector: auto.IInjectorService;
   $timeout: any;
   editModeInitiated = false;
-  height: number;
-  width: number;
+  declare height: number;
+  declare width: number;
   containerHeight: any;
   events: EventBusExtended;
   loading = false;

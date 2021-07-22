@@ -4,8 +4,8 @@ export class AzureMonitorAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
   datasource: any;
   annotation: any;
-  workspaces: any[];
-  subscriptions: Array<{ text: string; value: string }>;
+  declare workspaces: any[];
+  declare subscriptions: Array<{ text: string; value: string }>;
 
   defaultQuery =
     '<your table>\n| where $__timeFilter() \n| project TimeGenerated, Text=YourTitleColumn, Tags="tag1,tag2"';

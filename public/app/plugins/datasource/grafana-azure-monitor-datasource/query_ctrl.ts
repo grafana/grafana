@@ -132,7 +132,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   showLastQuery = false;
   lastQuery = '';
   lastQueryError?: string;
-  subscriptions: Array<{ text: string; value: string }>;
+  subscriptions: Array<{ text: string; value: string }> = [];
 
   /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService, private templateSrv: TemplateSrv) {

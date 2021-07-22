@@ -34,7 +34,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 > {
   resourcePath: string;
   azurePortalUrl: string;
-  applicationId: string;
+  declare applicationId: string;
 
   defaultSubscriptionId?: string;
 

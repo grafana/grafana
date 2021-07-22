@@ -30,8 +30,8 @@ type TypeaheadContext = {
 };
 
 export class CloudWatchLanguageProvider extends LanguageProvider {
-  started: boolean;
-  initialRange: AbsoluteTimeRange;
+  started = false;
+  declare initialRange: AbsoluteTimeRange;
   datasource: CloudWatchDatasource;
 
   constructor(datasource: CloudWatchDatasource, initialValues?: any) {

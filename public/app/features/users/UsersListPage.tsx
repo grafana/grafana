@@ -37,7 +37,7 @@ export interface State {
 const pageLimit = 30;
 
 export class UsersListPage extends PureComponent<Props, State> {
-  externalUserMngInfoHtml: string;
+  declare externalUserMngInfoHtml: string;
 
   constructor(props: Props) {
     super(props);

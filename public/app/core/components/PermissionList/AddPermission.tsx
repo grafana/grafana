@@ -5,7 +5,7 @@ import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TeamPicker } from 'app/core/components/Select/TeamPicker';
 import { Button, Form, HorizontalGroup, Select, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Team, User } from 'app/types';
+import { OrgUser, Team } from 'app/types';
 import {
   dashboardPermissionLevels,
   dashboardAclTargets,
@@ -58,7 +58,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     }
   };
 
-  onUserSelected = (user: User) => {
+  onUserSelected = (user: SelectableValue<OrgUser['userId']>) => {
     this.setState({ userId: user && !Array.isArray(user) ? user.id : 0 });
   };
 

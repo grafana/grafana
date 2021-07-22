@@ -89,7 +89,7 @@ interface PromQueryFieldState {
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
   plugins: Plugin[];
-  languageProviderInitializationPromise: CancelablePromise<any>;
+  declare languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: PromQueryFieldProps, context: React.Context<any>) {
     super(props, context);
