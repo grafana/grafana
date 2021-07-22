@@ -34,6 +34,10 @@ func New(cfg *setting.Cfg) httpclient.Provider {
 
 	setDefaultTimeoutOptions(cfg)
 
+	if cfg.FeatureToggles["httpclientprovider_azure_auth"] {
+		middlewares = append(middlewares, AzureMiddleware(cfg))
+	}
+
 	return newProviderFunc(sdkhttpclient.ProviderOptions{
 		Middlewares: middlewares,
 		ConfigureTransport: func(opts sdkhttpclient.Options, transport *http.Transport) {
