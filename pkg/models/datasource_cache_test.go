@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -391,6 +392,109 @@ func TestDataSource_DecryptedValue(t *testing.T) {
 		password, ok = ds.DecryptedValue("password")
 		require.True(t, ok)
 		require.Empty(t, password)
+	})
+}
+
+func TestDataSource_HTTPClientOptions(t *testing.T) {
+	emptyJsonData := simplejson.New()
+	emptySecureJsonData := map[string][]byte{}
+
+	ds := DataSource{
+		Id:   1,
+		Url:  "https://api.example.com",
+		Type: "prometheus",
+	}
+
+	t.Run("Azure authentication", func(t *testing.T) {
+		t.Run("should be disabled if not enabled in JsonData", func(t *testing.T) {
+			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
+
+			opts, err := ds.HTTPClientOptions()
+			require.NoError(t, err)
+
+			assert.NotEqual(t, true, opts.CustomOptions["_azureAuth"])
+			assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
+		})
+
+		t.Run("should be enabled if enabled in JsonData without credentials configured", func(t *testing.T) {
+			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
+
+			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
+				"azureAuth": true,
+			})
+
+			opts, err := ds.HTTPClientOptions()
+			require.NoError(t, err)
+
+			assert.Equal(t, true, opts.CustomOptions["_azureAuth"])
+			assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
+		})
+
+		t.Run("should be enabled if enabled in JsonData with credentials configured", func(t *testing.T) {
+			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
+
+			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
+				"azureAuth": true,
+				"azureCredentials": map[string]interface{}{
+					"authType": "msi",
+				},
+			})
+
+			opts, err := ds.HTTPClientOptions()
+			require.NoError(t, err)
+
+			assert.Equal(t, true, opts.CustomOptions["_azureAuth"])
+
+			require.Contains(t, opts.CustomOptions, "_azureCredentials")
+			credentials := opts.CustomOptions["_azureCredentials"]
+
+			assert.IsType(t, &azcredentials.AzureManagedIdentityCredentials{}, credentials)
+		})
+
+		t.Run("should be disabled if disabled in JsonData even with credentials configured", func(t *testing.T) {
+			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
+
+			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
+				"azureAuth": false,
+				"azureCredentials": map[string]interface{}{
+					"authType": "msi",
+				},
+			})
+
+			opts, err := ds.HTTPClientOptions()
+			require.NoError(t, err)
+
+			assert.NotEqual(t, true, opts.CustomOptions["_azureAuth"])
+			assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
+		})
+
+		t.Run("should fail if credentials are invalid", func(t *testing.T) {
+			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
+
+			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
+				"azureAuth":        true,
+				"azureCredentials": "invalid",
+			})
+
+			_, err := ds.HTTPClientOptions()
+			assert.Error(t, err)
+		})
+
+		t.Run("should pass resourceId from JsonData", func(t *testing.T) {
+			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
+
+			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
+				"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
+			})
+
+			opts, err := ds.HTTPClientOptions()
+			require.NoError(t, err)
+
+			require.Contains(t, opts.CustomOptions, "azureEndpointResourceId")
+			azureEndpointResourceId := opts.CustomOptions["azureEndpointResourceId"]
+
+			assert.Equal(t, "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5", azureEndpointResourceId)
+		})
 	})
 }
 
