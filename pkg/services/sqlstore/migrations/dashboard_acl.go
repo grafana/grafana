@@ -51,8 +51,20 @@ INSERT INTO dashboard_acl
 		"DELETE FROM dashboard_acl WHERE dashboard_id NOT IN (SELECT id FROM dashboard) AND dashboard_id != -1"))
 }
 
-// we now create these default rules as part of the sqlstore initialisation
-func removeDefaultDashboardACLRecords(mg *Migrator) {
-	const rawSQL = `DELETE FROM dashboard_acl WHERE org_id=-1 AND dashboard_id=-1 AND permission IN (1,2) AND role IN ('Viewer','Editor') AND created='2017-06-20' AND updated='2017-06-20'`
+// We now create these default rules as part of the sqlstore initialisation
+func addCleanupDashboardACLRulesMigration(mg *Migrator) {
+	// This query is really specific (including created/updated) because we only
+	// want to delete rules that were created by the "save default acl rules in
+	// dashboard_acl table" migration
+	const rawSQL = `
+		DELETE FROM dashboard_acl
+			WHERE org_id=-1 AND
+			dashboard_id=-1 AND
+			user_id is NULL AND
+			team_id is NULL AND
+			permission IN (1,2)	AND
+			role IN ('Viewer','Editor') AND
+			created='2017-06-20' AND
+			updated='2017-06-20'`
 	mg.AddMigration("remove default acl rules from dashboard_acl table", NewRawSQLMigration(rawSQL))
 }

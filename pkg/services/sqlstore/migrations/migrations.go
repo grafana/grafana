@@ -41,7 +41,7 @@ func AddMigrations(mg *Migrator) {
 	ualert.AddTablesMigrations(mg)
 	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
-	removeDefaultDashboardACLRecords(mg)
+	addCleanupDashboardACLRulesMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

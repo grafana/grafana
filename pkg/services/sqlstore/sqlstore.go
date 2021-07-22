@@ -191,7 +191,7 @@ func (ss *SQLStore) ensureDashboardACLDefaults() error {
 	ctx := context.Background()
 
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		ss.log.Debug("Ensuring default dashboard ACL records exist")
+		ss.log.Debug("Ensuring default dashboard ACL rules exist")
 
 		result := struct {
 			Count int64
@@ -202,17 +202,19 @@ func (ss *SQLStore) ensureDashboardACLDefaults() error {
 			WHERE
 				org_id = -1 AND
 				dashboard_id = -1 AND
+				user_id is NULL AND
+				team_id is NULL AND
 				permission IN (1,2) AND
 				role IN ('Viewer', 'Editor')`
 		if _, err := sess.SQL(rawSQL).Get(&result); err != nil {
-			return fmt.Errorf("could not determine existence of default dashboard_acl entries: %w", err)
+			return fmt.Errorf("could not determine existence of default dashboard_acl rules: %w", err)
 		}
 
 		if result.Count > 0 {
 			return nil
 		}
 
-		ss.log.Debug("Creating default dashboard_acl records")
+		ss.log.Debug("Creating default dashboard_acl rules")
 
 		if _, err := sess.Exec(`INSERT INTO dashboard_acl 
 			(
@@ -229,10 +231,10 @@ func (ss *SQLStore) ensureDashboardACLDefaults() error {
 			-1, -1, models.PERMISSION_VIEW, models.ROLE_VIEWER, time.Now(), time.Now(),
 			-1, -1, models.PERMISSION_EDIT, models.ROLE_EDITOR, time.Now(), time.Now(),
 		); err != nil {
-			return fmt.Errorf("failed to create default dashboard_acl records: %w", err)
+			return fmt.Errorf("failed to create default dashboard_acl rules: %w", err)
 		}
 
-		ss.log.Info("Created default dashboard_acl records")
+		ss.log.Info("Created default dashboard_acl rules")
 		return nil
 	})
 
