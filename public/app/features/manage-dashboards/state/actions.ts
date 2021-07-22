@@ -213,7 +213,7 @@ export function saveDashboard(options: SaveDashboardOptions) {
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
   return getBackendSrv().request({
     method: 'DELETE',
-    url: `/api/folders/${uid}`,
+    url: `/api/folders/${uid}?forceDeleteRules=true`,
     showSuccessAlert: showSuccessAlert === true,
   });
 }
