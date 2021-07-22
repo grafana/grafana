@@ -1,4 +1,4 @@
-import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, GrafanaTheme2, FrameGeometrySourceMode } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, FrameGeometrySourceMode } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
@@ -11,12 +11,12 @@ import { getScaledDimension, } from '../../dims/scale';
 import { getColorDimension, } from '../../dims/color';
 import { ScaleDimensionEditor } from '../../dims/editors/ScaleDimensionEditor';
 import { ColorDimensionEditor } from '../../dims/editors/ColorDimensionEditor';
-import { markerMakers } from '../../utils/regularShapes';
 import React from 'react';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { ReplaySubject } from 'rxjs';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { ReactNode } from 'react';
+import { circleMarker, markerMakers } from '../../utils/regularShapes';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -64,19 +64,14 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2, createLegend: boolean): MapLayerHandler => {
-    const matchers = getLocationMatchers(options.location);
+  create: async (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2, createLegend?:boolean) => {
+    const matchers = await getLocationMatchers(options.location);
     const vectorLayer = new layer.Vector({});
     // Assert default values
     const config = {
       ...defaultOptions,
       ...options?.config,
     };
-
-    let shape = markerMakers.getIfExists(config.shape);
-    if (!shape) {
-      shape = markerMakers.get('circle');
-    }
 
     const legendProps= new ReplaySubject<MarkersLegendProps>(1);
     let legend:ReactNode = null;
@@ -87,6 +82,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         child={MarkersLegend}
           />
     }
+    const shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
 
     return {
       init: () => vectorLayer,
@@ -95,44 +91,47 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         if(!data.series?.length) {
           return; // ignore empty
         }
-        const frame = data.series[0];
-        const info = dataFrameToPoints(frame, matchers);
-        if(info.warning) {
-          console.log( 'WARN', info.warning);
-          return; // ???
-        }
-
-        const colorDim = getColorDimension(frame, config.color, theme);
-        const sizeDim = getScaledDimension(frame, config.size);
-        const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
 
         const features: Feature[] = [];
 
-        // Post updates to the legend component
-        if (legend) {
-          legendProps.next({
-            color: colorDim,
-            size: sizeDim,
-          });
+        for(const frame of data.series) {
+          const info = dataFrameToPoints(frame, matchers);
+          if(info.warning) {
+            console.log( 'Could not find locations', info.warning);
+            continue; // ???
+          }
+
+          const colorDim = getColorDimension(frame, config.color, theme);
+          const sizeDim = getScaledDimension(frame, config.size);
+          const opacity = options.config?.fillOpacity ?? defaultOptions.fillOpacity;
+
+          // Map each data value into new points
+          for (let i = 0; i < frame.length; i++) {
+            // Get the circle color for a specific data value depending on color scheme
+            const color = colorDim.get(i);
+            // Set the opacity determined from user configuration
+            const fillColor = tinycolor(color).setAlpha(opacity).toRgbString();
+            // Get circle size from user configuration
+            const radius = sizeDim.get(i);
+
+            // Create a new Feature for each point returned from dataFrameToPoints
+            const dot = new Feature({
+                geometry: info.points[i],
+            });
+
+            dot.setStyle(shape!.make(color, fillColor, radius));
+            features.push(dot);
+          };
+
+          // Post updates to the legend component
+          if (legend) {
+            legendProps.next({
+              color: colorDim,
+              size: sizeDim,
+            });
+          }
+          break; // Only the first frame for now!
         }
-
-        // Map each data value into new points
-        for (let i = 0; i < frame.length; i++) {
-          // Get the circle color for a specific data value depending on color scheme
-          const color = colorDim.get(i);
-          // Set the opacity determined from user configuration
-          const fillColor = tinycolor(color).setAlpha(opacity).toRgbString();
-          // Get circle size from user configuration
-          const radius = sizeDim.get(i);
-
-          // Create a new Feature for each point returned from dataFrameToPoints
-          const dot = new Feature({
-              geometry: info.points[i],
-          });
-
-          dot.setStyle(shape!.make(color, fillColor, radius));
-          features.push(dot);
-        };
 
         // Source reads the data and provides a set of features to visualize
         const vectorSource = new source.Vector({ features });

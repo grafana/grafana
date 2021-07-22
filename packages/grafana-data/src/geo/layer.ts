@@ -33,8 +33,8 @@ export interface FrameGeometrySource {
   wkt?: string;
   lookup?: string;
 
-  // Path to a mappings file
-  lookupSrc?: string;
+  // Path to Gazetteer
+  gazetteer?: string;
 }
 
 /**
@@ -102,7 +102,7 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
     options: MapLayerOptions<TConfig>,
     theme: GrafanaTheme2,
     createLegend?: boolean
-  ) => MapLayerHandler;
+  ) => Promise<MapLayerHandler>;
 
   /**
    * Show custom elements in the panel edit UI
