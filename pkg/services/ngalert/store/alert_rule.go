@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -46,8 +47,8 @@ type RuleStore interface {
 	GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error
 	GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error
+	GetNamespaces(int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(string, int64, *models.SignedInUser, bool) (*models.Folder, error)
-	GetNamespaceByUID(string, int64, *models.SignedInUser) (*models.Folder, error)
 	GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules([]UpsertRule) error
 	UpdateRuleGroup(UpdateRuleGroupCmd) error
@@ -320,7 +321,18 @@ func (st DBstore) GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertRules := make([]*ngmodels.AlertRule, 0)
 		q := "SELECT * FROM alert_rule WHERE org_id = ?"
-		if err := sess.SQL(q, query.OrgID).Find(&alertRules); err != nil {
+		params := []interface{}{query.OrgID}
+
+		if len(query.NamespaceUIDs) > 0 {
+			placeholders := make([]string, 0, len(query.NamespaceUIDs))
+			for _, folderUID := range query.NamespaceUIDs {
+				params = append(params, folderUID)
+				placeholders = append(placeholders, "?")
+			}
+			q = fmt.Sprintf("%s AND namespace_uid IN (%s)", q, strings.Join(placeholders, ","))
+		}
+
+		if err := sess.SQL(q, params...).Find(&alertRules); err != nil {
 			return err
 		}
 
@@ -359,6 +371,30 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 	})
 }
 
+// GetNamespaces returns the folders that are visible to the user
+func (st DBstore) GetNamespaces(orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
+	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
+	namespaceMap := make(map[string]*models.Folder)
+	var page int64 = 1
+	for {
+		// if limit is negative; it fetches at most 1000
+		folders, err := s.GetFolders(-1, page)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(folders) == 0 {
+			break
+		}
+
+		for _, f := range folders {
+			namespaceMap[f.Uid] = f
+		}
+		page += 1
+	}
+	return namespaceMap, nil
+}
+
 // GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
 func (st DBstore) GetNamespaceByTitle(namespace string, orgID int64, user *models.SignedInUser, withCanSave bool) (*models.Folder, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
@@ -375,17 +411,6 @@ func (st DBstore) GetNamespaceByTitle(namespace string, orgID int64, user *model
 			}
 			return nil, ngmodels.ErrCannotEditNamespace
 		}
-	}
-
-	return folder, nil
-}
-
-// GetNamespaceByUID is a handler for retrieving namespace by its UID.
-func (st DBstore) GetNamespaceByUID(UID string, orgID int64, user *models.SignedInUser) (*models.Folder, error) {
-	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
-	folder, err := s.GetFolderByUID(UID)
-	if err != nil {
-		return nil, err
 	}
 
 	return folder, nil
@@ -542,8 +567,20 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 func (st DBstore) GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		var ruleGroups [][]string
-		q := "SELECT DISTINCT rule_group, namespace_uid, (select title from dashboard where org_id = alert_rule.org_id and uid = alert_rule.namespace_uid) AS namespace_title FROM alert_rule WHERE org_id = ? ORDER BY namespace_title"
-		if err := sess.SQL(q, query.OrgID).Find(&ruleGroups); err != nil {
+		q := "SELECT DISTINCT rule_group, namespace_uid, (select title from dashboard where org_id = alert_rule.org_id and uid = alert_rule.namespace_uid) AS namespace_title FROM alert_rule WHERE org_id = ?"
+		params := []interface{}{query.OrgID}
+
+		if len(query.NamespaceUIDs) > 0 {
+			placeholders := make([]string, 0, len(query.NamespaceUIDs))
+			for _, folderUID := range query.NamespaceUIDs {
+				params = append(params, folderUID)
+				placeholders = append(placeholders, "?")
+			}
+			q = fmt.Sprintf(" %s AND namespace_uid IN (%s)", q, strings.Join(placeholders, ","))
+		}
+		q = fmt.Sprintf(" %s ORDER BY namespace_title", q)
+
+		if err := sess.SQL(q, params...).Find(&ruleGroups); err != nil {
 			return err
 		}
 
