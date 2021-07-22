@@ -34,12 +34,14 @@ export const ConfigEditor = (props: Props) => {
         azureAuthSettings={azureAuthSettings}
       />
 
-      <AlertingSettings<PromOptions>
-        alertmanagerDataSources={alertmanagers}
-        sigV4AuthEnabled={config.sigV4AuthEnabled}
-        options={options}
-        onOptionsChange={onOptionsChange}
-      />
+      {config.featureToggles.ngalert && (
+        <AlertingSettings<PromOptions>
+          alertmanagerDataSources={alertmanagers}
+          sigV4AuthEnabled={config.sigV4AuthEnabled}
+          options={options}
+          onOptionsChange={onOptionsChange}
+        />
+      )}
 
       <PromSettings options={options} onOptionsChange={onOptionsChange} />
     </>

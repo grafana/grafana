@@ -5,6 +5,7 @@ import { LokiOptions } from '../types';
 import { MaxLinesField } from './MaxLinesField';
 import { DerivedFields } from './DerivedFields';
 import { getAllAlertmanagerDataSources } from 'app/features/alerting/unified/utils/alertmanager';
+import { config } from 'app/core/config';
 
 export type Props = DataSourcePluginOptionsEditorProps<LokiOptions>;
 
@@ -37,12 +38,14 @@ export const ConfigEditor = (props: Props) => {
         onChange={onOptionsChange}
       />
 
-      <AlertingSettings<LokiOptions>
-        alertmanagerDataSources={alertmanagers}
-        options={options}
-        onOptionsChange={onOptionsChange}
-        sigV4AuthEnabled={false}
-      />
+      {config.featureToggles.ngalert && (
+        <AlertingSettings<LokiOptions>
+          alertmanagerDataSources={alertmanagers}
+          options={options}
+          onOptionsChange={onOptionsChange}
+          sigV4AuthEnabled={false}
+        />
+      )}
 
       <div className="gf-form-group">
         <div className="gf-form-inline">
