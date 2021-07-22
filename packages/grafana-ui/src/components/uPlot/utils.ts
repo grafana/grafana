@@ -62,10 +62,25 @@ export function preparePlotData(frame: DataFrame): AlignedData {
     seriesIndex++;
   }
 
+  const byPct = frame.fields[1].config.custom?.stacking?.mode === StackingMode.Percent;
+
   // Stacking
   if (stackingGroups.size !== 0) {
+    const totals = byPct ? Array(result[0].length).fill(0) : null;
+
     // array or stacking groups
     for (const [_, seriesIdxs] of stackingGroups.entries()) {
+      if (byPct) {
+        for (let j = 0; j < seriesIdxs.length; j++) {
+          const currentlyStacking = result[seriesIdxs[j]];
+
+          for (let k = 0; k < result[0].length; k++) {
+            const v = currentlyStacking[k];
+            totals![k] += v == null ? 0 : +v;
+          }
+        }
+      }
+
       const acc = Array(result[0].length).fill(0);
 
       for (let j = 0; j < seriesIdxs.length; j++) {
@@ -73,7 +88,7 @@ export function preparePlotData(frame: DataFrame): AlignedData {
 
         for (let k = 0; k < result[0].length; k++) {
           const v = currentlyStacking[k];
-          acc[k] += v == null ? 0 : +v;
+          acc[k] += v == null ? 0 : v / (byPct ? totals![k] : 1);
         }
 
         result[seriesIdxs[j]] = acc.slice();
