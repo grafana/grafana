@@ -111,6 +111,18 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           max: 1,
           step: 0.01,
         },
+      })
+      .addRadio({
+        path: 'stacking',
+        name: 'Stacking',
+        settings: {
+          options: [
+            { value: StackingMode.None, label: 'None' },
+            { value: StackingMode.Normal, label: 'Normal' },
+            { value: StackingMode.Percent, label: '100%' },
+          ],
+        },
+        defaultValue: StackingMode.None,
       });
 
     commonOptionsBuilder.addTooltipOptions(builder);
