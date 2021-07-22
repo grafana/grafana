@@ -1,13 +1,58 @@
 [
-  { "keys": ["AD", "AND"], "latitude": 42.546245, "longitude": 1.601554, "name": "Andorra" },
-  { "keys": ["AE", "ARE"], "latitude": 23.424076, "longitude": 53.847818, "name": "United Arab Emirates" },
-  { "keys": ["AF", "AFG"], "latitude": 33.93911, "longitude": 67.709953, "name": "Afghanistan" },
-  { "keys": ["AG", "ATG"], "latitude": 17.060816, "longitude": -61.796428, "name": "Antigua and Barbuda" },
-  { "keys": ["AI", "AIA"], "latitude": 18.220554, "longitude": -63.068615, "name": "Anguilla" },
-  { "keys": ["AL", "ALB"], "latitude": 41.153332, "longitude": 20.168331, "name": "Albania" },
-  { "keys": ["AM", "ARM"], "latitude": 40.069099, "longitude": 45.038189, "name": "Armenia" },
-  { "keys": ["AN", "ANT"], "latitude": 12.226079, "longitude": -69.060087, "name": "Netherlands Antilles" },
-  { "keys": ["AO", "AGO"], "latitude": -11.202692, "longitude": 17.873887, "name": "Angola" },
+  {
+    "keys": ["AD", "AND"],
+    "latitude": 42.546245,
+    "longitude": 1.601554,
+    "name": "Andorra"
+  },
+  {
+    "keys": ["AE", "ARE"],
+    "latitude": 23.424076,
+    "longitude": 53.847818,
+    "name": "United Arab Emirates"
+  },
+  {
+    "keys": ["AF", "AFG"],
+    "latitude": 33.93911,
+    "longitude": 67.709953,
+    "name": "Afghanistan"
+  },
+  {
+    "keys": ["AG", "ATG"],
+    "latitude": 17.060816,
+    "longitude": -61.796428,
+    "name": "Antigua and Barbuda"
+  },
+  {
+    "keys": ["AI", "AIA"],
+    "latitude": 18.220554,
+    "longitude": -63.068615,
+    "name": "Anguilla"
+  },
+  {
+    "keys": ["AL", "ALB"],
+    "latitude": 41.153332,
+    "longitude": 20.168331,
+    "name": "Albania"
+  },
+  {
+    "keys": ["AM", "ARM"],
+    "latitude": 40.069099,
+    "longitude": 45.038189,
+    "name": "Armenia"
+  },
+  {
+    "keys": ["AN", "ANT"],
+    "latitude": 12.226079,
+    "longitude": -69.060087,
+    "name": "Netherlands Antilles"
+  },
+  {
+    "keys": ["AO", "AGO"],
+    "latitude": -11.202692,
+    "longitude": 17.873887,
+    "name": "Angola"
+  },
   { "keys": ["AQ", "ATA"], "latitude": -75.250973, "longitude": -0.071389, "name": "Antarctica" },
   { "keys": ["AR", "ARG"], "latitude": -38.416097, "longitude": -63.616672, "name": "Argentina" },
   { "keys": ["AS", "ASM"], "latitude": -14.270972, "longitude": -170.132217, "name": "American Samoa" },
@@ -284,5 +329,10 @@
   { "keys": ["YT", "MYT"], "latitude": -12.8275, "longitude": 45.166244, "name": "Mayotte" },
   { "keys": ["ZA", "ZAF"], "latitude": -30.559482, "longitude": 22.937506, "name": "South Africa" },
   { "keys": ["ZM", "ZMB"], "latitude": -13.133897, "longitude": 27.849332, "name": "Zambia" },
-  { "keys": ["ZW", "ZWE"], "latitude": -19.015438, "longitude": 29.154857, "name": "Zimbabwe" }
+  {
+    "keys": ["ZW", "ZWE"],
+    "latitude": -19.015438,
+    "longitude": 29.154857,
+    "name": "Zimbabwe"
+  }
 ]
