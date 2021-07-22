@@ -64,7 +64,7 @@
         "properties": {
           "uid": {
             "type": "string",
-            "description": "Unique identifier of the included resouce"
+            "description": "Unique identifier of the included resource"
           },
           "type": {
             "type": "string",
