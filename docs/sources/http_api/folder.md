@@ -237,7 +237,9 @@ Content-Length: 97
 
 `DELETE /api/folders/:uid`
 
-Deletes an existing folder identified by uid together with all dashboards stored in the folder, if any. This operation cannot be reverted.
+Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.
+
+If [Grafana 8 Alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}) are enabled, you can set an optional query parameter `forceDeleteRules=false` so that requests will fail with 400 (Bad Request) error if the folder contains any Grafana 8 Alerts. However, if this parameter is set to `true` then it will delete any Grafana 8 Alerts under this folder.
 
 **Example Request**:
 
@@ -265,6 +267,7 @@ Status Codes:
 
 - **200** – Deleted
 - **401** – Unauthorized
+- **400** – Bad Request
 - **403** – Access Denied
 - **404** – Folder not found
 
