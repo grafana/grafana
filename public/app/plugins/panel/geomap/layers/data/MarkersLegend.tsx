@@ -3,7 +3,6 @@ import { stylesFactory } from '@grafana/ui';
 import { formattedValueToString, getFieldColorModeForField, GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
-import tinycolor from 'tinycolor2';
 import { DimensionSupplier } from '../../dims/types';
 
 export interface MarkersLegendProps {
