@@ -13,6 +13,7 @@ export interface Gazetteer {
   path: string;
   error?: string;
   find: (key: string) => PlacenameInfo | undefined;
+  count?: number;
   examples: (count: number) => string[];
 }
 
@@ -21,16 +22,14 @@ export function loadGazetteer(path: string, data: any): Gazetteer {
   // Check for legacy worldmap syntax
   if (Array.isArray(data)) {
     const first = data[0] as any;
-    if (first.key && first.latitude) {
+    if (first.latitude && first.longitude && (first.key || first.keys)) {
       return loadWorldmapPoints(path, data);
     }
   }
 
-  // TODO: geojson? csv?
-
   return {
     path,
-    error: 'Invalid lookup data',
+    error: 'Unable to parse locations',
     find: (k) => undefined,
     examples: (v) => [],
   };
@@ -38,13 +37,15 @@ export function loadGazetteer(path: string, data: any): Gazetteer {
 
 const registry: KeyValue<Gazetteer> = {};
 
+export const COUNTRIES_GAZETTEER_PATH = 'public/gazetteer/countries.json';
+
 /**
  * Given a path to a file return a cached lookup function
  */
 export async function getGazetteer(path?: string): Promise<Gazetteer> {
   // When not specified, use the default path
   if (!path) {
-    path = 'public/gazetteer/countries.json';
+    path = COUNTRIES_GAZETTEER_PATH;
   }
 
   let lookup = registry[path];

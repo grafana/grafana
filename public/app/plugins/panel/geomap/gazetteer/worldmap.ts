@@ -10,6 +10,7 @@ export interface WorldmapPoint {
 }
 
 export function loadWorldmapPoints(path: string, data: WorldmapPoint[]): Gazetteer {
+  let count = 0;
   const values = new Map<string, PlacenameInfo>();
   for (const v of data) {
     const info: PlacenameInfo = {
@@ -30,6 +31,7 @@ export function loadWorldmapPoints(path: string, data: WorldmapPoint[]): Gazette
         values.set(key.toUpperCase(), info);
       }
     }
+    count++;
   }
   return {
     path,
@@ -40,6 +42,7 @@ export function loadWorldmapPoints(path: string, data: WorldmapPoint[]): Gazette
       }
       return v;
     },
+    count,
     examples: (count) => {
       const first: string[] = [];
       if (values.size < 1) {

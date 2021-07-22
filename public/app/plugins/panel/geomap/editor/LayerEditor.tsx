@@ -14,6 +14,7 @@ import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry'
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVizualizationOptions';
+import { GazetteerPathEditor } from './GazetteerPathEditor';
 
 export interface LayerEditorProps<TConfig = any> {
   options?: MapLayerOptions<TConfig>;
@@ -95,12 +96,11 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
           },
           showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
         })
-        .addTextInput({
+        .addCustomEditor({
+          id: 'gazetteer',
           path: 'location.gazetteer',
           name: 'Gazetteer',
-          settings: {
-            placeholder: 'url?',
-          },
+          editor: GazetteerPathEditor,
           showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
         });
     }
