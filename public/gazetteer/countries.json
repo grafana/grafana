@@ -732,16 +732,16 @@
     "name": "Saint Kitts and Nevis"
   },
   {
-    "keys": ["KR", "KOR"],
-    "latitude": 37,
-    "longitude": 127.5,
-    "name": "South Korea"
-  },
-  {
     "keys": ["KP", "PRK"],
     "latitude": 40.339852,
     "longitude": 127.510093,
     "name": "North Korea"
+  },
+  {
+    "keys": ["KR", "KOR"],
+    "latitude": 37,
+    "longitude": 127.5,
+    "name": "South Korea"
   },
   {
     "keys": ["KW", "KWT"],
@@ -772,12 +772,6 @@
     "latitude": 33.854721,
     "longitude": 35.862285,
     "name": "Lebanon"
-  },
-  {
-    "keys": ["LY", "LBY"],
-    "latitude": 25,
-    "longitude": 17,
-    "name": "Libya"
   },
   {
     "keys": ["LC", "LCA"],
@@ -828,16 +822,16 @@
     "name": "Latvia"
   },
   {
+    "keys": ["LY", "LBY"],
+    "latitude": 25,
+    "longitude": 17,
+    "name": "Libya"
+  },
+  {
     "keys": ["MA", "MAR"],
     "latitude": 31.791702,
     "longitude": -7.09262,
     "name": "Morocco"
-  },
-  {
-    "keys": ["MO", "MAC"],
-    "latitude": 22.1667,
-    "longitude": 113.55,
-    "name": "Macao"
   },
   {
     "keys": ["MC", "MCO"],
@@ -898,6 +892,12 @@
     "latitude": 46.862496,
     "longitude": 103.846656,
     "name": "Mongolia"
+  },
+  {
+    "keys": ["MO", "MAC"],
+    "latitude": 22.1667,
+    "longitude": 113.55,
+    "name": "Macao"
   },
   {
     "keys": ["MP", "MNP"],
