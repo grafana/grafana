@@ -1,10 +1,9 @@
 {
   "defaults": {
     "concurrency": 1,
-    "runners": [
-      "axe"
-    ]
-  },
+    "standard": "WCAG2AA",
+    "runners": ["axe"]
+   },
   "urls": [
     {
       "url": "http://localhost:3000/login",
@@ -28,6 +27,30 @@
     },
     {
       "url": "http://localhost:3000/?orgId=1&search=open"
+    },
+    {
+      "url": "http://localhost:3000/alerting/list"
+    },
+    {
+      "url": "http://localhost:3000/datasources"
+    },
+    {
+      "url": "http://localhost:3000/org/users"
+    },
+    {
+      "url": "http://localhost:3000/org/teams"
+    },
+    {
+      "url": "http://localhost:3000/plugins"
+    },
+    {
+      "url": "http://localhost:3000/org"
+    },
+    {
+      "url": "http://localhost:3000/org/apikeys"
+    },
+    {
+      "url": "http://localhost:3000/dashboards"
     }
   ]
 }
