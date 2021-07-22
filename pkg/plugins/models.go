@@ -95,8 +95,17 @@ type PluginInclude struct {
 	DefaultNav bool            `json:"defaultNav"`
 	Slug       string          `json:"slug"`
 	Icon       string          `json:"icon"`
+	UID        string          `json:"uid"`
 
 	Id string `json:"-"`
+}
+
+func (e PluginInclude) GetSlugOrUIDLink() string {
+	if len(e.UID) > 0 {
+		return "/d/" + e.UID
+	} else {
+		return "/dashboard/db/" + e.Slug
+	}
 }
 
 type PluginDependencyItem struct {
