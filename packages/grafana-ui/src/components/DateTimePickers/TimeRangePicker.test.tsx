@@ -26,6 +26,6 @@ describe('TimePicker', () => {
       />
     );
 
-    expect(container.queryByLabelText(/timepicker open button/i)).toBeInTheDocument();
+    expect(container.queryByLabelText(/Time range editor/i)).toBeInTheDocument();
   });
 });

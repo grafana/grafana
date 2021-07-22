@@ -113,11 +113,11 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
           onFocus={onFocus}
           onChange={(event) => onChange(from.value, event.currentTarget.value)}
           addonAfter={icon}
-          data-test-id={selectors.components.TimePicker.toField}
+          aria-label={selectors.components.TimePicker.toField}
           value={to.value}
         />
       </Field>
-      <Button aria-label={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
+      <Button data-testid={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
         Apply time range
       </Button>
 
