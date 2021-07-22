@@ -245,13 +245,15 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
               setCollapsedFlag(!collapsed);
             }
           }}
+          aria-expanded={!collapsed}
+          aria-controls="expanded-timerange"
         >
           <TimePickerTitle>Absolute time range</TimePickerTitle>
           {!hideQuickRanges && <Icon name={!collapsed ? 'angle-up' : 'angle-down'} />}
         </button>
       </h3>
       {!collapsed && (
-        <div className={styles.body}>
+        <div className={styles.body} id="expanded-timerange">
           <div className={styles.form}>
             <TimeRangeForm value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
           </div>
