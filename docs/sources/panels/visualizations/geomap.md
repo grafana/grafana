@@ -13,7 +13,7 @@ The Geomap panel visualization allows you to view and customize the world map us
 
 ## Base layer
 
-Base layer loads in a blank world map from the tile server to the Grafana panel. There are several base layer options currently available for you to choose from, each with their specific configuration options to style the base map. Default base layer is automatically set to use CartoDB base map, but can be specified through the `.ini` configuration file.
+Base layer loads in a blank world map from the tile server to the Grafana panel. There are several base layer options available for you to choose from, each with their specific configuration options to style the base map. Default base layer is CartoDB base map, but can be specified differently through the `.ini` configuration file.
 
 ### Configure the default base layer with provisioning
 
