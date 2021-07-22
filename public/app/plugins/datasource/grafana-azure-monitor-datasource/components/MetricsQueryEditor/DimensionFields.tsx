@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { Button, Select, Input, HorizontalGroup, VerticalGroup, InlineLabel } from '@grafana/ui';
 
 import { Field } from '../Field';
-import { findOption } from '../../utils/common';
 import { AzureMetricDimension, AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types';
 import { setDimensionFilters as setQueryDimensionFilters } from './setQueryValue';
 
@@ -63,7 +62,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
           <HorizontalGroup key={index} spacing="xs">
             <Select
               placeholder="Field"
-              value={findOption(dimensionOptions, filter.dimension)}
+              value={filter.dimension}
               options={dimensionOptions}
               onChange={(v) => onFieldChange(index, 'dimension', v.value ?? '')}
               width={38}

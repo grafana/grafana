@@ -3,7 +3,6 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { setMetricName } from './setQueryValue';
 
@@ -30,7 +29,7 @@ const MetricName: React.FC<MetricNameProps> = ({ metricNames, query, variableOpt
     <Field label="Metric">
       <Select
         inputId="azure-monitor-metrics-metric-field"
-        value={findOption(metricNames, query.azureMonitor?.metricName)}
+        value={query.azureMonitor?.metricName}
         onChange={handleChange}
         options={options}
         width={38}

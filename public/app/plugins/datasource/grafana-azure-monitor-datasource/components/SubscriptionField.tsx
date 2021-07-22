@@ -3,7 +3,7 @@ import { SelectableValue } from '@grafana/data';
 import { Select, MultiSelect } from '@grafana/ui';
 
 import { AzureMonitorQuery, AzureQueryEditorFieldProps, AzureMonitorOption, AzureQueryType } from '../types';
-import { findOption, findOptions } from '../utils/common';
+import { findOptions } from '../utils/common';
 import { Field } from './Field';
 
 interface SubscriptionFieldProps extends AzureQueryEditorFieldProps {
@@ -79,7 +79,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
   ) : (
     <Field label="Subscription">
       <Select
-        value={findOption(subscriptions, query.subscription)}
+        value={query.subscription}
         inputId="azure-monitor-subscriptions-field"
         onChange={handleChange}
         options={options}

@@ -3,7 +3,6 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { setResourceName } from './setQueryValue';
 
@@ -27,12 +26,11 @@ const ResourceNameField: React.FC<ResourceNameFieldProps> = ({
 
   const options = useMemo(() => [...resourceNames, variableOptionGroup], [resourceNames, variableOptionGroup]);
 
-  const selectedResourceNameValue = findOption(resourceNames, query.azureMonitor?.resourceName);
   return (
     <Field label="Resource name">
       <Select
         inputId="azure-monitor-metrics-resource-name-field"
-        value={selectedResourceNameValue}
+        value={query.azureMonitor?.resourceName}
         onChange={handleChange}
         options={options}
         width={38}

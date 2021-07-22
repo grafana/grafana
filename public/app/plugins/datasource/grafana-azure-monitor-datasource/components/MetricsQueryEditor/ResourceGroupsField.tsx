@@ -3,7 +3,6 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { setResourceGroup } from './setQueryValue';
 
@@ -32,7 +31,7 @@ const ResourceGroupsField: React.FC<ResourceGroupsFieldProps> = ({
     <Field label="Resource group">
       <Select
         inputId="azure-monitor-metrics-resource-group-field"
-        value={findOption(resourceGroups, query.azureMonitor?.resourceGroup)}
+        value={query.azureMonitor?.resourceGroup}
         onChange={handleChange}
         options={options}
         width={38}

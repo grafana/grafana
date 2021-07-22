@@ -3,7 +3,6 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { setResourceType } from './setQueryValue';
 
@@ -36,7 +35,7 @@ const NamespaceField: React.FC<NamespaceFieldProps> = ({
       {/* It's expected that the label reads Resource type but the property is metricDefinition */}
       <Select
         inputId="azure-monitor-metrics-resource-type-field"
-        value={findOption(resourceTypes, query.azureMonitor?.metricDefinition)}
+        value={query.azureMonitor?.metricDefinition}
         onChange={handleChange}
         options={options}
         width={38}

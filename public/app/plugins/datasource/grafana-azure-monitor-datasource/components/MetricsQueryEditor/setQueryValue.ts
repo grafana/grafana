@@ -1,45 +1,56 @@
 import { AzureMetricDimension, AzureMonitorQuery } from '../../types';
 
-const MAX_COMPONENT_LENGTH = 19;
-function log(component: string, msg: string, ...rest: any[]) {
-  const space = new Array(MAX_COMPONENT_LENGTH - component.length).fill(' ').join('');
-  console.log(`%c[${component}]%c${space} ${msg}`, 'color: #3498db; font-weight: bold', 'color: #3498db;', ...rest);
-}
-
 export function setSubscriptionID(query: AzureMonitorQuery, subscriptionID: string): AzureMonitorQuery {
-  log('setQueryID', 'setting subscriptionID', { subscriptionID });
+  if (query.subscription === subscriptionID) {
+    return query;
+  }
+
   return {
     ...query,
     subscription: subscriptionID,
+    azureMonitor: {
+      ...query.azureMonitor,
+      resourceGroup: undefined,
+    },
   };
 }
 
-export function setResourceGroup(query: AzureMonitorQuery, resourceGroupID: string | undefined): AzureMonitorQuery {
-  log('setQueryID', 'setting resourceGroupID', { resourceGroupID });
+export function setResourceGroup(query: AzureMonitorQuery, resourceGroup: string | undefined): AzureMonitorQuery {
+  if (query.azureMonitor?.resourceGroup === resourceGroup) {
+    return query;
+  }
 
   return {
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
-      resourceGroup: resourceGroupID,
+      resourceGroup: resourceGroup,
+      resourceName: undefined,
     },
   };
 }
 
 // In the query as "metricDefinition" for some reason
 export function setResourceType(query: AzureMonitorQuery, resourceType: string | undefined): AzureMonitorQuery {
-  log('setQueryID', 'setting resourceType', { resourceType });
+  if (query.azureMonitor?.metricDefinition === resourceType) {
+    return query;
+  }
+
   return {
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
       metricDefinition: resourceType,
+      resourceName: undefined,
     },
   };
 }
 
 export function setResourceName(query: AzureMonitorQuery, resourceName: string | undefined): AzureMonitorQuery {
-  log('setQueryID', 'setting resourceName', { resourceName });
+  if (query.azureMonitor?.resourceName === resourceName) {
+    return query;
+  }
+
   return {
     ...query,
     azureMonitor: {
@@ -50,18 +61,25 @@ export function setResourceName(query: AzureMonitorQuery, resourceName: string |
 }
 
 export function setMetricNamespace(query: AzureMonitorQuery, metricNamespace: string | undefined): AzureMonitorQuery {
-  log('setQueryID', 'setting setMetricNamespace', { metricNamespace });
+  if (query.azureMonitor?.metricNamespace === metricNamespace) {
+    return query;
+  }
+
   return {
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
       metricNamespace: metricNamespace,
+      metricName: undefined,
     },
   };
 }
 
 export function setMetricName(query: AzureMonitorQuery, metricName: string | undefined): AzureMonitorQuery {
-  log('setQueryID', 'setting setMetricName', { metricName });
+  if (query.azureMonitor?.metricName === metricName) {
+    return query;
+  }
+
   return {
     ...query,
     azureMonitor: {
@@ -72,7 +90,10 @@ export function setMetricName(query: AzureMonitorQuery, metricName: string | und
 }
 
 export function setAggregation(query: AzureMonitorQuery, aggregation: string): AzureMonitorQuery {
-  log('setQueryID', 'setting setAggregation', { aggregation });
+  if (query.azureMonitor?.aggregation === aggregation) {
+    return query;
+  }
+
   return {
     ...query,
     azureMonitor: {
@@ -83,7 +104,10 @@ export function setAggregation(query: AzureMonitorQuery, aggregation: string): A
 }
 
 export function setTimeGrain(query: AzureMonitorQuery, timeGrain: string): AzureMonitorQuery {
-  log('setQueryID', 'setting setTimeGrain', { timeGrain });
+  if (query.azureMonitor?.timeGrain === timeGrain) {
+    return query;
+  }
+
   return {
     ...query,
     azureMonitor: {
@@ -94,7 +118,10 @@ export function setTimeGrain(query: AzureMonitorQuery, timeGrain: string): Azure
 }
 
 export function setDimensionFilters(query: AzureMonitorQuery, dimensions: AzureMetricDimension[]): AzureMonitorQuery {
-  log('setQueryID', 'setting setDimensionFilters', { dimensions });
+  if (query.azureMonitor?.dimensionFilters === dimensions) {
+    return query;
+  }
+
   return {
     ...query,
     azureMonitor: {
@@ -105,7 +132,10 @@ export function setDimensionFilters(query: AzureMonitorQuery, dimensions: AzureM
 }
 
 export function setTop(query: AzureMonitorQuery, top: string): AzureMonitorQuery {
-  log('setQueryID', 'setting setTop', { top });
+  if (query.azureMonitor?.top === top) {
+    return query;
+  }
+
   return {
     ...query,
     azureMonitor: {
@@ -116,7 +146,10 @@ export function setTop(query: AzureMonitorQuery, top: string): AzureMonitorQuery
 }
 
 export function setLegendAlias(query: AzureMonitorQuery, alias: string): AzureMonitorQuery {
-  log('setQueryID', 'setting setLegendAlias', { alias });
+  if (query.azureMonitor?.alias === alias) {
+    return query;
+  }
+
   return {
     ...query,
     azureMonitor: {

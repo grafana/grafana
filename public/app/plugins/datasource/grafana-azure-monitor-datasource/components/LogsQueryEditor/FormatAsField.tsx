@@ -2,7 +2,6 @@ import React, { useCallback, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 import { AzureMonitorOption, AzureQueryEditorFieldProps, AzureResultFormat } from '../../types';
-import { findOption } from '../../utils/common';
 import { Field } from '../Field';
 import { setFormatAs } from './setQueryValue';
 
@@ -33,7 +32,7 @@ const FormatAsField: React.FC<AzureQueryEditorFieldProps> = ({ query, variableOp
     <Field label="Format as">
       <Select
         inputId="azure-monitor-logs-workspaces-field"
-        value={findOption(FORMAT_OPTIONS, query.azureLogAnalytics?.resultFormat)}
+        value={query.azureLogAnalytics?.resultFormat}
         onChange={handleChange}
         options={options}
         width={38}

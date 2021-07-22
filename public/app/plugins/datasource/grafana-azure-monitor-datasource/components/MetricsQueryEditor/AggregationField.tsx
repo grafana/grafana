@@ -3,7 +3,6 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { setAggregation } from './setQueryValue';
 
@@ -40,7 +39,7 @@ const AggregationField: React.FC<AggregationFieldProps> = ({
     <Field label="Aggregation">
       <Select
         inputId="azure-monitor-metrics-aggregation-field"
-        value={findOption(aggregationOptions, query.azureMonitor?.aggregation)}
+        value={query.azureMonitor?.aggregation}
         onChange={handleChange}
         options={options}
         width={38}

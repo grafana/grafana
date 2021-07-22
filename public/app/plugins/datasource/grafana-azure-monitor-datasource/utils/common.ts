@@ -2,11 +2,7 @@ import { rangeUtil } from '@grafana/data';
 import TimegrainConverter from '../time_grain_converter';
 import { AzureMonitorOption } from '../types';
 
-// Defaults to returning a fallback option so the UI still shows the value while the API is loading
-export const findOption = (options: AzureMonitorOption[], value: string | undefined) =>
-  value ? options.find((v) => v.value === value) ?? { value, label: value } : null;
-
-// TODO: need to test for template variables
+// TODO: need to test for template variables / subgroups
 // Don't merge this in!!!!
 export const hasOption = (options: AzureMonitorOption[], value: string) => options.some((v) => v.value === value);
 
