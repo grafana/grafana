@@ -7,7 +7,7 @@ import { getFiltersFromUrlParams } from '../utils/misc';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { stringMatchesSomeLabels } from '@grafana/data';
+import { labelsMatchMatchers, parseMatchers } from '../utils/alertmanager';
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
   const [queryParams] = useQueryParams();
@@ -55,13 +55,14 @@ const reduceGroups = (filters: RuleFilterState) => {
       if (filters.queryString) {
         const normalizedQueryString = filters.queryString.toLocaleLowerCase();
         const doesNameContainsQueryString = rule.name?.toLocaleLowerCase().includes(normalizedQueryString);
+        const matchers = parseMatchers(filters.queryString);
 
-        const doRuleLabelsMatchQuery = stringMatchesSomeLabels(filters.queryString, rule.labels);
+        const doRuleLabelsMatchQuery = labelsMatchMatchers(rule.labels, matchers);
         const doAlertsContainMatchingLabels =
           rule.promRule &&
           rule.promRule.type === PromRuleType.Alerting &&
           rule.promRule.alerts &&
-          rule.promRule.alerts.some((alert) => stringMatchesSomeLabels(filters.queryString || '', alert.labels));
+          rule.promRule.alerts.some((alert) => labelsMatchMatchers(alert.labels, matchers));
 
         if (!(doesNameContainsQueryString || doRuleLabelsMatchQuery || doAlertsContainMatchingLabels)) {
           return false;

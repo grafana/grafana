@@ -21,13 +21,6 @@ export enum DataTopic {
   Annotations = 'annotations',
 }
 
-export enum LabelOperators {
-  Equals = '=',
-  NotEquals = '!=',
-  RegexMatch = '=~',
-  NotRegexMatch = '!~',
-}
-
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
 export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace' | 'nodeGraph';
 
@@ -135,14 +128,6 @@ export interface QueryResultBase {
 export interface Labels {
   [key: string]: string;
 }
-
-export type LabelsWithOperator = {
-  [key: string]: {
-    value: string;
-    operator: LabelOperators;
-  };
-};
-
 export interface Column {
   text: string; // For a Column, the 'text' is the field name
   filterable?: boolean;
