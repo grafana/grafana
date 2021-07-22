@@ -54,6 +54,16 @@ func TestLoadingSettings(t *testing.T) {
 			}
 		})
 
+		Convey("sample.ini should load successfully", func() {
+			customInitPath := CustomInitPath
+			CustomInitPath = "conf/sample.ini"
+			cfg := NewCfg()
+			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			So(err, ShouldBeNil)
+			// Restore CustomInitPath to avoid side effects.
+			CustomInitPath = customInitPath
+		})
+
 		Convey("Should be able to override via environment variables", func() {
 			err := os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
 			require.NoError(t, err)
