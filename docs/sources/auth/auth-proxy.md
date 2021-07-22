@@ -30,7 +30,7 @@ sync_ttl = 60
 # Example `whitelist = 192.168.1.1, 192.168.1.0/24, 2001::23, 2001::0/120`
 whitelist =
 # Optionally define more headers to sync other user attributes
-# Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL Groups:X-WEBAUTH-GROUPS`
+# Example `headers = Name:X-WEBAUTH-NAME Role:X-WEBAUTH-ROLE Email:X-WEBAUTH-EMAIL Groups:X-WEBAUTH-GROUPS`
 headers =
 # Check out docs on this for more details on the below setting
 enable_login_token = false
