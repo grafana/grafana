@@ -1,4 +1,6 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { GraphiteDatasource } from './datasource';
+import { TemplateSrv } from '../../../features/templating/template_srv';
 
 export interface GraphiteQuery extends DataQuery {
   target?: string;
@@ -52,4 +54,35 @@ export type GraphiteLokiMapping = {
 export type GraphiteMetricLokiMatcher = {
   value: string;
   labelName?: string;
+};
+
+export type GraphiteSegment = {
+  value: string;
+  type?: 'tag' | 'metric' | 'series-ref';
+  expandable?: boolean;
+  focus?: boolean;
+  fake?: boolean;
+};
+
+export type GraphiteTagOperator = '=' | '!=' | '=~' | '!=~';
+
+export type GraphiteTag = {
+  key: string;
+  operator: GraphiteTagOperator;
+  value: string;
+};
+
+export type GraphiteActionDispatcher = (action: any) => Promise<void>;
+
+export type GraphiteQueryEditorAngularDependencies = {
+  panelCtrl: any;
+  target: any;
+  datasource: GraphiteDatasource;
+  uiSegmentSrv: any;
+  templateSrv: TemplateSrv;
+};
+
+export type AngularDropdownOptions = {
+  text: string;
+  value: string;
 };

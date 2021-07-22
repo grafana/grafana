@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { TeamMember, User } from 'app/types';
+import { TeamMember, OrgUser } from 'app/types';
 import { addTeamMember } from './state/actions';
 import { getSearchMemberQuery, isSignedInUserTeamAdmin } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
@@ -14,6 +14,7 @@ import TeamMemberRow from './TeamMemberRow';
 import { setSearchMemberQuery } from './state/reducers';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { Button } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 
 export interface Props {
   members: TeamMember[];
@@ -27,7 +28,7 @@ export interface Props {
 
 export interface State {
   isAdding: boolean;
-  newTeamMember?: User | null;
+  newTeamMember?: SelectableValue<OrgUser['userId']> | null;
 }
 
 export class TeamMembers extends PureComponent<Props, State> {
@@ -44,7 +45,7 @@ export class TeamMembers extends PureComponent<Props, State> {
     this.setState({ isAdding: !this.state.isAdding });
   };
 
-  onUserSelected = (user: User) => {
+  onUserSelected = (user: SelectableValue<OrgUser['userId']>) => {
     this.setState({ newTeamMember: user });
   };
 

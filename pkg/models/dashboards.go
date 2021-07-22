@@ -363,8 +363,9 @@ type DashboardProvisioning struct {
 }
 
 type DeleteDashboardCommand struct {
-	Id    int64
-	OrgId int64
+	Id                     int64
+	OrgId                  int64
+	ForceDeleteFolderRules bool
 }
 
 type DeleteOrphanedProvisionedDashboardsCommand struct {

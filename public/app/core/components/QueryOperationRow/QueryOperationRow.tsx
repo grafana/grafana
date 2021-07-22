@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Icon, renderOrCallToRender, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useUpdateEffect } from 'react-use';
 import { Draggable } from 'react-beautiful-dnd';
 
@@ -16,6 +16,7 @@ interface QueryOperationRowProps {
   children: React.ReactNode;
   isOpen?: boolean;
   draggable?: boolean;
+  disabled?: boolean;
 }
 
 export type QueryOperationRowRenderProp = ((props: QueryOperationRowRenderProps) => React.ReactNode) | React.ReactNode;
@@ -34,6 +35,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   onClose,
   onOpen,
   isOpen,
+  disabled,
   draggable,
   index,
   id,
@@ -80,7 +82,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
       />
       {title && (
         <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
-          <div className={styles.title}>{titleElement}</div>
+          <div className={cx(styles.title, disabled && styles.disabled)}>{titleElement}</div>
         </div>
       )}
       {headerElementRendered}
@@ -166,6 +168,9 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
     content: css`
       margin-top: ${theme.spacing.inlineFormMargin};
       margin-left: ${theme.spacing.lg};
+    `,
+    disabled: css`
+      color: ${theme.colors.textWeak};
     `,
   };
 });

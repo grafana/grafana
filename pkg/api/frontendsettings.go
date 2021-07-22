@@ -209,6 +209,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"sigV4AuthEnabled":           setting.SigV4AuthEnabled,
 		"exploreEnabled":             setting.ExploreEnabled,
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
+		"rudderstackWriteKey":        setting.RudderstackWriteKey,
+		"rudderstackDataPlaneUrl":    setting.RudderstackDataPlaneUrl,
 		"disableLoginForm":           setting.DisableLoginForm,
 		"disableUserSignUp":          !setting.AllowUserSignUp,
 		"loginHint":                  setting.LoginHint,
@@ -257,6 +259,13 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"caching": map[string]bool{
 			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
+	}
+
+	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {
+		jsonObj["geomapDefaultBaseLayerConfig"] = hs.Cfg.GeomapDefaultBaseLayerConfig
+	}
+	if !hs.Cfg.GeomapEnableCustomBaseLayers {
+		jsonObj["geomapDisableCustomBaseLayer"] = true
 	}
 
 	return jsonObj, nil

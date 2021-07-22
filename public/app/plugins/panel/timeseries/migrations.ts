@@ -45,6 +45,7 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
       fieldConfig: prevFieldConfig,
     });
     panel.fieldConfig = fieldConfig; // Mutates the incoming panel
+    panel.alert = prevOptions.angular.alert;
     return options;
   }
 

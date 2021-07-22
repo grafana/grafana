@@ -3,6 +3,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
+  AlertmanagerGroup,
   Silence,
   SilenceCreatePayload,
 } from 'app/plugins/datasource/alertmanager/types';
@@ -19,10 +20,12 @@ import {
   expireSilence,
   fetchAlertManagerConfig,
   fetchAlerts,
+  fetchAlertGroups,
   fetchSilences,
   createOrUpdateSilence,
   updateAlertManagerConfig,
   fetchStatus,
+  deleteAlertManagerConfig,
 } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
@@ -35,7 +38,7 @@ import {
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
-import { withAppEvents, withSerializedError } from '../utils/redux';
+import { isFetchError, withAppEvents, withSerializedError } from '../utils/redux';
 import { formValuesToRulerAlertingRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
 import {
   isCloudRuleIdentifier,
@@ -60,7 +63,11 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
     withSerializedError(
       fetchAlertManagerConfig(alertManagerSourceName).then((result) => {
         // if user config is empty for cortex alertmanager, try to get config from status endpoint
-        if (isEmpty(result.alertmanager_config) && alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
+        if (
+          isEmpty(result.alertmanager_config) &&
+          isEmpty(result.template_files) &&
+          alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME
+        ) {
           return fetchStatus(alertManagerSourceName).then((status) => ({
             alertmanager_config: status.config,
             template_files: {},
@@ -402,7 +409,10 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
       withSerializedError(
         (async () => {
           const latestConfig = await fetchAlertManagerConfig(alertManagerSourceName);
-          if (JSON.stringify(latestConfig) !== JSON.stringify(oldConfig)) {
+          if (
+            !(isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files)) &&
+            JSON.stringify(latestConfig) !== JSON.stringify(oldConfig)
+          ) {
             throw new Error(
               'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
             );
@@ -534,3 +544,46 @@ export const fetchFolderIfNotFetchedAction = (uid: string): ThunkResult<void> =>
     }
   };
 };
+
+export const fetchAlertGroupsAction = createAsyncThunk(
+  'unifiedalerting/fetchAlertGroups',
+  (alertManagerSourceName: string): Promise<AlertmanagerGroup[]> => {
+    return withSerializedError(fetchAlertGroups(alertManagerSourceName));
+  }
+);
+
+export const checkIfLotexSupportsEditingRulesAction = createAsyncThunk(
+  'unifiedalerting/checkIfLotexRuleEditingSupported',
+  async (rulesSourceName: string): Promise<boolean> =>
+    withAppEvents(
+      (async () => {
+        try {
+          await fetchRulerRulesGroup(rulesSourceName, 'test', 'test');
+          return true;
+        } catch (e) {
+          if (
+            (isFetchError(e) &&
+              (e.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage
+                e.data.message?.includes('page not found'))) || // ruler api disabled
+            e.message?.includes('404 from rules config endpoint') // ruler api disabled
+          ) {
+            return false;
+          }
+          throw e;
+        }
+      })(),
+      {
+        errorMessage: `Failed to determine if "${rulesSourceName}" allows editing rules`,
+      }
+    )
+);
+
+export const deleteAlertManagerConfigAction = createAsyncThunk(
+  'unifiedalerting/deleteAlertManagerConfig',
+  async (alertManagerSourceName: string): Promise<void> => {
+    return withAppEvents(withSerializedError(deleteAlertManagerConfig(alertManagerSourceName)), {
+      errorMessage: 'Failed to reset Alertmanager configuration',
+      successMessage: 'Alertmanager configuration reset.',
+    });
+  }
+);
