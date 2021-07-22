@@ -31,6 +31,7 @@ import { getThemeColor } from 'app/core/utils/colors';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 
 export const LIMIT_LABEL = 'Line limit';
+export const COMMON_LABELS = 'Common labels';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -395,7 +396,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   const meta: LogsMetaItem[] = [];
   if (size(commonLabels) > 0) {
     meta.push({
-      label: 'Common labels',
+      label: COMMON_LABELS,
       value: commonLabels,
       kind: LogsMetaKind.LabelsMap,
     });

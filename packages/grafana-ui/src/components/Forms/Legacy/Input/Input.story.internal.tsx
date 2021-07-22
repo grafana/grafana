@@ -12,7 +12,7 @@ export default {
   decorators: [withCenteredStory],
   parameters: {
     controls: {
-      exclude: ['inputRef'],
+      exclude: ['inputRef', 'onBlur', 'onFocus', 'onChange'],
     },
   },
   argTypes: {

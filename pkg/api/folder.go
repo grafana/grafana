@@ -16,7 +16,7 @@ import (
 
 func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folders, err := s.GetFolders(c.QueryInt64("limit"))
+	folders, err := s.GetFolders(c.QueryInt64("limit"), c.QueryInt64("page"))
 
 	if err != nil {
 		return ToFolderErrorResponse(err)
@@ -147,8 +147,6 @@ func ToFolderErrorResponse(err error) response.Response {
 	}
 
 	if errors.Is(err, models.ErrFolderTitleEmpty) ||
-		errors.Is(err, models.ErrFolderSameNameExists) ||
-		errors.Is(err, models.ErrFolderWithSameUIDExists) ||
 		errors.Is(err, models.ErrDashboardTypeMismatch) ||
 		errors.Is(err, models.ErrDashboardInvalidUid) ||
 		errors.Is(err, models.ErrDashboardUidTooLong) {
@@ -161,6 +159,11 @@ func ToFolderErrorResponse(err error) response.Response {
 
 	if errors.Is(err, models.ErrFolderNotFound) {
 		return response.JSON(404, util.DynMap{"status": "not-found", "message": models.ErrFolderNotFound.Error()})
+	}
+
+	if errors.Is(err, models.ErrFolderSameNameExists) ||
+		errors.Is(err, models.ErrFolderWithSameUIDExists) {
+		return response.Error(409, err.Error(), nil)
 	}
 
 	if errors.Is(err, models.ErrFolderVersionMismatch) {

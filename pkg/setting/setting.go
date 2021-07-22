@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -16,6 +17,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gobwas/glob"
 
 	"github.com/prometheus/common/model"
 	ini "gopkg.in/ini.v1"
@@ -76,17 +79,7 @@ var (
 	CustomInitPath = "conf/custom.ini"
 
 	// HTTP server options
-	DataProxyLogging               bool
-	DataProxyTimeout               int
-	DataProxyDialTimeout           int
-	DataProxyTLSHandshakeTimeout   int
-	DataProxyExpectContinueTimeout int
-	DataProxyMaxConnsPerHost       int
-	DataProxyMaxIdleConns          int
-	DataProxyMaxIdleConnsPerHost   int
-	DataProxyKeepAlive             int
-	DataProxyIdleConnTimeout       int
-	StaticRootPath                 string
+	StaticRootPath string
 
 	// Security settings.
 	SecretKey              string
@@ -146,8 +139,10 @@ var (
 	appliedEnvOverrides          []string
 
 	// analytics
-	GoogleAnalyticsId  string
-	GoogleTagManagerId string
+	GoogleAnalyticsId       string
+	GoogleTagManagerId      string
+	RudderstackDataPlaneUrl string
+	RudderstackWriteKey     string
 
 	// LDAP
 	LDAPEnabled           bool
@@ -318,7 +313,16 @@ type Cfg struct {
 	JWTAuthJWKSetFile    string
 
 	// Dataproxy
-	SendUserHeader bool
+	SendUserHeader                 bool
+	DataProxyLogging               bool
+	DataProxyTimeout               int
+	DataProxyDialTimeout           int
+	DataProxyTLSHandshakeTimeout   int
+	DataProxyExpectContinueTimeout int
+	DataProxyMaxConnsPerHost       int
+	DataProxyMaxIdleConns          int
+	DataProxyKeepAlive             int
+	DataProxyIdleConnTimeout       int
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
@@ -391,9 +395,16 @@ type Cfg struct {
 	LiveHAEngine string
 	// LiveHAEngineAddress is a connection address for Live HA engine.
 	LiveHAEngineAddress string
+	// LiveAllowedOrigins is a set of origins accepted by Live. If not provided
+	// then Live uses AppURL as the only allowed origin.
+	LiveAllowedOrigins []string
 
 	// Grafana.com URL
 	GrafanaComURL string
+
+	// Geomap base layer config
+	GeomapDefaultBaseLayerConfig map[string]interface{}
+	GeomapEnableCustomBaseLayers bool
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -836,19 +847,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 
-	// read data proxy settings
-	dataproxy := iniFile.Section("dataproxy")
-	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
-	DataProxyTimeout = dataproxy.Key("timeout").MustInt(10)
-	DataProxyDialTimeout = dataproxy.Key("dialTimeout").MustInt(30)
-	DataProxyKeepAlive = dataproxy.Key("keep_alive_seconds").MustInt(30)
-	DataProxyTLSHandshakeTimeout = dataproxy.Key("tls_handshake_timeout_seconds").MustInt(10)
-	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
-	DataProxyMaxConnsPerHost = dataproxy.Key("max_conns_per_host").MustInt(0)
-	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt(100)
-	DataProxyMaxIdleConnsPerHost = dataproxy.Key("max_idle_connections_per_host").MustInt(2)
-	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
-	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
+	if err := readDataProxySettings(iniFile, cfg); err != nil {
+		return err
+	}
 
 	if err := readSecuritySettings(iniFile, cfg); err != nil {
 		return err
@@ -885,6 +886,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
+	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
+	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
 	if len(cfg.ReportingDistributor) >= 100 {
@@ -967,6 +970,19 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		Name:    dbName,
 		ConnStr: connStr,
 	}
+
+	geomapSection := iniFile.Section("geomap")
+	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
+	if basemapJSON != "" {
+		layer := make(map[string]interface{})
+		err = json.Unmarshal([]byte(basemapJSON), &layer)
+		if err != nil {
+			cfg.Logger.Error("Error reading json from default_baselayer_config", "error", err)
+		} else {
+			cfg.GeomapDefaultBaseLayerConfig = layer
+		}
+	}
+	cfg.GeomapEnableCustomBaseLayers = geomapSection.Key("enable_custom_baselayers").MustBool(true)
 
 	cfg.readDateFormats()
 	cfg.readSentryConfig()
@@ -1446,6 +1462,19 @@ func (cfg *Cfg) readDataSourcesSettings() {
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 }
 
+func GetAllowedOriginGlobs(originPatterns []string) ([]glob.Glob, error) {
+	var originGlobs []glob.Glob
+	allowedOrigins := originPatterns
+	for _, originPattern := range allowedOrigins {
+		g, err := glob.Compile(originPattern)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing origin pattern: %v", err)
+		}
+		originGlobs = append(originGlobs, g)
+	}
+	return originGlobs, nil
+}
+
 func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	section := iniFile.Section("live")
 	cfg.LiveMaxConnections = section.Key("max_connections").MustInt(100)
@@ -1459,5 +1488,20 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 		return fmt.Errorf("unsupported live HA engine type: %s", cfg.LiveHAEngine)
 	}
 	cfg.LiveHAEngineAddress = section.Key("ha_engine_address").MustString("127.0.0.1:6379")
+
+	var originPatterns []string
+	allowedOrigins := section.Key("allowed_origins").MustString("")
+	for _, originPattern := range strings.Split(allowedOrigins, ",") {
+		originPattern = strings.TrimSpace(originPattern)
+		if originPattern == "" {
+			continue
+		}
+		originPatterns = append(originPatterns, originPattern)
+	}
+	_, err := GetAllowedOriginGlobs(originPatterns)
+	if err != nil {
+		return err
+	}
+	cfg.LiveAllowedOrigins = originPatterns
 	return nil
 }

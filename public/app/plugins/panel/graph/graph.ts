@@ -65,7 +65,7 @@ class GraphElement {
   eventManager: EventManager;
   thresholdManager?: ThresholdManager;
   timeRegionManager: TimeRegionManager;
-  legendElem: HTMLElement;
+  declare legendElem: HTMLElement;
 
   constructor(private scope: any, private elem: JQuery, private timeSrv: TimeSrv) {
     this.ctrl = scope.ctrl;
