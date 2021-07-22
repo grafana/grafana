@@ -21,7 +21,7 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
   name: 'XYZ Tile layer',
   isBaseMap: true,
 
-  create: (map: Map, options: MapLayerOptions<XYZConfig>, theme: GrafanaTheme2) => ({
+  create: async (map: Map, options: MapLayerOptions<XYZConfig>, theme: GrafanaTheme2) => ({
     init: () => {
       const cfg = { ...options.config };
       if (!cfg.url) {

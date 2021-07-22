@@ -12,7 +12,7 @@ export const standard: MapLayerRegistryItem = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions) => ({
+  create: async (map: Map, options: MapLayerOptions) => ({
     init: () => {
       return new TileLayer({
         source: new OSM(),
