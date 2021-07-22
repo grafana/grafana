@@ -34,7 +34,7 @@ const renderAmNotifications = () => {
 
 const dataSources = {
   am: mockDataSource({
-    name: 'Alert Manager',
+    name: 'Alertmanager',
     type: DataSourceType.Alertmanager,
   }),
 };

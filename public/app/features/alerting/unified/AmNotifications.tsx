@@ -12,7 +12,7 @@ import { initialAsyncRequestState } from './utils/redux';
 
 import { AmNotificationsGroup } from './components/amnotifications/AmNotificationsGroup';
 import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
-import { Alert, LoadingPlaceholder } from '../../../../../packages/grafana-ui/src';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
 
 const AlertManagerNotifications = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();

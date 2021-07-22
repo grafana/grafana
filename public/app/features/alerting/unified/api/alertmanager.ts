@@ -55,6 +55,17 @@ export async function updateAlertManagerConfig(
     .toPromise();
 }
 
+export async function deleteAlertManagerConfig(alertManagerSourceName: string): Promise<void> {
+  await getBackendSrv()
+    .fetch({
+      method: 'DELETE',
+      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
+}
+
 export async function fetchSilences(alertManagerSourceName: string): Promise<Silence[]> {
   const result = await getBackendSrv()
     .fetch<Silence[]>({
