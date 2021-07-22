@@ -1,9 +1,9 @@
-import { Labels, LabelsWithOperator, LabelOperators } from '../types/data';
+import { Labels } from '../types/data';
 
 /**
  * Regexp to extract Prometheus-style labels
  */
-const labelRegexp = /\b(\w+)(!?=?~?)"([^"\n]*?)"/g;
+const labelRegexp = /\b(\w+)(!?=~?)"([^"\n]*?)"/g;
 
 /**
  * Returns a map of label keys to value from an input selector string.
@@ -14,21 +14,6 @@ export function parseLabels(labels: string): Labels {
   const labelsByKey: Labels = {};
   labels.replace(labelRegexp, (_, key, operator, value) => {
     labelsByKey[key] = value;
-    return '';
-  });
-  return labelsByKey;
-}
-
-/**
- * Returns a map of label keys with the value and operator
- *
- * Example: `parseLabelsWithOperator('{job="foo", instance!="bar"})
- * returns: {job: { value: "foo", operator: '='}, instance: {value: "bar", operator: "!="}}`
- */
-export function parseLabelsWithOperator(labels: string): LabelsWithOperator {
-  const labelsByKey: LabelsWithOperator = {};
-  labels.replace(labelRegexp, (_, key, operator, value) => {
-    labelsByKey[key] = { value, operator };
     return '';
   });
   return labelsByKey;
@@ -102,30 +87,4 @@ export function formatLabels(labels: Labels, defaultValue = '', withoutBraces?: 
     return cleanSelector;
   }
   return ['{', cleanSelector, '}'].join('');
-}
-
-export function stringMatchesSomeLabels(queryString: string, labels: Labels): boolean {
-  const parsedLabels = parseLabelsWithOperator(queryString);
-
-  return Object.entries(parsedLabels).some(([key, { value, operator }]) => {
-    return Object.entries(labels).some(([labelKey, labelValue]) => {
-      const labelMatches = key === labelKey;
-      let valueMatches;
-      switch (operator) {
-        case LabelOperators.Equals:
-          valueMatches = value === labelValue;
-          break;
-        case LabelOperators.NotEquals:
-          valueMatches = value !== labelValue;
-          break;
-        case LabelOperators.RegexMatch:
-          valueMatches = new RegExp(value).test(labelValue);
-          break;
-        case LabelOperators.NotRegexMatch:
-          valueMatches = !new RegExp(value).test(labelValue);
-          break;
-      }
-      return labelMatches && valueMatches;
-    });
-  });
 }

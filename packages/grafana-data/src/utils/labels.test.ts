@@ -1,12 +1,5 @@
-import {
-  parseLabels,
-  parseLabelsWithOperator,
-  formatLabels,
-  findCommonLabels,
-  findUniqueLabels,
-  matchAllLabels,
-} from './labels';
-import { Labels, LabelOperators } from '../types/data';
+import { parseLabels, formatLabels, findCommonLabels, findUniqueLabels, matchAllLabels } from './labels';
+import { Labels } from '../types/data';
 
 describe('parseLabels()', () => {
   it('returns no labels on empty labels string', () => {
@@ -16,23 +9,6 @@ describe('parseLabels()', () => {
 
   it('returns labels on labels string', () => {
     expect(parseLabels('{foo="bar", baz="42"}')).toEqual({ foo: 'bar', baz: '42' });
-  });
-});
-
-describe('parseLabelsWithOperator()', () => {
-  it('returns no labels on empty labels string', () => {
-    expect(parseLabelsWithOperator('')).toEqual({});
-    expect(parseLabelsWithOperator('{}')).toEqual({});
-    expect(parseLabelsWithOperator('{test string}')).toEqual({});
-  });
-
-  it('returns labels with correct operators', () => {
-    expect(parseLabelsWithOperator('{foo="bar", baz!="buzz", region=~"cluster-.*", email!~".+@grafana.com"}')).toEqual({
-      foo: { value: 'bar', operator: LabelOperators.Equals },
-      baz: { value: 'buzz', operator: LabelOperators.NotEquals },
-      region: { value: 'cluster-.*', operator: LabelOperators.RegexMatch },
-      email: { value: '.+@grafana.com', operator: LabelOperators.NotRegexMatch },
-    });
   });
 });
 
