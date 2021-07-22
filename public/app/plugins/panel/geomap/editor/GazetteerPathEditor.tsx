@@ -1,6 +1,6 @@
 import React, { FC, useMemo, useState, useEffect } from 'react';
 import { StandardEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { Alert, Select, stylesFactory, useTheme2, VerticalGroup } from '@grafana/ui';
+import { Alert, Select, stylesFactory, useTheme2 } from '@grafana/ui';
 import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
 import { css } from '@emotion/css';
 
@@ -56,7 +56,7 @@ export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any>> = ({
           {gaz.error && <Alert title={gaz.error} severity={'warning'} />}
           {gaz.count && (
             <div className={styles.keys}>
-              <b>({gaz.count}):</b>
+              <b>({gaz.count})</b>
               {gaz.examples(10).map((k) => (
                 <span key={k}>{k},</span>
               ))}{' '}
