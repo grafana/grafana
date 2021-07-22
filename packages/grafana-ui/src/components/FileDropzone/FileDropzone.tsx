@@ -139,20 +139,27 @@ export function FileDropzone({ options, children, readAs, onLoad }: FileDropzone
     <div className={styles.container}>
       <div {...getRootProps({ className: styles.dropzone })}>
         <input {...getInputProps()} />
-        {children ?? (
-          <div className={styles.iconWrapper}>
-            <Icon name="upload" size="xxl" />
-            <h3>Upload file</h3>
-            <small className={styles.small}>
-              Drag and drop here or <span className={styles.link}>Browse</span>
-            </small>
-          </div>
-        )}
+        {children ?? <FileDropzoneDefaultChildren />}
       </div>
       {options?.accept ? (
         <small className={cx(styles.small, styles.acceptMargin)}>{getAcceptedFileTypeText(options)}</small>
       ) : null}
       {fileList}
+    </div>
+  );
+}
+
+export function FileDropzoneDefaultChildren({ primaryText = 'Upload file' }) {
+  const theme = useTheme2();
+  const styles = getStyles(theme);
+
+  return (
+    <div className={styles.iconWrapper}>
+      <Icon name="upload" size="xxl" />
+      <h3>{primaryText}</h3>
+      <small className={styles.small}>
+        Drag and drop here or <span className={styles.link}>Browse</span>
+      </small>
     </div>
   );
 }
@@ -173,7 +180,7 @@ function mapToCustomFile(file: File): DropzoneFile {
   };
 }
 
-function getStyles(theme: GrafanaTheme2, isDragActive: boolean) {
+function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
   return {
     container: css`
       display: flex;

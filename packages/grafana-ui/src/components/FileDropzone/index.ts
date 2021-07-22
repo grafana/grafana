@@ -1,4 +1,4 @@
-import { FileDropzone, DropzoneFile, FileDropzoneProps } from './FileDropzone';
+import { FileDropzone, DropzoneFile, FileDropzoneProps, FileDropzoneDefaultChildren } from './FileDropzone';
 import { FileListItem, FileListItemProps } from './FileListItem';
 
-export { FileDropzone, FileDropzoneProps, DropzoneFile, FileListItem, FileListItemProps };
+export { FileDropzone, FileDropzoneProps, DropzoneFile, FileListItem, FileListItemProps, FileDropzoneDefaultChildren };
