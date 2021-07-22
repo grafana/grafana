@@ -17,6 +17,7 @@ import {
   ScaleDirection,
   ScaleDistribution,
   ScaleOrientation,
+  StackingMode,
   UPlotConfigBuilder,
   UPlotConfigPrepFn,
 } from '@grafana/ui';
@@ -200,7 +201,10 @@ export function preparePlotFrame(data: DataFrame[]) {
 }
 
 /** @internal */
-export function prepareGraphableFrames(series: DataFrame[]): { frames?: DataFrame[]; warn?: string } {
+export function prepareGraphableFrames(
+  series: DataFrame[],
+  stacking: StackingMode
+): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
@@ -226,6 +230,13 @@ export function prepareGraphableFrames(series: DataFrame[]): { frames?: DataFram
       if (field.type === FieldType.number) {
         let copy = {
           ...field,
+          config: {
+            ...field.config,
+            custom: {
+              ...field.config.custom,
+              stacking,
+            },
+          },
           values: new ArrayVector(
             field.values.toArray().map((v) => {
               if (!(Number.isFinite(v) || v == null)) {
