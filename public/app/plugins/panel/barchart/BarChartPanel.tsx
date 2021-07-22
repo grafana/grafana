@@ -49,10 +49,9 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       height={height}
       {...options}
       orientation={orientation}
-      tooltip={tooltip}
     >
       {(config, alignedFrame) => {
-        return <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />;
+        return <TooltipPlugin data={alignedFrame} config={config} mode={tooltip.mode} timeZone={timeZone} />;
       }}
     </BarChart>
   );
