@@ -276,9 +276,25 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
   // Fetch new metric metadata when the fields change
   useEffect(() => {
     if (!(subscription && resourceGroup && metricDefinition && resourceName && metricNamespace && metricName)) {
+      log('useMetricMetadata', 'not requesting', {
+        subscription,
+        resourceGroup,
+        metricDefinition,
+        resourceName,
+        metricNamespace,
+        metricName,
+      });
       return;
     }
 
+    log('useMetricMetadata', 'requesting data', {
+      subscription,
+      resourceGroup,
+      metricDefinition,
+      resourceName,
+      metricNamespace,
+      metricName,
+    });
     datasource
       .getMetricMetadata(subscription, resourceGroup, metricDefinition, resourceName, metricNamespace, metricName)
       .then((metadata) => {
@@ -307,6 +323,10 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
     const newTimeGrain = timeGrain || 'auto';
 
     if (newAggregation !== aggregation || newTimeGrain !== timeGrain) {
+      log('useMetricMetadata', 'updating aggregation and timeGrain', {
+        aggregation: newAggregation,
+        timeGrain: newTimeGrain,
+      });
       onChange({
         ...query,
         azureMonitor: {

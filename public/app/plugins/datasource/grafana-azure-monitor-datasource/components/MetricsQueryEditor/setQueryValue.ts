@@ -50,7 +50,7 @@ export function setResourceName(query: AzureMonitorQuery, resourceName: string |
 }
 
 export function setMetricNamespace(query: AzureMonitorQuery, metricNamespace: string | undefined): AzureMonitorQuery {
-  log('setQueryID', 'setting setMetricNamespace', { setMetricNamespace });
+  log('setQueryID', 'setting setMetricNamespace', { metricNamespace });
   return {
     ...query,
     azureMonitor: {
@@ -61,7 +61,7 @@ export function setMetricNamespace(query: AzureMonitorQuery, metricNamespace: st
 }
 
 export function setMetricName(query: AzureMonitorQuery, metricName: string | undefined): AzureMonitorQuery {
-  log('setQueryID', 'setting setMetricName', { setMetricName });
+  log('setQueryID', 'setting setMetricName', { metricName });
   return {
     ...query,
     azureMonitor: {
@@ -72,7 +72,7 @@ export function setMetricName(query: AzureMonitorQuery, metricName: string | und
 }
 
 export function setAggregation(query: AzureMonitorQuery, aggregation: string): AzureMonitorQuery {
-  log('setQueryID', 'setting setAggregation', { setAggregation });
+  log('setQueryID', 'setting setAggregation', { aggregation });
   return {
     ...query,
     azureMonitor: {
@@ -83,7 +83,7 @@ export function setAggregation(query: AzureMonitorQuery, aggregation: string): A
 }
 
 export function setTimeGrain(query: AzureMonitorQuery, timeGrain: string): AzureMonitorQuery {
-  log('setQueryID', 'setting setTimeGrain', { setTimeGrain });
+  log('setQueryID', 'setting setTimeGrain', { timeGrain });
   return {
     ...query,
     azureMonitor: {
@@ -94,7 +94,7 @@ export function setTimeGrain(query: AzureMonitorQuery, timeGrain: string): Azure
 }
 
 export function setDimensionFilters(query: AzureMonitorQuery, dimensions: AzureMetricDimension[]): AzureMonitorQuery {
-  log('setQueryID', 'setting setDimensionFilters', { setDimensionFilters });
+  log('setQueryID', 'setting setDimensionFilters', { dimensions });
   return {
     ...query,
     azureMonitor: {
@@ -105,7 +105,7 @@ export function setDimensionFilters(query: AzureMonitorQuery, dimensions: AzureM
 }
 
 export function setTop(query: AzureMonitorQuery, top: string): AzureMonitorQuery {
-  log('setQueryID', 'setting setTop', { setTop });
+  log('setQueryID', 'setting setTop', { top });
   return {
     ...query,
     azureMonitor: {
@@ -116,7 +116,7 @@ export function setTop(query: AzureMonitorQuery, top: string): AzureMonitorQuery
 }
 
 export function setLegendAlias(query: AzureMonitorQuery, alias: string): AzureMonitorQuery {
-  log('setQueryID', 'setting setLegendAlias', { setLegendAlias });
+  log('setQueryID', 'setting setLegendAlias', { alias });
   return {
     ...query,
     azureMonitor: {
