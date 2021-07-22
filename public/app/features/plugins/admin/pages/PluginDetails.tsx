@@ -51,7 +51,7 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
             <PluginLogo
               src={plugin.info.logos.small}
               className={css`
-                object-fit: cover;
+                object-fit: contain;
                 width: 100%;
                 height: 68px;
                 max-width: 68px;
@@ -59,11 +59,19 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
             />
 
             <div className={styles.headerWrapper}>
-              <h1>{plugin.name}</h1>
+              <h1 className={styles.header}>
+                <a
+                  className={css`
+                    text-decoration: underline;
+                  `}
+                  href={'/plugins'}
+                >
+                  Plugins
+                </a>{' '}
+                / {plugin.name}
+              </h1>
               <div className={styles.headerLinks}>
-                <a className={styles.headerOrgName} href={'/plugins'}>
-                  {plugin.orgName}
-                </a>
+                <span>{plugin.orgName}</span>
                 {plugin.links.map((link: any) => (
                   <a key={link.name} href={link.url}>
                     {link.name}
@@ -126,12 +134,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     headerContainer: css`
       display: flex;
-      margin-bottom: 24px;
-      margin-top: 24px;
+      margin-bottom: ${theme.spacing(3)};
+      margin-top: ${theme.spacing(3)};
       min-height: 120px;
     `,
     headerWrapper: css`
       margin-left: ${theme.spacing(3)};
+    `,
+    header: css`
+      font-size: ${theme.typography.h2.fontSize};
     `,
     headerLinks: css`
       display: flex;
