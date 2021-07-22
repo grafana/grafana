@@ -3,6 +3,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -17,7 +18,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 		ss.Cfg.DateFormats.DefaultTimezone = "UTC"
 
 		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{}}
-		err := ss.GetPreferencesWithDefaults(query)
+		err := ss.GetPreferencesWithDefaults(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, "light", query.Result.Theme)
 		require.Equal(t, "UTC", query.Result.Timezone)
@@ -31,7 +32,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1, UserId: 1}}
-		err = ss.GetPreferencesWithDefaults(query)
+		err = ss.GetPreferencesWithDefaults(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, int64(4), query.Result.HomeDashboardId)
 	})
@@ -43,7 +44,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1, UserId: 2}}
-		err = ss.GetPreferencesWithDefaults(query)
+		err = ss.GetPreferencesWithDefaults(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), query.Result.HomeDashboardId)
 	})
@@ -59,7 +60,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 		query := &models.GetPreferencesWithDefaultsQuery{
 			User: &models.SignedInUser{OrgId: 1, Teams: []int64{2, 3}},
 		}
-		err = ss.GetPreferencesWithDefaults(query)
+		err = ss.GetPreferencesWithDefaults(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, int64(3), query.Result.HomeDashboardId)
 	})
@@ -73,7 +74,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1}}
-		err = ss.GetPreferencesWithDefaults(query)
+		err = ss.GetPreferencesWithDefaults(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), query.Result.HomeDashboardId)
 	})
@@ -91,7 +92,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 		query := &models.GetPreferencesWithDefaultsQuery{
 			User: &models.SignedInUser{OrgId: 1, UserId: 1, Teams: []int64{2, 3}},
 		}
-		err = ss.GetPreferencesWithDefaults(query)
+		err = ss.GetPreferencesWithDefaults(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, int64(4), query.Result.HomeDashboardId)
 	})
@@ -109,7 +110,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 		query := &models.GetPreferencesWithDefaultsQuery{
 			User: &models.SignedInUser{OrgId: 1, UserId: 2},
 		}
-		err = ss.GetPreferencesWithDefaults(query)
+		err = ss.GetPreferencesWithDefaults(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), query.Result.HomeDashboardId)
 	})

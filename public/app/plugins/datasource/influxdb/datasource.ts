@@ -13,6 +13,12 @@ import {
   AnnotationQueryRequest,
   AnnotationEvent,
   DataQueryError,
+  DataFrame,
+  TimeSeries,
+  TIME_SERIES_TIME_FIELD_NAME,
+  TIME_SERIES_VALUE_FIELD_NAME,
+  FieldType,
+  ArrayVector,
 } from '@grafana/data';
 import { v4 as uuidv4 } from 'uuid';
 import InfluxSeries from './influx_series';
@@ -25,6 +31,72 @@ import { getBackendSrv, DataSourceWithBackend, frameToMetricFindValue } from '@g
 import { Observable, throwError, of } from 'rxjs';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
 import { catchError, map } from 'rxjs/operators';
+
+// we detect the field type based on the value-array
+function getFieldType(values: unknown[]): FieldType {
+  if (values.length === 0) {
+    // if we get called with an empty value-array,
+    // we will assume the values are numbers
+    return FieldType.number;
+  }
+
+  const valueType = typeof values[0];
+
+  switch (valueType) {
+    case 'string':
+      return FieldType.string;
+    case 'boolean':
+      return FieldType.boolean;
+    case 'number':
+      return FieldType.number;
+    default:
+      // this should never happen, influxql values
+      // can only be numbers, strings and booleans.
+      throw new Error(`InfluxQL: invalid value type ${valueType}`);
+  }
+}
+
+// this conversion function is specialized to work with the timeseries
+// data returned by InfluxDatasource.getTimeSeries()
+function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
+  const times: number[] = [];
+  const values: unknown[] = [];
+
+  // the data we process here is not correctly typed.
+  // the typescript types say every data-point is number|null,
+  // but in fact it can be string or boolean too.
+
+  const points = timeSeries.datapoints;
+  for (const point of points) {
+    values.push(point[0]);
+    times.push(point[1] as number);
+  }
+
+  const timeField = {
+    name: TIME_SERIES_TIME_FIELD_NAME,
+    type: FieldType.time,
+    config: {},
+    values: new ArrayVector<number>(times),
+  };
+
+  const valueField = {
+    name: TIME_SERIES_VALUE_FIELD_NAME,
+    type: getFieldType(values),
+    config: {},
+    values: new ArrayVector<unknown>(values),
+    labels: timeSeries.tags,
+  };
+
+  const fields = [timeField, valueField];
+
+  return {
+    name: timeSeries.target,
+    refId: timeSeries.refId,
+    meta: timeSeries.meta,
+    fields,
+    length: values.length,
+  };
+}
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
   type: string;
@@ -200,7 +272,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
             default: {
               const timeSeries = influxSeries.getTimeSeries();
               for (y = 0; y < timeSeries.length; y++) {
-                seriesList.push(timeSeries[y]);
+                seriesList.push(timeSeriesToDataFrame(timeSeries[y]));
               }
               break;
             }

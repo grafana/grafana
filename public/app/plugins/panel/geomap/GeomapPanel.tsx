@@ -8,7 +8,7 @@ import BaseLayer from 'ol/layer/Base';
 import { defaults as interactionDefaults } from 'ol/interaction';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 
-import { PanelData, MapLayerHandler, MapLayerConfig, PanelProps, GrafanaTheme } from '@grafana/data';
+import { PanelData, MapLayerHandler, MapLayerOptions, PanelProps, GrafanaTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { ControlsOptions, GeomapPanelOptions, MapViewConfig } from './types';
@@ -24,25 +24,29 @@ import { getGlobalStyles } from './globalStyles';
 import { Global } from '@emotion/react';
 
 interface MapLayerState {
-  config: MapLayerConfig;
+  config: MapLayerOptions;
   handler: MapLayerHandler;
   layer: BaseLayer; // used to add|remove
 }
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
+export let lastGeomapPanelInstance: GeomapPanel | undefined = undefined;
 
 type Props = PanelProps<GeomapPanelOptions>;
 export class GeomapPanel extends Component<Props> {
   globalCSS = getGlobalStyles(config.theme2);
 
-  map: Map;
-
-  basemap: BaseLayer;
+  map?: Map;
+  basemap?: BaseLayer;
   layers: MapLayerState[] = [];
-  mouseWheelZoom: MouseWheelZoom;
+  mouseWheelZoom?: MouseWheelZoom;
   style = getStyles(config.theme);
   overlayProps: OverlayProps = {};
+
+  componentDidMount() {
+    lastGeomapPanelInstance = this;
+  }
 
   shouldComponentUpdate(nextProps: Props) {
     if (!this.map) {
@@ -54,7 +58,7 @@ export class GeomapPanel extends Component<Props> {
       this.map.updateSize();
     }
 
-    // External configuraiton changed
+    // External configuration changed
     let layersChanged = false;
     if (this.props.options !== nextProps.options) {
       layersChanged = this.optionsChanged(nextProps.options);
@@ -78,11 +82,11 @@ export class GeomapPanel extends Component<Props> {
 
     if (options.view !== oldOptions.view) {
       console.log('View changed');
-      this.map.setView(this.initMapView(options.view));
+      this.map!.setView(this.initMapView(options.view));
     }
 
     if (options.controls !== oldOptions.controls) {
-      console.log('Crontrols changed');
+      console.log('Controls changed');
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
     }
 
@@ -145,7 +149,10 @@ export class GeomapPanel extends Component<Props> {
     this.forceUpdate(); // first render
   };
 
-  initBasemap(cfg: MapLayerConfig) {
+  initBasemap(cfg: MapLayerOptions) {
+    if (!this.map) {
+      return;
+    }
     if (!cfg) {
       cfg = { type: defaultGrafanaThemedMap.id };
     }
@@ -159,10 +166,10 @@ export class GeomapPanel extends Component<Props> {
     this.map.getLayers().insertAt(0, this.basemap);
   }
 
-  initLayers(layers: MapLayerConfig[]) {
+  initLayers(layers: MapLayerOptions[]) {
     // 1st remove existing layers
     for (const state of this.layers) {
-      this.map.removeLayer(state.layer);
+      this.map!.removeLayer(state.layer);
       state.layer.dispose();
     }
 
@@ -178,9 +185,9 @@ export class GeomapPanel extends Component<Props> {
         continue; // TODO -- panel warning?
       }
 
-      const handler = item.create(this.map, overlay, config.theme2);
+      const handler = item.create(this.map!, overlay, config.theme2);
       const layer = handler.init();
-      this.map.addLayer(layer);
+      this.map!.addLayer(layer);
       this.layers.push({
         config: overlay,
         layer,
@@ -204,13 +211,12 @@ export class GeomapPanel extends Component<Props> {
       }
     }
 
-    const v = centerPointRegistry.getIfExists(config.center.id);
+    const v = centerPointRegistry.getIfExists(config.id);
     if (v) {
       let coord: Coordinate | undefined = undefined;
       if (v.lat == null) {
         if (v.id === MapCenterID.Coordinates) {
-          const center = config.center ?? {};
-          coord = [center.lon ?? 0, center.lat ?? 0];
+          coord = [config.lon ?? 0, config.lat ?? 0];
         } else {
           console.log('TODO, view requires special handling', v);
         }
@@ -235,6 +241,9 @@ export class GeomapPanel extends Component<Props> {
   }
 
   initControls(options: ControlsOptions) {
+    if (!this.map) {
+      return;
+    }
     this.map.getControls().clear();
 
     if (options.showZoom) {
@@ -250,7 +259,7 @@ export class GeomapPanel extends Component<Props> {
       );
     }
 
-    this.mouseWheelZoom.setActive(Boolean(options.mouseWheelZoom));
+    this.mouseWheelZoom!.setActive(Boolean(options.mouseWheelZoom));
 
     if (options.showAttribution) {
       this.map.addControl(new Attribution({ collapsed: true, collapsible: true }));
