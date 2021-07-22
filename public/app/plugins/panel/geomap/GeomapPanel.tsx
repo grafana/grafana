@@ -97,7 +97,7 @@ export class GeomapPanel extends Component<Props> {
 
     if (options.layers !== oldOptions.layers) {
       console.log('layers changed');
-      this.initLayers(options.layers ?? []);
+      this.initLayers(options.layers ?? []); // async
       layersChanged = true;
     }
     return layersChanged;
@@ -119,7 +119,7 @@ export class GeomapPanel extends Component<Props> {
     this.overlayProps.bottomLeft = legends;
   }
 
-  initMapRef = (div: HTMLDivElement) => {
+  initMapRef = async (div: HTMLDivElement) => {
     if (this.map) {
       this.map.dispose();
     }
@@ -143,12 +143,11 @@ export class GeomapPanel extends Component<Props> {
     this.map.addInteraction(this.mouseWheelZoom);
     this.initControls(options.controls);
     this.initBasemap(options.basemap);
-    this.initLayers(options.layers);
-    this.dataChanged(this.props.data, options.controls.showLegend);
+    await this.initLayers(options.layers, options.controls?.showLegend);
     this.forceUpdate(); // first render
   };
 
-  initBasemap(cfg: MapLayerOptions) {
+  async initBasemap(cfg: MapLayerOptions) {
     if (!this.map) {
       return;
     }
@@ -157,7 +156,8 @@ export class GeomapPanel extends Component<Props> {
       cfg = DEFAULT_BASEMAP_CONFIG;
     }
     const item = geomapLayerRegistry.getIfExists(cfg.type) ?? defaultBaseLayer;
-    const layer = item.create(this.map, cfg, config.theme2).init();
+    const handler = await item.create(this.map, cfg, config.theme2);
+    const layer = handler.init();
     if (this.basemap) {
       this.map.removeLayer(this.basemap);
       this.basemap.dispose();
@@ -166,7 +166,7 @@ export class GeomapPanel extends Component<Props> {
     this.map.getLayers().insertAt(0, this.basemap);
   }
 
-  initLayers(layers: MapLayerOptions[]) {
+  async initLayers(layers: MapLayerOptions[], showLegend?: boolean) {
     // 1st remove existing layers
     for (const state of this.layers) {
       this.map!.removeLayer(state.layer);
@@ -185,7 +185,7 @@ export class GeomapPanel extends Component<Props> {
         continue; // TODO -- panel warning?
       }
 
-      const handler = item.create(this.map!, overlay, config.theme2);
+      const handler = await item.create(this.map!, overlay, config.theme2);
       const layer = handler.init();
       this.map!.addLayer(layer);
       this.layers.push({
@@ -194,6 +194,9 @@ export class GeomapPanel extends Component<Props> {
         handler,
       });
     }
+
+    // Update data after init layers
+    this.dataChanged(this.props.data);
   }
 
   initMapView(config: MapViewConfig): View {
