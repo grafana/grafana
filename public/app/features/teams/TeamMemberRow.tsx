@@ -1,21 +1,19 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { LegacyForms, DeleteButton } from '@grafana/ui';
 const { Select } = LegacyForms;
 import { SelectableValue } from '@grafana/data';
 
-import { TeamMember, teamsPermissionLevels, TeamPermissionLevel } from 'app/types';
+import { TeamMember, teamsPermissionLevels, TeamPermissionLevel, StoreState } from 'app/types';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { updateTeamMember, removeTeamMember } from './state/actions';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
-export interface Props {
+export interface Props extends ConnectedProps<typeof connector> {
   member: TeamMember;
   syncEnabled: boolean;
   editorsCanAdmin: boolean;
   signedInUserIsTeamAdmin: boolean;
-  removeTeamMember: typeof removeTeamMember;
-  updateTeamMember: typeof updateTeamMember;
 }
 
 export class TeamMemberRow extends PureComponent<Props> {
@@ -97,7 +95,7 @@ export class TeamMemberRow extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps(state: any) {
+function mapStateToProps(state: StoreState) {
   return {};
 }
 
@@ -106,4 +104,5 @@ const mapDispatchToProps = {
   updateTeamMember,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(TeamMemberRow);
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export default connector(TeamMemberRow);

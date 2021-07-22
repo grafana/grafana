@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -9,21 +9,16 @@ import { getSearchMemberQuery, isSignedInUserTeamAdmin } from './state/selectors
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { config } from 'app/core/config';
-import { contextSrv, User as SignedInUser } from 'app/core/services/context_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import TeamMemberRow from './TeamMemberRow';
 import { setSearchMemberQuery } from './state/reducers';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { Button } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
-export interface Props {
+export interface Props extends ConnectedProps<typeof connector> {
   members: TeamMember[];
-  searchMemberQuery: string;
-  addTeamMember: typeof addTeamMember;
-  setSearchMemberQuery: typeof setSearchMemberQuery;
   syncEnabled: boolean;
-  editorsCanAdmin: boolean;
-  signedInUser: SignedInUser;
 }
 
 export interface State {
@@ -146,4 +141,5 @@ const mapDispatchToProps = {
   setSearchMemberQuery,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(TeamMembers);
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export default connector(TeamMembers);

@@ -1,14 +1,13 @@
 import React, { FC } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { Input, Field, Form, Button, FieldSet, VerticalGroup } from '@grafana/ui';
 
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { updateTeam } from './state/actions';
 import { Team } from 'app/types';
 
-export interface Props {
+export interface Props extends ConnectedProps<typeof connector> {
   team: Team;
-  updateTeam: typeof updateTeam;
 }
 
 export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
@@ -47,4 +46,5 @@ const mapDispatchToProps = {
   updateTeam,
 };
 
-export default connect(null, mapDispatchToProps)(TeamSettings);
+const connector = connect(null, mapDispatchToProps);
+export default connector(TeamSettings);

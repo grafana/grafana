@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, ScrollbarPosition, stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
@@ -14,8 +14,8 @@ import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
 import { initDashboard } from '../state/initDashboard';
 import { notifyApp } from 'app/core/actions';
-import { DashboardInitError, DashboardInitPhase, KioskMode, StoreState } from 'app/types';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { KioskMode, StoreState } from 'app/types';
+import { PanelModel } from 'app/features/dashboard/state';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { cleanUpDashboardAndVariables } from '../state/actions';
@@ -52,17 +52,9 @@ type DashboardPageRouteSearchParams = {
 
 export interface Props
   extends Themeable2,
-    GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
-  initPhase: DashboardInitPhase;
-  isInitSlow: boolean;
-  dashboard: DashboardModel | null;
-  initError?: DashboardInitError;
-  initDashboard: typeof initDashboard;
-  cleanUpDashboardAndVariables: typeof cleanUpDashboardAndVariables;
-  notifyApp: typeof notifyApp;
+    GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>,
+    ConnectedProps<typeof connector> {
   isPanelEditorOpen?: boolean;
-  cancelVariables: typeof cancelVariables;
-  templateVarsChangedInUrl: typeof templateVarsChangedInUrl;
 }
 
 export interface State {
@@ -413,4 +405,5 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
 
 export const DashboardPage = withTheme2(UnthemedDashboardPage);
 DashboardPage.displayName = 'DashboardPage';
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export default hot(module)(connector(DashboardPage));

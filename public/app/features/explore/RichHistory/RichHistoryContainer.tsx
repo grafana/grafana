@@ -1,6 +1,6 @@
 // Libraries
 import React, { useState } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
 // Services & Utils
@@ -9,7 +9,7 @@ import { RICH_HISTORY_SETTING_KEYS } from 'app/core/utils/richHistory';
 
 // Types
 import { ExploreItemState, StoreState } from 'app/types';
-import { ExploreId, RichHistoryQuery } from 'app/types/explore';
+import { ExploreId } from 'app/types/explore';
 
 // Components, enums
 import { RichHistory, Tabs } from './RichHistory';
@@ -18,13 +18,9 @@ import { RichHistory, Tabs } from './RichHistory';
 import { deleteRichHistory } from '../state/history';
 import { ExploreDrawer } from '../ExploreDrawer';
 
-export interface Props {
+export interface Props extends ConnectedProps<typeof connector> {
   width: number;
   exploreId: ExploreId;
-  activeDatasourceInstance: string;
-  richHistory: RichHistoryQuery[];
-  firstTab: Tabs;
-  deleteRichHistory: typeof deleteRichHistory;
   onClose: () => void;
 }
 
@@ -73,4 +69,5 @@ const mapDispatchToProps = {
   deleteRichHistory,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(RichHistoryContainer));
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export default hot(module)(connector(RichHistoryContainer));

@@ -29,7 +29,7 @@ export const sortOrderOptions = [
 
 export interface RichHistoryProps extends Themeable {
   richHistory: RichHistoryQuery[];
-  activeDatasourceInstance: string;
+  activeDatasourceInstance?: string;
   firstTab: Tabs;
   exploreId: ExploreId;
   height: number;

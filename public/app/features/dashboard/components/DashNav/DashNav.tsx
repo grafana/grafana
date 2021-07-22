@@ -1,6 +1,6 @@
 // Libaries
 import React, { PureComponent, FC, ReactNode } from 'react';
-import { connect, MapDispatchToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 // Utils & Services
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 // Components
@@ -29,10 +29,6 @@ export interface OwnProps {
   onAddPanel: () => void;
 }
 
-interface DispatchProps {
-  updateTimeZoneForSession: typeof updateTimeZoneForSession;
-}
-
 interface DashNavButtonModel {
   show: (props: Props) => boolean;
   component: FC<Partial<Props>>;
@@ -50,7 +46,7 @@ export function addCustomRightAction(content: DashNavButtonModel) {
   customRightActions.push(content);
 }
 
-type Props = OwnProps & DispatchProps;
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class DashNav extends PureComponent<Props> {
   constructor(props: Props) {
@@ -265,8 +261,9 @@ class DashNav extends PureComponent<Props> {
 
 const mapStateToProps = (state: StoreState) => ({});
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
+const mapDispatchToProps = {
   updateTimeZoneForSession,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(DashNav);
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export default connector(DashNav);

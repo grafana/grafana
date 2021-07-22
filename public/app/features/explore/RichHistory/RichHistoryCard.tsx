@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { css, cx } from '@emotion/css';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
@@ -20,15 +20,10 @@ import { changeDatasource } from '../state/datasource';
 import { setQueries } from '../state/query';
 import { ShowConfirmModalEvent } from '../../../types/events';
 
-export interface Props {
+export interface Props extends ConnectedProps<typeof connector> {
   query: RichHistoryQuery;
   dsImg: string;
   isRemoved: boolean;
-  changeDatasource: typeof changeDatasource;
-  updateRichHistory: typeof updateRichHistory;
-  setQueries: typeof setQueries;
-  exploreId: ExploreId;
-  datasourceInstance: DataSourceApi;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
@@ -319,4 +314,5 @@ const mapDispatchToProps = {
   setQueries,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(RichHistoryCard));
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export default hot(module)(connector(RichHistoryCard));
