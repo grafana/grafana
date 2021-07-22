@@ -168,22 +168,16 @@
     "name": "Bermuda"
   },
   {
-    "key": "BN",
+    "keys": ["BN", "BRN"],
     "latitude": 4.535277,
     "longitude": 114.727669,
     "name": "Brunei"
   },
   {
-    "key": "BO",
+    "keys": ["BO", "BOL"],
     "latitude": -16.290154,
     "longitude": -63.588653,
     "name": "Bolivia"
-  },
-  {
-    "key": "BOL",
-    "latitude": -17,
-    "longitude": -65,
-    "name": "Bolivia, Plurinational State of"
   },
   {
     "key": "BQ",
@@ -196,12 +190,6 @@
     "latitude": -14.235004,
     "longitude": -51.92528,
     "name": "Brazil"
-  },
-  {
-    "key": "BRN",
-    "latitude": 4.5,
-    "longitude": 114.6667,
-    "name": "Brunei Darussalam"
   },
   {
     "keys": ["BS", "BHS"],
@@ -246,19 +234,13 @@
     "name": "Canada"
   },
   {
-    "key": "CC",
+    "keys": ["CC", "CCK"],
     "latitude": -12.164165,
     "longitude": 96.870956,
     "name": "Cocos [Keeling] Islands"
   },
   {
-    "key": "CCK",
-    "latitude": -12.5,
-    "longitude": 96.8333,
-    "name": "Cocos (Keeling) Islands"
-  },
-  {
-    "key": "CD",
+    "keys": ["CD", "COD"],
     "latitude": -4.038333,
     "longitude": 21.758664,
     "name": "Congo [DRC]"
@@ -270,7 +252,7 @@
     "name": "Central African Republic"
   },
   {
-    "key": "CG",
+    "keys": ["CG", "COG"],
     "latitude": -0.228021,
     "longitude": 15.827659,
     "name": "Congo [Republic]"
@@ -316,18 +298,6 @@
     "latitude": 4.570868,
     "longitude": -74.297333,
     "name": "Colombia"
-  },
-  {
-    "key": "COD",
-    "latitude": 0,
-    "longitude": 25,
-    "name": "Congo, the Democratic Republic of the"
-  },
-  {
-    "key": "COG",
-    "latitude": -1,
-    "longitude": 15,
-    "name": "Congo"
   },
   {
     "keys": ["CR", "CRI"],
@@ -462,19 +432,13 @@
     "name": "Fiji"
   },
   {
-    "key": "FK",
+    "keys": ["FK", "FLK"],
     "latitude": -51.796253,
     "longitude": -59.523613,
     "name": "Falkland Islands [Islas Malvinas]"
   },
   {
-    "key": "FLK",
-    "latitude": -51.75,
-    "longitude": -59,
-    "name": "Falkland Islands (Malvinas)"
-  },
-  {
-    "key": "FM",
+    "keys": ["FM", "FSM"],
     "latitude": 7.425554,
     "longitude": 150.550812,
     "name": "Micronesia"
@@ -490,12 +454,6 @@
     "latitude": 46.227638,
     "longitude": 2.213749,
     "name": "France"
-  },
-  {
-    "key": "FSM",
-    "latitude": 6.9167,
-    "longitude": 158.25,
-    "name": "Micronesia, Federated States of"
   },
   {
     "keys": ["GA", "GAB"],
@@ -696,16 +654,10 @@
     "name": "Iraq"
   },
   {
-    "key": "IR",
+    "keys": ["IR", "IRN"],
     "latitude": 32.427908,
     "longitude": 53.688046,
     "name": "Iran"
-  },
-  {
-    "key": "IRN",
-    "latitude": 32,
-    "longitude": 53,
-    "name": "Iran, Islamic Republic of"
   },
   {
     "keys": ["IS", "ISL"],
@@ -780,22 +732,16 @@
     "name": "Saint Kitts and Nevis"
   },
   {
-    "key": "KOR",
+    "keys": ["KR", "KOR"],
     "latitude": 37,
     "longitude": 127.5,
-    "name": "Korea, Republic of"
+    "name": "South Korea"
   },
   {
-    "key": "KP",
+    "keys": ["KP", "PRK"],
     "latitude": 40.339852,
     "longitude": 127.510093,
     "name": "North Korea"
-  },
-  {
-    "key": "KR",
-    "latitude": 35.907757,
-    "longitude": 127.766922,
-    "name": "South Korea"
   },
   {
     "keys": ["KW", "KWT"],
@@ -816,16 +762,10 @@
     "name": "Kazakhstan"
   },
   {
-    "key": "LA",
+    "keys": ["LA", "LAO"],
     "latitude": 19.85627,
     "longitude": 102.495496,
     "name": "Laos"
-  },
-  {
-    "key": "LAO",
-    "latitude": 18,
-    "longitude": 105,
-    "name": "Lao People's Democratic Republic"
   },
   {
     "keys": ["LB", "LBN"],
@@ -834,10 +774,10 @@
     "name": "Lebanon"
   },
   {
-    "key": "LBY",
+    "keys": ["LY", "LBY"],
     "latitude": 25,
     "longitude": 17,
-    "name": "Libyan Arab Jamahiriya"
+    "name": "Libya"
   },
   {
     "keys": ["LC", "LCA"],
@@ -888,19 +828,13 @@
     "name": "Latvia"
   },
   {
-    "key": "LY",
-    "latitude": 26.3351,
-    "longitude": 17.228331,
-    "name": "Libya"
-  },
-  {
     "keys": ["MA", "MAR"],
     "latitude": 31.791702,
     "longitude": -7.09262,
     "name": "Morocco"
   },
   {
-    "key": "MAC",
+    "keys": ["MO", "MAC"],
     "latitude": 22.1667,
     "longitude": 113.55,
     "name": "Macao"
@@ -912,16 +846,10 @@
     "name": "Monaco"
   },
   {
-    "key": "MD",
+    "keys": ["MD", "MDA"],
     "latitude": 47.411631,
     "longitude": 28.369885,
     "name": "Moldova"
-  },
-  {
-    "key": "MDA",
-    "latitude": 47,
-    "longitude": 29,
-    "name": "Moldova, Republic of"
   },
   {
     "keys": ["ME", "MNE"],
@@ -948,16 +876,10 @@
     "name": "Marshall Islands"
   },
   {
-    "key": "MK",
+    "keys": ["MK", "MKD"],
     "latitude": 41.608635,
     "longitude": 21.745275,
     "name": "Macedonia [FYROM]"
-  },
-  {
-    "key": "MKD",
-    "latitude": 41.8333,
-    "longitude": 22,
-    "name": "Macedonia, the former Yugoslav Republic of"
   },
   {
     "keys": ["ML", "MLI"],
@@ -966,28 +888,16 @@
     "name": "Mali"
   },
   {
-    "key": "MM",
+    "keys": ["MM", "MMR"],
     "latitude": 21.913965,
     "longitude": 95.956223,
     "name": "Myanmar [Burma]"
-  },
-  {
-    "key": "MMR",
-    "latitude": 22,
-    "longitude": 98,
-    "name": "Myanmar"
   },
   {
     "keys": ["MN", "MNG"],
     "latitude": 46.862496,
     "longitude": 103.846656,
     "name": "Mongolia"
-  },
-  {
-    "key": "MO",
-    "latitude": 22.198745,
-    "longitude": 113.543873,
-    "name": "Macau"
   },
   {
     "keys": ["MP", "MNP"],
@@ -1140,12 +1050,6 @@
     "name": "Panama"
   },
   {
-    "key": "PCN",
-    "latitude": -24.7,
-    "longitude": -127.4,
-    "name": "Pitcairn"
-  },
-  {
     "keys": ["PE", "PER"],
     "latitude": -9.189967,
     "longitude": -75.015152,
@@ -1188,7 +1092,7 @@
     "name": "Saint Pierre and Miquelon"
   },
   {
-    "key": "PN",
+    "keys": ["PN", "PCN"],
     "latitude": -24.703615,
     "longitude": -127.439308,
     "name": "Pitcairn Islands"
@@ -1200,22 +1104,10 @@
     "name": "Puerto Rico"
   },
   {
-    "key": "PRK",
-    "latitude": 40,
-    "longitude": 127,
-    "name": "Korea, Democratic People's Republic of"
-  },
-  {
-    "key": "PS",
+    "keys": ["PS", "PSE"],
     "latitude": 31.952162,
     "longitude": 35.233154,
     "name": "Palestinian Territories"
-  },
-  {
-    "key": "PSE",
-    "latitude": 32,
-    "longitude": 35.25,
-    "name": "Palestinian Territory, Occupied"
   },
   {
     "keys": ["PT", "PRT"],
@@ -1260,16 +1152,10 @@
     "name": "Serbia"
   },
   {
-    "key": "RU",
+    "keys": ["RU", "RUS"],
     "latitude": 61.52401,
     "longitude": 105.318756,
     "name": "Russia"
-  },
-  {
-    "key": "RUS",
-    "latitude": 60,
-    "longitude": 100,
-    "name": "Russian Federation"
   },
   {
     "keys": ["RW", "RWA"],
@@ -1314,16 +1200,10 @@
     "name": "Singapore"
   },
   {
-    "key": "SH",
+    "keys": ["SH", "SHN"],
     "latitude": -24.143474,
     "longitude": -10.030696,
     "name": "Saint Helena"
-  },
-  {
-    "key": "SHN",
-    "latitude": -15.9333,
-    "longitude": -5.7,
-    "name": "Saint Helena, Ascension and Tristan da Cunha"
   },
   {
     "keys": ["SI", "SVN"],
@@ -1374,16 +1254,10 @@
     "name": "Suriname"
   },
   {
-    "key": "ST",
+    "keys": ["ST", "STP"],
     "latitude": 0.18636,
     "longitude": 6.613081,
     "name": "São Tomé and Príncipe"
-  },
-  {
-    "key": "STP",
-    "latitude": 1,
-    "longitude": 7,
-    "name": "Sao Tome and Principe"
   },
   {
     "keys": ["SV", "SLV"],
@@ -1398,16 +1272,10 @@
     "name": "Sint Maarten"
   },
   {
-    "key": "SY",
+    "keys": ["SY", "SYR"],
     "latitude": 34.802075,
     "longitude": 38.996815,
     "name": "Syria"
-  },
-  {
-    "key": "SYR",
-    "latitude": 35,
-    "longitude": 38,
-    "name": "Syrian Arab Republic"
   },
   {
     "keys": ["SZ", "SWZ"],
@@ -1500,28 +1368,16 @@
     "name": "Tuvalu"
   },
   {
-    "key": "TW",
+    "keys": ["TW", "TWN"],
     "latitude": 23.69781,
     "longitude": 120.960515,
     "name": "Taiwan"
   },
   {
-    "key": "TWN",
-    "latitude": 23.5,
-    "longitude": 121,
-    "name": "Taiwan, Province of China"
-  },
-  {
-    "key": "TZ",
+    "keys": ["TZ", "TZA"],
     "latitude": -6.369028,
     "longitude": 34.888822,
     "name": "Tanzania"
-  },
-  {
-    "key": "TZA",
-    "latitude": -6,
-    "longitude": 35,
-    "name": "Tanzania, United Republic of"
   },
   {
     "keys": ["UA", "UKR"],
@@ -1536,16 +1392,10 @@
     "name": "Uganda"
   },
   {
-    "key": "UM",
+    "keys": ["UM", "UMI"],
     "latitude": 0,
     "longitude": 0,
     "name": "U.S. Minor Outlying Islands"
-  },
-  {
-    "key": "UMI",
-    "latitude": 19.2833,
-    "longitude": 166.6,
-    "name": "United States Minor Outlying Islands"
   },
   {
     "keys": ["US", "USA"],
@@ -1566,16 +1416,10 @@
     "name": "Uzbekistan"
   },
   {
-    "key": "VA",
+    "keys": ["VA", "VAT"],
     "latitude": 41.902916,
     "longitude": 12.453389,
     "name": "Vatican City"
-  },
-  {
-    "key": "VAT",
-    "latitude": 41.9,
-    "longitude": 12.45,
-    "name": "Holy See (Vatican City State)"
   },
   {
     "keys": ["VC", "VCT"],
@@ -1584,52 +1428,28 @@
     "name": "Saint Vincent and the Grenadines"
   },
   {
-    "key": "VE",
+    "keys": ["VE", "VEN"],
     "latitude": 6.42375,
     "longitude": -66.58973,
     "name": "Venezuela"
   },
   {
-    "key": "VEN",
-    "latitude": 8,
-    "longitude": -66,
-    "name": "Venezuela, Bolivarian Republic of"
-  },
-  {
-    "key": "VG",
+    "keys": ["VG", "VGB"],
     "latitude": 18.420695,
     "longitude": -64.639968,
     "name": "British Virgin Islands"
   },
   {
-    "key": "VGB",
-    "latitude": 18.5,
-    "longitude": -64.5,
-    "name": "Virgin Islands, British"
-  },
-  {
-    "key": "VI",
+    "keys": ["VI", "VIR"],
     "latitude": 18.335765,
     "longitude": -64.896335,
     "name": "U.S. Virgin Islands"
   },
   {
-    "key": "VIR",
-    "latitude": 18.3333,
-    "longitude": -64.8333,
-    "name": "Virgin Islands, U.S."
-  },
-  {
-    "key": "VN",
+    "keys": ["VN", "VNM"],
     "latitude": 14.058324,
     "longitude": 108.277199,
     "name": "Vietnam"
-  },
-  {
-    "key": "VNM",
-    "latitude": 16,
-    "longitude": 106,
-    "name": "Viet Nam"
   },
   {
     "keys": ["VU", "VUT"],
