@@ -175,6 +175,18 @@ export function dataFrameToPoints(frame: DataFrame, location: LocationFieldMatch
       }
       break;
 
+    case FrameGeometrySourceMode.Lookup:
+      if (fields.lookup) {
+        if (location.gazetteer) {
+          info.points = getPointsFromGazetteer(location.gazetteer, fields.lookup);
+        } else {
+          info.warning = 'Gazetteer not found';
+        }
+      } else {
+        info.warning = 'Missing lookup field';
+      }
+      break;
+
     case FrameGeometrySourceMode.Auto:
       info.warning = 'Unable to find location fields';
   }
@@ -198,6 +210,18 @@ function getPointsFromGeohash(field: Field<string>): Point[] {
     const coords = decodeGeohash(field.values.get(i));
     if (coords) {
       points[i] = new Point(fromLonLat(coords));
+    }
+  }
+  return points;
+}
+
+function getPointsFromGazetteer(gaz: Gazetteer, field: Field<string>): Point[] {
+  const count = field.values.length;
+  const points = new Array<Point>(count);
+  for (let i = 0; i < count; i++) {
+    const info = gaz.find(field.values.get(i));
+    if (info?.coords) {
+      points[i] = new Point(fromLonLat(info.coords));
     }
   }
   return points;

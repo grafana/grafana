@@ -96,7 +96,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
           showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
         })
         .addTextInput({
-          path: 'location.placenames',
+          path: 'location.gazetteer',
           name: 'Gazetteer',
           settings: {
             placeholder: 'url?',
