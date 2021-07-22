@@ -41,7 +41,6 @@ export interface AzureMetricQuery {
   metricNamespace?: string;
   metricName?: string;
   timeGrain?: string;
-  allowedTimeGrainsMs?: number[];
   aggregation?: string;
   dimensionFilters?: AzureMetricDimension[];
   alias?: string;
@@ -49,6 +48,9 @@ export interface AzureMetricQuery {
 
   /** @deprecated */
   timeGrainUnit?: string;
+
+  /** @deprecated Remove this once angular is removed */
+  allowedTimeGrainsMs?: number[];
 }
 
 /**

@@ -2,7 +2,6 @@ import React from 'react';
 
 import Datasource from '../../datasource';
 import { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
-import { useMetricsMetadata } from '../metrics';
 import SubscriptionField from '../SubscriptionField';
 import MetricNamespaceField from './MetricNamespaceField';
 import ResourceTypeField from './ResourceTypeField';
@@ -22,6 +21,7 @@ import {
   useResourceNames,
   useResourceTypes,
   useSubscriptions,
+  useMetricMetadata,
 } from './dataHooks';
 
 interface MetricsQueryEditorProps {
@@ -41,7 +41,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
   onChange,
   setError,
 }) => {
-  const metricsMetadata = useMetricsMetadata(datasource, query, subscriptionId, onChange);
+  const metricsMetadata = useMetricMetadata(query, datasource, onChange);
   const subscriptions = useSubscriptions(query, datasource, onChange, setError);
   const resourceGroups = useResourceGroups(query, datasource, onChange, setError);
   const resourceTypes = useResourceTypes(query, datasource, onChange, setError);

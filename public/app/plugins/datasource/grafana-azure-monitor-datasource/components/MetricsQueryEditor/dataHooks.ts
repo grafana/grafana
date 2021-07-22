@@ -11,6 +11,17 @@ import {
   setSubscriptionID,
 } from './setQueryValue';
 
+export interface MetricMetadata {
+  aggOptions: AzureMonitorOption[];
+  timeGrains: AzureMonitorOption[];
+  dimensions: AzureMonitorOption[];
+  isLoading: boolean;
+
+  // These two properties are only used within the hook, and not elsewhere
+  supportedAggTypes: string[];
+  primaryAggType: string | undefined;
+}
+
 type SetErrorFn = (source: string, error: AzureMonitorErrorish | undefined) => void;
 type OnChangeFn = (newQuery: AzureMonitorQuery) => void;
 
@@ -246,4 +257,66 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
     setError,
     [subscription, resourceGroup, metricDefinition, resourceName, metricNamespace]
   );
+};
+
+export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasource, onChange: OnChangeFn) => {
+  const [metricMetadata, setMetricMetadata] = useState<MetricMetadata>({
+    aggOptions: [],
+    timeGrains: [],
+    dimensions: [],
+    isLoading: false,
+    supportedAggTypes: [],
+    primaryAggType: undefined,
+  });
+
+  const { subscription } = query;
+  const { resourceGroup, metricDefinition, resourceName, metricNamespace, metricName, aggregation, timeGrain } =
+    query.azureMonitor ?? {};
+
+  // Fetch new metric metadata when the fields change
+  useEffect(() => {
+    if (!(subscription && resourceGroup && metricDefinition && resourceName && metricNamespace && metricName)) {
+      return;
+    }
+
+    datasource
+      .getMetricMetadata(subscription, resourceGroup, metricDefinition, resourceName, metricNamespace, metricName)
+      .then((metadata) => {
+        // TODO: Move the aggregationTypes and timeGrain defaults into `getMetricMetadata`
+        const aggregations = (metadata.supportedAggTypes || [metadata.primaryAggType]).map((v) => ({
+          label: v,
+          value: v,
+        }));
+
+        setMetricMetadata({
+          aggOptions: aggregations,
+          timeGrains: metadata.supportedTimeGrains,
+          dimensions: metadata.dimensions,
+          isLoading: false,
+          supportedAggTypes: metadata.supportedAggTypes ?? [],
+          primaryAggType: metadata.primaryAggType,
+        });
+      });
+  }, [datasource, subscription, resourceGroup, metricDefinition, resourceName, metricNamespace, metricName]);
+
+  // Update the query state in response to the meta data changing
+  useEffect(() => {
+    const aggregationIsValid = aggregation && metricMetadata.supportedAggTypes.includes(aggregation);
+
+    const newAggregation = aggregationIsValid ? aggregation : metricMetadata.primaryAggType;
+    const newTimeGrain = timeGrain || 'auto';
+
+    if (newAggregation !== aggregation || newTimeGrain !== timeGrain) {
+      onChange({
+        ...query,
+        azureMonitor: {
+          ...query.azureMonitor,
+          aggregation: newAggregation,
+          timeGrain: newTimeGrain,
+        },
+      });
+    }
+  }, [onChange, metricMetadata, aggregation, timeGrain, query]);
+
+  return metricMetadata;
 };
