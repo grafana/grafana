@@ -1531,9 +1531,9 @@ allowed_origins = "https://*.example.com"
 
 **Experimental**
 
-The name of high-availability engine for Grafana Live. By default, it's not set. The only possible value is "redis".
+The high availability (HA) engine name for Grafana Live. By default, it's not set. The only possible value is "redis".
 
-More information in [Configure Grafana Live HA setup]({{< relref "../live/live-ha-setup.md" >}}).
+For more information, refer to [Configure Grafana Live HA setup]({{< relref "../live/live-ha-setup.md" >}}).
 
 ### ha_engine_address
 
@@ -1541,7 +1541,7 @@ More information in [Configure Grafana Live HA setup]({{< relref "../live/live-h
 
 **Experimental**
 
-Address string of selected HA Live engine. For Redis it's a `host:port` string. Example:
+Address string of selected the high availability (HA) Live engine. For Redis, it's a `host:port` string. Example:
 
 ```ini
 [live]
