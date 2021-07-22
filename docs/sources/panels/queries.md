@@ -101,6 +101,32 @@ Panel data source query options:
 
 - **Cache timeout -** (This field is only visible if available in your data source.) If your time series store has a query cache, then this option can override the default cache timeout. Specified as a numeric value in seconds.
 
+### Examples:
+
+- **Relative time:** 
+
+| Example             | Relative time field |
+| ------------------- | --------------------|
+| Last 5 minutes      | `now-5m`            |
+| The day so far      | `now/d`             |
+| Last 5 days         | `now-5d/d`          |
+| This week so far    | `now/w`             |
+| Last 2 years        | `now-2y/y`          |   
+
+
+- **Time shift:** 
+
+| Example             | Time shift field |
+| ------------------- | --------------------|
+| Last entire week    | `1w/w`              |
+| Two entire weeks ago | `2w/w`              |
+| Last entire month   | `1M/M`              |
+| This entire year    | `1d/y`              |
+| Last entire year    | `1y/y`              |   
+
+
+
+
 ### Query inspector button
 
 You can click **Query inspector** to open the Query tab of the panel inspector where you can see the query request sent by the panel and the response.

@@ -29,6 +29,12 @@ export const plugin = new PanelPlugin<PanelOptions>(LogsPanel).setPanelOptions((
       defaultValue: defaultPanelOptions.wrapLogMessage,
     })
     .addBooleanSwitch({
+      path: 'prettifyLogMessage',
+      name: 'Prettify JSON',
+      description: '',
+      defaultValue: false,
+    })
+    .addBooleanSwitch({
       path: 'enableLogDetails',
       name: 'Enable log details',
       description: '',
