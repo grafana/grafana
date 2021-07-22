@@ -82,7 +82,7 @@ default_baselayer_config = `{
 
 Data layer in the Geomap plugin determine how you visualize geospatial data on top of the base map.
 
-#### Markers Layer
+### Markers Layer
 
 Markers layer allows displaying data points as different marker shapes such as circle, square, triangle, star, and more.
 
@@ -96,7 +96,7 @@ Markers layer allows displaying data points as different marker shapes such as c
   - X
 - **Fill Opacity** configures the transparency of each marker.
 
-#### Heatmap Layer
+### Heatmap Layer
 
 Heatmap layer cluster data points to visualize locations with different densities. To add a heatmap layer, click on the drop down menu under Data Layer and choose `Heatmap`. Similar to `Markers`, you will be prompted with various options determine which data points to visualize and how. 
 
