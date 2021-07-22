@@ -21,6 +21,7 @@ import {
   UPlotConfigBuilder,
   UPlotConfigPrepFn,
 } from '@grafana/ui';
+import { collectStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
 /** @alpha */
 function getBarCharScaleOrientation(orientation: VizOrientation) {
@@ -109,6 +110,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   let seriesIndex = 0;
 
+  const stackingGroups: Map<string, number[]> = new Map();
+
   // iterate the y values
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
@@ -176,6 +179,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
         theme,
       });
     }
+
+    collectStackingGroups(field, stackingGroups, seriesIndex);
+  }
+
+  if (stackingGroups.size !== 0) {
+    builder.setStacking(true);
+    for (const [_, seriesIdxs] of stackingGroups.entries()) {
+      for (let j = seriesIdxs.length - 1; j > 0; j--) {
+        builder.addBand({
+          series: [seriesIdxs[j], seriesIdxs[j - 1]],
+        });
+      }
+    }
   }
 
   return builder;
@@ -236,7 +252,10 @@ export function prepareGraphableFrames(
             ...field.config,
             custom: {
               ...field.config.custom,
-              stacking,
+              stacking: {
+                group: '_',
+                mode: stacking,
+              },
             },
           },
           values: new ArrayVector(
