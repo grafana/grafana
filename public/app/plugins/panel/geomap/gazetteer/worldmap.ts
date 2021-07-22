@@ -1,26 +1,45 @@
-import { PlacenameInfo, PlacenameLookup } from './lookup';
+import { PlacenameInfo, Gazetteer } from './gazetteer';
 
 // https://github.com/grafana/worldmap-panel/blob/master/src/data/countries.json
 export interface WorldmapPoint {
-  key: string;
+  key?: string;
+  keys?: string[]; // new in grafana 8.1+
   latitude: number;
   longitude: number;
-  name: number;
+  name?: string;
 }
 
-export function loadWorldmapPoints(path: string, data: WorldmapPoint[]): PlacenameLookup {
+export function loadWorldmapPoints(path: string, data: WorldmapPoint[]): Gazetteer {
   const values = new Map<string, PlacenameInfo>();
   for (const v of data) {
-    values.set(v.key, {
+    const info: PlacenameInfo = {
       coords: [v.longitude, v.latitude],
-      props: {
-        name: v.name,
-      },
-    });
+    };
+    if (v.name) {
+      values.set(v.name, info);
+      values.set(v.name.toUpperCase(), info);
+      info.props = { name: v.name };
+    }
+    if (v.key) {
+      values.set(v.key, info);
+      values.set(v.key.toUpperCase(), info);
+    }
+    if (v.keys) {
+      for (const key of v.keys) {
+        values.set(key, info);
+        values.set(key.toUpperCase(), info);
+      }
+    }
   }
   return {
     path,
-    find: (k) => values.get(k),
+    find: (k) => {
+      let v = values.get(k);
+      if (!v) {
+        v = values.get(k.toUpperCase());
+      }
+      return v;
+    },
     examples: (count) => {
       const first: string[] = [];
       if (values.size < 1) {

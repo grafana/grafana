@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
-import { getGazetteer, Gazetteer } from '../gazetteer/lookup';
+import { getGazetteer, Gazetteer } from '../gazetteer/gazetteer';
 import { decodeGeohash } from './geohash';
 
 export type FieldFinder = (frame: DataFrame) => Field | undefined;
@@ -64,7 +64,7 @@ const defaultMatchers: LocationFieldMatchers = {
   lookup: matchLowerNames(new Set(['lookup'])),
 };
 
-export function getLocationMatchers(src?: FrameGeometrySource): LocationFieldMatchers {
+export async function getLocationMatchers(src?: FrameGeometrySource): Promise<LocationFieldMatchers> {
   const info: LocationFieldMatchers = {
     ...defaultMatchers,
     mode: src?.mode ?? FrameGeometrySourceMode.Auto,
@@ -79,7 +79,7 @@ export function getLocationMatchers(src?: FrameGeometrySource): LocationFieldMat
       if (src?.lookup) {
         info.lookup = getFieldFinder(getFieldMatcher({ id: FieldMatcherID.byName, options: src.lookup }));
       }
-      info.gazetteer = getGazetteer(src?.gazetteer);
+      info.gazetteer = await getGazetteer(src?.gazetteer);
       break;
     case FrameGeometrySourceMode.Coords:
       if (src?.latitude) {

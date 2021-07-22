@@ -1,4 +1,4 @@
-import { MapLayerRegistryItem, MapLayerOptions, MapLayerHandler, PanelData, GrafanaTheme2, FrameGeometrySourceMode } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, FrameGeometrySourceMode } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
@@ -59,8 +59,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2): MapLayerHandler => {
-    const matchers = getLocationMatchers(options.location);
+  create: async (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2) => {
+    const matchers = await getLocationMatchers(options.location);
     const vectorLayer = new layer.Vector({});
     // Assert default values
     const config = {
