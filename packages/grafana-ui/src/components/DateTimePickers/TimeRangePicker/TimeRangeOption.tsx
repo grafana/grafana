@@ -47,6 +47,8 @@ interface Props {
 
 export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false, name }) => {
   const styles = useStyles2(getStyles);
+  // In case there are more of the same timerange in the list
+  const id = value.display + Math.floor(Math.random() * 10);
 
   return (
     <li className={cx(styles.container, selected && styles.selected)}>
@@ -55,10 +57,10 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
         checked={selected}
         name={name}
         type="radio"
-        id={value.display}
+        id={id}
         onChange={() => onSelect(value)}
       />
-      <label className={styles.label} htmlFor={value.display}>
+      <label className={styles.label} htmlFor={id}>
         {value.display}
       </label>
     </li>

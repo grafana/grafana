@@ -10,6 +10,7 @@ import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeForm } from './TimeRangeForm';
 import { TimeRangeList } from './TimeRangeList';
 import { TimePickerFooter } from './TimePickerFooter';
+import { getFocusStyles } from '../../../themes/mixins';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRanges, isContainerTall) => {
   return {
@@ -63,6 +64,16 @@ const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme2) => {
       align-items: center;
       border-bottom: 1px solid ${theme.colors.border.weak};
       padding: 7px 9px 7px 9px;
+    `,
+    expandButton: css`
+      background-color: transparent;
+      border: none;
+      display: flex;
+      width: 100%;
+
+      &:focus-visible {
+        ${getFocusStyles(theme)}
+      }
     `,
     body: css`
       border-bottom: 1px solid ${theme.colors.border.weak};
@@ -218,9 +229,8 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
   };
 
   return (
-    <>
-      <div
-        aria-label="TimePicker absolute time range"
+    <fieldset>
+      <h3
         className={styles.header}
         onClick={() => {
           if (!hideQuickRanges) {
@@ -228,14 +238,23 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
           }
         }}
       >
-        <TimePickerTitle>Absolute time range</TimePickerTitle>
-        {!hideQuickRanges && <Icon name={!collapsed ? 'angle-up' : 'angle-down'} />}
-      </div>
+        <button
+          className={styles.expandButton}
+          onClick={() => {
+            if (!hideQuickRanges) {
+              setCollapsedFlag(!collapsed);
+            }
+          }}
+        >
+          <TimePickerTitle>Absolute time range</TimePickerTitle>
+          {!hideQuickRanges && <Icon name={!collapsed ? 'angle-up' : 'angle-down'} />}
+        </button>
+      </h3>
       {!collapsed && (
         <div className={styles.body}>
-          <section aria-label="Absolute time ranges" className={styles.form}>
+          <div className={styles.form}>
             <TimeRangeForm value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
-          </section>
+          </div>
           {showHistory && (
             <TimeRangeList
               title="Recently used absolute ranges"
@@ -246,7 +265,7 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
           )}
         </div>
       )}
-    </>
+    </fieldset>
   );
 };
 
@@ -260,10 +279,10 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
 
   return (
     <>
-      <section aria-label="Absolute time range" className={styles.container}>
-        <div className={styles.title}>
+      <div className={styles.container}>
+        <h2 className={styles.title}>
           <TimePickerTitle>Absolute time range</TimePickerTitle>
-        </div>
+        </h2>
         <TimeRangeForm
           value={props.value}
           timeZone={props.timeZone}
@@ -271,7 +290,7 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
           isFullscreen={true}
           isReversed={props.isReversed}
         />
-      </section>
+      </div>
       {props.showHistory && (
         <div className={styles.recent}>
           <TimeRangeList
