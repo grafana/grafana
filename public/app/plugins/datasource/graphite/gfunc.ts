@@ -994,7 +994,7 @@ export class FuncInstance {
    * True if this function was just added and not edited yet. It's used to focus on first
    * function param to edit it straight away after adding a function.
    */
-  added: boolean;
+  declare added: boolean;
   /**
    * Hidden functions are not displayed in UI but available in text editor
    * This is used for seriesByTagUsed function which when used switches
