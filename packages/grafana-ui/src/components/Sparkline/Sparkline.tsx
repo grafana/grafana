@@ -93,7 +93,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     const builder = new UPlotConfigBuilder();
 
     builder.setCursor({
-      show: true,
+      show: false,
       x: false, // no crosshairs
       y: false,
     });
