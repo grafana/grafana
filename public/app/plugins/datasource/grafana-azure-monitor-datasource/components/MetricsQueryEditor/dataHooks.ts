@@ -161,7 +161,7 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
       // Do some cleanup of the query state if need be
       if ((!metricNamespace && options.length) || options.length === 1) {
         onChange(setMetricNamespace(query, options[0].value));
-      } else if (metricNamespace && !hasOption(options, metricNamespace)) {
+      } else if (options[0] && metricNamespace && !hasOption(options, metricNamespace)) {
         onChange(setMetricNamespace(query, options[0].value));
       }
 

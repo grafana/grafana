@@ -4,7 +4,8 @@ import { AzureMonitorOption } from '../types';
 
 // TODO: need to test for template variables / subgroups
 // Don't merge this in!!!!
-export const hasOption = (options: AzureMonitorOption[], value: string) => options.some((v) => v.value === value);
+export const hasOption = (options: AzureMonitorOption[], value: string): boolean =>
+  options.some((v) => (v.options ? hasOption(v.options, value) : v.value === value));
 
 export const findOptions = (options: AzureMonitorOption[], values: string[] = []) => {
   if (values.length === 0) {
