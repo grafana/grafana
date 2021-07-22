@@ -1,6 +1,16 @@
 [
-  { "keys": ["AD", "AND"], "latitude": 42.546245, "longitude": 1.601554, "name": "Andorra" },
-  { "keys": ["AE", "ARE"], "latitude": 23.424076, "longitude": 53.847818, "name": "United Arab Emirates" },
+  {
+    "keys": ["AD", "AND"],
+    "latitude": 42.546245,
+    "longitude": 1.601554,
+    "name": "Andorra"
+  },
+  {
+    "keys": ["AE", "ARE"],
+    "latitude": 23.424076,
+    "longitude": 53.847818,
+    "name": "United Arab Emirates"
+  },
   { "keys": ["AF", "AFG"], "latitude": 33.93911, "longitude": 67.709953, "name": "Afghanistan" },
   { "keys": ["AG", "ATG"], "latitude": 17.060816, "longitude": -61.796428, "name": "Antigua and Barbuda" },
   { "keys": ["AI", "AIA"], "latitude": 18.220554, "longitude": -63.068615, "name": "Anguilla" },
