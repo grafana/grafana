@@ -1,9 +1,16 @@
 import uPlot, { Axis } from 'uplot';
 import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { BarValueVisibility, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
 import { GrafanaTheme2 } from '@grafana/data';
-import { calculateFontSize, PlotTooltipInterpolator, VizTextDisplayOptions } from '@grafana/ui';
+import {
+  calculateFontSize,
+  PlotTooltipInterpolator,
+  VizTextDisplayOptions,
+  StackingMode,
+  BarValueVisibility,
+  ScaleDirection,
+  ScaleOrientation,
+} from '@grafana/ui';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -33,6 +40,7 @@ export interface BarsOptions {
   groupWidth: number;
   barWidth: number;
   showValue: BarValueVisibility;
+  stacking: StackingMode;
   formatValue: (seriesIdx: number, value: any) => string;
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
@@ -46,6 +54,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const { xOri, xDir: dir, groupWidth, barWidth, formatValue, showValue } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
+  const isStacked = opts.stacking !== StackingMode.None;
 
   let qt: Quadtree;
   let hovered: Rect | undefined = undefined;
@@ -85,6 +94,22 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       distribute(barCount, barWidth, barDistr, null, (barIdx, barOffPct, barDimPct) => {
         out[barIdx].offs[groupIdx] = groupOffPct + groupDimPct * barOffPct;
         out[barIdx].size[groupIdx] = groupDimPct * barDimPct;
+      });
+    });
+
+    return out;
+  };
+
+  let distrOne = (groupCount: number, barCount: number) => {
+    let out = Array.from({ length: barCount }, () => ({
+      offs: Array(groupCount).fill(0),
+      size: Array(groupCount).fill(0),
+    }));
+
+    distribute(groupCount, groupWidth, groupDistr, null, (groupIdx, groupOffPct, groupDimPct) => {
+      distribute(barCount, barWidth, barDistr, null, (barIdx, barOffPct, barDimPct) => {
+        out[barIdx].offs[groupIdx] = groupOffPct;
+        out[barIdx].size[groupIdx] = groupDimPct;
       });
     });
 
@@ -151,7 +176,12 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       s._paths = null;
     });
 
-    barsPctLayout = ([null] as any).concat(distrTwo(u.data[0].length, u.data.length - 1));
+    if (isStacked) {
+      //barsPctLayout = [null as any].concat(distrOne(u.data.length - 1, u.data[0].length));
+      barsPctLayout = [null as any].concat(distrOne(u.data[0].length, u.data.length - 1));
+    } else {
+      barsPctLayout = [null as any].concat(distrTwo(u.data[0].length, u.data.length - 1));
+    }
     barRects.length = 0;
     vSpace = hSpace = Infinity;
   };

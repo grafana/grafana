@@ -48,6 +48,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   showValue,
   groupWidth,
   barWidth,
+  stacking,
   text,
 }) => {
   const builder = new UPlotConfigBuilder();
@@ -70,6 +71,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     xDir: vizOrientation.xDir,
     groupWidth,
     barWidth,
+    stacking,
     formatValue,
     text,
     showValue,
