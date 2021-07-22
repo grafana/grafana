@@ -101,6 +101,7 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
 
         <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
           <ToolbarButton
+            data-testid="TimePicker Open Button"
             aria-label={`Time range editor ${formattedRange(value, timeZone)}`}
             aria-controls="TimePickerContent"
             onClick={this.onOpen}

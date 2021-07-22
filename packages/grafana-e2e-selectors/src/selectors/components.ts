@@ -9,7 +9,7 @@ export const Components = {
     openButton: 'TimePicker Open Button',
     fromField: 'TimePicker from field',
     toField: 'TimePicker to field',
-    applyTimeRange: 'TimePicker submit button',
+    applyTimeRange: () => '[data-testid="TimePicker submit button"]',
     calendar: 'TimePicker calendar',
   },
   DataSource: {

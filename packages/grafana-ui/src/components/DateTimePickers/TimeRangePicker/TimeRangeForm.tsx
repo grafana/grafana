@@ -117,7 +117,9 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
           value={to.value}
         />
       </Field>
-      <Button onClick={onApply}>Apply time range</Button>
+      <Button data-testid="TimePicker submit button" onClick={onApply}>
+        Apply time range
+      </Button>
 
       <TimePickerCalendar
         isFullscreen={isFullscreen}
