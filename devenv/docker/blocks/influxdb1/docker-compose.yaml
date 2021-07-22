@@ -22,7 +22,7 @@
       FD_PORT: 8086
 
   telegraf-influxdb1:
-    image: telegraf:1.10.4
+    image: telegraf:1.19.1
     links:
       - influxdb1
     volumes:

@@ -6,7 +6,7 @@ import { has, cloneDeep } from 'lodash';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { ErrorBoundaryAlert, HorizontalGroup, InfoBox } from '@grafana/ui';
+import { ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import {
   DataQuery,
   DataSourceApi,
@@ -28,6 +28,7 @@ import { QueryOperationAction } from 'app/core/components/QueryOperationRow/Quer
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelModel } from 'app/features/dashboard/state';
+import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 
 interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -274,7 +275,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderActions = (props: QueryOperationRowRenderProps) => {
     const { query, hideDisableQuery = false } = this.props;
-    const { hasTextEditMode, datasource } = this.state;
+    const { hasTextEditMode, datasource, showingHelp } = this.state;
     const isDisabled = query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
@@ -282,7 +283,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return (
       <HorizontalGroup width="auto">
         {hasEditorHelp && (
-          <QueryOperationAction title="Toggle data source help" icon="question-circle" onClick={this.onToggleHelp} />
+          <QueryOperationAction
+            title="Toggle data source help"
+            icon="question-circle"
+            onClick={this.onToggleHelp}
+            active={showingHelp}
+          />
         )}
         {hasTextEditMode && (
           <QueryOperationAction
@@ -298,6 +304,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           <QueryOperationAction
             title="Disable/enable query"
             icon={isDisabled ? 'eye-slash' : 'eye'}
+            active={isDisabled}
             onClick={this.onDisableQuery}
           />
         ) : null}
@@ -354,12 +361,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           <div className={rowClasses}>
             <ErrorBoundaryAlert>
               {showingHelp && DatasourceCheatsheet && (
-                <InfoBox onDismiss={this.onToggleHelp}>
+                <OperationRowHelp>
                   <DatasourceCheatsheet
                     onClickExample={(query) => this.onClickExample(query)}
                     datasource={datasource}
                   />
-                </InfoBox>
+                </OperationRowHelp>
               )}
               {editor}
             </ErrorBoundaryAlert>
