@@ -22,10 +22,17 @@ export class ObservablePropsWrapper<T> extends PureComponent<Props<T>, State<T>>
   }
 
   componentDidMount() {
+    console.log('ObservablePropsWrapper:subscribe');
     this.sub = this.props.watch.subscribe({
       next: (subProps: T) => {
-        console.log('NEXT', subProps);
+        console.log('ObservablePropsWrapper:NEXT', subProps);
         this.setState({ subProps });
+      },
+      complete: () => {
+        console.log('ObservablePropsWrapper:complete');
+      },
+      error: (err) => {
+        console.log('ObservablePropsWrapper:error', err);
       },
     });
   }
@@ -34,6 +41,7 @@ export class ObservablePropsWrapper<T> extends PureComponent<Props<T>, State<T>>
     if (this.sub) {
       this.sub.unsubscribe();
     }
+    console.log('ObservablePropsWrapper:unsubscribe');
   }
 
   render() {

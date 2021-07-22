@@ -80,9 +80,10 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         watch={legendProps}  
         initialSubProps={{}}  
         child={MarkersLegend}
-          />
+      />
     }
     const shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
+    console.log( 'CREATE Marker layer', matchers);
 
     return {
       init: () => vectorLayer,
@@ -125,6 +126,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
           // Post updates to the legend component
           if (legend) {
+            console.log( 'UPDATE (marker layer)', colorDim);
             legendProps.next({
               color: colorDim,
               size: sizeDim,
