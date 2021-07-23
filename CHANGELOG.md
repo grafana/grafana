@@ -1,4 +1,19 @@
 
+<!-- 8.1.0-beta2 START -->
+
+# 8.1.0-beta2 (2021-07-23)
+
+### Features and enhancements
+
+* **Auth:** Add Azure HTTP authentication middleware. [#36932](https://github.com/grafana/grafana/pull/36932), [@kostrse](https://github.com/kostrse)
+* **Gazetteer:** Update Countries JSON. [#37129](https://github.com/grafana/grafana/pull/37129), [@bryanuribe](https://github.com/bryanuribe)
+
+### Bug fixes
+
+* **Explore:** Fix encoding of internal URLs. [#36919](https://github.com/grafana/grafana/pull/36919), [@aocenas](https://github.com/aocenas)
+
+<!-- 8.1.0-beta2 END -->
+
 <!-- 8.1.0-beta1 START -->
 
 # 8.1.0-beta1 (2021-07-22)
