@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -31,6 +32,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(registry.BackgroundServiceRegistry), new(*backgroundsvcs.BackgroundServiceRegistry)),
 	datasources.ProvideCacheService,
 	wire.Bind(new(datasources.CacheService), new(*datasources.CacheServiceImpl)),
+	migrations.ProvideOSSMigrations,
+	wire.Bind(new(registry.MigrationService), new(*migrations.OSSMigrations)),
 )
 
 var wireExtsSet = wire.NewSet(

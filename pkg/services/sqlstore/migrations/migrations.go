@@ -10,7 +10,14 @@ import (
 // 2. Always add new migrations (to change or undo previous migrations)
 // 3. Some migrations are not yet written (rename column, table, drop table, index etc)
 
-func AddMigrations(mg *Migrator) {
+type OSSMigrations struct {
+}
+
+func ProvideOSSMigrations() *OSSMigrations {
+	return &OSSMigrations{}
+}
+
+func (*OSSMigrations) AddMigrations(mg *Migrator) {
 	addMigrationLogMigrations(mg)
 	addUserMigrations(mg)
 	addTempUserMigrations(mg)
