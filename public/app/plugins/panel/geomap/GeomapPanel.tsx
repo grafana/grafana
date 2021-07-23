@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, ReactNode } from 'react';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry, defaultBaseLayer } from './layers/registry';
 import { Map, View } from 'ol';
 import Attribution from 'ol/control/Attribution';
@@ -33,16 +33,20 @@ let sharedView: View | undefined = undefined;
 export let lastGeomapPanelInstance: GeomapPanel | undefined = undefined;
 
 type Props = PanelProps<GeomapPanelOptions>;
-export class GeomapPanel extends Component<Props> {
+interface State extends OverlayProps {}
+export class GeomapPanel extends Component<Props, State> {
   globalCSS = getGlobalStyles(config.theme2);
 
+  counter = 0;
   map?: Map;
   basemap?: BaseLayer;
   layers: MapLayerState[] = [];
   mouseWheelZoom?: MouseWheelZoom;
   style = getStyles(config.theme);
-  overlayProps: OverlayProps = {};
-
+  constructor(props: Props) {
+    super(props);
+    this.state = {};
+  }
   componentDidMount() {
     lastGeomapPanelInstance = this;
   }
@@ -84,9 +88,11 @@ export class GeomapPanel extends Component<Props> {
       this.map!.setView(this.initMapView(options.view));
     }
 
+    let legendChanged = false;
     if (options.controls !== oldOptions.controls) {
       console.log('Controls changed');
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
+      legendChanged = options.controls.showLegend !== oldOptions.controls.showLegend;
     }
 
     if (options.basemap !== oldOptions.basemap) {
@@ -95,7 +101,7 @@ export class GeomapPanel extends Component<Props> {
       layersChanged = true;
     }
 
-    if (options.layers !== oldOptions.layers) {
+    if (legendChanged || options.layers !== oldOptions.layers) {
       console.log('layers changed');
       this.initLayers(options.layers ?? [], options.controls?.showLegend); // async
       layersChanged = true;
@@ -189,11 +195,12 @@ export class GeomapPanel extends Component<Props> {
         layer,
         handler,
       });
+
       if (handler.legend) {
-        legends.push(<div key={`${this.layers.length}/${overlay.type}`}>{handler.legend}</div>);
+        legends.push(<div key={`${this.counter++}`}>{handler.legend}</div>);
       }
     }
-    this.overlayProps.bottomLeft = legends;
+    this.setState({ bottomLeft: legends });
 
     // Update data after init layers
     this.dataChanged(this.props.data);
@@ -269,12 +276,12 @@ export class GeomapPanel extends Component<Props> {
     }
 
     // Update the react overlays
-    const overlayProps: OverlayProps = {};
+    let topRight: ReactNode[] = [];
     if (options.showDebug) {
-      overlayProps.topRight = [<DebugOverlay key="debug" map={this.map} />];
+      topRight = [<DebugOverlay key="debug" map={this.map} />];
     }
 
-    this.overlayProps = overlayProps;
+    this.setState({ topRight });
   }
 
   render() {
@@ -283,7 +290,7 @@ export class GeomapPanel extends Component<Props> {
         <Global styles={this.globalCSS} />
         <div className={this.style.wrap}>
           <div className={this.style.map} ref={this.initMapRef}></div>
-          <GeomapOverlay {...this.overlayProps} />
+          <GeomapOverlay {...this.state} />
         </div>
       </>
     );

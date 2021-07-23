@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import { Observable, Unsubscribable } from 'rxjs';
 
 interface Props<T> {
@@ -11,7 +11,7 @@ interface State<T> {
   subProps: T;
 }
 
-export class ObservablePropsWrapper<T> extends PureComponent<Props<T>, State<T>> {
+export class ObservablePropsWrapper<T> extends Component<Props<T>, State<T>> {
   sub?: Unsubscribable;
 
   constructor(props: Props<T>) {
