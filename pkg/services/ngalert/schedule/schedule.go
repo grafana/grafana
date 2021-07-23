@@ -147,6 +147,7 @@ func (sch *schedule) Run(ctx context.Context) error {
 		}
 	}()
 
+	sch.wg.Wait()
 	return nil
 }
 
