@@ -69,7 +69,7 @@ describe('Graphite components helpers', () => {
       );
     });
 
-    describe('when all parameters mapFuncInstanceToParamsare required and no multiple values are allowed', () => {
+    describe('when all parameters are required and no multiple values are allowed', () => {
       beforeEach(() => {
         funcDef = {
           name: 'allRequiredNoMultiple',
