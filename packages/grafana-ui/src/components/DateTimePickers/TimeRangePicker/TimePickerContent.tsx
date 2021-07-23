@@ -276,9 +276,9 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
   return (
     <>
       <div className={styles.container}>
-        <h2 className={styles.title}>
+        <h3 className={styles.title}>
           <TimePickerTitle>Absolute time range</TimePickerTitle>
-        </h2>
+        </h3>
         <TimeRangeForm
           value={props.value}
           timeZone={props.timeZone}
