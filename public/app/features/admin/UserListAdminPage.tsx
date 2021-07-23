@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
 import { css, cx } from '@emotion/css';
 import { hot } from 'react-hot-loader';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { NavModel } from '@grafana/data';
+import { connect, ConnectedProps } from 'react-redux';
 import { Pagination, Tooltip, stylesFactory, LinkButton, Icon } from '@grafana/ui';
 import { AccessControlAction, StoreState, UserDTO } from '../../types';
 import Page from 'app/core/components/Page/Page';
@@ -12,24 +11,26 @@ import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
+const mapDispatchToProps = {
+  fetchUsers,
+  changeQuery,
+  changePage,
+};
+
+const mapStateToProps = (state: StoreState) => ({
+  navModel: getNavModel(state.navIndex, 'global-users'),
+  users: state.userListAdmin.users,
+  query: state.userListAdmin.query,
+  showPaging: state.userListAdmin.showPaging,
+  totalPages: state.userListAdmin.totalPages,
+  page: state.userListAdmin.page,
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
 interface OwnProps {}
 
-interface ConnectedProps {
-  navModel: NavModel;
-  users: UserDTO[];
-  query: string;
-  showPaging: boolean;
-  totalPages: number;
-  page: number;
-}
-
-interface DispatchProps {
-  fetchUsers: typeof fetchUsers;
-  changeQuery: typeof changeQuery;
-  changePage: typeof changePage;
-}
-
-type Props = OwnProps & ConnectedProps & DispatchProps;
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 const UserListAdminPageUnConnected: React.FC<Props> = (props) => {
   const styles = getStyles();
@@ -141,19 +142,4 @@ const getStyles = stylesFactory(() => {
   };
 });
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  fetchUsers,
-  changeQuery,
-  changePage,
-};
-
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => ({
-  navModel: getNavModel(state.navIndex, 'global-users'),
-  users: state.userListAdmin.users,
-  query: state.userListAdmin.query,
-  showPaging: state.userListAdmin.showPaging,
-  totalPages: state.userListAdmin.totalPages,
-  page: state.userListAdmin.page,
-});
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UserListAdminPageUnConnected));
+export default hot(module)(connector(UserListAdminPageUnConnected));
