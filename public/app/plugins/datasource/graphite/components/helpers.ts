@@ -22,7 +22,7 @@ export function mapFuncDefsToSelectables(funcDefs: FuncDefs): Array<SelectableVa
   return sortBy(categories, 'label');
 }
 
-function createEditableParam(paramDef: ParamDef, value: string | number): EditableParam {
+function createEditableParam(paramDef: ParamDef, value?: string | number): EditableParam {
   return {
     name: paramDef.name,
     value: value?.toString() || '',
