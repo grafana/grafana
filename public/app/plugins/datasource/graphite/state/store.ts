@@ -75,6 +75,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     const { segment, index: segmentIndex } = action.payload;
 
     state.error = null;
+    state.segments[segmentIndex] = segment;
     state.queryModel.updateSegmentValue(segment, segmentIndex);
 
     if (state.queryModel.functions.length > 0 && state.queryModel.functions[0].def.fake) {
@@ -88,11 +89,11 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
       return state;
     }
 
+    // if newly selected segment can be expanded -> check if the path is correct
     if (segment.expandable) {
       await checkOtherSegments(state, segmentIndex + 1);
-      setSegmentFocus(state, segmentIndex + 1);
-      handleTargetChanged(state);
     } else {
+      // if not expandable -> remove all other segments
       spliceSegments(state, segmentIndex + 1);
     }
 
