@@ -32,7 +32,7 @@ function createEditableParam(paramDef: ParamDef, value?: string | number): Edita
       paramDef.options?.map((option: string | number) => ({
         value: option.toString(),
         label: option.toString(),
-      })) || [],
+      })) ?? [],
   };
 }
 

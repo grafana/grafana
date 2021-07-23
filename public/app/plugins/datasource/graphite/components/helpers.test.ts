@@ -43,6 +43,32 @@ describe('Graphite components helpers', () => {
       expect(mapFuncInstanceToParams(createFunctionInstance(definition, params))).toMatchObject(expected);
     }
 
+    it('converts param options to selectable options', () => {
+      const funcDef = {
+        name: 'functionA1',
+        category: 'A',
+        params: [{ name: 'foo', type: 'any', optional: false, multiple: false, options: ['foo', 2] }],
+        defaultParams: [],
+      };
+
+      assertFunctionInstance(
+        funcDef,
+        [],
+        [
+          {
+            name: 'foo',
+            multiple: false,
+            optional: false,
+            options: [
+              { label: 'foo', value: 'foo' },
+              { label: '2', value: '2' },
+            ],
+            value: '',
+          },
+        ]
+      );
+    });
+
     describe('when all parameters are required and no multiple values are allowed', () => {
       beforeEach(() => {
         funcDef = {
