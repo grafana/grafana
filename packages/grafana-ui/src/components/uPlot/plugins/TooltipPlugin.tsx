@@ -96,7 +96,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     } else {
       config.addHook('setLegend', (u) => {
         setFocusedPointIdx(u.cursor.idx!);
-        setFocusedPointIdxs(u.cursor.idxs!);
+        setFocusedPointIdxs(u.cursor.idxs!.slice());
       });
 
       // default series/datapoint idx retireval
