@@ -8,6 +8,7 @@ import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { DropzoneFile } from './FileDropzone';
 
+export const REMOVE_FILE = 'Remove file';
 export interface FileListItemProps {
   file: DropzoneFile;
   removeFile?: (file: DropzoneFile) => void;
@@ -30,8 +31,8 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
               className={retryUpload ? styles.marginLeft : ''}
               name="trash-alt"
               onClick={() => removeFile(customFile)}
-              tooltip="Remove file"
-              aria-label="Remove file"
+              tooltip={REMOVE_FILE}
+              aria-label={REMOVE_FILE}
             />
           )}
         </>
@@ -56,8 +57,8 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
         <IconButton
           name="trash-alt"
           onClick={() => removeFile(customFile)}
-          tooltip="Remove file"
-          aria-label="Remove file"
+          tooltip={REMOVE_FILE}
+          aria-label={REMOVE_FILE}
           tooltipPlacement="top"
         />
       )

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { FileDropzone } from './FileDropzone';
+import { REMOVE_FILE } from './FileListItem';
 
 const file = ({
   fileBits = JSON.stringify({ ping: true }),
@@ -42,11 +43,11 @@ describe('The FileDropzone component', () => {
 
     dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData(files));
 
-    expect(await screen.findAllByLabelText('Remove')).toHaveLength(3);
+    expect(await screen.findAllByLabelText(REMOVE_FILE)).toHaveLength(3);
 
-    fireEvent.click(screen.getAllByLabelText('Remove')[0]);
+    fireEvent.click(screen.getAllByLabelText(REMOVE_FILE)[0]);
 
-    expect(await screen.findAllByLabelText('Remove')).toHaveLength(2);
+    expect(await screen.findAllByLabelText(REMOVE_FILE)).toHaveLength(2);
   });
 
   it('should overwrite selected file when multiple false', async () => {
@@ -54,13 +55,13 @@ describe('The FileDropzone component', () => {
 
     dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData([file({})]));
 
-    expect(await screen.findAllByLabelText('Remove')).toHaveLength(1);
+    expect(await screen.findAllByLabelText(REMOVE_FILE)).toHaveLength(1);
     expect(await screen.findByText('ping.json')).toBeInTheDocument();
 
     dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData([file({ fileName: 'newFile.jpg' })]));
 
     expect(await screen.findByText('newFile.jpg')).toBeInTheDocument();
-    expect(await screen.findAllByLabelText('Remove')).toHaveLength(1);
+    expect(await screen.findAllByLabelText(REMOVE_FILE)).toHaveLength(1);
   });
 
   it('should use the passed readAs prop with the FileReader API', async () => {

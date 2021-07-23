@@ -1,6 +1,6 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { FileListItem } from './FileListItem';
+import React from 'react';
+import { FileListItem, REMOVE_FILE } from './FileListItem';
 
 const file = ({
   fileBits = 'prettyPicture',
@@ -55,7 +55,7 @@ describe('The FileListItem component', () => {
     const customFile = { file: file({}), id: '1', error: null };
     render(<FileListItem file={customFile} removeFile={removeFile} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Remove file' }));
+    fireEvent.click(screen.getByRole('button', { name: REMOVE_FILE }));
 
     expect(removeFile).toBeCalledWith(customFile);
   });
