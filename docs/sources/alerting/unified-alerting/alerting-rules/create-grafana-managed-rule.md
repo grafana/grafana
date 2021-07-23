@@ -109,8 +109,9 @@ The following template variables are available when expanding annotations and la
 
 | Name    | Description     |
 | ------- | --------------- |
-| $labels | Labels contains the labels from the query or condition. For example, `{{ $labels.instance }}` and `{{ $labels.job }}`. |
-| $values | Values contains the values of all reduce and math expressions that were evaluated for this alert rule. For example, `{{ $values.A }}`, `{{ $values.A.Labels }}` and `{{ $values.A.Value }}` where `A` is the `refID` of the expression. |
+| $labels | The labels from the query or condition. For example, `{{ $labels.instance }}` and `{{ $labels.job }}`. |
+| $values | The values of all reduce and math expressions that were evaluated for this alert rule. For example, `{{ $values.A }}`, `{{ $values.A.Labels }}` and `{{ $values.A.Value }}` where `A` is the `refID` of the expression. |
+| $value  | The value string of the alert instance. For example, `[ var='A' labels={instance=foo} value=10 ]`. |
 
 ## Preview alerts
 
