@@ -10,8 +10,10 @@ $panel-header-no-title-zindex: 1;
 .panel-container--no-title {
   .panel-header {
     position: absolute;
-    width: 100%;
+    width: calc(100% - 100px); // give space at the edges
     z-index: $panel-header-z-index;
+    background: #0e78206e;
+    margin-left: 50px;
   }
   .panel-content {
     height: 100%;
