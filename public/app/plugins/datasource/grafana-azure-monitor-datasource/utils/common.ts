@@ -2,8 +2,6 @@ import { rangeUtil } from '@grafana/data';
 import TimegrainConverter from '../time_grain_converter';
 import { AzureMonitorOption } from '../types';
 
-// TODO: need to test for template variables / subgroups
-// Don't merge this in!!!!
 export const hasOption = (options: AzureMonitorOption[], value: string): boolean =>
   options.some((v) => (v.options ? hasOption(v.options, value) : v.value === value));
 
