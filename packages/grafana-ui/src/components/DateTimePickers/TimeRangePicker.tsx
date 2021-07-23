@@ -25,6 +25,7 @@ import {
 import { Themeable } from '../../types';
 import { otherOptions, quickOptions } from './rangeOptions';
 import { ButtonGroup, ToolbarButton } from '../Button';
+import { selectors } from '@grafana/e2e-selectors';
 
 /** @public */
 export interface TimeRangePickerProps extends Themeable {
@@ -101,7 +102,7 @@ export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps,
 
         <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom">
           <ToolbarButton
-            data-testid="TimePicker Open Button"
+            data-testid={selectors.components.TimePicker.openButton}
             aria-label={`Time range editor ${formattedRange(value, timeZone)}`}
             aria-controls="TimePickerContent"
             onClick={this.onOpen}
