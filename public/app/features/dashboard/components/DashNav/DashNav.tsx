@@ -12,12 +12,18 @@ import { locationUtil, textUtil } from '@grafana/data';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 // Types
 import { DashboardModel } from '../../state';
-import { KioskMode, StoreState } from 'app/types';
+import { KioskMode } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
+
+const mapDispatchToProps = {
+  updateTimeZoneForSession,
+};
+
+const connector = connect(null, mapDispatchToProps);
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -259,11 +265,4 @@ class DashNav extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({});
-
-const mapDispatchToProps = {
-  updateTimeZoneForSession,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
 export default connector(DashNav);

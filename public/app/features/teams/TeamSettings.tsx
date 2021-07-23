@@ -6,9 +6,16 @@ import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedP
 import { updateTeam } from './state/actions';
 import { Team } from 'app/types';
 
-export interface Props extends ConnectedProps<typeof connector> {
+const mapDispatchToProps = {
+  updateTeam,
+};
+
+const connector = connect(null, mapDispatchToProps);
+
+interface OwnProps {
   team: Team;
 }
+export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
   return (
@@ -42,9 +49,4 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
   );
 };
 
-const mapDispatchToProps = {
-  updateTeam,
-};
-
-const connector = connect(null, mapDispatchToProps);
 export default connector(TeamSettings);

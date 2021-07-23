@@ -118,7 +118,7 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, OwnProps) => ({
   editor: state.templating.editor as VariableEditorState<DataSourceVariableEditorState>,
 });
 

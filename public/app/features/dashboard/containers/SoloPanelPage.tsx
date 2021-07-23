@@ -14,6 +14,16 @@ export interface DashboardPageRouteParams {
   slug?: string;
 }
 
+const mapStateToProps = (state: StoreState) => ({
+  dashboard: state.dashboard.getModel(),
+});
+
+const mapDispatchToProps = {
+  initDashboard,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
 export type Props = GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> &
   ConnectedProps<typeof connector>;
 
@@ -101,13 +111,4 @@ export class SoloPanelPage extends Component<Props, State> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
-  dashboard: state.dashboard.getModel(),
-});
-
-const mapDispatchToProps = {
-  initDashboard,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
 export default hot(module)(connector(SoloPanelPage));

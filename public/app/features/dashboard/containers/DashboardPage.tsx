@@ -50,12 +50,31 @@ type DashboardPageRouteSearchParams = {
   refresh?: string;
 };
 
-export interface Props
-  extends Themeable2,
-    GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>,
-    ConnectedProps<typeof connector> {
+export const mapStateToProps = (state: StoreState) => ({
+  initPhase: state.dashboard.initPhase,
+  isInitSlow: state.dashboard.isInitSlow,
+  initError: state.dashboard.initError,
+  dashboard: state.dashboard.getModel(),
+});
+
+const mapDispatchToProps = {
+  initDashboard,
+  cleanUpDashboardAndVariables,
+  notifyApp,
+  cancelVariables,
+  templateVarsChangedInUrl,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+interface OwnProps {
   isPanelEditorOpen?: boolean;
 }
+
+export type Props = Themeable2 &
+  GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> &
+  ConnectedProps<typeof connector> &
+  OwnProps;
 
 export interface State {
   editPanel: PanelModel | null;
@@ -358,21 +377,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 }
 
-export const mapStateToProps = (state: StoreState) => ({
-  initPhase: state.dashboard.initPhase,
-  isInitSlow: state.dashboard.isInitSlow,
-  initError: state.dashboard.initError,
-  dashboard: state.dashboard.getModel(),
-});
-
-const mapDispatchToProps = {
-  initDashboard,
-  cleanUpDashboardAndVariables,
-  notifyApp,
-  cancelVariables,
-  templateVarsChangedInUrl,
-};
-
 /*
  * Styles
  */
@@ -405,5 +409,4 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
 
 export const DashboardPage = withTheme2(UnthemedDashboardPage);
 DashboardPage.displayName = 'DashboardPage';
-const connector = connect(mapStateToProps, mapDispatchToProps);
 export default hot(module)(connector(DashboardPage));

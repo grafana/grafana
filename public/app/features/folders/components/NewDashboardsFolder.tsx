@@ -7,6 +7,16 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 import validationSrv from '../../manage-dashboards/services/ValidationSrv';
 
+const mapStateToProps = (state: StoreState) => ({
+  navModel: getNavModel(state.navIndex, 'manage-dashboards'),
+});
+
+const mapDispatchToProps = {
+  createNewFolder,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
 interface OwnProps {}
 
 interface FormModel {
@@ -63,13 +73,4 @@ export class NewDashboardsFolder extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'manage-dashboards'),
-});
-
-const mapDispatchToProps = {
-  createNewFolder,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
 export default connector(NewDashboardsFolder);

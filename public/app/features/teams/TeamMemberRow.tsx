@@ -4,17 +4,25 @@ import { LegacyForms, DeleteButton } from '@grafana/ui';
 const { Select } = LegacyForms;
 import { SelectableValue } from '@grafana/data';
 
-import { TeamMember, teamsPermissionLevels, TeamPermissionLevel, StoreState } from 'app/types';
+import { TeamMember, teamsPermissionLevels, TeamPermissionLevel } from 'app/types';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { updateTeamMember, removeTeamMember } from './state/actions';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
-export interface Props extends ConnectedProps<typeof connector> {
+const mapDispatchToProps = {
+  removeTeamMember,
+  updateTeamMember,
+};
+
+const connector = connect(null, mapDispatchToProps);
+
+interface OwnProps {
   member: TeamMember;
   syncEnabled: boolean;
   editorsCanAdmin: boolean;
   signedInUserIsTeamAdmin: boolean;
 }
+export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export class TeamMemberRow extends PureComponent<Props> {
   constructor(props: Props) {
@@ -95,14 +103,4 @@ export class TeamMemberRow extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps(state: StoreState) {
-  return {};
-}
-
-const mapDispatchToProps = {
-  removeTeamMember,
-  updateTeamMember,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
 export default connector(TeamMemberRow);

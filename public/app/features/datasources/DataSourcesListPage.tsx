@@ -22,6 +22,25 @@ import {
 } from './state/selectors';
 import { setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/reducers';
 
+function mapStateToProps(state: StoreState) {
+  return {
+    navModel: getNavModel(state.navIndex, 'datasources'),
+    dataSources: getDataSources(state.dataSources),
+    layoutMode: getDataSourcesLayoutMode(state.dataSources),
+    dataSourcesCount: getDataSourcesCount(state.dataSources),
+    searchQuery: getDataSourcesSearchQuery(state.dataSources),
+    hasFetched: state.dataSources.hasFetched,
+  };
+}
+
+const mapDispatchToProps = {
+  loadDataSources,
+  setDataSourcesSearchQuery,
+  setDataSourcesLayoutMode,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
 export type Props = ConnectedProps<typeof connector>;
 
 const emptyListModel = {
@@ -78,22 +97,4 @@ export class DataSourcesListPage extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps(state: StoreState) {
-  return {
-    navModel: getNavModel(state.navIndex, 'datasources'),
-    dataSources: getDataSources(state.dataSources),
-    layoutMode: getDataSourcesLayoutMode(state.dataSources),
-    dataSourcesCount: getDataSourcesCount(state.dataSources),
-    searchQuery: getDataSourcesSearchQuery(state.dataSources),
-    hasFetched: state.dataSources.hasFetched,
-  };
-}
-
-const mapDispatchToProps = {
-  loadDataSources,
-  setDataSourcesSearchQuery,
-  setDataSourcesLayoutMode,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
 export default hot(module)(connector(DataSourcesListPage));

@@ -16,10 +16,27 @@ import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { Button } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
-export interface Props extends ConnectedProps<typeof connector> {
+function mapStateToProps(state: any) {
+  return {
+    searchMemberQuery: getSearchMemberQuery(state.team),
+    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
+    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
+  };
+}
+
+const mapDispatchToProps = {
+  addTeamMember,
+  setSearchMemberQuery,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+interface OwnProps {
   members: TeamMember[];
   syncEnabled: boolean;
 }
+
+export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export interface State {
   isAdding: boolean;
@@ -128,18 +145,4 @@ export class TeamMembers extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state: any) {
-  return {
-    searchMemberQuery: getSearchMemberQuery(state.team),
-    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
-    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
-  };
-}
-
-const mapDispatchToProps = {
-  addTeamMember,
-  setSearchMemberQuery,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
 export default connector(TeamMembers);

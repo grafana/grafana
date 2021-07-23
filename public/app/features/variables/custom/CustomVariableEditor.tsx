@@ -68,7 +68,7 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({});
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, OwnProps) => ({});
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   changeVariableMultiValue,

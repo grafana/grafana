@@ -14,6 +14,24 @@ import { setDataSourceTypeSearchQuery } from './state/reducers';
 import { Card } from 'app/core/components/Card/Card';
 import { PluginsErrorsInfo } from '../plugins/PluginsErrorsInfo';
 
+function mapStateToProps(state: StoreState) {
+  return {
+    navModel: getNavModel(),
+    plugins: getDataSourcePlugins(state.dataSources),
+    searchQuery: state.dataSources.dataSourceTypeSearchQuery,
+    categories: state.dataSources.categories,
+    isLoading: state.dataSources.isLoadingDataSources,
+  };
+}
+
+const mapDispatchToProps = {
+  addDataSource,
+  loadDataSourcePlugins,
+  setDataSourceTypeSearchQuery,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
 type Props = ConnectedProps<typeof connector>;
 
 class NewDataSourcePage extends PureComponent<Props> {
@@ -161,21 +179,4 @@ export function getNavModel(): NavModel {
   };
 }
 
-function mapStateToProps(state: StoreState) {
-  return {
-    navModel: getNavModel(),
-    plugins: getDataSourcePlugins(state.dataSources),
-    searchQuery: state.dataSources.dataSourceTypeSearchQuery,
-    categories: state.dataSources.categories,
-    isLoading: state.dataSources.isLoadingDataSources,
-  };
-}
-
-const mapDispatchToProps = {
-  addDataSource,
-  loadDataSourcePlugins,
-  setDataSourceTypeSearchQuery,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
 export default hot(module)(connector(NewDataSourcePage));
