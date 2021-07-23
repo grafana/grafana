@@ -31,6 +31,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRang
     `,
     body: css`
       display: flex;
+      flex-direction: row-reverse;
       height: ${isContainerTall ? '381px' : '217px'};
     `,
     leftSide: css`
@@ -176,11 +177,6 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
   return (
     <div id="TimePickerContent" className={cx(styles.container, className)}>
       <div className={styles.body}>
-        {isFullscreen && (
-          <div className={styles.leftSide}>
-            <FullScreenForm {...props} historyOptions={historyOptions} />
-          </div>
-        )}
         {(!isFullscreen || !hideQuickRanges) && (
           <CustomScrollbar className={styles.rightSide}>
             {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
@@ -202,6 +198,11 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
               </>
             )}
           </CustomScrollbar>
+        )}
+        {isFullscreen && (
+          <div className={styles.leftSide}>
+            <FullScreenForm {...props} historyOptions={historyOptions} />
+          </div>
         )}
       </div>
       {!hideTimeZone && isFullscreen && <TimePickerFooter timeZone={timeZone} onChangeTimeZone={onChangeTimeZone} />}
