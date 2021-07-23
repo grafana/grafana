@@ -14,6 +14,7 @@ import { DataSourcePicker } from '@grafana/runtime';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
 import { validateTitle, validateUid } from '../utils/validation';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props extends Pick<FormAPI<ImportDashboardDTO>, 'register' | 'errors' | 'control' | 'getValues' | 'watch'> {
   uidReset: boolean;
@@ -61,6 +62,7 @@ export const ImportDashboardForm: FC<Props> = ({
             validate: async (v: string) => await validateTitle(v, getValues().folder.id),
           })}
           type="text"
+          data-testid={selectors.components.ImportDashboardForm.name}
         />
       </Field>
       <Field label="Folder">
@@ -137,6 +139,7 @@ export const ImportDashboardForm: FC<Props> = ({
       <HorizontalGroup>
         <Button
           type="submit"
+          data-testid={selectors.components.ImportDashboardForm.submit}
           variant={getButtonVariant(errors)}
           onClick={() => {
             setSubmitted(true);
