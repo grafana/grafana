@@ -137,19 +137,22 @@ export function FileDropzone({ options, children, readAs, onLoad }: FileDropzone
 
   return (
     <div className={styles.container}>
-      <div {...getRootProps({ className: styles.dropzone })}>
+      <div data-testid="dropzone" {...getRootProps({ className: styles.dropzone })}>
         <input {...getInputProps()} />
         {children ?? <FileDropzoneDefaultChildren primaryText={getPrimaryText(files, options)} />}
       </div>
-      {options?.accept ? (
+      {options?.accept && (
         <small className={cx(styles.small, styles.acceptMargin)}>{getAcceptedFileTypeText(options)}</small>
-      ) : null}
+      )}
       {fileList}
     </div>
   );
 }
 
-export function FileDropzoneDefaultChildren({ primaryText = 'Upload file' }) {
+export function FileDropzoneDefaultChildren({
+  primaryText = 'Upload file',
+  secondaryText = 'Drag and drop here or browse',
+}) {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
@@ -157,9 +160,7 @@ export function FileDropzoneDefaultChildren({ primaryText = 'Upload file' }) {
     <div className={styles.iconWrapper}>
       <Icon name="upload" size="xxl" />
       <h3>{primaryText}</h3>
-      <small className={styles.small}>
-        Drag and drop here or <span className={styles.link}>Browse</span>
-      </small>
+      <small className={styles.small}>{secondaryText}</small>
     </div>
   );
 }
@@ -200,10 +201,9 @@ function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
       align-items: center;
       padding: ${theme.spacing(6)};
       border-radius: 2px;
-      border-width: 2px;
-      border-style: dashed;
-      border-color: ${theme.colors.border.medium};
+      border: 2px dashed ${theme.colors.border.medium};
       background-color: ${isDragActive ? theme.colors.background.secondary : theme.colors.background.primary};
+      cursor: pointer;
     `,
     iconWrapper: css`
       display: flex;
@@ -215,10 +215,6 @@ function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
     `,
     small: css`
       color: ${theme.colors.text.secondary};
-    `,
-    link: css`
-      color: ${theme.colors.text.link};
-      cursor: pointer;
     `,
   };
 }

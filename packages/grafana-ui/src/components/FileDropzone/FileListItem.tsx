@@ -22,18 +22,18 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
       return (
         <>
           <span className={styles.error}>{error.message}</span>
-          {retryUpload ? (
+          {retryUpload && (
             <IconButton aria-label="Retry" name="sync" tooltip="Retry" tooltipPlacement="top" onClick={retryUpload} />
-          ) : null}
-          {removeFile ? (
+          )}
+          {removeFile && (
             <IconButton
               className={retryUpload ? styles.marginLeft : ''}
               name="trash-alt"
               onClick={() => removeFile(customFile)}
-              tooltip="Remove"
-              aria-label="Remove"
+              tooltip="Remove file"
+              aria-label="Remove file"
             />
-          ) : null}
+          )}
         </>
       );
     }
@@ -43,23 +43,25 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
         <>
           <progress className={styles.progressBar} max={file.size} value={progress} />
           <span className={styles.paddingLeft}>{Math.round((progress / file.size) * 100)}%</span>
-          {abortUpload ? (
+          {abortUpload && (
             <Button variant="secondary" type="button" fill="text" onClick={abortUpload}>
               Cancel
             </Button>
-          ) : null}
+          )}
         </>
       );
     }
-    return removeFile ? (
-      <IconButton
-        name="trash-alt"
-        onClick={() => removeFile(customFile)}
-        tooltip="Remove"
-        aria-label="Remove"
-        tooltipPlacement="top"
-      />
-    ) : null;
+    return (
+      removeFile && (
+        <IconButton
+          name="trash-alt"
+          onClick={() => removeFile(customFile)}
+          tooltip="Remove file"
+          aria-label="Remove file"
+          tooltipPlacement="top"
+        />
+      )
+    );
   };
 
   const valueFormat = getValueFormat('decbytes')(file.size);

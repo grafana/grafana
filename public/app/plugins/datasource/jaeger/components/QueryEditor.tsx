@@ -49,7 +49,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
               options={[
                 { value: 'search', label: 'Search' },
                 { value: undefined, label: 'TraceID' },
-                { value: 'upload', label: 'JSON File' },
+                { value: 'upload', label: 'JSON file' },
               ]}
               value={query.queryType}
               onChange={(v) =>
@@ -64,7 +64,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         </InlineFieldRow>
         {renderEditorBody()}
       </div>
-      {query.queryType === 'upload' ? (
+      {query.queryType === 'upload' && (
         <div className={css({ padding: theme.spacing(2) })}>
           <FileDropzone
             options={{ accept: '.json', multiple: false }}
@@ -74,7 +74,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
             }}
           />
         </div>
-      ) : null}
+      )}
     </>
   );
 }
