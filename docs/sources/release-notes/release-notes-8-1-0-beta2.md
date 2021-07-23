@@ -19,4 +19,3 @@ list = false
 
 * **Config:** Fix Docker builds by correcting formatting in sample.ini. [#37106](https://github.com/grafana/grafana/pull/37106), [@FZambia](https://github.com/FZambia)
 * **Explore:** Fix encoding of internal URLs. [#36919](https://github.com/grafana/grafana/pull/36919), [@aocenas](https://github.com/aocenas)
-
