@@ -8,12 +8,16 @@ weight = 600
 
 # Geomap
 
+{{< figure src="/static/img/docs/geomap-panel/geomap_example.png" max-width="1200px" caption="Geomap panel" >}}
+
 The Geomap panel visualization allows you to view and customize the world map using geospatial data in respect to geographical locations. Various overlay styles and map view settings can be configured to easily focus on the important location-based characteristics of the data.
 
 
 ## Base layer
 
 Base layer loads in a blank world map from the tile server to the Grafana panel. There are several base layer options available for you to choose from, each with their specific configuration options to style the base map. Default base layer is CartoDB base map, but can be specified differently through the `.ini` configuration file.
+
+![Base layer options](/static/img/docs/geomap-panel/geomap_base_layer.png)
 
 ### Configure the default base layer with provisioning
 
@@ -84,9 +88,14 @@ Data layer in the Geomap plugin determine how you visualize geospatial data on t
 
 ### Markers Layer
 
+![Markers Layer](/static/img/docs/geomap-panel/geomap_markers_layer.png)
+
 Markers layer allows displaying data points as different marker shapes such as circle, square, triangle, star, and more.
 
-- **Marker Size** configures the size of the marker. Default is `Fixed color`, making all marker size the same regardless of the data points. However, there are also an option to scale the circles to the corresponding data points. `Min` and `Max` marker size has to be set such that the Marker layer can scale within these range.
+![Markers Layer Options](/static/img/docs/geomap-panel/geomap_markers_options.png)
+
+- **Marker Color** configures the color of the marker. The default `Fixed size` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
+- **Marker Size** configures the size of the marker. Default is `Fixed size`, making all marker size the same regardless of the data points. However, there is also an option to scale the circles to the corresponding data points. `Min` and `Max` marker size has to be set such that the Marker layer can scale within these range.
 - **Marker Shape** gives flexibility to visualize the data points differently. 
   - Circle
   - Square
@@ -98,7 +107,12 @@ Markers layer allows displaying data points as different marker shapes such as c
 
 ### Heatmap Layer
 
+![Heatmap Layer](/static/img/docs/geomap-panel/geomap_heatmap_layer.png)
+
 Heatmap layer cluster data points to visualize locations with different densities. To add a heatmap layer, click on the drop down menu under Data Layer and choose `Heatmap`. Similar to `Markers`, you will be prompted with various options determine which data points to visualize and how. 
 
+![Heatmap Layer Options](/static/img/docs/geomap-panel/geomap_heatmap_options.png)
+
+- **Weight values** configures the intensity of the heatmap clusters. `Fixed value` keeps a constant weight value throughout all data points. This value should be in the range of 0~1. Similar to Markers, there is an alternate option in the drop down to automatically scale the weight values depending on data values.
 - **Radius** configures the size of the heatmap clusters.
 - **Blur** configures the amount of blur on each cluster.
