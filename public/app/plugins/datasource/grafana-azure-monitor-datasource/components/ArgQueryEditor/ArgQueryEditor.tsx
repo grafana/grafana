@@ -30,6 +30,7 @@ const ArgQueryEditor: React.FC<LogsQueryEditorProps> = ({
       .getSubscriptions()
       .then((results) => {
         const newSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
+        console.log('setting subscriptions', newSubscriptions);
         setSubscriptions(newSubscriptions);
         setError(ERROR_SOURCE, undefined);
 
@@ -42,7 +43,7 @@ const ArgQueryEditor: React.FC<LogsQueryEditorProps> = ({
       })
       .catch((err) => setError(ERROR_SOURCE, err));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datasource, onChange, setError]);
+  }, [datasource, setError]);
 
   return (
     <div data-testid="azure-monitor-logs-query-editor">

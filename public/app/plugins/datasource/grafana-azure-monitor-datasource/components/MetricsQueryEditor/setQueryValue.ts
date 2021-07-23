@@ -36,14 +36,18 @@ export function setResourceType(query: AzureMonitorQuery, resourceType: string |
     return query;
   }
 
-  return {
+  const newQuery = {
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
       metricDefinition: resourceType,
       resourceName: undefined,
+      metricNamespace: undefined,
+      metricName: undefined,
     },
   };
+
+  return newQuery;
 }
 
 export function setResourceName(query: AzureMonitorQuery, resourceName: string | undefined): AzureMonitorQuery {

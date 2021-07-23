@@ -25,12 +25,13 @@ const ResourceNameField: React.FC<ResourceNameFieldProps> = ({
   );
 
   const options = useMemo(() => [...resourceNames, variableOptionGroup], [resourceNames, variableOptionGroup]);
+  const value = query.azureMonitor?.resourceName ?? null;
 
   return (
     <Field label="Resource name">
       <Select
         inputId="azure-monitor-metrics-resource-name-field"
-        value={query.azureMonitor?.resourceName}
+        value={value}
         onChange={handleChange}
         options={options}
         width={38}

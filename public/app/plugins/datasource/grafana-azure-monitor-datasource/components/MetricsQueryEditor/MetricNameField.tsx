@@ -10,7 +10,7 @@ interface MetricNameProps extends AzureQueryEditorFieldProps {
   metricNames: AzureMonitorOption[];
 }
 
-const MetricName: React.FC<MetricNameProps> = ({ metricNames, query, variableOptionGroup, onQueryChange }) => {
+const MetricNameField: React.FC<MetricNameProps> = ({ metricNames, query, variableOptionGroup, onQueryChange }) => {
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
       if (!change.value) {
@@ -29,7 +29,7 @@ const MetricName: React.FC<MetricNameProps> = ({ metricNames, query, variableOpt
     <Field label="Metric">
       <Select
         inputId="azure-monitor-metrics-metric-field"
-        value={query.azureMonitor?.metricName}
+        value={query.azureMonitor?.metricName ?? null}
         onChange={handleChange}
         options={options}
         width={38}
@@ -38,4 +38,4 @@ const MetricName: React.FC<MetricNameProps> = ({ metricNames, query, variableOpt
   );
 };
 
-export default MetricName;
+export default MetricNameField;
