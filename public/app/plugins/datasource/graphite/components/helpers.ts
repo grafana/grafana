@@ -41,7 +41,7 @@ function createEditableParam(paramDef: ParamDef, value?: string | number): Edita
  */
 export function mapFuncInstanceToParams(func: FuncInstance): EditableParam[] {
   // list of required parameters (from func.def)
-  let params: EditableParam[] = func.def.params.map((paramDef: ParamDef, index: number) =>
+  const params: EditableParam[] = func.def.params.map((paramDef: ParamDef, index: number) =>
     createEditableParam(paramDef, func.params[index])
   );
 
