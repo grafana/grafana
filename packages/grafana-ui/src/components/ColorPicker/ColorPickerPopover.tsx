@@ -7,6 +7,7 @@ import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerProp
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '../../themes';
+import tinycolor from 'tinycolor2';
 
 export type ColorPickerChangeHandler = (color: string) => void;
 
@@ -55,11 +56,11 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
   handleChange = (color: any) => {
     const { onColorChange, onChange, enableNamedColors, theme } = this.props;
     const changeHandler = onColorChange || onChange;
-
+    const newColor = tinycolor(theme.visualization.getColorByName(color));
     if (enableNamedColors) {
       return changeHandler(color);
     }
-    changeHandler(theme.visualization.getColorByName(color));
+    changeHandler(newColor.toString(newColor.getAlpha() === 1 ? 'hex6' : 'hex8'));
   };
 
   onTabChange = (tab: PickerType | keyof T) => {
