@@ -1,16 +1,17 @@
-import React, { PureComponent } from 'react';
+import React from 'react';
 import { stylesFactory } from '@grafana/ui';
 import { formattedValueToString, getFieldColorModeForField, GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { DimensionSupplier } from '../../dims/types';
+import { getMinMaxAndDelta } from '../../../../../../../packages/grafana-data/src/field/scale'; 
 
 export interface MarkersLegendProps {
   color?: DimensionSupplier<string>;
   size?: DimensionSupplier<number>;
 }
 export function MarkersLegend(props: MarkersLegendProps) {
-  const {color, size} = props;
+  const { color } = props;
   const style = getStyles(config.theme);
   if (!color) {
     return (
@@ -21,10 +22,15 @@ export function MarkersLegend(props: MarkersLegendProps) {
     return <div className={style.infoWrap}>Fixed: {color.fixed}</div>;
   }
   const colorMode = getFieldColorModeForField(color.field!);
+  const colorRange = getMinMaxAndDelta(color.field!)
   if (colorMode.isContinuous && colorMode.getColors) {
     // getColors return an array of color string from the color scheme chosen
     const colors = colorMode.getColors(config.theme2);
-    return <div>This is continous</div>
+    //TODO: can we get the same gradiant scale img as the option dropdown?
+    return <div className={style.gradientContainer}>
+      <div className={style.minVal}>{colorRange.min}</div>
+      <div className={style.minVal}>{colorRange.max}</div>
+    </div>
   }
 
   const thresholds = color.field?.config?.thresholds;
@@ -88,4 +94,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   legendItem: css`
     white-space: nowrap;
   `,
+  gradientContainer: css`
+    min-width: 200px;
+    display: flex;
+    justify-content: space-between;
+    background-image: linear-gradient(to right, green, red);
+  `,
+  minVal: css `
+    width: 10%;
+  `,
+  maxVal: css `
+    width: 10%;
+  `
 }));
