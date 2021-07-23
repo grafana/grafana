@@ -1,4 +1,3 @@
-import './add_graphite_func';
 import './func_editor';
 
 import GraphiteQuery from './graphite_query';
@@ -26,10 +25,10 @@ import { ChangeEvent } from 'react';
 export class GraphiteQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
-  queryModel: GraphiteQuery;
+  declare queryModel: GraphiteQuery;
   segments: any[] = [];
   addTagSegments: any[] = [];
-  removeTagValue: string;
+  declare removeTagValue: string;
   supportsTags = false;
   paused = false;
 

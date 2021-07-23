@@ -29,8 +29,17 @@ Syntax is:
 {{< relref "example.md" >}}
 ```
 
-You might need to add more context for the link (containing folders and so on, `folder/example.md`) if Hugo says the relref is ambiguous. 
+You might need to add more context for the link (containing folders and so on, `folder/example.md`) if Hugo says the relref is ambiguous.
 
+### Managing redirects
+
+When moving content around or removing pages it's important that users following old links are properly redirected to the new location.  We do this using the [aliases](https://gohugo.io/content-management/urls/#aliases) feature in Hugo.
+
+If you are moving a page, add an `aliases` entry in the front matter referencing the old location of the page which will redirect the old url to the new location.
+
+If you are removing a page, add an `aliases` entry in the front matter of the most-applicable page referencing the location of the page being removed.
+
+If you are copying an existing page as the basis for a new one, be sure to remove any `aliases` entries in the front matter in your copy to avoid conflicting redirects.
 
 ### Edit the side menu
 

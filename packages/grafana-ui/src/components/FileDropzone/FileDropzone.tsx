@@ -139,7 +139,7 @@ export function FileDropzone({ options, children, readAs, onLoad }: FileDropzone
     <div className={styles.container}>
       <div {...getRootProps({ className: styles.dropzone })}>
         <input {...getInputProps()} />
-        {children ?? <FileDropzoneDefaultChildren />}
+        {children ?? <FileDropzoneDefaultChildren primaryText={getPrimaryText(files, options)} />}
       </div>
       {options?.accept ? (
         <small className={cx(styles.small, styles.acceptMargin)}>{getAcceptedFileTypeText(options)}</small>
@@ -162,6 +162,12 @@ export function FileDropzoneDefaultChildren({ primaryText = 'Upload file' }) {
       </small>
     </div>
   );
+}
+function getPrimaryText(files: DropzoneFile[], options?: DropzoneOptions) {
+  if (options?.multiple === undefined || options?.multiple) {
+    return 'Upload file';
+  }
+  return files.length ? 'Replace file' : 'Upload file';
 }
 
 function getAcceptedFileTypeText(options: DropzoneOptions) {
