@@ -203,6 +203,7 @@ export class GeomapPanel extends Component<Props> {
     let view = new View({
       center: [0, 0],
       zoom: 1,
+      showFullExtent: true, // alows zooming so the full range is visiable
     });
 
     // With shared views, all panels use the same view instance
