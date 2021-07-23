@@ -191,7 +191,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, OwnProps) => ({
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({
   editor: state.templating.editor,
   variable: getVariable(ownProps.identifier.id, state, false), // we could be renaming a variable and we don't want this to throw
 });
