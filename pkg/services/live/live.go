@@ -346,7 +346,6 @@ func (g *GrafanaLive) Init() error {
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 		newCtx = livecontext.SetContextSignedUser(newCtx, user)
-		newCtx = livecontext.SetContextValues(newCtx, ctx.Req.URL.Query())
 		r := ctx.Req.Request
 		r = r.WithContext(newCtx)
 		wsHandler.ServeHTTP(ctx.Resp, r)
@@ -355,7 +354,6 @@ func (g *GrafanaLive) Init() error {
 	g.pushWebsocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
 		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
-		newCtx = livecontext.SetContextValues(newCtx, ctx.Req.URL.Query())
 		newCtx = livecontext.SetContextStreamID(newCtx, ctx.Params(":streamId"))
 		r := ctx.Req.Request
 		r = r.WithContext(newCtx)
