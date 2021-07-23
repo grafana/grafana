@@ -1,4 +1,22 @@
 
+<!-- 8.1.0-beta2 START -->
+
+# 8.1.0-beta2 (2021-07-23)
+
+### Features and enhancements
+
+* **Alerting:** Expand the value string in alert annotations and labels. [#37051](https://github.com/grafana/grafana/pull/37051), [@gerobinson](https://github.com/gerobinson)
+* **Auth:** Add Azure HTTP authentication middleware. [#36932](https://github.com/grafana/grafana/pull/36932), [@kostrse](https://github.com/kostrse)
+* **Auth:** Pass user role to Grafana using auth proxy. [#36729](https://github.com/grafana/grafana/pull/36729), [@yuwaMSFT2](https://github.com/yuwaMSFT2)
+* **Gazetteer:** Update Countries JSON. [#37129](https://github.com/grafana/grafana/pull/37129), [@bryanuribe](https://github.com/bryanuribe)
+
+### Bug fixes
+
+* **Config:** Fix Docker builds by removing bad formatting in sample.ini. [#37106](https://github.com/grafana/grafana/pull/37106), [@FZambia](https://github.com/FZambia)
+* **Explore:** Fix encoding of internal URLs. [#36919](https://github.com/grafana/grafana/pull/36919), [@aocenas](https://github.com/aocenas)
+
+<!-- 8.1.0-beta2 END -->
+
 <!-- 8.1.0-beta1 START -->
 
 # 8.1.0-beta1 (2021-07-22)
