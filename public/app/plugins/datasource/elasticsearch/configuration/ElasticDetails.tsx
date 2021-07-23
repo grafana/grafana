@@ -5,7 +5,7 @@ import { ElasticsearchOptions, Interval } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { gte, lt } from 'semver';
 
-const indexPatternTypes = [
+const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'No pattern', value: 'none' },
   { label: 'Hourly', value: 'Hourly', example: '[logstash-]YYYY.MM.DD.HH' },
   { label: 'Daily', value: 'Daily', example: '[logstash-]YYYY.MM.DD' },
