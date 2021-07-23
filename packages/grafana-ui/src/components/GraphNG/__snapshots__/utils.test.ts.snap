@@ -69,6 +69,7 @@ Object {
     },
   ],
   "cursor": Object {
+    "dataIdx": [Function],
     "drag": Object {
       "setScale": false,
     },
