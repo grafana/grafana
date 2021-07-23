@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
 )
@@ -36,9 +35,9 @@ type Options struct {
 }
 
 // New returns a new instance of Server.
-func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer,
+func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry) (*Server, error) {
-	s, err := newServer(opts, cfg, sqlStore, httpServer, provisioningService, backgroundServiceProvider)
+	s, err := newServer(opts, cfg, httpServer, provisioningService, backgroundServiceProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +49,7 @@ func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer
 	return s, nil
 }
 
-func newServer(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer,
+func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
@@ -58,7 +57,6 @@ func newServer(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, http
 	s := &Server{
 		context:             childCtx,
 		childRoutines:       childRoutines,
-		sqlStore:            sqlStore,
 		HTTPServer:          httpServer,
 		provisioningService: provisioningService,
 		shutdownFn:          shutdownFn,
@@ -93,7 +91,6 @@ type Server struct {
 	buildBranch        string
 	backgroundServices []registry.BackgroundService
 
-	sqlStore            *sqlstore.SQLStore
 	HTTPServer          *api.HTTPServer
 	provisioningService provisioning.ProvisioningService
 }
@@ -115,14 +112,6 @@ func (s *Server) init() error {
 
 	login.Init()
 	social.ProvideService(s.cfg)
-
-	if err := s.sqlStore.Migrate(); err != nil {
-		return err
-	}
-
-	if err := s.sqlStore.Reset(); err != nil {
-		return err
-	}
 
 	return s.provisioningService.RunInitProvisioners()
 }

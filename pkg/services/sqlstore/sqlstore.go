@@ -57,7 +57,20 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	return newSQLStore(cfg, cacheService, bus, nil)
+	s, err := newSQLStore(cfg, cacheService, bus, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.Migrate(); err != nil {
+		return nil, err
+	}
+
+	if err := s.Reset(); err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }
 
 func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, engine *xorm.Engine,
