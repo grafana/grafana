@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { css, cx } from '@emotion/css';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
@@ -20,16 +20,30 @@ import { changeDatasource } from '../state/datasource';
 import { setQueries } from '../state/query';
 import { ShowConfirmModalEvent } from '../../../types/events';
 
-export interface Props {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+  const explore = state.explore;
+  const { datasourceInstance } = explore[exploreId]!;
+  return {
+    exploreId,
+    datasourceInstance,
+  };
+}
+
+const mapDispatchToProps = {
+  changeDatasource,
+  updateRichHistory,
+  setQueries,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+interface OwnProps {
   query: RichHistoryQuery;
   dsImg: string;
   isRemoved: boolean;
-  changeDatasource: typeof changeDatasource;
-  updateRichHistory: typeof updateRichHistory;
-  setQueries: typeof setQueries;
-  exploreId: ExploreId;
-  datasourceInstance: DataSourceApi;
 }
+
+export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
   /* Hard-coded value so all buttons and icons on right side of card are aligned */
@@ -304,19 +318,4 @@ export function RichHistoryCard(props: Props) {
   );
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
-  const explore = state.explore;
-  const { datasourceInstance } = explore[exploreId]!;
-  return {
-    exploreId,
-    datasourceInstance,
-  };
-}
-
-const mapDispatchToProps = {
-  changeDatasource,
-  updateRichHistory,
-  setQueries,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(RichHistoryCard));
+export default hot(module)(connector(RichHistoryCard));

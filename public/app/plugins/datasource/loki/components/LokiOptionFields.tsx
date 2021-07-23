@@ -2,6 +2,7 @@
 import React, { memo } from 'react';
 import { css, cx } from '@emotion/css';
 import { LokiQuery } from '../types';
+import { SelectableValue } from '@grafana/data';
 
 // Types
 import { InlineFormLabel, RadioButtonGroup, InlineField, Input } from '@grafana/ui';
@@ -17,7 +18,7 @@ export interface LokiOptionFieldsProps {
 
 type LokiQueryType = 'instant' | 'range';
 
-const queryTypeOptions = [
+const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
   { value: 'range', label: 'Range', description: 'Run query over a range of time.' },
   {
     value: 'instant',
