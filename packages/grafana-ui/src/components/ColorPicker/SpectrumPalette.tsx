@@ -15,7 +15,19 @@ export interface SpectrumPaletteProps {
 
 const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color, onChange }) => {
   const [currentColor, setColor] = useState(color);
-  useThrottleFn(onChange, 500, [currentColor]);
+
+  const formatHexColor = (color: string) => {
+    const newColor = tinycolor(color);
+    return newColor.toString(newColor.getAlpha() === 1 ? 'hex6' : 'hex8');
+  };
+
+  useThrottleFn(
+    (c) => {
+      onChange(formatHexColor(c));
+    },
+    500,
+    [currentColor]
+  );
 
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
