@@ -8,7 +8,7 @@ export interface TimeRangeConfig {
 }
 
 export const setTimeRange = ({ from, to, zone }: TimeRangeConfig) => {
-  e2e().get('[aria-label="TimePicker Open Button"]').click();
+  e2e.components.TimePicker.openButton().click();
 
   if (zone) {
     e2e().contains('button', 'Change time zone').click();
