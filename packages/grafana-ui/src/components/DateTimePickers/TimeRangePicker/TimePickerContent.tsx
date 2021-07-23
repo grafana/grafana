@@ -231,14 +231,7 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
 
   return (
     <fieldset>
-      <h3
-        className={styles.header}
-        onClick={() => {
-          if (!hideQuickRanges) {
-            setCollapsedFlag(!collapsed);
-          }
-        }}
-      >
+      <h3 className={styles.header}>
         <button
           className={styles.expandButton}
           onClick={() => {

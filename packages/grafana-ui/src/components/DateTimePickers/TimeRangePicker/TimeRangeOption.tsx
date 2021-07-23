@@ -56,7 +56,7 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
         className={styles.radio}
         checked={selected}
         name={name}
-        type="radio"
+        type="checkbox"
         id={id}
         onChange={() => onSelect(value)}
       />
