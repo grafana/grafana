@@ -127,7 +127,7 @@
     "@types/redux-mock-store": "1.0.2",
     "@types/reselect": "2.2.0",
     "@types/semver": "^6.0.0",
-    "@types/slate": "0.47.1",
+    "@types/slate": "0.47.2",
     "@types/slate-plain-serializer": "0.6.1",
     "@types/slate-react": "0.22.5",
     "@types/testing-library__jest-dom": "5.9.5",
