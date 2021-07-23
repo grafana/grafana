@@ -1,7 +1,7 @@
 <query-editor-row query-ctrl="ctrl" has-text-edit-mode="true">
 
   <div class="gf-form" ng-show="ctrl.state.target.textEditor">
-    <input type="text" class="gf-form-input" style="font-family: monospace;" ng-value="ctrl.state.target.target" spellcheck="false" ng-blur="ctrl.targetTextChanged($event)"></input>
+    <graphite-text-editor style="width: 100%" rawQuery="ctrl.state.target.target" dispatch="ctrl.dispatch"></graphite-text-editor>
   </div>
 
   <div ng-hide="ctrl.target.textEditor">
@@ -52,7 +52,7 @@
       </div>
 
       <div ng-if="ctrl.state.paused" class="gf-form">
-        <a ng-click="ctrl.unpause()" class="gf-form-label query-part"><icon name="'play'"></icon></a>
+        <play-button dispatch="ctrl.dispatch" />
       </div>
 
       <div class="gf-form gf-form--grow">
@@ -70,7 +70,7 @@
       </div>
 
       <div class="gf-form dropdown">
-        <span graphite-add-func></span>
+        <add-graphite-function funcDefs="ctrl.state.funcDefs" dispatch="ctrl.dispatch" />
       </div>
 
       <div class="gf-form gf-form--grow">

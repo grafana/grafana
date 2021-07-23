@@ -2,7 +2,6 @@ import {
   FieldType,
   getFieldColorModeForField,
   GrafanaTheme2,
-  MapLayerHandler,
   MapLayerOptions,
   MapLayerRegistryItem,
   PanelData,
@@ -47,9 +46,9 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerOptions<HeatmapConfig>, theme: GrafanaTheme2): MapLayerHandler => {
+  create: async (map: Map, options: MapLayerOptions<HeatmapConfig>, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
-    const matchers = getLocationMatchers(options.location);
+    const matchers = await getLocationMatchers(options.location);
 
     const vectorSource = new source.Vector();
 

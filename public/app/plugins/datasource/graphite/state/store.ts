@@ -19,6 +19,7 @@ import {
   spliceSegments,
 } from './helpers';
 import { Action } from 'redux';
+import { FuncDefs } from '../gfunc';
 
 export type GraphiteQueryEditorState = {
   /**
@@ -37,6 +38,8 @@ export type GraphiteQueryEditorState = {
   panelCtrl: any;
 
   target: { target: string; textEditor: boolean };
+
+  funcDefs: FuncDefs | null;
 
   segments: GraphiteSegment[];
   queryModel: GraphiteQuery;
@@ -63,6 +66,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
       supportsTags: deps.datasource.supportsTags,
       paused: false,
       removeTagValue: '-- remove tag --',
+      funcDefs: deps.datasource.funcDefs,
     };
 
     await buildSegments(state, false);
