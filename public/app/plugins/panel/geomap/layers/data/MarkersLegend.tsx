@@ -1,6 +1,6 @@
 import React from 'react';
 import { stylesFactory } from '@grafana/ui';
-import { formattedValueToString, getFieldColorModeForField, GrafanaTheme } from '@grafana/data';
+import { formattedValueToString, getFieldColorModeForField, GrafanaTheme, reduceField, ReducerID } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { DimensionSupplier } from '../../dims/types';
@@ -24,17 +24,31 @@ export function MarkersLegend(props: MarkersLegendProps) {
 
   const fmt = (v: any) => `${formattedValueToString(color.field!.display!(v))}`;
   const colorMode = getFieldColorModeForField(color.field!);
-  const colorRange = getMinMaxAndDelta(color.field!)
   
   if (colorMode.isContinuous && colorMode.getColors) {
+    const colorRange = getMinMaxAndDelta(color.field!)
+    const stats = reduceField({
+      field: color.field!,
+      reducers: [
+        ReducerID.min,
+        ReducerID.max,
+        ReducerID.mean,
+        // std dev?
+      ]
+    })
+
     // getColors return an array of color string from the color scheme chosen
     const colors = colorMode.getColors(config.theme2);
     console.log('TODO use gradient', colors);
     //TODO: can we get the same gradiant scale img as the option dropdown?
-    return <div className={style.gradientContainer}>
+    return <>
+    <div className={style.gradientContainer}>
       <div className={style.minVal}>{fmt(colorRange.min)}</div>
       <div className={style.maxVal}>{fmt(colorRange.max)}</div>
     </div>
+    <pre>{JSON.stringify(colorRange)}</pre>
+    <pre>{JSON.stringify({min:stats.min, max:stats.max, mean:stats.mean})}</pre>
+    </>
   }
 
   const thresholds = color.field?.config?.thresholds;
