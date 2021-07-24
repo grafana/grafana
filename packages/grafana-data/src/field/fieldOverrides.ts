@@ -32,6 +32,7 @@ import { getFrameDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { getTemplateProxyForField } from './templateProxies';
+import tinycolor from 'tinycolor2';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -204,11 +205,17 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   });
 }
 
+// this is a significant optimization for streaming, where we currently re-process all values in the buffer on ech update
+// via field.display(value). this can potentially be removed once we...
+// 1. process data packets incrementally and/if cache the results in the streaming datafame (maybe by buffer index)
+// 2. have the ability to selectively get display color or text (but not always both, which are each quite expensive)
+// 3. sufficently optimize text formating and threshold color determinitation
 function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): DisplayProcessor {
   const cache = new Map<any, DisplayValue>();
 
   return (value: any) => {
     let v = cache.get(value);
+
     if (!v) {
       // Don't grow too big
       if (cache.size === maxCacheSize) {
@@ -216,8 +223,17 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
       }
 
       v = disp(value);
+
+      // convert to hex6 or hex8 so downstream we can cheaply test for alpha (and set new alpha)
+      // via a simple length check (in colorManipulator) rather using slow parsing via tinycolor
+      if (v.color && v.color[0] !== '#') {
+        let color = tinycolor(v.color);
+        v.color = color.getAlpha() < 1 ? color.toHex8String() : color.toHexString();
+      }
+
       cache.set(value, v);
     }
+
     return v;
   };
 }
