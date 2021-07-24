@@ -20,7 +20,7 @@ import { AnnotationListItem } from './AnnotationListItem';
 import { AnnotationListItemTags } from './AnnotationListItemTags';
 import { CustomScrollbar, stylesFactory } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { Unsubscribable } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 interface UserInfo {
   id?: number;
@@ -38,7 +38,7 @@ interface State {
 }
 export class AnnoListPanel extends PureComponent<Props, State> {
   style = getStyles(config.theme);
-  sub?: Unsubscribable;
+  subs = new Subscription();
 
   constructor(props: Props) {
     super(props);
@@ -55,18 +55,17 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     this.doSearch();
 
     // When an annotation on this dashboard changes, re-run the query
-    this.sub = this.props.eventBus.getStream(AnnotationChangeEvent).subscribe({
-      next: () => {
-        this.doSearch();
-      },
-    });
-    // TODO: we should also add annotation events to the dashboard live channel
+    this.subs.add(
+      this.props.eventBus.getStream(AnnotationChangeEvent).subscribe({
+        next: () => {
+          this.doSearch();
+        },
+      })
+    );
   }
 
   componentWillUnmount() {
-    if (this.sub) {
-      this.sub.unsubscribe();
-    }
+    this.subs.unsubscribe();
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
