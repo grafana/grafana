@@ -69,7 +69,7 @@ export class GeomapPanel extends Component<Props, State> {
 
     // External data changed
     if (layersChanged || this.props.data !== nextProps.data) {
-      this.dataChanged(nextProps.data, nextProps.options.controls.showLegend);
+      this.dataChanged(nextProps.data);
     }
 
     return true; // always?
@@ -88,11 +88,9 @@ export class GeomapPanel extends Component<Props, State> {
       this.map!.setView(this.initMapView(options.view));
     }
 
-    let legendChanged = false;
     if (options.controls !== oldOptions.controls) {
       console.log('Controls changed');
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
-      legendChanged = options.controls.showLegend !== oldOptions.controls.showLegend;
     }
 
     if (options.basemap !== oldOptions.basemap) {
@@ -101,9 +99,9 @@ export class GeomapPanel extends Component<Props, State> {
       layersChanged = true;
     }
 
-    if (legendChanged || options.layers !== oldOptions.layers) {
+    if (options.layers !== oldOptions.layers) {
       console.log('layers changed');
-      this.initLayers(options.layers ?? [], options.controls?.showLegend); // async
+      this.initLayers(options.layers ?? []); // async
       layersChanged = true;
     }
     return layersChanged;
@@ -112,7 +110,7 @@ export class GeomapPanel extends Component<Props, State> {
   /**
    * Called when PanelData changes (query results etc)
    */
-  dataChanged(data: PanelData, showLegend?: boolean) {
+  dataChanged(data: PanelData) {
     for (const state of this.layers) {
       if (state.handler.update) {
         state.handler.update(data);
@@ -144,7 +142,7 @@ export class GeomapPanel extends Component<Props, State> {
     this.map.addInteraction(this.mouseWheelZoom);
     this.initControls(options.controls);
     this.initBasemap(options.basemap);
-    await this.initLayers(options.layers, options.controls?.showLegend);
+    await this.initLayers(options.layers);
     this.forceUpdate(); // first render
   };
 
@@ -167,7 +165,7 @@ export class GeomapPanel extends Component<Props, State> {
     this.map.getLayers().insertAt(0, this.basemap);
   }
 
-  async initLayers(layers: MapLayerOptions[], showLegend?: boolean) {
+  async initLayers(layers: MapLayerOptions[]) {
     // 1st remove existing layers
     for (const state of this.layers) {
       this.map!.removeLayer(state.layer);
@@ -187,7 +185,7 @@ export class GeomapPanel extends Component<Props, State> {
         continue; // TODO -- panel warning?
       }
 
-      const handler = await item.create(this.map!, overlay, config.theme2, showLegend);
+      const handler = await item.create(this.map!, overlay, config.theme2);
       const layer = handler.init();
       this.map!.addLayer(layer);
       this.layers.push({

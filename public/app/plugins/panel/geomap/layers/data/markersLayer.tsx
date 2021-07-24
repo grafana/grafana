@@ -24,6 +24,7 @@ export interface MarkersConfig {
   color: ColorDimensionConfig;
   fillOpacity: number;
   shape?: string;
+  showLegend?: boolean;
 }
 
 const defaultOptions: MarkersConfig = {
@@ -37,6 +38,7 @@ const defaultOptions: MarkersConfig = {
   },
   fillOpacity: 0.4,
   shape: 'circle',
+  showLegend: true,
 };
 
 export const MARKERS_LAYER_ID = "markers";
@@ -64,7 +66,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2, createLegend?:boolean) => {
+  create: async (map: Map, options: MapLayerOptions<MarkersConfig>, theme: GrafanaTheme2) => {
     const matchers = await getLocationMatchers(options.location);
     const vectorLayer = new layer.Vector({});
     // Assert default values
@@ -75,7 +77,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
     const legendProps= new ReplaySubject<MarkersLegendProps>(1);
     let legend:ReactNode = null;
-    if (createLegend) {
+    if (config.showLegend) {
       legend = <ObservablePropsWrapper 
         watch={legendProps}  
         initialSubProps={{}}  
@@ -187,6 +189,12 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           step: 0.1,
         },
         showIf: (cfg) => (markerMakers.getIfExists((cfg as any).config?.shape)?.hasFill),
+      })
+      .addBooleanSwitch({
+        path: 'config.showLegend',
+        name: 'Show legend',
+        description: 'Show legend',
+        defaultValue: defaultOptions.showLegend,
       });
   },
 

@@ -97,12 +97,7 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (
-    map: Map,
-    options: MapLayerOptions<TConfig>,
-    theme: GrafanaTheme2,
-    createLegend?: boolean
-  ) => Promise<MapLayerHandler>;
+  create: (map: Map, options: MapLayerOptions<TConfig>, theme: GrafanaTheme2) => Promise<MapLayerHandler>;
 
   /**
    * Show custom elements in the panel edit UI
