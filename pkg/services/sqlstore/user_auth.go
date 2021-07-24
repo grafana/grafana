@@ -2,7 +2,6 @@ package sqlstore
 
 import (
 	"encoding/base64"
-	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -16,7 +15,7 @@ var getTime = time.Now
 const genericOAuthModule = "oauth_generic_oauth"
 
 func init() {
-	bus.AddHandler("sql", GetUserByAuthInfo)
+	//bus.AddHandler("sql", GetUserByAuthInfo)
 	bus.AddHandler("sql", GetExternalUserInfoByLogin)
 	bus.AddHandler("sql", GetAuthInfo)
 	bus.AddHandler("sql", SetAuthInfo)
@@ -24,110 +23,110 @@ func init() {
 	bus.AddHandler("sql", DeleteAuthInfo)
 }
 
-func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
-	user := &models.User{}
-	has := false
-	var err error
-	authQuery := &models.GetAuthInfoQuery{}
-
-	// Try to find the user by auth module and id first
-	if query.AuthModule != "" && query.AuthId != "" {
-		authQuery.AuthModule = query.AuthModule
-		authQuery.AuthId = query.AuthId
-
-		err = GetAuthInfo(authQuery)
-		if !errors.Is(err, models.ErrUserNotFound) {
-			if err != nil {
-				return err
-			}
-
-			// if user id was specified and doesn't match the user_auth entry, remove it
-			if query.UserId != 0 && query.UserId != authQuery.Result.UserId {
-				err = DeleteAuthInfo(&models.DeleteAuthInfoCommand{
-					UserAuth: authQuery.Result,
-				})
-				if err != nil {
-					sqlog.Error("Error removing user_auth entry", "error", err)
-				}
-
-				authQuery.Result = nil
-			} else {
-				has, err = x.Id(authQuery.Result.UserId).Get(user)
-				if err != nil {
-					return err
-				}
-
-				if !has {
-					// if the user has been deleted then remove the entry
-					err = DeleteAuthInfo(&models.DeleteAuthInfoCommand{
-						UserAuth: authQuery.Result,
-					})
-					if err != nil {
-						sqlog.Error("Error removing user_auth entry", "error", err)
-					}
-
-					authQuery.Result = nil
-				}
-			}
-		}
-	}
-
-	// If not found, try to find the user by id
-	if !has && query.UserId != 0 {
-		has, err = x.Id(query.UserId).Get(user)
-		if err != nil {
-			return err
-		}
-	}
-
-	// If not found, try to find the user by email address
-	if !has && query.Email != "" {
-		user = &models.User{Email: query.Email}
-		has, err = x.Get(user)
-		if err != nil {
-			return err
-		}
-	}
-
-	// If not found, try to find the user by login
-	if !has && query.Login != "" {
-		user = &models.User{Login: query.Login}
-		has, err = x.Get(user)
-		if err != nil {
-			return err
-		}
-	}
-
-	// No user found
-	if !has {
-		return models.ErrUserNotFound
-	}
-
-	// Special case for generic oauth duplicates
-	if query.AuthModule == genericOAuthModule && user.Id != 0 {
-		authQuery.UserId = user.Id
-		authQuery.AuthModule = query.AuthModule
-		err = GetAuthInfo(authQuery)
-		if !errors.Is(err, models.ErrUserNotFound) {
-			if err != nil {
-				return err
-			}
-		}
-	}
-	if authQuery.Result == nil && query.AuthModule != "" {
-		cmd2 := &models.SetAuthInfoCommand{
-			UserId:     user.Id,
-			AuthModule: query.AuthModule,
-			AuthId:     query.AuthId,
-		}
-		if err := SetAuthInfo(cmd2); err != nil {
-			return err
-		}
-	}
-
-	query.Result = user
-	return nil
-}
+//func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
+//	user := &models.User{}
+//	has := false
+//	var err error
+//	authQuery := &models.GetAuthInfoQuery{}
+//
+//	// Try to find the user by auth module and id first
+//	if query.AuthModule != "" && query.AuthId != "" {
+//		authQuery.AuthModule = query.AuthModule
+//		authQuery.AuthId = query.AuthId
+//
+//		err = GetAuthInfo(authQuery)
+//		if !errors.Is(err, models.ErrUserNotFound) {
+//			if err != nil {
+//				return err
+//			}
+//
+//			// if user id was specified and doesn't match the user_auth entry, remove it
+//			if query.UserId != 0 && query.UserId != authQuery.Result.UserId {
+//				err = DeleteAuthInfo(&models.DeleteAuthInfoCommand{
+//					UserAuth: authQuery.Result,
+//				})
+//				if err != nil {
+//					sqlog.Error("Error removing user_auth entry", "error", err)
+//				}
+//
+//				authQuery.Result = nil
+//			} else {
+//				has, err = x.Id(authQuery.Result.UserId).Get(user)
+//				if err != nil {
+//					return err
+//				}
+//
+//				if !has {
+//					// if the user has been deleted then remove the entry
+//					err = DeleteAuthInfo(&models.DeleteAuthInfoCommand{
+//						UserAuth: authQuery.Result,
+//					})
+//					if err != nil {
+//						sqlog.Error("Error removing user_auth entry", "error", err)
+//					}
+//
+//					authQuery.Result = nil
+//				}
+//			}
+//		}
+//	}
+//
+//	// If not found, try to find the user by id
+//	if !has && query.UserId != 0 {
+//		has, err = x.Id(query.UserId).Get(user)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//
+//	// If not found, try to find the user by email address
+//	if !has && query.Email != "" {
+//		user = &models.User{Email: query.Email}
+//		has, err = x.Get(user)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//
+//	// If not found, try to find the user by login
+//	if !has && query.Login != "" {
+//		user = &models.User{Login: query.Login}
+//		has, err = x.Get(user)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//
+//	// No user found
+//	if !has {
+//		return models.ErrUserNotFound
+//	}
+//
+//	// Special case for generic oauth duplicates
+//	if query.AuthModule == genericOAuthModule && user.Id != 0 {
+//		authQuery.UserId = user.Id
+//		authQuery.AuthModule = query.AuthModule
+//		err = GetAuthInfo(authQuery)
+//		if !errors.Is(err, models.ErrUserNotFound) {
+//			if err != nil {
+//				return err
+//			}
+//		}
+//	}
+//	if authQuery.Result == nil && query.AuthModule != "" {
+//		cmd2 := &models.SetAuthInfoCommand{
+//			UserId:     user.Id,
+//			AuthModule: query.AuthModule,
+//			AuthId:     query.AuthId,
+//		}
+//		if err := SetAuthInfo(cmd2); err != nil {
+//			return err
+//		}
+//	}
+//
+//	query.Result = user
+//	return nil
+//}
 
 func GetExternalUserInfoByLogin(query *models.GetExternalUserInfoByLoginQuery) error {
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}

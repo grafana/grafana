@@ -3,6 +3,7 @@ package loginservice
 import (
 	"context"
 	"errors"
+	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,10 +23,11 @@ var (
 )
 
 type Implementation struct {
-	SQLStore     *sqlstore.SQLStore  `inject:""`
-	Bus          bus.Bus             `inject:""`
-	QuotaService *quota.QuotaService `inject:""`
-	TeamSync     login.TeamSyncFunc
+	SQLStore        *sqlstore.SQLStore      `inject:""`
+	Bus             bus.Bus                 `inject:""`
+	AuthInfoService authinfoservice.Service `inject:""`
+	QuotaService    *quota.QuotaService     `inject:""`
+	TeamSync        login.TeamSyncFunc
 }
 
 func (ls *Implementation) Init() error {
@@ -43,14 +45,14 @@ func (ls *Implementation) CreateUser(cmd models.CreateUserCommand) (*models.User
 func (ls *Implementation) UpsertUser(cmd *models.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
-	userQuery := &models.GetUserByAuthInfoQuery{
+	user, err := ls.AuthInfoService.LookupAndUpdate(&models.GetUserByAuthInfoQuery{
 		AuthModule: extUser.AuthModule,
 		AuthId:     extUser.AuthId,
 		UserId:     extUser.UserId,
 		Email:      extUser.Email,
 		Login:      extUser.Login,
-	}
-	if err := bus.Dispatch(userQuery); err != nil {
+	})
+	if err != nil {
 		if !errors.Is(err, models.ErrUserNotFound) {
 			return err
 		}
@@ -85,7 +87,7 @@ func (ls *Implementation) UpsertUser(cmd *models.UpsertUserCommand) error {
 			}
 		}
 	} else {
-		cmd.Result = userQuery.Result
+		cmd.Result = user
 
 		err = updateUser(cmd.Result, extUser)
 		if err != nil {
@@ -100,7 +102,7 @@ func (ls *Implementation) UpsertUser(cmd *models.UpsertUserCommand) error {
 			}
 		}
 
-		if extUser.AuthModule == models.AuthModuleLDAP && userQuery.Result.IsDisabled {
+		if extUser.AuthModule == models.AuthModuleLDAP && user.IsDisabled {
 			// Re-enable user when it found in LDAP
 			if err := ls.Bus.Dispatch(&models.DisableUserCommand{UserId: cmd.Result.Id, IsDisabled: false}); err != nil {
 				return err
