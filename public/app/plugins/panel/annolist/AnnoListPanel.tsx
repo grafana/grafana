@@ -38,7 +38,7 @@ interface State {
 }
 export class AnnoListPanel extends PureComponent<Props, State> {
   style = getStyles(config.theme);
-  subs: Unsubscribable[] = [];
+  sub?: Unsubscribable;
 
   constructor(props: Props) {
     super(props);
@@ -54,19 +54,18 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   componentDidMount() {
     this.doSearch();
 
-    // When anything changes, run the query again
-    this.subs.push(
-      this.props.eventBus.getStream(AnnotationChangeEvent).subscribe({
-        next: () => {
-          this.doSearch();
-        },
-      })
-    );
+    // When an annotation on this dashboard changes, re-run the query
+    this.sub = this.props.eventBus.getStream(AnnotationChangeEvent).subscribe({
+      next: () => {
+        this.doSearch();
+      },
+    });
+    // TODO: we should also add annotation events to the dashboard live channel
   }
 
   componentWillUnmount() {
-    for (const sub of this.subs) {
-      sub.unsubscribe();
+    if (this.sub) {
+      this.sub.unsubscribe();
     }
   }
 
@@ -76,7 +75,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       options !== prevProps.options ||
       this.state.queryTags !== prevState.queryTags ||
       this.state.queryUser !== prevState.queryUser ||
-      timeRange !== prevProps.timeRange;
+      (options.onlyInTimeRange && timeRange !== prevProps.timeRange);
 
     if (needsQuery) {
       this.doSearch();
