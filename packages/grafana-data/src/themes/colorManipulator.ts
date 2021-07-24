@@ -248,7 +248,12 @@ export function alpha(color: string, value: number) {
       color = color.substring(0, 7);
     }
 
-    return color + Math.round(value * 255).toString(16);
+    return (
+      color +
+      Math.round(value * 255)
+        .toString(16)
+        .padStart(2, '0')
+    );
   }
   // rgb(, hsl(
   else if (color[3] === '(') {
