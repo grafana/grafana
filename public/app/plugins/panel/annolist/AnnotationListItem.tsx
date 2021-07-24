@@ -99,21 +99,17 @@ const TimeStamp: FC<TimeStampProps> = ({ time, formatDate }) => {
 function getStyles(theme: GrafanaTheme) {
   return {
     pointer: css`
-      label: pointer;
       cursor: pointer;
     `,
     item: css`
-      label: labelItem;
       margin: ${theme.spacing.xs};
       padding: ${theme.spacing.sm};
       ${styleMixins.listItem(theme)}// display: flex;
     `,
     title: css`
-      label: title;
       flex-basis: 80%;
     `,
     link: css`
-      label: link;
       display: flex;
 
       .fa {
@@ -125,7 +121,6 @@ function getStyles(theme: GrafanaTheme) {
       }
     `,
     login: css`
-      label: login;
       align-self: center;
       flex: auto;
       display: flex;
@@ -133,13 +128,11 @@ function getStyles(theme: GrafanaTheme) {
       font-size: ${theme.typography.size.sm};
     `,
     time: css`
-      label: time;
       margin-left: ${theme.spacing.sm};
       font-size: ${theme.typography.size.sm};
       color: ${theme.colors.textWeak};
     `,
     avatar: css`
-      label: avatar;
       padding: ${theme.spacing.xs};
       img {
         border-radius: 50%;
