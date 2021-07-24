@@ -57,7 +57,7 @@ describe('locationUtil', () => {
     });
     test('absolute url with subdirectory subUrl', () => {
       const urlWithoutMaster = locationUtil.stripBaseFromUrl('http://www.domain.com:9877/thisShouldRemain/subUrl/');
-      expect(urlWithoutMaster).toBe('/thisShouldRemain/subUrl/');
+      expect(urlWithoutMaster).toBe('http://www.domain.com:9877/thisShouldRemain/subUrl/');
     });
   });
 
@@ -78,6 +78,24 @@ describe('locationUtil', () => {
     test('absolute url', () => {
       const urlWithoutMaster = locationUtil.stripBaseFromUrl('http://www.domain.com:9877/subUrl/grafana/');
       expect(urlWithoutMaster).toBe('/subUrl/grafana/');
+    });
+  });
+
+  describe('updateSearchParams', () => {
+    beforeEach(() => {
+      locationUtil.initialize({
+        config: {} as any,
+        getVariablesUrlParams: (() => {}) as any,
+        getTimeRangeForUrl: (() => {}) as any,
+      });
+    });
+
+    test('absolute url', () => {
+      const newURL = locationUtil.updateSearchParams(
+        'http://www.domain.com:1234/test?a=1&b=2#hashtag',
+        '?a=newValue&newKey=hello'
+      );
+      expect(newURL).toBe('http://www.domain.com:1234/test?a=newValue&b=2&newKey=hello#hashtag');
     });
   });
 });

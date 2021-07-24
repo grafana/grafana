@@ -42,9 +42,11 @@ const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
   showTime: 'grafana.explore.logs.showTime',
   wrapLogMessage: 'grafana.explore.logs.wrapLogMessage',
+  prettifyLogMessage: 'grafana.explore.logs.prettifyLogMessage',
 };
 
 interface Props {
+  width: number;
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: DataFrame[];
@@ -73,6 +75,7 @@ interface State {
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
+  prettifyLogMessage: boolean;
   dedupStrategy: LogsDedupStrategy;
   hiddenLogLevels: LogLevel[];
   logsSortOrder: LogsSortOrder | null;
@@ -90,6 +93,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
     showTime: store.getBool(SETTINGS_KEYS.showTime, true),
     wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
+    prettifyLogMessage: store.getBool(SETTINGS_KEYS.prettifyLogMessage, false),
     dedupStrategy: LogsDedupStrategy.none,
     hiddenLogLevels: [],
     logsSortOrder: null,
@@ -165,6 +169,17 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
+  onChangePrettifyLogMessage = (event?: React.SyntheticEvent) => {
+    const target = event && (event.target as HTMLInputElement);
+    if (target) {
+      const prettifyLogMessage = target.checked;
+      this.setState({
+        prettifyLogMessage,
+      });
+      store.set(SETTINGS_KEYS.prettifyLogMessage, prettifyLogMessage);
+    }
+  };
+
   onToggleLogLevel = (hiddenRawLevels: string[]) => {
     const hiddenLogLevels = hiddenRawLevels.map((level) => LogLevel[level as LogLevel]);
     this.setState({ hiddenLogLevels });
@@ -233,6 +248,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
   render() {
     const {
+      width,
       logRows,
       logsMeta,
       logsSeries,
@@ -258,6 +274,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       showLabels,
       showTime,
       wrapLogMessage,
+      prettifyLogMessage,
       dedupStrategy,
       hiddenLogLevels,
       logsSortOrder,
@@ -284,6 +301,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           <ExploreGraphNGPanel
             data={logsSeries}
             height={150}
+            width={width}
             tooltipDisplayMode={TooltipDisplayMode.Multi}
             absoluteRange={visibleRange || absoluteRange}
             timeZone={timeZone}
@@ -302,9 +320,12 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             <InlineField label="Wrap lines" transparent>
               <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
             </InlineField>
+            <InlineField label="Prettify JSON" transparent>
+              <InlineSwitch value={prettifyLogMessage} onChange={this.onChangePrettifyLogMessage} transparent />
+            </InlineField>
             <InlineField label="Dedup" transparent>
               <RadioButtonGroup
-                options={Object.keys(LogsDedupStrategy).map((dedupType: LogsDedupStrategy) => ({
+                options={Object.values(LogsDedupStrategy).map((dedupType) => ({
                   label: capitalize(dedupType),
                   value: dedupType,
                   description: LogsDedupDescription[dedupType],
@@ -353,6 +374,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               enableLogDetails={true}
               forceEscape={forceEscape}
               wrapLogMessage={wrapLogMessage}
+              prettifyLogMessage={prettifyLogMessage}
               timeZone={timeZone}
               getFieldLinks={getFieldLinks}
               logsSortOrder={logsSortOrder}
@@ -429,6 +451,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     logRows: css`
       overflow-x: scroll;
+      width: 100%;
     `,
     infoText: css`
       font-size: ${theme.typography.size.sm};

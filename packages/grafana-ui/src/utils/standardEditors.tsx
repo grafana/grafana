@@ -22,6 +22,8 @@ import {
   FieldColor,
   FieldColorConfigSettings,
   StatsPickerConfigSettings,
+  displayNameOverrideProcessor,
+  FieldNamePickerConfigSettings,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
@@ -42,6 +44,7 @@ import { DataLinksValueEditor } from '../components/OptionsUI/links';
 import { ColorValueEditor } from '../components/OptionsUI/color';
 import { FieldColorEditor } from '../components/OptionsUI/fieldColor';
 import { StatsPickerEditor } from '../components/OptionsUI/stats';
+import { FieldNamePicker } from '../components/MatchersUI/FieldNamePicker';
 
 /**
  * Returns collection of common field config properties definitions
@@ -55,7 +58,7 @@ export const getStandardFieldConfigs = () => {
     description: 'Change the field or series name',
     editor: standardEditorsRegistry.get('text').editor as any,
     override: standardEditorsRegistry.get('text').editor as any,
-    process: stringOverrideProcessor,
+    process: displayNameOverrideProcessor,
     settings: {
       placeholder: 'none',
       expandTemplateVars: true,
@@ -346,6 +349,13 @@ export const getStandardOptionEditors = () => {
     editor: TimeZonePicker as any,
   };
 
+  const fieldName: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
+    id: 'field-name',
+    name: 'Field name',
+    description: 'Time zone selection',
+    editor: FieldNamePicker as any,
+  };
+
   return [
     text,
     number,
@@ -363,5 +373,6 @@ export const getStandardOptionEditors = () => {
     fieldColor,
     color,
     multiSelect,
+    fieldName,
   ];
 };

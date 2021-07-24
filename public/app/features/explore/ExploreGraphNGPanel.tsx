@@ -32,31 +32,32 @@ import { ContextMenuPlugin } from 'app/plugins/panel/timeseries/plugins/ContextM
 import { ExemplarsPlugin } from 'app/plugins/panel/timeseries/plugins/ExemplarsPlugin';
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { splitOpen } from './state/main';
 import { getFieldLinksForExplore } from './utils/links';
 import { usePrevious } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import appEvents from 'app/core/app_events';
 import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 import { identity } from 'lodash';
+import { SplitOpen } from 'app/types/explore';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
 interface Props {
   data: DataFrame[];
   height: number;
+  width: number;
   annotations?: DataFrame[];
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
   tooltipDisplayMode: TooltipDisplayMode;
-  splitOpenFn?: typeof splitOpen;
+  splitOpenFn?: SplitOpen;
 }
 
 export function ExploreGraphNGPanel({
   data,
   height,
+  width,
   timeZone,
   absoluteRange,
   onUpdateTimeRange,
@@ -156,42 +157,33 @@ export function ExploreGraphNGPanel({
           >{`Show all ${dataWithConfig.length}`}</span>
         </div>
       )}
-      <AutoSizer disableHeight>
-        {({ width }) => (
-          <TimeSeries
-            frames={seriesToShow}
-            structureRev={structureRev}
-            width={width}
-            height={height}
-            timeRange={timeRange}
-            legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
-            timeZone={timeZone}
-          >
-            {(config, alignedDataFrame) => {
-              return (
-                <>
-                  <ZoomPlugin config={config} onZoom={onUpdateTimeRange} />
-                  <TooltipPlugin
-                    config={config}
-                    data={alignedDataFrame}
-                    mode={tooltipDisplayMode}
-                    timeZone={timeZone}
-                  />
-                  <ContextMenuPlugin config={config} data={alignedDataFrame} timeZone={timeZone} />
-                  {annotations && (
-                    <ExemplarsPlugin
-                      config={config}
-                      exemplars={annotations}
-                      timeZone={timeZone}
-                      getFieldLinks={getFieldLinks}
-                    />
-                  )}
-                </>
-              );
-            }}
-          </TimeSeries>
-        )}
-      </AutoSizer>
+      <TimeSeries
+        frames={seriesToShow}
+        structureRev={structureRev}
+        width={width}
+        height={height}
+        timeRange={timeRange}
+        legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
+        timeZone={timeZone}
+      >
+        {(config, alignedDataFrame) => {
+          return (
+            <>
+              <ZoomPlugin config={config} onZoom={onUpdateTimeRange} />
+              <TooltipPlugin config={config} data={alignedDataFrame} mode={tooltipDisplayMode} timeZone={timeZone} />
+              <ContextMenuPlugin config={config} data={alignedDataFrame} timeZone={timeZone} />
+              {annotations && (
+                <ExemplarsPlugin
+                  config={config}
+                  exemplars={annotations}
+                  timeZone={timeZone}
+                  getFieldLinks={getFieldLinks}
+                />
+              )}
+            </>
+          );
+        }}
+      </TimeSeries>
     </PanelContextProvider>
   );
 }

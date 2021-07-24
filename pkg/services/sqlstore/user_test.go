@@ -27,7 +27,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		query := models.GetUserByIdQuery{Id: user.Id}
-		err = GetUserById(&query)
+		err = GetUserById(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, query.Result.Email, "usertest@test.com")
@@ -37,7 +37,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.False(t, query.Result.IsDisabled)
 
 		query = models.GetUserByIdQuery{Id: user.Id}
-		err = GetUserById(&query)
+		err = GetUserById(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, query.Result.Email, "usertest@test.com")
@@ -60,7 +60,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		query := models.GetUserByIdQuery{Id: user.Id}
-		err = GetUserById(&query)
+		err = GetUserById(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, query.Result.Email, "usertest@test.com")
@@ -94,7 +94,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		query := models.GetUserByIdQuery{Id: user.Id}
-		err = GetUserById(&query)
+		err = GetUserById(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, query.Result.Email, "usertest@test.com")
@@ -612,7 +612,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Equal(t, updatePermsError, models.ErrLastGrafanaAdmin)
 
 		query := models.GetUserByIdQuery{Id: user.Id}
-		getUserError := GetUserById(&query)
+		getUserError := GetUserById(context.Background(), &query)
 		require.Nil(t, getUserError)
 
 		require.True(t, query.Result.IsAdmin)

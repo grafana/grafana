@@ -19,7 +19,7 @@ const InsightsAnalyticsEditor: React.FC<InsightsAnalyticsEditorProps> = ({ query
     <div data-testid="azure-monitor-insights-analytics-query-editor">
       <CodeEditor
         language="kusto"
-        value={query.insightsAnalytics.query}
+        value={query.insightsAnalytics?.query ?? ''}
         height={200}
         width="100%"
         readOnly={true}
@@ -29,7 +29,7 @@ const InsightsAnalyticsEditor: React.FC<InsightsAnalyticsEditorProps> = ({ query
       <Field label="Format as">
         <Select
           inputId="azure-monitor-logs-workspaces-field"
-          value={findOption(FORMAT_OPTIONS, query.insightsAnalytics.resultFormat)}
+          value={findOption(FORMAT_OPTIONS, query.insightsAnalytics?.resultFormat)}
           disabled={true}
           options={FORMAT_OPTIONS}
           onChange={() => {}}

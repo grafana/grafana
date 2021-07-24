@@ -98,7 +98,7 @@ const RulesFilter = () => {
             <Label>View as</Label>
             <RadioButtonGroup
               options={ViewOptions}
-              value={queryParams['view'] || 'group'}
+              value={String(queryParams['view'] || 'group')}
               onChange={handleViewChange}
             />
           </div>
@@ -135,14 +135,15 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       flex-direction: row;
       align-items: flex-end;
+      width: 100%;
+      flex-wrap: wrap;
     `,
     spaceBetween: css`
       justify-content: space-between;
     `,
     rowChild: css`
-      & + & {
-        margin-left: ${theme.spacing.sm};
-      }
+      margin-right: ${theme.spacing.sm};
+      margin-top: ${theme.spacing.sm};
     `,
     clearButton: css`
       align-self: flex-end;

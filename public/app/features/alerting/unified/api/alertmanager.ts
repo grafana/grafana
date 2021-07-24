@@ -7,6 +7,7 @@ import {
   Silence,
   SilenceCreatePayload,
   Matcher,
+  AlertmanagerStatus,
 } from 'app/plugins/datasource/alertmanager/types';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -48,6 +49,17 @@ export async function updateAlertManagerConfig(
       method: 'POST',
       url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
       data: config,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
+}
+
+export async function deleteAlertManagerConfig(alertManagerSourceName: string): Promise<void> {
+  await getBackendSrv()
+    .fetch({
+      method: 'DELETE',
+      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
@@ -123,6 +135,18 @@ export async function fetchAlertGroups(alertmanagerSourceName: string): Promise<
   const result = await getBackendSrv()
     .fetch<AlertmanagerGroup[]>({
       url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/alerts/groups`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
+
+  return result.data;
+}
+
+export async function fetchStatus(alertManagerSourceName: string): Promise<AlertmanagerStatus> {
+  const result = await getBackendSrv()
+    .fetch<AlertmanagerStatus>({
+      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/api/v2/status`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })

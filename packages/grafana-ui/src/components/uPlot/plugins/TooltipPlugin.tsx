@@ -43,6 +43,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   const plotCtx = usePlotContext();
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
+  const [focusedPointIdxs, setFocusedPointIdxs] = useState<Array<number | null>>([]);
   const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
   const plotInstance = plotCtx.plot;
 
@@ -93,10 +94,13 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         })(u);
       });
     } else {
+      config.addHook('setLegend', (u) => {
+        setFocusedPointIdx(u.cursor.idx!);
+        setFocusedPointIdxs(u.cursor.idxs!.slice());
+      });
+
       // default series/datapoint idx retireval
       config.addHook('setCursor', (u) => {
-        setFocusedPointIdx(u.cursor.idx === undefined ? u.posToIdx(u.cursor.left || 0) : u.cursor.idx);
-
         const bbox = plotCtx.getCanvasBoundingBox();
         if (!bbox) {
           return;
@@ -135,6 +139,10 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     if (mode === TooltipDisplayMode.Single && focusedSeriesIdx !== null) {
       const field = otherProps.data.fields[focusedSeriesIdx];
 
+      if (!field) {
+        return null;
+      }
+
       const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
       const display = fieldFmt(field.values.get(focusedPointIdx));
 
@@ -160,15 +168,17 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         const frame = otherProps.data;
         const field = frame.fields[i];
         if (
+          !field ||
           field === xField ||
           field.type === FieldType.time ||
           field.type !== FieldType.number ||
-          field.config.custom?.hideFrom?.tooltip
+          field.config.custom?.hideFrom?.tooltip ||
+          field.config.custom?.hideFrom?.viz
         ) {
           continue;
         }
 
-        const display = field.display!(otherProps.data.fields[i].values.get(focusedPointIdx));
+        const display = field.display!(otherProps.data.fields[i].values.get(focusedPointIdxs[i]!));
 
         series.push({
           color: display.color || FALLBACK_COLOR,

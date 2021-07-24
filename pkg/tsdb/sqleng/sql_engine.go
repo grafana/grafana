@@ -173,7 +173,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	return result, nil
 }
 
-//nolint: staticcheck // plugins.DataQueryResult deprecated
+//nolint: staticcheck,gocyclo // plugins.DataQueryResult deprecated
 func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup, queryContext plugins.DataQuery,
 	ch chan plugins.DataQueryResult) {
 	defer wg.Done()
@@ -283,8 +283,16 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			errAppendDebug("db has no time column", errors.New("no time column found"), interpolatedQuery)
 			return
 		}
+
+		// Make sure to name the time field 'Time' to be backward compatible with Grafana pre-v8.
+		frame.Fields[qm.timeIndex].Name = data.TimeSeriesTimeFieldName
+
 		for i := range qm.columnNames {
 			if i == qm.timeIndex || i == qm.metricIndex {
+				continue
+			}
+
+			if t := frame.Fields[i].Type(); t == data.FieldTypeString || t == data.FieldTypeNullableString {
 				continue
 			}
 
@@ -298,10 +306,26 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			var err error
+			originalData := frame
 			frame, err = data.LongToWide(frame, qm.FillMissing)
 			if err != nil {
 				errAppendDebug("failed to convert long to wide series when converting from dataframe", err, interpolatedQuery)
 				return
+			}
+
+			// Before 8x, a special metric column was used to name time series. The LongToWide transforms that into a metric label on the value field.
+			// But that makes series name have both the value column name AND the metric name. So here we are removing the metric label here and moving it to the
+			// field name to get the same naming for the series as pre v8
+			if len(originalData.Fields) == 3 {
+				for _, field := range frame.Fields {
+					if len(field.Labels) == 1 { // 7x only supported one label
+						name, ok := field.Labels["metric"]
+						if ok {
+							field.Name = name
+							field.Labels = nil
+						}
+					}
+				}
 			}
 		}
 		if qm.FillMissing != nil {
@@ -872,7 +896,7 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 	default:
 		convertUnknownToZero(frame.Fields[Index], newField)
 		frame.Fields[Index] = newField
-		return frame, fmt.Errorf("metricIndex %d type can't be converted to float", Index)
+		return frame, fmt.Errorf("metricIndex %d type %s can't be converted to float", Index, valueType)
 	}
 	frame.Fields[Index] = newField
 

@@ -1,10 +1,10 @@
 import React from 'react';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
-import { PanelData, TimeZone } from '@grafana/data';
+import { TimeZone } from '@grafana/data';
 import { runQueries } from './state/query';
 import { StoreState, ExploreItemState, ExploreId } from 'app/types';
 import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
@@ -13,15 +13,12 @@ import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
 import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
 
 interface DispatchProps {
-  runQueries: typeof runQueries;
-}
-interface Props extends DispatchProps {
-  loading: boolean;
   width: number;
   exploreId: ExploreId;
-  queryResponse?: PanelData;
   onClose: () => void;
 }
+
+type Props = DispatchProps & ConnectedProps<typeof connector>;
 
 export function ExploreQueryInspector(props: Props) {
   const { loading, width, onClose, queryResponse } = props;
@@ -90,8 +87,10 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
   };
 }
 
-const mapDispatchToProps: DispatchProps = {
+const mapDispatchToProps = {
   runQueries,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(ExploreQueryInspector));
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export default hot(module)(connector(ExploreQueryInspector));

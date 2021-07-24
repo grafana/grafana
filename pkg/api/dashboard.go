@@ -107,10 +107,10 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// Finding creator and last updater of the dashboard
 	updater, creator := anonString, anonString
 	if dash.UpdatedBy > 0 {
-		updater = getUserLogin(dash.UpdatedBy)
+		updater = getUserLogin(c.Req.Context(), dash.UpdatedBy)
 	}
 	if dash.CreatedBy > 0 {
-		creator = getUserLogin(dash.CreatedBy)
+		creator = getUserLogin(c.Req.Context(), dash.CreatedBy)
 	}
 
 	meta := dtos.DashboardMeta{
@@ -188,9 +188,9 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(200, dto)
 }
 
-func getUserLogin(userID int64) string {
+func getUserLogin(ctx context.Context, userID int64) string {
 	query := models.GetUserByIdQuery{Id: userID}
-	err := bus.Dispatch(&query)
+	err := bus.DispatchCtx(ctx, &query)
 	if err != nil {
 		return anonString
 	}
@@ -423,7 +423,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	homePage := hs.Cfg.HomePage
 
-	if err := hs.Bus.Dispatch(&prefsQuery); err != nil {
+	if err := hs.Bus.DispatchCtx(c.Req.Context(), &prefsQuery); err != nil {
 		return response.Error(500, "Failed to get preferences", err)
 	}
 
@@ -434,7 +434,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 
 	if prefsQuery.Result.HomeDashboardId != 0 {
 		slugQuery := models.GetDashboardRefByIdQuery{Id: prefsQuery.Result.HomeDashboardId}
-		err := hs.Bus.Dispatch(&slugQuery)
+		err := hs.Bus.DispatchCtx(c.Req.Context(), &slugQuery)
 		if err == nil {
 			url := models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
@@ -553,7 +553,7 @@ func GetDashboardVersion(c *models.ReqContext) response.Response {
 	query := models.GetDashboardVersionQuery{
 		OrgId:       c.OrgId,
 		DashboardId: dashID,
-		Version:     c.ParamsInt(":id"),
+		Version:     int(c.ParamsInt64(":id")),
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -562,7 +562,7 @@ func GetDashboardVersion(c *models.ReqContext) response.Response {
 
 	creator := anonString
 	if query.Result.CreatedBy > 0 {
-		creator = getUserLogin(query.Result.CreatedBy)
+		creator = getUserLogin(c.Req.Context(), query.Result.CreatedBy)
 	}
 
 	dashVersionMeta := &models.DashboardVersionMeta{

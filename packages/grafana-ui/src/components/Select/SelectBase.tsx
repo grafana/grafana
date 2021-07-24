@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { ComponentProps, useCallback } from 'react';
 import { default as ReactSelect } from 'react-select';
 import Creatable from 'react-select/creatable';
 import { default as ReactAsyncSelect } from 'react-select/async';
@@ -115,7 +115,7 @@ export function SelectBase<T>({
   maxMenuHeight = 300,
   minMenuHeight,
   maxVisibleValues,
-  menuPlacement = 'bottom',
+  menuPlacement = 'auto',
   menuPosition,
   noOptionsMessage = 'No options found',
   onBlur,
@@ -134,6 +134,7 @@ export function SelectBase<T>({
   tabSelectsValue = true,
   value,
   width,
+  isValidNewOption,
 }: SelectBaseProps<T>) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -149,7 +150,7 @@ export function SelectBase<T>({
 
   let ReactSelectComponent = ReactSelect;
 
-  const creatableProps: any = {};
+  const creatableProps: ComponentProps<typeof Creatable> = {};
   let asyncSelectProps: any = {};
   let selectedValue;
   if (isMulti && loadOptions) {
@@ -174,6 +175,8 @@ export function SelectBase<T>({
     backspaceRemovesValue,
     captureMenuScroll: false,
     closeMenuOnSelect,
+    // We don't want to close if we're actually scrolling the menu
+    // So only close if none of the parents are the select menu itself
     defaultValue,
     // Also passing disabled, as this is the new Select API, and I want to use this prop instead of react-select's one
     disabled,
@@ -196,7 +199,9 @@ export function SelectBase<T>({
     maxVisibleValues,
     menuIsOpen: isOpen,
     menuPlacement,
+    menuPortalTarget: document.body,
     menuPosition,
+    menuShouldBlockScroll: true,
     menuShouldScrollIntoView: false,
     onBlur,
     onChange: onChangeWithEmpty,
@@ -218,6 +223,7 @@ export function SelectBase<T>({
     ReactSelectComponent = Creatable as any;
     creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
     creatableProps.onCreateOption = onCreateOption;
+    creatableProps.isValidNewOption = isValidNewOption;
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
@@ -291,6 +297,9 @@ export function SelectBase<T>({
             return (
               <Icon
                 name="times"
+                role="button"
+                aria-label="select-clear-value"
+                className={styles.singleValueRemove}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -324,19 +333,16 @@ export function SelectBase<T>({
         }}
         styles={{
           ...resetSelectStyles(),
-          menuPortal: ({ position, width }: any) => ({
-            position,
-            width,
-            zIndex: theme.zIndex.dropdown,
+          menuPortal: (base: any) => ({
+            ...base,
+            zIndex: theme.zIndex.portal,
           }),
           //These are required for the menu positioning to function
           menu: ({ top, bottom, position }: any) => ({
             top,
             bottom,
             position,
-            marginBottom: !!bottom ? '10px' : '0',
             minWidth: '100%',
-            zIndex: theme.zIndex.dropdown,
           }),
           container: () => ({
             position: 'relative',

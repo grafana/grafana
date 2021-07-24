@@ -896,6 +896,42 @@ describe('ElasticDatasource', function (this: any) {
   });
 });
 
+describe('getMultiSearchUrl', () => {
+  describe('When esVersion >= 6.6.0', () => {
+    it('Should add correct params to URL if "includeFrozen" is enabled', () => {
+      const { ds } = getTestContext({ jsonData: { esVersion: '6.6.0', includeFrozen: true, xpack: true } });
+
+      expect(ds.getMultiSearchUrl()).toMatch(/ignore_throttled=false/);
+    });
+
+    it('Should NOT add ignore_throttled if "includeFrozen" is disabled', () => {
+      const { ds } = getTestContext({ jsonData: { esVersion: '6.6.0', includeFrozen: false, xpack: true } });
+
+      expect(ds.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
+    });
+
+    it('Should NOT add ignore_throttled if "xpack" is disabled', () => {
+      const { ds } = getTestContext({ jsonData: { esVersion: '6.6.0', includeFrozen: true, xpack: false } });
+
+      expect(ds.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
+    });
+  });
+
+  describe('When esVersion < 6.6.0', () => {
+    it('Should NOT add ignore_throttled params regardless of includeFrozen', () => {
+      const { ds: dsWithIncludeFrozen } = getTestContext({
+        jsonData: { esVersion: '5.6.0', includeFrozen: false, xpack: true },
+      });
+      const { ds: dsWithoutIncludeFrozen } = getTestContext({
+        jsonData: { esVersion: '5.6.0', includeFrozen: true, xpack: true },
+      });
+
+      expect(dsWithIncludeFrozen.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
+      expect(dsWithoutIncludeFrozen.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
+    });
+  });
+});
+
 describe('enhanceDataFrame', () => {
   it('adds links to dataframe', () => {
     const df = new MutableDataFrame({

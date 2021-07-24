@@ -1,6 +1,6 @@
 load('scripts/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.0.0'
+grabpl_version = '2.2.8'
 build_image = 'grafana/build-container:1.4.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -480,7 +480,7 @@ def frontend_metrics_step(edition):
         'name': 'publish-frontend-metrics',
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'build-frontend',
         ],
         'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
@@ -929,7 +929,6 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         init_cmds.extend([
             '$$ProgressPreference = "SilentlyContinue"',
             'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
-            '.\\grabpl.exe verify-drone',
         ])
     steps = [
         {
@@ -1029,7 +1028,6 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'rm -force grabpl.exe',
             'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise{}'.format(source_commit),
             'cp C:\\App\\grabpl.exe grabpl.exe',
-            '.\\grabpl.exe verify-drone',
         ])
 
     return steps
@@ -1078,6 +1076,6 @@ def validate_scuemata():
             'build-backend',
         ],
         'commands': [
-            './bin/linux-amd64/grafana-cli cue validate-schema',
+            './bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .',
         ],
     }

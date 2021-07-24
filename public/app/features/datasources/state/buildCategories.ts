@@ -162,6 +162,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'SAP HANA®',
       imgUrl: 'public/img/plugins/sap_hana.png',
     }),
+    getPhantomPlugin({
+      id: 'grafana-honeycomb-datasource',
+      description: 'Honeycomb integration ad datasource',
+      name: 'Honeycomb',
+      imgUrl: 'public/img/plugins/honeycomb.png',
+    }),
   ];
 }
 

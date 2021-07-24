@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -434,7 +435,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserByIdQuery) error {
 			require.Equal(t, q.Id, int64(34))
 
 			q.Result = &models.User{Login: "ldap-daniel", Id: 34}
@@ -470,7 +471,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 			return &LDAPMock{}
 		}
 
-		bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserByIdQuery) error {
 			require.Equal(t, q.Id, int64(34))
 
 			return models.ErrUserNotFound
@@ -502,7 +503,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 
 		sc.cfg.AdminUser = "ldap-daniel"
 
-		bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserByIdQuery) error {
 			require.Equal(t, q.Id, int64(34))
 
 			q.Result = &models.User{Login: "ldap-daniel", Id: 34}
@@ -546,7 +547,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserByIdQuery) error {
 			require.Equal(t, q.Id, int64(34))
 
 			q.Result = &models.User{Login: "ldap-daniel", Id: 34}
@@ -687,7 +688,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 				return &LDAPMock{}
 			}
 
-			bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserByIdQuery) error {
 				q.Result = &models.User{}
 				return nil
 			})

@@ -31,7 +31,7 @@ export function seriesVisibilityConfigFactory(
 
       return {
         ...fieldConfig,
-        overrides: [override, ...fieldConfig.overrides],
+        overrides: [...fieldConfig.overrides, override],
       };
     }
 
@@ -40,7 +40,7 @@ export function seriesVisibilityConfigFactory(
 
     return {
       ...fieldConfig,
-      overrides: [override, ...fieldConfig.overrides],
+      overrides: [...fieldConfig.overrides, override],
     };
   }
 
@@ -61,7 +61,7 @@ export function seriesVisibilityConfigFactory(
 
     return {
       ...fieldConfig,
-      overrides: [override, ...overridesCopy],
+      overrides: [...overridesCopy, override],
     };
   }
 
@@ -76,7 +76,7 @@ export function seriesVisibilityConfigFactory(
 
   return {
     ...fieldConfig,
-    overrides: [override, ...overridesCopy],
+    overrides: [...overridesCopy, override],
   };
 }
 

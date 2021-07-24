@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -34,7 +33,7 @@ func TestPushoverNotifier(t *testing.T) {
 		settings     string
 		alerts       []*types.Alert
 		expMsg       map[string]string
-		expInitError error
+		expInitError string
 		expMsgError  error
 	}{
 		{
@@ -62,8 +61,7 @@ func TestPushoverNotifier(t *testing.T) {
 				"message":   "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 				"html":      "1",
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		},
 		{
 			name: "Custom config with multiple alerts",
@@ -106,21 +104,20 @@ func TestPushoverNotifier(t *testing.T) {
 				"expire":    "86400",
 				"device":    "device",
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		},
 		{
 			name: "Missing user key",
 			settings: `{
 				"apiToken": "<apiToken>"
 			}`,
-			expInitError: alerting.ValidationError{Reason: "user key not found"},
+			expInitError: `failed to validate receiver "pushover_testing" of type "pushover": user key not found`,
 		}, {
 			name: "Missing api key",
 			settings: `{
 				"userKey": "<userKey>"
 			}`,
-			expInitError: alerting.ValidationError{Reason: "API token not found"},
+			expInitError: `failed to validate receiver "pushover_testing" of type "pushover": API token not found`,
 		},
 	}
 
@@ -145,9 +142,9 @@ func TestPushoverNotifier(t *testing.T) {
 			}
 
 			pn, err := NewPushoverNotifier(m, tmpl)
-			if c.expInitError != nil {
+			if c.expInitError != "" {
 				require.Error(t, err)
-				require.Equal(t, c.expInitError.Error(), err.Error())
+				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
