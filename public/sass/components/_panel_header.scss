@@ -10,8 +10,8 @@ $panel-header-no-title-zindex: 1;
 .panel-container--no-title {
   .panel-header {
     position: absolute;
-    left: 50px;
-    right: 50px;
+    left: min(50px, 10%);
+    right: min(50px, 10%);
     z-index: $panel-header-z-index;
   }
   .panel-content {
