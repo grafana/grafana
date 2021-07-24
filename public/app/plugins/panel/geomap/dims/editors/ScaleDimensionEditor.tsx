@@ -58,31 +58,37 @@ export const ScaleDimensionEditor: FC<StandardEditorProps<ScaleDimensionConfig, 
   );
 
   const onMinChange = useCallback(
-    (min: number) => {
-      validateAndDoChange({
-        ...value,
-        min,
-      });
+    (min?: number) => {
+      if (min !== undefined) {
+        validateAndDoChange({
+          ...value,
+          min,
+        });
+      }
     },
     [validateAndDoChange, value]
   );
 
   const onMaxChange = useCallback(
-    (max: number) => {
-      validateAndDoChange({
-        ...value,
-        max,
-      });
+    (max?: number) => {
+      if (max !== undefined) {
+        validateAndDoChange({
+          ...value,
+          max,
+        });
+      }
     },
     [validateAndDoChange, value]
   );
 
   const onValueChange = useCallback(
-    (fixed: number) => {
-      validateAndDoChange({
-        ...value,
-        fixed,
-      });
+    (fixed?: number) => {
+      if (fixed !== undefined) {
+        validateAndDoChange({
+          ...value,
+          fixed,
+        });
+      }
     },
     [validateAndDoChange, value]
   );

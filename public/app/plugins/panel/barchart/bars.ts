@@ -192,6 +192,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   // uPlot hook to draw the labels on the bar chart.
   const draw = (u: uPlot) => {
+    if (showValue === BarValueVisibility.Never) {
+      return;
+    }
     // pre-cache formatted labels
     let texts = Array(barRects.length);
     let labelOffset = LABEL_OFFSET_MAX;
