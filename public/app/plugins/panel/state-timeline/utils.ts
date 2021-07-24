@@ -285,8 +285,9 @@ export function prepareTimelineFields(
           let { spanNulls } = field.config.custom;
 
           // magic value for join() to leave nulls alone instead of expanding null ranges
-          // should be -1 for spanNulls null|undefined|false|0
-          field.config.custom.spanNulls = !spanNulls ? -1 : spanNulls;
+          // should be set to -1 when spanNulls = null|undefined|false|0, which is "retain nulls, without expanding"
+          // Infinity is not optimal here since it causes spanNulls to be more expensive than simply removing all nulls unconditionally
+          field.config.custom.spanNulls = !spanNulls ? -1 : spanNulls === true ? Infinity : spanNulls;
 
           if (mergeValues) {
             let merged = unsetSameFutureValues(field.values.toArray());
