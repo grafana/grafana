@@ -78,7 +78,7 @@ type PluginInstaller interface {
 	// and installs in the provided plugins directory.
 	Install(ctx context.Context, pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error
 	// Uninstall removes the specified plugin from the provided plugins directory.
-	Uninstall(ctx context.Context, pluginID, pluginPath string) error
+	Uninstall(ctx context.Context, pluginPath string) error
 }
 
 type PluginInstallerLogger interface {

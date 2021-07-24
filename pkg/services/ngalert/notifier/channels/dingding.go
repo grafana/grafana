@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
@@ -21,12 +20,12 @@ const defaultDingdingMsgType = "link"
 // NewDingDingNotifier is the constructor for the Dingding notifier
 func NewDingDingNotifier(model *NotificationChannelConfig, t *template.Template) (*DingDingNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+		return nil, receiverInitError{Reason: "no settings supplied", Cfg: *model}
 	}
 
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
+		return nil, receiverInitError{Reason: "could not find url property in settings", Cfg: *model}
 	}
 
 	msgType := model.Settings.Get("msgType").MustString(defaultDingdingMsgType)
@@ -79,7 +78,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	title := tmpl(`{{ template "default.title" . }}`)
 
 	var bodyMsg map[string]interface{}
-	if dd.MsgType == "actionCard" {
+	if tmpl(dd.MsgType) == "actionCard" {
 		bodyMsg = map[string]interface{}{
 			"msgtype": "actionCard",
 			"actionCard": map[string]string{
@@ -102,6 +101,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		}
 	}
 
+	u := tmpl(dd.URL)
 	if tmplErr != nil {
 		dd.log.Debug("failed to template DingDing message", "err", tmplErr.Error())
 	}
@@ -112,7 +112,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	cmd := &models.SendWebhookSync{
-		Url:  dd.URL,
+		Url:  u,
 		Body: string(body),
 	}
 

@@ -47,7 +47,7 @@ func (cfg *Cfg) readDateFormats() {
 	cfg.DateFormats.Interval.Day = valueAsString(dateFormats, "interval_day", "YYYY-MM-DD")
 	cfg.DateFormats.Interval.Month = valueAsString(dateFormats, "interval_month", "YYYY-MM")
 	cfg.DateFormats.Interval.Year = "YYYY"
-	cfg.DateFormats.UseBrowserLocale = dateFormats.Key("date_format_use_browser_locale").MustBool(false)
+	cfg.DateFormats.UseBrowserLocale = dateFormats.Key("use_browser_locale").MustBool(false)
 
 	timezone, err := valueAsTimezone(dateFormats, "default_timezone")
 	if err != nil {

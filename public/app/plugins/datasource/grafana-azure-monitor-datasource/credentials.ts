@@ -43,6 +43,21 @@ function getDefaultAzureCloud(): string {
   }
 }
 
+export function getAzurePortalUrl(azureCloud: string): string {
+  switch (azureCloud) {
+    case 'azuremonitor':
+      return 'https://portal.azure.com';
+    case 'chinaazuremonitor':
+      return 'https://portal.azure.cn';
+    case 'govazuremonitor':
+      return 'https://portal.azure.us';
+    case 'germanyazuremonitor':
+      return 'https://portal.microsoftazure.de';
+    default:
+      throw new Error('The cloud not supported.');
+  }
+}
+
 export function getAzureCloud(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): string {
   const authType = getAuthType(options);
   switch (authType) {

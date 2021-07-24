@@ -92,7 +92,7 @@ export class GrafanaLiveDataSourceScope extends GrafanaLiveScope {
     for (const [key, ds] of Object.entries(config.datasources)) {
       if (ds.meta.live) {
         try {
-          const s = this.getChannelSupport(key); // ds.name or ID?
+          const s = await this.getChannelSupport(key); // ds.name or ID?
           if (s) {
             names.push({
               label: ds.name,
@@ -143,7 +143,7 @@ export class GrafanaLivePluginScope extends GrafanaLiveScope {
     for (const [key, panel] of Object.entries(config.panels)) {
       if (panel.live) {
         try {
-          const s = this.getChannelSupport(key); // ds.name or ID?
+          const s = await this.getChannelSupport(key); // ds.name or ID?
           if (s) {
             names.push({
               label: panel.name,

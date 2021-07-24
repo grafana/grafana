@@ -1,16 +1,12 @@
-import { every, find } from 'lodash';
 import { DataQuery } from '@grafana/data';
 
 export const getNextRefIdChar = (queries: DataQuery[]): string => {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-  return (
-    find(letters, (refId) => {
-      return every(queries, (other) => {
-        return other.refId !== refId;
-      });
-    }) ?? 'NA'
-  );
+  for (let num = 0; ; num++) {
+    const refId = getRefId(num);
+    if (!queries.some((query) => query.refId === refId)) {
+      return refId;
+    }
+  }
 };
 
 export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>): DataQuery[] {
@@ -34,4 +30,14 @@ export function isDataQuery(url: string): boolean {
 
 export function isLocalUrl(url: string) {
   return !url.match(/^http/);
+}
+
+function getRefId(num: number): string {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  if (num < letters.length) {
+    return letters[num];
+  } else {
+    return getRefId(Math.floor(num / letters.length) - 1) + letters[num % letters.length];
+  }
 }

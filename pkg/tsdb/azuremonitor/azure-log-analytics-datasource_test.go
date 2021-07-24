@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -180,11 +181,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 
 func TestLogAnalyticsCreateRequest(t *testing.T) {
 	ctx := context.Background()
-	dsInfo := datasourceInfo{
-		Services: map[string]datasourceService{
-			azureLogAnalytics: {URL: "http://ds"},
-		},
-	}
+	url := "http://ds"
+	dsInfo := datasourceInfo{}
 
 	tests := []struct {
 		name            string
@@ -203,7 +201,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ds := AzureLogAnalyticsDatasource{}
-			req, err := ds.createRequest(ctx, dsInfo)
+			req, err := ds.createRequest(ctx, dsInfo, url)
 			tt.Err(t, err)
 			if req.URL.String() != tt.expectedURL {
 				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())
@@ -212,5 +210,29 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 				t.Errorf("Unexpected HTTP headers: %v", cmp.Diff(req.Header, tt.expectedHeaders))
 			}
 		})
+	}
+}
+
+func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
+	ds := AzureLogAnalyticsDatasource{}
+	dsInfo := datasourceInfo{
+		Services: map[string]datasourceService{
+			azureLogAnalytics: {URL: "http://ds"},
+		},
+		JSONData: map[string]interface{}{
+			"azureLogAnalyticsSameAs": false,
+		},
+	}
+	ctx := context.TODO()
+	query := &AzureLogAnalyticsQuery{
+		Params:    url.Values{},
+		TimeRange: backend.TimeRange{},
+	}
+	res := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services[azureLogAnalytics].URL)
+	if res.Error == nil {
+		t.Fatal("expecting an error")
+	}
+	if !strings.Contains(res.Error.Error(), "Log Analytics credentials are no longer supported") {
+		t.Error("expecting the error to inform of bad credentials")
 	}
 }

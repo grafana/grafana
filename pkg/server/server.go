@@ -28,7 +28,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/infra/tracing"
 	_ "github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/login/social"
+	_ "github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	_ "github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
@@ -150,7 +150,6 @@ func (s *Server) init() error {
 	}
 
 	login.Init()
-	social.NewOAuthService(s.cfg)
 
 	services := s.serviceRegistry.GetServices()
 	if err := s.buildServiceGraph(services); err != nil {

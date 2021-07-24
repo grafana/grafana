@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -15,7 +16,7 @@ import (
 
 func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folders, err := s.GetFolders(c.QueryInt64("limit"))
+	folders, err := s.GetFolders(c.QueryInt64("limit"), c.QueryInt64("page"))
 
 	if err != nil {
 		return ToFolderErrorResponse(err)
@@ -42,7 +43,7 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(g, folder))
+	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
@@ -53,7 +54,7 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(g, folder))
+	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolderCommand) response.Response {
@@ -71,7 +72,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolder
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(g, folder))
+	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response.Response {
@@ -82,7 +83,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolder
 	}
 
 	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(g, cmd.Result))
+	return response.JSON(200, toFolderDto(c.Req.Context(), g, cmd.Result))
 }
 
 func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
@@ -95,7 +96,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 		return ToFolderErrorResponse(err)
 	}
 
-	f, err := s.DeleteFolder(c.Params(":uid"))
+	f, err := s.DeleteFolder(c.Params(":uid"), c.QueryBool("forceDeleteRules"))
 	if err != nil {
 		return ToFolderErrorResponse(err)
 	}
@@ -107,7 +108,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	})
 }
 
-func toFolderDto(g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
+func toFolderDto(ctx context.Context, g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
@@ -115,10 +116,10 @@ func toFolderDto(g guardian.DashboardGuardian, folder *models.Folder) dtos.Folde
 	// Finding creator and last updater of the folder
 	updater, creator := anonString, anonString
 	if folder.CreatedBy > 0 {
-		creator = getUserLogin(folder.CreatedBy)
+		creator = getUserLogin(ctx, folder.CreatedBy)
 	}
 	if folder.UpdatedBy > 0 {
-		updater = getUserLogin(folder.UpdatedBy)
+		updater = getUserLogin(ctx, folder.UpdatedBy)
 	}
 
 	return dtos.Folder{
@@ -146,11 +147,10 @@ func ToFolderErrorResponse(err error) response.Response {
 	}
 
 	if errors.Is(err, models.ErrFolderTitleEmpty) ||
-		errors.Is(err, models.ErrFolderSameNameExists) ||
-		errors.Is(err, models.ErrFolderWithSameUIDExists) ||
 		errors.Is(err, models.ErrDashboardTypeMismatch) ||
 		errors.Is(err, models.ErrDashboardInvalidUid) ||
-		errors.Is(err, models.ErrDashboardUidTooLong) {
+		errors.Is(err, models.ErrDashboardUidTooLong) ||
+		errors.Is(err, models.ErrFolderContainsAlertRules) {
 		return response.Error(400, err.Error(), nil)
 	}
 
@@ -160,6 +160,11 @@ func ToFolderErrorResponse(err error) response.Response {
 
 	if errors.Is(err, models.ErrFolderNotFound) {
 		return response.JSON(404, util.DynMap{"status": "not-found", "message": models.ErrFolderNotFound.Error()})
+	}
+
+	if errors.Is(err, models.ErrFolderSameNameExists) ||
+		errors.Is(err, models.ErrFolderWithSameUIDExists) {
+		return response.Error(409, err.Error(), nil)
 	}
 
 	if errors.Is(err, models.ErrFolderVersionMismatch) {

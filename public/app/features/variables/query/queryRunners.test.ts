@@ -293,6 +293,7 @@ describe('QueryRunners', () => {
         const target = runner.getTarget({ datasource, variable });
         expect(target).toEqual({ refId: 'A', query: 'A query' });
       });
+
       describe('and ref id is missing', () => {
         it('then it should return correct target with dummy ref id', () => {
           const { runner, datasource, variable } = getDatasourceTestContext();

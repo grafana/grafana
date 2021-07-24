@@ -1,4 +1,4 @@
-import React, { memo, cloneElement, FC, ReactNode, useCallback } from 'react';
+import React, { memo, cloneElement, FC, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2, stylesFactory } from '../../themes';
@@ -52,13 +52,14 @@ export const Card: CardInterface = ({ heading, description, disabled, href, onCl
   const hasActions = Boolean(actions || secondaryActions);
   const disableHover = disabled || (!onClick && !href);
   const disableEvents = disabled && !actions;
-
-  const onCardClick = useCallback(() => (disableHover ? () => {} : onClick?.()), [disableHover, onClick]);
+  const onCardClick = onClick && !disabled ? onClick : undefined;
+  const onEnterKey = onClick && !disabled ? getEnterKeyHandler(onClick) : undefined;
 
   return (
     <CardContainer
       tabIndex={disableHover ? undefined : 0}
       onClick={onCardClick}
+      onKeyDown={onEnterKey}
       disableEvents={disableEvents}
       disableHover={disableHover}
       href={href}
@@ -86,6 +87,14 @@ export const Card: CardInterface = ({ heading, description, disabled, href, onCl
     </CardContainer>
   );
 };
+
+function getEnterKeyHandler(onClick: () => void) {
+  return (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      onClick();
+    }
+  };
+}
 
 /**
  * @public

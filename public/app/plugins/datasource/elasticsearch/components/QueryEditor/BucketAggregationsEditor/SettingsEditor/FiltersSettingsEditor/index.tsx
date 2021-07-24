@@ -10,25 +10,25 @@ import { addFilter, changeFilter, removeFilter } from './state/actions';
 import { reducer as filtersReducer } from './state/reducer';
 
 interface Props {
-  value: Filters;
+  bucketAgg: Filters;
 }
 
-export const FiltersSettingsEditor = ({ value }: Props) => {
+export const FiltersSettingsEditor = ({ bucketAgg }: Props) => {
   const upperStateDispatch = useDispatch<BucketAggregationAction<Filters>>();
 
   const dispatch = useStatelessReducer(
-    (newState) => upperStateDispatch(changeBucketAggregationSetting(value, 'filters', newState)),
-    value.settings?.filters,
+    (newState) => upperStateDispatch(changeBucketAggregationSetting(bucketAgg, 'filters', newState)),
+    bucketAgg.settings?.filters,
     filtersReducer
   );
 
   // The model might not have filters (or an empty array of filters) in it because of the way it was built in previous versions of the datasource.
   // If this is the case we add a default one.
   useEffect(() => {
-    if (!value.settings?.filters?.length) {
+    if (!bucketAgg.settings?.filters?.length) {
       dispatch(addFilter());
     }
-  }, [dispatch, value.settings?.filters?.length]);
+  }, [dispatch, bucketAgg.settings?.filters?.length]);
 
   return (
     <>
@@ -38,7 +38,7 @@ export const FiltersSettingsEditor = ({ value }: Props) => {
           flex-direction: column;
         `}
       >
-        {value.settings?.filters!.map((filter, index) => (
+        {bucketAgg.settings?.filters!.map((filter, index) => (
           <div
             key={index}
             className={css`
@@ -69,7 +69,7 @@ export const FiltersSettingsEditor = ({ value }: Props) => {
             </InlineField>
             <AddRemove
               index={index}
-              elements={value.settings?.filters || []}
+              elements={bucketAgg.settings?.filters || []}
               onAdd={() => dispatch(addFilter())}
               onRemove={() => dispatch(removeFilter(index))}
             />
