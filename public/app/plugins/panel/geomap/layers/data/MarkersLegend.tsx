@@ -21,15 +21,19 @@ export function MarkersLegend(props: MarkersLegendProps) {
   if (!color.field && color.fixed) {
     return <div className={style.infoWrap}>Fixed: {color.fixed}</div>;
   }
+
+  const fmt = (v: any) => `${formattedValueToString(color.field!.display!(v))}`;
   const colorMode = getFieldColorModeForField(color.field!);
   const colorRange = getMinMaxAndDelta(color.field!)
+  
   if (colorMode.isContinuous && colorMode.getColors) {
     // getColors return an array of color string from the color scheme chosen
     const colors = colorMode.getColors(config.theme2);
+    console.log('TODO use gradient', colors);
     //TODO: can we get the same gradiant scale img as the option dropdown?
     return <div className={style.gradientContainer}>
-      <div className={style.minVal}>{colorRange.min}</div>
-      <div className={style.minVal}>{colorRange.max}</div>
+      <div className={style.minVal}>{fmt(colorRange.min)}</div>
+      <div className={style.maxVal}>{fmt(colorRange.max)}</div>
     </div>
   }
 
@@ -38,7 +42,6 @@ export function MarkersLegend(props: MarkersLegendProps) {
     return <div className={style.infoWrap}>no thresholds????</div>;
   }
 
-  const fmt = (v: any) => `${formattedValueToString(color.field!.display!(v))}`;
   return (
     <div className={style.infoWrap}>
       {thresholds && (
