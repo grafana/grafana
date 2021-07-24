@@ -87,6 +87,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const baseUrl = this.instanceSettings.url;
     const params = data ? serializeParams(data) : '';
     const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
+    if (this.instanceSettings.withCredentials || this.instanceSettings.basicAuth) {
+      options = { ...options, withCredentials: true };
+      if (this.instanceSettings.basicAuth) {
+        options.headers = { ...options.headers, Authorization: this.instanceSettings.basicAuth };
+      }
+    }
     const req = {
       ...options,
       url,
@@ -184,14 +190,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         this.adjustInterval((options as DataQueryRequest<LokiQuery>).intervalMs || 1000, rangeMs) / 1000;
       // We want to ceil to 3 decimal places
       const step = Math.ceil(adjustedInterval * 1000) / 1000;
-      const alignedTimes = {
-        start: startNs - (startNs % 1e9),
-        end: endNs + (1e9 - (endNs % 1e9)),
-      };
 
       range = {
-        start: alignedTimes.start,
-        end: alignedTimes.end,
+        start: startNs,
+        end: endNs,
         step,
       };
     }

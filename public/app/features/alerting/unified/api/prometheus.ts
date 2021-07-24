@@ -1,7 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { RuleNamespace } from 'app/types/unified-alerting';
 import { PromRulesResponse } from 'app/types/unified-alerting-dto';
-import { getAllRulesSourceNames, getDatasourceAPIId } from '../utils/datasource';
+import { getDatasourceAPIId } from '../utils/datasource';
 
 export async function fetchRules(dataSourceName: string): Promise<RuleNamespace[]> {
   const response = await getBackendSrv()
@@ -10,12 +10,18 @@ export async function fetchRules(dataSourceName: string): Promise<RuleNamespace[
       showErrorAlert: false,
       showSuccessAlert: false,
     })
-    .toPromise();
+    .toPromise()
+    .catch((e) => {
+      if ('status' in e && e.status === 404) {
+        throw new Error('404 from rule state endpoint. Perhaps ruler API is not enabled?');
+      }
+      throw e;
+    });
 
   const nsMap: { [key: string]: RuleNamespace } = {};
   response.data.data.groups.forEach((group) => {
     group.rules.forEach((rule) => {
-      rule.query = rule.query || ''; // @TODO temp fix, backend response ism issing query. remove once it's there
+      rule.query = rule.query || '';
     });
     if (!nsMap[group.file]) {
       nsMap[group.file] = {
@@ -29,18 +35,4 @@ export async function fetchRules(dataSourceName: string): Promise<RuleNamespace[
   });
 
   return Object.values(nsMap);
-}
-
-export async function fetchAllRules(): Promise<RuleNamespace[]> {
-  const namespaces = [] as Array<Promise<RuleNamespace[]>>;
-  getAllRulesSourceNames().forEach(async (name) => {
-    namespaces.push(
-      fetchRules(name).catch((e) => {
-        return [];
-        // TODO add error comms
-      })
-    );
-  });
-  const promises = await Promise.all(namespaces);
-  return promises.flat();
 }

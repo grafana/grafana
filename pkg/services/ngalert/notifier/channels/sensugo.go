@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -34,17 +33,17 @@ type SensuGoNotifier struct {
 // NewSensuGoNotifier is the constructor for the SensuGo notifier
 func NewSensuGoNotifier(model *NotificationChannelConfig, t *template.Template) (*SensuGoNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No settings supplied"}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find URL property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find URL property in settings"}
 	}
 
 	apikey := model.DecryptedValue("apikey", model.Settings.Get("apikey").MustString())
 	if apikey == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find the API key property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find the API key property in settings"}
 	}
 
 	return &SensuGoNotifier{

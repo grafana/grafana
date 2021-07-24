@@ -12,16 +12,17 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     return !!item.azureResourceGraph?.query;
   }
 
-  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
     const item = target.azureResourceGraph;
+    if (!item) {
+      return target;
+    }
 
     const templateSrv = getTemplateSrv();
-
     const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
 
     return {
       refId: target.refId,
-      format: target.format,
       queryType: AzureQueryType.AzureResourceGraph,
       subscriptions: target.subscriptions,
       azureResourceGraph: {

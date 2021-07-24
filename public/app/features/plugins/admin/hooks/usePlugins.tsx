@@ -1,111 +1,79 @@
-import { useEffect, useMemo, useState } from 'react';
-
-import { Plugin, LocalPlugin } from '../types';
+import { useMemo } from 'react';
+import { useAsync } from 'react-use';
+import { CatalogPlugin } from '../types';
 import { api } from '../api';
+import { mapLocalToCatalog, mapRemoteToCatalog, applySearchFilter } from '../helpers';
 
-type PluginsState = {
-  isLoading: boolean;
-  items: Plugin[];
-  installedPlugins: any[];
+type CatalogPluginsState = {
+  loading: boolean;
+  error?: Error;
+  plugins: CatalogPlugin[];
 };
 
-export const usePlugins = () => {
-  const [state, setState] = useState<PluginsState>({ isLoading: true, items: [], installedPlugins: [] });
-
-  useEffect(() => {
-    const fetchPluginData = async () => {
-      const items = await api.getRemotePlugins();
-      const filteredPlugins = items.filter((plugin) => {
-        const isNotRenderer = plugin.typeCode !== 'renderer';
-        const isSigned = Boolean(plugin.versionSignatureType);
-        const isNotEnterprise = plugin.status !== 'enterprise';
-
-        return isNotRenderer && isSigned && isNotEnterprise;
-      });
-
-      const installedPlugins = await api.getInstalledPlugins();
-
-      setState((state) => ({ ...state, items: filteredPlugins, installedPlugins, isLoading: false }));
-    };
-
-    fetchPluginData();
+export function usePlugins(): CatalogPluginsState {
+  const { loading, value, error } = useAsync(async () => {
+    const remote = await api.getRemotePlugins();
+    const installed = await api.getInstalledPlugins();
+    return { remote, installed };
   }, []);
 
-  return state;
-};
+  const plugins = useMemo(() => {
+    const installed = value?.installed || [];
+    const remote = value?.remote || [];
+    const unique: Record<string, CatalogPlugin> = {};
+
+    for (const plugin of installed) {
+      unique[plugin.id] = mapLocalToCatalog(plugin);
+    }
+
+    for (const plugin of remote) {
+      if (unique[plugin.slug]) {
+        continue;
+      }
+
+      if (plugin.typeCode === 'renderer') {
+        continue;
+      }
+
+      if (!Boolean(plugin.versionSignatureType)) {
+        continue;
+      }
+
+      unique[plugin.slug] = mapRemoteToCatalog(plugin);
+    }
+
+    return Object.values(unique);
+  }, [value?.installed, value?.remote]);
+
+  return {
+    loading,
+    error,
+    plugins,
+  };
+}
 
 type FilteredPluginsState = {
   isLoading: boolean;
-  items: Plugin[];
+  error?: Error;
+  plugins: CatalogPlugin[];
 };
 
 export const usePluginsByFilter = (searchBy: string, filterBy: string): FilteredPluginsState => {
-  const plugins = usePlugins();
-  const all = useMemo(() => {
-    const combined: Plugin[] = [];
-    Array.prototype.push.apply(combined, plugins.items);
-    Array.prototype.push.apply(combined, plugins.installedPlugins);
+  const { loading, error, plugins } = usePlugins();
 
-    const bySlug = combined.reduce((unique: Record<string, Plugin>, plugin) => {
-      unique[plugin.slug] = plugin;
-      return unique;
-    }, {});
-
-    return Object.values(bySlug);
-  }, [plugins.items, plugins.installedPlugins]);
+  const installed = useMemo(() => plugins.filter((plugin) => plugin.isInstalled), [plugins]);
 
   if (filterBy === 'installed') {
     return {
-      isLoading: plugins.isLoading,
-      items: applySearchFilter(searchBy, plugins.installedPlugins ?? []),
+      isLoading: loading,
+      error,
+      plugins: applySearchFilter(searchBy, installed),
     };
   }
 
   return {
-    isLoading: plugins.isLoading,
-    items: applySearchFilter(searchBy, all),
+    isLoading: loading,
+    error,
+    plugins: applySearchFilter(searchBy, plugins),
   };
-};
-
-function applySearchFilter(searchBy: string | undefined, plugins: Plugin[]): Plugin[] {
-  if (!searchBy) {
-    return plugins;
-  }
-
-  return plugins.filter((plugin) => {
-    const fields: String[] = [];
-
-    if (plugin.name) {
-      fields.push(plugin.name.toLowerCase());
-    }
-
-    if (plugin.orgName) {
-      fields.push(plugin.orgName.toLowerCase());
-    }
-
-    return fields.some((f) => f.includes(searchBy.toLowerCase()));
-  });
-}
-
-type PluginState = {
-  isLoading: boolean;
-  remote?: Plugin;
-  remoteVersions?: Array<{ version: string; createdAt: string }>;
-  local?: LocalPlugin;
-};
-
-export const usePlugin = (slug: string): PluginState => {
-  const [state, setState] = useState<PluginState>({
-    isLoading: true,
-  });
-
-  useEffect(() => {
-    const fetchPluginData = async () => {
-      const plugin = await api.getPlugin(slug);
-      setState({ ...plugin, isLoading: false });
-    };
-    fetchPluginData();
-  }, [slug]);
-
-  return state;
 };
