@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/services/login"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -24,8 +26,9 @@ func init() {
 }
 
 type Implementation struct {
-	Bus      bus.Bus            `inject:""`
-	SQLStore *sqlstore.SQLStore `inject:""`
+	Bus                   bus.Bus                     `inject:""`
+	SQLStore              *sqlstore.SQLStore          `inject:""`
+	UserProtectionService login.UserProtectionService `inject:""`
 
 	logger log.Logger
 }
@@ -37,10 +40,10 @@ func (s *Implementation) Init() error {
 
 func (s *Implementation) getUserById(id int64) (bool, *models.User, error) {
 	var (
-		has  bool
-		err  error
-		user *models.User
+		has bool
+		err error
 	)
+	user := &models.User{}
 	err = s.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		has, err = sess.ID(id).Get(user)
 		return err
@@ -85,7 +88,7 @@ func (s *Implementation) LookupAndFix(query *models.GetUserByAuthInfoQuery) (boo
 
 				return false, nil, nil, models.ErrUserNotFound
 			} else {
-				has, user, err := s.getUserById(authQuery.UserId)
+				has, user, err := s.getUserById(authQuery.Result.UserId)
 				if err != nil {
 					return false, nil, nil, err
 				}
@@ -162,6 +165,7 @@ func (s *Implementation) GenericOAuthLookup(authModule string, authId string, us
 
 func (s *Implementation) LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (*models.User, error) {
 	// 1. LookupAndFix = auth info, user, error
+	// TODO: Not a big fan of the fact that we are deleting auth info here, might want to move that
 	foundUser, user, authInfo, err := s.LookupAndFix(query)
 	if err != nil && !errors.Is(err, models.ErrUserNotFound) {
 		return nil, err
@@ -177,7 +181,11 @@ func (s *Implementation) LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (
 		return nil, models.ErrUserNotFound
 	}
 
-	// 3. Update
+	if allow, err := s.UserProtectionService.AllowUserMapping(user, query.AuthModule); err != nil {
+		return nil, err
+	} else if !allow {
+		return nil, models.ErrProtectedUser
+	}
 
 	// Special case for generic oauth duplicates
 	ai, err := s.GenericOAuthLookup(query.AuthModule, query.AuthId, user.Id)

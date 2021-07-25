@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -24,10 +22,10 @@ var (
 )
 
 type Implementation struct {
-	SQLStore        *sqlstore.SQLStore              `inject:""`
-	Bus             bus.Bus                         `inject:""`
-	AuthInfoService *authinfoservice.Implementation `inject:""`
-	QuotaService    *quota.QuotaService             `inject:""`
+	SQLStore        *sqlstore.SQLStore    `inject:""`
+	Bus             bus.Bus               `inject:""`
+	AuthInfoService login.AuthInfoService `inject:""`
+	QuotaService    *quota.QuotaService   `inject:""`
 	TeamSync        login.TeamSyncFunc
 }
 
