@@ -214,6 +214,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     if (tr.raw.to === 'now') {
       const interval = getLiveTimerInterval(tr, window.innerWidth);
       if (interval > 0) {
+        console.log('Starting live timer', interval, tr);
         this.liveTimerID = setInterval(this.liveTimerTick, interval) as any;
       }
     }
