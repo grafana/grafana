@@ -153,6 +153,10 @@ func readConfig(configFile string) (*Config, error) {
 		}
 
 		for _, groupMap := range server.Groups {
+			if groupMap.OrgRole == "" {
+				return nil, fmt.Errorf("LDAP group mapping: organization role is required")
+			}
+
 			if groupMap.OrgId == 0 {
 				groupMap.OrgId = 1
 			}
