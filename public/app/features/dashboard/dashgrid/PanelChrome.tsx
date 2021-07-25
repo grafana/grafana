@@ -138,11 +138,24 @@ export class PanelChrome extends Component<Props, State> {
         })
     );
 
-    // it is time?
+    // TODO? check if the panel has X=time?
+    // Note these events will only be broadcast if the dashboard is enabled
     if (this.props.plugin) {
       this.subs.add(
         this.props.dashboard.events.getStream(LiveDashboardTick).subscribe({
-          next: (e) => this.setState({ liveTime: e.payload }),
+          next: (e) => {
+            const { data } = this.state;
+            const liveTime = e.payload;
+            if (data.timeRange) {
+              const delta = liveTime.to.valueOf() - data.timeRange.to.valueOf();
+              if (delta < 100) {
+                // 10hz
+                console.log('Skip tick render', this.props.panel.title, delta);
+                return;
+              }
+            }
+            this.setState({ liveTime });
+          },
         })
       );
     }

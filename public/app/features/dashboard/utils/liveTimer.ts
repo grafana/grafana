@@ -4,11 +4,7 @@ const FIVE_MINS = 5 * 60 * 1000;
 
 export function getLiveTimerInterval(tr: TimeRange, width: number): number {
   const delta = tr.to.valueOf() - tr.from.valueOf();
-  const millisPerPixel = delta / width;
-
-  if (millisPerPixel < 100) {
-    return 100; // 10hz max
-  }
+  const millisPerPixel = Math.ceil(delta / width / 100) * 100;
   if (millisPerPixel > FIVE_MINS) {
     return FIVE_MINS;
   }
