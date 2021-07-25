@@ -9,11 +9,11 @@ import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { TimeSeriesOptions } from './types';
 import { prepareGraphableFields } from './utils';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
-import { withLiveTimeRange } from './LiveRefreshComponent';
+// import { withLiveTimeRange } from './LiveRefreshComponent';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
-const LiveTimeSeries = withLiveTimeRange(TimeSeries);
+const LiveTimeSeries = TimeSeries; // withLiveTimeRange(TimeSeries);
 
 export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   data,

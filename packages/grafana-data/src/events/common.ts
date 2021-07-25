@@ -1,4 +1,4 @@
-import { DataFrame } from '../types';
+import { DataFrame, TimeRange } from '../types';
 import { BusEventWithPayload } from './types';
 
 /**
@@ -33,4 +33,16 @@ export class DataHoverClearEvent extends BusEventWithPayload<DataHoverPayload> {
 /** @alpha */
 export class DataSelectEvent extends BusEventWithPayload<DataHoverPayload> {
   static type = 'data-select';
+}
+
+/**
+ * This event is fired when the time on a dashboard should update, even if the data has not
+ * been refreshed.  This will help support panels that should "move left" while in live mode
+ *
+ * These events will fire depending on the curent time window and browser width
+ *
+ * @alpha
+ */
+export class LiveDashboardTick extends BusEventWithPayload<TimeRange> {
+  static type = 'live-tick';
 }

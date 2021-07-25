@@ -20,10 +20,12 @@ import {
   EventFilterOptions,
   FieldConfigSource,
   getDefaultTimeRange,
+  LiveDashboardTick,
   LoadingState,
   PanelData,
   PanelPlugin,
   PanelPluginMeta,
+  TimeRange,
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
@@ -55,6 +57,7 @@ export interface State {
   refreshWhenInView: boolean;
   context: PanelContext;
   data: PanelData;
+  liveTime?: TimeRange;
 }
 
 export class PanelChrome extends Component<Props, State> {
@@ -134,6 +137,15 @@ export class PanelChrome extends Component<Props, State> {
           next: (data) => this.onDataUpdate(data),
         })
     );
+
+    // it is time?
+    if (this.props.plugin) {
+      this.subs.add(
+        this.props.dashboard.events.getStream(LiveDashboardTick).subscribe({
+          next: (e) => this.setState({ liveTime: e.payload }),
+        })
+      );
+    }
   }
 
   componentWillUnmount() {
@@ -225,7 +237,7 @@ export class PanelChrome extends Component<Props, State> {
         break;
     }
 
-    this.setState({ isFirstLoad, errorMessage, data });
+    this.setState({ isFirstLoad, errorMessage, data, liveTime: undefined });
   }
 
   onRefresh = () => {
@@ -253,6 +265,7 @@ export class PanelChrome extends Component<Props, State> {
       this.setState({
         data: { ...this.state.data, timeRange: this.timeSrv.timeRange() },
         renderCounter: this.state.renderCounter + 1,
+        liveTime: undefined,
       });
     }
   };
@@ -358,7 +371,7 @@ export class PanelChrome extends Component<Props, State> {
     }
 
     const PanelComponent = plugin.panel!;
-    const timeRange = data.timeRange || this.timeSrv.timeRange();
+    const timeRange = this.state.liveTime ?? data.timeRange ?? this.timeSrv.timeRange();
     const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
     const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
     const panelWidth = width - chromePadding * 2 - PANEL_BORDER;

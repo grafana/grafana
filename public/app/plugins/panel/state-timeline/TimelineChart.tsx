@@ -29,7 +29,7 @@ export interface TimelineProps
   legendItems?: VizLegendItem[];
 }
 
-const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue'];
+const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'timeRange'];
 
 export class TimelineChart extends React.Component<TimelineProps> {
   static contextType = PanelContextRoot;
