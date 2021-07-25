@@ -13,24 +13,25 @@ import (
 
 const genericOAuthModule = "oauth_generic_oauth"
 
-var (
-	logger log.Logger
-)
-
 func init() {
-	registry.RegisterService(&Implementation{})
-}
+	srv := &Implementation{}
 
-type Service interface {
-	LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (*models.User, error)
+	registry.Register(&registry.Descriptor{
+		Name:         "UserAuthInfo",
+		Instance:     srv,
+		InitPriority: registry.MediumHigh,
+	})
 }
 
 type Implementation struct {
 	Bus      bus.Bus            `inject:""`
 	SQLStore *sqlstore.SQLStore `inject:""`
+
+	logger log.Logger
 }
 
 func (s *Implementation) Init() error {
+	s.logger = log.New("login.authinfo")
 	return nil
 }
 
@@ -59,7 +60,7 @@ func (s *Implementation) getUser(user *models.User) (has bool, err error) {
 	return
 }
 
-func (s *Implementation) LookupAndFix(query *models.GetUserByAuthInfoQuery) (*models.User, *models.UserAuth, error) {
+func (s *Implementation) LookupAndFix(query *models.GetUserByAuthInfoQuery) (bool, *models.User, *models.UserAuth, error) {
 	authQuery := &models.GetAuthInfoQuery{}
 
 	// Try to find the user by auth module and id first
@@ -70,7 +71,7 @@ func (s *Implementation) LookupAndFix(query *models.GetUserByAuthInfoQuery) (*mo
 		err := s.Bus.Dispatch(authQuery)
 		if !errors.Is(err, models.ErrUserNotFound) {
 			if err != nil {
-				return nil, nil, err
+				return false, nil, nil, err
 			}
 
 			// if user id was specified and doesn't match the user_auth entry, remove it
@@ -79,14 +80,14 @@ func (s *Implementation) LookupAndFix(query *models.GetUserByAuthInfoQuery) (*mo
 					UserAuth: authQuery.Result,
 				})
 				if err != nil {
-					logger.Error("Error removing user_auth entry", "error", err)
+					s.logger.Error("Error removing user_auth entry", "error", err)
 				}
 
-				return nil, nil, models.ErrUserNotFound
+				return false, nil, nil, models.ErrUserNotFound
 			} else {
 				has, user, err := s.getUserById(authQuery.UserId)
 				if err != nil {
-					return nil, nil, err
+					return false, nil, nil, err
 				}
 
 				if !has {
@@ -95,81 +96,105 @@ func (s *Implementation) LookupAndFix(query *models.GetUserByAuthInfoQuery) (*mo
 						UserAuth: authQuery.Result,
 					})
 					if err != nil {
-						logger.Error("Error removing user_auth entry", "error", err)
+						s.logger.Error("Error removing user_auth entry", "error", err)
 					}
 
-					return nil, nil, models.ErrUserNotFound
+					return false, nil, nil, models.ErrUserNotFound
 				}
 
-				return user, authQuery.Result, nil
+				return true, user, authQuery.Result, nil
 			}
 		}
 	}
 
-	return nil, nil, models.ErrUserNotFound
+	return false, nil, nil, models.ErrUserNotFound
 }
 
-func (s *Implementation) LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (*models.User, error) {
-	// 1. LookupAndFix = auth info, user, error
-	// 2. FindByUserDetails
-	// 3. Update
-	// return user, error
-
-	user := &models.User{}
-	has := false
+func (s *Implementation) LookupByOneOf(userId int64, email string, login string) (bool, *models.User, error) {
+	foundUser := false
+	var user *models.User
 	var err error
-	user, authInfo, err := s.LookupAndFix(query)
-	// this is where I am, not sure where to go next.
 
 	// If not found, try to find the user by id
-	if !has && query.UserId != 0 {
-		has, user, err = s.getUserById(query.UserId)
+	if !foundUser && userId != 0 {
+		foundUser, user, err = s.getUserById(userId)
 		if err != nil {
-			return nil, err
+			return false, nil, err
 		}
 	}
 
 	// If not found, try to find the user by email address
-	if !has && query.Email != "" {
-		user = &models.User{Email: query.Email}
-		has, err = s.getUser(user)
+	if !foundUser && email != "" {
+		user = &models.User{Email: email}
+		foundUser, err = s.getUser(user)
 		if err != nil {
-			return nil, err
+			return false, nil, err
 		}
 	}
 
 	// If not found, try to find the user by login
-	if !has && query.Login != "" {
-		user = &models.User{Login: query.Login}
-		has, err = s.getUser(user)
+	if !foundUser && login != "" {
+		user = &models.User{Login: login}
+		foundUser, err = s.getUser(user)
+		if err != nil {
+			return false, nil, err
+		}
+	}
+
+	return foundUser, user, err
+}
+
+func (s *Implementation) GenericOAuthLookup(authModule string, authId string, userID int64) (*models.UserAuth, error) {
+	if authModule == genericOAuthModule && userID != 0 {
+		authQuery := &models.GetAuthInfoQuery{}
+		authQuery.AuthModule = authModule
+		authQuery.AuthId = authId
+		authQuery.UserId = userID
+		err := bus.Dispatch(authQuery)
 		if err != nil {
 			return nil, err
 		}
+
+		return authQuery.Result, nil
+	}
+	return nil, nil
+}
+
+func (s *Implementation) LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (*models.User, error) {
+	// 1. LookupAndFix = auth info, user, error
+	foundUser, user, authInfo, err := s.LookupAndFix(query)
+	if err != nil && !errors.Is(err, models.ErrUserNotFound) {
+		return nil, err
+	}
+
+	// 2. FindByUserDetails
+	if !foundUser {
+		foundUser, user, err = s.LookupByOneOf(query.UserId, query.Email, query.Login)
 	}
 
 	// No user found
-	if !has {
+	if !foundUser {
 		return nil, models.ErrUserNotFound
 	}
 
+	// 3. Update
+
 	// Special case for generic oauth duplicates
-	if query.AuthModule == genericOAuthModule && user.Id != 0 {
-		authQuery.UserId = user.Id
-		authQuery.AuthModule = query.AuthModule
-		err = bus.Dispatch(authQuery)
-		if !errors.Is(err, models.ErrUserNotFound) {
-			if err != nil {
-				return nil, err
-			}
-		}
+	ai, err := s.GenericOAuthLookup(query.AuthModule, query.AuthId, user.Id)
+	if err != nil {
+		return nil, err
 	}
-	if authQuery.Result == nil && query.AuthModule != "" {
-		cmd2 := &models.SetAuthInfoCommand{
+	if ai != nil {
+		authInfo = ai
+	}
+
+	if authInfo == nil && query.AuthModule != "" {
+		cmd := &models.SetAuthInfoCommand{
 			UserId:     user.Id,
 			AuthModule: query.AuthModule,
 			AuthId:     query.AuthId,
 		}
-		if err := bus.Dispatch(cmd2); err != nil {
+		if err := bus.Dispatch(cmd); err != nil {
 			return nil, err
 		}
 	}
