@@ -1,6 +1,6 @@
 import React from 'react';
-import { stylesFactory } from '@grafana/ui';
-import { formattedValueToString, getFieldColorModeForField, GrafanaTheme, reduceField, ReducerID } from '@grafana/data';
+import { Label, stylesFactory } from '@grafana/ui';
+import { formattedValueToString, getFieldColorModeForField, GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { DimensionSupplier } from '../../dims/types';
@@ -12,42 +12,39 @@ export interface MarkersLegendProps {
 }
 export function MarkersLegend(props: MarkersLegendProps) {
   const { color } = props;
-  const style = getStyles(config.theme);
   if (!color) {
     return (
       <></>
     )
   }
+  const colorMode = getFieldColorModeForField(color!.field!);
+  const colors = colorMode.getColors!(config.theme2)
+  const style = getStyles(config.theme, colors);
   if (!color.field && color.fixed) {
     return <div className={style.infoWrap}>Fixed: {color.fixed}</div>;
   }
 
   const fmt = (v: any) => `${formattedValueToString(color.field!.display!(v))}`;
-  const colorMode = getFieldColorModeForField(color.field!);
   
   if (colorMode.isContinuous && colorMode.getColors) {
     const colorRange = getMinMaxAndDelta(color.field!)
-    const stats = reduceField({
-      field: color.field!,
-      reducers: [
-        ReducerID.min,
-        ReducerID.max,
-        ReducerID.mean,
-        // std dev?
-      ]
-    })
+    // TODO: explore showing mean on the gradiant scale
+    // const stats = reduceField({
+    //   field: color.field!,
+    //   reducers: [
+    //     ReducerID.min,
+    //     ReducerID.max,
+    //     ReducerID.mean,
+    //     // std dev?
+    //   ]
+    // })
 
-    // getColors return an array of color string from the color scheme chosen
-    const colors = colorMode.getColors(config.theme2);
-    console.log('TODO use gradient', colors);
-    //TODO: can we get the same gradiant scale img as the option dropdown?
     return <>
+    <Label>{color?.field?.name}</Label>
     <div className={style.gradientContainer}>
-      <div className={style.minVal}>{fmt(colorRange.min)}</div>
-      <div className={style.maxVal}>{fmt(colorRange.max)}</div>
+      <div>{fmt(colorRange.min)}</div>
+      <div>{fmt(colorRange.max)}</div>
     </div>
-    <pre>{JSON.stringify(colorRange)}</pre>
-    <pre>{JSON.stringify({min:stats.min, max:stats.max, mean:stats.mean})}</pre>
     </>
   }
 
@@ -87,7 +84,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
   )
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme, colors) => ({
   infoWrap: css`
     color: #999;
     background: #CCCC;
@@ -115,12 +112,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     min-width: 200px;
     display: flex;
     justify-content: space-between;
-    background-image: linear-gradient(to right, green, red);
-  `,
-  minVal: css `
-    width: 10%;
-  `,
-  maxVal: css `
-    width: 10%;
+    background-image: linear-gradient(to right, ${colors[0]}, ${colors[1]}, ${colors[2]});
   `
 }));
