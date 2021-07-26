@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, ReactNode } from 'react';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry, defaultBaseLayer } from './layers/registry';
 import { Map, View } from 'ol';
 import Attribution from 'ol/control/Attribution';
@@ -33,16 +33,20 @@ let sharedView: View | undefined = undefined;
 export let lastGeomapPanelInstance: GeomapPanel | undefined = undefined;
 
 type Props = PanelProps<GeomapPanelOptions>;
-export class GeomapPanel extends Component<Props> {
+interface State extends OverlayProps {}
+export class GeomapPanel extends Component<Props, State> {
   globalCSS = getGlobalStyles(config.theme2);
 
+  counter = 0;
   map?: Map;
   basemap?: BaseLayer;
   layers: MapLayerState[] = [];
   mouseWheelZoom?: MouseWheelZoom;
   style = getStyles(config.theme);
-  overlayProps: OverlayProps = {};
-
+  constructor(props: Props) {
+    super(props);
+    this.state = {};
+  }
   componentDidMount() {
     lastGeomapPanelInstance = this;
   }
@@ -65,7 +69,7 @@ export class GeomapPanel extends Component<Props> {
 
     // External data changed
     if (layersChanged || this.props.data !== nextProps.data) {
-      this.dataChanged(nextProps.data, nextProps.options.controls.showLegend);
+      this.dataChanged(nextProps.data);
     }
 
     return true; // always?
@@ -106,17 +110,12 @@ export class GeomapPanel extends Component<Props> {
   /**
    * Called when PanelData changes (query results etc)
    */
-  dataChanged(data: PanelData, showLegend?: boolean) {
-    const legends: React.ReactNode[] = [];
+  dataChanged(data: PanelData) {
     for (const state of this.layers) {
       if (state.handler.update) {
         state.handler.update(data);
       }
-      if (showLegend && state.handler.legend) {
-        legends.push(state.handler.legend());
-      }
     }
-    this.overlayProps.bottomLeft = legends;
   }
 
   initMapRef = async (div: HTMLDivElement) => {
@@ -143,7 +142,7 @@ export class GeomapPanel extends Component<Props> {
     this.map.addInteraction(this.mouseWheelZoom);
     this.initControls(options.controls);
     this.initBasemap(options.basemap);
-    await this.initLayers(options.layers, options.controls?.showLegend);
+    await this.initLayers(options.layers);
     this.forceUpdate(); // first render
   };
 
@@ -166,7 +165,7 @@ export class GeomapPanel extends Component<Props> {
     this.map.getLayers().insertAt(0, this.basemap);
   }
 
-  async initLayers(layers: MapLayerOptions[], showLegend?: boolean) {
+  async initLayers(layers: MapLayerOptions[]) {
     // 1st remove existing layers
     for (const state of this.layers) {
       this.map!.removeLayer(state.layer);
@@ -177,6 +176,7 @@ export class GeomapPanel extends Component<Props> {
       layers = [];
     }
 
+    const legends: React.ReactNode[] = [];
     this.layers = [];
     for (const overlay of layers) {
       const item = geomapLayerRegistry.getIfExists(overlay.type);
@@ -193,7 +193,12 @@ export class GeomapPanel extends Component<Props> {
         layer,
         handler,
       });
+
+      if (handler.legend) {
+        legends.push(<div key={`${this.counter++}`}>{handler.legend}</div>);
+      }
     }
+    this.setState({ bottomLeft: legends });
 
     // Update data after init layers
     this.dataChanged(this.props.data);
@@ -270,12 +275,12 @@ export class GeomapPanel extends Component<Props> {
     }
 
     // Update the react overlays
-    const overlayProps: OverlayProps = {};
+    let topRight: ReactNode[] = [];
     if (options.showDebug) {
-      overlayProps.topRight = [<DebugOverlay key="debug" map={this.map} />];
+      topRight = [<DebugOverlay key="debug" map={this.map} />];
     }
 
-    this.overlayProps = overlayProps;
+    this.setState({ topRight });
   }
 
   render() {
@@ -284,7 +289,7 @@ export class GeomapPanel extends Component<Props> {
         <Global styles={this.globalCSS} />
         <div className={this.style.wrap}>
           <div className={this.style.map} ref={this.initMapRef}></div>
-          <GeomapOverlay {...this.overlayProps} />
+          <GeomapOverlay {...this.state} />
         </div>
       </>
     );
