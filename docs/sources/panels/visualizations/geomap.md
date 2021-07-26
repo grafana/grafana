@@ -83,31 +83,31 @@ default_baselayer_config = `{
 
 ## Data layer
 
-Data layer in the Geomap plugin determines how you visualize geospatial data on top of the base map.
+The data layer in the Geomap plugin determines how you visualize geospatial data on top of the base map.
 
 ### Location
-The Geomap panel needs a source of geographical data. The data comes from a database query, and there are four mapping options for your data.
+The Geomap panel needs a source of geographical data. This data comes from a database query, and there are four mapping options for your data.
 
-- **Auto** will automatically search for location data. Use this data option when your query is based on one of the following names for data fields.
+- **Auto** automatically searches for location data. Use this option when your query is based on one of the following names for data fields.
   - geohash: “geohash”
   - latitude: “latitude”, “lat”
   - longitude: “longitude”, “lng”, “lon”
   - lookup: “lookup”
-- **Coords** specifies that your query holds coordinate data. You will be prompted to select numeric data fields for latitude and longitude from your database query.
-- **Geohash** specifies that your query holds geohash data. You will be prompted to select a string data field for geohash from your database query.
-- **Lookup** specifies that your query holds location name data that needs to be mapped to a value. You will be prompted to select the lookup field from your database query and a gazetteer. The gazeteer is the directory that will be used to map your queried data to a geographical point.
+- **Coords** specifies that your query holds coordinate data. You will get prompted to select numeric data fields for latitude and longitude from your database query.
+- **Geohash** specifies that your query holds geohash data. You will get prompted to select a string data field for the geohash from your database query.
+- **Lookup** specifies that your query holds location name data that needs to be mapped to a value. You will get prompted to select the lookup field from your database query and a gazetteer. The gazetteer is the directory that is used to map your queried data to a geographical point.
 
 ### Markers Layer
 
-![Markers Layer](/static/img/docs/geomap-panel/geomap_markers_layer.png)
+The markers layer allows you to display data points as different marker shapes such as circle, squares, triangles, stars, and more.
 
-Markers layer allows displaying data points as different marker shapes such as circle, square, triangle, star, and more.
+![Markers Layer](/static/img/docs/geomap-panel/geomap_markers_layer.png)
 
 ![Markers Layer Options](/static/img/docs/geomap-panel/geomap_markers_options.png)
 
 - **Marker Color** configures the color of the marker. The default `Fixed size` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
 - **Marker Size** configures the size of the marker. Default is `Fixed size`, making all marker size the same regardless of the data points. However, there is also an option to scale the circles to the corresponding data points. `Min` and `Max` marker size has to be set such that the Marker layer can scale within these range.
-- **Marker Shape** gives flexibility to visualize the data points differently. 
+- **Marker Shape** provides you with the flexibility to visualize the data points differently. 
   - Circle
   - Square
   - Triangle
@@ -118,9 +118,14 @@ Markers layer allows displaying data points as different marker shapes such as c
 
 ### Heatmap Layer
 
-![Heatmap Layer](/static/img/docs/geomap-panel/geomap_heatmap_layer.png)
+The heatmap layer clusters various data points to visualize locations with different densities. 
+To add a heatmap layer:
 
-Heatmap layer cluster data points to visualize locations with different densities. To add a heatmap layer, click on the drop down menu under Data Layer and choose `Heatmap`. Similar to `Markers`, you will be prompted with various options determine which data points to visualize and how. 
+Click on the drop down menu under Data Layer and choose `Heatmap`.
+
+Similar to `Markers`, you are prompted with various options to determine which data points to visualize and how.
+
+![Heatmap Layer](/static/img/docs/geomap-panel/geomap_heatmap_layer.png)
 
 ![Heatmap Layer Options](/static/img/docs/geomap-panel/geomap_heatmap_options.png)
 
