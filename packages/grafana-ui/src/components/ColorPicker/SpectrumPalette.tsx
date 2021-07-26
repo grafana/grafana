@@ -7,6 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { useStyles2, useTheme2 } from '../../themes';
 import { useThrottleFn } from 'react-use';
+import { formatHexByAlpha } from '../../../../grafana-data/src/themes/colorManipulator';
 
 export interface SpectrumPaletteProps {
   color: string;
@@ -16,14 +17,9 @@ export interface SpectrumPaletteProps {
 const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color, onChange }) => {
   const [currentColor, setColor] = useState(color);
 
-  const formatHexColor = (color: string) => {
-    const newColor = tinycolor(color);
-    return newColor.toString(newColor.getAlpha() === 1 ? 'hex6' : 'hex8');
-  };
-
   useThrottleFn(
     (c) => {
-      onChange(formatHexColor(c));
+      onChange(formatHexByAlpha(theme.visualization.getColorByName(c)));
     },
     500,
     [currentColor]
@@ -36,7 +32,7 @@ const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color,
     return currentColor.startsWith('rgba')
       ? currentColor
       : tinycolor(theme.visualization.getColorByName(color)).toRgbString();
-  }, [currentColor, theme]);
+  }, [currentColor, theme, color]);
 
   return (
     <div className={styles.wrapper}>
