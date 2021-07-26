@@ -64,7 +64,7 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 	if err != nil {
 		return false, err
 	}
-	return evaluator.Evaluate(accesscontrol.GroupPermissions(permissions))
+	return evaluator.Evaluate(accesscontrol.GroupPermissionsByAction(permissions))
 }
 
 // GetUserPermissions returns user permissions based on built-in roles
