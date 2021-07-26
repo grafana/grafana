@@ -1,4 +1,4 @@
-import { DataFrame, TimeRange } from '../types';
+import { DataFrame, TimeRange, AnnotationEvent } from '../types';
 import { BusEventWithPayload } from './types';
 
 /**
@@ -33,6 +33,11 @@ export class DataHoverClearEvent extends BusEventWithPayload<DataHoverPayload> {
 /** @alpha */
 export class DataSelectEvent extends BusEventWithPayload<DataHoverPayload> {
   static type = 'data-select';
+}
+
+/** @alpha */
+export class AnnotationChangeEvent extends BusEventWithPayload<Partial<AnnotationEvent>> {
+  static type = 'annotation-event';
 }
 
 /**

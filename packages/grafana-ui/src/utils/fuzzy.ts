@@ -20,10 +20,15 @@ type FuzzyMatch = {
  *
  * @param stack - main text to be searched
  * @param needle - partial text to find in the stack
+ *
+ * @internal
  */
 export function fuzzyMatch(stack: string, needle: string): FuzzyMatch {
   let distance = 0,
     searchIndex = stack.indexOf(needle);
+  // Remove whitespace from needle as a temporary solution to treat separate string
+  // queries as 'AND'
+  needle = needle.replace(/\s/g, '');
 
   const ranges: HighlightPart[] = [];
 
