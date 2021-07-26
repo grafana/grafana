@@ -28,6 +28,7 @@ func init() {
 type UsageStats interface {
 	GetUsageReport(context.Context) (UsageReport, error)
 	RegisterMetricsFunc(MetricsFunc)
+	ShouldBeReported(string) bool
 }
 
 type MetricsFunc func() (map[string]interface{}, error)
@@ -39,6 +40,7 @@ type UsageStatsService struct {
 	AlertingUsageStats alerting.UsageStatsQuerier `inject:""`
 	License            models.Licensing           `inject:""`
 	PluginManager      plugins.Manager            `inject:""`
+	SocialService      social.Service             `inject:""`
 
 	log log.Logger
 
@@ -48,7 +50,7 @@ type UsageStatsService struct {
 }
 
 func (uss *UsageStatsService) Init() error {
-	uss.oauthProviders = social.GetOAuthProviders(uss.Cfg)
+	uss.oauthProviders = uss.SocialService.GetOAuthProviders()
 	return nil
 }
 

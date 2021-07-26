@@ -1,9 +1,10 @@
-import React, { useState, useLayoutEffect, useRef, HTMLAttributes, useMemo } from 'react';
+import React, { useState, HTMLAttributes, useMemo, useRef, useLayoutEffect } from 'react';
 import { css, cx } from '@emotion/css';
 import { useStyles2 } from '../../themes';
 import { getTooltipContainerStyles } from '../../themes/mixins';
 import useWindowSize from 'react-use/lib/useWindowSize';
 import { Dimensions2D, GrafanaTheme2 } from '@grafana/data';
+import { calculateTooltipPosition } from './utils';
 
 /**
  * @public
@@ -40,7 +41,6 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
         for (let entry of entries) {
           const tW = Math.floor(entry.contentRect.width + 2 * 8); //  adding padding until Safari supports borderBoxSize
           const tH = Math.floor(entry.contentRect.height + 2 * 8);
-
           if (tooltipMeasurement.width !== tW || tooltipMeasurement.height !== tH) {
             setTooltipMeasurement({
               width: tW,
@@ -49,7 +49,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
           }
         }
       }),
-    [tooltipMeasurement.height, tooltipMeasurement.width]
+    [tooltipMeasurement]
   );
 
   useLayoutEffect(() => {
@@ -64,25 +64,21 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
 
   // Make sure tooltip does not overflow window
   useLayoutEffect(() => {
-    let xO = 0,
-      yO = 0;
     if (tooltipRef && tooltipRef.current) {
-      const xOverflow = width - (positionX + tooltipMeasurement.width);
-      const yOverflow = height - (positionY + tooltipMeasurement.height);
-      if (xOverflow < 0) {
-        xO = tooltipMeasurement.width;
-      }
+      const { x, y } = calculateTooltipPosition(
+        positionX,
+        positionY,
+        tooltipMeasurement.width,
+        tooltipMeasurement.height,
+        offsetX,
+        offsetY,
+        width,
+        height
+      );
 
-      if (yOverflow < 0) {
-        yO = tooltipMeasurement.height;
-      }
+      setPlacement({ x, y });
     }
-
-    setPlacement({
-      x: positionX + offsetX - xO,
-      y: positionY + offsetY - yO,
-    });
-  }, [width, height, positionX, offsetX, positionY, offsetY, tooltipMeasurement.width, tooltipMeasurement.height]);
+  }, [width, height, positionX, offsetX, positionY, offsetY, tooltipMeasurement]);
 
   const styles = useStyles2(getStyles);
 
@@ -92,9 +88,12 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
       style={{
         position: 'fixed',
         left: 0,
+        // disabling pointer-events is to prevent the tooltip from flickering when moving left to right
+        // see e.g. https://github.com/grafana/grafana/pull/33609
+        pointerEvents: 'none',
         top: 0,
-        transform: `translate3d(${placement.x}px, ${placement.y}px, 0)`,
-        transition: 'all ease-out 0.1s',
+        transform: `translate(${placement.x}px, ${placement.y}px)`,
+        transition: 'transform ease-out 0.1s',
       }}
       {...otherProps}
       className={cx(styles.wrapper, className)}

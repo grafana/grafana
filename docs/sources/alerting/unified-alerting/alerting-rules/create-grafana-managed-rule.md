@@ -103,6 +103,16 @@ Labels are key value pairs that categorize or identify an alert. Labels are  use
 
 ![Details section](/static/img/docs/alerting/unified/rule-edit-details-8-0.png 'Details section screenshot')
 
+#### Template variables
+
+The following template variables are available when expanding annotations and labels.
+
+| Name    | Description     |
+| ------- | --------------- |
+| $labels | The labels from the query or condition. For example, `{{ $labels.instance }}` and `{{ $labels.job }}`. |
+| $values | The values of all reduce and math expressions that were evaluated for this alert rule. For example, `{{ $values.A }}`, `{{ $values.A.Labels }}` and `{{ $values.A.Value }}` where `A` is the `refID` of the expression. |
+| $value  | The value string of the alert instance. For example, `[ var='A' labels={instance=foo} value=10 ]`. |
+
 ## Preview alerts
 
 To evaluate the rule and see what alerts it would produce, click **Preview alerts**. It will display a list of alerts with state and value for each one.

@@ -10,7 +10,7 @@ import { StreamingClientEditor, RandomWalkEditor } from './components';
 
 // Types
 import { TestDataDataSource } from './datasource';
-import { TestDataQuery, Scenario, NodesQuery, CSVWave } from './types';
+import { TestDataQuery, Scenario, NodesQuery, CSVWave, USAQuery } from './types';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
 import { CSVWavesEditor } from './components/CSVWaveEditor';
 import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constants';
@@ -19,6 +19,7 @@ import { NodeGraphEditor } from './components/NodeGraphEditor';
 import { defaultStreamQuery } from './runStreams';
 import { CSVFileEditor } from './components/CSVFileEditor';
 import { CSVContentEditor } from './components/CSVContentEditor';
+import { USAQueryEditor, usaQueryModes } from './components/USAQueryEditor';
 
 const showLabelsFor = ['random_walk', 'predictable_pulse'];
 const endpoints = [
@@ -102,6 +103,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       case 'predictable_csv_wave':
         update.csvWave = defaultCSVWaveQuery;
         break;
+      case 'usa':
+        update.usa = {
+          mode: usaQueryModes[0].value,
+        };
     }
 
     onUpdate(update);
@@ -139,6 +144,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
 
   const onStreamClientChange = onFieldChange('stream');
   const onPulseWaveChange = onFieldChange('pulseWave');
+  const onUSAStatsChange = (usa?: USAQuery) => {
+    onUpdate({ ...query, usa });
+  };
 
   const onCSVWaveChange = (csvWave?: CSVWave[]) => {
     onUpdate({ ...query, csvWave });
@@ -244,6 +252,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         </InlineFieldRow>
       )}
 
+      {scenarioId === 'usa' && <USAQueryEditor onChange={onUSAStatsChange} query={query.usa ?? {}} />}
       {scenarioId === 'grafana_api' && (
         <InlineField labelWidth={14} label="Endpoint">
           <Select

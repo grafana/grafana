@@ -146,26 +146,34 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 }
 
 func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response {
-	q := ngmodels.ListAlertRulesQuery{
-		OrgID: c.SignedInUser.OrgId,
+	namespaceMap, err := srv.store.GetNamespaces(c.OrgId, c.SignedInUser)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
+
+	namespaceUIDs := make([]string, len(namespaceMap))
+	for k := range namespaceMap {
+		namespaceUIDs = append(namespaceUIDs, k)
+	}
+
+	q := ngmodels.ListAlertRulesQuery{
+		OrgID:         c.SignedInUser.OrgId,
+		NamespaceUIDs: namespaceUIDs,
+	}
+
 	if err := srv.store.GetOrgAlertRules(&q); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
 	configs := make(map[string]map[string]apimodels.GettableRuleGroupConfig)
 	for _, r := range q.Result {
-		folder, err := srv.store.GetNamespaceByUID(r.NamespaceUID, c.SignedInUser.OrgId, c.SignedInUser)
-		if err != nil {
-			if errors.Is(err, models.ErrFolderAccessDenied) {
-				// do not fail if used does not have access to a specific namespace
-				// just do not include it in the response
-				continue
-			}
-			return toNamespaceErrorResponse(err)
+		folder, ok := namespaceMap[r.NamespaceUID]
+		if !ok {
+			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserId, "namespace", r.NamespaceUID, "rule", r.UID)
+			continue
 		}
 		namespace := folder.Title
-		_, ok := configs[namespace]
+		_, ok = configs[namespace]
 		if !ok {
 			ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
 			configs[namespace] = make(map[string]apimodels.GettableRuleGroupConfig)

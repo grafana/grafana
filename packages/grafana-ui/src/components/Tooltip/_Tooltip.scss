@@ -18,6 +18,10 @@ $popper-margin-from-ref: 5px;
   em {
     color: lighten($textColor, 20%);
   }
+  a {
+    color: $white;
+    text-decoration: underline;
+  }
 }
 
 .popper {

@@ -74,7 +74,7 @@ In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics
 
 Grafana 7.5 includes a deprecation notice for these queries, and some documentation to help users prepare for the upcoming changes.
 
-For more information, refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor.md#deprecating-application-insights-and-insights-analytics" >}}).
+For more information, refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor/_index.md#deprecating-application-insights-and-insights-analytics" >}}).
 
 ### Cloudwatch data source enhancements
 
@@ -98,7 +98,7 @@ server:
   http_listen_port: 3101
 ```
 
-[Azure Monitor data source]({{< relref "../datasources/azuremonitor.md" >}}) was updated as a result of this change.
+[Azure Monitor data source]({{< relref "../datasources/azuremonitor/_index.md" >}}) was updated as a result of this change.
 
 ## Enterprise features
 
@@ -109,6 +109,7 @@ These features are included in the Grafana Enterprise edition.
 When caching is enabled, Grafana temporarily stores the results of data source queries. When you or another user submit the same query again, the results return from the cache instead of from the data source (such as Splunk or ServiceNow).
 
 Query caching advantages:
+
 - Faster dashboard load times, especially for popular dashboards.
 - Reduced API costs.
 - Reduced likelihood that APIs will rate-limit or throttle requests.

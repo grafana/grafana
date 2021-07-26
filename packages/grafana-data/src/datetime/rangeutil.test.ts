@@ -41,6 +41,14 @@ describe('Range Utils', () => {
       expect(() => rangeUtil.describeInterval('123xyz')).toThrow();
       expect(() => rangeUtil.describeInterval('xyz')).toThrow();
     });
+
+    it('should be able to parse negative values as well', () => {
+      expect(rangeUtil.describeInterval('-50ms')).toEqual({
+        sec: 0.001,
+        type: 'ms',
+        count: -50,
+      });
+    });
   });
 
   describe('relativeToTimeRange', () => {

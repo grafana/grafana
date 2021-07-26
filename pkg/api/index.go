@@ -111,7 +111,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 
 			if include.Type == "dashboard" && include.AddToNav {
 				link := &dtos.NavLink{
-					Url:  hs.Cfg.AppSubURL + "/dashboard/db/" + include.Slug,
+					Url:  hs.Cfg.AppSubURL + include.GetSlugOrUIDLink(),
 					Text: include.Name,
 				}
 				appLink.Children = append(appLink.Children, link)
@@ -187,7 +187,11 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		Children:   dashboardChildNavs,
 	})
 
-	if setting.ExploreEnabled && (c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit) {
+	canExplore := func(context *models.ReqContext) bool {
+		return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit
+	}
+
+	if setting.ExploreEnabled && hasAccess(canExplore, eval.Permission(ac.ActionDatasourcesExplore, eval.ScopeNone)) {
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Explore",
 			Id:         "explore",
@@ -207,6 +211,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			{Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul"},
 		}
 		if hs.Cfg.IsNgAlertEnabled() {
+			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Notifications", Id: "notifications", Url: hs.Cfg.AppSubURL + "/alerting/alertmanager", Icon: "layer-group"})
 			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: hs.Cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
 		}
 		if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
@@ -222,6 +227,12 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 					Icon: "comment-alt-share",
 				})
 			}
+		}
+		if c.OrgRole == models.ROLE_ADMIN {
+			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+				Text: "Admin", Id: "alerting-admin", Url: hs.Cfg.AppSubURL + "/alerting/admin",
+				Icon: "cog",
+			})
 		}
 
 		navTree = append(navTree, &dtos.NavLink{
@@ -404,7 +415,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	settings["dateFormats"] = hs.Cfg.DateFormats
 
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
-	if err := bus.Dispatch(&prefsQuery); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &prefsQuery); err != nil {
 		return nil, err
 	}
 	prefs := prefsQuery.Result
@@ -471,6 +482,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		Sentry:                  &hs.Cfg.Sentry,
 		Nonce:                   c.RequestNonce,
 		ContentDeliveryURL:      hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
+		LoadingLogo:             "public/img/grafana_icon.svg",
 	}
 
 	if hs.Cfg.FeatureToggles["accesscontrol"] {

@@ -12,14 +12,14 @@ export default {
   decorator: [withCenteredStory],
   parameters: {
     controls: {
-      exclude: ['className', 'ariaLabel', 'legendDisplayMode'],
+      exclude: ['className', 'ariaLabel', 'legendDisplayMode', 'series'],
     },
   },
   argTypes: {
-    displayMode: { control: { type: 'radio', options: ['table', 'list', 'hidden'] } },
-    placement: { control: { type: 'radio', options: ['bottom', 'right'] } },
+    displayMode: { control: { type: 'radio' }, options: ['table', 'list', 'hidden'] },
+    placement: { control: { type: 'radio' }, options: ['bottom', 'right'] },
     rightAxisSeries: { name: 'Right y-axis series, i.e. A,C' },
-    timeZone: { control: { type: 'radio', options: ['browser', 'utc'] } },
+    timeZone: { control: { type: 'radio' }, options: ['browser', 'utc'] },
     width: { control: { type: 'range', min: 200, max: 800 } },
     height: { control: { type: 'range', min: 1700, step: 300 } },
     lineWidth: { control: { type: 'range', min: 1, max: 10 } },
@@ -124,8 +124,8 @@ export const WithLegend: Story<StoryProps> = ({ rightAxisSeries, displayMode, le
           ? LegendDisplayMode.Table
           : LegendDisplayMode.List
       }
-      {...props}
       {...args}
+      {...props}
     />
   );
 };

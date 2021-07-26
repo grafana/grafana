@@ -104,6 +104,8 @@ This command creates a production-ready build of your plugin.
 
 Available options:
 
+- `--skipTest` - Skip running tests as part of build. Useful if you're running the build as part of a larger pipeline.
+- `--skipLint` - Skip linting as part of build. Useful if you're running the build as part of a larger pipeline.
 - `--coverage` - Reports code coverage after the test step of the build.
 - `--preserveConsole` - Preserves console statements in the code.
 

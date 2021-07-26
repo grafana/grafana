@@ -10,7 +10,6 @@ weight = 400
 
 Notifications sent via [contact points]({{< relref "../contact-points.md" >}}) are built using templates. Grafana comes with default templates which you can customize. Grafana's notification templates are based on the [Go templating system](https://golang.org/pkg/text/template) where some fields are evaluated as text, while others are evaluated as HTML which can affect escaping. Since most of the contact point fields can be templated, you can create reusable templates and them in multiple contact points. See [template data reference]({{< relref "./template-data.md" >}}) to check what variables are available in the templates.
 
-
 ## Using templating in contact point fields
 
 This section shows an example of using templating to render a number of firing or resolved alerts in Slack message title, and listing alerts with status and name in the message body:
@@ -20,6 +19,10 @@ This section shows an example of using templating to render a number of firing o
 ## Reusable templates
 
 You can create named templates and then reuse them in contact point fields or other templates.
+
+Grafana alerting UI allows you to configure templates for the Grafana managed alerts (handled by the embedded Alertmanager) as well as templates for an [external Alertmanager if one is configured]({{< relref "../../../datasources/alertmanager.md" >}}), using the Alertmanager dropdown.
+
+> **Note:** Currently the configuration of the embedded Alertmanager is shared across organisations. Therefore users are advised to use the new Grafana 8 Alerts only if they have one organisation otherwise templates for the Grafana managed alerts will be visible by all organizations
 
 ### Create a template
 1. In the Grafana side bar, hover your cursor over the **Alerting** (bell) icon and then click **Contact points**.

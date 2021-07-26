@@ -37,22 +37,6 @@ $panel-header-no-title-zindex: 1;
   align-items: center;
 }
 
-.panel-title-text {
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-  max-width: calc(100% - 38px);
-  cursor: pointer;
-  font-weight: $font-weight-semi-bold;
-
-  &:hover {
-    color: $link-hover-color;
-  }
-  .panel-has-alert & {
-    max-width: calc(100% - 54px);
-  }
-}
-
 .panel-menu-container {
   width: 0px;
   height: 19px;

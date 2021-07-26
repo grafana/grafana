@@ -106,10 +106,17 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     align-items: center;
     padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0;
     background-color: ${theme.colors.background.secondary};
+    flex-wrap: wrap;
   `,
   headerStats: css`
     span {
       vertical-align: middle;
+    }
+
+    ${theme.breakpoints.down('sm')} {
+      order: 2;
+      width: 100%;
+      padding-left: ${theme.spacing(1)};
     }
   `,
   heading: css`

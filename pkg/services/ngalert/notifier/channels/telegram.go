@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
@@ -34,7 +33,7 @@ type TelegramNotifier struct {
 // NewTelegramNotifier is the constructor for the Telegram notifier
 func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template) (*TelegramNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	botToken := model.DecryptedValue("bottoken", model.Settings.Get("bottoken").MustString())
@@ -42,11 +41,11 @@ func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template)
 	message := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
 
 	if botToken == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find Bot Token in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find Bot Token in settings"}
 	}
 
 	if chatID == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find Chat Id in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find Chat Id in settings"}
 	}
 
 	return &TelegramNotifier{
@@ -99,7 +98,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		return false, err
 	}
 
-	tn.log.Info("sending telegram notification", "chat_id", tn.ChatID)
+	tn.log.Info("sending telegram notification", "chat_id", msg["chat_id"])
 	cmd := &models.SendWebhookSync{
 		Url:        fmt.Sprintf(TelegramAPIURL, tn.BotToken),
 		Body:       body.String(),
@@ -118,12 +117,12 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 }
 
 func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*types.Alert) (map[string]string, error) {
-	msg := map[string]string{}
-	msg["chat_id"] = tn.ChatID
-	msg["parse_mode"] = "html"
-
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
+
+	msg := map[string]string{}
+	msg["chat_id"] = tmpl(tn.ChatID)
+	msg["parse_mode"] = "html"
 
 	message := tmpl(tn.Message)
 	if tmplErr != nil {
