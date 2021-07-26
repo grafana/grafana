@@ -126,6 +126,8 @@ scopes = account email
 auth_url = https://bitbucket.org/site/oauth2/authorize
 token_url = https://bitbucket.org/site/oauth2/access_token
 api_url = https://api.bitbucket.org/2.0/user
+teams_url = https://api.bitbucket.org/2.0/user/permissions/workspaces
+team_id_attribute_path = values[*].workspace.slug
 team_ids =
 allowed_organizations =
 ```

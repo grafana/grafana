@@ -21,6 +21,7 @@ type SocialGenericOAuth struct {
 	*SocialBase
 	allowedOrganizations []string
 	apiUrl               string
+	teamsUrl             string
 	emailAttributeName   string
 	emailAttributePath   string
 	loginAttributePath   string
@@ -29,7 +30,8 @@ type SocialGenericOAuth struct {
 	roleAttributeStrict  bool
 	groupsAttributePath  string
 	idTokenAttributeName string
-	teamIds              []int
+	teamIdAttributePath  string
+	teamIds              []string
 }
 
 func (s *SocialGenericOAuth) Type() int {
@@ -412,28 +414,21 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 	return email, nil
 }
 
-func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]int, bool) {
-	type Record struct {
-		Id int `json:"id"`
-	}
-
-	response, err := s.httpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
+func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]string, bool) {
+	response, err := s.httpGet(client, fmt.Sprintf(s.teamsUrl))
 	if err != nil {
-		s.log.Error("Error getting team memberships", "url", s.apiUrl+"/teams", "error", err)
+		s.log.Error("Error getting team memberships", "url", s.teamsUrl, "error", err)
 		return nil, false
 	}
 
-	var records []Record
-
-	err = json.Unmarshal(response.Body, &records)
-	if err != nil {
-		s.log.Error("Error decoding team memberships response", "raw_json", string(response.Body), "error", err)
-		return nil, false
+	if s.teamIdAttributePath == "" {
+		return []string{}, true
 	}
 
-	var ids = make([]int, len(records))
-	for i, record := range records {
-		ids[i] = record.Id
+	ids, err := s.searchJSONForStringArrayAttr(s.teamIdAttributePath, response.Body)
+
+	if err != nil {
+		return nil, true
 	}
 
 	s.log.Debug("Received team memberships", "ids", ids)
