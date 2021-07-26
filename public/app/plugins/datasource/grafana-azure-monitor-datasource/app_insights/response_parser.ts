@@ -12,11 +12,11 @@ export default class ResponseParser {
         const xaxis = this.results[i].query.xaxis;
         const yaxises = this.results[i].query.yaxis;
         const spliton = this.results[i].query.spliton;
-        columns = this.results[i].result.data.Tables[0].Columns;
-        const rows = this.results[i].result.data.Tables[0].Rows;
+        columns = this.results[i].result.Tables[0].Columns;
+        const rows = this.results[i].result.Tables[0].Rows;
         data = concat(data, this.parseRawQueryResultRow(this.results[i].query, columns, rows, xaxis, yaxises, spliton));
       } else {
-        const value = this.results[i].result.data.value;
+        const value = this.results[i].result.value;
         const alias = this.results[i].query.alias;
         data = concat(data, this.parseQueryResultRow(this.results[i].query, value, alias));
       }
@@ -174,14 +174,14 @@ export default class ResponseParser {
     return dateTime(dateTimeValue).valueOf();
   }
 
-  static parseMetricNames(result: { data: { metrics: any } }) {
-    const keys = _keys(result.data.metrics);
+  static parseMetricNames(result: { metrics: any }) {
+    const keys = _keys(result.metrics);
 
     return ResponseParser.toTextValueList(keys);
   }
 
   parseMetadata(metricName: string) {
-    const metric = this.results.data.metrics[metricName];
+    const metric = this.results.metrics[metricName];
 
     if (!metric) {
       throw Error('No data found for metric: ' + metricName);
@@ -203,9 +203,9 @@ export default class ResponseParser {
       Type: 'AppInsights',
       Tables: {},
     };
-    if (this.results && this.results.data && this.results.data.Tables) {
-      for (let i = 0; i < this.results.data.Tables[0].Rows.length; i++) {
-        const column = this.results.data.Tables[0].Rows[i];
+    if (this.results && this.results && this.results.Tables) {
+      for (let i = 0; i < this.results.Tables[0].Rows.length; i++) {
+        const column = this.results.Tables[0].Rows[i];
         const columnTable = column[0];
         const columnName = column[1];
         const columnType = column[2];

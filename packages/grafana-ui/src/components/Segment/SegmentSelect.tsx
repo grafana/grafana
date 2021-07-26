@@ -1,10 +1,12 @@
 import React, { HTMLProps, useRef } from 'react';
-import useClickAway from 'react-use/lib/useClickAway';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { useTheme2 } from '../../themes/ThemeContext';
 
-/** @internal */
+/** @internal
+ * Should be used only internally by Segment/SegmentAsync which can guarantee that SegmentSelect is hidden
+ * when a value is selected. See comment below on closeMenuOnSelect()
+ */
 export interface Props<T> extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: SelectableValue<T>;
   options: Array<SelectableValue<T>>;
@@ -29,19 +31,6 @@ export function SegmentSelect<T>({
   const ref = useRef<HTMLDivElement>(null);
   const theme = useTheme2();
 
-  useClickAway(ref, () => {
-    if (ref && ref.current) {
-      // https://github.com/JedWatson/react-select/issues/188#issuecomment-279240292
-      // Unfortunately there's no other way of retrieving the (not yet) created new option
-      const input = ref.current.querySelector('input[id^="react-select-"]') as HTMLInputElement;
-      if (input && input.value) {
-        onChange({ value: input.value as any, label: input.value });
-      } else {
-        onClickOutside();
-      }
-    }
-  });
-
   let width = widthPixels > 0 ? widthPixels / theme.spacing.gridSize : undefined;
 
   return (
@@ -55,6 +44,22 @@ export function SegmentSelect<T>({
         onChange={onChange}
         options={options}
         value={value}
+        // Disable "close menu on select" option to avoid calling onChange() in onCloseMenu() when a value is selected.
+        // Once the value is selected the Select component (with the menu) will be hidden anyway by the parent component:
+        // Segment or SegmentAsync - hence setting this option has no UX effect.
+        closeMenuOnSelect={false}
+        onCloseMenu={() => {
+          if (ref && ref.current) {
+            // https://github.com/JedWatson/react-select/issues/188#issuecomment-279240292
+            // Unfortunately there's no other way of retrieving the value (not yet) created new option
+            const input = ref.current.querySelector('input[id^="react-select-"]') as HTMLInputElement;
+            if (input && input.value) {
+              onChange({ value: input.value as any, label: input.value });
+            } else {
+              onClickOutside();
+            }
+          }
+        }}
         allowCustomValue={allowCustomValue}
       />
     </div>

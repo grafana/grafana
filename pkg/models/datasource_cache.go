@@ -11,7 +11,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 func (ds *DataSource) getTimeout() time.Duration {
@@ -27,8 +27,9 @@ func (ds *DataSource) getTimeout() time.Duration {
 		}
 	}
 	if timeout <= 0 {
-		timeout = setting.DataProxyTimeout
+		return sdkhttpclient.DefaultTimeoutOptions.Timeout
 	}
+
 	return time.Duration(timeout) * time.Second
 }
 
@@ -66,10 +67,14 @@ func (ds *DataSource) GetHTTPTransport(provider httpclient.Provider, customMiddl
 		return t.roundTripper, nil
 	}
 
-	opts := ds.HTTPClientOptions()
+	opts, err := ds.HTTPClientOptions()
+	if err != nil {
+		return nil, err
+	}
+
 	opts.Middlewares = customMiddlewares
 
-	rt, err := provider.GetTransport(opts)
+	rt, err := provider.GetTransport(*opts)
 	if err != nil {
 		return nil, err
 	}
@@ -82,20 +87,20 @@ func (ds *DataSource) GetHTTPTransport(provider httpclient.Provider, customMiddl
 	return rt, nil
 }
 
-func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
+func (ds *DataSource) HTTPClientOptions() (*sdkhttpclient.Options, error) {
 	tlsOptions := ds.TLSOptions()
 	timeouts := &sdkhttpclient.TimeoutOptions{
 		Timeout:               ds.getTimeout(),
-		DialTimeout:           time.Duration(setting.DataProxyDialTimeout) * time.Second,
-		KeepAlive:             time.Duration(setting.DataProxyKeepAlive) * time.Second,
-		TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
-		ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
-		MaxConnsPerHost:       setting.DataProxyMaxConnsPerHost,
-		MaxIdleConns:          setting.DataProxyMaxIdleConns,
-		MaxIdleConnsPerHost:   setting.DataProxyMaxIdleConns,
-		IdleConnTimeout:       time.Duration(setting.DataProxyIdleConnTimeout) * time.Second,
+		DialTimeout:           sdkhttpclient.DefaultTimeoutOptions.DialTimeout,
+		KeepAlive:             sdkhttpclient.DefaultTimeoutOptions.KeepAlive,
+		TLSHandshakeTimeout:   sdkhttpclient.DefaultTimeoutOptions.TLSHandshakeTimeout,
+		ExpectContinueTimeout: sdkhttpclient.DefaultTimeoutOptions.ExpectContinueTimeout,
+		MaxConnsPerHost:       sdkhttpclient.DefaultTimeoutOptions.MaxConnsPerHost,
+		MaxIdleConns:          sdkhttpclient.DefaultTimeoutOptions.MaxIdleConns,
+		MaxIdleConnsPerHost:   sdkhttpclient.DefaultTimeoutOptions.MaxIdleConnsPerHost,
+		IdleConnTimeout:       sdkhttpclient.DefaultTimeoutOptions.IdleConnTimeout,
 	}
-	opts := sdkhttpclient.Options{
+	opts := &sdkhttpclient.Options{
 		Timeouts: timeouts,
 		Headers:  getCustomHeaders(ds.JsonData, ds.DecryptedValues()),
 		Labels: map[string]string{
@@ -121,6 +126,19 @@ func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 		}
 	}
 
+	if ds.JsonData != nil && ds.JsonData.Get("azureAuth").MustBool() {
+		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), ds.DecryptedValues())
+		if err != nil {
+			err = fmt.Errorf("invalid Azure credentials: %s", err)
+			return nil, err
+		}
+
+		opts.CustomOptions["_azureAuth"] = true
+		if credentials != nil {
+			opts.CustomOptions["_azureCredentials"] = credentials
+		}
+	}
+
 	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) {
 		opts.SigV4 = &sdkhttpclient.SigV4Config{
 			Service:       awsServiceNamespace(ds.Type),
@@ -140,7 +158,7 @@ func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 		}
 	}
 
-	return opts
+	return opts, nil
 }
 
 func (ds *DataSource) TLSOptions() sdkhttpclient.TLSOptions {
@@ -180,7 +198,11 @@ func (ds *DataSource) TLSOptions() sdkhttpclient.TLSOptions {
 }
 
 func (ds *DataSource) GetTLSConfig(httpClientProvider httpclient.Provider) (*tls.Config, error) {
-	return httpClientProvider.GetTLSConfig(ds.HTTPClientOptions())
+	opts, err := ds.HTTPClientOptions()
+	if err != nil {
+		return nil, err
+	}
+	return httpClientProvider.GetTLSConfig(*opts)
 }
 
 // getCustomHeaders returns a map with all the to be set headers

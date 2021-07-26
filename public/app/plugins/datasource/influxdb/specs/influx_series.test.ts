@@ -138,12 +138,20 @@ describe('when generating timeseries from influxdb response', () => {
         expect(result[0].datapoints[0][1]).toBe(1431946625000);
         expect(result[0].datapoints[1][0]).toBe(12);
         expect(result[0].datapoints[1][1]).toBe(1431946626000);
+        expect(result[0].tags).toMatchObject({
+          app: 'test',
+          server: 'server1',
+        });
 
         expect(result[1].target).toBe('cpu.mean {app: test2, server: server2}');
         expect(result[1].datapoints[0][0]).toBe(15);
         expect(result[1].datapoints[0][1]).toBe(1431946625000);
         expect(result[1].datapoints[1][0]).toBe(16);
         expect(result[1].datapoints[1][1]).toBe(1431946626000);
+        expect(result[1].tags).toMatchObject({
+          app: 'test2',
+          server: 'server2',
+        });
       });
     });
 

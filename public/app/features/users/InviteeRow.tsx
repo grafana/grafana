@@ -1,13 +1,20 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { Invitee } from 'app/types';
 import { revokeInvite } from './state/actions';
 import { Button, ClipboardButton } from '@grafana/ui';
 
-export interface Props {
+const mapDispatchToProps = {
+  revokeInvite,
+};
+
+const connector = connect(null, mapDispatchToProps);
+
+interface OwnProps {
   invitee: Invitee;
-  revokeInvite: typeof revokeInvite;
 }
+
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class InviteeRow extends PureComponent<Props> {
   render() {
@@ -30,10 +37,4 @@ class InviteeRow extends PureComponent<Props> {
   }
 }
 
-const mapDispatchToProps = {
-  revokeInvite,
-};
-
-export default connect(() => {
-  return {};
-}, mapDispatchToProps)(InviteeRow);
+export default connector(InviteeRow);
