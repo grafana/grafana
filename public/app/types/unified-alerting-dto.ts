@@ -101,12 +101,18 @@ export enum GrafanaAlertStateDecision {
   OK = 'OK',
 }
 
+interface AlertDataQuery extends DataQuery {
+  maxDataPoints?: number;
+  interval?: string;
+  intervalMs?: number;
+}
+
 export interface AlertQuery {
   refId: string;
   queryType: string;
   relativeTimeRange?: RelativeTimeRange;
   datasourceUid: string;
-  model: DataQuery;
+  model: AlertDataQuery;
 }
 
 export interface PostableGrafanaRuleDefinition {
