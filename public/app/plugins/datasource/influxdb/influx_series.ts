@@ -52,6 +52,7 @@ export default class InfluxSeries {
         }
 
         output.push({
+          title: seriesName,
           target: seriesName,
           datapoints: datapoints,
           tags: series.tags,

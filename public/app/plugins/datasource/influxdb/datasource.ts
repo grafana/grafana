@@ -85,7 +85,9 @@ function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   const valueField = {
     name: TIME_SERIES_VALUE_FIELD_NAME,
     type: getFieldType(values),
-    config: {},
+    config: {
+      displayNameFromDS: timeSeries.title,
+    },
     values: new ArrayVector<unknown>(values),
     labels: timeSeries.tags,
   };
