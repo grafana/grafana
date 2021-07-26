@@ -89,7 +89,7 @@ const RulesFilter = () => {
                   </div>
                 }
               >
-                <Icon name="info-circle" />
+                <Icon name="info-circle" className={styles.tooltip} />
               </Tooltip>
               Search by label
             </Label>
@@ -118,7 +118,13 @@ const RulesFilter = () => {
         </div>
         {(dataSource || alertState || queryString) && (
           <div className={styles.flexRow}>
-            <Button fullWidth={false} icon="times" variant="secondary" onClick={handleClearFiltersClick}>
+            <Button
+              className={styles.clearButton}
+              fullWidth={false}
+              icon="times"
+              variant="secondary"
+              onClick={handleClearFiltersClick}
+            >
               Clear filters
             </Button>
           </div>
@@ -158,8 +164,11 @@ const getStyles = (theme: GrafanaTheme) => {
       margin-right: ${theme.spacing.sm};
       margin-top: ${theme.spacing.sm};
     `,
+    tooltip: css`
+      margin: 0 ${theme.spacing.xs};
+    `,
     clearButton: css`
-      align-self: flex-end;
+      margin-top: ${theme.spacing.sm};
     `,
   };
 };
