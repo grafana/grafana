@@ -6,6 +6,65 @@ aliases =["/docs/grafana/latest/features/panels/anotations/"]
 weight = 600
 +++
 
-# Annotations
+# Annotations 
 
-The Annotations panel visualization allows you to view ...
+The Annotations panel allows you to create lists of annotations that can be used to view annotated data. Various options are available to filter the list based on tags and the current dashboard.
+
+## Annotation query
+
+The options control the source query for the list of annotations. 
+
+### Query Filter
+
+Use the query filter to create a list of annotations from all dashboards in your organization or the the current dashboard in which this panel is located.
+
+* All dashboards - List annotations from all dashboards in the current organization
+* This dashboard - Limit the annotions list to annotations on the same dashboard in which the annotation list panel appears
+
+### Time Range
+
+Use the time range option to select if the list should limited to the current time range.
+
+* None - no timerange limit for the annotations query
+* This dashboard - Limit the annotations list to the timerange of the dashboard in which the annotation list pannel appears
+
+### Tags
+
+Use the tags list to filter the annotations by tags. You can add multiple tags in order to refine the list. 
+
+> **Note:** Alternatively, you can leave the tag list empty and filter on-the-fly by selecting tags which are listed as part of the results on the panel itself.
+
+### Limit
+
+Use the limit option to limit the number of results returned.
+
+## Display
+
+### Show user
+
+Use this option to show or hide which user created the annotation. 
+
+### Show time
+
+Use this option to show or hide the time the annotation was created
+
+### Show Tags
+
+Use this option to show or hide the tags associated with a given annotation. *NB*: You can use the tags to live-filter the annotation list on the panel itself.
+
+## Link behavior
+
+### Link target
+
+Use this option to chose how to view the annotated data.
+
+* Panel - This option will take you directly to a full-screen view of the panel with the corresponding annotation
+* Dashboard - This option will focus the annotation in the context of a complete dashboard
+
+### Time before
+
+Use this option to set the time range before the annotation.
+
+### Time after
+
+Use this option to set the time range after the annotation.
