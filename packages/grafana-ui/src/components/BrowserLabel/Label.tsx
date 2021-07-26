@@ -1,4 +1,4 @@
-import React, { forwardRef, HTMLAttributes } from 'react';
+import React, { forwardRef, HTMLAttributes, useCallback } from 'react';
 import { cx, css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '../../themes';
@@ -47,11 +47,15 @@ export const Label = forwardRef<HTMLElement, Props>(
     const styles = getLabelStyles(theme);
     const searchWords = searchTerm ? [searchTerm] : [];
 
-    const onLabelClick = (event: React.MouseEvent<HTMLElement>) => {
-      if (onClick && !hidden) {
-        onClick(name, value, event);
-      }
-    };
+    const onLabelClick = useCallback(
+      (event: React.MouseEvent<HTMLElement>) => {
+        if (onClick && !hidden) {
+          onClick(name, value, event);
+        }
+      },
+      [onClick, name, hidden, value]
+    );
+
     // Using this component for labels and label values. If value is given use value for display text.
     let text = value || name;
     if (facets) {
