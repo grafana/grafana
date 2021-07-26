@@ -145,7 +145,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			Text: "External URL",
 		}},
 		Description: tmpl(`{{ template "default.title" . }}`), // TODO: this can be configurable template.
-		Payload: &pagerDutyPayload{
+		Payload: pagerDutyPayload{
 			Component:     tmpl(pn.Component),
 			Summary:       tmpl(pn.Summary),
 			Severity:      tmpl(pn.Severity),
@@ -177,18 +177,15 @@ func (pn *PagerdutyNotifier) SendResolved() bool {
 }
 
 type pagerDutyMessage struct {
-	RoutingKey  string            `json:"routing_key,omitempty"`
-	ServiceKey  string            `json:"service_key,omitempty"`
-	DedupKey    string            `json:"dedup_key,omitempty"`
-	IncidentKey string            `json:"incident_key,omitempty"`
-	EventType   string            `json:"event_type,omitempty"`
-	Description string            `json:"description,omitempty"`
-	EventAction string            `json:"event_action"`
-	Payload     *pagerDutyPayload `json:"payload"`
-	Client      string            `json:"client,omitempty"`
-	ClientURL   string            `json:"client_url,omitempty"`
-	Details     map[string]string `json:"details,omitempty"`
-	Links       []pagerDutyLink   `json:"links,omitempty"`
+	RoutingKey  string           `json:"routing_key,omitempty"`
+	ServiceKey  string           `json:"service_key,omitempty"`
+	DedupKey    string           `json:"dedup_key,omitempty"`
+	Description string           `json:"description,omitempty"`
+	EventAction string           `json:"event_action"`
+	Payload     pagerDutyPayload `json:"payload"`
+	Client      string           `json:"client,omitempty"`
+	ClientURL   string           `json:"client_url,omitempty"`
+	Links       []pagerDutyLink  `json:"links,omitempty"`
 }
 
 type pagerDutyLink struct {
@@ -200,7 +197,6 @@ type pagerDutyPayload struct {
 	Summary       string            `json:"summary"`
 	Source        string            `json:"source"`
 	Severity      string            `json:"severity"`
-	Timestamp     string            `json:"timestamp,omitempty"`
 	Class         string            `json:"class,omitempty"`
 	Component     string            `json:"component,omitempty"`
 	Group         string            `json:"group,omitempty"`
