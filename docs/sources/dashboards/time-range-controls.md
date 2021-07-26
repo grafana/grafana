@@ -31,7 +31,7 @@ Here are some examples:
 | This month so far      | `now/M`    | `now`      |
 | Previous Month         | `now-1M/M` | `now-1M/M` |
 | This year so far       | `now/Y`    | `now`      |
-| This Year              | `now/Y`    | `now/Y     |
+| This Year              | `now/Y`    | `now/Y`    |
 
 ## Common time range controls
 
