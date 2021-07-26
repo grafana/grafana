@@ -331,6 +331,15 @@ func (s *metricFrame) getFieldTypeAndValue(f *influx.Field) (data.FieldType, int
 	if err != nil {
 		return ft, nil, fmt.Errorf("value convert error: %v", err)
 	}
+	if ft == data.FieldTypeNullableString {
+		// We observed commercial Telegraf extensions that send NaN values as strings.
+		// Native Telegraf influx serializer drops fields with NaN values. While this
+		// fixes an observed scenario we still need to think on a more generic approach
+		// how to handle occasionally missing fields (maybe on a UI, maybe on a backend side).
+		if stringVal, ok := v.(*string); ok && stringVal != nil && *stringVal == "NaN" {
+			return data.FieldTypeNullableFloat64, nil, nil
+		}
+	}
 	return ft, v, nil
 }
 

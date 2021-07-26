@@ -323,6 +323,10 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 				continue
 			}
 
+			if t := frame.Fields[i].Type(); t == data.FieldTypeString || t == data.FieldTypeNullableString {
+				continue
+			}
+
 			var err error
 			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
 				errAppendDebug("convert value to float failed", err, interpolatedQuery)
@@ -920,7 +924,7 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 	default:
 		convertUnknownToZero(frame.Fields[Index], newField)
 		frame.Fields[Index] = newField
-		return frame, fmt.Errorf("metricIndex %d type can't be converted to float", Index)
+		return frame, fmt.Errorf("metricIndex %d type %s can't be converted to float", Index, valueType)
 	}
 	frame.Fields[Index] = newField
 
