@@ -79,7 +79,7 @@ func TestAll_Inject(t *testing.T) {
 			},
 		},
 		{
-			desc:     "should should fail for nil params",
+			desc:     "should fail for nil params",
 			expected: false,
 			evaluator: All(
 				Permission("settings:read", Combine("reports", Parameter(":settingsId"))),
