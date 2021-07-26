@@ -55,6 +55,7 @@ Name | Type | Supports images | Support alert rule tags
 [DingDing](#dingdingdingtalk) | `dingding` | yes, external only | no
 [Discord](#discord) | `discord` | yes | no
 [Email](#email) | `email` | yes | no
+[GitLab](#google-hangouts-chat) | `gitlab` | yes, external only | no
 [Google Hangouts Chat](#google-hangouts-chat) | `googlechat` | yes, external only | no
 Hipchat | `hipchat` | yes, external only | no
 [Kafka](#kafka) | `kafka` | yes, external only | no
@@ -87,6 +88,20 @@ Setting | Description
 ---------- | -----------
 Single email | Send a single email to all recipients. Disabled per default.
 Addresses | Email addresses to recipients. You can enter multiple email addresses using a ";" separator.
+
+### GitLab
+
+To setup the GitLab intergration you will need an Authorization Key and Webhook Url. These can be obtained by configuring a new alert [HTTP Endpoint](https://docs.gitlab.com/ee/operations/incident_management/integrations.html#single-http-endpoint).
+
+Alerts will appear in your GitLab project's [alert list](https://docs.gitlab.com/ee/operations/incident_management/alerts.html) and can be used as part of the GitLab [Incident Management](https://docs.gitlab.com/ee/operations/incident_management/) offering.
+
+https://docs.gitlab.com/ee/operations/incident_management/integrations.html#recovery-alerts
+
+Setting | Description
+--------|------------
+Alert Webhook URL | The Webhook URL for your GitLab alert integration.
+Auth Key | The Auth Key as provided by GitLab for your configured alert integration.
+Auto resolve alerts | Automatically resolve the alert in GitLab when the alert goes back to ok.
 
 ### Slack
 
