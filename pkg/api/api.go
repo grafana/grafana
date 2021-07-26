@@ -101,7 +101,7 @@ func (hs *HTTPServer) registerRoutes() {
 			f(c)
 		}
 		middleware.EnsureEditorOrViewerCanEdit(c)
-	}, accesscontrol.ActionDatasourcesExplore), hs.Index)
+	}, eval.Permission(accesscontrol.ActionDatasourcesExplore, eval.ScopeNone)), hs.Index)
 
 	r.Get("/playlists/", reqSignedIn, hs.Index)
 	r.Get("/playlists/*", reqSignedIn, hs.Index)
