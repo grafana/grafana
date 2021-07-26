@@ -3,7 +3,7 @@ import NestedResourceTable from './NestedResourceTable';
 import { ResourceRow, ResourceRowGroup } from './types';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 import { Space } from '../Space';
 import { addResources, findRow, parseResourceURI } from './utils';
@@ -28,6 +28,7 @@ const ResourcePicker = ({
 
   const [azureRows, setAzureRows] = useState<ResourceRowGroup>([]);
   const [internalSelected, setInternalSelected] = useState<string | undefined>(resourceURI);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Sync the resourceURI prop to internal state
   useEffect(() => {
@@ -76,7 +77,9 @@ const ResourcePicker = ({
 
   // Request initial data on first mount
   useEffect(() => {
+    setIsLoading(true);
     resourcePickerData.getResourcePickerData().then((initalRows) => {
+      setIsLoading(false);
       setAzureRows(initalRows);
     });
   }, [resourcePickerData]);
@@ -111,36 +114,44 @@ const ResourcePicker = ({
 
   return (
     <div>
-      <NestedResourceTable
-        rows={rows}
-        requestNestedRows={requestNestedRows}
-        onRowSelectedChange={handleSelectionChanged}
-        selectedRows={selectedResourceRows}
-      />
+      {isLoading ? (
+        <div className={styles.loadingWrapper}>
+          <LoadingPlaceholder text={'Loading resources...'} />
+        </div>
+      ) : (
+        <>
+          <NestedResourceTable
+            rows={rows}
+            requestNestedRows={requestNestedRows}
+            onRowSelectedChange={handleSelectionChanged}
+            selectedRows={selectedResourceRows}
+          />
 
-      <div className={styles.selectionFooter}>
-        {selectedResourceRows.length > 0 && (
-          <>
+          <div className={styles.selectionFooter}>
+            {selectedResourceRows.length > 0 && (
+              <>
+                <Space v={2} />
+                <h5>Selection</h5>
+                <NestedResourceTable
+                  rows={selectedResourceRows}
+                  requestNestedRows={requestNestedRows}
+                  onRowSelectedChange={handleSelectionChanged}
+                  selectedRows={selectedResourceRows}
+                  noHeader={true}
+                />
+              </>
+            )}
+
             <Space v={2} />
-            <h5>Selection</h5>
-            <NestedResourceTable
-              rows={selectedResourceRows}
-              requestNestedRows={requestNestedRows}
-              onRowSelectedChange={handleSelectionChanged}
-              selectedRows={selectedResourceRows}
-              noHeader={true}
-            />
-          </>
-        )}
 
-        <Space v={2} />
-
-        <Button onClick={handleApply}>Apply</Button>
-        <Space layout="inline" h={1} />
-        <Button onClick={onCancel} variant="secondary">
-          Cancel
-        </Button>
-      </div>
+            <Button onClick={handleApply}>Apply</Button>
+            <Space layout="inline" h={1} />
+            <Button onClick={onCancel} variant="secondary">
+              Cancel
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -153,5 +164,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     bottom: 0,
     background: theme.colors.background.primary,
     paddingTop: theme.spacing(2),
+  }),
+  loadingWrapper: css({
+    textAlign: 'center',
+    paddingTop: theme.spacing(2),
+    paddingBottom: theme.spacing(2),
+    color: theme.colors.text.secondary,
   }),
 });

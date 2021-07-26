@@ -46,7 +46,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       | InsightsAnalyticsDatasource;
   } = {};
 
-  optionsKey: Record<AzureQueryType, string>;
+  declare optionsKey: Record<AzureQueryType, string>;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
@@ -136,7 +136,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     return this.azureLogAnalyticsDatasource.annotationQuery(options);
   }
 
-  async metricFindQuery(query: string) {
+  async metricFindQuery(query: string, optionalOptions?: unknown) {
     if (!query) {
       return Promise.resolve([]);
     }
@@ -151,7 +151,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       return amResult;
     }
 
-    const alaResult = this.azureLogAnalyticsDatasource.metricFindQueryInternal(query);
+    const alaResult = this.azureLogAnalyticsDatasource.metricFindQueryInternal(query, optionalOptions);
     if (alaResult) {
       return alaResult;
     }
