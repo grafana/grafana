@@ -569,12 +569,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 		ds := &models.DataSource{Url: backend.URL, Type: models.DS_GRAPHITE}
 
-		responseRecorder := &closeNotifierResponseRecorder{
-			ResponseRecorder: httptest.NewRecorder(),
-		}
-		t.Cleanup(responseRecorder.Close)
-
-		responseWriter := macaron.NewResponseWriter("GET", responseRecorder)
+		responseWriter := macaron.NewResponseWriter("GET", httptest.NewRecorder())
 
 		// XXX: Really unsure why, but setting headers within the HTTP handler function doesn't stick,
 		// so doing it here instead
@@ -749,20 +744,6 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 			}
 		})
 	}
-}
-
-type closeNotifierResponseRecorder struct {
-	*httptest.ResponseRecorder
-	closeChan chan bool
-}
-
-func (r *closeNotifierResponseRecorder) CloseNotify() <-chan bool {
-	r.closeChan = make(chan bool)
-	return r.closeChan
-}
-
-func (r *closeNotifierResponseRecorder) Close() {
-	close(r.closeChan)
 }
 
 // getDatasourceProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.

@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"os"
 	"reflect"
-	"strconv"
 	"strings"
 )
 
@@ -88,19 +87,10 @@ func validateAndWrapHandler(h Handler) Handler {
 
 // validateAndWrapHandlers preforms validation and wrapping for each input handler.
 // It accepts an optional wrapper function to perform custom wrapping on handlers.
-func validateAndWrapHandlers(handlers []Handler, wrappers ...func(Handler) Handler) []Handler {
-	var wrapper func(Handler) Handler
-	if len(wrappers) > 0 {
-		wrapper = wrappers[0]
-	}
-
+func validateAndWrapHandlers(handlers []Handler) []Handler {
 	wrappedHandlers := make([]Handler, len(handlers))
 	for i, h := range handlers {
-		h = validateAndWrapHandler(h)
-		if wrapper != nil && !IsFastInvoker(h) {
-			h = wrapper(h)
-		}
-		wrappedHandlers[i] = h
+		wrappedHandlers[i] = validateAndWrapHandler(h)
 	}
 
 	return wrappedHandlers
@@ -136,16 +126,6 @@ func New() *Macaron {
 		http.Error(rw, err.Error(), 500)
 	})
 	return m
-}
-
-// Handlers sets the entire middleware stack with the given Handlers.
-// This will clear any current middleware handlers,
-// and panics if any of the handlers is not a callable function
-func (m *Macaron) Handlers(handlers ...Handler) {
-	m.handlers = make([]Handler, 0)
-	for _, handler := range handlers {
-		m.Use(handler)
-	}
 }
 
 // BeforeHandler represents a handler executes at beginning of every request.
@@ -227,18 +207,6 @@ func (m *Macaron) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 	m.Router.ServeHTTP(rw, req)
-}
-
-func getDefaultListenInfo() (string, int) {
-	host := os.Getenv("HOST")
-	if len(host) == 0 {
-		host = "0.0.0.0"
-	}
-	port, _ := strconv.Atoi(os.Getenv("PORT"))
-	if port == 0 {
-		port = 4000
-	}
-	return host, port
 }
 
 // SetURLPrefix sets URL prefix of router layer, so that it support suburl.

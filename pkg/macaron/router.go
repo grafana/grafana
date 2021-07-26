@@ -82,9 +82,6 @@ type Router struct {
 	groups              []group
 	notFound            http.HandlerFunc
 	internalServerError func(*Context, error)
-
-	// handlerWrapper is used to wrap arbitrary function from Handler to inject.FastInvoker.
-	handlerWrapper func(Handler) Handler
 }
 
 func NewRouter() *Router {
@@ -176,7 +173,7 @@ func (r *Router) Handle(method string, pattern string, handlers []Handler) *Rout
 		h = append(h, handlers...)
 		handlers = h
 	}
-	handlers = validateAndWrapHandlers(handlers, r.handlerWrapper)
+	handlers = validateAndWrapHandlers(handlers)
 
 	return r.handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params Params) {
 		c := r.m.createContext(resp, req)
@@ -279,11 +276,6 @@ func (r *Router) InternalServerError(handlers ...Handler) {
 		c.Map(err)
 		c.run()
 	}
-}
-
-// SetHandlerWrapper sets handlerWrapper for the router.
-func (r *Router) SetHandlerWrapper(f func(Handler) Handler) {
-	r.handlerWrapper = f
 }
 
 func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
