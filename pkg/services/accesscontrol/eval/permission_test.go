@@ -56,7 +56,7 @@ func TestPermission_Inject(t *testing.T) {
 			},
 		},
 		{
-			desc:      "should should fail for nil params",
+			desc:      "should fail for nil params",
 			expected:  false,
 			evaluator: Permission("reports:read", Combine("reports", Parameter(":reportId"))),
 			params:    nil,
