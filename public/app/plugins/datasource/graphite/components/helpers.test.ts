@@ -138,14 +138,27 @@ describe('Graphite components helpers', () => {
         );
       });
 
-      it('adds an extra param to add multiple values if all params are filled in', () => {
+      it('marks additional params as optional (only first one is required)', () => {
+        assertFunctionInstance(
+          funcDef,
+          ['a', 'b', 'b2'],
+          [
+            { name: 'a', multiple: false, optional: false, options: [], value: 'a' },
+            { name: 'b', multiple: true, optional: false, options: [], value: 'b' },
+            { name: 'b', multiple: true, optional: true, options: [], value: 'b2' },
+            { name: 'b', multiple: true, optional: true, options: [], value: '' },
+          ]
+        );
+      });
+
+      it('adds an extra param to allo adding multiple values if all params are filled in', () => {
         assertFunctionInstance(
           funcDef,
           ['a', 'b'],
           [
             { name: 'a', multiple: false, optional: false, options: [], value: 'a' },
             { name: 'b', multiple: true, optional: false, options: [], value: 'b' },
-            { name: 'b', multiple: true, optional: false, options: [], value: '' },
+            { name: 'b', multiple: true, optional: true, options: [], value: '' },
           ]
         );
       });

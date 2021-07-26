@@ -57,7 +57,9 @@ export function GraphiteFunctionEditor({ func, dispatch }: FunctionEditorProps) 
                 autofocus={index === 0 && func.added}
                 editableParam={editableParam}
                 onChange={(value) => {
-                  dispatch(actions.updateFunctionParam({ func, index, value }));
+                  if (value !== '' || editableParam.optional) {
+                    dispatch(actions.updateFunctionParam({ func, index, value }));
+                  }
                   setIsExpanded(false);
                   setIsMouseOver(false);
                 }}
