@@ -2,6 +2,8 @@
 // https://github.com/mui-org/material-ui/blob/1b096070faf102281f8e3c4f9b2bf50acf91f412/packages/material-ui/src/styles/colorManipulator.js#L97
 // MIT License Copyright (c) 2014 Call-Em-All
 
+import tinycolor from 'tinycolor2';
+
 /**
  * Returns a number whose value is limited to the given range.
  * @param value The value to be clamped
@@ -64,6 +66,19 @@ export function rgbToHex(color: string) {
 
   const { values } = decomposeColor(color);
   return `#${values.map((n: number) => intToHex(n)).join('')}`;
+}
+
+/**
+ * Converts a color to hex6 format if there is no alpha, hex8 if there is.
+ * @param color - Hex, RGB, HSL color
+ * @returns A hex color string, i.e. #ff0000 or #ff0000ff
+ */
+export function asHexString(color: string): string {
+  if (color[0] === '#') {
+    return color;
+  }
+  const tColor = tinycolor(color);
+  return tColor.getAlpha() === 1 ? tColor.toHexString() : tColor.toHex8String();
 }
 
 /**

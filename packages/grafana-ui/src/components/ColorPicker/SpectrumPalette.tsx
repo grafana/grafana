@@ -3,9 +3,9 @@ import React, { useMemo, useState } from 'react';
 import { RgbaStringColorPicker } from 'react-colorful';
 import tinycolor from 'tinycolor2';
 import ColorInput from './ColorInput';
-import { GrafanaTheme, getColorForTheme } from '@grafana/data';
+import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { useStyles, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes';
 import { useThrottleFn } from 'react-use';
 
 export interface SpectrumPaletteProps {
@@ -15,16 +15,23 @@ export interface SpectrumPaletteProps {
 
 const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color, onChange }) => {
   const [currentColor, setColor] = useState(color);
-  useThrottleFn(onChange, 500, [currentColor]);
+
+  useThrottleFn(
+    (c) => {
+      onChange(colorManipulator.asHexString(theme.visualization.getColorByName(c)));
+    },
+    500,
+    [currentColor]
+  );
 
   const theme = useTheme2();
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const rgbaString = useMemo(() => {
     return currentColor.startsWith('rgba')
       ? currentColor
-      : tinycolor(getColorForTheme(currentColor, theme.v1)).toRgbString();
-  }, [currentColor, theme]);
+      : tinycolor(theme.visualization.getColorByName(color)).toRgbString();
+  }, [currentColor, theme, color]);
 
   return (
     <div className={styles.wrapper}>
@@ -34,7 +41,7 @@ const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color,
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     flex-grow: 1;
   `,
@@ -45,24 +52,24 @@ const getStyles = (theme: GrafanaTheme) => ({
 
     .react-colorful {
       &__saturation {
-        border-radius: ${theme.border.radius.sm} ${theme.border.radius.sm} 0 0;
+        border-radius: ${theme.v1.border.radius.sm} ${theme.v1.border.radius.sm} 0 0;
       }
       &__alpha {
-        border-radius: 0 0 ${theme.border.radius.sm} ${theme.border.radius.sm};
+        border-radius: 0 0 ${theme.v1.border.radius.sm} ${theme.v1.border.radius.sm};
       }
       &__alpha,
       &__hue {
-        height: ${theme.spacing.md};
+        height: ${theme.spacing(2)};
         position: relative;
       }
       &__pointer {
-        height: ${theme.spacing.md};
-        width: ${theme.spacing.md};
+        height: ${theme.spacing(2)};
+        width: ${theme.spacing(2)};
       }
     }
   `,
   colorInput: css`
-    margin-top: ${theme.spacing.md};
+    margin-top: ${theme.spacing(2)};
   `,
 });
 
