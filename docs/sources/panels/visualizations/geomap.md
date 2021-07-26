@@ -84,7 +84,7 @@ default_baselayer_config = `{
 
 ## Data layer
 
-Data layer in the Geomap plugin determine how you visualize geospatial data on top of the base map.
+Data layer in the Geomap plugin determines how you visualize geospatial data on top of the base map.
 
 ### Location
 The Geomap panel needs a source of geographical data. The data comes from a database query, and there are four mapping options for your data.
@@ -94,9 +94,9 @@ The Geomap panel needs a source of geographical data. The data comes from a data
   - latitude: “latitude”, “lat”
   - longitude: “longitude”, “lng”, “lon”
   - lookup: “lookup”
-- **Coords** specifies that the query holds coordinate data. On selection, you will be prompted to select the data fields for latitude and longitude from your database query.
-- **Geohash** specifies that the query holds geohash data. On selection, you will be prompted to select the data field for geohash from your database query.
-- **Lookup** specifies that the query holds location name data that needs to be mapped to a value. On selection, you will be prompted to select the lookup field from your database query, and also the gazetteer. The gazeteer is the directory that will be used to map queried data to a geographical point.
+- **Coords** specifies that your query holds coordinate data. You will be prompted to select numeric data fields for latitude and longitude from your database query.
+- **Geohash** specifies that your query holds geohash data. You will be prompted to select a string data field for geohash from your database query.
+- **Lookup** specifies that your query holds location name data that needs to be mapped to a value. You will be prompted to select the lookup field from your database query and a gazetteer. The gazeteer is the directory that will be used to map your queried data to a geographical point.
 
 ### Markers Layer
 
