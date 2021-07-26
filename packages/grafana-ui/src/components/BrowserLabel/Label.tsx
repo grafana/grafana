@@ -7,12 +7,9 @@ import Highlighter from 'react-highlight-words';
 import { PartialHighlighter } from '../Typeahead/PartialHighlighter';
 import { HighlightPart } from '../../types';
 
-/**
- * @alpha
- */
-export type OnLabelClick = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => void;
+type OnLabelClick = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => void;
 
-export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
+interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   name: string;
   active?: boolean;
   loading?: boolean;
@@ -24,6 +21,9 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   onClick?: OnLabelClick;
 }
 
+/**
+ * @internal
+ */
 export const Label = forwardRef<HTMLElement, Props>(
   (
     {
