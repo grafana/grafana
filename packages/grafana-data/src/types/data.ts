@@ -128,7 +128,6 @@ export interface QueryResultBase {
 export interface Labels {
   [key: string]: string;
 }
-
 export interface Column {
   text: string; // For a Column, the 'text' is the field name
   filterable?: boolean;

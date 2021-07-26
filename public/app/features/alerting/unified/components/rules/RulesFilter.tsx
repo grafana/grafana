@@ -1,5 +1,5 @@
 import React, { FormEvent, useState } from 'react';
-import { Button, Icon, Input, Label, RadioButtonGroup, useStyles } from '@grafana/ui';
+import { Button, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles } from '@grafana/ui';
 import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { debounce } from 'lodash';
@@ -80,7 +80,19 @@ const RulesFilter = () => {
       <div className={cx(styles.flexRow, styles.spaceBetween)}>
         <div className={styles.flexRow}>
           <div className={styles.rowChild}>
-            <Label>Search by name or label</Label>
+            <Label>
+              <Tooltip
+                content={
+                  <div>
+                    Filter rules and alerts using label querying, ex:
+                    <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
+                  </div>
+                }
+              >
+                <Icon name="info-circle" className={styles.tooltip} />
+              </Tooltip>
+              Search by label
+            </Label>
             <Input
               key={queryStringKey}
               className={styles.inputWidth}
@@ -88,6 +100,7 @@ const RulesFilter = () => {
               onChange={handleQueryStringChange}
               defaultValue={queryString}
               placeholder="Search"
+              data-testid="search-query-input"
             />
           </div>
           <div className={styles.rowChild}>
@@ -105,7 +118,13 @@ const RulesFilter = () => {
         </div>
         {(dataSource || alertState || queryString) && (
           <div className={styles.flexRow}>
-            <Button fullWidth={false} icon="times" variant="secondary" onClick={handleClearFiltersClick}>
+            <Button
+              className={styles.clearButton}
+              fullWidth={false}
+              icon="times"
+              variant="secondary"
+              onClick={handleClearFiltersClick}
+            >
               Clear filters
             </Button>
           </div>
@@ -145,8 +164,11 @@ const getStyles = (theme: GrafanaTheme) => {
       margin-right: ${theme.spacing.sm};
       margin-top: ${theme.spacing.sm};
     `,
+    tooltip: css`
+      margin: 0 ${theme.spacing.xs};
+    `,
     clearButton: css`
-      align-self: flex-end;
+      margin-top: ${theme.spacing.sm};
     `,
   };
 };
