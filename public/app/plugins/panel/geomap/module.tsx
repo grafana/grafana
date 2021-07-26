@@ -1,12 +1,12 @@
-import { FrameGeometrySourceMode, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 import { BaseLayerEditor } from './editor/BaseLayerEditor';
 import { DataLayersEditor } from './editor/DataLayersEditor';
 import { GeomapPanel } from './GeomapPanel';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { defaultView, GeomapPanelOptions } from './types';
 import { mapPanelChangedHandler } from './migrations';
-import { defaultGrafanaThemedMap } from './layers/basemaps';
-import { MARKERS_LAYER_ID } from './layers/data/markersLayer';
+import { defaultMarkersConfig } from './layers/data/markersLayer';
+import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
@@ -32,17 +32,13 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       defaultValue: defaultView.shared,
     });
 
-    // Nested
     builder.addCustomEditor({
       category: ['Base Layer'],
       id: 'basemap',
       path: 'basemap',
       name: 'Base Layer',
       editor: BaseLayerEditor,
-      defaultValue: {
-        type: defaultGrafanaThemedMap.id,
-        config: defaultGrafanaThemedMap.defaultOptions,
-      },
+      defaultValue: DEFAULT_BASEMAP_CONFIG,
     });
 
     builder.addCustomEditor({
@@ -51,15 +47,7 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       path: 'layers',
       name: 'Data Layer',
       editor: DataLayersEditor,
-      defaultValue: [
-        {
-          type: MARKERS_LAYER_ID,
-          config: {},
-          location: {
-            mode: FrameGeometrySourceMode.Auto,
-          },
-        },
-      ],
+      defaultValue: [defaultMarkersConfig],
     });
 
     // The controls section

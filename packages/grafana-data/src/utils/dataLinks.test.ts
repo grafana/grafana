@@ -31,7 +31,7 @@ describe('mapInternalLinkToExplore', () => {
     expect(link).toEqual(
       expect.objectContaining({
         title: 'dsName',
-        href: '/explore?left={"datasource":"dsName","queries":[{"query":"12344"}]}',
+        href: `/explore?left=${encodeURIComponent('{"datasource":"dsName","queries":[{"query":"12344"}]}')}`,
         onClick: undefined,
       })
     );
