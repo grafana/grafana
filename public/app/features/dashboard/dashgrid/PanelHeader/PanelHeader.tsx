@@ -35,15 +35,15 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
   return (
     <>
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} />
+      <PanelHeaderCorner
+        panel={panel}
+        title={panel.title}
+        description={panel.description}
+        scopedVars={panel.scopedVars}
+        links={getPanelLinksSupplier(panel)}
+        error={error}
+      />
       <div className={className}>
-        <PanelHeaderCorner
-          panel={panel}
-          title={panel.title}
-          description={panel.description}
-          scopedVars={panel.scopedVars}
-          links={getPanelLinksSupplier(panel)}
-          error={error}
-        />
         <PanelHeaderMenuTrigger aria-label={selectors.components.Panels.Panel.title(title)}>
           {({ closeMenu, panelMenuOpen }) => {
             return (
