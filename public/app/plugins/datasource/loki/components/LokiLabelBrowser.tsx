@@ -1,19 +1,29 @@
 import React, { ChangeEvent } from 'react';
-import { Button, HorizontalGroup, Input, Label, LoadingPlaceholder, withTheme2 } from '@grafana/ui';
+import {
+  Button,
+  HighlightPart,
+  HorizontalGroup,
+  Input,
+  Label,
+  LoadingPlaceholder,
+  withTheme2,
+  BrowserLabel as LokiLabel,
+  fuzzyMatch,
+} from '@grafana/ui';
 import LokiLanguageProvider from '../language_provider';
 import PromQlLanguageProvider from '../../prometheus/language_provider';
 import { css, cx } from '@emotion/css';
 import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
-
 import { GrafanaTheme2 } from '@grafana/data';
-import { LokiLabel } from './LokiLabel';
+import { sortBy } from 'lodash';
 
 // Hard limit on labels to render
 const MAX_LABEL_COUNT = 1000;
 const MAX_VALUE_COUNT = 10000;
 const MAX_AUTO_SELECT = 4;
 const EMPTY_SELECTOR = '{}';
+
 export const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
 export interface BrowserProps {
@@ -36,6 +46,8 @@ interface BrowserState {
 interface FacettableValue {
   name: string;
   selected?: boolean;
+  highlightParts?: HighlightPart[];
+  order?: number;
 }
 
 export interface SelectableLabel {
@@ -378,15 +390,42 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       return <LoadingPlaceholder text="Loading labels..." />;
     }
     const styles = getStyles(theme);
-    let selectedLabels = labels.filter((label) => label.selected && label.values);
-    if (searchTerm) {
-      selectedLabels = selectedLabels.map((label) => ({
-        ...label,
-        values: label.values?.filter((value) => value.selected || value.name.includes(searchTerm)),
-      }));
-    }
     const selector = buildSelector(this.state.labels);
     const empty = selector === EMPTY_SELECTOR;
+
+    let selectedLabels = labels.filter((label) => label.selected && label.values);
+    if (searchTerm) {
+      selectedLabels = selectedLabels.map((label) => {
+        const searchResults = label.values!.filter((value) => {
+          // Always return selected values
+          if (value.selected) {
+            value.highlightParts = undefined;
+            return true;
+          }
+          const fuzzyMatchResult = fuzzyMatch(value.name.toLowerCase(), searchTerm.toLowerCase());
+          if (fuzzyMatchResult.found) {
+            value.highlightParts = fuzzyMatchResult.ranges;
+            value.order = fuzzyMatchResult.distance;
+            return true;
+          } else {
+            return false;
+          }
+        });
+        return {
+          ...label,
+          values: sortBy(searchResults, (value) => (value.selected ? -Infinity : value.order)),
+        };
+      });
+    } else {
+      // Clear highlight parts when searchTerm is cleared
+      selectedLabels = this.state.labels
+        .filter((label) => label.selected && label.values)
+        .map((label) => ({
+          ...label,
+          values: label?.values ? label.values.map((value) => ({ ...value, highlightParts: undefined })) : [],
+        }));
+    }
+
     return (
       <div className={styles.wrapper}>
         <div className={styles.section}>
@@ -431,7 +470,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
                 <FixedSizeList
                   height={200}
                   itemCount={label.values?.length || 0}
-                  itemSize={25}
+                  itemSize={28}
                   itemKey={(i) => (label.values as FacettableValue[])[i].name}
                   width={200}
                   className={styles.valueList}
@@ -447,6 +486,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
                           name={label.name}
                           value={value?.name}
                           active={value?.selected}
+                          highlightParts={value?.highlightParts}
                           onClick={this.onClickValue}
                           searchTerm={searchTerm}
                         />
