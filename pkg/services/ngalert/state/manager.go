@@ -137,11 +137,13 @@ func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
 func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []*State {
 	st.log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
 	var states []*State
+	processedResults := make(map[string]*State, len(results))
 	for _, result := range results {
 		s := st.setNextState(alertRule, result)
 		states = append(states, s)
+		processedResults[s.CacheId] = s
 	}
-	st.log.Debug("returning changed states to scheduler", "count", len(states))
+	st.staleResultsHandler(alertRule, processedResults)
 	return states
 }
 
@@ -264,4 +266,28 @@ func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.Ale
 		st.log.Error("error saving alert annotation", "alertRuleUID", alertRule.UID, "error", err.Error())
 		return
 	}
+}
+
+func (st *Manager) staleResultsHandler(alertRule *ngModels.AlertRule, states map[string]*State) {
+	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
+	for _, s := range allStates {
+		_, ok := states[s.CacheId]
+		if !ok && isItStale(s.LastEvaluationTime, alertRule.IntervalSeconds) {
+			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
+			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheId)
+			ilbs := ngModels.InstanceLabels(s.Labels)
+			_, labelsHash, err := ilbs.StringAndHash()
+			if err != nil {
+				st.log.Error("unable to get labelsHash", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID)
+			}
+
+			if err = st.instanceStore.DeleteAlertInstance(s.OrgID, s.AlertRuleUID, labelsHash); err != nil {
+				st.log.Error("unable to delete stale instance from database", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
+			}
+		}
+	}
+}
+
+func isItStale(lastEval time.Time, intervalSeconds int64) bool {
+	return lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).Before(time.Now())
 }
