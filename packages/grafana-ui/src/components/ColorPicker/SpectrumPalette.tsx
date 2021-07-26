@@ -36,7 +36,7 @@ const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color,
   return (
     <div className={styles.wrapper}>
       <RgbaStringColorPicker className={cx(styles.root)} color={rgbaString} onChange={setColor} />
-      <ColorInput theme={theme} color={currentColor} onChange={setColor} className={styles.colorInput} />
+      <ColorInput theme={theme} color={rgbaString} onChange={setColor} className={styles.colorInput} />
     </div>
   );
 };
