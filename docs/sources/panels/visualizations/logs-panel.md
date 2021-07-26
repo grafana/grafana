@@ -35,5 +35,6 @@ Use these settings to refine your visualization:
 - **Unique labels -** Show or hide the unique labels column, which shows only non-common labels.
 - **Common labels -** Show or hide the common labels.
 - **Wrap lines -** Toggle line wrapping.
+- **Prettify JSON -** Set this to `true` to pretty print all JSON logs. This setting does not affect logs in any format other than JSON.
 - **Enable log details -** Toggle option to see the log details view for each log row. The default setting is true.
 - **Order -** Display results in descending or ascending time order. The default is **Descending**, showing the newest logs first. Set to **Ascending** to show the oldest log lines first.
