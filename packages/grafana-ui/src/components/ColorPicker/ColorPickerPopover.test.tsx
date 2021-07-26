@@ -35,7 +35,7 @@ describe('ColorPickerPopover', () => {
       basicBlueSwatch.simulate('click');
 
       expect(onChangeSpy).toBeCalledTimes(1);
-      expect(onChangeSpy).toBeCalledWith(theme.visualization.getColorByName('green').toLowerCase());
+      expect(onChangeSpy).toBeCalledWith(theme.visualization.getColorByName('green'));
     });
 
     it('should pass color name to onChange prop when named colors enabled', () => {
