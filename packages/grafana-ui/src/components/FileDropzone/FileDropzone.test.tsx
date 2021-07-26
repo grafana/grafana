@@ -56,12 +56,12 @@ describe('The FileDropzone component', () => {
     dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData([file({})]));
 
     expect(await screen.findAllByLabelText(REMOVE_FILE)).toHaveLength(1);
-    expect(await screen.findByText('ping.json')).toBeInTheDocument();
+    expect(screen.getByText('ping.json')).toBeInTheDocument();
 
     dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData([file({ fileName: 'newFile.jpg' })]));
 
     expect(await screen.findByText('newFile.jpg')).toBeInTheDocument();
-    expect(await screen.findAllByLabelText(REMOVE_FILE)).toHaveLength(1);
+    expect(screen.getAllByLabelText(REMOVE_FILE)).toHaveLength(1);
   });
 
   it('should use the passed readAs prop with the FileReader API', async () => {
