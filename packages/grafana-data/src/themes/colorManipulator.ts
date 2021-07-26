@@ -73,7 +73,10 @@ export function rgbToHex(color: string) {
  * @param color - Hex, RGB, HSL color
  * @returns A hex color string, i.e. #ff0000 or #ff0000ff
  */
-export function formatHexByAlpha(color: string): string {
+export function asHexString(color: string): string {
+  if (color[0] === '#') {
+    return color;
+  }
   const tColor = tinycolor(color);
   return tColor.getAlpha() === 1 ? tColor.toHexString() : tColor.toHex8String();
 }

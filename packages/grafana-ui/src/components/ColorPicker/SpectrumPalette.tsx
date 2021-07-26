@@ -3,11 +3,10 @@ import React, { useMemo, useState } from 'react';
 import { RgbaStringColorPicker } from 'react-colorful';
 import tinycolor from 'tinycolor2';
 import ColorInput from './ColorInput';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { useStyles2, useTheme2 } from '../../themes';
 import { useThrottleFn } from 'react-use';
-import { formatHexByAlpha } from '../../../../grafana-data/src/themes/colorManipulator';
 
 export interface SpectrumPaletteProps {
   color: string;
@@ -19,7 +18,7 @@ const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color,
 
   useThrottleFn(
     (c) => {
-      onChange(formatHexByAlpha(theme.visualization.getColorByName(c)));
+      onChange(colorManipulator.asHexString(theme.visualization.getColorByName(c)));
     },
     500,
     [currentColor]
