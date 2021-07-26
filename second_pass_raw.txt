@@ -1,0 +1,120 @@
+7310	OPEN	[Feature request] Highlight row in table/log panel based on shared crosshair	area/panel/table, type/feature-request	2020-11-09 14:53:31 +0000 UTC
+8758	OPEN	[Feature request] Group annotations into groups to make many annotations close together more visible	area/annotations, area/panel/graph, type/feature-request	2017-07-03 08:13:14 +0000 UTC
+6806	OPEN	[Feature request] Dashboard-level series overrides	area/dashboard, type/feature-request	2016-12-02 19:38:21 +0000 UTC
+9700	OPEN	Add confirmation dialog when deleting alerting/notifications	area/alerting/notifications, type/feature-request	2017-10-31 13:22:58 +0000 UTC
+5043	OPEN	[Feat request]: Elasticsearch annotations & support for nested timestamp field	area/datasource, datasource/Elasticsearch, help wanted, priority/nice-to-have, type/feature-request	2019-03-30 12:15:26 +0000 UTC
+17218	OPEN	AzureMonitor: Can select multiple metrics in a query	datasource/Azure, type/feature-request	2019-05-22 08:31:00 +0000 UTC
+15426	OPEN	Hipchat will soon be defunct	area/alerting/notifications, priority/unscheduled, type/feature-request	2019-02-14 10:41:28 +0000 UTC
+13261	OPEN	Tab Panel	area/dashboard, type/feature-request	2018-09-13 19:20:17 +0000 UTC
+14829	OPEN	Support Doc value fields for Elasticsearch	area/backend, area/datasource, area/frontend, datasource/Elasticsearch, help wanted, needs investigation, type/feature-request	2021-03-12 09:41:54 +0000 UTC
+13545	OPEN	Change opacity of 'fill below'	area/panel/graph, type/feature-request	2018-10-06 18:36:22 +0000 UTC
+13560	OPEN	Stackdriver: intellisense/autocomplete for Alias patterns	area/datasource, datasource/GoogleCloudMonitoring, type/feature-request	2019-03-30 12:47:38 +0000 UTC
+11206	OPEN	remove negative from axis	area/panel/graph, priority/support-subscription, type/feature-request	2018-03-12 14:27:09 +0000 UTC
+16616	OPEN	Evaluate alert rule on historical data	area/alerting, type/feature-request	2019-04-16 12:59:07 +0000 UTC
+8621	OPEN	graph: show "significant figures" instead of decimal places	area/panel/graph, type/feature-request	2020-11-09 18:16:26 +0000 UTC
+6322	OPEN	feature request: return `http 400 bad request` when calling add new dashboard api for a dashboard that should be imported	area/dashboard, type/feature-request	2016-10-19 09:37:54 +0000 UTC
+8304	OPEN	Allow monospaced font for legends	area/panel/graph, type/feature-request	2017-05-05 13:27:22 +0000 UTC
+8290	OPEN	[Feature request] Add Return to Default Time Range to timepicker/zoom options	area/dashboard/timerange, type/feature-request	2018-12-13 19:05:06 +0000 UTC
+3630	OPEN	Feature Request: Diff view on unsaved changes	effort/medium, priority/nice-to-have, type/feature-request	2020-11-11 21:45:15 +0000 UTC
+7523	OPEN	[Feat Request] Add support for running Grafana inside electron	type/feature-request	2020-09-08 18:18:07 +0000 UTC
+7904	OPEN	[Feature request] Allow to customize a panel's "No datapoints" message	area/panel/graph, type/feature-request	2017-03-23 12:55:49 +0000 UTC
+8679	OPEN	Define Threshold values relative to current unit	area/panel/singlestat, type/feature-request	2019-11-17 09:37:13 +0000 UTC
+10430	OPEN	Show all alert thresholds (for multi-condition alert)	area/alerting, type/feature-request	2019-08-19 03:47:15 +0000 UTC
+10568	OPEN	Global Series Overrides	area/panel/graph, type/feature-request	2019-09-25 21:10:25 +0000 UTC
+9393	OPEN	[Feature request] Allow customizing how many Y-axis grid values are shown	area/panel/graph, type/feature-request	2017-10-02 14:25:33 +0000 UTC
+9584	OPEN	[Feature request] Add option to provide axis labels in heatmap	area/panel/heatmap, type/feature-request	2019-06-25 09:10:10 +0000 UTC
+8292	OPEN	[Feature request] Ability to determine how many rows the table legend should be before it scrolls	area/panel/graph, type/feature-request	2020-11-03 21:01:54 +0000 UTC
+8337	OPEN	[Feature request] Make Graphite time series rounding configurable or intelligent	area/datasource, datasource/Graphite, priority/nice-to-have, type/feature-request	2021-02-24 09:49:17 +0000 UTC
+11838	OPEN	[Feat] Support min opacity value for heatmaps	area/panel/heatmap, type/feature-request	2018-09-05 00:24:30 +0000 UTC
+13594	OPEN	Legend style should match line style	area/panel/graph, type/feature-request	2020-09-17 16:26:48 +0000 UTC
+13474	OPEN	Add role with no access by default	area/permissions, type/feature-request	2019-12-18 10:37:17 +0000 UTC
+11589	OPEN	If elasticsearch queries returned `timed_out` it should give the user a some sort of warning.	area/datasource, datasource/Elasticsearch, type/feature-request	2020-08-19 08:49:27 +0000 UTC
+16420	OPEN	Show series with string values in graph tooltip	area/panel/graph, type/feature-request	2021-02-12 00:17:26 +0000 UTC
+16771	OPEN	[FeatureRequest] Plugins - Better cache-busting on plugin assets	area/plugins, help wanted, type/feature-request	2020-11-11 10:13:21 +0000 UTC
+17186	OPEN	Support changing plugin ids	area/plugins, type/feature-request	2020-01-11 01:11:16 +0000 UTC
+1550	OPEN	Multiple x-axis	area/panel/graph, type/feature-request	2020-01-03 19:22:46 +0000 UTC
+956	OPEN	Dashboard: Visual indicator of unsaved changes	area/dashboard, type/feature-request, type/ux	2020-11-09 16:44:28 +0000 UTC
+8924	OPEN	[Feat Req]: Templating custom values for Table Panel Raw Document Size	area/datasource, datasource/Elasticsearch, effort/small, type/feature-request	2020-08-19 08:23:46 +0000 UTC
+5951	OPEN	Session max per user login ID	area/backend/security, type/feature-request	2020-03-26 02:34:14 +0000 UTC
+5788	OPEN	Graph: Option to hide series from Hover	area/panel/graph, priority/nice-to-have, type/feature-request	2020-11-10 14:57:25 +0000 UTC
+5863	OPEN	[Feature request] Showing actual percentage/values inside BarChart with (or) without stack mode	area/panel/graph, type/feature-request	2016-08-19 15:50:17 +0000 UTC
+6966	OPEN	[Feature request] rename series (alias with input from a source/dictionary/list)	area/panel/graph, type/feature-request	2020-11-11 16:39:32 +0000 UTC
+9530	OPEN	[Feature Request] Support Multiplexing of Proxied Datasource Queries	area/datasource, area/datasource/proxy, type/feature-request	2020-11-11 15:51:08 +0000 UTC
+4940	OPEN	[Feature Request] Add quick templates drop-down to left of new metrics rows	area/datasource, datasource/Graphite, effort/medium, priority/nice-to-have, type/feature-request	2019-03-30 12:16:56 +0000 UTC
+7415	OPEN	[Feature request] SSO-CAS authentication	area/backend/auth, type/feature-request	2017-10-10 09:55:35 +0000 UTC
+16885	OPEN	Support for Apache Phoenix Data Source	area/datasource, type/feature-request	2020-07-28 15:36:03 +0000 UTC
+13734	OPEN	Add quarterly time ranges to time picker	area/dashboard/timerange, type/feature-request	2019-12-06 01:14:10 +0000 UTC
+14487	OPEN	Warning state for Panels	area/panel/common, type/feature-request	2019-01-17 16:55:07 +0000 UTC
+12614	OPEN	Switch Notification channel depending on alert threshold (rules)	area/alerting, area/backend, type/feature-request	2020-07-01 15:51:54 +0000 UTC
+8066	OPEN	[Feature request] add AWS Lambda notifier	area/alerting/notifications, type/feature-request	2021-01-11 00:27:22 +0000 UTC
+13887	OPEN	Remove default values from dashboard JSON model frontend integration	area/dashboard, area/dashboard/schemas, type/feature-request	2021-04-28 11:08:47 +0000 UTC
+11505	OPEN	Plugins: Make template variable query a plugin UI component	area/plugins, type/feature-request	2020-11-11 17:12:30 +0000 UTC
+6995	OPEN	[Feature Request] Add option to not make 'All' the default selected value when include All option is enabled	area/dashboard/templating, type/feature-request	2020-11-10 06:48:29 +0000 UTC
+10651	OPEN	[FeatureRequest] Variables - Add custom value for the "None" value	area/dashboard/templating, type/feature-request	2020-11-11 13:20:33 +0000 UTC
+16081	OPEN	Allow variable in dashboard time range	area/dashboard/timerange, type/feature-request	2019-03-19 15:51:57 +0000 UTC
+9163	OPEN	[Feature request] Time range in the embedded inside the charts	type/feature-request	2019-08-19 13:00:32 +0000 UTC
+7724	OPEN	[Feature request] Add keyboard shortcuts for playlist forward and back	area/playlist, type/feature-request	2020-07-29 22:44:29 +0000 UTC
+8588	OPEN	[Feature request] Allow creation of users without password when LDAP is enabled	area/backend/auth/ldap, type/feature-request	2018-03-27 18:14:19 +0000 UTC
+5961	OPEN	[Feature request] Alter $timeFrame to match group by boundaries	type/feature-request	2020-01-15 22:24:25 +0000 UTC
+7178	OPEN	[Feature request] Dynamic value above bar graph	area/panel/graph, type/feature-request	2020-01-03 08:41:24 +0000 UTC
+4827	OPEN	[Feature Request] Dashboard-wide CSV Export of data	priority/nice-to-have, type/feature-request	2016-08-31 12:27:23 +0000 UTC
+8309	OPEN	[Feature Request] Option to only show non-zero points in graph	area/panel/graph, type/feature-request	2018-09-27 15:27:03 +0000 UTC
+11910	OPEN	[UX/UI] Allow horizontal graph tooltip	area/panel/graph, type/feature-request, type/ux	2019-08-26 20:48:19 +0000 UTC
+15722	OPEN	Import dashboard from any url, not just Grafana.net	area/dashboard/import, type/feature-request	2021-03-17 03:25:13 +0000 UTC
+13579	OPEN	Alert notifier settings documentation & validation	area/alerting/notifications, area/backend/api, type/docs, type/feature-request	2020-06-10 15:46:39 +0000 UTC
+13756	OPEN	Multi-value variable with wildcard not correctly expanded with ${var:lucene} for Elastic Search	area/dashboard/templating, area/datasource, datasource/Elasticsearch, priority/awaiting-more-evidence, type/feature-request	2021-03-12 11:03:56 +0000 UTC
+11864	OPEN	Configure default values for panels	area/panel/common, type/feature-request	2020-11-11 22:28:11 +0000 UTC
+6632	OPEN	Grafana to support Sharded influx db instances	area/datasource, datasource/InfluxDB, type/feature-request	2021-06-01 09:45:20 +0000 UTC
+7441	OPEN	[Feature request] FieldOverrides: Unit as templated variable	area/dashboard/templating, area/field/overrides, type/feature-request	2020-11-11 07:32:32 +0000 UTC
+11840	OPEN	Custom legend tooltip	area/panel/graph, type/feature-request	2020-11-12 10:17:46 +0000 UTC
+16824	OPEN	Organization switching redesign	area/frontend, type/feature-request, type/ux	2019-05-01 11:22:43 +0000 UTC
+1097	OPEN	Persist time window between dashboards	area/dashboard, type/feature-request	2019-10-28 07:13:10 +0000 UTC
+3078	OPEN	Feature request: Make LDAP group membership searchable by UID or other field	area/backend/auth/ldap, type/feature-request	2018-03-19 23:21:16 +0000 UTC
+9031	OPEN	[Feature request] Overwrite id of notification_channels and version of dashboards	type/feature-request	2018-07-10 13:54:20 +0000 UTC
+4744	OPEN	[Feature Request]: influxdb: influxql query editor: improved support for fields in WHERE-section	area/datasource, datasource/InfluxDB, priority/nice-to-have, type/feature-request	2021-05-18 11:50:24 +0000 UTC
+6809	OPEN	[Feature request] Generic oauth: Optionally verify oauth scopes	area/backend/auth, priority/nice-to-have, type/feature-request	2021-01-20 01:58:17 +0000 UTC
+5558	OPEN	[Feature request] - Custom times for playlists	area/playlist, type/feature-request	2020-03-06 13:25:11 +0000 UTC
+6575	OPEN	Allow setting custom relative time for alert snapshot	area/alerting, type/feature-request	2021-04-08 08:17:08 +0000 UTC
+9323	OPEN	[Feature Request] Add 'occurrences' to Grafana alerting	area/alerting/evaluation, type/feature-request	2018-01-08 11:44:17 +0000 UTC
+10654	OPEN	InfluxDB: Enable ::tag and ::field in Query Builder	area/datasource, datasource/InfluxDB, type/feature-request	2020-03-24 10:15:07 +0000 UTC
+11171	OPEN	graphite datasource: noNullPoints support	area/datasource, datasource/Graphite, priority/nice-to-have, type/feature-request	2021-02-24 09:44:38 +0000 UTC
+11871	OPEN	[UX/UI] Make stacked and left/right axis easier to discern in graphs	area/panel/graph, type/feature-request, type/ux	2018-05-14 12:22:32 +0000 UTC
+15535	OPEN	Document the way ad-hoc filters can be specified in URL parameters	area/dashboard/templating, type/docs, type/feature-request	2020-11-12 21:31:13 +0000 UTC
+17379	OPEN	Annotation support for large text	area/annotations, type/feature-request	2019-07-27 00:24:45 +0000 UTC
+12366	OPEN	Support markdown in Annotation description	area/annotations, type/feature-request	2019-02-02 18:35:46 +0000 UTC
+12176	OPEN	Option to have fullscreen graph URL instead of alert tab URL in alert notifications	area/alerting, area/alerting/notifications, type/feature-request	2020-09-10 05:15:16 +0000 UTC
+12755	OPEN	[Feat] Backoff auto refresh if datasource query takes longer time than refresh interval	area/datasource, area/datasource/proxy, type/feature-request	2019-03-30 12:50:58 +0000 UTC
+15312	OPEN	id_token signature validation	area/backend/auth/oauth, area/backend/security, type/feature-request	2019-12-16 13:17:51 +0000 UTC
+17115	OPEN	[Feature Request] Ad Hoc filter with multiple sources	area/dashboard/templating, type/feature-request	2021-02-04 16:16:20 +0000 UTC
+1914	OPEN	Default Timepicker Settings	area/dashboard/timerange, type/feature-request	2019-03-12 11:13:24 +0000 UTC
+2047	OPEN	Allow overriding defaults for new dashboard with empty.json	area/dashboard, type/feature-request	2019-07-17 09:05:39 +0000 UTC
+8696	OPEN	Reload/Refresh on Alert Page	area/alerting, type/feature-request	2021-02-10 20:21:11 +0000 UTC
+8919	OPEN	[Feature request] Group by multiple of time interval	type/feature-request	2018-07-13 14:04:01 +0000 UTC
+5436	OPEN	Invert legend order	area/panel/graph, type/feature-request	2019-12-18 15:24:27 +0000 UTC
+10242	OPEN	[FeatureRequest] Graphite - Templating Query support time series query to look up values or series names	area/dashboard/templating, datasource/Graphite, priority/nice-to-have, type/feature-request	2021-04-21 07:01:35 +0000 UTC
+10284	OPEN	Profile Page	type/feature-request, type/ux	2019-10-01 11:37:08 +0000 UTC
+10571	OPEN	Pause alerts by datasource	area/alerting, type/feature-request	2021-02-10 20:17:45 +0000 UTC
+5206	OPEN	Add support for datasource tags	area/datasource/frontend, type/feature-request	2020-11-11 16:50:03 +0000 UTC
+15951	OPEN	Elasticsearch datasource limited to 10,000 records max	area/datasource, datasource/Elasticsearch, priority/important-soon, type/feature-request	2020-08-14 12:56:18 +0000 UTC
+15079	OPEN	Feature: Alertmanager notifier label support	area/alerting/notifications, type/feature-request	2020-05-15 06:55:06 +0000 UTC
+16763	OPEN	Map Github Organizations to Grafana Organizations	area/backend/auth/oauth, type/feature-request	2019-04-29 01:51:06 +0000 UTC
+12772	OPEN	Make timezone configurable when embedding panels/dashboards	area/dashboard/timezone, type/feature-request	2021-05-14 00:08:25 +0000 UTC
+12899	OPEN	Official docker image for Grafana	area/docker, type/build-packaging, type/feature-request	2020-07-06 13:21:36 +0000 UTC
+17836	OPEN	OAuth login to specific organization	area/backend/auth/oauth, type/feature-request	2021-04-01 10:24:39 +0000 UTC
+264	OPEN	Search for metrics (similar to dashboard search)	area/search, type/feature-request	2021-04-06 07:45:11 +0000 UTC
+10144	OPEN	[Feature Request] Zoom-in without reloading data	type/feature-request	2017-12-13 12:49:03 +0000 UTC
+16230	OPEN	Support NaN values in Postgres query responses	area/datasource, datasource/Postgres, type/feature-request	2020-05-04 14:16:09 +0000 UTC
+16895	OPEN	Proxy support for outgoing requests from datasources	area/datasource/proxy, type/docs, type/feature-request	2020-07-30 13:02:15 +0000 UTC
+17210	OPEN	SQL Friendly Variable Formatting in Interpolation	area/dashboard/templating, datasource/MSSQL, datasource/MySQL, datasource/Postgres, type/feature-request	2020-10-06 20:14:46 +0000 UTC
+17812	OPEN	Dashboard List Panel: Show expand / collapsable folder structure	area/panel/dashboard-list, type/feature-request	2020-01-09 15:47:56 +0000 UTC
+13436	OPEN	[Feature request] Allow merging of graphs into a scratch pad	area/dashboard, type/feature-request	2020-11-13 06:52:18 +0000 UTC
+8310	OPEN	[Feature Request] Select Time Range from batch start/end time query	area/dashboard/timerange, type/feature-request	2017-06-22 17:19:32 +0000 UTC
+2911	OPEN	Feature request: TTL for dashboards	area/dashboard, type/feature-request	2016-03-07 10:45:37 +0000 UTC
+2493	OPEN	Disable profile editing when authenticated using LDAP	area/backend/auth/ldap, type/feature-request	2019-01-18 09:22:20 +0000 UTC
+10381	OPEN	Enforce stricter go code formatting and vetting.	type/build-packaging, type/feature-request	2018-04-19 08:30:57 +0000 UTC
+10658	OPEN	Expose user's partial query in ad hoc filter	area/dashboard/templating, type/feature-request	2020-11-11 18:34:17 +0000 UTC
+11972	OPEN	timeGroup macro improvements and expose built in variables like MaxDataPoints	area/datasource, datasource/MSSQL, datasource/MySQL, datasource/Postgres, type/feature-request	2020-12-14 10:24:29 +0000 UTC
+16254	OPEN	Singlestats Responsive Sizing	area/panel/singlestat, type/feature-request	2019-04-03 18:54:20 +0000 UTC
+13573	OPEN	Sidebar -> Top nav bar	area/frontend, type/feature-request, type/ux	2020-11-11 17:11:42 +0000 UTC
+13895	OPEN	Support for Annotations on Heatmap	area/annotations, area/panel/heatmap, type/feature-request	2018-11-01 18:29:26 +0000 UTC
+10057	OPEN	[Feat Req]: Support orgId query parameter when anonymous access is enabled	type/feature-request	2017-12-26 17:56:44 +0000 UTC
