@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactNode } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { stylesFactory } from '@grafana/ui';
@@ -7,6 +7,7 @@ import { css } from '@emotion/css';
 export interface OverlayProps {
   topRight?: React.ReactNode[];
   bottomLeft?: React.ReactNode[];
+  tooltip?: React.ReactNode;
 }
 
 export class GeomapOverlay extends PureComponent<OverlayProps> {
@@ -16,12 +17,20 @@ export class GeomapOverlay extends PureComponent<OverlayProps> {
     super(props);
   }
 
+  tooltipExists(tooltip: ReactNode) {
+    if (tooltip) {
+      return true;
+    }
+    return false;
+  }
+
   render() {
-    const { topRight, bottomLeft } = this.props;
+    const { topRight, bottomLeft, tooltip } = this.props;
     return (
       <div className={this.style.overlay}>
         {Boolean(topRight?.length) && <div className={this.style.TR}>{topRight}</div>}
         {Boolean(bottomLeft?.length) && <div className={this.style.BL}>{bottomLeft}</div>}
+        {Boolean(tooltip) && <div className={this.style.BL}>{tooltip}</div>}
       </div>
     );
   }

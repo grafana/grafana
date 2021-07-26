@@ -21,6 +21,7 @@ import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { DebugOverlay } from './components/DebugOverlay';
 import { getGlobalStyles } from './globalStyles';
 import { Global } from '@emotion/react';
+import { Tooltip } from './components/Tooltip';
 
 interface MapLayerState {
   config: MapLayerOptions;
@@ -177,6 +178,7 @@ export class GeomapPanel extends Component<Props> {
       layers = [];
     }
 
+    const tooltip: React.ReactNode[] = [];
     this.layers = [];
     for (const overlay of layers) {
       const item = geomapLayerRegistry.getIfExists(overlay.type);
@@ -193,6 +195,10 @@ export class GeomapPanel extends Component<Props> {
         layer,
         handler,
       });
+
+      if (handler.tooltip) {
+        tooltip.push(handler.tooltip);
+      }
     }
 
     // Update data after init layers
@@ -273,6 +279,8 @@ export class GeomapPanel extends Component<Props> {
     if (options.showDebug) {
       overlayProps.topRight = [<DebugOverlay key="debug" map={this.map} />];
     }
+
+    overlayProps.tooltip = <Tooltip key="tooltip" map={this.map} />;
 
     this.overlayProps = overlayProps;
   }
