@@ -11,6 +11,11 @@ import { getScaledDimension, } from '../../dims/scale';
 import { getColorDimension, } from '../../dims/color';
 import { ScaleDimensionEditor } from '../../dims/editors/ScaleDimensionEditor';
 import { ColorDimensionEditor } from '../../dims/editors/ColorDimensionEditor';
+import React from 'react';
+import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
+import { ReplaySubject } from 'rxjs';
+import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
+import { ReactNode } from 'react';
 import { circleMarker, markerMakers } from '../../utils/regularShapes';
 
 // Configuration options for Circle overlays
@@ -19,6 +24,7 @@ export interface MarkersConfig {
   color: ColorDimensionConfig;
   fillOpacity: number;
   shape?: string;
+  showLegend?: boolean;
 }
 
 const defaultOptions: MarkersConfig = {
@@ -32,6 +38,7 @@ const defaultOptions: MarkersConfig = {
   },
   fillOpacity: 0.4,
   shape: 'circle',
+  showLegend: true,
 };
 
 export const MARKERS_LAYER_ID = "markers";
@@ -68,10 +75,21 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       ...options?.config,
     };
 
+    const legendProps= new ReplaySubject<MarkersLegendProps>(1);
+    let legend:ReactNode = null;
+    if (config.showLegend) {
+      legend = <ObservablePropsWrapper 
+        watch={legendProps}  
+        initialSubProps={{}}  
+        child={MarkersLegend}
+      />
+    }
     const shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
+    console.log( 'CREATE Marker layer', matchers);
 
     return {
       init: () => vectorLayer,
+      legend: legend,
       update: (data: PanelData) => {
         if(!data.series?.length) {
           return; // ignore empty
@@ -107,8 +125,17 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             dot.setStyle(shape!.make(color, fillColor, radius));
             features.push(dot);
           };
-        }
 
+          // Post updates to the legend component
+          if (legend) {
+            console.log( 'UPDATE (marker layer)', colorDim);
+            legendProps.next({
+              color: colorDim,
+              size: sizeDim,
+            });
+          }
+          break; // Only the first frame for now!
+        }
 
         // Source reads the data and provides a set of features to visualize
         const vectorSource = new source.Vector({ features });
@@ -162,6 +189,12 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           step: 0.1,
         },
         showIf: (cfg) => (markerMakers.getIfExists((cfg as any).config?.shape)?.hasFill),
+      })
+      .addBooleanSwitch({
+        path: 'config.showLegend',
+        name: 'Show legend',
+        description: 'Show legend',
+        defaultValue: defaultOptions.showLegend,
       });
   },
 
