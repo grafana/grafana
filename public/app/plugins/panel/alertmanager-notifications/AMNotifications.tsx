@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { PanelProps } from '@grafana/data';
 import { CustomScrollbar } from '@grafana/ui';
 
-import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { fetchAlertGroupsAction } from 'app/features/alerting/unified/state/actions';
 import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
 import { NOTIFICATIONS_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
@@ -11,6 +11,8 @@ import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/
 
 import { AmNotificationsGroup } from './AmNotificationsGroup';
 import { AMNotificationsOptions } from './types';
+import { parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
+import { useFilteredGroups } from './useFilteredGroups';
 
 export const AMNotifications = (props: PanelProps<AMNotificationsOptions>) => {
   const dispatch = useDispatch();
@@ -21,6 +23,9 @@ export const AMNotifications = (props: PanelProps<AMNotificationsOptions>) => {
   const loading = alertGroups[alertManagerSourceName || '']?.loading;
   const error = alertGroups[alertManagerSourceName || '']?.error;
   const results: AlertmanagerGroup[] = alertGroups[alertManagerSourceName || '']?.result || [];
+  const matchers: Matcher[] = props.options.labels ? parseMatchers(props.options.labels) : [];
+
+  const filteredResults = useFilteredGroups(results, matchers);
 
   useEffect(() => {
     function fetchNotifications() {
@@ -41,7 +46,7 @@ export const AMNotifications = (props: PanelProps<AMNotificationsOptions>) => {
         {!error &&
           !loading &&
           results &&
-          results.map((group) => {
+          filteredResults.map((group) => {
             return <AmNotificationsGroup key={JSON.stringify(group.labels)} group={group} />;
           })}
       </div>
