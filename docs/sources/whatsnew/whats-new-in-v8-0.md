@@ -10,8 +10,6 @@ list = false
 
 # What’s new in Grafana v8.0
 
-> **Note:** This topic will be updated frequently between now and the final release.
-
 This topic includes the release notes for Grafana v8.0. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Grafana OSS features
