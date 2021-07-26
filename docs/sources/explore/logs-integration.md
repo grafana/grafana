@@ -73,7 +73,7 @@ Set this to True if you want the display to use line wrapping. If set to False, 
 
 #### Prettify JSON
 
-Set this to true if you want to pretty print all JSON logs. This will not affect logs in any format other than JSON.
+Set this to `true` to pretty print all JSON logs. This setting does not affect logs in any format other than JSON.
 
 #### Deduping
 
