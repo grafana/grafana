@@ -64,7 +64,7 @@ export class Tooltip extends PureComponent<Props, State> {
               </tr>
               <tr>
                 <th>Longitude:&nbsp;</th>
-                <td> {y?.toFixed(5)} </td>
+                <td> {y?.toFixed(1)} </td>
               </tr>
             </tbody>
           </table>

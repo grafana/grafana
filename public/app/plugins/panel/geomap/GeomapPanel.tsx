@@ -275,7 +275,9 @@ export class GeomapPanel extends Component<Props> {
       overlayProps.topRight = [<DebugOverlay key="debug" map={this.map} />];
     }
 
-    overlayProps.tooltip = <Tooltip key="tooltip" map={this.map} />;
+    if (options.showTooltip) {
+      overlayProps.tooltip = <Tooltip key="tooltip" map={this.map} />;
+    }
 
     this.overlayProps = overlayProps;
   }
