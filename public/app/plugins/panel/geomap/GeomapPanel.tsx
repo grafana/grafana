@@ -178,7 +178,6 @@ export class GeomapPanel extends Component<Props> {
       layers = [];
     }
 
-    const tooltip: React.ReactNode[] = [];
     this.layers = [];
     for (const overlay of layers) {
       const item = geomapLayerRegistry.getIfExists(overlay.type);
@@ -195,10 +194,6 @@ export class GeomapPanel extends Component<Props> {
         layer,
         handler,
       });
-
-      if (handler.tooltip) {
-        tooltip.push(handler.tooltip);
-      }
     }
 
     // Update data after init layers

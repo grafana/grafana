@@ -17,13 +17,6 @@ export class GeomapOverlay extends PureComponent<OverlayProps> {
     super(props);
   }
 
-  tooltipExists(tooltip: ReactNode) {
-    if (tooltip) {
-      return true;
-    }
-    return false;
-  }
-
   render() {
     const { topRight, bottomLeft, tooltip } = this.props;
     return (
