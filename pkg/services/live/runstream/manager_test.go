@@ -27,11 +27,11 @@ func TestStreamManager_Run(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockChannelSender := NewMockChannelSender(mockCtrl)
-	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
+	mockChannelPublisher := NewMockChannelLocalPublisher(mockCtrl)
+	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
-	manager := NewManager(mockChannelSender, mockPresenceGetter, mockContextGetter)
+	manager := NewManager(mockChannelPublisher, mockNumSubscribersGetter, mockContextGetter)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -48,11 +48,11 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockPacketSender := NewMockChannelSender(mockCtrl)
-	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
+	mockPacketSender := NewMockChannelLocalPublisher(mockCtrl)
+	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
-	manager := NewManager(mockPacketSender, mockPresenceGetter, mockContextGetter)
+	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -79,7 +79,7 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 		return testPluginContext, true, nil
 	}).Times(0)
 
-	mockPacketSender.EXPECT().Send("1/test", gomock.Any()).Times(1)
+	mockPacketSender.EXPECT().PublishLocal("1/test", gomock.Any()).Times(1)
 
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
@@ -113,11 +113,11 @@ func TestStreamManager_SubmitStream_DifferentOrgID(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockPacketSender := NewMockChannelSender(mockCtrl)
-	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
+	mockPacketSender := NewMockChannelLocalPublisher(mockCtrl)
+	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
-	manager := NewManager(mockPacketSender, mockPresenceGetter, mockContextGetter)
+	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -130,8 +130,8 @@ func TestStreamManager_SubmitStream_DifferentOrgID(t *testing.T) {
 	doneCh1 := make(chan struct{})
 	doneCh2 := make(chan struct{})
 
-	mockPacketSender.EXPECT().Send("1/test", gomock.Any()).Times(1)
-	mockPacketSender.EXPECT().Send("2/test", gomock.Any()).Times(1)
+	mockPacketSender.EXPECT().PublishLocal("1/test", gomock.Any()).Times(1)
+	mockPacketSender.EXPECT().PublishLocal("2/test", gomock.Any()).Times(1)
 
 	mockContextGetter.EXPECT().GetPluginContext(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(user *models.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
 		return backend.PluginContext{}, true, nil
@@ -184,14 +184,14 @@ func TestStreamManager_SubmitStream_CloseNoSubscribers(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockPacketSender := NewMockChannelSender(mockCtrl)
-	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
+	mockPacketSender := NewMockChannelLocalPublisher(mockCtrl)
+	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
 	// Create manager with very fast num subscribers checks.
 	manager := NewManager(
 		mockPacketSender,
-		mockPresenceGetter,
+		mockNumSubscribersGetter,
 		mockContextGetter,
 		WithCheckConfig(10*time.Millisecond, 3),
 	)
@@ -209,7 +209,7 @@ func TestStreamManager_SubmitStream_CloseNoSubscribers(t *testing.T) {
 		return backend.PluginContext{}, true, nil
 	}).Times(0)
 
-	mockPresenceGetter.EXPECT().GetNumSubscribers("1/test").Return(0, nil).Times(3)
+	mockNumSubscribersGetter.EXPECT().GetNumLocalSubscribers("1/test").Return(0, nil).Times(3)
 
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
@@ -231,11 +231,11 @@ func TestStreamManager_SubmitStream_ErrorRestartsRunStream(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockPacketSender := NewMockChannelSender(mockCtrl)
-	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
+	mockPacketSender := NewMockChannelLocalPublisher(mockCtrl)
+	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
-	manager := NewManager(mockPacketSender, mockPresenceGetter, mockContextGetter)
+	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -284,11 +284,11 @@ func TestStreamManager_SubmitStream_NilErrorStopsRunStream(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockPacketSender := NewMockChannelSender(mockCtrl)
-	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
+	mockPacketSender := NewMockChannelLocalPublisher(mockCtrl)
+	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
-	manager := NewManager(mockPacketSender, mockPresenceGetter, mockContextGetter)
+	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -317,11 +317,11 @@ func TestStreamManager_HandleDatasourceUpdate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockPacketSender := NewMockChannelSender(mockCtrl)
-	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
+	mockPacketSender := NewMockChannelLocalPublisher(mockCtrl)
+	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
-	manager := NewManager(mockPacketSender, mockPresenceGetter, mockContextGetter)
+	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -383,11 +383,11 @@ func TestStreamManager_HandleDatasourceDelete(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockPacketSender := NewMockChannelSender(mockCtrl)
-	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
+	mockPacketSender := NewMockChannelLocalPublisher(mockCtrl)
+	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
 	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
 
-	manager := NewManager(mockPacketSender, mockPresenceGetter, mockContextGetter)
+	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

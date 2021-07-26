@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,7 +28,7 @@ type GoogleChatNotifier struct {
 func NewGoogleChatNotifier(model *NotificationChannelConfig, t *template.Template) (*GoogleChatNotifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find url property in settings"}
 	}
 
 	return &GoogleChatNotifier{
@@ -107,6 +106,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		},
 	}
 
+	u := tmpl(gcn.URL)
 	if tmplErr != nil {
 		gcn.log.Debug("failed to template GoogleChat message", "err", tmplErr.Error())
 	}
@@ -117,7 +117,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	}
 
 	cmd := &models.SendWebhookSync{
-		Url:        gcn.URL,
+		Url:        u,
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
 			"Content-Type": "application/json; charset=UTF-8",

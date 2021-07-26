@@ -161,6 +161,12 @@ func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) macaron.Handler {
 	}
 }
 
+func ReqNotSignedIn(c *models.ReqContext) {
+	if c.IsSignedIn {
+		c.Redirect(setting.AppSubUrl + "/")
+	}
+}
+
 // NoAuth creates a middleware that doesn't require any authentication.
 // If forceLogin param is set it will redirect the user to the login page.
 func NoAuth() macaron.Handler {

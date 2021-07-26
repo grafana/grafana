@@ -52,7 +52,7 @@ describe('Browse list of plugins', () => {
     }
   });
 
-  it('should list all plugins by when filtering by all', async () => {
+  it('should list all plugins when filtering by all', async () => {
     const plugins = [...installed, ...remote];
     const { getByText } = setup('/plugins?filterBy=all');
 

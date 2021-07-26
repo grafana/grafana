@@ -103,7 +103,7 @@ func (mg *Migrator) Start() error {
 			Timestamp:   time.Now(),
 		}
 
-		err := mg.inTransaction(func(sess *xorm.Session) error {
+		err := mg.InTransaction(func(sess *xorm.Session) error {
 			err := mg.exec(m, sess)
 			if err != nil {
 				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
@@ -183,7 +183,7 @@ func (mg *Migrator) ClearMigrationEntry(id string) error {
 
 type dbTransactionFunc func(sess *xorm.Session) error
 
-func (mg *Migrator) inTransaction(callback dbTransactionFunc) error {
+func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
 	sess := mg.x.NewSession()
 	defer sess.Close()
 

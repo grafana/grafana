@@ -29,6 +29,7 @@ type ExtendedAlert struct {
 	SilenceURL   string      `json:"silenceURL"`
 	DashboardURL string      `json:"dashboardURL"`
 	PanelURL     string      `json:"panelURL"`
+	ValueString  string      `json:"valueString"`
 }
 
 type ExtendedAlerts []ExtendedAlert
@@ -85,6 +86,10 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 			u.RawQuery = "viewPanel=" + panelId
 			extended.PanelURL = u.String()
 		}
+	}
+
+	if alert.Annotations != nil {
+		extended.ValueString = alert.Annotations[`__value_string__`]
 	}
 
 	matchers := make([]string, 0)

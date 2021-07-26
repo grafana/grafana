@@ -7,7 +7,7 @@ import { TemplateSrv } from '@grafana/runtime';
 
 export default class InfluxQueryModel {
   target: InfluxQuery;
-  selectModels: any[];
+  selectModels: any[] = [];
   queryBuilder: any;
   groupByParts: any;
   templateSrv: any;

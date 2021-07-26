@@ -14,7 +14,7 @@ export default {
       page: mdx,
     },
     controls: {
-      exclude: ['size', 'variant', 'icon', 'className', 'fullWidth'],
+      exclude: ['size', 'variant', 'icon', 'className', 'fullWidth', 'getText', 'onClipboardCopy', 'onClipboardError'],
     },
   },
 } as Meta;

@@ -27,7 +27,7 @@ To create or update custom roles, you can add a list of `roles` in the configura
 
 Every role has a [version]({{< relref "./roles.md#custom-roles" >}}) number. For each role you update, you must remember to increment it, otherwise changes won't be accounted for.
 
-When you update a role, the existing role inside grafana is altered to be exactly what is specified in the YAML file, including permissions.
+When you update a role, the existing role inside Grafana is altered to be exactly what is specified in the YAML file, including permissions.
 
 Here is an example YAML file to create a local role with a set of permissions:
 
@@ -74,7 +74,9 @@ The `orgId` is lost when the role is set to global.
 
 ### Delete roles 
 
-To delete a role, you can add a list of roles under the `deleteRoles` section in the configuration file. Such a deletion is performed after a role is inserted or updated.
+To delete a role, add a list of roles under the `deleteRoles` section in the configuration file. 
+
+> **Note:** Any role in the `deleteRoles` section is deleted before any role in the `roles` section is saved.
 
 Here is an example YAML file to delete a role:
 ```yaml
@@ -91,6 +93,8 @@ deleteRoles:
 ### Assign your custom role to specific built-in roles
 
 To assign roles to built-in roles, add said built-in roles to the `builtInRoles` section of your roles. To remove a specific assignment, remove it from the list.
+
+> **Note:** Assignments are updated if the version of the role is greater or equal to the one stored internally. You don’t need to increment the version number of the role to update its assignments.
 
 For example, the following role is assigned to an organization editor or an organization administrator:
 

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { PanelProps, TimeRange, VizOrientation } from '@grafana/data';
-import { TooltipPlugin } from '@grafana/ui';
+import { StackingMode, TooltipDisplayMode, TooltipPlugin } from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
 import { prepareGraphableFrames } from './utils';
@@ -11,7 +11,10 @@ interface Props extends PanelProps<BarChartOptions> {}
  * @alpha
  */
 export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone }) => {
-  const { frames, warn } = useMemo(() => prepareGraphableFrames(data?.series), [data]);
+  const { frames, warn } = useMemo(() => prepareGraphableFrames(data?.series, options.stacking), [
+    data,
+    options.stacking,
+  ]);
   const orientation = useMemo(() => {
     if (!options.orientation || options.orientation === VizOrientation.Auto) {
       return width < height ? VizOrientation.Horizontal : VizOrientation.Vertical;
@@ -19,6 +22,14 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
 
     return options.orientation;
   }, [width, height, options.orientation]);
+
+  // Force 'multi' tooltip setting or stacking mode
+  const tooltip = useMemo(() => {
+    if (options.stacking === StackingMode.Normal || options.stacking === StackingMode.Percent) {
+      return { ...options.tooltip, mode: TooltipDisplayMode.Multi };
+    }
+    return options.tooltip;
+  }, [options.tooltip, options.stacking]);
 
   if (!frames || warn) {
     return (
@@ -40,7 +51,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       orientation={orientation}
     >
       {(config, alignedFrame) => {
-        return <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />;
+        return <TooltipPlugin data={alignedFrame} config={config} mode={tooltip.mode} timeZone={timeZone} />;
       }}
     </BarChart>
   );

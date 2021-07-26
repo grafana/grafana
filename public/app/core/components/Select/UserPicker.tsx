@@ -9,10 +9,11 @@ import { AsyncSelect } from '@grafana/ui';
 import { getBackendSrv } from '@grafana/runtime';
 
 // Types
-import { User } from 'app/types';
+import { OrgUser } from 'app/types';
+import { SelectableValue } from '@grafana/data';
 
 export interface Props {
-  onSelected: (user: User) => void;
+  onSelected: (user: SelectableValue<OrgUser['userId']>) => void;
   className?: string;
 }
 
@@ -43,8 +44,8 @@ export class UserPicker extends Component<Props, State> {
 
     return getBackendSrv()
       .get(`/api/org/users/lookup?query=${query}&limit=100`)
-      .then((result: any) => {
-        return result.map((user: any) => ({
+      .then((result: OrgUser[]) => {
+        return result.map((user) => ({
           id: user.userId,
           value: user.userId,
           label: user.login,

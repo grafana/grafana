@@ -1,7 +1,7 @@
 import React, { useState, HTMLAttributes } from 'react';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { ToolbarButtonVariant, ToolbarButton } from '../Button';
+import { ToolbarButtonVariant, ToolbarButton, ButtonGroup } from '../Button';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { css } from '@emotion/css';
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -22,7 +22,7 @@ export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
  * @internal
  * A temporary component until we have a proper dropdown component
  */
-export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
+const ButtonSelectComponent = <T,>(props: Props<T>) => {
   const { className, options, value, onChange, narrow, variant, ...restProps } = props;
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const styles = useStyles2(getStyles);
@@ -43,7 +43,7 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
   };
 
   return (
-    <div className={styles.wrapper}>
+    <ButtonGroup className={styles.wrapper}>
       <ToolbarButton
         className={className}
         isOpen={isOpen}
@@ -71,11 +71,13 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
           </ClickOutsideWrapper>
         </div>
       )}
-    </div>
+    </ButtonGroup>
   );
-});
+};
 
-ButtonSelect.displayName = 'ButtonSelect';
+ButtonSelectComponent.displayName = 'ButtonSelect';
+
+export const ButtonSelect = React.memo(ButtonSelectComponent) as typeof ButtonSelectComponent;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

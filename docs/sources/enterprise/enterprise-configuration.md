@@ -341,6 +341,8 @@ When query caching is enabled, Grafana can temporarily store the results of data
 
 The caching backend to use when storing cached queries. Options: `memory`, `redis`, and `memcached`.
 
+The default is `memory`.
+
 ### enabled
 
 Setting 'enabled' to `true` allows users to configure query caching for data sources.
@@ -357,20 +359,25 @@ _Time to live_ (TTL) is the time that a query result is stored in the caching sy
 
 This value limits the size of a single cache value. If a cache value (or query result) exceeds this size, then it is not cached. To disable this limit, set this value to `0`.
 
+The default is `1`.
+
 ## [caching.memory]
 
 ### gc_interval
 
 When storing cache data in-memory, this setting defines how often a background process cleans up stale data from the in-memory cache. More frequent "garbage collection" can keep memory usage from climbing but will increase CPU usage.
 
+The default is `1m`.
+
 ### max_size_mb
 
 The maximum size of the in-memory cache in megabytes. Once this size is reached, new cache items are rejected. For more flexible control over cache eviction policies and size, use the Redis or Memcached backend. 
 
-To disable the maximum, set this value to `0`. 
+To disable the maximum, set this value to `0`.
+
+The default is `25`.
 
 > **Note:** Disabling the maximum is not recommended in production environments.
-
 
 ## [caching.redis]
 
@@ -378,12 +385,18 @@ To disable the maximum, set this value to `0`.
 
 The full Redis URL of your Redis server. Example: `redis://localhost:6739/0`.
 
+The default is `"redis://localhost:6379"`.
+
 ### prefix
 
 A string that prefixes all Redis keys. This value must be set if using a shared database in Redis. If `prefix` is empty, then one will not be used.
+
+The default is `"grafana"`.
 
 ## [caching.memcached]
 
 ### memcached_servers
 
-A space-separated list of memcached servers. Example: `memcached-server-1:11211 memcached-server-2:11212 memcached-server-3:11211`. Or if there's only one server: `memcached-server:11211`
+A space-separated list of memcached servers. Example: `memcached-server-1:11211 memcached-server-2:11212 memcached-server-3:11211`. Or if there's only one server: `memcached-server:11211`.
+
+The default is `"localhost:11211"`.

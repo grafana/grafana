@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,14 +28,14 @@ type DiscordNotifier struct {
 
 func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) (*DiscordNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+		return nil, receiverInitError{Reason: "no settings supplied", Cfg: *model}
 	}
 
 	avatarURL := model.Settings.Get("avatar_url").MustString()
 
 	discordURL := model.Settings.Get("url").MustString()
 	if discordURL == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find webhook url property in settings"}
+		return nil, receiverInitError{Reason: "could not find webhook url property in settings", Cfg: *model}
 	}
 
 	content := model.Settings.Get("message").MustString(`{{ template "default.message" . }}`)
@@ -93,6 +92,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	bodyJSON.Set("embeds", []interface{}{embed})
 
+	u := tmpl(d.WebhookURL)
 	if tmplErr != nil {
 		d.log.Debug("failed to template Discord message", "err", tmplErr.Error())
 	}
@@ -102,7 +102,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, err
 	}
 	cmd := &models.SendWebhookSync{
-		Url:         d.WebhookURL,
+		Url:         u,
 		HttpMethod:  "POST",
 		ContentType: "application/json",
 		Body:        string(body),

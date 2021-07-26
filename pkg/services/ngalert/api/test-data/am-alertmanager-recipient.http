@@ -97,6 +97,10 @@ content-type: application/json
 GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/alerts
 
 ###
+# get status
+GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/status
+
+###
 # get AM alert groups
 GET http://admin:admin@localhost:3000/alertmanager/{{alertManagerDatasourceID}}/api/v2/alerts/groups
 

@@ -71,7 +71,6 @@ type PluginBase struct {
 	PluginDir       string              `json:"-"`
 	DefaultNavUrl   string              `json:"-"`
 	IsCorePlugin    bool                `json:"-"`
-	Files           []string            `json:"-"`
 	SignatureType   PluginSignatureType `json:"-"`
 	SignatureOrg    string              `json:"-"`
 
@@ -96,8 +95,17 @@ type PluginInclude struct {
 	DefaultNav bool            `json:"defaultNav"`
 	Slug       string          `json:"slug"`
 	Icon       string          `json:"icon"`
+	UID        string          `json:"uid"`
 
 	Id string `json:"-"`
+}
+
+func (e PluginInclude) GetSlugOrUIDLink() string {
+	if len(e.UID) > 0 {
+		return "/d/" + e.UID
+	} else {
+		return "/dashboard/db/" + e.Slug
+	}
 }
 
 type PluginDependencyItem struct {

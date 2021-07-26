@@ -16,7 +16,7 @@ import (
 // Returns a disjunction of structs representing each panel schema version
 // (post-mapping from on-disk #PanelModel form) from each scuemata in the map.
 func disjunctPanelScuemata(scuemap map[string]schema.VersionedCueSchema) (cue.Value, error) {
-	partsi, err := rt.Compile("panelDisjunction", `
+	partsi, err := rt.Compile("glue-panelDisjunction", `
 	allPanels: [Name=_]: {}
 	parts: or([for v in allPanels { v }])
 	`)
@@ -44,7 +44,7 @@ func disjunctPanelScuemata(scuemap map[string]schema.VersionedCueSchema) (cue.Va
 func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 	maj, min := vcs.Version()
 	// Ignore err return, this can't fail to compile
-	inter, _ := rt.Compile("typedPanel", fmt.Sprintf(`
+	inter, _ := rt.Compile(fmt.Sprintf("%s-glue-panelComposition", id), fmt.Sprintf(`
 	in: {
 		type: %q
 		v: {

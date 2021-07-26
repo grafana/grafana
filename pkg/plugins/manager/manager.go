@@ -530,7 +530,7 @@ func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) err
 		return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
 	}
 
-	if f.Name() == "node_modules" || f.Name() == "Chromium.app" {
+	if f.Name() == "node_modules" {
 		return util.ErrWalkSkipDir
 	}
 
@@ -577,12 +577,6 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	}
 
 	pluginCommon.PluginDir = filepath.Dir(pluginJSONFilePath)
-	pluginCommon.Files, err = collectPluginFilesWithin(pluginCommon.PluginDir)
-	if err != nil {
-		s.log.Warn("Could not collect plugin file information in directory", "pluginID", pluginCommon.Id, "dir", pluginCommon.PluginDir)
-		return err
-	}
-
 	signatureState, err := getPluginSignatureState(s.log, &pluginCommon)
 	if err != nil {
 		s.log.Warn("Could not get plugin signature state", "pluginID", pluginCommon.Id, "err", err)
@@ -726,25 +720,6 @@ func (pm *PluginManager) GetPluginMarkdown(pluginId string, name string) ([]byte
 	return data, nil
 }
 
-// gets plugin filenames that require verification for plugin signing
-func collectPluginFilesWithin(rootDir string) ([]string, error) {
-	var files []string
-	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() && info.Name() != "MANIFEST.txt" {
-			file, err := filepath.Rel(rootDir, path)
-			if err != nil {
-				return err
-			}
-			files = append(files, filepath.ToSlash(file))
-		}
-		return nil
-	})
-	return files, err
-}
-
 func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 	return pm.staticRoutes
 }
@@ -811,7 +786,7 @@ func (pm *PluginManager) Uninstall(ctx context.Context, pluginID string) error {
 		return err
 	}
 
-	return pm.pluginInstaller.Uninstall(ctx, pluginID, pm.Cfg.PluginsPath)
+	return pm.pluginInstaller.Uninstall(ctx, plugin.PluginDir)
 }
 
 func (pm *PluginManager) unregister(plugin *plugins.PluginBase) error {
