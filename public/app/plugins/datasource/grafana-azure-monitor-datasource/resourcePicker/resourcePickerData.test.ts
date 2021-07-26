@@ -47,6 +47,52 @@ describe('AzureMonitor resourcePickerData', () => {
         '/subscription/def-456/resourceGroups/qa',
       ]);
     });
+
+    describe('when there is more than one page', () => {
+      beforeEach(() => {
+        const response1 = {
+          ...createMockARGResourceContainersResponse(),
+          $skipToken: 'aaa',
+        };
+        const response2 = createMockARGResourceContainersResponse();
+        postResource = jest.fn();
+        postResource.mockResolvedValueOnce(response1);
+        postResource.mockResolvedValueOnce(response2);
+        resourcePickerData.postResource = postResource;
+      });
+
+      it('should requests additional pages', async () => {
+        await resourcePickerData.getResourcePickerData();
+        expect(postResource).toHaveBeenCalledTimes(2);
+      });
+
+      it('should use the skipToken of the previous page', async () => {
+        await resourcePickerData.getResourcePickerData();
+        const secondCall = postResource.mock.calls[1];
+        expect(secondCall[1]).toMatchObject({ options: { $skipToken: 'aaa', resultFormat: 'objectArray' } });
+      });
+
+      it('should combine responses', async () => {
+        const results = await resourcePickerData.getResourcePickerData();
+        expect(results[0].children?.map((v) => v.id)).toEqual([
+          '/subscriptions/abc-123/resourceGroups/prod',
+          '/subscriptions/abc-123/resourceGroups/pre-prod',
+          // second page
+          '/subscriptions/abc-123/resourceGroups/prod',
+          '/subscriptions/abc-123/resourceGroups/pre-prod',
+        ]);
+
+        expect(results[1].children?.map((v) => v.id)).toEqual([
+          '/subscription/def-456/resourceGroups/dev',
+          '/subscription/def-456/resourceGroups/test',
+          '/subscription/def-456/resourceGroups/qa',
+          // second page
+          '/subscription/def-456/resourceGroups/dev',
+          '/subscription/def-456/resourceGroups/test',
+          '/subscription/def-456/resourceGroups/qa',
+        ]);
+      });
+    });
   });
 
   describe('getResourcesForResourceGroup', () => {

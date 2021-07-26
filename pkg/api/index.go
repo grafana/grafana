@@ -110,7 +110,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 
 			if include.Type == "dashboard" && include.AddToNav {
 				link := &dtos.NavLink{
-					Url:  hs.Cfg.AppSubURL + "/dashboard/db/" + include.Slug,
+					Url:  hs.Cfg.AppSubURL + include.GetSlugOrUIDLink(),
 					Text: include.Name,
 				}
 				appLink.Children = append(appLink.Children, link)
@@ -226,6 +226,12 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 					Icon: "comment-alt-share",
 				})
 			}
+		}
+		if c.OrgRole == models.ROLE_ADMIN {
+			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+				Text: "Admin", Id: "alerting-admin", Url: hs.Cfg.AppSubURL + "/alerting/admin",
+				Icon: "cog",
+			})
 		}
 
 		navTree = append(navTree, &dtos.NavLink{

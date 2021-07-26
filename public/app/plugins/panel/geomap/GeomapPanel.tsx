@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { geomapLayerRegistry } from './layers/registry';
+import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry, defaultBaseLayer } from './layers/registry';
 import { Map, View } from 'ol';
 import Attribution from 'ol/control/Attribution';
 import Zoom from 'ol/control/Zoom';
@@ -12,7 +12,6 @@ import { PanelData, MapLayerHandler, MapLayerOptions, PanelProps, GrafanaTheme }
 import { config } from '@grafana/runtime';
 
 import { ControlsOptions, GeomapPanelOptions, MapViewConfig } from './types';
-import { defaultGrafanaThemedMap } from './layers/basemaps';
 import { centerPointRegistry, MapCenterID } from './view';
 import { fromLonLat } from 'ol/proj';
 import { Coordinate } from 'ol/coordinate';
@@ -31,6 +30,7 @@ interface MapLayerState {
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
+export let lastGeomapPanelInstance: GeomapPanel | undefined = undefined;
 
 type Props = PanelProps<GeomapPanelOptions>;
 export class GeomapPanel extends Component<Props> {
@@ -43,6 +43,10 @@ export class GeomapPanel extends Component<Props> {
   style = getStyles(config.theme);
   overlayProps: OverlayProps = {};
 
+  componentDidMount() {
+    lastGeomapPanelInstance = this;
+  }
+
   shouldComponentUpdate(nextProps: Props) {
     if (!this.map) {
       return true; // not yet initalized
@@ -53,7 +57,7 @@ export class GeomapPanel extends Component<Props> {
       this.map.updateSize();
     }
 
-    // External configuraiton changed
+    // External configuration changed
     let layersChanged = false;
     if (this.props.options !== nextProps.options) {
       layersChanged = this.optionsChanged(nextProps.options);
@@ -81,7 +85,7 @@ export class GeomapPanel extends Component<Props> {
     }
 
     if (options.controls !== oldOptions.controls) {
-      console.log('Crontrols changed');
+      console.log('Controls changed');
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
     }
 
@@ -93,7 +97,7 @@ export class GeomapPanel extends Component<Props> {
 
     if (options.layers !== oldOptions.layers) {
       console.log('layers changed');
-      this.initLayers(options.layers ?? []);
+      this.initLayers(options.layers ?? []); // async
       layersChanged = true;
     }
     return layersChanged;
@@ -115,7 +119,7 @@ export class GeomapPanel extends Component<Props> {
     this.overlayProps.bottomLeft = legends;
   }
 
-  initMapRef = (div: HTMLDivElement) => {
+  initMapRef = async (div: HTMLDivElement) => {
     if (this.map) {
       this.map.dispose();
     }
@@ -139,20 +143,21 @@ export class GeomapPanel extends Component<Props> {
     this.map.addInteraction(this.mouseWheelZoom);
     this.initControls(options.controls);
     this.initBasemap(options.basemap);
-    this.initLayers(options.layers);
-    this.dataChanged(this.props.data, options.controls.showLegend);
+    await this.initLayers(options.layers, options.controls?.showLegend);
     this.forceUpdate(); // first render
   };
 
-  initBasemap(cfg: MapLayerOptions) {
+  async initBasemap(cfg: MapLayerOptions) {
     if (!this.map) {
       return;
     }
-    if (!cfg) {
-      cfg = { type: defaultGrafanaThemedMap.id };
+
+    if (!cfg?.type || config.geomapDisableCustomBaseLayer) {
+      cfg = DEFAULT_BASEMAP_CONFIG;
     }
-    const item = geomapLayerRegistry.getIfExists(cfg.type) ?? defaultGrafanaThemedMap;
-    const layer = item.create(this.map, cfg, config.theme2).init();
+    const item = geomapLayerRegistry.getIfExists(cfg.type) ?? defaultBaseLayer;
+    const handler = await item.create(this.map, cfg, config.theme2);
+    const layer = handler.init();
     if (this.basemap) {
       this.map.removeLayer(this.basemap);
       this.basemap.dispose();
@@ -161,7 +166,7 @@ export class GeomapPanel extends Component<Props> {
     this.map.getLayers().insertAt(0, this.basemap);
   }
 
-  initLayers(layers: MapLayerOptions[]) {
+  async initLayers(layers: MapLayerOptions[], showLegend?: boolean) {
     // 1st remove existing layers
     for (const state of this.layers) {
       this.map!.removeLayer(state.layer);
@@ -180,7 +185,7 @@ export class GeomapPanel extends Component<Props> {
         continue; // TODO -- panel warning?
       }
 
-      const handler = item.create(this.map!, overlay, config.theme2);
+      const handler = await item.create(this.map!, overlay, config.theme2);
       const layer = handler.init();
       this.map!.addLayer(layer);
       this.layers.push({
@@ -189,12 +194,16 @@ export class GeomapPanel extends Component<Props> {
         handler,
       });
     }
+
+    // Update data after init layers
+    this.dataChanged(this.props.data);
   }
 
   initMapView(config: MapViewConfig): View {
     let view = new View({
       center: [0, 0],
       zoom: 1,
+      showFullExtent: true, // alows zooming so the full range is visiable
     });
 
     // With shared views, all panels use the same view instance
@@ -206,13 +215,12 @@ export class GeomapPanel extends Component<Props> {
       }
     }
 
-    const v = centerPointRegistry.getIfExists(config.center.id);
+    const v = centerPointRegistry.getIfExists(config.id);
     if (v) {
       let coord: Coordinate | undefined = undefined;
       if (v.lat == null) {
         if (v.id === MapCenterID.Coordinates) {
-          const center = config.center ?? {};
-          coord = [center.lon ?? 0, center.lat ?? 0];
+          coord = [config.lon ?? 0, config.lat ?? 0];
         } else {
           console.log('TODO, view requires special handling', v);
         }

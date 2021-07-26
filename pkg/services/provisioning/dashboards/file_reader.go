@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -33,6 +34,10 @@ type FileReader struct {
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	FoldersFromFilesStructure    bool
+
+	mux                     sync.RWMutex
+	usageTracker            *usageTracker
+	dbWriteAccessRestricted bool
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
@@ -59,6 +64,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger, store dboards.Store) (*
 		log:                          log,
 		dashboardProvisioningService: dashboards.NewProvisioningService(store),
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
+		usageTracker:                 newUsageTracker(),
 	}, nil
 }
 
@@ -99,25 +105,40 @@ func (fr *FileReader) walkDisk() error {
 
 	fr.handleMissingDashboardFiles(provisionedDashboardRefs, filesFoundOnDisk)
 
-	sanityChecker := newProvisioningSanityChecker(fr.Cfg.Name)
-
+	usageTracker := newUsageTracker()
 	if fr.FoldersFromFilesStructure {
-		err = fr.storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk, provisionedDashboardRefs, resolvedPath, &sanityChecker)
+		err = fr.storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk, provisionedDashboardRefs, resolvedPath, usageTracker)
 	} else {
-		err = fr.storeDashboardsInFolder(filesFoundOnDisk, provisionedDashboardRefs, &sanityChecker)
+		err = fr.storeDashboardsInFolder(filesFoundOnDisk, provisionedDashboardRefs, usageTracker)
 	}
 	if err != nil {
 		return err
 	}
 
-	sanityChecker.logWarnings(fr.log)
+	fr.mux.Lock()
+	defer fr.mux.Unlock()
 
+	fr.usageTracker = usageTracker
 	return nil
+}
+
+func (fr *FileReader) changeWritePermissions(restrict bool) {
+	fr.mux.Lock()
+	defer fr.mux.Unlock()
+
+	fr.dbWriteAccessRestricted = restrict
+}
+
+func (fr *FileReader) isDatabaseAccessRestricted() bool {
+	fr.mux.RLock()
+	defer fr.mux.RUnlock()
+
+	return fr.dbWriteAccessRestricted
 }
 
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
 func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.FileInfo,
-	dashboardRefs map[string]*models.DashboardProvisioning, sanityChecker *provisioningSanityChecker) error {
+	dashboardRefs map[string]*models.DashboardProvisioning, usageTracker *usageTracker) error {
 	folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
 	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 		return err
@@ -131,7 +152,7 @@ func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.Fil
 			continue
 		}
 
-		sanityChecker.track(provisioningMetadata)
+		usageTracker.track(provisioningMetadata)
 	}
 	return nil
 }
@@ -139,7 +160,7 @@ func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.Fil
 // storeDashboardsInFoldersFromFilesystemStructure saves dashboards from the filesystem on disk to the same folder
 // in Grafana as they are in on the filesystem.
 func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk map[string]os.FileInfo,
-	dashboardRefs map[string]*models.DashboardProvisioning, resolvedPath string, sanityChecker *provisioningSanityChecker) error {
+	dashboardRefs map[string]*models.DashboardProvisioning, resolvedPath string, usageTracker *usageTracker) error {
 	for path, fileInfo := range filesFoundOnDisk {
 		folderName := ""
 
@@ -154,7 +175,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk
 		}
 
 		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, dashboardRefs)
-		sanityChecker.track(provisioningMetadata)
+		usageTracker.track(provisioningMetadata)
 		if err != nil {
 			fr.log.Error("failed to save dashboard", "error", err)
 		}
@@ -236,16 +257,23 @@ func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.Fil
 		dash.Dashboard.SetId(provisionedData.DashboardId)
 	}
 
-	fr.log.Debug("saving new dashboard", "provisioner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderId)
-	dp := &models.DashboardProvisioning{
-		ExternalId: path,
-		Name:       fr.Cfg.Name,
-		Updated:    resolvedFileInfo.ModTime().Unix(),
-		CheckSum:   jsonFile.checkSum,
+	if !fr.isDatabaseAccessRestricted() {
+		fr.log.Debug("saving new dashboard", "provisioner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderId)
+		dp := &models.DashboardProvisioning{
+			ExternalId: path,
+			Name:       fr.Cfg.Name,
+			Updated:    resolvedFileInfo.ModTime().Unix(),
+			CheckSum:   jsonFile.checkSum,
+		}
+		if _, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(dash, dp); err != nil {
+			return provisioningMetadata, err
+		}
+	} else {
+		fr.log.Warn("Not saving new dashboard due to restricted database access", "provisioner", fr.Cfg.Name,
+			"file", path, "folderId", dash.Dashboard.FolderId)
 	}
 
-	_, err = fr.dashboardProvisioningService.SaveProvisionedDashboard(dash, dp)
-	return provisioningMetadata, err
+	return provisioningMetadata, nil
 }
 
 func getProvisionedDashboardsByPath(service dashboards.DashboardProvisioningService, name string) (
@@ -412,6 +440,13 @@ func (fr *FileReader) resolvedPath() string {
 	return path
 }
 
+func (fr *FileReader) getUsageTracker() *usageTracker {
+	fr.mux.RLock()
+	defer fr.mux.RUnlock()
+
+	return fr.usageTracker
+}
+
 type provisioningMetadata struct {
 	uid      string
 	identity dashboardIdentity
@@ -423,42 +458,26 @@ type dashboardIdentity struct {
 }
 
 func (d *dashboardIdentity) Exists() bool {
-	return len(d.title) > 0 && d.folderID > 0
+	return len(d.title) > 0
 }
 
-func newProvisioningSanityChecker(provisioningProvider string) provisioningSanityChecker {
-	return provisioningSanityChecker{
-		provisioningProvider: provisioningProvider,
-		uidUsage:             map[string]uint8{},
-		titleUsage:           map[dashboardIdentity]uint8{},
+func newUsageTracker() *usageTracker {
+	return &usageTracker{
+		uidUsage:   map[string]uint8{},
+		titleUsage: map[dashboardIdentity]uint8{},
 	}
 }
 
-type provisioningSanityChecker struct {
-	provisioningProvider string
-	uidUsage             map[string]uint8
-	titleUsage           map[dashboardIdentity]uint8
+type usageTracker struct {
+	uidUsage   map[string]uint8
+	titleUsage map[dashboardIdentity]uint8
 }
 
-func (checker provisioningSanityChecker) track(pm provisioningMetadata) {
+func (t *usageTracker) track(pm provisioningMetadata) {
 	if len(pm.uid) > 0 {
-		checker.uidUsage[pm.uid]++
+		t.uidUsage[pm.uid]++
 	}
 	if pm.identity.Exists() {
-		checker.titleUsage[pm.identity]++
-	}
-}
-
-func (checker provisioningSanityChecker) logWarnings(log log.Logger) {
-	for uid, times := range checker.uidUsage {
-		if times > 1 {
-			log.Error("the same 'uid' is used more than once", "uid", uid, "provider", checker.provisioningProvider)
-		}
-	}
-
-	for identity, times := range checker.titleUsage {
-		if times > 1 {
-			log.Error("the same 'title' is used more than once", "title", identity.title, "provider", checker.provisioningProvider)
-		}
+		t.titleUsage[pm.identity]++
 	}
 }
