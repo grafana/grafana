@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { stylesFactory } from '@grafana/ui';
@@ -9,7 +9,7 @@ export interface OverlayProps {
   bottomLeft?: React.ReactNode[];
 }
 
-export class GeomapOverlay extends Component<OverlayProps> {
+export class GeomapOverlay extends PureComponent<OverlayProps> {
   style = getStyles(config.theme);
 
   constructor(props: OverlayProps) {
