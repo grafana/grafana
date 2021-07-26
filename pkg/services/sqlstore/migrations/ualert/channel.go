@@ -129,7 +129,18 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 		return nil
 	}
 
-	chanKey, err := makeKeyForChannelGroup(channelUids)
+	// Remove obsolete notification channels.
+	filteredChannelUids := make([]interface{}, 0, len(channelUids))
+	for _, uid := range channelUids {
+		_, ok := allChannels[uid]
+		if ok {
+			filteredChannelUids = append(filteredChannelUids, uid)
+		} else {
+			m.mg.Logger.Warn("ignoring obsolete notification channel", "uid", uid)
+		}
+	}
+
+	chanKey, err := makeKeyForChannelGroup(filteredChannelUids)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -138,13 +149,8 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 		// We have ported these exact set of channels already. Re-use it.
 		receiverName = rn
 	} else {
-		for _, n := range channelUids {
-			c, ok := allChannels[n]
-			if !ok {
-				continue
-			}
-
-			if err := addChannel(c); err != nil {
+		for _, n := range filteredChannelUids {
+			if err := addChannel(allChannels[n]); err != nil {
 				return nil, nil, err
 			}
 		}
@@ -184,11 +190,11 @@ func makeKeyForChannelGroup(channelUids []interface{}) (string, error) {
 		switch uid := u.(type) {
 		case string:
 			uids = append(uids, uid)
-		case int:
+		case int, int32, int64:
 			uids = append(uids, fmt.Sprintf("%d", uid))
 		default:
 			// Should never happen.
-			return "", errors.New("unknown channel UID type")
+			return "", fmt.Errorf("unknown channel UID type: %T", u)
 		}
 	}
 
