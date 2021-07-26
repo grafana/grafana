@@ -8,24 +8,23 @@ weight = 600
 
 # Geomap
 
+The Geomap panel visualization allows you to view and customize the world map using geospatial data. You can configure various overlay styles and map view settings to easily focus on the important location-based characteristics of the data.
+
 {{< figure src="/static/img/docs/geomap-panel/geomap_example.png" max-width="1200px" caption="Geomap panel" >}}
-
-The Geomap panel visualization allows you to view and customize the world map using geospatial data. Various overlay styles and map view settings can be configured to easily focus on the important location-based characteristics of the data.
-
 
 ## Base layer
 
-Base layer loads in a blank world map from the tile server to the Grafana panel. There are several base layer options available for you to choose from, each with specific configuration options to style the base map. The default base layer is CartoDB base map. Custom default base layers can be defined using the `.ini` configuration file.
+The base layer loads in a blank world map from the tile server to the Grafana panel. Several base layer options are available each with specific configuration options to style the base map. The default base layer is CartoDB base map. Custom default base layers can be defined in the `.ini` configuration file.
 
 ![Base layer options](/static/img/docs/geomap-panel/geomap_base_layer.png)
 
 ### Configure the default base layer with provisioning
 
-It is possible to configure the default base map using config files with Grafana’s provisioning system. You can read more about how it works and all the settings you can set on the [provisioning docs page]({{< relref "../administration/provisioning.md" >}}).
+You can configure the default base map using config files with Grafana’s provisioning system. For more information on all the settings, refer to the [provisioning docs page]({{< relref "../administration/provisioning.md" >}}).
 
-`default_baselayer_config` is the JSON configuration used to define the default base map. There are currently four base map options to choose from: `carto`, `esri-xyz`, `osm-standard`, `xyz`. Here are some provisioning examples for each base map options.
+Use the JSON configuration option `default_baselayer_config` to define the default base map. There are currently four base map options to choose from: `carto`, `esri-xyz`, `osm-standard`, `xyz`. Here are some provisioning examples for each base map option.
 
-- **carto** loads the CartoDB tile server. There is a choice between `auto`, `dark`, and `light` theme for the base map and can be set as shown below. `showLabels` tag determines whether or not to show the Country details on top of the map.
+- **carto** loads the CartoDB tile server. You can choose from `auto`, `dark`, and `light` theme for the base map and can be set as shown below.  The `showLabels` tag determines whether or not Grafana shows the Country details on top of the map. Here is an example:
 
 ```ini
 geomap_default_baselayer = `{
@@ -37,7 +36,7 @@ geomap_default_baselayer = `{
 }`
 ```
 
-- **esri-xyz** loads the ESRI tile server. There are already multiple server instances implemented to show the various map styles: `world-imagery`, `world-physical`, `topo`, `usa-topo`, and `ocean`. There is also a `custom` server option which allows to configure your own ArcGIS map server.
+- **esri-xyz** loads the ESRI tile server. There are already multiple server instances implemented to show the various map styles: `world-imagery`, `world-physical`, `topo`, `usa-topo`, and `ocean`. The `custom` server option allows you to configure your own ArcGIS map server. Here are some examples:
 
 ```ini
 geomap_default_baselayer = `{
@@ -59,7 +58,7 @@ geomap_default_baselayer = `{
 }`
 ```
 
-- **osm-standard** loads the OpenStreetMap tile server. There is no additional `config` fields needed to be set and can be left blank. 
+- **osm-standard** loads the OpenStreetMap tile server. There are no additional configurations needed and the `config` fields can be left blank. Here is an example:
 
 ```ini
 default_baselayer_config = `{
@@ -68,7 +67,7 @@ default_baselayer_config = `{
 }`
 ```
 
-- **xyz** loads a custom tile server defined by the user.  A valid tile server `url`, with {z}/{x}/{y}, has to be set in order for this option to properly load a default base map.
+- **xyz** loads a custom tile server defined by the user.  Set a valid tile server `url`, with {z}/{x}/{y} for this option in order to properly load a default base map. Here is an example:
 
 ```ini
 default_baselayer_config = `{
@@ -80,7 +79,7 @@ default_baselayer_config = `{
 }`
 ```
 
-`enable_custom_baselayers` gives the option to enable/disable custom open source base maps that are already implemented. This will be defaulted to `true`.
+`enable_custom_baselayers` allows you to enable or disable custom open source base maps that are already implemented. The default is `true`.
 
 ## Data layer
 
