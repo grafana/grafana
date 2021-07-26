@@ -12,21 +12,18 @@ export interface MarkersLegendProps {
 }
 export function MarkersLegend(props: MarkersLegendProps) {
   const { color } = props;
-  if (!color) {
+  if (!color || (!color.field && color.fixed)) {
     return (
       <></>
     )
   }
-  const colorMode = getFieldColorModeForField(color!.field!);
-  const colors = colorMode.getColors!(config.theme2)
-  const style = getStyles(config.theme, colors);
-  if (!color.field && color.fixed) {
-    return <div className={style.infoWrap}>Fixed: {color.fixed}</div>;
-  }
-
+  const style = getStyles(config.theme);
+  
   const fmt = (v: any) => `${formattedValueToString(color.field!.display!(v))}`;
+  const colorMode = getFieldColorModeForField(color!.field!);
   
   if (colorMode.isContinuous && colorMode.getColors) {
+    const colors = colorMode.getColors(config.theme2)
     const colorRange = getMinMaxAndDelta(color.field!)
     // TODO: explore showing mean on the gradiant scale
     // const stats = reduceField({
@@ -41,7 +38,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
 
     return <>
     <Label>{color?.field?.name}</Label>
-    <div className={style.gradientContainer}>
+    <div className={style.gradientContainer} style={{backgroundImage: `linear-gradient(to right, ${colors.map((c) => c).join(', ')}`}}>
       <div>{fmt(colorRange.min)}</div>
       <div>{fmt(colorRange.max)}</div>
     </div>
@@ -84,7 +81,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
   )
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme, colors) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   infoWrap: css`
     color: #999;
     background: #CCCC;
@@ -112,6 +109,5 @@ const getStyles = stylesFactory((theme: GrafanaTheme, colors) => ({
     min-width: 200px;
     display: flex;
     justify-content: space-between;
-    background-image: linear-gradient(to right, ${colors[0]}, ${colors[1]}, ${colors[2]});
   `
 }));
