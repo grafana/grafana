@@ -62,6 +62,7 @@
     "react-colorful": "5.1.2",
     "react-custom-scrollbars": "4.2.1",
     "react-dom": "17.0.1",
+    "react-dropzone": "11.3.4",
     "react-highlight-words": "0.16.0",
     "react-hook-form": "7.5.3",
     "react-inlinesvg": "2.3.0",
