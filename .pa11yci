@@ -26,31 +26,40 @@
       "rootElement": ".dashboard-settings"
     },
     {
-      "url": "http://localhost:3000/?orgId=1&search=open"
+      "url": "http://localhost:3000/?orgId=1&search=open",
+      "rootElement": ".main-view"
     },
     {
-      "url": "http://localhost:3000/alerting/list"
+      "url": "http://localhost:3000/alerting/list",
+      "rootElement": ".main-view"
     },
     {
-      "url": "http://localhost:3000/datasources"
+      "url": "http://localhost:3000/datasources",
+      "rootElement": ".main-view"
     },
     {
-      "url": "http://localhost:3000/org/users"
+      "url": "http://localhost:3000/org/users",
+      "rootElement": ".main-view"
     },
     {
-      "url": "http://localhost:3000/org/teams"
+      "url": "http://localhost:3000/org/teams",
+      "rootElement": ".main-view"
     },
     {
-      "url": "http://localhost:3000/plugins"
+      "url": "http://localhost:3000/plugins",
+      "rootElement": ".main-view"
     },
     {
-      "url": "http://localhost:3000/org"
+      "url": "http://localhost:3000/org",
+      "rootElement": ".main-view"
     },
     {
-      "url": "http://localhost:3000/org/apikeys"
+      "url": "http://localhost:3000/org/apikeys",
+      "rootElement": ".main-view"
     },
     {
-      "url": "http://localhost:3000/dashboards"
+      "url": "http://localhost:3000/dashboards",
+      "rootElement": ".main-view"
     }
   ]
 }
