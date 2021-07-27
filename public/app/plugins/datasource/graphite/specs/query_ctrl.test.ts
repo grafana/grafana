@@ -4,6 +4,7 @@ import gfunc from '../gfunc';
 import { GraphiteQueryCtrl } from '../query_ctrl';
 import { TemplateSrvStub } from 'test/specs/helpers';
 import { silenceConsoleOutput } from 'test/core/utils/silenceConsoleOutput';
+import { actions } from '../state/actions';
 
 jest.mock('app/core/utils/promiseToDigest', () => ({
   promiseToDigest: (scope: any) => {
@@ -16,12 +17,13 @@ jest.mock('app/store/store', () => ({
 }));
 const mockDispatch = dispatch as jest.Mock;
 
-async function changeTarget(ctx: any, target: string, refId?: string): Promise<void> {
+/**
+ * Simulate switching to text editor, changing the query and switching back to visual editor
+ */
+async function changeTarget(ctx: any, target: string): Promise<void> {
   await ctx.ctrl.toggleEditorMode();
-  ctx.ctrl.state.target.target = target;
-  if (refId) {
-    ctx.ctrl.state.target.refId = refId;
-  }
+  await ctx.ctrl.dispatch(actions.updateQuery({ query: target }));
+  await ctx.ctrl.dispatch(actions.runQuery());
   await ctx.ctrl.toggleEditorMode();
 }
 
@@ -283,9 +285,6 @@ describe('GraphiteQueryCtrl', () => {
       const newQuery = 'aliasByNode(scaleToSeconds(test.prod.*, 1), 2)';
       ctx.ctrl.state.datasource.metricFindQuery = () => Promise.resolve([{ expandable: false }]);
       await changeTarget(ctx, newQuery);
-      await ctx.ctrl.targetTextChanged({
-        target: { value: newQuery },
-      } as any);
     });
 
     it('should rebuild target after expression model', () => {
@@ -323,7 +322,7 @@ describe('GraphiteQueryCtrl', () => {
         },
       ];
 
-      await ctx.ctrl.targetTextChanged({ target: { value: 'nested.query.count' } } as any);
+      await changeTarget(ctx, ctx.target.target);
 
       expect(ctx.ctrl.state.target.target).toBe('scaleToSeconds(#A, 60)');
 
@@ -334,15 +333,16 @@ describe('GraphiteQueryCtrl', () => {
   describe('when updating target used in other query', () => {
     beforeEach(async () => {
       ctx.ctrl.datasource.metricFindQuery = () => Promise.resolve([{ expandable: false }]);
-      await changeTarget(ctx, 'metrics.a.count', 'A');
+      ctx.ctrl.target.refId = 'A';
+      await changeTarget(ctx, 'metrics.foo.count');
 
       ctx.ctrl.state.panelCtrl.panel.targets = [ctx.ctrl.target, { target: 'sumSeries(#A)', refId: 'B' }];
 
-      await ctx.ctrl.targetTextChanged({ target: { value: 'metrics.a.count' } } as any);
+      await changeTarget(ctx, 'metrics.bar.count');
     });
 
     it('targetFull of other query should update', () => {
-      expect(ctx.ctrl.state.panelCtrl.panel.targets[1].targetFull).toBe('sumSeries(metrics.a.count)');
+      expect(ctx.ctrl.state.panelCtrl.panel.targets[1].targetFull).toBe('sumSeries(metrics.bar.count)');
     });
   });
 
