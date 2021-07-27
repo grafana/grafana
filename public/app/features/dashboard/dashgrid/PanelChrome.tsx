@@ -15,6 +15,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
+  AnnotationChangeEvent,
   AnnotationEventUIModel,
   DashboardCursorSync,
   EventFilterOptions,
@@ -278,7 +279,7 @@ export class PanelChrome extends Component<Props, State> {
 
   onAnnotationCreate = async (event: AnnotationEventUIModel) => {
     const isRegion = event.from !== event.to;
-    await saveAnnotation({
+    const anno = {
       dashboardId: this.props.dashboard.id,
       panelId: this.props.panel.id,
       isRegion,
@@ -286,18 +287,21 @@ export class PanelChrome extends Component<Props, State> {
       timeEnd: isRegion ? event.to : 0,
       tags: event.tags,
       text: event.description,
-    });
+    };
+    await saveAnnotation(anno);
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
+    this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));
   };
 
   onAnnotationDelete = async (id: string) => {
     await deleteAnnotation({ id });
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
+    this.state.context.eventBus.publish(new AnnotationChangeEvent({ id }));
   };
 
   onAnnotationUpdate = async (event: AnnotationEventUIModel) => {
     const isRegion = event.from !== event.to;
-    await updateAnnotation({
+    const anno = {
       id: event.id,
       dashboardId: this.props.dashboard.id,
       panelId: this.props.panel.id,
@@ -306,9 +310,11 @@ export class PanelChrome extends Component<Props, State> {
       timeEnd: isRegion ? event.to : 0,
       tags: event.tags,
       text: event.description,
-    });
+    };
+    await updateAnnotation(anno);
 
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
+    this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));
   };
 
   get hasPanelSnapshot() {
