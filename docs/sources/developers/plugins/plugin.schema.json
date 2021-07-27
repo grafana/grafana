@@ -62,6 +62,10 @@
         "type": "object",
         "additionalItems": false,
         "properties": {
+          "uid": {
+            "type": "string",
+            "description": "Unique identifier of the included resource"
+          },
           "type": {
             "type": "string",
             "enum": ["dashboard", "page", "panel", "datasource"]

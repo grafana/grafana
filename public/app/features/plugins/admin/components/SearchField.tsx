@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { css } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,11 +9,30 @@ interface Props {
   onSearch: (value: string) => void;
 }
 
+// useDebounce has a bug which causes it to fire on first render. This wrapper prevents that.
+// https://github.com/streamich/react-use/issues/759
+const useDebounceWithoutFirstRender = (callBack: () => any, delay = 0, deps: React.DependencyList = []) => {
+  const isFirstRender = useRef(true);
+  const debounceDeps = [...deps, isFirstRender];
+
+  return useDebounce(
+    () => {
+      if (isFirstRender.current) {
+        isFirstRender.current = false;
+        return;
+      }
+      return callBack();
+    },
+    delay,
+    debounceDeps
+  );
+};
+
 export const SearchField = ({ value, onSearch }: Props) => {
   const [query, setQuery] = useState(value);
   const styles = useStyles2(getStyles);
 
-  useDebounce(() => onSearch(query ?? ''), 500, [query]);
+  useDebounceWithoutFirstRender(() => onSearch(query ?? ''), 500, [query]);
 
   return (
     <input

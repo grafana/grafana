@@ -1,74 +1,69 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { css, cx } from '@emotion/css';
-import { gt, satisfies } from 'semver';
+import { satisfies } from 'semver';
 
 import { config } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 
-import { LocalPlugin, Plugin } from '../types';
-import { api } from '../api';
-
-// This isn't exported in the sdk yet
-// @ts-ignore
 import appEvents from 'app/core/app_events';
+import { CatalogPluginDetails, ActionTypes } from '../types';
+import { api } from '../api';
 import { isGrafanaAdmin } from '../helpers';
 
 interface Props {
-  localPlugin?: LocalPlugin;
-  remotePlugin: Plugin;
+  plugin: CatalogPluginDetails;
+  isInflight: boolean;
+  hasUpdate: boolean;
+  hasInstalledPanel: boolean;
+  isInstalled: boolean;
+  dispatch: React.Dispatch<any>;
 }
 
-export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
-  const [loading, setLoading] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(Boolean(localPlugin));
-  const [shouldUpdate, setShouldUpdate] = useState(
-    remotePlugin?.version && localPlugin?.info.version && gt(remotePlugin?.version!, localPlugin?.info.version!)
-  );
-  const [hasInstalledPanel, setHasInstalledPanel] = useState(false);
+export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, hasInstalledPanel, dispatch }: Props) => {
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
-  const externalManageLink = getExternalManageLink(remotePlugin);
+  const externalManageLink = getExternalManageLink(plugin);
 
   const styles = useStyles2(getStyles);
 
+  if (!plugin) {
+    return null;
+  }
+
   const onInstall = async () => {
-    setLoading(true);
+    dispatch({ type: ActionTypes.INFLIGHT });
     try {
-      await api.installPlugin(remotePlugin.slug, remotePlugin.version);
-      appEvents.emit(AppEvents.alertSuccess, [`Installed ${remotePlugin?.name}`]);
-      setLoading(false);
-      setIsInstalled(true);
-      setHasInstalledPanel(remotePlugin.typeCode === 'panel');
+      await api.installPlugin(plugin.id, plugin.version);
+      appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
+      dispatch({ type: ActionTypes.INSTALLED, payload: plugin.type === 'panel' });
     } catch (error) {
-      setLoading(false);
+      dispatch({ type: ActionTypes.ERROR, payload: { error } });
     }
   };
 
   const onUninstall = async () => {
-    setLoading(true);
+    dispatch({ type: ActionTypes.INFLIGHT });
     try {
-      await api.uninstallPlugin(remotePlugin.slug);
-      appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${remotePlugin?.name}`]);
-      setLoading(false);
-      setIsInstalled(false);
+      await api.uninstallPlugin(plugin.id);
+      appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${plugin.name}`]);
+      dispatch({ type: ActionTypes.UNINSTALLED });
     } catch (error) {
-      setLoading(false);
+      dispatch({ type: ActionTypes.ERROR, payload: error });
     }
   };
 
   const onUpdate = async () => {
-    setLoading(true);
+    dispatch({ type: ActionTypes.INFLIGHT });
     try {
-      await api.installPlugin(remotePlugin.slug, remotePlugin.version);
-      appEvents.emit(AppEvents.alertSuccess, [`Updated ${remotePlugin?.name}`]);
-      setLoading(false);
-      setShouldUpdate(false);
+      await api.installPlugin(plugin.id, plugin.version);
+      appEvents.emit(AppEvents.alertSuccess, [`Updated ${plugin.name}`]);
+      dispatch({ type: ActionTypes.UPDATED });
     } catch (error) {
-      setLoading(false);
+      dispatch({ type: ActionTypes.ERROR, payload: error });
     }
   };
 
-  const grafanaDependency = remotePlugin?.json?.dependencies?.grafanaDependency;
+  const grafanaDependency = plugin.grafanaDependency;
   const unsupportedGrafanaVersion = grafanaDependency
     ? !satisfies(config.buildInfo.version, grafanaDependency, {
         // needed for when running against master
@@ -76,9 +71,9 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
       })
     : false;
 
-  const isDevelopmentBuild = Boolean(localPlugin?.dev);
-  const isEnterprise = remotePlugin?.status === 'enterprise';
-  const isCore = remotePlugin?.internal || localPlugin?.signature === 'internal';
+  const isDevelopmentBuild = Boolean(plugin.isDev);
+  const isEnterprise = plugin.isEnterprise;
+  const isCore = plugin.isCore;
   const hasPermission = isGrafanaAdmin();
 
   if (isCore) {
@@ -102,14 +97,14 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   if (isInstalled) {
     return (
       <HorizontalGroup height="auto">
-        {shouldUpdate &&
+        {hasUpdate &&
           (isExternallyManaged ? (
             <LinkButton href={externalManageLink} target="_blank" rel="noopener noreferrer">
               {'Update via grafana.com'}
             </LinkButton>
           ) : (
-            <Button disabled={loading || !hasPermission} onClick={onUpdate}>
-              {loading ? 'Updating' : 'Update'}
+            <Button disabled={isInflight || !hasPermission} onClick={onUpdate}>
+              {isInflight ? 'Updating' : 'Update'}
             </Button>
           ))}
 
@@ -119,8 +114,8 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
           </LinkButton>
         ) : (
           <>
-            <Button variant="destructive" disabled={loading || !hasPermission} onClick={onUninstall}>
-              {loading && !shouldUpdate ? 'Uninstalling' : 'Uninstall'}
+            <Button variant="destructive" disabled={isInflight || !hasPermission} onClick={onUninstall}>
+              {isInflight && !hasUpdate ? 'Uninstalling' : 'Uninstall'}
             </Button>
             {hasInstalledPanel && (
               <div className={cx(styles.message, styles.messageMargin)}>
@@ -151,8 +146,8 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
         </LinkButton>
       ) : (
         <>
-          <Button disabled={loading || !hasPermission} onClick={onInstall}>
-            {loading ? 'Installing' : 'Install'}
+          <Button disabled={isInflight || !hasPermission} onClick={onInstall}>
+            {isInflight ? 'Installing' : 'Install'}
           </Button>
           {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
         </>
@@ -161,8 +156,8 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   );
 };
 
-function getExternalManageLink(plugin: Plugin): string {
-  return `https://grafana.com/grafana/plugins/${plugin.slug}`;
+function getExternalManageLink(plugin: CatalogPluginDetails): string {
+  return `https://grafana.com/grafana/plugins/${plugin.id}`;
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
@@ -172,27 +167,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     messageMargin: css`
       margin-left: ${theme.spacing()};
-    `,
-    readme: css`
-      margin: ${theme.spacing(3)} 0;
-
-      & img {
-        max-width: 100%;
-      }
-
-      h1,
-      h2,
-      h3 {
-        margin-top: ${theme.spacing(3)};
-        margin-bottom: ${theme.spacing(2)};
-      }
-
-      li {
-        margin-left: ${theme.spacing(2)};
-        & > p {
-          margin: ${theme.spacing()} 0;
-        }
-      }
     `,
   };
 };

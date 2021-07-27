@@ -51,7 +51,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
 				Description: "[FIRING:1]  (val1)",
 				EventAction: "trigger",
-				Payload: &pagerDutyPayload{
+				Payload: pagerDutyPayload{
 					Summary:   "[FIRING:1]  (val1)",
 					Source:    hostname,
 					Severity:  "critical",
@@ -97,7 +97,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
 				Description: "[FIRING:2]  ",
 				EventAction: "trigger",
-				Payload: &pagerDutyPayload{
+				Payload: pagerDutyPayload{
 					Summary:   "[FIRING:2]  ",
 					Source:    hostname,
 					Severity:  "warning",
