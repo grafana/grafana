@@ -105,9 +105,9 @@ The markers layer allows you to display data points as different marker shapes s
 
 ![Markers Layer Options](/static/img/docs/geomap-panel/geomap-markers-options-8-1-0.png)
 
-- **Marker color** configures the color of the marker. The default `Fixed size` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
-- **Marker size** configures the size of the marker. Default is `Fixed size`, making all marker size the same regardless of the data points. However, there is also an option to scale the circles to the corresponding data points. `Min` and `Max` marker size has to be set such that the Marker layer can scale within these range.
-- **Marker shape** provides you with the flexibility to visualize the data points differently. 
+- **Marker Color** configures the color of the marker. The default `Fixed size` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
+- **Marker Size** configures the size of the marker. Default is `Fixed size`, making all marker size the same regardless of the data points. However, there is also an option to scale the circles to the corresponding data points. `Min` and `Max` marker size has to be set such that the Marker layer can scale within these range.
+- **Marker Shape** provides you with the flexibility to visualize the data points differently. 
   - Circle
   - Square
   - Triangle
