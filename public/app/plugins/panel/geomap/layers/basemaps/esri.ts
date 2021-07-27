@@ -49,7 +49,9 @@ export const publicServiceRegistry = new Registry<PublicServiceItem>(() => [
 ]);
 
 export interface ESRIXYZConfig extends XYZConfig {
-  server: string;
+  config: {
+    server: string;
+  };
 }
 
 export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
@@ -57,19 +59,17 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
   name: 'ArcGIS MapServer',
   isBaseMap: true,
 
-  create: (map: Map, options: MapLayerOptions<ESRIXYZConfig>, theme: GrafanaTheme2) => ({
-    init: () => {
-      const cfg = { ...options.config };
-      const svc = publicServiceRegistry.getIfExists(cfg.server ?? DEFAULT_SERVICE)!;
-      if (svc.id !== CUSTOM_SERVICE) {
-        const base = 'https://services.arcgisonline.com/ArcGIS/rest/services/';
-        cfg.url = `${base}${svc.slug}/MapServer/tile/{z}/{y}/{x}`;
-        cfg.attribution = `Tiles © <a href="${base}${svc.slug}/MapServer">ArcGIS</a>`;
-      }
-      // reuse the standard XYZ tile logic
-      return xyzTiles.create(map, { ...options, config: cfg as XYZConfig }, theme).init();
-    },
-  }),
+  create: async (map: Map, options: MapLayerOptions<ESRIXYZConfig>, theme: GrafanaTheme2) => {
+    const cfg = { ...options.config };
+    const svc = publicServiceRegistry.getIfExists(cfg.config?.server ?? DEFAULT_SERVICE)!;
+    if (svc.id !== CUSTOM_SERVICE) {
+      const base = 'https://services.arcgisonline.com/ArcGIS/rest/services/';
+      cfg.url = `${base}${svc.slug}/MapServer/tile/{z}/{y}/{x}`;
+      cfg.attribution = `Tiles © <a href="${base}${svc.slug}/MapServer">ArcGIS</a>`;
+    }
+    const opts = { ...options, config: cfg as XYZConfig };
+    return xyzTiles.create(map, opts, theme);
+  },
 
   registerOptionsUI: (builder) => {
     builder
@@ -87,7 +87,7 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
         settings: {
           placeholder: defaultXYZConfig.url,
         },
-        showIf: (cfg) => cfg.server === CUSTOM_SERVICE,
+        showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
       })
       .addTextInput({
         path: 'config.attribution',
@@ -95,7 +95,7 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
         settings: {
           placeholder: defaultXYZConfig.attribution,
         },
-        showIf: (cfg) => cfg.server === CUSTOM_SERVICE,
+        showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
       });
   },
 

@@ -22,19 +22,6 @@ export function USAQueryEditor({ query, onChange }: Props) {
             value={usaQueryModes.find((ep) => ep.value === query.mode)}
           />
         </InlineField>
-
-        <InlineField label="Fields">
-          <Select
-            options={fieldNames}
-            onChange={(vals: SelectableValue[]) => {
-              onChange({ ...query, fields: vals.map((v) => v.value) });
-            }}
-            width={28}
-            isMulti={true}
-            placeholder="all"
-            value={query.fields}
-          />
-        </InlineField>
         <InlineField label="Period">
           <Input
             value={query.period}

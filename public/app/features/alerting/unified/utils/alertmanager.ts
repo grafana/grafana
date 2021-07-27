@@ -1,4 +1,5 @@
 import { AlertManagerCortexConfig, MatcherOperator, Route, Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { Labels } from 'app/types/unified-alerting-dto';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -92,4 +93,46 @@ export function parseMatcher(matcher: string): Matcher {
     isRegex: operator === MatcherOperator.regex || operator === MatcherOperator.notRegex,
     isEqual: operator === MatcherOperator.equal || operator === MatcherOperator.regex,
   };
+}
+
+export function parseMatchers(matcherQueryString: string): Matcher[] {
+  const matcherRegExp = /\b(\w+)(=~|!=|!~|=(?="?\w))"?([^"\n,]*)"?/g;
+  const matchers: Matcher[] = [];
+
+  matcherQueryString.replace(matcherRegExp, (_, key, operator, value) => {
+    const isEqual = operator === MatcherOperator.equal || operator === MatcherOperator.regex;
+    const isRegex = operator === MatcherOperator.regex || operator === MatcherOperator.notRegex;
+    matchers.push({
+      name: key,
+      value,
+      isEqual,
+      isRegex,
+    });
+    return '';
+  });
+
+  return matchers;
+}
+
+export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolean {
+  return matchers.every(({ name, value, isRegex, isEqual }) => {
+    return Object.entries(labels).some(([labelKey, labelValue]) => {
+      const nameMatches = name === labelKey;
+      let valueMatches;
+      if (isEqual && !isRegex) {
+        valueMatches = value === labelValue;
+      }
+      if (!isEqual && !isRegex) {
+        valueMatches = value !== labelValue;
+      }
+      if (isEqual && isRegex) {
+        valueMatches = new RegExp(value).test(labelValue);
+      }
+      if (!isEqual && isRegex) {
+        valueMatches = !new RegExp(value).test(labelValue);
+      }
+
+      return nameMatches && valueMatches;
+    });
+  });
 }
