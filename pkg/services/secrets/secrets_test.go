@@ -14,7 +14,7 @@ import (
 
 func TestSecrets_Encrypt(t *testing.T) {
 	s := Secrets{
-		store: sqlstore.InitTestDB(t),
+		Store: sqlstore.InitTestDB(t),
 	}
 
 	require.NoError(t, s.Init())

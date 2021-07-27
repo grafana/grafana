@@ -90,7 +90,7 @@ func (s *Secrets) newRandomDataKey(ctx context.Context, name string) error {
 		return err
 	}
 
-	encrypted, err := s.Encrypt(b)
+	encrypted, err := s.Encrypt(b) // TODO: Should it do encrypt( b, s.defaultEncryptionKey) instead?
 	if err != nil {
 		return err
 	}

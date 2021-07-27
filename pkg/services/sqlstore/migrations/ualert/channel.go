@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -312,7 +311,7 @@ func (c *PostableUserConfig) EncryptSecureSettings() error {
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
 			for k, v := range gr.SecureSettings {
-				encryptedData, err := util.Encrypt([]byte(v), setting.SecretKey)
+				encryptedData, err := util.Encrypt([]byte(v))
 				if err != nil {
 					return fmt.Errorf("failed to encrypt secure settings: %w", err)
 				}

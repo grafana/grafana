@@ -13,7 +13,6 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -352,7 +351,7 @@ func (c *PostableUserConfig) ProcessConfig() error {
 		case GrafanaReceiverType:
 			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 				for k, v := range gr.SecureSettings {
-					encryptedData, err := util.Encrypt([]byte(v), setting.SecretKey)
+					encryptedData, err := util.Encrypt([]byte(v))
 					if err != nil {
 						return fmt.Errorf("failed to encrypt secure settings: %w", err)
 					}
@@ -730,7 +729,7 @@ func (r *PostableGrafanaReceiver) GetDecryptedSecret(key string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	decryptedValue, err := util.Decrypt(decodeValue, setting.SecretKey)
+	decryptedValue, err := util.Decrypt(decodeValue)
 	if err != nil {
 		return "", err
 	}
