@@ -16,7 +16,7 @@ import { AngularLocationWrapper } from 'app/angular/AngularLocationWrapper';
 export class PanelCtrl {
   panel: any;
   error: any;
-  dashboard: DashboardModel;
+  declare dashboard: DashboardModel;
   pluginName = '';
   pluginId = '';
   editorTabs: any;

@@ -18,11 +18,11 @@
 package macaron // import "gopkg.in/macaron.v1"
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
 	"reflect"
-	"strconv"
 	"strings"
 )
 
@@ -87,19 +87,10 @@ func validateAndWrapHandler(h Handler) Handler {
 
 // validateAndWrapHandlers preforms validation and wrapping for each input handler.
 // It accepts an optional wrapper function to perform custom wrapping on handlers.
-func validateAndWrapHandlers(handlers []Handler, wrappers ...func(Handler) Handler) []Handler {
-	var wrapper func(Handler) Handler
-	if len(wrappers) > 0 {
-		wrapper = wrappers[0]
-	}
-
+func validateAndWrapHandlers(handlers []Handler) []Handler {
 	wrappedHandlers := make([]Handler, len(handlers))
 	for i, h := range handlers {
-		h = validateAndWrapHandler(h)
-		if wrapper != nil && !IsFastInvoker(h) {
-			h = wrapper(h)
-		}
-		wrappedHandlers[i] = h
+		wrappedHandlers[i] = validateAndWrapHandler(h)
 	}
 
 	return wrappedHandlers
@@ -137,19 +128,44 @@ func New() *Macaron {
 	return m
 }
 
-// Handlers sets the entire middleware stack with the given Handlers.
-// This will clear any current middleware handlers,
-// and panics if any of the handlers is not a callable function
-func (m *Macaron) Handlers(handlers ...Handler) {
-	m.handlers = make([]Handler, 0)
-	for _, handler := range handlers {
-		m.Use(handler)
-	}
-}
-
 // BeforeHandler represents a handler executes at beginning of every request.
 // Macaron stops future process when it returns true.
 type BeforeHandler func(rw http.ResponseWriter, req *http.Request) bool
+
+// macaronContextKey is used to store/fetch macaron.Context inside context.Context
+type macaronContextKey struct{}
+
+// FromContext returns the macaron context stored in a context.Context, if any.
+func FromContext(c context.Context) *Context {
+	if mc, ok := c.Value(macaronContextKey{}).(*Context); ok {
+		return mc
+	}
+	return nil
+}
+
+// UseMiddleware is a traditional approach to writing middleware in Go.
+// A middleware is a function that has a reference to the next handler in the chain
+// and returns the actual middleware handler, that may do its job and optionally
+// call next.
+// Due to how Macaron handles/injects requests and responses we patch the macaron.Context
+// to use the new ResponseWriter and http.Request here. The caller may only call
+// `next.ServeHTTP(rw, req)` to pass a modified response writer and/or a request to the
+// further middlewares in the chain.
+func (m *Macaron) UseMiddleware(middleware func(http.Handler) http.Handler) {
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		c := FromContext(req.Context())
+		c.Req.Request = req
+		if mrw, ok := rw.(*responseWriter); ok {
+			c.Resp = mrw
+		} else {
+			c.Resp = NewResponseWriter(req.Method, rw)
+		}
+		c.Map(req)
+		c.MapTo(rw, (*http.ResponseWriter)(nil))
+		c.Next()
+	})
+	m.handlers = append(m.handlers, Handler(middleware(next)))
+}
 
 // Use adds a middleware Handler to the stack,
 // and panics if the handler is not a callable func.
@@ -165,15 +181,16 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		handlers: m.handlers,
 		index:    0,
 		Router:   m.Router,
-		Req:      Request{req},
 		Resp:     NewResponseWriter(req.Method, rw),
 		Render:   &DummyRender{rw},
 		Data:     make(map[string]interface{}),
 	}
+	req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
 	c.SetParent(m)
 	c.Map(c)
 	c.MapTo(c.Resp, (*http.ResponseWriter)(nil))
 	c.Map(req)
+	c.Req = Request{req}
 	return c
 }
 
@@ -190,18 +207,6 @@ func (m *Macaron) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 	m.Router.ServeHTTP(rw, req)
-}
-
-func getDefaultListenInfo() (string, int) {
-	host := os.Getenv("HOST")
-	if len(host) == 0 {
-		host = "0.0.0.0"
-	}
-	port, _ := strconv.Atoi(os.Getenv("PORT"))
-	if port == 0 {
-		port = 4000
-	}
-	return host, port
 }
 
 // SetURLPrefix sets URL prefix of router layer, so that it support suburl.

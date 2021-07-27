@@ -31,7 +31,6 @@ export function worldmapToGeomapOptions(angular: any): { fieldConfig: FieldConfi
     },
     controls: {
       showZoom: true,
-      showLegend: Boolean(angular.showLegend),
       mouseWheelZoom: Boolean(angular.mouseWheelZoom),
     },
     basemap: {
