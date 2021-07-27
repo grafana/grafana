@@ -16,6 +16,8 @@ import {
 } from '@grafana/ui';
 import { AbsoluteTimeRange, DataQuery, GrafanaTheme, LoadingState, RawTimeRange, DataFrame } from '@grafana/data';
 
+import { keybindingSrv } from 'app/core/services/keybindingSrv';
+
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
@@ -102,6 +104,7 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
 export class Explore extends React.PureComponent<Props, ExploreState> {
   constructor(props: Props) {
     super(props);
+    keybindingSrv.setUpExploreBindings();
     this.state = {
       openDrawer: undefined,
     };

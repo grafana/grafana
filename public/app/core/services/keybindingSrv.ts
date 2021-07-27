@@ -333,6 +333,12 @@ export class KeybindingSrv {
       window.location.href = window.location.href + newUrlParam;
     });
   }
+
+  setUpExploreBindings() {
+    this.bind('shift+enter', () => {
+      console.log('Run query');
+    });
+  }
 }
 
 export const keybindingSrv = new KeybindingSrv();
