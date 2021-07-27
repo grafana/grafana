@@ -1,16 +1,18 @@
 // Libraries
 import React, { memo } from 'react';
 import { css, cx } from '@emotion/css';
-import { LokiQuery, StepType } from '../types';
+import { map } from 'lodash';
 
 // Types
 import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
+import { LokiQuery, StepType } from '../types';
 
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;
   stepInterval: string;
   stepMode: StepType;
+  resolution: number;
   queryType: LokiQueryType;
   query: LokiQuery;
   onChange: (value: LokiQuery) => void;
@@ -28,6 +30,11 @@ const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
     description: 'Run query against a single point in time. For this query, the "To" time is used.',
   },
 ];
+
+const RESOLUTION_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4, 5, 10], (value: number) => ({
+  value,
+  label: '1/' + value,
+}));
 
 export const DEFAULT_STEP_OPTION: SelectableValue<StepType> = {
   value: 'min',
@@ -47,7 +54,17 @@ const STEP_OPTIONS: Array<SelectableValue<StepType>> = [
 ];
 
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
-  const { lineLimitValue, stepInterval, stepMode, queryType, query, onRunQuery, runOnBlur, onChange } = props;
+  const {
+    lineLimitValue,
+    stepInterval,
+    stepMode,
+    resolution,
+    queryType,
+    query,
+    onRunQuery,
+    runOnBlur,
+    onChange,
+  } = props;
 
   function onChangeQueryLimit(value: string) {
     const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
@@ -92,6 +109,11 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
 
   function onStepIntervalChange(e: React.KeyboardEvent<HTMLInputElement>) {
     const nextQuery = { ...query, stepInterval: e.currentTarget.value };
+    onChange(nextQuery);
+  }
+
+  function onResolutionChange(option: SelectableValue<number>) {
+    const nextQuery = { ...query, resolution: option.value };
     onChange(nextQuery);
   }
 
@@ -176,6 +198,9 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
               }
             }}
           />
+        </InlineField>
+        <InlineField label="Resolution">
+          <Select isSearchable={false} onChange={onResolutionChange} options={RESOLUTION_OPTIONS} value={resolution} />
         </InlineField>
       </div>
     </div>

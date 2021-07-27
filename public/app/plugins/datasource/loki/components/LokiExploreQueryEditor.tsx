@@ -28,6 +28,7 @@ export function LokiExploreQueryEditor(props: Props) {
           lineLimitValue={query?.maxLines?.toString() || ''}
           stepInterval={query.stepInterval || ''}
           stepMode={query.stepMode || 'min'}
+          resolution={query.resolution || 1}
           query={query}
           onRunQuery={onRunQuery}
           onChange={onChange}
