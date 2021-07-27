@@ -1,7 +1,7 @@
 import { PanelPlugin } from '@grafana/data';
 
 import { CanvasPanel } from './CanvasPanel';
-import { defaultPanelOptions, PanelOptions, TextMode } from './models.gen';
+import { defaultPanelOptions, PanelOptions } from './models.gen';
 
 export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel).setPanelOptions((builder) => {
   builder.addRadio({
