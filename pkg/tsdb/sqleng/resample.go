@@ -90,7 +90,14 @@ func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
 	lastSeenRowIdx := -1
 	timeField := f.Fields[tsSchema.TimeIndex]
 
-	for currentTime := qm.TimeRange.From; !currentTime.After(qm.TimeRange.To); currentTime = currentTime.Add(qm.Interval) {
+	var startTime time.Time
+	if timeField.Type() == data.FieldTypeNullableTime {
+		startTime = *timeField.At(0).(*time.Time)
+	} else {
+		startTime = timeField.At(0).(time.Time)
+	}
+
+	for currentTime := startTime; !currentTime.After(qm.TimeRange.To); currentTime = currentTime.Add(qm.Interval) {
 		initialRowIdx := 0
 		if lastSeenRowIdx > 0 {
 			initialRowIdx = lastSeenRowIdx + 1
