@@ -23,11 +23,11 @@ type deleteChannelRuleConfig struct {
 }
 
 type upsertChannelRuleFromConfig struct {
-	OrgID   int64
-	Version int
-	Pattern string
-	Config  models.LiveChannelRuleSettings
-	Secure  map[string]string
+	OrgID          int64
+	Version        int
+	Pattern        string
+	Settings       models.LiveChannelRuleSettings
+	SecureSettings map[string]string
 }
 
 type configsV0 struct {
@@ -43,11 +43,11 @@ type deleteChannelRuleConfigV0 struct {
 }
 
 type upsertChannelRuleFromConfigV0 struct {
-	OrgID   values.Int64Value              `json:"orgId" yaml:"orgId"`
-	Version values.IntValue                `json:"version" yaml:"version"`
-	Pattern values.StringValue             `json:"pattern" yaml:"pattern"`
-	Config  models.LiveChannelRuleSettings `json:"config" yaml:"config"`
-	Secure  values.StringMapValue          `json:"secure" yaml:"secure"`
+	OrgID          values.Int64Value              `json:"orgId" yaml:"orgId"`
+	Version        values.IntValue                `json:"version" yaml:"version"`
+	Pattern        values.StringValue             `json:"pattern" yaml:"pattern"`
+	Settings       models.LiveChannelRuleSettings `json:"settings" yaml:"settings"`
+	SecureSettings values.StringMapValue          `json:"secureSettings" yaml:"secureSettings"`
 }
 
 func (cfg *configsV0) mapToChannelRuleFromConfig(apiVersion int64) *configs {
@@ -61,11 +61,11 @@ func (cfg *configsV0) mapToChannelRuleFromConfig(apiVersion int64) *configs {
 
 	for _, rule := range cfg.ChannelRules {
 		r.ChannelRules = append(r.ChannelRules, &upsertChannelRuleFromConfig{
-			OrgID:   rule.OrgID.Value(),
-			Pattern: rule.Pattern.Value(),
-			Version: rule.Version.Value(),
-			Config:  rule.Config,
-			Secure:  rule.Secure.Value(),
+			OrgID:          rule.OrgID.Value(),
+			Pattern:        rule.Pattern.Value(),
+			Version:        rule.Version.Value(),
+			Settings:       rule.Settings,
+			SecureSettings: rule.SecureSettings.Value(),
 		})
 	}
 
@@ -83,8 +83,8 @@ func createInsertCommand(ds *upsertChannelRuleFromConfig) models.CreateLiveChann
 	return models.CreateLiveChannelRuleCommand{
 		OrgId:          ds.OrgID,
 		Pattern:        ds.Pattern,
-		Settings:       ds.Config,
-		SecureSettings: ds.Secure,
+		Settings:       ds.Settings,
+		SecureSettings: ds.SecureSettings,
 	}
 }
 
@@ -93,8 +93,8 @@ func createUpdateCommand(ds *upsertChannelRuleFromConfig, uid string) models.Upd
 		Uid:            uid,
 		OrgId:          ds.OrgID,
 		Pattern:        ds.Pattern,
-		Settings:       ds.Config,
-		SecureSettings: ds.Secure,
+		Settings:       ds.Settings,
+		SecureSettings: ds.SecureSettings,
 		Version:        ds.Version,
 	}
 }

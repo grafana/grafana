@@ -2,13 +2,13 @@ apiVersion: 0
 
 channelRules:
   - pattern: $TEST_VAR
-    config:
+    settings:
       remoteWrite:
         enabled: true
         endpoint: "endpoint"
         user: "user"
         sampleMilliseconds: 1000
-    secure:
+    secureSettings:
       remoteWritePassword: "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA=="
     version: 10
 

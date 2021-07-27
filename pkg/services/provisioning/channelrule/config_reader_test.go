@@ -153,12 +153,12 @@ func validateChannelRule(t *testing.T, ruleCfg *configs) {
 	require.Equal(t, "name", rule.Pattern)
 	require.Equal(t, 10, rule.Version)
 
-	require.True(t, rule.Config.RemoteWrite.Enabled)
-	require.Equal(t, "endpoint", rule.Config.RemoteWrite.Endpoint)
-	require.Equal(t, "user", rule.Config.RemoteWrite.User)
-	require.Equal(t, int64(1000), rule.Config.RemoteWrite.SampleMilliseconds)
-	require.True(t, len(rule.Secure) > 0)
-	require.Equal(t, "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA==", rule.Secure["remoteWritePassword"])
+	require.True(t, rule.Settings.RemoteWrite.Enabled)
+	require.Equal(t, "endpoint", rule.Settings.RemoteWrite.Endpoint)
+	require.Equal(t, "user", rule.Settings.RemoteWrite.User)
+	require.Equal(t, int64(1000), rule.Settings.RemoteWrite.SampleMilliseconds)
+	require.True(t, len(rule.SecureSettings) > 0)
+	require.Equal(t, "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA==", rule.SecureSettings["remoteWritePassword"])
 }
 
 type fakeRepository struct {
