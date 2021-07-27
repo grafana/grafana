@@ -1,7 +1,7 @@
 import uPlot, { Axis } from 'uplot';
 import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import {
   calculateFontSize,
   PlotTooltipInterpolator,
@@ -11,6 +11,7 @@ import {
   ScaleDirection,
   ScaleOrientation,
 } from '@grafana/ui';
+import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -299,6 +300,18 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     };
   };
 
+  let alignedTotals;
+
+  function prepData(alignedFrame: DataFrame) {
+    let { data, totals } = preparePlotData(alignedFrame);
+
+    alignedTotals = totals;
+
+    console.log(alignedTotals);
+
+    return data;
+  }
+
   return {
     cursor: {
       x: false,
@@ -315,5 +328,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     drawClear,
     draw,
     interpolateTooltip,
+    prepData,
   };
 }

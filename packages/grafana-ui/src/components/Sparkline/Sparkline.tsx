@@ -92,6 +92,8 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     const { theme } = this.props;
     const builder = new UPlotConfigBuilder();
 
+    builder.setPrepData((alignedFrame: DataFrame) => preparePlotData(alignedFrame).data);
+
     builder.setCursor({
       show: true,
       x: false, // no crosshairs
