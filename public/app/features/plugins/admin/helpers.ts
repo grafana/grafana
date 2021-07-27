@@ -126,14 +126,18 @@ export function getCatalogPluginDetails(
   return plugin;
 }
 
-export function applySearchFilter(searchBy: string | undefined, plugins: CatalogPlugin[]): CatalogPlugin[] {
-  if (!searchBy) {
-    return plugins;
-  }
+export const filters = {
+  filterBy: (plugin: CatalogPlugin, filterBy?: string) =>
+    filterBy === 'installed' ? plugin.isInstalled : !plugin.isCore,
 
-  return plugins.filter((plugin) => {
+  filterByType: (plugin: CatalogPlugin, filterByType?: string) =>
+    filterByType === 'all' || plugin.type === filterByType,
+
+  searchBy: (plugin: CatalogPlugin, searchBy?: string) => {
+    if (!searchBy) {
+      return true;
+    }
     const fields: String[] = [];
-
     if (plugin.name) {
       fields.push(plugin.name.toLowerCase());
     }
@@ -143,5 +147,5 @@ export function applySearchFilter(searchBy: string | undefined, plugins: Catalog
     }
 
     return fields.some((f) => f.includes(searchBy.toLowerCase()));
-  });
-}
+  },
+};
