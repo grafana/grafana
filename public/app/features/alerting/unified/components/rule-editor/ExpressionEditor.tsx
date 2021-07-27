@@ -63,7 +63,7 @@ function useQueryMappers(dataSourceName: string): QueryMappers {
       case 'loki':
       case 'prometheus':
         return {
-          mapToValue: (query: PromQuery | LokiQuery) => query.expr,
+          mapToValue: (query: DataQuery) => (query as PromQuery | LokiQuery).expr,
           mapToQuery: (existing: DataQuery, value: string | undefined) => ({ ...existing, expr: value }),
         };
       default:
