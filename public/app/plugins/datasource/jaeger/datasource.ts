@@ -54,9 +54,11 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     }
 
     if (target.queryType === 'upload') {
-      return this.uploadedJson
-        ? of({ data: [createTraceFrame(JSON.parse(this.uploadedJson as string).data[0])] })
-        : of({ data: [emptyTraceDataFrame] });
+      if (!this.uploadedJson) {
+        return of({ data: [emptyTraceDataFrame] });
+      }
+      const traceData = JSON.parse(this.uploadedJson as string).data[0];
+      return of({ data: [createTraceFrame(traceData), ...createGraphFrames(traceData)] });
     }
 
     let jaegerQuery = pick(target, ['operation', 'service', 'tags', 'minDuration', 'maxDuration', 'limit']);

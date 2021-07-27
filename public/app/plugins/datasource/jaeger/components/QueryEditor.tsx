@@ -13,36 +13,45 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   const theme = useTheme2();
 
   const renderEditorBody = () => {
-    if (query.queryType === 'search') {
-      return <SearchForm datasource={datasource} query={query} onChange={onChange} />;
-    }
-
-    if (query.queryType !== 'upload') {
-      return (
-        <InlineFieldRow>
-          <InlineField label="Trace ID" labelWidth={21} grow>
-            <Input
-              aria-label={selectors.components.DataSource.Jaeger.traceIDInput}
-              placeholder="Eg. 4050b8060d659e52"
-              value={query.query || ''}
-              onChange={(v) =>
-                onChange({
-                  ...query,
-                  query: v.currentTarget.value,
-                })
-              }
+    switch (query.queryType) {
+      case 'search':
+        return <SearchForm datasource={datasource} query={query} onChange={onChange} />;
+      case 'upload':
+        return (
+          <div className={css({ padding: theme.spacing(2) })}>
+            <FileDropzone
+              options={{ accept: '.json', multiple: false }}
+              onLoad={(result) => {
+                datasource.uploadedJson = result;
+                onRunQuery();
+              }}
             />
-          </InlineField>
-        </InlineFieldRow>
-      );
+          </div>
+        );
+      default:
+        return (
+          <InlineFieldRow>
+            <InlineField label="Trace ID" labelWidth={21} grow>
+              <Input
+                aria-label={selectors.components.DataSource.Jaeger.traceIDInput}
+                placeholder="Eg. 4050b8060d659e52"
+                value={query.query || ''}
+                onChange={(v) =>
+                  onChange({
+                    ...query,
+                    query: v.currentTarget.value,
+                  })
+                }
+              />
+            </InlineField>
+          </InlineFieldRow>
+        );
     }
-
-    return null;
   };
 
   return (
     <>
-      <div className={css({ width: '50%' })}>
+      <div className={css({ width: query.queryType === 'upload' ? '100%' : '50%' })}>
         <InlineFieldRow>
           <InlineField label="Query type">
             <RadioButtonGroup<JaegerQueryType>
@@ -64,17 +73,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         </InlineFieldRow>
         {renderEditorBody()}
       </div>
-      {query.queryType === 'upload' && (
-        <div className={css({ padding: theme.spacing(2) })}>
-          <FileDropzone
-            options={{ accept: '.json', multiple: false }}
-            onLoad={(result) => {
-              datasource.uploadedJson = result;
-              onRunQuery();
-            }}
-          />
-        </div>
-      )}
     </>
   );
 }
