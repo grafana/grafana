@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry"
+
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -21,13 +23,21 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var logger = log.New("secrets")
+var logger = log.New("secrets") // TODO: should it be at the package level?
+
+func init() {
+	registry.Register(&registry.Descriptor{
+		Name:         "SecretsService",
+		Instance:     &Secrets{},
+		InitPriority: registry.High,
+	})
+}
 
 type Secrets struct {
-	store *sqlstore.SQLStore `inject:""`
-	bus   bus.Bus            `inject:""`
+	Store *sqlstore.SQLStore `inject:""`
+	Bus   bus.Bus            `inject:""`
 
-	defaultEncryptionKey string
+	defaultEncryptionKey string // TODO: Where should it be initialized? It looks like key id/name
 	defaultProvider      string
 	providers            map[string]Provider
 	dataKeyCache         map[string]dataKeyCacheItem
@@ -52,14 +62,13 @@ func (s *Secrets) Init() error {
 		},
 	}
 
-	base_key := "root"
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
 	defer cancel()
-	_, err := s.store.GetDataKey(ctx, base_key)
+	baseKey := "root"
+	_, err := s.Store.GetDataKey(ctx, baseKey)
 	if err != nil {
 		if errors.Is(err, models.ErrDataKeyNotFound) {
-			err = s.newRandomDataKey(ctx, base_key)
+			err = s.newRandomDataKey(ctx, baseKey)
 			if err != nil {
 				return err
 			}
@@ -74,7 +83,7 @@ func (s *Secrets) Init() error {
 	return nil
 }
 
-func (s *Secrets) newRandomDataKey(ctx context.Context, base_key string) error {
+func (s *Secrets) newRandomDataKey(ctx context.Context, name string) error {
 	b := make([]byte, 16)
 	_, err := rand.Read(b)
 	if err != nil {
@@ -86,9 +95,9 @@ func (s *Secrets) newRandomDataKey(ctx context.Context, base_key string) error {
 		return err
 	}
 
-	err = s.store.CreateDataKey(ctx, models.DataKey{
+	err = s.Store.CreateDataKey(ctx, models.DataKey{
 		Active:        true,
-		Name:          base_key,
+		Name:          name,
 		Provider:      s.defaultProvider,
 		EncryptedData: encrypted,
 	})
@@ -145,7 +154,7 @@ func (s *Secrets) Decrypt(payload []byte) ([]byte, error) {
 			return nil, err
 		}
 
-		dataKey, err = s.dataKey(string(key))
+		dataKey, err = s.dataKey(string(key)) // TODO: key is the identifier of the key
 		if err != nil {
 			return nil, err
 		}
@@ -154,6 +163,7 @@ func (s *Secrets) Decrypt(payload []byte) ([]byte, error) {
 	return decrypt(payload, dataKey)
 }
 
+// dataKey decrypts and caches DEK
 func (s *Secrets) dataKey(key string) ([]byte, error) {
 	if key == "" {
 		return []byte(setting.SecretKey), nil
@@ -170,7 +180,7 @@ func (s *Secrets) dataKey(key string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	// 1. get encrypted data key from database
-	dataKey, err := s.store.GetDataKey(ctx, key)
+	dataKey, err := s.Store.GetDataKey(ctx, key)
 	if err != nil {
 		return nil, err
 	}
