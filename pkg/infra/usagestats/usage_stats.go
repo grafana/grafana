@@ -89,6 +89,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 
 	uss.registerExternalMetrics(metrics)
 
+	// must run after registration of external metrics
 	if v, ok := metrics["stats.valid_license.count"]; ok {
 		report.HasValidLicense = v == 1
 	} else {
