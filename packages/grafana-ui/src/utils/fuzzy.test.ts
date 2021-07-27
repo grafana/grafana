@@ -76,4 +76,15 @@ describe('Fuzzy search', () => {
       found: true,
     });
   });
+
+  it('ignores whitespace in needle', () => {
+    expect(fuzzyMatch('bbaarr_bar_bbarr', 'bb bar')).toEqual({
+      ranges: [
+        { start: 0, end: 1 },
+        { start: 7, end: 9 },
+      ],
+      distance: 5,
+      found: true,
+    });
+  });
 });
