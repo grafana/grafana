@@ -16,6 +16,6 @@ func (OSSUserProtectionImpl) Init() error {
 	return nil
 }
 
-func (OSSUserProtectionImpl) AllowUserMapping(_ *models.User, _ string) (bool, error) {
-	return true, nil
+func (OSSUserProtectionImpl) AllowUserMapping(_ *models.User, _ string) error {
+	return nil
 }

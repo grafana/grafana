@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -180,10 +180,8 @@ func (s *Implementation) LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (
 		return nil, models.ErrUserNotFound
 	}
 
-	if allow, err := s.UserProtectionService.AllowUserMapping(user, query.AuthModule); err != nil {
+	if err := s.UserProtectionService.AllowUserMapping(user, query.AuthModule); err != nil {
 		return nil, err
-	} else if !allow {
-		return nil, models.ErrProtectedUser
 	}
 
 	// Special case for generic oauth duplicates
