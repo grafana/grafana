@@ -38,7 +38,8 @@ interface State extends OverlayProps {}
 export class GeomapPanel extends Component<Props, State> {
   globalCSS = getGlobalStyles(config.theme2);
 
-  counter = 0;
+  counterLegend = 0;
+  counterTooltip = 0;
   map?: Map;
   basemap?: BaseLayer;
   layers: MapLayerState[] = [];
@@ -178,6 +179,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     const legends: React.ReactNode[] = [];
+    const tooltips: React.ReactNode[] = [];
     this.layers = [];
     for (const overlay of layers) {
       const item = geomapLayerRegistry.getIfExists(overlay.type);
@@ -196,10 +198,15 @@ export class GeomapPanel extends Component<Props, State> {
       });
 
       if (handler.legend) {
-        legends.push(<div key={`${this.counter++}`}>{handler.legend}</div>);
+        legends.push(<div key={`${this.counterLegend++}`}>{handler.legend}</div>);
+      }
+
+      if (handler.tooltip) {
+        tooltips.push(<div key={`${this.counterTooltip++}`}>{handler.tooltip}</div>);
       }
     }
-    this.setState({ bottomLeft: legends });
+
+    this.setState({ bottomLeft: legends, tooltips: tooltips });
 
     // Update data after init layers
     this.dataChanged(this.props.data);
@@ -279,11 +286,6 @@ export class GeomapPanel extends Component<Props, State> {
     let topRight: ReactNode[] = [];
     if (options.showDebug) {
       topRight = [<DebugOverlay key="debug" map={this.map} />];
-    }
-
-    let tooltip: ReactNode;
-    if (options.showTooltip) {
-      tooltip = <Tooltip key="tooltip" map={this.map} />;
     }
 
     this.setState({ topRight });

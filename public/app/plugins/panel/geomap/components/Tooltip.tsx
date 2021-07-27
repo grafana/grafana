@@ -5,15 +5,16 @@ import { GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import tinycolor from 'tinycolor2';
+import { Layer } from 'ol/layer';
 
 interface Props {
   map: Map;
+  layerID: string;
 }
 
 interface State {
   visible: boolean;
-  x?: number;
-  y?: number;
+  coordinates?: number[];
 }
 
 export class Tooltip extends PureComponent<Props, State> {
@@ -24,34 +25,43 @@ export class Tooltip extends PureComponent<Props, State> {
     this.state = { visible: false };
   }
 
-  updateViewState = (onFeature: boolean) => {
+  updateViewState = (onFeature: boolean, coordinates: number[]) => {
     this.setState({
       visible: onFeature,
+      coordinates: coordinates,
     });
   };
 
   componentDidMount() {
-    const { map } = this.props;
+    const { map, layerID } = this.props;
 
     map.on('pointermove', (evt: any) => {
       const pixel = map.getEventPixel(evt.originalEvent);
-      const feature = map.forEachFeatureAtPixel(pixel, function (feature) {
+      const feature = map.forEachFeatureAtPixel(pixel, (feature, layer) => {
         return feature;
       });
 
-      if (feature) {
+      const coordinates = feature?.getProperties().geometry.flatCoordinates;
+
+      if (feature && coordinates) {
         console.log('hover', feature, evt);
-        this.updateViewState(true);
+        this.updateViewState(true, coordinates);
       } else {
-        this.updateViewState(false);
+        this.updateViewState(false, [0, 0]);
       }
     });
-
-    this.updateViewState(false);
   }
 
   render() {
-    const { visible, x, y } = this.state;
+    const { visible, coordinates } = this.state;
+
+    let x = 0;
+    let y = 0;
+
+    if (coordinates) {
+      x = coordinates[0];
+      y = coordinates[1];
+    }
 
     return (
       <div className={this.style.infoWrap}>
@@ -60,11 +70,11 @@ export class Tooltip extends PureComponent<Props, State> {
             <tbody>
               <tr>
                 <th>Latitude:</th>
-                <td>{x?.toFixed(1)}</td>
+                <td>{x.toFixed(1)}</td>
               </tr>
               <tr>
                 <th>Longitude:&nbsp;</th>
-                <td> {y?.toFixed(1)} </td>
+                <td> {y.toFixed(1)} </td>
               </tr>
             </tbody>
           </table>
