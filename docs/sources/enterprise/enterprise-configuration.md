@@ -364,9 +364,9 @@ The default is `1`.
 ## [caching.encryption]
 ### enabled
 
-When 'enabled' to `true`, this setting allows users to encrypt the query values in the cache. Default is `false`.
+When 'enabled' to `true`, this setting allows users to encrypt the query values in the cache. 
 
-This value is `false` by default.
+The default is `false`.
 
 ### encryption_key
 
