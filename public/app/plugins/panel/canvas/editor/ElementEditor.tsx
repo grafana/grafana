@@ -11,7 +11,7 @@ export interface CanvasElementEditorProps<TConfig = any> {
   options?: CanvasElementOptions<TConfig>;
   data: DataFrame[]; // All results
   onChange: (options: CanvasElementOptions<TConfig>) => void;
-  filter: (item: CanvasElementItem) => boolean;
+  filter?: (item: CanvasElementItem) => boolean;
 }
 
 export const CanvasElementEditor: FC<CanvasElementEditorProps> = ({ options, onChange, data, filter }) => {
@@ -155,7 +155,7 @@ export const CanvasElementEditor: FC<CanvasElementEditorProps> = ({ options, onC
         options={layerTypes.options}
         value={layerTypes.current}
         onChange={(v) => {
-          const layer = geomapCanvasElementRegistry.getIfExists(v.value);
+          const layer = canvasElementRegistry.getIfExists(v.value);
           if (!layer) {
             console.warn('layer does not exist', v);
             return;

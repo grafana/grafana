@@ -4,6 +4,7 @@ import { CanvasElementItem, CanvasElementProps, LineConfig } from '../base';
 import { config } from '@grafana/runtime';
 import SVG from 'react-inlinesvg';
 import { ColorDimensionConfig } from '../../geomap/dims/types';
+import { ColorDimensionEditor } from '../../geomap/dims/editors/ColorDimensionEditor';
 
 interface IconConfig {
   path?: string;
@@ -56,5 +57,25 @@ export const iconItem: CanvasElementItem<IconConfig> = {
   defaultSize: {
     width: 75,
     height: 75,
+  },
+
+  // Heatmap overlay options
+  registerOptionsUI: (builder) => {
+    builder
+      .addTextInput({
+        path: 'config.path',
+        name: 'SVG Path (TODO, selector)',
+      })
+      .addCustomEditor({
+        id: 'config.fill',
+        path: 'config.fill',
+        name: 'Icon fill color',
+        editor: ColorDimensionEditor,
+        settings: {},
+        defaultValue: {
+          // Configured values
+          fixed: 'grey',
+        },
+      });
   },
 };

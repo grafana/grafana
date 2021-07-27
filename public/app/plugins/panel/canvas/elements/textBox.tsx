@@ -1,9 +1,6 @@
-import React, { PureComponent, CSSProperties } from 'react';
+import React, { PureComponent } from 'react';
 
-import { CanvasElementItem, CanvasElementProps, LineConfig } from '../base';
-import { config } from '@grafana/runtime';
-import SVG from 'react-inlinesvg';
-import { ColorDimensionConfig } from '../../geomap/dims/types';
+import { CanvasElementItem, CanvasElementProps } from '../base';
 
 interface TextBoxConfig {
   text?: string; // could be parent config?
@@ -11,7 +8,8 @@ interface TextBoxConfig {
 
 class TextBoxDisplay extends PureComponent<CanvasElementProps<TextBoxConfig>> {
   render() {
-    return <div>TODO... import Text panel options?</div>;
+    const { config } = this.props;
+    return <div>TEXT: {config.text}</div>;
   }
 }
 
@@ -30,5 +28,13 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig> = {
   defaultSize: {
     width: 240,
     height: 160,
+  },
+
+  // Heatmap overlay options
+  registerOptionsUI: (builder) => {
+    builder.addTextInput({
+      path: 'config.text',
+      name: 'Text',
+    });
   },
 };
