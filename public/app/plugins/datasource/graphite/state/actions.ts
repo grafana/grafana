@@ -27,6 +27,7 @@ const updateFunctionParam = createAction<{ func: FuncInstance; index: number; va
 
 // Text editor
 const updateQuery = createAction<{ query: string }>('update-query');
+const runQuery = createAction('run-current-query');
 const toggleEditorMode = createAction('toggle-editor');
 
 export const actions = {
@@ -40,5 +41,6 @@ export const actions = {
   moveFunction,
   updateFunctionParam,
   updateQuery,
+  runQuery,
   toggleEditorMode,
 };

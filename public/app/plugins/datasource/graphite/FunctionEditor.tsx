@@ -16,7 +16,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     label: css({
       fontWeight: theme.typography.fontWeightMedium,
-      fontSize: theme.typography.size.sm, // to match .gf-form-label
+      fontSize: theme.typography.bodySmall.fontSize, // to match .gf-form-label
       cursor: 'pointer',
       display: 'inline-block',
       paddingBottom: '2px',
