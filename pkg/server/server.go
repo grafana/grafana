@@ -174,7 +174,7 @@ func (s *Server) init() error {
 		}
 	}
 
-	// Perform all services registrations
+	// Register all fixed roles
 	if err := s.AccessControl.RegisterFixedRoles(); err != nil {
 		return err
 	}

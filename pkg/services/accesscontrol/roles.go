@@ -251,7 +251,7 @@ func ValidateFixedRole(role RoleDTO) error {
 // ValidateBuiltInRoles errors when a built-in role does not match expected pattern
 func ValidateBuiltInRoles(builtInRoles []string) error {
 	for _, br := range builtInRoles {
-		if !models.RoleType(br).IsValid() && br != "Grafana Admin" {
+		if !models.RoleType(br).IsValid() && br != RoleGrafanaAdmin {
 			return fmt.Errorf("'%s' %w", br, ErrInvalidBuiltinRole)
 		}
 	}
