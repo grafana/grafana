@@ -16,7 +16,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 import store from 'app/core/store';
 import userEvent from '@testing-library/user-event';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import defaultConfig from '../../../../../packages/jaeger-ui-components/src/constants/default-config';
 
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
