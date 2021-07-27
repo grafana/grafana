@@ -5,6 +5,9 @@ import { GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import tinycolor from 'tinycolor2';
+import RenderFeature from 'ol/render/Feature';
+import { FeatureLike } from 'ol/Feature';
+import { Pixel } from 'ol/pixel';
 
 interface Props {
   map: Map;
@@ -12,8 +15,7 @@ interface Props {
 
 interface State {
   visible: boolean;
-  x?: number;
-  y?: number;
+  coordinates: number[];
 }
 
 export class Tooltip extends PureComponent<Props, State> {
@@ -21,37 +23,41 @@ export class Tooltip extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = { visible: false };
+    this.state = { visible: false, coordinates: [0, 0] };
   }
 
-  updateViewState = (onFeature: boolean) => {
-    this.setState({
-      visible: onFeature,
-    });
+  updateViewState = (features: FeatureLike[], pixel: Pixel) => {
+    if (features.length > 0) {
+      const firstFeature = features[0];
+      console.log(firstFeature.getProperties());
+      this.setState({
+        visible: true,
+        coordinates: firstFeature.getProperties().geometry.flatCoordinates,
+      });
+    } else {
+      this.setState({
+        visible: false,
+        coordinates: [0, 0],
+      });
+    }
   };
 
   componentDidMount() {
     const { map } = this.props;
 
     map.on('pointermove', (evt: any) => {
+      const features: FeatureLike[] = [];
       const pixel = map.getEventPixel(evt.originalEvent);
-      const feature = map.forEachFeatureAtPixel(pixel, function (feature) {
-        return feature;
+      map.forEachFeatureAtPixel(pixel, function (feature) {
+        features.push(feature);
       });
-
-      if (feature) {
-        console.log('hover', feature, evt);
-        this.updateViewState(true);
-      } else {
-        this.updateViewState(false);
-      }
+      console.log('hover', features, evt);
+      this.updateViewState(features, pixel);
     });
-
-    this.updateViewState(false);
   }
 
   render() {
-    const { visible, x, y } = this.state;
+    const { visible, coordinates } = this.state;
 
     return (
       <div className={this.style.infoWrap}>
@@ -60,11 +66,11 @@ export class Tooltip extends PureComponent<Props, State> {
             <tbody>
               <tr>
                 <th>Latitude:</th>
-                <td>{x?.toFixed(1)}</td>
+                <td>{coordinates[0].toFixed(1)}</td>
               </tr>
               <tr>
                 <th>Longitude:&nbsp;</th>
-                <td> {y?.toFixed(1)} </td>
+                <td> {coordinates[1].toFixed(1)} </td>
               </tr>
             </tbody>
           </table>

@@ -283,10 +283,10 @@ export class GeomapPanel extends Component<Props, State> {
 
     let tooltip: ReactNode;
     if (options.showTooltip) {
-      tooltip = <Tooltip key="tooltip" map={this.map} />;
+      tooltip = <Tooltip map={this.map} />;
     }
 
-    this.setState({ topRight });
+    this.setState({ topRight, tooltip });
   }
 
   render() {
