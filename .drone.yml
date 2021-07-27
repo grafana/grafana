@@ -159,9 +159,11 @@ steps:
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
+    HOST: end-to-end-tests-server
   failure: ignore
   depends_on:
   - build-frontend
+  - end-to-end-tests-server
 
 - name: build-frontend-docs
   image: grafana/build-container:1.4.1
@@ -450,9 +452,11 @@ steps:
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
+    HOST: end-to-end-tests-server
   failure: ignore
   depends_on:
   - build-frontend
+  - end-to-end-tests-server
 
 - name: build-frontend-docs
   image: grafana/build-container:1.4.1
@@ -3507,6 +3511,6 @@ get:
 
 ---
 kind: signature
-hmac: b2807f971c4d2c20a789b36262997c462b080ea957106d6b5ccd0f32505ec7c0
+hmac: dd35920d8e2b1eb66c7d1ecb9fb3d711b8569d5aeef53c427ff1f34cc87a3a62
 
 ...
