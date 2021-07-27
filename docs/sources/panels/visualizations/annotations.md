@@ -8,7 +8,7 @@ weight = 600
 
 # Annotations 
 
-The Annotations panel allows you to create lists of annotations that can be used to view annotated data. Various options are available to filter the list based on tags and the current dashboard.
+The Annotations panel allows you to show a list of annotations that can be used to view annotated data. Various options are available to filter the list based on tags and the current dashboard.
 
 ## Annotation query
 
