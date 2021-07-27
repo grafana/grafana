@@ -364,13 +364,13 @@ The default is `1`.
 ## [caching.encryption]
 ### enabled
 
-When 'enabled' to `true`, this setting allows users to encrypt the query values in the cache. 
+When 'enabled' is `true`, query values in the cache are encrypted.
 
 The default is `false`.
 
 ### encryption_key
 
-A string to generate a key for encrypting the cache. For the encrypted cache data to persist between Grafana restarts, you must specify this key. If it is empty when encryption is enabled, then the key is automatically generated on startup, and the cache clears upon restarts.
+A string used to generate a key for encrypting the cache. For the encrypted cache data to persist between Grafana restarts, you must specify this key. If it is empty when encryption is enabled, then the key is automatically generated on startup, and the cache clears upon restarts.
 
 The default is `""`.
 
