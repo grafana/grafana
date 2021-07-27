@@ -6,7 +6,7 @@ import {
   handleMetricsAutoCompleteError,
   handleTagsAutoCompleteError,
 } from './helpers';
-import { GraphiteSegment, GraphiteTag } from '../types';
+import { GraphiteSegment, GraphiteTag, GraphiteTagOperator } from '../types';
 
 /**
  * Providers are hooks for views to provide temporal data for autocomplete. They don't modify the state.
@@ -90,7 +90,7 @@ export async function getAltSegments(
   return [];
 }
 
-export function getTagOperators(): string[] {
+export function getTagOperators(): GraphiteTagOperator[] {
   return GRAPHITE_TAG_OPERATORS;
 }
 
@@ -120,7 +120,7 @@ export async function getTagsAsSegments(
   state: GraphiteQueryEditorState,
   tagPrefix: string
 ): Promise<GraphiteSegment[]> {
-  let tagsAsSegments: GraphiteSegment[] = [];
+  let tagsAsSegments: GraphiteSegment[];
   try {
     const tagExpressions = state.queryModel.renderTagExpressions();
     const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);

@@ -8,6 +8,7 @@ import { Button, Segment, SegmentAsync, useStyles2 } from '@grafana/ui';
 import { actions } from '../state/actions';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
+import { mapSegmentsToSelectables, mapStringsToSelectables } from './helpers';
 
 type Props = {
   dispatch: Dispatch;
@@ -21,45 +22,22 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
 
   const getTagsOptions = useCallback(
     async (index) => {
-      const tags = await getTags(state, index, '');
-      return tags.map((tagName) => {
-        return {
-          label: tagName,
-          value: tagName,
-        };
-      });
+      return mapStringsToSelectables(await getTags(state, index, ''));
     },
     [state]
   );
 
   const getTagValueOptions = useCallback(
     async (tag: GraphiteTag, index: number) => {
-      const values = await getTagValues(state, tag, index, '');
-      return values.map((value) => {
-        return {
-          label: value,
-          value: value,
-        };
-      });
+      return mapStringsToSelectables(await getTagValues(state, tag, index, ''));
     },
     [state]
   );
 
-  const newTagsOptions = addTagSegments.map((segment: GraphiteSegment) => {
-    return {
-      label: segment.value,
-      value: segment,
-    };
-  });
+  const newTagsOptions = mapSegmentsToSelectables(addTagSegments);
 
   const getTagsAsSegmentsOptions = useCallback(async () => {
-    const segments = await getTagsAsSegments(state, '');
-    return segments.map((segment) => {
-      return {
-        label: segment.value,
-        value: segment,
-      };
-    });
+    return mapSegmentsToSelectables(await getTagsAsSegments(state, ''));
   }, [state]);
 
   return (
@@ -84,12 +62,7 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
             <Segment<GraphiteTagOperator>
               inputMinWidth={50}
               value={tag.operator}
-              options={getTagOperators().map((operator: GraphiteTagOperator) => {
-                return {
-                  label: operator,
-                  value: operator,
-                };
-              })}
+              options={mapStringsToSelectables(getTagOperators())}
               onChange={(value) => {
                 dispatch(
                   actions.tagChanged({
