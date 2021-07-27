@@ -17,7 +17,7 @@ func ProvideOSSMigrations() *OSSMigrations {
 	return &OSSMigrations{}
 }
 
-func (*OSSMigrations) AddMigrations(mg *Migrator) {
+func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addMigrationLogMigrations(mg)
 	addUserMigrations(mg)
 	addTempUserMigrations(mg)

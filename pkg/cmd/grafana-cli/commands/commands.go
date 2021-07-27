@@ -4,15 +4,15 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafqana/pkg/bus"
 	"github.com/urfave/cli/v2"
 )
 
@@ -35,7 +35,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 			cfg.LogConfigSources()
 		}
 
-		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus())
+		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{})
 		if err != nil {
 			return errutil.Wrap("failed to initialize SQL store", err)
 		}

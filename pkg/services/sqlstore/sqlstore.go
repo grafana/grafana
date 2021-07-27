@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
@@ -49,10 +50,10 @@ type SQLStore struct {
 	Dialect                     migrator.Dialect
 	skipEnsureDefaultOrgAndUser bool
 	dbMigrators                 []registry.DatabaseMigrator
-	migrations                  registry.MigrationService
+	migrations                  registry.DatabaseMigrator
 }
 
-func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, migrations registry.MigrationService) (*SQLStore, error) {
+func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, migrations registry.DatabaseMigrator) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
@@ -74,7 +75,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus
 }
 
 func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, engine *xorm.Engine,
-	migrations registry.MigrationService, opts ...InitTestDBOpt) (*SQLStore, error) {
+	migrations registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
 		Cfg:                         cfg,
 		Bus:                         bus,
@@ -138,7 +139,7 @@ func (ss *SQLStore) Migrate() error {
 	}
 
 	migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
-	ss.migrations.AddMigrations(migrator)
+	ss.migrations.AddMigration(migrator)
 	for _, dbm := range ss.dbMigrators {
 		dbm.AddMigration(migrator)
 	}
@@ -439,8 +440,17 @@ type InitTestDBOpt struct {
 	EnsureDefaultOrgAndUser bool
 }
 
+// InitTestDBWithMigration initializes the test DB given custom migrations.
+func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
+	return initTestDB(t, migration, opts...)
+}
+
 // InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
+	return initTestDB(t, &migrations.OSSMigrations{}, opts...)
+}
+
+func initTestDB(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
@@ -501,7 +511,7 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 		engine.DatabaseTZ = time.UTC
 		engine.TZLocation = time.UTC
 
-		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), bus.GetBus(), engine, nil, opts...)
+		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), bus.GetBus(), engine, migration, opts...)
 		if err != nil {
 			t.Fatalf("Failed to init test database: %s", err)
 		}

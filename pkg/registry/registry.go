@@ -42,8 +42,3 @@ func IsDisabled(srv BackgroundService) bool {
 	canBeDisabled, ok := srv.(CanBeDisabled)
 	return ok && canBeDisabled.IsDisabled()
 }
-
-// MigrationService provides background services.
-type MigrationService interface {
-	AddMigrations(mg *migrator.Migrator)
-}

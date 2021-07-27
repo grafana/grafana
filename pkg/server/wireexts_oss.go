@@ -33,7 +33,7 @@ var wireExtsBasicSet = wire.NewSet(
 	datasources.ProvideCacheService,
 	wire.Bind(new(datasources.CacheService), new(*datasources.CacheServiceImpl)),
 	migrations.ProvideOSSMigrations,
-	wire.Bind(new(registry.MigrationService), new(*migrations.OSSMigrations)),
+	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
 )
 
 var wireExtsSet = wire.NewSet(
