@@ -101,8 +101,6 @@ export function preparePlotData(frame: DataFrame): { data: AlignedData; totals: 
         result[seriesIdx] = acc.slice();
       }
     }
-
-    //onStack && onStack(alignedTotals as AlignedData);
   }
 
   return {
