@@ -10,10 +10,6 @@
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
-    },
-    "logos": {
-      "small": "img/icn-singlestat-panel.svg",
-      "large": "img/icn-singlestat-panel.svg"
     }
   }
 }
