@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -38,7 +37,6 @@ type UsageStatsService struct {
 	Bus                bus.Bus                    `inject:""`
 	SQLStore           *sqlstore.SQLStore         `inject:""`
 	AlertingUsageStats alerting.UsageStatsQuerier `inject:""`
-	License            models.Licensing           `inject:""`
 	PluginManager      plugins.Manager            `inject:""`
 	SocialService      social.Service             `inject:""`
 
