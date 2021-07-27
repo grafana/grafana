@@ -1,8 +1,7 @@
 {
   "defaults": {
     "concurrency": 1,
-    "standard": "WCAG2AA",
-    "runners": ["axe"]
+    "standard": "WCAG2AA"
    },
   "urls": [
     {
@@ -26,31 +25,40 @@
       "rootElement": ".dashboard-settings"
     },
     {
-      "url": "http://localhost:3000/?orgId=1&search=open"
+      "url": "http://localhost:3000/?orgId=1&search=open",
+      "hideElements": ".sidemenu"
     },
     {
-      "url": "http://localhost:3000/alerting/list"
+      "url": "http://localhost:3000/alerting/list",
+      "hideElements": ".sidemenu"
     },
     {
-      "url": "http://localhost:3000/datasources"
+      "url": "http://localhost:3000/datasources",
+      "hideElements": ".sidemenu"
     },
     {
-      "url": "http://localhost:3000/org/users"
+      "url": "http://localhost:3000/org/users",
+      "hideElements": ".sidemenu"
     },
     {
-      "url": "http://localhost:3000/org/teams"
+      "url": "http://localhost:3000/org/teams",
+      "hideElements": ".sidemenu"
     },
     {
-      "url": "http://localhost:3000/plugins"
+      "url": "http://localhost:3000/plugins",
+      "hideElements": ".sidemenu"
     },
     {
-      "url": "http://localhost:3000/org"
+      "url": "http://localhost:3000/org",
+      "hideElements": ".sidemenu"
     },
     {
-      "url": "http://localhost:3000/org/apikeys"
+      "url": "http://localhost:3000/org/apikeys",
+      "hideElements": ".sidemenu"
     },
     {
-      "url": "http://localhost:3000/dashboards"
+      "url": "http://localhost:3000/dashboards",
+      "hideElements": ".sidemenu"
     }
   ]
 }

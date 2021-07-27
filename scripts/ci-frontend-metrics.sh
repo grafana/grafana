@@ -2,7 +2,7 @@
 set -e
 
 ERROR_COUNT="$(./node_modules/.bin/tsc --project tsconfig.json --noEmit --strict true | grep -oP 'Found \K(\d+)')"
-ACCESSIBILITY_ERROR_COUNT="$(yarn -s test:accessibilty --json | jq '.errors')"
+ACCESSIBILITY_ERROR_COUNT="$(yarn -s test:accessibility --json | jq '.errors')"
 DIRECTIVES="$(grep -r -o  directive public/app/ | wc -l)"
 CONTROLLERS="$(grep -r -oP 'class .*Ctrl' public/app/ | wc -l)"
 STORIES_COUNT="$(find ./packages/grafana-ui/src/components -name "*.story.tsx" | wc -l)"
