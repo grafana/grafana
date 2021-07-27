@@ -48,6 +48,9 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddTablesMigrations(mg)
 	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
+	if mg.Cfg != nil || mg.Cfg.IsLiveConfigEnabled() {
+		addLiveChannelMigrations(mg)
+	}
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

@@ -49,7 +49,6 @@ type SQLStore struct {
 	log                         log.Logger
 	Dialect                     migrator.Dialect
 	skipEnsureDefaultOrgAndUser bool
-	dbMigrators                 []registry.DatabaseMigrator
 	migrations                  registry.DatabaseMigrator
 }
 
@@ -125,11 +124,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	return ss, nil
 }
 
-// AddMigrator adds a registry.DatabaseMigrator.
-func (ss *SQLStore) AddMigrator(migrator registry.DatabaseMigrator) {
-	ss.dbMigrators = append(ss.dbMigrators, migrator)
-}
-
 // Migrate performs database migrations.
 // Has to be done in a second phase (after initialization), since other services can register migrations during
 // the initialization phase.
@@ -140,9 +134,6 @@ func (ss *SQLStore) Migrate() error {
 
 	migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
 	ss.migrations.AddMigration(migrator)
-	for _, dbm := range ss.dbMigrators {
-		dbm.AddMigration(migrator)
-	}
 
 	return migrator.Start()
 }

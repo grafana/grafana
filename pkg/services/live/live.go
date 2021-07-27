@@ -32,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/services/live/survey"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/util"
@@ -82,8 +81,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			Features: make(map[string]models.ChannelHandlerFactory),
 		},
 	}
-
-	sqlStore.AddMigrator(g)
 
 	logger.Debug("GrafanaLive initialization", "ha", g.IsHA())
 
@@ -358,15 +355,6 @@ func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, e
 		return nil, fmt.Errorf("%s plugin does not implement StreamHandler: %#v", pluginID, plugin)
 	}
 	return streamHandler, nil
-}
-
-// AddMigration defines database migrations.
-// This is an implementation of registry.DatabaseMigrator.
-func (g *GrafanaLive) AddMigration(mg *migrator.Migrator) {
-	if g == nil || g.Cfg == nil || !g.Cfg.IsLiveConfigEnabled() {
-		return
-	}
-	database.AddLiveChannelMigrations(mg)
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {
