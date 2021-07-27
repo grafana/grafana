@@ -118,7 +118,7 @@ func (s *Implementation) LookupByOneOf(userId int64, email string, login string)
 	var err error
 
 	// If not found, try to find the user by id
-	if !foundUser && userId != 0 {
+	if userId != 0 {
 		foundUser, user, err = s.getUserById(userId)
 		if err != nil {
 			return false, nil, err
