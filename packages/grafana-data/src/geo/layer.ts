@@ -68,8 +68,8 @@ export interface MapLayerOptions<TConfig = any> {
  */
 export interface MapLayerHandler {
   init: () => BaseLayer;
-  legend?: () => ReactNode;
   update?: (data: PanelData) => void;
+  legend?: ReactNode;
 }
 
 /**

@@ -192,6 +192,9 @@ export default class GraphiteQuery {
         this.updateRenderedTarget(target, targets);
       }
     }
+
+    // clean-up added param
+    this.functions.forEach((func) => (func.added = false));
   }
 
   updateRenderedTarget(target: { refId: string | number; target: any; targetFull: any }, targets: any) {

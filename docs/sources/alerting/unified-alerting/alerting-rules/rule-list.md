@@ -8,9 +8,10 @@ weight = 400
 # View alert rules
 
 To view alerts:
+
 1. In the Grafana menu hover your cursor over the Alerting (bell) icon.
-1. Click **Alert Rules**. You can see all configured Grafana alert rules as well as any rules from Loki or Prometheus data sources. 
-By default, the group view is shown. You can toggle between group or state views by clicking the relevant **View as** buttons in the options area at the top of the page.
+1. Click **Alert Rules**. You can see all configured Grafana alert rules as well as any rules from Loki or Prometheus data sources.
+   By default, the group view is shown. You can toggle between group or state views by clicking the relevant **View as** buttons in the options area at the top of the page.
 
 ### Group view
 
@@ -25,9 +26,10 @@ State view shows alert rules grouped by state. Use this view to get an overview 
 ![Alert rule state view](/static/img/docs/alerting/unified/rule-list-state-view-8-0.png 'Screenshot of alert rule state view')
 
 ## Filter alert rules
+
 You can use the following filters to view only alert rules that match specific criteria:
 
-- **Filter alerts by name or label -** Type an alert name, label name or value in the **Search** input.
+- **Filter alerts by label -** Search by alert labels using label selectors in the **Search** input. eg: `environment=production,region=~US|EU,severity!=warning`
 - **Filter alerts by state -** In **States** Select which alert states you want to see. All others are hidden.
 - **Filter alerts by data source -** Click the **Select data source** and select an alerting data source. Only alert rules that query selected data source will be visible.
 
@@ -39,13 +41,13 @@ A rule row shows the rule state, health, and summary annotation if the rule has 
 
 ### Edit or delete rule
 
-Grafana rules can only be edited or deleted by users with Edit permissions for the folder which contains the rule. Prometheus or Loki rules can be edited or deleted by users with Editor or Admin roles. 
+Grafana rules can only be edited or deleted by users with Edit permissions for the folder which contains the rule. Prometheus or Loki rules can be edited or deleted by users with Editor or Admin roles.
 
 To edit or delete a rule:
 
-1. Expand this rule to reveal rule controls. 
+1. Expand this rule to reveal rule controls.
 1. Click **Edit** to go to the rule editing form. Make changes following [instructions listed here]({{< relref "./create-grafana-managed-rule.md" >}}).
-1. Click **Delete"** to delete a rule. 
+1. Click **Delete"** to delete a rule.
 
 ## Opt-out a Loki or Prometheus data source
 
