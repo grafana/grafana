@@ -13,6 +13,7 @@ import { AdditionalOptionsFormPartProps, PostgreSQLAdditionalOptionsProps } from
 import { tablestatOptions } from './AdditionalOptions.constants';
 import { TablestatOptionsInterface } from './AdditionalOptions.types';
 import { MysqlTLSCertificate } from './MysqlTLSCertificate';
+import { PostgreTLSCertificate } from './PostgreTLSCertificate';
 
 export const AdditionalOptionsFormPart: FC<AdditionalOptionsFormPartProps> = ({
   instanceType,
@@ -90,6 +91,7 @@ export const getAdditionalOptions = (type: InstanceTypes, remoteInstanceCredenti
       return (
         <>
           <CheckboxField label={Messages.form.labels.additionalOptions.tls} name="tls" />
+          <PostgreTLSCertificate form={form} />
           <CheckboxField label={Messages.form.labels.additionalOptions.tlsSkipVerify} name="tls_skip_verify" />
           <PostgreSQLAdditionalOptions
             isRDS={remoteInstanceCredentials.isRDS}
