@@ -110,14 +110,14 @@ func (ng *AlertNG) Init() error {
 	return nil
 }
 
-// Run starts the scheduler.
+// Run starts the scheduler and Alertmanager.
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
 	ng.stateManager.Warm()
 
 	children, subCtx := errgroup.WithContext(ctx)
 	children.Go(func() error {
-		return ng.schedule.Ticker(subCtx)
+		return ng.schedule.Run(subCtx)
 	})
 	children.Go(func() error {
 		return ng.Alertmanager.Run(subCtx)
