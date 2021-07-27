@@ -6,7 +6,7 @@ import {
   handleMetricsAutoCompleteError,
   handleTagsAutoCompleteError,
 } from './helpers';
-import { AngularDropdownOptions, GraphiteSegment, GraphiteTag } from '../types';
+import { GraphiteSegment, GraphiteTag } from '../types';
 
 /**
  * Providers are hooks for views to provide temporal data for autocomplete. They don't modify the state.
@@ -90,25 +90,21 @@ export async function getAltSegments(
   return [];
 }
 
-export function getTagOperators(): AngularDropdownOptions[] {
-  return mapToDropdownOptions(GRAPHITE_TAG_OPERATORS);
+export function getTagOperators(): string[] {
+  return GRAPHITE_TAG_OPERATORS;
 }
 
 /**
  * Returns tags as dropdown options
  */
-export async function getTags(
-  state: GraphiteQueryEditorState,
-  index: number,
-  tagPrefix: string
-): Promise<AngularDropdownOptions[]> {
+export async function getTags(state: GraphiteQueryEditorState, index: number, tagPrefix: string): Promise<string[]> {
   try {
     const tagExpressions = state.queryModel.renderTagExpressions(index);
     const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
 
     const altTags = map(values, 'text');
     altTags.splice(0, 0, state.removeTagValue);
-    return mapToDropdownOptions(altTags);
+    return altTags;
   } catch (err) {
     handleTagsAutoCompleteError(state, err);
   }
@@ -148,7 +144,7 @@ export async function getTagValues(
   tag: GraphiteTag,
   index: number,
   valuePrefix: string
-): Promise<AngularDropdownOptions[]> {
+): Promise<string[]> {
   const tagExpressions = state.queryModel.renderTagExpressions(index);
   const tagKey = tag.key;
   const values = await state.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix, {});
@@ -158,7 +154,7 @@ export async function getTagValues(
     altValues.push('${' + variable.name + ':regex}');
   });
 
-  return mapToDropdownOptions(altValues);
+  return altValues;
 }
 
 /**
@@ -181,10 +177,4 @@ async function addAltTagSegments(
 
 function removeTaggedEntry(altSegments: GraphiteSegment[]) {
   remove(altSegments, (s) => s.value === '_tagged');
-}
-
-function mapToDropdownOptions(results: string[]) {
-  return map(results, (value) => {
-    return { text: value, value: value };
-  });
 }

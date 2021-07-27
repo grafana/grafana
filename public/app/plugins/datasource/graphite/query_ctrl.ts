@@ -3,10 +3,9 @@ import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
 import { TemplateSrv } from '@grafana/runtime';
 import { actions } from './state/actions';
-import { getAltSegments, getTagOperators, getTags, getTagsAsSegments, getTagValues } from './state/providers';
+import { getAltSegments } from './state/providers';
 import { createStore, GraphiteQueryEditorState } from './state/store';
 import {
-  AngularDropdownOptions,
   GraphiteActionDispatcher,
   GraphiteQueryEditorAngularDependencies,
   GraphiteSegment,
@@ -128,7 +127,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
    * Apply changes to a given metric segment
    */
   async segmentValueChanged(segment: GraphiteSegment, index: number) {
-    await this.dispatch(actions.segmentValueChanged({ segment, index }));
+    // WIP: moved to MetricsSegment
   }
 
   spliceSegments(index: any) {
@@ -148,7 +147,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   async addFunction(name: string) {
-    await this.dispatch(actions.addFunction({ name }));
+    // WIP: removed, called from AddGraphiteFunction
   }
 
   removeFunction(func: any) {
@@ -177,22 +176,22 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   /**
    * Get list of tags for editing exiting tag with <gf-form-dropdown>
    */
-  async getTags(index: number, query: string): Promise<AngularDropdownOptions[]> {
-    return await getTags(this.state, index, query);
+  getTags(index: number, query: string): void {
+    // WIP: removed, called from TagsSection
   }
 
   /**
    * Get tag list when adding a new tag with <metric-segment>
    */
-  async getTagsAsSegments(query: string): Promise<GraphiteSegment[]> {
-    return await getTagsAsSegments(this.state, query);
+  getTagsAsSegments(query: string): void {
+    // WIP: removed, called from TagsSection
   }
 
   /**
    * Get list of available tag operators
    */
-  getTagOperators(): AngularDropdownOptions[] {
-    return getTagOperators();
+  getTagOperators(): void {
+    // WIP: removed, called from TagsSection
   }
 
   getAllTagValues(tag: { key: any }) {
@@ -202,19 +201,19 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   /**
    * Get list of available tag values
    */
-  async getTagValues(tag: GraphiteTag, index: number, query: string): Promise<AngularDropdownOptions[]> {
-    return await getTagValues(this.state, tag, index, query);
+  getTagValues(tag: GraphiteTag, index: number, query: string): void {
+    // WIP: removed, called from TagsSection
   }
 
   /**
    * Apply changes when a tag is changed
    */
   async tagChanged(tag: GraphiteTag, index: number) {
-    await this.dispatch(actions.tagChanged({ tag, index }));
+    // WIP: removed, called from TagsSection
   }
 
   async addNewTag(segment: GraphiteSegment) {
-    await this.dispatch(actions.addNewTag({ segment }));
+    // WIP: removed, called from TagsSection
   }
 
   removeTag(index: any) {
@@ -235,7 +234,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   async unpause() {
-    await this.dispatch(actions.unpause());
+    // WIP: removed, called from PlayButton
   }
 
   getCollapsedText() {

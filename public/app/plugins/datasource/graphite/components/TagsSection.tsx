@@ -22,10 +22,10 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
   const getTagsOptions = useCallback(
     async (index) => {
       const tags = await getTags(state, index, '');
-      return tags.map((value) => {
+      return tags.map((tagName) => {
         return {
-          label: value.text,
-          value: value.value,
+          label: tagName,
+          value: tagName,
         };
       });
     },
@@ -37,8 +37,8 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
       const values = await getTagValues(state, tag, index, '');
       return values.map((value) => {
         return {
-          label: value.text,
-          value: value.value,
+          label: value,
+          value: value,
         };
       });
     },
@@ -60,7 +60,7 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
         value: segment,
       };
     });
-  }, []);
+  }, [state]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -84,10 +84,10 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
             <Segment<GraphiteTagOperator>
               inputMinWidth={50}
               value={tag.operator}
-              options={getTagOperators().map((value) => {
+              options={getTagOperators().map((operator: GraphiteTagOperator) => {
                 return {
-                  label: value.text as GraphiteTagOperator,
-                  value: value.value as GraphiteTagOperator,
+                  label: operator,
+                  value: operator,
                 };
               })}
               onChange={(value) => {
