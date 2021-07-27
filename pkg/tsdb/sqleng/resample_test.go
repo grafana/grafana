@@ -238,7 +238,7 @@ func TestResampleWide(t *testing.T) {
 				}),
 				data.NewField(`Values Floats`, data.Labels{"Animal Factor": "sloth"}, []*float64{
 					pointer.Float64(10.5),
-					nil,
+					pointer.Float64(12.5),
 					nil,
 					pointer.Float64(15.0),
 					nil,
