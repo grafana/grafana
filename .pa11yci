@@ -1,7 +1,7 @@
 {
   "defaults": {
     "concurrency": 1,
-    "standard": "WCAG2AA"
+    "standard": "WCAG2AA",
    },
   "urls": [
     {
@@ -58,7 +58,8 @@
     },
     {
       "url": "http://localhost:3000/dashboards",
-      "hideElements": ".sidemenu"
+      "hideElements": ".sidemenu",
+      "rootElement": ".main-view"
     }
   ]
 }

@@ -158,7 +158,7 @@ func TestAlertingTicker(t *testing.T) {
 	ctx := context.Background()
 
 	go func() {
-		err := sched.Ticker(ctx)
+		err := sched.Run(ctx)
 		require.NoError(t, err)
 	}()
 	runtime.Gosched()

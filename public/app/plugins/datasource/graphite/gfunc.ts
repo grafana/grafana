@@ -2,7 +2,7 @@ import { assign, each, filter, forEach, get, includes, isString, last, map, toSt
 import { isVersionGtOrEq } from 'app/core/utils/version';
 import { InterpolateFunction } from '@grafana/data';
 
-type ParamDef = {
+export type ParamDef = {
   name: string;
   type: string;
   options?: Array<string | number>;
@@ -990,6 +990,10 @@ export class FuncInstance {
   def: FuncDef;
   params: Array<string | number>;
   text: any;
+  /**
+   * True if this function was just added and not edited yet. It's used to focus on first
+   * function param to edit it straight away after adding a function.
+   */
   declare added: boolean;
   /**
    * Hidden functions are not displayed in UI but available in text editor
