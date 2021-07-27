@@ -142,7 +142,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   async targetTextChanged(event: ChangeEvent<HTMLInputElement>) {
-    await this.dispatch(actions.updateQuery({ query: event.target.value }));
+    // WIP: removed, handled by GraphiteTextEditor
   }
 
   updateModelTarget() {
