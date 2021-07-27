@@ -6,5 +6,8 @@ export interface SegmentProps<T> {
   allowCustomValue?: boolean;
   placeholder?: string;
   disabled?: boolean;
-  inputMinWidth?: number;
+  onExpandedChange?: (expanded: boolean) => void;
+  autofocus?: boolean;
+  allowEmptyValue?: boolean;
+  inputPlaceholder?: string;
 }

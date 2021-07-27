@@ -28,6 +28,7 @@ import QueryEditor from 'app/plugins/datasource/grafana-azure-monitor-datasource
 import { GraphiteTextEditor } from '../plugins/datasource/graphite/components/GraphiteTextEditor';
 import { PlayButton } from '../plugins/datasource/graphite/components/PlayButton';
 import { AddGraphiteFunction } from '../plugins/datasource/graphite/components/AddGraphiteFunction';
+import { GraphiteFunctionEditor } from '../plugins/datasource/graphite/components/GraphiteFunctionEditor';
 
 const { SecretFormField } = LegacyForms;
 
@@ -209,4 +210,5 @@ export function registerAngularDirectives() {
   react2AngularDirective('graphiteTextEditor', GraphiteTextEditor, ['rawQuery', 'dispatch']);
   react2AngularDirective('playButton', PlayButton, ['dispatch']);
   react2AngularDirective('addGraphiteFunction', AddGraphiteFunction, ['funcDefs', 'dispatch']);
+  react2AngularDirective('graphiteFunctionEditor', GraphiteFunctionEditor, ['func', 'dispatch']);
 }

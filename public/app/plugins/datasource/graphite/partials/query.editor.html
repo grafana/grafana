@@ -66,7 +66,7 @@
       </div>
 
       <div ng-repeat="func in ctrl.state.queryModel.functions" class="gf-form">
-        <span graphite-func-editor class="gf-form-label query-part" ng-hide="func.hidden"></span>
+        <graphite-function-editor func="func" dispatch="ctrl.dispatch" ng-hide="func.hidden"></graphite-function-editor>
       </div>
 
       <div class="gf-form dropdown">
