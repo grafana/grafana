@@ -63,7 +63,7 @@ Use this option to chose how to view the annotated data.
 
 ### Time before
 
-Use this option to set the time range before the annotation.
+Use this option to set the time range before the annotation.  Use duration string values like "1h" = 1 hour, "10m" = 10 minutes, etc
 
 ### Time after
 
