@@ -1,7 +1,7 @@
 {
   "type": "panel",
   "name": "Canvas",
-  "id": "text",
+  "id": "canvas",
   "state": "alpha",
 
   "info": {

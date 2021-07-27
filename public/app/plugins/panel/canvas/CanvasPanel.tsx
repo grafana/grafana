@@ -6,7 +6,7 @@ import { PanelOptions } from './models.gen';
 interface Props extends PanelProps<PanelOptions> {}
 
 interface State {
-  html: string;
+  item: string;
 }
 
 export class CanvasPanel extends PureComponent<Props, State> {
@@ -15,6 +15,11 @@ export class CanvasPanel extends PureComponent<Props, State> {
   }
 
   render() {
+    const { root } = this.props.options;
+    if (root?.elements?.length) {
+      return <pre>{JSON.stringify(root.elements[0], null, 2)}</pre>;
+    }
+
     return <div>HELLO</div>;
   }
 }

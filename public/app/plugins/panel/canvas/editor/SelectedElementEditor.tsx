@@ -11,7 +11,7 @@ export const SelectedElementEditor: FC<StandardEditorProps<CanvasLayerOptions, a
   context,
 }) => {
   const selectedElement = useMemo(() => {
-    return value.elements[0] ?? { ...DEFAULT_ELEMENT_CONFIG };
+    return value?.elements[0] ?? { ...DEFAULT_ELEMENT_CONFIG };
   }, [value]);
 
   return (
