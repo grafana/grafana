@@ -305,12 +305,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 				// Remove any inserted role after the test case has been run
 				t.Cleanup(func() { removeRoleHelper(run.role.Name) })
 
-				err := ac.registerFixedRole(run.role, run.builtInRoles)
-				if run.wantErr != nil {
-					assert.ErrorIs(t, err, run.wantErr)
-					return
-				}
-				require.NoError(t, err)
+				ac.registerFixedRole(run.role, run.builtInRoles)
 
 				// Check role has been registered
 				storedRole, ok := accesscontrol.FixedRoles[run.role.Name]
