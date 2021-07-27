@@ -1,7 +1,7 @@
 {
   "defaults": {
     "concurrency": 1,
-    "standard": "WCAG2AA",
+    "standard": "WCAG2AA"
    },
   "urls": [
     {
