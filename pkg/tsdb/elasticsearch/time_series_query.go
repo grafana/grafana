@@ -69,7 +69,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	if err != nil {
 		return err
 	}
-	interval := e.intervalCalculator.Calculate(*e.tsdbQuery.TimeRange, minInterval)
+	interval := e.intervalCalculator.Calculate(*e.tsdbQuery.TimeRange, minInterval, "min")
 
 	b := ms.Search(interval)
 	b.Size(0)

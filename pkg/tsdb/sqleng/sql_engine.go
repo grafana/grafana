@@ -348,7 +348,7 @@ var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRan
 	if err != nil {
 		return "", err
 	}
-	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
+	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval, "min")
 
 	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
 	sql = strings.ReplaceAll(sql, "$__interval", interval.Text)

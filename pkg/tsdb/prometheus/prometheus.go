@@ -23,6 +23,7 @@ import (
 var (
 	plog         log.Logger
 	legendFormat *regexp.Regexp = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	safeRes      int64          = 11000
 )
 
 func init() {
@@ -122,6 +123,9 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 
 func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query plugins.DataQuery) (
 	[]*PrometheusQuery, error) {
+	var intervalMode string
+	var adjustedInterval time.Duration
+
 	qs := []*PrometheusQuery{}
 	for _, queryModel := range query.Queries {
 		expr, err := queryModel.Model.Get("expr").String()
@@ -141,10 +145,13 @@ func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query plugins
 			return nil, err
 		}
 
-		stepMode := queryModel.Model.Get("stepMode").MustString("min")
-		intervalFactor := queryModel.Model.Get("intervalFactor").MustInt64(1)
 		hasQueryInterval := queryModel.Model.Get("interval").MustString("") != ""
-		var adjustedIntervalValue time.Duration
+		// Only use stepMode if we have interval in query, otherwise use "min"
+		if hasQueryInterval {
+			intervalMode = queryModel.Model.Get("stepMode").MustString("min")
+		} else {
+			intervalMode = "min"
+		}
 
 		// Calculate interval value from query or data source settings or use default value
 		intervalValue, err := interval.GetIntervalFrom(dsInfo, queryModel.Model, time.Second*15)
@@ -152,25 +159,17 @@ func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query plugins
 			return nil, err
 		}
 
-		if hasQueryInterval && stepMode == "max" {
-			// With max stepMode - use interval calculator to get ideal interval based on time range
-			rangeIntervalValue := e.intervalCalculator.Calculate(*query.TimeRange, 0).Value
-			// If rangeIntervalValue is smaller than max interval value, use it
-			if rangeIntervalValue < intervalValue {
-				adjustedIntervalValue = rangeIntervalValue
-				// Otherwise use max intervalValue
-			} else {
-				adjustedIntervalValue = intervalValue
-			}
-		} else if hasQueryInterval && stepMode == "exact" {
-			// With exact stepMode - use passed interval value
-			adjustedIntervalValue = intervalValue
+		calculatedInterval := e.intervalCalculator.Calculate(*query.TimeRange, intervalValue, intervalMode).Value
+		safeInterval := e.intervalCalculator.CalculateSafeInterval(*query.TimeRange, safeRes).Value
+
+		if calculatedInterval > safeInterval {
+			adjustedInterval = calculatedInterval
 		} else {
-			// With default stepMode - use interval calculator to get ideal interval based on time range and passed value
-			adjustedIntervalValue = e.intervalCalculator.Calculate(*query.TimeRange, intervalValue).Value
+			adjustedInterval = safeInterval
 		}
 
-		step := time.Duration(int64(adjustedIntervalValue) * intervalFactor)
+		intervalFactor := queryModel.Model.Get("intervalFactor").MustInt64(1)
+		step := time.Duration(int64(adjustedInterval) * intervalFactor)
 
 		qs = append(qs, &PrometheusQuery{
 			Expr:         expr,

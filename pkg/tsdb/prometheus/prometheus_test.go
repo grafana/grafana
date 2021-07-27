@@ -97,13 +97,13 @@ func TestPrometheus(t *testing.T) {
 			"format": "time_series",
 			"refId": "A",
 			"stepMode": "max",
-			"interval": "2s"
+			"interval": "6s"
 		}`)
 		timerange := plugins.NewDataTimeRange("12h", "now")
 		query.TimeRange = &timerange
 		models, err := executor.parseQuery(dsInfo, query)
 		require.NoError(t, err)
-		require.Equal(t, time.Second*2, models[0].Step)
+		require.Equal(t, time.Second*6, models[0].Step)
 	})
 
 	t.Run("parsing query model with long step and max stepMode", func(t *testing.T) {
@@ -119,6 +119,21 @@ func TestPrometheus(t *testing.T) {
 		models, err := executor.parseQuery(dsInfo, query)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, models[0].Step)
+	})
+
+	t.Run("parsing query model with unsafe interval", func(t *testing.T) {
+		query := queryContext(`{
+			"expr": "go_goroutines",
+			"format": "time_series",
+			"refId": "A",
+			"stepMode": "max",
+			"interval": "2s"
+		}`)
+		timerange := plugins.NewDataTimeRange("12h", "now")
+		query.TimeRange = &timerange
+		models, err := executor.parseQuery(dsInfo, query)
+		require.NoError(t, err)
+		require.Equal(t, time.Second*5, models[0].Step)
 	})
 
 	t.Run("parsing query model without step parameter", func(t *testing.T) {

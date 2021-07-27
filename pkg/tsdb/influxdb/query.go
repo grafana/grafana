@@ -29,7 +29,7 @@ func (query *Query) Build(queryContext plugins.DataQuery) (string, error) {
 	}
 
 	calculator := interval.NewCalculator(interval.CalculatorOptions{})
-	i := calculator.Calculate(*queryContext.TimeRange, query.Interval)
+	i := calculator.Calculate(*queryContext.TimeRange, query.Interval, "min")
 
 	res = strings.ReplaceAll(res, "$timeFilter", query.renderTimeFilter(queryContext))
 	res = strings.ReplaceAll(res, "$interval", i.Text)
