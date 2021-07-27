@@ -1,26 +1,39 @@
-import React, { FC, useMemo } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { StandardEditorProps } from '@grafana/data';
-import { CanvasLayerOptions } from '../base';
+import { CanvasGroupOptions } from '../base';
 import { PanelOptions } from '../models.gen';
 import { CanvasElementEditor } from './ElementEditor';
-import { DEFAULT_ELEMENT_CONFIG } from '../elements/registry';
+import { lastCanvasPanelInstance } from '../CanvasPanel';
+import { useObservable } from 'react-use';
+import { of } from 'rxjs';
 
-export const SelectedElementEditor: FC<StandardEditorProps<CanvasLayerOptions, any, PanelOptions>> = ({
-  value,
-  onChange,
-  context,
-}) => {
-  const selectedElement = useMemo(() => {
-    return value?.elements[0] ?? { ...DEFAULT_ELEMENT_CONFIG };
-  }, [value]);
+export const SelectedElementEditor: FC<StandardEditorProps<CanvasGroupOptions, any, PanelOptions>> = ({ context }) => {
+  const [scene, setScene] = useState(lastCanvasPanelInstance?.scene);
+
+  useEffect(() => {
+    if (scene) {
+      return;
+    }
+
+    console.log('Lazy load the scene');
+    const timer = setTimeout(() => setScene(lastCanvasPanelInstance?.scene), 200);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [scene]);
+
+  const selected = useObservable(scene?.selected ?? of(undefined));
+  if (!selected) {
+    return <div>No item is selected...</div>;
+  }
 
   return (
     <CanvasElementEditor
-      options={selectedElement}
+      options={selected.options}
       data={context.data}
       onChange={(cfg) => {
         console.log('Change element:', cfg);
-        onChange({ ...value, elements: [cfg] });
+        lastCanvasPanelInstance!.scene.onChange(selected.UID, cfg);
       }}
     />
   );

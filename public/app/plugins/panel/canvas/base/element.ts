@@ -22,8 +22,10 @@ export interface CanvasElementOptions<TConfig = any> {
   border?: LineConfig;
 }
 
-export interface CanvasLayerOptions extends CanvasElementOptions {
+export interface CanvasGroupOptions extends CanvasElementOptions {
+  type: 'group';
   elements: CanvasElementOptions[];
+  // layout? // absolute, list, grid?
 }
 
 export interface CanvasElementProps<TConfig = any> {
@@ -41,7 +43,7 @@ export interface CanvasElementItem<TConfig = any> extends RegistryItemWithOption
   defaultSize?: Placement;
 
   /** Component used to draw */
-  display?: ComponentType<CanvasElementProps<TConfig>>;
+  display: ComponentType<CanvasElementProps<TConfig>>;
 
   /** Build the configuraiton UI */
   registerOptionsUI?: (builder: PanelOptionsEditorBuilder<CanvasElementOptions<TConfig>>) => void;
