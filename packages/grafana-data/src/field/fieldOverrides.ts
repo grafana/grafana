@@ -32,6 +32,7 @@ import { getFrameDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { getTemplateProxyForField } from './templateProxies';
+import { asHexString } from '../themes/colorManipulator';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -216,6 +217,13 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
       }
 
       v = disp(value);
+
+      // convert to hex6 or hex8 so downstream we can cheaply test for alpha (and set new alpha)
+      // via a simple length check (in colorManipulator) rather using slow parsing via tinycolor
+      if (v.color) {
+        v.color = asHexString(v.color);
+      }
+
       cache.set(value, v);
     }
     return v;
