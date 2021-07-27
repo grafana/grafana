@@ -53,7 +53,7 @@ import LanguageProvider from './language_provider';
 import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import syntax from './syntax';
-import { DEFAULT_STEP_OPTION } from './components/LokiOptionFields';
+import { DEFAULT_STEP_OPTION, DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -196,12 +196,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         )
       );
       const stepMode = target.stepMode || (DEFAULT_STEP_OPTION.value as StepType);
+      const resolution = target.resolution || (DEFAULT_RESOLUTION.value as number);
 
       const adjustedInterval =
         this.adjustInterval(
           (options as DataQueryRequest<LokiQuery>).intervalMs || 1000,
           stepInterval,
           stepMode,
+          resolution,
           rangeMs
         ) / 1000;
       // We want to ceil to 3 decimal places
@@ -664,7 +666,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return error;
   }
 
-  adjustInterval(interval: number, stepInterval: number, stepMode: StepType, range: number) {
+  adjustInterval(dynamicInterval: number, stepInterval: number, stepMode: StepType, resolution: number, range: number) {
     // Loki will drop queries that might return more than 11000 data points.
     // Calibrate interval if it is too small.
     let safeInterval = range / 11000;
@@ -674,14 +676,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     // The min interval is set to 1ms
     let adjustedInterval = safeInterval;
     if (stepMode === 'min') {
-      adjustedInterval = Math.max(interval, stepInterval, safeInterval);
+      adjustedInterval = Math.max(resolution * dynamicInterval, stepInterval, safeInterval);
     } else if (stepMode === 'max') {
-      adjustedInterval = Math.min(interval, stepInterval);
+      adjustedInterval = Math.min(resolution * dynamicInterval, stepInterval);
       if (adjustedInterval < safeInterval) {
         adjustedInterval = safeInterval;
       }
     } else if (stepMode === 'exact') {
-      adjustedInterval = Math.max(stepInterval, safeInterval);
+      adjustedInterval = Math.max(resolution * stepInterval, safeInterval);
     }
     return adjustedInterval;
   }

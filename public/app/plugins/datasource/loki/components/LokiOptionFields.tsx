@@ -31,10 +31,17 @@ const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
   },
 ];
 
-const RESOLUTION_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4, 5, 10], (value: number) => ({
-  value,
-  label: '1/' + value,
-}));
+export const DEFAULT_RESOLUTION: SelectableValue<number> = {
+  value: 1,
+  label: '1/1',
+};
+
+const RESOLUTION_OPTIONS: Array<SelectableValue<number>> = [DEFAULT_RESOLUTION].concat(
+  map([2, 3, 4, 5, 10], (value: number) => ({
+    value,
+    label: '1/' + value,
+  }))
+);
 
 export const DEFAULT_STEP_OPTION: SelectableValue<StepType> = {
   value: 'min',
