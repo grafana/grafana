@@ -21,7 +21,7 @@ import { convertTagsLogfmt } from './util';
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 
 export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
-  uploadedJson?: string;
+  uploadedJson: string | ArrayBuffer | null = null;
   constructor(private instanceSettings: DataSourceInstanceSettings, private readonly timeSrv: TimeSrv = getTimeSrv()) {
     super(instanceSettings);
   }
@@ -55,7 +55,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
 
     if (target.queryType === 'upload') {
       return this.uploadedJson
-        ? of({ data: [createTraceFrame(JSON.parse(this.uploadedJson).data[0])] })
+        ? of({ data: [createTraceFrame(JSON.parse(this.uploadedJson as string).data[0])] })
         : of({ data: [emptyTraceDataFrame] });
     }
 
