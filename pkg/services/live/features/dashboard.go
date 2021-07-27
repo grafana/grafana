@@ -16,12 +16,12 @@ import (
 type actionType string
 
 const (
-	ACTION_SAVED     actionType = "saved"
-	ACTION_DELETED   actionType = "deleted"
-	EDITING_STARTED  actionType = "editing-started"
-	EDITING_FINISHED actionType = "editing-finished"
+	ActionSaved    actionType = "saved"
+	ActionDeleted  actionType = "deleted"
+	EditingStarted actionType = "editing-started"
+	//EditingFinished actionType = "editing-finished"
 
-	GITOPS_CHANNEL = "grafana/dashboard/gitops"
+	GitopsChannel = "grafana/dashboard/gitops"
 )
 
 // DashboardEvent events related to dashboards
@@ -42,7 +42,7 @@ type DashboardHandler struct {
 }
 
 // GetHandlerForPath called on init
-func (h *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler, error) {
+func (h *DashboardHandler) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
 	return h, nil // all dashboards share the same handler
 }
 
@@ -85,7 +85,7 @@ func (h *DashboardHandler) OnSubscribe(_ context.Context, user *models.SignedInU
 }
 
 // OnPublish is called when someone begins to edit a dashboard
-func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+func (h *DashboardHandler) OnPublish(_ context.Context, user *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
 	parts := strings.Split(e.Path, "/")
 	if parts[0] == "gitops" {
 		// gitops gets all changes for everything, so lets make sure it is an admin user
@@ -104,7 +104,7 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInU
 		if err != nil || event.UID != parts[1] {
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("bad request")
 		}
-		if event.Action != EDITING_STARTED {
+		if event.Action != EditingStarted {
 			// just ignore the event
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("ignore???")
 		}
@@ -114,8 +114,8 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInU
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 		}
 
-		guardian := guardian.New(query.Result.Id, user.OrgId, user)
-		canEdit, err := guardian.CanEdit()
+		guard := guardian.New(query.Result.Id, user.OrgId, user)
+		canEdit, err := guard.CanEdit()
 		if err != nil {
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
 		}
@@ -154,7 +154,7 @@ func (h *DashboardHandler) publish(orgID int64, event dashboardEvent) error {
 	}
 
 	// Send everything to the gitops channel
-	return h.Publisher(orgID, GITOPS_CHANNEL, msg)
+	return h.Publisher(orgID, GitopsChannel, msg)
 }
 
 // DashboardSaved will broadcast to all connected dashboards
@@ -165,7 +165,7 @@ func (h *DashboardHandler) DashboardSaved(orgID int64, user *models.UserDisplayD
 
 	msg := dashboardEvent{
 		UID:       dashboard.Uid,
-		Action:    ACTION_SAVED,
+		Action:    ActionSaved,
 		User:      user,
 		Message:   message,
 		Dashboard: dashboard,
@@ -182,14 +182,14 @@ func (h *DashboardHandler) DashboardSaved(orgID int64, user *models.UserDisplayD
 func (h *DashboardHandler) DashboardDeleted(orgID int64, user *models.UserDisplayDTO, uid string) error {
 	return h.publish(orgID, dashboardEvent{
 		UID:    uid,
-		Action: ACTION_DELETED,
+		Action: ActionDeleted,
 		User:   user,
 	})
 }
 
 // HasGitOpsObserver will return true if anyone is listening to the `gitops` channel
 func (h *DashboardHandler) HasGitOpsObserver(orgID int64) bool {
-	count, err := h.ClientCount(orgID, GITOPS_CHANNEL)
+	count, err := h.ClientCount(orgID, GitopsChannel)
 	if err != nil {
 		logger.Error("error getting client count", "error", err)
 		return false

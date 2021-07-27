@@ -4,7 +4,7 @@ import { AzureLogsTableData, AzureLogsVariable } from '../types';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
 export default class ResponseParser {
-  columns: string[];
+  declare columns: string[];
   constructor(private results: any) {}
 
   parseQueryResult(): any {

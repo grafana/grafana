@@ -10,8 +10,14 @@ $panel-header-no-title-zindex: 1;
 .panel-container--no-title {
   .panel-header {
     position: absolute;
-    width: 100%;
+    left: min(50px, 10%); // allows space for interaction in the corders
+    right: min(50px, 10%);
     z-index: $panel-header-z-index;
+
+    &:hover {
+      left: 0;
+      right: 0;
+    }
   }
   .panel-content {
     height: 100%;
