@@ -370,7 +370,7 @@ This value is `false` by default.
 
 ### encryption_key
 
-The string used to generate a key for encrypting the cache. In order for encrypted cache data to persist between Grafana restarts, the key must be specified. If left empty when encryption is enabled, the key will be automatically generated on startup and the cache will be cleared upon restarts.
+This string generates a key for encrypting the cache. For the encrypted cache data to persist between Grafana restarts, this key must be specified. If it is left empty when encryption is enabled, then the key is automatically generated on startup and the cache is cleared upon restarts.
 
 The default is `""`.
 
