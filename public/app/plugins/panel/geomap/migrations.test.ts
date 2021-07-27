@@ -52,22 +52,13 @@ describe('Worldmap Migrations', () => {
           },
           "controls": Object {
             "mouseWheelZoom": true,
-            "showLegend": true,
             "showZoom": true,
-          },
-          "fieldMapping": Object {
-            "geohashField": "",
-            "latitudeField": "",
-            "longitudeField": "",
-            "metricField": "",
           },
           "layers": Array [],
           "view": Object {
-            "center": Object {
-              "id": "europe",
-              "lat": 46,
-              "lon": 14,
-            },
+            "id": "europe",
+            "lat": 46,
+            "lon": 14,
             "zoom": 6,
           },
         },

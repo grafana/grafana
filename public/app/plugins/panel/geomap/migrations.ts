@@ -27,13 +27,10 @@ export function worldmapToGeomapOptions(angular: any): { fieldConfig: FieldConfi
 
   const options: GeomapPanelOptions = {
     view: {
-      center: {
-        id: MapCenterID.Zero,
-      },
+      id: MapCenterID.Zero,
     },
     controls: {
       showZoom: true,
-      showLegend: Boolean(angular.showLegend),
       mouseWheelZoom: Boolean(angular.mouseWheelZoom),
     },
     basemap: {
@@ -42,12 +39,6 @@ export function worldmapToGeomapOptions(angular: any): { fieldConfig: FieldConfi
     layers: [
       // TODO? depends on current configs
     ],
-    fieldMapping: {
-      metricField: '',
-      geohashField: '',
-      latitudeField: '',
-      longitudeField: '',
-    },
   };
 
   let v = asNumber(angular.decimals);
@@ -94,11 +85,11 @@ export function worldmapToGeomapOptions(angular: any): { fieldConfig: FieldConfi
     Europe: 'europe',
     'West Asia': 'west-asia',
     'SE Asia': 'se-asia',
-    'Last GeoHash': MapCenterID.LastPoint,
+    'Last GeoHash': MapCenterID.Coordinates, // MapCenterID.LastPoint,
   };
-  options.view.center.id = mapCenters[angular.mapCenter as any];
-  options.view.center.lat = asNumber(angular.mapCenterLatitude);
-  options.view.center.lon = asNumber(angular.mapCenterLongitude);
+  options.view.id = mapCenters[angular.mapCenter as any];
+  options.view.lat = asNumber(angular.mapCenterLatitude);
+  options.view.lon = asNumber(angular.mapCenterLongitude);
   return { fieldConfig, options };
 }
 
