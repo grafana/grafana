@@ -1,36 +1,61 @@
-import React, { forwardRef, HTMLAttributes } from 'react';
+import React, { forwardRef, HTMLAttributes, useCallback } from 'react';
 import { cx, css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '../../themes';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
+import { PartialHighlighter } from '../Typeahead/PartialHighlighter';
+import { HighlightPart } from '../../types';
 
-/**
- * @public
- */
-export type OnLabelClick = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => void;
+type OnLabelClick = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => void;
 
-export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
+interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   name: string;
   active?: boolean;
   loading?: boolean;
   searchTerm?: string;
   value?: string;
   facets?: number;
+  title?: string;
+  highlightParts?: HighlightPart[];
   onClick?: OnLabelClick;
 }
 
-export const LokiLabel = forwardRef<HTMLElement, Props>(
-  ({ name, value, hidden, facets, onClick, className, loading, searchTerm, active, style, ...rest }, ref) => {
+/**
+ * @internal
+ */
+export const Label = forwardRef<HTMLElement, Props>(
+  (
+    {
+      name,
+      value,
+      hidden,
+      facets,
+      onClick,
+      className,
+      loading,
+      searchTerm,
+      active,
+      style,
+      title,
+      highlightParts,
+      ...rest
+    },
+    ref
+  ) => {
     const theme = useTheme2();
     const styles = getLabelStyles(theme);
     const searchWords = searchTerm ? [searchTerm] : [];
 
-    const onLabelClick = (event: React.MouseEvent<HTMLElement>) => {
-      if (onClick && !hidden) {
-        onClick(name, value, event);
-      }
-    };
+    const onLabelClick = useCallback(
+      (event: React.MouseEvent<HTMLElement>) => {
+        if (onClick && !hidden) {
+          onClick(name, value, event);
+        }
+      },
+      [onClick, name, hidden, value]
+    );
+
     // Using this component for labels and label values. If value is given use value for display text.
     let text = value || name;
     if (facets) {
@@ -43,7 +68,7 @@ export const LokiLabel = forwardRef<HTMLElement, Props>(
         ref={ref}
         onClick={onLabelClick}
         style={style}
-        title={text}
+        title={title || text}
         role="option"
         aria-selected={!!active}
         className={cx(
@@ -56,26 +81,30 @@ export const LokiLabel = forwardRef<HTMLElement, Props>(
         )}
         {...rest}
       >
-        <Highlighter
-          textToHighlight={text}
-          searchWords={searchWords}
-          autoEscape={true}
-          highlightClassName={styles.matchHighLight}
-        />
+        {highlightParts !== undefined ? (
+          <PartialHighlighter text={text} highlightClassName={styles.matchHighLight} highlightParts={highlightParts} />
+        ) : (
+          <Highlighter
+            textToHighlight={text}
+            searchWords={searchWords}
+            autoEscape
+            highlightClassName={styles.matchHighLight}
+          />
+        )}
       </span>
     );
   }
 );
 
-LokiLabel.displayName = 'LokiLabel';
+Label.displayName = 'Label';
 
 const getLabelStyles = (theme: GrafanaTheme2) => ({
   base: css`
+    display: inline-block;
     cursor: pointer;
     font-size: ${theme.typography.size.sm};
     line-height: ${theme.typography.bodySmall.lineHeight};
     background-color: ${theme.colors.background.secondary};
-    vertical-align: baseline;
     color: ${theme.colors.text};
     white-space: nowrap;
     text-shadow: none;

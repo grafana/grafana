@@ -1,7 +1,7 @@
 import React from 'react';
-import { getColorForTheme, GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
-import { stylesFactory, useTheme } from '../../themes';
+import { useTheme2, useStyles2 } from '../../themes';
 import { css } from '@emotion/css';
 import { ColorSwatch } from '../ColorPicker/ColorSwatch';
 
@@ -17,8 +17,8 @@ export interface ColorValueEditorProps {
  * @alpha
  * */
 export const ColorValueEditor: React.FC<ColorValueEditorProps> = ({ value, onChange }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
 
   return (
     <ColorPicker color={value ?? ''} onChange={onChange} enableNamedColors={true}>
@@ -30,7 +30,7 @@ export const ColorValueEditor: React.FC<ColorValueEditorProps> = ({ value, onCha
                 ref={ref}
                 onClick={showColorPicker}
                 onMouseLeave={hideColorPicker}
-                color={value ? getColorForTheme(value, theme) : theme.colors.formInputBorder}
+                color={value ? theme.visualization.getColorByName(value) : theme.components.input.borderColor}
               />
             </div>
           </div>
@@ -40,23 +40,23 @@ export const ColorValueEditor: React.FC<ColorValueEditorProps> = ({ value, onCha
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     spot: css`
       color: ${theme.colors.text};
-      background: ${theme.colors.formInputBg};
+      background: ${theme.components.input.background};
       padding: 3px;
-      height: ${theme.spacing.formInputHeight}px;
-      border: 1px solid ${theme.colors.formInputBorder};
+      height: ${theme.v1.spacing.formInputHeight}px;
+      border: 1px solid ${theme.components.input.borderColor};
       display: flex;
       flex-direction: row;
       align-items: center;
       &:hover {
-        border: 1px solid ${theme.colors.formInputBorderHover};
+        border: 1px solid ${theme.components.input.borderHover};
       }
     `,
     colorPicker: css`
-      padding: 0 ${theme.spacing.sm};
+      padding: 0 ${theme.spacing(1)};
     `,
     colorText: css`
       cursor: pointer;
@@ -64,10 +64,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     trashIcon: css`
       cursor: pointer;
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
       &:hover {
         color: ${theme.colors.text};
       }
     `,
   };
-});
+};

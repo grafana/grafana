@@ -95,7 +95,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     builder.setPrepData((alignedFrame: DataFrame) => preparePlotData(alignedFrame).data);
 
     builder.setCursor({
-      show: true,
+      show: false,
       x: false, // no crosshairs
       y: false,
     });

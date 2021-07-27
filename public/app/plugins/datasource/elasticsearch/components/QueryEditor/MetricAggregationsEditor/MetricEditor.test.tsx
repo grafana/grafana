@@ -94,7 +94,7 @@ describe('Metric Editor', () => {
 
       const getFields: ElasticDatasource['getFields'] = jest.fn(() => from([[]]));
 
-      const wrapper = ({ children }: { children: ReactNode }) => (
+      const wrapper = ({ children }: { children?: ReactNode }) => (
         <ElasticsearchProvider
           datasource={{ getFields, esVersion, xpack } as ElasticDatasource}
           query={query}
