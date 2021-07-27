@@ -120,7 +120,7 @@ export const DerivedField = (props: Props) => {
           type="text"
           value={value.urlDisplayLabel}
           onChange={handleChange('urlDisplayLabel')}
-          tooltip={'Use to override the button text when this derived field is found in a log.'}
+          tooltip={'Use to override the button label when this derived field is found in a log.'}
         />
       </div>
 
