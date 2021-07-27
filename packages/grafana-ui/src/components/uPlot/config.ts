@@ -285,7 +285,7 @@ export const graphFieldOptions = {
   stacking: [
     { label: 'Off', value: StackingMode.None },
     { label: 'Normal', value: StackingMode.Normal },
-    { label: 'Percent', value: StackingMode.Percent },
+    { label: '100%', value: StackingMode.Percent },
   ] as Array<SelectableValue<StackingMode>>,
 
   thresholdsDisplayModes: [
