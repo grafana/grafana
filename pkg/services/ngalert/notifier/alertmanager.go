@@ -661,7 +661,12 @@ func (am *Alertmanager) createReceiverStage(name string, integrations []notify.I
 }
 
 func waitFunc() time.Duration {
-	return setting.AlertingNotificationTimeout
+	// When it's a single instance, we don't need additional wait. The routing policies will have their own group wait.
+	// We need >0 wait here in case we have peers to sync the notification state with. 0 wait in that case can result
+	// in duplicate notifications being sent.
+	// TODO: we have setting.AlertingNotificationTimeout in legacy settings. Either use that or separate set of config
+	// for clustering with intuitive name, like "PeerTimeout".
+	return 0
 }
 
 func timeoutFunc(d time.Duration) time.Duration {
