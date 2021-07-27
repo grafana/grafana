@@ -6,6 +6,7 @@ import { GraphiteQueryEditorState } from '../state/store';
 import { getAltSegments } from '../state/providers';
 import { actions } from '../state/actions';
 import { SelectableValue } from '@grafana/data';
+import { mapSegmentsToSelectables } from './helpers';
 
 type Props = {
   dispatch: Dispatch;
@@ -14,13 +15,10 @@ type Props = {
   state: GraphiteQueryEditorState;
 };
 
-function mapToSelectableValue(segment: GraphiteSegment): SelectableValue<GraphiteSegment> {
-  return {
-    label: segment.value,
-    value: segment,
-  };
-}
-
+/**
+ * Mapping is required to convert custom item (provided as strings) to a GraphiteSegment object
+ * @param selectableValue
+ */
 function mapFromSelectableValue(selectableValue: SelectableValue<GraphiteSegment | string>): GraphiteSegment {
   if (typeof selectableValue.value === 'string') {
     return {
@@ -36,8 +34,7 @@ function mapFromSelectableValue(selectableValue: SelectableValue<GraphiteSegment
 export function MetricsSection({ dispatch, segments = [], state }: Props) {
   const loadOptions = useCallback(
     async (index: number) => {
-      const segments = await getAltSegments(state, index, '');
-      return segments.map(mapToSelectableValue);
+      return mapSegmentsToSelectables(await getAltSegments(state, index, ''));
     },
     [state]
   );
@@ -48,7 +45,7 @@ export function MetricsSection({ dispatch, segments = [], state }: Props) {
         return (
           <SegmentAsync<GraphiteSegment>
             key={index}
-            value={mapToSelectableValue(segment)}
+            value={{ label: segment.value, value: segment }}
             inputMinWidth={150}
             allowCustomValue={true}
             loadOptions={async () => await loadOptions(index)}
