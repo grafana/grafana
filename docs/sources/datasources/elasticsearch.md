@@ -16,7 +16,7 @@ visualize logs or metrics stored in Elasticsearch. You can also annotate your gr
 1. Open the side menu by clicking the Grafana icon in the top header.
 1. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 1. Click the `+ Add data source` button in the top header.
-1. Select *Elasticsearch* from the *Type* dropdown.
+1. Select **Elasticsearch** from the **Type** dropdown.
 
 > **Note:** If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
