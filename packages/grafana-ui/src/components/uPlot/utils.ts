@@ -34,7 +34,14 @@ export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
 };
 
 /** @internal */
-export function preparePlotData(frame: DataFrame): { data: AlignedData; totals: AlignedData } {
+interface PlotData {
+  raw: AlignedData;
+  data: AlignedData;
+  totals: AlignedData;
+}
+
+/** @internal */
+export function preparePlotData(frame: DataFrame): PlotData {
   const result: any[] = [];
   const stackingGroups: Map<string, number[]> = new Map();
   let seriesIndex = 0;
@@ -61,6 +68,8 @@ export function preparePlotData(frame: DataFrame): { data: AlignedData; totals: 
     result.push(f.values.toArray());
     seriesIndex++;
   }
+
+  const rawData = result.slice();
 
   const byPct = frame.fields[1].config.custom?.stacking?.mode === StackingMode.Percent;
   const dataLength = result[0].length;
@@ -104,6 +113,7 @@ export function preparePlotData(frame: DataFrame): { data: AlignedData; totals: 
   }
 
   return {
+    raw: rawData as AlignedData,
     data: result as AlignedData,
     totals: alignedTotals as AlignedData,
   };

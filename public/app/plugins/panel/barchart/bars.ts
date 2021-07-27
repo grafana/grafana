@@ -1,4 +1,4 @@
-import uPlot, { Axis } from 'uplot';
+import uPlot, { Axis, AlignedData } from 'uplot';
 import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
@@ -201,7 +201,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let labelOffset = LABEL_OFFSET_MAX;
 
     barRects.forEach((r, i) => {
-      texts[i] = formatValue(r.sidx, rawValue(r.sidx, r.didx));
+      texts[i] = formatValue(
+        r.sidx,
+        rawValue(r.sidx, r.didx)! / (alignedTotals.length > 1 ? alignedTotals[r.sidx][r.didx]! : 1)
+      );
       labelOffset = Math.min(labelOffset, Math.round(LABEL_OFFSET_FACTOR * (isXHorizontal ? r.w : r.h)));
     });
 
@@ -303,14 +306,12 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     };
   };
 
-  let alignedTotals;
+  let alignedTotals: AlignedData;
 
   function prepData(alignedFrame: DataFrame) {
     let { data, totals } = preparePlotData(alignedFrame);
 
     alignedTotals = totals;
-
-    console.log(alignedTotals);
 
     return data;
   }
