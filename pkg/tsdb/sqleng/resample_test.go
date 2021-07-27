@@ -231,7 +231,7 @@ func TestResampleWide(t *testing.T) {
 				}),
 				data.NewField("Values Ints", nil, []*int64{
 					pointer.Int64(10),
-					nil,
+					pointer.Int64(12),
 					nil,
 					pointer.Int64(15),
 					nil,
