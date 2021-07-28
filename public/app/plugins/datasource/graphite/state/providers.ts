@@ -22,78 +22,76 @@ const DEBOUNCE_RATE = 150;
  * - mixed list of metrics and tags (only when nothing was selected)
  * - list of metric names (if a metric name was selected for this segment)
  */
-async function _getAltSegments(
-  state: GraphiteQueryEditorState,
-  index: number,
-  prefix: string
-): Promise<GraphiteSegment[]> {
-  let query = prefix.length > 0 ? '*' + prefix + '*' : '*';
-  if (index > 0) {
-    query = state.queryModel.getSegmentPathUpTo(index) + '.' + query;
-  }
-  const options = {
-    range: state.panelCtrl.range,
-    requestId: 'get-alt-segments',
-  };
-
-  try {
-    const segments = await state.datasource.metricFindQuery(query, options);
-    const altSegments = map(segments, (segment) => {
-      return state.uiSegmentSrv.newSegment({
-        value: segment.text,
-        expandable: segment.expandable,
-      });
-    });
-
-    if (index > 0 && altSegments.length === 0) {
-      return altSegments;
+export const getAltSegments = debouncePromise(
+  async (state: GraphiteQueryEditorState, index: number, prefix: string): Promise<GraphiteSegment[]> => {
+    let query = prefix.length > 0 ? '*' + prefix + '*' : '*';
+    if (index > 0) {
+      query = state.queryModel.getSegmentPathUpTo(index) + '.' + query;
     }
+    const options = {
+      range: state.panelCtrl.range,
+      requestId: 'get-alt-segments',
+    };
 
-    // add query references
-    if (index === 0) {
-      eachRight(state.panelCtrl.panel.targets, (target) => {
-        if (target.refId === state.queryModel.target.refId) {
-          return;
-        }
+    try {
+      const segments = await state.datasource.metricFindQuery(query, options);
+      const altSegments = map(segments, (segment) => {
+        return state.uiSegmentSrv.newSegment({
+          value: segment.text,
+          expandable: segment.expandable,
+        });
+      });
 
+      if (index > 0 && altSegments.length === 0) {
+        return altSegments;
+      }
+
+      // add query references
+      if (index === 0) {
+        eachRight(state.panelCtrl.panel.targets, (target) => {
+          if (target.refId === state.queryModel.target.refId) {
+            return;
+          }
+
+          altSegments.unshift(
+            state.uiSegmentSrv.newSegment({
+              type: 'series-ref',
+              value: '#' + target.refId,
+              expandable: false,
+            })
+          );
+        });
+      }
+
+      // add template variables
+      eachRight(state.templateSrv.getVariables(), (variable) => {
         altSegments.unshift(
           state.uiSegmentSrv.newSegment({
-            type: 'series-ref',
-            value: '#' + target.refId,
-            expandable: false,
+            type: 'template',
+            value: '$' + variable.name,
+            expandable: true,
           })
         );
       });
+
+      // add wildcard option
+      altSegments.unshift(state.uiSegmentSrv.newSegment('*'));
+
+      if (state.supportsTags && index === 0) {
+        removeTaggedEntry(altSegments);
+        return await addAltTagSegments(state, prefix, altSegments);
+      } else {
+        return altSegments;
+      }
+    } catch (err) {
+      handleMetricsAutoCompleteError(state, err);
     }
 
-    // add template variables
-    eachRight(state.templateSrv.getVariables(), (variable) => {
-      altSegments.unshift(
-        state.uiSegmentSrv.newSegment({
-          type: 'template',
-          value: '$' + variable.name,
-          expandable: true,
-        })
-      );
-    });
-
-    // add wildcard option
-    altSegments.unshift(state.uiSegmentSrv.newSegment('*'));
-
-    if (state.supportsTags && index === 0) {
-      removeTaggedEntry(altSegments);
-      return await addAltTagSegments(state, prefix, altSegments);
-    } else {
-      return altSegments;
-    }
-  } catch (err) {
-    handleMetricsAutoCompleteError(state, err);
-  }
-
-  return [];
-}
-
-export const getAltSegments = debouncePromise(_getAltSegments, DEBOUNCE_RATE, { leading: true });
+    return [];
+  },
+  DEBOUNCE_RATE,
+  { leading: true }
+);
 
 export function getTagOperators(): GraphiteTagOperator[] {
   return GRAPHITE_TAG_OPERATORS;
@@ -102,68 +100,69 @@ export function getTagOperators(): GraphiteTagOperator[] {
 /**
  * Returns tags as dropdown options
  */
-async function _getTags(state: GraphiteQueryEditorState, index: number, tagPrefix: string): Promise<string[]> {
-  try {
-    const tagExpressions = state.queryModel.renderTagExpressions(index);
-    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
+export const getTags = debouncePromise(
+  async (state: GraphiteQueryEditorState, index: number, tagPrefix: string): Promise<string[]> => {
+    try {
+      const tagExpressions = state.queryModel.renderTagExpressions(index);
+      const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
 
-    const altTags = map(values, 'text');
-    altTags.splice(0, 0, state.removeTagValue);
-    return altTags;
-  } catch (err) {
-    handleTagsAutoCompleteError(state, err);
-  }
+      const altTags = map(values, 'text');
+      altTags.splice(0, 0, state.removeTagValue);
+      return altTags;
+    } catch (err) {
+      handleTagsAutoCompleteError(state, err);
+    }
 
-  return [];
-}
-
-export const getTags = debouncePromise(_getTags, DEBOUNCE_RATE, { leading: true });
+    return [];
+  },
+  DEBOUNCE_RATE,
+  { leading: true }
+);
 
 /**
  * List of tags when a tag is added. getTags is used for editing.
  * When adding - segment is used. When editing - dropdown is used.
  */
-async function _getTagsAsSegments(state: GraphiteQueryEditorState, tagPrefix: string): Promise<GraphiteSegment[]> {
-  let tagsAsSegments: GraphiteSegment[];
-  try {
-    const tagExpressions = state.queryModel.renderTagExpressions();
-    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
-    tagsAsSegments = map(values, (val) => {
-      return state.uiSegmentSrv.newSegment({
-        value: val.text,
-        type: 'tag',
-        expandable: false,
+export const getTagsAsSegments = debouncePromise(
+  async (state: GraphiteQueryEditorState, tagPrefix: string): Promise<GraphiteSegment[]> => {
+    let tagsAsSegments: GraphiteSegment[];
+    try {
+      const tagExpressions = state.queryModel.renderTagExpressions();
+      const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
+      tagsAsSegments = map(values, (val) => {
+        return state.uiSegmentSrv.newSegment({
+          value: val.text,
+          type: 'tag',
+          expandable: false,
+        });
       });
+    } catch (err) {
+      tagsAsSegments = [];
+      handleTagsAutoCompleteError(state, err);
+    }
+
+    return tagsAsSegments;
+  },
+  DEBOUNCE_RATE,
+  { leading: true }
+);
+
+export const getTagValues = debouncePromise(
+  async (state: GraphiteQueryEditorState, tag: GraphiteTag, index: number, valuePrefix: string): Promise<string[]> => {
+    const tagExpressions = state.queryModel.renderTagExpressions(index);
+    const tagKey = tag.key;
+    const values = await state.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix, {});
+    const altValues = map(values, 'text');
+    // Add template variables as additional values
+    eachRight(state.templateSrv.getVariables(), (variable) => {
+      altValues.push('${' + variable.name + ':regex}');
     });
-  } catch (err) {
-    tagsAsSegments = [];
-    handleTagsAutoCompleteError(state, err);
-  }
 
-  return tagsAsSegments;
-}
-
-export const getTagsAsSegments = debouncePromise(_getTagsAsSegments, DEBOUNCE_RATE, { leading: true });
-
-export async function _getTagValues(
-  state: GraphiteQueryEditorState,
-  tag: GraphiteTag,
-  index: number,
-  valuePrefix: string
-): Promise<string[]> {
-  const tagExpressions = state.queryModel.renderTagExpressions(index);
-  const tagKey = tag.key;
-  const values = await state.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix, {});
-  const altValues = map(values, 'text');
-  // Add template variables as additional values
-  eachRight(state.templateSrv.getVariables(), (variable) => {
-    altValues.push('${' + variable.name + ':regex}');
-  });
-
-  return altValues;
-}
-
-export const getTagValues = debouncePromise(_getTagValues, DEBOUNCE_RATE, { leading: true });
+    return altValues;
+  },
+  DEBOUNCE_RATE,
+  { leading: true }
+);
 
 /**
  * Add segments with tags prefixed with "tag: " to include them in the same list as metrics
