@@ -103,7 +103,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   setSegmentFocus(segmentIndex: any) {
-    // WIP: moved to state/helpers (the same name)
+    // WIP: removed
   }
 
   /**

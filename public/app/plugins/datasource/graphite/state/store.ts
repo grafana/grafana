@@ -14,7 +14,6 @@ import {
   parseTarget,
   pause,
   removeTagPrefix,
-  setSegmentFocus,
   smartlyHandleNewAliasByNode,
   spliceSegments,
 } from './helpers';
@@ -97,7 +96,6 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
       spliceSegments(state, segmentIndex + 1);
     }
 
-    setSegmentFocus(state, segmentIndex + 1);
     handleTargetChanged(state);
   }
   if (actions.tagChanged.match(action)) {

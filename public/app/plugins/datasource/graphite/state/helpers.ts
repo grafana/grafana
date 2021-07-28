@@ -1,5 +1,5 @@
 import { GraphiteQueryEditorState } from './store';
-import { each, map } from 'lodash';
+import { map } from 'lodash';
 import { dispatch } from '../../../../store/store';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { createErrorNotification } from '../../../../core/copy/appNotification';
@@ -95,18 +95,6 @@ export async function checkOtherSegments(
   } catch (err) {
     handleMetricsAutoCompleteError(state, err);
   }
-}
-
-/**
- * Changes segment being in focus. After changing the value, next segment gets focus.
- *
- * Note: It's a bit hidden feature. After selecting one metric, and pressing down arrow the dropdown can be expanded.
- * But there's nothing indicating what's in focus and how to expand the dropdown.
- */
-export function setSegmentFocus(state: GraphiteQueryEditorState, segmentIndex: number): void {
-  each(state.segments, (segment, index) => {
-    segment.focus = segmentIndex === index;
-  });
 }
 
 export function spliceSegments(state: GraphiteQueryEditorState, index: number): void {
