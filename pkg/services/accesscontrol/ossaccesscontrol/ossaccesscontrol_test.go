@@ -448,7 +448,8 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 		name          string
 		token         models.Licensing
 		registrations []accesscontrol.RoleRegistration
-		wantErr       bool
+		//nolint
+		wantErr bool //nolint
 	}{
 		{
 			name: "should work with empty list",
