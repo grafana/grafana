@@ -3,6 +3,7 @@ import { Portal } from '../../Portal/Portal';
 import { usePlotContext } from '../context';
 import {
   CartesianCoords2D,
+  DashboardCursorSync,
   DataFrame,
   FALLBACK_COLOR,
   FieldType,
@@ -22,6 +23,7 @@ interface TooltipPluginProps {
   data: DataFrame;
   config: UPlotConfigBuilder;
   mode?: TooltipDisplayMode;
+  sync?: DashboardCursorSync;
   // Allows custom tooltip content rendering. Exposes aligned data frame with relevant indexes for data inspection
   // Use field.state.origin indexes from alignedData frame field to get access to original data frame and field index.
   renderTooltip?: (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => React.ReactNode;
@@ -34,11 +36,15 @@ const TOOLTIP_OFFSET = 10;
  */
 export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   mode = TooltipDisplayMode.Single,
+  sync,
   timeZone,
   config,
   renderTooltip,
   ...otherProps
 }) => {
+  if (mode === TooltipDisplayMode.None) {
+    return null;
+  }
   const theme = useTheme2();
   const plotCtx = usePlotContext();
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
@@ -120,7 +126,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     }
   }, [plotCtx, config, setFocusedPointIdx, setFocusedSeriesIdx, setCoords]);
 
-  if (!plotInstance || focusedPointIdx === null || mode === TooltipDisplayMode.None) {
+  if (!plotInstance || focusedPointIdx === null || (!focusedSeriesIdx && sync === DashboardCursorSync.Crosshair)) {
     return null;
   }
 
