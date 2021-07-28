@@ -61,7 +61,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   description: 'use markers to render each data point',
   isBaseMap: false,
   showLocation: true,
-  supportsTooltip: true,
 
   /**
    * Function that configures transformation and returns a transformer

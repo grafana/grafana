@@ -89,11 +89,6 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
   showLocation?: boolean;
 
   /**
-   * Does the layer implementation want to check features
-   */
-  supportsTooltip?: boolean;
-
-  /**
    * Show transparency controls in UI (for non-basemaps)
    */
   showOpacity?: boolean;
