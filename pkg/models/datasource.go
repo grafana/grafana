@@ -18,6 +18,7 @@ const (
 	DS_ACCESS_PROXY   = "proxy"
 	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
 	DS_ES_OPENSEARCH  = "grafana-opensearch-datasource"
+	DS_LOKI           = "loki"
 )
 
 var (
@@ -32,6 +33,12 @@ var (
 )
 
 type DsAccess string
+
+type Ruler struct {
+	BasicAuth     bool   `json:"basicAuth"`
+	BasicAuthUser string `json:"basicAuthUser"`
+	Url           string `json:"url"`
+}
 
 type DataSource struct {
 	Id      int64 `json:"id"`
@@ -57,6 +64,21 @@ type DataSource struct {
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
+}
+
+func (ds *DataSource) GetRulerProperties() *Ruler {
+	if ds.JsonData == nil {
+		return nil
+	}
+	props, ok := ds.JsonData.CheckGet("ruler")
+	if !ok {
+		return nil
+	}
+	return &Ruler{
+		Url:           props.Get("url").MustString(),
+		BasicAuth:     props.Get("basicAuth").MustBool(),
+		BasicAuthUser: props.Get("basicAuthUser").MustString(),
+	}
 }
 
 // ----------------------

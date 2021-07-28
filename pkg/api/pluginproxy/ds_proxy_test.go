@@ -558,6 +558,20 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			// do not go through proxy but through TSDB API which is not tested here.
 			createAuthTest(t, models.DS_ES, authTypeBasic, authCheckHeader, false),
 			createAuthTest(t, models.DS_ES, authTypeBasic, authCheckHeader, true),
+
+			// no ruler proxy path; basic auth should be used
+			createRulerAuthTest(t, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, ""),
+			// valid ruler proxy paths; ruler basic auth should be used
+			createRulerAuthTest(t, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, "/api/v1/rules"),
+			createRulerAuthTest(t, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, "/rules/namespace"),
+			createRulerAuthTest(t, models.DS_PROMETHEUS, authTypeBasic, authCheckHeader, "/rules/namespace/rulegroup"),
+
+			// no ruler proxy path; basic auth should be used
+			createRulerAuthTest(t, models.DS_LOKI, authTypeBasic, authCheckHeader, ""),
+			// valid ruler proxy paths; ruler basic auth should be used
+			createRulerAuthTest(t, models.DS_LOKI, authTypeBasic, authCheckHeader, "/api/v1/rules"),
+			createRulerAuthTest(t, models.DS_LOKI, authTypeBasic, authCheckHeader, "/rules/namespace"),
+			createRulerAuthTest(t, models.DS_LOKI, authTypeBasic, authCheckHeader, "/rules/namespace/rulegroup"),
 		}
 		for _, test := range tests {
 			runDatasourceAuthTest(t, test)
@@ -826,6 +840,7 @@ func newFakeHTTPClient(t *testing.T, fakeBody []byte) httpClient {
 type testCase struct {
 	datasource *models.DataSource
 	checkReq   func(req *http.Request)
+	proxyPath  string
 }
 
 const (
@@ -902,11 +917,66 @@ func createAuthTest(t *testing.T, dsType string, authType string, authCheck stri
 	return test
 }
 
+func createRulerAuthTest(t *testing.T, dsType string, authType string, authCheck string, proxyPath string) *testCase {
+	// Basic user:password
+	base64AuthHeader := "Basic dXNlcjpwYXNzd29yZA=="
+	// Ruler basic ruler user:ruler password
+	rulerBase64AuthHeader := "Basic cnVsZXIgdXNlcjpydWxlciBwYXNzd29yZA=="
+
+	jsonData, err := simplejson.NewJson([]byte(`{
+		"ruler":{
+			"url": "http://localhost:9009/api/prom",
+			"basicAuth": true,
+			"basicAuthUser": "ruler user"
+		}
+	}`))
+	require.NoError(t, err)
+
+	test := &testCase{
+		datasource: &models.DataSource{
+			Id:       1,
+			Type:     dsType,
+			JsonData: jsonData,
+		},
+	}
+
+	expAuthorisationHeader := base64AuthHeader
+	rulerBasicAuthTxt := " "
+	if proxyPath != "" {
+		expAuthorisationHeader = rulerBase64AuthHeader
+		rulerBasicAuthTxt = " ruler "
+	}
+
+	ctx := context.Background()
+
+	message := fmt.Sprintf("%v should add%sbasic auth username and password from securejsondata to auth header", dsType, rulerBasicAuthTxt)
+	test.datasource.BasicAuth = true
+	test.datasource.BasicAuthUser = "user"
+	test.datasource.SecureJsonData, err = ossencryption.ProvideService().EncryptJsonData(
+		ctx,
+		map[string]string{
+			"basicAuthPassword":      "password",
+			"rulerBasicAuthPassword": "ruler password",
+		})
+	require.NoError(t, err)
+
+	test.checkReq = func(req *http.Request) {
+		assert.Equal(t, expAuthorisationHeader, req.Header.Get("Authorization"), message)
+	}
+
+	test.proxyPath = proxyPath
+
+	return test
+}
+
 func runDatasourceAuthTest(t *testing.T, test *testCase) {
 	plugin := &plugins.DataSourcePlugin{}
 	ctx := &models.ReqContext{}
 	dsService := datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService())
-	proxy, err := NewDataSourceProxy(test.datasource, plugin, ctx, "", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
+	proxy, err := NewDataSourceProxy(test.datasource, plugin, ctx, "", &setting.Cfg{
+		FeatureToggles: map[string]bool{"ngalert": true},
+	}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService)
+
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
