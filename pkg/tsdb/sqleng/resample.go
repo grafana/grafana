@@ -90,12 +90,8 @@ func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
 	lastSeenRowIdx := -1
 	timeField := f.Fields[tsSchema.TimeIndex]
 
-	var startTime time.Time
-	if timeField.Type() == data.FieldTypeNullableTime {
-		startTime = *timeField.At(0).(*time.Time)
-	} else {
-		startTime = timeField.At(0).(time.Time)
-	}
+	startUnixTime := qm.TimeRange.From.Unix() / int64(qm.Interval.Seconds()) * int64(qm.Interval.Seconds())
+	startTime := time.Unix(startUnixTime, 0)
 
 	for currentTime := startTime; !currentTime.After(qm.TimeRange.To); currentTime = currentTime.Add(qm.Interval) {
 		initialRowIdx := 0
@@ -117,6 +113,7 @@ func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
 				return f, fmt.Errorf("time point is nil")
 			}
 
+			// take the last element of the period current - interval <-> current, use it as value for current data point value
 			previousTime := currentTime.Add(-qm.Interval)
 			if t.(time.Time).After(previousTime) {
 				if !t.(time.Time).After(currentTime) {
