@@ -8,7 +8,7 @@ weight = 600
 
 # Annotations 
 
-The Annotations panel allows you to create lists of annotations that can be used to view annotated data. Various options are available to filter the list based on tags and the current dashboard.
+The Annotations panel allows you to show a list of annotations that can be used to view annotated data. Various options are available to filter the list based on tags and the current dashboard.
 
 ## Annotation query
 
@@ -63,7 +63,7 @@ Use this option to chose how to view the annotated data.
 
 ### Time before
 
-Use this option to set the time range before the annotation.
+Use this option to set the time range before the annotation.  Use duration string values like "1h" = 1 hour, "10m" = 10 minutes, etc
 
 ### Time after
 
