@@ -362,9 +362,7 @@ export class GeomapPanel extends Component<Props, State> {
         <Portal>
           {ttip && ttip.data && (
             <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }}>
-              <div className={this.style.ttip}>
-                <DataHoverView {...ttip} />
-              </div>
+              <DataHoverView {...ttip} />
             </VizTooltipContainer>
           )}
         </Portal>
@@ -384,8 +382,5 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     z-index: 0;
     width: 100%;
     height: 100%;
-  `,
-  ttip: css`
-    padding: 2px;
   `,
 }));
