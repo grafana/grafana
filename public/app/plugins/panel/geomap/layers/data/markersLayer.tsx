@@ -17,8 +17,6 @@ import { ReplaySubject } from 'rxjs';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
 import { ReactNode } from 'react';
 import { circleMarker, markerMakers } from '../../utils/regularShapes';
-import { MarkersTooltip, MarkersTooltipProps } from './MarkersTooltip';
-import { Tooltip } from '../../components/Tooltip';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -86,7 +84,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         child={MarkersLegend}
       />
     }
-
     const shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
     console.log( 'CREATE Marker layer', matchers);
 
