@@ -5,9 +5,9 @@ import { GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import tinycolor from 'tinycolor2';
-import RenderFeature from 'ol/render/Feature';
 import { FeatureLike } from 'ol/Feature';
 import { Pixel } from 'ol/pixel';
+import { toLonLat } from 'ol/proj';
 
 interface Props {
   map: Map;
@@ -15,7 +15,8 @@ interface Props {
 
 interface State {
   visible: boolean;
-  coordinates: number[];
+  coordinates?: number[];
+  position?: number[];
 }
 
 export class Tooltip extends PureComponent<Props, State> {
@@ -23,13 +24,12 @@ export class Tooltip extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = { visible: false, coordinates: [0, 0] };
+    this.state = { visible: false };
   }
 
   updateViewState = (features: FeatureLike[], pixel: Pixel) => {
     if (features.length > 0) {
       const firstFeature = features[0];
-      console.log(firstFeature.getProperties());
       this.setState({
         visible: true,
         coordinates: firstFeature.getProperties().geometry.flatCoordinates,
@@ -37,7 +37,6 @@ export class Tooltip extends PureComponent<Props, State> {
     } else {
       this.setState({
         visible: false,
-        coordinates: [0, 0],
       });
     }
   };
@@ -51,7 +50,6 @@ export class Tooltip extends PureComponent<Props, State> {
       map.forEachFeatureAtPixel(pixel, function (feature) {
         features.push(feature);
       });
-      console.log('hover', features, evt);
       this.updateViewState(features, pixel);
     });
   }
@@ -59,24 +57,30 @@ export class Tooltip extends PureComponent<Props, State> {
   render() {
     const { visible, coordinates } = this.state;
 
-    return (
-      <div className={this.style.infoWrap}>
-        {visible && (
-          <table>
-            <tbody>
-              <tr>
-                <th>Latitude:</th>
-                <td>{coordinates[0].toFixed(1)}</td>
-              </tr>
-              <tr>
-                <th>Longitude:&nbsp;</th>
-                <td> {coordinates[1].toFixed(1)} </td>
-              </tr>
-            </tbody>
-          </table>
-        )}
-      </div>
-    );
+    if (visible && coordinates) {
+      const lonLat = toLonLat(coordinates, 'EPSG:3857');
+
+      return (
+        <div className={this.style.infoWrap}>
+          {visible && (
+            <table>
+              <tbody>
+                <tr>
+                  <th>Latitude:</th>
+                  <td>{lonLat[1].toFixed(3)}</td>
+                </tr>
+                <tr>
+                  <th>Longitude:&nbsp;</th>
+                  <td> {lonLat[0].toFixed(3)} </td>
+                </tr>
+              </tbody>
+            </table>
+          )}
+        </div>
+      );
+    } else {
+      return <></>;
+    }
   }
 }
 
