@@ -41,7 +41,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
       return null;
     }
 
-    const builder = new PanelOptionsEditorBuilder();
+    const builder = new PanelOptionsEditorBuilder<MapLayerOptions>();
     if (layer.showLocation) {
       builder
         .addRadio({
@@ -65,7 +65,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
             filter: (f: Field) => f.type === FieldType.number,
             noFieldsMessage: 'No numeric fields found',
           },
-          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Coords,
+          showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Coords,
         })
         .addFieldNamePicker({
           path: 'location.longitude',
@@ -74,7 +74,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
             filter: (f: Field) => f.type === FieldType.number,
             noFieldsMessage: 'No numeric fields found',
           },
-          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Coords,
+          showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Coords,
         })
         .addFieldNamePicker({
           path: 'location.geohash',
@@ -83,7 +83,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
             filter: (f: Field) => f.type === FieldType.string,
             noFieldsMessage: 'No strings fields found',
           },
-          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Geohash,
+          showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Geohash,
           // eslint-disable-next-line react/display-name
           // info: (props) => <div>HELLO</div>,
         })
@@ -94,14 +94,14 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
             filter: (f: Field) => f.type === FieldType.string,
             noFieldsMessage: 'No strings fields found',
           },
-          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
+          showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
         })
         .addCustomEditor({
           id: 'gazetteer',
           path: 'location.gazetteer',
           name: 'Gazetteer',
           editor: GazetteerPathEditor,
-          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
+          showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
         });
     }
     if (layer.registerOptionsUI) {
