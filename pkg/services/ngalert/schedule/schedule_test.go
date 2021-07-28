@@ -31,6 +31,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -231,9 +232,8 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	dbstore := tests.SetupTestEnv(t, 1)
 	t.Cleanup(registry.ClearOverrides)
 
-	alerts := make([]*models.AlertRule, 0)
 	// create alert rule with one second interval
-	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, 1))
+	alertRule := tests.CreateTestAlertRule(t, dbstore, 1)
 
 	fakeAM := newFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
@@ -284,7 +284,7 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 
 	// Eventually, our Alertmanager should have received at least one alert.
 	require.Eventually(t, func() bool {
-		return fakeAM.AlertsCount() >= 1
+		return fakeAM.AlertsCount() >= 1 && fakeAM.AlertNamesCompare([]string{alertRule.Title})
 	}, 10*time.Second, 200*time.Millisecond)
 
 	// Now, let's remove the Alertmanager from the admin configuration.
@@ -395,6 +395,19 @@ func newFakeExternalAlertmanager(t *testing.T) *fakeExternalAlertmanager {
 	return am
 }
 
+func (am *fakeExternalAlertmanager) AlertNamesCompare(expected []string) bool {
+	n := []string{}
+	for _, a := range am.Alerts() {
+		for k, v := range a.Alert.Labels {
+			if k == model.AlertNameLabel {
+				n = append(n, v)
+			}
+		}
+	}
+
+	return cmp.Equal(expected, n)
+}
+
 func (am *fakeExternalAlertmanager) AlertsCount() int {
 	am.mtx.Lock()
 	defer am.mtx.Unlock()
@@ -417,9 +430,7 @@ func (am *fakeExternalAlertmanager) Handler() func(w http.ResponseWriter, r *htt
 		require.NoError(am.t, json.Unmarshal(b, &a))
 
 		am.mtx.Lock()
-		for _, na := range a {
-			am.alerts = append(am.alerts, na)
-		}
+		am.alerts = append(am.alerts, a...)
 		am.mtx.Unlock()
 	}
 }

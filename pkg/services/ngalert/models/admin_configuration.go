@@ -19,8 +19,7 @@ type AdminConfiguration struct {
 
 func (ac *AdminConfiguration) AsSHA256() string {
 	h := sha256.New()
-	h.Write([]byte(fmt.Sprintf("%v", ac)))
-
+	_, _ = h.Write([]byte(fmt.Sprintf("%v", ac)))
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
