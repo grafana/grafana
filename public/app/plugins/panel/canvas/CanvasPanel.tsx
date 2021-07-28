@@ -26,6 +26,9 @@ export class CanvasPanel extends PureComponent<Props, State> {
     // later changs are all controled by the scene
     this.scene = new Scene(this.props.options.root, this.onUpdateScene);
     lastCanvasPanelInstance = this;
+
+    this.scene.updateSize(props.width, props.height);
+    this.scene.updateData(props.data);
   }
 
   // NOTE, all changes to the scene flow through this function
@@ -39,7 +42,18 @@ export class CanvasPanel extends PureComponent<Props, State> {
     this.setState({ refresh: this.state.refresh + 1 });
   };
 
+  shouldComponentUpdate(nextProps: Props) {
+    const { width, height, data } = this.props;
+    if (width !== nextProps.width || height !== nextProps.height) {
+      this.scene.updateSize(nextProps.width, nextProps.height);
+    }
+    if (data !== nextProps.data) {
+      this.scene.updateData(nextProps.data);
+    }
+    return true;
+  }
+
   render() {
-    return this.scene.render();
+    return this.scene.render(this.props.data);
   }
 }

@@ -34,9 +34,8 @@ class IconDisplay extends PureComponent<CanvasElementProps<IconConfig>, State> {
 
     return (
       <div>
-        XX
         <SVG src={path} width="100%" height="100%" style={style} />
-        YY
+        PATH: {path}
       </div>
     );
   }

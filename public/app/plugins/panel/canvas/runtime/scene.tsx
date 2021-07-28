@@ -1,6 +1,6 @@
+import React, { CSSProperties } from 'react';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
-import React from 'react';
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 import { CanvasElementItem, CanvasElementOptions, CanvasGroupOptions } from '../base';
@@ -12,11 +12,15 @@ let counter = 100;
 
 export class ElementState {
   readonly UID = counter++;
+  style: CSSProperties = {};
 
   constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
     if (!options) {
       this.options = { type: item.id };
     }
+
+    this.style.border = '5px solid black';
+    this.style.background = '#FF0';
   }
 
   // ???Given the configuraiton, what fields should exist in the update
@@ -40,10 +44,10 @@ export class ElementState {
   }
 
   render(data: PanelData) {
-    const { display } = this.item;
+    const { item } = this;
     return (
-      <div key={this.UID}>
-        <display />
+      <div key={this.UID} style={this.style}>
+        <item.display config={this.options.config} data={data} />
       </div>
     );
   }
@@ -71,8 +75,12 @@ export class GroupState extends ElementState {
     }
   }
 
-  render() {
-    return <div key={this.UID}>{this.elements.map((v) => v.render())}</div>;
+  render(data: PanelData) {
+    return (
+      <div key={this.UID} style={this.style}>
+        {this.elements.map((v) => v.render(data))}
+      </div>
+    );
   }
 
   /** Recursivly visit all nodes */
@@ -116,6 +124,14 @@ export class Scene {
     });
   }
 
+  updateData(data: PanelData) {
+    console.log('Data changed', data);
+  }
+
+  updateSize(width: number, height: number) {
+    console.log('SIZE changed', width, height);
+  }
+
   onChange(uid: number, cfg: CanvasElementOptions) {
     const elem = this.lookup.get(uid);
     if (!elem) {
@@ -130,7 +146,7 @@ export class Scene {
   }
 
   render(data: PanelData) {
-    return <div className={this.styles.wrap}>{this.root.render()}</div>;
+    return <div className={this.styles.wrap}>{this.root.render(data)}</div>;
   }
 }
 
