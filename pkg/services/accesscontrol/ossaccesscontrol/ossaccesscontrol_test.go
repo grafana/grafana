@@ -443,6 +443,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 }
 
 func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
+	//nolint
 	tests := []struct {
 		name          string
 		token         models.Licensing
