@@ -38,6 +38,14 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.props.runQueries(exploreId);
   };
 
+  onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && (event.shiftKey || event.ctrlKey)) {
+      this.onRunQuery();
+    }
+  };
+
+  testKeyShortcut = (event: React.KeyboardEvent<HTMLInputElement>) => {};
+
   onChange = (query: DataQuery, override?: boolean) => {
     const { datasourceInstance, exploreId, index } = this.props;
     this.props.changeQuery(exploreId, query, index, override);
@@ -156,7 +164,9 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     return (
       <>
         <div className="query-row" aria-label={selectors.components.QueryEditorRows.rows}>
-          <div className="query-row-field flex-shrink-1">{this.renderQueryEditor(datasourceInstance)}</div>
+          <div className="query-row-field flex-shrink-1" onKeyDown={this.onKeyDown}>
+            {this.renderQueryEditor(datasourceInstance)}
+          </div>
           <QueryRowActions
             canToggleEditorModes={canToggleEditorModes}
             isDisabled={query.hide}
