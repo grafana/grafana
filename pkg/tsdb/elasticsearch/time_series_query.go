@@ -9,18 +9,18 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 type timeSeriesQuery struct {
 	client             es.Client
 	dataQueries        []backend.DataQuery
-	intervalCalculator tsdb.Calculator
+	intervalCalculator intervalv2.Calculator
 }
 
 var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery,
-	intervalCalculator tsdb.Calculator) *timeSeriesQuery {
+	intervalCalculator intervalv2.Calculator) *timeSeriesQuery {
 	return &timeSeriesQuery{
 		client:             client,
 		dataQueries:        dataQuery,

@@ -171,6 +171,11 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 	if addr.Port != "0" {
 		connStr += fmt.Sprintf("port=%s;", addr.Port)
 	}
+
+	if dsInfo.JsonData.Encrypt == "" {
+		dsInfo.JsonData.Encrypt = "false"
+	}
+
 	if dsInfo.JsonData.Encrypt != "false" {
 		connStr += fmt.Sprintf("encrypt=%s;", dsInfo.JsonData.Encrypt)
 	}

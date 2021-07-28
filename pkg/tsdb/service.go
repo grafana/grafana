@@ -14,6 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
+	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
+	_ "github.com/grafana/grafana/pkg/tsdb/mysql"
+	_ "github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
 )

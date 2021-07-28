@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 
 	"golang.org/x/net/context/ctxhttp"
 )
@@ -104,13 +104,13 @@ func (c *baseClientImpl) GetTimeField() string {
 
 func (c *baseClientImpl) GetMinInterval(queryInterval string) (time.Duration, error) {
 	timeInterval := c.ds.TimeInterval
-	return tsdb.GetIntervalFrom(queryInterval, timeInterval, 0, 5*time.Second)
+	return intervalv2.GetIntervalFrom(queryInterval, timeInterval, 0, 5*time.Second)
 }
 
 type multiRequest struct {
 	header   map[string]interface{}
 	body     interface{}
-	interval tsdb.Interval
+	interval intervalv2.Interval
 }
 
 func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests []*multiRequest) (*response, error) {

@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 type InfluxdbQueryParser struct{}
@@ -42,7 +42,7 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.Data
 
 	queryInterval := model.Get("interval").MustString("")
 	intervalMS := model.Get("intervalMs").MustInt(0)
-	parsedInterval, err := tsdb.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, int64(intervalMS), time.Millisecond*1)
+	parsedInterval, err := intervalv2.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, int64(intervalMS), time.Millisecond*1)
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,6 @@
 package mssql
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 	"testing"
@@ -17,7 +16,7 @@ func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
 		engine := &msSQLMacroEngine{}
 		query := &backend.DataQuery{
-			JSON: []byte{},
+			JSON: []byte("{}"),
 		}
 
 		dfltTimeRange := backend.TimeRange{}
@@ -92,53 +91,25 @@ func TestMacroEngine(t *testing.T) {
 			Convey("interpolate __timeGroup function with fill (value = NULL)", func() {
 				_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', NULL)")
 				So(err, ShouldBeNil)
-				var queryJson map[string]interface{}
-				err = json.Unmarshal(query.JSON, &queryJson)
+				queryJson, err := query.JSON.MarshalJSON()
 				So(err, ShouldBeNil)
-				fill, exist := queryJson["fill"]
-				So(exist, ShouldBeTrue)
-				So(fill.(bool), ShouldBeTrue)
-
-				fillMode, exist := queryJson["fillMode"]
-				So(exist, ShouldBeTrue)
-				So(fillMode.(string), ShouldEqual, "null")
-
-				fillInterval, exist := queryJson["fillInterval"]
-				So(exist, ShouldBeTrue)
-				So(fillInterval.(int), ShouldEqual, 5*time.Minute.Seconds())
+				So(string(queryJson), ShouldEqual, `{"fill":true,"fillInterval":300,"fillMode":"null"}`)
 			})
 
 			Convey("interpolate __timeGroup function with fill (value = previous)", func() {
 				_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', previous)")
 				So(err, ShouldBeNil)
-				var queryJson map[string]interface{}
-				err = json.Unmarshal(query.JSON, &queryJson)
+				queryJson, err := query.JSON.MarshalJSON()
 				So(err, ShouldBeNil)
-
-				fill, exist := queryJson["fill"]
-				So(exist, ShouldBeTrue)
-				So(fill.(bool), ShouldBeTrue)
-
-				fillMode, exist := queryJson["fillMode"]
-				So(exist, ShouldBeTrue)
-				So(fillMode, ShouldEqual, "previous")
-
-				fillInterval, exist := queryJson["fillInterval"]
-				So(exist, ShouldBeTrue)
-				So(fillInterval.(int), ShouldEqual, 5*time.Minute.Seconds())
+				So(string(queryJson), ShouldEqual, `{"fill":true,"fillInterval":300,"fillMode":"previous"}`)
 			})
 
 			Convey("interpolate __timeGroup function with fill (value = float)", func() {
 				_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', 1.5)")
-
-				fill := query.Model.Get("fill").MustBool()
-				fillValue := query.Model.Get("fillValue").MustFloat64()
-				fillInterval := query.Model.Get("fillInterval").MustInt()
-
 				So(err, ShouldBeNil)
-				So(fill, ShouldBeTrue)
-				So(fillValue, ShouldEqual, 1.5)
-				So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
+				queryJson, err := query.JSON.MarshalJSON()
+				So(err, ShouldBeNil)
+				So(string(queryJson), ShouldEqual, `{"fill":true,"fillInterval":300,"fillMode":"value","fillValue":1.5}`)
 			})
 
 			Convey("interpolate __unixEpochFilter function", func() {

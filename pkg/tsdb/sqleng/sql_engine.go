@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb/calculator"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"xorm.io/core"
 	"xorm.io/xorm"
 )
@@ -51,7 +51,7 @@ var engineCache = engineCacheType{
 	updates: make(map[int64]time.Time),
 }
 
-var sqlIntervalCalculator = calculator.NewCalculator()
+var sqlIntervalCalculator = intervalv2.NewCalculator()
 
 // NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
 //nolint:gocritic
@@ -276,7 +276,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		}
 	}()
 
-	qm, err := e.newProcessCfg(query, queryContext, rows, interpolatedQuery, queryJson)
+	qm, err := e.newProcessCfg(query, queryContext, rows, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("failed to get configurations", err, interpolatedQuery)
 		return
@@ -379,7 +379,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 // Interpolate provides global macros/substitutions for all sql datasources.
 var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-	minInterval, err := calculator.GetIntervalFrom(timeInterval, query.Interval.String(), 0, time.Second*60)
+	minInterval, err := intervalv2.GetIntervalFrom(timeInterval, query.Interval.String(), query.Interval.Milliseconds(), time.Second*60)
 	if err != nil {
 		return "", err
 	}
@@ -395,7 +395,7 @@ var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, tim
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext context.Context,
-	rows *core.Rows, interpolatedQuery string, queryJson QueryJson) (*dataQueryModel, error) {
+	rows *core.Rows, interpolatedQuery string) (*dataQueryModel, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -413,6 +413,12 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 		metricIndex:  -1,
 		metricPrefix: false,
 		queryContext: queryContext,
+	}
+
+	queryJson := QueryJson{}
+	err = json.Unmarshal(query.JSON, &queryJson)
+	if err != nil {
+		return nil, err
 	}
 
 	if queryJson.Fill {

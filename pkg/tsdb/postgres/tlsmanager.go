@@ -59,14 +59,10 @@ type tlsSettings struct {
 
 func (m *tlsManager) getTLSSettings(dsInfo sqleng.DataSourceInfo) (tlsSettings, error) {
 	tlsconfig := tlsSettings{
-		ConfigurationMethod: dsInfo.JsonData.ConfigurationMethod,
-		Mode:                dsInfo.JsonData.Mode,
-		RootCertFile:        dsInfo.JsonData.RootCertFile,
-		CertFile:            dsInfo.JsonData.CertFile,
-		CertKeyFile:         dsInfo.JsonData.CertKeyFile,
+		Mode: dsInfo.JsonData.Mode,
 	}
 
-	isTLSDisabled := tlsconfig.Mode == "disable"
+	isTLSDisabled := (tlsconfig.Mode == "disable")
 
 	if isTLSDisabled {
 		m.logger.Debug("Postgres TLS/SSL is disabled")
@@ -74,6 +70,11 @@ func (m *tlsManager) getTLSSettings(dsInfo sqleng.DataSourceInfo) (tlsSettings, 
 	}
 
 	m.logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", tlsconfig.Mode)
+
+	tlsconfig.ConfigurationMethod = dsInfo.JsonData.ConfigurationMethod
+	tlsconfig.RootCertFile = dsInfo.JsonData.RootCertFile
+	tlsconfig.CertFile = dsInfo.JsonData.CertFile
+	tlsconfig.CertKeyFile = dsInfo.JsonData.CertKeyFile
 
 	if tlsconfig.ConfigurationMethod == "file-content" {
 		if err := m.writeCertFiles(dsInfo, &tlsconfig); err != nil {

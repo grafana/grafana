@@ -15,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/tsdb"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 var eslog = log.New("tsdb.elasticsearch")
@@ -32,7 +32,7 @@ func init() {
 type Service struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
 	HTTPClientProvider   httpclient.Provider   `inject:""`
-	intervalCalculator   tsdb.Calculator
+	intervalCalculator   intervalv2.Calculator
 	im                   instancemgmt.InstanceManager
 }
 
@@ -53,7 +53,7 @@ func newService(im instancemgmt.InstanceManager, httpClientProvider httpclient.P
 	return &Service{
 		im:                 im,
 		HTTPClientProvider: httpClientProvider,
-		intervalCalculator: tsdb.NewCalculator(),
+		intervalCalculator: intervalv2.NewCalculator(),
 	}
 }
 

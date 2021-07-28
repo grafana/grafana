@@ -17,7 +17,7 @@ func TestMacroEngine(t *testing.T) {
 		engine := &mySQLMacroEngine{
 			logger: log.New("test"),
 		}
-		query := backend.DataQuery{}
+		query := &backend.DataQuery{}
 
 		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
 			from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
@@ -187,7 +187,7 @@ func TestMacroEngine(t *testing.T) {
 			}
 
 			for _, tc := range tcs {
-				_, err := engine.Interpolate(backend.DataQuery{}, backend.TimeRange{}, tc)
+				_, err := engine.Interpolate(&backend.DataQuery{}, backend.TimeRange{}, tc)
 				So(err.Error(), ShouldEqual, "invalid query - inspect Grafana server log for details")
 			}
 		})
