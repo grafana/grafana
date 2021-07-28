@@ -26,7 +26,7 @@ import (
 var timeNow = time.Now
 
 // PollingInterval of how often we sync admin configuration.
-var PollingInterval = 1 * time.Minute
+var AdminConfigPollingInterval = 1 * time.Minute
 
 // ScheduleService handles scheduling
 type ScheduleService interface {
