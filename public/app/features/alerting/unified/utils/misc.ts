@@ -47,3 +47,21 @@ export function recordToArray(record: Record<string, string>): Array<{ key: stri
 export function makeAMLink(path: string, alertManagerName?: string): string {
   return `${path}${alertManagerName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${encodeURIComponent(alertManagerName)}` : ''}`;
 }
+
+// keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
+export function retryWhile<T, E = Error>(
+  fn: () => Promise<T>,
+  shouldRetry: (e: E) => boolean,
+  timeout: number, // milliseconds, how long to keep retrying
+  pause = 1000 // milliseconds, pause between retries
+): Promise<T> {
+  const start = new Date().getTime();
+  const makeAttempt = (): Promise<T> =>
+    fn().catch((e) => {
+      if (shouldRetry(e) && new Date().getTime() - start < timeout) {
+        return new Promise((resolve) => setTimeout(resolve, pause)).then(makeAttempt);
+      }
+      throw e;
+    });
+  return makeAttempt();
+}
