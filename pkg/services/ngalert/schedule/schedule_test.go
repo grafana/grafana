@@ -274,7 +274,7 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	}, 10*time.Second, 200*time.Millisecond)
 
 	go func() {
-		schedule.PollingInterval = 1 * time.Second
+		schedule.AdminConfigPollingInterval = 1 * time.Second
 		err := sched.Run(ctx)
 		require.NoError(t, err)
 	}()

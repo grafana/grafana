@@ -25,7 +25,7 @@ import (
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
-// PollingInterval of how often we sync admin configuration.
+// AdminConfigPollingInterval of how often we sync admin configuration.
 var AdminConfigPollingInterval = 1 * time.Minute
 
 // ScheduleService handles scheduling
@@ -46,8 +46,6 @@ type Notifier interface {
 }
 
 type schedule struct {
-	wg sync.WaitGroup
-
 	// base tick rate (fastest possible configured check)
 	baseInterval time.Duration
 
@@ -154,38 +152,36 @@ func (sch *schedule) Unpause() error {
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
-	sch.wg.Add(2)
+	var wg sync.WaitGroup
+	wg.Add(2)
 
 	go func() {
+		defer wg.Done()
 		if err := sch.ruleEvaluationLoop(ctx); err != nil {
 			sch.log.Error("failure while running the rule evaluation loop", "err", err)
 		}
 	}()
 
 	go func() {
+		defer wg.Done()
 		if err := sch.adminConfigSync(ctx); err != nil {
 			sch.log.Error("failure while running the admin configuration sync", "err", err)
 		}
 	}()
 
-	sch.wg.Wait()
+	wg.Wait()
 	return nil
 }
 
 // SyncAndApplyConfigFromDatabase looks for the admin configuration in the database and adjusts the sender(s) accordingly.
 func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
-	sch.log.Info("start of admin configuration sync")
-	orgIds, err := sch.adminConfigStore.GetOrgsWithAdminConfiguration()
-	if err != nil {
-		return err
-	}
-
-	q := &models.GetOrgAdminConfiguration{OrgIDs: orgIds}
+	sch.log.Debug("start of admin configuration sync")
+	q := &models.GetOrgAdminConfiguration{}
 	if err := sch.adminConfigStore.GetAdminConfigurations(q); err != nil {
 		return err
 	}
 
-	sch.log.Info("found admin configurations", "count", len(q.Result))
+	sch.log.Debug("found admin configurations", "count", len(q.Result))
 
 	orgsFound := make(map[int64]struct{}, len(q.Result))
 	sch.sendersMtx.Lock()
@@ -215,7 +211,7 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 			}
 
 			sch.log.Debug("applying new configuration to sender", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
-			err = existing.ApplyConfig(cfg)
+			err := existing.ApplyConfig(cfg)
 			if err != nil {
 				sch.log.Error("failed to apply configuration", "err", err, "org", cfg.OrgID)
 			}
@@ -262,7 +258,7 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 		sch.log.Info("stopped sender", "org", orgID)
 	}
 
-	sch.log.Info("finish of admin configuration sync")
+	sch.log.Debug("finish of admin configuration sync")
 
 	return nil
 }
@@ -292,10 +288,9 @@ func (sch *schedule) DroppedAlertmanagersFor(orgID int64) []*url.URL {
 }
 
 func (sch *schedule) adminConfigSync(ctx context.Context) error {
-	defer sch.wg.Done()
 	for {
 		select {
-		case <-time.After(PollingInterval):
+		case <-time.After(AdminConfigPollingInterval):
 			if err := sch.SyncAndApplyConfigFromDatabase(); err != nil {
 				sch.log.Error("unable to sync admin configuration", "err", err)
 			}
@@ -313,8 +308,6 @@ func (sch *schedule) adminConfigSync(ctx context.Context) error {
 }
 
 func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
-	defer sch.wg.Done()
-
 	dispatcherGroup, ctx := errgroup.WithContext(ctx)
 	for {
 		select {

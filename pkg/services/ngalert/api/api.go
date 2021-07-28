@@ -99,7 +99,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.Metrics) {
 func (api *API) RegisterAdminAPIEndpoints(srv AdminSrv, m *metrics.Metrics) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(
-			toMacaronPath("/api/v1/ngalert/configuration"),
+			toMacaronPath("/api/v1/ngalert/admin_config"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/ngalert/configuration",
@@ -112,7 +112,7 @@ func (api *API) RegisterAdminAPIEndpoints(srv AdminSrv, m *metrics.Metrics) {
 			binding.Bind(apimodels.AdminConfiguration{}),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/v1/ngalert/configuration",
+				"/api/v1/ngalert/admin_config",
 				srv.RouteUpdateAdminConfig,
 				m,
 			),
@@ -121,7 +121,7 @@ func (api *API) RegisterAdminAPIEndpoints(srv AdminSrv, m *metrics.Metrics) {
 			"api/v1/ngalert/configuration",
 			metrics.Instrument(
 				http.MethodDelete,
-				"api/v1/ngalert/configuration",
+				"api/v1/ngalert/admin_config",
 				srv.RouteDeleteAdminConfig,
 				m,
 			),

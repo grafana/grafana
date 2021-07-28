@@ -19,12 +19,10 @@ type AdminConfiguration struct {
 
 func (ac *AdminConfiguration) AsSHA256() string {
 	h := sha256.New()
-	_, _ = h.Write([]byte(fmt.Sprintf("%v", ac)))
+	_, _ = h.Write([]byte(fmt.Sprintf("%v", ac.Alertmanagers)))
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 type GetOrgAdminConfiguration struct {
-	OrgIDs []int64
-
 	Result []*AdminConfiguration
 }

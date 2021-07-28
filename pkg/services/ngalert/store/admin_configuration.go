@@ -22,7 +22,6 @@ type AdminConfigurationStore interface {
 	GetAdminConfigurations(query *ngmodels.GetOrgAdminConfiguration) error
 	DeleteAdminConfiguration(orgID int64) error
 	UpdateAdminConfiguration(UpdateAdminConfigurationCmd) error
-	GetOrgsWithAdminConfiguration() ([]int64, error)
 }
 
 func (st *DBstore) GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfiguration, error) {
@@ -50,7 +49,7 @@ func (st *DBstore) GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfigurat
 func (st DBstore) GetAdminConfigurations(q *ngmodels.GetOrgAdminConfiguration) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		cfg := []*ngmodels.AdminConfiguration{}
-		if err := sess.Table("alert_admin_configuration").In("org_id", q.OrgIDs).Find(&cfg); err != nil {
+		if err := sess.Table("alert_admin_configuration").Find(&cfg); err != nil {
 			return nil
 		}
 
@@ -85,16 +84,4 @@ func (st DBstore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) erro
 		_, err = sess.Table("alert_admin_configuration").AllCols().Update(cmd.AdminConfiguration)
 		return err
 	})
-}
-
-func (st DBstore) GetOrgsWithAdminConfiguration() ([]int64, error) {
-	orgIds := []int64{}
-	err := st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if err := sess.Table("alert_admin_configuration").Distinct("org_id").Find(&orgIds); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	return orgIds, err
 }
