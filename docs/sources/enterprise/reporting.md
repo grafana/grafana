@@ -106,10 +106,19 @@ When the CSV file is generated, it is temporarily written to the `csv` folder in
 A background job runs every 10 minutes and removes temporary CSV files. You can configure how long a CSV file should be stored before being removed by configuring the [temp-data-lifetime]({{< relref "../administration/configuration/#temp-data-lifetime" >}}) setting. This setting also affects how long a renderer PNG file should be stored.
 
 ### Scheduling
+> Note: Only available in Grafana Enterprise v8.1+.
 
-Scheduled reports can be sent on a monthly, weekly, daily, or hourly basis. You may also disable scheduling for when you either want to send it via the API.
+When scheduling a report, you can now choose to send a report only once, hourly, daily, weekly, monthly or at custom intervals. It's also possible to not schedule report due to Never frequency (for example, if report must be sent via the API).
 
-All scheduling indicates when the reporting service will start rendering the dashboard. It can take a few minutes to render a dashboard with a lot of panels.
+You can also send a report for a limited time period by providing a start and end date, or send a report only on weekdays or on the last day of each month.
+If you choose "Send now" option, start date will be set to current date and time implicitly. Alternatively, you can set start date and time explicitly by selecting "Send later".
+
+
+> Note: Only available before Grafana Enterprise v8.1.
+
+Scheduled reports can be sent on a monthly, weekly, daily, or hourly basis. Use Never schedule type for cases when report does not need to be scheduled (for example, if it is sent via the API).
+
+Schedule indicates when the reporting service will start rendering the dashboard. It can take a few minutes to render a dashboard with a lot of panels.
 
 #### Hourly
 
