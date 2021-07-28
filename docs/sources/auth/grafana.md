@@ -38,10 +38,10 @@ Example:
 login_cookie_name = grafana_session
 
 # The lifetime (days) an authenticated user can be inactive before being required to login at next visit. Default is 7 days.
-login_maximum_inactive_lifetime_duration = 7
+login_maximum_inactive_lifetime_duration = 7d
 
 # The maximum lifetime (days) an authenticated user can be logged in since login time before being required to login. Default is 30 days.
-login_maximum_lifetime_duration = 30
+login_maximum_lifetime_duration = 30d
 
 # How often should auth tokens be rotated for authenticated users when being active. The default is each 10 minutes.
 token_rotation_interval_minutes = 10
