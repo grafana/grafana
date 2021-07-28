@@ -18,6 +18,9 @@ export interface ControlsOptions {
 
   // Show debug
   showDebug?: boolean;
+
+  // Show tooltip
+  showTooltip?: boolean;
 }
 
 export interface MapViewConfig {

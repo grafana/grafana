@@ -21,6 +21,7 @@ import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { DebugOverlay } from './components/DebugOverlay';
 import { getGlobalStyles } from './globalStyles';
 import { Global } from '@emotion/react';
+import { Tooltip } from './components/Tooltip';
 
 interface MapLayerState {
   config: MapLayerOptions;
@@ -280,7 +281,12 @@ export class GeomapPanel extends Component<Props, State> {
       topRight = [<DebugOverlay key="debug" map={this.map} />];
     }
 
-    this.setState({ topRight });
+    let tooltip: ReactNode;
+    if (options.showTooltip) {
+      tooltip = <Tooltip map={this.map} />;
+    }
+
+    this.setState({ topRight, tooltip });
   }
 
   render() {

@@ -86,5 +86,12 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
         name: 'Show debug',
         description: 'show map info',
         defaultValue: false,
+      })
+      .addBooleanSwitch({
+        category,
+        path: 'controls.showTooltip',
+        name: 'Show tooltip',
+        description: 'show tooltip',
+        defaultValue: true,
       });
   });

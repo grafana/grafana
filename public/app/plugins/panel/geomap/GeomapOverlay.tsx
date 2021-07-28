@@ -7,6 +7,7 @@ import { css } from '@emotion/css';
 export interface OverlayProps {
   topRight?: React.ReactNode[];
   bottomLeft?: React.ReactNode[];
+  tooltip?: React.ReactNode;
 }
 
 export class GeomapOverlay extends PureComponent<OverlayProps> {
@@ -17,11 +18,12 @@ export class GeomapOverlay extends PureComponent<OverlayProps> {
   }
 
   render() {
-    const { topRight, bottomLeft } = this.props;
+    const { topRight, bottomLeft, tooltip } = this.props;
     return (
       <div className={this.style.overlay}>
         {Boolean(topRight?.length) && <div className={this.style.TR}>{topRight}</div>}
         {Boolean(bottomLeft?.length) && <div className={this.style.BL}>{bottomLeft}</div>}
+        {Boolean(tooltip) && <div className={this.style.BL}>{tooltip}</div>}
       </div>
     );
   }
