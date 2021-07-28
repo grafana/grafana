@@ -61,12 +61,16 @@ func (s *Implementation) getUserById(id int64) (bool, *models.User, error) {
 	return has, user, nil
 }
 
-func (s *Implementation) getUser(user *models.User) (has bool, err error) {
-	s.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func (s *Implementation) getUser(user *models.User) (bool, error) {
+	var err error
+	var has bool
+
+	err = s.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		has, err = sess.Get(user)
 		return err
 	})
-	return
+
+	return has, err
 }
 
 func (s *Implementation) LookupAndFix(query *models.GetUserByAuthInfoQuery) (bool, *models.User, *models.UserAuth, error) {
@@ -184,11 +188,9 @@ func (s *Implementation) LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (
 	// 2. FindByUserDetails
 	if !foundUser {
 		foundUser, user, err = s.LookupByOneOf(query.UserId, query.Email, query.Login)
-	}
-
-	// No user found
-	if !foundUser {
-		return nil, models.ErrUserNotFound
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err := s.UserProtectionService.AllowUserMapping(user, query.AuthModule); err != nil {
