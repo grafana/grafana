@@ -12,15 +12,39 @@ let counter = 100;
 
 export class ElementState {
   readonly UID = counter++;
-  style: CSSProperties = {};
+
+  revId = 0;
+  style: CSSProperties;
 
   constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
     if (!options) {
       this.options = { type: item.id };
     }
 
-    this.style.border = '5px solid black';
-    this.style.background = '#FF0';
+    this.style = this.getBaseStyle();
+  }
+
+  getBaseStyle(): CSSProperties {
+    const css: CSSProperties = {};
+
+    const { background, border } = this.options;
+
+    if (border && border.width) {
+      css.borderWidth = border.width;
+      css.borderColor = '#F00';
+    }
+
+    if (background) {
+      css.backgroundColor = '#FF0';
+
+      if (background.image) {
+        css.backgroundImage = 'url(public/plugins/edge-draw-panel/img/' + background.image + ')';
+        css.backgroundRepeat = 'no-repeat';
+        css.backgroundSize = '100% 100%';
+      }
+    }
+
+    return css;
   }
 
   // ???Given the configuraiton, what fields should exist in the update
@@ -33,10 +57,11 @@ export class ElementState {
     visitor(this);
   }
 
+  // Something changed
   onChange(options: CanvasElementOptions) {
-    // TODO: check changes...
-    // Copy the options
+    this.revId++;
     this.options = { ...options };
+    this.style = this.getBaseStyle();
   }
 
   getSaveModel() {
@@ -46,7 +71,7 @@ export class ElementState {
   render(data: PanelData) {
     const { item } = this;
     return (
-      <div key={this.UID} style={this.style}>
+      <div key={`${this.UID}/${this.revId}`} style={this.style}>
         <item.display config={this.options.config} data={data} />
       </div>
     );

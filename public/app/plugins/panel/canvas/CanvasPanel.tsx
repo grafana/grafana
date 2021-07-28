@@ -1,4 +1,4 @@
-import { PureComponent } from 'react';
+import { Component } from 'react';
 import { PanelProps } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { Scene } from './runtime/scene';
@@ -13,7 +13,7 @@ interface State {
 // Used to pass the scene to the editor functions
 export let lastCanvasPanelInstance: CanvasPanel | undefined = undefined;
 
-export class CanvasPanel extends PureComponent<Props, State> {
+export class CanvasPanel extends Component<Props, State> {
   readonly scene: Scene;
 
   constructor(props: Props) {
@@ -43,14 +43,23 @@ export class CanvasPanel extends PureComponent<Props, State> {
   };
 
   shouldComponentUpdate(nextProps: Props) {
-    const { width, height, data } = this.props;
+    const { width, height, data, renderCounter } = this.props;
+    let changed = false;
+
     if (width !== nextProps.width || height !== nextProps.height) {
       this.scene.updateSize(nextProps.width, nextProps.height);
+      changed = true;
     }
     if (data !== nextProps.data) {
       this.scene.updateData(nextProps.data);
+      changed = true;
     }
-    return true;
+
+    if (renderCounter !== nextProps.renderCounter) {
+      changed = true;
+    }
+
+    return changed;
   }
 
   render() {

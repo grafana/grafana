@@ -6,6 +6,7 @@ import { canvasElementRegistry, DEFAULT_ELEMENT_CONFIG } from '../elements/regis
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVizualizationOptions';
+import { ColorDimensionEditor } from '../../geomap/dims/editors/ColorDimensionEditor';
 
 export interface CanvasElementEditorProps<TConfig = any> {
   options?: CanvasElementOptions<TConfig>;
@@ -98,6 +99,53 @@ export const CanvasElementEditor: FC<CanvasElementEditorProps> = ({ options, onC
     if (layer.registerOptionsUI) {
       layer.registerOptionsUI(builder);
     }
+
+    // export interface BackgroundConfig {
+    //   color?: ColorDimensionConfig;
+    //   image?: string;
+    //   // repeat // https://developer.mozilla.org/en-US/docs/Web/CSS/background-repeat
+    //   // position ?
+    // }
+
+    // export interface LineConfig {
+    //   color?: ColorDimensionConfig;
+    //   width?: number;
+    // }
+
+    builder.addCustomEditor({
+      id: 'background.color',
+      path: 'background.color',
+      name: 'Background Color',
+      editor: ColorDimensionEditor,
+      settings: {},
+      defaultValue: {
+        // Configured values
+        fixed: '',
+      },
+    });
+
+    builder.addCustomEditor({
+      id: 'border.color',
+      path: 'border.color',
+      name: 'Border Color',
+      editor: ColorDimensionEditor,
+      settings: {},
+      defaultValue: {
+        // Configured values
+        fixed: '',
+      },
+    });
+
+    builder.addSliderInput({
+      path: 'border.width',
+      name: 'Border Width',
+      defaultValue: 2,
+      settings: {
+        min: 0,
+        max: 20,
+      },
+    });
+
     return builder;
   }, [options?.type]);
 

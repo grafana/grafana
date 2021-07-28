@@ -9,7 +9,7 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
   .setPanelOptions((builder) => {
     builder.addCustomEditor({
       category: ['Selected Element'],
-      id: 'selected',
+      id: 'root',
       path: 'root', // multiple elements may edit root!
       name: 'Selected Element',
       editor: SelectedElementEditor,
