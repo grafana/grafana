@@ -24,19 +24,19 @@ var timeNow = time.Now
 
 type Alertmanager interface {
 	// Configuration
-	SaveAndApplyConfig(config *apimodels.PostableUserConfig) error
-	SaveAndApplyDefaultConfig() error
-	GetStatus() apimodels.GettableStatus
+	SaveAndApplyConfig(orgID int64, config *apimodels.PostableUserConfig) error
+	SaveAndApplyDefaultConfig(orgID int64) error
+	GetStatus(orgID int64) apimodels.GettableStatus
 
 	// Silences
-	CreateSilence(ps *apimodels.PostableSilence) (string, error)
-	DeleteSilence(silenceID string) error
-	GetSilence(silenceID string) (apimodels.GettableSilence, error)
-	ListSilences(filter []string) (apimodels.GettableSilences, error)
+	CreateSilence(orgID int64, ps *apimodels.PostableSilence) (string, error)
+	DeleteSilence(orgID int64, silenceID string) error
+	GetSilence(orgID int64, silenceID string) (apimodels.GettableSilence, error)
+	ListSilences(orgID int64, filter []string) (apimodels.GettableSilences, error)
 
 	// Alerts
-	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
-	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
+	GetAlerts(orgID int64, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
+	GetAlertGroups(orgID int64, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 }
 
 // API handlers.

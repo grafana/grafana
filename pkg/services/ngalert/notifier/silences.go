@@ -19,7 +19,7 @@ var (
 )
 
 // ListSilences retrieves a list of stored silences. It supports a set of labels as filters.
-func (am *Alertmanager) ListSilences(filter []string) (apimodels.GettableSilences, error) {
+func (am *alertmanager) ListSilences(filter []string) (apimodels.GettableSilences, error) {
 	matchers, err := parseFilter(filter)
 	if err != nil {
 		am.logger.Error("failed to parse matchers", "err", err)
@@ -52,7 +52,7 @@ func (am *Alertmanager) ListSilences(filter []string) (apimodels.GettableSilence
 }
 
 // GetSilence retrieves a silence by the provided silenceID. It returns ErrSilenceNotFound if the silence is not present.
-func (am *Alertmanager) GetSilence(silenceID string) (apimodels.GettableSilence, error) {
+func (am *alertmanager) GetSilence(silenceID string) (apimodels.GettableSilence, error) {
 	sils, _, err := am.silences.Query(silence.QIDs(silenceID))
 	if err != nil {
 		return apimodels.GettableSilence{}, fmt.Errorf("%s: %w", ErrGetSilencesInternal.Error(), err)
@@ -74,7 +74,7 @@ func (am *Alertmanager) GetSilence(silenceID string) (apimodels.GettableSilence,
 }
 
 // CreateSilence persists the provided silence and returns the silence ID if successful.
-func (am *Alertmanager) CreateSilence(ps *apimodels.PostableSilence) (string, error) {
+func (am *alertmanager) CreateSilence(ps *apimodels.PostableSilence) (string, error) {
 	sil, err := v2.PostableSilenceToProto(ps)
 	if err != nil {
 		am.logger.Error("marshaling to protobuf failed", "err", err)
@@ -107,7 +107,7 @@ func (am *Alertmanager) CreateSilence(ps *apimodels.PostableSilence) (string, er
 }
 
 // DeleteSilence looks for and expires the silence by the provided silenceID. It returns ErrSilenceNotFound if the silence is not present.
-func (am *Alertmanager) DeleteSilence(silenceID string) error {
+func (am *alertmanager) DeleteSilence(silenceID string) error {
 	if err := am.silences.Expire(silenceID); err != nil {
 		if errors.Is(err, silence.ErrNotFound) {
 			return ErrSilenceNotFound

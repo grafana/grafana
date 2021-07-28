@@ -74,7 +74,7 @@ const (
 `
 )
 
-type Alertmanager struct {
+type alertmanager struct {
 	logger      log.Logger
 	gokitLogger gokit_log.Logger
 
@@ -106,8 +106,8 @@ type Alertmanager struct {
 	config          []byte
 }
 
-func New(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*Alertmanager, error) {
-	am := &Alertmanager{
+func new(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*alertmanager, error) {
+	am := &alertmanager{
 		Settings:          cfg,
 		stopc:             make(chan struct{}),
 		logger:            log.New("alertmanager"),
@@ -156,7 +156,7 @@ func New(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*Aler
 	return am, nil
 }
 
-func (am *Alertmanager) Ready() bool {
+func (am *alertmanager) Ready() bool {
 	// We consider AM as ready only when the config has been
 	// applied at least once successfully. Until then, some objects
 	// can still be nil.
@@ -166,7 +166,7 @@ func (am *Alertmanager) Ready() bool {
 	return len(am.config) > 0
 }
 
-func (am *Alertmanager) Run(ctx context.Context) error {
+func (am *alertmanager) Run(ctx context.Context) error {
 	// Make sure dispatcher starts. We can tolerate future reload failures.
 	if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
 		am.logger.Error("unable to sync configuration", "err", err)
@@ -184,7 +184,7 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 	}
 }
 
-func (am *Alertmanager) StopAndWait() error {
+func (am *alertmanager) StopAndWait() error {
 	if am.dispatcher != nil {
 		am.dispatcher.Stop()
 	}
@@ -201,9 +201,9 @@ func (am *Alertmanager) StopAndWait() error {
 	return nil
 }
 
-// SaveAndApplyDefaultConfig saves the default configuration the database and applies the configuration to the Alertmanager.
+// SaveAndApplyDefaultConfig saves the default configuration the database and applies the configuration to the alertmanager.
 // It rollbacks the save if we fail to apply the configuration.
-func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
+func (am *alertmanager) SaveAndApplyDefaultConfig() error {
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
@@ -232,9 +232,9 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
 	return nil
 }
 
-// SaveAndApplyConfig saves the configuration the database and applies the configuration to the Alertmanager.
+// SaveAndApplyConfig saves the configuration the database and applies the configuration to the alertmanager.
 // It rollbacks the save if we fail to apply the configuration.
-func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
+func (am *alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
 	rawConfig, err := json.Marshal(&cfg)
 	if err != nil {
 		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
@@ -264,7 +264,7 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 
 // SyncAndApplyConfigFromDatabase picks the latest config from database and restarts
 // the components with the new config.
-func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
+func (am *alertmanager) SyncAndApplyConfigFromDatabase() error {
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
@@ -310,7 +310,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It is not safe to call concurrently.
-func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) (err error) {
+func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) (err error) {
 	// First, let's make sure this config is not already loaded
 	var configChanged bool
 	if rawConfig == nil {
@@ -398,12 +398,12 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	return nil
 }
 
-func (am *Alertmanager) WorkingDirPath() string {
+func (am *alertmanager) WorkingDirPath() string {
 	return filepath.Join(am.Settings.DataPath, workingDir)
 }
 
 // buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
-func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *template.Template) (map[string][]notify.Integration, error) {
+func (am *alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *template.Template) (map[string][]notify.Integration, error) {
 	integrationsMap := make(map[string][]notify.Integration, len(receivers))
 	for _, receiver := range receivers {
 		integrations, err := am.buildReceiverIntegrations(receiver, templates)
@@ -422,7 +422,7 @@ type NotificationChannel interface {
 }
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *template.Template) ([]notify.Integration, error) {
+func (am *alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *template.Template) ([]notify.Integration, error) {
 	var integrations []notify.Integration
 
 	for i, r := range receiver.GrafanaManagedReceivers {
@@ -496,7 +496,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 }
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
-func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error {
+func (am *alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error {
 	now := time.Now()
 	alerts := make([]*types.Alert, 0, len(postableAlerts.PostableAlerts))
 	var validationErr *AlertValidationError
@@ -641,7 +641,7 @@ func (e AlertValidationError) Error() string {
 }
 
 // createReceiverStage creates a pipeline of stages for a receiver.
-func (am *Alertmanager) createReceiverStage(name string, integrations []notify.Integration, wait func() time.Duration, notificationLog notify.NotificationLog) notify.Stage {
+func (am *alertmanager) createReceiverStage(name string, integrations []notify.Integration, wait func() time.Duration, notificationLog notify.NotificationLog) notify.Stage {
 	var fs notify.FanoutStage
 	for i := range integrations {
 		recv := &nflogpb.Receiver{
