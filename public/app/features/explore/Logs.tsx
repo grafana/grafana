@@ -16,7 +16,6 @@ import {
   LogsSortOrder,
   LinkModel,
   Field,
-  GrafanaTheme,
   DataQuery,
   DataFrame,
   GrafanaTheme2,
@@ -441,7 +440,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       border: 1px solid ${theme.colors.border.medium};
     `,
     flipButton: css`
-      margin: ${theme.spacing(1)} 0 0 ${theme.spacing(2)};
+      margin: ${theme.spacing(0.5)} 0 0 ${theme.spacing(1)};
     `,
     radioButtons: css`
       margin: 0 ${theme.spacing(1)};
