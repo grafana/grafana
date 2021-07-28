@@ -161,7 +161,7 @@ func (s *Implementation) GenericOAuthLookup(authModule string, authId string, us
 	if authModule == genericOAuthModule && userID != 0 {
 		authQuery := &models.GetAuthInfoQuery{}
 		authQuery.AuthModule = authModule
-		//authQuery.AuthId = authId
+		authQuery.AuthId = authId
 		authQuery.UserId = userID
 		err := s.GetAuthInfo(authQuery)
 		if err != nil {
