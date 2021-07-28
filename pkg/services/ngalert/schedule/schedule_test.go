@@ -397,6 +397,12 @@ func newFakeExternalAlertmanager(t *testing.T) *fakeExternalAlertmanager {
 
 func (am *fakeExternalAlertmanager) AlertNamesCompare(expected []string) bool {
 	n := []string{}
+	alerts := am.Alerts()
+
+	if len(expected) != len(alerts) {
+		return false
+	}
+
 	for _, a := range am.Alerts() {
 		for k, v := range a.Alert.Labels {
 			if k == model.AlertNameLabel {
