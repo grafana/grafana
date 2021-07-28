@@ -1,13 +1,12 @@
-import { FrameGeometrySourceMode, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 import { BaseLayerEditor } from './editor/BaseLayerEditor';
 import { DataLayersEditor } from './editor/DataLayersEditor';
 import { GeomapPanel } from './GeomapPanel';
-import { MapCenterEditor } from './editor/MapCenterEditor';
+import { MapViewEditor } from './editor/MapViewEditor';
 import { defaultView, GeomapPanelOptions } from './types';
-import { MapZoomEditor } from './editor/MapZoomEditor';
 import { mapPanelChangedHandler } from './migrations';
-import { defaultGrafanaThemedMap } from './layers/basemaps';
-import { MARKERS_LAYER_ID } from './layers/data/markersLayer';
+import { defaultMarkersConfig } from './layers/data/markersLayer';
+import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
@@ -17,20 +16,12 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
     let category = ['Map View'];
     builder.addCustomEditor({
       category,
-      id: 'view.center',
-      path: 'view.center',
-      name: 'Center',
-      editor: MapCenterEditor,
-      defaultValue: defaultView.center,
-    });
-
-    builder.addCustomEditor({
-      category,
-      id: 'view.zoom',
-      path: 'view.zoom',
-      name: 'Initial zoom',
-      editor: MapZoomEditor,
-      defaultValue: defaultView.zoom,
+      id: 'view',
+      path: 'view',
+      name: 'Initial view', // don't show it
+      description: 'This location will show when the panel first loads',
+      editor: MapViewEditor,
+      defaultValue: defaultView,
     });
 
     builder.addBooleanSwitch({
@@ -41,17 +32,13 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       defaultValue: defaultView.shared,
     });
 
-    // Nested
     builder.addCustomEditor({
       category: ['Base Layer'],
       id: 'basemap',
       path: 'basemap',
       name: 'Base Layer',
       editor: BaseLayerEditor,
-      defaultValue: {
-        type: defaultGrafanaThemedMap.id,
-        config: defaultGrafanaThemedMap.defaultOptions,
-      },
+      defaultValue: DEFAULT_BASEMAP_CONFIG,
     });
 
     builder.addCustomEditor({
@@ -60,15 +47,7 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       path: 'layers',
       name: 'Data Layer',
       editor: DataLayersEditor,
-      defaultValue: [
-        {
-          type: MARKERS_LAYER_ID,
-          config: {},
-          location: {
-            mode: FrameGeometrySourceMode.Auto,
-          },
-        },
-      ],
+      defaultValue: [defaultMarkersConfig],
     });
 
     // The controls section
@@ -85,13 +64,6 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
         category,
         path: 'controls.mouseWheelZoom',
         name: 'Mouse wheel zoom',
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        category,
-        path: 'controls.showLegend',
-        name: 'Show legend',
-        description: 'Show legend',
         defaultValue: true,
       })
       .addBooleanSwitch({

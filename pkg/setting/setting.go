@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -409,6 +410,10 @@ type Cfg struct {
 	// AlertingBaseInterval controls the alerting base interval in seconds.
 	// Only for internal use and not user configuration.
 	AlertingBaseInterval time.Duration
+
+	// Geomap base layer config
+	GeomapDefaultBaseLayerConfig map[string]interface{}
+	GeomapEnableCustomBaseLayers bool
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -988,6 +993,19 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		Name:    dbName,
 		ConnStr: connStr,
 	}
+
+	geomapSection := iniFile.Section("geomap")
+	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
+	if basemapJSON != "" {
+		layer := make(map[string]interface{})
+		err = json.Unmarshal([]byte(basemapJSON), &layer)
+		if err != nil {
+			cfg.Logger.Error("Error reading json from default_baselayer_config", "error", err)
+		} else {
+			cfg.GeomapDefaultBaseLayerConfig = layer
+		}
+	}
+	cfg.GeomapEnableCustomBaseLayers = geomapSection.Key("enable_custom_baselayers").MustBool(true)
 
 	cfg.readDateFormats()
 	cfg.readSentryConfig()

@@ -17,7 +17,7 @@ import (
 
 func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	folders, err := s.GetFolders(c.QueryInt64("limit"))
+	folders, err := s.GetFolders(c.QueryInt64("limit"), c.QueryInt64("page"))
 
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
@@ -97,7 +97,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	f, err := s.DeleteFolder(c.Params(":uid"))
+	f, err := s.DeleteFolder(c.Params(":uid"), c.QueryBool("forceDeleteRules"))
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}

@@ -18,7 +18,8 @@ func ToFolderErrorResponse(err error) response.Response {
 	if errors.Is(err, models.ErrFolderTitleEmpty) ||
 		errors.Is(err, models.ErrDashboardTypeMismatch) ||
 		errors.Is(err, models.ErrDashboardInvalidUid) ||
-		errors.Is(err, models.ErrDashboardUidTooLong) {
+		errors.Is(err, models.ErrDashboardUidTooLong) ||
+		errors.Is(err, models.ErrFolderContainsAlertRules) {
 		return response.Error(400, err.Error(), nil)
 	}
 

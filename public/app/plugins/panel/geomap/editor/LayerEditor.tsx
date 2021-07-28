@@ -10,11 +10,11 @@ import {
   FieldType,
   Field,
 } from '@grafana/data';
-import { geomapLayerRegistry } from '../layers/registry';
-import { defaultGrafanaThemedMap } from '../layers/basemaps';
+import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVizualizationOptions';
+import { GazetteerPathEditor } from './GazetteerPathEditor';
 
 export interface LayerEditorProps<TConfig = any> {
   options?: MapLayerOptions<TConfig>;
@@ -29,7 +29,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
     return geomapLayerRegistry.selectOptions(
       options?.type // the selected value
         ? [options.type] // as an array
-        : [defaultGrafanaThemedMap.id],
+        : [DEFAULT_BASEMAP_CONFIG.type],
       filter
     );
   }, [options?.type, filter]);
@@ -40,6 +40,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
     if (!layer || !(layer.registerOptionsUI || layer.showLocation || layer.showOpacity)) {
       return null;
     }
+
     const builder = new PanelOptionsEditorBuilder();
     if (layer.showLocation) {
       builder
@@ -53,6 +54,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
               { value: FrameGeometrySourceMode.Auto, label: 'Auto' },
               { value: FrameGeometrySourceMode.Coords, label: 'Coords' },
               { value: FrameGeometrySourceMode.Geohash, label: 'Geohash' },
+              { value: FrameGeometrySourceMode.Lookup, label: 'Lookup' },
             ],
           },
         })
@@ -84,6 +86,22 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
           showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Geohash,
           // eslint-disable-next-line react/display-name
           // info: (props) => <div>HELLO</div>,
+        })
+        .addFieldNamePicker({
+          path: 'location.lookup',
+          name: 'Lookup Field',
+          settings: {
+            filter: (f: Field) => f.type === FieldType.string,
+            noFieldsMessage: 'No strings fields found',
+          },
+          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
+        })
+        .addCustomEditor({
+          id: 'gazetteer',
+          path: 'location.gazetteer',
+          name: 'Gazetteer',
+          editor: GazetteerPathEditor,
+          showIf: (opts: MapLayerOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
         });
     }
     if (layer.registerOptionsUI) {
@@ -112,7 +130,13 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
       options: options,
     };
 
-    const currentOptions = { ...options, config: { ...layer.defaultOptions, ...options?.config } };
+    const currentOptions = { ...options, type: layer.id, config: { ...layer.defaultOptions, ...options?.config } };
+
+    // Update the panel options if not set
+    if (!options || (layer.defaultOptions && !options.config)) {
+      onChange(currentOptions as any);
+    }
+
     const reg = optionsEditorBuilder.getRegistry();
 
     // Load the options into categories
