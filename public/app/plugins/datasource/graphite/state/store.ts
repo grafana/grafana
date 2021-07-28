@@ -146,11 +146,15 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     handleTargetChanged(state);
   }
   if (actions.updateFunctionParam.match(action)) {
+    const { func, index, value } = action.payload;
+    func.updateParam(value, index);
     handleTargetChanged(state);
   }
   if (actions.updateQuery.match(action)) {
     state.target.target = action.payload.query;
     handleTargetChanged(state);
+  }
+  if (actions.runQuery.match(action)) {
     // handleTargetChanged() builds target from segments/tags/functions only,
     // it doesn't handle refresh when target is change explicitly
     state.panelCtrl.refresh();

@@ -31,8 +31,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         <FormLabel
           tooltip={
             <React.Fragment>
-              Optionally, set the lower or upper bounds on the interval between data points, for example, set "minimum 1h" to hint that the measurements were not taken more frequently.
-               
+              Use 'Minimum' or 'Maximum' step mode to set the lower or upper bounds respectively on the interval between data points. For example, set "minimum 1h" to hint that measurements were not taken more frequently. Use the 'Exact' step mode to set an exact interval between data points. 
               <code>
                 $__interval
               </code>

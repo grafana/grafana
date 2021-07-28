@@ -173,9 +173,11 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 width={5}
                 tooltip={
                   <>
-                    Optionally, set the lower or upper bounds on the interval between data points, for example, set
-                    &quot;minimum 1h&quot; to hint that the measurements were not taken more frequently.{' '}
-                    <code>$__interval</code> and <code>$__rate_interval</code> are supported.
+                    Use &apos;Minimum&apos; or &apos;Maximum&apos; step mode to set the lower or upper bounds
+                    respectively on the interval between data points. For example, set &quot;minimum 1h&quot; to hint
+                    that measurements were not taken more frequently. Use the &apos;Exact&apos; step mode to set an
+                    exact interval between data points. <code>$__interval</code> and <code>$__rate_interval</code> are
+                    supported.
                   </>
                 }
               >
