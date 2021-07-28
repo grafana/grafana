@@ -19,16 +19,17 @@ var (
 	ErrGetAlertsUnavailable     = fmt.Errorf("unable to retrieve alerts(s) as alertmanager is not initialised yet")
 	ErrGetAlertsBadPayload      = fmt.Errorf("unable to retrieve alerts")
 	ErrGetAlertGroupsBadPayload = fmt.Errorf("unable to retrieve alerts groups")
+	ErrGetAlertsNotFound        = fmt.Errorf("unable to retrieve alertmanager")
 )
 
-func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []string, receivers string) (apimodels.GettableAlerts, error) {
+func (am *Alertmanager) GetAlerts(orgID int64, active, silenced, inhibited bool, filter []string, receivers string) (apimodels.GettableAlerts, error) {
 	var (
 		// Initialize result slice to prevent api returning `null` when there
 		// are no alerts present
 		res = apimodels.GettableAlerts{}
 	)
 
-	if !am.Ready() {
+	if !am.Ready(orgID) {
 		return res, ErrGetAlertsUnavailable
 	}
 
@@ -44,19 +45,24 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsBadPayload)
 	}
 
-	alerts := am.alerts.GetPending()
+	amInstance, err := am.GetAM(orgID)
+	if err != nil {
+		am.logger.Error("failed to get alertmanager instance", "error", err.Error(), "orgID", orgID)
+		return nil, fmt.Errorf(" %s: %w", err.Error(), ErrGetAlertsNotFound)
+	}
+	alerts := amInstance.alerts.GetPending()
 	defer alerts.Close()
 
-	alertFilter := am.alertFilter(matchers, silenced, inhibited, active)
+	alertFilter := amInstance.alertFilter(matchers, silenced, inhibited, active)
 	now := time.Now()
 
-	am.reloadConfigMtx.RLock()
+	amInstance.reloadConfigMtx.RLock()
 	for a := range alerts.Next() {
 		if err = alerts.Err(); err != nil {
 			break
 		}
 
-		routes := am.route.Match(a.Labels)
+		routes := amInstance.route.Match(a.Labels)
 		receivers := make([]string, 0, len(routes))
 		for _, r := range routes {
 			receivers = append(receivers, r.RouteOpts.Receiver)
@@ -70,11 +76,11 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 			continue
 		}
 
-		alert := v2.AlertToOpenAPIAlert(a, am.marker.Status(a.Fingerprint()), receivers)
+		alert := v2.AlertToOpenAPIAlert(a, amInstance.marker.Status(a.Fingerprint()), receivers)
 
 		res = append(res, alert)
 	}
-	am.reloadConfigMtx.RUnlock()
+	amInstance.reloadConfigMtx.RUnlock()
 
 	if err != nil {
 		am.logger.Error("failed to iterate through the alerts", "err", err)
@@ -87,7 +93,7 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 	return res, nil
 }
 
-func (am *Alertmanager) GetAlertGroups(active, silenced, inhibited bool, filter []string, receivers string) (apimodels.AlertGroups, error) {
+func (am *alertmanager) GetAlertGroups(active, silenced, inhibited bool, filter []string, receivers string) (apimodels.AlertGroups, error) {
 	matchers, err := parseFilter(filter)
 	if err != nil {
 		am.logger.Error("msg", "failed to parse matchers", "err", err)
@@ -135,7 +141,7 @@ func (am *Alertmanager) GetAlertGroups(active, silenced, inhibited bool, filter 
 	return res, nil
 }
 
-func (am *Alertmanager) alertFilter(matchers []*labels.Matcher, silenced, inhibited, active bool) func(a *types.Alert, now time.Time) bool {
+func (am *alertmanager) alertFilter(matchers []*labels.Matcher, silenced, inhibited, active bool) func(a *types.Alert, now time.Time) bool {
 	return func(a *types.Alert, now time.Time) bool {
 		if !a.EndsAt.IsZero() && a.EndsAt.Before(now) {
 			return false

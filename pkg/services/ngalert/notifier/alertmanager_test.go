@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func setupAMTest(t *testing.T) *Alertmanager {
+func setupAMTest(t *testing.T) *alertmanager {
 	dir, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -47,7 +47,7 @@ func setupAMTest(t *testing.T) *Alertmanager {
 		Logger:                 log.New("alertmanager-test"),
 	}
 
-	am, err := New(cfg, store, m)
+	am, err := new(cfg, store, m)
 	require.NoError(t, err)
 	return am
 }

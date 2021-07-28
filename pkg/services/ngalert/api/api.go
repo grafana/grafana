@@ -30,21 +30,19 @@ type Scheduler interface {
 
 type Alertmanager interface {
 	// Configuration
-	// temporary add orgID parameter; this will move to the Alertmanager wrapper when it will be available
 	SaveAndApplyConfig(orgID int64, config *apimodels.PostableUserConfig) error
-	// temporary add orgID parameter; this will move to the Alertmanager wrapper when it will be available
 	SaveAndApplyDefaultConfig(orgID int64) error
-	GetStatus() apimodels.GettableStatus
+	GetStatus(orgID int64) apimodels.GettableStatus
 
 	// Silences
-	CreateSilence(ps *apimodels.PostableSilence) (string, error)
-	DeleteSilence(silenceID string) error
-	GetSilence(silenceID string) (apimodels.GettableSilence, error)
-	ListSilences(filter []string) (apimodels.GettableSilences, error)
+	CreateSilence(orgID int64, ps *apimodels.PostableSilence) (string, error)
+	DeleteSilence(orgID int64, silenceID string) error
+	GetSilence(orgID int64, silenceID string) (apimodels.GettableSilence, error)
+	ListSilences(orgID int64, filter []string) (apimodels.GettableSilences, error)
 
 	// Alerts
-	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
-	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
+	GetAlerts(orgID int64, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
+	GetAlertGroups(orgID int64, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 
 	// Testing
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigParams) (*notifier.TestReceiversResult, error)

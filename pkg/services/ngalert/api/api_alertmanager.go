@@ -93,14 +93,14 @@ func (srv AlertmanagerSrv) loadSecureSettings(orgId int64, receivers []*apimodel
 }
 
 func (srv AlertmanagerSrv) RouteGetAMStatus(c *models.ReqContext) response.Response {
-	return response.JSON(http.StatusOK, srv.am.GetStatus())
+	return response.JSON(http.StatusOK, srv.am.GetStatus(c.OrgId))
 }
 
 func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
 	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
-	silenceID, err := srv.am.CreateSilence(&postableSilence)
+	silenceID, err := srv.am.CreateSilence(c.OrgId, &postableSilence)
 	if err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -132,7 +132,7 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Res
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
 	silenceID := c.Params(":SilenceId")
-	if err := srv.am.DeleteSilence(silenceID); err != nil {
+	if err := srv.am.DeleteSilence(c.OrgId, silenceID); err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}
@@ -203,6 +203,7 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 
 func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *models.ReqContext) response.Response {
 	groups, err := srv.am.GetAlertGroups(
+		c.OrgId,
 		c.QueryBoolWithDefault("active", true),
 		c.QueryBoolWithDefault("silenced", true),
 		c.QueryBoolWithDefault("inhibited", true),
@@ -222,6 +223,7 @@ func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *models.ReqContext) response.
 
 func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Response {
 	alerts, err := srv.am.GetAlerts(
+		c.OrgId,
 		c.QueryBoolWithDefault("active", true),
 		c.QueryBoolWithDefault("silenced", true),
 		c.QueryBoolWithDefault("inhibited", true),
@@ -244,7 +246,7 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Respo
 
 func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext) response.Response {
 	silenceID := c.Params(":SilenceId")
-	gettableSilence, err := srv.am.GetSilence(silenceID)
+	gettableSilence, err := srv.am.GetSilence(c.OrgId, silenceID)
 	if err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -256,7 +258,7 @@ func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext) response.Respon
 }
 
 func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Response {
-	gettableSilences, err := srv.am.ListSilences(c.QueryStrings("filter"))
+	gettableSilences, err := srv.am.ListSilences(c.OrgId, c.QueryStrings("filter"))
 	if err != nil {
 		if errors.Is(err, notifier.ErrListSilencesBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
