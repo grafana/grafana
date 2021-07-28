@@ -19,6 +19,7 @@ import {
   GrafanaTheme,
   DataQuery,
   DataFrame,
+  GrafanaTheme2,
 } from '@grafana/data';
 import {
   RadioButtonGroup,
@@ -27,9 +28,10 @@ import {
   InlineField,
   InlineFieldRow,
   InlineSwitch,
-  withTheme,
+  withTheme2,
   stylesFactory,
   TooltipDisplayMode,
+  Themeable2,
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
@@ -45,14 +47,14 @@ const SETTINGS_KEYS = {
   prettifyLogMessage: 'grafana.explore.logs.prettifyLogMessage',
 };
 
-interface Props {
+interface Props extends Themeable2 {
   width: number;
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: DataFrame[];
   logsQueries?: DataQuery[];
   visibleRange?: AbsoluteTimeRange;
-  theme: GrafanaTheme;
+  theme: GrafanaTheme2;
   highlighterExpressions?: string[];
   loading: boolean;
   absoluteRange: AbsoluteTimeRange;
@@ -418,9 +420,9 @@ export class UnthemedLogs extends PureComponent<Props, State> {
   }
 }
 
-export const Logs = withTheme(UnthemedLogs);
+export const Logs = withTheme2(UnthemedLogs);
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     noData: css`
       > * {
@@ -432,7 +434,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: space-between;
       align-items: baseline;
       flex-wrap: wrap;
-      background-color: ${theme.colors.bg1};
+      background-color: ${theme.colors.background.primary};
       padding: ${theme.spacing.sm} ${theme.spacing.md};
       border-radius: ${theme.border.radius.md};
       margin: ${theme.spacing.md} 0 ${theme.spacing.sm};
