@@ -1,5 +1,5 @@
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useDispatch } from 'react-redux';
 
@@ -13,6 +13,9 @@ import { initialAsyncRequestState } from './utils/redux';
 import { AmNotificationsGroup } from './components/amnotifications/AmNotificationsGroup';
 import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { AmNotificationsGroupBy } from './components/amnotifications/AmNotificationsGroupBy';
+import { useGroupedAlerts } from './hooks/useGroupedAlerts';
+import { useFlatAmAlerts } from './hooks/useFlatAmAlerts';
 
 const AlertManagerNotifications = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
@@ -22,6 +25,15 @@ const AlertManagerNotifications = () => {
   const loading = alertGroups[alertManagerSourceName || '']?.loading;
   const error = alertGroups[alertManagerSourceName || '']?.error;
   const results: AlertmanagerGroup[] = alertGroups[alertManagerSourceName || '']?.result || [];
+
+  const [groupByKeys, setGroupByKeys] = useState<string[]>([]);
+  const handleGroupingChange = (keys: string[]) => {
+    setGroupByKeys(keys);
+  };
+
+  const flattenedAlerts = useFlatAmAlerts(results);
+
+  const groupedAlerts = useGroupedAlerts(flattenedAlerts, groupByKeys);
 
   useEffect(() => {
     function fetchNotifications() {
@@ -36,9 +48,12 @@ const AlertManagerNotifications = () => {
     };
   }, [dispatch, alertManagerSourceName]);
 
+  const groupsToDisplay = groupByKeys.length > 0 ? groupedAlerts : results;
+
   return (
     <AlertingPageWrapper pageId="notifications">
       <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      <AmNotificationsGroupBy groups={results} handleGroupingChange={handleGroupingChange} />
       {loading && <LoadingPlaceholder text="Loading notifications" />}
       {error && !loading && (
         <Alert title={'Error loading notifications'} severity={'error'}>
@@ -46,7 +61,7 @@ const AlertManagerNotifications = () => {
         </Alert>
       )}
       {results &&
-        results.map((group, index) => {
+        groupsToDisplay.map((group, index) => {
           return (
             <AmNotificationsGroup
               alertManagerSourceName={alertManagerSourceName || ''}
