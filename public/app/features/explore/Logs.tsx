@@ -435,16 +435,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       align-items: baseline;
       flex-wrap: wrap;
       background-color: ${theme.colors.background.primary};
-      padding: ${theme.spacing.sm} ${theme.spacing.md};
-      border-radius: ${theme.border.radius.md};
-      margin: ${theme.spacing.md} 0 ${theme.spacing.sm};
-      border: 1px solid ${theme.colors.border2};
+      padding: ${theme.spacing(2)} ${theme.spacing(3)};
+      border-radius: ${theme.shape.borderRadius()};
+      margin: ${theme.spacing(3)} 0 ${theme.spacing(2)};
+      border: 1px solid ${theme.colors.border.weak};
     `,
     flipButton: css`
-      margin: ${theme.spacing.xs} 0 0 ${theme.spacing.sm};
+      margin: ${theme.spacing(1)} 0 0 ${theme.spacing(2)};
     `,
     radioButtons: css`
-      margin: 0 ${theme.spacing.sm};
+      margin: 0 ${theme.spacing(2)};
     `,
     logsSection: css`
       display: flex;
@@ -457,7 +457,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     infoText: css`
       font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
     `,
   };
 });
