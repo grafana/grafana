@@ -46,7 +46,7 @@ Use this option to show or hide which user created the annotation.
 
 ### Show time
 
-Use this option to show or hide the time the annotation was created
+Use this option to show or hide the time the annotation creation time.
 
 ### Show Tags
 
