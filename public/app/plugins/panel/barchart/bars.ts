@@ -53,11 +53,17 @@ export interface BarsOptions {
  * @internal
  */
 export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
-  const { xOri, xDir: dir, groupWidth, barWidth, rawValue, formatValue, showValue } = opts;
+  const { xOri, xDir: dir, rawValue, formatValue, showValue } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
   const isStacked = opts.stacking !== StackingMode.None;
   const pctStacked = opts.stacking === StackingMode.Percent;
+
+  let { groupWidth, barWidth } = opts;
+
+  if (isStacked) {
+    [groupWidth, barWidth] = [barWidth, groupWidth];
+  }
 
   let qt: Quadtree;
   let hovered: Rect | undefined = undefined;
