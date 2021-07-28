@@ -102,5 +102,5 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
   /**
    * Show custom elements in the panel edit UI
    */
-  registerOptionsUI?: (builder: PanelOptionsEditorBuilder<TConfig>) => void;
+  registerOptionsUI?: (builder: PanelOptionsEditorBuilder<MapLayerOptions<TConfig>>) => void;
 }
