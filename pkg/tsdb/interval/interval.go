@@ -72,6 +72,9 @@ func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, interva
 	case "exact":
 		return Interval{Text: FormatDuration(interval), Value: interval}
 
+	default:
+		panic(fmt.Sprintf("Unrecognized intervalMode %v", intervalMode))
+
 	}
 
 	rounded := roundInterval(calculatedInterval)
