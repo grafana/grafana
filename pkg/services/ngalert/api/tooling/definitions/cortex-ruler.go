@@ -318,3 +318,7 @@ type GettableGrafanaRule struct {
 	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
 }
+
+type AdminConfiguration struct {
+	Alertmanagers []string `json:"alertmanagers"`
+}

@@ -2,32 +2,37 @@ package schedule_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests"
-	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
-
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/benbjohnson/clock"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var nilMetrics = metrics.NewMetrics(nil)
@@ -222,6 +227,79 @@ func TestAlertingTicker(t *testing.T) {
 	})
 }
 
+func TestSendingToExternalAlertmanager(t *testing.T) {
+	dbstore := tests.SetupTestEnv(t, 1)
+	t.Cleanup(registry.ClearOverrides)
+
+	alerts := make([]*models.AlertRule, 0)
+	// create alert rule with one second interval
+	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, 1))
+
+	fakeAM := newFakeExternalAlertmanager(t)
+	defer fakeAM.Close()
+
+	// First, let's create an admin configuration that holds an alertmanager.
+	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}}
+	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
+	require.NoError(t, dbstore.UpdateAdminConfiguration(cmd))
+
+	mockedClock := clock.NewMock()
+	baseInterval := time.Second
+
+	logger := log.New("ngalert schedule test")
+	schedCfg := schedule.SchedulerCfg{
+		C:                mockedClock,
+		BaseInterval:     baseInterval,
+		MaxAttempts:      1,
+		Evaluator:        eval.Evaluator{Cfg: &setting.Cfg{ExpressionsEnabled: true}, Log: logger},
+		RuleStore:        dbstore,
+		InstanceStore:    dbstore,
+		AdminConfigStore: dbstore,
+		Notifier:         &fakeNotifier{},
+		Logger:           logger,
+		Metrics:          metrics.NewMetrics(prometheus.NewRegistry()),
+	}
+	st := state.NewManager(schedCfg.Logger, nilMetrics, dbstore, dbstore)
+	sched := schedule.NewScheduler(schedCfg, nil, "http://localhost", st)
+
+	ctx := context.Background()
+
+	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
+	// when the first alert triggers.
+	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
+
+	// Then, ensure we've discovered the Alertmanager.
+	require.Eventually(t, func() bool {
+		return len(sched.AlertmanagersFor(1)) == 1 && len(sched.DroppedAlertmanagersFor(1)) == 0
+	}, 10*time.Second, 200*time.Millisecond)
+
+	go func() {
+		schedule.PollingInterval = 1 * time.Second
+		err := sched.Run(ctx)
+		require.NoError(t, err)
+	}()
+
+	// With everything up and running, let's advance the time to make sure we get at least one alert iteration.
+	mockedClock.Add(2 * time.Second)
+
+	// Eventually, our Alertmanager should have received at least one alert.
+	require.Eventually(t, func() bool {
+		return fakeAM.AlertsCount() >= 1
+	}, 10*time.Second, 200*time.Millisecond)
+
+	// Now, let's remove the Alertmanager from the admin configuration.
+	adminConfig.Alertmanagers = []string{}
+	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
+	require.NoError(t, dbstore.UpdateAdminConfiguration(cmd))
+
+	// Again, make sure we sync.
+	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
+
+	// Then, ensure we've dropped the Alertmanager.
+	require.Eventually(t, func() bool {
+		return len(sched.AlertmanagersFor(1)) == 0 && len(sched.DroppedAlertmanagersFor(1)) == 0
+	}, 10*time.Second, 200*time.Millisecond)
+}
 func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys ...models.AlertRuleKey) {
 	timeout := time.After(time.Second)
 
@@ -289,4 +367,63 @@ func concatenate(keys []models.AlertRuleKey) string {
 		s = append(s, k.String())
 	}
 	return fmt.Sprintf("[%s]", strings.Join(s, ","))
+}
+
+// fakeNotifier represents a fake internal Alertmanager.
+type fakeNotifier struct{}
+
+func (n *fakeNotifier) PutAlerts(alerts apimodels.PostableAlerts) error {
+	return nil
+}
+
+type fakeExternalAlertmanager struct {
+	t      *testing.T
+	mtx    sync.Mutex
+	alerts amv2.PostableAlerts
+	server *httptest.Server
+}
+
+func newFakeExternalAlertmanager(t *testing.T) *fakeExternalAlertmanager {
+	t.Helper()
+
+	am := &fakeExternalAlertmanager{
+		t:      t,
+		alerts: amv2.PostableAlerts{},
+	}
+	am.server = httptest.NewServer(http.HandlerFunc(am.Handler()))
+
+	return am
+}
+
+func (am *fakeExternalAlertmanager) AlertsCount() int {
+	am.mtx.Lock()
+	defer am.mtx.Unlock()
+
+	return len(am.alerts)
+}
+
+func (am *fakeExternalAlertmanager) Alerts() amv2.PostableAlerts {
+	am.mtx.Lock()
+	defer am.mtx.Unlock()
+	return am.alerts
+}
+
+func (am *fakeExternalAlertmanager) Handler() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		b, err := ioutil.ReadAll(r.Body)
+		require.NoError(am.t, err)
+
+		a := amv2.PostableAlerts{}
+		require.NoError(am.t, json.Unmarshal(b, &a))
+
+		am.mtx.Lock()
+		for _, na := range a {
+			am.alerts = append(am.alerts, na)
+		}
+		am.mtx.Unlock()
+	}
+}
+
+func (am *fakeExternalAlertmanager) Close() {
+	am.server.Close()
 }
