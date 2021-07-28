@@ -12,7 +12,7 @@ The Annotations panel allows you to show a list of annotations that can be used 
 
 ## Annotation query
 
-The options control the source query for the list of annotations. 
+These options control the source query for the list of annotations. 
 
 ### Query Filter
 
@@ -39,6 +39,8 @@ Use the tags list to filter the annotations by tags. You can add multiple tags i
 Use the limit option to limit the number of results returned.
 
 ## Display
+
+These options control additional meta-data included in the annotations panel display. 
 
 ### Show user
 
