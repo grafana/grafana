@@ -43,7 +43,7 @@ import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
-const EXEMPLARS_NOT_AVAILABLE = 'Exemplars for this data source are not available.';
+const EXEMPLARS_NOT_AVAILABLE = 'Exemplars for this query are not available.';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
@@ -62,7 +62,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
-  exemplarErrors: Subject<string> = new Subject();
+  exemplarErrors: Subject<{ refId: string; error: string | null }> = new Subject();
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -265,12 +265,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
             exemplarTarget.requestId += '_exemplar';
             queries.push(this.createQuery(exemplarTarget, options, start, end));
             activeTargets.push(exemplarTarget);
-            this.exemplarErrors.next();
+            this.exemplarErrors.next({ refId: exemplarTarget.refId, error: null });
           }
           target.exemplar = false;
         }
         if (target.exemplar && target.instant) {
-          this.exemplarErrors.next('Exemplars are not available for instant queries.');
+          this.exemplarErrors.next({ refId: target.refId, error: 'Exemplars are not available for instant queries.' });
         }
         queries.push(this.createQuery(target, options, start, end));
         activeTargets.push(target);
@@ -383,8 +383,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     if (query.exemplar) {
       return this.getExemplars(query).pipe(
-        catchError((err: FetchError) => {
-          this.exemplarErrors.next(EXEMPLARS_NOT_AVAILABLE);
+        catchError(() => {
+          this.exemplarErrors.next({ refId: query.refId, error: EXEMPLARS_NOT_AVAILABLE });
           return of({
             data: [],
             state: LoadingState.Done,
