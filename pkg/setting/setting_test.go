@@ -58,7 +58,7 @@ func TestLoadingSettings(t *testing.T) {
 			customInitPath := CustomInitPath
 			CustomInitPath = "conf/sample.ini"
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err := cfg.Load(CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 			// Restore CustomInitPath to avoid side effects.
 			CustomInitPath = customInitPath

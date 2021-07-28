@@ -21,7 +21,7 @@ import (
 	"github.com/gobwas/glob"
 
 	"github.com/prometheus/common/model"
-	ini "gopkg.in/ini.v1"
+	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/components/gtime"
@@ -44,7 +44,6 @@ const (
 	Dev              = "development"
 	Prod             = "production"
 	Test             = "test"
-	CustomInitPath   = "conf/custom.ini"
 	ApplicationName  = "Grafana"
 )
 
@@ -76,7 +75,8 @@ var (
 	Packaging = "unknown"
 
 	// Paths
-	HomePath string
+	HomePath       string
+	CustomInitPath = "conf/custom.ini"
 
 	// HTTP server options
 	StaticRootPath string
