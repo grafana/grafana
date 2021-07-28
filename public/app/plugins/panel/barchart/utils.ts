@@ -252,13 +252,10 @@ export function prepareGraphableFrames(
     const fields: Field[] = [];
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
-        let unit = stacking === StackingMode.Percent ? 'percentunit' : field.config.unit;
-
         let copy = {
           ...field,
           config: {
             ...field.config,
-            unit,
             custom: {
               ...field.config.custom,
               stacking: {
@@ -277,7 +274,10 @@ export function prepareGraphableFrames(
           ),
         };
 
-        copy.display = stacking === StackingMode.Percent ? getDisplayProcessor({ field: copy, theme }) : copy.display;
+        if (stacking === StackingMode.Percent) {
+          copy.config.unit = 'percentunit';
+          copy.display = getDisplayProcessor({ field: copy, theme });
+        }
 
         fields.push(copy);
       } else {
