@@ -62,6 +62,11 @@ export class ElementState {
     this.revId++;
     this.options = { ...options };
     this.style = this.getBaseStyle();
+    let trav = this.parent;
+    while (trav) {
+      trav.revId++;
+      trav = trav.parent;
+    }
   }
 
   getSaveModel() {
@@ -102,7 +107,7 @@ export class GroupState extends ElementState {
 
   render(data: PanelData) {
     return (
-      <div key={this.UID} style={this.style}>
+      <div key={`${this.UID}/${this.revId}`} style={this.style}>
         {this.elements.map((v) => v.render(data))}
       </div>
     );
@@ -129,6 +134,7 @@ export class Scene {
   private lookup = new Map<number, ElementState>();
   styles = getStyles(config.theme2);
   readonly selected = new ReplaySubject<ElementState | undefined>(undefined);
+  revId = 0;
 
   constructor(cfg: CanvasGroupOptions, public onSave: (cfg: CanvasGroupOptions) => void) {
     this.root = new GroupState(
@@ -160,8 +166,9 @@ export class Scene {
   onChange(uid: number, cfg: CanvasElementOptions) {
     const elem = this.lookup.get(uid);
     if (!elem) {
-      throw new Error('element not found: ' + uid);
+      throw new Error('element not found: ' + uid + ' // ' + this.lookup.keys());
     }
+    this.revId++;
     elem.onChange(cfg);
     this.save();
   }
@@ -171,7 +178,11 @@ export class Scene {
   }
 
   render(data: PanelData) {
-    return <div className={this.styles.wrap}>{this.root.render(data)}</div>;
+    return (
+      <div key={this.revId} className={this.styles.wrap}>
+        {this.root.render(data)}
+      </div>
+    );
   }
 }
 
