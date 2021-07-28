@@ -190,12 +190,9 @@ func TestUsageMetrics(t *testing.T) {
 	}
 }
 
-//nolint
 type assignmentTestCase struct {
 	role         accesscontrol.RoleDTO
 	builtInRoles []string
-	//nolint
-	wantErr error //nolint
 }
 
 func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
