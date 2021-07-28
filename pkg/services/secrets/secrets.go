@@ -37,10 +37,10 @@ type Secrets struct {
 	Store *sqlstore.SQLStore `inject:""`
 	Bus   bus.Bus            `inject:""`
 
-	defaultEncryptionKey string // TODO: Where should it be initialized? It looks like key id/name
-	defaultProvider      string
-	providers            map[string]Provider
-	dataKeyCache         map[string]dataKeyCacheItem
+	//defaultEncryptionKey string // TODO: Where should it be initialized? It looks like key id/name
+	defaultProvider string
+	providers       map[string]Provider
+	dataKeyCache    map[string]dataKeyCacheItem
 }
 
 type dataKeyCacheItem struct {
@@ -55,15 +55,17 @@ type Provider interface {
 
 func (s *Secrets) Init() error {
 	s.providers = map[string]Provider{
-		"": &secretKey{
+		"": &settingsSecretKey{
 			key: func() []byte {
 				return []byte(setting.SecretKey)
 			},
 		},
 	}
+	s.defaultProvider = "" // should be read from settings
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
 	defer cancel()
+
 	baseKey := "root"
 	_, err := s.Store.GetDataKey(ctx, baseKey)
 	if err != nil {
@@ -90,7 +92,11 @@ func (s *Secrets) newRandomDataKey(ctx context.Context, name string) error {
 		return err
 	}
 
-	encrypted, err := s.Encrypt(b) // TODO: Should it do encrypt( b, s.defaultEncryptionKey) instead?
+	provider, exists := s.providers[s.defaultProvider]
+	if !exists {
+		return fmt.Errorf("could not find encryption provider '%s'", s.defaultProvider)
+	}
+	encrypted, err := provider.Encrypt(b)
 	if err != nil {
 		return err
 	}
@@ -107,7 +113,7 @@ func (s *Secrets) newRandomDataKey(ctx context.Context, name string) error {
 var b64 = base64.RawStdEncoding
 
 func (s *Secrets) Encrypt(payload []byte) ([]byte, error) {
-	key := s.defaultEncryptionKey
+	key := "" // TODO: some logic to figure out what DEK identifier to use
 
 	dataKey, err := s.dataKey(key)
 	if err != nil {
