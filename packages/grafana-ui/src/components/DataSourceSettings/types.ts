@@ -24,6 +24,8 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   sigV4AuthToggleEnabled?: boolean;
   /** Azure authentication settings **/
   azureAuthSettings?: AzureAuthSettings;
+  /** Show proxy settings if applicable. Default true */
+  proxySettingsEnabled?: boolean;
   /** Title for the section. Default "HTTP" */
   title?: string;
 }
