@@ -191,7 +191,9 @@ t=2019-12-04T12:39:22+0000 lvl=error msg="Request Completed" logger=context user
 
 If this happens, then you have to add the certificate to the trust store. If you have the certificate file for the internal root CA in the file `internal-root-ca.crt.pem`, then use these commands to create a user specific NSS trust store for the Grafana user (`grafana` for the purpose of this example) and execute the following steps:
 
-```[root@server ~]# [ -d /usr/share/grafana/.pki/nssdb ] || mkdir -p /usr/share/grafana/.pki/nssdb
+```
+[root@server ~]# apt install -y libnss3-tools
+[root@server ~]# [ -d /usr/share/grafana/.pki/nssdb ] || mkdir -p /usr/share/grafana/.pki/nssdb
 [root@merver ~]# certutil -d sql:/usr/share/grafana/.pki/nssdb -A -n internal-root-ca -t C -i /etc/pki/tls/certs/internal-root-ca.crt.pem
 [root@server ~]# chown -R grafana: /usr/share/grafana/.pki/nssdb
 ```
