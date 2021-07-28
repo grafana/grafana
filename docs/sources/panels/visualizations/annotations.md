@@ -56,7 +56,7 @@ Use this option to show or hide the tags associated with a given annotation. *NB
 
 ### Link target
 
-Use this option to chose how to view the annotated data.
+Use this option to chose how to view the annotated data. It has the following options.
 
 * Panel - This option will take you directly to a full-screen view of the panel with the corresponding annotation
 * Dashboard - This option will focus the annotation in the context of a complete dashboard
