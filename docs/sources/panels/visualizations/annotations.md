@@ -50,7 +50,7 @@ Use this option to show or hide the time the annotation creation time.
 
 ### Show Tags
 
-Use this option to show or hide the tags associated with a given annotation. *NB*: You can use the tags to live-filter the annotation list on the panel itself.
+Use this option to show or hide the tags associated with an annotation. *NB*: You can use the tags to live-filter the annotation list on the panel itself.
 
 ## Link behavior
 
