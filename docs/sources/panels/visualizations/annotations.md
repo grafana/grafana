@@ -12,7 +12,7 @@ The Annotations panel shows a list of available annotations you can use to view 
 
 ## Annotation query
 
-The options control the source query for the list of annotations. 
+The following options control the source query for the list of annotations. 
 
 ### Query Filter
 
