@@ -189,6 +189,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
                 "interval": "",
                 "legendFormat": "",
                 "refId": "A",
+                "stepMode": "min",
               }
             }
           />

@@ -74,7 +74,6 @@ func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, interva
 
 	default:
 		panic(fmt.Sprintf("Unrecognized intervalMode %v", intervalMode))
-
 	}
 
 	rounded := roundInterval(calculatedInterval)
