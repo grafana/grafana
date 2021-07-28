@@ -190,10 +190,12 @@ func TestUsageMetrics(t *testing.T) {
 	}
 }
 
+//nolint
 type assignmentTestCase struct {
 	role         accesscontrol.RoleDTO
 	builtInRoles []string
-	wantErr      error
+	//nolint
+	wantErr error //nolint
 }
 
 func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
@@ -443,13 +445,11 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 }
 
 func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
-	//nolint
 	tests := []struct {
 		name          string
 		token         models.Licensing
 		registrations []accesscontrol.RoleRegistration
-		//nolint
-		wantErr bool //nolint
+		wantErr       bool
 	}{
 		{
 			name: "should work with empty list",
