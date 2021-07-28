@@ -58,11 +58,17 @@ export class CursorView extends Component<Props, State> {
     if (!event) {
       return <div>no events yet</div>;
     }
+    const { type, payload, origin } = event;
     return (
       <div>
-        <h2>Origin: {(event.origin as any)?.path}</h2>
-        <span>Type: {event.type}</span>
-        <pre>{JSON.stringify(event.payload.point, null, '  ')}</pre>
+        <h3>Origin: {(origin as any)?.path}</h3>
+        <span>Type: {type}</span>
+        <pre>{JSON.stringify(payload.point, null, '  ')}</pre>
+        {payload.data && (
+          <div>
+            Row: {payload.rowIndex} / Column: {payload.columnIndex}
+          </div>
+        )}
       </div>
     );
   }

@@ -61,6 +61,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   description: 'use markers to render each data point',
   isBaseMap: false,
   showLocation: true,
+  supportsTooltip: true,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -118,8 +119,10 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             const radius = sizeDim.get(i);
 
             // Create a new Feature for each point returned from dataFrameToPoints
-            const dot = new Feature({
-                geometry: info.points[i],
+            const dot = new Feature( info.points[i] );
+            dot.setProperties({
+              frame,
+              rowIndex: i,
             });
 
             dot.setStyle(shape!.make(color, fillColor, radius));
@@ -128,7 +131,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
           // Post updates to the legend component
           if (legend) {
-            console.log( 'UPDATE (marker layer)', colorDim);
             legendProps.next({
               color: colorDim,
               size: sizeDim,

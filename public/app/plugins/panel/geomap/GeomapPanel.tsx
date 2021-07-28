@@ -1,6 +1,6 @@
 import React, { Component, ReactNode } from 'react';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry, defaultBaseLayer } from './layers/registry';
-import { Map, View } from 'ol';
+import { Map, MapBrowserEvent, View } from 'ol';
 import Attribution from 'ol/control/Attribution';
 import Zoom from 'ol/control/Zoom';
 import ScaleLine from 'ol/control/ScaleLine';
@@ -8,12 +8,22 @@ import BaseLayer from 'ol/layer/Base';
 import { defaults as interactionDefaults } from 'ol/interaction';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 
-import { PanelData, MapLayerHandler, MapLayerOptions, PanelProps, GrafanaTheme } from '@grafana/data';
+import {
+  PanelData,
+  MapLayerHandler,
+  MapLayerOptions,
+  PanelProps,
+  GrafanaTheme,
+  DataHoverClearEvent,
+  DataHoverPayload,
+  DataHoverEvent,
+  DataFrame,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { ControlsOptions, GeomapPanelOptions, MapViewConfig } from './types';
 import { centerPointRegistry, MapCenterID } from './view';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, toLonLat } from 'ol/proj';
 import { Coordinate } from 'ol/coordinate';
 import { css } from '@emotion/css';
 import { stylesFactory } from '@grafana/ui';
@@ -22,6 +32,7 @@ import { DebugOverlay } from './components/DebugOverlay';
 import { getGlobalStyles } from './globalStyles';
 import { Global } from '@emotion/react';
 import { Tooltip } from './components/Tooltip';
+import { GeomapHoverFeature, GeomapHoverPayload } from './event';
 
 interface MapLayerState {
   config: MapLayerOptions;
@@ -44,10 +55,14 @@ export class GeomapPanel extends Component<Props, State> {
   layers: MapLayerState[] = [];
   mouseWheelZoom?: MouseWheelZoom;
   style = getStyles(config.theme);
+  hoverPayload: GeomapHoverPayload = { point: {} };
+  readonly hoverEvent = new DataHoverEvent(this.hoverPayload);
+
   constructor(props: Props) {
     super(props);
     this.state = {};
   }
+
   componentDidMount() {
     lastGeomapPanelInstance = this;
   }
@@ -145,6 +160,48 @@ export class GeomapPanel extends Component<Props, State> {
     this.initBasemap(options.basemap);
     await this.initLayers(options.layers);
     this.forceUpdate(); // first render
+
+    // Tooltip listener
+    this.map.on('pointermove', this.pointerMoveListener);
+    this.map.getViewport().addEventListener('mouseout', (evt) => {
+      this.props.eventBus.publish(new DataHoverClearEvent({ point: {} }));
+    });
+  };
+
+  pointerMoveListener = (evt: MapBrowserEvent) => {
+    if (!this.map) {
+      return;
+    }
+    const mouse = evt.originalEvent as any;
+    const pixel = this.map.getEventPixel(mouse);
+    const hover = toLonLat(this.map.getCoordinateFromPixel(pixel));
+    console.log('HOVER', mouse, hover);
+
+    const { hoverPayload } = this;
+    hoverPayload.point = {
+      lat: hover[1],
+      lon: hover[0],
+      pageX: mouse.pageX,
+      pageY: mouse.pageY,
+    };
+    hoverPayload.data = undefined;
+    hoverPayload.columnIndex = undefined;
+    hoverPayload.rowIndex = undefined;
+
+    const features: GeomapHoverFeature[] = [];
+    this.map.forEachFeatureAtPixel(pixel, (feature, layer, geo) => {
+      if (!hoverPayload.data) {
+        const props = feature.getProperties();
+        const frame = props['frame'];
+        if (frame) {
+          hoverPayload.data = frame as DataFrame;
+          hoverPayload.rowIndex = props['rowIndex'];
+        }
+      }
+      features.push({ feature, layer, geo });
+    });
+    this.hoverPayload.features = features.length ? features : undefined;
+    this.props.eventBus.publish(this.hoverEvent);
   };
 
   async initBasemap(cfg: MapLayerOptions) {
@@ -188,6 +245,7 @@ export class GeomapPanel extends Component<Props, State> {
 
       const handler = await item.create(this.map!, overlay, config.theme2);
       const layer = handler.init();
+      (layer as any).___handler = handler;
       this.map!.addLayer(layer);
       this.layers.push({
         config: overlay,

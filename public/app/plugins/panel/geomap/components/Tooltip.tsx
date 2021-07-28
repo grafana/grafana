@@ -30,7 +30,6 @@ export class Tooltip extends PureComponent<Props, State> {
     const { map } = this.props;
 
     map.on('pointermove', (evt: MapBrowserEvent) => {
-      console.log('pointermove', evt);
       const mouse = evt.originalEvent as any;
       const update: State = { visible: false, pageX: mouse.pageX, pageY: mouse.pageY };
       const pixel = map.getEventPixel(mouse);
