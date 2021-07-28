@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 import { CatalogPlugin } from '../types';
 import { api } from '../api';
-import { mapLocalToCatalog, mapRemoteToCatalog, filters } from '../helpers';
+import { mapLocalToCatalog, mapRemoteToCatalog } from '../helpers';
 
 type CatalogPluginsState = {
   loading: boolean;
@@ -62,6 +62,30 @@ type PluginsByFilterType = {
   searchBy: string;
   filterBy: string;
   filterByType: string;
+};
+
+const filters = {
+  filterBy: (plugin: CatalogPlugin, filterBy?: string) =>
+    filterBy === 'installed' ? plugin.isInstalled : !plugin.isCore,
+
+  filterByType: (plugin: CatalogPlugin, filterByType?: string) =>
+    filterByType === 'all' || plugin.type === filterByType,
+
+  searchBy: (plugin: CatalogPlugin, searchBy?: string) => {
+    if (!searchBy) {
+      return true;
+    }
+    const fields: String[] = [];
+    if (plugin.name) {
+      fields.push(plugin.name.toLowerCase());
+    }
+
+    if (plugin.orgName) {
+      fields.push(plugin.orgName.toLowerCase());
+    }
+
+    return fields.some((f) => f.includes(searchBy.toLowerCase()));
+  },
 };
 
 export const usePluginsByFilter = (queries: PluginsByFilterType): FilteredPluginsState => {

@@ -125,27 +125,3 @@ export function getCatalogPluginDetails(
 
   return plugin;
 }
-
-export const filters = {
-  filterBy: (plugin: CatalogPlugin, filterBy?: string) =>
-    filterBy === 'installed' ? plugin.isInstalled : !plugin.isCore,
-
-  filterByType: (plugin: CatalogPlugin, filterByType?: string) =>
-    filterByType === 'all' || plugin.type === filterByType,
-
-  searchBy: (plugin: CatalogPlugin, searchBy?: string) => {
-    if (!searchBy) {
-      return true;
-    }
-    const fields: String[] = [];
-    if (plugin.name) {
-      fields.push(plugin.name.toLowerCase());
-    }
-
-    if (plugin.orgName) {
-      fields.push(plugin.orgName.toLowerCase());
-    }
-
-    return fields.some((f) => f.includes(searchBy.toLowerCase()));
-  },
-};
