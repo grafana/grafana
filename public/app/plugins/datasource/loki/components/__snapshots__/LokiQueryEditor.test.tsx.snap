@@ -16,9 +16,8 @@ exports[`Render LokiQueryEditor with legend should render 1`] = `
           }
         }
         queryType="range"
+        resolution={1}
         runOnBlur={true}
-        stepInterval=""
-        stepMode="min"
       />
       <div
         className="gf-form-inline"
@@ -77,9 +76,8 @@ exports[`Render LokiQueryEditor with legend should update timerange 1`] = `
           }
         }
         queryType="range"
+        resolution={1}
         runOnBlur={true}
-        stepInterval=""
-        stepMode="min"
       />
       <div
         className="gf-form-inline"
