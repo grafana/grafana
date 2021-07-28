@@ -1,7 +1,7 @@
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import React from 'react';
 import { uniq } from 'lodash';
-import { MultiSelect } from '@grafana/ui';
+import { Icon, MultiSelect } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 interface Props {
@@ -29,6 +29,8 @@ export const AmNotificationsGroupBy = ({ groups, handleGroupingChange }: Props) 
   return (
     <div>
       <MultiSelect
+        placeholder="Group by"
+        prefix={<Icon name={'tag-alt'} />}
         onChange={(items) => {
           handleGroupingChange(items.map(({ value }) => value as string));
         }}

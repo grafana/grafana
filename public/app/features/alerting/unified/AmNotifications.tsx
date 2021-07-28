@@ -1,4 +1,4 @@
-import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/types';
 import React, { useEffect, useState } from 'react';
 
 import { useDispatch } from 'react-redux';
@@ -16,6 +16,10 @@ import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { AmNotificationsGroupBy } from './components/amnotifications/AmNotificationsGroupBy';
 import { useGroupedAlerts } from './hooks/useGroupedAlerts';
 import { useFlatAmAlerts } from './hooks/useFlatAmAlerts';
+import { AmNotificationsFilter } from './components/amnotifications/AmNotificationsFilter';
+import { parseMatchers } from './utils/alertmanager';
+import { isEqual } from 'lodash';
+import { useFilteredAmGroups } from './hooks/useFilteredAmGroups';
 
 const AlertManagerNotifications = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
@@ -27,13 +31,22 @@ const AlertManagerNotifications = () => {
   const results: AlertmanagerGroup[] = alertGroups[alertManagerSourceName || '']?.result || [];
 
   const [groupByKeys, setGroupByKeys] = useState<string[]>([]);
+  const [filterMatchers, setFilterMatchers] = useState<Matcher[]>([]);
   const handleGroupingChange = (keys: string[]) => {
     setGroupByKeys(keys);
   };
 
-  const flattenedAlerts = useFlatAmAlerts(results);
+  const handleFilterChange = (queryString: string) => {
+    const matchers = parseMatchers(queryString);
+    if (!isEqual(matchers, filterMatchers)) {
+      setFilterMatchers(matchers);
+    }
+  };
 
+  const flattenedAlerts = useFlatAmAlerts(results);
   const groupedAlerts = useGroupedAlerts(flattenedAlerts, groupByKeys);
+  const groupToFilter = groupByKeys.length > 0 ? groupedAlerts : results;
+  const filteredAlerts = useFilteredAmGroups(groupToFilter, filterMatchers);
 
   useEffect(() => {
     function fetchNotifications() {
@@ -48,11 +61,10 @@ const AlertManagerNotifications = () => {
     };
   }, [dispatch, alertManagerSourceName]);
 
-  const groupsToDisplay = groupByKeys.length > 0 ? groupedAlerts : results;
-
   return (
     <AlertingPageWrapper pageId="notifications">
       <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      <AmNotificationsFilter onFilterChange={handleFilterChange} />
       <AmNotificationsGroupBy groups={results} handleGroupingChange={handleGroupingChange} />
       {loading && <LoadingPlaceholder text="Loading notifications" />}
       {error && !loading && (
@@ -61,7 +73,7 @@ const AlertManagerNotifications = () => {
         </Alert>
       )}
       {results &&
-        groupsToDisplay.map((group, index) => {
+        filteredAlerts.map((group, index) => {
           return (
             <AmNotificationsGroup
               alertManagerSourceName={alertManagerSourceName || ''}
