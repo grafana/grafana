@@ -7,6 +7,9 @@ import {
   handleTagsAutoCompleteError,
 } from './helpers';
 import { GraphiteSegment, GraphiteTag, GraphiteTagOperator } from '../types';
+import debouncePromise from 'debounce-promise';
+
+const DEBOUNCE_RATE = 150;
 
 /**
  * Providers are hooks for views to provide temporal data for autocomplete. They don't modify the state.
@@ -19,7 +22,7 @@ import { GraphiteSegment, GraphiteTag, GraphiteTagOperator } from '../types';
  * - mixed list of metrics and tags (only when nothing was selected)
  * - list of metric names (if a metric name was selected for this segment)
  */
-export async function getAltSegments(
+async function _getAltSegments(
   state: GraphiteQueryEditorState,
   index: number,
   prefix: string
@@ -90,6 +93,8 @@ export async function getAltSegments(
   return [];
 }
 
+export const getAltSegments = debouncePromise(_getAltSegments, DEBOUNCE_RATE, { leading: true });
+
 export function getTagOperators(): GraphiteTagOperator[] {
   return GRAPHITE_TAG_OPERATORS;
 }
@@ -97,7 +102,7 @@ export function getTagOperators(): GraphiteTagOperator[] {
 /**
  * Returns tags as dropdown options
  */
-export async function getTags(state: GraphiteQueryEditorState, index: number, tagPrefix: string): Promise<string[]> {
+async function _getTags(state: GraphiteQueryEditorState, index: number, tagPrefix: string): Promise<string[]> {
   try {
     const tagExpressions = state.queryModel.renderTagExpressions(index);
     const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
@@ -112,14 +117,13 @@ export async function getTags(state: GraphiteQueryEditorState, index: number, ta
   return [];
 }
 
+export const getTags = debouncePromise(_getTags, DEBOUNCE_RATE, { leading: true });
+
 /**
  * List of tags when a tag is added. getTags is used for editing.
  * When adding - segment is used. When editing - dropdown is used.
  */
-export async function getTagsAsSegments(
-  state: GraphiteQueryEditorState,
-  tagPrefix: string
-): Promise<GraphiteSegment[]> {
+async function _getTagsAsSegments(state: GraphiteQueryEditorState, tagPrefix: string): Promise<GraphiteSegment[]> {
   let tagsAsSegments: GraphiteSegment[];
   try {
     const tagExpressions = state.queryModel.renderTagExpressions();
@@ -139,7 +143,9 @@ export async function getTagsAsSegments(
   return tagsAsSegments;
 }
 
-export async function getTagValues(
+export const getTagsAsSegments = debouncePromise(_getTagsAsSegments, DEBOUNCE_RATE, { leading: true });
+
+export async function _getTagValues(
   state: GraphiteQueryEditorState,
   tag: GraphiteTag,
   index: number,
@@ -156,6 +162,8 @@ export async function getTagValues(
 
   return altValues;
 }
+
+export const getTagValues = debouncePromise(_getTagValues, DEBOUNCE_RATE, { leading: true });
 
 /**
  * Add segments with tags prefixed with "tag: " to include them in the same list as metrics

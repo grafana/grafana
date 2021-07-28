@@ -104,6 +104,10 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     const { tag, index: tagIndex } = action.payload;
     state.queryModel.updateTag(tag, tagIndex);
     handleTargetChanged(state);
+    if (state.queryModel.tags.length === 0) {
+      await checkOtherSegments(state, 0);
+      state.paused = false;
+    }
   }
   if (actions.addNewTag.match(action)) {
     const segment = action.payload.segment;

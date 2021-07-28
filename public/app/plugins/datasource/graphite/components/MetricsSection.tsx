@@ -7,6 +7,7 @@ import { getAltSegments } from '../state/providers';
 import { actions } from '../state/actions';
 import { SelectableValue } from '@grafana/data';
 import { mapSegmentsToSelectables } from './helpers';
+import { debounce } from 'lodash';
 
 type Props = {
   dispatch: Dispatch;
@@ -33,11 +34,16 @@ function mapFromSelectableValue(selectableValue: SelectableValue<GraphiteSegment
 
 export function MetricsSection({ dispatch, segments = [], state }: Props) {
   const loadOptions = useCallback(
-    async (index: number) => {
-      return mapSegmentsToSelectables(await getAltSegments(state, index, ''));
+    async (index: number, value: string) => {
+      return mapSegmentsToSelectables(await getAltSegments(state, index, value));
     },
     [state]
   );
+
+  const onSegmentChanged = debounce((value: SelectableValue<GraphiteSegment | string>, index: number) => {
+    let selectedSegment = mapFromSelectableValue(value);
+    dispatch(actions.segmentValueChanged({ segment: selectedSegment, index }));
+  }, 150);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -48,11 +54,9 @@ export function MetricsSection({ dispatch, segments = [], state }: Props) {
             value={{ label: segment.value, value: segment }}
             inputMinWidth={150}
             allowCustomValue={true}
-            loadOptions={async () => await loadOptions(index)}
-            onChange={(value) => {
-              let selectedSegment = mapFromSelectableValue(value);
-              dispatch(actions.segmentValueChanged({ segment: selectedSegment, index }));
-            }}
+            loadOptions={async (value) => await loadOptions(index, value || '')}
+            reloadOptionsOnChange={true}
+            onChange={(value: SelectableValue<GraphiteSegment | string>) => onSegmentChanged(value, index)}
           />
         );
       })}

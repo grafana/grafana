@@ -21,24 +21,27 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
   const styles = useStyles2(getStyles);
 
   const getTagsOptions = useCallback(
-    async (index) => {
-      return mapStringsToSelectables(await getTags(state, index, ''));
+    async (index: number, inputValue: string) => {
+      return mapStringsToSelectables(await getTags(state, index, inputValue));
     },
     [state]
   );
 
   const getTagValueOptions = useCallback(
-    async (tag: GraphiteTag, index: number) => {
-      return mapStringsToSelectables(await getTagValues(state, tag, index, ''));
+    async (tag: GraphiteTag, index: number, inputValue: string) => {
+      return mapStringsToSelectables(await getTagValues(state, tag, index, inputValue));
     },
     [state]
   );
 
-  const newTagsOptions = mapSegmentsToSelectables(addTagSegments);
+  const newTagsOptions = mapSegmentsToSelectables(addTagSegments || []);
 
-  const getTagsAsSegmentsOptions = useCallback(async () => {
-    return mapSegmentsToSelectables(await getTagsAsSegments(state, ''));
-  }, [state]);
+  const getTagsAsSegmentsOptions = useCallback(
+    async (inputValue: string) => {
+      return mapSegmentsToSelectables(await getTagsAsSegments(state, inputValue));
+    },
+    [state]
+  );
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -48,7 +51,8 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
             <SegmentAsync
               inputMinWidth={150}
               value={tag.key}
-              loadOptions={async () => await getTagsOptions(index)}
+              loadOptions={async (inputValue: string) => await getTagsOptions(index, inputValue)}
+              reloadOptionsOnChange={true}
               onChange={(value) => {
                 dispatch(
                   actions.tagChanged({
@@ -75,7 +79,8 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
             <SegmentAsync
               inputMinWidth={150}
               value={tag.value}
-              loadOptions={async () => await getTagValueOptions(tag, index)}
+              loadOptions={async (inputValue: string) => await getTagValueOptions(tag, index, inputValue)}
+              reloadOptionsOnChange={true}
               onChange={(value) => {
                 dispatch(
                   actions.tagChanged({
@@ -91,10 +96,12 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
       })}
       {newTagsOptions.length && (
         <SegmentAsync<GraphiteSegment>
+          inputMinWidth={150}
           onChange={(value) => {
             dispatch(actions.addNewTag({ segment: value.value! }));
           }}
           loadOptions={getTagsAsSegmentsOptions}
+          reloadOptionsOnChange={true}
           Component={<Button icon="plus" variant="secondary" className={cx(styles.button)} />}
         />
       )}

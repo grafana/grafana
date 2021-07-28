@@ -13,6 +13,7 @@ import { useStyles } from '../../themes';
 export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
   loadOptions: (query?: string) => Promise<Array<SelectableValue<T>>>;
+  reloadOptionsOnChange?: boolean;
   onChange: (item: SelectableValue<T>) => void;
   noOptionMessageHandler?: (state: AsyncState<Array<SelectableValue<T>>>) => string;
   inputMinWidth?: number;
@@ -22,6 +23,7 @@ export function SegmentAsync<T>({
   value,
   onChange,
   loadOptions,
+  reloadOptionsOnChange = false,
   Component,
   className,
   allowCustomValue,
@@ -73,6 +75,7 @@ export function SegmentAsync<T>({
       value={value && !isObject(value) ? { value } : value}
       placeholder={inputPlaceholder}
       options={state.value ?? []}
+      loadOptions={reloadOptionsOnChange ? fetchOptions : undefined}
       width={width}
       noOptionsMessage={noOptionMessageHandler(state)}
       allowCustomValue={allowCustomValue}

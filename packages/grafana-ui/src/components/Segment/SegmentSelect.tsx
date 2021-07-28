@@ -1,6 +1,6 @@
 import React, { HTMLProps, useRef } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Select } from '../Select/Select';
+import { AsyncSelect, Select } from '../Select/Select';
 import { useTheme2 } from '../../themes/ThemeContext';
 
 /** @internal
@@ -11,6 +11,7 @@ export interface Props<T> extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onC
   value?: SelectableValue<T>;
   options: Array<SelectableValue<T>>;
   onChange: (item: SelectableValue<T>) => void;
+  loadOptions?: (inputValue: string) => void;
   onClickOutside: () => void;
   width: number;
   noOptionsMessage?: string;
@@ -30,6 +31,7 @@ export function SegmentSelect<T>({
   options = [],
   onChange,
   onClickOutside,
+  loadOptions = undefined,
   width: widthPixels,
   noOptionsMessage = '',
   allowCustomValue = false,
@@ -41,9 +43,18 @@ export function SegmentSelect<T>({
 
   let width = widthPixels > 0 ? widthPixels / theme.spacing.gridSize : undefined;
 
+  let Component;
+  let asyncOptions = {};
+  if (loadOptions) {
+    Component = AsyncSelect;
+    asyncOptions = { loadOptions, defaultOptions: true };
+  } else {
+    Component = Select;
+  }
+
   return (
     <div {...rest} ref={ref}>
-      <Select
+      <Component
         width={width}
         noOptionsMessage={noOptionsMessage}
         placeholder={placeholder}
@@ -69,6 +80,7 @@ export function SegmentSelect<T>({
           }
         }}
         allowCustomValue={allowCustomValue}
+        {...asyncOptions}
       />
     </div>
   );
