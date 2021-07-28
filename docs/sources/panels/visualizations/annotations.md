@@ -19,7 +19,7 @@ The following options control the source query for the list of annotations.
 Use the query filter to create a list of annotations from all dashboards in your organization or the current dashboard in which this panel is located. It has the following options:
 
 * All dashboards - List annotations from all dashboards in the current organization.
-* This dashboard - Limit the annotions list to annotations on the same dashboard in which the annotation list panel appears
+* This dashboard - Limit the list to the annotations on the current dashboard.
 
 ### Time Range
 
