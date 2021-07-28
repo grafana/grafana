@@ -70,6 +70,7 @@ export interface MapLayerHandler {
   init: () => BaseLayer;
   update?: (data: PanelData) => void;
   legend?: ReactNode;
+  tooltip?: ReactNode;
 }
 
 /**
