@@ -18,7 +18,6 @@ type Props = {
 
 /**
  * Mapping is required to convert custom item (provided as strings) to a GraphiteSegment object
- * @param selectableValue
  */
 function mapFromSelectableValue(selectableValue: SelectableValue<GraphiteSegment | string>): GraphiteSegment {
   if (typeof selectableValue.value === 'string') {
@@ -40,10 +39,11 @@ export function MetricsSection({ dispatch, segments = [], state }: Props) {
     [state]
   );
 
+  // segmentValueChanged action will destroy SegmentAsync immediately if a tag is selected. To give time
+  // for the clean up the action is debounced.
   const onSegmentChanged = debounce((value: SelectableValue<GraphiteSegment | string>, index: number) => {
-    let selectedSegment = mapFromSelectableValue(value);
-    dispatch(actions.segmentValueChanged({ segment: selectedSegment, index }));
-  }, 150);
+    dispatch(actions.segmentValueChanged({ segment: mapFromSelectableValue(value), index }));
+  }, 100);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row' }}>

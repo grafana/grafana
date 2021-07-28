@@ -13,6 +13,8 @@ import { useStyles } from '../../themes';
 export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
   loadOptions: (query?: string) => Promise<Array<SelectableValue<T>>>;
+  // if true, options will be reloaded when user changes the value in the input,
+  // otherwise, options will be loaded when the segment is clicked
   reloadOptionsOnChange?: boolean;
   onChange: (item: SelectableValue<T>) => void;
   noOptionMessageHandler?: (state: AsyncState<Array<SelectableValue<T>>>) => string;
