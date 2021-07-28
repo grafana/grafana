@@ -9,6 +9,8 @@ import {
 } from '@grafana/data';
 import React, { Component } from 'react';
 import { Subscription } from 'rxjs';
+import { CustomScrollbar } from '../../../../../packages/grafana-ui/src';
+import { DataHoverView } from '../geomap/components/DataHoverView';
 
 interface Props {
   eventBus: EventBus;
@@ -60,16 +62,14 @@ export class CursorView extends Component<Props, State> {
     }
     const { type, payload, origin } = event;
     return (
-      <div>
+      <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
         <h3>Origin: {(origin as any)?.path}</h3>
         <span>Type: {type}</span>
         <pre>{JSON.stringify(payload.point, null, '  ')}</pre>
         {payload.data && (
-          <div>
-            Row: {payload.rowIndex} / Column: {payload.columnIndex}
-          </div>
+          <DataHoverView data={payload.data} rowIndex={payload.rowIndex} columnIndex={payload.columnIndex} />
         )}
-      </div>
+      </CustomScrollbar>
     );
   }
 }

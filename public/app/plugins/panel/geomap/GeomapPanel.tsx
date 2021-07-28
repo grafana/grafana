@@ -15,7 +15,6 @@ import {
   PanelProps,
   GrafanaTheme,
   DataHoverClearEvent,
-  DataHoverPayload,
   DataHoverEvent,
   DataFrame,
 } from '@grafana/data';
@@ -26,13 +25,13 @@ import { centerPointRegistry, MapCenterID } from './view';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { Coordinate } from 'ol/coordinate';
 import { css } from '@emotion/css';
-import { stylesFactory } from '@grafana/ui';
+import { Portal, stylesFactory, VizTooltipContainer } from '@grafana/ui';
 import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { DebugOverlay } from './components/DebugOverlay';
 import { getGlobalStyles } from './globalStyles';
 import { Global } from '@emotion/react';
-import { Tooltip } from './components/Tooltip';
 import { GeomapHoverFeature, GeomapHoverPayload } from './event';
+import { DataHoverView } from './components/DataHoverView';
 
 interface MapLayerState {
   config: MapLayerOptions;
@@ -45,7 +44,10 @@ let sharedView: View | undefined = undefined;
 export let lastGeomapPanelInstance: GeomapPanel | undefined = undefined;
 
 type Props = PanelProps<GeomapPanelOptions>;
-interface State extends OverlayProps {}
+interface State extends OverlayProps {
+  ttip?: GeomapHoverPayload;
+}
+
 export class GeomapPanel extends Component<Props, State> {
   globalCSS = getGlobalStyles(config.theme2);
 
@@ -55,7 +57,7 @@ export class GeomapPanel extends Component<Props, State> {
   layers: MapLayerState[] = [];
   mouseWheelZoom?: MouseWheelZoom;
   style = getStyles(config.theme);
-  hoverPayload: GeomapHoverPayload = { point: {} };
+  hoverPayload: GeomapHoverPayload = { point: {}, pageX: -1, pageY: -1 };
   readonly hoverEvent = new DataHoverEvent(this.hoverPayload);
 
   constructor(props: Props) {
@@ -178,15 +180,17 @@ export class GeomapPanel extends Component<Props, State> {
     console.log('HOVER', mouse, hover);
 
     const { hoverPayload } = this;
+    hoverPayload.pageX = mouse.pageX;
+    hoverPayload.pageY = mouse.pageY;
     hoverPayload.point = {
       lat: hover[1],
       lon: hover[0],
-      pageX: mouse.pageX,
-      pageY: mouse.pageY,
     };
     hoverPayload.data = undefined;
     hoverPayload.columnIndex = undefined;
     hoverPayload.rowIndex = undefined;
+
+    let ttip: GeomapHoverPayload = {} as GeomapHoverPayload;
 
     const features: GeomapHoverFeature[] = [];
     this.map.forEachFeatureAtPixel(pixel, (feature, layer, geo) => {
@@ -194,14 +198,19 @@ export class GeomapPanel extends Component<Props, State> {
         const props = feature.getProperties();
         const frame = props['frame'];
         if (frame) {
-          hoverPayload.data = frame as DataFrame;
-          hoverPayload.rowIndex = props['rowIndex'];
+          hoverPayload.data = ttip.data = frame as DataFrame;
+          hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
         }
       }
       features.push({ feature, layer, geo });
     });
     this.hoverPayload.features = features.length ? features : undefined;
     this.props.eventBus.publish(this.hoverEvent);
+
+    const currentTTip = this.state.ttip;
+    if (ttip.data !== currentTTip?.data || ttip.rowIndex !== currentTTip?.rowIndex) {
+      this.setState({ ttip: { ...hoverPayload } });
+    }
   };
 
   async initBasemap(cfg: MapLayerOptions) {
@@ -339,22 +348,28 @@ export class GeomapPanel extends Component<Props, State> {
       topRight = [<DebugOverlay key="debug" map={this.map} />];
     }
 
-    let tooltip: ReactNode;
-    if (options.showTooltip) {
-      tooltip = <Tooltip map={this.map} />;
-    }
-
-    this.setState({ topRight, tooltip });
+    this.setState({ topRight });
   }
 
   render() {
+    const { ttip, topRight, bottomLeft } = this.state;
+
     return (
       <>
         <Global styles={this.globalCSS} />
         <div className={this.style.wrap}>
           <div className={this.style.map} ref={this.initMapRef}></div>
-          <GeomapOverlay {...this.state} />
+          <GeomapOverlay bottomLeft={bottomLeft} topRight={topRight} />
         </div>
+        <Portal>
+          {ttip && ttip.data && (
+            <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }}>
+              <div className={this.style.ttip}>
+                <DataHoverView {...ttip} />
+              </div>
+            </VizTooltipContainer>
+          )}
+        </Portal>
       </>
     );
   }
@@ -371,5 +386,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     z-index: 0;
     width: 100%;
     height: 100%;
+  `,
+  ttip: css`
+    padding: 2px;
   `,
 }));

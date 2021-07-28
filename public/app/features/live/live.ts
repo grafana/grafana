@@ -296,8 +296,6 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
             ) {
               if (evt.message) {
                 process(evt.message);
-              } else if (channel.lastMessageWithSchema) {
-                process(channel.lastMessageWithSchema);
               }
               return;
             }
