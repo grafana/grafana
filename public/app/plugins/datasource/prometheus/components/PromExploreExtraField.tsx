@@ -78,6 +78,7 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
         </div>
 
         <PromExemplarField
+          refId={query.refId}
           isEnabled={Boolean(query.exemplar)}
           onChange={(isEnabled) => onChange({ ...query, exemplar: isEnabled })}
           datasource={datasource}
