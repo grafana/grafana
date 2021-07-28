@@ -8,18 +8,18 @@ weight = 600
 
 # Annotations 
 
-The Annotations panel allows you to show a list of annotations that can be used to view annotated data. Various options are available to filter the list based on tags and the current dashboard.
+The Annotations panel shows a list of available annotations you can use to view annotated data. Various options are available to filter the list based on tags and on the current dashboard.
 
 ## Annotation query
 
-These options control the source query for the list of annotations. 
+The following options control the source query for the list of annotations. 
 
 ### Query Filter
 
-Use the query filter to create a list of annotations from all dashboards in your organization or the the current dashboard in which this panel is located.
+Use the query filter to create a list of annotations from all dashboards in your organization or the current dashboard in which this panel is located. It has the following options:
 
-* All dashboards - List annotations from all dashboards in the current organization
-* This dashboard - Limit the annotions list to annotations on the same dashboard in which the annotation list panel appears
+* All dashboards - List annotations from all dashboards in the current organization.
+* This dashboard - Limit the list to the annotations on the current dashboard.
 
 ### Time Range
 
@@ -32,7 +32,7 @@ Use the time range option to select if the list should limited to the current ti
 
 Use the tags list to filter the annotations by tags. You can add multiple tags in order to refine the list. 
 
-> **Note:** Alternatively, you can leave the tag list empty and filter on-the-fly by selecting tags which are listed as part of the results on the panel itself.
+> **Note:** Optionally, leave the tag list empty and filter on the fly by selecting tags that are listed as part of the results on the panel itself.
 
 ### Limit
 
@@ -48,17 +48,17 @@ Use this option to show or hide which user created the annotation.
 
 ### Show time
 
-Use this option to show or hide the time the annotation was created
+Use this option to show or hide the time the annotation creation time.
 
 ### Show Tags
 
-Use this option to show or hide the tags associated with a given annotation. *NB*: You can use the tags to live-filter the annotation list on the panel itself.
+Use this option to show or hide the tags associated with an annotation. *NB*: You can use the tags to live-filter the annotation list on the panel itself.
 
 ## Link behavior
 
 ### Link target
 
-Use this option to chose how to view the annotated data.
+Use this option to chose how to view the annotated data. It has the following options.
 
 * Panel - This option will take you directly to a full-screen view of the panel with the corresponding annotation
 * Dashboard - This option will focus the annotation in the context of a complete dashboard
