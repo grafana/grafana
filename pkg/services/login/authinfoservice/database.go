@@ -1,8 +1,11 @@
-package sqlstore
+package authinfoservice
 
 import (
+	"context"
 	"encoding/base64"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -12,17 +15,7 @@ import (
 
 var getTime = time.Now
 
-const genericOAuthModule = "oauth_generic_oauth"
-
-func init() {
-	bus.AddHandler("sql", GetExternalUserInfoByLogin)
-	bus.AddHandler("sql", GetAuthInfo)
-	bus.AddHandler("sql", SetAuthInfo)
-	bus.AddHandler("sql", UpdateAuthInfo)
-	bus.AddHandler("sql", DeleteAuthInfo)
-}
-
-func GetExternalUserInfoByLogin(query *models.GetExternalUserInfoByLoginQuery) error {
+func (s *Implementation) GetExternalUserInfoByLogin(query *models.GetExternalUserInfoByLoginQuery) error {
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
 	err := bus.Dispatch(&userQuery)
 	if err != nil {
@@ -46,13 +39,20 @@ func GetExternalUserInfoByLogin(query *models.GetExternalUserInfoByLoginQuery) e
 	return nil
 }
 
-func GetAuthInfo(query *models.GetAuthInfoQuery) error {
+func (s *Implementation) GetAuthInfo(query *models.GetAuthInfoQuery) error {
 	userAuth := &models.UserAuth{
 		UserId:     query.UserId,
 		AuthModule: query.AuthModule,
 		AuthId:     query.AuthId,
 	}
-	has, err := x.Desc("created").Get(userAuth)
+
+	var has bool
+	var err error
+
+	err = s.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		has, err = sess.Desc("created").Get(userAuth)
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -81,8 +81,8 @@ func GetAuthInfo(query *models.GetAuthInfoQuery) error {
 	return nil
 }
 
-func SetAuthInfo(cmd *models.SetAuthInfoCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (s *Implementation) SetAuthInfo(cmd *models.SetAuthInfoCommand) error {
+	return s.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		authUser := &models.UserAuth{
 			UserId:     cmd.UserId,
 			AuthModule: cmd.AuthModule,
@@ -115,8 +115,8 @@ func SetAuthInfo(cmd *models.SetAuthInfoCommand) error {
 	})
 }
 
-func UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (s *Implementation) UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error {
+	return s.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		authUser := &models.UserAuth{
 			UserId:     cmd.UserId,
 			AuthModule: cmd.AuthModule,
@@ -149,13 +149,13 @@ func UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error {
 			AuthModule: cmd.AuthModule,
 		}
 		upd, err := sess.Update(authUser, cond)
-		sqlog.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_module", cmd.AuthModule, "rows", upd)
+		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_module", cmd.AuthModule, "rows", upd)
 		return err
 	})
 }
 
-func DeleteAuthInfo(cmd *models.DeleteAuthInfoCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (s *Implementation) DeleteAuthInfo(cmd *models.DeleteAuthInfoCommand) error {
+	return s.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		_, err := sess.Delete(cmd.UserAuth)
 		return err
 	})
