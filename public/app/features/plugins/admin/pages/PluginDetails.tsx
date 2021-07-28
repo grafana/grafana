@@ -59,17 +59,25 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
             />
 
             <div className={styles.headerWrapper}>
-              <h1 className={styles.header}>
-                <a
-                  className={css`
-                    text-decoration: underline;
-                  `}
-                  href={'/plugins'}
-                >
-                  Plugins
-                </a>{' '}
-                / {plugin.name}
-              </h1>
+              <nav className={styles.breadcrumb} aria-label="Breadcrumb">
+                <ol>
+                  <li>
+                    <a
+                      className={css`
+                        text-decoration: underline;
+                      `}
+                      href={'/plugins'}
+                    >
+                      Plugins
+                    </a>
+                  </li>
+                  <li>
+                    <a href={`/plugins/${pluginId}`} aria-current="page">
+                      {plugin.name}
+                    </a>
+                  </li>
+                </ol>
+              </nav>
               <div className={styles.headerLinks}>
                 <span>{plugin.orgName}</span>
                 {plugin.links.map((link: any) => (
@@ -141,8 +149,19 @@ export const getStyles = (theme: GrafanaTheme2) => {
     headerWrapper: css`
       margin-left: ${theme.spacing(3)};
     `,
-    header: css`
+    breadcrumb: css`
       font-size: ${theme.typography.h2.fontSize};
+      li {
+        display: inline;
+        list-style: none;
+        &::after {
+          content: '/';
+          padding: 0 0.25ch;
+        }
+        &:last-child::after {
+          content: '';
+        }
+      }
     `,
     headerLinks: css`
       display: flex;
@@ -155,9 +174,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
           content: '|';
           padding: 0 ${theme.spacing()};
         }
-      }
-      & > *:last-child {
-        &::after {
+        &:last-child::after {
           content: '';
           padding-right: 0;
         }
