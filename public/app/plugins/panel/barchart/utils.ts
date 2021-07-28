@@ -4,8 +4,10 @@ import {
   Field,
   FieldType,
   formattedValueToString,
+  getDisplayProcessor,
   getFieldColorModeForField,
   getFieldSeriesColor,
+  GrafanaTheme2,
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
@@ -224,6 +226,7 @@ export function preparePlotFrame(data: DataFrame[]) {
 /** @internal */
 export function prepareGraphableFrames(
   series: DataFrame[],
+  theme: GrafanaTheme2,
   stacking: StackingMode
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
@@ -249,10 +252,13 @@ export function prepareGraphableFrames(
     const fields: Field[] = [];
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
+        let unit = stacking === StackingMode.Percent ? 'percentunit' : field.config.unit;
+
         let copy = {
           ...field,
           config: {
             ...field.config,
+            unit,
             custom: {
               ...field.config.custom,
               stacking: {
@@ -270,6 +276,9 @@ export function prepareGraphableFrames(
             })
           ),
         };
+
+        copy.display = stacking === StackingMode.Percent ? getDisplayProcessor({ field: copy, theme }) : copy.display;
+
         fields.push(copy);
       } else {
         fields.push({ ...field });
