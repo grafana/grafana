@@ -223,7 +223,12 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 />
               </InlineFormLabel>
             </div>
-            <PromExemplarField isEnabled={exemplar} onChange={this.onExemplarChange} datasource={datasource} />
+            <PromExemplarField
+              refId={query.refId}
+              isEnabled={exemplar}
+              onChange={this.onExemplarChange}
+              datasource={datasource}
+            />
           </div>
         }
       />

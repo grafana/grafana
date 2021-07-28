@@ -203,6 +203,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         }
         isEnabled={true}
         onChange={[Function]}
+        refId="A"
       />
     </div>
   }
