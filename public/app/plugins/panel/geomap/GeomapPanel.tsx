@@ -199,7 +199,6 @@ export class GeomapPanel extends Component<Props, State> {
         legends.push(<div key={`${this.counter++}`}>{handler.legend}</div>);
       }
     }
-
     this.setState({ bottomLeft: legends });
 
     // Update data after init layers

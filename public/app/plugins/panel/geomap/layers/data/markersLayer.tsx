@@ -27,7 +27,6 @@ export interface MarkersConfig {
   fillOpacity: number;
   shape?: string;
   showLegend?: boolean;
-  showTooltip?: boolean;
 }
 
 const defaultOptions: MarkersConfig = {
@@ -42,7 +41,6 @@ const defaultOptions: MarkersConfig = {
   fillOpacity: 0.4,
   shape: 'circle',
   showLegend: true,
-  showTooltip: true,
 };
 
 export const MARKERS_LAYER_ID = "markers";
@@ -79,9 +77,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       ...options?.config,
     };
 
-    console.log(12);
-    console.log(vectorLayer);
-
     const legendProps= new ReplaySubject<MarkersLegendProps>(1);
     let legend:ReactNode = null;
     if (config.showLegend) {
@@ -92,18 +87,12 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       />
     }
 
-    let tooltip: ReactNode = null;
-    if (config.showTooltip) {
-      tooltip = <Tooltip key="tooltip" map={map} layerID={"test"}/>;
-    }
-
     const shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
     console.log( 'CREATE Marker layer', matchers);
 
     return {
       init: () => vectorLayer,
       legend: legend,
-      tooltip: tooltip,
       update: (data: PanelData) => {
         if(!data.series?.length) {
           return; // ignore empty
@@ -209,12 +198,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         name: 'Show legend',
         description: 'Show legend',
         defaultValue: defaultOptions.showLegend,
-      })
-      .addBooleanSwitch({
-        path: 'config.shoTooltip',
-        name: 'Show tooltip',
-        description: 'Show tooltip',
-        defaultValue: defaultOptions.showTooltip,
       });
   },
 
