@@ -34,14 +34,12 @@ export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
 };
 
 /** @internal */
-interface PlotData {
-  raw: AlignedData;
-  data: AlignedData;
+interface StackMeta {
   totals: AlignedData;
 }
 
 /** @internal */
-export function preparePlotData(frame: DataFrame): PlotData {
+export function preparePlotData(frame: DataFrame, onStackMeta?: (meta: StackMeta) => void): AlignedData {
   const result: any[] = [];
   const stackingGroups: Map<string, number[]> = new Map();
   let seriesIndex = 0;
@@ -69,15 +67,13 @@ export function preparePlotData(frame: DataFrame): PlotData {
     seriesIndex++;
   }
 
-  const rawData = result.slice();
-
-  const byPct = frame.fields[1].config.custom?.stacking?.mode === StackingMode.Percent;
-  const dataLength = result[0].length;
-  const alignedTotals = Array(stackingGroups.size);
-  alignedTotals[0] = null;
-
   // Stacking
   if (stackingGroups.size !== 0) {
+    const byPct = frame.fields[1].config.custom?.stacking?.mode === StackingMode.Percent;
+    const dataLength = result[0].length;
+    const alignedTotals = Array(stackingGroups.size);
+    alignedTotals[0] = null;
+
     // array or stacking groups
     for (const [_, seriesIdxs] of stackingGroups.entries()) {
       const groupTotals = byPct ? Array(dataLength).fill(0) : null;
@@ -110,13 +106,14 @@ export function preparePlotData(frame: DataFrame): PlotData {
         result[seriesIdx] = acc.slice();
       }
     }
+
+    onStackMeta &&
+      onStackMeta({
+        totals: alignedTotals as AlignedData,
+      });
   }
 
-  return {
-    raw: rawData as AlignedData,
-    data: result as AlignedData,
-    totals: alignedTotals as AlignedData,
-  };
+  return result as AlignedData;
 }
 
 export function collectStackingGroups(f: Field, groups: Map<string, number[]>, seriesIdx: number) {

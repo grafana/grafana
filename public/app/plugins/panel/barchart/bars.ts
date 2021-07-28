@@ -208,7 +208,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let labelOffset = LABEL_OFFSET_MAX;
 
     barRects.forEach((r, i) => {
-      texts[i] = formatValue(r.sidx, rawValue(r.sidx, r.didx)! / (pctStacked ? alignedTotals[r.sidx][r.didx]! : 1));
+      texts[i] = formatValue(r.sidx, rawValue(r.sidx, r.didx)! / (pctStacked ? alignedTotals![r.sidx][r.didx]! : 1));
       labelOffset = Math.min(labelOffset, Math.round(LABEL_OFFSET_FACTOR * (isXHorizontal ? r.w : r.h)));
     });
 
@@ -310,14 +310,14 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     };
   };
 
-  let alignedTotals: AlignedData;
+  let alignedTotals: AlignedData | null = null;
 
   function prepData(alignedFrame: DataFrame) {
-    let { data, totals } = preparePlotData(alignedFrame);
+    alignedTotals = null;
 
-    alignedTotals = totals;
-
-    return data;
+    return preparePlotData(alignedFrame, ({ totals }) => {
+      alignedTotals = totals;
+    });
   }
 
   return {

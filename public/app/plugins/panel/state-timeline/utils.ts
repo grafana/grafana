@@ -141,7 +141,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
 
   builder.setTooltipInterpolator(interpolateTooltip);
 
-  builder.setPrepData((alignedFrame: DataFrame) => preparePlotData(alignedFrame).data);
+  builder.setPrepData(preparePlotData);
 
   builder.setCursor(coreConfig.cursor);
 

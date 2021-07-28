@@ -46,7 +46,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
-  builder.setPrepData((alignedFrame: DataFrame) => preparePlotData(alignedFrame).data);
+  builder.setPrepData(preparePlotData);
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];
