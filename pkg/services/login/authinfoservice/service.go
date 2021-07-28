@@ -187,7 +187,7 @@ func (s *Implementation) LookupAndUpdate(query *models.GetUserByAuthInfoQuery) (
 
 	// 2. FindByUserDetails
 	if !foundUser {
-		foundUser, user, err = s.LookupByOneOf(query.UserId, query.Email, query.Login)
+		_, user, err = s.LookupByOneOf(query.UserId, query.Email, query.Login)
 		if err != nil {
 			return nil, err
 		}
