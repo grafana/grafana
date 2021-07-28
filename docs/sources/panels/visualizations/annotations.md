@@ -23,14 +23,14 @@ Use the query filter to create a list of annotations from all dashboards in your
 
 ### Time Range
 
-Use the time range option to select if the list should limited to the current time range.
+Use the time range option to specify whether the list should be limited to the current time range. It has the following options:
 
-* None - no timerange limit for the annotations query
-* This dashboard - Limit the annotations list to the timerange of the dashboard in which the annotation list pannel appears
+* None - no time range limit for the annotations query.
+* This dashboard - Limit the list to the time range of the dashboard where the annotation list panel is available.
 
 ### Tags
 
-Use the tags list to filter the annotations by tags. You can add multiple tags in order to refine the list. 
+Use the tags option to filter the annotations by tags. You can add multiple tags in order to refine the list. 
 
 > **Note:** Optionally, leave the tag list empty and filter on the fly by selecting tags that are listed as part of the results on the panel itself.
 
@@ -65,7 +65,7 @@ Use this option to chose how to view the annotated data. It has the following op
 
 ### Time before
 
-Use this option to set the time range before the annotation.  Use duration string values like "1h" = 1 hour, "10m" = 10 minutes, etc
+Use this option to set the time range before the annotation.  Use duration string values like "1h" = 1 hour, "10m" = 10 minutes, etc.
 
 ### Time after
 
