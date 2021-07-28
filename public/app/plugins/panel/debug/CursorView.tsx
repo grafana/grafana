@@ -1,3 +1,4 @@
+import React, { Component } from 'react';
 import {
   EventBus,
   LegacyGraphHoverEvent,
@@ -7,9 +8,8 @@ import {
   DataHoverPayload,
   BusEventWithPayload,
 } from '@grafana/data';
-import React, { Component } from 'react';
 import { Subscription } from 'rxjs';
-import { CustomScrollbar } from '../../../../../packages/grafana-ui/src';
+import { CustomScrollbar } from '@grafana/ui';
 import { DataHoverView } from '../geomap/components/DataHoverView';
 
 interface Props {

@@ -177,7 +177,6 @@ export class GeomapPanel extends Component<Props, State> {
     const mouse = evt.originalEvent as any;
     const pixel = this.map.getEventPixel(mouse);
     const hover = toLonLat(this.map.getCoordinateFromPixel(pixel));
-    console.log('HOVER', mouse, hover);
 
     const { hoverPayload } = this;
     hoverPayload.pageX = mouse.pageX;
@@ -191,7 +190,6 @@ export class GeomapPanel extends Component<Props, State> {
     hoverPayload.rowIndex = undefined;
 
     let ttip: GeomapHoverPayload = {} as GeomapHoverPayload;
-
     const features: GeomapHoverFeature[] = [];
     this.map.forEachFeatureAtPixel(pixel, (feature, layer, geo) => {
       if (!hoverPayload.data) {
