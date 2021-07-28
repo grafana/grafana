@@ -6,12 +6,10 @@ import { map } from 'lodash';
 // Types
 import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
-import { LokiQuery, StepType } from '../types';
+import { LokiQuery } from '../types';
 
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;
-  stepInterval: string;
-  stepMode: StepType;
   resolution: number;
   queryType: LokiQueryType;
   query: LokiQuery;
@@ -43,35 +41,8 @@ const RESOLUTION_OPTIONS: Array<SelectableValue<number>> = [DEFAULT_RESOLUTION].
   }))
 );
 
-export const DEFAULT_STEP_OPTION: SelectableValue<StepType> = {
-  value: 'min',
-  label: 'Minimum',
-};
-
-const STEP_OPTIONS: Array<SelectableValue<StepType>> = [
-  DEFAULT_STEP_OPTION,
-  {
-    value: 'max',
-    label: 'Maximum',
-  },
-  {
-    value: 'exact',
-    label: 'Exact',
-  },
-];
-
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
-  const {
-    lineLimitValue,
-    stepInterval,
-    stepMode,
-    resolution,
-    queryType,
-    query,
-    onRunQuery,
-    runOnBlur,
-    onChange,
-  } = props;
+  const { lineLimitValue, resolution, queryType, query, onRunQuery, runOnBlur, onChange } = props;
 
   function onChangeQueryLimit(value: string) {
     const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
@@ -114,18 +85,8 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
     }
   }
 
-  function onStepIntervalChange(e: React.KeyboardEvent<HTMLInputElement>) {
-    const nextQuery = { ...query, stepInterval: e.currentTarget.value };
-    onChange(nextQuery);
-  }
-
   function onResolutionChange(option: SelectableValue<number>) {
     const nextQuery = { ...query, resolution: option.value };
-    onChange(nextQuery);
-  }
-
-  function onStepModeChange(option: SelectableValue<StepType>) {
-    const nextQuery = { ...query, stepMode: option.value };
     onChange(nextQuery);
   }
 
@@ -175,30 +136,6 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
             onChange={onMaxLinesChange}
             onKeyDown={onReturnKeyDown}
             value={lineLimitValue}
-            onBlur={() => {
-              if (runOnBlur) {
-                onRunQuery();
-              }
-            }}
-          />
-        </InlineField>
-        <InlineField
-          label="Step"
-          tooltip={
-            'Optionally, set the lower or upper bounds on the interval between data points, for example, set "minimum 1h" to hint that measurements were not taken more frequently. `$__interval` and `$__rate_interval` are supported.'
-          }
-        >
-          <Select isSearchable={false} width={16} onChange={onStepModeChange} options={STEP_OPTIONS} value={stepMode} />
-        </InlineField>
-        <InlineField>
-          <Input
-            className="width-4"
-            width={12}
-            placeholder="15s"
-            min={0}
-            onChange={onStepIntervalChange}
-            onKeyDown={onReturnKeyDown}
-            value={stepInterval}
             onBlur={() => {
               if (runOnBlur) {
                 onRunQuery();
