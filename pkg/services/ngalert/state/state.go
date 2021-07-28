@@ -111,14 +111,8 @@ func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) 
 	}
 }
 
-func (a *State) NeedsSending(resendDelay time.Duration) bool {
-	if a.State != eval.Alerting {
-		return false
-	}
-
-	// if LastSentAt is before or equal to LastEvaluationTime + resendDelay, send again
-	return a.LastSentAt.Add(resendDelay).Before(a.LastEvaluationTime) ||
-		a.LastSentAt.Add(resendDelay).Equal(a.LastEvaluationTime)
+func (a *State) NeedsSending() bool {
+	return a.State == eval.Alerting
 }
 
 func (a *State) Equals(b *State) bool {
