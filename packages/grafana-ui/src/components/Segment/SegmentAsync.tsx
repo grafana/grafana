@@ -47,7 +47,7 @@ export function SegmentAsync<T>({
 
     return (
       <Label
-        onClick={fetchOptions}
+        onClick={reloadOptionsOnChange ? undefined : fetchOptions}
         disabled={disabled}
         Component={
           Component || (
