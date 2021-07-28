@@ -32,7 +32,7 @@ Use the time range option to select if the list should limited to the current ti
 
 Use the tags list to filter the annotations by tags. You can add multiple tags in order to refine the list. 
 
-> **Note:** Alternatively, you can leave the tag list empty and filter on-the-fly by selecting tags which are listed as part of the results on the panel itself.
+> **Note:** Optionally, leave the tag list empty and filter on the fly by selecting tags that are listed as part of the results on the panel itself.
 
 ### Limit
 
