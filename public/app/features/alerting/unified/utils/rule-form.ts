@@ -1,6 +1,7 @@
 import { DataQuery, rangeUtil, RelativeTimeRange, ScopedVars, getDefaultRelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getIntervals } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
@@ -197,14 +198,22 @@ const dataQueriesToGrafanaQueries = async (
   scopedVars: ScopedVars | {},
   datasourceName?: string,
   maxDataPoints?: number,
-  interval?: string
+  minInterval?: string
 ): Promise<AlertQuery[]> => {
   const result: AlertQuery[] = [];
   for (const target of queries) {
     const dsName = target.datasource || datasourceName;
     const datasource = await getDataSourceSrv().get(dsName);
+
+    const range = rangeUtil.relativeToTimeRange(relativeTimeRange);
+    const { interval, intervalMs } = getIntervals(range, minInterval, maxDataPoints);
+    const queryVariables = {
+      __interval: { text: interval, value: interval },
+      __interval_ms: { text: intervalMs, value: intervalMs },
+      ...scopedVars,
+    };
     const interpolatedTarget = datasource.interpolateVariablesInQueries
-      ? await datasource.interpolateVariablesInQueries([target], scopedVars)[0]
+      ? await datasource.interpolateVariablesInQueries([target], queryVariables)[0]
       : target;
     if (dsName) {
       // expressions
@@ -229,8 +238,8 @@ const dataQueriesToGrafanaQueries = async (
             model: {
               ...interpolatedTarget,
               maxDataPoints,
-              interval,
-              intervalMs: interval ? rangeUtil.intervalToMs(interval) : undefined,
+              interval: minInterval,
+              intervalMs: minInterval ? rangeUtil.intervalToMs(minInterval) : undefined,
             },
           };
           result.push(newQuery);
