@@ -54,8 +54,9 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
 		}
 		mg.AddMigration(migTitle, &migration{
-			seenChannelUIDs:  make(map[string]struct{}),
-			migratedChannels: make(map[*notificationChannel]struct{}),
+			seenChannelUIDs:     make(map[string]struct{}),
+			migratedChannels:    make(map[*notificationChannel]struct{}),
+			portedChannelGroups: make(map[string]string),
 		})
 	case !ngEnabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
@@ -74,9 +75,11 @@ type migration struct {
 	sess *xorm.Session
 	mg   *migrator.Migrator
 
-	seenChannelUIDs  map[string]struct{}
-	migratedChannels map[*notificationChannel]struct{}
-	silences         []*pb.MeshSilence
+	seenChannelUIDs     map[string]struct{}
+	migratedChannels    map[*notificationChannel]struct{}
+	silences            []*pb.MeshSilence
+	portedChannelGroups map[string]string // Channel group key -> receiver name.
+	lastReceiverID      int               // For the auto generated receivers.
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
@@ -111,7 +114,10 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	}
 
 	amConfig := PostableUserConfig{}
-	amConfig.AlertmanagerConfig.Route = &Route{}
+	err = m.addDefaultChannels(&amConfig, allChannels, defaultChannels)
+	if err != nil {
+		return err
+	}
 
 	for _, da := range dashAlerts {
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
@@ -245,7 +251,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	}
 
 	// Create a separate receiver for all the unmigrated channels.
-	err = m.updateDefaultAndUnmigratedChannels(&amConfig, allChannels, defaultChannels)
+	err = m.addUnmigratedChannels(&amConfig, allChannels, defaultChannels)
 	if err != nil {
 		return err
 	}
