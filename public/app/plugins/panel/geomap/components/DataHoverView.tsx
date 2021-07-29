@@ -1,13 +1,6 @@
 import React, { PureComponent } from 'react';
 import { stylesFactory } from '@grafana/ui';
-import {
-  DataFrame,
-  Field,
-  formattedValueToString,
-  getFieldDisplayName,
-  GrafanaTheme,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { DataFrame, Field, formattedValueToString, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 
