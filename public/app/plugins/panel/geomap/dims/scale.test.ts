@@ -40,7 +40,7 @@ describe('scale dimensions', () => {
   });
 
   it('should support negative min values', () => {
-    const values = [-20, -10, 5, 0, 5, 10, 20];
+    const values = [-20, -10, -5, 0, 5, 10, 20];
     const frame: DataFrame = {
       name: 'a',
       length: values.length,
