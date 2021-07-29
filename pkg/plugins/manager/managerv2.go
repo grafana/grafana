@@ -579,6 +579,8 @@ func (m *PluginManagerV2) IsSupported(pluginID string) bool {
 }
 
 func (m *PluginManagerV2) Install(ctx context.Context, pluginID, version string) error {
+	var pluginZipURL string
+
 	plugin := m.Plugin(pluginID)
 	if plugin != nil {
 		if !plugin.IsExternalPlugin() {
@@ -592,14 +594,22 @@ func (m *PluginManagerV2) Install(ctx context.Context, pluginID, version string)
 			}
 		}
 
+		// get plugin update information to confirm if upgrading is possible
+		updateInfo, err := m.pluginInstaller.GetUpdateInfo(pluginID, version, grafanaComURL)
+		if err != nil {
+			return err
+		}
+
+		pluginZipURL = updateInfo.PluginZipURL
+
 		// remove existing installation of plugin
-		err := m.Uninstall(context.Background(), plugin.ID)
+		err = m.Uninstall(context.Background(), plugin.ID)
 		if err != nil {
 			return err
 		}
 	}
 
-	err := m.pluginInstaller.Install(ctx, pluginID, version, m.Cfg.PluginsPath, "", grafanaComURL)
+	err := m.pluginInstaller.Install(ctx, pluginID, version, m.Cfg.PluginsPath, pluginZipURL, grafanaComURL)
 	if err != nil {
 		return err
 	}
@@ -640,7 +650,7 @@ func (m *PluginManagerV2) Uninstall(ctx context.Context, pluginID string) error 
 		return err
 	}
 
-	return m.pluginInstaller.Uninstall(ctx, pluginID, m.Cfg.PluginsPath)
+	return m.pluginInstaller.Uninstall(ctx, plugin.PluginDir)
 }
 
 func (m *PluginManagerV2) unregister(plugin *plugins.PluginV2) error {
