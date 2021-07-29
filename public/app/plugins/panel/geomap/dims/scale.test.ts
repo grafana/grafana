@@ -1,6 +1,4 @@
-import { values } from 'lodash';
-import { config } from 'process';
-import { ArrayVector, DataFrame, FieldType, toDataFrame } from '../../../../../../packages/grafana-data/src';
+import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
 import { getScaledDimension, validateScaleConfig } from './scale';
 
 describe('scale dimensions', () => {
