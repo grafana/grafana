@@ -19,7 +19,7 @@ type UpdateAdminConfigurationCmd struct {
 
 type AdminConfigurationStore interface {
 	GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfiguration, error)
-	GetAdminConfigurations(query *ngmodels.GetOrgAdminConfiguration) error
+	GetAdminConfigurations() ([]*ngmodels.AdminConfiguration, error)
 	DeleteAdminConfiguration(orgID int64) error
 	UpdateAdminConfiguration(UpdateAdminConfigurationCmd) error
 }
@@ -27,7 +27,7 @@ type AdminConfigurationStore interface {
 func (st *DBstore) GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfiguration, error) {
 	cfg := &ngmodels.AdminConfiguration{}
 	err := st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		ok, err := sess.Table("alert_admin_configuration").Where("org_id = ?", orgID).Limit(1).Get(cfg)
+		ok, err := sess.Table("ngalert_configuration").Where("org_id = ?", orgID).Limit(1).Get(cfg)
 		if err != nil {
 			return err
 		}
@@ -46,21 +46,26 @@ func (st *DBstore) GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfigurat
 	return cfg, nil
 }
 
-func (st DBstore) GetAdminConfigurations(q *ngmodels.GetOrgAdminConfiguration) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		cfg := []*ngmodels.AdminConfiguration{}
-		if err := sess.Table("alert_admin_configuration").Find(&cfg); err != nil {
-			return nil
+func (st DBstore) GetAdminConfigurations() ([]*ngmodels.AdminConfiguration, error) {
+	var cfg []*ngmodels.AdminConfiguration
+	err := st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		if err := sess.Table("ngalert_configuration").Find(&cfg); err != nil {
+			return err
 		}
 
-		q.Result = cfg
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
 }
 
 func (st DBstore) DeleteAdminConfiguration(orgID int64) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("DELETE FROM alert_admin_configuration WHERE org_id = ?", orgID)
+		_, err := sess.Exec("DELETE FROM ngalert_configuration WHERE org_id = ?", orgID)
 		if err != nil {
 			return err
 		}
@@ -71,17 +76,17 @@ func (st DBstore) DeleteAdminConfiguration(orgID int64) error {
 
 func (st DBstore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		has, err := sess.Table("alert_admin_configuration").Where("org_id = ?", cmd.AdminConfiguration.OrgID).Limit(1, 0).Exist()
+		has, err := sess.Table("ngalert_configuration").Where("org_id = ?", cmd.AdminConfiguration.OrgID).Limit(1, 0).Exist()
 		if err != nil {
 			return err
 		}
 
 		if !has {
-			_, err := sess.Table("alert_admin_configuration").Insert(cmd.AdminConfiguration)
+			_, err := sess.Table("ngalert_configuration").Insert(cmd.AdminConfiguration)
 			return err
 		}
 
-		_, err = sess.Table("alert_admin_configuration").AllCols().Update(cmd.AdminConfiguration)
+		_, err = sess.Table("ngalert_configuration").AllCols().Update(cmd.AdminConfiguration)
 		return err
 	})
 }

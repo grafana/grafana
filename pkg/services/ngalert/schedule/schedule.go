@@ -176,16 +176,16 @@ func (sch *schedule) Run(ctx context.Context) error {
 // SyncAndApplyConfigFromDatabase looks for the admin configuration in the database and adjusts the sender(s) accordingly.
 func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 	sch.log.Debug("start of admin configuration sync")
-	q := &models.GetOrgAdminConfiguration{}
-	if err := sch.adminConfigStore.GetAdminConfigurations(q); err != nil {
+	cfgs, err := sch.adminConfigStore.GetAdminConfigurations()
+	if err != nil {
 		return err
 	}
 
-	sch.log.Debug("found admin configurations", "count", len(q.Result))
+	sch.log.Debug("found admin configurations", "count", len(cfgs))
 
-	orgsFound := make(map[int64]struct{}, len(q.Result))
+	orgsFound := make(map[int64]struct{}, len(cfgs))
 	sch.sendersMtx.Lock()
-	for _, cfg := range q.Result {
+	for _, cfg := range cfgs {
 		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which senders we need to keep.
 
 		existing, ok := sch.senders[cfg.OrgID]

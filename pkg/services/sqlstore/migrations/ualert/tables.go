@@ -285,5 +285,5 @@ func AddAlertAdminConfigMigrations(mg *migrator.Migrator) {
 		},
 	}
 
-	mg.AddMigration("create_alert_admin_configuration_table", migrator.NewAddTableMigration(adminConfiguration))
+	mg.AddMigration("create_ngalert_configuration_table", migrator.NewAddTableMigration(adminConfiguration))
 }

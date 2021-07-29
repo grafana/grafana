@@ -22,7 +22,3 @@ func (ac *AdminConfiguration) AsSHA256() string {
 	_, _ = h.Write([]byte(fmt.Sprintf("%v", ac.Alertmanagers)))
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
-
-type GetOrgAdminConfiguration struct {
-	Result []*AdminConfiguration
-}
