@@ -12,9 +12,9 @@ list = false
 
 > **Note:** This topic will be updated frequently between now and the final release.
 
-Grafana 8.1 builds upon our promise of composable, open observability platform with new panels and extends functionality launched in Grafana 8.0. We’ve got new panels, including the Geomap panel, the Annotations panel, and some great updates to the Time Series panel. For enterprise customers we’ve got additions to fine grained access control, updates to the reporting scheduler and more. We’ve also got some new transformations, updates to data sources and more. Details below.
+Grafana 8.1 builds upon our promise of a composable, open observability platform with new panels and extends functionality launched in Grafana 8.0. We’ve got new  Geomap and Annotations panels, and some great updates to the Time Series panel. We’ve also got new transformations and updates to data sources. For our enterprise customers, we've got additions to fine grained access control, updates to the reporting scheduler, and more. Read on to learn more.
 
-We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post as well. If you’d like all the details you can checkout the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+In addition to what is summarized here, you might also be interested in the announcement blog post. For all the technical details, check out the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 
 ## Grafana OSS features
@@ -37,7 +37,7 @@ The new Annotations panel shows a list of available annotations you can use to c
 
 ### Time series panel updates
 
-Time series panels have been updated with the ability to color series and line by thresholds or gradient color scales. This allows users to create time series panels where the line color can change dynamically based on thresholds or using gradient color scales. his change adds a layer of visibility to your data, making it more straightforward to quickly see changes across thresholds at a glance.
+The time series panel has been updated with the ability to color series and line by thresholds or gradient color scales. This allows users to create time series panels where the line color can change dynamically based on thresholds or using gradient color scales. his change adds a layer of visibility to your data, making it more straightforward to quickly see changes across thresholds at a glance.
 
 Color scheme **From thresholds**: 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_line.png" max-width="1200px" caption="Colors scheme: From thresholds" >}}
@@ -48,12 +48,6 @@ Color scheme: **Green-Yellow-Red (by value)**
 For more on how to configure Graphs with by value color schemes read [Graph and color schemes]({{< relref "../panels/visualizations/time-series/_index.md" >}}).
 
 We've also added the ability to [create annotations on the new Time series panel]({{< relref "../panels/visualizations/time-series/annotate-time-series.md" >}}), bringing it closer to parity with the legacy Graph Panel. [Read more about the time series panel here]({{< relref "../panels/visualizations/time-series/_index.md" >}}). 
-
-### Annotation panel
-
-The new Annotations panel shows a list of available annotations you can use to create lists of annotated data available within your organization. Various options are available to filter the list based on tags and on the current dashboard. This panel makes it easy to find and filter annotated data within and across multiple dashboards.
-
-{{< figure src="/static/img/docs/annolist/annolist.png" max-width="1200px" caption="Geomap panel: Heatmap" >}}
 
 ### Transformations improvements
 
