@@ -366,4 +366,83 @@ describe('Reducer Transformer', () => {
       expect(processed[0].fields).toEqual(expected);
     });
   });
+  it('reduces keeping label field', async () => {
+    const cfg = {
+      id: DataTransformerID.reduce,
+      options: {
+        reducers: [ReducerID.max],
+        labelsToFields: true,
+      },
+    };
+
+    const seriesA = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+        { name: 'value', label: { state: 'CA' }, type: FieldType.number, values: [3, 4, 5, 6] },
+        { name: 'value', label: { state: 'NY' }, type: FieldType.number, values: [3, 4, 5, 6] },
+      ],
+    });
+
+    const seriesB = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+        { name: 'value', label: { state: 'CA', country: 'USA' }, type: FieldType.number, values: [3, 4, 5, 6] },
+        { name: 'value', label: { country: 'USA' }, type: FieldType.number, values: [3, 4, 5, 6] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed.length).toEqual(1);
+      expect(processed[0].fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "config": Object {},
+            "name": "Field",
+            "type": "string",
+            "values": Array [
+              "value",
+              "value",
+              "value",
+              "value",
+            ],
+          },
+          Object {
+            "config": Object {},
+            "name": "state",
+            "type": "string",
+            "values": Array [
+              "CA",
+              "NY",
+              "CA",
+              undefined,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "name": "country",
+            "type": "string",
+            "values": Array [
+              undefined,
+              undefined,
+              "USA",
+              "USA",
+            ],
+          },
+          Object {
+            "config": Object {},
+            "name": "Max",
+            "type": "number",
+            "values": Array [
+              6,
+              6,
+              6,
+              6,
+            ],
+          },
+        ]
+      `);
+    });
+  });
 });

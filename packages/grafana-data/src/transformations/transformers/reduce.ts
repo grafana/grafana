@@ -20,6 +20,7 @@ export interface ReduceTransformerOptions {
   fields?: MatcherConfig; // Assume all fields
   mode?: ReduceTransformerMode;
   includeTimeField?: boolean;
+  labelsToFields?: boolean;
 }
 
 export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = {
@@ -53,7 +54,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
         }
 
         // Add a row for each series
-        const res = reduceSeriesToRows(data, matcher, options.reducers);
+        const res = reduceSeriesToRows(data, matcher, options.reducers, options.labelsToFields);
         return res ? [res] : [];
       })
     ),
@@ -65,7 +66,8 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
 export function reduceSeriesToRows(
   data: DataFrame[],
   matcher: FieldMatcher,
-  reducerId: ReducerID[]
+  reducerId: ReducerID[],
+  labelsToFields?: boolean
 ): DataFrame | undefined {
   const calculators = fieldReducers.list(reducerId);
   const reducers = calculators.map((c) => c.id);
@@ -96,7 +98,9 @@ export function reduceSeriesToRows(
         config: {},
       });
     }
-
+    if (labelsToFields) {
+      console.log('TODO');
+    }
     for (let i = 0; i < series.fields.length; i++) {
       const field = series.fields[i];
 
