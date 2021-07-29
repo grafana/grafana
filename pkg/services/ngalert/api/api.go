@@ -109,7 +109,7 @@ func (api *API) RegisterAdminAPIEndpoints(srv AdminSrv, m *metrics.Metrics) {
 		)
 		group.Post(
 			"/api/v1/ngalert/configuration",
-			binding.Bind(apimodels.AdminConfiguration{}),
+			binding.Bind(apimodels.PostableNGalertConfig{}),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/ngalert/admin_config",
