@@ -55,6 +55,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
               { value: FrameGeometrySourceMode.Coords, label: 'Coords' },
               { value: FrameGeometrySourceMode.Geohash, label: 'Geohash' },
               { value: FrameGeometrySourceMode.Lookup, label: 'Lookup' },
+              { value: FrameGeometrySourceMode.Label, label: 'Labels' },
             ],
           },
         })

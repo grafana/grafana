@@ -160,11 +160,6 @@ export interface StatsPickerConfigSettings {
   defaultStat?: string;
 }
 
-interface FieldNamePickerInfoProps {
-  name?: string;
-  field?: Field;
-}
-
 export interface FieldNamePickerConfigSettings {
   /**
    * Function is a predicate, to test each element of the array.
@@ -176,10 +171,4 @@ export interface FieldNamePickerConfigSettings {
    * Show this text when no values are found
    */
   noFieldsMessage?: string;
-
-  /**
-   * When a field is selected, this component can show aditional
-   * information, including validation etc
-   */
-  info?: ComponentType<FieldNamePickerInfoProps> | null;
 }

@@ -11,6 +11,7 @@ import { ReactNode } from 'react';
  */
 export enum FrameGeometrySourceMode {
   Auto = 'auto', // Will scan fields and find best match
+  Label = 'label',
   Geohash = 'geohash',
   Coords = 'coords', // lon field, lat field
   Lookup = 'lookup', // keys > location
@@ -24,6 +25,7 @@ export enum FrameGeometrySourceMode {
  */
 export interface FrameGeometrySource {
   mode: FrameGeometrySourceMode;
+  labelMode?: FrameGeometrySourceMode; // Geohash, Lookup, H3
 
   // Field mappings
   geohash?: string;
@@ -32,6 +34,7 @@ export interface FrameGeometrySource {
   h3?: string;
   wkt?: string;
   lookup?: string;
+  label?: string;
 
   // Path to Gazetteer
   gazetteer?: string;
