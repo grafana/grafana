@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, RenderResult, waitFor } from '@testing-library/react';
+import { PluginSignatureStatus, PluginType } from '@grafana/data';
 import PluginDetailsPage from './PluginDetails';
 import { API_ROOT, GRAFANA_API_ROOT } from '../constants';
 import { LocalPlugin, Plugin } from '../types';
@@ -83,10 +84,11 @@ function remotePlugin(plugin: Partial<Plugin> = {}): Plugin {
     signatureType: 'community',
     slug: 'alexanderzobnin-zabbix-app',
     status: 'active',
-    typeCode: 'app',
+    typeCode: PluginType.app,
     updatedAt: '2021-05-18T14:53:01.000Z',
     version: '4.1.5',
     versionSignatureType: 'community',
+    signature: PluginSignatureStatus.valid,
     readme: '',
     json: {
       dependencies: {
@@ -126,11 +128,11 @@ function localPlugin(plugin: Partial<LocalPlugin> = {}): LocalPlugin {
     latestVersion: '',
     name: 'Alert Manager',
     pinned: false,
-    signature: 'internal',
+    signature: PluginSignatureStatus.internal,
     signatureOrg: '',
     signatureType: '',
     state: 'alpha',
-    type: 'datasource',
+    type: PluginType.datasource,
     dev: false,
     ...plugin,
   };
@@ -159,11 +161,11 @@ function corePlugin(plugin: Partial<LocalPlugin> = {}): LocalPlugin {
     latestVersion: '',
     name: 'PostgreSQL',
     pinned: false,
-    signature: 'internal',
+    signature: PluginSignatureStatus.internal,
     signatureOrg: '',
     signatureType: '',
     state: '',
-    type: 'datasource',
+    type: PluginType.datasource,
     ...plugin,
   };
 }

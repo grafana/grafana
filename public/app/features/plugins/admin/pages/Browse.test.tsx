@@ -3,6 +3,7 @@ import { Router } from 'react-router-dom';
 import { render, RenderResult, waitFor } from '@testing-library/react';
 import BrowsePage from './Browse';
 import { locationService } from '@grafana/runtime';
+import { PluginSignatureStatus, PluginType } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 import { Provider } from 'react-redux';
 import { LocalPlugin, Plugin } from '../types';
@@ -149,11 +150,11 @@ const installed: LocalPlugin[] = [
     latestVersion: '',
     name: 'Alert Manager',
     pinned: false,
-    signature: 'internal',
+    signature: PluginSignatureStatus.internal,
     signatureOrg: '',
     signatureType: '',
     state: 'alpha',
-    type: 'datasource',
+    type: PluginType.datasource,
     dev: false,
   },
   {
@@ -210,10 +211,11 @@ const remote: Plugin[] = [
     orgSlug: 'alexanderzobnin',
     packages: {},
     popularity: 0.2111,
+    signature: PluginSignatureStatus.valid,
     signatureType: 'community',
     slug: 'alexanderzobnin-zabbix-app',
     status: 'active',
-    typeCode: 'app',
+    typeCode: PluginType.app,
     updatedAt: '2021-05-18T14:53:01.000Z',
     version: '4.1.5',
     versionSignatureType: 'community',
@@ -233,8 +235,9 @@ const remote: Plugin[] = [
     popularity: 0.0133,
     signatureType: 'grafana',
     slug: 'grafana-wavefront-datasource',
+    signature: PluginSignatureStatus.valid,
     status: 'enterprise',
-    typeCode: 'datasource',
+    typeCode: PluginType.datasource,
     updatedAt: '2021-06-23T12:45:13.000Z',
     version: '1.0.7',
     versionSignatureType: 'grafana',
