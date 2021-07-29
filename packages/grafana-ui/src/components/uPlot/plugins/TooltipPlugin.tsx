@@ -59,15 +59,19 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   }, [focusedPointIdx, focusedSeriesIdx]);
 
   useEffect(() => {
-    const plotMouseLeave = (e: MouseEvent) => {
+    const plotMouseLeave = () => {
       setCoords(null);
       setIsActive(false);
-      handleMouseEvent(e);
+      if (plotCtx.plot) {
+        plotCtx.plot.over.classList.remove('plot-active');
+      }
     };
 
-    const plotMouseEnter = (e: MouseEvent) => {
+    const plotMouseEnter = () => {
       setIsActive(true);
-      handleMouseEvent(e);
+      if (plotCtx.plot) {
+        plotCtx.plot.over.classList.add('plot-active');
+      }
     };
 
     if (plotCtx && plotCtx.plot) {
@@ -85,7 +89,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         plotCtx.plot.over.removeEventListener('mouseenter', plotMouseEnter);
       }
     };
-  }, [plotCtx.plot?.root, setCoords, setIsActive]);
+  }, [plotCtx.plot?.root]);
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
@@ -220,12 +224,6 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     </Portal>
   );
 };
-
-function handleMouseEvent(e: MouseEvent) {
-  if (e.target) {
-    (e.target as HTMLDivElement).classList.toggle('plot-active');
-  }
-}
 
 function isCursourOutsideCanvas({ left, top }: uPlot.Cursor, canvas: DOMRect) {
   if (left === undefined || top === undefined) {
