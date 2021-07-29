@@ -14,6 +14,14 @@ type Props = {
   state: GraphiteQueryEditorState;
 };
 
+/**
+ * Editor for a tag at given index. Allows changing the name of the tag, operator or value. Tag names are provided with
+ * getTagsSelectables and contain only valid tags (it may depend on currently used tags). The dropdown for tag names is
+ * also used for removing tag (with a special "--remove tag--" option provided by getTagsSelectables).
+ *
+ * Options for tag names and values are reloaded while user is typing with backend taking care of auto-complete
+ * (auto-complete cannot be implemented in front-end because backend returns only limited number of entries)
+ */
 export function TagEditor({ dispatch, tag, tagIndex, state }: Props) {
   const getTagsOptions = useCallback(
     async (inputValue: string | undefined) => {

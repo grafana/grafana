@@ -19,11 +19,19 @@ type Props = {
   state: GraphiteQueryEditorState;
 };
 
+/**
+ * Renders all tags and a button allowing to add more tags.
+ *
+ * Options for tag names are reloaded while user is typing with backend taking care of auto-complete
+ * (auto-complete cannot be implemented in front-end because backend returns only limited number of entries)
+ */
 export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
   const styles = useStyles2(getStyles);
 
   const newTagsOptions = mapSegmentsToSelectables(addTagSegments || []);
 
+  // Options are reloaded while user is typing with backend taking care of auto-complete (auto-complete cannot be
+  // implemented in front-end because backend returns only limited number of entries)
   const getTagsAsSegmentsOptions = useCallback(
     async (inputValue: string) => {
       return await getTagsAsSegmentsSelectables(state, inputValue);

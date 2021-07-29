@@ -15,6 +15,16 @@ type Props = {
   state: GraphiteQueryEditorState;
 };
 
+/**
+ * Represents a single metric node in the metric path at the given index. Allows to change the metric name to one of the
+ * provided options or a custom value.
+ *
+ * Options for tag names and metric names are reloaded while user is typing with backend taking care of auto-complete
+ * (auto-complete cannot be implemented in front-end because backend returns only limited number of entries)
+ *
+ * getAltSegmentsSelectables() also returns list of tags for segment with index=0. Once a tag is selected the editor
+ * enters tag-adding mode (see SeriesSection and GraphiteQueryModel.seriesByTagUsed).
+ */
 export function MetricSegment({ dispatch, metricIndex, segment, state }: Props) {
   const loadOptions = useCallback(
     async (value: string | undefined) => {
