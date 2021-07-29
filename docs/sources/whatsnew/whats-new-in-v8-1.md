@@ -92,7 +92,12 @@ We have added timezone support. As a result, you can now specify the time zone u
 
 ### Trace to logs improvements
 
-We have updated the default behavior from creating a one (1) hour span Loki query to only query at the exact time the trace span started for the duration of it. For more fine grained control over this you can shift this time in the tracing data source settings. It is now possible to to shift the start time and end time of the Loki query by the set amount. For more information, refer to [Trace to logs]({{< relref "../datasources/tempo.md#trace-to-logs" >}}).
+We changed the default behavior from creating a 1-hour span Loki query to the only query at the exact time the trace span started for the duration of it. For more fine grained control over this, you can shift this time in the tracing data source settings. Also, it is now possible to shift the start time and end time of the Loki query by the set amount. For more information, refer to [Trace to logs]({{< relref "../datasources/tempo.md#trace-to-logs" >}}).
+
+### Plugin catalog - Updated UX and extended features
+
+We’ve made some changes to the plugins UI to help make it easier to discover and manage your plugins. Enterprise users can now also manage enterprise plugins from within the catalog.
+
 
 #### Documentation updates
 
@@ -106,7 +111,7 @@ These features are included in the Grafana Enterprise edition.
 
 Fine-grained access control remains in beta. You can now grant or revoke permissions for Viewers, Editors, or Admins to use Explore mode, configure LDAP or SAML settings, or view the admin/stats page. These new permissions enhance the existing permissions that can be customized, namely permissions to access Users, Orgs, LDAP settings, and Reports in Grafana.
 
-Fine grained access control allows you to customize roles and permissions in Grafana beyond the built-in Viewer, Editor, and Admin roles. As of 8.1, you can modify some of the permissions for any of these built-in roles. This is helpful if you’d like users to have more or fewer access permissions than a given role allows for by default. For an overview of fine-grained access control and a complete list of available permissions, refer to the [Fine grained access control]({{< relref "../enterprise/access-control.md" >}}) documentation.
+Fine grained access control allows you to customize roles and permissions in Grafana beyond the built-in Viewer, Editor, and Admin roles. As of 8.1, you can modify some of the permissions for any of these built-in roles. This is helpful if you’d like users to have more or fewer access permissions than a given role allows for by default. For an overview of fine-grained access control and a complete list of available permissions, refer to the [Fine grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) documentation.
 
 
 ### New and improved reporting scheduler
