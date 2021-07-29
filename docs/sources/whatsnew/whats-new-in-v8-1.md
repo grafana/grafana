@@ -12,7 +12,7 @@ list = false
 
 > **Note:** This topic will be updated frequently between now and the final release.
 
-Grafana 8.1 builds upon our promise of composable, open observability platform with new panels and extends functionality launched in Grafana 8.0. We’ve got new panels, including the Geomap panel, the Annotations panel, and some great updates to the Time Series panel. For enterprise customers we’ve got additions to fine grained access control, updates to the reporting scheduler and more. We’ve also got some new transformations, updates to data sources and more. Details below.
+Grafana 8.1 builds upon our promise of a composable, open observability platform with new panels and extends functionality launched in Grafana 8.0. We’ve got new  Geomap and Annotations panels, and some great updates to the Time Series panel. We’ve also got new transformations and updates to data sources. For our enterprise customers, we've got additions to fine grained access control, updates to the reporting scheduler, and more. Read on to learn more.
 
 We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post as well. If you’d like all the details you can checkout the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
@@ -89,4 +89,3 @@ These features are included in the Grafana Enterprise edition.
 ### Oauth2 - Team Sync to Group Mapping 
 
 With Team Sync you can map your Generic OAuth groups to teams in Grafana so that the users are automatically added to the correct teams.
-
