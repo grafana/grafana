@@ -29,13 +29,13 @@ func (srv AdminSrv) RouteGetAdminConfig(c *models.ReqContext) response.Response 
 		return ErrResp(http.StatusInternalServerError, err, msg)
 	}
 
-	resp := apimodels.AdminConfiguration{
+	resp := apimodels.GettableNGalertconfig{
 		Alertmanagers: cfg.Alertmanagers,
 	}
 	return response.JSON(http.StatusOK, resp)
 }
 
-func (srv AdminSrv) RouteUpdateAdminConfig(c *models.ReqContext, body apimodels.AdminConfiguration) response.Response {
+func (srv AdminSrv) RouteUpdateAdminConfig(c *models.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
 	cfg := &ngmodels.AdminConfiguration{
 		Alertmanagers: body.Alertmanagers,
 		OrgID:         c.OrgId,
@@ -48,10 +48,10 @@ func (srv AdminSrv) RouteUpdateAdminConfig(c *models.ReqContext, body apimodels.
 		return ErrResp(http.StatusBadRequest, err, msg)
 	}
 
-	return response.JSON(http.StatusOK, "admin configuration updated")
+	return response.JSON(http.StatusCreated, "admin configuration updated")
 }
 
-func (srv AdminSrv) RouteDeleteAdminConfig(c *models.ReqContext, body apimodels.AdminConfiguration) response.Response {
+func (srv AdminSrv) RouteDeleteAdminConfig(c *models.ReqContext) response.Response {
 	err := srv.store.DeleteAdminConfiguration(c.OrgId)
 	if err != nil {
 		srv.log.Error("unable to delete configuration", "err", err)

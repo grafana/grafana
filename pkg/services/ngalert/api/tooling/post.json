@@ -58,9 +58,7 @@
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "AlertGroup": {},
-  "AlertGroups": {
-   "$ref": "#/definitions/alertGroups"
-  },
+  "AlertGroups": {},
   "AlertInstancesResponse": {
    "properties": {
     "instances": {
@@ -475,12 +473,8 @@
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
   },
-  "GettableAlert": {
-   "$ref": "#/definitions/gettableAlert"
-  },
-  "GettableAlerts": {
-   "$ref": "#/definitions/gettableAlerts"
-  },
+  "GettableAlert": {},
+  "GettableAlerts": {},
   "GettableApiAlertingConfig": {
    "properties": {
     "global": {
@@ -746,6 +740,19 @@
      "format": "int64",
      "type": "integer",
      "x-go-name": "Version"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "GettableNGalertconfig": {
+   "properties": {
+    "alertmanagers": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array",
+     "x-go-name": "Alertmanagers"
     }
    },
    "type": "object",
@@ -1545,6 +1552,19 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "PostableNGalertConfig": {
+   "properties": {
+    "alertmanagers": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array",
+     "x-go-name": "Alertmanagers"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "PostableRuleGroupConfig": {
    "properties": {
     "interval": {
@@ -1565,7 +1585,9 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
-  "PostableSilence": {},
+  "PostableSilence": {
+   "$ref": "#/definitions/postableSilence"
+  },
   "PostableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -2449,7 +2471,7 @@
   "alertGroups": {
    "description": "AlertGroups alert groups",
    "items": {
-    "$ref": "#/definitions/alertGroup"
+    "$ref": "#/definitions/AlertGroup"
    },
    "type": "array",
    "x-go-name": "AlertGroups",
@@ -2601,7 +2623,7 @@
     "receivers": {
      "description": "receivers",
      "items": {
-      "$ref": "#/definitions/receiver"
+      "$ref": "#/definitions/Receiver"
      },
      "type": "array",
      "x-go-name": "Receivers"
@@ -3318,7 +3340,7 @@
       "in": "body",
       "name": "Silence",
       "schema": {
-       "$ref": "#/definitions/postableSilence"
+       "$ref": "#/definitions/PostableSilence"
       }
      },
      {
@@ -3772,6 +3794,89 @@
     },
     "tags": [
      "testing"
+    ]
+   }
+  },
+  "/api/v1/ngalert/configuration": {
+   "delete": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RouteDeleteNGalertConfig",
+    "responses": {
+     "200": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     }
+    },
+    "summary": "Deletes the NGalert configuration of the user's organization.",
+    "tags": [
+     "configuration"
+    ]
+   },
+   "get": {
+    "operationId": "RouteGetNGalertConfig",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/PostableNGalertConfig"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "$ref": "#/responses/GettableNgalertconfig"
+     },
+     "404": {
+      "description": "Failure",
+      "schema": {
+       "$ref": "#/definitions/Failure"
+      }
+     },
+     "500": {
+      "description": "Failure",
+      "schema": {
+       "$ref": "#/definitions/Failure"
+      }
+     }
+    },
+    "summary": "Get the NGalert configuration of the user's organization, returns 404 if no configuration is present.",
+    "tags": [
+     "configuration"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePostNGalertConfig",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/PostableNGalertConfig"
+      }
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     }
+    },
+    "summary": "Creates or updates the NGalert configuration of the user's organization.",
+    "tags": [
+     "configuration"
     ]
    }
   },
