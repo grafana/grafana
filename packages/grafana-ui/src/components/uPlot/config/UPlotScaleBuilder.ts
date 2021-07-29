@@ -2,7 +2,7 @@ import uPlot, { Scale, Range } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { ScaleOrientation, ScaleDirection } from '../config';
 import { ScaleDistribution } from '../models.gen';
-import { isBooleanUnit, NumericRange } from '@grafana/data';
+import { isBooleanUnit } from '@grafana/data';
 
 export interface ScaleProps {
   scaleKey: string;
@@ -16,7 +16,6 @@ export interface ScaleProps {
   orientation: ScaleOrientation;
   direction: ScaleDirection;
   log?: number;
-  getDataMinMax?: () => NumericRange | undefined;
 }
 
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
@@ -63,15 +62,6 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
 
     // uPlot range function
     const rangeFn = (u: uPlot, dataMin: number, dataMax: number, scaleKey: string) => {
-      let { getDataMinMax } = this.props;
-
-      // cumulative data min/max across multiple charts, usually via VizRepeater
-      if (getDataMinMax) {
-        let dataRange = getDataMinMax()!;
-        dataMin = dataRange.min!;
-        dataMax = dataRange.max!;
-      }
-
       const scale = u.scales[scaleKey];
 
       let minMax: uPlot.Range.MinMax = [dataMin, dataMax];
