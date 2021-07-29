@@ -85,7 +85,7 @@ type schedule struct {
 	metrics  *metrics.Metrics
 
 	// Senders help us send alerts to external Alertmanagers.
-	sendersMtx     sync.Mutex
+	sendersMtx     sync.RWMutex
 	sendersCfgHash map[int64]string
 	senders        map[int64]*sender.Sender
 }
@@ -237,11 +237,9 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 
 		sch.sendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
 	}
-	sch.sendersMtx.Unlock()
 
 	sendersToStop := map[int64]*sender.Sender{}
 
-	sch.sendersMtx.Lock()
 	for orgID, s := range sch.senders {
 		if _, exists := orgsFound[orgID]; !exists {
 			sendersToStop[orgID] = s
@@ -265,8 +263,8 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 
 // AlertmanagersFor returns all the discovered Alertmanager(s) for a particular organization.
 func (sch *schedule) AlertmanagersFor(orgID int64) []*url.URL {
-	sch.sendersMtx.Lock()
-	defer sch.sendersMtx.Unlock()
+	sch.sendersMtx.RLock()
+	defer sch.sendersMtx.RUnlock()
 	s, ok := sch.senders[orgID]
 	if !ok {
 		return []*url.URL{}
@@ -277,8 +275,8 @@ func (sch *schedule) AlertmanagersFor(orgID int64) []*url.URL {
 
 // DroppedAlertmanagersFor returns all the dropped Alertmanager(s) for a particular organization.
 func (sch *schedule) DroppedAlertmanagersFor(orgID int64) []*url.URL {
-	sch.sendersMtx.Lock()
-	defer sch.sendersMtx.Unlock()
+	sch.sendersMtx.RLock()
+	defer sch.sendersMtx.RUnlock()
 	s, ok := sch.senders[orgID]
 	if !ok {
 		return []*url.URL{}
@@ -296,11 +294,11 @@ func (sch *schedule) adminConfigSync(ctx context.Context) error {
 			}
 		case <-ctx.Done():
 			// Stop sending alerts to all external Alertmanager(s).
-			sch.sendersMtx.Lock()
+			sch.sendersMtx.RLock()
 			for _, s := range sch.senders {
 				s.Stop()
 			}
-			sch.sendersMtx.Unlock()
+			sch.sendersMtx.RUnlock()
 
 			return nil
 		}
@@ -458,8 +456,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				}
 
 				// Send alerts to external Alertmanager(s) if we have a sender for this organization.
-				sch.sendersMtx.Lock()
-				defer sch.sendersMtx.Unlock()
+				sch.sendersMtx.RLock()
+				defer sch.sendersMtx.RUnlock()
 				s, ok := sch.senders[alertRule.OrgID]
 				if ok {
 					s.SendAlerts(alerts)
