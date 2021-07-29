@@ -7,7 +7,13 @@ import { PrometheusDatasource } from './datasource';
  */
 export const SUM_HINT_THRESHOLD_COUNT = 20;
 
-export function getQueryHints(query: string, series?: any[], datasource?: PrometheusDatasource): QueryHint[] {
+export function getQueryHints(
+  query: string,
+  series?: any[],
+  datasource?: PrometheusDatasource,
+  safeInterval?: number,
+  interval?: number
+): QueryHint[] {
   const hints = [];
 
   // ..._bucket metric needs a histogram_quantile()
@@ -123,6 +129,11 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
         } as QueryFix,
       });
     }
+  }
+
+  //Check if interval is below safeInterval
+  if (interval && safeInterval && interval < safeInterval) {
+    // TODO: Add hint
   }
 
   return hints;

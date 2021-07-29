@@ -157,6 +157,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const { datasource, query, data } = this.props;
     const initHints = datasource.getInitHints();
     const initHint = initHints.length > 0 ? initHints[0] : null;
+    const interval = query.interval?.slice(0, -1);
+    const intervalToInt = 20;
 
     if (!data || data.series.length === 0) {
       this.setState({
@@ -166,7 +168,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     }
 
     const result = isDataFrame(data.series[0]) ? data.series.map(toLegacyResponseData) : data.series;
-    const queryHints = datasource.getQueryHints(query, result);
+    const queryHints = datasource.getQueryHints(query, result, datasource.safeInterval, intervalToInt);
     let queryHint = queryHints.length > 0 ? queryHints[0] : null;
 
     this.setState({ hint: queryHint ?? initHint });
