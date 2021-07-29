@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 import { css } from '@emotion/css';
-import { SelectableValue, dateTimeParse } from '@grafana/data';
-import { LoadingPlaceholder, Select, HorizontalGroup, RadioButtonGroup } from '@grafana/ui';
+import { SelectableValue, dateTimeParse, GrafanaTheme2 } from '@grafana/data';
+import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { useLocation } from 'react-router-dom';
 import { locationSearchToObject } from '@grafana/runtime';
 
@@ -10,6 +10,7 @@ import { SearchField } from '../components/SearchField';
 import { useHistory } from '../hooks/useHistory';
 import { CatalogPlugin } from '../types';
 import { Page as PluginPage } from '../components/Page';
+import { HorizontalGroup } from '../components/HorizontalGroup';
 import { Page } from 'app/core/components/Page/Page';
 import { usePluginsByFilter } from '../hooks/usePlugins';
 import { useSelector } from 'react-redux';
@@ -20,6 +21,7 @@ export default function Browse(): ReactElement | null {
   const location = useLocation();
   const query = locationSearchToObject(location.search);
   const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, 'plugins'));
+  const styles = useStyles2(getStyles);
 
   const q = query.q as string;
   const filterBy = (query.filterBy as string) ?? 'installed';
@@ -56,45 +58,47 @@ export default function Browse(): ReactElement | null {
     <Page navModel={navModel}>
       <Page.Contents>
         <PluginPage>
-          <HorizontalGroup justify="space-between">
+          <HorizontalGroup wrap>
             <SearchField value={q} onSearch={onSearch} />
-            <HorizontalGroup>
-              <RadioButtonGroup
-                value={filterByType}
-                onChange={onFilterByTypeChange}
-                options={[
-                  { value: 'all', label: 'All' },
-                  { value: 'datasource', label: 'Data sources' },
-                  { value: 'panel', label: 'Panels' },
-                  { value: 'app', label: 'Applications' },
-                ]}
-              />
-              <RadioButtonGroup
-                value={filterBy}
-                onChange={onFilterByChange}
-                options={[
-                  { value: 'all', label: 'All' },
-                  { value: 'installed', label: 'Installed' },
-                ]}
-              />
-              <Select
-                width={24}
-                value={sortBy}
-                onChange={onSortByChange}
-                options={[
-                  { value: 'name', label: 'Sort by name (A-Z)' },
-                  { value: 'updated', label: 'Sort by updated date' },
-                  { value: 'published', label: 'Sort by published date' },
-                  { value: 'downloads', label: 'Sort by downloads' },
-                ]}
-              />
+            <HorizontalGroup wrap className={styles.actionBar}>
+              <div>
+                <RadioButtonGroup
+                  value={filterByType}
+                  onChange={onFilterByTypeChange}
+                  options={[
+                    { value: 'all', label: 'All' },
+                    { value: 'datasource', label: 'Data sources' },
+                    { value: 'panel', label: 'Panels' },
+                    { value: 'app', label: 'Applications' },
+                  ]}
+                />
+              </div>
+              <div>
+                <RadioButtonGroup
+                  value={filterBy}
+                  onChange={onFilterByChange}
+                  options={[
+                    { value: 'all', label: 'All' },
+                    { value: 'installed', label: 'Installed' },
+                  ]}
+                />
+              </div>
+              <div>
+                <Select
+                  width={24}
+                  value={sortBy}
+                  onChange={onSortByChange}
+                  options={[
+                    { value: 'name', label: 'Sort by name (A-Z)' },
+                    { value: 'updated', label: 'Sort by updated date' },
+                    { value: 'published', label: 'Sort by published date' },
+                    { value: 'downloads', label: 'Sort by downloads' },
+                  ]}
+                />
+              </div>
             </HorizontalGroup>
           </HorizontalGroup>
-          <div
-            className={css`
-              margin-top: 24px;
-            `}
-          >
+          <div className={styles.listWrap}>
             {isLoading ? (
               <LoadingPlaceholder
                 className={css`
@@ -111,6 +115,17 @@ export default function Browse(): ReactElement | null {
     </Page>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  actionBar: css`
+    ${theme.breakpoints.up('xl')} {
+      margin-left: auto;
+    }
+  `,
+  listWrap: css`
+    margin-top: ${theme.spacing(2)};
+  `,
+});
 
 const sorters: { [name: string]: (a: CatalogPlugin, b: CatalogPlugin) => number } = {
   name: (a: CatalogPlugin, b: CatalogPlugin) => a.name.localeCompare(b.name),
