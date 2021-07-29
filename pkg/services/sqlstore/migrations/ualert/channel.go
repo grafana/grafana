@@ -96,7 +96,12 @@ func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notifica
 }
 
 func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface{}, defaultChannels []*notificationChannel, allChannels map[interface{}]*notificationChannel) (*PostableApiReceiver, *Route, error) {
-	receiverName := getMigratedReceiverNameFromRuleUID(ruleUid)
+	m.lastReceiverID++
+	receiverName := fmt.Sprintf("autogen-contact-point-%d", m.lastReceiverID)
+	if ruleUid == "default_route" {
+		receiverName = "autogen-contact-point-default"
+		m.lastReceiverID--
+	}
 
 	portedChannels := []*PostableGrafanaReceiver{}
 	var receiver *PostableApiReceiver
@@ -148,6 +153,7 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 	if rn, ok := m.portedChannelGroups[chanKey]; ok {
 		// We have ported these exact set of channels already. Re-use it.
 		receiverName = rn
+		m.lastReceiverID--
 	} else {
 		for _, n := range filteredChannelUids {
 			if err := addChannel(allChannels[n]); err != nil {
@@ -316,10 +322,6 @@ func migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json,
 	}
 
 	return settings, ss
-}
-
-func getMigratedReceiverNameFromRuleUID(ruleUID string) string {
-	return fmt.Sprintf("autogen-panel-recv-%s", ruleUID)
 }
 
 func getLabelForRouteMatching(ruleUID string) (string, string) {

@@ -79,6 +79,7 @@ type migration struct {
 	migratedChannels    map[*notificationChannel]struct{}
 	silences            []*pb.MeshSilence
 	portedChannelGroups map[string]string // Channel group key -> receiver name.
+	lastReceiverID      int               // For the auto generated receivers.
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
