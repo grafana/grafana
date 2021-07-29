@@ -21,6 +21,7 @@ import { convertTagsLogfmt } from './util';
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 
 export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
+  uploadedJson: string | ArrayBuffer | null = null;
   constructor(private instanceSettings: DataSourceInstanceSettings, private readonly timeSrv: TimeSrv = getTimeSrv()) {
     super(instanceSettings);
   }
@@ -50,6 +51,14 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
           };
         })
       );
+    }
+
+    if (target.queryType === 'upload') {
+      if (!this.uploadedJson) {
+        return of({ data: [] });
+      }
+      const traceData = JSON.parse(this.uploadedJson as string).data[0];
+      return of({ data: [createTraceFrame(traceData), ...createGraphFrames(traceData)] });
     }
 
     let jaegerQuery = pick(target, ['operation', 'service', 'tags', 'minDuration', 'maxDuration', 'limit']);
