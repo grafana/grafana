@@ -14,7 +14,7 @@ list = false
 
 Grafana 8.1 builds upon our promise of a composable, open observability platform with new panels and extends functionality launched in Grafana 8.0. We’ve got new  Geomap and Annotations panels, and some great updates to the Time Series panel. We’ve also got new transformations and updates to data sources. For our enterprise customers, we've got additions to fine grained access control, updates to the reporting scheduler, and more. Read on to learn more.
 
-In addition to what is summarized here, you might also be interested in the announcement blog post. For all the technical details, check out the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+In addition to what is summarized here, you might also be interested in our announcement blog post. For all the technical details, check out the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 
 ## Grafana OSS features
@@ -102,7 +102,30 @@ New panel summaries and preview on the top level [Visualizations]({{< relref "..
 
 These features are included in the Grafana Enterprise edition.
 
+### New permissions for fine-grained access control
+
+Fine-grained access control remains in beta. You can now grant or revoke permissions for Viewers, Editors, or Admins to use Explore mode, configure LDAP or SAML settings, or view the admin/stats page. These new permissions enhance the existing permissions that can be customized, namely permissions to access Users, Orgs, LDAP settings, and Reports in Grafana.
+
+Fine grained access control allows you to customize roles and permissions in Grafana beyond the built-in Viewer, Editor, and Admin roles. As of 8.1, you can modify some of the permissions for any of these built-in roles. This is helpful if you’d like users to have more or fewer access permissions than a given role allows for by default. For an overview of fine-grained access control and a complete list of available permissions, refer to the [Fine grained access control]({{< relref "../enterprise/access-control.md" >}}) documentation.
+
+
+### New and improved reporting scheduler
+
+We’ve enhanced the scheduler for Reports to be more flexible, so you can send reports at just the right time. When scheduling a report, you can now choose to send a report at custom intervals such as every 4 hours or every 2 weeks. You can also send a report for a limited time period by providing a start and end date, or send a report only on weekdays or on the last day of each month. This change accompanies some other recent improvements to Reporting, like the ability to choose template variables for reports and an improved UX for authoring reports. To learn more, refer to the [reporting]({{< relref "../enterprise/reporting.md" >}}) documentation.
+
+### Encrypt data in the query cache
+
+Query caching was released in Grafana 8.0 and allows you to temporarily store the results of data source queries in a cache, so that Grafana reads repeated queries from there instead of from the data source itself. This reduces load on data sources, improves dashboard load times, and can save money for data sources that charge per query. To learn more about query caching see its [overview]({{< relref "../enterprise/query-caching.md" >}}) page. To find out how to turn on encryption, refer to the [caching configuration]({{< relref "../enterprise/enterprise-configuration.md#caching" >}}) documentation.
+
+You can now encrypt the query data cached by Grafana. This improves the security of query data, especially when your cache (like Redis) is shared with other services. 
+
+
+### White labeling for the Grafana loading logo
+
+You can now customize Grafana’s loading logo, which displays while Grafana is loading in a user’s browser. White labeling in Grafana Enterprise allows you to customize the look and feel of Grafana to match your product’s or company’s brand. This makes Grafana a more integrated part of your observability stack and keep Grafana consistent with other visualizations displayed in public.
+
+To find out how you can configure it along with other Grafana UI elements, like the corner logo and application footer, refer to the [White labeling]({{< relref "../enterprise/white-labeling.md" >}}) topic of the Grafana Enterprise docs.
+
 ### Oauth2 - Team Sync to Group Mapping 
 
 With Team Sync you can map your Generic OAuth groups to teams in Grafana so that the users are automatically added to the correct teams.
-
