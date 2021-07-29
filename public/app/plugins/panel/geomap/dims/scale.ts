@@ -34,6 +34,10 @@ export function getScaledDimension(frame: DataFrame, config: ScaleDimensionConfi
       if (value !== -Infinity) {
         percent = (value - info.min!) / info.delta;
       }
+      if (percent > 1) {
+        percent = 1;
+        console.log('??????????????????', i, value);
+      }
       return config.min + percent * delta;
     },
     field,
