@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -98,6 +99,10 @@ var wireBasicSet = wire.NewSet(
 	remotecache.ProvideService,
 	loginservice.ProvideService,
 	wire.Bind(new(login.Service), new(*loginservice.Implementation)),
+	authinfoservice.ProvideAuthInfoService,
+	wire.Bind(new(login.AuthInfoService), new(*authinfoservice.Implementation)),
+	authinfoservice.ProvideOSSUserProtectionService,
+	wire.Bind(new(login.UserProtectionService), new(*authinfoservice.OSSUserProtectionImpl)),
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	live.ProvideService,

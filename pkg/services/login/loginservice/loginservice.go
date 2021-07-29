@@ -16,21 +16,23 @@ var (
 	logger = log.New("login.ext_user")
 )
 
-func ProvideService(sqlStore *sqlstore.SQLStore, bus bus.Bus, quotaService *quota.QuotaService) *Implementation {
+func ProvideService(sqlStore *sqlstore.SQLStore, bus bus.Bus, quotaService *quota.QuotaService, authInfoService login.AuthInfoService) *Implementation {
 	s := &Implementation{
-		SQLStore:     sqlStore,
-		Bus:          bus,
-		QuotaService: quotaService,
+		SQLStore:        sqlStore,
+		Bus:             bus,
+		QuotaService:    quotaService,
+		AuthInfoService: authInfoService,
 	}
 	bus.AddHandler(s.UpsertUser)
 	return s
 }
 
 type Implementation struct {
-	SQLStore     *sqlstore.SQLStore
-	Bus          bus.Bus
-	QuotaService *quota.QuotaService
-	TeamSync     login.TeamSyncFunc
+	SQLStore        *sqlstore.SQLStore
+	Bus             bus.Bus
+	AuthInfoService login.AuthInfoService
+	QuotaService    *quota.QuotaService
+	TeamSync        login.TeamSyncFunc
 }
 
 // CreateUser creates inserts a new one.
@@ -42,14 +44,14 @@ func (ls *Implementation) CreateUser(cmd models.CreateUserCommand) (*models.User
 func (ls *Implementation) UpsertUser(cmd *models.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
-	userQuery := &models.GetUserByAuthInfoQuery{
+	user, err := ls.AuthInfoService.LookupAndUpdate(&models.GetUserByAuthInfoQuery{
 		AuthModule: extUser.AuthModule,
 		AuthId:     extUser.AuthId,
 		UserId:     extUser.UserId,
 		Email:      extUser.Email,
 		Login:      extUser.Login,
-	}
-	if err := bus.Dispatch(userQuery); err != nil {
+	})
+	if err != nil {
 		if !errors.Is(err, models.ErrUserNotFound) {
 			return err
 		}
@@ -84,7 +86,7 @@ func (ls *Implementation) UpsertUser(cmd *models.UpsertUserCommand) error {
 			}
 		}
 	} else {
-		cmd.Result = userQuery.Result
+		cmd.Result = user
 
 		err = updateUser(cmd.Result, extUser)
 		if err != nil {
@@ -99,7 +101,7 @@ func (ls *Implementation) UpsertUser(cmd *models.UpsertUserCommand) error {
 			}
 		}
 
-		if extUser.AuthModule == models.AuthModuleLDAP && userQuery.Result.IsDisabled {
+		if extUser.AuthModule == models.AuthModuleLDAP && user.IsDisabled {
 			// Re-enable user when it found in LDAP
 			if err := ls.Bus.Dispatch(&models.DisableUserCommand{UserId: cmd.Result.Id, IsDisabled: false}); err != nil {
 				return err
