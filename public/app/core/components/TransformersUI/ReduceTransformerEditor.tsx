@@ -49,6 +49,13 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
     });
   }, [onChange, options]);
 
+  const onToggleLabels = useCallback(() => {
+    onChange({
+      ...options,
+      labelsToFields: !options.labelsToFields,
+    });
+  }, [onChange, options]);
+
   return (
     <>
       <div>
@@ -91,6 +98,18 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
               labelClass="width-8"
               checked={!!options.includeTimeField}
               onChange={onToggleTime}
+            />
+          </div>
+        </div>
+      )}
+      {options.mode !== ReduceTransformerMode.ReduceFields && (
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <LegacyForms.Switch
+              label="Labels to fields"
+              labelClass="width-8"
+              checked={!!options.labelsToFields}
+              onChange={onToggleLabels}
             />
           </div>
         </div>
