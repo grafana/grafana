@@ -114,7 +114,10 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	}
 
 	amConfig := PostableUserConfig{}
-	amConfig.AlertmanagerConfig.Route = &Route{}
+	err = m.addDefaultChannels(&amConfig, allChannels, defaultChannels)
+	if err != nil {
+		return err
+	}
 
 	for _, da := range dashAlerts {
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
@@ -248,7 +251,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	}
 
 	// Create a separate receiver for all the unmigrated channels.
-	err = m.updateDefaultAndUnmigratedChannels(&amConfig, allChannels, defaultChannels)
+	err = m.addUnmigratedChannels(&amConfig, allChannels, defaultChannels)
 	if err != nil {
 		return err
 	}

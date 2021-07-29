@@ -90,23 +90,16 @@ func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notifica
 	if recv != nil {
 		amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
 	}
-	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, route)
+	if route != nil {
+		amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, route)
+	}
 
 	return nil
 }
 
 func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface{}, defaultChannels []*notificationChannel, allChannels map[interface{}]*notificationChannel) (*PostableApiReceiver, *Route, error) {
-	m.lastReceiverID++
-	receiverName := fmt.Sprintf("autogen-contact-point-%d", m.lastReceiverID)
-	if ruleUid == "default_route" {
-		receiverName = "autogen-contact-point-default"
-		m.lastReceiverID--
-	}
-
 	portedChannels := []*PostableGrafanaReceiver{}
 	var receiver *PostableApiReceiver
-
-	addedChannels := map[*notificationChannel]struct{}{}
 
 	addChannel := func(c *notificationChannel) error {
 		if c.Type == "hipchat" || c.Type == "sensu" {
@@ -129,20 +122,35 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 			Settings:              settings,
 			SecureSettings:        secureSettings,
 		})
-		addedChannels[c] = struct{}{}
 
 		return nil
 	}
 
 	// Remove obsolete notification channels.
-	filteredChannelUids := make([]interface{}, 0, len(channelUids))
+	filteredChannelUids := make(map[interface{}]struct{})
 	for _, uid := range channelUids {
 		_, ok := allChannels[uid]
 		if ok {
-			filteredChannelUids = append(filteredChannelUids, uid)
+			filteredChannelUids[uid] = struct{}{}
 		} else {
 			m.mg.Logger.Warn("ignoring obsolete notification channel", "uid", uid)
 		}
+	}
+	// Add default channels that are not obsolete.
+	for _, c := range defaultChannels {
+		id := interface{}(c.Uid)
+		if c.Uid == "" {
+			id = c.ID
+		}
+		_, ok := allChannels[id]
+		if ok {
+			filteredChannelUids[id] = struct{}{}
+		}
+	}
+
+	if len(filteredChannelUids) == 0 && ruleUid != "default_route" {
+		// We use the default route instead. No need to add additional route.
+		return nil, nil, nil
 	}
 
 	chanKey, err := makeKeyForChannelGroup(filteredChannelUids)
@@ -150,23 +158,22 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 		return nil, nil, err
 	}
 
+	var receiverName string
 	if rn, ok := m.portedChannelGroups[chanKey]; ok {
 		// We have ported these exact set of channels already. Re-use it.
 		receiverName = rn
-		m.lastReceiverID--
 	} else {
-		for _, n := range filteredChannelUids {
+		for n := range filteredChannelUids {
 			if err := addChannel(allChannels[n]); err != nil {
 				return nil, nil, err
 			}
 		}
 
-		for _, c := range defaultChannels {
-			if _, ok := addedChannels[c]; !ok {
-				if err := addChannel(c); err != nil {
-					return nil, nil, err
-				}
-			}
+		if ruleUid == "default_route" {
+			receiverName = "autogen-contact-point-default"
+		} else {
+			m.lastReceiverID++
+			receiverName = fmt.Sprintf("autogen-contact-point-%d", m.lastReceiverID)
 		}
 
 		m.portedChannelGroups[chanKey] = receiverName
@@ -190,9 +197,9 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 }
 
 // makeKeyForChannelGroup generates a unique for this group of channels UIDs.
-func makeKeyForChannelGroup(channelUids []interface{}) (string, error) {
+func makeKeyForChannelGroup(channelUids map[interface{}]struct{}) (string, error) {
 	uids := make([]string, 0, len(channelUids))
-	for _, u := range channelUids {
+	for u := range channelUids {
 		switch uid := u.(type) {
 		case string:
 			uids = append(uids, uid)
@@ -208,7 +215,26 @@ func makeKeyForChannelGroup(channelUids []interface{}) (string, error) {
 	return strings.Join(uids, "::sep::"), nil
 }
 
-func (m *migration) updateDefaultAndUnmigratedChannels(amConfig *PostableUserConfig, allChannels map[interface{}]*notificationChannel, defaultChannels []*notificationChannel) error {
+// addDefaultChannels should be called before adding any other routes.
+func (m *migration) addDefaultChannels(amConfig *PostableUserConfig, allChannels map[interface{}]*notificationChannel, defaultChannels []*notificationChannel) error {
+	// Default route and receiver.
+	recv, route, err := m.makeReceiverAndRoute("default_route", nil, defaultChannels, allChannels)
+	if err != nil {
+		return err
+	}
+
+	if recv != nil {
+		amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
+	}
+	if route != nil {
+		route.Matchers = nil // Don't need matchers for root route.
+		amConfig.AlertmanagerConfig.Route = route
+	}
+
+	return nil
+}
+
+func (m *migration) addUnmigratedChannels(amConfig *PostableUserConfig, allChannels map[interface{}]*notificationChannel, defaultChannels []*notificationChannel) error {
 	// Unmigrated channels.
 	portedChannels := []*PostableGrafanaReceiver{}
 	receiver := &PostableApiReceiver{
@@ -244,28 +270,6 @@ func (m *migration) updateDefaultAndUnmigratedChannels(amConfig *PostableUserCon
 	if len(portedChannels) > 0 {
 		amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, receiver)
 	}
-
-	// Default route and receiver.
-	var channelUids = []interface{}{}
-	for _, c := range defaultChannels {
-		if c.Uid == "" {
-			channelUids = append(channelUids, c.ID)
-		} else {
-			channelUids = append(channelUids, c.Uid)
-		}
-	}
-
-	recv, route, err := m.makeReceiverAndRoute("default_route", channelUids, defaultChannels, allChannels)
-	if err != nil {
-		return err
-	}
-
-	route.Matchers = nil // Don't need matchers for root route.
-	route.Routes = amConfig.AlertmanagerConfig.Route.Routes
-	if recv != nil {
-		amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
-	}
-	amConfig.AlertmanagerConfig.Route = route
 
 	return nil
 }
