@@ -12,7 +12,7 @@ import { initialAsyncRequestState } from './utils/redux';
 
 import { AmNotificationsGroup } from './components/amnotifications/AmNotificationsGroup';
 import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
-import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { AmNotificationsGroupBy } from './components/amnotifications/AmNotificationsGroupBy';
 import { useGroupedAlerts } from './hooks/useGroupedAlerts';
 import { useFlatAmAlerts } from './hooks/useFlatAmAlerts';
@@ -20,10 +20,13 @@ import { AmNotificationsFilter } from './components/amnotifications/AmNotificati
 import { parseMatchers } from './utils/alertmanager';
 import { isEqual } from 'lodash';
 import { useFilteredAmGroups } from './hooks/useFilteredAmGroups';
+import { GrafanaTheme2 } from '@grafana/data';
+import { css } from '@emotion/css';
 
 const AlertManagerNotifications = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
+  const styles = useStyles2(getStyles);
 
   const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups) || initialAsyncRequestState;
   const loading = alertGroups[alertManagerSourceName || '']?.loading;
@@ -63,9 +66,11 @@ const AlertManagerNotifications = () => {
 
   return (
     <AlertingPageWrapper pageId="notifications">
-      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
-      <AmNotificationsFilter onFilterChange={handleFilterChange} />
-      <AmNotificationsGroupBy groups={results} handleGroupingChange={handleGroupingChange} />
+      <div className={styles.filterSection}>
+        <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+        <AmNotificationsFilter onFilterChange={handleFilterChange} />
+        <AmNotificationsGroupBy groups={results} onGroupingChange={handleGroupingChange} />
+      </div>
       {loading && <LoadingPlaceholder text="Loading notifications" />}
       {error && !loading && (
         <Alert title={'Error loading notifications'} severity={'error'}>
@@ -85,5 +90,12 @@ const AlertManagerNotifications = () => {
     </AlertingPageWrapper>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  filterSection: css`
+    display: flex;
+    flex-direction: row;
+  `,
+});
 
 export default AlertManagerNotifications;

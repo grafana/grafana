@@ -1,17 +1,20 @@
 import React, { FormEvent } from 'react';
-import { Label, Tooltip, Input, Icon } from '@grafana/ui';
+import { Label, Tooltip, Input, Icon, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { css } from '@emotion/css';
 
 interface Props {
   onFilterChange: (filterString: string) => void;
 }
 
 export const AmNotificationsFilter = (props: Props) => {
+  const styles = useStyles2(getStyles);
   const handleSearchChange = (e: FormEvent<HTMLInputElement>) => {
     const target = e.target as HTMLInputElement;
     props.onFilterChange(target.value);
   };
   return (
-    <div>
+    <div className={styles.wrapper}>
       <Label>
         <Tooltip
           content={
@@ -21,7 +24,7 @@ export const AmNotificationsFilter = (props: Props) => {
             </div>
           }
         >
-          <Icon name="info-circle" />
+          <Icon className={styles.icon} name="info-circle" size="xs" />
         </Tooltip>
         Search by label
       </Label>
@@ -29,3 +32,13 @@ export const AmNotificationsFilter = (props: Props) => {
     </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css`
+    width: 340px;
+    margin-left: ${theme.spacing(2)};
+  `,
+  icon: css`
+    margin-right: ${theme.spacing(0.5)};
+  `,
+});

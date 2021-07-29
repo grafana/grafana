@@ -1,15 +1,17 @@
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import React from 'react';
 import { uniq } from 'lodash';
-import { Icon, MultiSelect } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { Icon, Label, MultiSelect, useStyles2 } from '@grafana/ui';
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
+import { css } from '@emotion/css';
 
 interface Props {
   groups: AlertmanagerGroup[];
-  handleGroupingChange: (keys: string[]) => void;
+  onGroupingChange: (keys: string[]) => void;
 }
 
-export const AmNotificationsGroupBy = ({ groups, handleGroupingChange }: Props) => {
+export const AmNotificationsGroupBy = ({ groups, onGroupingChange }: Props) => {
+  const styles = useStyles2(getStyles);
   const labelKeyOptions = uniq(
     groups.reduce((keys, group) => {
       group.alerts.forEach(({ labels }) => {
@@ -27,15 +29,23 @@ export const AmNotificationsGroupBy = ({ groups, handleGroupingChange }: Props) 
   );
 
   return (
-    <div>
+    <div className={styles.wrapper}>
+      <Label>Custom group by</Label>
       <MultiSelect
         placeholder="Group by"
         prefix={<Icon name={'tag-alt'} />}
         onChange={(items) => {
-          handleGroupingChange(items.map(({ value }) => value as string));
+          onGroupingChange(items.map(({ value }) => value as string));
         }}
         options={labelKeyOptions}
       />
     </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css`
+    width: 340px;
+    margin-left: ${theme.spacing(2)};
+  `,
+});
