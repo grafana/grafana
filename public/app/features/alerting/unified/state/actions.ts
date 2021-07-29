@@ -25,6 +25,7 @@ import {
   createOrUpdateSilence,
   updateAlertManagerConfig,
   fetchStatus,
+  deleteAlertManagerConfig,
 } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
@@ -36,7 +37,7 @@ import {
 } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
-import { makeAMLink } from '../utils/misc';
+import { makeAMLink, retryWhile } from '../utils/misc';
 import { isFetchError, withAppEvents, withSerializedError } from '../utils/redux';
 import { formValuesToRulerAlertingRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
 import {
@@ -50,6 +51,9 @@ import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruleId from '../utils/rule-id';
 import { isEmpty } from 'lodash';
+import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
+
+const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
@@ -60,9 +64,19 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
   'unifiedalerting/fetchAmConfig',
   (alertManagerSourceName: string): Promise<AlertManagerCortexConfig> =>
     withSerializedError(
-      fetchAlertManagerConfig(alertManagerSourceName).then((result) => {
+      retryWhile(
+        () => fetchAlertManagerConfig(alertManagerSourceName),
+        // if config has been recently deleted, it takes a while for cortex start returning the default one.
+        // retry for a short while instead of failing
+        (e) => !!messageFromError(e)?.includes('alertmanager storage object not found'),
+        FETCH_CONFIG_RETRY_TIMEOUT
+      ).then((result) => {
         // if user config is empty for cortex alertmanager, try to get config from status endpoint
-        if (isEmpty(result.alertmanager_config) && alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
+        if (
+          isEmpty(result.alertmanager_config) &&
+          isEmpty(result.template_files) &&
+          alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME
+        ) {
           return fetchStatus(alertManagerSourceName).then((status) => ({
             alertmanager_config: status.config,
             template_files: {},
@@ -404,7 +418,10 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
       withSerializedError(
         (async () => {
           const latestConfig = await fetchAlertManagerConfig(alertManagerSourceName);
-          if (JSON.stringify(latestConfig) !== JSON.stringify(oldConfig)) {
+          if (
+            !(isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files)) &&
+            JSON.stringify(latestConfig) !== JSON.stringify(oldConfig)
+          ) {
             throw new Error(
               'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
             );
@@ -568,4 +585,22 @@ export const checkIfLotexSupportsEditingRulesAction = createAsyncThunk(
         errorMessage: `Failed to determine if "${rulesSourceName}" allows editing rules`,
       }
     )
+);
+
+export const deleteAlertManagerConfigAction = createAsyncThunk(
+  'unifiedalerting/deleteAlertManagerConfig',
+  async (alertManagerSourceName: string, thunkAPI): Promise<void> => {
+    return withAppEvents(
+      withSerializedError(
+        (async () => {
+          await deleteAlertManagerConfig(alertManagerSourceName);
+          await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+        })()
+      ),
+      {
+        errorMessage: 'Failed to reset Alertmanager configuration',
+        successMessage: 'Alertmanager configuration reset.',
+      }
+    );
+  }
 );

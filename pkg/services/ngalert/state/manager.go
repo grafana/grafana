@@ -1,7 +1,13 @@
 package state
 
 import (
+	"fmt"
+	"strconv"
 	"time"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 
@@ -131,11 +137,13 @@ func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
 func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []*State {
 	st.log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
 	var states []*State
+	processedResults := make(map[string]*State, len(results))
 	for _, result := range results {
 		s := st.setNextState(alertRule, result)
 		states = append(states, s)
+		processedResults[s.CacheId] = s
 	}
-	st.log.Debug("returning changed states to scheduler", "count", len(states))
+	st.staleResultsHandler(alertRule, processedResults)
 	return states
 }
 
@@ -149,13 +157,15 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 		EvaluationTime:   result.EvaluatedAt,
 		EvaluationState:  result.State,
 		EvaluationString: result.EvaluationString,
+		Values:           NewEvaluationValues(result.Values),
 	})
 	currentState.TrimResults(alertRule)
+	oldState := currentState.State
 
 	st.log.Debug("setting alert state", "uid", alertRule.UID)
 	switch result.State {
 	case eval.Normal:
-		currentState.resultNormal(result)
+		currentState.resultNormal(alertRule, result)
 	case eval.Alerting:
 		currentState.resultAlerting(alertRule, result)
 	case eval.Error:
@@ -166,6 +176,9 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 	}
 
 	st.set(currentState)
+	if oldState != currentState.State {
+		go st.createAlertAnnotation(currentState.State, alertRule, result)
+	}
 	return currentState
 }
 
@@ -210,4 +223,71 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	default:
 		return eval.Error
 	}
+}
+
+func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.AlertRule, result eval.Result) {
+	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", new.String())
+	dashUid, ok := alertRule.Annotations["__dashboardUid__"]
+	if !ok {
+		return
+	}
+
+	panelUid := alertRule.Annotations["__panelId__"]
+
+	panelId, err := strconv.ParseInt(panelUid, 10, 64)
+	if err != nil {
+		st.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", alertRule.UID, "error", err.Error())
+		return
+	}
+
+	query := &models.GetDashboardQuery{
+		Uid:   dashUid,
+		OrgId: alertRule.OrgID,
+	}
+
+	err = sqlstore.GetDashboard(query)
+	if err != nil {
+		st.log.Error("error getting dashboard for alert annotation", "dashboardUID", dashUid, "alertRuleUID", alertRule.UID, "error", err.Error())
+		return
+	}
+
+	annotationText := fmt.Sprintf("%s %s", result.Instance.String(), new.String())
+
+	item := &annotations.Item{
+		OrgId:       alertRule.OrgID,
+		DashboardId: query.Result.Id,
+		PanelId:     panelId,
+		Text:        annotationText,
+		Epoch:       result.EvaluatedAt.UnixNano() / int64(time.Millisecond),
+	}
+
+	annotationRepo := annotations.GetRepository()
+	if err = annotationRepo.Save(item); err != nil {
+		st.log.Error("error saving alert annotation", "alertRuleUID", alertRule.UID, "error", err.Error())
+		return
+	}
+}
+
+func (st *Manager) staleResultsHandler(alertRule *ngModels.AlertRule, states map[string]*State) {
+	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
+	for _, s := range allStates {
+		_, ok := states[s.CacheId]
+		if !ok && isItStale(s.LastEvaluationTime, alertRule.IntervalSeconds) {
+			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
+			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheId)
+			ilbs := ngModels.InstanceLabels(s.Labels)
+			_, labelsHash, err := ilbs.StringAndHash()
+			if err != nil {
+				st.log.Error("unable to get labelsHash", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID)
+			}
+
+			if err = st.instanceStore.DeleteAlertInstance(s.OrgID, s.AlertRuleUID, labelsHash); err != nil {
+				st.log.Error("unable to delete stale instance from database", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
+			}
+		}
+	}
+}
+
+func isItStale(lastEval time.Time, intervalSeconds int64) bool {
+	return lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).Before(time.Now())
 }

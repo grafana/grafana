@@ -25,6 +25,10 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SearchField, SearchResults, SearchResultsFilter } from '../features/search';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import QueryEditor from 'app/plugins/datasource/grafana-azure-monitor-datasource/components/QueryEditor/QueryEditor';
+import { GraphiteTextEditor } from '../plugins/datasource/graphite/components/GraphiteTextEditor';
+import { PlayButton } from '../plugins/datasource/graphite/components/PlayButton';
+import { AddGraphiteFunction } from '../plugins/datasource/graphite/components/AddGraphiteFunction';
+import { GraphiteFunctionEditor } from '../plugins/datasource/graphite/components/GraphiteFunctionEditor';
 
 const { SecretFormField } = LegacyForms;
 
@@ -38,7 +42,6 @@ export function registerAngularDirectives() {
   ]);
   react2AngularDirective('spinner', Spinner, ['inline']);
   react2AngularDirective('helpModal', HelpModal, []);
-  react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
   react2AngularDirective('pageHeader', PageHeader, ['model', 'noTabs']);
   react2AngularDirective('emptyListCta', EmptyListCTA, [
     'title',
@@ -201,4 +204,11 @@ export function registerAngularDirectives() {
     ['datasource', { watchDepth: 'reference' }],
     'onChange',
   ]);
+
+  // Temporal wrappers for Graphite migration
+  react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
+  react2AngularDirective('graphiteTextEditor', GraphiteTextEditor, ['rawQuery', 'dispatch']);
+  react2AngularDirective('playButton', PlayButton, ['dispatch']);
+  react2AngularDirective('addGraphiteFunction', AddGraphiteFunction, ['funcDefs', 'dispatch']);
+  react2AngularDirective('graphiteFunctionEditor', GraphiteFunctionEditor, ['func', 'dispatch']);
 }

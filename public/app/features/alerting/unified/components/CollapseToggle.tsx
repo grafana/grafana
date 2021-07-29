@@ -7,14 +7,16 @@ interface Props extends HTMLAttributes<HTMLButtonElement> {
   onToggle: (isCollapsed: boolean) => void;
   size?: IconSize;
   className?: string;
+  text?: string;
 }
 
-export const CollapseToggle: FC<Props> = ({ isCollapsed, onToggle, className, size = 'xl', ...restOfProps }) => {
+export const CollapseToggle: FC<Props> = ({ isCollapsed, onToggle, className, text, size = 'xl', ...restOfProps }) => {
   const styles = useStyles(getStyles);
 
   return (
     <button className={cx(styles.expandButton, className)} onClick={() => onToggle(!isCollapsed)} {...restOfProps}>
       <Icon size={size} name={isCollapsed ? 'angle-right' : 'angle-down'} />
+      {text}
     </button>
   );
 };
@@ -25,6 +27,9 @@ export const getStyles = () => ({
     border: none;
 
     outline: none !important;
+
+    display: inline-flex;
+    align-items: center;
 
     svg {
       margin-bottom: 0;

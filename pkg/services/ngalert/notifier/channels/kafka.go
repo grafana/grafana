@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
@@ -31,11 +30,11 @@ type KafkaNotifier struct {
 func NewKafkaNotifier(model *NotificationChannelConfig, t *template.Template) (*KafkaNotifier, error) {
 	endpoint := model.Settings.Get("kafkaRestProxy").MustString()
 	if endpoint == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find kafka rest proxy endpoint property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find kafka rest proxy endpoint property in settings"}
 	}
 	topic := model.Settings.Get("kafkaTopic").MustString()
 	if topic == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find kafka topic property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find kafka topic property in settings"}
 	}
 
 	return &KafkaNotifier{

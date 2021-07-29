@@ -6,8 +6,6 @@ weight = 200
 
 # Graph time series as bars
 
-> **Note:** This is a beta feature. Time series panel is going to replace the Graph panel in the future releases.
-
 This section explains how to use Time series field options to visualize time series data as bars and illustrates what the options do.
 
 ## Create the panel
@@ -97,6 +95,12 @@ Transparency of the gradient is calculated based on the values on the y-axis. Op
 Gradient color is generated based on the hue of the line color.
 
 ![Gradient mode hue example](/static/img/docs/time-series-panel/bar-graph-gradient-hue-7-4.png)
+
+#### Scheme 
+
+In this mode the whole bar will use a color gradient defined by your [Color scheme]({{< relref "../../standard-options.md#color-scheme" >}}) option. There is more information on this option in [Graph and color scheme]({{< relref "./graph-color-scheme.md" >}}).
+
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Gradient color scheme mode" >}}
 
 ### Show points
 

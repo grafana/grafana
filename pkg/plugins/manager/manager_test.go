@@ -697,9 +697,13 @@ func (f *fakePluginInstaller) Install(ctx context.Context, pluginID, version, pl
 	return nil
 }
 
-func (f *fakePluginInstaller) Uninstall(ctx context.Context, pluginID, pluginPath string) error {
+func (f *fakePluginInstaller) Uninstall(ctx context.Context, pluginPath string) error {
 	f.uninstallCount++
 	return nil
+}
+
+func (f *fakePluginInstaller) GetUpdateInfo(pluginID, version, pluginRepoURL string) (plugins.UpdateInfo, error) {
+	return plugins.UpdateInfo{}, nil
 }
 
 var _ plugins.PluginInstaller = &fakePluginInstaller{}

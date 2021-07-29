@@ -13,13 +13,13 @@ import (
 
 // FolderService is a service for operating on folders.
 type FolderService interface {
-	GetFolders(limit int64) ([]*models.Folder, error)
+	GetFolders(limit int64, page int64) ([]*models.Folder, error)
 	GetFolderByID(id int64) (*models.Folder, error)
 	GetFolderByUID(uid string) (*models.Folder, error)
 	GetFolderByTitle(title string) (*models.Folder, error)
 	CreateFolder(title, uid string) (*models.Folder, error)
 	UpdateFolder(uid string, cmd *models.UpdateFolderCommand) error
-	DeleteFolder(uid string) (*models.Folder, error)
+	DeleteFolder(uid string, forceDeleteRules bool) (*models.Folder, error)
 	MakeUserAdmin(orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
 }
 
@@ -32,7 +32,7 @@ var NewFolderService = func(orgID int64, user *models.SignedInUser, store dashbo
 	}
 }
 
-func (dr *dashboardServiceImpl) GetFolders(limit int64) ([]*models.Folder, error) {
+func (dr *dashboardServiceImpl) GetFolders(limit int64, page int64) ([]*models.Folder, error) {
 	searchQuery := search.Query{
 		SignedInUser: dr.user,
 		DashboardIds: make([]int64, 0),
@@ -41,6 +41,7 @@ func (dr *dashboardServiceImpl) GetFolders(limit int64) ([]*models.Folder, error
 		OrgId:        dr.orgId,
 		Type:         "dash-folder",
 		Permission:   models.PERMISSION_VIEW,
+		Page:         page,
 	}
 
 	if err := bus.Dispatch(&searchQuery); err != nil {
@@ -191,7 +192,7 @@ func (dr *dashboardServiceImpl) UpdateFolder(existingUid string, cmd *models.Upd
 	return nil
 }
 
-func (dr *dashboardServiceImpl) DeleteFolder(uid string) (*models.Folder, error) {
+func (dr *dashboardServiceImpl) DeleteFolder(uid string, forceDeleteRules bool) (*models.Folder, error) {
 	query := models.GetDashboardQuery{OrgId: dr.orgId, Uid: uid}
 	dashFolder, err := getFolder(query)
 	if err != nil {
@@ -206,7 +207,7 @@ func (dr *dashboardServiceImpl) DeleteFolder(uid string) (*models.Folder, error)
 		return nil, models.ErrFolderAccessDenied
 	}
 
-	deleteCmd := models.DeleteDashboardCommand{OrgId: dr.orgId, Id: dashFolder.Id}
+	deleteCmd := models.DeleteDashboardCommand{OrgId: dr.orgId, Id: dashFolder.Id, ForceDeleteFolderRules: forceDeleteRules}
 	if err := bus.Dispatch(&deleteCmd); err != nil {
 		return nil, toFolderError(err)
 	}

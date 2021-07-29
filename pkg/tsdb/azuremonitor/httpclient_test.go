@@ -10,20 +10,36 @@ import (
 
 func Test_httpCliProvider(t *testing.T) {
 	cfg := &setting.Cfg{}
-	model := datasourceInfo{
-		Credentials: &azcredentials.AzureClientSecretCredentials{},
-	}
 	tests := []struct {
 		name                string
 		route               azRoute
+		model               datasourceInfo
 		expectedMiddlewares int
 		Err                 require.ErrorAssertionFunc
 	}{
 		{
-			name: "creates an HTTP client with a middleware",
+			name: "creates an HTTP client with a middleware due to the scope",
 			route: azRoute{
 				URL:    "http://route",
 				Scopes: []string{"http://route/.default"},
+			},
+			model: datasourceInfo{
+				Credentials: &azcredentials.AzureClientSecretCredentials{},
+			},
+			expectedMiddlewares: 1,
+			Err:                 require.NoError,
+		},
+		{
+			name: "creates an HTTP client with a middleware due to an app key",
+			route: azRoute{
+				URL:    azAppInsights.URL,
+				Scopes: []string{},
+			},
+			model: datasourceInfo{
+				Credentials: &azcredentials.AzureClientSecretCredentials{},
+				DecryptedSecureJSONData: map[string]string{
+					"appInsightsApiKey": "foo",
+				},
 			},
 			expectedMiddlewares: 1,
 			Err:                 require.NoError,
@@ -34,20 +50,22 @@ func Test_httpCliProvider(t *testing.T) {
 				URL:    "http://route",
 				Scopes: []string{},
 			},
-			// httpclient.NewProvider returns a client with 2 middlewares by default
-			expectedMiddlewares: 2,
+			model: datasourceInfo{
+				Credentials: &azcredentials.AzureClientSecretCredentials{},
+			},
+			expectedMiddlewares: 0,
 			Err:                 require.NoError,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cli, err := httpClientProvider(tt.route, model, cfg)
+			m, err := getMiddlewares(tt.route, tt.model, cfg)
 			require.NoError(t, err)
 
 			// Cannot test that the cli middleware works properly since the azcore sdk
 			// rejects the TLS certs (if provided)
-			if len(cli.Opts.Middlewares) != tt.expectedMiddlewares {
-				t.Errorf("Unexpected middlewares: %v", cli.Opts.Middlewares)
+			if len(m) != tt.expectedMiddlewares {
+				t.Errorf("Unexpected middlewares: %v", m)
 			}
 		})
 	}

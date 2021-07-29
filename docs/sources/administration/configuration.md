@@ -202,15 +202,14 @@ Or redirect port 80 to the Grafana port using:
 $ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
 ```
 
-Another way is put a webserver like Nginx or Apache in front of Grafana and have them proxy requests to Grafana.
+Another way is to put a web server like Nginx or Apache in front of Grafana and have them proxy requests to Grafana.
 
 ### domain
 
-This setting is only used in as a part of the `root_url` setting (see below). Important if you use GitHub or Google OAuth.
 
 ### enforce_domain
 
-Redirect to correct domain if host header does not match domain. Prevents DNS rebinding attacks. Default is `false`.
+Redirect to correct domain if the host header does not match the domain. Prevents DNS rebinding attacks. Default is `false`.
 
 ### root_url
 
@@ -510,7 +509,7 @@ Sets the `SameSite` cookie attribute and prevents the browser from sending this 
 
 When `false`, the HTTP header `X-Frame-Options: deny` will be set in Grafana HTTP responses which will instruct
 browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`. The main goal is to
-mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking). Default is `false`.
+mitigate the risk of [Clickjacking](https://owasp.org/www-community/attacks/Clickjacking). Default is `false`.
 
 ### strict_transport_security
 
@@ -910,7 +909,11 @@ Default is `false`.
 
 ### templates_pattern
 
-Default is `emails/*.html`.
+Enter a comma separated list of template patterns. Default is `emails/*.html, emails/*.txt`.
+
+### content_types
+
+Enter a comma-separated list of content types that should be included in the emails that are sent. List the content types according descending preference, e.g. `text/html, text/plain` for HTML as the most preferred. The order of the parts is significant as the mail clients will use the content type that is supported and most preferred by the sender. Supported content types are `text/html` and `text/plain`. Default is `text/html`.
 
 <hr>
 
@@ -1526,6 +1529,30 @@ For example:
 allowed_origins = "https://*.example.com"
 ```
 
+### ha_engine
+
+> **Note**: Available in Grafana v8.1 and later versions.
+
+**Experimental**
+
+The high availability (HA) engine name for Grafana Live. By default, it's not set. The only possible value is "redis".
+
+For more information, refer to [Configure Grafana Live HA setup]({{< relref "../live/live-ha-setup.md" >}}).
+
+### ha_engine_address
+
+> **Note**: Available in Grafana v8.1 and later versions.
+
+**Experimental**
+
+Address string of selected the high availability (HA) Live engine. For Redis, it's a `host:port` string. Example:
+
+```ini
+[live]
+ha_engine = redis
+ha_engine_address = 127.0.0.1:6379
+```
+
 <hr>
 
 ## [plugin.grafana-image-renderer]
@@ -1669,3 +1696,26 @@ Used as the default time zone for user preferences. Can be either `browser` for 
 ### enabled
 
 Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.
+
+## [geomap]
+
+This section controls the defaults settings for Geomap Plugin.
+
+### default_baselayer_config
+
+The json config used to define the default base map. Four base map options to choose from are `carto`, `esriXYZTiles`, `xyzTiles`, `standard`.
+For example, to set cartoDB light as the default base layer:
+
+```ini
+default_baselayer_config = `{
+  "type": "xyz",
+  "config": {
+    "attribution": "Open street map",
+    "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+  }
+}`
+```
+
+### enable_custom_baselayers
+
+Set this to `true` to disable loading other custom base maps and hide them in the Grafana UI. Default is `false`.

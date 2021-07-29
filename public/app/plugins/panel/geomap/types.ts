@@ -1,4 +1,4 @@
-import { MapLayerConfig } from '@grafana/data';
+import { MapLayerOptions } from '@grafana/data';
 import Units from 'ol/proj/Units';
 import { MapCenterID } from './view';
 
@@ -8,9 +8,6 @@ export interface ControlsOptions {
 
   // let the mouse wheel zoom
   mouseWheelZoom?: boolean;
-
-  // Add legend control
-  showLegend?: boolean;
 
   // Lower right
   showAttribution?: boolean;
@@ -23,14 +20,10 @@ export interface ControlsOptions {
   showDebug?: boolean;
 }
 
-export interface MapCenterConfig {
+export interface MapViewConfig {
   id: string; // placename > lookup
   lat?: number;
   lon?: number;
-}
-
-export interface MapViewConfig {
-  center: MapCenterConfig;
   zoom?: number;
   minZoom?: number;
   maxZoom?: number;
@@ -38,27 +31,15 @@ export interface MapViewConfig {
 }
 
 export const defaultView: MapViewConfig = {
-  center: {
-    id: MapCenterID.Zero,
-  },
+  id: MapCenterID.Zero,
+  lat: 0,
+  lon: 0,
   zoom: 1,
 };
 
 export interface GeomapPanelOptions {
   view: MapViewConfig;
   controls: ControlsOptions;
-  basemap: MapLayerConfig;
-  layers: MapLayerConfig[];
-  fieldMapping: FieldMappingOptions;
-}
-
-export interface FieldMappingOptions {
-  metricField: string;
-  geohashField: string;
-  latitudeField: string;
-  longitudeField: string;
-}
-
-export interface QueryFormat {
-  locationType: string;
+  basemap: MapLayerOptions;
+  layers: MapLayerOptions[];
 }
