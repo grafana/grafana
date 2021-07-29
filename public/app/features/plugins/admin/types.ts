@@ -1,4 +1,4 @@
-import { GrafanaPlugin, PluginMeta } from '@grafana/data';
+import { GrafanaPlugin, PluginMeta, PluginType, PluginSignatureStatus } from '@grafana/data';
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 export interface CatalogPlugin {
   description: string;
@@ -12,9 +12,10 @@ export interface CatalogPlugin {
   isInstalled: boolean;
   name: string;
   orgName: string;
+  signature: PluginSignatureStatus;
   popularity: number;
   publishedAt: string;
-  type: string;
+  type?: PluginType;
   updatedAt: string;
   version: string;
 }
@@ -49,11 +50,12 @@ export interface Plugin {
   downloads: number;
   updatedAt: string;
   createdAt: string;
-  typeCode: string;
+  typeCode: PluginType;
   featured: number;
   readme: string;
   internal: boolean;
   versionSignatureType: string;
+  signature: PluginSignatureStatus;
   packages: {
     [arch: string]: {
       packageName: string;
@@ -105,11 +107,11 @@ export type LocalPlugin = {
   latestVersion: string;
   name: string;
   pinned: boolean;
-  signature: string;
+  signature: PluginSignatureStatus;
   signatureOrg: string;
   signatureType: string;
   state: string;
-  type: string;
+  type: PluginType;
   dev: boolean | undefined;
 };
 

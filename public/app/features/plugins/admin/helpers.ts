@@ -1,5 +1,6 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
+import { PluginSignatureStatus } from '@grafana/data';
 import { CatalogPlugin, CatalogPluginDetails, LocalPlugin, Plugin, Version, PluginFilter } from './types';
 
 export function isGrafanaAdmin(): boolean {
@@ -19,7 +20,11 @@ export function mapRemoteToCatalog(plugin: Plugin): CatalogPlugin {
     updatedAt,
     createdAt: publishedAt,
     status,
+    versionSignatureType,
+    signatureType,
   } = plugin;
+
+  const hasSignature = signatureType !== '' || versionSignatureType !== '';
   const catalogPlugin = {
     description,
     downloads,
@@ -34,6 +39,7 @@ export function mapRemoteToCatalog(plugin: Plugin): CatalogPlugin {
     orgName,
     popularity,
     publishedAt,
+    signature: hasSignature ? PluginSignatureStatus.valid : PluginSignatureStatus.invalid,
     updatedAt,
     version,
     hasUpdate: false,
@@ -64,6 +70,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin): CatalogPlugin {
     orgName: author.name,
     popularity: 0,
     publishedAt: '',
+    signature,
     updatedAt: updated,
     version,
     hasUpdate: false,
@@ -75,11 +82,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin): CatalogPlugin {
   };
 }
 
-export function getCatalogPluginDetails(
-  local: LocalPlugin | undefined,
-  remote: Plugin | undefined,
-  pluginVersions: Version[] | undefined
-): CatalogPluginDetails {
+export function mapToCatalogPlugin(local?: LocalPlugin, remote?: Plugin): CatalogPlugin {
   const version = remote?.version || local?.info.version || '';
   const hasUpdate = Boolean(remote?.version && local?.info.version && gt(remote?.version, local?.info.version));
   const id = remote?.slug || local?.id || '';
@@ -98,10 +101,9 @@ export function getCatalogPluginDetails(
     logos = local.info.logos;
   }
 
-  const plugin = {
+  return {
     description: remote?.description || local?.info.description || '',
     downloads: remote?.downloads || 0,
-    grafanaDependency: remote?.json?.dependencies?.grafanaDependency || '',
     hasUpdate,
     id,
     info: {
@@ -111,19 +113,31 @@ export function getCatalogPluginDetails(
     isDev: Boolean(local?.dev),
     isEnterprise: remote?.status === 'enterprise' || false,
     isInstalled: Boolean(local),
-    links: remote?.json?.info.links || local?.info.links || [],
     name: remote?.name || local?.name || '',
     orgName: remote?.orgName || local?.info.author.name || '',
     popularity: remote?.popularity || 0,
     publishedAt: remote?.createdAt || '',
-    readme: remote?.readme || 'No plugin help or readme markdown file was found',
-    type: remote?.typeCode || local?.type || '',
+    type: remote?.typeCode || local?.type,
+    signature: remote?.signature || local?.signature || PluginSignatureStatus.missing,
     updatedAt: remote?.updatedAt || local?.info.updated || '',
     version,
-    versions: pluginVersions || [],
   };
+}
 
-  return plugin;
+export function getCatalogPluginDetails(
+  local: LocalPlugin | undefined,
+  remote: Plugin | undefined,
+  pluginVersions: Version[] = []
+): CatalogPluginDetails {
+  const plugin = mapToCatalogPlugin(local, remote);
+
+  return {
+    ...plugin,
+    grafanaDependency: remote?.json?.dependencies?.grafanaDependency || '',
+    links: remote?.json?.info.links || local?.info.links || [],
+    readme: remote?.readme || 'No plugin help or readme markdown file was found',
+    versions: pluginVersions,
+  };
 }
 
 export const isInstalled: PluginFilter = (plugin, query) =>
