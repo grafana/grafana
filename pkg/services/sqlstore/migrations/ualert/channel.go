@@ -162,6 +162,10 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 	if rn, ok := m.portedChannelGroups[chanKey]; ok {
 		// We have ported these exact set of channels already. Re-use it.
 		receiverName = rn
+		if receiverName == "autogen-contact-point-default" {
+			// We don't need to create new routes if it's the default contact point.
+			return nil, nil, nil
+		}
 	} else {
 		for n := range filteredChannelUids {
 			if err := addChannel(allChannels[n]); err != nil {
