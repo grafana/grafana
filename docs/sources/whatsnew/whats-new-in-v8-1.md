@@ -12,7 +12,7 @@ list = false
 
 > **Note:** This topic will be updated frequently between now and the final release.
 
-Grafana 8.1 builds upon our promise of a composable, open observability platform with new panels and extends functionality launched in Grafana 8.0. We’ve got new  Geomap and Annotations panels, and some great updates to the Time Series panel. We’ve also got new transformations and updates to data sources. For our enterprise customers, we've got additions to fine grained access control, updates to the reporting scheduler, and more. Read on to learn more.
+Grafana 8.1 builds upon our promise of a composable, open observability platform with new panels and extends functionality launched in Grafana 8.0. We’ve got new  Geomap and Annotations panels, and some great updates to the Time Series panel. We’ve also got new transformations and updates to data sources. For our enterprise customers, there are additions to fine grained access control, updates to the reporting schedule and query caching, and more. Read on to learn more.
 
 In addition to what is summarized here, you might also be interested in our announcement blog post. For all the technical details, check out the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
