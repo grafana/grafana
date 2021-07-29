@@ -42,9 +42,6 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   renderTooltip,
   ...otherProps
 }) => {
-  if (mode === TooltipDisplayMode.None) {
-    return null;
-  }
   const theme = useTheme2();
   const plotCtx = usePlotContext();
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
@@ -52,6 +49,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   const [focusedPointIdxs, setFocusedPointIdxs] = useState<Array<number | null>>([]);
   const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
   const plotInstance = plotCtx.plot;
+  const [isActive, setIsActive] = useState<boolean>(false);
 
   const pluginId = `TooltipPlugin`;
 
@@ -61,21 +59,30 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   }, [focusedPointIdx, focusedSeriesIdx]);
 
   useEffect(() => {
-    const plotMouseLeave = () => {
+    const plotMouseLeave = (e: MouseEvent) => {
       setCoords(null);
+      setIsActive(false);
+      handleMouseEvent(e);
+    };
+
+    const plotMouseEnter = (e: MouseEvent) => {
+      setIsActive(true);
+      handleMouseEvent(e);
     };
 
     if (plotCtx && plotCtx.plot) {
       plotCtx.plot.over.addEventListener('mouseleave', plotMouseLeave);
+      plotCtx.plot.over.addEventListener('mouseenter', plotMouseEnter);
     }
 
     return () => {
       setCoords(null);
       if (plotCtx && plotCtx.plot) {
         plotCtx.plot.over.removeEventListener('mouseleave', plotMouseLeave);
+        plotCtx.plot.over.removeEventListener('mouseenter', plotMouseEnter);
       }
     };
-  }, [plotCtx.plot?.root, setCoords]);
+  }, [plotCtx.plot?.root, setCoords, setIsActive]);
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
@@ -126,7 +133,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     }
   }, [plotCtx, config, setFocusedPointIdx, setFocusedSeriesIdx, setCoords]);
 
-  if (!plotInstance || focusedPointIdx === null || (!focusedSeriesIdx && sync === DashboardCursorSync.Crosshair)) {
+  if (!plotInstance || focusedPointIdx === null || (!isActive && sync === DashboardCursorSync.Crosshair)) {
     return null;
   }
 
@@ -210,6 +217,12 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     </Portal>
   );
 };
+
+function handleMouseEvent(e: MouseEvent) {
+  if (e.target) {
+    (e.target as HTMLDivElement).classList.toggle('plot-active');
+  }
+}
 
 function isCursourOutsideCanvas({ left, top }: uPlot.Cursor, canvas: DOMRect) {
   if (left === undefined || top === undefined) {
