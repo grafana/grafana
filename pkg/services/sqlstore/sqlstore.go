@@ -49,15 +49,15 @@ type SQLStore struct {
 	log                         log.Logger
 	Dialect                     migrator.Dialect
 	skipEnsureDefaultOrgAndUser bool
-	dbMigrators                 []registry.DatabaseMigrator
+	migrations                  registry.DatabaseMigrator
 }
 
-func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus) (*SQLStore, error) {
+func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, migrations registry.DatabaseMigrator) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newSQLStore(cfg, cacheService, bus, nil)
+	s, err := newSQLStore(cfg, cacheService, bus, nil, migrations)
 	if err != nil {
 		return nil, err
 	}
@@ -74,13 +74,14 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus
 }
 
 func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, engine *xorm.Engine,
-	opts ...InitTestDBOpt) (*SQLStore, error) {
+	migrations registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
 		Cfg:                         cfg,
 		Bus:                         bus,
 		CacheService:                cacheService,
 		log:                         log.New("sqlstore"),
 		skipEnsureDefaultOrgAndUser: false,
+		migrations:                  migrations,
 	}
 	for _, opt := range opts {
 		if !opt.EnsureDefaultOrgAndUser {
@@ -123,11 +124,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	return ss, nil
 }
 
-// AddMigrator adds a registry.DatabaseMigrator.
-func (ss *SQLStore) AddMigrator(migrator registry.DatabaseMigrator) {
-	ss.dbMigrators = append(ss.dbMigrators, migrator)
-}
-
 // Migrate performs database migrations.
 // Has to be done in a second phase (after initialization), since other services can register migrations during
 // the initialization phase.
@@ -137,10 +133,7 @@ func (ss *SQLStore) Migrate() error {
 	}
 
 	migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
-	migrations.AddMigrations(migrator)
-	for _, dbm := range ss.dbMigrators {
-		dbm.AddMigration(migrator)
-	}
+	ss.migrations.AddMigration(migrator)
 
 	return migrator.Start()
 }
@@ -438,8 +431,17 @@ type InitTestDBOpt struct {
 	EnsureDefaultOrgAndUser bool
 }
 
+// InitTestDBWithMigration initializes the test DB given custom migrations.
+func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
+	return initTestDB(t, migration, opts...)
+}
+
 // InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
+	return initTestDB(t, &migrations.OSSMigrations{}, opts...)
+}
+
+func initTestDB(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
@@ -500,7 +502,7 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 		engine.DatabaseTZ = time.UTC
 		engine.TZLocation = time.UTC
 
-		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), bus.GetBus(), engine, opts...)
+		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), bus.GetBus(), engine, migration, opts...)
 		if err != nil {
 			t.Fatalf("Failed to init test database: %s", err)
 		}
