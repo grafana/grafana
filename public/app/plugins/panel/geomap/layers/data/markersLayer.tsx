@@ -85,8 +85,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       />
     }
     const shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
-    console.log( 'CREATE Marker layer', matchers);
-
+    
     return {
       init: () => vectorLayer,
       legend: legend,
