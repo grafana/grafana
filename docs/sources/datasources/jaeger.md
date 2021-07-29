@@ -58,9 +58,11 @@ To perform a search, set the query type selector to Search, then use the followi
 
 ## Upload JSON trace file
 
+You can upload a JSON file that contains a single trace to visualize it. If the file has multiple traces then the first trace is used for visualization.
+
 {{< figure src="/static/img/docs/explore/jaeger-upload-json.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger data source in explore with upload selected" >}}
 
-You can upload a JSON file that contains a single trace to visualize it. If the file has multiple traces then the first trace is used for visualization. Here is an example JSON:
+Here is an example JSON:
 
 ```json
 {
