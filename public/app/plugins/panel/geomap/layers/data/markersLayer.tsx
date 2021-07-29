@@ -85,8 +85,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       />
     }
     const shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
-    console.log( 'CREATE Marker layer', matchers);
-
+    
     return {
       init: () => vectorLayer,
       legend: legend,
@@ -118,8 +117,10 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             const radius = sizeDim.get(i);
 
             // Create a new Feature for each point returned from dataFrameToPoints
-            const dot = new Feature({
-                geometry: info.points[i],
+            const dot = new Feature( info.points[i] );
+            dot.setProperties({
+              frame,
+              rowIndex: i,
             });
 
             dot.setStyle(shape!.make(color, fillColor, radius));
@@ -128,7 +129,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
           // Post updates to the legend component
           if (legend) {
-            console.log( 'UPDATE (marker layer)', colorDim);
             legendProps.next({
               color: colorDim,
               size: sizeDim,

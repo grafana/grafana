@@ -22,17 +22,16 @@ export class ObservablePropsWrapper<T> extends Component<Props<T>, State<T>> {
   }
 
   componentDidMount() {
-    console.log('ObservablePropsWrapper:subscribe');
     this.sub = this.props.watch.subscribe({
       next: (subProps: T) => {
-        console.log('ObservablePropsWrapper:NEXT', subProps);
+        //console.log('ObservablePropsWrapper:NEXT', subProps);
         this.setState({ subProps });
       },
       complete: () => {
-        console.log('ObservablePropsWrapper:complete');
+        //console.log('ObservablePropsWrapper:complete');
       },
       error: (err) => {
-        console.log('ObservablePropsWrapper:error', err);
+        //console.log('ObservablePropsWrapper:error', err);
       },
     });
   }
@@ -41,12 +40,10 @@ export class ObservablePropsWrapper<T> extends Component<Props<T>, State<T>> {
     if (this.sub) {
       this.sub.unsubscribe();
     }
-    console.log('ObservablePropsWrapper:unsubscribe');
   }
 
   render() {
     const { subProps } = this.state;
-    console.log('RENDER (wrap)', subProps);
     return <this.props.child {...subProps} />;
   }
 }
