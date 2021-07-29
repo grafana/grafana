@@ -205,11 +205,17 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   });
 }
 
+// this is a significant optimization for streaming, where we currently re-process all values in the buffer on ech update
+// via field.display(value). this can potentially be removed once we...
+// 1. process data packets incrementally and/if cache the results in the streaming datafame (maybe by buffer index)
+// 2. have the ability to selectively get display color or text (but not always both, which are each quite expensive)
+// 3. sufficently optimize text formating and threshold color determinitation
 function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): DisplayProcessor {
   const cache = new Map<any, DisplayValue>();
 
   return (value: any) => {
     let v = cache.get(value);
+
     if (!v) {
       // Don't grow too big
       if (cache.size === maxCacheSize) {
@@ -226,6 +232,7 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
 
       cache.set(value, v);
     }
+
     return v;
   };
 }
