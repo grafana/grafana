@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/centrifugal/centrifuge"
@@ -92,8 +93,7 @@ func (c *Caller) CallManagedStreams(orgID int64) ([]*managedstream.ManagedChanne
 		return nil, err
 	}
 
-	channels := make([]*managedstream.ManagedChannel, 0)
-	duplicatesCheck := map[string]struct{}{}
+	channels := map[string]*managedstream.ManagedChannel{}
 
 	for _, result := range resp {
 		if result.Code != 0 {
@@ -105,13 +105,22 @@ func (c *Caller) CallManagedStreams(orgID int64) ([]*managedstream.ManagedChanne
 			return nil, err
 		}
 		for _, ch := range res.Channels {
-			if _, ok := duplicatesCheck[ch.Channel]; ok {
+			if _, ok := channels[ch.Channel]; ok {
+				channels[ch.Channel].MinuteRate += ch.MinuteRate
 				continue
 			}
-			channels = append(channels, ch)
-			duplicatesCheck[ch.Channel] = struct{}{}
+			channels[ch.Channel] = ch
 		}
 	}
 
-	return channels, nil
+	result := make([]*managedstream.ManagedChannel, 0, len(channels))
+	for _, v := range channels {
+		result = append(result, v)
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Channel < result[j].Channel
+	})
+
+	return result, nil
 }

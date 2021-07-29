@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -36,13 +37,22 @@ func NewRunner(publisher models.ChannelPublisher, frameCache FrameCache) *Runner
 }
 
 func (r *Runner) GetManagedChannels(orgID int64) ([]*ManagedChannel, error) {
-	channels := make([]*ManagedChannel, 0)
-	for _, v := range r.Streams(orgID) {
-		streamChannels, err := v.ListChannels(orgID)
-		if err != nil {
-			return nil, err
+	paths, err := r.frameCache.GetActiveChannels(orgID)
+	if err != nil {
+		return []*ManagedChannel{}, fmt.Errorf("error getting active managed stream paths: %v", err)
+	}
+	channels := make([]*ManagedChannel, 0, len(paths))
+	for k, v := range paths {
+		managedChannel := &ManagedChannel{
+			Channel: k,
+			Data:    v,
 		}
-		channels = append(channels, streamChannels...)
+		channel, _ := live.ParseChannel(managedChannel.Channel)
+		namespaceStream, ok := r.streams[orgID][channel.Namespace]
+		if ok {
+			managedChannel.MinuteRate = namespaceStream.minuteRate(channel.Path)
+		}
+		channels = append(channels, managedChannel)
 	}
 
 	// Hardcode sample streams
@@ -54,16 +64,24 @@ func (r *Runner) GetManagedChannels(orgID int64) ([]*ManagedChannel, error) {
 	), data.IncludeSchemaOnly)
 	if err == nil {
 		channels = append(channels, &ManagedChannel{
-			Channel: "plugin/testdata/random-2s-stream",
-			Data:    frameJSON,
+			Channel:    "plugin/testdata/random-2s-stream",
+			Data:       frameJSON,
+			MinuteRate: 30,
 		}, &ManagedChannel{
-			Channel: "plugin/testdata/random-flakey-stream",
-			Data:    frameJSON,
+			Channel:    "plugin/testdata/random-flakey-stream",
+			Data:       frameJSON,
+			MinuteRate: 150,
 		}, &ManagedChannel{
-			Channel: "plugin/testdata/random-20Hz-stream",
-			Data:    frameJSON,
+			Channel:    "plugin/testdata/random-20Hz-stream",
+			Data:       frameJSON,
+			MinuteRate: 1200,
 		})
 	}
+
+	sort.Slice(channels, func(i, j int) bool {
+		return channels[i].Channel < channels[j].Channel
+	})
+
 	return channels, nil
 }
 
@@ -104,6 +122,13 @@ type ManagedStream struct {
 	start      time.Time
 	publisher  models.ChannelPublisher
 	frameCache FrameCache
+	rateMu     sync.RWMutex
+	rates      map[string][60]rateEntry
+}
+
+type rateEntry struct {
+	time  uint32
+	count int32
 }
 
 // NewManagedStream creates new ManagedStream.
@@ -113,30 +138,15 @@ func NewManagedStream(id string, publisher models.ChannelPublisher, schemaUpdate
 		start:      time.Now(),
 		publisher:  publisher,
 		frameCache: schemaUpdater,
+		rates:      map[string][60]rateEntry{},
 	}
 }
 
 // ManagedChannel represents a managed stream.
 type ManagedChannel struct {
-	Channel string          `json:"channel"`
-	Data    json.RawMessage `json:"data"`
-}
-
-// ListChannels returns info for the UI about this stream.
-func (s *ManagedStream) ListChannels(orgID int64) ([]*ManagedChannel, error) {
-	paths, err := s.frameCache.GetActiveChannels(orgID)
-	if err != nil {
-		return []*ManagedChannel{}, fmt.Errorf("error getting active managed stream paths: %v", err)
-	}
-	info := make([]*ManagedChannel, 0, len(paths))
-	for k, v := range paths {
-		managedChannel := &ManagedChannel{
-			Channel: k,
-			Data:    v,
-		}
-		info = append(info, managedChannel)
-	}
-	return info, nil
+	Channel    string          `json:"channel"`
+	MinuteRate int64           `json:"minute_rate"`
+	Data       json.RawMessage `json:"data"`
 }
 
 // Push sends frame to the stream and saves it for later retrieval by subscribers.
@@ -165,7 +175,41 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 	frameJSON := jsonFrameCache.Bytes(include)
 
 	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
+	s.incRate(path, time.Now().Unix())
 	return s.publisher(orgID, channel, frameJSON)
+}
+
+func (s *ManagedStream) incRate(path string, nowUnix int64) {
+	s.rateMu.Lock()
+	pathRate, ok := s.rates[path]
+	if !ok {
+		pathRate = [60]rateEntry{}
+	}
+	now := time.Unix(nowUnix, 0)
+	slot := now.Second() % 60
+	if pathRate[slot].time != uint32(nowUnix) {
+		pathRate[slot].count = 0
+	}
+	pathRate[slot].time = uint32(nowUnix)
+	pathRate[slot].count += 1
+	s.rates[path] = pathRate
+	s.rateMu.Unlock()
+}
+
+func (s *ManagedStream) minuteRate(path string) int64 {
+	var total int64
+	s.rateMu.RLock()
+	defer s.rateMu.RUnlock()
+	pathRate, ok := s.rates[path]
+	if !ok {
+		return 0
+	}
+	for _, val := range pathRate {
+		if val.time > uint32(time.Now().Unix()-60) {
+			total += int64(val.count)
+		}
+	}
+	return total
 }
 
 func (s *ManagedStream) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
