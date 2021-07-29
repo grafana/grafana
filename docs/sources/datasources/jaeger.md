@@ -60,7 +60,7 @@ To perform a search, set the query type selector to Search, then use the followi
 
 {{< figure src="/static/img/docs/explore/jaeger-upload-json.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger data source in explore with upload selected" >}}
 
-You can upload JSON file that contains a single trace to visualize it. If the JSON contains multiple traces then the first one is going to be used. The JSON schema needs to look like this:
+You can upload JSON file that contains a single trace to visualize it. If the JSON contains multiple traces then the first one is going to be used. Here is an example JSON:
 
 ```json
 {

@@ -20,7 +20,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         return (
           <div className={css({ padding: theme.spacing(2) })}>
             <FileDropzone
-              options={{ accept: '.json', multiple: false }}
+              options={{ multiple: false }}
               onLoad={(result) => {
                 datasource.uploadedJson = result;
                 onRunQuery();

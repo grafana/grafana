@@ -55,7 +55,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
 
     if (target.queryType === 'upload') {
       if (!this.uploadedJson) {
-        return of({ data: [emptyTraceDataFrame] });
+        return of({ data: [] });
       }
       const traceData = JSON.parse(this.uploadedJson as string).data[0];
       return of({ data: [createTraceFrame(traceData), ...createGraphFrames(traceData)] });
