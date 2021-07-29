@@ -1,6 +1,13 @@
 import React, { PureComponent } from 'react';
 import { stylesFactory } from '@grafana/ui';
-import { DataFrame, Field, formattedValueToString, getFieldDisplayName, GrafanaTheme } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  formattedValueToString,
+  getFieldDisplayName,
+  GrafanaTheme,
+  GrafanaTheme2,
+} from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 
@@ -11,10 +18,10 @@ export interface Props {
 }
 
 export class DataHoverView extends PureComponent<Props> {
-  style = getStyles(config.theme);
+  style = getStyles(config.theme2);
 
   render() {
-    const { data, rowIndex } = this.props;
+    const { data, rowIndex, columnIndex } = this.props;
     if (!data || rowIndex == null) {
       return null;
     }
@@ -23,7 +30,7 @@ export class DataHoverView extends PureComponent<Props> {
       <table className={this.style.infoWrap}>
         <tbody>
           {data.fields.map((f, i) => (
-            <tr key={`${i}/${rowIndex}`}>
+            <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? this.style.highlight : ''}>
               <th>{getFieldDisplayName(f, data)}:</th>
               <td>{fmt(f, rowIndex)}</td>
             </tr>
@@ -42,12 +49,15 @@ function fmt(field: Field, row: number): string {
   return `${v}`;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   infoWrap: css`
     padding: 8px;
     th {
       font-weight: bold;
       padding: 2px 10px 2px 0px;
     }
+  `,
+  highlight: css`
+    background: ${theme.colors.action.hover};
   `,
 }));
