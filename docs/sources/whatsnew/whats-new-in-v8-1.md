@@ -96,7 +96,7 @@ We changed the default behavior from creating a 1-hour span Loki query to the on
 
 ### Prettify JSON for Logs in Explore
 
-New in 8.1 is the ability to format JSON to make it easier to view, review and find relevant data in JSON format logs.
+Added the ability to format JSON to make it easier to view, review and find relevant data in JSON format logs.
 
 ### Plugin catalog - Updated UX and extended features
 
