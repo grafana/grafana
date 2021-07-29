@@ -65,8 +65,8 @@ export default function Browse(): ReactElement | null {
                 options={[
                   { value: 'all', label: 'All' },
                   { value: 'datasource', label: 'Data sources' },
-                  { value: 'app', label: 'Applications' },
                   { value: 'panel', label: 'Panels' },
+                  { value: 'app', label: 'Applications' },
                 ]}
               />
               <RadioButtonGroup
