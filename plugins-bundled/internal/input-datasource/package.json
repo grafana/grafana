@@ -1,6 +1,6 @@
 {
   "name": "@grafana-plugins/input-datasource",
-  "version": "8.1.0-beta.2",
+  "version": "8.1.0-beta.3",
   "description": "Input Datasource",
   "private": true,
   "repository": {
@@ -15,9 +15,9 @@
   },
   "author": "Grafana Labs",
   "devDependencies": {
-    "@grafana/data": "8.1.0-beta.2",
-    "@grafana/toolkit": "8.1.0-beta.2",
-    "@grafana/ui": "8.1.0-beta.2"
+    "@grafana/data": "8.1.0-beta.3",
+    "@grafana/toolkit": "8.1.0-beta.3",
+    "@grafana/ui": "8.1.0-beta.3"
   },
   "volta": {
     "extends": "../../../package.json"
