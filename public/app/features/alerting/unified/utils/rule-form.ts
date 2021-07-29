@@ -255,7 +255,6 @@ export const panelToRuleFormValues = async (
   dashboard: DashboardModel
 ): Promise<Partial<RuleFormValues> | undefined> => {
   const { targets } = panel;
-
   if (!panel.editSourceId || !dashboard.uid) {
     return undefined;
   }
@@ -291,6 +290,7 @@ export const panelToRuleFormValues = async (
         : undefined,
     queries,
     name: panel.title,
+    condition: queries[queries.length - 1].refId,
     annotations: [
       {
         key: Annotation.dashboardUID,

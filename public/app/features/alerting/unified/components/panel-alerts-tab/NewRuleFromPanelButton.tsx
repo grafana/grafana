@@ -33,7 +33,7 @@ export const NewRuleFromPanelButton: FC<Props> = ({ dashboard, panel, className 
   });
 
   return (
-    <LinkButton icon="bell" href={ruleFormUrl} className={className}>
+    <LinkButton icon="bell" href={ruleFormUrl} className={className} data-testid="create-alert-rule-button">
       Create alert rule from this panel
     </LinkButton>
   );
