@@ -44,8 +44,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     }
   };
 
-  testKeyShortcut = (event: React.KeyboardEvent<HTMLInputElement>) => {};
-
   onChange = (query: DataQuery, override?: boolean) => {
     const { datasourceInstance, exploreId, index } = this.props;
     this.props.changeQuery(exploreId, query, index, override);
