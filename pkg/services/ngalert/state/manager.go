@@ -176,7 +176,7 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 	}
 
 	// Set Resolved property so the scheduler knows to send a postable alert
-	// to alert manager.
+	// to Alertmanager.
 	if oldState == eval.Alerting && currentState.State == eval.Normal {
 		currentState.Resolved = true
 	} else {
