@@ -67,6 +67,39 @@ func TestNeedsSending(t *testing.T) {
 				LastSentAt:         evaluationTime,
 			},
 		},
+		{
+			name:        "state: normal + resolved sends after a minute",
+			resendDelay: 1 * time.Minute,
+			expected:    true,
+			testState: &State{
+				State:              eval.Normal,
+				Resolved:           true,
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+			},
+		},
+		{
+			name:        "state: normal + resolved does _not_ send after 30 seconds (before one minute)",
+			resendDelay: 1 * time.Minute,
+			expected:    false,
+			testState: &State{
+				State:              eval.Normal,
+				Resolved:           true,
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         evaluationTime.Add(-30 * time.Second),
+			},
+		},
+		{
+			name:        "state: normal but not resolved does not send after a minute",
+			resendDelay: 1 * time.Minute,
+			expected:    false,
+			testState: &State{
+				State:              eval.Normal,
+				Resolved:           false,
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+			},
+		},
 	}
 
 	for _, tc := range testCases {

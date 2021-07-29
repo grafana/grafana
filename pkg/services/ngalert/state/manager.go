@@ -175,6 +175,10 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 	case eval.Pending: // we do not emit results with this state
 	}
 
+	// Set Resolved property so the scheduler knows to send a postable alert
+	// to Alertmanager.
+	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
+
 	st.set(currentState)
 	if oldState != currentState.State {
 		go st.createAlertAnnotation(currentState.State, alertRule, result)
