@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
-import { AlignedData } from 'uplot';
+import { AlignedData, Range } from 'uplot';
 import {
   compareDataFrameStructures,
   DataFrame,
+  Field,
   FieldConfig,
   FieldSparkline,
   FieldType,
@@ -21,6 +22,7 @@ import { UPlotChart } from '../uPlot/Plot';
 import { Themeable2 } from '../../types';
 import { preparePlotData } from '../uPlot/utils';
 import { preparePlotFrame } from './utils';
+import { isEqual } from 'lodash';
 
 export interface SparklineProps extends Themeable2 {
   width: number;
@@ -78,13 +80,22 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
     if (prevProps.sparkline !== this.props.sparkline) {
       rebuildConfig = !compareDataFrameStructures(this.state.alignedDataFrame, prevState.alignedDataFrame);
-    } else if (prevProps.config !== this.props.config) {
-      rebuildConfig = true;
+    } else {
+      rebuildConfig = !isEqual(prevProps.config, this.props.config);
     }
 
     if (rebuildConfig) {
       this.setState({ configBuilder: this.prepareConfig(alignedDataFrame) });
     }
+  }
+
+  getYRange(field: Field) {
+    let { min, max } = this.state.alignedDataFrame.fields[1].state?.range!;
+
+    return [
+      Math.max(min!, field.config.min ?? -Infinity),
+      Math.min(max!, field.config.max ?? Infinity),
+    ] as Range.MinMax;
   }
 
   prepareConfig(data: DataFrame) {
@@ -140,9 +151,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         scaleKey,
         orientation: ScaleOrientation.Vertical,
         direction: ScaleDirection.Up,
-        min: field.config.min,
-        max: field.config.max,
-        getDataMinMax: () => field.state?.range,
+        range: () => this.getYRange(field),
       });
 
       builder.addAxis({
@@ -156,6 +165,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
       const pointsMode = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 
       builder.addSeries({
+        pxAlign: false,
         scaleKey,
         theme,
         drawStyle: customConfig.drawStyle!,
