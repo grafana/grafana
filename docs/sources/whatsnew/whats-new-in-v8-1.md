@@ -25,19 +25,18 @@ These features are included in the Grafana open source edition.
 
 Grafana 8.1 introduces the foundation for our new map panel. This new panel leverages [OpenLayers](https://openlayers.org/) and gives us a flexible solution for extending the way we use the new Geomap panel moving forward. The new Geomap panel includes multiple base layer styles (map layer options), as well as a more open data layer. The data layer can use coordinates and geo-hashed data in addition to a lookup table. 
 
-The Geomap panel is also able to share views across multiple Geomap panels on the same dashboard, making it straightforward to visualize and explore multiple types of geospatial data using the same map zoom and focus settings. For more information, refer to [Geomap panel]({{< relref "../panels/visualizations/geomap.md" >}}) in our product documentation.
-
+The Geomap panel is also able to share views across multiple Geomap panels on the same dashboard, making it straightforward to visualize and explore multiple types of geospatial data using the same map zoom and focus settings. For more information, refer to [Geomap panel]({{< relref "../panels/visualizations/geomap.md" >}}).
 {{< figure src="/static/img/docs/geomap/geomap_heatmap.png" max-width="1200px" caption="Geomap panel: Heatmap" >}}
 
 ## Annotation panel
 
-The new Annotations panel shows a list of available annotations you can use to create lists of annotated data available within your organization. Various options are available to filter the list based on tags and on the current dashboard. This panel makes it easy to find and filter annotated data within and across multiple dashboards.
+The new Annotations panel shows a list of available annotations you can use to create lists of annotated data available within your organization. Various options are available to filter the list based on the tags and on the current dashboard. This panel makes it easy to find and filter annotated data within and across multiple dashboards.
 
 {{< figure src="/static/img/docs/annolist/annolist.png" max-width="1200px" caption="Geomap panel: Heatmap" >}}
 
 ### Time series panel updates
 
-The time series panel has been updated with the ability to color series and line by thresholds or gradient color scales. This allows users to create time series panels where the line color can change dynamically based on thresholds or using gradient color scales. his change adds a layer of visibility to your data, making it more straightforward to quickly see changes across thresholds at a glance.
+The time series panel has been updated with the ability to color series and line by thresholds or gradient color scales. This allows users to create panels where the line color can change dynamically based on thresholds or using gradient color scales. It adds a layer of visibility to your data, making it more straightforward to quickly see changes across thresholds at a glance.
 
 Color scheme **From thresholds**: 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_line.png" max-width="1200px" caption="Colors scheme: From thresholds" >}}
@@ -47,7 +46,7 @@ Color scheme: **Green-Yellow-Red (by value)**
 
 For more on how to configure Graphs with by value color schemes read [Graph and color schemes]({{< relref "../panels/visualizations/time-series/_index.md" >}}).
 
-We've also added the ability to [create annotations on the new Time series panel]({{< relref "../panels/visualizations/time-series/annotate-time-series.md" >}}), bringing it closer to parity with the legacy Graph Panel. [Read more about the time series panel here]({{< relref "../panels/visualizations/time-series/_index.md" >}}). 
+You can also create annotations on the new Time series panel]({{< relref "../panels/visualizations/time-series/annotate-time-series.md" >}}), bringing it closer to parity with the legacy Graph Panel. To learn more, refer to the [time series panel]({{< relref "../panels/visualizations/time-series/_index.md" >}}). 
 
 ### Transformations improvements
 
@@ -60,7 +59,24 @@ This transformation enables panel config (Threshold, Min, Max, etc.) to be deriv
 #### Rows to fields (Beta)
 
 This transformation enables rows in returned data to be converted into separate fields. Prior to this enhancement, you could style and configure fields individually, but not rows. For more information, refer to [Rows to fields transform]Added the ability annotations directly from the panel
-You can now create annotations on the new Time series panel (introduced in Grafana 8)..
+
+Example, Input:
+
+| Name    | Value | Max |
+| ------- | ----- | --- |
+| ServerA | 10    | 100 |
+| ServerB | 20    | 200 |
+| ServerC | 30    | 300 |
+
+Output:
+
+| ServerA (config: max=100) | ServerB (config: max=200) | ServerC (config: max=300) |
+| ------------------------- | ------------------------- | ------------------------- |
+| 10                        | 20                        | 30                        |
+
+As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like **Min**, **Max**, **Unit** and **Thresholds** are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
+
+For more on how to use this transformation, refer to [Rows to fields transform]({{< relref "../panels/transformations/rows-to-fields.md" >}}).
 
 #### Contextual & Inline Help
 
