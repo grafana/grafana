@@ -271,7 +271,7 @@ func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
 
 func AddAlertAdminConfigMigrations(mg *migrator.Migrator) {
 	adminConfiguration := migrator.Table{
-		Name: "alert_admin_configuration",
+		Name: "ngalert_configuration",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
