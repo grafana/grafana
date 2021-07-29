@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { PanelProps, TimeRange, VizOrientation } from '@grafana/data';
-import { StackingMode, TooltipDisplayMode, TooltipPlugin } from '@grafana/ui';
+import { StackingMode, TooltipDisplayMode, TooltipPlugin, useTheme2 } from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
 import { prepareGraphableFrames } from './utils';
@@ -11,8 +11,11 @@ interface Props extends PanelProps<BarChartOptions> {}
  * @alpha
  */
 export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone }) => {
-  const { frames, warn } = useMemo(() => prepareGraphableFrames(data?.series, options.stacking), [
+  const theme = useTheme2();
+
+  const { frames, warn } = useMemo(() => prepareGraphableFrames(data?.series, theme, options.stacking), [
     data,
+    theme,
     options.stacking,
   ]);
   const orientation = useMemo(() => {

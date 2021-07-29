@@ -34,7 +34,12 @@ export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
 };
 
 /** @internal */
-export function preparePlotData(frame: DataFrame): AlignedData {
+interface StackMeta {
+  totals: AlignedData;
+}
+
+/** @internal */
+export function preparePlotData(frame: DataFrame, onStackMeta?: (meta: StackMeta) => void): AlignedData {
   const result: any[] = [];
   const stackingGroups: Map<string, number[]> = new Map();
   let seriesIndex = 0;
@@ -64,21 +69,48 @@ export function preparePlotData(frame: DataFrame): AlignedData {
 
   // Stacking
   if (stackingGroups.size !== 0) {
+    const byPct = frame.fields[1].config.custom?.stacking?.mode === StackingMode.Percent;
+    const dataLength = result[0].length;
+    const alignedTotals = Array(stackingGroups.size);
+    alignedTotals[0] = null;
+
     // array or stacking groups
     for (const [_, seriesIdxs] of stackingGroups.entries()) {
-      const acc = Array(result[0].length).fill(0);
+      const groupTotals = byPct ? Array(dataLength).fill(0) : null;
+
+      if (byPct) {
+        for (let j = 0; j < seriesIdxs.length; j++) {
+          const currentlyStacking = result[seriesIdxs[j]];
+
+          for (let k = 0; k < dataLength; k++) {
+            const v = currentlyStacking[k];
+            groupTotals![k] += v == null ? 0 : +v;
+          }
+        }
+      }
+
+      const acc = Array(dataLength).fill(0);
 
       for (let j = 0; j < seriesIdxs.length; j++) {
-        const currentlyStacking = result[seriesIdxs[j]];
+        let seriesIdx = seriesIdxs[j];
 
-        for (let k = 0; k < result[0].length; k++) {
+        alignedTotals[seriesIdx] = groupTotals;
+
+        const currentlyStacking = result[seriesIdx];
+
+        for (let k = 0; k < dataLength; k++) {
           const v = currentlyStacking[k];
-          acc[k] += v == null ? 0 : +v;
+          acc[k] += v == null ? 0 : v / (byPct ? groupTotals![k] : 1);
         }
 
-        result[seriesIdxs[j]] = acc.slice();
+        result[seriesIdx] = acc.slice();
       }
     }
+
+    onStackMeta &&
+      onStackMeta({
+        totals: alignedTotals as AlignedData,
+      });
   }
 
   return result as AlignedData;

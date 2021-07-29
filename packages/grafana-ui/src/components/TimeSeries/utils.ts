@@ -24,7 +24,7 @@ import {
   ScaleDirection,
   ScaleOrientation,
 } from '../uPlot/config';
-import { collectStackingGroups } from '../uPlot/utils';
+import { collectStackingGroups, preparePlotData } from '../uPlot/utils';
 import uPlot from 'uplot';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
@@ -45,6 +45,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   allFrames,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
+
+  builder.setPrepData(preparePlotData);
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];

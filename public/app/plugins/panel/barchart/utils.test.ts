@@ -143,7 +143,7 @@ describe('BarChart utils', () => {
 
   describe('prepareGraphableFrames', () => {
     it('will warn when there is no data in the response', () => {
-      const result = prepareGraphableFrames([], StackingMode.None);
+      const result = prepareGraphableFrames([], createTheme(), StackingMode.None);
       expect(result.warn).toEqual('No data in response');
     });
 
@@ -154,7 +154,7 @@ describe('BarChart utils', () => {
           { name: 'value', values: [1, 2, 3, 4, 5] },
         ],
       });
-      const result = prepareGraphableFrames([df], StackingMode.None);
+      const result = prepareGraphableFrames([df], createTheme(), StackingMode.None);
       expect(result.warn).toEqual('Bar charts requires a string field');
       expect(result.frames).toBeUndefined();
     });
@@ -166,7 +166,7 @@ describe('BarChart utils', () => {
           { name: 'value', type: FieldType.boolean, values: [true, true, true, true, true] },
         ],
       });
-      const result = prepareGraphableFrames([df], StackingMode.None);
+      const result = prepareGraphableFrames([df], createTheme(), StackingMode.None);
       expect(result.warn).toEqual('No numeric fields found');
       expect(result.frames).toBeUndefined();
     });
@@ -178,7 +178,7 @@ describe('BarChart utils', () => {
           { name: 'value', values: [-10, NaN, 10, -Infinity, +Infinity] },
         ],
       });
-      const result = prepareGraphableFrames([df], StackingMode.None);
+      const result = prepareGraphableFrames([df], createTheme(), StackingMode.None);
 
       const field = result.frames![0].fields[1];
       expect(field!.values.toArray()).toMatchInlineSnapshot(`

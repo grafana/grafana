@@ -27,6 +27,7 @@ import { getConfig, TimelineCoreOptions } from './timeline';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
 import { TimelineFieldConfig, TimelineOptions } from './types';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
+import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
@@ -139,6 +140,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   };
 
   builder.setTooltipInterpolator(interpolateTooltip);
+
+  builder.setPrepData(preparePlotData);
 
   builder.setCursor(coreConfig.cursor);
 
