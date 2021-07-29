@@ -85,9 +85,9 @@ type schedule struct {
 	metrics  *metrics.Metrics
 
 	// Senders help us send alerts to external Alertmanagers.
-	sendersMtx sync.Mutex
-	sendersCfg map[int64]string
-	senders    map[int64]*sender.Sender
+	sendersMtx     sync.Mutex
+	sendersCfgHash map[int64]string
+	senders        map[int64]*sender.Sender
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -128,7 +128,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, st
 		appURL:           appURL,
 		stateManager:     stateManager,
 		senders:          map[int64]*sender.Sender{},
-		sendersCfg:       map[int64]string{},
+		sendersCfgHash:   map[int64]string{},
 	}
 	return &sch
 }
@@ -205,7 +205,7 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 
 		// We have a running sender, check if we need to apply a new config.
 		if ok {
-			if sch.sendersCfg[cfg.OrgID] == cfg.AsSHA256() {
+			if sch.sendersCfgHash[cfg.OrgID] == cfg.AsSHA256() {
 				sch.log.Debug("sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
 				continue
 			}
@@ -235,7 +235,7 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		sch.sendersCfg[cfg.OrgID] = cfg.AsSHA256()
+		sch.sendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
 	}
 	sch.sendersMtx.Unlock()
 
@@ -246,7 +246,7 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 		if _, exists := orgsFound[orgID]; !exists {
 			sendersToStop[orgID] = s
 			delete(sch.senders, orgID)
-			delete(sch.sendersCfg, orgID)
+			delete(sch.sendersCfgHash, orgID)
 		}
 	}
 	sch.sendersMtx.Unlock()

@@ -83,7 +83,7 @@ func (ng *AlertNG) Init() error {
 	schedCfg := schedule.SchedulerCfg{
 		C:                clock.New(),
 		BaseInterval:     baseInterval,
-		Logger:           ng.Log,
+		Logger:           log.New("ngalert.scheduler"),
 		MaxAttempts:      maxAttempts,
 		Evaluator:        eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log},
 		InstanceStore:    store,
