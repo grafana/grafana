@@ -108,11 +108,24 @@ A background job runs every 10 minutes and removes temporary CSV files. You can 
 ### Scheduling
 > Note: Only available in Grafana Enterprise v8.1+.
 
-When scheduling a report, you can now choose to send a report only once, hourly, daily, weekly, monthly or at custom intervals. It's also possible to not schedule report due to Never frequency (for example, if report must be sent via the API).
+Scheduled reports can be sent once or repeated on an hourly, daily, weekly and monthly basis, or at custom intervals.  You may also disable scheduling by selecting "Never" for when you want to send the report via the API.
+<br/>[screenshot of scheduler]()
 
-You can also send a report for a limited time period by providing a start and end date, or send a report only on weekdays or on the last day of each month.
-If you choose "Send now" option, start date will be set to current date and time implicitly. Alternatively, you can set start date and time explicitly by selecting "Send later".
+**Send now or schedule for later**
 
+- "Send now" - sends report immediately after you save it. You can also add an end date and thus set the sending of the report to a limited time period. If you leave the end date empty, the report will be sent out for an indefinite period.
+<br/>[screenshot of send now]()
+
+- "Schedule for later" - to schedule report for a later date, you must set a start date and time. If you leave the end date empty, the report will be sent out for an indefinite period.
+<br/>[screenshot of send later]()
+
+**Send only from Monday to Friday**
+
+You can choose to send some reports only from Monday to Friday. This applies to reports that have an hourly or daily frequency.
+
+**Send on the last day of the month**
+
+When you schedule a report with a monthly frequency and set the start date as any day between the 29th and the 31st of the month, the report will not be sent on the months that don't have these dates. For this reason you can select the "Send on the last day of the month" option and the report will be sent every month on the last day regardless of the number of days those months have.
 
 > Note: Only available before Grafana Enterprise v8.1.
 
