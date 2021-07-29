@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -17,13 +16,13 @@ var getTime = time.Now
 
 func (s *Implementation) GetExternalUserInfoByLogin(query *models.GetExternalUserInfoByLoginQuery) error {
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
-	err := bus.Dispatch(&userQuery)
+	err := s.Bus.Dispatch(&userQuery)
 	if err != nil {
 		return err
 	}
 
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userQuery.Result.Id}
-	if err := bus.Dispatch(authInfoQuery); err != nil {
+	if err := s.Bus.Dispatch(authInfoQuery); err != nil {
 		return err
 	}
 
