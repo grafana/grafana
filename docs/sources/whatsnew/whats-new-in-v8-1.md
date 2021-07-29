@@ -32,7 +32,7 @@ The Geomap panel is also able to share views across multiple Geomap panels on th
 
 The new Annotations panel shows a list of available annotations you can use to create lists of annotated data available within your organization. Various options are available to filter the list based on the tags and on the current dashboard. This panel makes it easy to find and filter annotated data within and across multiple dashboards.
 
-{{< figure src="/static/img/docs/annolist/annolist.png" max-width="1200px" caption="Geomap panel: Heatmap" >}}
+{{< figure src="/static/img/docs/annolist/annolist.png" max-width="1200px" caption="Annotations panel" >}}
 
 ### Time series panel updates
 
