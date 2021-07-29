@@ -15,6 +15,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVizualizationOptions';
 import { GazetteerPathEditor } from './GazetteerPathEditor';
+import { FieldLabelPicker } from './FieldLabelPicker';
 
 export interface LayerEditorProps<TConfig = any> {
   options?: MapLayerOptions<TConfig>;
@@ -59,6 +60,26 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
             ],
           },
         })
+        .addCustomEditor({
+          id: 'location.label',
+          path: 'location.label',
+          name: 'Location label',
+          editor: FieldLabelPicker,
+          showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Label,
+        })
+        .addRadio({
+          path: 'location.labelMode',
+          name: 'Label value',
+          description: '',
+          defaultValue: FrameGeometrySourceMode.Auto,
+          settings: {
+            options: [
+              { value: FrameGeometrySourceMode.Geohash, label: 'Geohash' },
+              { value: FrameGeometrySourceMode.Lookup, label: 'Lookup' },
+            ],
+          },
+          showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Label,
+        })
         .addFieldNamePicker({
           path: 'location.latitude',
           name: 'Latitude Field',
@@ -85,8 +106,6 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
             noFieldsMessage: 'No strings fields found',
           },
           showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Geohash,
-          // eslint-disable-next-line react/display-name
-          // info: (props) => <div>HELLO</div>,
         })
         .addFieldNamePicker({
           path: 'location.lookup',
@@ -102,7 +121,15 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
           path: 'location.gazetteer',
           name: 'Gazetteer',
           editor: GazetteerPathEditor,
-          showIf: (opts) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
+          showIf: (opts) => {
+            const mode = opts.location?.mode;
+            if (mode === FrameGeometrySourceMode.Lookup) {
+              return true;
+            }
+            return (
+              mode === FrameGeometrySourceMode.Label && opts?.location?.labelMode === FrameGeometrySourceMode.Lookup
+            );
+          },
         });
     }
     if (layer.registerOptionsUI) {

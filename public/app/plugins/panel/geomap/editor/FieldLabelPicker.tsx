@@ -1,7 +1,6 @@
-import React, { useCallback } from 'react';
-import { DataFrame, FieldNamePickerConfigSettings, SelectableValue, StandardEditorProps } from '@grafana/data';
+import React, { useCallback, useMemo } from 'react';
+import { DataFrame, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import { OptionsPaneOptions } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 
 export interface FieldLabelPickerConfigSettings {
   /**
@@ -18,33 +17,30 @@ export const FieldLabelPicker: React.FC<StandardEditorProps<string, FieldLabelPi
   item,
 }) => {
   const settings: FieldLabelPickerConfigSettings = item.settings ?? {};
-  const names = useFieldDisplayNames(context.data, settings?.filter);
-  const selectOptions = useSelectOptions(names, value);
+  const info = useMemo(() => {
+    return getLabelInfo(context.data, value);
+  }, [context.data, value]);
 
   const onSelectChange = useCallback(
     (selection: SelectableValue<string>) => {
-      if (!frameHasName(selection.value, names)) {
-        return;
-      }
       return onChange(selection.value!);
     },
-    [names, onChange]
+    [onChange]
   );
 
-  const selectedOption = selectOptions.find((v) => v.value === value);
   return (
     <>
       <Select
-        value={selectedOption}
-        options={selectOptions}
+        value={info.selected}
+        options={info.options}
         onChange={onSelectChange}
-        noOptionsMessage={settings.noFieldsMessage}
+        noOptionsMessage={settings.noLabelsMessage}
       />
     </>
   );
 };
 
-function getLabelInfo(frames: DataFrame[], current?: string) {
+export function getLabelInfo(frames: DataFrame[], current?: string) {
   const info = new Map<string, Set<string>>();
   const options: Array<SelectableValue<string>> = [];
   let selected: SelectableValue<string> | undefined = undefined;
@@ -66,6 +62,7 @@ function getLabelInfo(frames: DataFrame[], current?: string) {
             }
             options.push(item);
           }
+          values.add(field.labels[label]);
         }
       }
     }
@@ -74,12 +71,20 @@ function getLabelInfo(frames: DataFrame[], current?: string) {
   const showValues = 5;
   for (const option of options) {
     const allValues = info.get(option.value!)!;
-    const values = new Array(allValues).slice(0);
-    option.description = values.join(', ');
+    let values = [...allValues.keys()];
     if (allValues.size > showValues) {
-      option.description += `, (${allValues.size} values)...`;
+      values = values.slice(0, showValues);
+      values.push(`(${allValues.size} values)...`);
     }
+    option.description = values.join(', ');
   }
 
+  if (current && !selected) {
+    selected = {
+      label: `${current} (not found)`,
+      value: current,
+    };
+    options.push(selected);
+  }
   return { options, selected, info };
 }
