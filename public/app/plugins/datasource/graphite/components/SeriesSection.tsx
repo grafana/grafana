@@ -18,6 +18,6 @@ export function SeriesSection({ dispatch, state }: Props) {
       state={state}
     />
   ) : (
-    <MetricsSection dispatch={dispatch} rawQuery={state.target?.target} segments={state.segments} state={state} />
+    <MetricsSection dispatch={dispatch} segments={state.segments} state={state} />
   );
 }

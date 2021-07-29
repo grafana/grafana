@@ -7,9 +7,8 @@ import {
   handleTagsAutoCompleteError,
 } from './helpers';
 import { GraphiteSegment, GraphiteTag, GraphiteTagOperator } from '../types';
-import debouncePromise from 'debounce-promise';
-
-const DEBOUNCE_RATE = 150;
+import { mapSegmentsToSelectables } from '../components/helpers';
+import { SelectableValue } from '@grafana/data';
 
 /**
  * Providers are hooks for views to provide temporal data for autocomplete. They don't modify the state.
@@ -22,76 +21,84 @@ const DEBOUNCE_RATE = 150;
  * - mixed list of metrics and tags (only when nothing was selected)
  * - list of metric names (if a metric name was selected for this segment)
  */
-export const getAltSegments = debouncePromise(
-  async (state: GraphiteQueryEditorState, index: number, prefix: string): Promise<GraphiteSegment[]> => {
-    let query = prefix.length > 0 ? '*' + prefix + '*' : '*';
-    if (index > 0) {
-      query = state.queryModel.getSegmentPathUpTo(index) + '.' + query;
-    }
-    const options = {
-      range: state.panelCtrl.range,
-      requestId: 'get-alt-segments',
-    };
+export async function getAltSegments(
+  state: GraphiteQueryEditorState,
+  index: number,
+  prefix: string
+): Promise<GraphiteSegment[]> {
+  let query = prefix.length > 0 ? '*' + prefix + '*' : '*';
+  if (index > 0) {
+    query = state.queryModel.getSegmentPathUpTo(index) + '.' + query;
+  }
+  const options = {
+    range: state.panelCtrl.range,
+    requestId: 'get-alt-segments',
+  };
 
-    try {
-      const segments = await state.datasource.metricFindQuery(query, options);
-      const altSegments = map(segments, (segment) => {
-        return state.uiSegmentSrv.newSegment({
-          value: segment.text,
-          expandable: segment.expandable,
-        });
+  try {
+    const segments = await state.datasource.metricFindQuery(query, options);
+    const altSegments = map(segments, (segment) => {
+      return state.uiSegmentSrv.newSegment({
+        value: segment.text,
+        expandable: segment.expandable,
       });
+    });
 
-      if (index > 0 && altSegments.length === 0) {
-        return altSegments;
-      }
+    if (index > 0 && altSegments.length === 0) {
+      return altSegments;
+    }
 
-      // add query references
-      if (index === 0) {
-        eachRight(state.panelCtrl.panel.targets, (target) => {
-          if (target.refId === state.queryModel.target.refId) {
-            return;
-          }
+    // add query references
+    if (index === 0) {
+      eachRight(state.panelCtrl.panel.targets, (target) => {
+        if (target.refId === state.queryModel.target.refId) {
+          return;
+        }
 
-          altSegments.unshift(
-            state.uiSegmentSrv.newSegment({
-              type: 'series-ref',
-              value: '#' + target.refId,
-              expandable: false,
-            })
-          );
-        });
-      }
-
-      // add template variables
-      eachRight(state.templateSrv.getVariables(), (variable) => {
         altSegments.unshift(
           state.uiSegmentSrv.newSegment({
-            type: 'template',
-            value: '$' + variable.name,
-            expandable: true,
+            type: 'series-ref',
+            value: '#' + target.refId,
+            expandable: false,
           })
         );
       });
-
-      // add wildcard option
-      altSegments.unshift(state.uiSegmentSrv.newSegment('*'));
-
-      if (state.supportsTags && index === 0) {
-        removeTaggedEntry(altSegments);
-        return await addAltTagSegments(state, prefix, altSegments);
-      } else {
-        return altSegments;
-      }
-    } catch (err) {
-      handleMetricsAutoCompleteError(state, err);
     }
 
-    return [];
-  },
-  DEBOUNCE_RATE,
-  { leading: true }
-);
+    // add template variables
+    eachRight(state.templateSrv.getVariables(), (variable) => {
+      altSegments.unshift(
+        state.uiSegmentSrv.newSegment({
+          type: 'template',
+          value: '$' + variable.name,
+          expandable: true,
+        })
+      );
+    });
+
+    // add wildcard option
+    altSegments.unshift(state.uiSegmentSrv.newSegment('*'));
+
+    if (state.supportsTags && index === 0) {
+      removeTaggedEntry(altSegments);
+      return await addAltTagSegments(state, prefix, altSegments);
+    } else {
+      return altSegments;
+    }
+  } catch (err) {
+    handleMetricsAutoCompleteError(state, err);
+  }
+
+  return [];
+}
+
+export async function getAltSegmentsSelectables(
+  state: GraphiteQueryEditorState,
+  index: number,
+  prefix: string
+): Promise<Array<SelectableValue<GraphiteSegment>>> {
+  return mapSegmentsToSelectables(await getAltSegments(state, index, prefix));
+}
 
 export function getTagOperators(): GraphiteTagOperator[] {
   return GRAPHITE_TAG_OPERATORS;
@@ -100,69 +107,65 @@ export function getTagOperators(): GraphiteTagOperator[] {
 /**
  * Returns tags as dropdown options
  */
-export const getTags = debouncePromise(
-  async (state: GraphiteQueryEditorState, index: number, tagPrefix: string): Promise<string[]> => {
-    try {
-      const tagExpressions = state.queryModel.renderTagExpressions(index);
-      const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
+export async function getTags(state: GraphiteQueryEditorState, index: number, tagPrefix: string): Promise<string[]> {
+  try {
+    const tagExpressions = state.queryModel.renderTagExpressions(index);
+    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
 
-      const altTags = map(values, 'text');
-      altTags.splice(0, 0, state.removeTagValue);
-      return altTags;
-    } catch (err) {
-      handleTagsAutoCompleteError(state, err);
-    }
+    const altTags = map(values, 'text');
+    altTags.splice(0, 0, state.removeTagValue);
+    return altTags;
+  } catch (err) {
+    handleTagsAutoCompleteError(state, err);
+  }
 
-    return [];
-  },
-  DEBOUNCE_RATE,
-  { leading: true }
-);
+  return [];
+}
 
 /**
  * List of tags when a tag is added. getTags is used for editing.
  * When adding - segment is used. When editing - dropdown is used.
  */
-export const getTagsAsSegments = debouncePromise(
-  async (state: GraphiteQueryEditorState, tagPrefix: string): Promise<GraphiteSegment[]> => {
-    let tagsAsSegments: GraphiteSegment[];
-    try {
-      const tagExpressions = state.queryModel.renderTagExpressions();
-      const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
-      tagsAsSegments = map(values, (val) => {
-        return state.uiSegmentSrv.newSegment({
-          value: val.text,
-          type: 'tag',
-          expandable: false,
-        });
+export async function getTagsAsSegments(
+  state: GraphiteQueryEditorState,
+  tagPrefix: string
+): Promise<GraphiteSegment[]> {
+  let tagsAsSegments: GraphiteSegment[];
+  try {
+    const tagExpressions = state.queryModel.renderTagExpressions();
+    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
+    tagsAsSegments = map(values, (val) => {
+      return state.uiSegmentSrv.newSegment({
+        value: val.text,
+        type: 'tag',
+        expandable: false,
       });
-    } catch (err) {
-      tagsAsSegments = [];
-      handleTagsAutoCompleteError(state, err);
-    }
-
-    return tagsAsSegments;
-  },
-  DEBOUNCE_RATE,
-  { leading: true }
-);
-
-export const getTagValues = debouncePromise(
-  async (state: GraphiteQueryEditorState, tag: GraphiteTag, index: number, valuePrefix: string): Promise<string[]> => {
-    const tagExpressions = state.queryModel.renderTagExpressions(index);
-    const tagKey = tag.key;
-    const values = await state.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix, {});
-    const altValues = map(values, 'text');
-    // Add template variables as additional values
-    eachRight(state.templateSrv.getVariables(), (variable) => {
-      altValues.push('${' + variable.name + ':regex}');
     });
+  } catch (err) {
+    tagsAsSegments = [];
+    handleTagsAutoCompleteError(state, err);
+  }
 
-    return altValues;
-  },
-  DEBOUNCE_RATE,
-  { leading: true }
-);
+  return tagsAsSegments;
+}
+
+export async function getTagValues(
+  state: GraphiteQueryEditorState,
+  tag: GraphiteTag,
+  index: number,
+  valuePrefix: string
+): Promise<string[]> {
+  const tagExpressions = state.queryModel.renderTagExpressions(index);
+  const tagKey = tag.key;
+  const values = await state.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix, {});
+  const altValues = map(values, 'text');
+  // Add template variables as additional values
+  eachRight(state.templateSrv.getVariables(), (variable) => {
+    altValues.push('${' + variable.name + ':regex}');
+  });
+
+  return altValues;
+}
 
 /**
  * Add segments with tags prefixed with "tag: " to include them in the same list as metrics

@@ -3,7 +3,6 @@ import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
 import { TemplateSrv } from '@grafana/runtime';
 import { actions } from './state/actions';
-import { getAltSegments } from './state/providers';
 import { createStore, GraphiteQueryEditorState } from './state/store';
 import {
   GraphiteActionDispatcher,
@@ -29,8 +28,8 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   supportsTags = false;
   paused = false;
 
-  private state: GraphiteQueryEditorState;
-  private readonly dispatch: GraphiteActionDispatcher;
+  state: GraphiteQueryEditorState;
+  readonly dispatch: GraphiteActionDispatcher;
 
   /** @ngInject */
   constructor(
@@ -111,8 +110,8 @@ export class GraphiteQueryCtrl extends QueryCtrl {
    *
    * This is used for new segments and segments with metrics selected.
    */
-  async getAltSegments(index: number, text: string): Promise<GraphiteSegment[]> {
-    return await getAltSegments(this.state, index, text);
+  getAltSegments(index: number, text: string): void {
+    // WIP: moved to state/providers (the same name)
   }
 
   addAltTagSegments(prefix: string, altSegments: any[]) {

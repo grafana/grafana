@@ -71,7 +71,19 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     await buildSegments(state, false);
   }
   if (actions.segmentValueChanged.match(action)) {
-    const { segment, index: segmentIndex } = action.payload;
+    const { segment: segmentOrString, index: segmentIndex } = action.payload;
+
+    let segment;
+    // is segment was changed to a string - create a new segment
+    if (typeof segmentOrString === 'string') {
+      segment = {
+        value: segmentOrString,
+        expandable: true,
+        fake: false,
+      };
+    } else {
+      segment = segmentOrString as GraphiteSegment;
+    }
 
     state.error = null;
     state.segments[segmentIndex] = segment;
