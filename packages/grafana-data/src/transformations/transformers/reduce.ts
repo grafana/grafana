@@ -72,72 +72,105 @@ export function reduceSeriesToRows(
   const calculators = fieldReducers.list(reducerId);
   const reducers = calculators.map((c) => c.id);
   const processed: DataFrame[] = [];
+  const distinctLabels = labelsToFields ? getDistinctLabelKeys(data) : [];
 
   for (const series of data) {
-    const values: ArrayVector[] = [];
-    const fields: Field[] = [];
-    const byId: KeyValue<ArrayVector> = {};
+    const source = series.fields.filter((f) => matcher(f, series, data));
 
-    values.push(new ArrayVector()); // The name
+    const size = source.length;
+    const fields: Field[] = [];
+    const names = new ArrayVector<string>(new Array(size));
     fields.push({
       name: 'Field',
       type: FieldType.string,
-      values: values[0],
+      values: names,
       config: {},
     });
 
-    for (const info of calculators) {
-      const vals = new ArrayVector();
-      byId[info.id] = vals;
-      values.push(vals);
-
-      fields.push({
-        name: info.name,
-        type: FieldType.other, // UNKNOWN until after we call the functions
-        values: values[values.length - 1],
-        config: {},
-      });
-    }
+    const labels: KeyValue<ArrayVector> = {};
     if (labelsToFields) {
-      console.log('TODO');
-    }
-    for (let i = 0; i < series.fields.length; i++) {
-      const field = series.fields[i];
-
-      if (matcher(field, series, data)) {
-        const results = reduceField({
-          field,
-          reducers,
+      for (const key of distinctLabels) {
+        labels[key] = new ArrayVector<string>(new Array(size));
+        fields.push({
+          name: key,
+          type: FieldType.string,
+          values: labels[key],
+          config: {},
         });
-
-        // Update the name list
-        const fieldName = getFieldDisplayName(field, series, data);
-
-        values[0].buffer.push(fieldName);
-
-        for (const info of calculators) {
-          const v = results[info.id];
-          byId[info.id].buffer.push(v);
-        }
       }
     }
 
-    for (const f of fields) {
-      const t = guessFieldTypeForField(f);
+    const calcs: KeyValue<ArrayVector> = {};
+    for (const info of calculators) {
+      calcs[info.id] = new ArrayVector(new Array(size));
+      fields.push({
+        name: info.name,
+        type: FieldType.other, // UNKNOWN until after we call the functions
+        values: calcs[info.id],
+        config: {},
+      });
+    }
 
-      if (t) {
-        f.type = t;
+    for (let i = 0; i < source.length; i++) {
+      const field = source[i];
+      const results = reduceField({
+        field,
+        reducers,
+      });
+
+      if (labelsToFields) {
+        names.buffer[i] = field.name;
+        if (field.labels) {
+          for (const key of Object.keys(field.labels)) {
+            labels[key].set(i, field.labels[key]);
+          }
+        }
+      } else {
+        names.buffer[i] = getFieldDisplayName(field, series, data);
+      }
+
+      for (const info of calculators) {
+        const v = results[info.id];
+        calcs[info.id].buffer[i] = v;
+      }
+    }
+
+    // For reduced fields, we don't know the type until we see the value
+    for (const f of fields) {
+      if (f.type === FieldType.other) {
+        const t = guessFieldTypeForField(f);
+        if (t) {
+          f.type = t;
+        }
       }
     }
 
     processed.push({
       ...series, // Same properties, different fields
       fields,
-      length: values[0].length,
+      length: size,
     });
   }
 
   return mergeResults(processed);
+}
+
+export function getDistinctLabelKeys(frames: DataFrame[]): string[] {
+  const ordered: string[] = [];
+  const keys = new Set<string>();
+  for (const frame of frames) {
+    for (const field of frame.fields) {
+      if (field.labels) {
+        for (const k of Object.keys(field.labels)) {
+          if (!keys.has(k)) {
+            ordered.push(k);
+            keys.add(k);
+          }
+        }
+      }
+    }
+  }
+  return ordered;
 }
 
 /**
