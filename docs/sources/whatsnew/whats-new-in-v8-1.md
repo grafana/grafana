@@ -12,7 +12,7 @@ list = false
 
 > **Note:** This topic will be updated frequently between now and the final release.
 
-Grafana 8.1 builds upon our promise of a composable, open observability platform with new panels and extends functionality launched in Grafana 8.0. We’ve got new  Geomap and Annotations panels, and some great updates to the Time Series panel. We’ve also got new transformations and updates to data sources. For our enterprise customers, we've got additions to fine grained access control, updates to the reporting scheduler, and more. Read on to learn more.
+Grafana 8.1 builds upon our promise of composable, open observability platform with new panels and extends functionality launched in Grafana 8.0. We’ve got new panels, including the Geomap panel, the Annotations panel, and some great updates to the Time Series panel. For enterprise customers we’ve got additions to fine grained access control, updates to the reporting scheduler and more. We’ve also got some new transformations, updates to data sources and more. Details below.
 
 We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post as well. If you’d like all the details you can checkout the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
@@ -20,6 +20,20 @@ We’ve summarized what’s new in the release here, but you might also be inter
 ## Grafana OSS features
 
 These features are included in the Grafana open source edition.
+
+## Geomap panel
+
+Grafana 8.1 introduces the foundation for our new map panel. This new panel leverages [OpenLayers](https://openlayers.org/) and gives us a flexible solution for extending the way we use the new Geomap panel moving forward. The new Geomap panel includes multiple base layer styles (map layer options), as well as a more open data layer. The data layer can use coordinates and geo-hashed data in addition to a lookup table. 
+
+The Geomap panel is also able to share views across multiple Geomap panels on the same dashboard, making it straightforward to visualize and explore multiple types of geospatial data using the same map zoom and focus settings. For more information, refer to [Geomap panel]({{< relref "../panels/visualizations/geomap.md" >}}) in our product documentation.
+
+{{< figure src="/static/img/docs/geomap/geomap_heatmap.png" max-width="1200px" caption="Geomap panel: Heatmap" >}}
+
+## Annotation panel
+
+The new Annotations panel shows a list of available annotations you can use to create lists of annotated data available within your organization. Various options are available to filter the list based on tags and on the current dashboard. This panel makes it easy to find and filter annotated data within and across multiple dashboards.
+
+{{< figure src="/static/img/docs/annolist/annolist.png" max-width="1200px" caption="Geomap panel: Heatmap" >}}
 
 ### Time series panel updates
 
@@ -34,14 +48,6 @@ Color scheme: **Green-Yellow-Red (by value)**
 For more on how to configure Graphs with by value color schemes read [Graph and color schemes]({{< relref "../panels/visualizations/time-series/_index.md" >}}).
 
 We've also added the ability to [create annotations on the new Time series panel]({{< relref "../panels/visualizations/time-series/annotate-time-series.md" >}}), bringing it closer to parity with the legacy Graph Panel. [Read more about the time series panel here]({{< relref "../panels/visualizations/time-series/_index.md" >}}). 
-
-### Geomap panel
-
-Grafana 8.1 introduces the foundation for our new map panel. This new panel leverages [OpenLayers](https://openlayers.org/) and gives us a flexible solution for extending the way we use the new Geomap panel moving forward. The new Geomap panel includes multiple base layer styles (map layer options), as well as a more open data layer. The the data layer is able to use coordinates and geohashed in addition to a lookup-table. 
-
-The new Geomap panel is also able to share views across multiple Geomap panels on the same dashboard, making it straightforward to visualize and explore multiple types of geospacial data using the same map zoom and focus settings. Read about this and more on the [Geomap panel]({{< relref "../panels/visualizations/geomap.md" >}}) page.
-
-{{< figure src="/static/img/docs/geomap/geomap_heatmap.png" max-width="1200px" caption="Geomap panel: Heatmap" >}}
 
 ### Annotation panel
 
@@ -89,3 +95,4 @@ These features are included in the Grafana Enterprise edition.
 ### Oauth2 - Team Sync to Group Mapping 
 
 With Team Sync you can map your Generic OAuth groups to teams in Grafana so that the users are automatically added to the correct teams.
+
