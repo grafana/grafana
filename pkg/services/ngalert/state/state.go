@@ -13,6 +13,7 @@ type State struct {
 	OrgID              int64
 	CacheId            string
 	State              eval.State
+	Resolved           bool
 	Results            []Evaluation
 	StartsAt           time.Time
 	EndsAt             time.Time
@@ -112,7 +113,7 @@ func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) 
 }
 
 func (a *State) NeedsSending() bool {
-	return a.State == eval.Alerting
+	return a.State == eval.Alerting || a.Resolved
 }
 
 func (a *State) Equals(b *State) bool {
