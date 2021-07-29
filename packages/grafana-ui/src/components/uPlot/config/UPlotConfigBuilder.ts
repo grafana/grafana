@@ -1,4 +1,4 @@
-import uPlot, { Cursor, Band, Hooks, Select } from 'uplot';
+import uPlot, { Cursor, Band, Hooks, Select, AlignedData } from 'uplot';
 import { merge } from 'lodash';
 import {
   DataFrame,
@@ -35,6 +35,8 @@ const cursorDefaults: Cursor = {
   },
 };
 
+type PrepData = (frame: DataFrame) => AlignedData;
+
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
@@ -55,6 +57,8 @@ export class UPlotConfigBuilder {
    * that sets tooltips state.
    */
   tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
+
+  prepData: PrepData | undefined = undefined;
 
   constructor(timeZone: TimeZone = DefaultTimeZone) {
     this.tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
@@ -151,6 +155,10 @@ export class UPlotConfigBuilder {
 
   setTooltipInterpolator(interpolator: PlotTooltipInterpolator) {
     this.tooltipInterpolator = interpolator;
+  }
+
+  setPrepData(prepData: PrepData) {
+    this.prepData = prepData;
   }
 
   setSync() {
