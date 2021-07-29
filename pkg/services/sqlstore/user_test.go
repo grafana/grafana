@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -119,7 +118,7 @@ func TestUserDataAccess(t *testing.T) {
 	t.Run("Testing DB - multiple users", func(t *testing.T) {
 		ss = InitTestDB(t)
 
-		users := createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
+		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
 			return &models.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
 				Name:       fmt.Sprint("user", i),
@@ -188,48 +187,6 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 		require.Len(t, query.Result.Users, 1)
 		require.EqualValues(t, query.Result.TotalCount, 1)
-
-		// Return list users based on their auth type
-		for index, user := range users {
-			authModule := "killa"
-
-			// define every second user as ldap
-			if index%2 == 0 {
-				authModule = "ldap"
-			}
-
-			cmd2 := &models.SetAuthInfoCommand{
-				UserId:     user.Id,
-				AuthModule: authModule,
-				AuthId:     "gorilla",
-			}
-			err := SetAuthInfo(cmd2)
-			require.Nil(t, err)
-		}
-		query = models.SearchUsersQuery{AuthModule: "ldap"}
-		err = SearchUsers(&query)
-		require.Nil(t, err)
-
-		require.Len(t, query.Result.Users, 3)
-
-		zero, second, fourth := false, false, false
-		for _, user := range query.Result.Users {
-			if user.Name == "user0" {
-				zero = true
-			}
-
-			if user.Name == "user2" {
-				second = true
-			}
-
-			if user.Name == "user4" {
-				fourth = true
-			}
-		}
-
-		require.True(t, zero)
-		require.True(t, second)
-		require.True(t, fourth)
 	})
 
 	t.Run("Testing DB - return list users based on their is_disabled flag", func(t *testing.T) {
@@ -490,107 +447,6 @@ func TestUserDataAccess(t *testing.T) {
 				IsDisabled: false,
 			}
 		})
-		// Find a user to set tokens on
-		login := "loginuser0"
-
-		// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
-		// Make the first log-in during the past
-		getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-		query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "ldap", AuthId: "ldap0"}
-		err := GetUserByAuthInfo(query)
-		getTime = time.Now
-
-		require.Nil(t, err)
-		require.Equal(t, query.Result.Login, login)
-
-		// Add a second auth module for this user
-		// Have this module's last log-in be more recent
-		getTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
-		query = &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "oauth", AuthId: "oauth0"}
-		err = GetUserByAuthInfo(query)
-		getTime = time.Now
-
-		require.Nil(t, err)
-		require.Equal(t, query.Result.Login, login)
-
-		// Return the only most recently used auth_module
-		searchUserQuery := &models.SearchUsersQuery{}
-		err = SearchUsers(searchUserQuery)
-
-		require.Nil(t, err)
-		require.Len(t, searchUserQuery.Result.Users, 5)
-		for _, user := range searchUserQuery.Result.Users {
-			if user.Login == login {
-				require.Len(t, user.AuthModule, 1)
-				require.Equal(t, user.AuthModule[0], "oauth")
-			}
-		}
-
-		// "log in" again with the first auth module
-		updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: query.Result.Id, AuthModule: "ldap", AuthId: "ldap1"}
-		err = UpdateAuthInfo(updateAuthCmd)
-		require.Nil(t, err)
-
-		searchUserQuery = &models.SearchUsersQuery{}
-		err = SearchUsers(searchUserQuery)
-
-		require.Nil(t, err)
-		for _, user := range searchUserQuery.Result.Users {
-			if user.Login == login {
-				require.Len(t, user.AuthModule, 1)
-				require.Equal(t, user.AuthModule[0], "ldap")
-			}
-		}
-
-		// Re-init DB
-		ss = InitTestDB(t)
-		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
-			return &models.CreateUserCommand{
-				Email:      fmt.Sprint("user", i, "@test.com"),
-				Name:       fmt.Sprint("user", i),
-				Login:      fmt.Sprint("loginuser", i),
-				IsDisabled: false,
-			}
-		})
-
-		// Search LDAP users
-		for i := 0; i < 5; i++ {
-			// Find a user to set tokens on
-			login = fmt.Sprint("loginuser", i)
-
-			// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
-			// Make the first log-in during the past
-			getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-			query = &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "ldap", AuthId: fmt.Sprint("ldap", i)}
-			err = GetUserByAuthInfo(query)
-			getTime = time.Now
-
-			require.Nil(t, err)
-			require.Equal(t, query.Result.Login, login)
-		}
-
-		// Log in first user with oauth
-		login = "loginuser0"
-		getTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
-		query = &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "oauth", AuthId: "oauth0"}
-		err = GetUserByAuthInfo(query)
-		getTime = time.Now
-
-		require.Nil(t, err)
-		require.Equal(t, query.Result.Login, login)
-
-		// Should only return users recently logged in with ldap when filtered by ldap auth module
-		searchUserQuery = &models.SearchUsersQuery{AuthModule: "ldap"}
-		err = SearchUsers(searchUserQuery)
-
-		require.Nil(t, err)
-		require.Len(t, searchUserQuery.Result.Users, 4)
-		for _, user := range searchUserQuery.Result.Users {
-			if user.Login == login {
-				require.Len(t, user.AuthModule, 1)
-				require.Equal(t, user.AuthModule[0], "ldap")
-			}
-		}
 	})
 
 	t.Run("Testing DB - grafana admin users", func(t *testing.T) {
