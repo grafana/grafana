@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
 )
 
@@ -54,7 +53,6 @@ type Service struct {
 
 // Init initialises the service.
 func (s *Service) Init() error {
-	s.registry["prometheus"] = prometheus.New(s.HTTPClientProvider)
 	s.registry["mssql"] = mssql.NewExecutor
 	s.registry["postgres"] = s.PostgresService.NewExecutor
 	s.registry["mysql"] = mysql.New(s.HTTPClientProvider)
