@@ -28,7 +28,7 @@ func FromAlertStateToPostableAlerts(logger log.Logger, firingStates []*state.Sta
 	}
 
 	for _, alertState := range firingStates {
-		if !alertState.NeedsSending() {
+		if !alertState.NeedsSending(stateManager.ResendDelay) {
 			continue
 		}
 		nL := alertState.Labels.Copy()

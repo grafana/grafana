@@ -21,8 +21,9 @@ type Manager struct {
 	log     log.Logger
 	metrics *metrics.Metrics
 
-	cache *cache
-	quit  chan struct{}
+	cache       *cache
+	quit        chan struct{}
+	ResendDelay time.Duration
 
 	ruleStore     store.RuleStore
 	instanceStore store.InstanceStore
@@ -32,6 +33,7 @@ func NewManager(logger log.Logger, metrics *metrics.Metrics, ruleStore store.Rul
 	manager := &Manager{
 		cache:         newCache(logger, metrics),
 		quit:          make(chan struct{}),
+		ResendDelay:   1 * time.Minute, // TODO: make this configurable
 		log:           logger,
 		metrics:       metrics,
 		ruleStore:     ruleStore,
