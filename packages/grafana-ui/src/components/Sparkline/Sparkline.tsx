@@ -46,10 +46,9 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     super(props);
 
     const alignedDataFrame = preparePlotFrame(props.sparkline, props.config);
-    const data = preparePlotData(alignedDataFrame);
 
     this.state = {
-      data,
+      data: preparePlotData(alignedDataFrame),
       alignedDataFrame,
       configBuilder: this.prepareConfig(alignedDataFrame),
     };
