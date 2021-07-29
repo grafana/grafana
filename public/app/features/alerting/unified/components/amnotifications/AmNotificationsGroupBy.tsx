@@ -7,10 +7,11 @@ import { css } from '@emotion/css';
 
 interface Props {
   groups: AlertmanagerGroup[];
+  groupBy: string[];
   onGroupingChange: (keys: string[]) => void;
 }
 
-export const AmNotificationsGroupBy = ({ groups, onGroupingChange }: Props) => {
+export const AmNotificationsGroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
   const styles = useStyles2(getStyles);
   const labelKeyOptions = uniq(
     groups.reduce((keys, group) => {
@@ -32,6 +33,7 @@ export const AmNotificationsGroupBy = ({ groups, onGroupingChange }: Props) => {
     <div className={styles.wrapper}>
       <Label>Custom group by</Label>
       <MultiSelect
+        value={groupBy}
         placeholder="Group by"
         prefix={<Icon name={'tag-alt'} />}
         onChange={(items) => {
@@ -46,6 +48,6 @@ export const AmNotificationsGroupBy = ({ groups, onGroupingChange }: Props) => {
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     width: 340px;
-    margin-left: ${theme.spacing(2)};
+    margin-left: ${theme.spacing(1)};
   `,
 });
