@@ -3,8 +3,7 @@ import { Dispatch } from 'redux';
 import { Segment, SegmentAsync } from '@grafana/ui';
 import { actions } from '../state/actions';
 import { GraphiteTag, GraphiteTagOperator } from '../types';
-import { mapStringsToSelectables } from './helpers';
-import { getTagOperators, getTags, getTagValues } from '../state/providers';
+import { getTagOperatorsSelectables, getTagsSelectables, getTagValuesSelectables } from '../state/providers';
 import { GraphiteQueryEditorState } from '../state/store';
 import { debounce } from 'lodash';
 
@@ -18,7 +17,7 @@ type Props = {
 export function TagEditor({ dispatch, tag, tagIndex, state }: Props) {
   const getTagsOptions = useCallback(
     async (inputValue: string | undefined) => {
-      return mapStringsToSelectables(await getTags(state, tagIndex, inputValue || ''));
+      return await getTagsSelectables(state, tagIndex, inputValue || '');
     },
     [state, tagIndex]
   );
@@ -26,7 +25,7 @@ export function TagEditor({ dispatch, tag, tagIndex, state }: Props) {
 
   const getTagValueOptions = useCallback(
     async (inputValue: string | undefined) => {
-      return mapStringsToSelectables(await getTagValues(state, tag, tagIndex, inputValue || ''));
+      return await getTagValuesSelectables(state, tag, tagIndex, inputValue || '');
     },
     [state, tagIndex, tag]
   );
@@ -54,7 +53,7 @@ export function TagEditor({ dispatch, tag, tagIndex, state }: Props) {
       <Segment<GraphiteTagOperator>
         inputMinWidth={50}
         value={tag.operator}
-        options={mapStringsToSelectables(getTagOperators())}
+        options={getTagOperatorsSelectables()}
         onChange={(value) => {
           dispatch(
             actions.tagChanged({

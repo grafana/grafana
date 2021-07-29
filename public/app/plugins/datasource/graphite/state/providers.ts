@@ -7,7 +7,7 @@ import {
   handleTagsAutoCompleteError,
 } from './helpers';
 import { GraphiteSegment, GraphiteTag, GraphiteTagOperator } from '../types';
-import { mapSegmentsToSelectables } from '../components/helpers';
+import { mapSegmentsToSelectables, mapStringsToSelectables } from '../components/helpers';
 import { SelectableValue } from '@grafana/data';
 
 /**
@@ -21,7 +21,7 @@ import { SelectableValue } from '@grafana/data';
  * - mixed list of metrics and tags (only when nothing was selected)
  * - list of metric names (if a metric name was selected for this segment)
  */
-export async function getAltSegments(
+async function getAltSegments(
   state: GraphiteQueryEditorState,
   index: number,
   prefix: string
@@ -100,14 +100,14 @@ export async function getAltSegmentsSelectables(
   return mapSegmentsToSelectables(await getAltSegments(state, index, prefix));
 }
 
-export function getTagOperators(): GraphiteTagOperator[] {
-  return GRAPHITE_TAG_OPERATORS;
+export function getTagOperatorsSelectables(): Array<SelectableValue<GraphiteTagOperator>> {
+  return mapStringsToSelectables(GRAPHITE_TAG_OPERATORS);
 }
 
 /**
  * Returns tags as dropdown options
  */
-export async function getTags(state: GraphiteQueryEditorState, index: number, tagPrefix: string): Promise<string[]> {
+async function getTags(state: GraphiteQueryEditorState, index: number, tagPrefix: string): Promise<string[]> {
   try {
     const tagExpressions = state.queryModel.renderTagExpressions(index);
     const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
@@ -122,14 +122,19 @@ export async function getTags(state: GraphiteQueryEditorState, index: number, ta
   return [];
 }
 
+export async function getTagsSelectables(
+  state: GraphiteQueryEditorState,
+  index: number,
+  tagPrefix: string
+): Promise<Array<SelectableValue<string>>> {
+  return mapStringsToSelectables(await getTags(state, index, tagPrefix));
+}
+
 /**
  * List of tags when a tag is added. getTags is used for editing.
  * When adding - segment is used. When editing - dropdown is used.
  */
-export async function getTagsAsSegments(
-  state: GraphiteQueryEditorState,
-  tagPrefix: string
-): Promise<GraphiteSegment[]> {
+async function getTagsAsSegments(state: GraphiteQueryEditorState, tagPrefix: string): Promise<GraphiteSegment[]> {
   let tagsAsSegments: GraphiteSegment[];
   try {
     const tagExpressions = state.queryModel.renderTagExpressions();
@@ -149,7 +154,14 @@ export async function getTagsAsSegments(
   return tagsAsSegments;
 }
 
-export async function getTagValues(
+export async function getTagsAsSegmentsSelectables(
+  state: GraphiteQueryEditorState,
+  tagPrefix: string
+): Promise<Array<SelectableValue<GraphiteSegment>>> {
+  return mapSegmentsToSelectables(await getTagsAsSegments(state, tagPrefix));
+}
+
+async function getTagValues(
   state: GraphiteQueryEditorState,
   tag: GraphiteTag,
   index: number,
@@ -165,6 +177,15 @@ export async function getTagValues(
   });
 
   return altValues;
+}
+
+export async function getTagValuesSelectables(
+  state: GraphiteQueryEditorState,
+  tag: GraphiteTag,
+  index: number,
+  valuePrefix: string
+): Promise<Array<SelectableValue<string>>> {
+  return mapStringsToSelectables(await getTagValues(state, tag, index, valuePrefix));
 }
 
 /**

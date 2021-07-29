@@ -5,7 +5,7 @@ import { GraphiteQueryCtrl } from '../query_ctrl';
 import { TemplateSrvStub } from 'test/specs/helpers';
 import { silenceConsoleOutput } from 'test/core/utils/silenceConsoleOutput';
 import { actions } from '../state/actions';
-import { getAltSegments, getTags, getTagsAsSegments } from '../state/providers';
+import { getAltSegmentsSelectables, getTagsSelectables, getTagsAsSegmentsSelectables } from '../state/providers';
 import { GraphiteSegment } from '../types';
 
 jest.mock('app/core/utils/promiseToDigest', () => ({
@@ -193,7 +193,7 @@ describe('GraphiteQueryCtrl', () => {
     beforeEach(async () => {
       ctx.ctrl.state.datasource.metricFindQuery = () => Promise.resolve([]);
       await changeTarget(ctx, 'test.count');
-      ctx.altSegments = await getAltSegments(ctx.ctrl.state, 1, '');
+      ctx.altSegments = await getAltSegmentsSelectables(ctx.ctrl.state, 1, '');
     });
 
     it('should have no segments', () => {
@@ -213,10 +213,9 @@ describe('GraphiteQueryCtrl', () => {
       );
     });
 
-    it('getAltSegments should handle autocomplete errors', async () => {
+    it('getAltSegmentsSelectables should handle autocomplete errors', async () => {
       await expect(async () => {
-        await getAltSegments(ctx.ctrl.state, 0, 'any');
-        console.log('alt segments 1 done.');
+        await getAltSegmentsSelectables(ctx.ctrl.state, 0, 'any');
         expect(mockDispatch).toBeCalledWith(
           expect.objectContaining({
             type: 'appNotifications/notifyApp',
@@ -225,15 +224,11 @@ describe('GraphiteQueryCtrl', () => {
       }).not.toThrow();
     });
 
-    it('getAltSegments should display the error message only once', async () => {
-      await getAltSegments(ctx.ctrl.state, 0, 'any');
-      console.log('alt segments 2 done.');
-
+    it('getAltSegmentsSelectables should display the error message only once', async () => {
+      await getAltSegmentsSelectables(ctx.ctrl.state, 0, 'any');
       expect(mockDispatch.mock.calls.length).toBe(1);
 
-      await getAltSegments(ctx.ctrl.state, 0, 'any');
-      console.log('alt segments 3 done.');
-
+      await getAltSegmentsSelectables(ctx.ctrl.state, 0, 'any');
       expect(mockDispatch.mock.calls.length).toBe(1);
     });
   });
@@ -249,9 +244,9 @@ describe('GraphiteQueryCtrl', () => {
       );
     });
 
-    it('getTags should handle autocomplete errors', async () => {
+    it('getTagsSelectables should handle autocomplete errors', async () => {
       await expect(async () => {
-        await getTags(ctx.ctrl.state, 0, 'any');
+        await getTagsSelectables(ctx.ctrl.state, 0, 'any');
         expect(mockDispatch).toBeCalledWith(
           expect.objectContaining({
             type: 'appNotifications/notifyApp',
@@ -260,17 +255,17 @@ describe('GraphiteQueryCtrl', () => {
       }).not.toThrow();
     });
 
-    it('getTags should display the error message only once', async () => {
-      await getTags(ctx.ctrl.state, 0, 'any');
+    it('getTagsSelectables should display the error message only once', async () => {
+      await getTagsSelectables(ctx.ctrl.state, 0, 'any');
       expect(mockDispatch.mock.calls.length).toBe(1);
 
-      await getTags(ctx.ctrl.state, 0, 'any');
+      await getTagsSelectables(ctx.ctrl.state, 0, 'any');
       expect(mockDispatch.mock.calls.length).toBe(1);
     });
 
-    it('getTagsAsSegments should handle autocomplete errors', async () => {
+    it('getTagsAsSegmentsSelectables should handle autocomplete errors', async () => {
       await expect(async () => {
-        await getTagsAsSegments(ctx.ctrl.state, 'any');
+        await getTagsAsSegmentsSelectables(ctx.ctrl.state, 'any');
         expect(mockDispatch).toBeCalledWith(
           expect.objectContaining({
             type: 'appNotifications/notifyApp',
@@ -279,11 +274,11 @@ describe('GraphiteQueryCtrl', () => {
       }).not.toThrow();
     });
 
-    it('getTagsAsSegments should display the error message only once', async () => {
-      await getTagsAsSegments(ctx.ctrl.state, 'any');
+    it('getTagsAsSegmentsSelectables should display the error message only once', async () => {
+      await getTagsAsSegmentsSelectables(ctx.ctrl.state, 'any');
       expect(mockDispatch.mock.calls.length).toBe(1);
 
-      await getTagsAsSegments(ctx.ctrl.state, 'any');
+      await getTagsAsSegmentsSelectables(ctx.ctrl.state, 'any');
       expect(mockDispatch.mock.calls.length).toBe(1);
     });
   });

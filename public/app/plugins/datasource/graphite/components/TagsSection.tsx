@@ -3,7 +3,7 @@ import { Dispatch } from 'redux';
 import { GraphiteSegment } from '../types';
 import { GraphiteTag } from '../graphite_query';
 import { GraphiteQueryEditorState } from '../state/store';
-import { getTagsAsSegments } from '../state/providers';
+import { getTagsAsSegmentsSelectables } from '../state/providers';
 import { Button, SegmentAsync, useStyles2 } from '@grafana/ui';
 import { actions } from '../state/actions';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -26,7 +26,7 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
 
   const getTagsAsSegmentsOptions = useCallback(
     async (inputValue: string) => {
-      return mapSegmentsToSelectables(await getTagsAsSegments(state, inputValue));
+      return await getTagsAsSegmentsSelectables(state, inputValue);
     },
     [state]
   );
