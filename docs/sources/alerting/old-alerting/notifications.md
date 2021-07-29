@@ -57,6 +57,7 @@ Name | Type | Supports images | Support alert rule tags
 [Email](#email) | `email` | yes | no
 [Google Hangouts Chat](#google-hangouts-chat) | `googlechat` | yes, external only | no
 Hipchat | `hipchat` | yes, external only | no
+[iLert](#ilert) | `webhook` | yes, external only | yes
 [Kafka](#kafka) | `kafka` | yes, external only | no
 Line | `line` | yes, external only | no
 Microsoft Teams | `teams` | yes, external only | no
@@ -248,6 +249,10 @@ Once these two properties are set, you can send the alerts to Kafka for further 
 ### Google Hangouts Chat
 
 Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. For more information about configuring a webhook, refer to [webhooks](https://developers.google.com/hangouts/chat/how-tos/webhooks).
+
+### iLert
+
+[iLert](https://www.ilert.com) is an alerting and on-call management platform for DevOps teams and helps you always alert the right person using iLert's on-call schedules, automatic escalation, and multiple alerting channels. iLert can be configured as a notification channel using Grafana's webhook notifier. Whenever Grafana triggers an alert, iLert will alert the on-call person through their preferred channel, including SMS, phone calls, push notifications and Slack. iLert will automatically escalate to the next person, if the alert is not acknowledged. iLert also lets you define alerting rules based on support hours and delay alerts until your support hours start. Refer to iLert's [Grafana integration documentation](https://docs.ilert.com/integrations/grafana) for information on how to setup the integration.
 
 ### Prometheus Alertmanager
 
