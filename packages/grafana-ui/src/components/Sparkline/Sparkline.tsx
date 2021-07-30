@@ -118,9 +118,6 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
       range: () => {
         const { sparkline } = this.props;
         if (sparkline.x) {
-          if (sparkline.timeRange && sparkline.x.type === FieldType.time) {
-            return [sparkline.timeRange.from.valueOf(), sparkline.timeRange.to.valueOf()];
-          }
           const vals = sparkline.x.values;
           return [vals.get(0), vals.get(vals.length - 1)];
         }
