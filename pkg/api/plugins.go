@@ -444,8 +444,9 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 func shouldExclude(fi os.FileInfo) bool {
 	normalizedFilename := strings.ToLower(fi.Name())
 
+	isUnixExecutable := fi.Mode()&0111 == 0111
 	isWindowsExecutable := strings.HasSuffix(normalizedFilename, ".exe")
 	isScript := strings.HasSuffix(normalizedFilename, ".sh")
 
-	return isWindowsExecutable || isScript
+	return isUnixExecutable || isWindowsExecutable || isScript
 }
