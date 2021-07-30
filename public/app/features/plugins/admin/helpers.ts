@@ -109,7 +109,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: Plugin): Catalo
     info: {
       logos,
     },
-    isCore: Boolean(remote?.internal || local?.signature === 'internal'),
+    isCore: Boolean(remote?.internal || local?.signature === PluginSignatureStatus.internal),
     isDev: Boolean(local?.dev),
     isEnterprise: remote?.status === 'enterprise' || false,
     isInstalled: Boolean(local),

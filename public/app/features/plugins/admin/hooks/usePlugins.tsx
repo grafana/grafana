@@ -38,7 +38,7 @@ export function usePlugins(): CatalogPluginsState {
 
       if (unique[plugin.slug]) {
         unique[plugin.slug] = mapToCatalogPlugin(
-          installed.find((plugin) => plugin.id),
+          installed.find((installedPlugin) => installedPlugin.id === plugin.slug),
           plugin
         );
       } else {
