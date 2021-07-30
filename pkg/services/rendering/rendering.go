@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -113,6 +114,17 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		rs.renderAction = rs.renderViaPlugin
 		rs.renderCSVAction = rs.renderCSVViaPlugin
 		<-ctx.Done()
+
+		// On Windows, Chromium is generating a debug.log file that breaks signature check on next restart
+		debugFilePath := path.Join(rs.pluginInfo.PluginDir, "chrome-win/debug.log")
+		if _, err := os.Stat(debugFilePath); err == nil {
+			err = os.Remove(debugFilePath)
+			if err != nil {
+				rs.log.Warn("Couldn't remove debug.log file, the renderer plugin will not be able to pass the signature check until this file is deleted",
+					"err", err)
+			}
+		}
+
 		return nil
 	}
 
