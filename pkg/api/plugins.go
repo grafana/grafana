@@ -292,7 +292,7 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	if shouldExclude(fi) {
+	if accessForbidden(fi, c.Req.URL.Path, pluginFilePath, plugin) {
 		c.JsonApiErr(403, "Plugin file access forbidden",
 			fmt.Errorf("access is forbidden to executable plugin file %s", pluginFilePath))
 		return
@@ -441,12 +441,22 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	return response.Error(500, "Plugin request failed", err)
 }
 
-func shouldExclude(fi os.FileInfo) bool {
-	normalizedFilename := strings.ToLower(fi.Name())
+func accessForbidden(fi os.FileInfo, reqPath string, pluginFilePath string, p *plugins.PluginBase) bool {
+	reqPath = strings.TrimPrefix(reqPath, "/")
+	isLogo := strings.EqualFold(reqPath, p.Info.Logos.Large) || strings.EqualFold(reqPath, p.Info.Logos.Small)
+	if isLogo {
+		return false
+	}
+
+	pluginFileNoExt := strings.TrimSuffix(pluginFilePath, filepath.Ext(pluginFilePath))
+	isModuleJS := strings.HasSuffix(pluginFileNoExt, p.Module) && strings.HasSuffix(pluginFilePath, "module.js")
+	if isModuleJS {
+		return false
+	}
 
 	isUnixExecutable := fi.Mode()&0111 == 0111
-	isWindowsExecutable := strings.HasSuffix(normalizedFilename, ".exe")
-	isScript := strings.HasSuffix(normalizedFilename, ".sh")
+	isWindowsExecutable := strings.EqualFold(filepath.Ext(fi.Name()), ".exe")
+	isScript := strings.EqualFold(filepath.Ext(fi.Name()), ".sh")
 
 	return isUnixExecutable || isWindowsExecutable || isScript
 }
