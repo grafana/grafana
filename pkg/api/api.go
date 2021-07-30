@@ -445,11 +445,10 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, accesscontrol.ActionServerStatsRead), routing.Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, bind(dtos.PauseAllAlertsCommand{}), routing.Wrap(PauseAllAlerts))
 
-		adminRoute.Post("/provisioning/dashboards/reload", authorize(reqGrafanaAdmin, ActionProvisioningReload, ScopeProvisionersDashboards), routing.Wrap(hs.AdminProvisioningReloadDashboards))
-		adminRoute.Post("/provisioning/plugins/reload", authorize(reqGrafanaAdmin, ActionProvisioningReload, ScopeProvisionersPlugins), routing.Wrap(hs.AdminProvisioningReloadPlugins))
-		adminRoute.Post("/provisioning/datasources/reload", authorize(reqGrafanaAdmin, ActionProvisioningReload, ScopeProvisionersDatasources), routing.Wrap(hs.AdminProvisioningReloadDatasources))
-		adminRoute.Post("/provisioning/notifications/reload", authorize(reqGrafanaAdmin, ActionProvisioningReload, ScopeProvisionersNotifications), routing.Wrap(hs.AdminProvisioningReloadNotifications))
-
+		adminRoute.Post("/provisioning/dashboards/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadDashboards))
+		adminRoute.Post("/provisioning/plugins/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadPlugins))
+		adminRoute.Post("/provisioning/datasources/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadDatasources))
+		adminRoute.Post("/provisioning/notifications/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadNotifications))
 		adminRoute.Post("/ldap/reload", authorize(reqGrafanaAdmin, accesscontrol.ActionLDAPConfigReload), routing.Wrap(hs.ReloadLDAPCfg))
 		adminRoute.Post("/ldap/sync/:id", authorize(reqGrafanaAdmin, accesscontrol.ActionLDAPUsersSync), routing.Wrap(hs.PostSyncUserWithLDAP))
 		adminRoute.Get("/ldap/:username", authorize(reqGrafanaAdmin, accesscontrol.ActionLDAPUsersRead), routing.Wrap(hs.GetUserFromLDAP))

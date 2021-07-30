@@ -78,7 +78,7 @@ type provisioningServiceImpl struct {
 }
 
 func (ps *provisioningServiceImpl) Init() error {
-	return nil
+	return ps.RunInitProvisioners()
 }
 
 func (ps *provisioningServiceImpl) RunInitProvisioners() error {

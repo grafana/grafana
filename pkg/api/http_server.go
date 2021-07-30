@@ -117,7 +117,8 @@ func (hs *HTTPServer) Init() error {
 
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
-	return hs.declareFixedRoles()
+
+	return nil
 }
 
 func (hs *HTTPServer) AddMiddleware(middleware macaron.Handler) {
