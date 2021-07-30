@@ -15,6 +15,8 @@ import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
+  AnnotationChangeEvent,
+  AnnotationEventUIModel,
   DashboardCursorSync,
   EventFilterOptions,
   FieldConfigSource,
@@ -31,6 +33,8 @@ import { loadSnapshotData } from '../utils/loadSnapshotData';
 import { RefreshEvent, RenderEvent } from 'app/types/events';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
+import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
+import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -74,6 +78,10 @@ export class PanelChrome extends Component<Props, State> {
         eventBus,
         onSeriesColorChange: this.onSeriesColorChange,
         onToggleSeriesVisibility: this.onSeriesVisibilityChange,
+        onAnnotationCreate: this.onAnnotationCreate,
+        onAnnotationUpdate: this.onAnnotationUpdate,
+        onAnnotationDelete: this.onAnnotationDelete,
+        canAddAnnotations: () => Boolean(props.dashboard.meta.canEdit || props.dashboard.meta.canMakeEditable),
       },
       data: this.getInitialPanelDataState(),
     };
@@ -243,9 +251,10 @@ export class PanelChrome extends Component<Props, State> {
       panel.runAllPanelQueries(this.props.dashboard.id, this.props.dashboard.getTimezone(), timeData, width);
     } else {
       // The panel should render on refresh as well if it doesn't have a query, like clock panel
-      this.setState((prevState) => ({
-        data: { ...prevState.data, timeRange: this.timeSrv.timeRange() },
-      }));
+      this.setState({
+        data: { ...this.state.data, timeRange: this.timeSrv.timeRange() },
+        renderCounter: this.state.renderCounter + 1,
+      });
     }
   };
 
@@ -266,6 +275,46 @@ export class PanelChrome extends Component<Props, State> {
     if (this.state.errorMessage !== message) {
       this.setState({ errorMessage: message });
     }
+  };
+
+  onAnnotationCreate = async (event: AnnotationEventUIModel) => {
+    const isRegion = event.from !== event.to;
+    const anno = {
+      dashboardId: this.props.dashboard.id,
+      panelId: this.props.panel.id,
+      isRegion,
+      time: event.from,
+      timeEnd: isRegion ? event.to : 0,
+      tags: event.tags,
+      text: event.description,
+    };
+    await saveAnnotation(anno);
+    getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
+    this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));
+  };
+
+  onAnnotationDelete = async (id: string) => {
+    await deleteAnnotation({ id });
+    getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
+    this.state.context.eventBus.publish(new AnnotationChangeEvent({ id }));
+  };
+
+  onAnnotationUpdate = async (event: AnnotationEventUIModel) => {
+    const isRegion = event.from !== event.to;
+    const anno = {
+      id: event.id,
+      dashboardId: this.props.dashboard.id,
+      panelId: this.props.panel.id,
+      isRegion,
+      time: event.from,
+      timeEnd: isRegion ? event.to : 0,
+      tags: event.tags,
+      text: event.description,
+    };
+    await updateAnnotation(anno);
+
+    getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
+    this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));
   };
 
   get hasPanelSnapshot() {
@@ -360,12 +409,7 @@ export class PanelChrome extends Component<Props, State> {
 
   hasOverlayHeader() {
     const { panel } = this.props;
-    const { errorMessage, data } = this.state;
-
-    // always show normal header if we have an error message
-    if (errorMessage) {
-      return false;
-    }
+    const { data } = this.state;
 
     // always show normal header if we have time override
     if (data.request && data.request.timeInfo) {
@@ -391,7 +435,10 @@ export class PanelChrome extends Component<Props, State> {
     });
 
     return (
-      <div className={containerClassNames} aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}>
+      <section
+        className={containerClassNames}
+        aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
+      >
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
@@ -413,7 +460,7 @@ export class PanelChrome extends Component<Props, State> {
             return this.renderPanel(width, height);
           }}
         </ErrorBoundary>
-      </div>
+      </section>
     );
   }
 }

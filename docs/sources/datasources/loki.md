@@ -33,13 +33,14 @@ The Derived Fields configuration allows you to:
 - Add fields parsed from the log message.
 - Add a link that uses the value of the field.
 
-You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details]({{< relref "../explore/logs-integration/#labels-and-detected-fields" >}}).
+For example, you can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details]({{< relref "../explore/logs-integration/#labels-and-detected-fields" >}}).
 
 Each derived field consists of:
 
 - **Name -** Shown in the log details as a label.
 - **Regex -** A Regex pattern that runs on the log message and captures part of it as the value of the new field. Can only contain a single capture group.
 - **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw }` macro.
+- **URL Label -** (Optional) Set a custom display label for the link. The link label defaults to the full external URL or name of the linked internal data source and is overridden by this setting.
 - **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
 
 You can use a debug section to see what your fields extract and how the URL is interpolated. Click **Show example log message** to show the text area where you can enter a log message.
@@ -154,6 +155,12 @@ provides the following functions you can use in the `Query` input field.
 | `label_values(label)`                      | Returns a list of label values for the `label`.                                      |
 | `label_values(log stream selector, label)` | Returns a list of label values for the `label` in the specified `log stream selector`.|
 
+### Ad hoc filters variable
+Loki supports the special ad hoc filters variable type. It allows you to specify any number of label/value filters on the fly. These filters are automatically applied to all your Loki queries.
+
+### Using interval and range variables
+
+You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
 ## Annotations
 
 You can use any non-metric Loki query as a source for [annotations]({{< relref "../dashboards/annotations" >}}). Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.

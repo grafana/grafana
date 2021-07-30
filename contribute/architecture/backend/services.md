@@ -1,6 +1,6 @@
 # Services
 
-A Grafana _service_ encapsulates and exposes application logic to the rest of the application, through a set of related operations. 
+A Grafana _service_ encapsulates and exposes application logic to the rest of the application, through a set of related operations.
 
 Before a service can start communicating with the rest of Grafana, it needs to be registered in the _service registry_.
 
@@ -48,7 +48,7 @@ import _ "github.com/grafana/grafana/pkg/services/mysvc"
 
 ## Dependencies
 
-Grafana uses the [inject](https://github.com/facebookgo/inject) package to inject dependencies during runtime. 
+Grafana uses the [inject](https://github.com/facebookgo/inject) package to inject dependencies during runtime.
 
 For example, to access the [bus](communication.md), add it to the `MyService` struct:
 
@@ -67,3 +67,7 @@ type MyService struct {
 ```
 
 > **Note:** Any injected dependency needs to be an exported field. Any unexported fields result in a runtime error.
+
+## Methods
+
+Any public method of a service should take `context.Context` as its first argument. If the method calls the bus, other services or the database the context should be propagated, if possible.

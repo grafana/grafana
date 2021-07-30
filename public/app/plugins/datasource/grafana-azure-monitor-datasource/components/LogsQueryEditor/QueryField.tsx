@@ -31,7 +31,7 @@ const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, o
   }
 
   useEffect(() => {
-    if (!query.azureLogAnalytics.resource) {
+    if (!query.azureLogAnalytics?.resource) {
       return;
     }
 
@@ -54,7 +54,7 @@ const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, o
         });
       });
     });
-  }, [datasource.azureLogAnalyticsDatasource, query.azureLogAnalytics.resource]);
+  }, [datasource.azureLogAnalyticsDatasource, query.azureLogAnalytics?.resource]);
 
   const handleEditorMount = useCallback((editor: MonacoEditor, monaco: Monaco) => {
     monacoPromiseRef.current?.resolve?.({ editor, monaco });
@@ -75,7 +75,7 @@ const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, o
 
   return (
     <CodeEditor
-      value={query.azureLogAnalytics.query}
+      value={query.azureLogAnalytics?.query ?? ''}
       language="kusto"
       height={200}
       width="100%"

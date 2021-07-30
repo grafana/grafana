@@ -1,9 +1,15 @@
 import { CandlestickFieldMappings } from './types';
 
 export interface PanelOptions {
-  names: CandlestickFieldMappings; // open: "open_price"
-}
+  mode: 'ohlc' | 'candlestick' | 'volume';
 
+  // Fields
+  names: CandlestickFieldMappings; // open: "open_price"
+
+  // Colors
+  up: string;
+  down: string;
+}
 export interface PanelFieldConfig {
-  // nothing for now
+  // nothing for now, extend timeseries?
 }

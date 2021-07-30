@@ -16,7 +16,7 @@ visualize logs or metrics stored in Elasticsearch. You can also annotate your gr
 1. Open the side menu by clicking the Grafana icon in the top header.
 1. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 1. Click the `+ Add data source` button in the top header.
-1. Select *Elasticsearch* from the *Type* dropdown.
+1. Select **Elasticsearch** from the **Type** dropdown.
 
 > **Note:** If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
@@ -80,6 +80,13 @@ number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 se
 | `s`        | second      |
 | `ms`       | millisecond |
 
+### X-Pack enabled
+
+Enables `X-Pack` specific features and options, providing the query editor with additional aggregations such as `Rate` and `Top Metrics`.
+
+#### Include frozen indices
+
+When `X-Pack enabled` is active and the configured Elasticsearch version is higher than `6.6.0`, you can configure Grafana to not ignore [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
 ### Logs
 
 There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determine
@@ -97,6 +104,7 @@ Data links create a link from a specified field that can be accessed in logs vie
 Each data link configuration consists of:
 - **Field -** Name of the field used by the data link.
 - **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw }` macro.
+- **URL Label -** (Optional) Set a custom display label for the link. The link label defaults to the full external URL or name of the linked internal data source and is overridden by this setting.
 - **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
 
 ## Metric Query editor

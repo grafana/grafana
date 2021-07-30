@@ -20,6 +20,14 @@ Refer to specific resources to understand what permissions are required.
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+
+Action | Scope
+--- | --- | 
+settings:read	| settings:**<br>settings:auth.saml:*<br>settings:auth.saml:enabled (property level)
+
 **Example Request**:
 
 ```http
@@ -97,8 +105,9 @@ Content-Type: application/json
     "user":"root"
   },
   "emails":{
-    "templates_pattern":"emails/*.html",
-    "welcome_email_on_sign_up":"false"
+    "templates_pattern":"emails/*.html, emails/*.txt",
+    "welcome_email_on_sign_up":"false",
+    "content_types":"text/html"
   },
   "log":{
     "buffer_len":"10000",
@@ -183,6 +192,14 @@ Updates / removes and reloads database settings. You must provide either `update
 
 This endpoint only supports changes to `auth.saml` configuration.
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+
+Action | Scope
+--- | --- | 
+settings:write | settings:**<br>settings:auth.saml:*<br>settings:auth.saml:enabled (property level)
+
 **Example request:**
 
 ```http
@@ -228,6 +245,14 @@ Status codes:
 `GET /api/admin/stats`
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+
+Action | Scope
+--- | --- | 
+server.stats:read | n/a
 
 **Example Request**:
 
