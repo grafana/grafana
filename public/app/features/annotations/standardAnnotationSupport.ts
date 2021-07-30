@@ -109,9 +109,17 @@ export const annotationEventNames: AnnotationFieldInfo[] = [
   {
     key: 'id',
   },
-  // { key: 'userId' },
-  // { key: 'login' },
-  // { key: 'email' },
+];
+
+// Properties we want passed though, but not exposed in the UI config builders
+const allAnnoEvents: AnnotationFieldInfo[] = [
+  ...annotationEventNames,
+  { key: 'userId' as any },
+  { key: 'login' as any },
+  { key: 'email' as any },
+  { key: 'prevState' as any },
+  { key: 'newState' as any },
+  { key: 'data' as any },
 ];
 
 export function getAnnotationsFromData(
@@ -140,7 +148,7 @@ export function getAnnotationsFromData(
 
       const fields: AnnotationEventFieldSetter[] = [];
 
-      for (const evts of annotationEventNames) {
+      for (const evts of allAnnoEvents) {
         const opt = options[evts.key] || {}; //AnnotationEventFieldMapping
 
         if (opt.source === AnnotationEventFieldSource.Skip) {
