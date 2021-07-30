@@ -29,6 +29,7 @@ func (p permission) Evaluate(permissions map[string]map[string]struct{}) (bool, 
 		}
 
 		for s := range scopes {
+			// TODO: replace glob parser with a simpler parser that handles only prefixes and asterisk matching.
 			rule, err := glob.Compile(s, ':', '/')
 			if err != nil {
 				return false, err
