@@ -22,14 +22,12 @@ FROM golang:1.16 AS go-builder
 WORKDIR /src/grafana
 
 COPY go.mod go.sum embed.go ./
-
-RUN go mod verify
-
 COPY build.go package.json ./
 COPY pkg pkg/
 COPY cue cue/
 COPY public/app/plugins public/app/plugins/
 
+RUN go mod verify
 RUN go run build.go build
 
 FROM ubuntu:20.04

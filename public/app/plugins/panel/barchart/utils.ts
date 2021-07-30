@@ -4,8 +4,10 @@ import {
   Field,
   FieldType,
   formattedValueToString,
+  getDisplayProcessor,
   getFieldColorModeForField,
   getFieldSeriesColor,
+  GrafanaTheme2,
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
@@ -17,9 +19,11 @@ import {
   ScaleDirection,
   ScaleDistribution,
   ScaleOrientation,
+  StackingMode,
   UPlotConfigBuilder,
   UPlotConfigPrepFn,
 } from '@grafana/ui';
+import { collectStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
 /** @alpha */
 function getBarCharScaleOrientation(orientation: VizOrientation) {
@@ -47,6 +51,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   showValue,
   groupWidth,
   barWidth,
+  stacking,
   text,
 }) => {
   const builder = new UPlotConfigBuilder();
@@ -69,6 +74,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     xDir: vizOrientation.xDir,
     groupWidth,
     barWidth,
+    stacking,
+    rawValue: (seriesIdx: number, valueIdx: number) => frame.fields[seriesIdx].values.get(valueIdx),
     formatValue,
     text,
     showValue,
@@ -83,6 +90,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   builder.addHook('draw', config.draw);
 
   builder.setTooltipInterpolator(config.interpolateTooltip);
+
+  builder.setPrepData(config.prepData);
 
   builder.addScale({
     scaleKey: 'x',
@@ -106,6 +115,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   let seriesIndex = 0;
 
+  const stackingGroups: Map<string, number[]> = new Map();
+
   // iterate the y values
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
@@ -121,13 +132,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
     builder.addSeries({
       scaleKey,
-      pxAlign: false,
+      pxAlign: true,
       lineWidth: customConfig.lineWidth,
       lineColor: seriesColor,
       fillOpacity: customConfig.fillOpacity,
       theme,
       colorMode,
-      pathBuilder: config.drawBars,
+      pathBuilder: config.barsBuilder,
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
@@ -173,6 +184,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
         theme,
       });
     }
+
+    collectStackingGroups(field, stackingGroups, seriesIndex);
+  }
+
+  if (stackingGroups.size !== 0) {
+    builder.setStacking(true);
+    for (const [_, seriesIdxs] of stackingGroups.entries()) {
+      for (let j = seriesIdxs.length - 1; j > 0; j--) {
+        builder.addBand({
+          series: [seriesIdxs[j], seriesIdxs[j - 1]],
+        });
+      }
+    }
   }
 
   return builder;
@@ -200,7 +224,11 @@ export function preparePlotFrame(data: DataFrame[]) {
 }
 
 /** @internal */
-export function prepareGraphableFrames(series: DataFrame[]): { frames?: DataFrame[]; warn?: string } {
+export function prepareGraphableFrames(
+  series: DataFrame[],
+  theme: GrafanaTheme2,
+  stacking: StackingMode
+): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
@@ -226,6 +254,16 @@ export function prepareGraphableFrames(series: DataFrame[]): { frames?: DataFram
       if (field.type === FieldType.number) {
         let copy = {
           ...field,
+          config: {
+            ...field.config,
+            custom: {
+              ...field.config.custom,
+              stacking: {
+                group: '_',
+                mode: stacking,
+              },
+            },
+          },
           values: new ArrayVector(
             field.values.toArray().map((v) => {
               if (!(Number.isFinite(v) || v == null)) {
@@ -235,6 +273,12 @@ export function prepareGraphableFrames(series: DataFrame[]): { frames?: DataFram
             })
           ),
         };
+
+        if (stacking === StackingMode.Percent) {
+          copy.config.unit = 'percentunit';
+          copy.display = getDisplayProcessor({ field: copy, theme });
+        }
+
         fields.push(copy);
       } else {
         fields.push({ ...field });

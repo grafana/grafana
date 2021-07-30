@@ -3,25 +3,27 @@ import { IconButton, InlineLabel, Tooltip, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { PrometheusDatasource } from '../datasource';
+import { filter } from 'rxjs/operators';
 
 interface Props {
   isEnabled: boolean;
   onChange: (isEnabled: boolean) => void;
   datasource: PrometheusDatasource;
+  refId: string;
 }
 
-export function PromExemplarField({ datasource, onChange, isEnabled }: Props) {
-  const [error, setError] = useState<string>();
+export function PromExemplarField({ datasource, onChange, isEnabled, refId }: Props) {
+  const [error, setError] = useState<string | null>(null);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    const subscription = datasource.exemplarErrors.subscribe((err) => {
-      setError(err);
+    const subscription = datasource.exemplarErrors.pipe(filter((value) => refId === value.refId)).subscribe((err) => {
+      setError(err.error);
     });
     return () => {
       subscription.unsubscribe();
     };
-  }, [datasource]);
+  }, [datasource, refId]);
 
   const iconButtonStyles = cx(
     {

@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -606,7 +605,6 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStatsService {
 		Bus:                bus.New(),
 		Cfg:                &cfg,
 		SQLStore:           sqlstore.InitTestDB(t),
-		License:            &licensing.OSSLicensingService{},
 		AlertingUsageStats: &alertingUsageMock{},
 		externalMetrics:    make([]MetricsFunc, 0),
 		PluginManager:      &fakePluginManager{},
