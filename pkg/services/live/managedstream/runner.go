@@ -37,16 +37,17 @@ func NewRunner(publisher models.ChannelPublisher, frameCache FrameCache) *Runner
 }
 
 func (r *Runner) GetManagedChannels(orgID int64) ([]*ManagedChannel, error) {
-	paths, err := r.frameCache.GetActiveChannels(orgID)
+	activeChannels, err := r.frameCache.GetActiveChannels(orgID)
 	if err != nil {
 		return []*ManagedChannel{}, fmt.Errorf("error getting active managed stream paths: %v", err)
 	}
-	channels := make([]*ManagedChannel, 0, len(paths))
-	for k, v := range paths {
+	channels := make([]*ManagedChannel, 0, len(activeChannels))
+	for ch, schema := range activeChannels {
 		managedChannel := &ManagedChannel{
-			Channel: k,
-			Data:    v,
+			Channel: ch,
+			Data:    schema,
 		}
+		// Enrich with minute rate.
 		channel, _ := live.ParseChannel(managedChannel.Channel)
 		namespaceStream, ok := r.streams[orgID][channel.Namespace]
 		if ok {
@@ -110,7 +111,7 @@ func (r *Runner) GetOrCreateStream(orgID int64, streamID string) (*ManagedStream
 	}
 	s, ok := r.streams[orgID][streamID]
 	if !ok {
-		s = NewManagedStream(streamID, r.publisher, r.frameCache)
+		s = NewManagedStream(streamID, orgID, r.publisher, r.frameCache)
 		r.streams[orgID][streamID] = s
 	}
 	return s, nil
@@ -119,6 +120,7 @@ func (r *Runner) GetOrCreateStream(orgID int64, streamID string) (*ManagedStream
 // ManagedStream holds the state of a managed stream.
 type ManagedStream struct {
 	id         string
+	orgID      int64
 	start      time.Time
 	publisher  models.ChannelPublisher
 	frameCache FrameCache
@@ -132,9 +134,10 @@ type rateEntry struct {
 }
 
 // NewManagedStream creates new ManagedStream.
-func NewManagedStream(id string, publisher models.ChannelPublisher, schemaUpdater FrameCache) *ManagedStream {
+func NewManagedStream(id string, orgID int64, publisher models.ChannelPublisher, schemaUpdater FrameCache) *ManagedStream {
 	return &ManagedStream{
 		id:         id,
+		orgID:      orgID,
 		start:      time.Now(),
 		publisher:  publisher,
 		frameCache: schemaUpdater,
@@ -151,7 +154,7 @@ type ManagedChannel struct {
 
 // Push sends frame to the stream and saves it for later retrieval by subscribers.
 // unstableSchema flag can be set to disable schema caching for a path.
-func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error {
+func (s *ManagedStream) Push(path string, frame *data.Frame) error {
 	jsonFrameCache, err := data.FrameToJSONCache(frame)
 	if err != nil {
 		return err
@@ -160,7 +163,7 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 	// The channel this will be posted into.
 	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
 
-	isUpdated, err := s.frameCache.Update(orgID, channel, jsonFrameCache)
+	isUpdated, err := s.frameCache.Update(s.orgID, channel, jsonFrameCache)
 	if err != nil {
 		logger.Error("Error updating managed stream schema", "error", err)
 		return err
@@ -176,7 +179,7 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 
 	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
 	s.incRate(path, time.Now().Unix())
-	return s.publisher(orgID, channel, frameJSON)
+	return s.publisher(s.orgID, channel, frameJSON)
 }
 
 func (s *ManagedStream) incRate(path string, nowUnix int64) {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/centrifugal/centrifuge"
@@ -106,6 +107,11 @@ func (c *Caller) CallManagedStreams(orgID int64) ([]*managedstream.ManagedChanne
 		}
 		for _, ch := range res.Channels {
 			if _, ok := channels[ch.Channel]; ok {
+				if strings.HasPrefix(ch.Channel, "plugin/testdata/") {
+					// Skip adding testdata rates since it works over different
+					// mechanism (plugin stream) and the minute rate is hardcoded.
+					continue
+				}
 				channels[ch.Channel].MinuteRate += ch.MinuteRate
 				continue
 			}
