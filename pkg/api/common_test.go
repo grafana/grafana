@@ -253,10 +253,6 @@ func (f *fakeAccessControl) IsDisabled() bool {
 	return f.isDisabled
 }
 
-func (f *fakeAccessControl) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
-	return nil
-}
-
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
 	cfg.FeatureToggles = make(map[string]bool)
 	cfg.FeatureToggles["accesscontrol"] = true
