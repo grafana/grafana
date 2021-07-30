@@ -52,7 +52,6 @@ type Service struct {
 	HTTPClientProvider   httpclient.Provider   `inject:""`
 	intervalCalculator   tsdb.Calculator
 	im                   instancemgmt.InstanceManager
-	client               apiv1.API
 }
 
 func (s *Service) Init() error {
@@ -215,7 +214,7 @@ func (s *Service) parseQuery(queries []backend.DataQuery) (
 		start := queryModel.TimeRange.From
 		end := queryModel.TimeRange.To
 
-		dsInterval, err := tsdb.GetIntervalFrom("", "", 0, time.Duration(0))
+		dsInterval, err := tsdb.GetIntervalFrom("", "", 0, 15*time.Second)
 		if err != nil {
 			return nil, err
 		}
