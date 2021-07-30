@@ -49,7 +49,7 @@ email_claim = sub
 # auto_sign_up = true
 ```
 
-If `auto_sign_up` is enabled, the `sub` claim is used as the "external Auth ID" and the `name` claim, if present, is used as the user's full name.
+If `auto_sign_up` is enabled, then the `sub` claim is used as the "external Auth ID". The `name` claim is used as the user's full name if it is present.
 
 ## Signature verification
 
