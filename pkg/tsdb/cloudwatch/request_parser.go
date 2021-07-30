@@ -69,7 +69,7 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	var period int
 	if strings.ToLower(p) == "auto" || p == "" {
 		deltaInSeconds := endTime.Sub(startTime).Seconds()
-		periods := []int{60, 300, 900, 3600, 21600, 86400}
+		periods := getPeriodsForRetention(time.Now().Sub(startTime))
 		datapoints := int(math.Ceil(deltaInSeconds / 2000))
 		period = periods[len(periods)-1]
 		for _, value := range periods {
@@ -121,6 +121,16 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 		ReturnData: returnData,
 		MatchExact: matchExact,
 	}, nil
+}
+
+func filterForRetention(timeSince time.Duration) []int {
+	if timeSince > time.Duration(63) * 24 * time.Hour {
+		return []int{3600, 21600, 86400}
+	} else if timeSince > time.Duration(15) * 24 * time.Hour {
+		return []int{300, 900, 3600,21600, 86400}
+	} else {
+		return []int{60, 300, 900, 3600, 21600, 86400}
+	}
 }
 
 func parseStatistics(model *simplejson.Json) []string {
