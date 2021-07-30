@@ -4,7 +4,7 @@ import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
 import { getXYDimensions } from './dims';
-import { prepareDimensions } from './utils';
+import { prepareSeries } from './utils';
 
 interface XYChartPanelProps extends PanelProps<Options> {}
 
@@ -44,13 +44,13 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   }
 
   if (options.mode === 'scatter') {
-    const trace = prepareDimensions(options, data.series)[0];
+    const series = prepareSeries(options, data.series)[0];
     return (
       <div style={{ height, overflow: 'scroll' }}>
-        <h2>TODO, scatter {trace.name}</h2>
-        {trace.x!.values.toArray().map((v, i) => (
+        <h2>TODO, scatter {series.name}</h2>
+        {series.x!.values.toArray().map((v: number, i: number) => (
           <div key={i}>
-            {`${v}`} -- color: {trace.color.get(i)} -- size: {trace.size!.get(i)}
+            {`${v}`} -- color: {series.color.get(i)} -- size: {series.size!.get(i)}
           </div>
         ))}
       </div>

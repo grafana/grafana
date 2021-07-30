@@ -35,7 +35,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
         showIf: (cfg) => cfg.mode === 'xy',
       })
       .addFieldNamePicker({
-        path: 'trace.x',
+        path: 'series.x',
         name: 'X Field',
         settings: {
           // filter: (f: Field) => f.type === FieldType.number,
@@ -44,7 +44,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
         showIf: (cfg) => cfg.mode === 'scatter',
       })
       .addFieldNamePicker({
-        path: 'trace.y',
+        path: 'series.y',
         name: 'Y Field',
         settings: {
           // filter: (f: Field) => f.type === FieldType.number,
@@ -53,9 +53,9 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
         showIf: (cfg) => cfg.mode === 'scatter',
       })
       .addCustomEditor({
-        id: 'trace.color',
-        path: 'trace.color',
-        name: 'Trace Color',
+        id: 'series.color',
+        path: 'series.color',
+        name: 'Marker color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {
@@ -64,9 +64,9 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
         },
       })
       .addCustomEditor({
-        id: 'trace.size',
-        path: 'trace.size',
-        name: 'Trace Size',
+        id: 'series.size',
+        path: 'series.size',
+        name: 'Marker size',
         editor: ScaleDimensionEditor,
         settings: {
           min: 1,

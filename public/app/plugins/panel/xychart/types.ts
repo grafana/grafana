@@ -13,10 +13,10 @@ export interface XYDimensionConfig {
 }
 
 // Runtime processed type send to render
-export interface ScatterTrace {
+export interface ScatterSeries {
   style?: 'line' | 'points' | '...';
 
-  color: DimensionSupplier<string>; // point color?
+  color: DimensionSupplier<string>; // marker color?
   size?: DimensionSupplier<number>;
   label?: DimensionSupplier<string>;
 
@@ -29,7 +29,7 @@ export interface ScatterTrace {
   name: string;
 }
 
-export interface TraceConfig {
+export interface SeriesConfig {
   x: string;
   y: string;
 
@@ -44,6 +44,6 @@ export interface Options extends OptionsWithLegend, OptionsWithTooltip {
   // Flag to trigger new behavior
   mode?: 'xy' | 'scatter';
 
-  // Single trace for now (should be an array)
-  trace: TraceConfig;
+  // Single series for now (should be an array)
+  series: SeriesConfig; // TODO array?  config per series? refId?
 }

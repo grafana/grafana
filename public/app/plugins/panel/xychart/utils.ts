@@ -2,17 +2,17 @@ import { DataFrame } from '@grafana/data';
 import { getColorDimension } from '../geomap/dims/color';
 import { getScaledDimension } from '../geomap/dims/scale';
 import { findField } from '../geomap/dims/utils';
-import { Options, ScatterTrace } from './types';
+import { Options, ScatterSeries } from './types';
 import { config } from '@grafana/runtime';
 
-export function prepareDimensions(options: Options, frames: DataFrame[]): ScatterTrace[] {
+export function prepareSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
   if (!frames.length) {
     return [];
   }
-  const cfg = options.trace ?? {};
+  const cfg = options.series ?? {};
   const frame = frames[0];
 
-  const trace: ScatterTrace = {
+  const trace: ScatterSeries = {
     x: findField(frame, cfg.x),
     y: findField(frame, cfg.y),
 
