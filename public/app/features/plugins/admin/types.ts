@@ -174,3 +174,23 @@ export type PluginDetailsActions =
   | {
       type: ActionTypes.LOADING | ActionTypes.INFLIGHT | ActionTypes.UNINSTALLED | ActionTypes.UPDATED;
     };
+
+export type CatalogPluginsState = {
+  loading: boolean;
+  error?: Error;
+  plugins: CatalogPlugin[];
+};
+
+export type FilteredPluginsState = {
+  isLoading: boolean;
+  error?: Error;
+  plugins: CatalogPlugin[];
+};
+
+export type PluginsByFilterType = {
+  searchBy: string;
+  filterBy: string;
+  filterByType: string;
+};
+
+export type PluginFilter = (plugin: CatalogPlugin, query: string) => boolean;

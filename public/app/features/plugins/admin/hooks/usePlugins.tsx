@@ -1,14 +1,8 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
-import { CatalogPlugin } from '../types';
+import { CatalogPlugin, CatalogPluginsState, PluginsByFilterType, FilteredPluginsState } from '../types';
 import { api } from '../api';
-import { mapLocalToCatalog, mapRemoteToCatalog, applySearchFilter } from '../helpers';
-
-type CatalogPluginsState = {
-  loading: boolean;
-  error?: Error;
-  plugins: CatalogPlugin[];
-};
+import { mapLocalToCatalog, mapRemoteToCatalog, isInstalled, isType, matchesKeyword } from '../helpers';
 
 export function usePlugins(): CatalogPluginsState {
   const { loading, value, error } = useAsync(async () => {
@@ -52,28 +46,24 @@ export function usePlugins(): CatalogPluginsState {
   };
 }
 
-type FilteredPluginsState = {
-  isLoading: boolean;
-  error?: Error;
-  plugins: CatalogPlugin[];
+const URLFilterHandlers = {
+  filterBy: isInstalled,
+  filterByType: isType,
+  searchBy: matchesKeyword,
 };
 
-export const usePluginsByFilter = (searchBy: string, filterBy: string): FilteredPluginsState => {
+export const usePluginsByFilter = (queries: PluginsByFilterType): FilteredPluginsState => {
   const { loading, error, plugins } = usePlugins();
 
-  const installed = useMemo(() => plugins.filter((plugin) => plugin.isInstalled), [plugins]);
-
-  if (filterBy === 'installed') {
-    return {
-      isLoading: loading,
-      error,
-      plugins: applySearchFilter(searchBy, installed),
-    };
-  }
+  const filteredPlugins = plugins.filter((plugin) =>
+    Object.keys(queries).every((query: keyof PluginsByFilterType) =>
+      typeof URLFilterHandlers[query] === 'function' ? URLFilterHandlers[query](plugin, queries[query]) : true
+    )
+  );
 
   return {
     isLoading: loading,
     error,
-    plugins: applySearchFilter(searchBy, plugins),
+    plugins: filteredPlugins,
   };
 };

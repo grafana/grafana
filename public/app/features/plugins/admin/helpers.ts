@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
-import { CatalogPlugin, CatalogPluginDetails, LocalPlugin, Plugin, Version } from './types';
+import { CatalogPlugin, CatalogPluginDetails, LocalPlugin, Plugin, Version, PluginFilter } from './types';
 
 export function isGrafanaAdmin(): boolean {
   return config.bootData.user.isGrafanaAdmin;
@@ -126,22 +126,23 @@ export function getCatalogPluginDetails(
   return plugin;
 }
 
-export function applySearchFilter(searchBy: string | undefined, plugins: CatalogPlugin[]): CatalogPlugin[] {
-  if (!searchBy) {
-    return plugins;
+export const isInstalled: PluginFilter = (plugin, query) =>
+  query === 'installed' ? plugin.isInstalled : !plugin.isCore;
+
+export const isType: PluginFilter = (plugin, query) => query === 'all' || plugin.type === query;
+
+export const matchesKeyword: PluginFilter = (plugin, query) => {
+  if (!query) {
+    return true;
+  }
+  const fields: String[] = [];
+  if (plugin.name) {
+    fields.push(plugin.name.toLowerCase());
   }
 
-  return plugins.filter((plugin) => {
-    const fields: String[] = [];
+  if (plugin.orgName) {
+    fields.push(plugin.orgName.toLowerCase());
+  }
 
-    if (plugin.name) {
-      fields.push(plugin.name.toLowerCase());
-    }
-
-    if (plugin.orgName) {
-      fields.push(plugin.orgName.toLowerCase());
-    }
-
-    return fields.some((f) => f.includes(searchBy.toLowerCase()));
-  });
-}
+  return fields.some((f) => f.includes(query.toLowerCase()));
+};
