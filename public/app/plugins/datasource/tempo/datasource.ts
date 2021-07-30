@@ -4,16 +4,17 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  LoadingState,
 } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { TraceToLogsData, TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { from, merge, Observable, throwError } from 'rxjs';
+import { from, merge, Observable, of, throwError } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 import { LokiOptions } from '../loki/types';
-import { transformTrace, transformTraceList } from './resultTransformer';
+import { transformFromOTLP, transformTrace, transformTraceList } from './resultTransformer';
 
-export type TempoQueryType = 'search' | 'traceId';
+export type TempoQueryType = 'search' | 'traceId' | 'upload';
 
 export type TempoQuery = {
   query: string;
@@ -24,6 +25,7 @@ export type TempoQuery = {
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLogsData> {
   tracesToLogs?: TraceToLogsOptions;
+  uploadedJson?: string | ArrayBuffer | null = null;
 
   constructor(instanceSettings: DataSourceInstanceSettings<TraceToLogsData>) {
     super(instanceSettings);
@@ -34,6 +36,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLo
     const subQueries: Array<Observable<DataQueryResponse>> = [];
     const filteredTargets = options.targets.filter((target) => !target.hide);
     const searchTargets = filteredTargets.filter((target) => target.queryType === 'search');
+    const uploadTargets = filteredTargets.filter((target) => target.queryType === 'upload');
     const traceTargets = filteredTargets.filter(
       (target) => target.queryType === 'traceId' || target.queryType === undefined
     );
@@ -68,8 +71,20 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLo
       );
     }
 
+    if (uploadTargets.length) {
+      if (this.uploadedJson) {
+        const otlpTraceData = JSON.parse(this.uploadedJson as string);
+        subQueries.push(of(transformFromOTLP(otlpTraceData.batches)));
+      } else {
+        subQueries.push(of({ data: [], state: LoadingState.Done }));
+      }
+    }
+
     if (traceTargets.length > 0) {
-      const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: traceTargets };
+      const traceRequest: DataQueryRequest<TempoQuery> = {
+        ...options,
+        targets: traceTargets.map((target) => ({ ...target, uploadedJson: this.uploadedJson })),
+      } as any;
       subQueries.push(
         super.query(traceRequest).pipe(
           map((response) => {

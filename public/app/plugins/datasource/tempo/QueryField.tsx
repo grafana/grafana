@@ -1,7 +1,7 @@
 import { DataQuery, DataSourceApi, ExploreQueryFieldProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, InlineLabel, LegacyForms, RadioButtonGroup } from '@grafana/ui';
+import { FileDropzone, InlineField, InlineFieldRow, InlineLabel, LegacyForms, RadioButtonGroup } from '@grafana/ui';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import React from 'react';
 import { LokiQueryField } from '../loki/components/LokiQueryField';
@@ -59,6 +59,7 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
               options={[
                 { value: 'search', label: 'Search' },
                 { value: 'traceId', label: 'TraceID' },
+                { value: 'upload', label: 'JSON file' },
               ]}
               value={query.queryType || DEFAULT_QUERY_TYPE}
               onChange={(v) =>
@@ -89,7 +90,16 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
         {query.queryType === 'search' && !linkedDatasource && (
           <div className="text-warning">Please set up a Traces-to-logs datasource in the datasource settings.</div>
         )}
-        {query.queryType !== 'search' && (
+        {query.queryType === 'upload' && (
+          <FileDropzone
+            options={{ multiple: false }}
+            onLoad={(result) => {
+              this.props.datasource.uploadedJson = result;
+              this.props.onRunQuery();
+            }}
+          />
+        )}
+        {(!query.queryType || query.queryType === 'traceId') && (
           <LegacyForms.FormField
             label="Trace ID"
             labelWidth={4}
