@@ -1,14 +1,8 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
-import { CatalogPlugin } from '../types';
+import { CatalogPlugin, CatalogPluginsState, PluginsByFilterType, FilteredPluginsState } from '../types';
 import { api } from '../api';
-import { mapLocalToCatalog, mapRemoteToCatalog } from '../helpers';
-
-type CatalogPluginsState = {
-  loading: boolean;
-  error?: Error;
-  plugins: CatalogPlugin[];
-};
+import { mapLocalToCatalog, mapRemoteToCatalog, isInstalled, isType, matchesKeyword } from '../helpers';
 
 export function usePlugins(): CatalogPluginsState {
   const { loading, value, error } = useAsync(async () => {
@@ -52,49 +46,19 @@ export function usePlugins(): CatalogPluginsState {
   };
 }
 
-type FilteredPluginsState = {
-  isLoading: boolean;
-  error?: Error;
-  plugins: CatalogPlugin[];
-};
-
-type PluginsByFilterType = {
-  searchBy: string;
-  filterBy: string;
-  filterByType: string;
-};
-
-const filters = {
-  filterBy: (plugin: CatalogPlugin, filterBy?: string) =>
-    filterBy === 'installed' ? plugin.isInstalled : !plugin.isCore,
-
-  filterByType: (plugin: CatalogPlugin, filterByType?: string) =>
-    filterByType === 'all' || plugin.type === filterByType,
-
-  searchBy: (plugin: CatalogPlugin, searchBy?: string) => {
-    if (!searchBy) {
-      return true;
-    }
-    const fields: String[] = [];
-    if (plugin.name) {
-      fields.push(plugin.name.toLowerCase());
-    }
-
-    if (plugin.orgName) {
-      fields.push(plugin.orgName.toLowerCase());
-    }
-
-    return fields.some((f) => f.includes(searchBy.toLowerCase()));
-  },
+const URLFilterHandlers = {
+  filterBy: isInstalled,
+  filterByType: isType,
+  searchBy: matchesKeyword,
 };
 
 export const usePluginsByFilter = (queries: PluginsByFilterType): FilteredPluginsState => {
   const { loading, error, plugins } = usePlugins();
 
   const filteredPlugins = plugins.filter((plugin) =>
-    Object.keys(queries).every((query: keyof PluginsByFilterType) => {
-      return typeof filters[query] === 'function' ? filters[query](plugin, queries[query]) : true;
-    })
+    Object.keys(queries).every((query: keyof PluginsByFilterType) =>
+      typeof URLFilterHandlers[query] === 'function' ? URLFilterHandlers[query](plugin, queries[query]) : true
+    )
   );
 
   return {
