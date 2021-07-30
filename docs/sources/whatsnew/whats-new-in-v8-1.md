@@ -18,9 +18,18 @@ This topic includes the release notes for Grafana v8.1. For all details, read th
 
 These features are included in the Grafana open source edition.
 
-### Time series panel updates
+## Geomap panel
 
-Time series panels have been updated with the ability to color series and line by thresholds or gradient color scales. This allows users to create time series panels where the line color can change dynamically based on thresholds or using gradient color scales. 
+Grafana 8.1 introduces the foundation for our new map panel. This new panel leverages [OpenLayers](https://openlayers.org/) and gives us a flexible solution for extending the way we use the new Geomap panel moving forward. The new Geomap panel includes multiple base layer styles (map layer options), as well as a more open data layer. The data layer can use coordinates and geo-hashed data in addition to a lookup table. 
+
+The Geomap panel is also able to share views across multiple Geomap panels on the same dashboard, making it straightforward to visualize and explore multiple types of geospatial data using the same map zoom and focus settings. For more information, refer to [Geomap panel]({{< relref "../panels/visualizations/geomap.md" >}}).
+{{< figure src="/static/img/docs/geomap-panel/geomap_with_heatmap.png" max-width="850px" caption="Geomap panel: Heatmap" >}}
+
+## Annotation panel
+
+The new Annotations panel shows a list of available annotations you can use to create lists of annotated data available within your organization. Various options are available to filter the list based on the tags and on the current dashboard. This panel makes it easy to find and filter annotated data within and across multiple dashboards.
+
+{{< figure src="/static/img/docs/annotations-panel/annolist.png" max-width="900px" caption="Annotations panel" >}}
 
 Also, we have added possibility to create annotations directly from the panel. For more information, refer to ...
 
