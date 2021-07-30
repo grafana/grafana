@@ -36,9 +36,12 @@ For example, if you provide the following `updates`:
 
 ```json
 {
-  "auth.saml": {
-    "enabled": "true",
-    "single_logout": "false"
+  "updates": {
+    "auth.saml": {
+      "enabled": "true",
+      "single_logout": "false"
+    }
+  }
 }
 ```
 it would enable SAML and disable single logouts. And, if you provide the following `removals`:
@@ -78,3 +81,8 @@ settings updates. If there are updates, it reloads the Grafana services affected
 
 The background job synchronizes settings between instances in high availability set-ups. So, after you perform some changes through the
 HTTP API, then the other instances are synchronized through the database and the background job.
+
+## Control access with fine-grained access control
+
+If you have [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, you can control who can read or update settings. 
+Refer to the [Admin API]({{< relref "../http_api/admin.md#update-settings" >}}) for more information.
