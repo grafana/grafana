@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/mail"
 	"regexp"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -415,17 +416,48 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 }
 
 func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]string, bool) {
-	response, err := s.httpGet(client, fmt.Sprintf(s.teamsUrl))
-	if err != nil {
-		s.log.Error("Error getting team memberships", "url", s.teamsUrl, "error", err)
-		return nil, false
-	}
+	var response httpGetResponse
+	var err error
+	var ids []string
 
-	if s.teamIdAttributePath == "" {
-		return []string{}, true
-	}
+	if s.teamsUrl == "" {
+		s.log.Warn("[Deprecated] Switch to the use of the teams_url and team_id_attribute_path configuration options for filtering on team membership")
 
-	ids, err := s.searchJSONForStringArrayAttr(s.teamIdAttributePath, response.Body)
+		type Record struct {
+			Id int `json:"id"`
+		}
+
+		response, err = s.httpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
+		if err != nil {
+			s.log.Error("Error getting team memberships", "url", s.apiUrl+"/teams", "error", err)
+			return nil, false
+		}
+
+		var records []Record
+
+		err = json.Unmarshal(response.Body, &records)
+		if err != nil {
+			s.log.Error("Error decoding team memberships response", "raw_json", string(response.Body), "error", err)
+			return nil, false
+		}
+
+		ids = make([]string, len(records))
+		for i, record := range records {
+			ids[i] = strconv.Itoa(record.Id)
+		}
+	} else {
+		response, err = s.httpGet(client, fmt.Sprintf(s.teamsUrl))
+		if err != nil {
+			s.log.Error("Error getting team memberships", "url", s.teamsUrl, "error", err)
+			return nil, false
+		}
+
+		if s.teamIdAttributePath == "" {
+			return []string{}, true
+		}
+
+		ids, err = s.searchJSONForStringArrayAttr(s.teamIdAttributePath, response.Body)
+	}
 
 	if err != nil {
 		return nil, true
