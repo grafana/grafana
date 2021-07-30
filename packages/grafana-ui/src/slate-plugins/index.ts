@@ -7,3 +7,4 @@ export { RunnerPlugin } from './runner';
 export { SelectionShortcutsPlugin } from './selection_shortcuts';
 export { SlatePrism, Token } from './slate-prism';
 export { SuggestionsPlugin } from './suggestions';
+export { PreventNewLineOnShiftEnterPlugin } from './preventNewLine';

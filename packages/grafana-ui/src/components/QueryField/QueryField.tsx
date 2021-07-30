@@ -9,10 +9,10 @@ import classnames from 'classnames';
 import {
   ClearPlugin,
   NewlinePlugin,
+  PreventNewLineOnShiftEnterPlugin,
   SelectionShortcutsPlugin,
   IndentationPlugin,
   ClipboardPlugin,
-  RunnerPlugin,
   SuggestionsPlugin,
 } from '../../slate-plugins';
 
@@ -73,7 +73,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       // SuggestionsPlugin and RunnerPlugin need to be before NewlinePlugin
       // because they override Enter behavior
       SuggestionsPlugin({ onTypeahead, cleanText, portalOrigin, onWillApplySuggestion }),
-      //RunnerPlugin({ handler: this.runOnChangeAndRunQuery }),
+      PreventNewLineOnShiftEnterPlugin({ handler: this.runOnChangeAndRunQuery }),
       NewlinePlugin(),
       ClearPlugin(),
       SelectionShortcutsPlugin(),
