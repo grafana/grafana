@@ -43,3 +43,6 @@ export interface ScaleDimensionOptions {
 
 /** Use the color value from field configs */
 export interface ColorDimensionConfig extends BaseDimensionConfig<string> {}
+
+/** Used to pick out a maker label */
+export interface LabelDimensionConfig extends BaseDimensionConfig<string> {}

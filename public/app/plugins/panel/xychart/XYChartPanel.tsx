@@ -4,6 +4,7 @@ import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
 import { getXYDimensions } from './dims';
+import { prepareDimensions } from './utils';
 
 interface XYChartPanelProps extends PanelProps<Options> {}
 
@@ -38,6 +39,20 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
             {dims.hasTime && <Button onClick={() => alert('TODO, switch vis')}>Show as Time series</Button>}
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (options.mode === 'scatter') {
+    const trace = prepareDimensions(options, data.series)[0];
+    return (
+      <div style={{ height, overflow: 'scroll' }}>
+        <h2>TODO, scatter {trace.name}</h2>
+        {trace.x!.values.toArray().map((v, i) => (
+          <div key={i}>
+            {`${v}`} -- color: {trace.color.get(i)} -- size: {trace.size!.get(i)}
+          </div>
+        ))}
       </div>
     );
   }
