@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Badge, HorizontalGroup, LinkButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+import { Badge, Button, HorizontalGroup, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CatalogPlugin } from '../types';
@@ -22,38 +22,33 @@ export function PluginBadges({ plugin }: PluginBadgeType) {
 }
 
 function EnterpriseBadge() {
-  const styles = useStyles2(getEnterpriseBadgeColors);
+  const customBadgeStyles = useStyles2(getBadgeColor);
+  const onClick = (ev: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    ev.preventDefault();
+    window.open('https://grafana.com/products/enterprise/', '_blank', 'noopener,noreferrer');
+  };
+
   if (config.licenseInfo?.hasValidLicense) {
     return <Badge text="Enterprise" color="blue" />;
   }
 
   return (
     <HorizontalGroup>
-      <Badge icon="lock" text="Enterprise" color="blue" className={styles.noLicense} />
-      <LinkButton size="sm" fill="text" icon="external-link-alt" href="https://grafana.com/products/enterprise/">
+      <Badge icon="lock" text="Enterprise" color="blue" className={customBadgeStyles} />
+      <Button size="sm" fill="text" icon="external-link-alt" onClick={onClick}>
         Learn more
-      </LinkButton>
+      </Button>
     </HorizontalGroup>
   );
 }
 
 function InstalledBadge() {
-  const styles = useStyles2(getInstalledBadgeColors);
-  return <Badge text="Installed" color="orange" className={styles.installed} />;
+  const customBadgeStyles = useStyles2(getBadgeColor);
+  return <Badge text="Installed" color="orange" className={customBadgeStyles} />;
 }
 
-const getEnterpriseBadgeColors = (theme: GrafanaTheme2) => ({
-  noLicense: css`
-    background: ${theme.colors.background.secondary};
-    border-color: ${theme.colors.border.weak};
-    color: ${theme.colors.text.secondary};
-  `,
-});
-
-const getInstalledBadgeColors = (theme: GrafanaTheme2) => ({
-  installed: css`
-    background: ${theme.colors.background.secondary};
-    border-color: ${theme.colors.border.weak};
-    color: ${theme.colors.text.secondary};
-  `,
-});
+const getBadgeColor = (theme: GrafanaTheme2) => css`
+  background: ${theme.colors.background.primary};
+  border-color: ${theme.colors.border.strong};
+  color: ${theme.colors.text.secondary};
+`;

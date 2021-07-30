@@ -1,8 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2, CardContainer, VerticalGroup } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Tile } from '../components/Tile';
 import { Grid } from '../components/Grid';
 
 import { CatalogPlugin } from '../types';
@@ -30,10 +29,8 @@ export const PluginList = ({ plugins }: Props) => {
         const { name, id, orgName, type } = plugin;
 
         return (
-          <Tile
-            key={`${id}`}
-            href={`/plugins/${id}`}
-            header={
+          <CardContainer key={`${id}`} href={`/plugins/${id}`} className={styles.cardContainer}>
+            <VerticalGroup spacing="md">
               <div className={styles.headerWrap}>
                 <PluginLogo
                   src={plugin.info.logos.small}
@@ -44,10 +41,10 @@ export const PluginList = ({ plugins }: Props) => {
                 <h3 className={styles.name}>{name}</h3>
                 <div className={styles.icon}>{type && <Icon name={IconName[type]} />}</div>
               </div>
-            }
-            content={<p className={styles.orgName}>By {orgName}</p>}
-            footer={<PluginBadges plugin={plugin} />}
-          />
+              <p className={styles.orgName}>By {orgName}</p>
+              <PluginBadges plugin={plugin} />
+            </VerticalGroup>
+          </CardContainer>
         );
       })}
     </Grid>
@@ -55,17 +52,22 @@ export const PluginList = ({ plugins }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  name: css`
-    color: ${theme.colors.text.primary};
-    flex-grow: 1;
-    font-size: ${theme.typography.h4.fontSize};
+  cardContainer: css`
     margin-bottom: 0;
+    padding: ${theme.spacing()};
   `,
   headerWrap: css`
     align-items: center;
     display: grid;
     grid-template-columns: ${LOGO_SIZE} 1fr 24px;
     grid-gap: ${theme.spacing(2)};
+    width: 100%;
+  `,
+  name: css`
+    color: ${theme.colors.text.primary};
+    flex-grow: 1;
+    font-size: ${theme.typography.h4.fontSize};
+    margin-bottom: 0;
   `,
   image: css`
     object-fit: contain;
