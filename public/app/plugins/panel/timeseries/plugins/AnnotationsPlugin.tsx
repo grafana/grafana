@@ -66,7 +66,13 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
           }
 
           let x0 = u.valToPos(annotation.time, 'x', true);
-          const color = theme.visualization.getColorByName(annotation.color);
+          var color = theme.visualization.getColorByName(annotation.color);
+
+          if (annotation.newState === 'Alerting') {
+            color = theme.visualization.getColorByName('red');
+          }
+
+          console.log(annotation);
 
           renderLine(x0, color);
 
