@@ -72,7 +72,15 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
             color = theme.visualization.getColorByName('red');
           }
 
-          console.log(annotation);
+          if (annotation.newState === 'Pending') {
+            color = theme.visualization.getColorByName('yellow');
+          }
+
+          if (annotation.newState === 'Normal') {
+            color = theme.visualization.getColorByName('green');
+          }
+
+          console.log(annotation.newState);
 
           renderLine(x0, color);
 

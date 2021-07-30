@@ -262,7 +262,7 @@ func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.Ale
 		DashboardId: query.Result.Id,
 		PanelId:     panelId,
 		PrevState:   oldState.String(),
-		NewState:    result.State.String(),
+		NewState:    new.String(),
 		Text:        annotationText,
 		Epoch:       result.EvaluatedAt.UnixNano() / int64(time.Millisecond),
 	}
