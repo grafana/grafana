@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	// ErrNoAlertmanagerConfiguration is an error for when no alertmanager configuration is found.
+	// ErrNoAdminConfiguration is an error for when no admin configuration is found.
 	ErrNoAdminConfiguration = fmt.Errorf("no admin configuration available")
 )
 

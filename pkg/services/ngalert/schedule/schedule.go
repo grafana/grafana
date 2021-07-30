@@ -215,6 +215,7 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 			if err != nil {
 				sch.log.Error("failed to apply configuration", "err", err, "org", cfg.OrgID)
 			}
+			sch.sendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
 			continue
 		}
 
@@ -294,11 +295,12 @@ func (sch *schedule) adminConfigSync(ctx context.Context) error {
 			}
 		case <-ctx.Done():
 			// Stop sending alerts to all external Alertmanager(s).
-			sch.sendersMtx.RLock()
-			for _, s := range sch.senders {
+			sch.sendersMtx.Lock()
+			for orgID, s := range sch.senders {
+				delete(sch.senders, orgID) // delete before we stop to make sure we don't accept any more alerts.
 				s.Stop()
 			}
-			sch.sendersMtx.RUnlock()
+			sch.sendersMtx.Unlock()
 
 			return nil
 		}

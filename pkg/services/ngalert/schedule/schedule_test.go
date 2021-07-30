@@ -274,7 +274,7 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	}, 10*time.Second, 200*time.Millisecond)
 
 	go func() {
-		schedule.AdminConfigPollingInterval = 1 * time.Second
+		schedule.AdminConfigPollingInterval = 10 * time.Minute // Do not poll in unit tests.
 		err := sched.Run(ctx)
 		require.NoError(t, err)
 	}()
@@ -411,7 +411,7 @@ func (am *fakeExternalAlertmanager) AlertNamesCompare(expected []string) bool {
 		}
 	}
 
-	return cmp.Equal(expected, n)
+	return assert.ObjectsAreEqual(expected, n)
 }
 
 func (am *fakeExternalAlertmanager) AlertsCount() int {

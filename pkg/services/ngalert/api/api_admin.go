@@ -29,7 +29,7 @@ func (srv AdminSrv) RouteGetAdminConfig(c *models.ReqContext) response.Response 
 		return ErrResp(http.StatusInternalServerError, err, msg)
 	}
 
-	resp := apimodels.GettableNGalertconfig{
+	resp := apimodels.GettableNGalertConfig{
 		Alertmanagers: cfg.Alertmanagers,
 	}
 	return response.JSON(http.StatusOK, resp)

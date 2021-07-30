@@ -177,18 +177,14 @@ func alertToNotifierAlert(alert models.PostableAlert) *notifier.Alert {
 	ls := make(labels.Labels, 0, len(alert.Alert.Labels))
 	a := make(labels.Labels, 0, len(alert.Annotations))
 
+	// Prometheus does not allow spaces in labels or annotations while Grafana does, we need to make sure we
+	// remove them before sending the alerts.
 	for k, v := range alert.Alert.Labels {
-		ls = append(
-			ls,
-			labels.Label{Name: removeSpaces(k), Value: v},
-		)
+		ls = append(ls, labels.Label{Name: removeSpaces(k), Value: v})
 	}
 
 	for k, v := range alert.Annotations {
-		a = append(
-			a,
-			labels.Label{Name: removeSpaces(k), Value: v},
-		)
+		a = append(a, labels.Label{Name: removeSpaces(k), Value: v})
 	}
 
 	return &notifier.Alert{
@@ -200,8 +196,6 @@ func alertToNotifierAlert(alert models.PostableAlert) *notifier.Alert {
 	}
 }
 
-// Prometheus does not allow spaces in labels while Grafana does, we need to make sure we remove them before sending
-// the alerts.
 func removeSpaces(labelName string) string {
 	return strings.Join(strings.Fields(labelName), "")
 }
