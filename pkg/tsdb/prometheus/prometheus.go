@@ -113,17 +113,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	cfg := api.Config{
-		Address:      dsInfo.URL,
-		RoundTripper: nil,
-	}
-
-	client, err := api.NewClient(cfg)
+	client, err := getClient(dsInfo, s)
 	if err != nil {
 		return nil, err
 	}
-
-	apiv1Client := apiv1.NewAPI(client)
 
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
@@ -149,7 +142,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		value, _, err := apiv1Client.QueryRange(ctx, query.Expr, timeRange)
+		value, _, err := client.QueryRange(ctx, query.Expr, timeRange)
 
 		if err != nil {
 			return &result, err
@@ -165,6 +158,33 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	return &result, nil
+}
+
+func getClient(dsInfo *DatasourceInfo, s *Service) (apiv1.API, error) {
+	opts := &sdkhttpclient.Options{
+		Timeouts: dsInfo.HTTPClientOpts.Timeouts,
+		TLS:      dsInfo.HTTPClientOpts.TLS,
+	}
+
+	customMiddlewares := customQueryParametersMiddleware(plog)
+	opts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
+
+	roundTripper, err := s.HTTPClientProvider.GetTransport(*opts)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := api.Config{
+		Address:      dsInfo.URL,
+		RoundTripper: roundTripper,
+	}
+
+	client, err := api.NewClient(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiv1.NewAPI(client), nil
 }
 
 func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*DatasourceInfo, error) {
