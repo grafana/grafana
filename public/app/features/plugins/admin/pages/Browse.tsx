@@ -23,7 +23,7 @@ export default function Browse(): ReactElement | null {
   const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, 'plugins'));
   const styles = useStyles2(getStyles);
 
-  const q = query.q as string;
+  const q = (query.q as string) ?? '';
   const filterBy = (query.filterBy as string) ?? 'installed';
   const filterByType = (query.filterByType as string) ?? 'all';
   const sortBy = (query.sortBy as string) ?? 'name';
