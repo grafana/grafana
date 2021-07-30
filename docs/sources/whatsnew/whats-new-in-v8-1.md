@@ -36,7 +36,8 @@ The new Annotations panel shows a list of available annotations you can use to c
 
 ### Time series panel updates
 
-The time series panel has been updated with the ability to color series and line by thresholds or gradient color scales. This allows users to create panels where the line color can change dynamically based on thresholds or using gradient color scales. It adds a layer of visibility to your data, making it more straightforward to quickly see changes across thresholds at a glance.
+The time series panel has been updated with the ability to color series and line by thresholds or gradient color scales. This allows users to create panels where the line color can change dynamically based on thresholds or using gradient color scales. It adds a layer of visibility to your data, making it easier to view the changes across thresholds at a glance quickly.
+
 
 Color scheme **From thresholds**: 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_line.png" max-width="1200px" caption="Colors scheme: From thresholds" >}}
@@ -58,7 +59,7 @@ This transformation enables panel config (Threshold, Min, Max, etc.) to be deriv
 
 #### Rows to fields (Beta)
 
-This transformation enables rows in returned data to be converted into separate fields. Prior to this enhancement, you could style and configure fields individually, but not rows. For more information, refer to [Rows to fields transform]Added the ability annotations directly from the panel
+This transformation enables rows in returned data to be converted into separate fields. Prior to this enhancement, you could style and configure fields individually, but not rows. For more information, refer to [Rows to fields transform].
 
 Example, Input:
 
