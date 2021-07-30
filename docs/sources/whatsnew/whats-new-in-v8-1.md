@@ -26,13 +26,13 @@ These features are included in the Grafana open source edition.
 Grafana 8.1 introduces the foundation for our new map panel. This new panel leverages [OpenLayers](https://openlayers.org/) and gives us a flexible solution for extending the way we use the new Geomap panel moving forward. The new Geomap panel includes multiple base layer styles (map layer options), as well as a more open data layer. The data layer can use coordinates and geo-hashed data in addition to a lookup table. 
 
 The Geomap panel is also able to share views across multiple Geomap panels on the same dashboard, making it straightforward to visualize and explore multiple types of geospatial data using the same map zoom and focus settings. For more information, refer to [Geomap panel]({{< relref "../panels/visualizations/geomap.md" >}}).
-{{< figure src="/static/img/docs/geomap/geomap_heatmap.png" max-width="1200px" caption="Geomap panel: Heatmap" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap_heatmap.png" max-width="1200px" caption="Geomap panel: Heatmap" >}}
 
 ## Annotation panel
 
 The new Annotations panel shows a list of available annotations you can use to create lists of annotated data available within your organization. Various options are available to filter the list based on the tags and on the current dashboard. This panel makes it easy to find and filter annotated data within and across multiple dashboards.
 
-{{< figure src="/static/img/docs/annolist/annolist.png" max-width="1200px" caption="Annotations panel" >}}
+{{< figure src="/static/img/docs/annotation-panel/annolist.png" max-width="1200px" caption="Annotations panel" >}}
 
 ### Time series panel updates
 
@@ -93,6 +93,10 @@ We have added timezone support. As a result, you can now specify the time zone u
 ### Trace to logs improvements
 
 We changed the default behavior from creating a 1-hour span Loki query to the only query at the exact time the trace span started for the duration of it. For more fine grained control over this, you can shift this time in the tracing data source settings. Also, it is now possible to shift the start time and end time of the Loki query by the set amount. For more information, refer to [Trace to logs]({{< relref "../datasources/tempo.md#trace-to-logs" >}}).
+
+### Prettify JSON for Logs in Explore
+
+Added the ability to format JSON to make it easier to view, review and find relevant data in JSON format logs.
 
 ### Plugin catalog - Updated UX and extended features
 
