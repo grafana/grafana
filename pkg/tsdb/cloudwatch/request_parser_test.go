@@ -211,7 +211,7 @@ func TestRequestParser(t *testing.T) {
 
 		t.Run("Time range is 2 days, but 16 days ago", func(t *testing.T) {
 			query.Set("period", "auto")
-			to := time.Now().SubDate(0, 0, -14)
+			to := time.Now().AddDate(0, 0, -14)
 			from := to.AddDate(0, 0, -2)
 			res, err := parseRequestQuery(query, "ref1", from, to)
 			require.NoError(t, err)
@@ -220,11 +220,20 @@ func TestRequestParser(t *testing.T) {
 
 		t.Run("Time range is 2 days, but 90 days ago", func(t *testing.T) {
 			query.Set("period", "auto")
-			to := time.Now().SubDate(0, 0, -88)
+			to := time.Now().AddDate(0, 0, -88)
 			from := to.AddDate(0, 0, -2)
 			res, err := parseRequestQuery(query, "ref1", from, to)
 			require.NoError(t, err)
 			assert.Equal(t, 3600, res.Period)
+		})
+
+		t.Run("Time range is 2 days, but 456 days ago", func(t *testing.T) {
+			query.Set("period", "auto")
+			to := time.Now().AddDate(0, 0, -454)
+			from := to.AddDate(0, 0, -2)
+			res, err := parseRequestQuery(query, "ref1", from, to)
+			require.NoError(t, err)
+			assert.Equal(t, 21600, res.Period)
 		})
 	})
 }
