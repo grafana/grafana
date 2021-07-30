@@ -99,8 +99,11 @@ We changed the default behavior from creating a 1-hour span Loki query to the on
 
 Added the ability to format JSON to make it easier to view, review and find relevant data in JSON format logs. This is a regular JSON log.
 
+{{< figure src="/static/img/docs/panels/pretty-json/regular-log-line.png" max-width="1200px" caption="Regular log line" >}}
 
 And here is the prettified JSON log.
+
+{{< figure src="/static/img/docs/panels/pretty-json/prettified-json.png" max-width="1200px" caption="Prettified JSON" >}}
 
 For more on how to prettify JSON logs, refer to [Visualization]({{< relref "../panels/visualizations/_index.md" >}}) and [Display]({{< relref "../panels/visualizations/logs-panel.md" >}}) options.
 
