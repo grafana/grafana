@@ -189,7 +189,7 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, mf := range metricFrames {
-			err := stream.Push(user.OrgId, mf.Key(), mf.Frame())
+			err := stream.Push(mf.Key(), mf.Frame())
 			if err != nil {
 				logger.Error("Error pushing frame", "error", err, "data", string(body))
 				return
