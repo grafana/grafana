@@ -159,7 +159,7 @@ const installed: LocalPlugin[] = [
   },
   {
     name: 'Diagram',
-    type: 'panel',
+    type: PluginType.panel,
     id: 'jdbranham-diagram-panel',
     enabled: true,
     pinned: false,
@@ -192,7 +192,7 @@ const installed: LocalPlugin[] = [
     defaultNavUrl: '/plugins/jdbranham-diagram-panel/',
     category: '',
     state: '',
-    signature: 'unsigned',
+    signature: PluginSignatureStatus.missing,
     signatureType: '',
     signatureOrg: '',
     dev: false,
