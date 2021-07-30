@@ -1,5 +1,5 @@
 import { OptionsWithTooltip, OptionsWithLegend } from '@grafana/ui';
-import { DataFrame, Field } from '../../../../../packages/grafana-data/src';
+import { DataFrame, Field } from '@grafana/data';
 import {
   ColorDimensionConfig,
   DimensionSupplier,
