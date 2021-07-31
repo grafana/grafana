@@ -84,6 +84,27 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
           // Configured values
           fixed: 'grey',
         },
+      })
+      .addSliderInput({
+        path: 'config.stroke.width',
+        name: 'Stroke',
+        defaultValue: 0,
+        settings: {
+          min: 0,
+          max: 10,
+        },
+      })
+      .addCustomEditor({
+        id: 'config.stroke.color',
+        path: 'config.stroke.color',
+        name: 'Icon Stroke color',
+        editor: ColorDimensionEditor,
+        settings: {},
+        defaultValue: {
+          // Configured values
+          fixed: 'grey',
+        },
+        showIf: (cfg) => Boolean(cfg.config?.stroke?.width),
       });
   },
 };

@@ -33,6 +33,10 @@ export class CanvasPanel extends Component<Props, State> {
     this.scene.updateData(props.data);
   }
 
+  componentDidMount() {
+    theScene.next(this.scene);
+  }
+
   // NOTE, all changes to the scene flow through this function
   // even the editor gets current state from the same scene instance!
   onUpdateScene = (root: CanvasGroupOptions) => {
@@ -42,6 +46,7 @@ export class CanvasPanel extends Component<Props, State> {
       root,
     });
     this.setState({ refresh: this.state.refresh + 1 });
+    console.log('send changes', root);
   };
 
   shouldComponentUpdate(nextProps: Props) {
