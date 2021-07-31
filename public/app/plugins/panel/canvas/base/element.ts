@@ -51,7 +51,7 @@ export interface CanvasSceneContext {
  *
  * @alpha
  */
-export interface CanvasElementItem<TConfig = any, TData = PanelData> extends RegistryItemWithOptions {
+export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryItemWithOptions {
   /** The default width/height to use when adding  */
   defaultSize?: Placement;
 
