@@ -16,7 +16,7 @@ export const SelectedElementEditor: FC<StandardEditorProps<CanvasGroupOptions, a
     }
 
     console.log('Lazy load the scene');
-    const timer = setTimeout(() => setScene(lastCanvasPanelInstance?.scene), 200);
+    const timer = setTimeout(() => setScene(lastCanvasPanelInstance?.scene), 350);
     return () => {
       clearTimeout(timer);
     };
@@ -24,7 +24,7 @@ export const SelectedElementEditor: FC<StandardEditorProps<CanvasGroupOptions, a
 
   const selected = useObservable(scene?.selected ?? of(undefined));
   if (!selected) {
-    return <div>No item is selected...</div>;
+    return <div>No item is selected (todo, loop!) or... close and reopen the element to get values!</div>;
   }
 
   return (

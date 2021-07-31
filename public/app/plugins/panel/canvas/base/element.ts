@@ -1,6 +1,7 @@
 import { ComponentType } from 'react';
 import { RegistryItemWithOptions, PanelOptionsEditorBuilder, PanelData } from '@grafana/data';
 import { Anchor, BackgroundConfig, LineConfig, Placement } from './types';
+import { ColorDimensionConfig, DimensionSupplier, ScaleDimensionConfig } from '../../geomap/dims/types';
 
 /**
  * This gets saved in panel json
@@ -28,7 +29,7 @@ export interface CanvasGroupOptions extends CanvasElementOptions {
   // layout? // absolute, list, grid?
 }
 
-export interface CanvasElementProps<TConfig = any> {
+export interface CanvasElementProps<TConfig = any, TData = PanelData> {
   // Saved config
   config: TConfig;
 
@@ -37,7 +38,12 @@ export interface CanvasElementProps<TConfig = any> {
   height: number;
 
   // Raw data
-  data?: PanelData; // TOO much info! better if we can limit to dimensions (•_•)
+  data?: TData;
+}
+
+export interface CanvasSceneContext {
+  getColor(color: ColorDimensionConfig): DimensionSupplier<string>;
+  getScale(scale: ScaleDimensionConfig): DimensionSupplier<number>;
 }
 
 /**
@@ -45,12 +51,14 @@ export interface CanvasElementProps<TConfig = any> {
  *
  * @alpha
  */
-export interface CanvasElementItem<TConfig = any> extends RegistryItemWithOptions {
+export interface CanvasElementItem<TConfig = any, TData = PanelData> extends RegistryItemWithOptions {
   /** The default width/height to use when adding  */
   defaultSize?: Placement;
 
+  prepareData?: (ctx: CanvasSceneContext, cfg: TConfig) => TData;
+
   /** Component used to draw */
-  display: ComponentType<CanvasElementProps<TConfig>>;
+  display: ComponentType<CanvasElementProps<TConfig, TData>>;
 
   /** Build the configuraiton UI */
   registerOptionsUI?: (builder: PanelOptionsEditorBuilder<CanvasElementOptions<TConfig>>) => void;

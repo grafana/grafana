@@ -64,6 +64,6 @@ export class CanvasPanel extends Component<Props, State> {
   }
 
   render() {
-    return this.scene.render(this.props.data);
+    return this.scene.render();
   }
 }

@@ -22,6 +22,11 @@ export interface DimensionSupplier<T = any> {
   fixed?: T;
 
   /**
+   * A single value -- typically last
+   */
+  value: () => T;
+
+  /**
    * Supplier for the dimension value
    */
   get: (index: number) => T;
