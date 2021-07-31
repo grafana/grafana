@@ -29,7 +29,14 @@ export interface CanvasGroupOptions extends CanvasElementOptions {
 }
 
 export interface CanvasElementProps<TConfig = any> {
+  // Saved config
   config: TConfig;
+
+  // Calculated position info
+  width: number;
+  height: number;
+
+  // Raw data
   data?: PanelData; // TOO much info! better if we can limit to dimensions (•_•)
 }
 

@@ -16,12 +16,22 @@ export class ElementState {
   revId = 0;
   style: CSSProperties;
 
+  // Calculated
+  width: number;
+  height: number;
+
   constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
     if (!options) {
       this.options = { type: item.id };
     }
 
     this.style = this.getBaseStyle();
+  }
+
+  // The parent size, need to set our own size based on offsets
+  updateSize(width: number, height: number) {
+    this.width = width;
+    this.height = height;
   }
 
   getBaseStyle(): CSSProperties {
@@ -59,6 +69,10 @@ export class ElementState {
 
   // Something changed
   onChange(options: CanvasElementOptions) {
+    if (this.item.id !== options.type) {
+      this.item = canvasElementRegistry.getIfExists(options.type) ?? notFoundItem;
+    }
+
     this.revId++;
     this.options = { ...options };
     this.style = this.getBaseStyle();
@@ -77,7 +91,7 @@ export class ElementState {
     const { item } = this;
     return (
       <div key={`${this.UID}/${this.revId}`} style={this.style}>
-        <item.display config={this.options.config} data={data} />
+        <item.display config={this.options.config} data={data} width={this.width} height={this.height} />
       </div>
     );
   }
@@ -102,6 +116,16 @@ export class GroupState extends ElementState {
         const item = canvasElementRegistry.getIfExists(c.type) ?? notFoundItem;
         this.elements.push(new ElementState(item, c, parent));
       }
+    }
+  }
+
+  // The parent size, need to set our own size based on offsets
+  updateSize(width: number, height: number) {
+    super.updateSize(width, height);
+
+    // Update children with calculated size
+    for (const elem of this.elements) {
+      elem.updateSize(this.width, this.height);
     }
   }
 
@@ -136,6 +160,10 @@ export class Scene {
   readonly selected = new ReplaySubject<ElementState | undefined>(undefined);
   revId = 0;
 
+  width = 0;
+  height = 0;
+  style: CSSProperties = {};
+
   constructor(cfg: CanvasGroupOptions, public onSave: (cfg: CanvasGroupOptions) => void) {
     this.root = new GroupState(
       cfg ?? {
@@ -160,13 +188,17 @@ export class Scene {
   }
 
   updateSize(width: number, height: number) {
-    console.log('SIZE changed', width, height);
+    this.width = width;
+    this.height = height;
+    this.style = { width, height };
+    this.root.updateSize(width, height);
+    console.log('SIZE changed', this.style);
   }
 
   onChange(uid: number, cfg: CanvasElementOptions) {
     const elem = this.lookup.get(uid);
     if (!elem) {
-      throw new Error('element not found: ' + uid + ' // ' + this.lookup.keys());
+      throw new Error('element not found: ' + uid + ' // ' + [...this.lookup.keys()]);
     }
     this.revId++;
     elem.onChange(cfg);
@@ -179,7 +211,7 @@ export class Scene {
 
   render(data: PanelData) {
     return (
-      <div key={this.revId} className={this.styles.wrap}>
+      <div key={this.revId} className={this.styles.wrap} style={this.style}>
         {this.root.render(data)}
       </div>
     );
@@ -199,8 +231,6 @@ export const groupItemDummy: CanvasElementItem = {
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   wrap: css`
-    width: 100%;
-    height: 100%;
     overflow: hidden;
     position: relative;
   `,

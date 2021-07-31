@@ -32,7 +32,6 @@ export const SelectedElementEditor: FC<StandardEditorProps<CanvasGroupOptions, a
       options={selected.options}
       data={context.data}
       onChange={(cfg) => {
-        console.log('Change element:', cfg);
         lastCanvasPanelInstance!.scene.onChange(selected.UID, cfg);
       }}
     />
