@@ -3,6 +3,7 @@ import { PanelProps } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { Scene } from './runtime/scene';
 import { CanvasGroupOptions } from './base';
+import { ReplaySubject } from 'rxjs';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -11,7 +12,7 @@ interface State {
 }
 
 // Used to pass the scene to the editor functions
-export let lastCanvasPanelInstance: CanvasPanel | undefined = undefined;
+export const theScene = new ReplaySubject<Scene>(1);
 
 export class CanvasPanel extends Component<Props, State> {
   readonly scene: Scene;
@@ -26,7 +27,7 @@ export class CanvasPanel extends Component<Props, State> {
     // later changs are all controled by the scene
     this.scene = new Scene(this.props.options.root, this.onUpdateScene);
     this.scene.updateSize(props.width, props.height);
-    lastCanvasPanelInstance = this;
+    theScene.next(this.scene);
 
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);

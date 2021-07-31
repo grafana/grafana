@@ -203,7 +203,6 @@ export class Scene {
         this.selected.next(v);
       }
     });
-    console.log('INITALIZED', [...this.lookup.keys()]);
   }
 
   context: CanvasSceneContext = {
@@ -221,7 +220,6 @@ export class Scene {
     this.height = height;
     this.style = { width, height };
     this.root.updateSize(width, height);
-    console.log('SIZE changed', this.style);
   }
 
   onChange(uid: number, cfg: CanvasElementOptions) {
