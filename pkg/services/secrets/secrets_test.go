@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -53,10 +54,23 @@ func TestSecrets_Encrypt(t *testing.T) {
 		})
 	}
 
-	t.Run("decrypting empty payload should not fail", func(t *testing.T) {
-		_, err := s.Decrypt([]byte(""))
-		require.Error(t, err)
+	//// TODO: This test has been moved from util.encryption_test, not sure if Decrypt should work this way
+	//t.Run("decrypting empty payload should not fail", func(t *testing.T) {
+	//	_, err := s.Decrypt([]byte(""))
+	//	require.Error(t, err)
+	//
+	//	assert.Equal(t, "unable to compute salt", err.Error())
+	//})
 
-		assert.Equal(t, "unable to compute salt", err.Error())
+	t.Run("encrypt and decrypts", func(t *testing.T) {
+		plaintext := ""
+		encrypted, err := s.Encrypt([]byte(plaintext))
+		require.NoError(t, err)
+
+		decrypted, err := s.Decrypt(encrypted)
+		require.NoError(t, err)
+
+		assert.Equal(t, plaintext, string(decrypted))
 	})
+
 }

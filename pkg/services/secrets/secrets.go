@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"time"
 
@@ -36,7 +37,6 @@ type Secrets struct {
 	Store *sqlstore.SQLStore `inject:""`
 	Bus   bus.Bus            `inject:""`
 
-	//defaultEncryptionKey string // TODO: Where should it be initialized? It looks like key id/name
 	defaultProvider string
 	providers       map[string]Provider
 	dataKeyCache    map[string]dataKeyCacheItem
@@ -54,29 +54,16 @@ type Provider interface {
 
 func (s *Secrets) Init() error {
 	s.providers = map[string]Provider{
-		"": &settingsSecretKey{
+		"settings-secret": &settingsSecretKey{
 			key: func() []byte {
 				return []byte(setting.SecretKey)
 			},
 		},
 	}
-	s.defaultProvider = "" // should be read from settings
+	s.defaultProvider = "settings-secret"
+	logger.Debug("configured secrets provider", s.defaultProvider)
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
-	defer cancel()
-
-	//baseKey := "root"
-	//_, err := s.Store.GetDataKey(ctx, baseKey)
-	//if err != nil {
-	//	if errors.Is(err, models.ErrDataKeyNotFound) {
-	//		err = s.newRandomDataKey(ctx, baseKey)
-	//		if err != nil {
-	//			return err
-	//		}
-	//	} else {
-	//		return err
-	//	}
-	//}
+	s.dataKeyCache = make(map[string]dataKeyCacheItem, 0)
 
 	util.Encrypt = s.Encrypt
 	util.Decrypt = s.Decrypt
@@ -84,39 +71,65 @@ func (s *Secrets) Init() error {
 	return nil
 }
 
-func (s *Secrets) newRandomDataKey(ctx context.Context, name string) error {
-	b := make([]byte, 16)
-	_, err := rand.Read(b)
-	if err != nil {
-		return err
-	}
-
+// newDataKey creates a new random DEK, caches it and returns its value
+func (s *Secrets) newDataKey(ctx context.Context, name string) ([]byte, error) {
+	// 1. Create new DEK
+	dataKey, err := newRandomDataKey()
 	provider, exists := s.providers[s.defaultProvider]
 	if !exists {
-		return fmt.Errorf("could not find encryption provider '%s'", s.defaultProvider)
-	}
-	encrypted, err := provider.Encrypt(b)
-	if err != nil {
-		return err
+		return nil, fmt.Errorf("could not find encryption provider '%s'", s.defaultProvider)
 	}
 
+	// 2. Encrypt it
+	encrypted, err := provider.Encrypt(dataKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Store its encrypted value in db
 	err = s.Store.CreateDataKey(ctx, models.DataKey{
 		Active:        true, // TODO: how do we manage active/deactivated DEKs?
 		Name:          name,
 		Provider:      s.defaultProvider,
 		EncryptedData: encrypted,
 	})
-	return nil
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. Cache its unencrypted value and return it
+	s.dataKeyCache[name] = dataKeyCacheItem{
+		expiry:  time.Now().Add(15 * time.Minute),
+		dataKey: dataKey,
+	}
+
+	return dataKey, nil
+}
+
+func newRandomDataKey() ([]byte, error) {
+	rawDataKey := make([]byte, 16)
+	_, err := rand.Read(rawDataKey)
+	if err != nil {
+		return nil, err
+	}
+	return rawDataKey, nil
 }
 
 var b64 = base64.RawStdEncoding
 
 func (s *Secrets) Encrypt(payload []byte) ([]byte, error) {
-	//key := "root" // TODO: some logic to figure out what DEK identifier to use
-	createOrGetDEK()
-	dataKey, err := s.dataKey(key)
+	keyName := fmt.Sprintf("%s-%s", s.defaultProvider, time.Now().Format("2006-01-02"))
+
+	dataKey, err := s.dataKey(keyName)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, models.ErrDataKeyNotFound) { // TODO: should it be in models?
+			dataKey, err = s.newDataKey(context.TODO(), keyName)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 
 	encrypted, err := encrypt(payload, dataKey)
@@ -124,8 +137,8 @@ func (s *Secrets) Encrypt(payload []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	prefix := make([]byte, b64.EncodedLen(len(key))+2)
-	b64.Encode(prefix[1:], []byte(key))
+	prefix := make([]byte, b64.EncodedLen(len(keyName))+2)
+	b64.Encode(prefix[1:], []byte(keyName))
 	prefix[0] = '#'
 	prefix[len(prefix)-1] = '#'
 
@@ -138,7 +151,7 @@ func (s *Secrets) Encrypt(payload []byte) ([]byte, error) {
 
 func (s *Secrets) Decrypt(payload []byte) ([]byte, error) {
 	if len(payload) == 0 {
-		return []byte{}, nil // TODO: Not sure if it should return error like decrypt does (also see tests)
+		return []byte{}, nil // TODO: !!! Not sure if it should return error like util.decrypt did (also see tests)
 	}
 
 	var dataKey []byte
@@ -159,7 +172,7 @@ func (s *Secrets) Decrypt(payload []byte) ([]byte, error) {
 			return nil, err
 		}
 
-		dataKey, err = s.dataKey(string(key)) // TODO: key is the identifier of the key
+		dataKey, err = s.dataKey(string(key))
 		if err != nil {
 			return nil, err
 		}
@@ -168,24 +181,20 @@ func (s *Secrets) Decrypt(payload []byte) ([]byte, error) {
 	return decrypt(payload, dataKey)
 }
 
-// dataKey decrypts and caches DEK
-func (s *Secrets) dataKey(key string) ([]byte, error) {
-	if key == "" {
-		return []byte(setting.SecretKey), nil // TODO: not sure what case this condition handles
-	}
-
-	if item, exists := s.dataKeyCache[key]; exists {
+// dataKey looks up DEK in cache or database, and decrypts it
+func (s *Secrets) dataKey(name string) ([]byte, error) {
+	if item, exists := s.dataKeyCache[name]; exists {
 		if item.expiry.Before(time.Now()) && !item.expiry.IsZero() {
-			delete(s.dataKeyCache, key)
+			delete(s.dataKeyCache, name)
 		} else {
 			return item.dataKey, nil
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5) // TODO: What's the reasonable time here?
 	defer cancel()
 	// 1. get encrypted data key from database
-	dataKey, err := s.Store.GetDataKey(ctx, key)
+	dataKey, err := s.Store.GetDataKey(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +211,7 @@ func (s *Secrets) dataKey(key string) ([]byte, error) {
 	}
 
 	// 3. cache data key
-	s.dataKeyCache[key] = dataKeyCacheItem{
+	s.dataKeyCache[name] = dataKeyCacheItem{
 		expiry:  time.Now().Add(15 * time.Minute),
 		dataKey: decrypted,
 	}
