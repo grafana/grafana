@@ -14,7 +14,7 @@ import (
 )
 
 func TestSecrets_Encrypt(t *testing.T) {
-	s := Secrets{
+	s := SecretsService{
 		Store: sqlstore.InitTestDB(t),
 	}
 

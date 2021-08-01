@@ -28,12 +28,12 @@ var logger = log.New("secrets") // TODO: should it be at the package level?
 func init() {
 	registry.Register(&registry.Descriptor{
 		Name:         "SecretsService",
-		Instance:     &Secrets{},
+		Instance:     &SecretsService{},
 		InitPriority: registry.High,
 	})
 }
 
-type Secrets struct {
+type SecretsService struct {
 	Store *sqlstore.SQLStore `inject:""`
 	Bus   bus.Bus            `inject:""`
 
@@ -52,7 +52,7 @@ type Provider interface {
 	Decrypt(blob []byte) ([]byte, error)
 }
 
-func (s *Secrets) Init() error {
+func (s *SecretsService) Init() error {
 	s.providers = map[string]Provider{
 		"settings-secret": &settingsSecretKey{
 			key: func() []byte {
@@ -72,7 +72,7 @@ func (s *Secrets) Init() error {
 }
 
 // newDataKey creates a new random DEK, caches it and returns its value
-func (s *Secrets) newDataKey(ctx context.Context, name string) ([]byte, error) {
+func (s *SecretsService) newDataKey(ctx context.Context, name string) ([]byte, error) {
 	// 1. Create new DEK
 	dataKey, err := newRandomDataKey()
 	provider, exists := s.providers[s.defaultProvider]
@@ -117,7 +117,7 @@ func newRandomDataKey() ([]byte, error) {
 
 var b64 = base64.RawStdEncoding
 
-func (s *Secrets) Encrypt(payload []byte) ([]byte, error) {
+func (s *SecretsService) Encrypt(payload []byte) ([]byte, error) {
 	keyName := fmt.Sprintf("%s-%s", s.defaultProvider, time.Now().Format("2006-01-02"))
 
 	dataKey, err := s.dataKey(keyName)
@@ -149,7 +149,7 @@ func (s *Secrets) Encrypt(payload []byte) ([]byte, error) {
 	return blob, nil
 }
 
-func (s *Secrets) Decrypt(payload []byte) ([]byte, error) {
+func (s *SecretsService) Decrypt(payload []byte) ([]byte, error) {
 	if len(payload) == 0 {
 		return []byte{}, nil // TODO: !!! Not sure if it should return error like util.decrypt did (also see tests)
 	}
@@ -182,7 +182,7 @@ func (s *Secrets) Decrypt(payload []byte) ([]byte, error) {
 }
 
 // dataKey looks up DEK in cache or database, and decrypts it
-func (s *Secrets) dataKey(name string) ([]byte, error) {
+func (s *SecretsService) dataKey(name string) ([]byte, error) {
 	if item, exists := s.dataKeyCache[name]; exists {
 		if item.expiry.Before(time.Now()) && !item.expiry.IsZero() {
 			delete(s.dataKeyCache, name)
