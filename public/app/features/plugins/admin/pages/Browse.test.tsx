@@ -39,12 +39,12 @@ function setup(path = '/plugins'): RenderResult {
 
 describe('Browse list of plugins', () => {
   it('should list installed plugins by default', async () => {
-    const { getByText, queryByText } = setup('/plugins');
+    const { queryByText } = setup('/plugins');
 
-    await waitFor(() => getByText('Installed'));
+    await waitFor(() => queryByText('Installed'));
 
     for (const plugin of installed) {
-      expect(getByText(plugin.name)).toBeInTheDocument();
+      expect(queryByText(plugin.name)).toBeInTheDocument();
     }
 
     for (const plugin of remote) {
@@ -52,33 +52,75 @@ describe('Browse list of plugins', () => {
     }
   });
 
-  it('should list all plugins when filtering by all', async () => {
-    const plugins = [...installed, ...remote];
-    const { getByText } = setup('/plugins?filterBy=all');
+  it('should list all plugins (except core plugins) when filtering by all', async () => {
+    const { queryByText } = setup('/plugins?filterBy=all?filterByType=all');
 
-    await waitFor(() => getByText('All'));
+    await waitFor(() => expect(queryByText('Diagram')).toBeInTheDocument());
+    for (const plugin of remote) {
+      expect(queryByText(plugin.name)).toBeInTheDocument();
+    }
 
-    for (const plugin of plugins) {
-      expect(getByText(plugin.name)).toBeInTheDocument();
+    expect(queryByText('Alert Manager')).not.toBeInTheDocument();
+  });
+
+  it('should list installed plugins (including core plugins) when filtering by installed', async () => {
+    const { queryByText } = setup('/plugins?filterBy=installed');
+
+    await waitFor(() => queryByText('Installed'));
+
+    for (const plugin of installed) {
+      expect(queryByText(plugin.name)).toBeInTheDocument();
+    }
+
+    for (const plugin of remote) {
+      expect(queryByText(plugin.name)).not.toBeInTheDocument();
     }
   });
 
-  it('should only list plugins matching search', async () => {
-    const { getByText } = setup('/plugins?filterBy=all&q=zabbix');
+  it('should list enterprise plugins', async () => {
+    const { queryByText } = setup('/plugins?filterBy=all&q=wavefront');
 
-    await waitFor(() => getByText('All'));
-
-    expect(getByText('Zabbix')).toBeInTheDocument();
-    expect(getByText('1 result')).toBeInTheDocument();
+    await waitFor(() => expect(queryByText('Wavefront')).toBeInTheDocument());
   });
 
-  it('should list enterprise plugins', async () => {
-    const { getByText } = setup('/plugins?filterBy=all&q=wavefront');
+  it('should list only datasource plugins when filtering by datasource', async () => {
+    const { queryByText } = setup('/plugins?filterBy=all&filterByType=datasource');
 
-    await waitFor(() => getByText('All'));
+    await waitFor(() => expect(queryByText('Wavefront')).toBeInTheDocument());
 
-    expect(getByText('Wavefront')).toBeInTheDocument();
-    expect(getByText('1 result')).toBeInTheDocument();
+    expect(queryByText('Alert Manager')).not.toBeInTheDocument();
+    expect(queryByText('Diagram')).not.toBeInTheDocument();
+    expect(queryByText('Zabbix')).not.toBeInTheDocument();
+  });
+
+  it('should list only panel plugins when filtering by panel', async () => {
+    const { queryByText } = setup('/plugins?filterBy=all&filterByType=panel');
+
+    await waitFor(() => expect(queryByText('Diagram')).toBeInTheDocument());
+
+    expect(queryByText('Wavefront')).not.toBeInTheDocument();
+    expect(queryByText('Alert Manager')).not.toBeInTheDocument();
+    expect(queryByText('Zabbix')).not.toBeInTheDocument();
+  });
+
+  it('should list only app plugins when filtering by app', async () => {
+    const { queryByText } = setup('/plugins?filterBy=all&filterByType=app');
+
+    await waitFor(() => expect(queryByText('Zabbix')).toBeInTheDocument());
+
+    expect(queryByText('Wavefront')).not.toBeInTheDocument();
+    expect(queryByText('Alert Manager')).not.toBeInTheDocument();
+    expect(queryByText('Diagram')).not.toBeInTheDocument();
+  });
+
+  it('should only list plugins matching search', async () => {
+    const { queryByText } = setup('/plugins?filterBy=all&q=zabbix');
+
+    await waitFor(() => expect(queryByText('Zabbix')).toBeInTheDocument());
+
+    expect(queryByText('Wavefront')).not.toBeInTheDocument();
+    expect(queryByText('Alert Manager')).not.toBeInTheDocument();
+    expect(queryByText('Diagram')).not.toBeInTheDocument();
   });
 });
 
@@ -112,6 +154,46 @@ const installed: LocalPlugin[] = [
     signatureType: '',
     state: 'alpha',
     type: 'datasource',
+    dev: false,
+  },
+  {
+    name: 'Diagram',
+    type: 'panel',
+    id: 'jdbranham-diagram-panel',
+    enabled: true,
+    pinned: false,
+    info: {
+      author: {
+        name: 'Jeremy Branham',
+        url: 'https://savantly.net',
+      },
+      description: 'Display diagrams and charts with colored metric indicators',
+      links: [
+        {
+          name: 'Project site',
+          url: 'https://github.com/jdbranham/grafana-diagram',
+        },
+        {
+          name: 'Apache License',
+          url: 'https://github.com/jdbranham/grafana-diagram/blob/master/LICENSE',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/jdbranham-diagram-panel/img/logo.svg',
+        large: 'public/plugins/jdbranham-diagram-panel/img/logo.svg',
+      },
+      build: {},
+      version: '1.7.1',
+      updated: '2021-05-26',
+    },
+    latestVersion: '1.7.3',
+    hasUpdate: true,
+    defaultNavUrl: '/plugins/jdbranham-diagram-panel/',
+    category: '',
+    state: '',
+    signature: 'unsigned',
+    signatureType: '',
+    signatureOrg: '',
     dev: false,
   },
 ];

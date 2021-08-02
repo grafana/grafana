@@ -2,14 +2,25 @@
 import React, { PureComponent } from 'react';
 // Types
 import { AnnoOptions } from './types';
-import { AnnotationEvent, AppEvents, dateTime, DurationUnit, locationUtil, PanelProps } from '@grafana/data';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import {
+  AnnotationChangeEvent,
+  AnnotationEvent,
+  AppEvents,
+  dateTime,
+  DurationUnit,
+  GrafanaTheme,
+  locationUtil,
+  PanelProps,
+} from '@grafana/data';
+import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import appEvents from 'app/core/app_events';
 import { AnnotationListItem } from './AnnotationListItem';
 import { AnnotationListItemTags } from './AnnotationListItemTags';
-import { CustomScrollbar } from '@grafana/ui';
+import { CustomScrollbar, stylesFactory } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { Subscription } from 'rxjs';
 
 interface UserInfo {
   id?: number;
@@ -25,8 +36,10 @@ interface State {
   queryUser?: UserInfo;
   queryTags: string[];
 }
-
 export class AnnoListPanel extends PureComponent<Props, State> {
+  style = getStyles(config.theme);
+  subs = new Subscription();
+
   constructor(props: Props) {
     super(props);
 
@@ -40,6 +53,19 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.doSearch();
+
+    // When an annotation on this dashboard changes, re-run the query
+    this.subs.add(
+      this.props.eventBus.getStream(AnnotationChangeEvent).subscribe({
+        next: () => {
+          this.doSearch();
+        },
+      })
+    );
+  }
+
+  componentWillUnmount() {
+    this.subs.unsubscribe();
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
@@ -48,7 +74,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       options !== prevProps.options ||
       this.state.queryTags !== prevState.queryTags ||
       this.state.queryUser !== prevState.queryUser ||
-      timeRange !== prevProps.timeRange;
+      (options.onlyInTimeRange && timeRange !== prevProps.timeRange);
 
     if (needsQuery) {
       this.doSearch();
@@ -228,10 +254,20 @@ export class AnnoListPanel extends PureComponent<Props, State> {
           </div>
         )}
 
-        {annotations.length < 1 && <div className="panel-alert-list__no-alerts">No Annotations Found</div>}
+        {annotations.length < 1 && <div className={this.style.noneFound}>No Annotations Found</div>}
 
         <AbstractList items={annotations} renderItem={this.renderItem} getItemKey={(item) => `${item.id}`} />
       </CustomScrollbar>
     );
   }
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  noneFound: css`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: calc(100% - 30px);
+  `,
+}));

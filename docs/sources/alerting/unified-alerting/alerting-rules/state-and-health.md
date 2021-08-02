@@ -4,6 +4,8 @@ description = "State and Health of alerting rules"
 keywords = ["grafana", "alerting", "guide", "state"]
 +++
 
+# State and Health of alerting rule
+
 The concepts of state and health for alerting rules help you understand, at a glance, several key status indicators about your alerts. Alert state, alerting rule state, and alerting rule health are related, but they each convey subtly different information.
 
 ## Alerting rule state

@@ -36,9 +36,9 @@ provider (listed above). There are also options for allowing self sign up.
 Grafana are using short-lived tokens as a mechanism for verifying authenticated users.
 These short-lived tokens are rotated each `token_rotation_interval_minutes` for an active authenticated user.
 
-An active authenticated user that gets it token rotated will extend the `login_maximum_inactive_lifetime_days` time from "now" that Grafana will remember the user.
-This means that a user can close its browser and come back before `now + login_maximum_inactive_lifetime_days` and still being authenticated.
- This is true as long as the time since user login is less than `login_maximum_lifetime_days`.
+An active authenticated user that gets it token rotated will extend the `login_maximum_inactive_lifetime_duration` time from "now" that Grafana will remember the user.
+This means that a user can close its browser and come back before `now + login_maximum_inactive_lifetime_duration` and still being authenticated.
+ This is true as long as the time since user login is less than `login_maximum_lifetime_duration`.
 
 #### Remote logout
 
