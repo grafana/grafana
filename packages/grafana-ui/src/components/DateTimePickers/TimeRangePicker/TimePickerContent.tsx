@@ -11,6 +11,7 @@ import { TimeRangeForm } from './TimeRangeForm';
 import { TimeRangeList } from './TimeRangeList';
 import { TimePickerFooter } from './TimePickerFooter';
 import { getFocusStyles } from '../../../themes/mixins';
+import { selectors } from '@grafana/e2e-selectors';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRanges, isContainerTall) => {
   return {
@@ -239,6 +240,7 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
               setCollapsedFlag(!collapsed);
             }
           }}
+          data-testid={selectors.components.TimePicker.narrowAbsoluteTimeRangeButton}
           aria-expanded={!collapsed}
           aria-controls="expanded-timerange"
         >

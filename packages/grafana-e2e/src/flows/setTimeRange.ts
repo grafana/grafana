@@ -21,7 +21,7 @@ export const setTimeRange = ({ from, to, zone }: TimeRangeConfig) => {
   }
 
   // For smaller screens
-  e2e().get('[aria-label="TimePicker absolute time range"]').click();
+  e2e().get('[data-testid="data-testid-absolute-time-range-narrow"]').click();
 
   e2e().get('[aria-label="TimePicker from field"]').clear().type(from);
   e2e().get('[aria-label="TimePicker to field"]').clear().type(to);

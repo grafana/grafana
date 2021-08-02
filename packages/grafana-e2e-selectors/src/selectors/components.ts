@@ -11,6 +11,7 @@ export const Components = {
     toField: 'TimePicker to field',
     applyTimeRange: 'data-testid TimePicker submit button',
     calendar: 'TimePicker calendar',
+    narrowAbsoluteTimeRangeButton: 'data-testid-absolute-time-range-narrow',
   },
   DataSource: {
     TestData: {
