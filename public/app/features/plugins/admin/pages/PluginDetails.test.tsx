@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, RenderResult, waitFor } from '@testing-library/react';
-import { PluginSignatureStatus, PluginType } from '@grafana/data';
+import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import PluginDetailsPage from './PluginDetails';
 import { API_ROOT, GRAFANA_API_ROOT } from '../constants';
-import { LocalPlugin, Plugin } from '../types';
+import { LocalPlugin, RemotePlugin } from '../types';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 jest.mock('@grafana/runtime', () => {
@@ -68,27 +68,38 @@ describe('Plugin details page', () => {
   });
 });
 
-function remotePlugin(plugin: Partial<Plugin> = {}): Plugin {
+function remotePlugin(plugin: Partial<RemotePlugin> = {}): RemotePlugin {
   return {
     createdAt: '2016-04-06T20:23:41.000Z',
     description: 'Zabbix plugin for Grafana',
     downloads: 33645089,
     featured: 180,
+    id: 74,
+    typeId: 1,
+    typeName: 'Application',
     internal: false,
     links: [],
     name: 'Zabbix',
+    orgId: 13056,
     orgName: 'Alexander Zobnin',
     orgSlug: 'alexanderzobnin',
+    orgUrl: 'https://github.com/alexanderzobnin',
+    url: 'https://github.com/alexanderzobnin/grafana-zabbix',
+    verified: false,
+    downloadSlug: 'alexanderzobnin-zabbix-app',
     packages: {},
     popularity: 0.2111,
-    signatureType: 'community',
+    signatureType: PluginSignatureType.community,
     slug: 'alexanderzobnin-zabbix-app',
     status: 'active',
     typeCode: PluginType.app,
     updatedAt: '2021-05-18T14:53:01.000Z',
     version: '4.1.5',
-    versionSignatureType: 'community',
-    signature: PluginSignatureStatus.valid,
+    versionStatus: 'active',
+    versionSignatureType: PluginSignatureType.community,
+    versionSignedByOrg: 'alexanderzobnin',
+    versionSignedByOrgName: 'Alexander Zobnin',
+    userId: 0,
     readme: '',
     json: {
       dependencies: {
@@ -133,7 +144,6 @@ function localPlugin(plugin: Partial<LocalPlugin> = {}): LocalPlugin {
     signatureType: '',
     state: 'alpha',
     type: PluginType.datasource,
-    dev: false,
     ...plugin,
   };
 }
@@ -142,7 +152,6 @@ function corePlugin(plugin: Partial<LocalPlugin> = {}): LocalPlugin {
   return {
     category: 'sql',
     defaultNavUrl: '/plugins/postgres/',
-    dev: false,
     enabled: true,
     hasUpdate: false,
     id: 'core',
