@@ -39,7 +39,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin): CatalogPlugin {
     orgName,
     popularity,
     publishedAt,
-    signature: hasSignature ? PluginSignatureStatus.valid : PluginSignatureStatus.invalid,
+    signature: hasSignature ? PluginSignatureStatus.valid : PluginSignatureStatus.missing,
     updatedAt,
     version,
     hasUpdate: false,
@@ -84,9 +84,10 @@ export function mapLocalToCatalog(plugin: LocalPlugin): CatalogPlugin {
 
 export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin): CatalogPlugin {
   const version = remote?.version || local?.info.version || '';
-  const hasUpdate = Boolean(remote?.version && local?.info.version && gt(remote?.version, local?.info.version));
+  const hasUpdate =
+    local?.hasUpdate || Boolean(remote?.version && local?.info.version && gt(remote?.version, local?.info.version));
   const id = remote?.slug || local?.id || '';
-
+  const hasRemoteSignature = remote?.signatureType !== '' || remote?.versionSignatureType !== '';
   let logos = {
     small: 'https://grafana.com/api/plugins/404notfound/versions/none/logos/small',
     large: 'https://grafana.com/api/plugins/404notfound/versions/none/logos/large',
@@ -111,14 +112,14 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin): 
     },
     isCore: Boolean(remote?.internal || local?.signature === PluginSignatureStatus.internal),
     isDev: Boolean(local?.dev),
-    isEnterprise: remote?.status === 'enterprise' || false,
+    isEnterprise: remote?.status === 'enterprise',
     isInstalled: Boolean(local),
     name: remote?.name || local?.name || '',
     orgName: remote?.orgName || local?.info.author.name || '',
     popularity: remote?.popularity || 0,
     publishedAt: remote?.createdAt || '',
     type: remote?.typeCode || local?.type,
-    signature: remote?.signature || local?.signature || PluginSignatureStatus.missing,
+    signature: local?.signature || hasRemoteSignature ? PluginSignatureStatus.valid : PluginSignatureStatus.missing,
     updatedAt: remote?.updatedAt || local?.info.updated || '',
     version,
   };
