@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { CombinedRuleGroup, CombinedRuleNamespace, RuleFilterState } from 'app/types/unified-alerting';
+import { CombinedRuleGroup, CombinedRuleNamespace, FilterState } from 'app/types/unified-alerting';
 import { isCloudRulesSource } from '../utils/datasource';
 import { isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
 import { getFiltersFromUrlParams } from '../utils/misc';
@@ -29,7 +29,7 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
   }, [namespaces, filters]);
 };
 
-const reduceNamespaces = (filters: RuleFilterState) => {
+const reduceNamespaces = (filters: FilterState) => {
   return (namespaceAcc: CombinedRuleNamespace[], namespace: CombinedRuleNamespace) => {
     const groups = namespace.groups.reduce(reduceGroups(filters), [] as CombinedRuleGroup[]);
 
@@ -45,7 +45,7 @@ const reduceNamespaces = (filters: RuleFilterState) => {
 };
 
 // Reduces groups to only groups that have rules matching the filters
-const reduceGroups = (filters: RuleFilterState) => {
+const reduceGroups = (filters: FilterState) => {
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
     const rules = group.rules.filter((rule) => {
       if (filters.dataSource && isGrafanaRulerRule(rule.rulerRule) && !isQueryingDataSource(rule.rulerRule, filters)) {
@@ -87,7 +87,7 @@ const reduceGroups = (filters: RuleFilterState) => {
   };
 };
 
-const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filter: RuleFilterState): boolean => {
+const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filter: FilterState): boolean => {
   if (!filter.dataSource) {
     return true;
   }

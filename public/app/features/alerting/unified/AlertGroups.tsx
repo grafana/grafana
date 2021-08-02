@@ -1,10 +1,10 @@
-import { AlertmanagerGroup, AlertState, Matcher } from 'app/plugins/datasource/alertmanager/types';
-import React, { useEffect, useState } from 'react';
+import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import React, { useEffect } from 'react';
 
 import { useDispatch } from 'react-redux';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { AlertManagerPicker } from './components/AlertManagerPicker';
+
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertGroupsAction } from './state/actions';
@@ -12,52 +12,32 @@ import { initialAsyncRequestState } from './utils/redux';
 
 import { AlertGroup } from './components/alert-groups/AlertGroup';
 import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
-import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { GroupBy } from './components/alert-groups/GroupBy';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
+
 import { useGroupedAlerts } from './hooks/useGroupedAlerts';
 import { useFlatAmAlerts } from './hooks/useFlatAmAlerts';
-import { MatcherFilter } from './components/alert-groups/MatcherFilter';
-import { parseMatchers } from './utils/alertmanager';
-import { isEqual } from 'lodash';
+
 import { useFilteredAmGroups } from './hooks/useFilteredAmGroups';
-import { GrafanaTheme2 } from '@grafana/data';
-import { css } from '@emotion/css';
-import { AlertStateFilter } from './components/alert-groups/AlertStateFilter';
+
+import { AlertGroupFilter } from './components/alert-groups/AlertGroupFilter';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { getFiltersFromUrlParams } from './utils/misc';
 
 const AlertGroups = () => {
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
+  const [alertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
-  const styles = useStyles2(getStyles);
+  const [queryParams] = useQueryParams();
+  const { groupBy = [] } = getFiltersFromUrlParams(queryParams);
 
   const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups) || initialAsyncRequestState;
   const loading = alertGroups[alertManagerSourceName || '']?.loading;
   const error = alertGroups[alertManagerSourceName || '']?.error;
   const results: AlertmanagerGroup[] = alertGroups[alertManagerSourceName || '']?.result || [];
 
-  const [groupByKeys, setGroupByKeys] = useState<string[]>([]);
-  const [filterMatchers, setFilterMatchers] = useState<Matcher[]>([]);
-  const [stateFilter, setStateFilter] = useState<AlertState>();
-  const handleGroupingChange = (keys: string[]) => {
-    setGroupByKeys(keys);
-  };
-
-  const handleFilterChange = (queryString: string) => {
-    const matchers = parseMatchers(queryString);
-    if (!isEqual(matchers, filterMatchers)) {
-      setFilterMatchers(matchers);
-    }
-  };
-
   const flattenedAlerts = useFlatAmAlerts(results);
-  const groupedAlerts = useGroupedAlerts(flattenedAlerts, groupByKeys);
-  const groupToFilter = groupByKeys.length > 0 ? groupedAlerts : results;
-  const filteredAlerts = useFilteredAmGroups(groupToFilter, filterMatchers, stateFilter);
-
-  const clearFilters = () => {
-    setGroupByKeys([]);
-    setFilterMatchers([]);
-    setStateFilter(undefined);
-  };
+  const groupedAlerts = useGroupedAlerts(flattenedAlerts, groupBy);
+  const groupToFilter = groupBy.length > 0 ? groupedAlerts : results;
+  const filteredAlerts = useFilteredAmGroups(groupToFilter);
 
   useEffect(() => {
     function fetchNotifications() {
@@ -74,17 +54,7 @@ const AlertGroups = () => {
 
   return (
     <AlertingPageWrapper pageId="groups">
-      <div className={styles.filterSection}>
-        <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
-        <MatcherFilter onFilterChange={handleFilterChange} />
-        <GroupBy groups={results} groupBy={groupByKeys} onGroupingChange={handleGroupingChange} />
-        <AlertStateFilter stateFilter={stateFilter} onStateFilterChange={(value) => setStateFilter(value)} />
-        {(stateFilter || filterMatchers.length > 0 || groupByKeys.length > 0) && (
-          <Button className={styles.clearButton} variant={'secondary'} icon="times" onClick={clearFilters}>
-            Clear filters
-          </Button>
-        )}
-      </div>
+      <AlertGroupFilter groups={results} />
       {loading && <LoadingPlaceholder text="Loading notifications" />}
       {error && !loading && (
         <Alert title={'Error loading notifications'} severity={'error'}>
@@ -104,18 +74,5 @@ const AlertGroups = () => {
     </AlertingPageWrapper>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  filterSection: css`
-    display: flex;
-    flex-direction: row;
-    border-bottom: 1px solid ${theme.colors.border.medium};
-    margin-bottom: ${theme.spacing(3)};
-  `,
-  clearButton: css`
-    margin-left: ${theme.spacing(1)};
-    margin-top: 19px;
-  `,
-});
 
 export default AlertGroups;

@@ -1,18 +1,25 @@
-import { AlertmanagerGroup, AlertState, Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { useMemo } from 'react';
-import { labelsMatchMatchers } from '../utils/alertmanager';
+import { labelsMatchMatchers, parseMatchers } from '../utils/alertmanager';
+import { getFiltersFromUrlParams } from '../utils/misc';
 
-export const useFilteredAmGroups = (groups: AlertmanagerGroup[], matchers: Matcher[], stateFilter?: AlertState) => {
+export const useFilteredAmGroups = (groups: AlertmanagerGroup[]) => {
+  const [queryParams] = useQueryParams();
+  const filters = getFiltersFromUrlParams(queryParams);
+  const matchers = parseMatchers(filters.queryString);
+
   return useMemo(() => {
     return groups.reduce((filteredGroup, group) => {
-      const alerts = group.alerts.filter(({ labels, status }) =>
-        labelsMatchMatchers(labels, matchers) && stateFilter ? status.state === stateFilter : true
-      );
+      const alerts = group.alerts.filter(({ labels, status }) => {
+        const labelsMatch = labelsMatchMatchers(labels, matchers);
+        const filtersMatch = filters.alertState ? status.state === filters.alertState : true;
+        return labelsMatch && filtersMatch;
+      });
       if (alerts.length > 0) {
-        const newGroup = { ...group, alerts };
-        filteredGroup.push(newGroup);
+        filteredGroup.push({ ...group, alerts });
       }
       return filteredGroup;
     }, [] as AlertmanagerGroup[]);
-  }, [groups, matchers, stateFilter]);
+  }, [groups, filters, matchers]);
 };

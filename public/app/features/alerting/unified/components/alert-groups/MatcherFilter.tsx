@@ -4,14 +4,15 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 
 interface Props {
+  queryString?: string;
   onFilterChange: (filterString: string) => void;
 }
 
-export const MatcherFilter = (props: Props) => {
+export const MatcherFilter = ({ onFilterChange, queryString }: Props) => {
   const styles = useStyles2(getStyles);
   const handleSearchChange = (e: FormEvent<HTMLInputElement>) => {
     const target = e.target as HTMLInputElement;
-    props.onFilterChange(target.value);
+    onFilterChange(target.value);
   };
   return (
     <div className={styles.wrapper}>
@@ -28,7 +29,12 @@ export const MatcherFilter = (props: Props) => {
         </Tooltip>
         Search by label
       </Label>
-      <Input placeholder="Search" onChange={handleSearchChange} data-testid="search-query-input" />
+      <Input
+        placeholder="Search"
+        defaultValue={queryString}
+        onChange={handleSearchChange}
+        data-testid="search-query-input"
+      />
     </div>
   );
 };
