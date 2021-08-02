@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+
 	"github.com/grafana/grafana/pkg/registry"
 
 	"github.com/grafana/grafana/pkg/util"
@@ -24,8 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var logger = log.New("secrets") // TODO: move to the service struct
-
 func init() {
 	registry.Register(&registry.Descriptor{
 		Name:         "SecretsService",
@@ -40,6 +40,7 @@ type SecretsService struct {
 	Enc      encryption.EncryptionService `inject:""`
 	Settings setting.Provider             `inject:""`
 
+	log             log.Logger
 	defaultProvider string
 	providers       map[string]Provider
 	dataKeyCache    map[string]dataKeyCacheItem
@@ -59,8 +60,8 @@ func (s *SecretsService) Init() error {
 	s.providers = map[string]Provider{
 		"grafana-provider": newGrafanaProvider(s.Settings, s.Enc),
 	}
-
 	s.defaultProvider = "grafana-provider"
+	s.log = log.New("secrets")
 	logger.Debug("configured secrets provider", s.defaultProvider)
 
 	s.dataKeyCache = make(map[string]dataKeyCacheItem, 0)
@@ -119,6 +120,9 @@ func newRandomDataKey() ([]byte, error) {
 var b64 = base64.RawStdEncoding
 
 func (s *SecretsService) Encrypt(payload []byte, entityID string) ([]byte, error) {
+	if entityID == "" {
+		entityID = "root"
+	}
 	keyName := fmt.Sprintf("%s-%s-%s", time.Now().Format("2006-01-02"), entityID, s.defaultProvider)
 
 	dataKey, err := s.dataKey(keyName)
