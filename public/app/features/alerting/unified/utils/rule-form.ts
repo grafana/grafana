@@ -238,8 +238,7 @@ const dataQueriesToGrafanaQueries = async (
             model: {
               ...interpolatedTarget,
               maxDataPoints,
-              interval: minInterval,
-              intervalMs: minInterval ? rangeUtil.intervalToMs(minInterval) : undefined,
+              intervalMs,
             },
           };
           result.push(newQuery);
