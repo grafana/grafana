@@ -20,7 +20,7 @@ type permission struct {
 }
 
 func (p permission) Evaluate(permissions map[string]map[string]struct{}) (bool, error) {
-	targetScopes, ok := permissions[p.Action]
+	userScopes, ok := permissions[p.Action]
 	if !ok {
 		return false, nil
 	}
@@ -29,11 +29,11 @@ func (p permission) Evaluate(permissions map[string]map[string]struct{}) (bool, 
 		return true, nil
 	}
 
-	for _, scope := range p.Scopes {
+	for _, target := range p.Scopes {
 		var err error
 		var matches bool
 
-		for target := range targetScopes {
+		for scope := range userScopes {
 			matches, err = match(scope, target)
 			if err != nil {
 				return false, err
@@ -52,11 +52,11 @@ func (p permission) Evaluate(permissions map[string]map[string]struct{}) (bool, 
 
 func match(scope, target string) (bool, error) {
 	// TODO: replace glob parser with a simpler parser that handles only prefixes and asterisk matching.
-	rule, err := glob.Compile(target, ':', '/')
+	rule, err := glob.Compile(scope, ':', '/')
 	if err != nil {
 		return false, err
 	}
-	if rule.Match(scope) {
+	if rule.Match(target) {
 		return true, nil
 	}
 	return false, nil
