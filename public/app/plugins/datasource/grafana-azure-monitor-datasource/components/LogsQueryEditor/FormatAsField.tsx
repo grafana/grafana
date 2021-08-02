@@ -20,9 +20,7 @@ const FormatAsField: React.FC<AzureQueryEditorFieldProps> = ({ query, variableOp
         return;
       }
 
-      console.log('setting', { value });
       const newQuery = setFormatAs(query, value);
-      console.log('new query', newQuery);
       onQueryChange(newQuery);
     },
     [onQueryChange, query]

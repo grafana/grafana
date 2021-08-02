@@ -12,7 +12,6 @@ interface SubscriptionFieldProps extends AzureQueryEditorFieldProps {
   multiSelect?: boolean;
 }
 
-// const ERROR_SOURCE = 'metrics-subscription';
 const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
   query,
   subscriptions,

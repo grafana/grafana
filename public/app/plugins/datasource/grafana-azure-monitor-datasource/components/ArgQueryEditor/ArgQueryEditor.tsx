@@ -29,15 +29,14 @@ const ArgQueryEditor: React.FC<LogsQueryEditorProps> = ({
     datasource.azureMonitorDatasource
       .getSubscriptions()
       .then((results) => {
-        const newSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
-        console.log('setting subscriptions', newSubscriptions);
-        setSubscriptions(newSubscriptions);
+        const fetchedSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
+        setSubscriptions(fetchedSubscriptions);
         setError(ERROR_SOURCE, undefined);
 
-        if (!query.subscriptions || (query.subscriptions.length < 1 && newSubscriptions.length)) {
+        if (!query.subscriptions || (query.subscriptions.length < 1 && fetchedSubscriptions.length)) {
           onChange({
             ...query,
-            subscriptions: [query.subscription ?? newSubscriptions[0].value],
+            subscriptions: [query.subscription ?? fetchedSubscriptions[0].value],
           });
         }
       })
