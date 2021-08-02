@@ -23,6 +23,7 @@ import {
   createViewedBoundsFunc,
   findServerChildSpan,
   isErrorSpan,
+  isKindClient,
   spanContainsErredSpan,
   ViewedBoundsFunctionType,
 } from './utils';
@@ -31,6 +32,7 @@ import { getColorByKey } from '../utils/color-generator';
 import { TNil } from '../types';
 import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink } from '../types/trace';
 import TTraceTimeline from '../types/TTraceTimeline';
+import { PEER_SERVICE } from '../constants/tag-keys';
 
 import { createStyle, Theme, withTheme } from '../Theme';
 import { CreateSpanLink } from './types';
@@ -360,6 +362,18 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
         };
       }
     }
+
+    const peerServiceKV = span.tags.find((kv) => kv.key === PEER_SERVICE);
+    // Leaf, kind == client and has peer.service.tag, is likely a client span that does a request
+    // to an uninstrumented/external service
+    let noInstrumentedServer = null;
+    if (!span.hasChildren && peerServiceKV && isKindClient(span)) {
+      noInstrumentedServer = {
+        serviceName: peerServiceKV.value,
+        color: getColorByKey(peerServiceKV.value, theme),
+      };
+    }
+
     const styles = getStyles();
     return (
       <div className={styles.row} key={key} style={style} {...attrs}>
@@ -375,6 +389,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           onDetailToggled={detailToggle}
           onChildrenToggled={childrenToggle}
           rpc={rpc}
+          noInstrumentedServer={noInstrumentedServer}
           showErrorIcon={showErrorIcon}
           getViewedBounds={this.getViewedBounds}
           traceStartTime={trace.startTime}
