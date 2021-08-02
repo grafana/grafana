@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -24,6 +26,7 @@ type UsageReport struct {
 	Edition         string                 `json:"edition"`
 	HasValidLicense bool                   `json:"hasValidLicense"`
 	Packaging       string                 `json:"packaging"`
+	UsageStatsId    string                 `json:"usageStatsId"`
 }
 
 func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, error) {
@@ -36,12 +39,13 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 		edition = "enterprise"
 	}
 	report := UsageReport{
-		Version:   version,
-		Metrics:   metrics,
-		Os:        runtime.GOOS,
-		Arch:      runtime.GOARCH,
-		Edition:   edition,
-		Packaging: uss.Cfg.Packaging,
+		Version:      version,
+		Metrics:      metrics,
+		Os:           runtime.GOOS,
+		Arch:         runtime.GOARCH,
+		Edition:      edition,
+		Packaging:    uss.Cfg.Packaging,
+		UsageStatsId: uss.GetUsageStatsId(ctx),
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
@@ -403,4 +407,34 @@ func (uss *UsageStatsService) ShouldBeReported(dsType string) bool {
 	}
 
 	return ds.Signature.IsValid() || ds.Signature.IsInternal()
+}
+
+func (uss *UsageStatsService) GetUsageStatsId(ctx context.Context) string {
+	kvStore := kvstore.WithNamespace(uss.kvStore, 0, "usage_stats")
+
+	anonId, ok, err := kvStore.Get(ctx, "anonymous_id")
+	if err != nil {
+		metricsLogger.Error("Failed to get usage stats id", "error", err)
+		return ""
+	}
+
+	if ok {
+		return anonId
+	}
+
+	newId, err := uuid.NewRandom()
+	if err != nil {
+		metricsLogger.Error("Failed to generate usage stats id", "error", err)
+		return ""
+	}
+
+	anonId = newId.String()
+
+	err = kvStore.Set(ctx, "anonymous_id", anonId)
+	if err != nil {
+		metricsLogger.Error("Failed to store usage stats id", "error", err)
+		return ""
+	}
+
+	return anonId
 }

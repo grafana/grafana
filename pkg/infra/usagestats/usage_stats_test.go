@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
@@ -629,14 +630,17 @@ type httpResp struct {
 func createService(t *testing.T, cfg setting.Cfg) *UsageStatsService {
 	t.Helper()
 
+	sqlStore := sqlstore.InitTestDB(t)
+
 	return &UsageStatsService{
 		Bus:                bus.New(),
 		Cfg:                &cfg,
-		SQLStore:           sqlstore.InitTestDB(t),
+		SQLStore:           sqlStore,
 		AlertingUsageStats: &alertingUsageMock{},
 		externalMetrics:    make([]MetricsFunc, 0),
 		PluginManager:      &fakePluginManager{},
 		grafanaLive:        newTestLive(t),
+		kvStore:            kvstore.ProvideService(sqlStore),
 	}
 }
 

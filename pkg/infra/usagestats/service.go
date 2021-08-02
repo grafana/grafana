@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -33,6 +34,7 @@ type UsageStatsService struct {
 	PluginManager      plugins.Manager
 	SocialService      social.Service
 	grafanaLive        *live.GrafanaLive
+	kvStore            kvstore.KVStore
 
 	log log.Logger
 
@@ -54,7 +56,8 @@ type liveUsageStats struct {
 
 func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
 	alertingStats alerting.UsageStatsQuerier, pluginManager plugins.Manager,
-	socialService social.Service, grafanaLive *live.GrafanaLive) *UsageStatsService {
+	socialService social.Service, grafanaLive *live.GrafanaLive,
+	kvStore kvstore.KVStore) *UsageStatsService {
 	s := &UsageStatsService{
 		Cfg:                cfg,
 		Bus:                bus,
@@ -63,6 +66,7 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
 		oauthProviders:     socialService.GetOAuthProviders(),
 		PluginManager:      pluginManager,
 		grafanaLive:        grafanaLive,
+		kvStore:            kvStore,
 		log:                log.New("infra.usagestats"),
 	}
 	return s
