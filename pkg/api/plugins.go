@@ -443,7 +443,7 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 
 func accessForbidden(fi os.FileInfo, reqPath string, pluginFilePath string, p *plugins.PluginBase) bool {
 	reqPath = strings.TrimPrefix(reqPath, "/")
-	isLogo := strings.EqualFold(reqPath, p.Info.Logos.Large) || strings.EqualFold(reqPath, p.Info.Logos.Small)
+	isLogo := strings.EqualFold(reqPath, p.Info.Logos.Small) || strings.EqualFold(reqPath, p.Info.Logos.Large)
 	if isLogo {
 		return false
 	}

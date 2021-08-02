@@ -11,7 +11,11 @@ import (
 
 func Test_shouldExclude(t *testing.T) {
 	pluginInfo := plugins.PluginInfo{
-		Logos: plugins.PluginLogos{Small: "img/small.svg", Large: "img/large.svg"}}
+		Logos: plugins.PluginLogos{
+			Small: "img/small.svg",
+			Large: "img/large.svg",
+		},
+	}
 
 	type args struct {
 		fi        os.FileInfo
@@ -63,10 +67,23 @@ func Test_shouldExclude(t *testing.T) {
 			forbidden: false,
 		},
 		{
-			name: "module.js is forbidden if not set on plugin",
+			name: "module.js is not forbidden if set correctly on plugin",
 			args: args{
 				fi: testFileInfo{
 					name: "module.js",
+				},
+				p: &plugins.PluginBase{
+					Info: pluginInfo,
+				},
+				pFilePath: "/plugins/test/module.js",
+			},
+			forbidden: false,
+		},
+		{
+			name: "module.js is forbidden if not set correctly on plugin",
+			args: args{
+				fi: testFileInfo{
+					name: "incorrect_name.js",
 				},
 				p: &plugins.PluginBase{
 					Info: pluginInfo,
