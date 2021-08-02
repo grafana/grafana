@@ -192,6 +192,14 @@ Updates / removes and reloads database settings. You must provide either `update
 
 This endpoint only supports changes to `auth.saml` configuration.
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+
+Action | Scope
+--- | --- | 
+settings:write | settings:**<br>settings:auth.saml:*<br>settings:auth.saml:enabled (property level)
+
 **Example request:**
 
 ```http
