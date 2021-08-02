@@ -102,6 +102,6 @@ export interface InsightsAnalyticsQuery {
 
 export interface AzureMetricDimension {
   dimension: string;
-  operator: 'eq'; // future proof
-  filter?: string; // *
+  operator: string;
+  filter?: string;
 }

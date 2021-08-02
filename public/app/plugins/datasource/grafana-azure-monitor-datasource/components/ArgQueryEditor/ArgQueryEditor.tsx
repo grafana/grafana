@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import Datasource from '../../datasource';
 import { InlineFieldRow } from '@grafana/ui';
@@ -23,9 +23,15 @@ const ArgQueryEditor: React.FC<LogsQueryEditorProps> = ({
   onChange,
   setError,
 }) => {
+  const fetchedRef = useRef(false);
   const [subscriptions, setSubscriptions] = useState<AzureMonitorOption[]>([]);
 
   useEffect(() => {
+    if (fetchedRef.current) {
+      return;
+    }
+
+    fetchedRef.current = true;
     datasource.azureMonitorDatasource
       .getSubscriptions()
       .then((results) => {
@@ -33,7 +39,7 @@ const ArgQueryEditor: React.FC<LogsQueryEditorProps> = ({
         setSubscriptions(fetchedSubscriptions);
         setError(ERROR_SOURCE, undefined);
 
-        if (!query.subscriptions || (query.subscriptions.length < 1 && fetchedSubscriptions.length)) {
+        if (!query.subscriptions?.length && fetchedSubscriptions?.length) {
           onChange({
             ...query,
             subscriptions: [query.subscription ?? fetchedSubscriptions[0].value],
@@ -41,8 +47,7 @@ const ArgQueryEditor: React.FC<LogsQueryEditorProps> = ({
         }
       })
       .catch((err) => setError(ERROR_SOURCE, err));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datasource, setError]);
+  }, [datasource, onChange, query, setError]);
 
   return (
     <div data-testid="azure-monitor-logs-query-editor">

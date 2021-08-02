@@ -135,6 +135,44 @@ export function setDimensionFilters(query: AzureMonitorQuery, dimensions: AzureM
   };
 }
 
+export function appendDimensionFilter(
+  query: AzureMonitorQuery,
+  dimension = '',
+  operator = 'eq',
+  filter = ''
+): AzureMonitorQuery {
+  const existingFilters = query.azureMonitor?.dimensionFilters ?? [];
+
+  return setDimensionFilters(query, [
+    ...existingFilters,
+    {
+      dimension,
+      operator,
+      filter,
+    },
+  ]);
+}
+
+export function removeDimensionFilter(query: AzureMonitorQuery, indexToRemove: number): AzureMonitorQuery {
+  const existingFilters = query.azureMonitor?.dimensionFilters ?? [];
+  const newFilters = [...existingFilters];
+  newFilters.splice(indexToRemove, 1);
+  return setDimensionFilters(query, newFilters);
+}
+
+export function setDimensionFilterValue<Key extends keyof AzureMetricDimension>(
+  query: AzureMonitorQuery,
+  index: number,
+  fieldName: Key,
+  value: AzureMetricDimension[Key]
+): AzureMonitorQuery {
+  const existingFilters = query.azureMonitor?.dimensionFilters ?? [];
+  const newFilters = [...existingFilters];
+  const newFilter = newFilters[index];
+  newFilter[fieldName] = value;
+  return setDimensionFilters(query, newFilters);
+}
+
 export function setTop(query: AzureMonitorQuery, top: string): AzureMonitorQuery {
   if (query.azureMonitor?.top === top) {
     return query;

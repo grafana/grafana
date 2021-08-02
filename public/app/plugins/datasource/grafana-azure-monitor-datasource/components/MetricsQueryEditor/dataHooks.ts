@@ -32,7 +32,8 @@ type DataHook = (
   setError: SetErrorFn
 ) => AzureMonitorOption[];
 
-function useAsyncState<T>(asyncFn: () => Promise<T>, setError: Function, dependencies: unknown[]) {
+export function useAsyncState<T>(asyncFn: () => Promise<T>, setError: Function, dependencies: unknown[]) {
+  // Use the lazy initial state functionality of useState to assign a random ID to the component using this
   const [errorSource] = useState(() => Math.random());
   const [value, setValue] = useState<T>();
 
@@ -44,7 +45,9 @@ function useAsyncState<T>(asyncFn: () => Promise<T>, setError: Function, depende
         setValue(results);
         setError(errorSource, undefined);
       })
-      .catch((err) => setError(errorSource, err));
+      .catch((err) => {
+        setError(errorSource, err);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, dependencies);
 
