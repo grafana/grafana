@@ -433,7 +433,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: baseline;
       flex-wrap: wrap;
       background-color: ${theme.colors.background.primary};
-      padding: ${theme.spacing(1)} ${theme.spacing(2)};
+      padding: ${theme.spacing(1, 2)};
       border-radius: ${theme.shape.borderRadius()};
       margin: ${theme.spacing(2, 0, 1)};
       border: 1px solid ${theme.colors.border.medium};
