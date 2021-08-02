@@ -58,8 +58,8 @@ func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannels
 		return nil, nil, nil
 	}
 
-	allChannelsMap := make(channelsPerOrg, 0)
-	defaultChannelsMap := make(defaultChannelsPerOrg, 0)
+	allChannelsMap := make(channelsPerOrg)
+	defaultChannelsMap := make(defaultChannelsPerOrg)
 	for i, c := range allChannels {
 		if _, ok := allChannelsMap[c.OrgID]; !ok { // new seen org
 			allChannelsMap[c.OrgID] = make(map[interface{}]*notificationChannel)
@@ -258,7 +258,6 @@ func (m *migration) addDefaultChannels(amConfigsPerOrg amConfigsPerOrg, allChann
 			route.Matchers = nil // Don't need matchers for root route.
 			amConfigsPerOrg[orgID].AlertmanagerConfig.Route = route
 		}
-
 	}
 	return nil
 }
