@@ -144,10 +144,6 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, tra
 		return nil, err
 	}
 
-	// if dsInfo.BasicAuth {
-	// req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
-	// }
-
 	req.Header.Set("Accept", "application/protobuf")
 
 	tlog.Debug("Tempo request", "url", req.URL.String(), "headers", req.Header)
