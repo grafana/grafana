@@ -1,6 +1,6 @@
-import { DashboardCursorSync, Field, PanelProps } from '@grafana/data';
+import { Field, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { TooltipDisplayMode, usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
+import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, TooltipDisplayMode } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import React, { useMemo } from 'react';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
@@ -53,12 +53,15 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-            <TooltipPlugin
-              data={alignedDataFrame}
-              config={config}
-              mode={sync === DashboardCursorSync.Tooltip ? TooltipDisplayMode.Multi : options.tooltip.mode}
-              timeZone={timeZone}
-            />
+            {options.tooltip.mode === TooltipDisplayMode.None || (
+              <TooltipPlugin
+                data={alignedDataFrame}
+                config={config}
+                mode={options.tooltip.mode}
+                sync={sync}
+                timeZone={timeZone}
+              />
+            )}
             {/* Renders annotation markers*/}
             {data.annotations && (
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
