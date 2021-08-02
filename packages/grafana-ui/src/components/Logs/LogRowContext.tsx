@@ -25,6 +25,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme, wrapLogMessage?: boolean) =
    * This is workaround for displaying uncropped context when we have unwrapping log messages.
    * We are using margins to correctly position context. Because non-wrapped logs have always 1 line of log
    * and 1 line of Show/Hide context switch. Therefore correct position can be reliably achieved by margins.
+   * We also adjust width to 75%.
    */
 
   const afterContext = wrapLogMessage
@@ -33,6 +34,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme, wrapLogMessage?: boolean) =
       `
     : css`
         margin-top: -250px;
+        width: 75%;
       `;
 
   const beforeContext = wrapLogMessage
@@ -41,6 +43,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme, wrapLogMessage?: boolean) =
       `
     : css`
         margin-top: 40px;
+        width: 75%;
       `;
   return {
     commonStyles: css`
@@ -52,6 +55,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme, wrapLogMessage?: boolean) =
       box-shadow: 0 0 10px ${theme.colors.dropdownShadow};
       border: 1px solid ${theme.colors.bg2};
       border-radius: ${theme.border.radius.md};
+      width: 100%;
     `,
     header: css`
       height: 30px;
@@ -144,11 +148,11 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   };
 
   return (
-    <div className={cx(className, commonStyles)}>
+    <div className={cx(commonStyles, className)}>
       {/* When displaying "after" context */}
       {shouldScrollToBottom && !error && <LogRowContextGroupHeader {...headerProps} />}
       <div className={logs}>
-        <CustomScrollbar autoHide scrollTop={scrollTop}>
+        <CustomScrollbar autoHide scrollTop={scrollTop} autoHeightMin={'210px'}>
           <div ref={listContainerRef}>
             {!error && (
               <List
