@@ -12,7 +12,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { from, merge, Observable, of, throwError } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 import { LokiOptions } from '../loki/types';
-import { transformFromOTLP, transformTrace, transformTraceList } from './resultTransformer';
+import { transformFromOTLP as transformFromOTEL, transformTrace, transformTraceList } from './resultTransformer';
 
 export type TempoQueryType = 'search' | 'traceId' | 'upload';
 
@@ -73,8 +73,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLo
 
     if (uploadTargets.length) {
       if (this.uploadedJson) {
-        const otlpTraceData = JSON.parse(this.uploadedJson as string);
-        subQueries.push(of(transformFromOTLP(otlpTraceData.batches)));
+        const otelTraceData = JSON.parse(this.uploadedJson as string);
+        if (!otelTraceData.batches) {
+          subQueries.push(of({ error: { message: 'JSON is not valid opentelemetry format' }, data: [] }));
+        } else {
+          subQueries.push(of(transformFromOTEL(otelTraceData.batches)));
+        }
       } else {
         subQueries.push(of({ data: [], state: LoadingState.Done }));
       }
