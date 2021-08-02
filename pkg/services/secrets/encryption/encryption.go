@@ -1,4 +1,4 @@
-package secrets
+package encryption
 
 import (
 	"crypto/aes"
@@ -9,9 +9,38 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/grafana/grafana/pkg/registry"
+
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/crypto/pbkdf2"
 )
+
+func init() {
+	registry.Register(&registry.Descriptor{
+		Name:         "Encryption Service",
+		Instance:     &OSSEncryptionService{},
+		InitPriority: registry.High,
+	})
+}
+
+type EncryptionService interface {
+	Encrypt(payload, secret []byte) ([]byte, error)
+	Decrypt(payload, secret []byte) ([]byte, error)
+}
+
+type OSSEncryptionService struct{}
+
+func (s *OSSEncryptionService) Init() error {
+	return nil
+}
+
+func (s OSSEncryptionService) Encrypt(payload, secret []byte) ([]byte, error) {
+	return encrypt(payload, secret)
+}
+
+func (s OSSEncryptionService) Decrypt(payload, secret []byte) ([]byte, error) {
+	return decrypt(payload, secret)
+}
 
 const saltLength = 8
 

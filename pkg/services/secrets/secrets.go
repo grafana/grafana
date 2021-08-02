@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 
+	"github.com/grafana/grafana/pkg/services/secrets/encryption"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,8 +35,10 @@ func init() {
 }
 
 type SecretsService struct {
-	Store *sqlstore.SQLStore `inject:""`
-	Bus   bus.Bus            `inject:""`
+	Store    *sqlstore.SQLStore           `inject:""`
+	Bus      bus.Bus                      `inject:""`
+	Enc      encryption.EncryptionService `inject:""`
+	Settings setting.Provider             `inject:""`
 
 	defaultProvider string
 	providers       map[string]Provider
@@ -54,13 +57,10 @@ type Provider interface {
 
 func (s *SecretsService) Init() error {
 	s.providers = map[string]Provider{
-		"settings-secret": &settingsSecretKey{
-			key: func() []byte {
-				return []byte(setting.SecretKey)
-			},
-		},
+		"grafana-provider": newGrafanaProvider(s.Settings, s.Enc),
 	}
-	s.defaultProvider = "settings-secret"
+
+	s.defaultProvider = "grafana-provider"
 	logger.Debug("configured secrets provider", s.defaultProvider)
 
 	s.dataKeyCache = make(map[string]dataKeyCacheItem, 0)
@@ -133,7 +133,7 @@ func (s *SecretsService) Encrypt(payload []byte, entityID string) ([]byte, error
 		}
 	}
 
-	encrypted, err := encrypt(payload, dataKey)
+	encrypted, err := s.Enc.Encrypt(payload, dataKey)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func (s *SecretsService) Decrypt(payload []byte) ([]byte, error) {
 		}
 	}
 
-	return decrypt(payload, dataKey)
+	return s.Enc.Decrypt(payload, dataKey)
 }
 
 // dataKey looks up DEK in cache or database, and decrypts it

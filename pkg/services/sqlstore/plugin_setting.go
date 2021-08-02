@@ -78,7 +78,7 @@ func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
 			return err
 		}
 		for key, data := range cmd.SecureJsonData {
-			encryptedData, err := util.Encrypt([]byte(data))
+			encryptedData, err := util.Encrypt([]byte(data), "")
 			if err != nil {
 				return err
 			}

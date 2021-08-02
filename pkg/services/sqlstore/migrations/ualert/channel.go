@@ -311,7 +311,7 @@ func (c *PostableUserConfig) EncryptSecureSettings() error {
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
 			for k, v := range gr.SecureSettings {
-				encryptedData, err := util.Encrypt([]byte(v))
+				encryptedData, err := util.Encrypt([]byte(v), "")
 				if err != nil {
 					return fmt.Errorf("failed to encrypt secure settings: %w", err)
 				}

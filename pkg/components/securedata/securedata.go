@@ -7,7 +7,7 @@ import (
 type SecureData []byte
 
 func Encrypt(data []byte) (SecureData, error) {
-	return util.Encrypt(data)
+	return util.Encrypt(data, "")
 }
 
 func (s SecureData) Decrypt() ([]byte, error) {
