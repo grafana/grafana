@@ -101,8 +101,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(login.Service), new(*loginservice.Implementation)),
 	authinfoservice.ProvideAuthInfoService,
 	wire.Bind(new(login.AuthInfoService), new(*authinfoservice.Implementation)),
-	authinfoservice.ProvideOSSUserProtectionService,
-	wire.Bind(new(login.UserProtectionService), new(*authinfoservice.OSSUserProtectionImpl)),
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	live.ProvideService,
