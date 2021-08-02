@@ -13,7 +13,7 @@ Reporting allows you to automatically generate PDFs from any of your dashboards 
 > If you have [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some actions you would need to have relevant permissions.
 Refer to specific guides to understand what permissions are required.
 
-{{< figure src="/static/img/docs/enterprise/reports-list-8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_list_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report changes as well.
 
@@ -47,7 +47,7 @@ Only organization admins can create reports by default. You can customize who ca
 1. **Save** the report.
 1. **Send test email** to verify that the whole configuration is working as expected. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
 
-{{< figure src="/static/img/docs/enterprise/reports-create-new-8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_create_new_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Choose template variables
 
@@ -110,7 +110,7 @@ A background job runs every 10 minutes and removes temporary CSV files. You can 
 
 Scheduled reports can be sent once or repeated on an hourly, daily, weekly and monthly basis, or at custom intervals.  You may also disable scheduling by selecting "Never" for when you want to send the report via the API.
 
-{{< figure src="/static/img/docs/enterprise/reports-scheduler-8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_scheduler_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 
 **Send now or schedule for later**
