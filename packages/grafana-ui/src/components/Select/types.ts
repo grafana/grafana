@@ -41,6 +41,7 @@ export interface SelectCommonProps<T> {
   minMenuHeight?: number;
   maxVisibleValues?: number;
   menuPlacement?: 'auto' | 'bottom' | 'top';
+  menuPortalTarget?: HTMLElement | null;
   menuPosition?: 'fixed' | 'absolute';
   /** The message to display when no options could be found */
   noOptionsMessage?: string;
@@ -70,7 +71,6 @@ export interface SelectCommonProps<T> {
     value: SelectableValue<T> | null,
     options: Readonly<Array<SelectableValue<T>>>
   ) => boolean;
-  [key: string]: any;
 }
 
 export interface SelectAsyncProps<T> {

@@ -116,6 +116,7 @@ export function SelectBase<T>({
   minMenuHeight,
   maxVisibleValues,
   menuPlacement = 'auto',
+  menuPortalTarget = document.body,
   menuPosition,
   noOptionsMessage = 'No options found',
   onBlur,
@@ -135,7 +136,6 @@ export function SelectBase<T>({
   value,
   width,
   isValidNewOption,
-  ...selectProps
 }: SelectBaseProps<T>) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -200,7 +200,7 @@ export function SelectBase<T>({
     maxVisibleValues,
     menuIsOpen: isOpen,
     menuPlacement,
-    menuPortalTarget: document.body,
+    menuPortalTarget,
     menuPosition,
     menuShouldBlockScroll: true,
     menuShouldScrollIntoView: false,
@@ -358,7 +358,6 @@ export function SelectBase<T>({
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}
-        {...selectProps}
       />
     </>
   );
