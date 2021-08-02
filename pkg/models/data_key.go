@@ -12,6 +12,7 @@ var (
 type DataKey struct {
 	Active        bool      `json:"active"`
 	Name          string    `json:"name"`
+	EntityID      string    `json:"entityId"`
 	Provider      string    `json:"provider"`
 	EncryptedData []byte    `json:"-"`
 	Created       time.Time `json:"created"`
