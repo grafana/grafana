@@ -12,6 +12,6 @@ var Decrypt = func(_ []byte) ([]byte, error) {
 }
 
 // Encrypt encrypts a payload with a given secret.
-var Encrypt = func(_ []byte) ([]byte, error) {
+var Encrypt = func(_ []byte, _ string) ([]byte, error) {
 	return nil, ErrNotInitialized
 }

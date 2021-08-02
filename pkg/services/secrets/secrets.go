@@ -92,6 +92,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string) ([]byte, e
 		Name:          name,
 		Provider:      s.defaultProvider,
 		EncryptedData: encrypted,
+		// TODO: Add migration to include EntityID: varchar column
 	})
 	if err != nil {
 		return nil, err
@@ -117,8 +118,8 @@ func newRandomDataKey() ([]byte, error) {
 
 var b64 = base64.RawStdEncoding
 
-func (s *SecretsService) Encrypt(payload []byte) ([]byte, error) {
-	keyName := fmt.Sprintf("%s-%s", s.defaultProvider, time.Now().Format("2006-01-02"))
+func (s *SecretsService) Encrypt(payload []byte, entityID string) ([]byte, error) {
+	keyName := fmt.Sprintf("%s-%s-%s", s.defaultProvider, time.Now().Format("2006-01-02"), entityID)
 
 	dataKey, err := s.dataKey(keyName)
 	if err != nil {
