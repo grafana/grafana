@@ -144,26 +144,11 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 
 		// get folder if exists
-		folder := dashboard{}
-		if dash.FolderId > 0 {
-			exists, err := m.sess.Where("id=?", dash.FolderId).Get(&folder)
-			if err != nil {
-				return MigrationError{
-					Err:     fmt.Errorf("failed to get folder %d: %w", dash.FolderId, err),
-					AlertId: da.Id,
-				}
-			}
-			if !exists {
-				return MigrationError{
-					Err:     fmt.Errorf("folder with id %v not found", dash.FolderId),
-					AlertId: da.Id,
-				}
-			}
-			if !folder.IsFolder {
-				return MigrationError{
-					Err:     fmt.Errorf("id %v is a dashboard not a folder", dash.FolderId),
-					AlertId: da.Id,
-				}
+		folder, err := m.getFolder(dash, da)
+		if err != nil {
+			return MigrationError{
+				Err:     err,
+				AlertId: da.Id,
 			}
 		}
 
