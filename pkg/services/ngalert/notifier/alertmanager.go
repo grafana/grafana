@@ -214,6 +214,7 @@ func (am *alertmanager) SaveAndApplyDefaultConfig() error {
 		AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
 		Default:                   true,
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+		OrgID:                     mainOrgID,
 	}
 
 	cfg, err := Load([]byte(alertmanagerDefaultConfiguration))
@@ -249,6 +250,7 @@ func (am *alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(rawConfig),
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+		OrgID:                     mainOrgID,
 	}
 
 	err = am.Store.SaveAlertmanagerConfigurationWithCallback(cmd, func() error {
@@ -282,6 +284,7 @@ func (am *alertmanager) SyncAndApplyConfigFromDatabase() error {
 				AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
 				Default:                   true,
 				ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+				OrgID:                     mainOrgID,
 			}
 			if err := am.Store.SaveAlertmanagerConfiguration(savecmd); err != nil {
 				return err
