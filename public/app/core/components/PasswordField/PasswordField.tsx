@@ -31,7 +31,7 @@ export const PasswordField: FC<Props> = React.forwardRef<HTMLInputElement, Props
             aria-controls={id}
             aria-role="switch"
             aria-checked={showPassword}
-            aria-label="Toggle password visibility"
+            aria-label="Show password"
             onClick={() => {
               setShowPassword(!showPassword);
             }}
