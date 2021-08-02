@@ -125,7 +125,7 @@ You can choose to send some reports only from Monday to Friday. This applies to 
 
 **Send on the last day of the month**
 
-When you schedule a report with a monthly frequency and set the start date as any day between the 29th and the 31st of the month, the report will not be sent on the months that don't have these dates. For this reason you can select the "Send on the last day of the month" option and the report will be sent every month on the last day regardless of the number of days those months have.
+When you schedule a report with a monthly frequency, and set the start date between the 29th and the 31st of the month, the report is only sent during the months that have those dates. If you want the report to be sent every month, select the **Send on the last day of the month** option instead. This way, the report is sent on the last day of every month regardless of how many days there are in any given month.
 
 ### Send test email
 
