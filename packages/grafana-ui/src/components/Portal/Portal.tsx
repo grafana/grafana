@@ -1,4 +1,4 @@
-﻿import React, { PropsWithChildren, useEffect, useState } from 'react';
+﻿import React, { PropsWithChildren, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { useTheme2 } from '../../themes';
 
@@ -11,21 +11,21 @@ interface Props {
 export function Portal(props: PropsWithChildren<Props>) {
   const { children, className, root = document.body, forwardedRef } = props;
   const theme = useTheme2();
-  const [node] = useState(document.createElement('div'));
+  const [node] = useState(() => document.createElement('div'));
   const portalRoot = root;
 
-  if (className) {
-    node.classList.add(className);
-  }
-  node.style.position = 'relative';
-  node.style.zIndex = `${theme.zIndex.portal}`;
-
   useEffect(() => {
+    if (className) {
+      node.classList.add(className);
+    }
+    node.style.position = 'relative';
+    node.style.zIndex = `${theme.zIndex.portal}`;
+
     portalRoot.appendChild(node);
     return () => {
       portalRoot.removeChild(node);
     };
-  }, [node, portalRoot]);
+  }, [node, portalRoot, className, theme.zIndex.portal]);
 
   return ReactDOM.createPortal(<div ref={forwardedRef}>{children}</div>, node);
 }
