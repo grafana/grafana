@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceApi, ExploreQueryFieldProps } from '@grafana/data';
+import { DataSourceApi, ExploreQueryFieldProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, InlineLabel, LegacyForms, RadioButtonGroup } from '@grafana/ui';
@@ -6,11 +6,13 @@ import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import React from 'react';
 import { LokiQueryField } from '../loki/components/LokiQueryField';
 import { TempoDatasource, TempoQuery, TempoQueryType } from './datasource';
+import LokiDatasource from '../loki/datasource';
+import { LokiQuery } from '../loki/types';
 
 type Props = ExploreQueryFieldProps<TempoDatasource, TempoQuery>;
 const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceId';
 interface State {
-  linkedDatasource?: DataSourceApi;
+  linkedDatasource?: LokiDatasource;
 }
 export class TempoQueryField extends React.PureComponent<Props, State> {
   state = {
@@ -28,14 +30,14 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
     const linkedDatasourceUid = tracesToLogsOptions.datasourceUid;
     if (linkedDatasourceUid) {
       const dsSrv = getDataSourceSrv();
-      const linkedDatasource = await dsSrv.get(linkedDatasourceUid);
+      const linkedDatasource = (await dsSrv.get(linkedDatasourceUid)) as LokiDatasource;
       this.setState({
         linkedDatasource,
       });
     }
   }
 
-  onChangeLinkedQuery = (value: DataQuery) => {
+  onChangeLinkedQuery = (value: LokiQuery) => {
     const { query, onChange } = this.props;
     onChange({
       ...query,
@@ -59,6 +61,7 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
               options={[
                 { value: 'search', label: 'Search' },
                 { value: 'traceId', label: 'TraceID' },
+                { value: 'serviceMap', label: 'Service Map' },
               ]}
               value={query.queryType || DEFAULT_QUERY_TYPE}
               onChange={(v) =>
@@ -71,25 +74,15 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
             />
           </InlineField>
         </InlineFieldRow>
-        {query.queryType === 'search' && linkedDatasource && (
-          <>
-            <InlineLabel>
-              Tempo uses {((linkedDatasource as unknown) as DataSourceApi).name} to find traces.
-            </InlineLabel>
-
-            <LokiQueryField
-              datasource={linkedDatasource!}
-              onChange={this.onChangeLinkedQuery}
-              onRunQuery={this.onRunLinkedQuery}
-              query={this.props.query.linkedQuery ?? ({ refId: 'linked' } as any)}
-              history={[]}
-            />
-          </>
+        {query.queryType === 'search' && (
+          <SearchSection
+            linkedDatasource={linkedDatasource}
+            query={query}
+            onRunQuery={this.onRunLinkedQuery}
+            onChange={this.onChangeLinkedQuery}
+          />
         )}
-        {query.queryType === 'search' && !linkedDatasource && (
-          <div className="text-warning">Please set up a Traces-to-logs datasource in the datasource settings.</div>
-        )}
-        {query.queryType !== 'search' && (
+        {query.queryType === 'traceId' && (
           <LegacyForms.FormField
             label="Trace ID"
             labelWidth={4}
@@ -116,4 +109,34 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
       </>
     );
   }
+}
+
+interface SearchSectionProps {
+  linkedDatasource?: LokiDatasource;
+  onChange: (value: LokiQuery) => void;
+  onRunQuery: () => void;
+  query: TempoQuery;
+}
+function SearchSection({ linkedDatasource, onChange, onRunQuery, query }: SearchSectionProps) {
+  if (linkedDatasource) {
+    return (
+      <>
+        <InlineLabel>Tempo uses {((linkedDatasource as unknown) as DataSourceApi).name} to find traces.</InlineLabel>
+
+        <LokiQueryField
+          datasource={linkedDatasource!}
+          onChange={onChange}
+          onRunQuery={onRunQuery}
+          query={query.linkedQuery ?? ({ refId: 'linked' } as any)}
+          history={[]}
+        />
+      </>
+    );
+  }
+
+  if (!linkedDatasource) {
+    return <div className="text-warning">Please set up a Traces-to-logs datasource in the datasource settings.</div>;
+  }
+
+  return null;
 }
