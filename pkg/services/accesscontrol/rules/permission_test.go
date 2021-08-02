@@ -19,9 +19,30 @@ func TestPermission_Evaluate(t *testing.T) {
 			},
 		},
 		{
+			desc:      "should evaluate to true when all required scopes matches",
+			expected:  true,
+			evaluator: Permission("reports:read", "reports:1", "reports:2"),
+			permissions: map[string]map[string]struct{}{
+				"reports:read": {
+					"reports:1": struct{}{},
+					"reports:2": struct{}{},
+				},
+			},
+		},
+		{
 			desc:      "should evaluate to true for empty scope",
 			expected:  true,
-			evaluator: Permission("reports:read", ScopeNone),
+			evaluator: Permission("reports:read"),
+			permissions: map[string]map[string]struct{}{
+				"reports:read": {
+					"reports:1": struct{}{},
+				},
+			},
+		},
+		{
+			desc:      "should evaluate to false when only one of required scopes exists",
+			expected:  false,
+			evaluator: Permission("reports:read", "reports:1", "reports:2"),
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
 					"reports:1": struct{}{},
