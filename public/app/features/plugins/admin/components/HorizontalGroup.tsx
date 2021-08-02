@@ -1,29 +1,30 @@
 import React from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
-import { useStyles2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 
 interface HorizontalGroupProps {
   children: React.ReactNode;
+  wrap?: boolean;
+  className?: string;
 }
 
-export const HorizontalGroup = ({ children }: HorizontalGroupProps) => {
-  const styles = useStyles2(getStyles);
+export const HorizontalGroup = ({ children, wrap, className }: HorizontalGroupProps) => {
+  const theme = useTheme2();
+  const styles = getStyles(theme, wrap);
 
-  return <div className={styles.container}>{children}</div>;
+  return <div className={cx(styles.container, className)}>{children}</div>;
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, wrap?: boolean) => ({
   container: css`
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: row;
+    flex-wrap: ${wrap ? 'wrap' : 'no-wrap'};
     & > * {
+      margin-bottom: ${theme.spacing()};
       margin-right: ${theme.spacing()};
-    }
-    & > *:first-child {
-      flex-grow: 1;
     }
     & > *:last-child {
       margin-right: 0;
