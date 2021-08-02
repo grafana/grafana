@@ -53,6 +53,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     contextNewline: css`
       display: block;
+      margin-left: 0px;
     `,
   };
 });
