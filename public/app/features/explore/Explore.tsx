@@ -194,7 +194,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
   renderGraphPanel(width: number) {
     const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme } = this.props;
-    const spacing = parseInt(theme.spacing(4).slice(0, -2), 10);
+    const spacing = parseInt(theme.spacing(1).slice(0, -2), 10);
     return (
       <Collapse label="Graph" loading={loading} isOpen>
         <ExploreGraphNGPanel
@@ -226,7 +226,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
   renderLogsPanel(width: number) {
     const { exploreId, syncedTimes, theme } = this.props;
-    const spacing = parseInt(theme.spacing(4).slice(0, -2), 10);
+    const spacing = parseInt(theme.spacing(1).slice(0, -2), 10);
     return (
       <LogsContainer
         exploreId={exploreId}
