@@ -6,14 +6,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  ErrorBoundaryAlert,
-  stylesFactory,
-  CustomScrollbar,
-  Collapse,
-  TooltipDisplayMode,
-  withTheme2,
-} from '@grafana/ui';
+import { ErrorBoundaryAlert, CustomScrollbar, Collapse, TooltipDisplayMode, withTheme2, Themeable2 } from '@grafana/ui';
 import { AbsoluteTimeRange, DataQuery, LoadingState, RawTimeRange, DataFrame, GrafanaTheme2 } from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
@@ -37,7 +30,7 @@ import { NodeGraphContainer } from './NodeGraphContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     exploreMain: css`
       label: exploreMain;
@@ -57,9 +50,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       padding: ${theme.spacing(1)};
     `,
   };
-});
+};
 
-export interface ExploreProps {
+export interface ExploreProps extends Themeable2 {
   exploreId: ExploreId;
   theme: GrafanaTheme2;
 }
