@@ -1,18 +1,17 @@
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import React from 'react';
 import { uniq } from 'lodash';
-import { Icon, Label, MultiSelect, useStyles2 } from '@grafana/ui';
-import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { css } from '@emotion/css';
+import { Icon, Label, MultiSelect } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 
 interface Props {
+  className?: string;
   groups: AlertmanagerGroup[];
   groupBy: string[];
   onGroupingChange: (keys: string[]) => void;
 }
 
-export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
-  const styles = useStyles2(getStyles);
+export const GroupBy = ({ className, groups, groupBy, onGroupingChange }: Props) => {
   const labelKeyOptions = uniq(
     groups.reduce((keys, group) => {
       group.alerts.forEach(({ labels }) => {
@@ -30,7 +29,7 @@ export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
   );
 
   return (
-    <div className={styles.wrapper}>
+    <div className={className}>
       <Label>Custom group by</Label>
       <MultiSelect
         value={groupBy}
@@ -44,10 +43,3 @@ export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
     </div>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    width: 340px;
-    margin-left: ${theme.spacing(1)};
-  `,
-});

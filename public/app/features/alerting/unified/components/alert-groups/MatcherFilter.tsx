@@ -4,23 +4,24 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 
 interface Props {
+  className?: string;
   queryString?: string;
   onFilterChange: (filterString: string) => void;
 }
 
-export const MatcherFilter = ({ onFilterChange, queryString }: Props) => {
+export const MatcherFilter = ({ className, onFilterChange, queryString }: Props) => {
   const styles = useStyles2(getStyles);
   const handleSearchChange = (e: FormEvent<HTMLInputElement>) => {
     const target = e.target as HTMLInputElement;
     onFilterChange(target.value);
   };
   return (
-    <div className={styles.wrapper}>
+    <div className={className}>
       <Label>
         <Tooltip
           content={
             <div>
-              Filter rules and alerts using label querying, ex:
+              Filter alerts using label querying, ex:
               <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
             </div>
           }
@@ -40,10 +41,6 @@ export const MatcherFilter = ({ onFilterChange, queryString }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    width: 340px;
-    margin-left: ${theme.spacing(1)};
-  `,
   icon: css`
     margin-right: ${theme.spacing(0.5)};
   `,
