@@ -6,8 +6,7 @@ import (
 )
 
 const (
-	ScopeNone = ""
-	ScopeAll  = "*"
+	ScopeAll = "*"
 )
 
 func Combine(scopes ...string) string {
