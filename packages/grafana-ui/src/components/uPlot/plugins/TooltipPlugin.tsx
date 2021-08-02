@@ -63,14 +63,14 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       setCoords(null);
       setIsActive(false);
       if (plotCtx.plot) {
-        plotCtx.plot.over.classList.remove('plot-active');
+        plotCtx.plot.root.classList.remove('plot-active');
       }
     };
 
     const plotMouseEnter = () => {
       setIsActive(true);
       if (plotCtx.plot) {
-        plotCtx.plot.over.classList.add('plot-active');
+        plotCtx.plot.root.classList.add('plot-active');
       }
     };
 
@@ -78,7 +78,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       plotCtx.plot.over.addEventListener('mouseleave', plotMouseLeave);
       plotCtx.plot.over.addEventListener('mouseenter', plotMouseEnter);
       if (sync === DashboardCursorSync.Crosshair) {
-        plotCtx.plot.over.classList.add('plot-crosshair');
+        plotCtx.plot.root.classList.add('shared-crosshair');
       }
     }
 
