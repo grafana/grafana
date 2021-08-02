@@ -202,7 +202,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   disclaimerIcon: css`
     label: disclaimer-icon;
     color: ${theme.colors.warning.main};
-    margin-right: ${theme.spacing(1)};
+    margin-right: ${theme.spacing(0.5)};
   `,
   showAllTimeSeries: css`
     label: show-all-time-series;
