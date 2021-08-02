@@ -52,8 +52,8 @@ const getLogRowContextStyles = (theme: GrafanaTheme, wrapLogMessage?: boolean) =
       box-shadow: 0 0 10px ${theme.colors.dropdownShadow};
       border: 1px solid ${theme.colors.bg2};
       border-radius: ${theme.border.radius.md};
-      width: ${wrapLogMessage ? 'calc(100% + 20px)' : 'unset'};
-      left: ${wrapLogMessage ? '-13px' : 'unset'};
+      width: ${wrapLogMessage ? 'calc(100% + 20px)' : 'auto'};
+      left: ${wrapLogMessage ? '-13px' : 'auto'};
     `,
     header: css`
       height: 30px;
