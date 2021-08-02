@@ -13,7 +13,7 @@ Reporting allows you to automatically generate PDFs from any of your dashboards 
 > If you have [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some actions you would need to have relevant permissions.
 Refer to specific guides to understand what permissions are required.
 
-{{< figure src="/static/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports-list-8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report changes as well.
 
@@ -47,7 +47,7 @@ Only organization admins can create reports by default. You can customize who ca
 1. **Save** the report.
 1. **Send test email** to verify that the whole configuration is working as expected. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
 
-{{< figure src="/static/img/docs/enterprise/reports-create-new-8.0.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports-create-new-8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Choose template variables
 
@@ -106,18 +106,18 @@ When the CSV file is generated, it is temporarily written to the `csv` folder in
 A background job runs every 10 minutes and removes temporary CSV files. You can configure how long a CSV file should be stored before being removed by configuring the [temp-data-lifetime]({{< relref "../administration/configuration/#temp-data-lifetime" >}}) setting. This setting also affects how long a renderer PNG file should be stored.
 
 ### Scheduling
-> Note: Only available in Grafana Enterprise v8.1+.
+> Note: Scheduler has been significantly changed in Grafana Enterprise v8.1.
 
 Scheduled reports can be sent once or repeated on an hourly, daily, weekly and monthly basis, or at custom intervals.  You may also disable scheduling by selecting "Never" for when you want to send the report via the API.
-<br/>[screenshot of scheduler]()
+
+{{< figure src="/static/img/docs/enterprise/reports-scheduler-8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
+
 
 **Send now or schedule for later**
 
 - "Send now" - sends report immediately after you save it. You can also add an end date and thus set the sending of the report to a limited time period. If you leave the end date empty, the report will be sent out for an indefinite period.
-<br/>[screenshot of send now]()
 
-- "Schedule for later" - to schedule report for a later date, you must set a start date and time. If you leave the end date empty, the report will be sent out for an indefinite period.
-<br/>[screenshot of send later]()
+- "Send later" - to schedule report for a later date, you must set a start date and time. If you leave the end date empty, the report will be sent out for an indefinite period.
 
 **Send only from Monday to Friday**
 
@@ -126,50 +126,6 @@ You can choose to send some reports only from Monday to Friday. This applies to 
 **Send on the last day of the month**
 
 When you schedule a report with a monthly frequency and set the start date as any day between the 29th and the 31st of the month, the report will not be sent on the months that don't have these dates. For this reason you can select the "Send on the last day of the month" option and the report will be sent every month on the last day regardless of the number of days those months have.
-
-> Note: Only available before Grafana Enterprise v8.1.
-
-Scheduled reports can be sent on a monthly, weekly, daily, or hourly basis. Use Never schedule type for cases when report does not need to be scheduled (for example, if it is sent via the API).
-
-Schedule indicates when the reporting service will start rendering the dashboard. It can take a few minutes to render a dashboard with a lot of panels.
-
-#### Hourly
-
-Hourly reports are generated once per hour. All fields are required.
-
-- **At minute -** The number of minutes after full hour when the report should be generated.
-- **Time zone -** Time zone to determine the offset of the full hour. Does not currently change the time in the rendered report.
-
-#### Daily
-
-Daily reports are generated once per day. All fields are required.
-
-- **Time -** Time the report is sent, in 24-hour format.
-- **Time zone -** Time zone for the **Time** field.
-
-#### Weekly
-
-Weekly reports are generated once per week. All fields are required.
-
-- **Day -** Weekday which the report should be sent on.
-- **Time -** Time the report is sent, in 24-hour format.
-- **Time zone -** Time zone for the **Time** field.
-
-#### Monthly
-
-> Only available in Grafana Enterprise v7.1+.
-
-Monthly reports are generated once per month. All fields are required.
-
-- **Day in month -** Day of the month when the report should be sent. You can select `last` for reports that should go out on the last day of the month.
-- **Time -** Time the report is sent, in 24-hour format.
-- **Time zone -** Time zone for the **Time** field.
-
-#### Never
-
-> Only available in Grafana Enterprise v7.0+.
-
-Reports which are scheduled to never be sent have no parameter and will not be sent to the scheduler. They may be manually generated from the **Send test email** prompt or via the [Reporting API]({{< relref "../http_api/reporting.md" >}}).
 
 ### Send test email
 
