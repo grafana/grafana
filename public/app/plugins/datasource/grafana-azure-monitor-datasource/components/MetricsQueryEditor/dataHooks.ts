@@ -33,7 +33,8 @@ type DataHook = (
 ) => AzureMonitorOption[];
 
 export function useAsyncState<T>(asyncFn: () => Promise<T>, setError: Function, dependencies: unknown[]) {
-  // Use the lazy initial state functionality of useState to assign a random ID to the component using this
+  // Use the lazy initial state functionality of useState to assign a random ID to the API call
+  // to track where errors come from. See useLastError.
   const [errorSource] = useState(() => Math.random());
   const [value, setValue] = useState<T>();
 
