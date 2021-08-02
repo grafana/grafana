@@ -135,6 +135,7 @@ export function SelectBase<T>({
   value,
   width,
   isValidNewOption,
+  ...selectProps
 }: SelectBaseProps<T>) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -357,6 +358,7 @@ export function SelectBase<T>({
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}
+        {...selectProps}
       />
     </>
   );

@@ -70,6 +70,7 @@ export interface SelectCommonProps<T> {
     value: SelectableValue<T> | null,
     options: Readonly<Array<SelectableValue<T>>>
   ) => boolean;
+  [key: string]: any;
 }
 
 export interface SelectAsyncProps<T> {
