@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var logger = log.New("secrets") // TODO: should it be at the package level?
+var logger = log.New("secrets") // TODO: move to the service struct
 
 func init() {
 	registry.Register(&registry.Descriptor{
@@ -192,10 +192,8 @@ func (s *SecretsService) dataKey(name string) ([]byte, error) {
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5) // TODO: What's the reasonable time here?
-	defer cancel()
 	// 1. get encrypted data key from database
-	dataKey, err := s.Store.GetDataKey(ctx, name)
+	dataKey, err := s.Store.GetDataKey(context.Background(), name)
 	if err != nil {
 		return nil, err
 	}
