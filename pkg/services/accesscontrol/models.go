@@ -27,11 +27,6 @@ type Permission struct {
 	Scope  string `json:"scope"`
 }
 
-type EvaluationResult struct {
-	HasAccess bool
-	Meta      interface{}
-}
-
 func (p RoleDTO) Role() Role {
 	return Role{
 		Name:        p.Name,
