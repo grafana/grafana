@@ -62,7 +62,7 @@ func init() {
 
 func (s *Service) Init() error {
 	s.im = datasource.NewInstanceManager(newInstanceSettings(s.HTTPClientProvider))
-
+	s.intervalCalculator = tsdb.NewCalculator()
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
