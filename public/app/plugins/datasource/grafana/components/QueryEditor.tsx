@@ -54,7 +54,7 @@ export class QueryEditor extends PureComponent<Props, State> {
               }
               return {
                 value: c.channel,
-                label: c.channel,
+                label: c.channel + ' [' + c.minute_rate + ' msg/min]',
               };
             });
 
