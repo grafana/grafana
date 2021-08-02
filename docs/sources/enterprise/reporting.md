@@ -108,7 +108,7 @@ A background job runs every 10 minutes and removes temporary CSV files. You can 
 ### Scheduling
 > Note: Scheduler has been significantly changed in Grafana Enterprise v8.1.
 
-Scheduled reports can be sent once or repeated on an hourly, daily, weekly and monthly basis, or at custom intervals.  You may also disable scheduling by selecting "Never" for when you want to send the report via the API.
+Scheduled reports can be sent once or repeated on an hourly, daily, weekly and monthly basis, or at custom intervals.  You can also disable scheduling by selecting **Never** if you want to send the report via the API.
 
 {{< figure src="/static/img/docs/enterprise/reports_scheduler_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
 
