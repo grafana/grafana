@@ -300,7 +300,8 @@ describe('<VirtualizedTraceViewImpl>', () => {
       expect(
         rowWrapper.containsMatchingElement(
           <SpanBarRow
-            className={instance.clippingCssClasses}
+            clippingLeft={instance.getClipping().left}
+            clippingRight={instance.getClipping().right}
             columnDivision={props.spanNameColumnWidth}
             isChildrenExpanded
             isDetailExpanded={false}
