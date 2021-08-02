@@ -435,7 +435,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background-color: ${theme.colors.background.primary};
       padding: ${theme.spacing(1)} ${theme.spacing(2)};
       border-radius: ${theme.shape.borderRadius()};
-      margin: ${theme.spacing(2)} 0 ${theme.spacing(1)};
+      margin: ${theme.spacing(2, 0, 1)};
       border: 1px solid ${theme.colors.border.medium};
     `,
     flipButton: css`
