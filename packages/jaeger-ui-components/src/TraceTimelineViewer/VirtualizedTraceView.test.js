@@ -350,6 +350,23 @@ describe('<VirtualizedTraceViewImpl>', () => {
         )
       ).toBe(true);
     });
+
+    it('renders a SpanBarRow with a client span and no instrumented server span', () => {
+      const externServiceName = 'externalServiceTest';
+      const leafSpan = trace.spans.find((span) => !span.hasChildren);
+      const leafSpanIndex = trace.spans.indexOf(leafSpan);
+      const clientTags = [
+        { key: 'span.kind', value: 'client' },
+        { key: 'peer.service', value: externServiceName },
+        ...leafSpan.tags,
+      ];
+      const altTrace = updateSpan(trace, leafSpanIndex, { tags: clientTags });
+      wrapper.setProps({ trace: altTrace });
+      const rowWrapper = mount(instance.renderRow('some-key', {}, leafSpanIndex, {}));
+      const spanBarRow = rowWrapper.find(SpanBarRow);
+      expect(spanBarRow.length).toBe(1);
+      expect(spanBarRow.prop('noInstrumentedServer')).not.toBeNull();
+    });
   });
 
   describe('shouldScrollToFirstUiFindMatch', () => {

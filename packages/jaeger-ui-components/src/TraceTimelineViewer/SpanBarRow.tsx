@@ -278,6 +278,12 @@ type SpanBarRowProps = {
         serviceName: string;
       }
     | TNil;
+  noInstrumentedServer?:
+    | {
+        color: string;
+        serviceName: string;
+      }
+    | TNil;
   showErrorIcon: boolean;
   getViewedBounds: ViewedBoundsFunctionType;
   traceStartTime: number;
@@ -326,6 +332,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       isMatchingFilter,
       numTicks,
       rpc,
+      noInstrumentedServer,
       showErrorIcon,
       getViewedBounds,
       traceStartTime,
@@ -420,6 +427,13 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                   <span>
                     <IoArrowRightA /> <i className={styles.rpcColorMarker} style={{ background: rpc.color }} />
                     {rpc.serviceName}
+                  </span>
+                )}
+                {noInstrumentedServer && (
+                  <span>
+                    <IoArrowRightA />{' '}
+                    <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
+                    {noInstrumentedServer.serviceName}
                   </span>
                 )}
               </span>
