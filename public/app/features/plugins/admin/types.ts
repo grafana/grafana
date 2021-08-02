@@ -1,4 +1,4 @@
-import { GrafanaPlugin, PluginMeta, PluginType, PluginSignatureStatus } from '@grafana/data';
+import { GrafanaPlugin, PluginMeta, PluginType, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 export interface CatalogPlugin {
   description: string;
@@ -37,35 +37,14 @@ export interface CatalogPluginInfo {
   };
 }
 
-export interface Plugin {
-  name: string;
-  description: string;
-  slug: string;
-  orgName: string;
-  orgSlug: string;
-  signatureType: string;
-  version: string;
-  status: string;
-  popularity: number;
-  downloads: number;
-  updatedAt: string;
+export type RemotePlugin = {
   createdAt: string;
-  typeCode: PluginType;
+  description: string;
+  downloads: number;
+  downloadSlug: string;
   featured: number;
-  readme: string;
+  id: number;
   internal: boolean;
-  versionSignatureType: string;
-  signature: PluginSignatureStatus;
-  packages: {
-    [arch: string]: {
-      packageName: string;
-      downloadUrl: string;
-    };
-  };
-  links: Array<{
-    rel: string;
-    href: string;
-  }>;
   json?: {
     dependencies: {
       grafanaDependency: string;
@@ -78,31 +57,59 @@ export interface Plugin {
       }>;
     };
   };
-}
+  links: Array<{ rel: string; href: string }>;
+  name: string;
+  orgId: number;
+  orgName: string;
+  orgSlug: string;
+  orgUrl: string;
+  packages: {
+    [arch: string]: {
+      packageName: string;
+      downloadUrl: string;
+    };
+  };
+  popularity: number;
+  readme?: string;
+  signatureType: PluginSignatureType | '';
+  slug: string;
+  status: string;
+  typeCode: PluginType;
+  typeId: number;
+  typeName: string;
+  updatedAt: string;
+  url: string;
+  userId: number;
+  verified: boolean;
+  version: string;
+  versionSignatureType: PluginSignatureType | '';
+  versionSignedByOrg: string;
+  versionSignedByOrgName: string;
+  versionStatus: string;
+};
 
 export type LocalPlugin = {
   category: string;
   defaultNavUrl: string;
+  dev?: boolean;
   enabled: boolean;
   hasUpdate: boolean;
   id: string;
   info: {
-    author: {
-      name: string;
-      url: string;
-    };
-    build: {};
+    author: Rel;
     description: string;
-    links: Array<{
-      name: string;
-      url: string;
-    }>;
+    links?: Rel[];
     logos: {
-      large: string;
       small: string;
+      large: string;
     };
-    updated: string;
+    build: Build;
+    screenshots?: Array<{
+      path: string;
+      name: string;
+    }> | null;
     version: string;
+    updated: string;
   };
   latestVersion: string;
   name: string;
@@ -112,8 +119,19 @@ export type LocalPlugin = {
   signatureType: string;
   state: string;
   type: PluginType;
-  dev: boolean | undefined;
 };
+
+interface Rel {
+  name: string;
+  url: string;
+}
+
+export interface Build {
+  time?: number;
+  repo?: string;
+  branch?: string;
+  hash?: string;
+}
 
 export interface Version {
   version: string;
@@ -121,7 +139,7 @@ export interface Version {
 }
 
 export interface PluginDetails {
-  remote?: Plugin;
+  remote?: RemotePlugin;
   remoteVersions?: Version[];
   local?: LocalPlugin;
 }

@@ -1,13 +1,13 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
 import { PluginSignatureStatus } from '@grafana/data';
-import { CatalogPlugin, CatalogPluginDetails, LocalPlugin, Plugin, Version, PluginFilter } from './types';
+import { CatalogPlugin, CatalogPluginDetails, LocalPlugin, RemotePlugin, Version, PluginFilter } from './types';
 
 export function isGrafanaAdmin(): boolean {
   return config.bootData.user.isGrafanaAdmin;
 }
 
-export function mapRemoteToCatalog(plugin: Plugin): CatalogPlugin {
+export function mapRemoteToCatalog(plugin: RemotePlugin): CatalogPlugin {
   const {
     name,
     slug: id,
@@ -82,7 +82,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin): CatalogPlugin {
   };
 }
 
-export function mapToCatalogPlugin(local?: LocalPlugin, remote?: Plugin): CatalogPlugin {
+export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin): CatalogPlugin {
   const version = remote?.version || local?.info.version || '';
   const hasUpdate = Boolean(remote?.version && local?.info.version && gt(remote?.version, local?.info.version));
   const id = remote?.slug || local?.id || '';
@@ -126,7 +126,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: Plugin): Catalo
 
 export function getCatalogPluginDetails(
   local: LocalPlugin | undefined,
-  remote: Plugin | undefined,
+  remote: RemotePlugin | undefined,
   pluginVersions: Version[] = []
 ): CatalogPluginDetails {
   const plugin = mapToCatalogPlugin(local, remote);
