@@ -78,7 +78,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       plotCtx.plot.over.addEventListener('mouseleave', plotMouseLeave);
       plotCtx.plot.over.addEventListener('mouseenter', plotMouseEnter);
       if (sync === DashboardCursorSync.Crosshair) {
-        plotCtx.plot.over.classList.add('u-crosshair');
+        plotCtx.plot.over.classList.add('plot-crosshair');
       }
     }
 
