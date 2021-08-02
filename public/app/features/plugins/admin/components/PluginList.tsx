@@ -59,7 +59,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   headerWrap: css`
     align-items: center;
     display: grid;
-    grid-template-columns: ${LOGO_SIZE} 1fr 24px;
+    grid-template-columns: ${LOGO_SIZE} 1fr ${theme.spacing(3)};
     grid-gap: ${theme.spacing(2)};
     width: 100%;
   `,
