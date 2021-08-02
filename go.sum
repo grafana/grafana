@@ -913,8 +913,8 @@ github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036/go.mod h1:xbL0r
 github.com/grafana/grafana-aws-sdk v0.7.0 h1:D+Lhxi3P/7vpyDHUK/fdX9bL2mRz8hLG04ucNf1E02o=
 github.com/grafana/grafana-aws-sdk v0.7.0/go.mod h1:+pPo5U+pX0zWimR7YBc7ASeSQfbRkcTyQYqMiAj7G5U=
 github.com/grafana/grafana-plugin-sdk-go v0.79.0/go.mod h1:NvxLzGkVhnoBKwzkst6CFfpMFKwAdIUZ1q8ssuLeF60=
-github.com/grafana/grafana-plugin-sdk-go v0.110.0 h1:ZktbcBHoM7Cjsckz68a453ByFxFqn7fkwCM7KzPn2LI=
-github.com/grafana/grafana-plugin-sdk-go v0.110.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
+github.com/grafana/grafana-plugin-sdk-go v0.111.0 h1:7eqLgAdDYeELVokRCeDEobYQJy5/E5C43tZkb/xH66Q=
+github.com/grafana/grafana-plugin-sdk-go v0.111.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103 h1:qCmofFVwQR9QnsinstVqI1NPLMVl33jNCnOCXEAVn6E=
 github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103/go.mod h1:GHIsn+EohCChsdu5YouNZewqLeV9L2FNw4DEJU3P9qE=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
