@@ -1,4 +1,4 @@
-package eval
+package rules
 
 var _ Evaluator = new(all)
 

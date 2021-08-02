@@ -1,4 +1,4 @@
-package eval
+package rules
 
 import (
 	"fmt"

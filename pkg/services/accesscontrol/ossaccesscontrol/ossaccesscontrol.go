@@ -55,7 +55,7 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 }
 
 // Evaluate evaluates access to the given resources
-func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator eval.Evaluator) (bool, error) {
+func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator rules.Evaluator) (bool, error) {
 	timer := prometheus.NewTimer(metrics.MAccessEvaluationsSummary)
 	defer timer.ObserveDuration()
 	metrics.MAccessEvaluationCount.Inc()

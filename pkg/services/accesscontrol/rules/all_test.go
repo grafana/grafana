@@ -1,4 +1,4 @@
-package eval
+package rules
 
 import (
 	"testing"
@@ -6,11 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAny_Evaluate(t *testing.T) {
+func TestAll_Evaluate(t *testing.T) {
 	tests := []evaluateTestCase{
 		{
 			desc: "should return true for one that matches",
-			evaluator: Any(
+			evaluator: All(
 				Permission("settings:write", Combine("settings", ScopeAll)),
 			),
 			permissions: map[string]map[string]struct{}{
@@ -19,26 +19,28 @@ func TestAny_Evaluate(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc: "should return true when at least one matches",
-			evaluator: Any(
-				Permission("settings:write", Combine("settings", "auth.saml", ScopeAll)),
-				Permission("report:read", Combine("reports", "1")),
-				Permission("report:write", Combine("reports", "10")),
+			desc: "should return true for several that matches",
+			evaluator: All(
+				Permission("settings:write", Combine("settings", ScopeAll)),
+				Permission("settings:read", Combine("settings", "auth.saml", ScopeAll)),
 			),
 			permissions: map[string]map[string]struct{}{
 				"settings:write": {"settings:**": struct{}{}},
+				"settings:read":  {"settings:**": struct{}{}},
 			},
 			expected: true,
 		},
 		{
-			desc: "should return false when there is no match",
-			evaluator: Any(
-				Permission("settings:write", Combine("settings", "auth.saml", ScopeAll)),
-				Permission("report:read", Combine("reports", "1")),
-				Permission("report:write", Combine("reports", "10")),
+			desc: "should return false if one does not match",
+			evaluator: All(
+				Permission("settings:write", Combine("settings", ScopeAll)),
+				Permission("settings:read", Combine("settings", "auth.saml", ScopeAll)),
+				Permission("report:read", Combine("reports", ScopeAll)),
 			),
 			permissions: map[string]map[string]struct{}{
-				"permissions:write": {"permissions:delegate": struct{}{}},
+				"settings:write": {"settings:**": struct{}{}},
+				"settings:read":  {"settings:**": struct{}{}},
+				"report:read":    {"report:1": struct{}{}},
 			},
 			expected: false,
 		},
@@ -53,12 +55,12 @@ func TestAny_Evaluate(t *testing.T) {
 	}
 }
 
-func TestAny_Inject(t *testing.T) {
+func TestAll_Inject(t *testing.T) {
 	tests := []injectTestCase{
 		{
 			desc:     "should inject correct param",
 			expected: true,
-			evaluator: Any(
+			evaluator: All(
 				Permission("reports:read", Combine("reports", Parameter(":reportId"))),
 				Permission("settings:read", Combine("settings", Parameter(":settingsId"))),
 			),
@@ -79,7 +81,7 @@ func TestAny_Inject(t *testing.T) {
 		{
 			desc:     "should fail for nil params",
 			expected: false,
-			evaluator: Any(
+			evaluator: All(
 				Permission("settings:read", Combine("reports", Parameter(":settingsId"))),
 				Permission("reports:read", Combine("reports", Parameter(":reportId"))),
 			),

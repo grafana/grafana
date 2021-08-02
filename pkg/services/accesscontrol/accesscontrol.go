@@ -9,7 +9,7 @@ import (
 
 type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
-	Evaluate(ctx context.Context, user *models.SignedInUser, evaluator eval.Evaluator) (bool, error)
+	Evaluate(ctx context.Context, user *models.SignedInUser, evaluator rules.Evaluator) (bool, error)
 
 	// GetUserPermissions returns user permissions.
 	GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*Permission, error)
@@ -18,8 +18,8 @@ type AccessControl interface {
 	IsDisabled() bool
 }
 
-func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator eval.Evaluator) bool {
-	return func(fallback func(*models.ReqContext) bool, evaluator eval.Evaluator) bool {
+func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator rules.Evaluator) bool {
+	return func(fallback func(*models.ReqContext) bool, evaluator rules.Evaluator) bool {
 		if ac.IsDisabled() {
 			return fallback(c)
 		}

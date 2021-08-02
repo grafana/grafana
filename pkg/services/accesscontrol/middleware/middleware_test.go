@@ -20,7 +20,7 @@ type middlewareTestCase struct {
 	desc           string
 	expectFallback bool
 	expectEndpoint bool
-	evaluator      eval.Evaluator
+	evaluator      rules.Evaluator
 	ac             accesscontrol.AccessControl
 }
 
@@ -38,7 +38,7 @@ func TestMiddleware(t *testing.T) {
 				isDisabled:  false,
 				permissions: []*accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
 			},
-			evaluator:      eval.Permission("users:read", "users:*"),
+			evaluator:      rules.Permission("users:read", "users:*"),
 			expectFallback: false,
 			expectEndpoint: true,
 		},
@@ -48,7 +48,7 @@ func TestMiddleware(t *testing.T) {
 				isDisabled:  false,
 				permissions: []*accesscontrol.Permission{{Action: "users:read", Scope: "users:1"}},
 			},
-			evaluator:      eval.Permission("users:read", "users:*"),
+			evaluator:      rules.Permission("users:read", "users:*"),
 			expectFallback: false,
 			expectEndpoint: false,
 		},
@@ -104,7 +104,7 @@ type fakeAccessControl struct {
 	permissions []*accesscontrol.Permission
 }
 
-func (f fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator eval.Evaluator) (bool, error) {
+func (f fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator rules.Evaluator) (bool, error) {
 	permissions, _ := f.GetUserPermissions(ctx, user)
 	return evaluator.Evaluate(accesscontrol.GroupPermissionsByAction(permissions))
 }

@@ -72,7 +72,7 @@ type userTestCase struct {
 }
 
 type endpointTestCase struct {
-	evaluator eval.Evaluator
+	evaluator rules.Evaluator
 }
 
 func TestEvaluatingPermissions(t *testing.T) {
@@ -85,8 +85,8 @@ func TestEvaluatingPermissions(t *testing.T) {
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
-				{evaluator: eval.Permission(accesscontrol.ActionUsersDisable, accesscontrol.ScopeGlobalUsersAll)},
-				{evaluator: eval.Permission(accesscontrol.ActionUsersEnable, accesscontrol.ScopeGlobalUsersAll)},
+				{evaluator: rules.Permission(accesscontrol.ActionUsersDisable, accesscontrol.ScopeGlobalUsersAll)},
+				{evaluator: rules.Permission(accesscontrol.ActionUsersEnable, accesscontrol.ScopeGlobalUsersAll)},
 			},
 			evalResult: true,
 		},
@@ -98,7 +98,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
-				{evaluator: eval.Permission(accesscontrol.ActionUsersCreate, accesscontrol.ScopeGlobalUsersAll)},
+				{evaluator: rules.Permission(accesscontrol.ActionUsersCreate, accesscontrol.ScopeGlobalUsersAll)},
 			},
 			evalResult: false,
 		},

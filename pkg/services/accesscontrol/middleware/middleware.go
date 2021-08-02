@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, eval.Evaluator) macaron.Handler {
-	return func(fallback macaron.Handler, evaluator eval.Evaluator) macaron.Handler {
+func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, rules.Evaluator) macaron.Handler {
+	return func(fallback macaron.Handler, evaluator rules.Evaluator) macaron.Handler {
 		if ac.IsDisabled() {
 			return fallback
 		}

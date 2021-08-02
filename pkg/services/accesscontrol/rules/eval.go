@@ -1,4 +1,4 @@
-package eval
+package rules
 
 type Evaluator interface {
 	// Evaluate permissions that are grouped by action
