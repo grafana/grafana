@@ -9,7 +9,7 @@ interface Props {
   onStateFilterChange: (value: AlertState) => void;
 }
 
-export const AmNotificationsStateFilter = ({ onStateFilterChange, stateFilter }: Props) => {
+export const AlertStateFilter = ({ onStateFilterChange, stateFilter }: Props) => {
   const styles = useStyles2(getStyles);
   const alertStateOptions: SelectableValue[] = Object.entries(AlertState)
     .sort(([labelA], [labelB]) => (labelA < labelB ? -1 : 1))

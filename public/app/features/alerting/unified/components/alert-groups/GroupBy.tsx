@@ -11,7 +11,7 @@ interface Props {
   onGroupingChange: (keys: string[]) => void;
 }
 
-export const AmNotificationsGroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
+export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
   const styles = useStyles2(getStyles);
   const labelKeyOptions = uniq(
     groups.reduce((keys, group) => {

@@ -7,7 +7,7 @@ import { fetchAlertGroups } from './api/alertmanager';
 import { byTestId, byText } from 'testing-library-selector';
 import { configureStore } from 'app/store/configureStore';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
-import AmNotifications from './AmNotifications';
+import AmNotifications from './AlertGroups';
 import { mockAlertGroup, mockAlertmanagerAlert, mockDataSource, MockDataSourceSrv } from './mocks';
 import { DataSourceType } from './utils/datasource';
 import userEvent from '@testing-library/user-event';

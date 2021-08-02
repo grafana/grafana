@@ -7,7 +7,7 @@ interface Props {
   onFilterChange: (filterString: string) => void;
 }
 
-export const AmNotificationsMatcherFilter = (props: Props) => {
+export const MatcherFilter = (props: Props) => {
   const styles = useStyles2(getStyles);
   const handleSearchChange = (e: FormEvent<HTMLInputElement>) => {
     const target = e.target as HTMLInputElement;

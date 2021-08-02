@@ -4,16 +4,16 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { AlertLabels } from '../AlertLabels';
-import { AmNotificationsAlertsTable } from './AmNotificationsAlertsTable';
+import { AlertGroupAlertsTable } from './AlertGroupAlertsTable';
 import { CollapseToggle } from '../CollapseToggle';
-import { AmNotificationsGroupHeader } from './AmNotificationsGroupHeader';
+import { AlertGroupHeader } from './AlertGroupHeader';
 
 interface Props {
   group: AlertmanagerGroup;
   alertManagerSourceName: string;
 }
 
-export const AmNotificationsGroup = ({ alertManagerSourceName, group }: Props) => {
+export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const styles = useStyles2(getStyles);
 
@@ -32,11 +32,9 @@ export const AmNotificationsGroup = ({ alertManagerSourceName, group }: Props) =
             <span>No grouping</span>
           )}
         </div>
-        <AmNotificationsGroupHeader group={group} />
+        <AlertGroupHeader group={group} />
       </div>
-      {!isCollapsed && (
-        <AmNotificationsAlertsTable alertManagerSourceName={alertManagerSourceName} alerts={group.alerts} />
-      )}
+      {!isCollapsed && <AlertGroupAlertsTable alertManagerSourceName={alertManagerSourceName} alerts={group.alerts} />}
     </div>
   );
 };

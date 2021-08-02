@@ -10,21 +10,21 @@ import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertGroupsAction } from './state/actions';
 import { initialAsyncRequestState } from './utils/redux';
 
-import { AmNotificationsGroup } from './components/amnotifications/AmNotificationsGroup';
+import { AlertGroup } from './components/alert-groups/AlertGroup';
 import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
 import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { AmNotificationsGroupBy } from './components/amnotifications/AmNotificationsGroupBy';
+import { GroupBy } from './components/alert-groups/GroupBy';
 import { useGroupedAlerts } from './hooks/useGroupedAlerts';
 import { useFlatAmAlerts } from './hooks/useFlatAmAlerts';
-import { AmNotificationsMatcherFilter } from './components/amnotifications/AmNotificationsMatcherFilter';
+import { MatcherFilter } from './components/alert-groups/MatcherFilter';
 import { parseMatchers } from './utils/alertmanager';
 import { isEqual } from 'lodash';
 import { useFilteredAmGroups } from './hooks/useFilteredAmGroups';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { AmNotificationsStateFilter } from './components/amnotifications/AmNotificationsStateFilter';
+import { AlertStateFilter } from './components/alert-groups/AlertStateFilter';
 
-const AlertManagerNotifications = () => {
+const AlertGroups = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
@@ -73,12 +73,12 @@ const AlertManagerNotifications = () => {
   }, [dispatch, alertManagerSourceName]);
 
   return (
-    <AlertingPageWrapper pageId="notifications">
+    <AlertingPageWrapper pageId="groups">
       <div className={styles.filterSection}>
         <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
-        <AmNotificationsMatcherFilter onFilterChange={handleFilterChange} />
-        <AmNotificationsGroupBy groups={results} groupBy={groupByKeys} onGroupingChange={handleGroupingChange} />
-        <AmNotificationsStateFilter stateFilter={stateFilter} onStateFilterChange={(value) => setStateFilter(value)} />
+        <MatcherFilter onFilterChange={handleFilterChange} />
+        <GroupBy groups={results} groupBy={groupByKeys} onGroupingChange={handleGroupingChange} />
+        <AlertStateFilter stateFilter={stateFilter} onStateFilterChange={(value) => setStateFilter(value)} />
         {(stateFilter || filterMatchers.length > 0 || groupByKeys.length > 0) && (
           <Button className={styles.clearButton} variant={'secondary'} icon="times" onClick={clearFilters}>
             Clear filters
@@ -94,7 +94,7 @@ const AlertManagerNotifications = () => {
       {results &&
         filteredAlerts.map((group, index) => {
           return (
-            <AmNotificationsGroup
+            <AlertGroup
               alertManagerSourceName={alertManagerSourceName || ''}
               key={`${JSON.stringify(group.labels)}-group-${index}`}
               group={group}
@@ -118,4 +118,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-export default AlertManagerNotifications;
+export default AlertGroups;
