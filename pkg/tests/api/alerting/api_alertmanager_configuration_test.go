@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -16,12 +17,16 @@ import (
 func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
-		AnonymousUserRole:    models.ROLE_EDITOR,
+		DisableAnonymous:     true,
 	})
 
 	store := testinfra.SetUpDatabase(t, dir)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
-	alertConfigURL := fmt.Sprintf("http://%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
+
+	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
+	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 
 	// On a blank start with no configuration, it saves and delivers the default configuration.
 	{
@@ -71,12 +76,15 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
-		AnonymousUserRole:    models.ROLE_EDITOR,
+		DisableAnonymous:     true,
 	})
 
 	store := testinfra.SetUpDatabase(t, dir)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
-	alertConfigURL := fmt.Sprintf("http://%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
+	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
+	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 	generatedUID := ""
 
 	// create a new configuration that has a secret
