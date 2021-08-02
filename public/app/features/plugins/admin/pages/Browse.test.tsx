@@ -1,6 +1,6 @@
 import React from 'react';
 import { Router } from 'react-router-dom';
-import { render, RenderResult, waitFor } from '@testing-library/react';
+import { render, RenderResult, waitFor, within } from '@testing-library/react';
 import BrowsePage from './Browse';
 import { locationService } from '@grafana/runtime';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
@@ -39,89 +39,173 @@ function setup(path = '/plugins'): RenderResult {
 }
 
 describe('Browse list of plugins', () => {
-  it('should list installed plugins by default', async () => {
-    const { queryByText } = setup('/plugins');
+  describe('when filtering', () => {
+    it('should list installed plugins by default', async () => {
+      const { queryByText } = setup('/plugins');
 
-    await waitFor(() => queryByText('Installed'));
+      await waitFor(() => queryByText('Installed'));
 
-    for (const plugin of installed) {
-      expect(queryByText(plugin.name)).toBeInTheDocument();
-    }
+      for (const plugin of installed) {
+        expect(queryByText(plugin.name)).toBeInTheDocument();
+      }
 
-    for (const plugin of remote) {
-      expect(queryByText(plugin.name)).toBeNull();
-    }
+      for (const plugin of remote) {
+        expect(queryByText(plugin.name)).toBeNull();
+      }
+    });
+
+    it('should list all plugins (except core plugins) when filtering by all', async () => {
+      const { queryByText } = setup('/plugins?filterBy=all&filterByType=all');
+
+      await waitFor(() => expect(queryByText('Diagram')).toBeInTheDocument());
+      for (const plugin of remote) {
+        expect(queryByText(plugin.name)).toBeInTheDocument();
+      }
+
+      expect(queryByText('Alert Manager')).not.toBeInTheDocument();
+    });
+
+    it('should list installed plugins (including core plugins) when filtering by installed', async () => {
+      const { queryByText } = setup('/plugins?filterBy=installed');
+
+      await waitFor(() => queryByText('Installed'));
+
+      for (const plugin of installed) {
+        expect(queryByText(plugin.name)).toBeInTheDocument();
+      }
+
+      for (const plugin of remote) {
+        expect(queryByText(plugin.name)).not.toBeInTheDocument();
+      }
+    });
+
+    it('should list enterprise plugins', async () => {
+      const { queryByText } = setup('/plugins?filterBy=all&q=wavefront');
+
+      await waitFor(() => expect(queryByText('Wavefront')).toBeInTheDocument());
+    });
+
+    it('should list only datasource plugins when filtering by datasource', async () => {
+      const { queryByText } = setup('/plugins?filterBy=all&filterByType=datasource');
+
+      await waitFor(() => expect(queryByText('Wavefront')).toBeInTheDocument());
+
+      expect(queryByText('Alert Manager')).not.toBeInTheDocument();
+      expect(queryByText('Diagram')).not.toBeInTheDocument();
+      expect(queryByText('Zabbix')).not.toBeInTheDocument();
+      expect(queryByText('ACE.SVG')).not.toBeInTheDocument();
+    });
+
+    it('should list only panel plugins when filtering by panel', async () => {
+      const { queryByText } = setup('/plugins?filterBy=all&filterByType=panel');
+
+      await waitFor(() => expect(queryByText('Diagram')).toBeInTheDocument());
+      expect(queryByText('ACE.SVG')).toBeInTheDocument();
+
+      expect(queryByText('Wavefront')).not.toBeInTheDocument();
+      expect(queryByText('Alert Manager')).not.toBeInTheDocument();
+      expect(queryByText('Zabbix')).not.toBeInTheDocument();
+    });
+
+    it('should list only app plugins when filtering by app', async () => {
+      const { queryByText } = setup('/plugins?filterBy=all&filterByType=app');
+
+      await waitFor(() => expect(queryByText('Zabbix')).toBeInTheDocument());
+
+      expect(queryByText('Wavefront')).not.toBeInTheDocument();
+      expect(queryByText('Alert Manager')).not.toBeInTheDocument();
+      expect(queryByText('Diagram')).not.toBeInTheDocument();
+      expect(queryByText('ACE.SVG')).not.toBeInTheDocument();
+    });
+  });
+  describe('when searching', () => {
+    it('should only list plugins matching search', async () => {
+      const { queryByText } = setup('/plugins?filterBy=all&q=zabbix');
+
+      await waitFor(() => expect(queryByText('Zabbix')).toBeInTheDocument());
+
+      expect(queryByText('Wavefront')).not.toBeInTheDocument();
+      expect(queryByText('Alert Manager')).not.toBeInTheDocument();
+      expect(queryByText('Diagram')).not.toBeInTheDocument();
+      expect(queryByText('Redis Application')).not.toBeInTheDocument();
+    });
   });
 
-  it('should list all plugins (except core plugins) when filtering by all', async () => {
-    const { queryByText } = setup('/plugins?filterBy=all?filterByType=all');
+  describe('when sorting', () => {
+    it('should sort plugins by name in ascending alphabetical order', async () => {
+      const { findByTestId } = setup('/plugins?filterBy=all');
 
-    await waitFor(() => expect(queryByText('Diagram')).toBeInTheDocument());
-    for (const plugin of remote) {
-      expect(queryByText(plugin.name)).toBeInTheDocument();
-    }
+      const pluginList = await findByTestId('plugin-list');
+      const pluginHeadings = within(pluginList).queryAllByRole('heading');
 
-    expect(queryByText('Alert Manager')).not.toBeInTheDocument();
-  });
+      expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
+        'ACE.SVG',
+        'Diagram',
+        'Redis Application',
+        'Wavefront',
+        'Zabbix',
+      ]);
+    });
 
-  it('should list installed plugins (including core plugins) when filtering by installed', async () => {
-    const { queryByText } = setup('/plugins?filterBy=installed');
+    it('should sort plugins by name in descending alphabetical order', async () => {
+      const { findByTestId } = setup('/plugins?filterBy=all&sortBy=nameDesc');
 
-    await waitFor(() => queryByText('Installed'));
+      const pluginList = await findByTestId('plugin-list');
+      const pluginHeadings = within(pluginList).queryAllByRole('heading');
 
-    for (const plugin of installed) {
-      expect(queryByText(plugin.name)).toBeInTheDocument();
-    }
+      expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
+        'Zabbix',
+        'Wavefront',
+        'Redis Application',
+        'Diagram',
+        'ACE.SVG',
+      ]);
+    });
 
-    for (const plugin of remote) {
-      expect(queryByText(plugin.name)).not.toBeInTheDocument();
-    }
-  });
+    it('should sort plugins by date in ascending updated order', async () => {
+      const { findByTestId } = setup('/plugins?filterBy=all&sortBy=updated');
 
-  it('should list enterprise plugins', async () => {
-    const { queryByText } = setup('/plugins?filterBy=all&q=wavefront');
+      const pluginList = await findByTestId('plugin-list');
+      const pluginHeadings = within(pluginList).queryAllByRole('heading');
 
-    await waitFor(() => expect(queryByText('Wavefront')).toBeInTheDocument());
-  });
+      expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
+        'Diagram',
+        'Wavefront',
+        'Redis Application',
+        'ACE.SVG',
+        'Zabbix',
+      ]);
+    });
 
-  it('should list only datasource plugins when filtering by datasource', async () => {
-    const { queryByText } = setup('/plugins?filterBy=all&filterByType=datasource');
+    it('should sort plugins by date in ascending published order', async () => {
+      const { findByTestId } = setup('/plugins?filterBy=all&sortBy=published');
 
-    await waitFor(() => expect(queryByText('Wavefront')).toBeInTheDocument());
+      const pluginList = await findByTestId('plugin-list');
+      const pluginHeadings = within(pluginList).queryAllByRole('heading');
 
-    expect(queryByText('Alert Manager')).not.toBeInTheDocument();
-    expect(queryByText('Diagram')).not.toBeInTheDocument();
-    expect(queryByText('Zabbix')).not.toBeInTheDocument();
-  });
+      expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
+        'Diagram',
+        'Redis Application',
+        'ACE.SVG',
+        'Wavefront',
+        'Zabbix',
+      ]);
+    });
 
-  it('should list only panel plugins when filtering by panel', async () => {
-    const { queryByText } = setup('/plugins?filterBy=all&filterByType=panel');
+    it('should sort plugins by number of downloads in ascending order', async () => {
+      const { findByTestId } = setup('/plugins?filterBy=all&sortBy=downloads');
 
-    await waitFor(() => expect(queryByText('Diagram')).toBeInTheDocument());
+      const pluginList = await findByTestId('plugin-list');
+      const pluginHeadings = within(pluginList).queryAllByRole('heading');
 
-    expect(queryByText('Wavefront')).not.toBeInTheDocument();
-    expect(queryByText('Alert Manager')).not.toBeInTheDocument();
-    expect(queryByText('Zabbix')).not.toBeInTheDocument();
-  });
-
-  it('should list only app plugins when filtering by app', async () => {
-    const { queryByText } = setup('/plugins?filterBy=all&filterByType=app');
-
-    await waitFor(() => expect(queryByText('Zabbix')).toBeInTheDocument());
-
-    expect(queryByText('Wavefront')).not.toBeInTheDocument();
-    expect(queryByText('Alert Manager')).not.toBeInTheDocument();
-    expect(queryByText('Diagram')).not.toBeInTheDocument();
-  });
-
-  it('should only list plugins matching search', async () => {
-    const { queryByText } = setup('/plugins?filterBy=all&q=zabbix');
-
-    await waitFor(() => expect(queryByText('Zabbix')).toBeInTheDocument());
-
-    expect(queryByText('Wavefront')).not.toBeInTheDocument();
-    expect(queryByText('Alert Manager')).not.toBeInTheDocument();
-    expect(queryByText('Diagram')).not.toBeInTheDocument();
+      expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
+        'Zabbix',
+        'ACE.SVG',
+        'Wavefront',
+        'Diagram',
+        'Redis Application',
+      ]);
+    });
   });
 });
 
@@ -186,38 +270,9 @@ const installed: LocalPlugin[] = [
         large: 'public/plugins/jdbranham-diagram-panel/img/logo.svg',
       },
       build: {},
-      screenshots: [
-        {
-          path: 'public/plugins/jdbranham-diagram-panel/img/default.png',
-          name: 'diagram',
-        },
-        {
-          path: 'public/plugins/jdbranham-diagram-panel/img/simple.png',
-          name: 'simple',
-        },
-        {
-          path: 'public/plugins/jdbranham-diagram-panel/img/field_options.png',
-          name: 'field options',
-        },
-        {
-          path: 'public/plugins/jdbranham-diagram-panel/img/field_overrides.png',
-          name: 'field override',
-        },
-        {
-          path: 'public/plugins/jdbranham-diagram-panel/img/composites.png',
-          name: 'composites',
-        },
-        {
-          path: 'public/plugins/jdbranham-diagram-panel/img/theme_dark.png',
-          name: 'dark',
-        },
-        {
-          path: 'public/plugins/jdbranham-diagram-panel/img/theme_custom.png',
-          name: 'custom',
-        },
-      ],
-      version: '%VERSION%',
-      updated: '%TODAY%',
+      screenshots: [],
+      version: '1.7.3',
+      updated: '2021-07-20',
     },
     latestVersion: '1.7.3',
     hasUpdate: true,
@@ -252,32 +307,7 @@ const installed: LocalPlugin[] = [
         large: 'public/plugins/redis-app/img/logo.svg',
       },
       build: {},
-      screenshots: [
-        {
-          path: 'public/plugins/redis-app/img/redis-app.png',
-          name: 'Redis Application',
-        },
-        {
-          path: 'public/plugins/redis-app/img/redis-cli-dashboard.png',
-          name: 'Redis CLI Dashboard',
-        },
-        {
-          path: 'public/plugins/redis-app/img/redis-gears-dashboard.png',
-          name: 'RedisGears Dashboard',
-        },
-        {
-          path: 'public/plugins/redis-app/img/redis-cli-panel.png',
-          name: 'Redis CLI Panel',
-        },
-        {
-          path: 'public/plugins/redis-app/img/redis-latency-panel-graph.png',
-          name: 'Redis Latency Panel',
-        },
-        {
-          path: 'public/plugins/redis-app/img/redis-keys-panel.png',
-          name: 'Max Memory Keys Panel',
-        },
-      ],
+      screenshots: [],
       version: '2.0.1',
       updated: '2021-07-07',
     },
@@ -291,6 +321,7 @@ const installed: LocalPlugin[] = [
     signatureOrg: 'RedisGrafana',
   },
 ];
+
 const remote: RemotePlugin[] = [
   {
     status: 'active',
@@ -322,24 +353,7 @@ const remote: RemotePlugin[] = [
     popularity: 0.2019,
     signatureType: PluginSignatureType.community,
     packages: {},
-    links: [
-      {
-        rel: 'self',
-        href: '/plugins/alexanderzobnin-zabbix-app',
-      },
-      {
-        rel: 'versions',
-        href: '/plugins/alexanderzobnin-zabbix-app/versions',
-      },
-      {
-        rel: 'latest',
-        href: '/plugins/alexanderzobnin-zabbix-app/versions/4.1.5',
-      },
-      {
-        rel: 'download',
-        href: '/plugins/alexanderzobnin-zabbix-app/versions/4.1.5/download',
-      },
-    ],
+    links: [],
   },
   {
     status: 'enterprise',
@@ -371,24 +385,7 @@ const remote: RemotePlugin[] = [
     popularity: 0.0107,
     signatureType: PluginSignatureType.grafana,
     packages: {},
-    links: [
-      {
-        rel: 'self',
-        href: '/plugins/grafana-wavefront-datasource',
-      },
-      {
-        rel: 'versions',
-        href: '/plugins/grafana-wavefront-datasource/versions',
-      },
-      {
-        rel: 'latest',
-        href: '/plugins/grafana-wavefront-datasource/versions/1.0.8',
-      },
-      {
-        rel: 'download',
-        href: '/plugins/grafana-wavefront-datasource/versions/1.0.8/download',
-      },
-    ],
+    links: [],
   },
   {
     status: 'active',
@@ -420,23 +417,6 @@ const remote: RemotePlugin[] = [
     popularity: 0.0134,
     signatureType: PluginSignatureType.community,
     packages: {},
-    links: [
-      {
-        rel: 'self',
-        href: '/plugins/aceiot-svg-panel',
-      },
-      {
-        rel: 'versions',
-        href: '/plugins/aceiot-svg-panel/versions',
-      },
-      {
-        rel: 'latest',
-        href: '/plugins/aceiot-svg-panel/versions/0.0.10',
-      },
-      {
-        rel: 'download',
-        href: '/plugins/aceiot-svg-panel/versions/0.0.10/download',
-      },
-    ],
+    links: [],
   },
 ];

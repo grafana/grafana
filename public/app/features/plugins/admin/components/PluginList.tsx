@@ -2,8 +2,6 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { Icon, useStyles2, CardContainer, VerticalGroup } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Grid } from '../components/Grid';
-
 import { CatalogPlugin } from '../types';
 import { PluginLogo } from './PluginLogo';
 import { PluginBadges } from './PluginBadges';
@@ -24,7 +22,7 @@ export const PluginList = ({ plugins }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <Grid>
+    <div className={styles.grid} data-testid="plugin-list">
       {plugins.map((plugin) => {
         const { name, id, orgName, type } = plugin;
 
@@ -47,11 +45,16 @@ export const PluginList = ({ plugins }: Props) => {
           </CardContainer>
         );
       })}
-    </Grid>
+    </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  grid: css`
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+    grid-gap: ${theme.spacing(3)};
+  `,
   cardContainer: css`
     margin-bottom: 0;
     padding: ${theme.spacing()};
