@@ -94,7 +94,6 @@ export function ExploreGraphNGPanel({
   });
 
   const style = useStyles2(getStyles);
-  console.log(style);
   const timeRange = {
     from: dateTime(absoluteRange.from),
     to: dateTime(absoluteRange.to),
