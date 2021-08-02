@@ -146,9 +146,10 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, orgID int64, channelUid
 	// Remove obsolete notification channels.
 	filteredChannelUids := make(map[interface{}]struct{})
 	for _, uid := range channelUids {
-		_, ok := allChannels[uid]
+		c, ok := allChannels[uid]
 		if ok {
-			filteredChannelUids[uid] = struct{}{}
+			// always store the channel UID to prevent duplicates
+			filteredChannelUids[c.Uid] = struct{}{}
 		} else {
 			m.mg.Logger.Warn("ignoring obsolete notification channel", "uid", uid)
 		}
@@ -159,9 +160,10 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, orgID int64, channelUid
 		if c.Uid == "" {
 			id = c.ID
 		}
-		_, ok := allChannels[id]
+		c, ok := allChannels[id]
 		if ok {
-			filteredChannelUids[id] = struct{}{}
+			// always store the channel UID to prevent duplicates
+			filteredChannelUids[c.Uid] = struct{}{}
 		}
 	}
 
