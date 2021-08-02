@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Input, IconButton } from '@grafana/ui';
+import { Input, Icon } from '@grafana/ui';
 
 export interface Props {
   autoFocus?: boolean;
@@ -25,13 +25,9 @@ export const PasswordField: FC<Props> = React.forwardRef<HTMLInputElement, Props
         aria-label={selectors.pages.Login.password}
         ref={ref}
         suffix={
-          <IconButton
+          <Icon
             name={showPassword ? 'eye-slash' : 'eye'}
-            surface="header"
-            aria-controls={id}
-            aria-expanded={showPassword}
-            onClick={(e) => {
-              e.preventDefault();
+            onClick={() => {
               setShowPassword(!showPassword);
             }}
           />
