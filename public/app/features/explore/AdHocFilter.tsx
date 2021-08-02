@@ -1,10 +1,10 @@
 import React from 'react';
-import { LegacyForms, useStyles } from '@grafana/ui';
+import { LegacyForms, useStyles2 } from '@grafana/ui';
 const { Select } = LegacyForms;
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   keyValueContainer: css`
     label: key-value-container;
     display: flex;
@@ -32,7 +32,7 @@ export interface Props {
 }
 
 export const AdHocFilter: React.FunctionComponent<Props> = (props) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const onChange = (changeType: ChangeType) => (item: SelectableValue<string>) => {
     const { onKeyChanged, onValueChanged, onOperatorChanged } = props;
