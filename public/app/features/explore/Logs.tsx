@@ -16,9 +16,9 @@ import {
   LogsSortOrder,
   LinkModel,
   Field,
-  GrafanaTheme,
   DataQuery,
   DataFrame,
+  GrafanaTheme2,
 } from '@grafana/data';
 import {
   RadioButtonGroup,
@@ -27,9 +27,9 @@ import {
   InlineField,
   InlineFieldRow,
   InlineSwitch,
-  withTheme,
-  stylesFactory,
+  withTheme2,
   TooltipDisplayMode,
+  Themeable2,
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
@@ -45,14 +45,14 @@ const SETTINGS_KEYS = {
   prettifyLogMessage: 'grafana.explore.logs.prettifyLogMessage',
 };
 
-interface Props {
+interface Props extends Themeable2 {
   width: number;
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: DataFrame[];
   logsQueries?: DataQuery[];
   visibleRange?: AbsoluteTimeRange;
-  theme: GrafanaTheme;
+  theme: GrafanaTheme2;
   highlighterExpressions?: string[];
   loading: boolean;
   absoluteRange: AbsoluteTimeRange;
@@ -418,9 +418,9 @@ export class UnthemedLogs extends PureComponent<Props, State> {
   }
 }
 
-export const Logs = withTheme(UnthemedLogs);
+export const Logs = withTheme2(UnthemedLogs);
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     noData: css`
       > * {
@@ -432,17 +432,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: space-between;
       align-items: baseline;
       flex-wrap: wrap;
-      background-color: ${theme.colors.bg1};
-      padding: ${theme.spacing.sm} ${theme.spacing.md};
-      border-radius: ${theme.border.radius.md};
-      margin: ${theme.spacing.md} 0 ${theme.spacing.sm};
-      border: 1px solid ${theme.colors.border2};
+      background-color: ${theme.colors.background.primary};
+      padding: ${theme.spacing(1, 2)};
+      border-radius: ${theme.shape.borderRadius()};
+      margin: ${theme.spacing(2, 0, 1)};
+      border: 1px solid ${theme.colors.border.medium};
     `,
     flipButton: css`
-      margin: ${theme.spacing.xs} 0 0 ${theme.spacing.sm};
+      margin: ${theme.spacing(0.5, 0, 0, 1)};
     `,
     radioButtons: css`
-      margin: 0 ${theme.spacing.sm};
+      margin: 0 ${theme.spacing(1)};
     `,
     logsSection: css`
       display: flex;
@@ -455,7 +455,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     infoText: css`
       font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
     `,
   };
-});
+};
