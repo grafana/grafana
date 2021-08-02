@@ -28,7 +28,6 @@ import {
   InlineFieldRow,
   InlineSwitch,
   withTheme2,
-  stylesFactory,
   TooltipDisplayMode,
   Themeable2,
 } from '@grafana/ui';
@@ -421,7 +420,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
 export const Logs = withTheme2(UnthemedLogs);
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     noData: css`
       > * {
@@ -459,4 +458,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       color: ${theme.colors.text.secondary};
     `,
   };
-});
+};
