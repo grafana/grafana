@@ -53,7 +53,11 @@ type datasourceInfo struct {
 }
 
 func init() {
-	registry.Register(&registry.Descriptor{Instance: &Service{}})
+	registry.Register(&registry.Descriptor{
+		Name:         "LokiService",
+		InitPriority: registry.Low,
+		Instance:     &Service{},
+	})
 }
 
 func (s *Service) Init() error {
