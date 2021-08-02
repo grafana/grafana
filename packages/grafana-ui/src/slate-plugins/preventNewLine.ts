@@ -1,6 +1,9 @@
 import { Plugin } from '@grafana/slate-react';
 import { Editor as CoreEditor } from 'slate';
 
+/**
+ * @alpha
+ */
 // This plugin should be used to prevent inserting new lines when pressing shift+enter inside a query editor
 export function PreventNewLineOnShiftEnterPlugin({ handler }: any): Plugin {
   return {
