@@ -71,6 +71,10 @@ Shows or hides the unique labels column that includes only non-common labels. Al
 
 Set this to True if you want the display to use line wrapping. If set to False, it will result in horizontal scrolling.
 
+#### Prettify JSON
+
+Set this to `true` to pretty print all JSON logs. This setting does not affect logs in any format other than JSON.
+
 #### Deduping
 
 Log data can be very repetitive and Explore can help by hiding duplicate log lines. There are a few different deduplication algorithms that you can use:

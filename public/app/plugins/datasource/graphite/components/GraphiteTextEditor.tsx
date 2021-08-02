@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { QueryField } from '@grafana/ui';
 import { actions } from '../state/actions';
 import { Dispatch } from 'redux';
@@ -9,19 +9,24 @@ type Props = {
 };
 
 export function GraphiteTextEditor({ rawQuery, dispatch }: Props) {
-  const [currentQuery, updateCurrentQuery] = useState<string>(rawQuery);
+  const updateQuery = useCallback(
+    (query: string) => {
+      dispatch(actions.updateQuery({ query }));
+    },
+    [dispatch]
+  );
 
-  const applyChanges = useCallback(() => {
-    dispatch(actions.updateQuery({ query: currentQuery }));
-  }, [dispatch, currentQuery]);
+  const runQuery = useCallback(() => {
+    dispatch(actions.runQuery());
+  }, [dispatch]);
 
   return (
     <>
       <QueryField
         query={rawQuery}
-        onChange={updateCurrentQuery}
-        onBlur={applyChanges}
-        onRunQuery={applyChanges}
+        onChange={updateQuery}
+        onBlur={runQuery}
+        onRunQuery={runQuery}
         placeholder={'Enter a Graphite query (run with Shift+Enter)'}
         portalOrigin="graphite"
       />

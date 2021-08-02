@@ -1,5 +1,3 @@
-import './func_editor';
-
 import GraphiteQuery from './graphite_query';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
@@ -142,7 +140,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   async targetTextChanged(event: ChangeEvent<HTMLInputElement>) {
-    await this.dispatch(actions.updateQuery({ query: event.target.value }));
+    // WIP: removed, handled by GraphiteTextEditor
   }
 
   updateModelTarget() {
