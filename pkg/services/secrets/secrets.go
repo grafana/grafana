@@ -119,7 +119,7 @@ func newRandomDataKey() ([]byte, error) {
 var b64 = base64.RawStdEncoding
 
 func (s *SecretsService) Encrypt(payload []byte, entityID string) ([]byte, error) {
-	keyName := fmt.Sprintf("%s-%s-%s", s.defaultProvider, time.Now().Format("2006-01-02"), entityID)
+	keyName := fmt.Sprintf("%s-%s-%s", time.Now().Format("2006-01-02"), entityID, s.defaultProvider)
 
 	dataKey, err := s.dataKey(keyName)
 	if err != nil {

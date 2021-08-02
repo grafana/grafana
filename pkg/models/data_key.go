@@ -10,11 +10,11 @@ var (
 )
 
 type DataKey struct {
-	Active        bool      `json:"active"`
-	Name          string    `json:"name"`
-	EntityID      string    `json:"entityId"`
-	Provider      string    `json:"provider"`
-	EncryptedData []byte    `json:"-"`
-	Created       time.Time `json:"created"`
-	Updated       time.Time `json:"updated"`
+	Active        bool
+	Name          string
+	EntityID      string `xorm:"entity_id"`
+	Provider      string
+	EncryptedData []byte
+	Created       time.Time
+	Updated       time.Time
 }
