@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/eval"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/rules"
 )
 
 type AccessControl interface {
