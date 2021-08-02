@@ -13,6 +13,7 @@ type State struct {
 	OrgID              int64
 	CacheId            string
 	State              eval.State
+	Resolved           bool
 	Results            []Evaluation
 	StartsAt           time.Time
 	EndsAt             time.Time
@@ -112,10 +113,13 @@ func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) 
 }
 
 func (a *State) NeedsSending(resendDelay time.Duration) bool {
-	if a.State != eval.Alerting {
+	if a.State != eval.Alerting && a.State != eval.Normal {
 		return false
 	}
 
+	if a.State == eval.Normal && !a.Resolved {
+		return false
+	}
 	// if LastSentAt is before or equal to LastEvaluationTime + resendDelay, send again
 	return a.LastSentAt.Add(resendDelay).Before(a.LastEvaluationTime) ||
 		a.LastSentAt.Add(resendDelay).Equal(a.LastEvaluationTime)
