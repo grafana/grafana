@@ -9,11 +9,9 @@ import (
 
 var _ Evaluator = new(permission)
 
+// Permission creates a new permission rule that will require all scopes in combination with action to match
 func Permission(action string, scopes ...string) Evaluator {
-	return permission{
-		Action: action,
-		Scopes: scopes,
-	}
+	return permission{Action: action, Scopes: scopes}
 }
 
 type permission struct {
