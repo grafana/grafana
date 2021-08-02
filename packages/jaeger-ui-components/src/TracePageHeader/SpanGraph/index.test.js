@@ -73,4 +73,16 @@ describe('<SpanGraph>', () => {
     }));
     expect(canvasGraph.prop('items')).toEqual(items);
   });
+
+  it('does not regenerate CanvasSpanGraph without new trace', () => {
+    const canvasGraph = wrapper.find(CanvasSpanGraph).first();
+    const items = canvasGraph.prop('items');
+
+    wrapper.instance().forceUpdate();
+
+    const newCanvasGraph = wrapper.find(CanvasSpanGraph).first();
+    const newItems = newCanvasGraph.prop('items');
+
+    expect(newItems).toBe(items);
+  });
 });
