@@ -22,9 +22,9 @@ interface LogRowContextProps {
 
 const getLogRowContextStyles = (theme: GrafanaTheme, wrapLogMessage?: boolean) => {
   /**
-   * This is workaround for displaying context and not hididing it when we are not wrapping log message and using
-   * overflow-x: scroll for log message. We are using margins to correctly position context. Because non-wrapped log
-   * has alwways 1 line of log and 1 line of Show/Hide context switch, correct position can be achieved by using margins.
+   * This is workaround for displaying uncropped context when we have unwrapping log messages.
+   * We are using margins to correctly position context. Because non-wrapped logs have always 1 line of log
+   * and 1 line of Show/Hide context switch. Therefore correct position can be reliably achieved by margins.
    */
 
   const afterContext = wrapLogMessage
