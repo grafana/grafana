@@ -127,7 +127,7 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
         )}
         aria-label="Line limit field"
       >
-        <InlineField label="Line limit">
+        <InlineField label="Line limit" tooltip={'Upper limit for number of log lines returned by query.'}>
           <Input
             className="width-4"
             placeholder="auto"
@@ -143,7 +143,12 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
             }}
           />
         </InlineField>
-        <InlineField label="Resolution">
+        <InlineField
+          label="Resolution"
+          tooltip={
+            'Resolution 1/1 sets step parameter of Loki metrics range queries such that each pixel corresponds to one data point. For better performance, lower resolutions can be picked. 1/2 only retrieves a data point for every other pixel, and 1/10 retrieves one data point per 10 pixels.'
+          }
+        >
           <Select isSearchable={false} onChange={onResolutionChange} options={RESOLUTION_OPTIONS} value={resolution} />
         </InlineField>
       </div>
