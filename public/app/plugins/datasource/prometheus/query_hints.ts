@@ -11,8 +11,7 @@ export function getQueryHints(
   query: string,
   series?: any[],
   datasource?: PrometheusDatasource,
-  safeInterval?: number,
-  interval?: number
+  safeInterval?: number
 ): QueryHint[] {
   const hints = [];
 
@@ -132,8 +131,13 @@ export function getQueryHints(
   }
 
   //Check if interval is below safeInterval
-  if (interval && safeInterval && interval < safeInterval) {
-    // TODO: Add hint
+  const currentInterval = datasource?.currentInterval;
+  if (currentInterval && safeInterval && currentInterval === safeInterval) {
+    hints.push({
+      type: 'SAFE_INTERVAL',
+      label:
+        'Specified step interval is lower than the safe interval. Safe interval is used instead. Consider increasing the step interval',
+    });
   }
 
   return hints;

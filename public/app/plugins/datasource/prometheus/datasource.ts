@@ -60,6 +60,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   metricsNameCache = new LRU<string, string[]>(10);
   interval: string;
   safeInterval: number;
+  currentInterval: number;
   queryTimeout: string;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
@@ -450,6 +451,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         ...this.getRangeScopedVars(options.range),
       });
     }
+    this.currentInterval = interval;
     query.step = interval;
 
     let expr = target.expr;
@@ -772,8 +774,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return expandedQueries;
   }
 
-  getQueryHints(query: PromQuery, result: any[], safeInterval: number, interval: number) {
-    return getQueryHints(query.expr ?? '', result, this, safeInterval, interval);
+  getQueryHints(query: PromQuery, result: any[], safeInterval: number) {
+    return getQueryHints(query.expr ?? '', result, this, safeInterval);
   }
 
   getInitHints() {
