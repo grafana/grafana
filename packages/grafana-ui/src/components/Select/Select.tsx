@@ -3,6 +3,9 @@ import { SelectableValue } from '@grafana/data';
 import { SelectCommonProps, MultiSelectCommonProps, SelectAsyncProps } from './types';
 import { SelectBase } from './SelectBase';
 
+/**
+ * @example <Select menuPortalTarget={document.body} />
+ */
 export function Select<T>(props: SelectCommonProps<T>) {
   return <SelectBase {...props} />;
 }
