@@ -15,6 +15,7 @@ export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HT
   loadOptions: (query?: string) => Promise<Array<SelectableValue<T>>>;
   onChange: (item: SelectableValue<T>) => void;
   noOptionMessageHandler?: (state: AsyncState<Array<SelectableValue<T>>>) => string;
+  inputMinWidth?: number;
 }
 
 export function SegmentAsync<T>({
@@ -24,14 +25,18 @@ export function SegmentAsync<T>({
   Component,
   className,
   allowCustomValue,
+  allowEmptyValue,
   disabled,
   placeholder,
   inputMinWidth,
+  inputPlaceholder,
+  autofocus = false,
+  onExpandedChange,
   noOptionMessageHandler = mapStateToNoOptionsMessage,
   ...rest
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
   const [state, fetchOptions] = useAsyncFn(loadOptions, [loadOptions]);
-  const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(false);
+  const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
   const width = inputMinWidth ? Math.max(inputMinWidth, labelWidth) : labelWidth;
   const styles = useStyles(getSegmentStyles);
 
@@ -66,10 +71,12 @@ export function SegmentAsync<T>({
     <SegmentSelect
       {...rest}
       value={value && !isObject(value) ? { value } : value}
+      placeholder={inputPlaceholder}
       options={state.value ?? []}
       width={width}
       noOptionsMessage={noOptionMessageHandler(state)}
       allowCustomValue={allowCustomValue}
+      allowEmptyValue={allowEmptyValue}
       onClickOutside={() => {
         setExpanded(false);
       }}

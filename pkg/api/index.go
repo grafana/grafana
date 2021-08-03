@@ -227,7 +227,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 				})
 			}
 		}
-		if c.OrgRole == models.ROLE_ADMIN {
+		if c.OrgRole == models.ROLE_ADMIN && hs.Cfg.IsNgAlertEnabled() {
 			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 				Text: "Admin", Id: "alerting-admin", Url: hs.Cfg.AppSubURL + "/alerting/admin",
 				Icon: "cog",

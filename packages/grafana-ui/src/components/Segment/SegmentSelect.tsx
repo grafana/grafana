@@ -15,17 +15,25 @@ export interface Props<T> extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onC
   width: number;
   noOptionsMessage?: string;
   allowCustomValue?: boolean;
+  /**
+   * If true, empty value will be passed to onChange callback otherwise using empty value
+   * will work as canceling and using the previous value
+   */
+  allowEmptyValue?: boolean;
+  placeholder?: string;
 }
 
 /** @internal */
 export function SegmentSelect<T>({
   value,
+  placeholder = '',
   options = [],
   onChange,
   onClickOutside,
   width: widthPixels,
   noOptionsMessage = '',
   allowCustomValue = false,
+  allowEmptyValue = false,
   ...rest
 }: React.PropsWithChildren<Props<T>>) {
   const ref = useRef<HTMLDivElement>(null);
@@ -38,7 +46,7 @@ export function SegmentSelect<T>({
       <Select
         width={width}
         noOptionsMessage={noOptionsMessage}
-        placeholder=""
+        placeholder={placeholder}
         autoFocus={true}
         isOpen={true}
         onChange={onChange}
@@ -53,7 +61,7 @@ export function SegmentSelect<T>({
             // https://github.com/JedWatson/react-select/issues/188#issuecomment-279240292
             // Unfortunately there's no other way of retrieving the value (not yet) created new option
             const input = ref.current.querySelector('input[id^="react-select-"]') as HTMLInputElement;
-            if (input && input.value) {
+            if (input && (input.value || allowEmptyValue)) {
               onChange({ value: input.value as any, label: input.value });
             } else {
               onClickOutside();

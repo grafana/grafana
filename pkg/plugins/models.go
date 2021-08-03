@@ -158,3 +158,7 @@ type EnabledPlugins struct {
 	DataSources map[string]*DataSourcePlugin
 	Apps        []*AppPlugin
 }
+
+type UpdateInfo struct {
+	PluginZipURL string
+}
