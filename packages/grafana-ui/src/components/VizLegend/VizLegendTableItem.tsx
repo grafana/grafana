@@ -92,7 +92,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     row: css`
       label: LegendRow;
       font-size: ${theme.v1.typography.size.sm};
-      border-bottom: 1px solid ${theme.colors.border.strong};
+      border-bottom: 1px solid ${theme.colors.border.weak};
       td {
         padding: ${theme.spacing(0.25, 1)};
         white-space: nowrap;
@@ -123,7 +123,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       text-align: right;
     `,
     yAxisLabel: css`
-      color: ${theme.v1.palette.gray2};
+      color: ${theme.colors.text.secondary};
     `,
   };
 };
