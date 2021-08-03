@@ -83,7 +83,7 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
       </Field>
       <Field
         label="Hidden"
-        description="Annotation queries can be toggled on or of at the top of the dashboard. With this option checked this toggle will be hidden."
+        description="Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden."
       >
         <Checkbox name="hide" id="hide" value={annotation.hide} onChange={onChange} />
       </Field>
