@@ -1,0 +1,19 @@
+[
+  {
+    "traceId": "efe9cb8857f68c8f",
+    "parentId": "efe9cb8857f68c8f",
+    "id": "8608dc6ce5cafe8e",
+    "kind": "SERVER",
+    "name": "get /api",
+    "timestamp": 1627975249601797,
+    "duration": 23457,
+    "localEndpoint": { "serviceName": "backend", "ipv4": "127.0.0.1", "port": 9000 },
+    "tags": {
+      "http.method": "GET",
+      "http.path": "/api",
+      "jaxrs.resource.class": "Resource",
+      "jaxrs.resource.method": "printDate"
+    },
+    "shared": true
+  }
+]
