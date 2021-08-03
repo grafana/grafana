@@ -32,7 +32,7 @@ var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
 	// change to true to run the MSSQL tests
-	const runMssqlTests = false
+	const runMssqlTests = true
 
 	if !(sqlstore.IsTestDBMSSQL() || runMssqlTests) {
 		t.Skip()
@@ -151,7 +151,7 @@ func TestMSSQL(t *testing.T) {
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, 24, len(frames[0].Fields))
 
-			require.Equal(t, true, frames[0].Fields[0].At(0).(bool))
+			require.Equal(t, true, *frames[0].Fields[0].At(0).(*bool))
 			require.Equal(t, int64(5), *frames[0].Fields[1].At(0).(*int64))
 			require.Equal(t, int64(20020), *frames[0].Fields[2].At(0).(*int64))
 			require.Equal(t, int64(980300), *frames[0].Fields[3].At(0).(*int64))
@@ -272,7 +272,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT $__timeGroup(time, '5m', NULL) AS time, avg(value) as value FROM metric GROUP BY $__timeGroup(time, '5m') ORDER BY 1",
-							"format": "time_series",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 						TimeRange: backend.TimeRange{
@@ -353,7 +353,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT $__timeGroup(time, '5m', 1.5) AS time, avg(value) as value FROM metric GROUP BY $__timeGroup(time, '5m') ORDER BY 1",
-							"format": "time_series",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 						TimeRange: backend.TimeRange{
@@ -450,7 +450,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT TOP 1 timeInt64 as time, timeInt64 FROM metric_values ORDER BY time",
-							"format": "time_series",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 					},
@@ -473,7 +473,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT TOP 1 timeInt64Nullable as time, timeInt64Nullable FROM metric_values ORDER BY time",
-							"format": "time_series",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 					},
@@ -496,7 +496,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT TOP 1 timeFloat64 as time, timeFloat64 FROM metric_values ORDER BY time",
-							"format": "time_series",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 					},
@@ -519,7 +519,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT TOP 1 timeFloat64Nullable as time, timeFloat64Nullable FROM metric_values ORDER BY time",
-							"format": "time_series",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 					},
@@ -542,7 +542,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT TOP 1 timeInt32 as time, timeInt32 FROM metric_values ORDER BY time",
-							"format": "time_series",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 					},
@@ -565,7 +565,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT TOP 1 timeInt32Nullable as time, timeInt32Nullable FROM metric_values ORDER BY time",
-							"format": "time_series",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 					},
@@ -588,7 +588,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT TOP 1 timeFloat32 as time, timeFloat32 FROM metric_values ORDER BY time",
-							"format": "time_series",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 					},
@@ -611,7 +611,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT TOP 1 timeFloat32Nullable as time, timeFloat32Nullable FROM metric_values ORDER BY time",
-							"format": "time_series",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 					},
@@ -635,7 +635,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values ORDER BY 1",
-							"format": "time_series",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 					},
@@ -662,7 +662,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values ORDER BY 1",
-							"format": "time_series",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 					},
@@ -688,7 +688,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT $__timeEpoch(time), measurement, valueOne, valueTwo FROM metric_values ORDER BY 1",
-							"format": "time_series",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 					},
@@ -725,7 +725,7 @@ func TestMSSQL(t *testing.T) {
 						// here we may have to escape
 						JSON: []byte(`{
 							"rawSql": "SELECT time FROM metric_values WHERE time > $__timeFrom() OR time < $__timeFrom() OR 1 < $__unixEpochFrom() OR $__unixEpochTo() > 1 ORDER BY 1",
-							"format": "time_series",
+							"format": "time_series"
 						}`),
 						RefID: "A",
 					},
@@ -807,7 +807,7 @@ func TestMSSQL(t *testing.T) {
 													@to int = $__unixEpochTo()
 
 													EXEC dbo.sp_test_epoch @from, @to",
-								"format": "time_series",
+								"format": "time_series"
 							}`),
 							RefID: "A",
 							TimeRange: backend.TimeRange{
@@ -885,12 +885,8 @@ func TestMSSQL(t *testing.T) {
 					Queries: []backend.DataQuery{
 						{
 							JSON: []byte(`{
-								"rawSql": "DECLARE
-													@from int = $__unixEpochFrom(),
-													@to int = $__unixEpochTo()
-
-													EXEC dbo.sp_test_epoch @from, @to",
-								"format": "time_series",
+								"rawSql": "DECLARE @from int = $__unixEpochFrom(), @to int = $__unixEpochTo() EXEC dbo.sp_test_epoch @from, @to",
+								"format": "time_series"
 							}`),
 							RefID: "A",
 							TimeRange: backend.TimeRange{
@@ -973,7 +969,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT time_sec as time, description as [text], tags FROM [event] WHERE $__unixEpochFilter(time_sec) AND tags='deploy' ORDER BY 1 ASC",
-							"format": "table",
+							"format": "table"
 						}`),
 						RefID: "Deploys",
 						TimeRange: backend.TimeRange{
@@ -999,7 +995,7 @@ func TestMSSQL(t *testing.T) {
 					{
 						JSON: []byte(`{
 							"rawSql": "SELECT time_sec as time, description as [text], tags FROM [event] WHERE $__unixEpochFilter(time_sec) AND tags='ticket' ORDER BY 1 ASC",
-							"format": "table",
+							"format": "table"
 						}`),
 						RefID: "Tickets",
 						TimeRange: backend.TimeRange{
@@ -1022,18 +1018,11 @@ func TestMSSQL(t *testing.T) {
 		t.Run("When doing an annotation query with a time column in datetime format", func(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
 			const dtFormat = "2006-01-02 15:04:05.999999999"
-
+			queryjson := fmt.Sprintf("{\"rawSql\": \"SELECT CAST('%s' AS DATETIME) as time, 'message' as text, 'tag1,tag2' as tags\", \"format\": \"table\"}", dt.Format(dtFormat))
 			query := &backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
-						JSON: []byte(`{
-							"rawSql": fmt.Sprintf("SELECT
-											CAST('%s' AS DATETIME) as time,
-											'message' as text,
-											'tag1,tag2' as tags
-										", dt.Format(dtFormat)),
-							"format": "table",
-						}`),
+						JSON:  []byte(queryjson),
 						RefID: "A",
 					},
 				},
@@ -1054,18 +1043,12 @@ func TestMSSQL(t *testing.T) {
 
 		t.Run("When doing an annotation query with a time column in epoch second format should return ms", func(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
+			queryjson := fmt.Sprintf("{\"rawSql\": \"SELECT %d as time, 'message' as text, 'tag1,tag2' as tags\", \"format\": \"table\"}", dt.Unix())
 
 			query := &backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
-						JSON: []byte(`{
-							"rawSql": fmt.Sprintf("SELECT
-											 %d as time,
-											'message' as text,
-											'tag1,tag2' as tags
-										", dt.Unix()),
-							"format": "table",
-						}`),
+						JSON:  []byte(queryjson),
 						RefID: "A",
 					},
 				},
@@ -1086,18 +1069,11 @@ func TestMSSQL(t *testing.T) {
 
 		t.Run("When doing an annotation query with a time column in epoch second format (int) should return ms", func(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
-
+			queryjson := fmt.Sprintf("{\"rawSql\": \"SELECT cast(%d as int) as time, 'message' as text, 'tag1,tag2' as tags\", \"format\": \"table\"}", dt.Unix())
 			query := &backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
-						JSON: []byte(`{
-							"rawSql": fmt.Sprintf("SELECT
-											 cast(%d as int) as time,
-											'message' as text,
-											'tag1,tag2' as tags
-										", dt.Unix()),
-							"format": "table",
-						}`),
+						JSON:  []byte(queryjson),
 						RefID: "A",
 					},
 				},
@@ -1118,18 +1094,11 @@ func TestMSSQL(t *testing.T) {
 
 		t.Run("When doing an annotation query with a time column in epoch millisecond format should return ms", func(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
-
+			queryjson := fmt.Sprintf("{\"rawSql\": \"SELECT %d as time, 'message' as text, 'tag1,tag2' as tags\", \"format\": \"table\"}", dt.Unix()*1000)
 			query := &backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
-						JSON: []byte(`{
-							"rawSql": fmt.Sprintf("SELECT
-											 %d as time,
-											'message' as text,
-											'tag1,tag2' as tags
-										", dt.Unix()*1000),
-							"format": "table",
-						}`),
+						JSON:  []byte(queryjson),
 						RefID: "A",
 					},
 				},
@@ -1153,12 +1122,8 @@ func TestMSSQL(t *testing.T) {
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
-							"rawSql": "SELECT
-											 cast(null as bigint) as time,
-											'message' as text,
-											'tag1,tag2' as tags
-										",
-							"format": "table",
+							"rawSql": "SELECT cast(null as bigint) as time, 'message' as text, 'tag1,tag2' as tags",
+							"format": "table"
 						}`),
 						RefID: "A",
 					},
@@ -1183,12 +1148,8 @@ func TestMSSQL(t *testing.T) {
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
-							"rawSql": "SELECT
-											 cast(null as datetime) as time,
-											'message' as text,
-											'tag1,tag2' as tags
-										",
-							"format": "table",
+							"rawSql": "SELECT cast(null as datetime) as time, 'message' as text, 'tag1,tag2' as tags",
+							"format": "table"
 						}`),
 						RefID: "A",
 					},
