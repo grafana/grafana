@@ -117,7 +117,7 @@ Scheduled reports can be sent once or repeatedly on an hourly, daily, weekly, or
 
 - **Send now** sends the report immediately after you save it. To stop sending the report at some point in the future, add an end date. If you leave the end date empty, the report is sent out indefinitely.
 
-- **Send later** schedules a report for a later date, so you must set a start date and time. If you leave the end date empty, the report is sent out indefinitely.
+- **Send later** schedules a report for a later date. Thus, the start date and time are required fields. If you leave the end date empty, the report is sent out indefinitely.
 
 **Send only from Monday to Friday**
 
