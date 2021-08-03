@@ -11,6 +11,7 @@ import { mapSegmentsToSelectables } from './helpers';
 import { TagEditor } from './TagEditor';
 import { debounce } from 'lodash';
 import { useDispatch } from '../state/context';
+import { PlayButton } from './PlayButton';
 
 type Props = {
   tags: GraphiteTag[];
@@ -58,6 +59,7 @@ export function TagsSection({ tags, state, addTagSegments }: Props) {
           Component={<Button icon="plus" variant="secondary" className={cx(styles.button)} />}
         />
       )}
+      {state.paused && <PlayButton />}
     </div>
   );
 }

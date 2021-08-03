@@ -3,7 +3,6 @@ import { Dispatch } from 'redux';
 import { GraphiteQueryEditorState } from '../state/store';
 import { GraphiteTextEditor } from './GraphiteTextEditor';
 import { SeriesSection } from './SeriesSection';
-import { PlayButton } from './PlayButton';
 import { GraphiteFunctionEditor } from './GraphiteFunctionEditor';
 import { FuncInstance } from '../gfunc';
 import { AddGraphiteFunction } from './AddGraphiteFunction';
@@ -20,20 +19,8 @@ export function GraphiteQueryEditor({ dispatch, state }: Props) {
       {state.target?.textEditor && <GraphiteTextEditor rawQuery={state.target.target} />}
 
       {!state.target?.textEditor && (
-        <div ng-hide="ctrl.target.textEditor">
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <label className="gf-form-label width-6 query-keyword">Series</label>
-            </div>
-
-            <SeriesSection state={state} />
-
-            {state.paused && <PlayButton />}
-
-            <div className="gf-form gf-form--grow">
-              <div className="gf-form-label gf-form-label--grow" />
-            </div>
-          </div>
+        <div>
+          <SeriesSection state={state} />
 
           <div className="gf-form-inline">
             <div className="gf-form">

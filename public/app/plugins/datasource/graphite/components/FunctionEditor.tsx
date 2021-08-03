@@ -3,7 +3,7 @@ import { PopoverController, Popover, ClickOutsideWrapper, Icon, Tooltip, useStyl
 import { FunctionEditorControls, FunctionEditorControlsProps } from './FunctionEditorControls';
 import { FuncInstance } from '../gfunc';
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data/compiled';
+import { GrafanaTheme2 } from '@grafana/data';
 
 interface FunctionEditorProps extends FunctionEditorControlsProps {
   func: FuncInstance;
