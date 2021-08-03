@@ -3,16 +3,10 @@ import { SelectableValue } from '@grafana/data';
 import { SelectCommonProps, MultiSelectCommonProps, SelectAsyncProps } from './types';
 import { SelectBase } from './SelectBase';
 
-/**
- * @example <Select menuShouldPortal {...props} />
- */
 export function Select<T>(props: SelectCommonProps<T>) {
   return <SelectBase {...props} />;
 }
 
-/**
- * @example <MultiSelect menuShouldPortal {...props} />
- */
 export function MultiSelect<T>(props: MultiSelectCommonProps<T>) {
   // @ts-ignore
   return <SelectBase {...props} isMulti />;
@@ -24,9 +18,6 @@ interface AsyncSelectProps<T> extends Omit<SelectCommonProps<T>, 'options'>, Sel
   invalid?: boolean;
 }
 
-/**
- * @example <AsyncSelect menuShouldPortal {...props} />
- */
 export function AsyncSelect<T>(props: AsyncSelectProps<T>) {
   return <SelectBase {...props} />;
 }
@@ -36,9 +27,6 @@ interface AsyncMultiSelectProps<T> extends Omit<MultiSelectCommonProps<T>, 'opti
   value?: Array<SelectableValue<T>>;
 }
 
-/**
- * @example <AsyncMultiSelect menuShouldPortal {...props} />
- */
 export function AsyncMultiSelect<T>(props: AsyncMultiSelectProps<T>) {
   // @ts-ignore
   return <SelectBase {...props} isMulti />;
