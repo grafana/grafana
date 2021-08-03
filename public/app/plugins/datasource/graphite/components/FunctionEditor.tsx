@@ -1,9 +1,9 @@
 import React, { useRef } from 'react';
 import { PopoverController, Popover, ClickOutsideWrapper, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { FunctionEditorControls, FunctionEditorControlsProps } from './FunctionEditorControls';
-import { FuncInstance } from './gfunc';
+import { FuncInstance } from '../gfunc';
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data/compiled';
 
 interface FunctionEditorProps extends FunctionEditorControlsProps {
   func: FuncInstance;

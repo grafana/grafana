@@ -4,7 +4,6 @@ import { actions } from '../state/actions';
 import { Dispatch } from 'redux';
 
 type Props = {
-  rawQuery: string;
   dispatch: Dispatch;
 };
 

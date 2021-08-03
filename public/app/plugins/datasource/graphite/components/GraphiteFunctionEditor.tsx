@@ -5,7 +5,7 @@ import { css, cx } from '@emotion/css';
 import { FuncInstance } from '../gfunc';
 import { EditableParam, FunctionParamEditor } from './FunctionParamEditor';
 import { actions } from '../state/actions';
-import { FunctionEditor } from '../FunctionEditor';
+import { FunctionEditor } from './FunctionEditor';
 import { mapFuncInstanceToParams } from './helpers';
 
 export type FunctionEditorProps = {
