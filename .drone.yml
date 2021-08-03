@@ -3486,4 +3486,8 @@ get:
   path: infra/data/ci/github/grafanabot
   name: pat
 
+---
+kind: signature
+hmac: 5ef44a6746bff6f2d5258df8220301d1c91cfee46ed8a100571b5c36f33a442c
+
 ...
