@@ -268,7 +268,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         cursor: pointer;
         background: ${theme.colors.background.secondary};
         border-radius: ${theme.shape.borderRadius(1)};
-        color: ${theme.v1.colors.text};
+        color: ${theme.colors.text.primary};
         width: 100%;
         display: flex;
         flex-direction: column;
