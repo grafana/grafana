@@ -17,8 +17,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 
-	"github.com/grafana/grafana/pkg/models"
-
 	"github.com/grafana/grafana/pkg/services/secrets/encryption"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
@@ -35,7 +33,7 @@ func init() {
 }
 
 type SecretsService struct {
-	Store    *sqlstore.SQLStore           `inject:""`
+	SQLStore *sqlstore.SQLStore           `inject:""`
 	Bus      bus.Bus                      `inject:""`
 	Enc      encryption.EncryptionService `inject:""`
 	Settings setting.Provider             `inject:""`
@@ -88,7 +86,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string) ([]byte, e
 	}
 
 	// 3. Store its encrypted value in db
-	err = s.Store.CreateDataKey(ctx, models.DataKey{
+	err = s.CreateDataKey(ctx, DataKey{
 		Active:        true, // TODO: how do we manage active/deactivated DEKs?
 		Name:          name,
 		Provider:      s.defaultProvider,
@@ -127,7 +125,7 @@ func (s *SecretsService) Encrypt(payload []byte, entityID string) ([]byte, error
 
 	dataKey, err := s.dataKey(keyName)
 	if err != nil {
-		if errors.Is(err, models.ErrDataKeyNotFound) { // TODO: should it be in models?
+		if errors.Is(err, ErrDataKeyNotFound) { // TODO: should it be in models?
 			dataKey, err = s.newDataKey(context.TODO(), keyName)
 			if err != nil {
 				return nil, err
@@ -197,7 +195,7 @@ func (s *SecretsService) dataKey(name string) ([]byte, error) {
 	}
 
 	// 1. get encrypted data key from database
-	dataKey, err := s.Store.GetDataKey(context.Background(), name)
+	dataKey, err := s.GetDataKey(context.Background(), name)
 	if err != nil {
 		return nil, err
 	}
