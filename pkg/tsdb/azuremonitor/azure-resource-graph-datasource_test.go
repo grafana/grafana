@@ -121,10 +121,18 @@ func TestAddConfigData(t *testing.T) {
 		Fields: []*data.Field{&field},
 	}
 	frameWithLink := addConfigData(frame, "http://ds")
-	assert.NotEmpty(t, frameWithLink.Fields)
-	assert.NotNil(t, frameWithLink.Fields[0].Config)
-	assert.NotEmpty(t, frameWithLink.Fields[0].Config.Links)
-	assert.Equal(t, frameWithLink.Fields[0].Config.Links[0], dataLink)
+	expectedFrameWithLink := data.Frame{
+		Fields: []*data.Field{
+			{
+				Config: &data.FieldConfig{
+					Links: []data.DataLink{dataLink},
+				},
+			},
+		},
+	}
+	if !cmp.Equal(frameWithLink, expectedFrameWithLink, data.FrameTestCompareOptions()...) {
+		t.Errorf("unexpepcted frame: %v", cmp.Diff(frameWithLink, expectedFrameWithLink, data.FrameTestCompareOptions()...))
+	}
 }
 
 func TestGetAzurePortalUrl(t *testing.T) {
