@@ -95,7 +95,7 @@ export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, ha
   }
 
   if (!hasPermission) {
-    const message = `You need server admin privileges to ${isInstalled ? 'manage' : 'install'} this plugin.`;
+    const message = `You need server admin privileges to ${isInstalled ? 'uninstall' : 'install'} this plugin.`;
     return <div className={styles.message}>{message}</div>;
   }
 
