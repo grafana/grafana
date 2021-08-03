@@ -11,7 +11,7 @@ type PluginBadgeType = {
 
 export function PluginBadges({ plugin }: PluginBadgeType) {
   if (plugin.isEnterprise) {
-    return <EnterpriseBadge />;
+    return <EnterpriseBadge id={plugin.id} />;
   }
   return (
     <HorizontalGroup>
@@ -21,11 +21,15 @@ export function PluginBadges({ plugin }: PluginBadgeType) {
   );
 }
 
-function EnterpriseBadge() {
+function EnterpriseBadge({ id }: { id: string }) {
   const customBadgeStyles = useStyles2(getBadgeColor);
   const onClick = (ev: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     ev.preventDefault();
-    window.open('https://grafana.com/products/enterprise/', '_blank', 'noopener,noreferrer');
+    window.open(
+      `https://grafana.com/grafana/plugins/${id}?utm_source=grafana_catalog_learn_more`,
+      '_blank',
+      'noopener,noreferrer'
+    );
   };
 
   if (config.licenseInfo?.hasValidLicense) {
