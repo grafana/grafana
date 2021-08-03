@@ -150,8 +150,13 @@ func (e *LokiExecutor) parseQuery(dsInfo *models.DataSource, queryContext plugin
 			return nil, fmt.Errorf("failed to parse Interval: %v", err)
 		}
 
+		resolution := queryModel.Model.Get("resolution").MustInt64(1)
 		interval := e.intervalCalculator.Calculate(*queryContext.TimeRange, dsInterval)
-		step := time.Duration(int64(interval.Value))
+		step := time.Duration(int64(interval.Value) * resolution)
+
+		fmt.Println("===========")
+		fmt.Println(resolution)
+		fmt.Println("===========")
 
 		qs = append(qs, &lokiQuery{
 			Expr:         expr,
