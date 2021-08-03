@@ -41,6 +41,12 @@ export interface SelectCommonProps<T> {
   minMenuHeight?: number;
   maxVisibleValues?: number;
   menuPlacement?: 'auto' | 'bottom' | 'top';
+  /**
+   * @deprecated Setting `menuPortalTarget` to null will revert to previous `Select` behaviour.
+   * This is provided as an escape hatch for cases where portalling is a breaking change (e.g. `Select` wrapped in `ClickOutsideWrapper`).
+   * It's recommended to achieve the same behaviour using `onCloseMenu`, as this will be removed at some point.
+   */
+  menuPortalTarget?: HTMLElement | null;
   menuPosition?: 'fixed' | 'absolute';
   /** The message to display when no options could be found */
   noOptionsMessage?: string;
