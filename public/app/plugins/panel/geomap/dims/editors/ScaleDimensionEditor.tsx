@@ -58,35 +58,42 @@ export const ScaleDimensionEditor: FC<StandardEditorProps<ScaleDimensionConfig, 
   );
 
   const onMinChange = useCallback(
-    (min: number) => {
-      validateAndDoChange({
-        ...value,
-        min,
-      });
+    (min?: number) => {
+      if (min !== undefined) {
+        validateAndDoChange({
+          ...value,
+          min,
+        });
+      }
     },
     [validateAndDoChange, value]
   );
 
   const onMaxChange = useCallback(
-    (max: number) => {
-      validateAndDoChange({
-        ...value,
-        max,
-      });
+    (max?: number) => {
+      if (max !== undefined) {
+        validateAndDoChange({
+          ...value,
+          max,
+        });
+      }
     },
     [validateAndDoChange, value]
   );
 
   const onValueChange = useCallback(
-    (fixed: number) => {
-      validateAndDoChange({
-        ...value,
-        fixed,
-      });
+    (fixed?: number) => {
+      if (fixed !== undefined) {
+        validateAndDoChange({
+          ...value,
+          fixed,
+        });
+      }
     },
     [validateAndDoChange, value]
   );
 
+  const val = value ?? {};
   const selectedOption = isFixed ? fixedValueOption : selectOptions.find((v) => v.value === fieldName);
   return (
     <>
@@ -102,7 +109,7 @@ export const ScaleDimensionEditor: FC<StandardEditorProps<ScaleDimensionConfig, 
         {isFixed && (
           <InlineFieldRow>
             <InlineField label="Value" labelWidth={8} grow={true}>
-              <NumberInput value={value.fixed} {...minMaxStep} onChange={onValueChange} />
+              <NumberInput value={val.fixed} {...minMaxStep} onChange={onValueChange} />
             </InlineField>
           </InlineFieldRow>
         )}
@@ -110,12 +117,12 @@ export const ScaleDimensionEditor: FC<StandardEditorProps<ScaleDimensionConfig, 
           <>
             <InlineFieldRow>
               <InlineField label="Min" labelWidth={8} grow={true}>
-                <NumberInput value={value.min} {...minMaxStep} onChange={onMinChange} />
+                <NumberInput value={val.min} {...minMaxStep} onChange={onMinChange} />
               </InlineField>
             </InlineFieldRow>
             <InlineFieldRow>
               <InlineField label="Max" labelWidth={8} grow={true}>
-                <NumberInput value={value.max} {...minMaxStep} onChange={onMaxChange} />
+                <NumberInput value={val.max} {...minMaxStep} onChange={onMaxChange} />
               </InlineField>
             </InlineFieldRow>
           </>

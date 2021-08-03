@@ -34,13 +34,16 @@ import { catchError, map } from 'rxjs/operators';
 
 // we detect the field type based on the value-array
 function getFieldType(values: unknown[]): FieldType {
-  if (values.length === 0) {
-    // if we get called with an empty value-array,
-    // we will assume the values are numbers
+  // the values-array may contain a lot of nulls.
+  // we need the first not-null item
+  const firstNotNull = values.find((v) => v !== null);
+
+  if (firstNotNull === undefined) {
+    // we could not find any not-null values
     return FieldType.number;
   }
 
-  const valueType = typeof values[0];
+  const valueType = typeof firstNotNull;
 
   switch (valueType) {
     case 'string':
@@ -82,7 +85,9 @@ function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   const valueField = {
     name: TIME_SERIES_VALUE_FIELD_NAME,
     type: getFieldType(values),
-    config: {},
+    config: {
+      displayNameFromDS: timeSeries.title,
+    },
     values: new ArrayVector<unknown>(values),
     labels: timeSeries.tags,
   };
@@ -316,6 +321,19 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   targetContainsTemplate(target: any) {
+    if (this.isFlux) {
+      return this.templateSrv.variableExists(target.query);
+    }
+
+    // now we know it is an InfluxQL query.
+    // it can be either a raw-query or a not-raw-query
+
+    if (target.rawQuery) {
+      return this.templateSrv.variableExists(target.query);
+    }
+
+    // now we know it is an InfluxQL not-raw-query
+
     for (const group of target.groupBy) {
       for (const param of group.params) {
         if (this.templateSrv.variableExists(param)) {
