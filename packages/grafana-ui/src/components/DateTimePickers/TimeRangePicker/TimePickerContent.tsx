@@ -240,7 +240,7 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
               setCollapsedFlag(!collapsed);
             }
           }}
-          data-testid={selectors.components.TimePicker.narrowAbsoluteTimeRangeButton}
+          data-testid={selectors.components.TimePicker.absoluteTimeRangeTitle}
           aria-expanded={!collapsed}
           aria-controls="expanded-timerange"
         >
@@ -278,7 +278,7 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
   return (
     <>
       <div className={styles.container}>
-        <h3 className={styles.title}>
+        <h3 className={styles.title} data-testid={selectors.components.TimePicker.absoluteTimeRangeTitle}>
           <TimePickerTitle>Absolute time range</TimePickerTitle>
         </h3>
         <TimeRangeForm
