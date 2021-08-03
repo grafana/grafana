@@ -1,7 +1,6 @@
 import { Alert, CodeEditor, Select } from '@grafana/ui';
 import React from 'react';
 import { AzureMonitorOption, AzureMonitorQuery, AzureResultFormat } from '../../types';
-import { findOption } from '../../utils/common';
 import { Field } from '../Field';
 import { Space } from '../Space';
 
@@ -29,7 +28,7 @@ const InsightsAnalyticsEditor: React.FC<InsightsAnalyticsEditorProps> = ({ query
       <Field label="Format as">
         <Select
           inputId="azure-monitor-logs-workspaces-field"
-          value={findOption(FORMAT_OPTIONS, query.insightsAnalytics?.resultFormat)}
+          value={query.insightsAnalytics?.resultFormat}
           disabled={true}
           options={FORMAT_OPTIONS}
           onChange={() => {}}

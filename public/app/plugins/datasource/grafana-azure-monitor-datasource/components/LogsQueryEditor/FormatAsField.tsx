@@ -2,8 +2,8 @@ import React, { useCallback, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 import { AzureMonitorOption, AzureQueryEditorFieldProps, AzureResultFormat } from '../../types';
-import { findOption } from '../../utils/common';
 import { Field } from '../Field';
+import { setFormatAs } from './setQueryValue';
 
 const FORMAT_OPTIONS: Array<AzureMonitorOption<AzureResultFormat>> = [
   { label: 'Time series', value: 'time_series' },
@@ -20,13 +20,8 @@ const FormatAsField: React.FC<AzureQueryEditorFieldProps> = ({ query, variableOp
         return;
       }
 
-      onQueryChange({
-        ...query,
-        azureLogAnalytics: {
-          ...query.azureLogAnalytics,
-          resultFormat: value,
-        },
-      });
+      const newQuery = setFormatAs(query, value);
+      onQueryChange(newQuery);
     },
     [onQueryChange, query]
   );
@@ -35,7 +30,7 @@ const FormatAsField: React.FC<AzureQueryEditorFieldProps> = ({ query, variableOp
     <Field label="Format as">
       <Select
         inputId="azure-monitor-logs-workspaces-field"
-        value={findOption(FORMAT_OPTIONS, query.azureLogAnalytics?.resultFormat)}
+        value={query.azureLogAnalytics?.resultFormat}
         onChange={handleChange}
         options={options}
         width={38}
