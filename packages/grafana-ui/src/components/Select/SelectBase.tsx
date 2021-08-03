@@ -20,6 +20,7 @@ import { useTheme2 } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue, findSelectedValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';
+import { deprecationWarning } from '@grafana/data';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
@@ -116,6 +117,7 @@ export function SelectBase<T>({
   minMenuHeight,
   maxVisibleValues,
   menuPlacement = 'auto',
+  menuPortalTarget,
   menuPosition,
   noOptionsMessage = 'No options found',
   onBlur,
@@ -136,6 +138,11 @@ export function SelectBase<T>({
   width,
   isValidNewOption,
 }: SelectBaseProps<T>) {
+  if (menuPortalTarget !== undefined) {
+    deprecationWarning('SelectBase', 'menuPortalTarget');
+  } else {
+    menuPortalTarget = document.body;
+  }
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const onChangeWithEmpty = useCallback(
@@ -199,7 +206,7 @@ export function SelectBase<T>({
     maxVisibleValues,
     menuIsOpen: isOpen,
     menuPlacement,
-    menuPortalTarget: document.body,
+    menuPortalTarget,
     menuPosition,
     menuShouldBlockScroll: true,
     menuShouldScrollIntoView: false,
