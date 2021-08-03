@@ -1,6 +1,5 @@
-import groupBy from 'lodash/groupBy';
+import { groupBy } from 'lodash';
 import {
-  DataFrameView,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
@@ -8,7 +7,6 @@ import {
   DataSourceInstanceSettings,
   DataSourceJsonData,
   LoadingState,
-  MutableDataFrame,
 } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
@@ -19,6 +17,7 @@ import { LokiOptions, LokiQuery } from '../loki/types';
 import { transformTrace, transformTraceList } from './resultTransformer';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
+import { mapPromMetricsToServiceMap } from './graphTransform';
 
 export type TempoQueryType = 'search' | 'traceId' | 'serviceMap';
 
@@ -124,91 +123,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return query.query;
   }
 
-  private serviceMapQuery(options: DataQueryRequest<TempoQuery>) {
+  private queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>) {
     return from(getDatasourceSrv().get(this.serviceMap!.datasourceUid)).pipe(
       mergeMap((ds) => {
-        const promOptions: DataQueryRequest<PromQuery> = {
-          ...options,
-          targets: serviceMapMetrics.map((metric) => {
-            return {
-              refId: metric,
-              expr: `delta(${metric}[$__range])`,
-              instant: true,
-            };
-          }),
-        };
-        return (ds as PrometheusDatasource).query(promOptions);
-      }),
+        return (ds as PrometheusDatasource).query(request);
+      })
+    );
+  }
+
+  private serviceMapQuery(request: DataQueryRequest<TempoQuery>) {
+    return this.queryServiceMapPrometheus(makePromServiceMapRequest(request)).pipe(
+      // TODO: probably just buffer until complete?
       bufferCount(2),
       map((responses: DataQueryResponse[]) => {
-        console.log(responses);
-
-        const nodes = new MutableDataFrame({
-          name: 'Nodes',
-          fields: [{ name: 'id' }, { name: 'title' }, { name: 'mainStat' }],
-          meta: {
-            preferredVisualisationType: 'nodeGraph',
-          },
-        });
-
-        const edges = new MutableDataFrame({
-          name: 'Edges',
-          fields: [{ name: 'id' }, { name: 'source' }, { name: 'target' }, { name: 'mainStat' }],
-          meta: {
-            preferredVisualisationType: 'nodeGraph',
-          },
-        });
-
-        const totalsDF = responses.find((r) => r.data[0].refId == 'tempo_service_graph_request_total')!.data[0];
-        const totalsDFView = new DataFrameView<{
-          client: string;
-          server: string;
-          'Value #tempo_service_graph_request_total': number;
-        }>(totalsDF);
-        const nodesMap: Record<string, any> = {};
-        const edgesMap: Record<string, any> = {};
-        for (let i = 0; i < totalsDFView.length; i++) {
-          const row = totalsDFView.get(i);
-          const edgeId = `${row.client}_${row.server}`;
-          edgesMap[edgeId] = {
-            total: row['Value #tempo_service_graph_request_total'],
-            target: row.server,
-            source: row.client,
-          };
-
-          if (!nodesMap[row.server]) {
-            nodesMap[row.server] = {
-              total: row['Value #tempo_service_graph_request_total'],
-            };
-          } else {
-            nodesMap[row.server].total += row['Value #tempo_service_graph_request_total'];
-          }
-
-          if (!nodesMap[row.client]) {
-            nodesMap[row.client] = {
-              total: 0,
-            };
-          }
-
-        }
-
-        for (const nodeId of Object.keys(nodesMap)) {
-          const node = nodesMap[nodeId]
-            nodes.fields[0].values.add(nodeId);
-            nodes.fields[1].values.add(nodeId);
-            nodes.fields[2].values.add(node.total);
-        }
-
-        for (const edgeId of Object.keys(edgesMap)) {
-          const edge = edgesMap[edgeId]
-          edges.fields[0].values.add(edgeId);
-          edges.fields[1].values.add(edge.source);
-          edges.fields[2].values.add(edge.target);
-          edges.fields[3].values.add(edge.total);
-        }
-
         return {
-          data: [nodes, edges],
+          data: mapPromMetricsToServiceMap(request, responses),
           state: LoadingState.Done,
         };
       })
@@ -216,10 +145,23 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 }
 
+function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQueryRequest<PromQuery> {
+  return {
+    ...options,
+    targets: serviceMapMetrics.map((metric) => {
+      return {
+        refId: metric,
+        expr: `delta(${metric}[$__range])`,
+        instant: true,
+      };
+    }),
+  };
+}
+
 const serviceMapMetrics = [
   // 'tempo_service_graph_request_seconds_bucket',
   // 'tempo_service_graph_request_seconds_count',
-  'tempo_service_graph_request_seconds_sum',
+  'tempo_service_graph_request_server_seconds_sum',
   'tempo_service_graph_request_total',
   // 'tempo_service_graph_unpaired_spans_total',
   // 'tempo_service_graph_untagged_spans_total',

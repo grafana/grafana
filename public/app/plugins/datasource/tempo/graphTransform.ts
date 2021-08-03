@@ -1,5 +1,15 @@
-import { DataFrame, DataFrameView, NodeGraphDataFrameFieldNames as Fields } from '@grafana/data';
+import { groupBy } from 'lodash';
+import {
+  DataFrame,
+  DataFrameView,
+  DataQueryRequest,
+  DataQueryResponse,
+  FieldDTO,
+  MutableDataFrame,
+  NodeGraphDataFrameFieldNames as Fields,
+} from '@grafana/data';
 import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '../../../core/utils/tracing';
+import { TempoQuery } from './datasource';
 
 interface Row {
   traceID: string;
@@ -116,4 +126,113 @@ function findTraceDuration(view: DataFrameView<Row>): number {
   }
 
   return traceEndTime - traceStartTime;
+}
+
+export function mapPromMetricsToServiceMap(request: DataQueryRequest<TempoQuery>, responses: DataQueryResponse[]) {
+  const secondsMetric = 'tempo_service_graph_request_server_seconds_sum';
+  const totalsMetric = 'tempo_service_graph_request_total';
+
+  function createDF(name: string, fields: FieldDTO[]) {
+    return new MutableDataFrame({ name, fields, meta: { preferredVisualisationType: 'nodeGraph' } });
+  }
+
+  function valueName(metric: string) {
+    return `Value #${metric}`;
+  }
+
+  const nodes = createDF('Nodes', [
+    { name: 'id' },
+    { name: 'title' },
+    { name: 'mainStat', config: { unit: 'ms/t', displayName: 'Average response time' } },
+    { name: 'secondaryStat', config: { unit: 't/min', displayName: 'Transactions per minute' } },
+  ]);
+  const edges = createDF('Edges', [
+    { name: 'id' },
+    { name: 'source' },
+    { name: 'target' },
+    { name: 'mainStat', config: { unit: 't', displayName: 'Transactions' } },
+    { name: 'secondaryStat', config: { unit: 'ms/t', displayName: 'Average response time' } },
+  ]);
+
+  const responsesMap = groupBy(responses, (r) => r.data[0].refId);
+  const totalsDFView = new DataFrameView(responsesMap[totalsMetric][0].data[0]);
+  const secondsDFView = new DataFrameView(responsesMap[secondsMetric][0].data[0]);
+
+  const nodesMap: Record<string, any> = {};
+  const edgesMap: Record<string, any> = {};
+
+  for (let i = 0; i < totalsDFView.length; i++) {
+    const row = totalsDFView.get(i);
+    const edgeId = `${row.client}_${row.server}`;
+    edgesMap[edgeId] = {
+      total: row[valueName(totalsMetric)],
+      target: row.server,
+      source: row.client,
+    };
+
+    if (!nodesMap[row.server]) {
+      nodesMap[row.server] = {
+        total: row[valueName(totalsMetric)],
+        seconds: 0,
+      };
+    } else {
+      nodesMap[row.server].total += row[valueName(totalsMetric)];
+    }
+
+    if (!nodesMap[row.client]) {
+      nodesMap[row.client] = {
+        total: 0,
+        seconds: 0,
+      };
+    }
+  }
+
+  for (let i = 0; i < secondsDFView.length; i++) {
+    const row = secondsDFView.get(i);
+    const edgeId = `${row.client}_${row.server}`;
+
+    if (!edgesMap[edgeId]) {
+      edgesMap[edgeId] = {
+        seconds: row[valueName(secondsMetric)],
+        target: row.server,
+        source: row.client,
+      };
+    } else {
+      edgesMap[edgeId].seconds += row[valueName(secondsMetric)];
+    }
+
+    if (!nodesMap[row.server]) {
+      nodesMap[row.server] = {
+        seconds: row[valueName(secondsMetric)],
+        total: 0,
+      };
+    } else {
+      nodesMap[row.server].seconds += row[valueName(secondsMetric)];
+    }
+  }
+
+  const rangeMs = request.range.to.valueOf() - request.range.from.valueOf();
+
+  for (const nodeId of Object.keys(nodesMap)) {
+    const node = nodesMap[nodeId];
+    nodes.add({
+      id: nodeId,
+      title: nodeId,
+      mainStat: node.total ? (node.seconds / node.total) * 1000 : Number.NaN,
+      secondaryStat: node.total ? node.total / (rangeMs / (1000 * 60)) : Number.NaN,
+    });
+  }
+
+  for (const edgeId of Object.keys(edgesMap)) {
+    const edge = edgesMap[edgeId];
+    edges.add({
+      id: edgeId,
+      source: edge.source,
+      target: edge.target,
+      mainStat: edge.total,
+      secondaryStat: edge.total / (rangeMs / (1000 * 60)) + 't/m',
+    });
+  }
+
+  return [nodes, edges];
 }
