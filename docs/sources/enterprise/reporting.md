@@ -121,7 +121,7 @@ Scheduled reports can be sent once or repeatedly on an hourly, daily, weekly, or
 
 **Send only from Monday to Friday**
 
-You can choose to send some reports only from Monday to Friday. This applies to reports that have an hourly or daily frequency.
+For reports that have an hourly or daily frequency, you can choose to send them only from Monday to Friday.
 
 **Send on the last day of the month**
 
