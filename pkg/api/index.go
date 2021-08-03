@@ -390,7 +390,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 
 	if hs.Cfg.PluginAdminEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.ActionPluginsManage) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
-			Text: "Plugins", Id: "plugins", Url: hs.Cfg.AppSubURL + "/admin/plugins", Icon: "plug",
+			Text: "Plugins", Id: "admin-plugins", Url: hs.Cfg.AppSubURL + "/admin/plugins", Icon: "plug",
 		})
 	}
 
