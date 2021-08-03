@@ -70,14 +70,21 @@ export const AdHocFilter: React.FunctionComponent<Props> = (props) => {
   return (
     <div className={cx([styles.keyValueContainer])}>
       <Select
+        menuShouldPortal
         options={keysAsOptions}
         isSearchable
         value={selectedKey}
         onChange={onChange(ChangeType.Key)}
         placeholder={keysPlaceHolder}
       />
-      <Select options={operatorsAsOptions} value={selectedOperator} onChange={onChange(ChangeType.Operator)} />
       <Select
+        menuShouldPortal
+        options={operatorsAsOptions}
+        value={selectedOperator}
+        onChange={onChange(ChangeType.Operator)}
+      />
+      <Select
+        menuShouldPortal
         options={valuesAsOptions}
         isSearchable
         value={selectedValue}

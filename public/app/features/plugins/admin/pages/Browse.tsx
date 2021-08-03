@@ -85,6 +85,7 @@ export default function Browse(): ReactElement | null {
               </div>
               <div>
                 <Select
+                  menuShouldPortal
                   width={24}
                   value={sortBy}
                   onChange={onSortByChange}

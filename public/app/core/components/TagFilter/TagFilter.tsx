@@ -107,7 +107,7 @@ export const TagFilter: FC<Props> = ({
           Clear tags
         </span>
       )}
-      <AsyncMultiSelect {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
+      <AsyncMultiSelect menuShouldPortal {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
     </div>
   );
 };

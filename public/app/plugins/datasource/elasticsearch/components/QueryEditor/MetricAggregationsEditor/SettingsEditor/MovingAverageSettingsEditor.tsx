@@ -20,6 +20,7 @@ export const MovingAverageSettingsEditor = ({ metric }: Props) => {
     <>
       <InlineField label="Model" labelWidth={16}>
         <Select
+          menuShouldPortal
           onChange={(value) => dispatch(changeMetricSetting(metric, 'model', value.value!))}
           options={movingAvgModelOptions}
           value={metric.settings?.model}
