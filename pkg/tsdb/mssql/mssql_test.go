@@ -652,8 +652,8 @@ func TestMSSQL(t *testing.T) {
 			require.Equal(t, 1, len(frames))
 
 			require.Equal(t, 3, len(frames[0].Fields))
-			require.Equal(t, data.Labels{"metric": "Metric A - value one"}, frames[0].Fields[1].Labels)
-			require.Equal(t, data.Labels{"metric": "Metric B - value one"}, frames[0].Fields[2].Labels)
+			require.Equal(t, string("Metric A - value one"), frames[0].Fields[1].Name)
+			require.Equal(t, string("Metric B - value one"), frames[0].Fields[2].Name)
 		})
 
 		t.Run("When doing a metric query grouping by time should return correct series", func(t *testing.T) {
@@ -802,11 +802,7 @@ func TestMSSQL(t *testing.T) {
 					Queries: []backend.DataQuery{
 						{
 							JSON: []byte(`{
-								"rawSql": "DECLARE
-													@from int = $__unixEpochFrom(),
-													@to int = $__unixEpochTo()
-
-													EXEC dbo.sp_test_epoch @from, @to",
+								"rawSql": "DECLARE @from int = $__unixEpochFrom(), @to int = $__unixEpochTo() EXEC dbo.sp_test_epoch @from, @to",
 								"format": "time_series"
 							}`),
 							RefID: "A",

@@ -29,7 +29,11 @@ import (
 var logger = log.New("tsdb.mssql")
 
 func init() {
-	registry.Register(&registry.Descriptor{Instance: &Service{}})
+	registry.Register(&registry.Descriptor{
+		Name:         "MSSQLService",
+		InitPriority: registry.Low,
+		Instance:     &Service{},
+	})
 }
 
 type Service struct {
@@ -43,7 +47,7 @@ func (s *Service) Init() error {
 		QueryDataHandler: s,
 	})
 
-	if err := s.BackendPluginManager.Register("mysql", factory); err != nil {
+	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "mssql", factory); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}
 	return nil
@@ -54,8 +58,8 @@ func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng
 	if err != nil {
 		return nil, err
 	}
-	instance := i.(sqleng.DataSourceHandler)
-	return &instance, nil
+	instance := i.(*sqleng.DataSourceHandler)
+	return instance, nil
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

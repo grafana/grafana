@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
 	_ "github.com/grafana/grafana/pkg/tsdb/mysql"
-	_ "github.com/grafana/grafana/pkg/tsdb/postgres"
+	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
 )
@@ -40,6 +40,7 @@ func init() {
 // Service handles data requests to data sources.
 type Service struct {
 	Cfg                    *setting.Cfg             `inject:""`
+	PostgresService        *postgres.Service        `inject:""`
 	CloudMonitoringService *cloudmonitoring.Service `inject:""`
 	AzureMonitorService    *azuremonitor.Service    `inject:""`
 	PluginManager          plugins.Manager          `inject:""`
