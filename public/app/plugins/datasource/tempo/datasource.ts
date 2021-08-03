@@ -85,10 +85,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLo
     }
 
     if (traceTargets.length > 0) {
-      const traceRequest: DataQueryRequest<TempoQuery> = {
-        ...options,
-        targets: traceTargets.map((target) => ({ ...target, uploadedJson: this.uploadedJson })),
-      } as any;
+      const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: traceTargets };
       subQueries.push(
         super.query(traceRequest).pipe(
           map((response) => {

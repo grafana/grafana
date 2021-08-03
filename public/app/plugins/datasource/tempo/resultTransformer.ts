@@ -269,7 +269,7 @@ export function transformFromOTLP(
     }
   }
 
-  return { data: [frame] };
+  return { data: [frame, ...createGraphFrames(frame)] };
 }
 
 export function transformTrace(response: DataQueryResponse): DataQueryResponse {
