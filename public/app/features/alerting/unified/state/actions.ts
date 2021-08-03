@@ -4,6 +4,7 @@ import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
+  Receiver,
   Silence,
   SilenceCreatePayload,
 } from 'app/plugins/datasource/alertmanager/types';
@@ -26,6 +27,7 @@ import {
   updateAlertManagerConfig,
   fetchStatus,
   deleteAlertManagerConfig,
+  testReceivers,
 } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
@@ -602,5 +604,20 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
         successMessage: 'Alertmanager configuration reset.',
       }
     );
+  }
+);
+
+interface TestReceiversOptions {
+  alertManagerSourceName: string;
+  receivers: Receiver[];
+}
+
+export const testReceiversAction = createAsyncThunk(
+  'unifiedalerting/testReceivers',
+  ({ alertManagerSourceName, receivers }: TestReceiversOptions): Promise<void> => {
+    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers)), {
+      errorMessage: 'Failed to send test alert.',
+      successMessage: 'Test alert sent.',
+    });
   }
 );

@@ -8,6 +8,8 @@ import {
   SilenceCreatePayload,
   Matcher,
   AlertmanagerStatus,
+  Receiver,
+  TestReceiversPayload,
 } from 'app/plugins/datasource/alertmanager/types';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -153,6 +155,21 @@ export async function fetchStatus(alertManagerSourceName: string): Promise<Alert
     .toPromise();
 
   return result.data;
+}
+
+export async function testReceivers(alertManagerSourceName: string, receivers: Receiver[]): Promise<void> {
+  const data: TestReceiversPayload = {
+    receivers,
+  };
+  await getBackendSrv()
+    .fetch<void>({
+      method: 'POST',
+      data,
+      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/receivers/test`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
 }
 
 function escapeQuotes(value: string): string {

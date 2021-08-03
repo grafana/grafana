@@ -226,3 +226,7 @@ export interface AlertmanagerStatus {
     version: string;
   };
 }
+
+export interface TestReceiversPayload {
+  receivers?: Receiver[];
+}
