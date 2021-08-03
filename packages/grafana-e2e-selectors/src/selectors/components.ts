@@ -6,7 +6,7 @@
 // prefix your selector string with 'data-test-id' so that when create the selectors we know to search for it on the right attribute
 export const Components = {
   TimePicker: {
-    openButton: 'data-testidTimePicker Open Button',
+    openButton: 'data-testid TimePicker Open Button',
     fromField: 'TimePicker from field',
     toField: 'TimePicker to field',
     applyTimeRange: 'data-testid TimePicker submit button',
