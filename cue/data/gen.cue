@@ -74,6 +74,22 @@ Family: scuemata.#Family & {
                 version?: number
                 panels?: [...#Panel]
 
+                // TODO
+                #FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(targetType="enum")
+
+                // TODO
+                #FieldColorSeriesByMode: "min" | "max" | "last" @cuetsy(targetType="type")
+
+                // TODO
+                #FieldColor: {
+                    // The main color scheme mode
+                    mode: #FieldColorModeId | string
+                    // Stores the fixed color value if mode is fixed
+                    fixedColor?: string
+                    // Some visualizations need to know how to assign a series color from by value color schemes
+                    seriesBy?: #FieldColorSeriesByMode
+                } @cuetsy(targetType="interface")
+
                 // Dashboard panels. Panels are canonically defined inline
                 // because they share a version timeline with the dashboard
                 // schema; they do not vary independently. We create a separate,
@@ -173,7 +189,7 @@ Family: scuemata.#Family & {
                             //   thresholds?: ThresholdsConfig;
 
                             //   // Map values to a display color
-                            //   color?: FieldColor;
+                            color?: #FieldColor
 
                             //   // Used when reducing field values
                             //   nullValueMode?: NullValueMode;
