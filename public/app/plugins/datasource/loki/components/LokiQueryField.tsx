@@ -1,6 +1,4 @@
-// Libraries
 import React, { ReactNode } from 'react';
-
 import {
   SlatePrism,
   TypeaheadOutput,
@@ -11,17 +9,13 @@ import {
   DOMUtil,
   Icon,
 } from '@grafana/ui';
-
-// Utils & Services
-// dom also includes Element polyfills
 import { Plugin, Node } from 'slate';
 import { LokiLabelBrowser } from './LokiLabelBrowser';
-
-// Types
-import { ExploreQueryFieldProps } from '@grafana/data';
+import { ExploreQueryFieldProps, TimeRange } from '@grafana/data';
 import { LokiQuery, LokiOptions } from '../types';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
+import { roundMsToMin } from '../language_utils';
 import LokiDatasource from '../datasource';
 
 function getChooserText(hasSyntax: boolean, hasLogLabels: boolean) {
@@ -64,6 +58,7 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
 export interface LokiQueryFieldProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions> {
   history: LokiHistoryItem[];
   ExtraFieldElement?: ReactNode;
+  range?: TimeRange;
   placeholder?: string;
   'data-testid'?: string;
 }
@@ -96,6 +91,29 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   async componentDidMount() {
     await this.props.datasource.languageProvider.start();
     this.setState({ labelsLoaded: true });
+  }
+
+  async componentDidUpdate(prevProps: LokiQueryFieldProps) {
+    const {
+      range,
+      datasource: { languageProvider },
+    } = this.props;
+    const changedRangeToRefresh = this.rangeChangedToRefresh(range, prevProps.range);
+    // We want to refresh labels when range changes (we round up intervals to a minute)
+    if (changedRangeToRefresh) {
+      console.log('here');
+      await languageProvider.fetchLabels();
+    }
+  }
+
+  rangeChangedToRefresh(range?: TimeRange, prevRange?: TimeRange): boolean {
+    if (range && prevRange) {
+      const sameMinuteFrom = roundMsToMin(range.from.valueOf()) === roundMsToMin(prevRange.from.valueOf());
+      const sameMinuteTo = roundMsToMin(range.to.valueOf()) === roundMsToMin(prevRange.to.valueOf());
+      // If both are same, don't need to refresh
+      return !(sameMinuteFrom && sameMinuteTo);
+    }
+    return false;
   }
 
   onChangeLabelBrowser = (selector: string) => {
