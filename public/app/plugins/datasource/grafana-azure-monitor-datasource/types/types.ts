@@ -140,6 +140,7 @@ export interface AzureLogsTableColumn {
 export interface AzureMonitorOption<T = string> {
   label: string;
   value: T;
+  options?: AzureMonitorOption[];
 }
 
 export interface AzureQueryEditorFieldProps {
