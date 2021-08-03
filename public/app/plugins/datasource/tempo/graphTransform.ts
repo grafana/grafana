@@ -211,7 +211,7 @@ export function mapPromMetricsToServiceMap(request: DataQueryRequest<TempoQuery>
       source: edge.source,
       target: edge.target,
       mainStat: edge.total,
-      secondaryStat: edge.total / (rangeMs / (1000 * 60)) + 't/m',
+      secondaryStat: edge.total / (rangeMs / (1000 * 60)),
     });
   }
 
