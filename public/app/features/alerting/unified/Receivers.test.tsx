@@ -108,7 +108,7 @@ describe('Receivers', () => {
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
   });
 
-  it('Template and receiver tables are rendered, alert manager can be selected', async () => {
+  it('Template and receiver tables are rendered, alertmanager can be selected', async () => {
     mocks.api.fetchConfig.mockImplementation((name) =>
       Promise.resolve(name === GRAFANA_RULES_SOURCE_NAME ? someGrafanaAlertManagerConfig : someCloudAlertManagerConfig)
     );

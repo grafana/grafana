@@ -1,93 +1,69 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
-import { Plugin, LocalPlugin } from '../types';
+import { CatalogPlugin, CatalogPluginsState, PluginsByFilterType, FilteredPluginsState } from '../types';
 import { api } from '../api';
+import { mapLocalToCatalog, mapRemoteToCatalog, isInstalled, isType, matchesKeyword } from '../helpers';
 
-export const usePlugins = () => {
-  const result = useAsync(async () => {
-    const items = await api.getRemotePlugins();
-    const filteredPlugins = items.filter((plugin) => {
-      const isNotRenderer = plugin.typeCode !== 'renderer';
-      const isSigned = Boolean(plugin.versionSignatureType);
-
-      return isNotRenderer && isSigned;
-    });
-
-    const installedPlugins = await api.getInstalledPlugins();
-
-    return { items: filteredPlugins, installedPlugins };
+export function usePlugins(): CatalogPluginsState {
+  const { loading, value, error } = useAsync(async () => {
+    const remote = await api.getRemotePlugins();
+    const installed = await api.getInstalledPlugins();
+    return { remote, installed };
   }, []);
 
-  return result;
-};
+  const plugins = useMemo(() => {
+    const installed = value?.installed || [];
+    const remote = value?.remote || [];
+    const unique: Record<string, CatalogPlugin> = {};
 
-type FilteredPluginsState = {
-  isLoading: boolean;
-  items: Array<Plugin | LocalPlugin>;
-};
+    for (const plugin of installed) {
+      unique[plugin.id] = mapLocalToCatalog(plugin);
+    }
 
-export const usePluginsByFilter = (searchBy: string, filterBy: string): FilteredPluginsState => {
-  const { loading, value } = usePlugins();
-  const all = useMemo(() => {
-    const combined: Plugin[] = [];
-    Array.prototype.push.apply(combined, value?.items ?? []);
-    Array.prototype.push.apply(combined, value?.installedPlugins ?? []);
+    for (const plugin of remote) {
+      if (unique[plugin.slug]) {
+        continue;
+      }
 
-    const bySlug = combined.reduce((unique: Record<string, Plugin>, plugin) => {
-      unique[plugin.slug] = plugin;
-      return unique;
-    }, {});
+      if (plugin.typeCode === 'renderer') {
+        continue;
+      }
 
-    return Object.values(bySlug);
-  }, [value?.items, value?.installedPlugins]);
+      if (!Boolean(plugin.versionSignatureType)) {
+        continue;
+      }
 
-  if (filterBy === 'installed') {
-    return {
-      isLoading: loading,
-      items: applySearchFilter(searchBy, value?.installedPlugins ?? []),
-    };
-  }
+      unique[plugin.slug] = mapRemoteToCatalog(plugin);
+    }
+
+    return Object.values(unique);
+  }, [value?.installed, value?.remote]);
 
   return {
-    isLoading: loading,
-    items: applySearchFilter(searchBy, all),
+    loading,
+    error,
+    plugins,
   };
-};
-
-function applySearchFilter(searchBy: string | undefined, plugins: Plugin[]): Plugin[] {
-  if (!searchBy) {
-    return plugins;
-  }
-
-  return plugins.filter((plugin) => {
-    const fields: String[] = [];
-
-    if (plugin.name) {
-      fields.push(plugin.name.toLowerCase());
-    }
-
-    if (plugin.orgName) {
-      fields.push(plugin.orgName.toLowerCase());
-    }
-
-    return fields.some((f) => f.includes(searchBy.toLowerCase()));
-  });
 }
 
-type PluginState = {
-  isLoading: boolean;
-  remote?: Plugin;
-  remoteVersions?: Array<{ version: string; createdAt: string }>;
-  local?: LocalPlugin;
+const URLFilterHandlers = {
+  filterBy: isInstalled,
+  filterByType: isType,
+  searchBy: matchesKeyword,
 };
 
-export const usePlugin = (slug: string): PluginState => {
-  const { loading, value } = useAsync(async () => {
-    return await api.getPlugin(slug);
-  }, [slug]);
+export const usePluginsByFilter = (queries: PluginsByFilterType): FilteredPluginsState => {
+  const { loading, error, plugins } = usePlugins();
+
+  const filteredPlugins = plugins.filter((plugin) =>
+    Object.keys(queries).every((query: keyof PluginsByFilterType) =>
+      typeof URLFilterHandlers[query] === 'function' ? URLFilterHandlers[query](plugin, queries[query]) : true
+    )
+  );
 
   return {
     isLoading: loading,
-    ...value,
+    error,
+    plugins: filteredPlugins,
   };
 };

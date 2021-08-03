@@ -58,7 +58,6 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   subscriptionId?: string;
 
   // logs
-  logAnalyticsDefaultWorkspace?: string;
   /** @deprecated Azure Logs credentials */
   azureLogAnalyticsSameAs?: boolean;
   /** @deprecated Azure Logs credentials */
@@ -178,4 +177,15 @@ export interface RawAzureResourceItem {
 
 export interface AzureGraphResponse<T = unknown> {
   data: T;
+  // skipToken is used for pagination, to get the next page
+  $skipToken?: string;
+}
+
+// https://docs.microsoft.com/en-us/rest/api/azureresourcegraph/resourcegraph(2021-03-01)/resources/resources#queryrequestoptions
+export interface AzureResourceGraphOptions {
+  $skip: number;
+  $skipToken: string;
+  $top: number;
+  allowPartialScopes: boolean;
+  resultFormat: 'objectArray' | 'table';
 }

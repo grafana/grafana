@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { LegacyForms, DeleteButton } from '@grafana/ui';
 const { Select } = LegacyForms;
 import { SelectableValue } from '@grafana/data';
@@ -9,14 +9,20 @@ import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { updateTeamMember, removeTeamMember } from './state/actions';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
-export interface Props {
+const mapDispatchToProps = {
+  removeTeamMember,
+  updateTeamMember,
+};
+
+const connector = connect(null, mapDispatchToProps);
+
+interface OwnProps {
   member: TeamMember;
   syncEnabled: boolean;
   editorsCanAdmin: boolean;
   signedInUserIsTeamAdmin: boolean;
-  removeTeamMember: typeof removeTeamMember;
-  updateTeamMember: typeof updateTeamMember;
 }
+export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export class TeamMemberRow extends PureComponent<Props> {
   constructor(props: Props) {
@@ -97,13 +103,4 @@ export class TeamMemberRow extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps(state: any) {
-  return {};
-}
-
-const mapDispatchToProps = {
-  removeTeamMember,
-  updateTeamMember,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(TeamMemberRow);
+export default connector(TeamMemberRow);

@@ -4,11 +4,12 @@ import { of, throwError } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { JaegerDatasource } from './datasource';
+import mockJson from './mockJsonResponse.json';
 import {
   testResponse,
   testResponseDataFrameFields,
-  testResponseNodesFields,
   testResponseEdgesFields,
+  testResponseNodesFields,
 } from './testResponse';
 import { JaegerQuery } from './types';
 
@@ -70,6 +71,21 @@ describe('JaegerDatasource', () => {
     expect(field.name).toBe('trace');
     expect(field.type).toBe(FieldType.trace);
     expect(field.values.length).toBe(0);
+  });
+
+  it('should handle json file upload', async () => {
+    const ds = new JaegerDatasource(defaultSettings);
+    ds.uploadedJson = JSON.stringify(mockJson);
+    const response = await ds
+      .query({
+        ...defaultQuery,
+        targets: [{ queryType: 'upload', refId: 'A' }],
+      })
+      .toPromise();
+    const field = response.data[0].fields[0];
+    expect(field.name).toBe('traceID');
+    expect(field.type).toBe(FieldType.string);
+    expect(field.values.length).toBe(2);
   });
 
   it('should return search results when the query type is search', async () => {

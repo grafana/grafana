@@ -5,6 +5,7 @@ import { Icon } from '../index';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { ComponentSize } from '../../types/size';
 import { getButtonStyles } from '../Button';
+import { trimFileName } from '../../utils/file';
 
 export interface Props {
   /** Callback function to handle uploaded file  */
@@ -15,19 +16,6 @@ export interface Props {
   className?: string;
   /** Button size */
   size?: ComponentSize;
-}
-
-function trimFileName(fileName: string) {
-  const nameLength = 16;
-  const delimiter = fileName.lastIndexOf('.');
-  const extension = fileName.substring(delimiter);
-  const file = fileName.substring(0, delimiter);
-
-  if (file.length < nameLength) {
-    return fileName;
-  }
-
-  return `${file.substring(0, nameLength)}...${extension}`;
 }
 
 export const FileUpload: FC<Props> = ({
