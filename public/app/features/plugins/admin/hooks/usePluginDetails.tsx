@@ -1,8 +1,9 @@
 import { useReducer, useEffect } from 'react';
 import { PluginType, PluginIncludeType } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
 import { api } from '../api';
 import { loadPlugin } from '../../PluginPage';
-import { getCatalogPluginDetails, isGrafanaAdmin } from '../helpers';
+import { getCatalogPluginDetails } from '../helpers';
 import { ActionTypes, PluginDetailsActions, PluginDetailsState } from '../types';
 
 const defaultTabs = [{ label: 'Overview' }, { label: 'Version history' }];
@@ -10,7 +11,7 @@ const defaultTabs = [{ label: 'Overview' }, { label: 'Version history' }];
 const initialState = {
   hasInstalledPanel: false,
   hasUpdate: false,
-  isAdmin: isGrafanaAdmin(),
+  isAdmin: contextSrv.hasRole('Admin'),
   isInstalled: false,
   isInflight: false,
   loading: false,
