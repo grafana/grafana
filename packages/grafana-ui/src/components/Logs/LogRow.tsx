@@ -76,7 +76,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     errorLogRow: css`
       label: erroredLogRow;
-      color: ${theme.v1.colors.textWeak};
+      color: ${theme.colors.text.secondary};
     `,
   };
 };

@@ -48,7 +48,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       word-break: break-all;
     `,
     showingField: css`
-      color: ${theme.v1.palette.blue95};
+      color: ${theme.colors.primary.text};
     `,
     wrapLine: css`
       label: wrapLine;

@@ -34,7 +34,7 @@ interface Props extends Themeable2 {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const outlineColor = tinycolor(theme.v1.colors.dashboardBg).setAlpha(0.7).toRgbString();
+  const outlineColor = tinycolor(theme.colors.border.weak).setAlpha(0.7).toRgbString();
 
   return {
     positionRelative: css`
