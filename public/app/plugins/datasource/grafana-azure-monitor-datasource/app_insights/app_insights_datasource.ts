@@ -1,9 +1,15 @@
 import { DataQueryRequest, DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
 import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
-import { isString } from 'lodash';
+import { map, isString } from 'lodash';
 
 import TimegrainConverter from '../time_grain_converter';
-import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '../types';
+import {
+  AzureDataSourceJsonData,
+  AzureMonitorQuery,
+  AzureQueryType,
+  AzureLogsVariable,
+  DatasourceValidationResult,
+} from '../types';
 import { routeNames } from '../utils/common';
 import ResponseParser from './response_parser';
 
@@ -17,12 +23,17 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
   version = 'beta';
   applicationId: string;
   logAnalyticsColumns: { [key: string]: LogAnalyticsColumn[] } = {};
+  azureMonitorPath: string;
+  defaultSubscriptionId?: string;
 
   constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
     this.applicationId = instanceSettings.jsonData.appInsightsAppId || '';
 
     this.resourcePath = `${routeNames.appInsights}/${this.version}/apps/${this.applicationId}`;
+    this.azureMonitorPath = `${routeNames.azureMonitor}/subscriptions`;
+
+    this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId || '';
   }
 
   isConfigured(): boolean {
@@ -113,6 +124,24 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
    * external interface does not support
    */
   metricFindQueryInternal(query: string): Promise<MetricFindValue[]> | null {
+    // appinsights() - Get application insights in the default subscription
+    const appInsightsQuery = query.match(/^AppInsights\(\)/i);
+    if (appInsightsQuery) {
+      if (this.defaultSubscriptionId) {
+        return this.getApplicationInsights(this.defaultSubscriptionId);
+      } else {
+        throw new Error(
+          'No subscription ID. Specify a default subscription ID in the data source config to use AppInsights() without a subscription ID'
+        );
+      }
+    }
+
+    // AppInsights("abc-def-etc") - Get AppInsights of a specified subscription
+    const appInsightsQueryWithSub = query.match(/^AppInsights\(["']?([^\)]+?)["']?\)/i);
+    if (appInsightsQueryWithSub) {
+      return this.getApplicationInsights((appInsightsQueryWithSub[1] || '').trim());
+    }
+
     const appInsightsMetricNameQuery = query.match(/^AppInsightsMetricNames\(\)/i);
     if (appInsightsMetricNameQuery) {
       return this.getMetricNames();
@@ -154,6 +183,27 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
           message: message,
         };
       });
+  }
+
+  async getApplicationInsights(subscription: string): Promise<AzureLogsVariable[]> {
+    const response = await this.getApplicationInsightsList(subscription);
+
+    return (
+      map(response.value, (val: any) => {
+        return {
+          text: val.name,
+          value: val.id,
+        };
+      }) || []
+    );
+  }
+
+  private getApplicationInsightsList(subscription: string): Promise<any> {
+    const subscriptionId = getTemplateSrv().replace(subscription || this.defaultSubscriptionId);
+
+    const applicationInsightsListUrl =
+      this.azureMonitorPath + `/${subscriptionId}/providers/Microsoft.Insights/components?api-version=2015-05-01`;
+    return this.getResource(applicationInsightsListUrl);
   }
 
   getMetricNames() {
