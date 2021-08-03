@@ -321,6 +321,19 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   targetContainsTemplate(target: any) {
+    if (this.isFlux) {
+      return this.templateSrv.variableExists(target.query);
+    }
+
+    // now we know it is an InfluxQL query.
+    // it can be either a raw-query or a not-raw-query
+
+    if (target.rawQuery) {
+      return this.templateSrv.variableExists(target.query);
+    }
+
+    // now we know it is an InfluxQL not-raw-query
+
     for (const group of target.groupBy) {
       for (const param of group.params) {
         if (this.templateSrv.variableExists(param)) {
