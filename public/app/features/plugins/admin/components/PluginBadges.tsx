@@ -34,7 +34,7 @@ function EnterpriseBadge() {
 
   return (
     <HorizontalGroup>
-      <Badge icon="lock" text="Enterprise" color="blue" className={customBadgeStyles} />
+      <Badge icon="lock" aria-label="lock icon" text="Enterprise" color="blue" className={customBadgeStyles} />
       <Button size="sm" fill="text" icon="external-link-alt" onClick={onClick}>
         Learn more
       </Button>
