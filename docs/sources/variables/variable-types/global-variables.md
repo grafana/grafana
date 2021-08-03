@@ -39,7 +39,7 @@ You can use the `$__interval` variable as a parameter to group by time (for Infl
 
 Grafana automatically calculates an interval that can be used to group by time in queries. When there are more data points than can be shown on a graph then queries can be made more efficient by grouping by a larger interval. It is more efficient to group by 1 day than by 10s when looking at 3 months of data and the graph will look the same and the query will be faster. The `$__interval` is calculated using the time range and the width of the graph (the number of pixels).
 
-Approximate Calculation: `(from - to) / resolution`
+Approximate Calculation: `(to - from) / resolution`
 
 For example, when the time range is 1 hour and the graph is full screen, then the interval might be calculated to `2m` - points are grouped in 2 minute intervals. If the time range is 6 months and the graph is full screen, then the interval might be `1d` (1 day) - points are grouped by day.
 
