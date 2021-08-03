@@ -81,6 +81,9 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
       <Field label="Data source">
         <DataSourcePicker width={50} annotations current={annotation.datasource} onChange={onDataSourceChange} />
       </Field>
+      <Field label="Enabled" description="When enabled the annotation query is issued every dashboard refresh">
+        <Checkbox name="enable" id="enable" value={annotation.enable} onChange={onChange} />
+      </Field>
       <Field
         label="Hidden"
         description="Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden."
