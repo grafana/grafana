@@ -128,35 +128,16 @@ function findTraceDuration(view: DataFrameView<Row>): number {
   return traceEndTime - traceStartTime;
 }
 
+const secondsMetric = 'tempo_service_graph_request_server_seconds_sum';
+const totalsMetric = 'tempo_service_graph_request_total';
+
 export function mapPromMetricsToServiceMap(request: DataQueryRequest<TempoQuery>, responses: DataQueryResponse[]) {
-  const secondsMetric = 'tempo_service_graph_request_server_seconds_sum';
-  const totalsMetric = 'tempo_service_graph_request_total';
-
-  function createDF(name: string, fields: FieldDTO[]) {
-    return new MutableDataFrame({ name, fields, meta: { preferredVisualisationType: 'nodeGraph' } });
-  }
-
   function valueName(metric: string) {
     return `Value #${metric}`;
   }
 
-  const nodes = createDF('Nodes', [
-    { name: 'id' },
-    { name: 'title' },
-    { name: 'mainStat', config: { unit: 'ms/t', displayName: 'Average response time' } },
-    { name: 'secondaryStat', config: { unit: 't/min', displayName: 'Transactions per minute' } },
-  ]);
-  const edges = createDF('Edges', [
-    { name: 'id' },
-    { name: 'source' },
-    { name: 'target' },
-    { name: 'mainStat', config: { unit: 't', displayName: 'Transactions' } },
-    { name: 'secondaryStat', config: { unit: 'ms/t', displayName: 'Average response time' } },
-  ]);
-
-  const responsesMap = groupBy(responses, (r) => r.data[0].refId);
-  const totalsDFView = new DataFrameView(responsesMap[totalsMetric][0].data[0]);
-  const secondsDFView = new DataFrameView(responsesMap[secondsMetric][0].data[0]);
+  const [nodes, edges] = createServiceMapFrames();
+  const [totalsDFView, secondsDFView] = getMetricFrames(responses);
 
   const nodesMap: Record<string, any> = {};
   const edgesMap: Record<string, any> = {};
@@ -235,4 +216,36 @@ export function mapPromMetricsToServiceMap(request: DataQueryRequest<TempoQuery>
   }
 
   return [nodes, edges];
+}
+
+function createServiceMapFrames() {
+  function createDF(name: string, fields: FieldDTO[]) {
+    return new MutableDataFrame({ name, fields, meta: { preferredVisualisationType: 'nodeGraph' } });
+  }
+
+  const nodes = createDF('Nodes', [
+    { name: Fields.id },
+    { name: Fields.title },
+    { name: Fields.mainStat, config: { unit: 'ms/t', displayName: 'Average response time' } },
+    {
+      name: Fields.secondaryStat,
+      config: { unit: 't/min', displayName: 'Transactions per minute' },
+    },
+  ]);
+  const edges = createDF('Edges', [
+    { name: Fields.id },
+    { name: Fields.source },
+    { name: Fields.target },
+    { name: Fields.mainStat, config: { unit: 't', displayName: 'Transactions' } },
+    { name: Fields.secondaryStat, config: { unit: 'ms/t', displayName: 'Average response time' } },
+  ]);
+
+  return [nodes, edges];
+}
+
+function getMetricFrames(responses: DataQueryResponse[]) {
+  const responsesMap = groupBy(responses, (r) => r.data[0].refId);
+  const totalsDFView = new DataFrameView(responsesMap[totalsMetric][0].data[0]);
+  const secondsDFView = new DataFrameView(responsesMap[secondsMetric][0].data[0]);
+  return [totalsDFView, secondsDFView];
 }
