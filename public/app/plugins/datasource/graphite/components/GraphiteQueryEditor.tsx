@@ -7,6 +7,7 @@ import { PlayButton } from './PlayButton';
 import { GraphiteFunctionEditor } from './GraphiteFunctionEditor';
 import { FuncInstance } from '../gfunc';
 import { AddGraphiteFunction } from './AddGraphiteFunction';
+import { GraphiteContext } from '../state/context';
 
 type Props = {
   state: GraphiteQueryEditorState;
@@ -15,12 +16,8 @@ type Props = {
 
 export function GraphiteQueryEditor({ dispatch, state }: Props) {
   return (
-    <>
-      {state.target?.textEditor && (
-        <div className="gf-form" ng-show="ctrl.state.target.textEditor">
-          <GraphiteTextEditor rawQuery={state.target.target} dispatch={dispatch} />
-        </div>
-      )}
+    <GraphiteContext dispatch={dispatch}>
+      {state.target?.textEditor && <GraphiteTextEditor rawQuery={state.target.target} />}
 
       {!state.target?.textEditor && (
         <div ng-hide="ctrl.target.textEditor">
@@ -29,12 +26,12 @@ export function GraphiteQueryEditor({ dispatch, state }: Props) {
               <label className="gf-form-label width-6 query-keyword">Series</label>
             </div>
 
-            <SeriesSection dispatch={dispatch} state={state} />
+            <SeriesSection state={state} />
 
-            {state.paused && <PlayButton dispatch={dispatch} />}
+            {state.paused && <PlayButton />}
 
             <div className="gf-form gf-form--grow">
-              <div className="gf-form-label gf-form-label--grow"></div>
+              <div className="gf-form-label gf-form-label--grow" />
             </div>
           </div>
 
@@ -44,17 +41,17 @@ export function GraphiteQueryEditor({ dispatch, state }: Props) {
             </div>
 
             {state.queryModel?.functions.map((func: FuncInstance, index: number) => {
-              return <GraphiteFunctionEditor key={index} func={func} dispatch={dispatch} />;
+              return <GraphiteFunctionEditor key={index} func={func} />;
             })}
 
-            <AddGraphiteFunction dispatch={dispatch} funcDefs={state.funcDefs!} />
+            <AddGraphiteFunction funcDefs={state.funcDefs!} />
 
             <div className="gf-form gf-form--grow">
-              <div className="gf-form-label gf-form-label--grow"></div>
+              <div className="gf-form-label gf-form-label--grow" />
             </div>
           </div>
         </div>
       )}
-    </>
+    </GraphiteContext>
   );
 }

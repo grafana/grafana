@@ -1,23 +1,16 @@
 import React from 'react';
-import { Dispatch } from 'redux';
 import { GraphiteQueryEditorState } from '../state/store';
 import { TagsSection } from './TagsSection';
 import { MetricsSection } from './MetricsSection';
 
 type Props = {
-  dispatch: Dispatch;
   state: GraphiteQueryEditorState;
 };
 
-export function SeriesSection({ dispatch, state }: Props) {
+export function SeriesSection({ state }: Props) {
   return state.queryModel?.seriesByTagUsed ? (
-    <TagsSection
-      dispatch={dispatch}
-      tags={state.queryModel?.tags}
-      addTagSegments={state.addTagSegments}
-      state={state}
-    />
+    <TagsSection tags={state.queryModel?.tags} addTagSegments={state.addTagSegments} state={state} />
   ) : (
-    <MetricsSection dispatch={dispatch} segments={state.segments} state={state} />
+    <MetricsSection segments={state.segments} state={state} />
   );
 }

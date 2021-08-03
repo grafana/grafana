@@ -7,16 +7,17 @@ import { EditableParam, FunctionParamEditor } from './FunctionParamEditor';
 import { actions } from '../state/actions';
 import { FunctionEditor } from './FunctionEditor';
 import { mapFuncInstanceToParams } from './helpers';
+import { useDispatch } from '../state/context';
 
 export type FunctionEditorProps = {
   func: FuncInstance;
-  dispatch: (action: any) => void;
 };
 
 /**
  * Allows editing function params and removing/moving a function (note: editing function name is not supported)
  */
-export function GraphiteFunctionEditor({ func, dispatch }: FunctionEditorProps) {
+export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
+  const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
 
   // keep track of mouse over and isExpanded state to display buttons for adding optional/multiple params
