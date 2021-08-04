@@ -10,6 +10,8 @@ import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeForm } from './TimeRangeForm';
 import { TimeRangeList } from './TimeRangeList';
 import { TimePickerFooter } from './TimePickerFooter';
+import { getFocusStyles } from '../../../themes/mixins';
+import { selectors } from '@grafana/e2e-selectors';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRanges, isContainerTall) => {
   return {
@@ -30,6 +32,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRang
     `,
     body: css`
       display: flex;
+      flex-direction: row-reverse;
       height: ${isContainerTall ? '381px' : '217px'};
     `,
     leftSide: css`
@@ -63,6 +66,16 @@ const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme2) => {
       align-items: center;
       border-bottom: 1px solid ${theme.colors.border.weak};
       padding: 7px 9px 7px 9px;
+    `,
+    expandButton: css`
+      background-color: transparent;
+      border: none;
+      display: flex;
+      width: 100%;
+
+      &:focus-visible {
+        ${getFocusStyles(theme)}
+      }
     `,
     body: css`
       border-bottom: 1px solid ${theme.colors.border.weak};
@@ -163,13 +176,8 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
   };
 
   return (
-    <div className={cx(styles.container, className)}>
+    <div id="TimePickerContent" className={cx(styles.container, className)}>
       <div className={styles.body}>
-        {isFullscreen && (
-          <div className={styles.leftSide}>
-            <FullScreenForm {...props} historyOptions={historyOptions} />
-          </div>
-        )}
         {(!isFullscreen || !hideQuickRanges) && (
           <CustomScrollbar className={styles.rightSide}>
             {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
@@ -191,6 +199,11 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
               </>
             )}
           </CustomScrollbar>
+        )}
+        {isFullscreen && (
+          <div className={styles.leftSide}>
+            <FullScreenForm {...props} historyOptions={historyOptions} />
+          </div>
         )}
       </div>
       {!hideTimeZone && isFullscreen && <TimePickerFooter timeZone={timeZone} onChangeTimeZone={onChangeTimeZone} />}
@@ -218,21 +231,25 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
   };
 
   return (
-    <>
-      <div
-        aria-label="TimePicker absolute time range"
-        className={styles.header}
-        onClick={() => {
-          if (!hideQuickRanges) {
-            setCollapsedFlag(!collapsed);
-          }
-        }}
-      >
-        <TimePickerTitle>Absolute time range</TimePickerTitle>
-        {!hideQuickRanges && <Icon name={!collapsed ? 'angle-up' : 'angle-down'} />}
-      </div>
+    <fieldset>
+      <h3 className={styles.header}>
+        <button
+          className={styles.expandButton}
+          onClick={() => {
+            if (!hideQuickRanges) {
+              setCollapsedFlag(!collapsed);
+            }
+          }}
+          data-testid={selectors.components.TimePicker.absoluteTimeRangeTitle}
+          aria-expanded={!collapsed}
+          aria-controls="expanded-timerange"
+        >
+          <TimePickerTitle>Absolute time range</TimePickerTitle>
+          {!hideQuickRanges && <Icon name={!collapsed ? 'angle-up' : 'angle-down'} />}
+        </button>
+      </h3>
       {!collapsed && (
-        <div className={styles.body}>
+        <div className={styles.body} id="expanded-timerange">
           <div className={styles.form}>
             <TimeRangeForm value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
           </div>
@@ -246,7 +263,7 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
           )}
         </div>
       )}
-    </>
+    </fieldset>
   );
 };
 
@@ -261,9 +278,9 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
   return (
     <>
       <div className={styles.container}>
-        <div aria-label="TimePicker absolute time range" className={styles.title}>
+        <h3 className={styles.title} data-testid={selectors.components.TimePicker.absoluteTimeRangeTitle}>
           <TimePickerTitle>Absolute time range</TimePickerTitle>
-        </div>
+        </h3>
         <TimeRangeForm
           value={props.value}
           timeZone={props.timeZone}
