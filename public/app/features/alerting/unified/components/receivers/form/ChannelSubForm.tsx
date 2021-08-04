@@ -75,7 +75,13 @@ export function ChannelSubForm<R extends ChannelValues>({
               name={name('type')}
               defaultValue={defaultValues.type}
               render={({ field: { ref, onChange, ...field } }) => (
-                <Select {...field} width={37} options={typeOptions} onChange={(value) => onChange(value?.value)} />
+                <Select
+                  menuShouldPortal
+                  {...field}
+                  width={37}
+                  options={typeOptions}
+                  onChange={(value) => onChange(value?.value)}
+                />
               )}
               control={control}
               rules={{ required: true }}

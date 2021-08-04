@@ -44,6 +44,7 @@ export function SegmentSelect<T>({
   return (
     <div {...rest} ref={ref}>
       <Select
+        menuShouldPortal
         width={width}
         noOptionsMessage={noOptionsMessage}
         placeholder={placeholder}

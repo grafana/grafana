@@ -86,6 +86,7 @@ export const GroupByFieldConfiguration: React.FC<FieldProps> = ({ fieldName, con
       <div className={cx('gf-form', styles.cell)}>
         <div className={cx('gf-form-spacing', styles.rowSpacing)}>
           <Select
+            menuShouldPortal
             className="width-12"
             options={options}
             value={config?.operation}

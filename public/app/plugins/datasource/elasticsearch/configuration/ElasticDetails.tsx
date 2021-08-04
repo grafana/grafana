@@ -53,6 +53,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
               label="Pattern"
               inputEl={
                 <Select
+                  menuShouldPortal
                   options={indexPatternTypes}
                   onChange={intervalHandler(value, onChange)}
                   value={indexPatternTypes.find(
@@ -82,6 +83,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             label="Version"
             inputEl={
               <Select
+                menuShouldPortal
                 options={esVersions}
                 onChange={(option) => {
                   const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(

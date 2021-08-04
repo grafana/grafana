@@ -55,6 +55,7 @@ export const SelectWithAdd: FC<Props> = ({
   } else {
     return (
       <Select
+        menuShouldPortal
         width={width}
         options={_options}
         value={value}

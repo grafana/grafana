@@ -13,5 +13,5 @@ export const ThresholdsStyleEditor: React.FC<
     },
     [onChange]
   );
-  return <Select value={value.mode} options={item.settings.options} onChange={onChangeCb} />;
+  return <Select menuShouldPortal value={value.mode} options={item.settings.options} onChange={onChangeCb} />;
 };

@@ -64,6 +64,7 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
             Mode
           </div>
           <Select
+            menuShouldPortal
             options={modes}
             value={modes.find((v) => v.value === options.mode) || modes[0]}
             onChange={onSelectMode}

@@ -84,7 +84,12 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
         className="space-between"
       >
         <div className={styles.input}>
-          <Select value={selectedOption} options={retentionPeriodOptions} onChange={onChangeRetentionPeriod}></Select>
+          <Select
+            menuShouldPortal
+            value={selectedOption}
+            options={retentionPeriodOptions}
+            onChange={onChangeRetentionPeriod}
+          ></Select>
         </div>
       </Field>
       <Field label="Default active tab" description=" " className="space-between">

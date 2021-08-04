@@ -117,6 +117,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
                 <Select
+                  menuShouldPortal
                   {...field}
                   className={formStyles.input}
                   onChange={(value) => onChange(mapSelectValueToString(value))}
@@ -141,6 +142,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               <InputControl
                 render={({ field: { onChange, ref, ...field } }) => (
                   <MultiSelect
+                    menuShouldPortal
                     {...field}
                     allowCustomValue
                     className={formStyles.input}
@@ -188,6 +190,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                     <InputControl
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
+                          menuShouldPortal
                           {...field}
                           className={formStyles.input}
                           onChange={(value) => onChange(mapSelectValueToString(value))}
@@ -221,6 +224,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                     <InputControl
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
+                          menuShouldPortal
                           {...field}
                           className={formStyles.input}
                           onChange={(value) => onChange(mapSelectValueToString(value))}
@@ -254,6 +258,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                     <InputControl
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
+                          menuShouldPortal
                           {...field}
                           className={formStyles.input}
                           menuPlacement="top"

@@ -28,6 +28,7 @@ export const FieldNamePicker: React.FC<StandardEditorProps<string, FieldNamePick
   return (
     <>
       <Select
+        menuShouldPortal
         value={selectedOption}
         options={selectOptions}
         onChange={onSelectChange}

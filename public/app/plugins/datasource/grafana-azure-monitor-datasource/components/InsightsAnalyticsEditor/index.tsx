@@ -27,6 +27,7 @@ const InsightsAnalyticsEditor: React.FC<InsightsAnalyticsEditorProps> = ({ query
 
       <Field label="Format as">
         <Select
+          menuShouldPortal
           inputId="azure-monitor-logs-workspaces-field"
           value={query.insightsAnalytics?.resultFormat}
           disabled={true}
