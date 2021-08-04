@@ -33,15 +33,23 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     textEditModeEnabled: false,
   };
 
-  onRunQuery = () => {
-    const { exploreId } = this.props;
-    this.props.runQueries(exploreId);
-  };
-
   onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && (event.shiftKey || event.ctrlKey)) {
       this.onRunQuery();
     }
+  };
+
+  runOnKeyDownDebounced = debounce(this.onKeyDown, 500);
+
+  runOnKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    /* Debounce query execution by keyboard because we're debouncing runOnChangeDebounced() 
+    in packages/grafana-ui/src/components/QueryField.tsx when the query is changed */
+    this.runOnKeyDownDebounced(event);
+  };
+
+  onRunQuery = () => {
+    const { exploreId } = this.props;
+    this.props.runQueries(exploreId);
   };
 
   onChange = (query: DataQuery, override?: boolean) => {
@@ -162,7 +170,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     return (
       <>
         <div className="query-row" aria-label={selectors.components.QueryEditorRows.rows}>
-          <div className="query-row-field flex-shrink-1" onKeyDown={this.onKeyDown}>
+          <div className="query-row-field flex-shrink-1" onKeyDown={this.runOnKeyDown}>
             {this.renderQueryEditor(datasourceInstance)}
           </div>
           <QueryRowActions
