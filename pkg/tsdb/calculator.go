@@ -18,6 +18,14 @@ var (
 	day                      = time.Hour * 24
 )
 
+type IntervalMode string
+
+const (
+	Min   IntervalMode = "min"
+	Max                = "max"
+	Exact              = "exact"
+)
+
 type Interval struct {
 	Text  string
 	Value time.Duration
@@ -28,7 +36,7 @@ type intervalCalculator struct {
 }
 
 type Calculator interface {
-	Calculate(timerange backend.TimeRange, minInterval time.Duration) Interval
+	Calculate(timerange backend.TimeRange, minInterval time.Duration, intervalMode IntervalMode) Interval
 }
 
 type CalculatorOptions struct {
@@ -53,16 +61,28 @@ func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration) Interval {
+func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, intrvl time.Duration, intervalMode IntervalMode) Interval {
 	to := timerange.To.UnixNano()
 	from := timerange.From.UnixNano()
-	intrvl := time.Duration((to - from) / defaultRes)
+	calculatedIntrvl := time.Duration((to - from) / defaultRes)
 
-	if intrvl < minInterval {
-		return Interval{Text: interval.FormatDuration(minInterval), Value: minInterval}
+	switch intervalMode {
+	case Min:
+		if calculatedIntrvl < intrvl {
+			return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}
+		}
+	case Max:
+		if calculatedIntrvl > intrvl {
+			return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}
+		}
+	case Exact:
+		return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}
+
+	default:
+		panic(fmt.Sprintf("Unrecognized intervalMode %v", intervalMode))
 	}
 
-	rounded := roundInterval(intrvl)
+	rounded := roundInterval(calculatedIntrvl)
 	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}
 }
 
