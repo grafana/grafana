@@ -137,8 +137,8 @@ in the panel editor options pane.
 
 ## Value mappings
 
-You can also transform a query result into value mappings. This is is a bit different as here every
-row in the config query result will be used to define a single value mapping row. See example below.
+You can also transform a query result into value mappings. This is is a bit different because every
+row in the configuration query result is used to define a single value mapping row. See the following example.
 
 Config query result:
 
