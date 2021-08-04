@@ -73,7 +73,7 @@ func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, interva
 		return Interval{Text: FormatDuration(interval), Value: interval}, nil
 
 	default:
-		return Interval{}, fmt.Errorf("Unrecognized intervalMode: %v", intervalMode)
+		return Interval{}, fmt.Errorf("unrecognized intervalMode: %v", intervalMode)
 	}
 
 	rounded := roundInterval(calculatedInterval)

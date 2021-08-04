@@ -22,8 +22,8 @@ type IntervalMode string
 
 const (
 	Min   IntervalMode = "min"
-	Max                = "max"
-	Exact              = "exact"
+	Max   IntervalMode = "max"
+	Exact IntervalMode = "exact"
 )
 
 type Interval struct {
@@ -80,7 +80,7 @@ func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, intrvl time
 		return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}, nil
 
 	default:
-		return Interval{}, fmt.Errorf("Unrecognized intervalMode: %v", intervalMode)
+		return Interval{}, fmt.Errorf("unrecognized intervalMode: %v", intervalMode)
 	}
 
 	rounded := roundInterval(calculatedIntrvl)
