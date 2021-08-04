@@ -36,9 +36,8 @@ func TestNotificationChannels(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	s := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
 	s.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, s)
 
 	mockChannel := newMockNotificationChannel(t, grafanaListedAddr)
 	amConfig := getAlertmanagerConfig(mockChannel.server.Addr)

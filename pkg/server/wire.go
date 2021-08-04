@@ -61,6 +61,7 @@ import (
 )
 
 var wireBasicSet = wire.NewSet(
+	sqlstore.ProvideService,
 	tsdb.NewService,
 	wire.Bind(new(plugins.DataRequestHandler), new(*tsdb.Service)),
 	alerting.ProvideAlertEngine,
@@ -131,13 +132,13 @@ var wireBasicSet = wire.NewSet(
 
 var wireSet = wire.NewSet(
 	wireBasicSet,
-	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 )
 
 var wireTestSet = wire.NewSet(
 	wireBasicSet,
 	ngmetrics.ProvideServiceForTest,
+	ProvideTestingPair,
 )
 
 func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {
@@ -145,7 +146,7 @@ func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOpt
 	return &Server{}, nil
 }
 
-func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions, sqlStore *sqlstore.SQLStore) (*Server, error) {
+func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*TestingPair, error) {
 	wire.Build(wireExtsTestSet)
-	return &Server{}, nil
+	return &TestingPair{}, nil
 }

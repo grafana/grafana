@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -20,7 +19,7 @@ import (
 )
 
 const (
-	usernameAdmin    = "admin"
+	usernameAdmin    = "testAdmin"
 	usernameNonAdmin = "nonAdmin"
 	defaultPassword  = "password"
 )
@@ -29,9 +28,8 @@ func TestPluginInstallAccess(t *testing.T) {
 	dir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		PluginAdminEnabled: true,
 	})
-	store := testinfra.SetUpDatabase(t, dir)
-	store.Bus = bus.GetBus() // in order to allow successful user auth
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, cfgPath, store)
+
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, cfgPath)
 
 	createUser(t, store, usernameNonAdmin, defaultPassword, false)
 	createUser(t, store, usernameAdmin, defaultPassword, true)

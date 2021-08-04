@@ -24,7 +24,7 @@ import (
 
 // StartGrafana starts a Grafana server.
 // The server address is returned.
-func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLStore) string {
+func StartGrafana(t *testing.T, grafDir, cfgPath string) (string, *sqlstore.SQLStore) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -33,8 +33,10 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLS
 	cmdLineArgs := setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir}
 	serverOpts := server.Options{Listener: listener, HomePath: grafDir}
 	apiServerOpts := api.ServerOptions{Listener: listener}
-	srv, err := server.InitializeForTest(cmdLineArgs, serverOpts, apiServerOpts, sqlStore)
+	testingStruct, err := server.InitializeForTest(cmdLineArgs, serverOpts, apiServerOpts)
 	require.NoError(t, err)
+
+	srv := testingStruct.Server
 
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
@@ -43,6 +45,10 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLS
 		}
 	}()
 	t.Cleanup(func() {
+		if err := testingStruct.SQLStore.Dialect.TruncateDBTables(); err != nil {
+			t.Fatalf("Cannot truncate tables: %s", err)
+		}
+
 		if err := srv.Shutdown(ctx, "test cleanup"); err != nil {
 			t.Error("Timed out waiting on server to shut down")
 		}
@@ -61,7 +67,7 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLS
 
 	t.Logf("Grafana is listening on %s", addr)
 
-	return addr
+	return addr, testingStruct.SQLStore
 }
 
 // SetUpDatabase sets up the Grafana database.

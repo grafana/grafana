@@ -33,15 +33,14 @@ func TestAMConfigAccess(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create a users to make authenticated requests
 	require.NoError(t, createUser(t, store, models.ROLE_VIEWER, "viewer", "viewer"))
 	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
-	require.NoError(t, createUser(t, store, models.ROLE_ADMIN, "admin", "admin"))
+	require.NoError(t, createUser(t, store, models.ROLE_ADMIN, "testadmin", "admin"))
 
 	type testCase struct {
 		desc      string
@@ -94,7 +93,7 @@ func TestAMConfigAccess(t *testing.T) {
 			},
 			{
 				desc:      "admin request should succeed",
-				url:       "http://admin:admin@%s/api/alertmanager/grafana/config/api/v1/alerts",
+				url:       "http://testadmin:admin@%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusAccepted,
 				expBody:   `{"message":"configuration created"}`,
 			},
@@ -164,7 +163,7 @@ func TestAMConfigAccess(t *testing.T) {
 			},
 			{
 				desc:      "admin request should succeed",
-				url:       "http://admin:admin@%s/api/alertmanager/grafana/config/api/v1/alerts",
+				url:       "http://testadmin:admin@%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusOK,
 				expBody:   cfgBody,
 			},
@@ -227,7 +226,7 @@ func TestAMConfigAccess(t *testing.T) {
 			},
 			{
 				desc:      "admin request should succeed",
-				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silences",
+				url:       "http://testadmin:admin@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusAccepted,
 				expBody:   `{"id": "0", "message":"silence created"}`,
 			},
@@ -276,7 +275,7 @@ func TestAMConfigAccess(t *testing.T) {
 			},
 			{
 				desc:      "admin request should succeed",
-				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silences",
+				url:       "http://testadmin:admin@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusOK,
 			},
 		}
@@ -333,7 +332,7 @@ func TestAMConfigAccess(t *testing.T) {
 			},
 			{
 				desc:      "admin request should succeed",
-				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silence/%s",
+				url:       "http://testadmin:admin@%s/api/alertmanager/grafana/api/v2/silence/%s",
 				expStatus: http.StatusOK,
 				expBody:   `{"message": "silence deleted"}`,
 			},
@@ -380,10 +379,9 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// unauthenticated request to get the alerts should fail
 	{
@@ -544,10 +542,7 @@ func TestRulerAccess(t *testing.T) {
 		ViewersCanEdit:       true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create the namespace we'll save our alerts to.
 	_, err := createFolder(t, store, 0, "default")
@@ -556,7 +551,7 @@ func TestRulerAccess(t *testing.T) {
 	// Create a users to make authenticated requests
 	require.NoError(t, createUser(t, store, models.ROLE_VIEWER, "viewer", "viewer"))
 	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
-	require.NoError(t, createUser(t, store, models.ROLE_ADMIN, "admin", "admin"))
+	require.NoError(t, createUser(t, store, models.ROLE_ADMIN, "testadmin", "admin"))
 
 	// Now, let's test the access policies.
 	testCases := []struct {
@@ -585,7 +580,7 @@ func TestRulerAccess(t *testing.T) {
 		},
 		{
 			desc:             "admin request should succeed",
-			url:              "http://admin:admin@%s/api/ruler/grafana/api/v1/rules/default",
+			url:              "http://testadmin:admin@%s/api/ruler/grafana/api/v1/rules/default",
 			expStatus:        http.StatusAccepted,
 			expectedResponse: `{"message":"rule group updated successfully"}`,
 		},
@@ -659,10 +654,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		ViewersCanEdit:       true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create the namespace we'll save our alerts to.
 	namespaceUID, err := createFolder(t, store, 0, "default")
@@ -690,7 +682,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 
 		re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
 		b = re.ReplaceAll(b, []byte(`"uid":""`))
-		re = regexp.MustCompile(`"updated":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"`)
+		re = regexp.MustCompile(`"updated":"(.*?)"`)
 		b = re.ReplaceAll(b, []byte(`"updated":"2021-05-19T19:47:55Z"`))
 
 		expectedGetRulesResponseBody := fmt.Sprintf(`{
@@ -810,10 +802,9 @@ func TestAlertRuleCRUD(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	err := createUser(t, store, models.ROLE_EDITOR, "grafana", "password")
 
@@ -1754,8 +1745,7 @@ func TestAlertmanagerStatus(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 	})
-	store := testinfra.SetUpDatabase(t, dir)
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+	grafanaListedAddr, _ := testinfra.StartGrafana(t, dir, path)
 
 	// Get the Alertmanager current status.
 	{
@@ -1817,10 +1807,9 @@ func TestQuota(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create the namespace we'll save our alerts to.
 	_, err := createFolder(t, store, 0, "default")
@@ -1916,10 +1905,9 @@ func TestEval(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
 
