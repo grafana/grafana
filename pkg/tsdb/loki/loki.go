@@ -115,7 +115,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 
 	client := &client.DefaultClient{
@@ -132,7 +132,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	queries, err := s.parseQuery(dsInfo, req)
 	if err != nil {
-		return &backend.QueryDataResponse{}, err
+		return result, err
 	}
 
 	for _, query := range queries {
@@ -150,12 +150,12 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 		value, err := client.QueryRange(query.Expr, limit, query.Start, query.End, logproto.BACKWARD, query.Step, interval, false)
 		if err != nil {
-			return &backend.QueryDataResponse{}, err
+			return result, err
 		}
 
 		frames, err := parseResponse(value, query)
 		if err != nil {
-			return &backend.QueryDataResponse{}, err
+			return result, err
 		}
 		queryRes.Frames = frames
 		result.Responses[query.RefID] = queryRes
