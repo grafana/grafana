@@ -118,9 +118,9 @@ New panel summaries and preview on the top level [Visualizations]({{< relref "..
 
 ### Upcoming changes to the Select component
 
-`@grafana/ui` exposes a `Select` component, along with the `MultiSelect`, `AsyncSelect` and `AsyncMultiSelect` variants. We've made some internal changes to these components to make the behavior and positioning more consistent in all scenarios.
+The `@grafana/ui` exposes a `Select` component, and its varients `MultiSelect`, `AsyncSelect`, and `AsyncMultiSelect`. We have made some internal changes to these components to make the behavior and positioning more consistent in all scenarios.
 
-In order to test the changes, you can use the `menuShouldPortal` prop:
+To test the changes, you can use the `menuShouldPortal` property:
 ```jsx
 <Select
   menuShouldPortal
