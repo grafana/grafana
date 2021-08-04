@@ -56,7 +56,7 @@ Content-Type: application/json
 
 ## Get a single data source by Id
 
-`GET /api/datasources/:datasourceId`
+`GET /api/datasources/_datasourceId_`
 
 **Example Request**:
 
@@ -102,7 +102,7 @@ Content-Type: application/json
 
 ## Get a single data source by UID
 
-`GET /api/datasources/uid/:uid`
+`GET /api/datasources/uid/_uid_`
 
 **Example request:**
 
@@ -148,7 +148,7 @@ Content-Type: application/json
 
 ## Get a single data source by Name
 
-`GET /api/datasources/name/:name`
+`GET /api/datasources/name/_name_`
 
 **Example Request**:
 
@@ -194,7 +194,7 @@ Content-Type: application/json
 
 ## Get data source Id by Name
 
-`GET /api/datasources/id/:name`
+`GET /api/datasources/id/_name_`
 
 **Example Request**:
 
@@ -355,7 +355,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 ## Update an existing data source
 
-`PUT /api/datasources/:datasourceId`
+`PUT /api/datasources/_datasourceId_`
 
 **Example Request**:
 
@@ -425,7 +425,7 @@ Content-Type: application/json
 
 ## Delete an existing data source by id
 
-`DELETE /api/datasources/:datasourceId`
+`DELETE /api/datasources/_datasourceId_`
 
 **Example Request**:
 
@@ -447,7 +447,7 @@ Content-Type: application/json
 
 ## Delete an existing data source by UID
 
-`DELETE /api/datasources/uid/:uid`
+`DELETE /api/datasources/uid/_uid_`
 
 **Example request:**
 
@@ -469,7 +469,7 @@ Content-Type: application/json
 
 ## Delete an existing data source by name
 
-`DELETE /api/datasources/name/:datasourceName`
+`DELETE /api/datasources/name/_datasourceName_`
 
 **Example Request**:
 
@@ -494,7 +494,7 @@ Content-Type: application/json
 
 ## Data source proxy calls
 
-`GET /api/datasources/proxy/:datasourceId/*`
+`GET /api/datasources/proxy/_datasourceId_/*`
 
 Proxies all calls to the actual data source.
 
