@@ -224,7 +224,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       <LogsContainer
         exploreId={exploreId}
         syncedTimes={syncedTimes}
-        width={width - spacing * 2}
+        width={width - spacing }
         onClickFilterLabel={this.onClickFilterLabel}
         onClickFilterOutLabel={this.onClickFilterOutLabel}
         onStartScanning={this.onStartScanning}
