@@ -15,5 +15,9 @@ export function SeriesSection({ state }: Props) {
     <MetricsSection segments={state.segments} state={state} />
   );
 
-  return <Section label="Series">{sectionContent}</Section>;
+  return (
+    <Section label="Series" fill={true}>
+      {sectionContent}
+    </Section>
+  );
 }

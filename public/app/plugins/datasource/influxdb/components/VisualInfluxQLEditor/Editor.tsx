@@ -103,7 +103,7 @@ export const Editor = (props: Props): JSX.Element => {
 
   return (
     <div>
-      <Section label="FROM">
+      <Section label="FROM" fill={true}>
         <FromSection
           policy={policy}
           measurement={measurement}
@@ -126,7 +126,7 @@ export const Editor = (props: Props): JSX.Element => {
         />
       </Section>
       {selectLists.map((sel, index) => (
-        <Section key={index} label={index === 0 ? 'SELECT' : ''}>
+        <Section key={index} label={index === 0 ? 'SELECT' : ''} fill={true}>
           <PartListSection
             parts={sel}
             getNewPartOptions={() => Promise.resolve(getNewSelectPartOptions())}
@@ -143,7 +143,7 @@ export const Editor = (props: Props): JSX.Element => {
           />
         </Section>
       ))}
-      <Section label="GROUP BY">
+      <Section label="GROUP BY" fill={true}>
         <PartListSection
           parts={groupByList}
           getNewPartOptions={() => getNewGroupByPartOptions(query, getTagKeys)}
@@ -159,7 +159,7 @@ export const Editor = (props: Props): JSX.Element => {
           }}
         />
       </Section>
-      <Section label="TIMEZONE">
+      <Section label="TIMEZONE" fill={true}>
         <InputSection
           placeholder="(optional)"
           value={query.tz}
@@ -180,7 +180,7 @@ export const Editor = (props: Props): JSX.Element => {
           approach seem to be to handle "fill" inside query.groupBy. so, if you
           have a panel where in the json you have query.fill, it will be applied,
           as long as you do not edit that query. */}
-      <Section label="LIMIT">
+      <Section label="LIMIT" fill={true}>
         <InputSection
           placeholder="(optional)"
           value={query.limit?.toString()}
@@ -197,7 +197,7 @@ export const Editor = (props: Props): JSX.Element => {
           }}
         />
       </Section>
-      <Section label="FORMAT AS">
+      <Section label="FORMAT AS" fill={true}>
         <FormatAsSection
           format={query.resultFormat ?? DEFAULT_RESULT_FORMAT}
           onChange={(format) => {

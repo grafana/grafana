@@ -9,16 +9,18 @@ export const Section = ({
   label,
   children,
   inline,
+  fill,
 }: {
   label: string;
   children: React.ReactNode;
   inline?: boolean;
+  fill?: boolean;
 }) => (
   <div className="gf-form-inline">
     <div className="gf-form">
       <SectionLabel name={label} inline={inline} />
       {children}
     </div>
-    <SectionFill />
+    {fill && <SectionFill />}
   </div>
 );

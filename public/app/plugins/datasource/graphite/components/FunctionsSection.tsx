@@ -11,7 +11,7 @@ type Props = {
 
 export function FunctionsSection({ functions = [], funcDefs }: Props) {
   return (
-    <Section label="Functions">
+    <Section label="Functions" fill={true}>
       {functions.map((func: FuncInstance, index: number) => {
         return <GraphiteFunctionEditor key={index} func={func} />;
       })}
