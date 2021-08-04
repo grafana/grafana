@@ -169,15 +169,15 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         range = { min, max, delta: max! - min! };
       }
 
+      field.state!.seriesIndex = seriesIndex;
+      field.state!.range = range;
+      field.type = type;
+
       // Some color modes needs series index to assign field color so we count
       // up series index here but ignore time fields
       if (field.type !== FieldType.time) {
         seriesIndex++;
       }
-
-      field.state!.seriesIndex = seriesIndex;
-      field.state!.range = range;
-      field.type = type;
 
       // and set the display processor using it
       field.display = getDisplayProcessor({
