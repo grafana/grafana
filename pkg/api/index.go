@@ -227,7 +227,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 				})
 			}
 		}
-		if c.OrgRole == models.ROLE_ADMIN {
+		if c.OrgRole == models.ROLE_ADMIN && hs.Cfg.IsNgAlertEnabled() {
 			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 				Text: "Admin", Id: "alerting-admin", Url: hs.Cfg.AppSubURL + "/alerting/admin",
 				Icon: "cog",
@@ -385,6 +385,12 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	if hs.Cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.ActionLDAPStatusRead) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "LDAP", Id: "ldap", Url: hs.Cfg.AppSubURL + "/admin/ldap", Icon: "book",
+		})
+	}
+
+	if hs.Cfg.PluginAdminEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.ActionPluginsManage) {
+		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+			Text: "Plugins", Id: "admin-plugins", Url: hs.Cfg.AppSubURL + "/admin/plugins", Icon: "plug",
 		})
 	}
 

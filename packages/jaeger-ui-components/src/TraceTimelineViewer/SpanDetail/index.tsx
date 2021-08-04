@@ -255,7 +255,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             onToggle={() => stackTracesToggle(spanID)}
           />
         )}
-        {references && references.length > 1 && (
+        {references && references.length > 0 && (references.length > 1 || references[0].refType !== 'CHILD_OF') && (
           <AccordianReferences
             data={references}
             isOpen={isReferencesOpen}

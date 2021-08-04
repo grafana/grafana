@@ -26,7 +26,7 @@ const getOptionsStyles = stylesFactory(() => {
 });
 
 interface Props {
-  title?: string;
+  title: string;
   options: TimeOption[];
   value?: TimeOption;
   onChange: (option: TimeOption) => void;
@@ -46,30 +46,35 @@ export const TimeRangeList: React.FC<Props> = (props) => {
   }
 
   return (
-    <>
-      <div className={styles.title}>
-        <TimePickerTitle>{title}</TimePickerTitle>
-      </div>
-      <Options {...props} />
-    </>
+    <section aria-label={title}>
+      <form>
+        <fieldset>
+          <div className={styles.title}>
+            <TimePickerTitle>{title}</TimePickerTitle>
+          </div>
+          <Options {...props} />
+        </fieldset>
+      </form>
+    </section>
   );
 };
 
-const Options: React.FC<Props> = ({ options, value, onChange }) => {
+const Options: React.FC<Props> = ({ options, value, onChange, title }) => {
   const styles = getOptionsStyles();
 
   return (
     <>
-      <div>
+      <ul aria-roledescription="Time range selection">
         {options.map((option, index) => (
           <TimeRangeOption
             key={keyForOption(option, index)}
             value={option}
             selected={isEqual(option, value)}
             onSelect={onChange}
+            name={title}
           />
         ))}
-      </div>
+      </ul>
       <div className={styles.grow} />
     </>
   );
