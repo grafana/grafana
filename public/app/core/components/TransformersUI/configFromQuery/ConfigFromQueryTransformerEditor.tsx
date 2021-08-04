@@ -94,7 +94,7 @@ export const configFromQueryTransformRegistryItem: TransformerRegistryItem<Confi
 ### Use cases
 
 This transformation allows you select one query and from it extract standard options such as 
-**Min**, **Max**, **Unit** and **Thresholds** and apply it to other query results.
+**Min**, **Max**, **Unit**, and **Thresholds** and apply them to other query results.
 This enables dynamic query driven visualization configuration.
 
 ### Options
