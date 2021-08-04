@@ -2,15 +2,20 @@ import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 export class AzureMonitorAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
-  datasource: any;
-  annotation: any;
+  declare datasource: any;
+  declare annotation: any;
   declare workspaces: any[];
   declare subscriptions: Array<{ text: string; value: string }>;
+  private templateSrv: TemplateSrv = getTemplateSrv();
 
   defaultQuery =
     '<your table>\n| where $__timeFilter() \n| project TimeGenerated, Text=YourTitleColumn, Tags="tag1,tag2"';
 
-  constructor(private templateSrv: TemplateSrv = getTemplateSrv()) {
+  /** @ngInject */
+  constructor($scope: any) {
+    this.annotation = $scope.ctrl.annotation;
+    this.datasource = $scope.ctrl.datasource;
+
     this.annotation.queryType = this.annotation.queryType || 'Azure Log Analytics';
     this.annotation.rawQuery = this.annotation.rawQuery || this.defaultQuery;
     this.initDropdowns();

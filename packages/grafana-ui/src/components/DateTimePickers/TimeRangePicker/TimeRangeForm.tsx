@@ -96,7 +96,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
   const icon = isFullscreen ? null : <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
 
   return (
-    <>
+    <form aria-label="Absolute time ranges">
       <Field label="From" invalid={from.invalid} error={from.errorMessage}>
         <Input
           onClick={(event) => event.stopPropagation()}
@@ -117,7 +117,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
           value={to.value}
         />
       </Field>
-      <Button aria-label={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
+      <Button data-testid={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
         Apply time range
       </Button>
 
@@ -132,7 +132,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
         timeZone={timeZone}
         isReversed={isReversed}
       />
-    </>
+    </form>
   );
 };
 

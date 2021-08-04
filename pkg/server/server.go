@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+
 	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
 )
@@ -35,9 +38,10 @@ type Options struct {
 }
 
 // New returns a new instance of Server.
-func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer,
-	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry) (*Server, error) {
-	s, err := newServer(opts, cfg, httpServer, provisioningService, backgroundServiceProvider)
+func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
+	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
+) (*Server, error) {
+	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -49,8 +53,9 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer,
 	return s, nil
 }
 
-func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer,
-	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry) (*Server, error) {
+func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
+	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
+) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
@@ -59,6 +64,7 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer,
 		childRoutines:       childRoutines,
 		HTTPServer:          httpServer,
 		provisioningService: provisioningService,
+		roleRegistry:        roleRegistry,
 		shutdownFn:          shutdownFn,
 		shutdownFinished:    make(chan struct{}),
 		log:                 log.New("server"),
@@ -92,6 +98,7 @@ type Server struct {
 	backgroundServices []registry.BackgroundService
 
 	HTTPServer          *api.HTTPServer
+	roleRegistry        accesscontrol.RoleRegistry
 	provisioningService provisioning.ProvisioningService
 }
 
@@ -112,6 +119,10 @@ func (s *Server) init() error {
 
 	login.Init()
 	social.ProvideService(s.cfg)
+
+	if err := s.roleRegistry.RegisterFixedRoles(); err != nil {
+		return err
+	}
 
 	return s.provisioningService.RunInitProvisioners()
 }
