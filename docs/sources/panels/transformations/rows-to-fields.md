@@ -9,7 +9,7 @@ weight = 300
 
 This transforms rows into separate fields. This can be useful as fields can be styled and configured individually, something rows cannot. It can also use additional fields as sources for dynamic field  configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
 
-Useful when visualization data in:
+Useful when visualizing data in:
 
 - Gauge
 - Stat
