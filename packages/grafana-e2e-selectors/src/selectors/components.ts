@@ -6,11 +6,12 @@
 // prefix your selector string with 'data-test-id' so that when create the selectors we know to search for it on the right attribute
 export const Components = {
   TimePicker: {
-    openButton: 'TimePicker Open Button',
+    openButton: 'data-testid TimePicker Open Button',
     fromField: 'TimePicker from field',
     toField: 'TimePicker to field',
-    applyTimeRange: 'TimePicker submit button',
+    applyTimeRange: 'data-testid TimePicker submit button',
     calendar: 'TimePicker calendar',
+    absoluteTimeRangeTitle: 'data-testid-absolute-time-range-narrow',
   },
   DataSource: {
     TestData: {

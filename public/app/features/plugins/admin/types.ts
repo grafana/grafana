@@ -1,5 +1,15 @@
 import { GrafanaPlugin, PluginMeta } from '@grafana/data';
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
+
+export enum PluginAdminRoutes {
+  Home = 'plugins-home',
+  Browse = 'plugins-browse',
+  Details = 'plugins-details',
+  HomeAdmin = 'plugins-home-admin',
+  BrowseAdmin = 'plugins-browse-admin',
+  DetailsAdmin = 'plugins-details-admin',
+}
+
 export interface CatalogPlugin {
   description: string;
   downloads: number;
@@ -137,7 +147,6 @@ export interface Org {
 export interface PluginDetailsState {
   hasInstalledPanel: boolean;
   hasUpdate: boolean;
-  isAdmin: boolean;
   isInstalled: boolean;
   isInflight: boolean;
   loading: boolean;
