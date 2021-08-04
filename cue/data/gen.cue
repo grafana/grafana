@@ -200,10 +200,17 @@ Family: scuemata.#Family & {
                             // Alternative to empty string
                             noValue?: string
 
+                            // TODO conundrum: marking this struct as open would
+                            // - i think - preclude closed validation of
+                            // plugin-defined config bits. But, marking it
+                            // closed makes it impossible to use just this
+                            // schema (the "base" variant) to validate the base
+                            // components of a dashboard.
+                            //
                             // Can always exist. Valid fields within this are
                             // defined by the panel plugin - that's the
                             // PanelFieldConfig that comes from the plugin.
-                            custom?: {}
+                            custom?: {...}
                         }
                         overrides: [...{
                             matcher: {
