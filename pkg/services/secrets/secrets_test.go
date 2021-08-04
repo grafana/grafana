@@ -70,13 +70,13 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 		assert.Equal(t, "unable to decrypt empty payload", err.Error())
 	})
 
-	//t.Run("decrypting legacy secret encrypted with secret key from settings", func(t *testing.T) {
-	//	expected := "grafana"
-	//	encrypted := []byte{}
-	//	decrypted, err := svc.Decrypt(encrypted)
-	//	require.NoError(t, err)
-	//	assert.Equal(t, expected, string(decrypted))
-	//})
+	t.Run("decrypting legacy secret encrypted with secret key from settings", func(t *testing.T) {
+		expected := "grafana"
+		encrypted := []byte{122, 56, 53, 113, 101, 117, 73, 89, 20, 254, 36, 112, 112, 16, 128, 232, 227, 52, 166, 108, 192, 5, 28, 125, 126, 42, 197, 190, 251, 36, 94}
+		decrypted, err := svc.Decrypt(encrypted)
+		require.NoError(t, err)
+		assert.Equal(t, expected, string(decrypted))
+	})
 }
 
 func TestSecretsService_DataKeys(t *testing.T) {
