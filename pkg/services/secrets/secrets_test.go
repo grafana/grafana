@@ -67,9 +67,9 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 		_, err := svc.Decrypt([]byte(""))
 		require.Error(t, err)
 
-		assert.Equal(t, "unable to compute salt", err.Error())
+		assert.Equal(t, "unable to decrypt empty payload", err.Error())
 	})
-	//
+
 	//t.Run("decrypting legacy secret encrypted with secret key from settings", func(t *testing.T) {
 	//	expected := "grafana"
 	//	encrypted := []byte{}

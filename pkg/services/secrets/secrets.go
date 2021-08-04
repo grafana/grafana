@@ -91,7 +91,6 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string) ([]byte, e
 		Name:          name,
 		Provider:      s.defaultProvider,
 		EncryptedData: encrypted,
-		// TODO: Add migration to include EntityID: varchar column
 	})
 	if err != nil {
 		return nil, err
@@ -121,7 +120,7 @@ func (s *SecretsService) Encrypt(payload []byte, entityID string) ([]byte, error
 	if entityID == "" {
 		entityID = "root"
 	}
-	keyName := fmt.Sprintf("%s-%s-%s", time.Now().Format("2006-01-02"), entityID, s.defaultProvider)
+	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), entityID, s.defaultProvider)
 
 	dataKey, err := s.dataKey(keyName)
 	if err != nil {
@@ -153,8 +152,8 @@ func (s *SecretsService) Encrypt(payload []byte, entityID string) ([]byte, error
 }
 
 func (s *SecretsService) Decrypt(payload []byte) ([]byte, error) {
-	if len(payload) == 0 {
-		return []byte{}, nil // TODO: !!! Not sure if it should return error like util.decrypt did (also see tests)
+	if len(payload) < 0 {
+		return nil, fmt.Errorf("unable to decrypt empty payload") // TODO: check when this error has been added to util.decrypt and if it's really needed
 	}
 
 	var dataKey []byte
