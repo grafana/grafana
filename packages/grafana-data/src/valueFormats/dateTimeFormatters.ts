@@ -406,11 +406,11 @@ export function dateTimeSystemFormatter(
   decimals: DecimalCount,
   scaledDecimals: DecimalCount,
   timeZone?: TimeZone,
-  hasMs?: boolean
+  showMs?: boolean
 ): FormattedValue {
   return {
     text: dateTimeFormat(value, {
-      format: hasMs ? systemDateFormats.fullDateMS : systemDateFormats.fullDate,
+      format: showMs ? systemDateFormats.fullDateMS : systemDateFormats.fullDate,
       timeZone,
     }),
   };
