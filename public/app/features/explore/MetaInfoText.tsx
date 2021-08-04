@@ -24,7 +24,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   metaLabel: css`
     margin-right: calc(${theme.spacing(2)} / 2);
-    font-size: ${theme.v1.typography.size.sm};
+    font-size: ${theme.typography.h6.fontSize};
     font-weight: ${theme.v1.typography.weight.semibold};
   `,
   metaValue: css`
