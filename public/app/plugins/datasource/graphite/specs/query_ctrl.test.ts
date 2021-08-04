@@ -202,12 +202,11 @@ describe('GraphiteQueryCtrl', () => {
   });
 
   describe('when autocomplete for metric names is not available', () => {
-    // silenceConsoleOutput();
+    silenceConsoleOutput();
     beforeEach(() => {
       ctx.ctrl.state.datasource.getTagsAutoComplete = jest.fn().mockReturnValue(Promise.resolve([]));
       ctx.ctrl.state.datasource.metricFindQuery = jest.fn().mockReturnValue(
         new Promise(() => {
-          console.log('throw new Error();');
           throw new Error();
         })
       );
