@@ -1,7 +1,14 @@
-import { DataQuery, rangeUtil, RelativeTimeRange, ScopedVars, getDefaultRelativeTimeRange } from '@grafana/data';
+import {
+  DataQuery,
+  rangeUtil,
+  RelativeTimeRange,
+  ScopedVars,
+  getDefaultRelativeTimeRange,
+  TimeRange,
+  IntervalValues,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getIntervals } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceID, ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
@@ -206,7 +213,7 @@ const dataQueriesToGrafanaQueries = async (
     const datasource = await getDataSourceSrv().get(dsName);
 
     const range = rangeUtil.relativeToTimeRange(relativeTimeRange);
-    const { interval, intervalMs } = getIntervals(range, minInterval, maxDataPoints);
+    const { interval, intervalMs } = getIntervals(range, minInterval ?? datasource.interval, maxDataPoints);
     const queryVariables = {
       __interval: { text: interval, value: interval },
       __interval_ms: { text: intervalMs, value: intervalMs },
@@ -303,3 +310,17 @@ export const panelToRuleFormValues = async (
   };
   return formValues;
 };
+
+export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
+  if (!resolution) {
+    if (lowLimit && rangeUtil.intervalToMs(lowLimit) > 1000) {
+      return {
+        interval: lowLimit,
+        intervalMs: rangeUtil.intervalToMs(lowLimit),
+      };
+    }
+    return { interval: '1s', intervalMs: 1000 };
+  }
+
+  return rangeUtil.calculateInterval(range, resolution, lowLimit);
+}

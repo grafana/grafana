@@ -23,6 +23,7 @@ import { Annotation } from './utils/constants';
 import { byTestId } from 'testing-library-selector';
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { DataSourceApi } from '@grafana/data';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
@@ -56,6 +57,99 @@ const renderAlertTabContent = (dashboard: DashboardModel, panel: PanelModel) => 
   );
 };
 
+const rules = [
+  mockPromRuleNamespace({
+    name: 'default',
+    groups: [
+      mockPromRuleGroup({
+        name: 'mygroup',
+        rules: [
+          mockPromAlertingRule({
+            name: 'dashboardrule1',
+            annotations: {
+              [Annotation.dashboardUID]: '12',
+              [Annotation.panelID]: '34',
+            },
+          }),
+        ],
+      }),
+      mockPromRuleGroup({
+        name: 'othergroup',
+        rules: [
+          mockPromAlertingRule({
+            name: 'dashboardrule2',
+            annotations: {
+              [Annotation.dashboardUID]: '121',
+              [Annotation.panelID]: '341',
+            },
+          }),
+        ],
+      }),
+    ],
+  }),
+];
+
+const rulerRules = {
+  default: [
+    {
+      name: 'mygroup',
+      rules: [
+        mockRulerGrafanaRule(
+          {
+            annotations: {
+              [Annotation.dashboardUID]: '12',
+              [Annotation.panelID]: '34',
+            },
+          },
+          {
+            title: 'dashboardrule1',
+          }
+        ),
+      ],
+    },
+    {
+      name: 'othergroup',
+      rules: [
+        mockRulerGrafanaRule(
+          {
+            annotations: {
+              [Annotation.dashboardUID]: '121',
+              [Annotation.panelID]: '341',
+            },
+          },
+          {
+            title: 'dashboardrule2',
+          }
+        ),
+      ],
+    },
+  ],
+};
+
+const dashboard = {
+  uid: '12',
+  time: {
+    from: 'now-6h',
+    to: 'now',
+  },
+  meta: {
+    canSave: true,
+    folderId: 1,
+    folderTitle: 'super folder',
+  },
+} as DashboardModel;
+const panel = ({
+  datasource: dataSources.prometheus.uid,
+  title: 'mypanel',
+  editSourceId: 34,
+  targets: [
+    {
+      expr: 'sum(some_metric [$__interval])) by (app)',
+      refId: 'A',
+    },
+  ],
+} as any) as PanelModel;
+
 const ui = {
   row: byTestId('row'),
   createButton: byTestId<HTMLAnchorElement>('create-alert-rule-button'),
@@ -72,99 +166,52 @@ describe('PanelAlertTabContent', () => {
     setDataSourceSrv(dsService);
   });
 
-  it('Will render alerts belonging to panel and a button to create alert from panel queries', async () => {
-    mocks.api.fetchRules.mockResolvedValue([
-      mockPromRuleNamespace({
-        name: 'default',
-        groups: [
-          mockPromRuleGroup({
-            name: 'mygroup',
-            rules: [
-              mockPromAlertingRule({
-                name: 'dashboardrule1',
-                annotations: {
-                  [Annotation.dashboardUID]: '12',
-                  [Annotation.panelID]: '34',
-                },
-              }),
-            ],
-          }),
-          mockPromRuleGroup({
-            name: 'othergroup',
-            rules: [
-              mockPromAlertingRule({
-                name: 'dashboardrule2',
-                annotations: {
-                  [Annotation.dashboardUID]: '121',
-                  [Annotation.panelID]: '341',
-                },
-              }),
-            ],
-          }),
-        ],
-      }),
-    ]);
-
-    mocks.api.fetchRulerRules.mockResolvedValue({
-      default: [
-        {
-          name: 'mygroup',
-          rules: [
-            mockRulerGrafanaRule(
-              {
-                annotations: {
-                  [Annotation.dashboardUID]: '12',
-                  [Annotation.panelID]: '34',
-                },
-              },
-              {
-                title: 'dashboardrule1',
-              }
-            ),
-          ],
-        },
-        {
-          name: 'othergroup',
-          rules: [
-            mockRulerGrafanaRule(
-              {
-                annotations: {
-                  [Annotation.dashboardUID]: '121',
-                  [Annotation.panelID]: '341',
-                },
-              },
-              {
-                title: 'dashboardrule2',
-              }
-            ),
-          ],
-        },
-      ],
+  it('Will take into account panel maxDataPoints', async () => {
+    await renderAlertTabContent(dashboard, ({
+      ...panel,
+      maxDataPoints: 100,
+      interval: '10s',
+    } as any) as PanelModel);
+    const button = await ui.createButton.find();
+    const href = button.href;
+    const match = href.match(/alerting\/new\?defaults=(.*)&returnTo=/);
+    expect(match).toHaveLength(2);
+    const defaults = JSON.parse(decodeURIComponent(match![1]));
+    expect(defaults.queries[0].model).toEqual({
+      expr: 'sum(some_metric [5m])) by (app)',
+      refId: 'A',
+      datasource: 'Prometheus',
+      interval: '',
+      intervalMs: 300000,
+      maxDataPoints: 100,
     });
+  });
 
-    const dashboard = {
-      uid: '12',
-      time: {
-        from: 'now-6h',
-        to: 'now',
-      },
-      meta: {
-        canSave: true,
-        folderId: 1,
-        folderTitle: 'super folder',
-      },
-    } as DashboardModel;
-    const panel = ({
-      datasource: dataSources.prometheus.uid,
-      title: 'mypanel',
-      editSourceId: 34,
-      targets: [
-        {
-          expr: 'sum(some_metric [$__interval])) by (app)',
-          refId: 'A',
-        },
-      ],
-    } as any) as PanelModel;
+  it('Will take into account datasource minInterval', async () => {
+    ((getDatasourceSrv() as any) as MockDataSourceSrv).datasources[dataSources.prometheus.name].interval = '7m';
+
+    await renderAlertTabContent(dashboard, ({
+      ...panel,
+      maxDataPoints: 100,
+    } as any) as PanelModel);
+    const button = await ui.createButton.find();
+    const href = button.href;
+    const match = href.match(/alerting\/new\?defaults=(.*)&returnTo=/);
+    expect(match).toHaveLength(2);
+    const defaults = JSON.parse(decodeURIComponent(match![1]));
+    expect(defaults.queries[0].model).toEqual({
+      expr: 'sum(some_metric [7m])) by (app)',
+      refId: 'A',
+      datasource: 'Prometheus',
+      interval: '',
+      intervalMs: 420000,
+      maxDataPoints: 100,
+    });
+  });
+
+  it('Will render alerts belonging to panel and a button to create alert from panel queries', async () => {
+    mocks.api.fetchRules.mockResolvedValue(rules);
+    mocks.api.fetchRulerRules.mockResolvedValue(rulerRules);
 
     await renderAlertTabContent(dashboard, panel);
 
@@ -187,9 +234,11 @@ describe('PanelAlertTabContent', () => {
           relativeTimeRange: { from: 21600, to: 0 },
           datasourceUid: 'mock-ds-2',
           model: {
-            expr: 'sum(some_metric [1s])) by (app)',
+            expr: 'sum(some_metric [15s])) by (app)',
             refId: 'A',
             datasource: 'Prometheus',
+            interval: '',
+            intervalMs: 15000,
           },
         },
         {
