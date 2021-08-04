@@ -102,31 +102,32 @@ function appendQueryToUrl(url: string, stringToAppend: string) {
   return url;
 }
 
+let prevSearch: string;
+let prevParams: UrlQueryMap;
+
 /**
  * Return search part (as object) of current url
  */
 function getUrlSearchParams(): UrlQueryMap {
-  const search = window.location.search.substring(1);
-  const searchParamsSegments = search.split('&');
-  const params: UrlQueryMap = {};
-  for (const p of searchParamsSegments) {
-    const keyValuePair = p.split('=');
-    if (keyValuePair.length > 1) {
-      // key-value param
-      const key = decodeURIComponent(keyValuePair[0]);
-      const value = decodeURIComponent(keyValuePair[1]);
-      if (key in params) {
-        params[key] = [...(params[key] as any[]), value];
-      } else {
-        params[key] = [value];
-      }
-    } else if (keyValuePair.length === 1) {
-      // boolean param
-      const key = decodeURIComponent(keyValuePair[0]);
-      params[key] = true;
+  const curSearch = window.location.search.substring(1);
+
+  if (curSearch !== prevSearch) {
+    prevParams = {};
+
+    const curParsed = new URLSearchParams(curSearch);
+
+    // @ts-ignore
+    for (const key of new Set(curParsed.keys())) {
+      // @ts-ignore
+      let all = curParsed.getAll(key);
+      // @ts-ignore
+      prevParams[key] = all.length === 1 && all[0] === '' ? true : all;
     }
+
+    prevSearch = curSearch;
   }
-  return params;
+
+  return prevParams;
 }
 
 /**
