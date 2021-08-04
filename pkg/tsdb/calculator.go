@@ -86,6 +86,15 @@ func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, intrvl time
 	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}
 }
 
+func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange, safeRes int64) Interval {
+	to := timerange.To.UnixNano()
+	from := timerange.From.UnixNano()
+	safeInterval := time.Duration((to - from) / safeRes)
+
+	rounded := roundInterval(safeInterval)
+	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}
+}
+
 // GetIntervalFrom returns the minimum interval.
 // dsInterval is the string representation of data source min interval, if configured.
 // queryInterval is the string representation of query interval (min interval), e.g. "10ms" or "10s".
