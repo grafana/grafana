@@ -7,7 +7,7 @@ import { getTagsAsSegmentsSelectables } from '../state/providers';
 import { Button, SegmentAsync, useStyles2 } from '@grafana/ui';
 import { actions } from '../state/actions';
 import { GrafanaTheme2 } from '@grafana/data';
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { mapSegmentsToSelectables } from './helpers';
 import { TagEditor } from './TagEditor';
 import { debounce } from 'lodash';
@@ -43,7 +43,7 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
   ]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'row' }}>
+    <div className={styles.container}>
       {tags.map((tag, index) => {
         return <TagEditor key={index} tagIndex={index} tag={tag} dispatch={dispatch} state={state} />;
       })}
@@ -55,7 +55,7 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
           }}
           loadOptions={debouncedGetTagsAsSegments}
           reloadOptionsOnChange={true}
-          Component={<Button icon="plus" variant="secondary" className={cx(styles.button)} />}
+          Component={<Button icon="plus" variant="secondary" className={styles.button} />}
         />
       )}
     </div>
@@ -64,6 +64,10 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    container: css`
+      display: flex;
+      flex-direction: row;
+    `,
     button: css`
       margin-right: ${theme.spacing(0.5)};
     `,
