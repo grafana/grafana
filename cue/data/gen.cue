@@ -171,6 +171,13 @@ Family: scuemata.#Family & {
                     // type directly to achieve the same effect.
                     targets?: [...{...}]
 
+                    // TODO docs
+                    maxDataPoints?: number
+
+                    // TODO docs
+                    // TODO tighter constraint
+                    interval: string
+
                     // The values depend on panel type
                     options: {...}
                     fieldConfig: {
