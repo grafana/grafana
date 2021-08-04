@@ -23,6 +23,7 @@ export const TopMetricsSettingsEditor: FunctionComponent<Props> = ({ metric }) =
     <>
       <InlineField label="Metrics" labelWidth={16}>
         <AsyncMultiSelect
+          menuShouldPortal
           onChange={(e) =>
             dispatch(
               changeMetricSetting(
@@ -40,6 +41,7 @@ export const TopMetricsSettingsEditor: FunctionComponent<Props> = ({ metric }) =
       </InlineField>
       <InlineField label="Order" labelWidth={16}>
         <Select
+          menuShouldPortal
           onChange={(e) => dispatch(changeMetricSetting(metric, 'order', e.value))}
           options={orderOptions}
           value={metric.settings?.order}

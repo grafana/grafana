@@ -60,6 +60,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
   return (
     <Field label="Metric">
       <Select
+        menuShouldPortal
         inputId="azure-monitor-metrics-metric-field"
         value={findOption(metricNames, query.azureMonitor?.metricName)}
         onChange={handleChange}

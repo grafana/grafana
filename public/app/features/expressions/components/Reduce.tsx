@@ -24,10 +24,10 @@ export const Reduce: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
   return (
     <InlineFieldRow>
       <InlineField label="Function" labelWidth={labelWidth}>
-        <Select options={reducerTypes} value={reducer} onChange={onSelectReducer} width={25} />
+        <Select menuShouldPortal options={reducerTypes} value={reducer} onChange={onSelectReducer} width={25} />
       </InlineField>
       <InlineField label="Input" labelWidth={labelWidth}>
-        <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
+        <Select menuShouldPortal onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
       </InlineField>
     </InlineFieldRow>
   );

@@ -72,6 +72,7 @@ const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   return (
     <Field label="Metric namespace">
       <Select
+        menuShouldPortal
         inputId="azure-monitor-metrics-metric-namespace-field"
         value={findOption(metricNamespaces, query.azureMonitor?.metricNamespace)}
         onChange={handleChange}

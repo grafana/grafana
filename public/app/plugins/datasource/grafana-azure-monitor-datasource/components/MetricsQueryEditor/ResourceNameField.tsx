@@ -60,6 +60,7 @@ const ResourceNameField: React.FC<AzureQueryEditorFieldProps> = ({
   return (
     <Field label="Resource name">
       <Select
+        menuShouldPortal
         inputId="azure-monitor-metrics-resource-name-field"
         value={selectedResourceNameValue}
         onChange={handleChange}
