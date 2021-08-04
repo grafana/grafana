@@ -29,9 +29,10 @@ export const GroupBy = ({ className, groups, groupBy, onGroupingChange }: Props)
   );
 
   return (
-    <div className={className}>
+    <div data-testid={'group-by-container'} className={className}>
       <Label>Custom group by</Label>
       <MultiSelect
+        aria-label={'group by label keys'}
         value={groupBy}
         placeholder="Group by"
         prefix={<Icon name={'tag-alt'} />}

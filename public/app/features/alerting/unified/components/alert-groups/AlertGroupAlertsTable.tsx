@@ -61,7 +61,7 @@ export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props)
   );
 
   return (
-    <div className={styles.tableWrapper} data-testid="notifications-table">
+    <div className={styles.tableWrapper} data-testid="alert-group-table">
       <DynamicTableWithGuidelines
         cols={columns}
         items={items}
