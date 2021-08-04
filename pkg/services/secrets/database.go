@@ -12,17 +12,19 @@ const dataKeysTable = "data_keys"
 
 func (s *SecretsService) GetDataKey(ctx context.Context, name string) (*DataKey, error) {
 	dataKey := &DataKey{}
+	var exists bool
+
 	err := s.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		exists, err := sess.Table(dataKeysTable).
+		ex, err := sess.Table(dataKeysTable).
 			Where("name = ? AND active = ?", name, s.SQLStore.Dialect.BooleanStr(true)).
 			Get(dataKey)
-
-		if !exists {
-			return ErrDataKeyNotFound
-		}
-
+		exists = ex
 		return err
 	})
+
+	if !exists {
+		return nil, ErrDataKeyNotFound
+	}
 
 	if err != nil {
 		s.log.Error("Failed getting data key", "err", err, "name", name)
