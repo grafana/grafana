@@ -200,6 +200,7 @@ export function RichHistoryQueriesTab(props: Props) {
           {!activeDatasourceOnly && (
             <div aria-label="Filter datasources" className={styles.multiselect}>
               <MultiSelect
+                menuShouldPortal
                 options={listOfDatasources}
                 value={datasourceFilters}
                 placeholder="Filter queries for data sources(s)"
@@ -218,6 +219,7 @@ export function RichHistoryQueriesTab(props: Props) {
           </div>
           <div aria-label="Sort queries" className={styles.sort}>
             <Select
+              menuShouldPortal
               value={sortOrderOptions.filter((order) => order.value === sortOrder)}
               options={sortOrderOptions}
               placeholder="Sort queries by"

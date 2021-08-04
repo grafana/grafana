@@ -117,8 +117,8 @@ export function SelectBase<T>({
   minMenuHeight,
   maxVisibleValues,
   menuPlacement = 'auto',
-  menuPortalTarget,
   menuPosition,
+  menuShouldPortal = false,
   noOptionsMessage = 'No options found',
   onBlur,
   onChange,
@@ -138,10 +138,8 @@ export function SelectBase<T>({
   width,
   isValidNewOption,
 }: SelectBaseProps<T>) {
-  if (menuPortalTarget !== undefined) {
-    deprecationWarning('SelectBase', 'menuPortalTarget');
-  } else {
-    menuPortalTarget = document.body;
+  if (menuShouldPortal === false) {
+    deprecationWarning('SelectBase', 'menuShouldPortal={false}', 'menuShouldPortal={true}');
   }
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -206,9 +204,9 @@ export function SelectBase<T>({
     maxVisibleValues,
     menuIsOpen: isOpen,
     menuPlacement,
-    menuPortalTarget,
     menuPosition,
     menuShouldBlockScroll: true,
+    menuPortalTarget: menuShouldPortal ? document.body : undefined,
     menuShouldScrollIntoView: false,
     onBlur,
     onChange: onChangeWithEmpty,
@@ -350,6 +348,7 @@ export function SelectBase<T>({
             bottom,
             position,
             minWidth: '100%',
+            zIndex: theme.zIndex.dropdown,
           }),
           container: () => ({
             position: 'relative',
