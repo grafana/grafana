@@ -214,8 +214,16 @@ Family: scuemata.#Family & {
                             min?: number
                             max?: number
 
-                            //   // Convert input values into a display string
-                            //   mappings?: ValueMapping[];
+                            // Convert input values into a display string
+                            //
+                            // TODO this one corresponds to a complex type with
+                            // generics on the typescript side. Ouch. Will
+                            // either need special care, or we'll just need to
+                            // accept a very loosely specified schema. It's very
+                            // unlikely we'll be able to translate cue to
+                            // typescript generics in the general case, though
+                            // this particular one *may* be able to work.
+                            mappings?: [...{...}]
 
                             // Map numeric values to states
                             thresholds?: #ThresholdsConfig
