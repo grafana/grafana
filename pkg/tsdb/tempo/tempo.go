@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -30,6 +29,10 @@ type Service struct {
 type datasourceInfo struct {
 	HTTPClient *http.Client
 	URL        string
+}
+
+type QueryModel struct {
+	TraceID string `json:"query"`
 }
 
 var (
@@ -83,18 +86,14 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	queryRes := backend.DataResponse{}
 	refID := req.Queries[0].RefID
 
-	model, err := simplejson.NewJson(req.Queries[0].JSON)
-	if err != nil {
-		return result, err
-	}
-	traceID := model.Get("query").MustString("")
+	model := &QueryModel{}
 
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
 
-	request, err := s.createRequest(ctx, dsInfo, traceID)
+	request, err := s.createRequest(ctx, dsInfo, model.TraceID)
 	if err != nil {
 		return result, err
 	}
@@ -116,7 +115,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		queryRes.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", traceID, resp.Status, string(body))
+		queryRes.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", model.TraceID, resp.Status, string(body))
 		result.Responses[refID] = queryRes
 		return result, nil
 	}
@@ -129,7 +128,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	frame, err := TraceToFrame(otTrace)
 	if err != nil {
-		return &backend.QueryDataResponse{}, fmt.Errorf("failed to transform trace %v to data frame: %w", traceID, err)
+		return &backend.QueryDataResponse{}, fmt.Errorf("failed to transform trace %v to data frame: %w", model.TraceID, err)
 	}
 	frame.RefID = refID
 	frames := []*data.Frame{frame}
