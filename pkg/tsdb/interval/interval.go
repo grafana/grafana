@@ -29,7 +29,7 @@ type intervalCalculator struct {
 }
 
 type Calculator interface {
-	Calculate(timeRange plugins.DataTimeRange, interval time.Duration, intervalMode string) Interval
+	Calculate(timeRange plugins.DataTimeRange, interval time.Duration, intervalMode string) (Interval, error)
 	CalculateSafeInterval(timeRange plugins.DataTimeRange, resolution int64) Interval
 }
 
@@ -55,7 +55,7 @@ func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, interval time.Duration, intervalMode string) Interval {
+func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, interval time.Duration, intervalMode string) (Interval, error) {
 	to := timerange.MustGetTo().UnixNano()
 	from := timerange.MustGetFrom().UnixNano()
 	calculatedInterval := time.Duration((to - from) / defaultRes)
@@ -63,21 +63,21 @@ func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, interva
 	switch intervalMode {
 	case "min":
 		if calculatedInterval < interval {
-			return Interval{Text: FormatDuration(interval), Value: interval}
+			return Interval{Text: FormatDuration(interval), Value: interval}, nil
 		}
 	case "max":
 		if calculatedInterval > interval {
-			return Interval{Text: FormatDuration(interval), Value: interval}
+			return Interval{Text: FormatDuration(interval), Value: interval}, nil
 		}
 	case "exact":
-		return Interval{Text: FormatDuration(interval), Value: interval}
+		return Interval{Text: FormatDuration(interval), Value: interval}, nil
 
 	default:
-		panic(fmt.Sprintf("Unrecognized intervalMode %v", intervalMode))
+		return Interval{}, fmt.Errorf("Unrecognized intervalMode: %v", intervalMode)
 	}
 
 	rounded := roundInterval(calculatedInterval)
-	return Interval{Text: FormatDuration(rounded), Value: rounded}
+	return Interval{Text: FormatDuration(rounded), Value: rounded}, nil
 }
 
 func (ic *intervalCalculator) CalculateSafeInterval(timerange plugins.DataTimeRange, safeRes int64) Interval {

@@ -36,7 +36,8 @@ type intervalCalculator struct {
 }
 
 type Calculator interface {
-	Calculate(timerange backend.TimeRange, minInterval time.Duration, intervalMode IntervalMode) Interval
+	Calculate(timerange backend.TimeRange, minInterval time.Duration, intervalMode IntervalMode) (Interval, error)
+	CalculateSafeInterval(timerange backend.TimeRange, resolution int64) Interval
 }
 
 type CalculatorOptions struct {
@@ -61,7 +62,7 @@ func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, intrvl time.Duration, intervalMode IntervalMode) Interval {
+func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, intrvl time.Duration, intervalMode IntervalMode) (Interval, error) {
 	to := timerange.To.UnixNano()
 	from := timerange.From.UnixNano()
 	calculatedIntrvl := time.Duration((to - from) / defaultRes)
@@ -69,21 +70,21 @@ func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, intrvl time
 	switch intervalMode {
 	case Min:
 		if calculatedIntrvl < intrvl {
-			return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}
+			return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}, nil
 		}
 	case Max:
 		if calculatedIntrvl > intrvl {
-			return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}
+			return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}, nil
 		}
 	case Exact:
-		return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}
+		return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}, nil
 
 	default:
-		panic(fmt.Sprintf("Unrecognized intervalMode %v", intervalMode))
+		return Interval{}, fmt.Errorf("Unrecognized intervalMode: %v", intervalMode)
 	}
 
 	rounded := roundInterval(calculatedIntrvl)
-	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}
+	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}, nil
 }
 
 func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange, safeRes int64) Interval {

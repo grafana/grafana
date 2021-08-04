@@ -159,13 +159,16 @@ func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query plugins
 			return nil, err
 		}
 
-		calculatedInterval := e.intervalCalculator.Calculate(*query.TimeRange, intervalValue, intervalMode).Value
-		safeInterval := e.intervalCalculator.CalculateSafeInterval(*query.TimeRange, safeRes).Value
+		calculatedInterval, err := e.intervalCalculator.Calculate(*query.TimeRange, intervalValue, intervalMode)
+		if err != nil {
+			return nil, err
+		}
+		safeInterval := e.intervalCalculator.CalculateSafeInterval(*query.TimeRange, safeRes)
 
-		if calculatedInterval > safeInterval {
-			adjustedInterval = calculatedInterval
+		if calculatedInterval.Value > safeInterval.Value {
+			adjustedInterval = calculatedInterval.Value
 		} else {
-			adjustedInterval = safeInterval
+			adjustedInterval = safeInterval.Value
 		}
 
 		intervalFactor := queryModel.Model.Get("intervalFactor").MustInt64(1)
