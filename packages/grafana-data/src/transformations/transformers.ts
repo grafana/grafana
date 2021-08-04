@@ -13,6 +13,7 @@ import { renameFieldsTransformer } from './transformers/rename';
 import { labelsToFieldsTransformer } from './transformers/labelsToFields';
 import { ensureColumnsTransformer } from './transformers/ensureColumns';
 import { groupByTransformer } from './transformers/groupBy';
+import { pivotTransformer } from './transformers/pivot';
 import { sortByTransformer } from './transformers/sortBy';
 import { mergeTransformer } from './transformers/merge';
 import { renameByRegexTransformer } from './transformers/renameByRegex';
@@ -37,6 +38,7 @@ export const standardTransformers = {
   labelsToFieldsTransformer,
   ensureColumnsTransformer,
   groupByTransformer,
+  pivotTransformer,
   sortByTransformer,
   mergeTransformer,
   renameByRegexTransformer,
