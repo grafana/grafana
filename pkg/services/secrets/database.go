@@ -34,6 +34,15 @@ func (s *SecretsService) GetDataKey(ctx context.Context, name string) (*DataKey,
 	return dataKey, nil
 }
 
+func (s *SecretsService) GetAllDataKeys(ctx context.Context) ([]*DataKey, error) {
+	result := make([]*DataKey, 0)
+	err := s.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		err := sess.Table(dataKeysTable).Find(&result)
+		return err
+	})
+	return result, err
+}
+
 func (s *SecretsService) CreateDataKey(ctx context.Context, dataKey DataKey) error {
 	if !dataKey.Active {
 		return fmt.Errorf("cannot insert deactivated data keys")
