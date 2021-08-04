@@ -59,7 +59,7 @@ func (m *migration) writeSilencesFile(orgID int64) error {
 		}
 	}
 
-	f, err := openReplace(silencesFileName(m.mg, orgID))
+	f, err := openReplace(silencesFileNameForOrg(m.mg, orgID))
 	if err != nil {
 		return err
 	}

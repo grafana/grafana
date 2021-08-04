@@ -336,7 +336,7 @@ func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
-	files, err := getAllSilenceFiles(mg)
+	files, err := getSilenceFileNamesForAllOrgs(mg)
 	if err != nil {
 		return err
 	}
