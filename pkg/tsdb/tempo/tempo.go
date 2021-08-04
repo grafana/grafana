@@ -2,6 +2,7 @@ package tempo
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -87,6 +88,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	refID := req.Queries[0].RefID
 
 	model := &QueryModel{}
+	err := json.Unmarshal(req.Queries[0].JSON, model)
+	if err != nil {
+		return result, err
+	}
 
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
