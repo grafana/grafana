@@ -31,6 +31,13 @@ jest.mock('@grafana/runtime', () => {
     }),
     config: {
       ...original.config,
+      bootData: {
+        ...original.config.bootData,
+        user: {
+          ...original.config.bootData.user,
+          isGrafanaAdmin: true,
+        },
+      },
       buildInfo: {
         ...original.config.buildInfo,
         version: 'v7.5.0',

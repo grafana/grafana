@@ -247,7 +247,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
 		"sentry":                           hs.Cfg.Sentry,
 		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
-		"pluginAdminEnabled":               (c.IsGrafanaAdmin || hs.Cfg.PluginAdminExternalManageEnabled) && hs.Cfg.PluginAdminEnabled,
+		"pluginAdminEnabled":               hs.Cfg.PluginAdminEnabled,
 		"pluginAdminExternalManageEnabled": hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
 		"expressionsEnabled":               hs.Cfg.ExpressionsEnabled,
 		"awsAllowedAuthProviders":          hs.Cfg.AWSAllowedAuthProviders,

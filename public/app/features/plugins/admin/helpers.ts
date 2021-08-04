@@ -1,9 +1,14 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
+import { contextSrv } from 'app/core/services/context_srv';
 import { CatalogPlugin, CatalogPluginDetails, LocalPlugin, Plugin, Version, PluginFilter } from './types';
 
 export function isGrafanaAdmin(): boolean {
   return config.bootData.user.isGrafanaAdmin;
+}
+
+export function isOrgAdmin() {
+  return contextSrv.hasRole('Admin');
 }
 
 export function mapRemoteToCatalog(plugin: Plugin): CatalogPlugin {

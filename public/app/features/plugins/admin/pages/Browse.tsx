@@ -4,11 +4,11 @@ import { SelectableValue, dateTimeParse, GrafanaTheme2 } from '@grafana/data';
 import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { useLocation } from 'react-router-dom';
 import { locationSearchToObject } from '@grafana/runtime';
-
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
 import { useHistory } from '../hooks/useHistory';
-import { CatalogPlugin } from '../types';
+import { CatalogPlugin, PluginAdminRoutes } from '../types';
 import { Page as PluginPage } from '../components/Page';
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { Page } from 'app/core/components/Page/Page';
@@ -17,10 +17,11 @@ import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 import { getNavModel } from 'app/core/selectors/navModel';
 
-export default function Browse(): ReactElement | null {
+export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
   const location = useLocation();
   const query = locationSearchToObject(location.search);
-  const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, 'plugins'));
+  const navModelId = getNavModelId(route.routeName);
+  const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, navModelId));
   const styles = useStyles2(getStyles);
 
   const q = (query.q as string) ?? '';
@@ -126,6 +127,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-top: ${theme.spacing(2)};
   `,
 });
+
+// Because the component is used under multiple paths (/plugins and /admin/plugins) we need to get
+// the correct navModel from the store
+const getNavModelId = (routeName?: string) => {
+  if (routeName === PluginAdminRoutes.HomeAdmin || routeName === PluginAdminRoutes.BrowseAdmin) {
+    return 'admin-plugins';
+  }
+
+  return 'plugins';
+};
 
 const sorters: { [name: string]: (a: CatalogPlugin, b: CatalogPlugin) => number } = {
   name: (a: CatalogPlugin, b: CatalogPlugin) => a.name.localeCompare(b.name),

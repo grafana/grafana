@@ -2,7 +2,7 @@ import { useReducer, useEffect } from 'react';
 import { PluginType, PluginIncludeType } from '@grafana/data';
 import { api } from '../api';
 import { loadPlugin } from '../../PluginPage';
-import { getCatalogPluginDetails, isGrafanaAdmin } from '../helpers';
+import { getCatalogPluginDetails, isOrgAdmin } from '../helpers';
 import { ActionTypes, PluginDetailsActions, PluginDetailsState } from '../types';
 
 const defaultTabs = [{ label: 'Overview' }, { label: 'Version history' }];
@@ -10,7 +10,6 @@ const defaultTabs = [{ label: 'Overview' }, { label: 'Version history' }];
 const initialState = {
   hasInstalledPanel: false,
   hasUpdate: false,
-  isAdmin: isGrafanaAdmin(),
   isInstalled: false,
   isInflight: false,
   loading: false,
@@ -87,6 +86,7 @@ const reducer = (state: PluginDetailsState, action: PluginDetailsActions) => {
 
 export const usePluginDetails = (id: string) => {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const userCanConfigurePlugins = isOrgAdmin();
 
   useEffect(() => {
     const fetchPlugin = async () => {
@@ -125,7 +125,7 @@ export const usePluginDetails = (id: string) => {
     const pluginConfig = state.pluginConfig;
     const tabs: Array<{ label: string }> = [...defaultTabs];
 
-    if (pluginConfig && state.isAdmin) {
+    if (pluginConfig && userCanConfigurePlugins) {
       if (pluginConfig.meta.type === PluginType.app) {
         if (pluginConfig.angularConfigCtrl) {
           tabs.push({
@@ -149,7 +149,7 @@ export const usePluginDetails = (id: string) => {
       }
     }
     dispatch({ type: ActionTypes.UPDATE_TABS, payload: tabs });
-  }, [state.isAdmin, state.pluginConfig, id]);
+  }, [userCanConfigurePlugins, state.pluginConfig, id]);
 
   return { state, dispatch };
 };

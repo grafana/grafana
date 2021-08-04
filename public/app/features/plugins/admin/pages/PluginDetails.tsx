@@ -1,6 +1,5 @@
 import React from 'react';
 import { css } from '@emotion/css';
-
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TabsBar, TabContent, Tab, Icon, Alert } from '@grafana/ui';
 
@@ -34,6 +33,7 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
   } = state;
   const tab = tabs[activeTab];
   const styles = useStyles2(getStyles);
+  const breadcrumbHref = match.url.substring(0, match.url.lastIndexOf('/'));
 
   if (loading) {
     return (
@@ -66,13 +66,13 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
                       className={css`
                         text-decoration: underline;
                       `}
-                      href={'/plugins'}
+                      href={breadcrumbHref}
                     >
                       Plugins
                     </a>
                   </li>
                   <li>
-                    <a href={`/plugins/${pluginId}`} aria-current="page">
+                    <a href={`${match.url}`} aria-current="page">
                       {plugin.name}
                     </a>
                   </li>
