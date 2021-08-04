@@ -28,6 +28,7 @@ export const SortPicker: FC<Props> = ({ onChange, value, placeholder, filter }) 
   const selected = options?.find((opt) => opt.value === value);
   return !loading ? (
     <Select
+      menuShouldPortal
       key={value}
       width={25}
       onChange={onChange}

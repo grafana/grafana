@@ -170,6 +170,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       <InlineFieldRow aria-label={selectors.scenarioSelectContainer}>
         <InlineField labelWidth={14} label="Scenario">
           <Select
+            menuShouldPortal
             options={options}
             value={options.find((item) => item.value === query.scenarioId)}
             onChange={onScenarioChange}
@@ -256,6 +257,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       {scenarioId === 'grafana_api' && (
         <InlineField labelWidth={14} label="Endpoint">
           <Select
+            menuShouldPortal
             options={endpoints}
             onChange={onEndPointChange}
             width={32}
