@@ -18,7 +18,7 @@ The Azure Monitor data source provides the following queries you can specify in 
 | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `Subscriptions()`                                                                  | Returns subscriptions.                                                                                           |
 | `ResourceGroups()`                                                                 | Returns resource groups.                                                                                         |
-| `ResourceGroups(subscriptionID)`                                                   | Returns resource groups for a specified subscription.                                                            |
+| `ResourceGroups(subscriptionID)`                                                   | Returns resource groups for the specified subscription.                                                            |
 | `Namespaces(aResourceGroup)`                                                       | Returns namespaces for the default subscription and specified resource group.                                    |
 | `Namespaces(subscriptionID, aResourceGroup)`                                       | Returns namespaces for the specified subscription and resource group.                                            |
 | `ResourceNames(aResourceGroup, aNamespace)`                                        | Returns a list of resource names.                                                                                |
