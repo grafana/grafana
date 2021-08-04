@@ -292,7 +292,7 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	if accessForbidden(fi, c.Req.URL.Path, pluginFilePath, plugin) {
+	if accessForbidden(fi, c.Req.URL.Path, plugin) {
 		c.JsonApiErr(403, "Plugin file access forbidden",
 			fmt.Errorf("access is forbidden to executable plugin file %s", pluginFilePath))
 		return
@@ -441,15 +441,15 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	return response.Error(500, "Plugin request failed", err)
 }
 
-func accessForbidden(fi os.FileInfo, reqPath string, pluginFilePath string, p *plugins.PluginBase) bool {
+func accessForbidden(fi os.FileInfo, reqPath string, p *plugins.PluginBase) bool {
 	reqPath = strings.TrimPrefix(reqPath, "/")
 	isLogo := strings.EqualFold(reqPath, p.Info.Logos.Small) || strings.EqualFold(reqPath, p.Info.Logos.Large)
 	if isLogo {
 		return false
 	}
 
-	pluginFileNoExt := strings.TrimSuffix(pluginFilePath, filepath.Ext(pluginFilePath))
-	isModuleJS := strings.HasSuffix(pluginFileNoExt, p.Module) && strings.HasSuffix(pluginFilePath, "module.js")
+	fileNoExt := strings.TrimSuffix(reqPath, filepath.Ext(reqPath))
+	isModuleJS := strings.HasSuffix(fileNoExt, p.Module) && strings.HasSuffix(reqPath, "module.js")
 	if isModuleJS {
 		return false
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func Test_shouldExclude(t *testing.T) {
+func Test_accessForbidden(t *testing.T) {
 	pluginInfo := plugins.PluginInfo{
 		Logos: plugins.PluginLogos{
 			Small: "img/small.svg",
@@ -17,20 +17,20 @@ func Test_shouldExclude(t *testing.T) {
 		},
 	}
 
-	type args struct {
-		fi        os.FileInfo
-		reqPath   string
-		p         *plugins.PluginBase
-		pFilePath string
+	type testCase struct {
+		fi      os.FileInfo
+		reqPath string
+		p       *plugins.PluginBase
 	}
 	tests := []struct {
 		name      string
-		args      args
+		t         testCase
 		forbidden bool
 	}{
 		{
 			name: ".exe files are forbidden",
-			args: args{
+			t: testCase{
+				reqPath: "/bin/test.exe",
 				fi: testFileInfo{
 					name: "test.exe",
 				},
@@ -42,7 +42,8 @@ func Test_shouldExclude(t *testing.T) {
 		},
 		{
 			name: ".sh files are forbidden",
-			args: args{
+			t: testCase{
+				reqPath: "scripts/test.sh",
 				fi: testFileInfo{
 					name: "test.sh",
 				},
@@ -54,7 +55,7 @@ func Test_shouldExclude(t *testing.T) {
 		},
 		{
 			name: "module.js is not forbidden",
-			args: args{
+			t: testCase{
 				fi: testFileInfo{
 					name: "module.js",
 				},
@@ -62,40 +63,47 @@ func Test_shouldExclude(t *testing.T) {
 					Info:   pluginInfo,
 					Module: "test/module",
 				},
-				pFilePath: "/plugins/test/module.js",
 			},
 			forbidden: false,
 		},
 		{
 			name: "module.js is not forbidden if set correctly on plugin",
-			args: args{
+			t: testCase{
 				fi: testFileInfo{
 					name: "module.js",
 				},
 				p: &plugins.PluginBase{
 					Info: pluginInfo,
 				},
-				pFilePath: "/plugins/test/module.js",
 			},
 			forbidden: false,
 		},
 		{
 			name: "module.js is forbidden if not set correctly on plugin",
-			args: args{
+			t: testCase{
 				fi: testFileInfo{
 					name: "incorrect_name.js",
 				},
 				p: &plugins.PluginBase{
 					Info: pluginInfo,
 				},
-				pFilePath: "/plugins/test/module.js",
+			},
+			forbidden: false,
+		},
+		{
+			name: "logos are not forbidden",
+			t: testCase{
+				reqPath: "/img/small.svg",
+				p: &plugins.PluginBase{
+					Info: pluginInfo,
+				},
 			},
 			forbidden: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := accessForbidden(tt.args.fi, tt.args.reqPath, tt.args.pFilePath, tt.args.p); got != tt.forbidden {
+			if got := accessForbidden(tt.t.fi, tt.t.reqPath, tt.t.p); got != tt.forbidden {
 				t.Errorf("accessForbidden() = %v, forbidden %v", got, tt.forbidden)
 			}
 		})
