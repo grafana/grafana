@@ -45,10 +45,12 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   let unit = config.unit;
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
+  let hasMs: boolean;
 
   if (field.type === FieldType.time && !hasDateUnit) {
     unit = `dateTimeAsSystem`;
     hasDateUnit = true;
+    hasMs = true; //needs to depend on range...
   } else if (field.type === FieldType.boolean) {
     if (!isBooleanUnit(unit)) {
       unit = 'bool';
@@ -93,7 +95,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
     if (!isNaN(numeric)) {
       if (shouldFormat && !isBoolean(value)) {
-        const v = formatFunc(numeric, config.decimals, null, options.timeZone);
+        const v = formatFunc(numeric, config.decimals, null, options.timeZone, hasMs);
         text = v.text;
         suffix = v.suffix;
         prefix = v.prefix;
