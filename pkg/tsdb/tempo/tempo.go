@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 
-	ot_pdata "go.opentelemetry.io/collector/consumer/pdata"
+	otlp "go.opentelemetry.io/collector/model/otlp"
 )
 
 type tempoExecutor struct {
@@ -76,7 +76,7 @@ func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource
 		}, nil
 	}
 
-	otTrace, err := ot_pdata.TracesFromOtlpProtoBytes(body)
+	otTrace, err := otlp.NewProtobufTracesUnmarshaler().UnmarshalTraces(body)
 
 	if err != nil {
 		return plugins.DataResponse{}, fmt.Errorf("failed to convert tempo response to Otlp: %w", err)
