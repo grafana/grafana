@@ -25,16 +25,6 @@ func TestSecrets_Encrypt(t *testing.T) {
 		}()
 		setting.SecretKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 	}
-	// TODO: should be moved to encryption service
-	//t.Run("getting encryption key", func(t *testing.T) {
-	//	key, err := encryptionKeyToBytes([]byte("secret"), []byte("salt"))
-	//	require.NoError(t, err)
-	//	assert.Len(t, key, 32)
-	//
-	//	key, err = encryptionKeyToBytes([]byte("a very long secret key that is larger then 32bytes"), []byte("salt"))
-	//	require.NoError(t, err)
-	//	assert.Len(t, key, 32)
-	//})
 
 	plaintexts := [][]byte{
 		[]byte("hello, world"),
@@ -71,7 +61,7 @@ secret_key = SW2YcwTIb9zpOOhoPsMm
 	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
 
 	s := SecretsService{
-		Store:    sqlstore.InitTestDB(t),
+		SQLStore: sqlstore.InitTestDB(t),
 		Enc:      &encryption.OSSEncryptionService{},
 		Settings: settings,
 	}
