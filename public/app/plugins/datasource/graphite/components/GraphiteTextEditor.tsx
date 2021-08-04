@@ -22,15 +22,13 @@ export function GraphiteTextEditor({ rawQuery }: Props) {
   }, [dispatch]);
 
   return (
-    <div className="gf-form">
-      <QueryField
-        query={rawQuery}
-        onChange={updateQuery}
-        onBlur={runQuery}
-        onRunQuery={runQuery}
-        placeholder={'Enter a Graphite query (run with Shift+Enter)'}
-        portalOrigin="graphite"
-      />
-    </div>
+    <QueryField
+      query={rawQuery}
+      onChange={updateQuery}
+      onBlur={runQuery}
+      onRunQuery={runQuery}
+      placeholder={'Enter a Graphite query (run with Shift+Enter)'}
+      portalOrigin="graphite"
+    />
   );
 }

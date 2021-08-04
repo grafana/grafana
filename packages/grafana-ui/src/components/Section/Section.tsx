@@ -15,8 +15,10 @@ export const Section = ({
   inline?: boolean;
 }) => (
   <div className="gf-form-inline">
-    <SectionLabel name={label} inline={inline} />
-    {children}
+    <div className="gf-form">
+      <SectionLabel name={label} inline={inline} />
+      {children}
+    </div>
     <SectionFill />
   </div>
 );

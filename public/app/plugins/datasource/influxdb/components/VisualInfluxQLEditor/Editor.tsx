@@ -24,10 +24,9 @@ import {
   changeGroupByPart,
 } from '../../queryUtils';
 import { FormatAsSection } from './FormatAsSection';
-import { SectionLabel } from './SectionLabel';
-import { SectionFill } from './SectionFill';
 import { DEFAULT_RESULT_FORMAT } from '../constants';
 import { getNewSelectPartOptions, getNewGroupByPartOptions, makePartList } from './partListUtils';
+import { Section, SectionLabel } from '@grafana/ui';
 
 type Props = {
   query: InfluxQuery;
@@ -50,14 +49,6 @@ function getTemplateVariableOptions() {
 function withTemplateVariableOptions(optionsPromise: Promise<string[]>): Promise<string[]> {
   return optionsPromise.then((options) => [...getTemplateVariableOptions(), ...options]);
 }
-
-const SectionWrap = ({ initialName, children }: { initialName: string; children: React.ReactNode }) => (
-  <div className="gf-form-inline">
-    <SectionLabel name={initialName} isInitial={true} />
-    {children}
-    <SectionFill />
-  </div>
-);
 
 export const Editor = (props: Props): JSX.Element => {
   const query = normalizeQuery(props.query);
@@ -112,7 +103,7 @@ export const Editor = (props: Props): JSX.Element => {
 
   return (
     <div>
-      <SectionWrap initialName="from">
+      <Section label="FROM">
         <FromSection
           policy={policy}
           measurement={measurement}
@@ -124,7 +115,7 @@ export const Editor = (props: Props): JSX.Element => {
           }
           onChange={handleFromSectionChange}
         />
-        <SectionLabel name="where" />
+        <SectionLabel name="WHERE" inline={true} />
         <TagsSection
           tags={query.tags ?? []}
           onChange={handleTagsSectionChange}
@@ -133,9 +124,9 @@ export const Editor = (props: Props): JSX.Element => {
             withTemplateVariableOptions(getTagValues(key, measurement, policy, query.tags ?? [], datasource))
           }
         />
-      </SectionWrap>
+      </Section>
       {selectLists.map((sel, index) => (
-        <SectionWrap key={index} initialName={index === 0 ? 'select' : ''}>
+        <Section key={index} label={index === 0 ? 'SELECT' : ''}>
           <PartListSection
             parts={sel}
             getNewPartOptions={() => Promise.resolve(getNewSelectPartOptions())}
@@ -150,9 +141,9 @@ export const Editor = (props: Props): JSX.Element => {
               onAppliedChange(removeSelectPart(query, partIndex, index));
             }}
           />
-        </SectionWrap>
+        </Section>
       ))}
-      <SectionWrap initialName="group by">
+      <Section label="GROUP BY">
         <PartListSection
           parts={groupByList}
           getNewPartOptions={() => getNewGroupByPartOptions(query, getTagKeys)}
@@ -167,8 +158,8 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange(removeGroupByPart(query, partIndex));
           }}
         />
-      </SectionWrap>
-      <SectionWrap initialName="timezone">
+      </Section>
+      <Section label="TIMEZONE">
         <InputSection
           placeholder="(optional)"
           value={query.tz}
@@ -176,20 +167,20 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, tz });
           }}
         />
-        <SectionLabel name="order by time" />
+        <SectionLabel name="ORDER BY TIME" inline={true} />
         <OrderByTimeSection
           value={query.orderByTime === 'DESC' ? 'DESC' : 'ASC' /* FIXME: make this shared with influx_query_model */}
           onChange={(v) => {
             onAppliedChange({ ...query, orderByTime: v });
           }}
         />
-      </SectionWrap>
+      </Section>
       {/* query.fill is ignored in the query-editor, and it is deleted whenever
           query-editor changes. the influx_query_model still handles it, but the new
           approach seem to be to handle "fill" inside query.groupBy. so, if you
-          have a panel where in the json you have query.fill, it will be appled,
+          have a panel where in the json you have query.fill, it will be applied,
           as long as you do not edit that query. */}
-      <SectionWrap initialName="limit">
+      <Section label="LIMIT">
         <InputSection
           placeholder="(optional)"
           value={query.limit?.toString()}
@@ -197,7 +188,7 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, limit });
           }}
         />
-        <SectionLabel name="slimit" />
+        <SectionLabel name="SLIMIT" inline={true} />
         <InputSection
           placeholder="(optional)"
           value={query.slimit?.toString()}
@@ -205,8 +196,8 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, slimit });
           }}
         />
-      </SectionWrap>
-      <SectionWrap initialName="format as">
+      </Section>
+      <Section label="FORMAT AS">
         <FormatAsSection
           format={query.resultFormat ?? DEFAULT_RESULT_FORMAT}
           onChange={(format) => {
@@ -215,7 +206,7 @@ export const Editor = (props: Props): JSX.Element => {
         />
         {query.resultFormat !== 'table' && (
           <>
-            <SectionLabel name="alias" />
+            <SectionLabel name="ALIAS" inline={true} />
             <InputSection
               isWide
               placeholder="Naming pattern"
@@ -226,7 +217,7 @@ export const Editor = (props: Props): JSX.Element => {
             />
           </>
         )}
-      </SectionWrap>
+      </Section>
     </div>
   );
 };

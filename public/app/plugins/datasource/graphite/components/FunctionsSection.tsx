@@ -12,11 +12,9 @@ type Props = {
 export function FunctionsSection({ functions = [], funcDefs }: Props) {
   return (
     <Section label="Functions">
-      <div className="gf-form">
-        {functions.map((func: FuncInstance, index: number) => {
-          return <GraphiteFunctionEditor key={index} func={func} />;
-        })}
-      </div>
+      {functions.map((func: FuncInstance, index: number) => {
+        return <GraphiteFunctionEditor key={index} func={func} />;
+      })}
       <AddGraphiteFunction funcDefs={funcDefs} />
     </Section>
   );
