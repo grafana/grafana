@@ -91,7 +91,7 @@ const getStyles = (theme: GrafanaTheme2, loading: boolean) => {
       padding: 0;
       flex-direction: column;
     `,
-    page: /*rgb(90,134,222) theme.colors.text.secondary*/ css`
+    page: css`
       display: flex;
       margin: ${theme.spacing(2)} 0;
       cursor: ${loading ? 'auto' : 'pointer'};
