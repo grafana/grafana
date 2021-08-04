@@ -147,7 +147,6 @@ export interface Org {
 export interface PluginDetailsState {
   hasInstalledPanel: boolean;
   hasUpdate: boolean;
-  isAdmin: boolean;
   isInstalled: boolean;
   isInflight: boolean;
   loading: boolean;
