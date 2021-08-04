@@ -232,7 +232,7 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
 
   return (
     <fieldset>
-      <h3 className={styles.header}>
+      <div className={styles.header}>
         <button
           className={styles.expandButton}
           onClick={() => {
@@ -247,7 +247,7 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
           <TimePickerTitle>Absolute time range</TimePickerTitle>
           {!hideQuickRanges && <Icon name={!collapsed ? 'angle-up' : 'angle-down'} />}
         </button>
-      </h3>
+      </div>
       {!collapsed && (
         <div className={styles.body} id="expanded-timerange">
           <div className={styles.form}>
@@ -278,9 +278,9 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
   return (
     <>
       <div className={styles.container}>
-        <h3 className={styles.title} data-testid={selectors.components.TimePicker.absoluteTimeRangeTitle}>
+        <div className={styles.title} data-testid={selectors.components.TimePicker.absoluteTimeRangeTitle}>
           <TimePickerTitle>Absolute time range</TimePickerTitle>
-        </h3>
+        </div>
         <TimeRangeForm
           value={props.value}
           timeZone={props.timeZone}

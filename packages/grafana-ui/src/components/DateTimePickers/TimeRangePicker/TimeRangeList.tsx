@@ -47,14 +47,12 @@ export const TimeRangeList: React.FC<Props> = (props) => {
 
   return (
     <section aria-label={title}>
-      <form>
-        <fieldset>
-          <div className={styles.title}>
-            <TimePickerTitle>{title}</TimePickerTitle>
-          </div>
-          <Options {...props} />
-        </fieldset>
-      </form>
+      <fieldset>
+        <div className={styles.title}>
+          <TimePickerTitle>{title}</TimePickerTitle>
+        </div>
+        <Options {...props} />
+      </fieldset>
     </section>
   );
 };
