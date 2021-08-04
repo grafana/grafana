@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
+import { useLocation } from 'react-router-dom';
 import { Card } from '../components/Card';
 import { Grid } from '../components/Grid';
 
@@ -14,6 +15,7 @@ interface Props {
 
 export const PluginList = ({ plugins }: Props) => {
   const styles = useStyles2(getStyles);
+  const location = useLocation();
 
   return (
     <Grid>
@@ -23,7 +25,7 @@ export const PluginList = ({ plugins }: Props) => {
         return (
           <Card
             key={`${id}`}
-            href={`/plugins/${id}`}
+            href={`${location.pathname}/${id}`}
             image={
               <PluginLogo
                 src={plugin.info.logos.small}
