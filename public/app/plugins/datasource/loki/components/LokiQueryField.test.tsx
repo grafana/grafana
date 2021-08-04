@@ -40,6 +40,7 @@ describe('LokiQueryField', () => {
 
     expect(fetchLabelsMock).not.toHaveBeenCalled();
 
+    // 2 minutes difference over the initial time
     const newRange = {
       from: dateTime([2021, 1, 11, 12, 2, 0]),
       to: dateTime([2021, 1, 11, 18, 2, 0]),
@@ -53,7 +54,7 @@ describe('LokiQueryField', () => {
     expect(fetchLabelsMock).toHaveBeenCalledTimes(1);
   });
 
-  it('does not refreshes metrics when time range deso not change', async () => {
+  it('does not refreshes metrics when time range change by less than 1 minute', async () => {
     const fetchLabelsMock = jest.fn();
     const props = defaultProps;
     props.datasource.languageProvider.fetchLabels = fetchLabelsMock;
@@ -62,7 +63,7 @@ describe('LokiQueryField', () => {
 
     expect(fetchLabelsMock).not.toHaveBeenCalled();
 
-    //same as def
+    // 20 seconds difference over the initial time
     const newRange = {
       from: dateTime([2021, 1, 11, 12, 0, 20]),
       to: dateTime([2021, 1, 11, 18, 0, 20]),
