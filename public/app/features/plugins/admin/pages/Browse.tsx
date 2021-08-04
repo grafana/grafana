@@ -27,7 +27,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const q = (query.q as string) ?? '';
   const filterBy = (query.filterBy as string) ?? 'installed';
   const filterByType = (query.filterByType as string) ?? 'all';
-  const sortBy = (query.sortBy as string) ?? 'name';
+  const sortBy = (query.sortBy as string) ?? 'nameAsc';
 
   const { plugins, isLoading, error } = usePluginsByFilter({ searchBy: q, filterBy, filterByType });
   const sortedPlugins = plugins.sort(sorters[sortBy]);
@@ -90,7 +90,8 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                   value={sortBy}
                   onChange={onSortByChange}
                   options={[
-                    { value: 'name', label: 'Sort by name (A-Z)' },
+                    { value: 'nameAsc', label: 'Sort by name (A-Z)' },
+                    { value: 'nameDesc', label: 'Sort by name (Z-A)' },
                     { value: 'updated', label: 'Sort by updated date' },
                     { value: 'published', label: 'Sort by published date' },
                     { value: 'downloads', label: 'Sort by downloads' },
@@ -139,7 +140,8 @@ const getNavModelId = (routeName?: string) => {
 };
 
 const sorters: { [name: string]: (a: CatalogPlugin, b: CatalogPlugin) => number } = {
-  name: (a: CatalogPlugin, b: CatalogPlugin) => a.name.localeCompare(b.name),
+  nameAsc: (a: CatalogPlugin, b: CatalogPlugin) => a.name.localeCompare(b.name),
+  nameDesc: (a: CatalogPlugin, b: CatalogPlugin) => b.name.localeCompare(a.name),
   updated: (a: CatalogPlugin, b: CatalogPlugin) =>
     dateTimeParse(b.updatedAt).valueOf() - dateTimeParse(a.updatedAt).valueOf(),
   published: (a: CatalogPlugin, b: CatalogPlugin) =>

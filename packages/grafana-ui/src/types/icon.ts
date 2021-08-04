@@ -47,6 +47,7 @@ export const getAvailableIcons = () =>
     'comments-alt',
     'compass',
     'copy',
+    'credit-card',
     'cube',
     'database',
     'document-info',

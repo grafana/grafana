@@ -2,7 +2,14 @@ import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 import { CatalogPlugin, CatalogPluginsState, PluginsByFilterType, FilteredPluginsState } from '../types';
 import { api } from '../api';
-import { mapLocalToCatalog, mapRemoteToCatalog, isInstalled, isType, matchesKeyword } from '../helpers';
+import {
+  mapLocalToCatalog,
+  mapRemoteToCatalog,
+  mapToCatalogPlugin,
+  isInstalled,
+  isType,
+  matchesKeyword,
+} from '../helpers';
 
 export function usePlugins(): CatalogPluginsState {
   const { loading, value, error } = useAsync(async () => {
@@ -21,10 +28,6 @@ export function usePlugins(): CatalogPluginsState {
     }
 
     for (const plugin of remote) {
-      if (unique[plugin.slug]) {
-        continue;
-      }
-
       if (plugin.typeCode === 'renderer') {
         continue;
       }
@@ -33,9 +36,15 @@ export function usePlugins(): CatalogPluginsState {
         continue;
       }
 
-      unique[plugin.slug] = mapRemoteToCatalog(plugin);
+      if (unique[plugin.slug]) {
+        unique[plugin.slug] = mapToCatalogPlugin(
+          installed.find((installedPlugin) => installedPlugin.id === plugin.slug),
+          plugin
+        );
+      } else {
+        unique[plugin.slug] = mapRemoteToCatalog(plugin);
+      }
     }
-
     return Object.values(unique);
   }, [value?.installed, value?.remote]);
 
