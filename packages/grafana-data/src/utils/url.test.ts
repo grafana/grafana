@@ -82,7 +82,15 @@ describe('getUrlSearchParams', () => {
   };
 
   it('should take into account multi-value and boolean parameters', () => {
+    // Jest's variant of URLSearchParams.getAll() returns an array with a non-native Array constructor
+    // so we spread the array-esque results to real arrays to appease Jest's deepEq matchers
+    // see https://github.com/grafana/grafana/pull/37512#issuecomment-893012788
     const params = urlUtil.getUrlSearchParams();
+    for (const key of Object.keys(params)) {
+      if (Array.isArray(params[key])) {
+        params[key] = [...(params[key] as string[])];
+      }
+    }
     expect(params).toStrictEqual(expectedParams);
   });
 });
