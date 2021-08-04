@@ -40,8 +40,18 @@
       "reqRole": "Editor"
     },
     {
+      "method": "POST",
+      "path": "/api/v1/rules",
+      "reqRole": "Editor"
+    },
+    {
       "method": "DELETE",
       "path": "/rules",
+      "reqRole": "Editor"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/rules",
       "reqRole": "Editor"
     }
   ],

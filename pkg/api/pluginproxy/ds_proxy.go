@@ -80,9 +80,9 @@ func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService *datasources.Service) (*DataSourceProxy, error) {
 
 	url := ds.Url
-	if cfg.IsNgAlertEnabled() && isRulerPath(proxyPath) {
+	if cfg.IsNgAlertEnabled() && isLotex(ds.Type) && isRulerPath(proxyPath) {
 		rulerProps := ds.GetRulerProperties()
-		if rulerProps != nil && rulerProps.Url != "" {
+		if rulerProps.Url != "" {
 			url = rulerProps.Url
 		}
 	}
@@ -367,8 +367,8 @@ func (proxy *DataSourceProxy) logRequest() {
 		"body", body)
 }
 
-func (proxy *DataSourceProxy) getRulerURL(rulerProperties *models.Ruler) (rulerURL *url.URL) {
-	if rulerProperties != nil && rulerProperties.Url != "" {
+func (proxy *DataSourceProxy) getRulerURL(rulerProperties models.Ruler) (rulerURL *url.URL) {
+	if rulerProperties.Url != "" {
 		u, err := url.Parse(rulerProperties.Url)
 		if err != nil {
 			return nil
@@ -378,12 +378,8 @@ func (proxy *DataSourceProxy) getRulerURL(rulerProperties *models.Ruler) (rulerU
 	return rulerURL
 }
 
-func (proxy *DataSourceProxy) isRulerReq(rulerProperties *models.Ruler) bool {
-	if proxy.ds.Type != models.DS_PROMETHEUS && proxy.ds.Type != "loki" {
-		return false
-	}
-
-	if rulerProperties == nil {
+func (proxy *DataSourceProxy) isRulerReq(rulerProperties models.Ruler) bool {
+	if !isLotex(proxy.ds.Type) {
 		return false
 	}
 
@@ -397,9 +393,9 @@ func (proxy *DataSourceProxy) isRulerReq(rulerProperties *models.Ruler) bool {
 	return false
 }
 
-func (proxy *DataSourceProxy) setAuthorisation(req *http.Request, rulerProperties *models.Ruler) {
+func (proxy *DataSourceProxy) setAuthorisation(req *http.Request, rulerProperties models.Ruler) {
 	if proxy.isRulerReq(rulerProperties) {
-		if rulerProperties != nil && rulerProperties.BasicAuth {
+		if rulerProperties.BasicAuth {
 			req.Header.Set("Authorization", util.GetBasicAuthHeader(rulerProperties.BasicAuthUser,
 				proxy.ds.DecryptedRulerBasicAuthPassword()))
 		}
@@ -417,6 +413,10 @@ func checkWhiteList(c *models.ReqContext, host string) bool {
 	}
 
 	return true
+}
+
+func isLotex(dsType string) bool {
+	return dsType == models.DS_PROMETHEUS || dsType == models.DS_LOKI
 }
 
 func isRulerPath(proxyPath string) bool {

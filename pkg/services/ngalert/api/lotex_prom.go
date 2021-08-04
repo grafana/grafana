@@ -19,6 +19,10 @@ var dsTypeToLotexRoutes = map[string]promEndpoints{
 		rules:  "/api/v1/rules",
 		alerts: "/api/v1/alerts",
 	},
+	"prometheus-ruler": {
+		rules:  "/prometheus/api/v1/rules",
+		alerts: "/prometheus/api/v1/alerts",
+	},
 	"loki": {
 		rules:  "/prometheus/api/v1/rules",
 		alerts: "/prometheus/api/v1/alerts",
@@ -80,7 +84,13 @@ func (p *LotexProm) getEndpoints(ctx *models.ReqContext) (*promEndpoints, error)
 	if err != nil {
 		return nil, err
 	}
-	routes, ok := dsTypeToLotexRoutes[ds.Type]
+
+	key := ds.Type
+	if ds.Type == models.DS_PROMETHEUS && ds.GetRulerProperties().Url != "" {
+		key = "prometheus-ruler"
+	}
+
+	routes, ok := dsTypeToLotexRoutes[key]
 	if !ok {
 		return nil, fmt.Errorf("unexpected datasource type. expecting loki or prometheus")
 	}

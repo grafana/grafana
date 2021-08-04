@@ -68,13 +68,13 @@ type DataSource struct {
 
 func (ds *DataSource) GetRulerProperties() *Ruler {
 	if ds.JsonData == nil {
-		return nil
+		return ruler
 	}
 	props, ok := ds.JsonData.CheckGet("ruler")
 	if !ok {
-		return nil
+		return ruler
 	}
-	return &Ruler{
+	return Ruler{
 		Url:           props.Get("url").MustString(),
 		BasicAuth:     props.Get("basicAuth").MustBool(),
 		BasicAuthUser: props.Get("basicAuthUser").MustString(),
