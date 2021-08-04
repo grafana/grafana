@@ -1,10 +1,10 @@
 import React from 'react';
 import { PanelPlugin } from '@grafana/data';
-import { AMNotificationsOptions } from './types';
-import { AMNotifications } from './AMNotifications';
+import { AlertGroupPanelOptions } from './types';
+import { AlertGroupsPanel } from './AlertGroupsPanel';
 import { AlertManagerPicker } from 'app/features/alerting/unified/components/AlertManagerPicker';
 
-export const plugin = new PanelPlugin<AMNotificationsOptions>(AMNotifications).setPanelOptions((builder) => {
+export const plugin = new PanelPlugin<AlertGroupPanelOptions>(AlertGroupsPanel).setPanelOptions((builder) => {
   return builder
     .addTextInput({
       name: 'Labels',

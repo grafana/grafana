@@ -9,12 +9,12 @@ import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/re
 import { NOTIFICATIONS_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 
-import { AmNotificationsGroup } from './AmNotificationsGroup';
-import { AMNotificationsOptions } from './types';
+import { AlertGroup } from './AlertGroup';
+import { AlertGroupPanelOptions } from './types';
 import { parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { useFilteredGroups } from './useFilteredGroups';
 
-export const AMNotifications = (props: PanelProps<AMNotificationsOptions>) => {
+export const AlertGroupsPanel = (props: PanelProps<AlertGroupPanelOptions>) => {
   const dispatch = useDispatch();
 
   const alertManagerSourceName = props.options.alertmanager;
@@ -47,7 +47,7 @@ export const AMNotifications = (props: PanelProps<AMNotificationsOptions>) => {
           !loading &&
           results &&
           filteredResults.map((group) => {
-            return <AmNotificationsGroup key={JSON.stringify(group.labels)} group={group} />;
+            return <AlertGroup key={JSON.stringify(group.labels)} group={group} />;
           })}
       </div>
     </CustomScrollbar>

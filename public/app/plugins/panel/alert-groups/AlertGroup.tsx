@@ -13,7 +13,7 @@ type Props = {
   group: AlertmanagerGroup;
 };
 
-export const AmNotificationsGroup = ({ group }: Props) => {
+export const AlertGroup = ({ group }: Props) => {
   const [showAlerts, setShowAlerts] = useState(false);
   const styles = useStyles2(getStyles);
   const textStyles = useStyles2(getNotificationsTextColors);

@@ -66,7 +66,7 @@ import * as debugPanel from 'app/plugins/panel/debug/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 import * as nodeGraph from 'app/plugins/panel/nodeGraph/module';
 import * as histogramPanel from 'app/plugins/panel/histogram/module';
-import * as amNotificationsPanel from 'app/plugins/panel/alertmanager-notifications/module';
+import * as amNotificationsPanel from 'app/plugins/panel/alert-groups/module';
 
 // Async loaded panels
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
