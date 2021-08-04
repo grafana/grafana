@@ -18,7 +18,7 @@ The plugin catalog allows you to browse and manage plugins from within Grafana. 
 
 <div class="medium-6 columns">
   <video width="700" height="600" controls>
-    <source src="/static/assets/videos/plugins-catalog-install-8-0.mp4" type="video/mp4">
+    <source src="/static/assets/videos/plugins-catalog-install-8-1.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </div>
@@ -37,7 +37,7 @@ To browse available plugins:
 1. Click the **All** filter to browse all available plugins.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
 
-![Plugin catalog browse](/static/img/docs/plugins/plugins-catalog-browse-8-0.png)
+![Plugin catalog browse](/static/img/docs/plugins/plugins-catalog-browse-8-1.png)
 
 ## Install a plugin
 
@@ -48,7 +48,7 @@ To browse available plugins:
 
 A confirmation message opens notifying that the installation was successful.
 
-![Plugin catalog install](/static/img/docs/plugins/plugins-catalog-install-8-0.png)
+![Plugin catalog install](/static/img/docs/plugins/plugins-catalog-install-8-1.png)
 
 ## Update a plugin
 
@@ -58,7 +58,7 @@ A confirmation message opens notifying that the installation was successful.
 
 A confirmation message opens notifying that the update was successful.
 
-![Plugin catalog update](/static/img/docs/plugins/plugins-catalog-update-8-0.png)
+![Plugin catalog update](/static/img/docs/plugins/plugins-catalog-update-8-1.png)
 
 ## Uninstall a plugin
 
@@ -68,4 +68,4 @@ A confirmation message opens notifying that the update was successful.
 
 A confirmation message opens notifying that the uninstallation was successful.
 
-![Plugin catalog uninstall](/static/img/docs/plugins/plugins-catalog-uninstall-8-0.png)
+![Plugin catalog uninstall](/static/img/docs/plugins/plugins-catalog-uninstall-8-1.png)
