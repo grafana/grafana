@@ -130,9 +130,8 @@ Output (Same as Input[0] but now with config on the Value field)
 | 1626178119127 | 10                      |
 | 1626178119129 | 30                      |
 
-As you can see each row in the source data becomes a separate field. Each field now also has a max
-config option set. Options like min, max, unit and thresholds are all part of field configuration
-and if set like this will be used by the visualization instead of any options manually configured
+Each row in the source data becomes a separate field. Each field now also has a maximum
+configuration option set. Options such as **min**, **max**, **unit**, and **thresholds** are all part of field configuration, and if they are set like this, they will be used by the visualization instead of any options that are manually configured.
 in the panel editor options pane.
 
 ## Value mappings
