@@ -73,7 +73,7 @@ const (
 	}
 }
 `
-	// temporary until fix org isolation
+	//TODO: temporary until fix org isolation
 	mainOrgID = 1
 )
 

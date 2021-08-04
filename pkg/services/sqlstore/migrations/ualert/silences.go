@@ -71,11 +71,11 @@ func (m *migration) writeSilencesFile(orgID int64) error {
 	return f.Close()
 }
 
-func getAllSilenceFiles(mg *migrator.Migrator) ([]string, error) {
+func getSilenceFileNamesForAllOrgs(mg *migrator.Migrator) ([]string, error) {
 	return filepath.Glob(filepath.Join(mg.Cfg.DataPath, "alerting", "*", "silences"))
 }
 
-func silencesFileName(mg *migrator.Migrator, orgID int64) string {
+func silencesFileNameForOrg(mg *migrator.Migrator, orgID int64) string {
 	return filepath.Join(mg.Cfg.DataPath, "alerting", strconv.Itoa(int(orgID)), "silences")
 }
 
