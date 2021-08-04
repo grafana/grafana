@@ -3,6 +3,7 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, TimeOption } from '@grafana/data';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
+import { v4 as uuidv4 } from 'uuid';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -48,7 +49,7 @@ interface Props {
 export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false, name }) => {
   const styles = useStyles2(getStyles);
   // In case there are more of the same timerange in the list
-  const id = value.display + Math.floor(Math.random() * 10);
+  const id = uuidv4();
 
   return (
     <li className={cx(styles.container, selected && styles.selected)}>
