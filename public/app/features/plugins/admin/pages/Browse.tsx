@@ -86,6 +86,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
               </div>
               <div>
                 <Select
+                  menuShouldPortal
                   width={24}
                   value={sortBy}
                   onChange={onSortByChange}

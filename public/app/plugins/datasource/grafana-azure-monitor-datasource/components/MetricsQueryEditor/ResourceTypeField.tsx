@@ -60,6 +60,7 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
     <Field label="Resource type">
       {/* It's expected that the label reads Resource type but the property is metricDefinition */}
       <Select
+        menuShouldPortal
         inputId="azure-monitor-metrics-resource-type-field"
         value={findOption(namespaces, query.azureMonitor?.metricDefinition)}
         onChange={handleChange}

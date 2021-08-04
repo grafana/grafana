@@ -34,6 +34,7 @@ const FormatAsField: React.FC<AzureQueryEditorFieldProps> = ({ query, variableOp
   return (
     <Field label="Format as">
       <Select
+        menuShouldPortal
         inputId="azure-monitor-logs-workspaces-field"
         value={findOption(FORMAT_OPTIONS, query.azureLogAnalytics?.resultFormat)}
         onChange={handleChange}

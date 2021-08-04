@@ -67,6 +67,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
         {dimensionFilters.map((filter, index) => (
           <HorizontalGroup key={index} spacing="xs">
             <Select
+              menuShouldPortal
               placeholder="Field"
               value={findOption(dimensionOptions, filter.dimension)}
               options={dimensionOptions}

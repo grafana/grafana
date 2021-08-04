@@ -32,11 +32,11 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
           tooltip={
             <React.Fragment>
               An additional lower limit for the step parameter of the Prometheus query and for the
-               
+
               <code>
                 $__interval
               </code>
-               and 
+               and
               <code>
                 $__rate_interval
               </code>
@@ -66,6 +66,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         </div>
         <Select
           isSearchable={false}
+          menuShouldPortal={true}
           onChange={[Function]}
           options={
             Array [
@@ -113,6 +114,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         </div>
         <Select
           isSearchable={false}
+          menuShouldPortal={true}
           onChange={[Function]}
           options={
             Array [
