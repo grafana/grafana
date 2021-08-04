@@ -15,12 +15,17 @@ enum IconName {
   renderer = 'pen',
 }
 
-export function PluginListCard({ plugin }: { plugin: CatalogPlugin }) {
+type PluginListCardProps = {
+  plugin: CatalogPlugin;
+  pathName: string;
+};
+
+export function PluginListCard({ plugin, pathName }: PluginListCardProps) {
   const { name, id, orgName, type } = plugin;
   const styles = useStyles2(getStyles);
 
   return (
-    <CardContainer href={`/plugins/${id}`} className={styles.cardContainer}>
+    <CardContainer href={`${pathName}/${id}`} className={styles.cardContainer}>
       <VerticalGroup spacing="md">
         <div className={styles.headerWrap}>
           <PluginLogo

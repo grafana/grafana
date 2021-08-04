@@ -29,8 +29,11 @@ describe('PluginCard', () => {
     isEnterprise: false,
   };
 
-  it('renders a card with image, name, orgName and badges', () => {
-    render(<PluginListCard plugin={plugin} />);
+  it('renders a card with link, image, name, orgName and badges', () => {
+    render(<PluginListCard plugin={plugin} pathName="/plugins" />);
+
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/plugins/test-plugin');
+
     const logo = screen.getByRole('img');
     expect(logo).toHaveAttribute('src', plugin.info.logos.small);
     expect(logo).toHaveAttribute('alt', `${plugin.name} logo`);
@@ -43,21 +46,21 @@ describe('PluginCard', () => {
 
   it('renders a datasource plugin with correct icon', () => {
     const datasourcePlugin = { ...plugin, type: PluginType.datasource };
-    render(<PluginListCard plugin={datasourcePlugin} />);
+    render(<PluginListCard plugin={datasourcePlugin} pathName="" />);
 
     expect(screen.getByLabelText(/datasource plugin icon/i)).toBeVisible();
   });
 
   it('renders a panel plugin with correct icon', () => {
     const panelPlugin = { ...plugin, type: PluginType.panel };
-    render(<PluginListCard plugin={panelPlugin} />);
+    render(<PluginListCard plugin={panelPlugin} pathName="" />);
 
     expect(screen.getByLabelText(/panel plugin icon/i)).toBeVisible();
   });
 
   it('renders an app plugin with correct icon', () => {
     const appPlugin = { ...plugin, type: PluginType.app };
-    render(<PluginListCard plugin={appPlugin} />);
+    render(<PluginListCard plugin={appPlugin} pathName="" />);
 
     expect(screen.getByLabelText(/app plugin icon/i)).toBeVisible();
   });

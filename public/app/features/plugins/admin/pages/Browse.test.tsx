@@ -1,12 +1,13 @@
 import React from 'react';
 import { Router } from 'react-router-dom';
 import { render, RenderResult, waitFor, within } from '@testing-library/react';
-import BrowsePage from './Browse';
+import { Provider } from 'react-redux';
 import { locationService } from '@grafana/runtime';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
+import BrowsePage from './Browse';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
-import { Provider } from 'react-redux';
-import { LocalPlugin, RemotePlugin } from '../types';
+import { LocalPlugin, RemotePlugin, PluginAdminRoutes } from '../types';
 import { API_ROOT, GRAFANA_API_ROOT } from '../constants';
 
 jest.mock('@grafana/runtime', () => ({
@@ -28,11 +29,14 @@ jest.mock('@grafana/runtime', () => ({
 function setup(path = '/plugins'): RenderResult {
   const store = configureStore();
   locationService.push(path);
+  const props = getRouteComponentProps({
+    route: { routeName: PluginAdminRoutes.Home } as any,
+  });
 
   return render(
     <Provider store={store}>
       <Router history={locationService.getHistory()}>
-        <BrowsePage />
+        <BrowsePage {...props} />
       </Router>
     </Provider>
   );
