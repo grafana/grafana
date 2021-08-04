@@ -191,7 +191,6 @@ func formatLegend(metric model.Metric, query *lokiQuery) string {
 func (s *Service) parseQuery(dsInfo *datasourceInfo, queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
-		// model, err := simplejson.NewJson(query.JSON)
 
 		model := &ResponseModel{}
 		err := json.Unmarshal(query.JSON, model)
