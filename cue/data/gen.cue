@@ -120,6 +120,9 @@ Family: scuemata.#Family & {
                     // The panel plugin type id. 
                     type: !=""
 
+                    // TODO docs
+                    id?: number
+
                     // Internal - the exact major and minor versions of the panel plugin
                     // schema. Hidden and therefore not a part of the data model, but
                     // expected to be filled with panel plugin schema versions so that it's
@@ -153,6 +156,7 @@ Family: scuemata.#Family & {
                     }
                     // Panel links.
                     // links?: [..._panelLink]
+
                     // Name of template variable to repeat for.
                     repeat?: string
                     // Direction to repeat in if 'repeat' is set.
