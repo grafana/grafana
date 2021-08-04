@@ -63,7 +63,7 @@ To update a plugin:
 1. Click on the plugin logo.
 1. Click **Update**.
 
-A confirmation message opens notifying that the update was successful.
+When the update is complete, you see a confirmation message that the update was successful.
 
 ![Plugin catalog update](/static/img/docs/plugins/plugins-catalog-update-8-1.png)
 
