@@ -36,7 +36,8 @@ func TestIntervalCalculator_Calculate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			interval := calculator.Calculate(tc.timeRange, time.Millisecond*1, tc.intervalMode)
+			interval, err := calculator.Calculate(tc.timeRange, time.Millisecond*1, tc.intervalMode)
+			require.Nil(t, err)
 			assert.Equal(t, tc.expected, interval.Text)
 		})
 	}
