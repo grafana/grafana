@@ -10,7 +10,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
 
   dashlistSection: css`
-    margin-bottom: ${theme.v1.spacing.d};
+    margin-bottom: ${theme.spacing(2)};
     padding-top: 3px;
   `,
 
