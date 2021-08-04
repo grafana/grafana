@@ -107,8 +107,14 @@ func (am *Alertmanager) GetAlertGroups(orgID int64, active, silenced, inhibited 
 	return amInstance.GetAlertGroups(active, silenced, inhibited, filter, receiver)
 }
 
-func (am *Alertmanager) PutAlerts(alerts apimodels.PostableAlerts) error {
-	panic("implement me")
+func (am *Alertmanager) PutAlerts(orgID int64, alerts apimodels.PostableAlerts) error {
+	am.instanceMtx.RLock()
+	defer am.instanceMtx.RUnlock()
+	amInstance, ok := am.Instances[orgID]
+	if !ok {
+		return fmt.Errorf("unable to get alertmanager for orgID: %d", orgID)
+	}
+	return amInstance.PutAlerts(alerts)
 }
 
 func (am *Alertmanager) GetAM(orgID int64) (*alertmanager, error) {
