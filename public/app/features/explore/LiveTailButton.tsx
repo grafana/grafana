@@ -1,8 +1,8 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { CSSTransition } from 'react-transition-group';
-import { useTheme, Tooltip, stylesFactory, ButtonGroup, ToolbarButton } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { Tooltip, ButtonGroup, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 
 type LiveTailButtonProps = {
   splitted: boolean;
@@ -16,7 +16,7 @@ type LiveTailButtonProps = {
 
 export function LiveTailButton(props: LiveTailButtonProps) {
   const { start, pause, resume, isLive, isPaused, stop, splitted } = props;
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme);
   const buttonVariant = isLive && !isPaused ? 'active' : 'default';
   const onClickMain = isLive ? (isPaused ? resume : pause) : start;
@@ -57,7 +57,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
   );
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     stopButtonEnter: css`
       label: stopButtonEnter;
@@ -82,4 +82,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       width: 0;
     `,
   };
-});
+};
