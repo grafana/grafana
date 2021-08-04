@@ -1,13 +1,10 @@
 import React from 'react';
-import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { useLocation } from 'react-router-dom';
-import { Card } from '../components/Card';
-import { Grid } from '../components/Grid';
-
-import { CatalogPlugin } from '../types';
+import { useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { PluginLogo } from './PluginLogo';
+import { CatalogPlugin } from '../types';
+import { PluginListCard } from './PluginListCard';
+import { useLocation } from 'react-router-dom';
 
 interface Props {
   plugins: CatalogPlugin[];
@@ -18,50 +15,16 @@ export const PluginList = ({ plugins }: Props) => {
   const location = useLocation();
 
   return (
-    <Grid>
-      {plugins.map((plugin) => {
-        const { name, id, orgName } = plugin;
-
-        return (
-          <Card
-            key={`${id}`}
-            href={`${location.pathname}/${id}`}
-            image={
-              <PluginLogo
-                src={plugin.info.logos.small}
-                className={css`
-                  max-height: 64px;
-                `}
-              />
-            }
-            text={
-              <>
-                <div className={styles.name}>{name}</div>
-                <div className={styles.orgName}>{orgName}</div>
-              </>
-            }
-          />
-        );
-      })}
-    </Grid>
+    <div className={styles} data-testid="plugin-list">
+      {plugins.map((plugin) => (
+        <PluginListCard key={plugin.id} plugin={plugin} pathName={location.pathname} />
+      ))}
+    </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  name: css`
-    font-size: ${theme.typography.h4.fontSize};
-    color: ${theme.colors.text};
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: center;
-  `,
-  orgName: css`
-    font-size: ${theme.typography.body.fontSize};
-    color: ${theme.colors.text.secondary};
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: center;
-  `,
-});
+const getStyles = (theme: GrafanaTheme2) => css`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+  grid-gap: ${theme.spacing(3)};
+`;

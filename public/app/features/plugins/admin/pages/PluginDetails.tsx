@@ -49,6 +49,7 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
         <PluginPage>
           <div className={styles.headerContainer}>
             <PluginLogo
+              alt={`${plugin.name} logo`}
               src={plugin.info.logos.small}
               className={css`
                 object-fit: contain;
