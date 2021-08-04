@@ -1,6 +1,6 @@
-import { DataSourceApi, ExploreQueryFieldProps } from '@grafana/data';
+import { DataSourceApi, ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, InlineLabel, LegacyForms, RadioButtonGroup } from '@grafana/ui';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import React from 'react';
@@ -52,17 +52,21 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
   render() {
     const { query, onChange } = this.props;
     const { linkedDatasource } = this.state;
+    const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
+      { value: 'search', label: 'Search' },
+      { value: 'traceId', label: 'TraceID' },
+    ];
+
+    if (config.featureToggles.tempoServiceGraph) {
+      queryTypeOptions.push({ value: 'serviceMap', label: 'Service Map' });
+    }
 
     return (
       <>
         <InlineFieldRow>
           <InlineField label="Query type">
             <RadioButtonGroup<TempoQueryType>
-              options={[
-                { value: 'search', label: 'Search' },
-                { value: 'traceId', label: 'TraceID' },
-                { value: 'serviceMap', label: 'Service Map' },
-              ]}
+              options={queryTypeOptions}
               value={query.queryType || DEFAULT_QUERY_TYPE}
               onChange={(v) =>
                 onChange({

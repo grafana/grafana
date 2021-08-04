@@ -3,6 +3,7 @@ import { DataSourceHttpSettings } from '@grafana/ui';
 import { TraceToLogsSettings } from 'app/core/components/TraceToLogsSettings';
 import React from 'react';
 import { ServiceMapSettings } from './ServiceMapSettings';
+import { config } from '@grafana/runtime';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
@@ -17,7 +18,9 @@ export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
       />
 
       <TraceToLogsSettings options={options} onOptionsChange={onOptionsChange} />
-      <ServiceMapSettings options={options} onOptionsChange={onOptionsChange} />
+      {config.featureToggles.tempoServiceGraph && (
+        <ServiceMapSettings options={options} onOptionsChange={onOptionsChange} />
+      )}
     </>
   );
 };
