@@ -170,7 +170,13 @@ export class UPlotConfigBuilder {
   }
 
   getConfig() {
-    const config: PlotConfig = { series: [{}] };
+    const config: PlotConfig = {
+      series: [
+        {
+          value: () => '',
+        },
+      ],
+    };
     config.axes = this.ensureNonOverlappingAxes(Object.values(this.axes)).map((a) => a.getConfig());
     config.series = [...config.series, ...this.series.map((s) => s.getConfig())];
     config.scales = this.scales.reduce((acc, s) => {
