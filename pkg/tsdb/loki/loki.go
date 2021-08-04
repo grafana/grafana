@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -50,6 +49,13 @@ type datasourceInfo struct {
 	BasicAuthUser     string
 	BasicAuthPassword string
 	TimeInterval      string `json:"timeInterval"`
+}
+
+type ResponseModel struct {
+	Expr         string `json:"expr"`
+	LegendFormat string `json:"legendFormat"`
+	Interval     string `json:"interval"`
+	IntervalMS   int    `json:"intervalMS"`
 }
 
 func init() {
@@ -185,24 +191,18 @@ func formatLegend(metric model.Metric, query *lokiQuery) string {
 func (s *Service) parseQuery(dsInfo *datasourceInfo, queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
-		model, err := simplejson.NewJson(query.JSON)
+		// model, err := simplejson.NewJson(query.JSON)
+
+		model := &ResponseModel{}
+		err := json.Unmarshal(query.JSON, model)
 		if err != nil {
 			return nil, err
 		}
-		expr, err := model.Get("expr").String()
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse Expr: %v", err)
-		}
-
-		format := model.Get("legendFormat").MustString("")
 
 		start := query.TimeRange.From
-
 		end := query.TimeRange.To
 
-		intervalS := model.Get("interval").MustString("")
-		intervalMS := model.Get("intervalMs").MustInt(0)
-		dsInterval, err := tsdb.GetIntervalFrom(dsInfo.TimeInterval, intervalS, int64(intervalMS), time.Second)
+		dsInterval, err := tsdb.GetIntervalFrom(dsInfo.TimeInterval, model.Interval, int64(model.IntervalMS), time.Second)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse Interval: %v", err)
 		}
@@ -216,9 +216,9 @@ func (s *Service) parseQuery(dsInfo *datasourceInfo, queryContext *backend.Query
 		step := time.Duration(int64(interval.Value))
 
 		qs = append(qs, &lokiQuery{
-			Expr:         expr,
+			Expr:         model.Expr,
 			Step:         step,
-			LegendFormat: format,
+			LegendFormat: model.LegendFormat,
 			Start:        start,
 			End:          end,
 			RefID:        query.RefID,
