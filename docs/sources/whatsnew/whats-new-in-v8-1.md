@@ -116,6 +116,21 @@ We’ve made some changes to the plugins UI to help make it easier to discover a
 
 New panel summaries and preview on the top level [Visualizations]({{< relref "../panels/visualizations/_index.md" >}}) page to help users pick or learn about specific visualizations more easily.
 
+### Upcoming changes to the Select component
+
+`@grafana/ui` exposes a `Select` component, along with the `MultiSelect`, `AsyncSelect` and `AsyncMultiSelect` variants. We've made some internal changes to these components to make the behavior and positioning more consistent in all scenarios.
+
+In order to test the changes, you can use the `menuShouldPortal` prop:
+```jsx
+<Select
+  menuShouldPortal
+  {...otherProps}
+/>
+```
+Tests are most likely to be affected. There are some tips for fixing these in the original pull request [here](https://github.com/grafana/grafana/pull/36398).
+
+We'd love as much feedback as possible on this change as we're looking to make this the default behavior in a future release of Grafana.
+
 ## Enterprise features
 
 These features are included in the Grafana Enterprise edition.
