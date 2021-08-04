@@ -187,13 +187,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
   renderGraphPanel(width: number) {
     const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme } = this.props;
-    const spacing = parseInt(theme.spacing(1).slice(0, -2), 10);
+    const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     return (
       <Collapse label="Graph" loading={loading} isOpen>
         <ExploreGraphNGPanel
           data={graphResult!}
           height={400}
-          width={width - spacing * 2}
+          width={width - spacing}
           tooltipDisplayMode={TooltipDisplayMode.Single}
           absoluteRange={absoluteRange}
           timeZone={timeZone}
