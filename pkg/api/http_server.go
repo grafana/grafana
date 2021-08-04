@@ -135,7 +135,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
 	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
-	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService) *HTTPServer {
+	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService) (*HTTPServer, error) {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -191,7 +191,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	}
 	hs.registerRoutes()
 
-	return hs
+	if err := hs.declareFixedRoles(); err != nil {
+		return nil, err
+	}
+	return hs, nil
 }
 
 func (hs *HTTPServer) AddMiddleware(middleware macaron.Handler) {

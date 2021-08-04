@@ -25,6 +25,7 @@ var wireExtsBasicSet = wire.NewSet(
 	setting.ProvideProvider,
 	wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	ossaccesscontrol.ProvideService,
+	wire.Bind(new(accesscontrol.RoleRegistry), new(*ossaccesscontrol.OSSAccessControlService)),
 	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.OSSAccessControlService)),
 	validations.ProvideValidator,
 	wire.Bind(new(models.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
