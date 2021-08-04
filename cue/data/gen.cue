@@ -74,13 +74,13 @@ Family: scuemata.#Family & {
                 version?: number
                 panels?: [...#Panel]
 
-                // TODO
+                // TODO docs
                 #FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(targetType="enum")
 
-                // TODO
+                // TODO docs
                 #FieldColorSeriesByMode: "min" | "max" | "last" @cuetsy(targetType="type")
 
-                // TODO
+                // TODO docs
                 #FieldColor: {
                     // The main color scheme mode
                     mode: #FieldColorModeId | string
@@ -88,6 +88,27 @@ Family: scuemata.#Family & {
                     fixedColor?: string
                     // Some visualizations need to know how to assign a series color from by value color schemes
                     seriesBy?: #FieldColorSeriesByMode
+                } @cuetsy(targetType="interface")
+
+                // TODO docs
+                #Threshold: {
+                    // TODO docs
+                    value: number
+                    // TODO docs
+                    color: string
+                    // TODO docs
+                    // TODO are the values here enumerable into a disjunction?
+                    // Some seem to be listed in typescript comment
+                    state?: string
+                } @cuetsy(targetType="interface")
+
+                #ThresholdsMode: "absolute" | "percentage" @cuetsy(targetType="enum")
+
+                #ThresholdsConfig: {
+                    mode: #ThresholdsMode
+
+                    // Must be sorted by 'value', first value is always -Infinity
+                    steps: [...#Threshold]
                 } @cuetsy(targetType="interface")
 
                 // Dashboard panels. Panels are canonically defined inline
@@ -185,14 +206,14 @@ Family: scuemata.#Family & {
                             //   // Convert input values into a display string
                             //   mappings?: ValueMapping[];
 
-                            //   // Map numeric values to states
-                            //   thresholds?: ThresholdsConfig;
+                            // Map numeric values to states
+                            thresholds?: #ThresholdsConfig
 
                             //   // Map values to a display color
                             color?: #FieldColor
 
                             //   // Used when reducing field values
-                            //   nullValueMode?: NullValueMode;
+                            //   nullValueMode?: NullValueMode
 
                             //   // The behavior when clicking on a result
                             links?: [...]
