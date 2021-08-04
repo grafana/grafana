@@ -24,16 +24,16 @@ type Props = {
  */
 export function TagEditor({ dispatch, tag, tagIndex, state }: Props) {
   const getTagsOptions = useCallback(
-    async (inputValue: string | undefined) => {
-      return await getTagsSelectables(state, tagIndex, inputValue || '');
+    (inputValue: string | undefined) => {
+      return getTagsSelectables(state, tagIndex, inputValue || '');
     },
     [state, tagIndex]
   );
   const debouncedGetTagsOptions = useMemo(() => debounce(getTagsOptions, 200, { leading: true }), [getTagsOptions]);
 
   const getTagValueOptions = useCallback(
-    async (inputValue: string | undefined) => {
-      return await getTagValuesSelectables(state, tag, tagIndex, inputValue || '');
+    (inputValue: string | undefined) => {
+      return getTagValuesSelectables(state, tag, tagIndex, inputValue || '');
     },
     [state, tagIndex, tag]
   );
