@@ -12,12 +12,12 @@ import { DataSourceWithBackend } from '@grafana/runtime';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { from, merge, Observable, throwError } from 'rxjs';
-import { bufferCount, map, mergeMap } from 'rxjs/operators';
+import { map, mergeMap, toArray } from 'rxjs/operators';
 import { LokiOptions, LokiQuery } from '../loki/types';
 import { transformTrace, transformTraceList } from './resultTransformer';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
-import { mapPromMetricsToServiceMap } from './graphTransform';
+import { mapPromMetricsToServiceMap, serviceMapMetrics } from './graphTransform';
 
 export type TempoQueryType = 'search' | 'traceId' | 'serviceMap';
 
@@ -133,8 +133,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   private serviceMapQuery(request: DataQueryRequest<TempoQuery>) {
     return this.queryServiceMapPrometheus(makePromServiceMapRequest(request)).pipe(
-      // TODO: probably just buffer until complete?
-      bufferCount(2),
+      // Just collect all the responses first before processing into node graph data
+      toArray(),
       map((responses: DataQueryResponse[]) => {
         return {
           data: mapPromMetricsToServiceMap(request, responses),
@@ -157,12 +157,3 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
     }),
   };
 }
-
-const serviceMapMetrics = [
-  // 'tempo_service_graph_request_seconds_bucket',
-  // 'tempo_service_graph_request_seconds_count',
-  'tempo_service_graph_request_server_seconds_sum',
-  'tempo_service_graph_request_total',
-  // 'tempo_service_graph_unpaired_spans_total',
-  // 'tempo_service_graph_untagged_spans_total',
-];

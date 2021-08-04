@@ -7,6 +7,7 @@ import {
   FieldDTO,
   MutableDataFrame,
   NodeGraphDataFrameFieldNames as Fields,
+  TimeRange,
 } from '@grafana/data';
 import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '../../../core/utils/tracing';
 import { TempoQuery } from './datasource';
@@ -131,94 +132,39 @@ function findTraceDuration(view: DataFrameView<Row>): number {
 const secondsMetric = 'tempo_service_graph_request_server_seconds_sum';
 const totalsMetric = 'tempo_service_graph_request_total';
 
-export function mapPromMetricsToServiceMap(request: DataQueryRequest<TempoQuery>, responses: DataQueryResponse[]) {
-  function valueName(metric: string) {
-    return `Value #${metric}`;
-  }
+export const serviceMapMetrics = [
+  secondsMetric,
+  totalsMetric,
+  // We don't show histogram in node graph at the moment but we could later add that into a node context menu.
+  // 'tempo_service_graph_request_seconds_bucket',
+  // 'tempo_service_graph_request_seconds_count',
+  // These are used for debugging the tempo collection so probably not useful for service map right now.
+  // 'tempo_service_graph_unpaired_spans_total',
+  // 'tempo_service_graph_untagged_spans_total',
+];
 
-  const [nodes, edges] = createServiceMapFrames();
+/**
+ * Map response from multiple prometheus metrics into a node graph data frames with nodes and edges.
+ * @param request
+ * @param responses
+ */
+export function mapPromMetricsToServiceMap(
+  request: DataQueryRequest<TempoQuery>,
+  responses: DataQueryResponse[]
+): [DataFrame, DataFrame] {
   const [totalsDFView, secondsDFView] = getMetricFrames(responses);
 
+  // First just collect data from the metrics into a map with nodes and edges as keys
   const nodesMap: Record<string, any> = {};
   const edgesMap: Record<string, any> = {};
+  // At this moment we don't have any error/success or other counts so we just use these 2
+  collectMetricData(totalsDFView, 'total', totalsMetric, nodesMap, edgesMap);
+  collectMetricData(secondsDFView, 'seconds', secondsMetric, nodesMap, edgesMap);
 
-  for (let i = 0; i < totalsDFView.length; i++) {
-    const row = totalsDFView.get(i);
-    const edgeId = `${row.client}_${row.server}`;
-    edgesMap[edgeId] = {
-      total: row[valueName(totalsMetric)],
-      target: row.server,
-      source: row.client,
-    };
-
-    if (!nodesMap[row.server]) {
-      nodesMap[row.server] = {
-        total: row[valueName(totalsMetric)],
-        seconds: 0,
-      };
-    } else {
-      nodesMap[row.server].total += row[valueName(totalsMetric)];
-    }
-
-    if (!nodesMap[row.client]) {
-      nodesMap[row.client] = {
-        total: 0,
-        seconds: 0,
-      };
-    }
-  }
-
-  for (let i = 0; i < secondsDFView.length; i++) {
-    const row = secondsDFView.get(i);
-    const edgeId = `${row.client}_${row.server}`;
-
-    if (!edgesMap[edgeId]) {
-      edgesMap[edgeId] = {
-        seconds: row[valueName(secondsMetric)],
-        target: row.server,
-        source: row.client,
-      };
-    } else {
-      edgesMap[edgeId].seconds += row[valueName(secondsMetric)];
-    }
-
-    if (!nodesMap[row.server]) {
-      nodesMap[row.server] = {
-        seconds: row[valueName(secondsMetric)],
-        total: 0,
-      };
-    } else {
-      nodesMap[row.server].seconds += row[valueName(secondsMetric)];
-    }
-  }
-
-  const rangeMs = request.range.to.valueOf() - request.range.from.valueOf();
-
-  for (const nodeId of Object.keys(nodesMap)) {
-    const node = nodesMap[nodeId];
-    nodes.add({
-      id: nodeId,
-      title: nodeId,
-      mainStat: node.total ? (node.seconds / node.total) * 1000 : Number.NaN,
-      secondaryStat: node.total ? node.total / (rangeMs / (1000 * 60)) : Number.NaN,
-    });
-  }
-
-  for (const edgeId of Object.keys(edgesMap)) {
-    const edge = edgesMap[edgeId];
-    edges.add({
-      id: edgeId,
-      source: edge.source,
-      target: edge.target,
-      mainStat: edge.total,
-      secondaryStat: edge.total / (rangeMs / (1000 * 60)),
-    });
-  }
-
-  return [nodes, edges];
+  return convertToDataFrames(nodesMap, edgesMap, request.range);
 }
 
-function createServiceMapFrames() {
+function createServiceMapDataFrames() {
   function createDF(name: string, fields: FieldDTO[]) {
     return new MutableDataFrame({ name, fields, meta: { preferredVisualisationType: 'nodeGraph' } });
   }
@@ -248,4 +194,88 @@ function getMetricFrames(responses: DataQueryResponse[]) {
   const totalsDFView = new DataFrameView(responsesMap[totalsMetric][0].data[0]);
   const secondsDFView = new DataFrameView(responsesMap[secondsMetric][0].data[0]);
   return [totalsDFView, secondsDFView];
+}
+
+/**
+ * Collect data from a metric into a map of nodes and edges. The metric data is modeled as counts of metric per edge
+ * which is a pair of client-server nodes. This means we convert each row of the metric 1-1 to edges and than we assign
+ * the metric also to server. We count the stats for server only as we show requests/transactions that particular node
+ * processed not those which it generated and other stats like average transaction time then stem from that.
+ * @param frame
+ * @param stat
+ * @param metric
+ * @param nodesMap
+ * @param edgesMap
+ */
+function collectMetricData(
+  frame: DataFrameView,
+  stat: 'total' | 'seconds',
+  metric: string,
+  nodesMap: Record<string, any>,
+  edgesMap: Record<string, any>
+) {
+  // The name of the value column is in this format
+  // TODO figure out if it can be changed
+  const valueName = `Value #${metric}`;
+
+  for (let i = 0; i < frame.length; i++) {
+    const row = frame.get(i);
+    const edgeId = `${row.client}_${row.server}`;
+
+    if (!edgesMap[edgeId]) {
+      edgesMap[edgeId] = {
+        target: row.server,
+        source: row.client,
+        [stat]: row[valueName],
+      };
+    } else {
+      edgesMap[edgeId][stat] = (edgesMap[edgeId][stat] || 0) + row[valueName];
+    }
+
+    if (!nodesMap[row.server]) {
+      nodesMap[row.server] = {
+        [stat]: row[valueName],
+      };
+    } else {
+      nodesMap[row.server][stat] = (nodesMap[row.server][stat] || 0) + row[valueName];
+    }
+
+    if (!nodesMap[row.client]) {
+      nodesMap[row.client] = {
+        [stat]: 0,
+      };
+    }
+  }
+}
+
+function convertToDataFrames(
+  nodesMap: Record<string, any>,
+  edgesMap: Record<string, any>,
+  range: TimeRange
+): [DataFrame, DataFrame] {
+  const rangeMs = range.to.valueOf() - range.from.valueOf();
+  const [nodes, edges] = createServiceMapDataFrames();
+  for (const nodeId of Object.keys(nodesMap)) {
+    const node = nodesMap[nodeId];
+    nodes.add({
+      id: nodeId,
+      title: nodeId,
+      // NaN will not be shown in the node graph. This happens for a root client node which did not process
+      // any requests itself.
+      mainStat: node.total ? (node.seconds / node.total) * 1000 : Number.NaN,
+      secondaryStat: node.total ? node.total / (rangeMs / (1000 * 60)) : Number.NaN,
+    });
+  }
+  for (const edgeId of Object.keys(edgesMap)) {
+    const edge = edgesMap[edgeId];
+    edges.add({
+      id: edgeId,
+      source: edge.source,
+      target: edge.target,
+      mainStat: edge.total,
+      secondaryStat: edge.total / (rangeMs / (1000 * 60)),
+    });
+  }
+
+  return [nodes, edges];
 }
