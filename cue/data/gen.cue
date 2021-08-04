@@ -69,7 +69,7 @@ Family: scuemata.#Family & {
                 refresh?: string
                 // Version of the JSON schema, incremented each time a Grafana update brings
                 // changes to said schema.
-                schemaVersion: number | *25
+                schemaVersion: number | *30
                 // Version of the dashboard, incremented each time the dashboard is updated.
                 version?: number
                 panels?: [...#Panel]
