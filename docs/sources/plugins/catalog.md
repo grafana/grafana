@@ -6,7 +6,7 @@ weight = 1
 
 # Plugin catalog
 
-The plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and organization administrators can access and use the catalog. The following access rules apply depending on the user role
+The plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and organization administrators can access and use the plugin catalog. The following access rules apply depending on the user role:
 
 | Org Admin | Server Admin | Permissions                                                                                 |
 | --------- | ------------ | ------------------------------------------------------------------------------------------- |
@@ -27,11 +27,14 @@ Before you can use the plugin catalog, you must enable it in the Grafana [config
 Before following the steps below, make sure you are logged in as a Grafana administrator.
 
 <a id="#plugin-catalog-entry"></a>
-There are currently two entry points to the Plugin catalog. Grafana server administrators can find the Plugin catalog at **Server Admin > Plugins**. Organization administrators can find the Plugin catalog at **Configuration > Plugins**.
+Currently, there are two entry points to the plugin catalog. 
+- Grafana server administrators can find it at **Server Admin > 
+Plugins**.
+- Organization administrators can find it at **Configuration > Plugins**.
 
 ## Browse plugins
 
-To browse available plugins:
+To browse for available plugins:
 
 1. In Grafana, [navigate to the Plugin catalog](#plugin-catalog-entry) to view installed plugins.
 1. Click the **All** filter to browse all available plugins.
@@ -46,12 +49,12 @@ To browse available plugins:
 1. Click on the plugin logo.
 1. Click **Install**.
 
-A confirmation message opens notifying that the installation was successful.
+When the update is complete, you see a confirmation message that the installation was successful.
 
 ![Plugin catalog install](/static/img/docs/plugins/plugins-catalog-install-8-1.png)
 
 ## Update a plugin
-
+To update a plugin:
 1. In Grafana, [navigate to the Plugin catalog](#plugin-catalog-entry) to view installed plugins.
 1. Click on the plugin logo.
 1. Click **Update**.
@@ -61,11 +64,11 @@ A confirmation message opens notifying that the update was successful.
 ![Plugin catalog update](/static/img/docs/plugins/plugins-catalog-update-8-1.png)
 
 ## Uninstall a plugin
-
+To uninstall a plugin:
 1. In Grafana, [navigate to the Plugin catalog](#plugin-catalog-entry) to view installed plugins.
 1. Click on the plugin logo.
 1. Click **Uninstall**.
 
-A confirmation message opens notifying that the uninstallation was successful.
+When the update is complete, you see a confirmation message that the uninstall was successful.
 
 ![Plugin catalog uninstall](/static/img/docs/plugins/plugins-catalog-uninstall-8-1.png)
