@@ -31,10 +31,10 @@ function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc'): TimeRan
 
 describe('TimeRangeForm', () => {
   it('should render form correcty', () => {
-    const { getByLabelText } = setup();
+    const { getByLabelText, getByText } = setup();
     const { TimePicker } = selectors.components;
 
-    expect(getByLabelText(TimePicker.applyTimeRange)).toBeInTheDocument();
+    expect(getByText('Apply time range')).toBeInTheDocument();
     expect(getByLabelText(TimePicker.fromField)).toBeInTheDocument();
     expect(getByLabelText(TimePicker.toField)).toBeInTheDocument();
   });
