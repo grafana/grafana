@@ -87,7 +87,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string) ([]byte, e
 
 	// 3. Store its encrypted value in db
 	err = s.CreateDataKey(ctx, DataKey{
-		Active:        true, // TODO: how do we manage active/deactivated DEKs?
+		Active:        true, // TODO: right now we do never mark a key as deactivated
 		Name:          name,
 		Provider:      s.defaultProvider,
 		EncryptedData: encrypted,
@@ -124,7 +124,7 @@ func (s *SecretsService) Encrypt(payload []byte, entityID string) ([]byte, error
 
 	dataKey, err := s.dataKey(keyName)
 	if err != nil {
-		if errors.Is(err, ErrDataKeyNotFound) { // TODO: should it be in models?
+		if errors.Is(err, ErrDataKeyNotFound) {
 			dataKey, err = s.newDataKey(context.TODO(), keyName)
 			if err != nil {
 				return nil, err
@@ -152,14 +152,17 @@ func (s *SecretsService) Encrypt(payload []byte, entityID string) ([]byte, error
 }
 
 func (s *SecretsService) Decrypt(payload []byte) ([]byte, error) {
+	// TODO: check when this error has been added to util.decrypt and if it's really needed
+	// Decrypt will return this error if payload is empty,
+	// but if its payloadLength <= saltLength, call to s.Enc.Decrypt(payload, dataKey) will return "unable to compute salt"
 	if len(payload) < 0 {
-		return nil, fmt.Errorf("unable to decrypt empty payload") // TODO: check when this error has been added to util.decrypt and if it's really needed
+		return nil, fmt.Errorf("unable to decrypt empty payload")
 	}
 
 	var dataKey []byte
 
 	if payload[0] != '#' {
-		dataKey = []byte(setting.SecretKey)
+		dataKey = []byte(s.Settings.KeyValue("security", "secret_key").Value()) // TODO: should it be moved somewhere else?
 	} else {
 		payload = payload[1:]
 		endOfKey := bytes.Index(payload, []byte{'#'})
