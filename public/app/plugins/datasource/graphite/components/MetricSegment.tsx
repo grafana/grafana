@@ -47,8 +47,8 @@ export function MetricSegment({ dispatch, metricIndex, segment, state }: Props) 
   const onSegmentChangedDebounced = useMemo(() => debounce(onSegmentChanged, 100), [onSegmentChanged]);
 
   return (
-    <SegmentAsync<GraphiteSegment>
-      value={{ label: segment.value, value: segment }}
+    <SegmentAsync<GraphiteSegment | string>
+      value={segment.value}
       inputMinWidth={150}
       allowCustomValue={true}
       loadOptions={debouncedLoadOptions}
