@@ -45,7 +45,7 @@ export interface SelectCommonProps<T> {
   /**
    * @deprecated
    * Setting to true will portal the menu to `document.body`.
-   * This prop will soon be removed and portalling will be the default behaviour.
+   * This property will soon be removed and portalling will be the default behavior.
    */
   menuShouldPortal?: boolean;
   /** The message to display when no options could be found */
