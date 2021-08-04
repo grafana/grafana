@@ -30,7 +30,7 @@ The Azure Monitor data source provides the following queries you can specify in 
 | `workspaces()`                                                                     | Returns a list of workspaces for the default subscription.                                                       |
 | `workspaces(subscriptionID)`                                                       | Returns a list of workspaces for the specified subscription (the parameter can be quoted or unquoted).           |
 | `AppInsights()`                                                                    | Returns a list of Application Insights for the default subscription.                                             |
-| `AppInsights(subscriptionID)`                                                      | Returns a list of Application Insights for the specified subscription (the parameter can be quoted or unquoted). |
+| `AppInsights(subscriptionID)`                                                      | Returns a list of Application Insights for the specified subscription (the parameter can be within quotes or without). |
 
 Where a subscription ID is not specified, a default subscription must be specified in the data source configuration, which will be used.
 
