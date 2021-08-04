@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/alertmanager/api/metrics"
@@ -25,17 +26,29 @@ const (
 
 var GlobalMetrics = NewMetrics(prometheus.DefaultRegisterer)
 
+// multi-thread safety and stable ordering.
+type orgRegistries struct {
+	regsMu *sync.Mutex
+	regs   map[int64]prometheus.Registerer
+}
+
+func newOrgRegistries() orgRegistries {
+	return orgRegistries{
+		regsMu: &sync.Mutex{},
+		regs:   make(map[int64]prometheus.Registerer),
+	}
+}
+
 type Metrics struct {
 	*metrics.Alerts
-	AlertState *prometheus.GaugeVec
-	// Registerer is for use by subcomponents which register their own metrics.
-	Registerer           prometheus.Registerer
+	AlertState           *prometheus.GaugeVec
 	RequestDuration      *prometheus.HistogramVec
 	ActiveConfigurations prometheus.Gauge
 	EvalTotal            *prometheus.CounterVec
 	EvalFailures         *prometheus.CounterVec
 	EvalDuration         *prometheus.SummaryVec
 	GroupRules           *prometheus.GaugeVec
+	orgRegistry          orgRegistries
 }
 
 func init() {
@@ -62,7 +75,6 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			Name:      "alerts",
 			Help:      "How many alerts by state.",
 		}, []string{"state"}),
-		Registerer: r,
 		RequestDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: "grafana",
@@ -122,7 +134,21 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			},
 			[]string{"user"},
 		),
+		orgRegistry: newOrgRegistries(),
 	}
+}
+
+func (m *Metrics) GetOrCreateOrgRegistry(orgID int64) prometheus.Registerer {
+	m.orgRegistry.regsMu.Lock()
+	defer m.orgRegistry.regsMu.Unlock()
+
+	orgRegistry, ok := m.orgRegistry.regs[orgID]
+	if !ok {
+		reg := prometheus.NewRegistry()
+		m.orgRegistry.regs[orgID] = reg
+		return reg
+	}
+	return orgRegistry
 }
 
 // Instrument wraps a middleware, instrumenting the request latencies.

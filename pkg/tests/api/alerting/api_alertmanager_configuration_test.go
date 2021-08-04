@@ -6,16 +6,25 @@ import (
 	"net/http"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
+	// override polling interval for fetching orgs
+	origOrgPollingInterval := schedule.OrgPollingInterval
+	schedule.OrgPollingInterval = 1 * time.Millisecond
+	defer func() {
+		schedule.OrgPollingInterval = origOrgPollingInterval
+	}()
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
@@ -85,7 +94,7 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 }
 `
 		resp := postRequest(t, alertConfigURL, payload, http.StatusBadRequest) // nolint
-		require.JSONEq(t, `{"message":"failed to save and apply Alertmanager configuration: the receiver is invalid: failed to validate receiver \"slack.receiver\" of type \"slack\": token must be specified when using the Slack chat API"}`, getBody(t, resp.Body))
+		require.JSONEq(t, `{"message":"failed to save and apply Alertmanager configuration: failed to build integration map for org 1: failed to validate receiver \"slack.receiver\" of type \"slack\": token must be specified when using the Slack chat API"}`, getBody(t, resp.Body))
 
 		resp = getRequest(t, alertConfigURL, http.StatusOK) // nolint
 		require.JSONEq(t, defaultAlertmanagerConfigJSON, getBody(t, resp.Body))

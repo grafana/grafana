@@ -74,11 +74,7 @@ func (ng *AlertNG) Init() error {
 		Logger:                 ng.Log,
 	}
 
-	var err error
-	ng.Alertmanager, err = notifier.New(ng.Cfg, store, ng.Metrics)
-	if err != nil {
-		return err
-	}
+	ng.Alertmanager = notifier.New(ng.Cfg, store, ng.Metrics)
 
 	schedCfg := schedule.SchedulerCfg{
 		C:                       clock.New(),
@@ -89,6 +85,7 @@ func (ng *AlertNG) Init() error {
 		InstanceStore:           store,
 		RuleStore:               store,
 		AdminConfigStore:        store,
+		OrgStore:                store,
 		Notifier:                ng.Alertmanager,
 		Metrics:                 ng.Metrics,
 		AdminConfigPollInterval: ng.Cfg.AdminConfigPollInterval,
