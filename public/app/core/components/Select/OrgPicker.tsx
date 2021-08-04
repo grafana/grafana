@@ -48,6 +48,7 @@ export class OrgPicker extends PureComponent<Props, State> {
 
     return (
       <AsyncSelect
+        menuShouldPortal
         className={className}
         isLoading={isLoading}
         defaultOptions={true}

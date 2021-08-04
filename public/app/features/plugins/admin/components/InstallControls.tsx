@@ -94,6 +94,12 @@ export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, ha
     );
   }
 
+  if (!hasPermission && !isExternallyManaged) {
+    const pluginStatus = isInstalled ? 'uninstall' : hasUpdate ? 'update' : 'install';
+    const message = `You do not have permission to ${pluginStatus} this plugin.`;
+    return <div className={styles.message}>{message}</div>;
+  }
+
   if (isInstalled) {
     return (
       <HorizontalGroup height="auto">
@@ -122,7 +128,6 @@ export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, ha
                 Please refresh your browser window before using this plugin.
               </div>
             )}
-            {!hasPermission && <div className={styles.message}>You need admin privileges to manage this plugin.</div>}
           </>
         )}
       </HorizontalGroup>
@@ -149,7 +154,6 @@ export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, ha
           <Button disabled={isInflight || !hasPermission} onClick={onInstall}>
             {isInflight ? 'Installing' : 'Install'}
           </Button>
-          {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
         </>
       )}
     </HorizontalGroup>

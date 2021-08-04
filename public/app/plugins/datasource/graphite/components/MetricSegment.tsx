@@ -27,8 +27,8 @@ type Props = {
 export function MetricSegment({ metricIndex, segment, state }: Props) {
   const dispatch = useDispatch();
   const loadOptions = useCallback(
-    async (value: string | undefined) => {
-      return await getAltSegmentsSelectables(state, metricIndex, value || '');
+    (value: string | undefined) => {
+      return getAltSegmentsSelectables(state, metricIndex, value || '');
     },
     [state, metricIndex]
   );
