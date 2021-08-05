@@ -440,7 +440,7 @@ func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opt
 	t.Helper()
 	store, err := initTestDB(migration, opts...)
 	if err != nil {
-		t.Fatalf("failed to initialize sql store: %v", err)
+		t.Fatalf("failed to initialize sql store: %s", err)
 	}
 	return store
 }
@@ -450,7 +450,7 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	store, err := initTestDB(&migrations.OSSMigrations{}, opts...)
 	if err != nil {
-		t.Fatalf("failed to initialize sql store: %v", err)
+		t.Fatalf("failed to initialize sql store: %s", err)
 	}
 	return store
 }
