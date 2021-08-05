@@ -8,15 +8,24 @@ import { LokiQueryField } from '../loki/components/LokiQueryField';
 import { TempoDatasource, TempoQuery, TempoQueryType } from './datasource';
 import LokiDatasource from '../loki/datasource';
 import { LokiQuery } from '../loki/types';
+import { PrometheusDatasource } from '../prometheus/datasource';
+import useAsync from 'react-use/lib/useAsync';
 
 type Props = ExploreQueryFieldProps<TempoDatasource, TempoQuery>;
 const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceId';
+
 interface State {
+  linkedDatasourceUid?: string;
   linkedDatasource?: LokiDatasource;
+  serviceMapDatasourceUid?: string;
+  serviceMapDatasource?: PrometheusDatasource;
 }
 export class TempoQueryField extends React.PureComponent<Props, State> {
   state = {
+    linkedDatasourceUid: undefined,
     linkedDatasource: undefined,
+    serviceMapDatasourceUid: undefined,
+    serviceMapDatasource: undefined,
   };
 
   constructor(props: Props) {
@@ -28,13 +37,18 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
     // Find query field from linked datasource
     const tracesToLogsOptions: TraceToLogsOptions = datasource.tracesToLogs || {};
     const linkedDatasourceUid = tracesToLogsOptions.datasourceUid;
-    if (linkedDatasourceUid) {
-      const dsSrv = getDataSourceSrv();
-      const linkedDatasource = (await dsSrv.get(linkedDatasourceUid)) as LokiDatasource;
-      this.setState({
-        linkedDatasource,
-      });
-    }
+
+    const serviceMapDsUid = datasource.serviceMap?.datasourceUid;
+
+    // Check status of linked data sources so we can show warnings if needed.
+    const [logsDs, serviceMapDs] = await Promise.all([getDS(linkedDatasourceUid), getDS(serviceMapDsUid)]);
+
+    this.setState({
+      linkedDatasourceUid: linkedDatasourceUid,
+      linkedDatasource: logsDs as LokiDatasource,
+      serviceMapDatasourceUid: serviceMapDsUid,
+      serviceMapDatasource: serviceMapDs as PrometheusDatasource,
+    });
   }
 
   onChangeLinkedQuery = (value: LokiQuery) => {
@@ -50,8 +64,12 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
   };
 
   render() {
-    const { query, onChange } = this.props;
-    const { linkedDatasource } = this.state;
+    const { query, onChange, datasource } = this.props;
+    // Find query field from linked datasource
+    const tracesToLogsOptions: TraceToLogsOptions = datasource.tracesToLogs || {};
+    const logsDatasourceUid = tracesToLogsOptions.datasourceUid;
+    const graphDatasourceUid = datasource.serviceMap?.datasourceUid;
+
     const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
       { value: 'search', label: 'Search' },
       { value: 'traceId', label: 'TraceID' },
@@ -80,7 +98,7 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
         </InlineFieldRow>
         {query.queryType === 'search' && (
           <SearchSection
-            linkedDatasource={linkedDatasource}
+            linkedDatasourceUid={logsDatasourceUid}
             query={query}
             onRunQuery={this.onRunLinkedQuery}
             onChange={this.onChangeLinkedQuery}
@@ -110,25 +128,57 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
             }
           />
         )}
+        {query.queryType === 'serviceMap' && <ServiceMapSection graphDatasourceUid={graphDatasourceUid} />}
       </>
     );
   }
 }
 
+function ServiceMapSection({ graphDatasourceUid }: { graphDatasourceUid?: string }) {
+  const dsState = useAsync(() => getDS(graphDatasourceUid), [graphDatasourceUid]);
+  if (dsState.loading) {
+    return null;
+  }
+
+  const ds = dsState.value as LokiDatasource;
+
+  if (!graphDatasourceUid) {
+    return <div className="text-warning">Please set up a service graph datasource in the datasource settings.</div>;
+  }
+
+  if (graphDatasourceUid && !ds) {
+    return (
+      <div className="text-warning">
+        Service graph datasource is configured but the data source no longer exists. Please configure existing data
+        source to use the service graph functionality.
+      </div>
+    );
+  }
+
+  return null;
+}
+
 interface SearchSectionProps {
-  linkedDatasource?: LokiDatasource;
+  linkedDatasourceUid?: string;
   onChange: (value: LokiQuery) => void;
   onRunQuery: () => void;
   query: TempoQuery;
 }
-function SearchSection({ linkedDatasource, onChange, onRunQuery, query }: SearchSectionProps) {
-  if (linkedDatasource) {
+function SearchSection({ linkedDatasourceUid, onChange, onRunQuery, query }: SearchSectionProps) {
+  const dsState = useAsync(() => getDS(linkedDatasourceUid), [linkedDatasourceUid]);
+  if (dsState.loading) {
+    return null;
+  }
+
+  const ds = dsState.value as LokiDatasource;
+
+  if (ds) {
     return (
       <>
-        <InlineLabel>Tempo uses {((linkedDatasource as unknown) as DataSourceApi).name} to find traces.</InlineLabel>
+        <InlineLabel>Tempo uses {ds.name} to find traces.</InlineLabel>
 
         <LokiQueryField
-          datasource={linkedDatasource!}
+          datasource={ds}
           onChange={onChange}
           onRunQuery={onRunQuery}
           query={query.linkedQuery ?? ({ refId: 'linked' } as any)}
@@ -138,9 +188,32 @@ function SearchSection({ linkedDatasource, onChange, onRunQuery, query }: Search
     );
   }
 
-  if (!linkedDatasource) {
+  if (!linkedDatasourceUid) {
     return <div className="text-warning">Please set up a Traces-to-logs datasource in the datasource settings.</div>;
   }
 
+  if (linkedDatasourceUid && !ds) {
+    return (
+      <div className="text-warning">
+        Traces-to-logs datasource is configured but the data source no longer exists. Please configure existing data
+        source to use the search.
+      </div>
+    );
+  }
+
   return null;
+}
+
+async function getDS(uid?: string): Promise<DataSourceApi | undefined> {
+  if (!uid) {
+    return undefined;
+  }
+
+  const dsSrv = getDataSourceSrv();
+  try {
+    return await dsSrv.get(uid);
+  } catch (error) {
+    console.error('Failed to load data source', error);
+    return undefined;
+  }
 }

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, useStyles } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, useStyles } from '@grafana/ui';
 import React from 'react';
 import { TempoJsonData } from './datasource';
 
@@ -18,7 +18,7 @@ export function ServiceMapSettings({ options, onOptionsChange }: Props) {
         To allow querying service map data you have to select a Prometheus instance where the data is stored.
       </div>
 
-      <InlineFieldRow>
+      <InlineFieldRow className={styles.row}>
         <InlineField tooltip="The Prometheus data source with the service map data" label="Data source" labelWidth={26}>
           <DataSourcePicker
             pluginId="prometheus"
@@ -32,6 +32,19 @@ export function ServiceMapSettings({ options, onOptionsChange }: Props) {
             }
           />
         </InlineField>
+        <Button
+          type={'button'}
+          variant={'secondary'}
+          size={'sm'}
+          fill={'text'}
+          onClick={() => {
+            updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'serviceMap', {
+              datasourceUid: undefined,
+            });
+          }}
+        >
+          Clear
+        </Button>
       </InlineFieldRow>
     </div>
   );
@@ -39,7 +52,13 @@ export function ServiceMapSettings({ options, onOptionsChange }: Props) {
 
 const getStyles = (theme: GrafanaTheme) => ({
   infoText: css`
+    label: infoText;
     padding-bottom: ${theme.spacing.md};
     color: ${theme.colors.textSemiWeak};
+  `,
+
+  row: css`
+    label: row;
+    align-items: baseline;
   `,
 });

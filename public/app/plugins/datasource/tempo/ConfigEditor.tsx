@@ -17,7 +17,9 @@ export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
         onChange={onOptionsChange}
       />
 
-      <TraceToLogsSettings options={options} onOptionsChange={onOptionsChange} />
+      <div className="gf-form-group">
+        <TraceToLogsSettings options={options} onOptionsChange={onOptionsChange} />
+      </div>
       {config.featureToggles.tempoServiceGraph && (
         <ServiceMapSettings options={options} onOptionsChange={onOptionsChange} />
       )}
