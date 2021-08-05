@@ -1,8 +1,9 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, FieldType } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { ZipkinDatasource } from './datasource';
+import mockJson from './mockJsonResponse.json';
 import { traceFrameFields, zipkinResponse } from './utils/testData';
 
 jest.mock('@grafana/runtime', () => ({
@@ -25,6 +26,20 @@ describe('ZipkinDatasource', () => {
       await expect(ds.query({ targets: [{ query: 'a/b' }] } as any)).toEmitValuesWith((val) => {
         expect(val[0].data[0].fields).toMatchObject(traceFrameFields);
       });
+    });
+
+    it('should handle json file upload', async () => {
+      const ds = new ZipkinDatasource(defaultSettings);
+      ds.uploadedJson = JSON.stringify(mockJson);
+      const response = await ds
+        .query({
+          targets: [{ queryType: 'upload', refId: 'A' }],
+        } as any)
+        .toPromise();
+      const field = response.data[0].fields[0];
+      expect(field.name).toBe('traceID');
+      expect(field.type).toBe(FieldType.string);
+      expect(field.values.length).toBe(3);
     });
   });
 

@@ -1,21 +1,31 @@
+import { css } from '@emotion/css';
 import { ExploreQueryFieldProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ButtonCascader, CascaderOption } from '@grafana/ui';
+import {
+  ButtonCascader,
+  CascaderOption,
+  FileDropzone,
+  InlineField,
+  InlineFieldRow,
+  RadioButtonGroup,
+  useTheme2,
+} from '@grafana/ui';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { dispatch } from 'app/store/store';
 import { fromPairs } from 'lodash';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useAsyncFn, useMount, useMountedState } from 'react-use';
 import { AsyncState } from 'react-use/lib/useAsyncFn';
 import { apiPrefix } from './constants';
-import { ZipkinDatasource, ZipkinQuery } from './datasource';
-import { ZipkinSpan } from './types';
-import { dispatch } from 'app/store/store';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
+import { ZipkinDatasource } from './datasource';
+import { ZipkinQuery, ZipkinQueryType, ZipkinSpan } from './types';
 
 type Props = ExploreQueryFieldProps<ZipkinDatasource, ZipkinQuery>;
 
 export const QueryField = ({ query, onChange, onRunQuery, datasource }: Props) => {
   const serviceOptions = useServices(datasource);
+  const theme = useTheme2();
   const { onLoadOptions, allOptions } = useLoadOptions(datasource);
 
   const onSelectTrace = useCallback(
@@ -33,29 +43,59 @@ export const QueryField = ({ query, onChange, onRunQuery, datasource }: Props) =
 
   return (
     <>
-      <div className="gf-form-inline gf-form-inline--nowrap">
-        <div className="gf-form flex-shrink-0">
-          <ButtonCascader options={cascaderOptions} onChange={onSelectTrace} loadData={onLoadOptions}>
-            Traces
-          </ButtonCascader>
+      <InlineFieldRow>
+        <InlineField label="Query type">
+          <RadioButtonGroup<ZipkinQueryType>
+            options={[
+              { value: 'traceID', label: 'TraceID' },
+              { value: 'upload', label: 'JSON file' },
+            ]}
+            value={query.queryType || 'traceID'}
+            onChange={(v) =>
+              onChange({
+                ...query,
+                queryType: v,
+              })
+            }
+            size="md"
+          />
+        </InlineField>
+      </InlineFieldRow>
+      {query.queryType === 'upload' ? (
+        <div className={css({ padding: theme.spacing(2) })}>
+          <FileDropzone
+            options={{ multiple: false }}
+            onLoad={(result) => {
+              datasource.uploadedJson = result;
+              onRunQuery();
+            }}
+          />
         </div>
-        <div className="gf-form gf-form--grow flex-shrink-1">
-          <div className="slate-query-field__wrapper">
-            <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
-              <input
-                style={{ width: '100%' }}
-                value={query.query || ''}
-                onChange={(e) =>
-                  onChange({
-                    ...query,
-                    query: e.currentTarget.value,
-                  })
-                }
-              />
+      ) : (
+        <div className="gf-form-inline gf-form-inline--nowrap">
+          <div className="gf-form flex-shrink-0">
+            <ButtonCascader options={cascaderOptions} onChange={onSelectTrace} loadData={onLoadOptions}>
+              Traces
+            </ButtonCascader>
+          </div>
+          <div className="gf-form gf-form--grow flex-shrink-1">
+            <div className="slate-query-field__wrapper">
+              <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
+                <input
+                  style={{ width: '100%' }}
+                  value={query.query || ''}
+                  onChange={(e) =>
+                    onChange({
+                      ...query,
+                      query: e.currentTarget.value,
+                    })
+                  }
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 };
