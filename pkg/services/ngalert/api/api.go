@@ -1,12 +1,10 @@
 package api
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -17,8 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
-
-	"github.com/go-macaron/binding"
 )
 
 // timeNow makes it possible to test usage of time
@@ -90,41 +86,8 @@ func (api *API) RegisterAPIEndpoints(m *metrics.Metrics) {
 		DatasourceCache: api.DatasourceCache,
 		log:             logger,
 	}, m)
-	api.RegisterAdminAPIEndpoints(AdminSrv{
+	api.RegisterConfigurationApiEndpoints(AdminSrv{
 		store: api.AdminConfigStore,
 		log:   logger,
 	}, m)
-}
-
-func (api *API) RegisterAdminAPIEndpoints(srv AdminSrv, m *metrics.Metrics) {
-	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Get(
-			toMacaronPath("/api/v1/ngalert/admin_config"),
-			metrics.Instrument(
-				http.MethodGet,
-				"/api/v1/ngalert/admin_config",
-				srv.RouteGetAdminConfig,
-				m,
-			),
-		)
-		group.Post(
-			"/api/v1/ngalert/admin_config",
-			binding.Bind(apimodels.PostableNGalertConfig{}),
-			metrics.Instrument(
-				http.MethodPost,
-				"/api/v1/ngalert/admin_config",
-				srv.RouteUpdateAdminConfig,
-				m,
-			),
-		)
-		group.Delete(
-			"api/v1/ngalert/admin_config",
-			metrics.Instrument(
-				http.MethodDelete,
-				"api/v1/ngalert/admin_config",
-				srv.RouteDeleteAdminConfig,
-				m,
-			),
-		)
-	}, middleware.ReqOrgAdmin)
 }

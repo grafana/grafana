@@ -57,8 +57,12 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
-  "AlertGroup": {},
-  "AlertGroups": {},
+  "AlertGroup": {
+   "$ref": "#/definitions/alertGroup"
+  },
+  "AlertGroups": {
+   "$ref": "#/definitions/alertGroups"
+  },
   "AlertInstancesResponse": {
    "properties": {
     "instances": {
@@ -473,8 +477,12 @@
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
   },
-  "GettableAlert": {},
-  "GettableAlerts": {},
+  "GettableAlert": {
+   "$ref": "#/definitions/gettableAlert"
+  },
+  "GettableAlerts": {
+   "$ref": "#/definitions/gettableAlerts"
+  },
   "GettableApiAlertingConfig": {
    "properties": {
     "global": {
@@ -745,7 +753,7 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
-  "GettableNGalertconfig": {
+  "GettableNGalertConfig": {
    "properties": {
     "alertmanagers": {
      "items": {
@@ -778,12 +786,8 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
-  "GettableSilence": {
-   "$ref": "#/definitions/gettableSilence"
-  },
-  "GettableSilences": {
-   "$ref": "#/definitions/gettableSilences"
-  },
+  "GettableSilence": {},
+  "GettableSilences": {},
   "GettableStatus": {
    "properties": {
     "cluster": {
@@ -1585,9 +1589,7 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
-  "PostableSilence": {
-   "$ref": "#/definitions/postableSilence"
-  },
+  "PostableSilence": {},
   "PostableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -2447,7 +2449,7 @@
     "alerts": {
      "description": "alerts",
      "items": {
-      "$ref": "#/definitions/GettableAlert"
+      "$ref": "#/definitions/gettableAlert"
      },
      "type": "array",
      "x-go-name": "Alerts"
@@ -2456,7 +2458,7 @@
      "$ref": "#/definitions/labelSet"
     },
     "receiver": {
-     "$ref": "#/definitions/receiver"
+     "$ref": "#/definitions/Receiver"
     }
    },
    "required": [
@@ -2471,7 +2473,7 @@
   "alertGroups": {
    "description": "AlertGroups alert groups",
    "items": {
-    "$ref": "#/definitions/AlertGroup"
+    "$ref": "#/definitions/alertGroup"
    },
    "type": "array",
    "x-go-name": "AlertGroups",
@@ -2661,7 +2663,7 @@
   "gettableAlerts": {
    "description": "GettableAlerts gettable alerts",
    "items": {
-    "$ref": "#/definitions/GettableAlert"
+    "$ref": "#/definitions/gettableAlert"
    },
    "type": "array",
    "x-go-name": "GettableAlerts",
@@ -2727,7 +2729,7 @@
   "gettableSilences": {
    "description": "GettableSilences gettable silences",
    "items": {
-    "$ref": "#/definitions/gettableSilence"
+    "$ref": "#/definitions/GettableSilence"
    },
    "type": "array",
    "x-go-name": "GettableSilences",
@@ -3340,7 +3342,7 @@
       "in": "body",
       "name": "Silence",
       "schema": {
-       "$ref": "#/definitions/PostableSilence"
+       "$ref": "#/definitions/postableSilence"
       }
      },
      {
@@ -3797,7 +3799,7 @@
     ]
    }
   },
-  "/api/v1/ngalert/configuration": {
+  "/api/v1/ngalert/admin_config": {
    "delete": {
     "consumes": [
      "application/json"
@@ -3809,6 +3811,12 @@
       "schema": {
        "$ref": "#/definitions/Ack"
       }
+     },
+     "500": {
+      "description": "Failure",
+      "schema": {
+       "$ref": "#/definitions/Failure"
+      }
      }
     },
     "summary": "Deletes the NGalert configuration of the user's organization.",
@@ -3818,21 +3826,15 @@
    },
    "get": {
     "operationId": "RouteGetNGalertConfig",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/PostableNGalertConfig"
-      }
-     }
-    ],
     "produces": [
      "application/json"
     ],
     "responses": {
      "200": {
-      "$ref": "#/responses/GettableNgalertconfig"
+      "description": "GettableNGalertConfig",
+      "schema": {
+       "$ref": "#/definitions/GettableNGalertConfig"
+      }
      },
      "404": {
       "description": "Failure",
@@ -3871,6 +3873,12 @@
       "description": "Ack",
       "schema": {
        "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
       }
      }
     },

@@ -34,7 +34,7 @@ package definitions
 //       200: Ack
 //       500: Failure
 
-// swagger:parameters RoutePostNGalertConfig RouteGetNGalertConfig
+// swagger:parameters RoutePostNGalertConfig
 type NGalertConfig struct {
 	// in:body
 	Body PostableNGalertConfig

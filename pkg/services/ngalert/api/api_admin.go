@@ -17,7 +17,11 @@ type AdminSrv struct {
 	log   log.Logger
 }
 
-func (srv AdminSrv) RouteGetAdminConfig(c *models.ReqContext) response.Response {
+func (srv AdminSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Response {
+	if c.OrgRole != models.ROLE_ADMIN {
+		return accessForbiddenResp()
+	}
+
 	cfg, err := srv.store.GetAdminConfiguration(c.OrgId)
 	if err != nil {
 		if errors.Is(err, store.ErrNoAdminConfiguration) {
@@ -35,7 +39,11 @@ func (srv AdminSrv) RouteGetAdminConfig(c *models.ReqContext) response.Response 
 	return response.JSON(http.StatusOK, resp)
 }
 
-func (srv AdminSrv) RouteUpdateAdminConfig(c *models.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
+func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
+	if c.OrgRole != models.ROLE_ADMIN {
+		return accessForbiddenResp()
+	}
+
 	cfg := &ngmodels.AdminConfiguration{
 		Alertmanagers: body.Alertmanagers,
 		OrgID:         c.OrgId,
@@ -51,7 +59,11 @@ func (srv AdminSrv) RouteUpdateAdminConfig(c *models.ReqContext, body apimodels.
 	return response.JSON(http.StatusCreated, "admin configuration updated")
 }
 
-func (srv AdminSrv) RouteDeleteAdminConfig(c *models.ReqContext) response.Response {
+func (srv AdminSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Response {
+	if c.OrgRole != models.ROLE_ADMIN {
+		return accessForbiddenResp()
+	}
+
 	err := srv.store.DeleteAdminConfiguration(c.OrgId)
 	if err != nil {
 		srv.log.Error("unable to delete configuration", "err", err)
