@@ -156,21 +156,17 @@ export function reduceSeriesToRows(
 }
 
 export function getDistinctLabelKeys(frames: DataFrame[]): string[] {
-  const ordered: string[] = [];
   const keys = new Set<string>();
   for (const frame of frames) {
     for (const field of frame.fields) {
       if (field.labels) {
         for (const k of Object.keys(field.labels)) {
-          if (!keys.has(k)) {
-            ordered.push(k);
-            keys.add(k);
-          }
+          keys.add(k);
         }
       }
     }
   }
-  return ordered;
+  return [...keys];
 }
 
 /**
