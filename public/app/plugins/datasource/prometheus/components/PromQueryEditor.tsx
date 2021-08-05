@@ -58,7 +58,13 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
   constructor(props: PromQueryEditorProps) {
     super(props);
     // Use default query to prevent undefined input values
-    const defaultQuery: Partial<PromQuery> = { expr: '', legendFormat: '', interval: '', exemplar: true };
+    const defaultQuery: Partial<PromQuery> = {
+      expr: '',
+      legendFormat: '',
+      interval: '',
+      exemplar: true,
+      stepMode: DEFAULT_STEP_MODE.value,
+    };
     const query = Object.assign({}, defaultQuery, props.query);
     this.query = query;
     // Query target properties that are fully controlled inputs

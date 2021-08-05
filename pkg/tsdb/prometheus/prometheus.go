@@ -23,6 +23,7 @@ import (
 var (
 	plog         log.Logger
 	legendFormat *regexp.Regexp = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	safeRes      int64          = 11000
 )
 
 func init() {
@@ -122,6 +123,9 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 
 func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query plugins.DataQuery) (
 	[]*PrometheusQuery, error) {
+	var intervalMode string
+	var adjustedInterval time.Duration
+
 	qs := []*PrometheusQuery{}
 	for _, queryModel := range query.Queries {
 		expr, err := queryModel.Model.Get("expr").String()
@@ -141,14 +145,34 @@ func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query plugins
 			return nil, err
 		}
 
-		dsInterval, err := interval.GetIntervalFrom(dsInfo, queryModel.Model, time.Second*15)
+		hasQueryInterval := queryModel.Model.Get("interval").MustString("") != ""
+		// Only use stepMode if we have interval in query, otherwise use "min"
+		if hasQueryInterval {
+			intervalMode = queryModel.Model.Get("stepMode").MustString("min")
+		} else {
+			intervalMode = "min"
+		}
+
+		// Calculate interval value from query or data source settings or use default value
+		intervalValue, err := interval.GetIntervalFrom(dsInfo, queryModel.Model, time.Second*15)
 		if err != nil {
 			return nil, err
 		}
 
+		calculatedInterval, err := e.intervalCalculator.Calculate(*query.TimeRange, intervalValue, intervalMode)
+		if err != nil {
+			return nil, err
+		}
+		safeInterval := e.intervalCalculator.CalculateSafeInterval(*query.TimeRange, safeRes)
+
+		if calculatedInterval.Value > safeInterval.Value {
+			adjustedInterval = calculatedInterval.Value
+		} else {
+			adjustedInterval = safeInterval.Value
+		}
+
 		intervalFactor := queryModel.Model.Get("intervalFactor").MustInt64(1)
-		interval := e.intervalCalculator.Calculate(*query.TimeRange, dsInterval)
-		step := time.Duration(int64(interval.Value) * intervalFactor)
+		step := time.Duration(int64(adjustedInterval) * intervalFactor)
 
 		qs = append(qs, &PrometheusQuery{
 			Expr:         expr,

@@ -18,6 +18,14 @@ var (
 	day                      = time.Hour * 24
 )
 
+type IntervalMode string
+
+const (
+	Min   IntervalMode = "min"
+	Max   IntervalMode = "max"
+	Exact IntervalMode = "exact"
+)
+
 type Interval struct {
 	Text  string
 	Value time.Duration
@@ -28,7 +36,8 @@ type intervalCalculator struct {
 }
 
 type Calculator interface {
-	Calculate(timerange backend.TimeRange, minInterval time.Duration) Interval
+	Calculate(timerange backend.TimeRange, minInterval time.Duration, intervalMode IntervalMode) (Interval, error)
+	CalculateSafeInterval(timerange backend.TimeRange, resolution int64) Interval
 }
 
 type CalculatorOptions struct {
@@ -53,16 +62,37 @@ func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration) Interval {
+func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, intrvl time.Duration, intervalMode IntervalMode) (Interval, error) {
 	to := timerange.To.UnixNano()
 	from := timerange.From.UnixNano()
-	intrvl := time.Duration((to - from) / defaultRes)
+	calculatedIntrvl := time.Duration((to - from) / defaultRes)
 
-	if intrvl < minInterval {
-		return Interval{Text: interval.FormatDuration(minInterval), Value: minInterval}
+	switch intervalMode {
+	case Min:
+		if calculatedIntrvl < intrvl {
+			return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}, nil
+		}
+	case Max:
+		if calculatedIntrvl > intrvl {
+			return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}, nil
+		}
+	case Exact:
+		return Interval{Text: interval.FormatDuration(intrvl), Value: intrvl}, nil
+
+	default:
+		return Interval{}, fmt.Errorf("unrecognized intervalMode: %v", intervalMode)
 	}
 
-	rounded := roundInterval(intrvl)
+	rounded := roundInterval(calculatedIntrvl)
+	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}, nil
+}
+
+func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange, safeRes int64) Interval {
+	to := timerange.To.UnixNano()
+	from := timerange.From.UnixNano()
+	safeInterval := time.Duration((to - from) / safeRes)
+
+	rounded := roundInterval(safeInterval)
 	return Interval{Text: interval.FormatDuration(rounded), Value: rounded}
 }
 
