@@ -7,10 +7,10 @@ import (
 
 type grafanaProvider struct {
 	settings   setting.Provider
-	encryption encryption.EncryptionService
+	encryption encryption.EncryptionServiceImpl
 }
 
-func newGrafanaProvider(settings setting.Provider, encryption encryption.EncryptionService) grafanaProvider {
+func newGrafanaProvider(settings setting.Provider, encryption encryption.EncryptionServiceImpl) grafanaProvider {
 	return grafanaProvider{
 		settings:   settings,
 		encryption: encryption,

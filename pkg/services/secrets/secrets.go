@@ -33,10 +33,10 @@ func init() {
 }
 
 type SecretsService struct {
-	SQLStore *sqlstore.SQLStore           `inject:""`
-	Bus      bus.Bus                      `inject:""`
-	Enc      encryption.EncryptionService `inject:""`
-	Settings setting.Provider             `inject:""`
+	SQLStore *sqlstore.SQLStore               `inject:""`
+	Bus      bus.Bus                          `inject:""`
+	Enc      encryption.EncryptionServiceImpl `inject:""`
+	Settings setting.Provider                 `inject:""`
 
 	log             log.Logger
 	defaultProvider string

@@ -17,13 +17,13 @@ import (
 
 func init() {
 	registry.Register(&registry.Descriptor{
-		Name:         "Encryption Service",
+		Name:         "OSSEncryptionService",
 		Instance:     &OSSEncryptionService{},
 		InitPriority: registry.High,
 	})
 }
 
-type EncryptionService interface {
+type EncryptionServiceImpl interface {
 	Encrypt(payload, secret []byte) ([]byte, error)
 	Decrypt(payload, secret []byte) ([]byte, error)
 }
