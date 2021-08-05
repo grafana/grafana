@@ -155,7 +155,7 @@ func (s *SecretsService) Decrypt(payload []byte) ([]byte, error) {
 	// TODO: check when this error has been added to util.decrypt and if it's really needed
 	// Decrypt will return this error if payload is empty,
 	// but if its payloadLength <= saltLength, call to s.Enc.Decrypt(payload, dataKey) will return "unable to compute salt"
-	if len(payload) < 0 {
+	if len(payload) == 0 {
 		return nil, fmt.Errorf("unable to decrypt empty payload")
 	}
 
