@@ -36,7 +36,7 @@ func ProvideService(httpClientProvider httpclient.Provider, manager backendplugi
 		QueryDataHandler: s,
 	})
 
-	if err := manager.RegisterAndStart(context.Background(), "loki", factory); err != nil {
+	if err := manager.RegisterAndStart(context.Background(), "tempo", factory); err != nil {
 		s.tlog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}
