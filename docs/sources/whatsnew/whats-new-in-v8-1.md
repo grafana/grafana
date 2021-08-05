@@ -163,8 +163,3 @@ To find out how you can configure it along with other Grafana UI elements, like 
 ### Oauth2 - Team Sync to Group Mapping 
 
 With Team Sync you can map your Generic OAuth groups to teams in Grafana so that the users are automatically added to the correct teams.
-
-### Support for AES-GCM encryption algorithm
-
-Added support for AES-GCM cipher mode, preferred by some security standards and teams. By default, Grafana uses the AES-CFB cipher mode to encrypt data source credentials and usernames in Grafana’s database. 
-
