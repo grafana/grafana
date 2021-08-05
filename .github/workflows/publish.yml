@@ -3,7 +3,7 @@ name: publish_docs
 on:
   push:
     branches:
-    - main
+    - v8.1.x
     paths:
     - 'docs/sources/**'
     - 'packages/grafana-*/**'
@@ -36,7 +36,7 @@ jobs:
         host: github.com
         github_pat: '${{ secrets.GH_BOT_ACCESS_TOKEN }}'
         source_folder: docs/sources
-        target_folder: content/docs/grafana/next
+        target_folder: content/docs/grafana/latest
         allow_no_changes: 'true'
     - shell: bash
       run: |
