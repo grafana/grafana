@@ -111,6 +111,7 @@ export function transformTraceList(
   return response;
 }
 
+// Don't forget to change the backend code when the id representation changed
 function transformBase64IDToHexString(base64: string) {
   const buffer = Buffer.from(base64, 'base64');
   const id = buffer.toString('hex');
