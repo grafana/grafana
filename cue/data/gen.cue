@@ -177,7 +177,7 @@ Family: scuemata.#Family & {
 
                     // TODO docs
                     // TODO tighter constraint
-                    interval: string
+                    interval?: string
 
                     // The values depend on panel type
                     options: {...}
