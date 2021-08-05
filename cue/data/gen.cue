@@ -22,7 +22,7 @@ Family: scuemata.#Family & {
                 // Theme of dashboard.
                 style: *"light" | "dark"
                 // Timezone of dashboard,
-                timezone?: *"browser" | "utc"
+                timezone?: *"browser" | "utc" | ""
                 // Whether a dashboard is editable or not.
                 editable: bool | *true
                 // 0 for no shared crosshair or tooltip (default).
