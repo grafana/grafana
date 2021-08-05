@@ -165,7 +165,8 @@ Family: scuemata.#Family & {
                     // FIXME this is temporarily specified as a closed list so
                     // that validation will pass when no links are present, but
                     // to force a failure as soon as it's checked against there
-                    // being anything in the list
+                    // being anything in the list so it can be fixed in
+                    // accordance with that object
                     links?: []
 
                     // Name of template variable to repeat for.
@@ -188,6 +189,14 @@ Family: scuemata.#Family & {
                     // TODO docs
                     // TODO tighter constraint
                     interval?: string
+
+                    // TODO docs
+                    // TODO tighter constraint
+                    timeFrom?: string
+
+                    // TODO docs
+                    // TODO tighter constraint
+                    timeShift?: string
 
                     // The values depend on panel type
                     options: {...}
