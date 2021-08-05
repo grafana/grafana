@@ -24,7 +24,7 @@ type Service struct {
 	tlog log.Logger
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, manager backendplugin.Manager) *Service {
+func ProvideService(httpClientProvider httpclient.Provider, manager backendplugin.Manager) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 
 	s := &Service{
@@ -36,11 +36,12 @@ func ProvideService(httpClientProvider httpclient.Provider, manager backendplugi
 		QueryDataHandler: s,
 	})
 
-	if err := manager.RegisterAndStart(context.Background(), "tempo", factory); err != nil {
+	if err := manager.RegisterAndStart(context.Background(), "loki", factory); err != nil {
 		s.tlog.Error("Failed to register plugin", "error", err)
+		return nil, err
 	}
 
-	return s
+	return s, nil
 }
 
 type datasourceInfo struct {
