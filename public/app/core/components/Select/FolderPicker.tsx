@@ -165,6 +165,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     return (
       <div aria-label={selectors.components.FolderPicker.container}>
         <AsyncSelect
+          menuShouldPortal
           loadingMessage="Loading folders..."
           defaultOptions
           defaultValue={folder}

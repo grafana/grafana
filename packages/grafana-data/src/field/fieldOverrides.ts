@@ -32,7 +32,7 @@ import { getFrameDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { getTemplateProxyForField } from './templateProxies';
-import tinycolor from 'tinycolor2';
+import { asHexString } from '../themes/colorManipulator';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -169,15 +169,15 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         range = { min, max, delta: max! - min! };
       }
 
+      field.state!.seriesIndex = seriesIndex;
+      field.state!.range = range;
+      field.type = type;
+
       // Some color modes needs series index to assign field color so we count
       // up series index here but ignore time fields
       if (field.type !== FieldType.time) {
         seriesIndex++;
       }
-
-      field.state!.seriesIndex = seriesIndex;
-      field.state!.range = range;
-      field.type = type;
 
       // and set the display processor using it
       field.display = getDisplayProcessor({
@@ -226,9 +226,8 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
 
       // convert to hex6 or hex8 so downstream we can cheaply test for alpha (and set new alpha)
       // via a simple length check (in colorManipulator) rather using slow parsing via tinycolor
-      if (v.color && v.color[0] !== '#') {
-        let color = tinycolor(v.color);
-        v.color = color.getAlpha() < 1 ? color.toHex8String() : color.toHexString();
+      if (v.color) {
+        v.color = asHexString(v.color);
       }
 
       cache.set(value, v);
