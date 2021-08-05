@@ -132,6 +132,10 @@ Tests are most likely to be affected. There are some tips for fixing these in th
 
 We’d love as much feedback as possible about this change, because we are considering making this the default behavior in a future release of Grafana.
 
+### High availability setup support for Grafana Live
+
+We have added an experimental HA setup support for Grafana Live with Redis. This resolves several limitations of Grafana Live when clients were connected to different Grafana instances and instances had no shared state. For additional information, refer to [Configure Grafana Live HA setup]({{< relref "../live/live-ha-setup.md" >}}).
+
 ## Enterprise features
 
 These features are included in the Grafana Enterprise edition.
@@ -167,4 +171,3 @@ With Team Sync you can map your Generic OAuth groups to teams in Grafana so that
 ### Support for AES-GCM encryption algorithm
 
 Added support for AES-GCM cipher mode, preferred by some security standards and teams. By default, Grafana uses the AES-CFB cipher mode to encrypt data source credentials and usernames in Grafana’s database. 
-
