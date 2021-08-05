@@ -44,6 +44,7 @@ function setupTestContext(options: Partial<Props>) {
       panelInitialized: jest.fn(),
       getTimezone: () => 'browser',
       events: new EventBusSrv(),
+      canEditPanel: jest.fn(),
     } as unknown) as DashboardModel,
     plugin: ({
       meta: { skipDataQuery: false },

@@ -1,7 +1,8 @@
 $panel-header-no-title-zindex: 1;
 
 .panel-header {
-  &:hover {
+  &:hover,
+  &:focus-within {
     transition: background-color 0.1s ease-in-out;
     background-color: $panel-header-hover-bg;
   }
