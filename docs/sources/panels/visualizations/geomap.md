@@ -24,7 +24,7 @@ You can configure the default base map using config files with Grafana’s provi
 
 Use the JSON configuration option `default_baselayer_config` to define the default base map. There are currently four base map options to choose from: `carto`, `esri-xyz`, `osm-standard`, `xyz`. Here are some provisioning examples for each base map option.
 
-- **carto** loads the CartoDB tile server. You can choose from `auto`, `dark`, and `light` theme for the base map and can be set as shown below.  The `showLabels` tag determines whether or not Grafana shows the Country details on top of the map. Here is an example:
+- **carto** loads the CartoDB tile server. You can choose from `auto`, `dark`, and `light` theme for the base map and can be set as shown below. The `showLabels` tag determines whether or not Grafana shows the Country details on top of the map. Here is an example:
 
 ```ini
 geomap_default_baselayer = `{
@@ -48,7 +48,7 @@ geomap_default_baselayer = `{
 ```
 
 ```ini
-geomap_default_baselayer = `{   
+geomap_default_baselayer = `{
   "type": "esri-xyz",
   "config": {
     "server": "custom",
@@ -67,7 +67,7 @@ default_baselayer_config = `{
 }`
 ```
 
-- **xyz** loads a custom tile server defined by the user.  Set a valid tile server `url`, with {z}/{x}/{y} for this option in order to properly load a default base map. Here is an example:
+- **xyz** loads a custom tile server defined by the user. Set a valid tile server `url`, with {z}/{x}/{y} for this option in order to properly load a default base map. Here is an example:
 
 ```ini
 default_baselayer_config = `{
@@ -86,6 +86,7 @@ default_baselayer_config = `{
 The data layer in the Geomap plugin determines how you visualize geospatial data on top of the base map.
 
 ### Location
+
 The Geomap panel needs a source of geographical data. This data comes from a database query, and there are four mapping options for your data.
 
 - **Auto** automatically searches for location data. Use this option when your query is based on one of the following names for data fields.
@@ -107,7 +108,7 @@ The markers layer allows you to display data points as different marker shapes s
 
 - **Marker Color** configures the color of the marker. The default `Fixed size` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
 - **Marker Size** configures the size of the marker. Default is `Fixed size`, making all marker size the same regardless of the data points. However, there is also an option to scale the circles to the corresponding data points. `Min` and `Max` marker size has to be set such that the Marker layer can scale within these range.
-- **Marker Shape** provides you with the flexibility to visualize the data points differently. 
+- **Marker Shape** provides you with the flexibility to visualize the data points differently.
   - Circle
   - Square
   - Triangle
@@ -118,7 +119,7 @@ The markers layer allows you to display data points as different marker shapes s
 
 ### Heatmap layer
 
-The heatmap layer clusters various data points to visualize locations with different densities. 
+The heatmap layer clusters various data points to visualize locations with different densities.
 To add a heatmap layer:
 
 Click on the drop down menu under Data Layer and choose `Heatmap`.
