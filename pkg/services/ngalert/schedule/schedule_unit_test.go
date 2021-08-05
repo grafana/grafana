@@ -77,7 +77,7 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	// Now, let's remove the Alertmanager from the admin configuration.
 	adminConfig.Alertmanagers = []string{}
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
-	fakeAdminConfigStore.UpdateAdminConfiguration(cmd)
+	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
 	// Again, make sure we sync and verify the senders.
@@ -188,8 +188,8 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	}, 10*time.Second, 200*time.Millisecond)
 
 	// Finally, remove everything.
-	fakeAdminConfigStore.DeleteAdminConfiguration(1)
-	fakeAdminConfigStore.DeleteAdminConfiguration(2)
+	require.NoError(t, fakeAdminConfigStore.DeleteAdminConfiguration(1))
+	require.NoError(t, fakeAdminConfigStore.DeleteAdminConfiguration(2))
 	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
 	sched.sendersMtx.Lock()
 	require.Equal(t, 0, len(sched.senders))
