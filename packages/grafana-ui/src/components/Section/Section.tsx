@@ -8,7 +8,6 @@ import { SectionLabel } from './SectionLabel';
 export const Section = ({
   label,
   children,
-  inline,
   fill,
 }: {
   label: string;
@@ -18,7 +17,7 @@ export const Section = ({
 }) => (
   <div className="gf-form-inline">
     <div className="gf-form">
-      <SectionLabel name={label} inline={inline} />
+      <SectionLabel name={label} className="width-7" />
       {children}
     </div>
     {fill && <SectionFill />}

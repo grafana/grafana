@@ -115,7 +115,7 @@ export const Editor = (props: Props): JSX.Element => {
           }
           onChange={handleFromSectionChange}
         />
-        <SectionLabel name="WHERE" inline={true} />
+        <SectionLabel name="WHERE" />
         <TagsSection
           tags={query.tags ?? []}
           onChange={handleTagsSectionChange}
@@ -167,7 +167,7 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, tz });
           }}
         />
-        <SectionLabel name="ORDER BY TIME" inline={true} />
+        <SectionLabel name="ORDER BY TIME" />
         <OrderByTimeSection
           value={query.orderByTime === 'DESC' ? 'DESC' : 'ASC' /* FIXME: make this shared with influx_query_model */}
           onChange={(v) => {
@@ -188,7 +188,7 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, limit });
           }}
         />
-        <SectionLabel name="SLIMIT" inline={true} />
+        <SectionLabel name="SLIMIT" />
         <InputSection
           placeholder="(optional)"
           value={query.slimit?.toString()}
@@ -206,7 +206,7 @@ export const Editor = (props: Props): JSX.Element => {
         />
         {query.resultFormat !== 'table' && (
           <>
-            <SectionLabel name="ALIAS" inline={true} />
+            <SectionLabel name="ALIAS" />
             <InputSection
               isWide
               placeholder="Naming pattern"

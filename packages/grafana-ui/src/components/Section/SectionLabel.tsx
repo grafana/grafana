@@ -3,12 +3,12 @@ import { cx } from '@emotion/css';
 
 type Props = {
   name: string;
-  inline?: boolean;
+  className?: string;
 };
 
 /**
  * @alpha
  */
-export const SectionLabel = ({ name, inline = false }: Props) => (
-  <label className={cx('gf-form-label query-keyword', { 'width-7': !inline ?? false })}>{name}</label>
+export const SectionLabel = ({ name, className }: Props) => (
+  <label className={cx('gf-form-label query-keyword', className)}>{name}</label>
 );
