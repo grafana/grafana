@@ -204,9 +204,8 @@ func (s *Service) parseQuery(dsInfo *datasourceInfo, queryContext *backend.Query
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse Interval: %v", err)
 		}
-		
 
-		interval, err := s.intervalCalculator.Calculate(query.TimeRange, dsInterval, "min")
+		interval, err := s.intervalCalculator.Calculate(query.TimeRange, dsInterval, tsdb.Min)
 		if err != nil {
 			return nil, err
 		}
