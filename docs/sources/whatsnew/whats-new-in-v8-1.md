@@ -116,6 +116,22 @@ We’ve made some changes to the plugins UI to help make it easier to discover a
 
 New panel summaries and preview on the top level [Visualizations]({{< relref "../panels/visualizations/_index.md" >}}) page to help users pick or learn about specific visualizations more easily.
 
+### Upcoming changes to the Select component
+
+The `@grafana/ui` exposes a `Select` component, and its variants `MultiSelect`, `AsyncSelect`, and `AsyncMultiSelect`. We have made some internal changes to these components to make the behavior and positioning more consistent in all scenarios.
+
+To test the changes, you can use the `menuShouldPortal` property:
+```jsx
+<Select
+  menuShouldPortal
+  {...otherProps}
+/>
+```
+
+Tests are most likely to be affected. There are some tips for fixing these in the original pull request at [https://github.com/grafana/grafana/pull/36398](https://github.com/grafana/grafana/pull/36398).
+
+We’d love as much feedback as possible about this change, because we are considering making this the default behavior in a future release of Grafana.
+
 ## Enterprise features
 
 These features are included in the Grafana Enterprise edition.
@@ -147,3 +163,8 @@ To find out how you can configure it along with other Grafana UI elements, like 
 ### Oauth2 - Team Sync to Group Mapping 
 
 With Team Sync you can map your Generic OAuth groups to teams in Grafana so that the users are automatically added to the correct teams.
+
+### Support for AES-GCM encryption algorithm
+
+Added support for AES-GCM cipher mode, preferred by some security standards and teams. By default, Grafana uses the AES-CFB cipher mode to encrypt data source credentials and usernames in Grafana’s database. 
+

@@ -82,9 +82,19 @@ export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, ha
 
   if (isEnterprise && !config.licenseInfo?.hasValidLicense) {
     return (
-      <div className={styles.message}>
-        Marketplace doesn&#39;t support installing Enterprise plugins yet. Stay tuned!
-      </div>
+      <HorizontalGroup height="auto" align="center">
+        <span className={styles.message}>No valid Grafana Enterprise license detected.</span>
+        <LinkButton
+          href={`${getExternalManageLink(plugin)}?utm_source=grafana_catalog_learn_more`}
+          target="_blank"
+          rel="noopener noreferrer"
+          size="sm"
+          fill="text"
+          icon="external-link-alt"
+        >
+          Learn more
+        </LinkButton>
+      </HorizontalGroup>
     );
   }
 
@@ -94,8 +104,9 @@ export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, ha
     );
   }
 
-  if (!hasPermission) {
-    const message = `You need server admin privileges to ${isInstalled ? 'uninstall' : 'install'} this plugin.`;
+  if (!hasPermission && !isExternallyManaged) {
+    const pluginStatus = isInstalled ? 'uninstall' : hasUpdate ? 'update' : 'install';
+    const message = `You do not have permission to ${pluginStatus} this plugin.`;
     return <div className={styles.message}>{message}</div>;
   }
 
