@@ -63,6 +63,9 @@
     ],
     "*pkg/**/*.go": [
       "gofmt -w -s"
+    ],
+    "*.{md,mdx}": [
+      "prettier --write"
     ]
   },
   "devDependencies": {
