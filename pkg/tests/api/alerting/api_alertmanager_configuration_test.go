@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -25,7 +26,25 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 	store.Bus = bus.GetBus()
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
-	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
+	// create user under main organisation
+	userID := createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "editor",
+		Login:          "editor",
+	})
+
+	// create another organisation
+	orgID := createOrg(t, store, "another org", userID)
+
+	// create user under different organisation
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "editor-42",
+		Login:          "editor-42",
+		OrgId:          orgID,
+	})
+
+	// editor from main organisation requests configuration
 	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 
 	// On a blank start with no configuration, it saves and delivers the default configuration.
@@ -71,6 +90,30 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 		resp = getRequest(t, alertConfigURL, http.StatusOK) // nolint
 		require.JSONEq(t, defaultAlertmanagerConfigJSON, getBody(t, resp.Body))
 	}
+
+	// editor42 from organisation 42 posts configuration
+	alertConfigURL = fmt.Sprintf("http://editor-42:editor-42@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
+
+	// Post the alertmanager config.
+	{
+		mockChannel := newMockNotificationChannel(t, grafanaListedAddr)
+		amConfig := getAlertmanagerConfig(mockChannel.server.Addr)
+		postRequest(t, alertConfigURL, amConfig, http.StatusAccepted) // nolint
+
+		// Verifying that the new configuration is returned
+		resp := getRequest(t, alertConfigURL, http.StatusOK) // nolint
+		b := getBody(t, resp.Body)
+		re := regexp.MustCompile(`"uid":"([\w|-]*)"`)
+		e := getExpAlertmanagerConfigFromAPI(mockChannel.server.Addr)
+		require.JSONEq(t, e, string(re.ReplaceAll([]byte(b), []byte(`"uid":""`))))
+	}
+
+	// verify that main organisation still gets the default configuration
+	alertConfigURL = fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
+	{
+		resp := getRequest(t, alertConfigURL, http.StatusOK) // nolint
+		require.JSONEq(t, defaultAlertmanagerConfigJSON, getBody(t, resp.Body))
+	}
 }
 
 func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
@@ -83,7 +126,11 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
-	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "editor",
+		Login:          "editor",
+	})
 	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 	generatedUID := ""
 
