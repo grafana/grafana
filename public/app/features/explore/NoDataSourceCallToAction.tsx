@@ -29,7 +29,7 @@ export const NoDataSourceCallToAction = () => {
   );
 
   const cardClassName = css`
-    max-width: ${theme.breakpoints.values.lg};
+    max-width: ${theme.breakpoints.values.lg}px;
     margin-top: ${theme.spacing(2)};
     align-self: center;
   `;
