@@ -93,7 +93,8 @@ Family: scuemata.#Family & {
                 // TODO docs
                 #Threshold: {
                     // TODO docs
-                    value: number
+                    // FIXME the corresponding typescript field is required/non-optional, but some dashboard json apparently omits this field
+                    value?: number
                     // TODO docs
                     color: string
                     // TODO docs
