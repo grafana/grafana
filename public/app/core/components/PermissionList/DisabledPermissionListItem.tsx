@@ -25,6 +25,7 @@ export default class DisabledPermissionListItem extends Component<Props, any> {
         <td>
           <div className="gf-form">
             <Select
+              menuShouldPortal
               options={dashboardPermissionLevels}
               onChange={() => {}}
               disabled={true}
