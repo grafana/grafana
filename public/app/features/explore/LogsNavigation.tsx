@@ -1,8 +1,8 @@
 import React, { memo, useState, useEffect, useRef } from 'react';
 import { isEqual } from 'lodash';
 import { css } from 'emotion';
-import { LogsSortOrder, AbsoluteTimeRange, TimeZone, DataQuery, GrafanaTheme } from '@grafana/data';
-import { Button, Icon, Spinner, useTheme, stylesFactory } from '@grafana/ui';
+import { LogsSortOrder, AbsoluteTimeRange, TimeZone, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
 import { LogsNavigationPages } from './LogsNavigationPages';
 
 type Props = {
@@ -48,7 +48,7 @@ function LogsNavigation({
   const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
   const onFirstPage = currentPageIndex === 0;
   const onLastPage = currentPageIndex === pages.length - 1;
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme, oldestLogsFirst, loading);
 
   // Main effect to set pages and index
@@ -176,7 +176,7 @@ function LogsNavigation({
 
 export default memo(LogsNavigation);
 
-const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, loading: boolean) => {
+const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean, loading: boolean) => {
   return {
     navContainer: css`
       max-height: 95vh;
@@ -184,7 +184,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
       flex-direction: column;
       justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};
       position: sticky;
-      top: ${theme.spacing.md};
+      top: ${theme.spacing(2)};
       right: 0;
     `,
     navButton: css`
@@ -212,7 +212,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      margin-top: ${theme.spacing.sm};
+      margin-top: ${theme.spacing(1)};
     `,
   };
-});
+};
