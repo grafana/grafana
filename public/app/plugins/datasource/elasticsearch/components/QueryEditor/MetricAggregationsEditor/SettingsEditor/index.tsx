@@ -78,7 +78,7 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
         <InlineField label="Size" {...inlineFieldProps}>
           <Input
             id={`ES-query-${query.refId}_metric-${metric.id}-size`}
-            onBlur={(e) => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
+            onBlur={(e) => dispatch(changeMetricSetting({ metric, settingName: 'size', newValue: e.target.value }))}
             defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
           />
         </InlineField>
@@ -96,7 +96,7 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
             <ExtendedStatSetting
               key={stat.value}
               stat={stat}
-              onChange={(checked) => dispatch(changeMetricMeta(metric, stat.value, checked))}
+              onChange={(newValue) => dispatch(changeMetricMeta({ metric, meta: stat.value, newValue }))}
               value={
                 metric.meta?.[stat.value] !== undefined
                   ? !!metric.meta?.[stat.value]
@@ -112,7 +112,15 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
       {metric.type === 'percentiles' && (
         <InlineField label="Percentiles" {...inlineFieldProps}>
           <Input
-            onBlur={(e) => dispatch(changeMetricSetting(metric, 'percents', e.target.value.split(',').filter(Boolean)))}
+            onBlur={(e) =>
+              dispatch(
+                changeMetricSetting({
+                  metric,
+                  settingName: 'percents',
+                  newValue: e.target.value.split(',').filter(Boolean),
+                })
+              )
+            }
             defaultValue={
               metric.settings?.percents || metricAggregationConfig['percentiles'].defaults.settings?.percents
             }
@@ -127,7 +135,7 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
             <Select
               menuShouldPortal
               id={`ES-query-${query.refId}_metric-${metric.id}-unit`}
-              onChange={(e) => dispatch(changeMetricSetting(metric, 'unit', e.value))}
+              onChange={(e) => dispatch(changeMetricSetting({ metric, settingName: 'unit', newValue: e.value }))}
               options={rateAggUnitOptions}
               value={metric.settings?.unit}
             />
@@ -137,7 +145,7 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
             <Select
               menuShouldPortal
               id={`ES-query-${query.refId}_metric-${metric.id}-mode`}
-              onChange={(e) => dispatch(changeMetricSetting(metric, 'mode', e.value))}
+              onChange={(e) => dispatch(changeMetricSetting({ metric, settingName: 'mode', newValue: e.value }))}
               options={rateAggModeOptions}
               value={metric.settings?.unit}
             />
