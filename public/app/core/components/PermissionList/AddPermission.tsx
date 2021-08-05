@@ -100,6 +100,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
           {() => (
             <HorizontalGroup>
               <Select
+                menuShouldPortal
                 isSearchable={false}
                 value={this.state.type}
                 options={dashboardAclTargets}
@@ -117,6 +118,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
               <span className={styles.label}>Can</span>
 
               <Select
+                menuShouldPortal
                 isSearchable={false}
                 value={this.state.permission}
                 options={dashboardPermissionLevels}
