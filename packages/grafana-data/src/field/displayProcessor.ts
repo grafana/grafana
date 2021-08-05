@@ -50,9 +50,11 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   if (field.type === FieldType.time && !hasDateUnit) {
     unit = `dateTimeAsSystem`;
     hasDateUnit = true;
-    const end = dateTimeParse(field.values.get(field.values.length - 1)).unix();
-    const start = dateTimeParse(field.values.get(0)).unix();
-    showMs = end - start < 61;
+    if (field.values && field.values.length > 1) {
+      const end = dateTimeParse(field.values.get(field.values.length - 1)).unix();
+      const start = dateTimeParse(field.values.get(0)).unix();
+      showMs = end - start < 61; //show ms when minute or less
+    }
   } else if (field.type === FieldType.boolean) {
     if (!isBooleanUnit(unit)) {
       unit = 'bool';

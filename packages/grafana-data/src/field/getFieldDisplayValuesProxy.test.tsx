@@ -42,12 +42,12 @@ describe('getFieldDisplayValuesProxy', () => {
     }
   });
 
-  it('should format the time values in UTC', () => {
+  it('should format the time values in UTC with ms since field range is minute or less', () => {
     // Test Proxies in general
     const p = getFieldDisplayValuesProxy({ frame: data, rowIndex: 0 });
     const time = p.Time;
     expect(time.numeric).toEqual(1);
-    expect(time.text).toEqual('1970-01-01 00:00:00');
+    expect(time.text).toEqual('1970-01-01 00:00:00.001');
 
     // Should get to the same values by name or index
     const time2 = p[0];
