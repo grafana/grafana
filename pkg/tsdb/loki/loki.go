@@ -150,7 +150,10 @@ func (e *LokiExecutor) parseQuery(dsInfo *models.DataSource, queryContext plugin
 			return nil, fmt.Errorf("failed to parse Interval: %v", err)
 		}
 
-		interval := e.intervalCalculator.Calculate(*queryContext.TimeRange, dsInterval)
+		interval, err := e.intervalCalculator.Calculate(*queryContext.TimeRange, dsInterval, "min")
+		if err != nil {
+			return nil, err
+		}
 		step := time.Duration(int64(interval.Value))
 
 		qs = append(qs, &lokiQuery{
