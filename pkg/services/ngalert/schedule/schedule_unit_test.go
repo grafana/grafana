@@ -78,7 +78,6 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	adminConfig.Alertmanagers = []string{}
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
 
 	// Again, make sure we sync and verify the senders.
 	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
@@ -136,7 +135,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	// Now, let's assume a new org comes along.
+	// 1. Now, let's assume a new org comes along.
 	adminConfig2 := &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.server.URL}}
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
@@ -161,7 +160,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 		return fakeAM.AlertsCount() == 2 && fakeAM.AlertNamesCompare([]string{alertRuleOrgOne.Title, alertRuleOrgTwo.Title})
 	}, 20*time.Second, 200*time.Millisecond)
 
-	// Next, let's modify the configuration of an organization by adding an extra alertmanager.
+	// 2. Next, let's modify the configuration of an organization by adding an extra alertmanager.
 	fakeAM2 := newFakeExternalAlertmanager(t)
 	adminConfig2 = &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.server.URL, fakeAM2.server.URL}}
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
@@ -182,10 +181,38 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	require.Equal(t, 2, len(sched.sendersCfgHash))
 	sched.sendersMtx.Unlock()
 
-	// Wait for the discovery of the new alertmanager for orgID = 2.
+	// Wait for the discovery of the new Alertmanager for orgID = 2.
 	require.Eventually(t, func() bool {
 		return len(sched.AlertmanagersFor(2)) == 2 && len(sched.DroppedAlertmanagersFor(2)) == 0
 	}, 10*time.Second, 200*time.Millisecond)
+
+	// 3. Now, let's provide a configuration that fails for OrgID = 1.
+	adminConfig2 = &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{"123://invalid.org"}}
+	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
+	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
+
+	// Before we sync, let's get the current config hash.
+	sched.sendersMtx.Lock()
+	currentHash = sched.sendersCfgHash[1]
+	sched.sendersMtx.Unlock()
+
+	// Now, sync again.
+	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
+
+	// The old configuration should still be running.
+	sched.sendersMtx.Lock()
+	require.Equal(t, sched.sendersCfgHash[1], currentHash)
+	sched.sendersMtx.Unlock()
+	require.Equal(t, 1, len(sched.AlertmanagersFor(1)))
+
+	// If we fix it - it should be applied.
+	adminConfig2 = &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{"notarealalertmanager:3030"}}
+	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
+	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
+	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
+	sched.sendersMtx.Lock()
+	require.NotEqual(t, sched.sendersCfgHash[1], currentHash)
+	sched.sendersMtx.Unlock()
 
 	// Finally, remove everything.
 	require.NoError(t, fakeAdminConfigStore.DeleteAdminConfiguration(1))

@@ -214,6 +214,7 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 			err := existing.ApplyConfig(cfg)
 			if err != nil {
 				sch.log.Error("failed to apply configuration", "err", err, "org", cfg.OrgID)
+				continue
 			}
 			sch.sendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
 			continue
