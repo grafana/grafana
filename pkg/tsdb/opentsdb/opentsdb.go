@@ -43,7 +43,11 @@ type datasourceInfo struct {
 type DsAccess string
 
 func init() {
-	registry.Register(&registry.Descriptor{Instance: &Service{}})
+	registry.Register(&registry.Descriptor{
+		Name:         "OpenTSDBService",
+		InitPriority: registry.Low,
+		Instance:     &Service{},
+	})
 }
 
 func (s *Service) Init() error {
@@ -53,7 +57,7 @@ func (s *Service) Init() error {
 		QueryDataHandler: s,
 	})
 
-	if err := s.BackendPluginManager.Register("opentsdb", factory); err != nil {
+	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "opentsdb", factory); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
 	}
 
