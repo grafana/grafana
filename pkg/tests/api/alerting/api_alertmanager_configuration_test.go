@@ -19,8 +19,7 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 		AnonymousUserRole:    models.ROLE_EDITOR,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+	grafanaListedAddr, _ := testinfra.StartGrafana(t, dir, path)
 	alertConfigURL := fmt.Sprintf("http://%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 
 	// On a blank start with no configuration, it saves and delivers the default configuration.
@@ -74,8 +73,7 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 		AnonymousUserRole:    models.ROLE_EDITOR,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+	grafanaListedAddr, _ := testinfra.StartGrafana(t, dir, path)
 	alertConfigURL := fmt.Sprintf("http://%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 	generatedUID := ""
 

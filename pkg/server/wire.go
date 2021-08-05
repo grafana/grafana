@@ -137,6 +137,8 @@ var wireSet = wire.NewSet(
 
 var wireTestSet = wire.NewSet(
 	wireBasicSet,
+	ProvideTestEnv,
+	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
 )
 
@@ -145,7 +147,7 @@ func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOpt
 	return &Server{}, nil
 }
 
-func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions, sqlStore *sqlstore.SQLStore) (*Server, error) {
+func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
-	return &Server{}, nil
+	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}}, nil
 }

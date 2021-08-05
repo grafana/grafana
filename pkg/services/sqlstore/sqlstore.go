@@ -73,6 +73,10 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus
 	return s, nil
 }
 
+func ProvideServiceForTests(migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	return initTestDB(migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+}
+
 func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, engine *xorm.Engine,
 	migrations registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
@@ -433,16 +437,25 @@ type InitTestDBOpt struct {
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
 func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
-	return initTestDB(t, migration, opts...)
+	t.Helper()
+	store, err := initTestDB(migration, opts...)
+	if err != nil {
+		t.Fatalf("failed to initialize sql store: %s", err)
+	}
+	return store
 }
 
 // InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
-	return initTestDB(t, &migrations.OSSMigrations{}, opts...)
+	t.Helper()
+	store, err := initTestDB(&migrations.OSSMigrations{}, opts...)
+	if err != nil {
+		t.Fatalf("failed to initialize sql store: %s", err)
+	}
+	return store
 }
 
-func initTestDB(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
-	t.Helper()
+func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
 	if testSQLStore == nil {
@@ -454,7 +467,6 @@ func initTestDB(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTest
 
 		// environment variable present for test db?
 		if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-			t.Logf("Using database type %q", db)
 			dbType = db
 		}
 
@@ -462,41 +474,39 @@ func initTestDB(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTest
 		cfg := setting.NewCfg()
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
-			t.Fatalf("Failed to create section: %s", err)
+			return nil, err
 		}
 		if _, err := sec.NewKey("type", dbType); err != nil {
-			t.Fatalf("Failed to create key: %s", err)
+			return nil, err
 		}
 
 		switch dbType {
 		case "mysql":
 			if _, err := sec.NewKey("connection_string", sqlutil.MySQLTestDB().ConnStr); err != nil {
-				t.Fatalf("Failed to create key: %s", err)
+				return nil, err
 			}
 		case "postgres":
 			if _, err := sec.NewKey("connection_string", sqlutil.PostgresTestDB().ConnStr); err != nil {
-				t.Fatalf("Failed to create key: %s", err)
+				return nil, err
 			}
 		default:
 			if _, err := sec.NewKey("connection_string", sqlutil.SQLite3TestDB().ConnStr); err != nil {
-				t.Fatalf("Failed to create key: %s", err)
+				return nil, err
 			}
 		}
 
 		// useful if you already have a database that you want to use for tests.
 		// cannot just set it on testSQLStore as it overrides the config in Init
 		if _, present := os.LookupEnv("SKIP_MIGRATIONS"); present {
-			t.Log("Skipping database migrations")
 			if _, err := sec.NewKey("skip_migrations", "true"); err != nil {
-				t.Fatalf("Failed to create key: %s", err)
+				return nil, err
 			}
 		}
 
 		// need to get engine to clean db before we init
-		t.Logf("Creating database connection: %q", sec.Key("connection_string"))
 		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
 		if err != nil {
-			t.Fatalf("Failed to init test database: %v", err)
+			return nil, err
 		}
 
 		engine.DatabaseTZ = time.UTC
@@ -504,46 +514,42 @@ func initTestDB(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTest
 
 		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), bus.GetBus(), engine, migration, opts...)
 		if err != nil {
-			t.Fatalf("Failed to init test database: %s", err)
+			return nil, err
 		}
 
 		if err := testSQLStore.Migrate(); err != nil {
-			t.Fatalf("Database migration failed: %s", err)
+			return nil, err
 		}
 
-		t.Log("Truncating DB tables")
 		if err := dialect.TruncateDBTables(); err != nil {
-			t.Fatalf("Failed to truncate test db: %s", err)
+			return nil, err
 		}
 
 		if err := testSQLStore.Reset(); err != nil {
-			t.Fatalf("Database reset failed: %s", err)
+			return nil, err
 		}
 
 		// Make sure the changes are synced, so they get shared with eventual other DB connections
 		// XXX: Why is this only relevant when not skipping migrations?
 		if !testSQLStore.dbCfg.SkipMigrations {
 			if err := testSQLStore.Sync(); err != nil {
-				t.Fatalf("Database sync failed: %s", err)
+				return nil, err
 			}
 		}
 
-		t.Log("Successfully initialized test database")
 		// temp global var until we get rid of global vars
 		dialect = testSQLStore.Dialect
-
-		return testSQLStore
+		return testSQLStore, nil
 	}
 
-	t.Log("Truncating DB tables")
 	if err := dialect.TruncateDBTables(); err != nil {
-		t.Fatalf("Failed to truncate test db: %s", err)
+		return nil, err
 	}
 	if err := testSQLStore.Reset(); err != nil {
-		t.Fatalf("Failed to reset SQLStore: %s", err)
+		return nil, err
 	}
 
-	return testSQLStore
+	return testSQLStore, nil
 }
 
 func IsTestDbMySQL() bool {
