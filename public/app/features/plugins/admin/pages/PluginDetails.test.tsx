@@ -62,15 +62,14 @@ describe('Plugin details page', () => {
   });
 
   it('should not display install button for enterprise plugins', async () => {
-    const { getByText } = setup('enterprise');
+    const { queryByRole } = setup('enterprise');
 
-    const expected = "Marketplace doesn't support installing Enterprise plugins yet. Stay tuned!";
-
-    await waitFor(() => expect(getByText(expected)).toBeInTheDocument());
+    await waitFor(() => expect(queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument());
   });
 
   it('should not display install / uninstall buttons for core plugins', async () => {
     const { queryByRole } = setup('core');
+
     await waitFor(() => expect(queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument());
   });
 });

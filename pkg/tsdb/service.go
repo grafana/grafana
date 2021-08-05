@@ -14,13 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-	"github.com/grafana/grafana/pkg/tsdb/tempo"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
@@ -40,8 +38,6 @@ func NewService(cfg *setting.Cfg, _ *cloudwatch.CloudWatchService,
 	s.registry["postgres"] = postgresService.NewExecutor
 	s.registry["mysql"] = mysql.New(httpClientProvider)
 	s.registry["stackdriver"] = cloudMonitoringService.NewExecutor
-	s.registry["loki"] = loki.New(httpClientProvider)
-	s.registry["tempo"] = tempo.New(httpClientProvider)
 
 	return s
 }
@@ -69,7 +65,6 @@ type Service struct {
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
 	if factory, exists := s.registry[ds.Type]; exists {
 		var err error
