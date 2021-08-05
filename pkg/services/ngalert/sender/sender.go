@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/logging"
@@ -50,7 +52,7 @@ func New(metrics *metrics.Metrics) (*Sender, error) {
 	}
 
 	s.manager = notifier.NewManager(
-		&notifier.Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: metrics.Registerer},
+		&notifier.Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
 		s.gokitLogger,
 	)
 
