@@ -117,11 +117,9 @@ function getUrlSearchParams(): UrlQueryMap {
     const curParsed = new URLSearchParams(curSearch);
 
     // @ts-ignore
-    for (const key of new Set(curParsed.keys())) {
-      // @ts-ignore
-      let all = curParsed.getAll(key);
-      // @ts-ignore
-      prevParams[key] = all.length === 1 && all[0] === '' ? true : all;
+     // @ts-ignore
+    for (const [key, value] of curParsed.entries()) {
+      prevParams[key] = [...(prevParams[key] || []), value || true]
     }
 
     prevSearch = curSearch;
