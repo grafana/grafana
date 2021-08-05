@@ -599,7 +599,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   password?: string; // when access is direct, for some legacy datasources
   database?: string;
   isDefault?: boolean;
-  access: 'direct' | 'proxy'; // direct == browser; proxy == server
+  access: 'direct' | 'proxy'; // Currently we support 2 options - direct (browser) and proxy (server)
 
   /**
    * This is the full Authorization header if basic auth is enabled.
