@@ -91,6 +91,7 @@ const defaultSettings: DataSourceInstanceSettings = {
   uid: '0',
   type: 'tracing',
   name: 'jaeger',
+  access: 'proxy',
   meta: {
     id: 'jaeger',
     name: 'jaeger',
