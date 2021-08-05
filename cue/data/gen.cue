@@ -124,6 +124,12 @@ Family: scuemata.#Family & {
                     // TODO docs
                     id?: number
 
+                    // FIXME this almost certainly has to be changed in favor of scuemata versions
+                    pluginVersion?: string
+
+                    // TODO docs
+                    tags?: [...string]
+
                     // Internal - the exact major and minor versions of the panel plugin
                     // schema. Hidden and therefore not a part of the data model, but
                     // expected to be filled with panel plugin schema versions so that it's
@@ -156,7 +162,11 @@ Family: scuemata.#Family & {
                         static?: bool
                     }
                     // Panel links.
-                    // links?: [..._panelLink]
+                    // FIXME this is temporarily specified as a closed list so
+                    // that validation will pass when no links are present, but
+                    // to force a failure as soon as it's checked against there
+                    // being anything in the list
+                    links?: []
 
                     // Name of template variable to repeat for.
                     repeat?: string
