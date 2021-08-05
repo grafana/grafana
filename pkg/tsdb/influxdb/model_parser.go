@@ -1,9 +1,11 @@
 package influxdb
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
@@ -11,7 +13,12 @@ import (
 
 type InfluxdbQueryParser struct{}
 
-func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.DatasourceInfo) (*Query, error) {
+func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery, dsInfo *models.DatasourceInfo) (*Query, error) {
+	model, err := simplejson.NewJson(query.JSON)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't unmarshal query")
+	}
+
 	policy := model.Get("policy").MustString("default")
 	rawQuery := model.Get("query").MustString("")
 	useRawQuery := model.Get("rawQuery").MustBool(false)
@@ -40,11 +47,30 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.Data
 		return nil, err
 	}
 
-	queryInterval := model.Get("interval").MustString("")
-	intervalMS := model.Get("intervalMs").MustInt(0)
-	parsedInterval, err := tsdb.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, int64(intervalMS), time.Millisecond*1)
-	if err != nil {
-		return nil, err
+	interval := query.Interval
+
+	// in old-alert use-case query.Interval is zero.
+	// for this case, to be backawrd-compatible,
+	// we calculate the final alert based on:
+	// - time-range
+	// - min-interval in json
+	// - min-interval from data-source-config
+	if interval == 0*time.Nanosecond {
+		panelMinInterval := model.Get("interval").MustString("")
+		dataSourceMinInterval := dsInfo.TimeInterval
+
+		minInterval, err := tsdb.GetIntervalFrom(dataSourceMinInterval, panelMinInterval, 0, time.Millisecond*1)
+		if err != nil {
+			return nil, err
+		}
+
+		calculator := tsdb.NewCalculator(tsdb.CalculatorOptions{})
+		calculatedInterval, err := calculator.Calculate(query.TimeRange, minInterval, tsdb.Min)
+		if err != nil {
+			return nil, err
+		}
+
+		interval = calculatedInterval.Value
 	}
 
 	return &Query{
@@ -55,7 +81,7 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.Data
 		Tags:         tags,
 		Selects:      selects,
 		RawQuery:     rawQuery,
-		Interval:     parsedInterval,
+		Interval:     interval,
 		Alias:        alias,
 		UseRawQuery:  useRawQuery,
 		Tz:           tz,

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 	"github.com/stretchr/testify/require"
 )
@@ -104,10 +104,12 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
       }
       `
 		dsInfo.TimeInterval = ">20s"
-		modelJSON, err := simplejson.NewJson([]byte(json))
-		require.NoError(t, err)
 
-		res, err := parser.Parse(modelJSON, dsInfo)
+		query := backend.DataQuery{
+			JSON: []byte(json),
+		}
+
+		res, err := parser.Parse(query, dsInfo)
 		require.NoError(t, err)
 		require.Len(t, res.GroupBy, 3)
 		require.Len(t, res.Selects, 3)
@@ -162,15 +164,118 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
       }
       `
 
-		modelJSON, err := simplejson.NewJson([]byte(json))
-		require.NoError(t, err)
+		query := backend.DataQuery{
+			JSON: []byte(json),
+		}
 
-		res, err := parser.Parse(modelJSON, dsInfo)
+		res, err := parser.Parse(query, dsInfo)
 		require.NoError(t, err)
 		require.Equal(t, "RawDummyQuery", res.RawQuery)
 		require.Len(t, res.GroupBy, 2)
 		require.Len(t, res.Selects, 1)
 		require.Empty(t, res.Tags)
 		require.Equal(t, time.Second*10, res.Interval)
+	})
+
+	t.Run("accepts DataQuery.Interval", func(t *testing.T) {
+		json := `
+        {
+        "groupBy": [
+          {
+            "params": [
+              "$interval"
+            ],
+            "type": "time"
+          },
+          {
+            "params": [
+              "datacenter"
+            ],
+            "type": "tag"
+          },
+          {
+            "params": [
+              "none"
+            ],
+            "type": "fill"
+          }
+        ],
+        "measurement": "logins.count",
+        "tz": "Europe/Paris",
+        "policy": "default",
+        "refId": "B",
+        "resultFormat": "time_series",
+        "select": [
+          [
+            {
+              "type": "field",
+              "params": [
+                "value"
+              ]
+            },
+            {
+              "type": "count",
+              "params": []
+            }
+          ],
+          [
+            {
+              "type": "field",
+              "params": [
+                "value"
+              ]
+            },
+            {
+              "type": "bottom",
+              "params": [
+                3
+              ]
+            }
+          ],
+          [
+            {
+              "type": "field",
+              "params": [
+                "value"
+              ]
+            },
+            {
+              "type": "mean",
+              "params": []
+            },
+            {
+              "type": "math",
+              "params": [
+                " / 100"
+              ]
+            }
+          ]
+        ],
+        "alias": "series alias",
+        "tags": [
+          {
+            "key": "datacenter",
+            "operator": "=",
+            "value": "America"
+          },
+          {
+            "condition": "OR",
+            "key": "hostname",
+            "operator": "=",
+            "value": "server1"
+          }
+        ]
+      }
+      `
+		dsInfo.TimeInterval = ">20s"
+
+		query := backend.DataQuery{
+			JSON:     []byte(json),
+			Interval: time.Second * 5,
+		}
+
+		res, err := parser.Parse(query, dsInfo)
+		require.NoError(t, err)
+		require.Equal(t, time.Second*5, res.Interval)
 	})
 }

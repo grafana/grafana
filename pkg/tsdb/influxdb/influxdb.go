@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -161,17 +160,17 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) getQuery(dsInfo *models.DatasourceInfo, query *backend.QueryDataRequest) (*Query, error) {
-	if len(query.Queries) == 0 {
-		return nil, fmt.Errorf("query request contains no queries")
-	}
+	queryCount := len(query.Queries)
 
 	// The model supports multiple queries, but right now this is only used from
 	// alerting so we only needed to support batch executing 1 query at a time.
-	model, err := simplejson.NewJson(query.Queries[0].JSON)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't unmarshal query")
+	if queryCount != 1 {
+		return nil, fmt.Errorf("query request should contain exactly 1 query, it contains: %d", queryCount)
 	}
-	return s.QueryParser.Parse(model, dsInfo)
+
+	q := query.Queries[0]
+
+	return s.QueryParser.Parse(q, dsInfo)
 }
 
 func (s *Service) createRequest(ctx context.Context, dsInfo *models.DatasourceInfo, query string) (*http.Request, error) {
