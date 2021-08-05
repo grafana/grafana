@@ -136,7 +136,9 @@ export function getQueryHints(
     hints.push({
       type: 'SAFE_INTERVAL',
       label:
-        'Specified step interval is lower than the safe interval. Safe interval is used instead. Consider increasing the step interval',
+        'The specified step interval is lower than the safe interval and has been changed to ' +
+        safeInterval +
+        's. Consider increasing the step interval or changing step mode',
     });
   }
 
