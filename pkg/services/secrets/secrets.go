@@ -71,7 +71,7 @@ func (s *SecretsService) Init() error {
 }
 
 // newDataKey creates a new random DEK, caches it and returns its value
-func (s *SecretsService) newDataKey(ctx context.Context, name string) ([]byte, error) {
+func (s *SecretsService) newDataKey(ctx context.Context, name string, entityID string) ([]byte, error) {
 	// 1. Create new DEK
 	dataKey, err := newRandomDataKey()
 	provider, exists := s.providers[s.defaultProvider]
@@ -91,6 +91,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string) ([]byte, e
 		Name:          name,
 		Provider:      s.defaultProvider,
 		EncryptedData: encrypted,
+		EntityID:      entityID,
 	})
 	if err != nil {
 		return nil, err
@@ -125,7 +126,7 @@ func (s *SecretsService) Encrypt(payload []byte, entityID string) ([]byte, error
 	dataKey, err := s.dataKey(keyName)
 	if err != nil {
 		if errors.Is(err, ErrDataKeyNotFound) {
-			dataKey, err = s.newDataKey(context.TODO(), keyName)
+			dataKey, err = s.newDataKey(context.TODO(), keyName, entityID)
 			if err != nil {
 				return nil, err
 			}
@@ -152,9 +153,6 @@ func (s *SecretsService) Encrypt(payload []byte, entityID string) ([]byte, error
 }
 
 func (s *SecretsService) Decrypt(payload []byte) ([]byte, error) {
-	// TODO: check when this error has been added to util.decrypt and if it's really needed
-	// Decrypt will return this error if payload is empty,
-	// but if its payloadLength <= saltLength, call to s.Enc.Decrypt(payload, dataKey) will return "unable to compute salt"
 	if len(payload) == 0 {
 		return nil, fmt.Errorf("unable to decrypt empty payload")
 	}
@@ -162,7 +160,8 @@ func (s *SecretsService) Decrypt(payload []byte) ([]byte, error) {
 	var dataKey []byte
 
 	if payload[0] != '#' {
-		dataKey = []byte(s.Settings.KeyValue("security", "secret_key").Value()) // TODO: should it be moved somewhere else?
+		secretKey := s.Settings.KeyValue("security", "secret_key").Value()
+		dataKey = []byte(secretKey)
 	} else {
 		payload = payload[1:]
 		endOfKey := bytes.Index(payload, []byte{'#'})
