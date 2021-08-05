@@ -74,7 +74,6 @@ func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannels
 			if _, ok := defaultChannelsMap[c.OrgID]; !ok { // new seen org
 				defaultChannelsMap[c.OrgID] = make([]*notificationChannel, 0, len(allChannels))
 			}
-			// TODO: verify that there will be only 1 default channel.
 			defaultChannelsMap[c.OrgID] = append(defaultChannelsMap[c.OrgID], &allChannels[i])
 		}
 	}
