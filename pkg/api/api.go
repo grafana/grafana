@@ -428,6 +428,9 @@ func (hs *HTTPServer) registerRoutes() {
 			// POST influx line protocol
 			liveRoute.Post("/push/:streamId", hs.LivePushGateway.Handle)
 
+			// POST JSON.
+			liveRoute.Post("/push/:streamId/:path", hs.LivePushGateway.HandlePath)
+
 			// List available streams and fields
 			liveRoute.Get("/list", routing.Wrap(hs.Live.HandleListHTTP))
 
