@@ -10,7 +10,7 @@ import { StreamingClientEditor, RandomWalkEditor } from './components';
 
 // Types
 import { TestDataDataSource } from './datasource';
-import { TestDataQuery, Scenario, NodesQuery, CSVWave, USAQuery } from './types';
+import { TestDataQuery, NodesQuery, CSVWave, USAQuery } from './types';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
 import { CSVWavesEditor } from './components/CSVWaveEditor';
 import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constants';
@@ -40,7 +40,7 @@ export type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
 export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) => {
   query = { ...defaultQuery, ...query };
 
-  const { loading, value: scenarioList } = useAsync<Scenario[]>(async () => {
+  const { loading, value: scenarioList } = useAsync(async () => {
     // migrate manual_entry (unusable since 7, removed in 8)
     if (query.scenarioId === 'manual_entry' && (query as any).points) {
       let csvContent = 'Time,Value\n';
