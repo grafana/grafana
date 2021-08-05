@@ -599,6 +599,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   password?: string; // when access is direct, for some legacy datasources
   database?: string;
   isDefault?: boolean;
+  access?: string;
 
   /**
    * This is the full Authorization header if basic auth is enabled.
