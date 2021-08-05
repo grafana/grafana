@@ -66,7 +66,7 @@ Family: scuemata.#Family & {
                     showIn:   number | *0
                 }]
                 // Auto-refresh interval.
-                refresh?: string
+                refresh?: string | false
                 // Version of the JSON schema, incremented each time a Grafana update brings
                 // changes to said schema.
                 schemaVersion: number | *30
