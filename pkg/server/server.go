@@ -39,7 +39,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/login/loginservice"
 	_ "github.com/grafana/grafana/pkg/services/ngalert"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
-	_ "github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/rendering"
 	_ "github.com/grafana/grafana/pkg/services/search"
 	_ "github.com/grafana/grafana/pkg/services/sqlstore"
@@ -71,6 +71,11 @@ func (r *globalServiceRegistry) IsDisabled(srv registry.Service) bool {
 
 func (r *globalServiceRegistry) GetServices() []*registry.Descriptor {
 	return registry.GetServices()
+}
+
+type roleRegistry interface {
+	// RegisterFixedRoles registers all roles declared to AccessControl
+	RegisterFixedRoles() error
 }
 
 // New returns a new instance of Server.
@@ -130,7 +135,9 @@ type Server struct {
 
 	serviceRegistry serviceRegistry
 
-	HTTPServer *api.HTTPServer `inject:""`
+	HTTPServer          *api.HTTPServer                  `inject:""`
+	AccessControl       roleRegistry                     `inject:""`
+	ProvisioningService provisioning.ProvisioningService `inject:""`
 }
 
 // init initializes the server and its services.
@@ -167,7 +174,12 @@ func (s *Server) init() error {
 		}
 	}
 
-	return nil
+	// Register all fixed roles
+	if err := s.AccessControl.RegisterFixedRoles(); err != nil {
+		return err
+	}
+
+	return s.ProvisioningService.RunInitProvisioners()
 }
 
 // Run initializes and starts services. This will block until all services have

@@ -164,6 +164,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
   return (
     <div>
       <Select
+        menuShouldPortal
         options={layerTypes.options}
         value={layerTypes.current}
         onChange={(v) => {
