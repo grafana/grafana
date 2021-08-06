@@ -47,5 +47,5 @@ If a user belongs to several organizations, then that user is counted once as a 
 
 For example, if Sofia is a Viewer in two organizations, an Editor in two organizations, and Admin in three organizations, then she would be reflected in the stats as:
 
-- Total users     1
-- Total admins    1
+- Total users 1
+- Total admins 1

@@ -42,6 +42,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                 <InputControl
                   render={({ field: { onChange, ref, ...field } }) => (
                     <Select
+                      menuShouldPortal
                       {...field}
                       className={styles.input}
                       onChange={(value) => onChange(mapSelectValueToString(value))}
@@ -68,6 +69,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
                 <MultiSelect
+                  menuShouldPortal
                   {...field}
                   allowCustomValue
                   className={styles.input}
@@ -113,6 +115,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                   <InputControl
                     render={({ field: { onChange, ref, ...field } }) => (
                       <Select
+                        menuShouldPortal
                         {...field}
                         className={styles.input}
                         onChange={(value) => onChange(mapSelectValueToString(value))}
@@ -147,6 +150,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                   <InputControl
                     render={({ field: { onChange, ref, ...field } }) => (
                       <Select
+                        menuShouldPortal
                         {...field}
                         className={styles.input}
                         onChange={(value) => onChange(mapSelectValueToString(value))}
@@ -181,6 +185,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                   <InputControl
                     render={({ field: { onChange, ref, ...field } }) => (
                       <Select
+                        menuShouldPortal
                         {...field}
                         className={styles.input}
                         menuPlacement="top"

@@ -87,7 +87,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx,
         <Input name="title" id="title" value={linkSettings.title} onChange={onChange} autoFocus={isNew} />
       </Field>
       <Field label="Type">
-        <Select value={linkSettings.type} options={linkTypeOptions} onChange={onTypeChange} />
+        <Select menuShouldPortal value={linkSettings.type} options={linkTypeOptions} onChange={onTypeChange} />
       </Field>
       {linkSettings.type === 'dashboards' && (
         <>
@@ -105,7 +105,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx,
             <Input name="tooltip" value={linkSettings.tooltip} onChange={onChange} placeholder="Open dashboard" />
           </Field>
           <Field label="Icon">
-            <Select value={linkSettings.icon} options={linkIconOptions} onChange={onIconChange} />
+            <Select menuShouldPortal value={linkSettings.icon} options={linkIconOptions} onChange={onIconChange} />
           </Field>
         </>
       )}

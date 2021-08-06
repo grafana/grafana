@@ -28,6 +28,7 @@ const MetricNameField: React.FC<MetricNameProps> = ({ metricNames, query, variab
   return (
     <Field label="Metric">
       <Select
+        menuShouldPortal
         inputId="azure-monitor-metrics-metric-field"
         value={query.azureMonitor?.metricName ?? null}
         onChange={handleChange}

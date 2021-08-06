@@ -61,7 +61,7 @@ Available Elasticsearch versions are `2.x`, `5.x`, `5.6+`, `6.0+`, `7.0+`, `7.7+
 
 Grafana assumes that you are running the lowest possible version for a specified range. This ensures that new features or breaking changes in a future Elasticsearch release will not affect your configuration.
 
-For example, suppose you are running Elasticsearch `7.6.1` and you selected `7.0+`. If a new feature is made available for Elasticsearch `7.5.0` or newer releases, then a `7.5+` option will be available.  However, your configuration will not be affected until you explicitly select the new `7.5+` option in your settings.
+For example, suppose you are running Elasticsearch `7.6.1` and you selected `7.0+`. If a new feature is made available for Elasticsearch `7.5.0` or newer releases, then a `7.5+` option will be available. However, your configuration will not be affected until you explicitly select the new `7.5+` option in your settings.
 
 ### Min time interval
 
@@ -87,6 +87,7 @@ Enables `X-Pack` specific features and options, providing the query editor with 
 #### Include frozen indices
 
 When `X-Pack enabled` is active and the configured Elasticsearch version is higher than `6.6.0`, you can configure Grafana to not ignore [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
+
 ### Logs
 
 There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determine
@@ -94,7 +95,7 @@ which fields will be used for log messages and log levels when visualizing logs 
 
 For example, if you're using a default setup of Filebeat for shipping logs to Elasticsearch the following configuration should work:
 
-- **Message field name:**  message
+- **Message field name:** message
 - **Level field name:** fields.level
 
 ### Data links
@@ -102,6 +103,7 @@ For example, if you're using a default setup of Filebeat for shipping logs to El
 Data links create a link from a specified field that can be accessed in logs view in Explore.
 
 Each data link configuration consists of:
+
 - **Field -** Name of the field used by the data link.
 - **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw }` macro.
 - **URL Label -** (Optional) Set a custom display label for the link. The link label defaults to the full external URL or name of the linked internal data source and is overridden by this setting.
@@ -126,7 +128,7 @@ You can control the name for time series via the `Alias` input field.
 
 ## Pipeline metrics
 
-Some metric aggregations are called Pipeline aggregations, for example, *Moving Average* and *Derivative*. Elasticsearch pipeline metrics require another metric to be based on. Use the eye icon next to the metric to hide metrics from appearing in the graph. This is useful for metrics you only have in the query for use in a pipeline metric.
+Some metric aggregations are called Pipeline aggregations, for example, _Moving Average_ and _Derivative_. Elasticsearch pipeline metrics require another metric to be based on. Use the eye icon next to the metric to hide metrics from appearing in the graph. This is useful for metrics you only have in the query for use in a pipeline metric.
 
 ![Pipeline aggregation editor](/static/img/docs/elasticsearch/pipeline-aggregation-editor-7-4.png)
 
@@ -141,7 +143,7 @@ types of template variables.
 
 ### Query variable
 
-The Elasticsearch data source supports two types of queries you can use in the *Query* field of *Query* variables. The query is written using a custom JSON string.
+The Elasticsearch data source supports two types of queries you can use in the _Query_ field of _Query_ variables. The query is written using a custom JSON string.
 
 | Query                                                                | Description                                                                                                                                                           |
 | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -172,16 +174,16 @@ To keep terms in the doc count order, set the variable's Sort dropdown to **Disa
 
 There are two syntaxes:
 
-- `$<varname>`  Example: @hostname:$hostname
+- `$<varname>` Example: @hostname:$hostname
 - `[[varname]]` Example: @hostname:[[hostname]]
 
-Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the *Multi-value* or *Include all value*
+Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the _Multi-value_ or _Include all value_
 options are enabled, Grafana converts the labels from plain text to a lucene compatible condition.
 
 ![Query with template variables](/static/img/docs/elasticsearch/elastic-templating-query-7-4.png)
 
-In the above example, we have a lucene query that filters documents based on the `@hostname`  property using a variable named `$hostname`. It is also using
-a variable in the *Terms* group by field input box. This allows you to use a variable to quickly change how the data is grouped.
+In the above example, we have a lucene query that filters documents based on the `@hostname` property using a variable named `$hostname`. It is also using
+a variable in the _Terms_ group by field input box. This allows you to use a variable to quickly change how the data is grouped.
 
 Example dashboard:
 [Elasticsearch Templated Dashboard](https://play.grafana.org/d/CknOEXDMk/elasticsearch-templated?orgId=1d)
@@ -193,7 +195,7 @@ queries via the Dashboard menu / Annotations view. Grafana can query any Elastic
 for annotation events.
 
 | Name       | Description                                                                                                                                |
-| --------   | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `Query`    | You can leave the search query blank or specify a lucene query.                                                                            |
 | `Time`     | The name of the time field, needs to be date field.                                                                                        |
 | `Time End` | Optional name of the time end field needs to be date field. If set, then annotations will be marked as a region between time and time-end. |
@@ -230,11 +232,11 @@ datasources:
   - name: Elastic
     type: elasticsearch
     access: proxy
-    database: "[metrics-]YYYY.MM.DD"
+    database: '[metrics-]YYYY.MM.DD'
     url: http://localhost:9200
     jsonData:
       interval: Daily
-      timeField: "@timestamp"
+      timeField: '@timestamp'
 ```
 
 or, for logs:
@@ -246,18 +248,18 @@ datasources:
   - name: elasticsearch-v7-filebeat
     type: elasticsearch
     access: proxy
-    database: "[filebeat-]YYYY.MM.DD"
+    database: '[filebeat-]YYYY.MM.DD'
     url: http://localhost:9200
     jsonData:
       interval: Daily
-      timeField: "@timestamp"
-      esVersion: "7.0.0"
+      timeField: '@timestamp'
+      esVersion: '7.0.0'
       logMessageField: message
       logLevelField: fields.level
       dataLinks:
         - datasourceUid: my_jaeger_uid # Target UID needs to be known
           field: traceID
-          url: "$${__value.raw}" # Careful about the double "$$" because of env var expansion
+          url: '$${__value.raw}' # Careful about the double "$$" because of env var expansion
 ```
 
 ## Amazon Elasticsearch Service

@@ -1,8 +1,16 @@
-import { DataFrame, dataFrameToJSON, DataSourceInstanceSettings, MutableDataFrame, PluginType } from '@grafana/data';
+import {
+  DataFrame,
+  dataFrameToJSON,
+  DataSourceInstanceSettings,
+  FieldType,
+  MutableDataFrame,
+  PluginType,
+} from '@grafana/data';
+import { BackendDataSourceResponse, FetchResponse, setBackendSrv } from '@grafana/runtime';
 import { Observable, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { TempoDatasource } from './datasource';
-import { FetchResponse, setBackendSrv, BackendDataSourceResponse } from '@grafana/runtime';
+import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
   it('parses json fields from backend', async () => {
@@ -68,6 +76,21 @@ describe('Tempo data source', () => {
       { name: 'source', values: [] },
     ]);
   });
+
+  it('should handle json file upload', async () => {
+    const ds = new TempoDatasource(defaultSettings);
+    ds.uploadedJson = JSON.stringify(mockJson);
+    const response = await ds
+      .query({
+        targets: [{ queryType: 'upload', refId: 'A' }],
+      } as any)
+      .toPromise();
+    const field = response.data[0].fields[0];
+    expect(field.name).toBe('traceID');
+    expect(field.type).toBe(FieldType.string);
+    expect(field.values.get(0)).toBe('60ba2abb44f13eae');
+    expect(field.values.length).toBe(6);
+  });
 });
 
 function setupBackendSrv(frame: DataFrame) {
@@ -91,6 +114,7 @@ const defaultSettings: DataSourceInstanceSettings = {
   uid: '0',
   type: 'tracing',
   name: 'jaeger',
+  access: 'proxy',
   meta: {
     id: 'jaeger',
     name: 'jaeger',
