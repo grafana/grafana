@@ -660,6 +660,9 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       catchError((err) => {
         if (err.data?.error) {
           throw err.data.error;
+        } else if (err.data?.message) {
+          // In PROD we do not supply .error
+          throw err.data.message;
         }
 
         throw err;
