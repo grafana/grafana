@@ -1,8 +1,16 @@
-import { DataFrame, dataFrameToJSON, DataSourceInstanceSettings, MutableDataFrame, PluginType } from '@grafana/data';
+import {
+  DataFrame,
+  dataFrameToJSON,
+  DataSourceInstanceSettings,
+  getDefaultTimeRange,
+  LoadingState,
+  MutableDataFrame,
+  PluginType,
+} from '@grafana/data';
 import { Observable, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { TempoDatasource } from './datasource';
-import { FetchResponse, setBackendSrv, BackendDataSourceResponse } from '@grafana/runtime';
+import { FetchResponse, setBackendSrv, BackendDataSourceResponse, setDataSourceSrv } from '@grafana/runtime';
 
 describe('Tempo data source', () => {
   it('parses json fields from backend', async () => {
@@ -68,7 +76,44 @@ describe('Tempo data source', () => {
       { name: 'source', values: [] },
     ]);
   });
+
+  it('runs service map queries', async () => {
+    const ds = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: {
+        serviceMap: {
+          datasourceUid: 'prom',
+        },
+      },
+    });
+    setDataSourceSrv(backendSrvWithPrometheus as any);
+    const response = await ds
+      .query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)
+      .toPromise();
+
+    expect(response.data).toHaveLength(2);
+    expect(response.data[0].name).toBe('Nodes');
+    expect(response.data[0].fields[0].values.length).toBe(3);
+
+    expect(response.data[1].name).toBe('Edges');
+    expect(response.data[1].fields[0].values.length).toBe(2);
+
+    expect(response.state).toBe(LoadingState.Done);
+  });
 });
+
+const backendSrvWithPrometheus = {
+  async get(uid: string) {
+    if (uid === 'prom') {
+      return {
+        query() {
+          return of({ data: [totalsPromMetric] }, { data: [secondsPromMetric] });
+        },
+      };
+    }
+    throw new Error('unexpected uid');
+  },
+};
 
 function setupBackendSrv(frame: DataFrame) {
   setBackendSrv({
@@ -90,10 +135,10 @@ const defaultSettings: DataSourceInstanceSettings = {
   id: 0,
   uid: '0',
   type: 'tracing',
-  name: 'jaeger',
+  name: 'tempo',
   meta: {
-    id: 'jaeger',
-    name: 'jaeger',
+    id: 'tempo',
+    name: 'tempo',
     type: PluginType.datasource,
     info: {} as any,
     module: '',
@@ -101,3 +146,29 @@ const defaultSettings: DataSourceInstanceSettings = {
   },
   jsonData: {},
 };
+
+const totalsPromMetric = new MutableDataFrame({
+  refId: 'tempo_service_graph_request_total',
+  fields: [
+    { name: 'Time', values: [1628169788000, 1628169788000] },
+    { name: 'client', values: ['app', 'lb'] },
+    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+    { name: 'job', values: ['local_scrape', 'local_scrape'] },
+    { name: 'server', values: ['db', 'app'] },
+    { name: 'tempo_config', values: ['default', 'default'] },
+    { name: 'Value #tempo_service_graph_request_total', values: [10, 20] },
+  ],
+});
+
+const secondsPromMetric = new MutableDataFrame({
+  refId: 'tempo_service_graph_request_server_seconds_sum',
+  fields: [
+    { name: 'Time', values: [1628169788000, 1628169788000] },
+    { name: 'client', values: ['app', 'lb'] },
+    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+    { name: 'job', values: ['local_scrape', 'local_scrape'] },
+    { name: 'server', values: ['db', 'app'] },
+    { name: 'tempo_config', values: ['default', 'default'] },
+    { name: 'Value #tempo_service_graph_request_server_seconds_sum', values: [10, 40] },
+  ],
+});
