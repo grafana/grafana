@@ -29,7 +29,7 @@ status:accesscontrol | services:accesscontrol
 #### Example request
 
 ```http
-GET /api/access-control/check
+GET /api/access-control/status
 Accept: application/json
 Content-Type: application/json
 ```
@@ -287,6 +287,7 @@ Content-Type: application/json
     "version": 2,    
     "name": "custom:delete:create:roles",
     "description": "My custom role which gives users permissions to delete and create roles",    
+    "global": true,
     "permissions": [
         {
             "action": "roles:delete",
@@ -373,7 +374,7 @@ roles:delete | permissions:delegate
 #### Example request
 
 ```http
-DELETE /api/access-control/roles/jZrmlLCGka?force=true
+DELETE /api/access-control/roles/jZrmlLCGka?force=true&global=true
 Accept: application/json
 ```
 
