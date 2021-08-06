@@ -286,4 +286,5 @@ func AddAlertAdminConfigMigrations(mg *migrator.Migrator) {
 	}
 
 	mg.AddMigration("create_ngalert_configuration_table", migrator.NewAddTableMigration(adminConfiguration))
+	mg.AddMigration("add index in ngalert_configuration on org_id column", migrator.NewAddIndexMigration(adminConfiguration, adminConfiguration.Indices[0]))
 }
