@@ -29,6 +29,8 @@ ha_engine = redis
 ha_engine_address = 127.0.0.1:6379
 ```
 
+For additional information, refer to the [ha_engine]({{< relref "../administration/configuration.md#ha_engine" >}}) and [ha_engine_address]({{< relref "../administration/configuration.md#ha_engine_address" >}}) options.
+
 After running:
 
 - All built-in real-time notifications like dashboard changes are delivered to all Grafana server instances and broadcasted to all subscribers.
