@@ -4,7 +4,7 @@ import { Button, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { api } from '../../api';
 import { ActionTypes, CatalogPlugin } from '../../types';
-import { getStyles } from '../InstallControls';
+import { getStyles } from './index';
 
 type InstallControlsButtonProps = {
   disabled: boolean;

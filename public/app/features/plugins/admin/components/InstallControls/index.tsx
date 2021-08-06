@@ -6,10 +6,10 @@ import { config } from '@grafana/runtime';
 import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { CatalogPluginDetails } from '../types';
-import { isGrafanaAdmin, getExternalManageLink } from '../helpers';
-import { ExternallyManagedButton } from './InstallControls/ExternallyManagedButton';
-import { InstallControlsButton } from './InstallControls/InstallControlsButton';
+import { CatalogPluginDetails } from '../../types';
+import { isGrafanaAdmin, getExternalManageLink } from '../../helpers';
+import { ExternallyManagedButton } from './ExternallyManagedButton';
+import { InstallControlsButton } from './InstallControlsButton';
 
 interface Props {
   plugin: CatalogPluginDetails;
