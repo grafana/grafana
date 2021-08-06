@@ -169,7 +169,7 @@ var provisioningAdminRole = RoleDTO{
 	},
 }
 
-// FixedRoles provides a map of permissionEvaluator sets/roles which can be
+// FixedRoles provides a map of permission sets/roles which can be
 // assigned to a set of users. When adding a new resource protected by
 // Grafana access control the default permissions should be added to a
 // new fixed role in this set so that users can access the new
