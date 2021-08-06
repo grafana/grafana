@@ -104,7 +104,7 @@ Gradient color is generated based on the hue of the line color.
 
 ![Gradient mode hue example](/static/img/docs/time-series-panel/line-graph-gradient-hue-7-4.png)
 
-#### Scheme 
+#### Scheme
 
 In this mode the whole line will use a color gradient defined by your [Color scheme]({{< relref "../../standard-options.md#color-scheme" >}}) option. There is more information on this option in [Graph and color scheme]({{< relref "./graph-color-scheme.md" >}}).
 
@@ -152,7 +152,7 @@ Dot spacing set to 0, 30:
 
 ### Connect null values
 
-Choose how null values (gaps in the data) are displayed on the graph. Null values can be connected to form a continuous line or, optionally, set a threshold above which gaps in the data should no longer be connected. 
+Choose how null values (gaps in the data) are displayed on the graph. Null values can be connected to form a continuous line or, optionally, set a threshold above which gaps in the data should no longer be connected.
 
 ![Image name](/static/img/docs/time-series-panel/connect-null-values-8-0.png)
 
@@ -166,7 +166,7 @@ Time series data points with gaps in the the data are always connected.
 
 #### Threshold
 
-A threshold can be set above which gaps in the data should no longer be connected. This can be useful when the connected gaps in the data are of a known size and/or within a known range and gaps outside this range should no longer be connected. 
+A threshold can be set above which gaps in the data should no longer be connected. This can be useful when the connected gaps in the data are of a known size and/or within a known range and gaps outside this range should no longer be connected.
 
 ![Image name](/static/img/docs/time-series-panel/connect-null-values-8-0.png)
 
