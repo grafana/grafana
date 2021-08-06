@@ -17,6 +17,7 @@ export const Selector: React.FC<Props> = ({ query, templateVariableOptions, onCh
   return (
     <QueryEditorRow label="Selector">
       <Select
+        menuShouldPortal
         width={SELECT_WIDTH}
         allowCustomValue
         value={[...SELECTORS, ...templateVariableOptions].find((s) => s.value === query?.selectorName ?? '')}

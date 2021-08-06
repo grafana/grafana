@@ -56,6 +56,7 @@ export function ValuePicker<T>({
       {isPicking && (
         <span>
           <Select
+            menuShouldPortal
             placeholder={label}
             options={options}
             aria-label={selectors.components.ValuePicker.select(label)}

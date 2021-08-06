@@ -75,6 +75,7 @@ export default class PermissionsListItem extends PureComponent<Props> {
         <td className="query-keyword">Can</td>
         <td>
           <Select
+            menuShouldPortal
             isSearchable={false}
             options={dashboardPermissionLevels}
             onChange={this.onPermissionChanged}
