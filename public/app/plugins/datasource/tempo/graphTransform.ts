@@ -2,7 +2,6 @@ import { groupBy } from 'lodash';
 import {
   DataFrame,
   DataFrameView,
-  DataQueryRequest,
   DataQueryResponse,
   FieldDTO,
   MutableDataFrame,
@@ -10,7 +9,6 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '../../../core/utils/tracing';
-import { TempoQuery } from './datasource';
 
 interface Row {
   traceID: string;
@@ -145,13 +143,10 @@ export const serviceMapMetrics = [
 
 /**
  * Map response from multiple prometheus metrics into a node graph data frames with nodes and edges.
- * @param request
  * @param responses
+ * @param range
  */
-export function mapPromMetricsToServiceMap(
-  request: DataQueryRequest<TempoQuery>,
-  responses: DataQueryResponse[]
-): [DataFrame, DataFrame] {
+export function mapPromMetricsToServiceMap(responses: DataQueryResponse[], range: TimeRange): [DataFrame, DataFrame] {
   const [totalsDFView, secondsDFView] = getMetricFrames(responses);
 
   // First just collect data from the metrics into a map with nodes and edges as keys
@@ -161,7 +156,7 @@ export function mapPromMetricsToServiceMap(
   collectMetricData(totalsDFView, 'total', totalsMetric, nodesMap, edgesMap);
   collectMetricData(secondsDFView, 'seconds', secondsMetric, nodesMap, edgesMap);
 
-  return convertToDataFrames(nodesMap, edgesMap, request.range);
+  return convertToDataFrames(nodesMap, edgesMap, range);
 }
 
 function createServiceMapDataFrames() {
@@ -273,7 +268,7 @@ function convertToDataFrames(
       source: edge.source,
       target: edge.target,
       mainStat: edge.total,
-      secondaryStat: edge.total / (rangeMs / (1000 * 60)),
+      secondaryStat: edge.total ? (edge.seconds / edge.total) * 1000 : Number.NaN,
     });
   }
 

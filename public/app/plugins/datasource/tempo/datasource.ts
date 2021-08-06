@@ -137,7 +137,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       toArray(),
       map((responses: DataQueryResponse[]) => {
         return {
-          data: mapPromMetricsToServiceMap(request, responses),
+          data: mapPromMetricsToServiceMap(responses, request.range),
           state: LoadingState.Done,
         };
       })
