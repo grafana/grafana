@@ -124,7 +124,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin): 
     popularity: remote?.popularity || 0,
     publishedAt: remote?.createdAt || '',
     type: remote?.typeCode || local?.type,
-    signature: local?.signature || hasRemoteSignature ? PluginSignatureStatus.valid : PluginSignatureStatus.missing,
+    signature: local?.signature || (hasRemoteSignature ? PluginSignatureStatus.valid : PluginSignatureStatus.missing),
     updatedAt: remote?.updatedAt || local?.info.updated || '',
     version,
   };
