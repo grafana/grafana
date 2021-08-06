@@ -354,10 +354,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.SetURLPrefix(hs.Cfg.AppSubURL)
 	}
 
-	m.UseMiddleware(macaron.Renderer(macaron.RenderOptions{
-		Directory: filepath.Join(hs.Cfg.StaticRootPath, "views"),
-		Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-	}))
+	m.UseMiddleware(macaron.Renderer(filepath.Join(hs.Cfg.StaticRootPath, "views"), "[[", "]]"))
 
 	// These endpoints are used for monitoring the Grafana instance
 	// and should not be redirected or rejected.

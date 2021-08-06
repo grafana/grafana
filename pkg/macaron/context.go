@@ -15,6 +15,7 @@
 package macaron
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -44,11 +45,11 @@ type Context struct {
 	index    int
 
 	*Router
-	Req    Request
-	Resp   ResponseWriter
-	params Params
-	render Render
-	Data   map[string]interface{}
+	Req      Request
+	Resp     ResponseWriter
+	params   Params
+	template *tmpl
+	Data     map[string]interface{}
 }
 
 func (ctx *Context) handler() Handler {
@@ -108,13 +109,36 @@ func (ctx *Context) RemoteAddr() string {
 	return addr
 }
 
+const (
+	headerContentType = "Content-Type"
+	contentTypeJSON   = "application/json; charset=UTF-8"
+	contentTypeHTML   = "text/html; charset=UTF-8"
+)
+
 // HTML renders the HTML with default template set.
 func (ctx *Context) HTML(status int, name string, data interface{}) {
-	ctx.render.HTML(status, name, data)
+	if Env == DEV {
+		if err := ctx.template.compile(); err != nil {
+			panic("Context.HTML:" + err.Error())
+		}
+	}
+	ctx.Resp.Header().Set(headerContentType, contentTypeHTML)
+	ctx.Resp.WriteHeader(status)
+	if err := ctx.template.ExecuteTemplate(ctx.Resp, name, data); err != nil {
+		panic("Context.HTML:" + err.Error())
+	}
 }
 
 func (ctx *Context) JSON(status int, data interface{}) {
-	ctx.render.JSON(status, data)
+	ctx.Resp.Header().Set(headerContentType, contentTypeJSON)
+	ctx.Resp.WriteHeader(status)
+	enc := json.NewEncoder(ctx.Resp)
+	if Env != PROD {
+		enc.SetIndent("", "  ")
+	}
+	if err := enc.Encode(data); err != nil {
+		panic("Context.JSON: " + err.Error())
+	}
 }
 
 // Redirect sends a redirect response
@@ -136,7 +160,7 @@ func (ctx *Context) parseForm() {
 		return
 	}
 
-	contentType := ctx.Req.Header.Get(_CONTENT_TYPE)
+	contentType := ctx.Req.Header.Get(headerContentType)
 	if (ctx.Req.Method == "POST" || ctx.Req.Method == "PUT") &&
 		len(contentType) > 0 && strings.Contains(contentType, "multipart/form-data") {
 		_ = ctx.Req.ParseMultipartForm(MaxMemory)

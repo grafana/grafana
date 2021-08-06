@@ -633,10 +633,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.m = macaron.New()
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
 		sc.m.Use(AddCSPHeader(cfg, logger))
-		sc.m.UseMiddleware(macaron.Renderer(macaron.RenderOptions{
-			Directory: viewsPath,
-			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-		}))
+		sc.m.UseMiddleware(macaron.Renderer(viewsPath, "[[", "]]"))
 
 		ctxHdlr := getContextHandler(t, cfg)
 		sc.sqlStore = ctxHdlr.SQLStore
