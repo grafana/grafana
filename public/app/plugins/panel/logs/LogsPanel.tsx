@@ -24,10 +24,10 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   },
   title,
 }) => {
-  const style = useStyles2(getStyles(title, sortOrder));
+  const isAscending = sortOrder === LogsSortOrder.Ascending;
+  const style = useStyles2(getStyles(title, isAscending));
   const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>;
-  const isAscending = sortOrder === LogsSortOrder.Ascending;
 
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
@@ -92,14 +92,14 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   );
 };
 
-const getStyles = (title: string, sortOrder: LogsSortOrder) => (theme: GrafanaTheme2) => ({
+const getStyles = (title: string, isAscending: boolean) => (theme: GrafanaTheme2) => ({
   container: css`
     margin-bottom: ${theme.spacing(1.5)};
     //We can remove this hot-fix when we fix panel menu with no title overflowing top of all panels
     margin-top: ${theme.spacing(!title ? 2.5 : 0)};
   `,
   labelContainer: css`
-    margin: ${sortOrder === LogsSortOrder.Descending ? theme.spacing(0, 0, 0.5, 0.5) : theme.spacing(0.5, 0, 0.5, 0)};
+    margin: ${isAscending ? theme.spacing(0.5, 0, 0.5, 0) : theme.spacing(0, 0, 0.5, 0.5)};
     display: flex;
     align-items: center;
   `,
