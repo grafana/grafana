@@ -60,7 +60,7 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
     globals: {
       'ts-jest': {
         isolatedModules: true,
-        tsConfig: path.resolve(baseDir, 'tsconfig.json'),
+        tsconfig: path.resolve(baseDir, 'tsconfig.json'),
       },
     },
     coverageReporters: ['json-summary', 'text', 'lcov'],
