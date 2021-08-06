@@ -9,7 +9,7 @@ aliases = ["/docs/grafana/latest/http_api/accesscontrol/"]
 
 > Fine-grained access control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
-The API can be used to create, update, get and list roles, and create or remove built-in role assignments. 
+The API can be used to create, update, get and list roles, and create or remove built-in role assignments.
 To use the API, you would need to [enable fine-grained access control]({{< relref "../enterprise/access-control/_index.md#enable-fine-grained-access-control" >}}).
 
 The API does not currently work with an API Token. So in order to use these API endpoints you will have to use [Basic auth]({{< relref "./auth/#basic-auth" >}}).
@@ -23,7 +23,7 @@ Returns an indicator to check if fine-grained access control is enabled or not.
 ### Required permissions
 
 Action | Scope
---- | --- | 
+--- | --- |
 status:accesscontrol | services:accesscontrol
 
 #### Example request
@@ -48,7 +48,7 @@ Content-Type: application/json; charset=UTF-8
 #### Status codes
 
 Code | Description
---- | --- | 
+--- | --- |
 200 | Returned a flag indicating if the fine-grained access control is enabled or no.
 403 | Access denied
 404 | Not found, an indication that fine-grained access control is not available at all.
@@ -60,14 +60,14 @@ Code | Description
 
 `GET /api/access-control/roles`
 
-Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in. 
+Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.
 Refer to the [Role scopes]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) for more information.  
 
 #### Required permissions
 
-Action | Scope 
---- | --- | 
-roles:list | roles:* 
+Action | Scope
+--- | --- |
+roles:list | roles:*
 
 #### Example request
 
@@ -108,7 +108,7 @@ Content-Type: application/json; charset=UTF-8
 #### Status codes
 
 Code | Description
---- | --- | 
+--- | --- |
 200 | Global and organization local roles are returned.
 403 | Access denied
 500 | Unexpected error. Refer to body and/or server logs for more details.
@@ -122,7 +122,7 @@ Get a role for the given UID.
 #### Required permissions
 
 Action | Scope
---- | --- | 
+--- | --- |
 roles:read | roles:*
 
 #### Example request
@@ -167,7 +167,7 @@ Content-Type: application/json; charset=UTF-8
 #### Status codes
 
 Code | Description
---- | --- | 
+--- | --- |
 200 | Role is returned.
 403 | Access denied
 500 | Unexpected error. Refer to body and/or server logs for more details.
@@ -184,7 +184,7 @@ Creates a new custom role and maps given permissions to that role. Note that rol
 For example, if a user does not have required permissions for creating users, they won't be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.
 
 Action | Scope
---- | --- | 
+--- | --- |
 roles:write | permissions:delegate
 
 #### Example request
@@ -255,7 +255,7 @@ Content-Type: application/json; charset=UTF-8
 #### Status codes
 
 Code | Description
---- | --- | 
+--- | --- |
 200 | Role is updated.
 400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
 403 | Access denied
@@ -273,7 +273,7 @@ Update the role with the given UID, and it's permissions with the given UID. The
 For example, if a user does not have required permissions for creating users, they won't be able to update a custom role which allows to do that. This is done to prevent escalation of privileges.
 
 Action | Scope
---- | --- | 
+--- | --- |
 roles:write | permissions:delegate
 
 #### Example request
@@ -284,17 +284,17 @@ Accept: application/json
 Content-Type: application/json
 
 {
-    "version": 2,    
-    "name": "custom:delete:create:roles",
-    "description": "My custom role which gives users permissions to delete and create roles",    
+    "version": 3,
+    "name": "custom:delete:write:roles",
+    "description": "My custom role which gives users permissions to delete and write roles",
     "global": true,
     "permissions": [
         {
             "action": "roles:delete",
             "scope": "permissions:delegate"
         },
-         {
-            "action": "roles:create",
+        {
+            "action": "roles:write",
             "scope": "permissions:delegate"
         }
     ]
@@ -324,32 +324,34 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
 {
-    "version": 3,    
-    "name": "custom:delete:create:roles",
-    "description": "My custom role which gives users permissions to delete and create roles",    
-    "permissions": [
+    "version":3,
+    "uid":"jZrmlLCGka",
+    "name":"custom:delete:write:roles",
+    "description":"My custom role which gives users permissions to delete and write roles",
+    "permissions":[
         {
-            "action": "roles:delete",
-            "scope": "permissions:delegate",
-            "updated": "2021-05-13T23:19:46.546146+02:00",
-            "created": "2021-05-13T23:19:46.546146+02:00"
+            "action":"roles:delete",
+            "scope":"permissions:delegate",
+            "updated":"2021-08-06T18:27:40+02:00",
+            "created":"2021-08-06T18:27:40+02:00"
         },
-         {
-            "action": "roles:create",
-            "scope": "permissions:delegate",
-            "updated": "2021-05-13T23:19:46.546146+02:00",
-            "created": "2021-05-13T23:19:46.546146+02:00"
+        {
+            "action":"roles:write",
+            "scope":"permissions:delegate",
+            "updated":"2021-08-06T18:27:41+02:00",
+            "created":"2021-08-06T18:27:41+02:00"
         }
     ],
-    "updated": "2021-05-13T23:19:46.540987+02:00",
-    "created": "2021-05-13T23:19:46.540986+02:00"
+    "updated":"2021-08-06T18:27:41+02:00",
+    "created":"2021-08-06T18:27:40+02:00",
+    "global":true
 }
 ```
 
 #### Status codes
 
 Code | Description
---- | --- | 
+--- | --- |
 200 | Role is updated.
 400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
 403 | Access denied
@@ -368,7 +370,7 @@ Delete a role with the given UID, and it's permissions. If the role is assigned 
 For example, if a user does not have required permissions for creating users, they won't be able to delete a custom role which allows to do that.
 
 Action | Scope
---- | --- | 
+--- | --- |
 roles:delete | permissions:delegate
 
 #### Example request
@@ -398,7 +400,7 @@ Content-Type: application/json; charset=UTF-8
 #### Status codes
 
 Code | Description
---- | --- | 
+--- | --- |
 200 | Role is deleted.
 400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
 403 | Access denied
@@ -406,7 +408,7 @@ Code | Description
 
 ## Create and remove built-in role assignments
 
-API set allows to create or remove [built-in role assignments]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) and list current assignments. 
+API set allows to create or remove [built-in role assignments]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) and list current assignments.
 
 ### Get all built-in role assignments
 
@@ -417,7 +419,7 @@ Gets all built-in role assignments.
 #### Required permissions
 
 Action | Scope
---- | --- | 
+--- | --- |
 roles.builtin:list | roles:*
 
 #### Example request
@@ -472,7 +474,7 @@ Content-Type: application/json; charset=UTF-8
 #### Status codes
 
 Code | Description
---- | --- | 
+--- | --- |
 200 | Built-in role assignments are returned.
 403 | Access denied
 500 | Unexpected error. Refer to body and/or server logs for more details.
@@ -485,11 +487,11 @@ Creates a new built-in role assignment.
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. 
+`permission:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.
 
 Action | Scope
---- | --- | 
+--- | --- |
 roles.builtin:add | permissions:delegate
 
 #### Example request
@@ -528,7 +530,7 @@ Content-Type: application/json; charset=UTF-8
 #### Status codes
 
 Code | Description
---- | --- | 
+--- | --- |
 200 | Role was assigned to built-in role.
 400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
 403 | Access denied
@@ -547,7 +549,7 @@ Deletes a built-in role assignment (for one of _Viewer_, _Editor_, _Admin_, or _
 For example, if a user does not have required permissions for creating users, they won't be able to remove a built-in role assignment which allows to do that.
 
 Action | Scope
---- | --- | 
+--- | --- |
 roles.builtin:remove | permissions:delegate
 
 #### Example request
@@ -577,7 +579,7 @@ Content-Type: application/json; charset=UTF-8
 #### Status codes
 
 Code | Description
---- | --- | 
+--- | --- |
 200 | Role was unassigned from built-in role.
 400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
 403 | Access denied
