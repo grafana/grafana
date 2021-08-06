@@ -96,7 +96,7 @@ Gradient color is generated based on the hue of the line color.
 
 ![Gradient mode hue example](/static/img/docs/time-series-panel/bar-graph-gradient-hue-7-4.png)
 
-#### Scheme 
+#### Scheme
 
 In this mode the whole bar will use a color gradient defined by your [Color scheme]({{< relref "../../standard-options.md#color-scheme" >}}) option. There is more information on this option in [Graph and color scheme]({{< relref "./graph-color-scheme.md" >}}).
 

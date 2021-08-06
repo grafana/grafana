@@ -251,7 +251,7 @@ There can be different reasons for this:
 - A dashboard with the same uid already exists, `status=name-exists`
 - The dashboard belongs to plugin `<plugin title>`, `status=plugin-dashboard`
 
- The response body will have the following properties:
+The response body will have the following properties:
 
 ```http
 HTTP/1.1 412 Precondition Failed
@@ -438,4 +438,5 @@ Content-Type: application/json
 ```
 
 ## Dashboard Search
+
 See [Folder/Dashboard Search API]({{< relref "folder_dashboard_search.md" >}}).

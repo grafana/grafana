@@ -109,6 +109,7 @@ We always try to bring some UX/UI refinements and polish in every release.
       shortcut or by adding <code>&kiosk</code> to the URL when you load a dashboard.
       In kiosk mode the navbar is completely hidden/removed from view.
     </p>
+
   </div>
   <div class="medium-6 columns">
    {{< figure src="/static/img/docs/v4/tvmode.png" caption="TV mode" >}}
