@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
+import { AlertingSettings, DataSourceHttpSettings, Alert } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { config } from 'app/core/config';
 import { PromOptions } from '../types';
@@ -17,6 +17,12 @@ export const ConfigEditor = (props: Props) => {
 
   return (
     <>
+      {options.access === 'direct' && (
+        <Alert title="Deprecation Notice" severity="warning">
+          Browser access mode in the Prometheus datasource is deprecated and will be removed in a future release.
+        </Alert>
+      )}
+
       <DataSourceHttpSettings
         defaultUrl="http://localhost:9090"
         dataSourceConfig={options}
