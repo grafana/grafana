@@ -35,6 +35,8 @@ type Gateway struct {
 	autoJsonConverter *autoJsonConverter
 	jsonPathConverter *jsonPathConverter
 	pipeline          *pipeline.Pipeline
+	frameStorage      *FrameStorage
+	ruleProcessor     *RuleProcessor
 }
 
 type dropFieldsProcessor struct {
@@ -80,7 +82,9 @@ func (l managedStreamOutput) Output(_ context.Context, vars pipeline.OutputVars,
 }
 
 type fakeStorage struct {
-	gLive *live.GrafanaLive
+	gLive         *live.GrafanaLive
+	frameStorage  *FrameStorage
+	ruleProcessor *RuleProcessor
 }
 
 func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChannelRuleCommand) ([]*pipeline.LiveChannelRule, error) {
@@ -162,6 +166,11 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 						},
 					},
 				},
+				{
+					Name:  "annotation",
+					Type:  data.FieldTypeNullableString,
+					Value: "$.annotation",
+				},
 			},
 			Processors: []pipeline.Processor{
 				newDropFieldsProcessor("value2"),
@@ -172,6 +181,30 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					Enabled:  true,
 					Endpoint: "",
 				}),
+				NewLiveChangeLogOutput(f.frameStorage, f.ruleProcessor, LiveChangeLogOutputConfig{
+					Fields:  []string{"value3"},
+					Channel: "stream/test/exact/value3/changes",
+				}),
+				NewLiveChangeLogOutput(f.frameStorage, f.ruleProcessor, LiveChangeLogOutputConfig{
+					Fields:  []string{"annotation"},
+					Channel: "stream/test/exact/annotation/changes",
+				}),
+			},
+		},
+		{
+			OrgId:   1,
+			Pattern: "stream/test/exact/value3/changes",
+			Mode:    "auto",
+			Outputs: []pipeline.Outputter{
+				newManagedStreamOutput(f.gLive),
+			},
+		},
+		{
+			OrgId:   1,
+			Pattern: "stream/test/exact/annotation/changes",
+			Mode:    "auto",
+			Outputs: []pipeline.Outputter{
+				newManagedStreamOutput(f.gLive),
 			},
 		},
 	}, nil
@@ -182,9 +215,9 @@ func (g *Gateway) Init() error {
 	logger.Info("Live Push Gateway initialization")
 
 	g.converter = convert.NewConverter()
-	g.autoJsonConverter = newJSONConverter()
-	g.jsonPathConverter = newJsonPathConverter()
-	g.pipeline = pipeline.New(&fakeStorage{gLive: g.GrafanaLive})
+	storage := &fakeStorage{gLive: g.GrafanaLive, frameStorage: NewFrameStorage()}
+	g.ruleProcessor = NewRuleProcessor(pipeline.New(storage))
+	storage.ruleProcessor = g.ruleProcessor
 	return nil
 }
 
@@ -262,75 +295,19 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 		"bodyLength", len(body),
 	)
 
-	rule, ruleOk, err := g.pipeline.Get(1, "stream/"+streamID+"/"+path)
+	channel := "stream/" + streamID + "/" + path
+
+	frame, err := g.ruleProcessor.DataToFrame(context.Background(), ctx.OrgId, channel, body)
 	if err != nil {
-		logger.Error("Error getting rule", "error", err, "data", string(body))
-		ctx.Resp.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	if !ruleOk {
-		ctx.Resp.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	var frame *data.Frame
-
-	if rule.Mode == "auto" || rule.Mode == "tip" {
-		fields := map[string]pipeline.Field{}
-		if rule.Fields != nil {
-			for _, field := range rule.Fields {
-				fields[field.Name] = field
-			}
-		}
-		frame, err = g.autoJsonConverter.Convert(path, body, fields)
-		if err != nil {
-			logger.Error("Error converting JSON", "error", err)
-			ctx.Resp.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	} else if rule.Mode == "exact" {
-		frame, err = g.jsonPathConverter.Convert(path, body, rule.Fields)
-		if err != nil {
-			logger.Error("Error converting JSON", "error", err)
-			ctx.Resp.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	} else {
-		logger.Error("Unknown mode", "mode", rule.Mode)
+		logger.Error("Error data to frame", "error", err, "body", string(body))
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	vars := pipeline.Vars{
-		OrgID: ctx.OrgId,
-	}
-
-	processorVars := pipeline.ProcessorVars{
-		Vars:      vars,
-		Scope:     "stream",
-		Namespace: streamID,
-		Path:      path,
-	}
-
-	for _, p := range rule.Processors {
-		frame, err = p.Process(context.Background(), processorVars, frame)
-		if err != nil {
-			logger.Error("Error processing frame", "error", err)
-			ctx.Resp.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	}
-
-	outputVars := pipeline.OutputVars{
-		ProcessorVars: processorVars,
-	}
-
-	for _, out := range rule.Outputs {
-		err = out.Output(context.Background(), outputVars, frame)
-		if err != nil {
-			logger.Error("Error outputting frame", "error", err, "data", string(body))
-			ctx.Resp.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	err = g.ruleProcessor.ProcessFrame(context.Background(), ctx.OrgId, channel, frame)
+	if err != nil {
+		logger.Error("Error processing frame", "error", err, "data", string(body))
+		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 }

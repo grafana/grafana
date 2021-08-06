@@ -60,7 +60,7 @@ func (c *jsonPathConverter) Convert(name string, payload []byte, exactFields []p
 					if !ok {
 						return nil, errors.New("malformed string type")
 					}
-					field.Set(0, v)
+					field.SetConcrete(0, v)
 				}
 			} else {
 				return nil, errors.New("too many values")
@@ -95,8 +95,8 @@ func (c *jsonPathConverter) Convert(name string, payload []byte, exactFields []p
 	}
 
 	frame := data.NewFrame(name, fields...)
-	s, _ := frame.StringTable(10, 10)
-	println(s)
+	//s, _ := frame.StringTable(10, 10)
+	//println(s)
 
 	return frame, nil
 }
