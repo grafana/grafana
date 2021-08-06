@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/eval"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/rules"
 )
 
 type middlewareTestCase struct {
