@@ -129,7 +129,7 @@ We’d love as much feedback as possible about this change, because we are consi
 
 ### High availability setup support for Grafana Live
 
-We have added an experimental HA setup support for Grafana Live with Redis. This resolves several limitations of Grafana Live when clients were connected to different Grafana instances and instances had no shared state. For additional information, refer to [Configure Grafana Live HA setup]({{< relref "../live/live-ha-setup.md" >}}).
+We have added an experimental HA setup support for Grafana Live with Redis. This resolves the limitation when clients were connected to different Grafana instances and those instances had no shared state. For additional information, refer to [Configure Grafana Live HA setup]({{< relref "../live/live-ha-setup.md" >}}).
 
 ## Enterprise features
 

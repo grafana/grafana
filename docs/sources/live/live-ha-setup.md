@@ -29,7 +29,7 @@ ha_engine = redis
 ha_engine_address = 127.0.0.1:6379
 ```
 
-See a description of [ha_engine]({{< relref "../administration/configuration.md#ha_engine" >}}) and [ha_engine_address]({{< relref "../administration/configuration.md#ha_engine_address" >}}) options.
+For additional information, refer to the [ha_engine]({{< relref "../administration/configuration.md#ha_engine" >}}) and [ha_engine_address]({{< relref "../administration/configuration.md#ha_engine_address" >}}) options.
 
 After running:
 
