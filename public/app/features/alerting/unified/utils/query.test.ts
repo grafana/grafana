@@ -50,6 +50,7 @@ describe('alertRuleToQueries', () => {
           type: 'prometheus',
           uid: 'asdf23',
           id: 1,
+          access: 'proxy',
           meta: {} as PluginMeta,
           jsonData: {} as DataSourceJsonData,
         },
