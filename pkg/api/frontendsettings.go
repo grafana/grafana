@@ -58,6 +58,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 			"name":      ds.Name,
 			"url":       url,
 			"isDefault": ds.IsDefault,
+			"access":    ds.Access,
 		}
 
 		meta, exists := enabledPlugins.DataSources[ds.Type]
