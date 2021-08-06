@@ -26,7 +26,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 }) => {
   const style = useStyles2(getStyles(title, sortOrder));
   const [scrollTop, setScrollTop] = useState(0);
-  const labelsContainerRef = useRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>;
+  const logsContainerRef = useRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>;
   const isAscending = sortOrder === LogsSortOrder.Ascending;
 
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
@@ -39,8 +39,8 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   }, [data, dedupStrategy]);
 
   useLayoutEffect(() => {
-    if (isAscending && labelsContainerRef.current) {
-      setScrollTop(labelsContainerRef.current.offsetHeight);
+    if (isAscending && logsContainerRef.current) {
+      setScrollTop(logsContainerRef.current.offsetHeight);
     } else {
       setScrollTop(0);
     }
@@ -70,7 +70,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   return (
     <CustomScrollbar autoHide scrollTop={scrollTop}>
-      <div className={style.container} ref={labelsContainerRef}>
+      <div className={style.container} ref={logsContainerRef}>
         {showCommonLabels && !isAscending && renderCommonLabels()}
         <LogRows
           logRows={logRows}
