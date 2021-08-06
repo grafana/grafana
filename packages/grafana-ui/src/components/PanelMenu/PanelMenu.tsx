@@ -10,20 +10,19 @@ interface Props {
   items: PanelMenuItem[];
   title: string;
   buttonClassName?: string;
-  outside?: React.ReactElement;
-  inside?: React.ReactElement;
+  extraMarkup?: { outsideButton?: React.ReactElement; insideButton?: React.ReactElement };
 }
 
-const generateMarkup = (item: PanelMenuItem, styles: ReturnType<typeof panelMenuStyles>, items: PanelMenuItem[]) => {
+const generateMarkup = (item: PanelMenuItem, styles: ReturnType<typeof panelMenuStyles>, id: string) => {
   if (item.type === 'divider') {
-    return <li id="divider" role="none" className={styles.divider} key="divider"></li>;
+    return <li id={`divider-${id}`} role="none" className={styles.divider} key={id}></li>;
   }
 
   if (item.subMenu && item.subMenu?.length > 0) {
     return (
       <PanelMenuListItem key={item.text} item={item}>
         <ul className={cx(styles.panelMenu, styles.subMenu)} role="menu" id="panel-menu">
-          {item.subMenu.map((i) => generateMarkup(i, styles, items))}
+          {item.subMenu.map((menuItem, i) => generateMarkup(menuItem, styles, `${id}-${i}`))}
         </ul>
       </PanelMenuListItem>
     );
@@ -32,7 +31,10 @@ const generateMarkup = (item: PanelMenuItem, styles: ReturnType<typeof panelMenu
   }
 };
 
-export const PanelMenu = ({ items, title, buttonClassName, outside, inside }: Props) => {
+/**
+ * @internal
+ */
+export const PanelMenu = ({ items, title, buttonClassName, extraMarkup }: Props) => {
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const onMouseDown = useCallback(() => {
@@ -65,20 +67,22 @@ export const PanelMenu = ({ items, title, buttonClassName, outside, inside }: Pr
 
   const handleKeys = (event: React.KeyboardEvent) => {
     const curMenuItem = document.activeElement;
+    const menuItemParent = curMenuItem?.parentElement as HTMLLIElement | undefined;
+    const parentSubmenu = menuItemParent?.parentElement;
+
     switch (event.key) {
       case 'ArrowUp':
         event.preventDefault();
 
-        const prevSibling = (curMenuItem?.parentElement as HTMLLIElement).previousElementSibling;
+        const prevSibling = menuItemParent?.previousElementSibling;
         let prevMenuItem = prevSibling?.firstElementChild as HTMLButtonElement;
-        if (prevSibling && prevSibling.id === 'divider') {
+        if (prevSibling && prevSibling.id.startsWith('divider')) {
           prevMenuItem = prevSibling.previousElementSibling?.firstElementChild as HTMLButtonElement;
         }
 
         if (!prevMenuItem) {
           // wrap around to the end if we're at the start of the menu
-          const lastMenuItem = curMenuItem?.parentElement?.parentElement?.lastElementChild
-            ?.firstElementChild as HTMLButtonElement;
+          const lastMenuItem = parentSubmenu?.lastElementChild?.firstElementChild as HTMLButtonElement;
           lastMenuItem.focus();
         } else {
           prevMenuItem.focus();
@@ -90,20 +94,18 @@ export const PanelMenu = ({ items, title, buttonClassName, outside, inside }: Pr
         const nextSibling = (curMenuItem?.parentElement as HTMLLIElement).nextElementSibling;
         let nextMenuItem = nextSibling?.firstElementChild as HTMLButtonElement;
 
-        if (nextSibling && nextSibling.id === 'divider') {
+        if (nextSibling && nextSibling.id.startsWith('divider')) {
           nextMenuItem = nextSibling.nextElementSibling?.firstElementChild as HTMLButtonElement;
         }
         if (!nextMenuItem) {
           // wrap around to the beginning if we're at the end of the menu
-          const firstMenuItem = curMenuItem?.parentElement?.parentElement?.firstElementChild
-            ?.firstElementChild as HTMLButtonElement;
+          const firstMenuItem = parentSubmenu?.firstElementChild?.firstElementChild as HTMLButtonElement;
           firstMenuItem.focus();
         } else {
           nextMenuItem.focus();
         }
         break;
       case 'ArrowLeft':
-        const parentSubmenu = curMenuItem?.parentElement?.parentElement;
         if (parentSubmenu?.id === 'panel-menu') {
           (parentSubmenu.previousElementSibling as HTMLButtonElement).focus();
         }
@@ -124,14 +126,12 @@ export const PanelMenu = ({ items, title, buttonClassName, outside, inside }: Pr
         break;
       case 'Home':
         event.preventDefault();
-        const firstMenuItem = curMenuItem?.parentElement?.parentElement?.firstElementChild
-          ?.firstElementChild as HTMLButtonElement;
+        const firstMenuItem = parentSubmenu?.firstElementChild?.firstElementChild as HTMLButtonElement;
         firstMenuItem.focus();
         break;
       case 'End':
         event.preventDefault();
-        const lastMenuItem = curMenuItem?.parentElement?.parentElement?.lastElementChild
-          ?.firstElementChild as HTMLButtonElement;
+        const lastMenuItem = parentSubmenu?.lastElementChild?.firstElementChild as HTMLButtonElement;
         lastMenuItem.focus();
         break;
       default:
@@ -154,31 +154,33 @@ export const PanelMenu = ({ items, title, buttonClassName, outside, inside }: Pr
   const styles = useStyles2(panelMenuStyles);
 
   return (
-    <ClickOutsideWrapper includeButtonPress={false} onClick={blurMenu}>
+    <ClickOutsideWrapper onClick={blurMenu}>
       <div className={styles.container} id="panel-menu-container">
-        {outside}
+        {extraMarkup?.outsideButton}
         <button
           id="panel-menu-button"
           className={cx(styles.menuButton, buttonClassName)}
           aria-haspopup="true"
           aria-expanded={menuIsOpen}
+          aria-controls="main-menu"
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
           onMouseUp={onMouseUp}
           onClick={toggleMenu}
         >
-          {inside}
+          {extraMarkup?.insideButton}
           <h2 className={styles.titleText}>{title}</h2>
           <Icon name="angle-down" className={styles.menuToggle} />
         </button>
         <ul
           className={cx(styles.panelMenu, styles.mainMenu)}
           role="menu"
+          id="main-menu"
           hidden={!menuIsOpen}
           onKeyDown={handleKeys}
           ref={menuRef}
         >
-          {items.map((item) => generateMarkup(item, styles, items))}
+          {items.map((item, i) => generateMarkup(item, styles, `pm-${i}`))}
         </ul>
       </div>
     </ClickOutsideWrapper>

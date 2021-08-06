@@ -6,13 +6,17 @@ import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 import { useStyles2 } from '../../themes';
 
+// Converts shortcuts to aria-keyshortcuts format. (See https://www.digitala11y.com/aria-keyshortcutsproperties/)
+function convertShortcutToAria(shortcut: string): string {
+  return shortcut.toUpperCase().replace(' ', '+');
+}
+
 interface Props {
   item: PanelMenuItem;
-  className?: string;
   children?: React.ReactNode;
 }
 
-export const PanelMenuListItem = ({ item, className, children }: Props) => {
+export const PanelMenuListItem = ({ item, children }: Props) => {
   const styles = useStyles2(panelMenuItemStyles);
   return (
     <li className={styles.subMenuItemList} role="none">
@@ -21,7 +25,7 @@ export const PanelMenuListItem = ({ item, className, children }: Props) => {
         role="menuitem"
         tabIndex={-1}
         className={styles.menuItem}
-        aria-keyshortcuts={item.shortcut}
+        aria-keyshortcuts={item.shortcut && convertShortcutToAria(item.shortcut)}
       >
         <Icon name={item.iconClassName as IconName} className={styles.icon} aria-hidden />
         <span className={styles.menuItemText}>{item.text}</span>

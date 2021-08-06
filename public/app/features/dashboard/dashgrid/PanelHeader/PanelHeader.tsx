@@ -34,38 +34,40 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
       title={title}
       items={items}
       buttonClassName={buttonClassName}
-      outside={
-        <>
-          <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} />
-          <PanelHeaderCorner
-            panel={panel}
-            title={panel.title}
-            description={panel.description}
-            scopedVars={panel.scopedVars}
-            links={getPanelLinksSupplier(panel)}
-            error={error}
-          />
-        </>
-      }
-      inside={
-        <>
-          <PanelHeaderNotices frames={data.series} panelId={panel.id} />
-          {panel.libraryPanel && <Icon name="library-panel" style={{ marginRight: '4px' }} />}
-          {alertState ? (
-            <Icon
-              name={alertState === 'alerting' ? 'heart-break' : 'heart'}
-              className="icon-gf panel-alert-icon"
-              style={{ marginRight: '4px' }}
-              size="sm"
+      extraMarkup={{
+        outsideButton: (
+          <>
+            <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} />
+            <PanelHeaderCorner
+              panel={panel}
+              title={panel.title}
+              description={panel.description}
+              scopedVars={panel.scopedVars}
+              links={getPanelLinksSupplier(panel)}
+              error={error}
             />
-          ) : null}
-          {data.request && data.request.timeInfo && (
-            <span className="panel-time-info">
-              <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
-            </span>
-          )}
-        </>
-      }
+          </>
+        ),
+        insideButton: (
+          <>
+            <PanelHeaderNotices frames={data.series} panelId={panel.id} />
+            {panel.libraryPanel && <Icon name="library-panel" style={{ marginRight: '4px' }} />}
+            {alertState ? (
+              <Icon
+                name={alertState === 'alerting' ? 'heart-break' : 'heart'}
+                className="icon-gf panel-alert-icon"
+                style={{ marginRight: '4px' }}
+                size="sm"
+              />
+            ) : null}
+            {data.request && data.request.timeInfo && (
+              <span className="panel-time-info">
+                <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
+              </span>
+            )}
+          </>
+        ),
+      }}
     />
   );
 };
