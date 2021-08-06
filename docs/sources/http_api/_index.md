@@ -42,4 +42,3 @@ Grafana Enterprise includes all of the Grafana OSS APIs as well as those that fo
 - [External Group Sync API]({{< relref "external_group_sync.md" >}})
 - [License API]({{< relref "licensing.md" >}})
 - [Reporting API]({{< relref "reporting.md" >}})
-
