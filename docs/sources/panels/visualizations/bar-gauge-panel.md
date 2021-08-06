@@ -21,7 +21,7 @@ Use the following options to refine how your visualization displays the value:
 ### Show
 
 Choose how Grafana displays your data.
-  
+
 #### Calculate
 
 Show a calculated value based on all rows.

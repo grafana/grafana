@@ -19,25 +19,26 @@ To access data source settings, hover your mouse over the **Configuration** (gea
 InfluxDB data source options differ depending on which [query language](#query-languages) you select: InfluxQL or Flux.
 
 > **Note:** Though not required, it's a good practice to append the language choice to the data source name. For example:
->
- - InfluxDB-InfluxQL
- - InfluxDB-Flux
+
+- InfluxDB-InfluxQL
+- InfluxDB-Flux
 
 ### InfluxQL (classic InfluxDB query)
 
 These options apply if you are using the InfluxQL query language. If you are using Flux, refer to [Flux support in Grafana]({{< relref "influxdb-flux.md" >}}).
 
-Name        | Description
------------ | -------------
-`Name`      | The data source name. This is how you refer to the data source in panels and queries. We recommend something like `InfluxDB-InfluxQL`.
-`Default`   | Default data source means that it will be pre-selected for new panels.
-`URL`       | The HTTP protocol, IP address and port of your InfluxDB API. InfluxDB API port is by default 8086.
-`Access`    | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
+| Name      | Description                                                                                                                            |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`    | The data source name. This is how you refer to the data source in panels and queries. We recommend something like `InfluxDB-InfluxQL`. |
+| `Default` | Default data source means that it will be pre-selected for new panels.                                                                 |
+| `URL`     | The HTTP protocol, IP address and port of your InfluxDB API. InfluxDB API port is by default 8086.                                     |
+| `Access`  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.  |
+
 **Note**: Browser access is deprecated and will be removed in a future release.
 `Whitelisted Cookies`| Cookies that will be forwarded to the data source. All other cookies will be deleted.
-`Database`  | The ID of the bucket you want to query from, copied from the [Buckets page](https://docs.influxdata.com/influxdb/v2.0/organizations/buckets/view-buckets/) of the InfluxDB UI.
-`User`      | The username you use to sign into InfluxDB.
-`Password`  | The token you use to query the bucket above, copied from the [Tokens page](https://docs.influxdata.com/influxdb/v2.0/security/tokens/view-tokens/) of the InfluxDB UI.
+`Database` | The ID of the bucket you want to query from, copied from the [Buckets page](https://docs.influxdata.com/influxdb/v2.0/organizations/buckets/view-buckets/) of the InfluxDB UI.
+`User` | The username you use to sign into InfluxDB.
+`Password` | The token you use to query the bucket above, copied from the [Tokens page](https://docs.influxdata.com/influxdb/v2.0/security/tokens/view-tokens/) of the InfluxDB UI.
 `HTTP mode` | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
 `Min time interval` | (Optional) Refer to [Min time interval]({{< relref "#min-time-interval" >}}).
 `Max series`| (Optional) Limits the number of series/tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000.
@@ -51,16 +52,16 @@ For information on data source settings and using Flux in Grafana, refer to [Flu
 A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value _must_ be formatted as a number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
 
-Identifier   | Description
------------- | -------------
-`y`          | year
-`M`          | month
-`w`          | week
-`d`          | day
-`h`          | hour
-`m`          | minute
-`s`          | second
-`ms`         | millisecond
+| Identifier | Description |
+| ---------- | ----------- |
+| `y`        | year        |
+| `M`        | month       |
+| `w`        | week        |
+| `d`        | day         |
+| `h`        | hour        |
+| `m`        | minute      |
+| `s`        | second      |
+| `ms`       | millisecond |
 
 ## Query languages
 
@@ -104,6 +105,7 @@ Use the plus button and select Field > field to add another SELECT clause. You c
 specify an asterix `*` to select all fields.
 
 ### Group By
+
 To group by a tag, click the plus icon at the end of the GROUP BY row. Pick a tag from the dropdown that appears.
 You can remove the "Group By" by clicking on the `tag` and then click on the x icon.
 
@@ -119,7 +121,7 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 - $m = replaced with measurement name
 - $measurement = replaced with measurement name
 - $col = replaced with column name
-- $tag_exampletag = replaced with the value of the `exampletag` tag. The syntax is `$tag_yourTagName` (must start with `$tag_`). To use your tag as an alias in the ALIAS BY field then the tag must be used to group by in the query.
+- $tag_exampletag = replaced with the value of the `exampletag` tag. The syntax is `$tag*yourTagName`(must start with`$tag*`). To use your tag as an alias in the ALIAS BY field then the tag must be used to group by in the query.
 - You can also use [[tag_hostname]] pattern replacement syntax. For example, in the ALIAS BY field using this text `Host: [[tag_hostname]]` would substitute in the `hostname` tag value for each legend value and an example legend value would be: `Host: server1`.
 
 ## Querying logs
@@ -147,4 +149,4 @@ An example query:
 SELECT title, description from events WHERE $timeFilter ORDER BY time ASC
 ```
 
-For InfluxDB, you need to enter a query like the one in the example above. The ```where $timeFilter``` component is required. If you only select one column, then you do not need to enter anything in the column mapping fields. The **Tags** field can be a comma-separated string.
+For InfluxDB, you need to enter a query like the one in the example above. The `where $timeFilter` component is required. If you only select one column, then you do not need to enter anything in the column mapping fields. The **Tags** field can be a comma-separated string.

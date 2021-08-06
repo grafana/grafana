@@ -12,10 +12,9 @@ list = false
 
 > **Note:** This topic will be updated frequently between now and the final release.
 
-Grafana 8.1 builds upon our promise of a composable, open observability platform with new panels and extends functionality launched in Grafana 8.0. We’ve got new  Geomap and Annotations panels, and some great updates to the Time Series panel. We’ve also got new transformations and updates to data sources. For our enterprise customers, there are additions to fine grained access control, updates to the reporting schedule and query caching, and more. Read on to learn more.
+Grafana 8.1 builds upon our promise of a composable, open observability platform with new panels and extends functionality launched in Grafana 8.0. We’ve got new Geomap and Annotations panels, and some great updates to the Time Series panel. We’ve also got new transformations and updates to data sources. For our enterprise customers, there are additions to fine grained access control, updates to the reporting schedule and query caching, and more. Read on to learn more.
 
 In addition to what is summarized here, you might also be interested in our announcement blog post. For all the technical details, check out the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
-
 
 ## Grafana OSS features
 
@@ -23,7 +22,7 @@ These features are included in the Grafana open source edition.
 
 ## Geomap panel
 
-Grafana 8.1 introduces the foundation for our new map panel. This new panel leverages [OpenLayers](https://openlayers.org/) and gives us a flexible solution for extending the way we use the new Geomap panel moving forward. The new Geomap panel includes multiple base layer styles (map layer options), as well as a more open data layer. The data layer can use coordinates and geo-hashed data in addition to a lookup table. 
+Grafana 8.1 introduces the foundation for our new map panel. This new panel leverages [OpenLayers](https://openlayers.org/) and gives us a flexible solution for extending the way we use the new Geomap panel moving forward. The new Geomap panel includes multiple base layer styles (map layer options), as well as a more open data layer. The data layer can use coordinates and geo-hashed data in addition to a lookup table.
 
 The Geomap panel is also able to share views across multiple Geomap panels on the same dashboard, making it straightforward to visualize and explore multiple types of geospatial data using the same map zoom and focus settings. For more information, refer to [Geomap panel]({{< relref "../panels/visualizations/geomap.md" >}}).
 {{< figure src="/static/img/docs/geomap-panel/geomap_with_heatmap.png" max-width="850px" caption="Geomap panel: Heatmap" >}}
@@ -38,8 +37,7 @@ The new Annotations panel shows a list of available annotations you can use to c
 
 The time series panel has been updated with the ability to color series and line by thresholds or gradient color scales. This allows users to create panels where the line color can change dynamically based on thresholds or using gradient color scales. It adds a layer of visibility to your data, making it easier to view the changes across thresholds at a glance quickly.
 
-
-Color scheme **From thresholds**: 
+Color scheme **From thresholds**:
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_line.png" max-width="1200px" caption="Colors scheme: From thresholds" >}}
 
 Color scheme: **Green-Yellow-Red (by value)**
@@ -47,7 +45,7 @@ Color scheme: **Green-Yellow-Red (by value)**
 
 For more on how to configure Graphs with by value color schemes read [Graph and color schemes]({{< relref "../panels/visualizations/time-series/_index.md" >}}).
 
-You can also create annotations on the new Time series panel]({{< relref "../panels/visualizations/time-series/annotate-time-series.md" >}}), bringing it closer to parity with the legacy Graph Panel. To learn more, refer to the [time series panel]({{< relref "../panels/visualizations/time-series/_index.md" >}}). 
+You can also create annotations on the new Time series panel]({{< relref "../panels/visualizations/time-series/annotate-time-series.md" >}}), bringing it closer to parity with the legacy Graph Panel. To learn more, refer to the [time series panel]({{< relref "../panels/visualizations/time-series/_index.md" >}}).
 
 ### Transformations improvements
 
@@ -111,7 +109,6 @@ For more on how to prettify JSON logs, refer to [Visualization]({{< relref "../p
 
 We’ve made some changes to the plugins UI to help make it easier to discover and manage your plugins. Enterprise users can now also manage enterprise plugins from within the catalog.
 
-
 #### Documentation updates
 
 New panel summaries and preview on the top level [Visualizations]({{< relref "../panels/visualizations/_index.md" >}}) page to help users pick or learn about specific visualizations more easily.
@@ -121,11 +118,9 @@ New panel summaries and preview on the top level [Visualizations]({{< relref "..
 The `@grafana/ui` exposes a `Select` component, and its variants `MultiSelect`, `AsyncSelect`, and `AsyncMultiSelect`. We have made some internal changes to these components to make the behavior and positioning more consistent in all scenarios.
 
 To test the changes, you can use the `menuShouldPortal` property:
+
 ```jsx
-<Select
-  menuShouldPortal
-  {...otherProps}
-/>
+<Select menuShouldPortal {...otherProps} />
 ```
 
 Tests are most likely to be affected. There are some tips for fixing these in the original pull request at [https://github.com/grafana/grafana/pull/36398](https://github.com/grafana/grafana/pull/36398).
@@ -142,7 +137,6 @@ Fine-grained access control remains in beta. You can now grant or revoke permiss
 
 Fine grained access control allows you to customize roles and permissions in Grafana beyond the built-in Viewer, Editor, and Admin roles. As of 8.1, you can modify some of the permissions for any of these built-in roles. This is helpful if you’d like users to have more or fewer access permissions than a given role allows for by default. For an overview of fine-grained access control and a complete list of available permissions, refer to the [Fine grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) documentation.
 
-
 ### New and improved reporting scheduler
 
 We’ve enhanced the scheduler for Reports to be more flexible, so you can send reports at just the right time. When scheduling a report, you can now choose to send a report at custom intervals such as every 4 hours or every 2 weeks. You can also send a report for a limited time period by providing a start and end date, or send a report only on weekdays or on the last day of each month. This change accompanies some other recent improvements to Reporting, like the ability to choose template variables for reports and an improved UX for authoring reports. To learn more, refer to the [reporting]({{< relref "../enterprise/reporting.md" >}}) documentation.
@@ -151,8 +145,7 @@ We’ve enhanced the scheduler for Reports to be more flexible, so you can send 
 
 Query caching was released in Grafana 8.0 and allows you to temporarily store the results of data source queries in a cache, so that Grafana reads repeated queries from there instead of from the data source itself. This reduces load on data sources, improves dashboard load times, and can save money for data sources that charge per query. To learn more about query caching see its [overview]({{< relref "../enterprise/query-caching.md" >}}) page. To find out how to turn on encryption, refer to the [caching configuration]({{< relref "../enterprise/enterprise-configuration.md#caching" >}}) documentation.
 
-You can now encrypt the query data cached by Grafana. This improves the security of query data, especially when your cache (like Redis) is shared with other services. 
-
+You can now encrypt the query data cached by Grafana. This improves the security of query data, especially when your cache (like Redis) is shared with other services.
 
 ### White labeling for the Grafana loading logo
 
@@ -160,6 +153,6 @@ You can now customize Grafana’s loading logo, which displays while Grafana is 
 
 To find out how you can configure it along with other Grafana UI elements, like the corner logo and application footer, refer to the [White labeling]({{< relref "../enterprise/white-labeling.md" >}}) topic of the Grafana Enterprise docs.
 
-### Oauth2 - Team Sync to Group Mapping 
+### Oauth2 - Team Sync to Group Mapping
 
 With Team Sync you can map your Generic OAuth groups to teams in Grafana so that the users are automatically added to the correct teams.

@@ -17,13 +17,13 @@ This section explains how to create annotations in the Time series panel. To rea
    ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-add-annotation.png)
 1. Click save.
 
-Alternatively, to add an annotation, Ctrl/Cmd+Click on the Time series panel and the Add annotation popover will appear 
+Alternatively, to add an annotation, Ctrl/Cmd+Click on the Time series panel and the Add annotation popover will appear
 
 ## Add region annotation
 
 1. In the dashboard Ctrl/Cmd+click and drag on the Time series panel.
    ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-add-region-annotation.gif)
-1. Add an annotation description and tags(optional).   
+1. Add an annotation description and tags(optional).
 1. Click save.
 
 ## Edit annotation
@@ -39,10 +39,3 @@ Alternatively, to add an annotation, Ctrl/Cmd+Click on the Time series panel and
 1. In the dashboard hover over an annotation indicator on the Time series panel.
    ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-edit-annotation.gif)
 1. Click on the trash icon in the annotation tooltip.
-
-
-
-
-
-
-

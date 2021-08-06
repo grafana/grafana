@@ -25,6 +25,7 @@ Grafana alerting UI allows you to configure templates for the Grafana managed al
 > **Note:** Currently the configuration of the embedded Alertmanager is shared across organisations. Therefore users are advised to use the new Grafana 8 Alerts only if they have one organisation otherwise templates for the Grafana managed alerts will be visible by all organizations
 
 ### Create a template
+
 1. In the Grafana side bar, hover your cursor over the **Alerting** (bell) icon and then click **Contact points**.
 1. Click **Add template**.
 1. Fill in **Name** and **Content** fields.
@@ -32,18 +33,19 @@ Grafana alerting UI allows you to configure templates for the Grafana managed al
 
 **Note** The template name used to reference this template in templating is not the value of the **Name** field, but the parameter to `define` tag in the content. When creating a template you can omit `define` entirely and it will be added automatically with same value as **Name** field. It's recommended to use the same name for `define` and **Name** field to avoid confusion.
 
-
 <img  src="/static/img/docs/alerting/unified/templates-create-8-0.png" width="600px">
 
 ### Edit a template
+
 1. In the Grafana side bar, hover your cursor over the **Alerting** (bell) icon and then click **Contact points**.
 1. Find the template you want to edit in the templates table and click the **pen icon** on the right side.
 1. Make any changes and click **Save template** button at the bottom of the page.
 
 ### Delete a template
+
 1. In the Grafana side bar, hover your cursor over the **Alerting** (bell) icon and then click **Contact points**.
 1. Find the template you want to edit in the templates table and click the **trash can icon** on the right side.
-1. A confirmation dialog will open. Click **Yes, delete**. 
+1. A confirmation dialog will open. Click **Yes, delete**.
 
 **Note** You are not prevented from deleting templates that are in use somewhere in contact points or other templates. Be careful!
 
@@ -51,23 +53,23 @@ Grafana alerting UI allows you to configure templates for the Grafana managed al
 
 To use a template:
 
-Enter `{{ template "templatename" . }}` into a contact point field, where `templatename` is the `define` parameter of a template. 
+Enter `{{ template "templatename" . }}` into a contact point field, where `templatename` is the `define` parameter of a template.
 
 <img  src="/static/img/docs/alerting/unified/contact-points-use-template-8-0.png" width="600px">
-
 
 ### Template examples
 
 Here is an example of a template to render a single alert:
+
 ```
 {{ define "alert" }}
   [{{.Status}}] {{ .Labels.alertname }}
-  
+
   Labels:
   {{ range .Labels.SortedPairs }}
     {{ .Name }}: {{ .Value }}
   {{ end }}
-  
+
   {{ if gt (len .Annotations) 0 }}
   Annotations:
   {{ range .Annotations.SortedPairs }}
@@ -85,6 +87,7 @@ Here is an example of a template to render a single alert:
 ```
 
 Template to render entire notification message:
+
 ```
 {{ define "message" }}
   {{ if gt (len .Alerts.Firing) 0 }}
@@ -100,6 +103,6 @@ Template to render entire notification message:
 
 ## Manage templates for an external Alertmanager
 
-Grafana alerting UI supports managing external Alertmanager configuration. Once you add an [Alertmanager data source]({{< relref "../../../datasources/alertmanager.md" >}}), a dropdown displays at the top of the page, allowing you to select either `Grafana` or an external Alertmanager data source. 
+Grafana alerting UI supports managing external Alertmanager configuration. Once you add an [Alertmanager data source]({{< relref "../../../datasources/alertmanager.md" >}}), a dropdown displays at the top of the page, allowing you to select either `Grafana` or an external Alertmanager data source.
 
 {{< figure max-width="40%" src="/static/img/docs/alerting/unified/contact-points-select-am-8-0.gif" caption="Select Alertmanager" >}}

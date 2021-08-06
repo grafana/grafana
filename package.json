@@ -58,7 +58,7 @@
     "*.{js,ts,tsx}": [
       "eslint --ext .js,.tsx,.ts --cache --fix"
     ],
-    "*.{json,scss}": [
+    "*.{json,scss,md,mdx}": [
       "prettier --write"
     ],
     "*pkg/**/*.go": [

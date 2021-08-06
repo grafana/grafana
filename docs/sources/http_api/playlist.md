@@ -21,12 +21,12 @@ Accept: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-  Querystring Parameters:
+Querystring Parameters:
 
-  These parameters are used as querystring parameters.
+These parameters are used as querystring parameters.
 
-  - **query** - Limit response to playlist having a name like this value.
-  - **limit** - Limit response to *X* number of playlist.
+- **query** - Limit response to playlist having a name like this value.
+- **limit** - Limit response to _X_ number of playlist.
 
 **Example Response**:
 

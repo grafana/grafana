@@ -15,6 +15,7 @@ Upgrading is generally safe (between many minor and one major version) and dashb
 ## Backup
 
 We recommend that you backup a few things in case you have to rollback the upgrade.
+
 - Installed plugins - Back them up before you upgrade them in case you want to rollback the Grafana version and want to get the exact same versions you were running before the upgrade.
 - Configuration files do not need to be backed up. However, you might want to in case you add new configuration options after upgrade and then rollback.
 
@@ -47,6 +48,7 @@ backup:
 restore:
 > psql grafana < grafana_backup
 ```
+
 ### Ubuntu or Debian
 
 You can upgrade Grafana by following the same procedure as when you installed it.
@@ -170,10 +172,10 @@ will keep working with unencrypted passwords. If you want to migrate to encrypte
 you can do that by:
 
 - For data sources created through UI, you need to go to data source config, re-enter the password or basic auth
-password and save the data source.
+  password and save the data source.
 - For data sources created by provisioning, you need to update your config file and use secureJsonData.password or
-secureJsonData.basicAuthPassword field. See [provisioning docs]({{< relref "../administration/provisioning" >}}) for example of current
-configuration.
+  secureJsonData.basicAuthPassword field. See [provisioning docs]({{< relref "../administration/provisioning" >}}) for example of current
+  configuration.
 
 ### Embedding Grafana
 
@@ -243,7 +245,7 @@ A global minimum dashboard refresh interval is now enforced and defaults to 5 se
 
 ### Backend plugins
 
-Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with.  All Grafana Labs authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. For more information about this setting, refer to [allow loading unsigned plugins]({{< relref "../administration/#allow_loading_unsigned_plugins" >}}).
+Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with. All Grafana Labs authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. For more information about this setting, refer to [allow loading unsigned plugins]({{< relref "../administration/#allow_loading_unsigned_plugins" >}}).
 
 ### Cookie path
 
@@ -256,6 +258,7 @@ Starting from Grafana v7.0.0, the cookie path does not include the trailing slas
 Before Grafana v7.2 alert notification channels did not store sensitive settings/secrets such as API tokens and password encrypted in the database. In Grafana v7.2, creating a new alert notification channel will store sensitive settings encrypted in the database.
 
 The following alert notifiers have been updated to support storing their sensitive settings encrypted:
+
 - Slack (URL and Token)
 - Pagerduty (Integration Key)
 - Webhook (Password)
@@ -294,7 +297,7 @@ For more information and details, please refer to [Using AWS CloudWatch in Grafa
 
 ### User invites database migration
 
-The database table _temp\_user_, that tracks user invites, is subject to a database migration that changes the data type of the _created_ and _updated_ columns:
+The database table _temp_user_, that tracks user invites, is subject to a database migration that changes the data type of the _created_ and _updated_ columns:
 
 | Database | Old data type | New data type |
 | -------- | ------------- | ------------- |
@@ -306,12 +309,12 @@ The database table _temp\_user_, that tracks user invites, is subject to a datab
 
 ### Snapshots database migration
 
-The database table _dashboard\_snapshot_, that stores dashboard snapshots, adds a new column _dashboard\_encrypted_ for storing an encrypted snapshot.
+The database table _dashboard_snapshot_, that stores dashboard snapshots, adds a new column _dashboard_encrypted_ for storing an encrypted snapshot.
 NOTE: Only snapshots created on Grafana 7.3 or later will use this column to store snapshot data as encrypted. Snapshots created before this version will be unaffected and remain unencrypted.
 
 ### Use of the root group in the Docker images
 
-The Grafana Docker images use the `root` group instead of the `grafana` group. This change can cause builds to break for users who extend the Grafana Docker image. Learn more about this change in the  [Docker migration instructions]({{< relref "docker/#migrate-to-v73-or-later">}})
+The Grafana Docker images use the `root` group instead of the `grafana` group. This change can cause builds to break for users who extend the Grafana Docker image. Learn more about this change in the [Docker migration instructions]({{< relref "docker/#migrate-to-v73-or-later">}})
 
 ## Upgrading to v7.5
 
@@ -342,5 +345,4 @@ Refer to [Grafana Live configuration]({{< relref "../live/configure-grafana-live
 Grafana v8.0 changes the underlying data structure to [data frames]({{< relref "../developers/plugins/data-frames.md" >}}) for the Postgres, MySQL, Microsoft SQL Server data sources. As a result, a _Time series_ query result gets returned in a [wide format]({{< relref "../developers/plugins/data-frames.md#wide-format" >}}). To make the visualizations work as they did before, you might have to do some manual migrations.
 
 For any existing panels/visualizations using a _Time series_ query, where the time column is only needed for filtering the time range, for example, using the bar gauge or pie chart panel, we recommend that you use a _Table query_ instead and exclude the time column as a field in the response.
-		
 Refer to this [issue comment](https://github.com/grafana/grafana/issues/35534#issuecomment-861519658) for detailed instructions and workarounds.

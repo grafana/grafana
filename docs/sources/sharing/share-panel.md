@@ -7,7 +7,7 @@ weight = 6
 
 # Share a panel
 
-You can share a panel as a direct link, as a snapshot or as an embedded link. You can also create library panels using the “Share” option for any panel. 
+You can share a panel as a direct link, as a snapshot or as an embedded link. You can also create library panels using the “Share” option for any panel.
 
 To share a panel:
 
@@ -33,6 +33,7 @@ Here is an example of a link to a server-side rendered PNG:
 ```bash
 https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=1568719680173&to=1568726880174&panelId=4&fullscreen
 ```
+
 #### Query string parameters for server-side rendered images
 
 - **width:** width in pixels. Default is 800.
@@ -59,7 +60,7 @@ If you created a snapshot by mistake, click **delete snapshot** to remove the sn
 
 ## Embed panel
 
-You can embed a panel using an iframe on another web site. A viewer must be signed into Grafana to view the graph. 
+You can embed a panel using an iframe on another web site. A viewer must be signed into Grafana to view the graph.
 
 **> Note:** As of Grafana 8.0, anonymous access permission is no available for Grafana Cloud.
 
@@ -68,7 +69,12 @@ You can embed a panel using an iframe on another web site. A viewer must be sign
 Here is an example of the HTML code:
 
 ```html
-<iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4" width="650" height="300" frameborder="0"></iframe>
+<iframe
+  src="https://snapshot.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4"
+  width="650"
+  height="300"
+  frameborder="0"
+></iframe>
 ```
 
 The result is an interactive Grafana graph embedded in an iframe:
@@ -79,9 +85,9 @@ The result is an interactive Grafana graph embedded in an iframe:
 
 To create a library panel from the Share Panel dialog:
 
-1. Click **Library panel**. 
+1. Click **Library panel**.
    {{< figure src="/static/img/docs/library-panels/create-lib-panel-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the create library panel dialog" >}}
 1. In **Library panel name**, enter the name.
 1. In **Save in folder**, select the folder to save the library panel. By default, the General folder is selected.
 1. Click **Create library panel** to save your changes.
-1. Save the dashboard. 
+1. Save the dashboard.

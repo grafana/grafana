@@ -24,6 +24,7 @@ as info on deprecations, breaking changes and plugin development read the [relea
 - [What's new in 7.0]({{< relref "whats-new-in-v7-0" >}})
 
 ## Grafana 6
+
 - [What's new in 6.7]({{< relref "whats-new-in-v6-7" >}})
 - [What's new in 6.6]({{< relref "whats-new-in-v6-6" >}})
 - [What's new in 6.5]({{< relref "whats-new-in-v6-5" >}})
@@ -34,6 +35,7 @@ as info on deprecations, breaking changes and plugin development read the [relea
 - [What's new in 6.0]({{< relref "whats-new-in-v6-0" >}})
 
 ## Grafana 5
+
 - [What's new in 5.4]({{< relref "whats-new-in-v5-4" >}})
 - [What's new in 5.3]({{< relref "whats-new-in-v5-3" >}})
 - [What's new in 5.2]({{< relref "whats-new-in-v5-2" >}})

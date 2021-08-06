@@ -43,7 +43,7 @@ For more information about heatmap visualization options, refer to [Heatmap]({{<
 
 There are a number of data sources supporting histogram over time like Elasticsearch (by using a Histogram bucket
 aggregation) or Prometheus (with [histogram](https://prometheus.io/docs/concepts/metric_types/#histogram) metric type
-and *Format as* option set to Heatmap). But generally, any data source could be used if it meets the requirements:
+and _Format as_ option set to Heatmap). But generally, any data source could be used if it meets the requirements:
 returns series with names representing bucket bound or returns series sorted by the bound in ascending order.
 
 ## Raw data vs aggregated

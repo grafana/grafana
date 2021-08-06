@@ -21,8 +21,8 @@ To access Loki settings, click the **Configuration** (gear) icon, then click **D
 | Name                  | Description                                                                                                                                               |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Name`                | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                                           |
-| `Default`             | Default data source that is pre-selected for new panels.                                                                                    |
-| `URL`                 | URL of the Loki instance, e.g., `http://localhost:3100`.                                                                                             |
+| `Default`             | Default data source that is pre-selected for new panels.                                                                                                  |
+| `URL`                 | URL of the Loki instance, e.g., `http://localhost:3100`.                                                                                                  |
 | `Whitelisted Cookies` | Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.                                  |
 | `Maximum lines`       | Upper limit for the number of log lines returned by Loki (default is 1000). Lower this limit if your browser is sluggish when displaying logs in Explore. |
 
@@ -149,18 +149,20 @@ Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentatio
 Variable of the type _Query_ allows you to query Loki for a list labels or label values. The Loki data source plugin
 provides the following functions you can use in the `Query` input field.
 
-| Name                                       | Description                                                                          |
-| -------------------------------------------| -------------------------------------------------------------------------------------|
-| `label_names()`                            | Returns a list of label names.                                                       |
-| `label_values(label)`                      | Returns a list of label values for the `label`.                                      |
-| `label_values(log stream selector, label)` | Returns a list of label values for the `label` in the specified `log stream selector`.|
+| Name                                       | Description                                                                            |
+| ------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `label_names()`                            | Returns a list of label names.                                                         |
+| `label_values(label)`                      | Returns a list of label values for the `label`.                                        |
+| `label_values(log stream selector, label)` | Returns a list of label values for the `label` in the specified `log stream selector`. |
 
 ### Ad hoc filters variable
+
 Loki supports the special ad hoc filters variable type. It allows you to specify any number of label/value filters on the fly. These filters are automatically applied to all your Loki queries.
 
 ### Using interval and range variables
 
 You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
+
 ## Annotations
 
 You can use any non-metric Loki query as a source for [annotations]({{< relref "../dashboards/annotations" >}}). Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.

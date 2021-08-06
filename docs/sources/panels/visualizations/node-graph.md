@@ -10,7 +10,7 @@ weight = 850
 
 The _Node graph_ can visualize directed graphs or networks. It uses a directed force layout to effectively position the nodes, so it can display complex infrastructure maps, hierarchies, or execution diagrams.
 
-![Node graph panel](/static/img/docs/node-graph/node-graph-8-0.png "Node graph")
+![Node graph panel](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')
 
 ## Data requirements
 
@@ -31,7 +31,7 @@ Usually, nodes show two statistical values inside the node and two identifiers j
 
 For example, you can have the percentage of errors represented by a red portion of the circle. Additional details can be displayed in a context menu which is displayed when you click on the node. There also can be additional links in the context menu that can target either other parts of Grafana or any external link.
 
-![Node graph navigation](/static/img/docs/node-graph/node-graph-navigation-7-4.gif "Node graph navigation")
+![Node graph navigation](/static/img/docs/node-graph/node-graph-navigation-7-4.gif 'Node graph navigation')
 
 ### Edges
 
@@ -55,21 +55,21 @@ Use the buttons in the upper left corner or use the mouse wheel, touchpad scroll
 
 The number of nodes shown at a given time is limited to maintain a reasonable visualization performance. Nodes that are not currently visible are hidden behind clickable markers that show an approximate number of hidden nodes that are connected by a particular edge. You can click on the marker to expand the graph around that node.
 
-![Node graph exploration](/static/img/docs/node-graph/node-graph-exploration-8-0.png "Node graph exploration")
+![Node graph exploration](/static/img/docs/node-graph/node-graph-exploration-8-0.png 'Node graph exploration')
 
 ### Grid view
 
 You can switch to the grid view to have a better overview of the most interesting nodes in the graph. Grid view shows nodes in a grid without edges and can be sorted by stats shown inside the node or by stats represented by the a colored border of the nodes.
 
-![Node graph grid](/static/img/docs/node-graph/node-graph-grid-8-0.png "Node graph grid")
+![Node graph grid](/static/img/docs/node-graph/node-graph-grid-8-0.png 'Node graph grid')
 
 To sort the nodes, click on the stats inside the legend. The marker next to the stat name shows which stat is currently used for sorting and sorting direction.
 
-![Node graph legend](/static/img/docs/node-graph/node-graph-legend-8-0.png "Node graph legend")
+![Node graph legend](/static/img/docs/node-graph/node-graph-legend-8-0.png 'Node graph legend')
 
 Click on the node and select "Show in Graph layout" option to switch back to graph layout and focus on the selected node, to show it in context of the full graph.
 
-![Node graph grid to default](/static/img/docs/node-graph/node-graph-grid-to-default-8-0.png "Node graph grid to default")
+![Node graph grid to default](/static/img/docs/node-graph/node-graph-grid-to-default-8-0.png 'Node graph grid to default')
 
 ## Data API
 
@@ -81,35 +81,35 @@ Data source needs to return two data frames, one for nodes and one for edges, an
 
 Required fields:
 
-| Field name | Type    | Description |
-|------------|---------|-------------|
-| id         | string  | Unique identifier of the node. This ID is referenced by edge in it's source and target field. |
+| Field name | Type   | Description                                                                                   |
+| ---------- | ------ | --------------------------------------------------------------------------------------------- |
+| id         | string | Unique identifier of the node. This ID is referenced by edge in it's source and target field. |
 
 Optional fields:
 
-| Field name | Type    | Description |
-|------------|---------|-------------|
-| title      | string  | Name of the node visible in just under the node. |
-| subTitle   | string  | Additional, name, type or other identifier that will be shown right under the title. |
-| mainStat   | string/number  | First stat shown inside the node itself. Can be either string in which case the value will be shown as it is or it can be a number in which case any unit associated with that field will be also shown. |
-| secondaryStat   | string/number  | Same as mainStat but shown right under it inside the node. |
-| arc__*   | number  | Any field prefixed with `arc__` will be used to create the color circle around the node. All values in these fields should add up to 1. You can specify color using `config.color.fixedColor`. |
-| detail__*   | string/number  | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the node. Use `config.displayName` for more human readable label. |
+| Field name    | Type          | Description                                                                                                                                                                                              |
+| ------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| title         | string        | Name of the node visible in just under the node.                                                                                                                                                         |
+| subTitle      | string        | Additional, name, type or other identifier that will be shown right under the title.                                                                                                                     |
+| mainStat      | string/number | First stat shown inside the node itself. Can be either string in which case the value will be shown as it is or it can be a number in which case any unit associated with that field will be also shown. |
+| secondaryStat | string/number | Same as mainStat but shown right under it inside the node.                                                                                                                                               |
+| arc\_\_\*     | number        | Any field prefixed with `arc__` will be used to create the color circle around the node. All values in these fields should add up to 1. You can specify color using `config.color.fixedColor`.           |
+| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the node. Use `config.displayName` for more human readable label.                                         |
 
 ### Edge parameters
 
 Required fields:
 
-| Field name | Type    | Description |
-|------------|---------|-------------|
-| id         | string  | Unique identifier of the edge. |
-| source     | string  | Id of the source node. |
-| target     | string  | Id of the target. |
+| Field name | Type   | Description                    |
+| ---------- | ------ | ------------------------------ |
+| id         | string | Unique identifier of the edge. |
+| source     | string | Id of the source node.         |
+| target     | string | Id of the target.              |
 
 Optional fields:
 
-| Field name | Type    | Description |
-|------------|---------|-------------|
-| mainStat   | string/number  | First stat shown in the overlay when hovering over the edge. Can be either string in which case the value will be shown as it is or it can be a number in which case any unit associated with that field will be also shown |
-| secondaryStat   | string/number  | Same as mainStat but shown right under it. |
-| detail__*   | string/number  | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the edge. Use `config.displayName` for more human readable label. |
+| Field name    | Type          | Description                                                                                                                                                                                                                 |
+| ------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| mainStat      | string/number | First stat shown in the overlay when hovering over the edge. Can be either string in which case the value will be shown as it is or it can be a number in which case any unit associated with that field will be also shown |
+| secondaryStat | string/number | Same as mainStat but shown right under it.                                                                                                                                                                                  |
+| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the edge. Use `config.displayName` for more human readable label.                                                            |

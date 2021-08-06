@@ -45,8 +45,8 @@ Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data sou
    ```
 
    ```ts
-   const observables = options.targets.map(target => {
-     return new Observable<DataQueryResponse>(subscriber => {
+   const observables = options.targets.map((target) => {
+     return new Observable<DataQueryResponse>((subscriber) => {
        // ...
      });
    });
@@ -99,38 +99,38 @@ Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data sou
 
 Here's the final `query` method.
 
-   ```ts
-   query(options: DataQueryRequest<MyQuery>): Observable<DataQueryResponse> {
-     const streams = options.targets.map(target => {
-       const query = defaults(target, defaultQuery);
+```ts
+query(options: DataQueryRequest<MyQuery>): Observable<DataQueryResponse> {
+  const streams = options.targets.map(target => {
+    const query = defaults(target, defaultQuery);
 
-       return new Observable<DataQueryResponse>(subscriber => {
-         const frame = new CircularDataFrame({
-           append: 'tail',
-           capacity: 1000,
-         });
+    return new Observable<DataQueryResponse>(subscriber => {
+      const frame = new CircularDataFrame({
+        append: 'tail',
+        capacity: 1000,
+      });
 
-         frame.refId = query.refId;
-         frame.addField({ name: 'time', type: FieldType.time });
-         frame.addField({ name: 'value', type: FieldType.number });
+      frame.refId = query.refId;
+      frame.addField({ name: 'time', type: FieldType.time });
+      frame.addField({ name: 'value', type: FieldType.number });
 
-         const intervalId = setInterval(() => {
-           frame.add({ time: Date.now(), value: Math.random() });
+      const intervalId = setInterval(() => {
+        frame.add({ time: Date.now(), value: Math.random() });
 
-           subscriber.next({
-             data: [frame],
-             key: query.refId,
-           });
-         }, 100);
+        subscriber.next({
+          data: [frame],
+          key: query.refId,
+        });
+      }, 100);
 
-         return () => {
-           clearInterval(intervalId);
-         };
-       });
-     });
+      return () => {
+        clearInterval(intervalId);
+      };
+    });
+  });
 
-     return merge(...streams);
-   }
-   ```
+  return merge(...streams);
+}
+```
 
 One limitation with this example is that the panel visualization is cleared every time you update the dashboard. If you have access to historical data, you can add, or _backfill_, it to the data frame before the first call to `subscriber.next()`.

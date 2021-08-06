@@ -63,8 +63,8 @@ In addition to the data sources that you have configured in your Grafana, there 
 
 - **Grafana -** A built-in data source that generates random walk data. Useful for testing visualizations and running experiments.
 - **Mixed -** Select this to query multiple data sources in the same panel. When this data source is selected, Grafana allows you to select a data source for every new query that you add.
-  * The first query will use the data source that was selected before you selected **Mixed**.
-  * You cannot change an existing query to use the Mixed Data Source.
+  - The first query will use the data source that was selected before you selected **Mixed**.
+  - You cannot change an existing query to use the Mixed Data Source.
 - **Dashboard -** Select this to use a result set from another panel in the same dashboard.
 
 ### Query options
@@ -103,29 +103,25 @@ Panel data source query options:
 
 ### Examples:
 
-- **Relative time:** 
+- **Relative time:**
 
-| Example             | Relative time field |
-| ------------------- | --------------------|
-| Last 5 minutes      | `now-5m`            |
-| The day so far      | `now/d`             |
-| Last 5 days         | `now-5d/d`          |
-| This week so far    | `now/w`             |
-| Last 2 years        | `now-2y/y`          |   
+| Example          | Relative time field |
+| ---------------- | ------------------- |
+| Last 5 minutes   | `now-5m`            |
+| The day so far   | `now/d`             |
+| Last 5 days      | `now-5d/d`          |
+| This week so far | `now/w`             |
+| Last 2 years     | `now-2y/y`          |
 
+- **Time shift:**
 
-- **Time shift:** 
-
-| Example             | Time shift field |
-| ------------------- | --------------------|
-| Last entire week    | `1w/w`              |
-| Two entire weeks ago | `2w/w`              |
-| Last entire month   | `1M/M`              |
-| This entire year    | `1d/y`              |
-| Last entire year    | `1y/y`              |   
-
-
-
+| Example              | Time shift field |
+| -------------------- | ---------------- |
+| Last entire week     | `1w/w`           |
+| Two entire weeks ago | `2w/w`           |
+| Last entire month    | `1M/M`           |
+| This entire year     | `1d/y`           |
+| Last entire year     | `1y/y`           |
 
 ### Query inspector button
 
@@ -143,13 +139,13 @@ In the UI, queries are organized in collapsible query rows. Each query row conta
 
 You can:
 
-| Icon | Description |
-|:--:|:---|
-| {{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Toggle query editor help. If supported by the data source, click this icon to display information on how to use the query editor or provide quick access to common queries. |
-| {{< figure src="/static/img/docs/queries/duplicate-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Copy a query. Duplicating queries is useful when working with multiple complex queries that are similar and you want to either experiment with different variants or do minor alterations. |
-| {{< figure src="/static/img/docs/queries/hide-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Hide a query. Grafana does not send hidden queries to the data source. |
-| {{< figure src="/static/img/docs/queries/remove-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Remove a query. Removing a query permanently deletes it, but sometimes you can recover deleted queries by reverting to previously saved versions of the panel. |
-| {{< figure src="/static/img/docs/queries/query-drag-icon-7-2.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Reorder queries. Change the order of queries by clicking and holding the drag icon, then drag queries where desired. The order of results reflects the order of the queries, so you can often adjust your visual results based on query order. |
+|                                                                    Icon                                                                     | Description                                                                                                                                                                                                                                    |
+| :-----------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  {{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}   | Toggle query editor help. If supported by the data source, click this icon to display information on how to use the query editor or provide quick access to common queries.                                                                    |
+| {{< figure src="/static/img/docs/queries/duplicate-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Copy a query. Duplicating queries is useful when working with multiple complex queries that are similar and you want to either experiment with different variants or do minor alterations.                                                     |
+|   {{< figure src="/static/img/docs/queries/hide-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}    | Hide a query. Grafana does not send hidden queries to the data source.                                                                                                                                                                         |
+|  {{< figure src="/static/img/docs/queries/remove-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}   | Remove a query. Removing a query permanently deletes it, but sometimes you can recover deleted queries by reverting to previously saved versions of the panel.                                                                                 |
+|   {{< figure src="/static/img/docs/queries/query-drag-icon-7-2.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}    | Reorder queries. Change the order of queries by clicking and holding the drag icon, then drag queries where desired. The order of results reflects the order of the queries, so you can often adjust your visual results based on query order. |
 
 ### Expressions
 

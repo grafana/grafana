@@ -34,10 +34,10 @@ Grafana v5.1 brings an improved official docker image which should make it easie
 We've switched the id of the grafana user running Grafana inside a docker container. Unfortunately this means that files created prior to 5.1 won't have the correct permissions for later versions and thereby this introduces a breaking change.
 We made this change so that it would be easier for you to control what user Grafana is executed as (see examples below).
 
-Version | User    | User ID
---------|---------|---------
-< 5.1   | grafana | 104
->= 5.1  | grafana | 472
+| Version | User    | User ID |
+| ------- | ------- | ------- |
+| < 5.1   | grafana | 104     |
+| >= 5.1  | grafana | 472     |
 
 Please read the [updated documentation](/installation/docker/#migrate-to-v51-or-later) which includes migration instructions and more information.
 
@@ -75,7 +75,7 @@ The control for adding new panels to dashboards have got some enhancements and n
 you want to add. Further, the control has tabs separating functionality for adding new panels and pasting
 copied panels.
 
-By copying a panel in a dashboard it will be displayed in the `Paste` tab in *any* dashboard and allows you to paste the
+By copying a panel in a dashboard it will be displayed in the `Paste` tab in _any_ dashboard and allows you to paste the
 copied panel into the current dashboard.
 
 {{< figure src="/static/img/docs/v51/dashboard_panel_copy.png"  max-width= "300px" >}}
@@ -95,12 +95,12 @@ New enhancements include support for mapping a numeric value/range to text and a
 We now support a new option for rendering variables that gives the user full control of how the value(s) should be rendered.
 In the table below you can see some examples and you can find all different options in the [Variables documentation](http://docs.grafana.org/variables/templates-and-variables/#advanced-formatting-options).
 
-Filter Option | Example | Raw | Interpolated | Description
------------- | ------------- | ------------- | -------------  | -------------
-`glob` | ${servers:glob} |  `'test1', 'test2'` | `{test1,test2}` | Formats multi-value variable into a glob
-`regex` | ${servers:regex} | `'test.', 'test2'` |  <code>(test\.&#124;test2)</code> | Formats multi-value variable into a regex string
-`pipe` | ${servers:pipe} | `'test.', 'test2'` |  <code>test.&#124;test2</code> | Formats multi-value variable into a pipe-separated string
-`csv`| ${servers:csv} |  `'test1', 'test2'` | `test1,test2` | Formats multi-value variable as a comma-separated string
+| Filter Option | Example          | Raw                | Interpolated                     | Description                                               |
+| ------------- | ---------------- | ------------------ | -------------------------------- | --------------------------------------------------------- |
+| `glob`        | ${servers:glob}  | `'test1', 'test2'` | `{test1,test2}`                  | Formats multi-value variable into a glob                  |
+| `regex`       | ${servers:regex} | `'test.', 'test2'` | <code>(test\.&#124;test2)</code> | Formats multi-value variable into a regex string          |
+| `pipe`        | ${servers:pipe}  | `'test.', 'test2'` | <code>test.&#124;test2</code>    | Formats multi-value variable into a pipe-separated string |
+| `csv`         | ${servers:csv}   | `'test1', 'test2'` | `test1,test2`                    | Formats multi-value variable as a comma-separated string  |
 
 ## Improved workflow for provisioned dashboards
 
@@ -109,8 +109,7 @@ Filter Option | Example | Raw | Interpolated | Description
 Grafana v5.1 brings an improved workflow for provisioned dashboards:
 
 - A populated `id` property in JSON is now automatically removed when provisioning dashboards.
-- When making changes to a provisioned dashboard you can `Save` the dashboard which now will bring up a *Cannot save provisioned dashboard* dialog like seen in the screenshot to the right.
-
+- When making changes to a provisioned dashboard you can `Save` the dashboard which now will bring up a _Cannot save provisioned dashboard_ dialog like seen in the screenshot to the right.
 
 Available options in the dialog will let you `Copy JSON to Clipboard` and/or `Save JSON to file` which can help you synchronize your dashboard changes back to the provisioning source.
 More information in the [Provisioning documentation](/administration/provisioning/).

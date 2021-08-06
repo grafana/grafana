@@ -23,6 +23,7 @@ Keep your graphs simple and focused on answering the question that you are askin
 _Cognitive load_ is basically how hard you need to think about something in order to figure it out. Make your dashboard easy to interpret. Other users and future you (when you're trying to figure out what broke at 2AM) will appreciate it.
 
 Ask yourself:
+
 - Can I tell what exactly each graph represents? Is it obvious, or do I have to think about it?
 - If I show this to someone else, how long will it take them to figure it out? Will they get lost?
 
@@ -46,8 +47,8 @@ Once you have a strategy or design guidelines, write them down to help maintain 
 - Grafana retrieves data from a data source. A basic understanding of [data sources]({{< relref "../datasources/_index.md" >}}) in general and your specific is important.
 - Avoid unnecessary dashboard refreshing to reduce the load on the network or backend. For example, if your data changes every hour, then you don't need to set the dashboard refresh rate to 30 seconds.
 - Use the left and right Y-axes when displaying time series with different units or ranges.
--  Add documentation to dashboards and panels.
-   - To add documentation to a dashboard, add a [Text panel visualization]({{< relref "../panels/visualizations/text-panel.md" >}}) to the dashboard. Record things like the purpose of the dashboard, useful resource links, and any instructions users might need to interact with the dashboard. Check out this [Wikimedia example](https://grafana.wikimedia.org/d/000000066/resourceloader?orgId=1).
-   - To add documentation to a panel, [edit the panel settings]({{< relref "../panels/add-a-panel.md#edit-panel-settings" >}}) and add a description. Any text you add will appear if you hover your cursor over the small `i` in the top left corner of the panel.
--  Reuse your dashboards and enforce consistency by using [templates and variables]({{< relref "../variables/_index.md" >}}).
--  Be careful with stacking graph data. The visualizations can be misleading, and hide important data. We recommend turning it off in most cases.
+- Add documentation to dashboards and panels.
+  - To add documentation to a dashboard, add a [Text panel visualization]({{< relref "../panels/visualizations/text-panel.md" >}}) to the dashboard. Record things like the purpose of the dashboard, useful resource links, and any instructions users might need to interact with the dashboard. Check out this [Wikimedia example](https://grafana.wikimedia.org/d/000000066/resourceloader?orgId=1).
+  - To add documentation to a panel, [edit the panel settings]({{< relref "../panels/add-a-panel.md#edit-panel-settings" >}}) and add a description. Any text you add will appear if you hover your cursor over the small `i` in the top left corner of the panel.
+- Reuse your dashboards and enforce consistency by using [templates and variables]({{< relref "../variables/_index.md" >}}).
+- Be careful with stacking graph data. The visualizations can be misleading, and hide important data. We recommend turning it off in most cases.

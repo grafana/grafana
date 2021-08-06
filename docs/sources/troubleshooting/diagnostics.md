@@ -6,11 +6,11 @@ weight = 200
 # Enable diagnostics
 
 You can set up the `grafana-server` process to enable certain diagnostics when it starts. This can be helpful
-when investigating certain performance problems. It's *not* recommended to have these enabled by default.
+when investigating certain performance problems. It's _not_ recommended to have these enabled by default.
 
 ## Turn on profiling
 
-The `grafana-server` can be started with the arguments `-profile` to enable profiling and  `-profile-port` to override
+The `grafana-server` can be started with the arguments `-profile` to enable profiling and `-profile-port` to override
 the default HTTP port (`6060`) where the `pprof` debugging endpoints are available, for example:
 
 ```bash
