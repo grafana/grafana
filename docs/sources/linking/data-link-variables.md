@@ -19,36 +19,36 @@ You can also use template variables in your data links URLs, refer to [Templates
 
 These variables allow you to include the current time range in the data link URL.
 
-- ``__url_time_range`` - current dashboard's time range (i.e. ``?from=now-6h&to=now``)
+- `__url_time_range` - current dashboard's time range (i.e. `?from=now-6h&to=now`)
 - `$__from and $__to` - For more information, refer to [Global variables]({{< relref "../variables/variable-types/global-variables.md#__from-and-__to" >}}).
 
 ## Series variables
 
-Series specific variables are available under ``__series`` namespace:
+Series specific variables are available under `__series` namespace:
 
-- ``__series.name`` - series name to the URL
+- `__series.name` - series name to the URL
 
 ## Field variables
 
-Field-specific variables are available under ``__field`` namespace:
+Field-specific variables are available under `__field` namespace:
 
-- ``__field.name`` - the name of the field
-- ``__field.labels.<LABEL>`` - label's value to the URL. If your label contains dots, then use ``__field.labels["<LABEL>"]`` syntax.
+- `__field.name` - the name of the field
+- `__field.labels.<LABEL>` - label's value to the URL. If your label contains dots, then use `__field.labels["<LABEL>"]` syntax.
 
 ## Value variables
 
-Value-specific variables are available under ``__value`` namespace:
+Value-specific variables are available under `__value` namespace:
 
-- ``__value.time`` - value's timestamp (Unix ms epoch) to the URL (i.e. ``?time=1560268814105``)
-- ``__value.raw`` - raw value
-- ``__value.numeric`` - numeric representation of a value
-- ``__value.text`` - text representation of a value
-- ``__value.calc`` - calculation name if the value is result of calculation
+- `__value.time` - value's timestamp (Unix ms epoch) to the URL (i.e. `?time=1560268814105`)
+- `__value.raw` - raw value
+- `__value.numeric` - numeric representation of a value
+- `__value.text` - text representation of a value
+- `__value.calc` - calculation name if the value is result of calculation
 
 ## Template variables
 
 When linking to another dashboard that uses template variables, select variable values for whoever clicks the link.
 
-``${myvar:queryparams}`` - where ``myvar`` is a name of the template variable that matches one in the current dashboard that you want to use.
+`${myvar:queryparams}` - where `myvar` is a name of the template variable that matches one in the current dashboard that you want to use.
 
-If you want to add all of the current dashboard's variables to the URL, then use  ``__all_variables``.
+If you want to add all of the current dashboard's variables to the URL, then use `__all_variables`.

@@ -96,16 +96,16 @@ Below are conditions you can configure how the rule evaluation engine should han
 | --------------- | ------------------------------------------------------------------------------------------ |
 | No Data         | Set alert rule state to `NoData`                                                           |
 | Alerting        | Set alert rule state to `Alerting`                                                         |
-| Keep Last State | Keep the current alert rule state, whatever it is.                                        |
+| Keep Last State | Keep the current alert rule state, whatever it is.                                         |
 | Ok              | Not sure why you would want to send yourself an alert when things are okay, but you could. |
 
 ### Execution errors or timeouts
 
 Tell Grafana how to handle execution or timeout errors.
 
-| Error or timeout option | Description                                         |
-| ----------------------- | --------------------------------------------------- |
-| Alerting                | Set alert rule state to `Alerting`                  |
+| Error or timeout option | Description                                        |
+| ----------------------- | -------------------------------------------------- |
+| Alerting                | Set alert rule state to `Alerting`                 |
 | Keep Last State         | Keep the current alert rule state, whatever it is. |
 
 If you have an unreliable time series store from which queries sometime timeout or fail randomly you can set this option to `Keep Last State` in order to basically ignore them.
@@ -124,4 +124,3 @@ The actual notifications are configured and shared between multiple alerts. Read
 ## Alert state history and annotations
 
 Alert state changes are recorded in the internal annotation table in Grafana's database. The state changes are visualized as annotations in the alert rule's graph panel. You can also go into the `State history` submenu in the alert tab to view and clear state history.
-

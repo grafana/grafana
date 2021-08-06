@@ -3,7 +3,7 @@ title = "Add authentication for data source plugins"
 aliases = ["/docs/grafana/latest/plugins/developing/auth-for-datasources/", "/docs/grafana/next/developers/plugins/authentication/"]
 +++
 
- # Add authentication for data source plugins
+# Add authentication for data source plugins
 
 This page explains how to configure your data source plugin to authenticate against a third-party API.
 
@@ -146,11 +146,10 @@ To forward requests through the Grafana proxy, you need to configure one or more
    ```ts
    const routePath = '/example';
 
-   getBackendSrv()
-     .datasourceRequest({
-       url: this.url + routePath + '/v1/users',
-       method: 'GET',
-     });
+   getBackendSrv().datasourceRequest({
+     url: this.url + routePath + '/v1/users',
+     method: 'GET',
+   });
    ```
 
 ### Add a dynamic proxy route to your plugin

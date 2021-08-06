@@ -5,34 +5,35 @@ weight = 420
 
 # Visualization panels
 
-Grafana offers a variety of visualizations to support different use cases. This section of the documentation highlights the built-in panels, their options and typical usage. 
+Grafana offers a variety of visualizations to support different use cases. This section of the documentation highlights the built-in panels, their options and typical usage.
 
-* Graphs & charts 
-  * [Time series]({{< relref "./time-series/_index.md" >}}) is the default and main Graph visualization.    
-  * [State timeline]({{< relref "./state-timeline.md" >}}) for state changes over time.   
-  * [Status history]({{< relref "./status-history.md" >}}) for periodic state over time. 
-  * [Bar chart]({{< relref "./bar-chart.md" >}}) shows any categorical data.
-  * [Histogram]({{< relref "./histogram.md" >}}) calculates and shows value distribution in a bar chart.
-  * [Heatmap]({{< relref "./heatmap.md" >}}).  
-  * [Pie chart]({{< relref "./pie-chart-panel.md" >}}). 
-* Stats & numbers
-  * [Stat]({{< relref "./stat-panel.md" >}}) for big stats and optional sparkline. 
-  * [Gauge]({{< relref "./gauge-panel.md" >}}) is a normal radial gauge.  
-  * [Bar gauge]({{< relref "./bar-gauge-panel.md" >}}) is a horizontal or vertical bar gauge. 
-* Misc
-  * [Table]({{< relref "./table/_index.md" >}}) is the main and only table visualization.
-  * [Logs]({{< relref "./logs-panel.md" >}}) is the main visualization for logs.
-  * [Node Graph]({{< relref "./node-graph.md" >}}) for directed graphs or networks.
-* Widgets
-  * [Dashboard list]({{< relref "./dashboard-list-panel.md" >}}) can list dashboards.
-  * [Alert list]({{< relref "./alert-list-panel.md" >}}) can list alerts.
-  * [Text panel]({{< relref "./alert-list-panel.md" >}}) can show markdown and html.
-  * [News panel]({{< relref "./news-panel.md" >}}) can show RSS feeds.
+- Graphs & charts
+  - [Time series]({{< relref "./time-series/_index.md" >}}) is the default and main Graph visualization.
+  - [State timeline]({{< relref "./state-timeline.md" >}}) for state changes over time.
+  - [Status history]({{< relref "./status-history.md" >}}) for periodic state over time.
+  - [Bar chart]({{< relref "./bar-chart.md" >}}) shows any categorical data.
+  - [Histogram]({{< relref "./histogram.md" >}}) calculates and shows value distribution in a bar chart.
+  - [Heatmap]({{< relref "./heatmap.md" >}}).
+  - [Pie chart]({{< relref "./pie-chart-panel.md" >}}).
+- Stats & numbers
+  - [Stat]({{< relref "./stat-panel.md" >}}) for big stats and optional sparkline.
+  - [Gauge]({{< relref "./gauge-panel.md" >}}) is a normal radial gauge.
+  - [Bar gauge]({{< relref "./bar-gauge-panel.md" >}}) is a horizontal or vertical bar gauge.
+- Misc
+  - [Table]({{< relref "./table/_index.md" >}}) is the main and only table visualization.
+  - [Logs]({{< relref "./logs-panel.md" >}}) is the main visualization for logs.
+  - [Node Graph]({{< relref "./node-graph.md" >}}) for directed graphs or networks.
+- Widgets
+  - [Dashboard list]({{< relref "./dashboard-list-panel.md" >}}) can list dashboards.
+  - [Alert list]({{< relref "./alert-list-panel.md" >}}) can list alerts.
+  - [Text panel]({{< relref "./alert-list-panel.md" >}}) can show markdown and html.
+  - [News panel]({{< relref "./news-panel.md" >}}) can show RSS feeds.
 
-## Get more  
+## Get more
 
 You can add more visualization types by installing panel [panel plugins](https://grafana.com/grafana/plugins/?type=panel).
-## Examples 
+
+## Examples
 
 Below you can find some good examples for how all the visualizations in Grafana can be configured. You can also explore [play.grafana.org](https://play.grafana.org) which has a large set of demo dashboards that showcase all the different visualizations.
 
@@ -42,7 +43,7 @@ For time based line, area and bar charts we recommend the default [Time series](
 
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="700px" caption="Time series" >}}
 
-For categorical data use the [Bar chart]({{< relref "./bar-chart.md" >}}) visualization. 
+For categorical data use the [Bar chart]({{< relref "./bar-chart.md" >}}) visualization.
 
 {{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="700px" caption="Bar chart" >}}
 
@@ -52,23 +53,23 @@ The [Stat](stat-panel/) visualization shows one large stat value with an optiona
 
 {{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
 
-### Gauge 
+### Gauge
 
 If you want to present a value as it relates to a min and max value you have two options. First a standard [Radial Gauge]({{< relref "./gauge-panel.md" >}}) shown below.
 
 {{< figure src="/static/img/docs/v66/gauge_panel_cover.png" max-width="700px" >}}
 
-Secondly Grafana also has a horizontal or vertical [Bar gauge]({{< relref "./bar-gauge-panel.md" >}}) with three different distinct display modes. 
+Secondly Grafana also has a horizontal or vertical [Bar gauge]({{< relref "./bar-gauge-panel.md" >}}) with three different distinct display modes.
 
 {{< figure src="/static/img/docs/v66/bar_gauge_lcd.png" max-width="700px" >}}
 
-### Table 
+### Table
 
 To show data in a table layout, use the [Table]({{< relref "./table/_index.md" >}}) visualization.
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="700px" lightbox="true" caption="Table visualization" >}}
 
-### Pie chart 
+### Pie chart
 
 Grafana now ships with an included [Pie chart]({{< relref "./pie-chart-panel.md" >}}) visualization.
 
