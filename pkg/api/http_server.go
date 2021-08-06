@@ -335,7 +335,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(middleware.Logger(hs.Cfg))
 
 	if hs.Cfg.EnableGzip {
-		m.Use(middleware.Gziper())
+		m.UseMiddleware(middleware.Gziper())
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
@@ -354,7 +354,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.SetURLPrefix(hs.Cfg.AppSubURL)
 	}
 
-	m.Use(macaron.Renderer(macaron.RenderOptions{
+	m.UseMiddleware(macaron.Renderer(macaron.RenderOptions{
 		Directory:  filepath.Join(hs.Cfg.StaticRootPath, "views"),
 		IndentJSON: macaron.Env != macaron.PROD,
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
@@ -408,7 +408,7 @@ func (hs *HTTPServer) healthzHandler(ctx *macaron.Context) {
 		return
 	}
 
-	ctx.WriteHeader(200)
+	ctx.Resp.WriteHeader(200)
 	_, err := ctx.Resp.Write([]byte("Ok"))
 	if err != nil {
 		hs.log.Error("could not write to response", "err", err)

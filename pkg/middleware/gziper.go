@@ -1,11 +1,14 @@
 package middleware
 
 import (
+	"bufio"
+	"compress/gzip"
+	"fmt"
+	"net"
+	"net/http"
 	"strings"
 
-	"github.com/go-macaron/gzip"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"gopkg.in/macaron.v1"
+	macaron "gopkg.in/macaron.v1"
 )
 
 const resourcesPath = "/resources"
@@ -18,26 +21,59 @@ var gzipIgnoredPathPrefixes = []string{
 	"/api/live/push", // WebSocket does not support gzip compression.
 }
 
-func Gziper() macaron.Handler {
-	gziperLogger := log.New("gziper")
-	gziper := gzip.Gziper()
+type gzipResponseWriter struct {
+	w *gzip.Writer
+	macaron.ResponseWriter
+}
 
-	return func(ctx *macaron.Context) {
-		requestPath := ctx.Req.URL.RequestURI()
+func (grw *gzipResponseWriter) WriteHeader(c int) {
+	grw.Header().Del("Content-Length")
+	grw.ResponseWriter.WriteHeader(c)
+}
 
-		for _, pathPrefix := range gzipIgnoredPathPrefixes {
-			if strings.HasPrefix(requestPath, pathPrefix) {
+func (grw gzipResponseWriter) Write(p []byte) (int, error) {
+	if grw.Header().Get("Content-Type") == "" {
+		grw.Header().Set("Content-Type", http.DetectContentType(p))
+	}
+	grw.Header().Del("Content-Length")
+	return grw.w.Write(p)
+}
+
+func (grw gzipResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hijacker, ok := grw.ResponseWriter.(http.Hijacker); ok {
+		return hijacker.Hijack()
+	}
+	return nil, nil, fmt.Errorf("GZIP ResponseWriter doesn't implement the Hijacker interface")
+}
+
+func Gziper() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			requestPath := req.URL.RequestURI()
+
+			for _, pathPrefix := range gzipIgnoredPathPrefixes {
+				if strings.HasPrefix(requestPath, pathPrefix) {
+					return
+				}
+			}
+
+			// ignore resources
+			if (strings.HasPrefix(requestPath, "/api/datasources/") || strings.HasPrefix(requestPath, "/api/plugins/")) && strings.Contains(requestPath, resourcesPath) {
 				return
 			}
-		}
 
-		// ignore resources
-		if (strings.HasPrefix(requestPath, "/api/datasources/") || strings.HasPrefix(requestPath, "/api/plugins/")) && strings.Contains(requestPath, resourcesPath) {
-			return
-		}
+			if !strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
+				next.ServeHTTP(rw, req)
+				return
+			}
 
-		if _, err := ctx.Invoke(gziper); err != nil {
-			gziperLogger.Error("Invoking gzip handler failed", "err", err)
-		}
+			grw := &gzipResponseWriter{gzip.NewWriter(rw), rw.(macaron.ResponseWriter)}
+			grw.Header().Set("Content-Encoding", "gzip")
+			grw.Header().Set("Vary", "Accept-Encoding")
+
+			next.ServeHTTP(grw, req)
+			// We can't really handle close errors at this point and we can't report them to the caller
+			_ = grw.w.Close()
+		})
 	}
 }

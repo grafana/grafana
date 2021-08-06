@@ -47,8 +47,8 @@ type Context struct {
 	Req    Request
 	Resp   ResponseWriter
 	params Params
-	Render
-	Data map[string]interface{}
+	render Render
+	Data   map[string]interface{}
 }
 
 func (ctx *Context) handler() Handler {
@@ -108,19 +108,13 @@ func (ctx *Context) RemoteAddr() string {
 	return addr
 }
 
-func (ctx *Context) renderHTML(status int, setName, tplName string, data ...interface{}) {
-	if len(data) <= 0 {
-		ctx.Render.HTMLSet(status, setName, tplName, ctx.Data)
-	} else if len(data) == 1 {
-		ctx.Render.HTMLSet(status, setName, tplName, data[0])
-	} else {
-		ctx.Render.HTMLSet(status, setName, tplName, data[0], data[1].(HTMLOptions))
-	}
+// HTML renders the HTML with default template set.
+func (ctx *Context) HTML(status int, name string, data interface{}) {
+	ctx.render.HTML(status, name, data)
 }
 
-// HTML renders the HTML with default template set.
-func (ctx *Context) HTML(status int, name string, data ...interface{}) {
-	ctx.renderHTML(status, DEFAULT_TPL_SET_NAME, name, data...)
+func (ctx *Context) JSON(status int, data interface{}) {
+	ctx.render.JSON(status, data)
 }
 
 // Redirect sends a redirect response
