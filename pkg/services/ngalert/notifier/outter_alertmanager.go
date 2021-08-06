@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -17,7 +18,12 @@ import (
 type Alertmanager struct {
 	Instances   map[int64]*alertmanager
 	instanceMtx sync.RWMutex
+	ctx         context.Context
+	cfg         *setting.Cfg
 	logger      log.Logger
+	metrics     *metrics.Metrics
+	store       store.AlertingStore
+	children    *errgroup.Group
 }
 
 func (am *Alertmanager) SaveAndApplyConfig(orgID int64, config *apimodels.PostableUserConfig) error {
@@ -28,7 +34,7 @@ func (am *Alertmanager) SaveAndApplyConfig(orgID int64, config *apimodels.Postab
 		am.logger.Error("unable to retrieve alertmanager", "orgID", orgID)
 		return fmt.Errorf("unable to retrieve alertmanager")
 	}
-	return amInstance.SaveAndApplyConfig(config)
+	return amInstance.SaveAndApplyConfig(orgID, config)
 }
 
 func (am *Alertmanager) SaveAndApplyDefaultConfig(orgID int64) error {
@@ -39,7 +45,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(orgID int64) error {
 		am.logger.Error("unable to retrieve alertmanager", "orgID", orgID)
 		return fmt.Errorf("unable to retrieve alertmanager")
 	}
-	return amInstance.SaveAndApplyDefaultConfig()
+	return amInstance.SaveAndApplyDefaultConfig(orgID)
 }
 
 func (am *Alertmanager) GetStatus(orgID int64) apimodels.GettableStatus {
@@ -127,23 +133,15 @@ func (am *Alertmanager) GetAM(orgID int64) (*alertmanager, error) {
 	return amInstance, nil
 }
 
-func New(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*Alertmanager, error) {
-	//TODO: remove this because it's a hack until we have the org id column for alert_configuration
-	orgIDs := []int64{1, 2, 3}
-	am := &Alertmanager{
-		Instances:   make(map[int64]*alertmanager, len(orgIDs)),
+func New(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) *Alertmanager {
+	return &Alertmanager{
+		Instances:   make(map[int64]*alertmanager),
+		cfg:         cfg,
 		instanceMtx: sync.RWMutex{},
 		logger:      log.New("Alertmanager"),
+		metrics:     m,
+		store:       store,
 	}
-	for _, id := range orgIDs {
-		newAM, err := new(cfg, store, m)
-		if err != nil {
-			//TODO: log this
-			continue
-		}
-		am.Instances[id] = newAM
-	}
-	return am, nil
 }
 
 func (am *Alertmanager) Ready(orgID int64) bool {
@@ -158,15 +156,78 @@ func (am *Alertmanager) Ready(orgID int64) bool {
 }
 
 func (am *Alertmanager) Run(ctx context.Context) error {
-	for orgID, amInstance := range am.Instances {
-		amInstance := amInstance
-		orgID := orgID
-		go func() {
-			err := amInstance.Run(ctx)
-			if err != nil {
-				am.logger.Error("unable to start alertmanager", "error", err.Error(), "orgID", orgID)
-			}
-		}()
+	am.children, am.ctx = errgroup.WithContext(ctx)
+	return am.children.Wait()
+}
+
+func (am *Alertmanager) UpdateInstances(orgIDs ...int64) error {
+	found := make(map[int64]struct{})
+	for _, orgID := range orgIDs {
+		found[orgID] = struct{}{}
+		_, ok := am.getInstance(orgID)
+		if !ok {
+			// new org
+			am.logger.Debug("starting Alertmanager instance", "org_id", orgID)
+			am.addInstance(orgID)
+		}
+	}
+
+	for item := range am.iterInstances() {
+		_, ok := found[item.orgID]
+		if !ok {
+			am.logger.Debug("stopping Alertmanager instance", "org_id", item.orgID)
+			item.instance.StopAndWait()
+		}
 	}
 	return nil
+}
+
+func (am *Alertmanager) getInstance(orgID int64) (*alertmanager, bool) {
+	am.instanceMtx.RLock()
+	defer am.instanceMtx.RUnlock()
+	instance, ok := am.Instances[orgID]
+	return instance, ok
+}
+
+func (am *Alertmanager) addInstance(orgID int64) error {
+	am.instanceMtx.RLock()
+	defer am.instanceMtx.RUnlock()
+	newAM, err := new(am.cfg, am.store, am.metrics)
+	if err != nil {
+		return err
+	}
+	am.Instances[orgID] = newAM
+
+	am.children.Go(func() error {
+		err := newAM.Run(am.ctx)
+		if err != nil {
+			am.logger.Error("unable to start alertmanager", "error", err.Error(), "orgID", orgID)
+		}
+		return err
+	})
+	return nil
+}
+
+type item struct {
+	orgID    int64
+	instance *alertmanager
+}
+
+func (am *Alertmanager) iterInstances() <-chan item {
+	c := make(chan item)
+	f := func() {
+		am.instanceMtx.RLock()
+		defer am.instanceMtx.RUnlock()
+
+		for k, v := range am.Instances {
+			c <- item{
+				orgID:    k,
+				instance: v,
+			}
+		}
+		close(c)
+	}
+	go f()
+
+	return c
 }

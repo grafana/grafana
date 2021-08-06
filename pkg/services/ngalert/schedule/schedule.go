@@ -22,6 +22,9 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// OrgPollingPollingInterval of how often we sync admin configuration.
+const OrgPollingInterval = 5 * time.Minute
+
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
@@ -42,6 +45,7 @@ type ScheduleService interface {
 
 // Notifier handles the delivery of alert notifications to the end user
 type Notifier interface {
+	UpdateInstances(orgIDs ...int64) error
 	PutAlerts(orgID int64, alerts apimodels.PostableAlerts) error
 }
 
@@ -75,6 +79,7 @@ type schedule struct {
 	ruleStore        store.RuleStore
 	instanceStore    store.InstanceStore
 	adminConfigStore store.AdminConfigurationStore
+	orgStore         store.OrgStore
 	dataService      *tsdb.Service
 
 	stateManager *state.Manager
@@ -100,6 +105,7 @@ type SchedulerCfg struct {
 	StopAppliedFunc  func(models.AlertRuleKey)
 	Evaluator        eval.Evaluator
 	RuleStore        store.RuleStore
+	OrgStore         store.OrgStore
 	InstanceStore    store.InstanceStore
 	AdminConfigStore store.AdminConfigurationStore
 	Notifier         Notifier
@@ -121,6 +127,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, st
 		evaluator:        cfg.Evaluator,
 		ruleStore:        cfg.RuleStore,
 		instanceStore:    cfg.InstanceStore,
+		orgStore:         cfg.OrgStore,
 		dataService:      dataService,
 		adminConfigStore: cfg.AdminConfigStore,
 		notifier:         cfg.Notifier,
@@ -153,7 +160,7 @@ func (sch *schedule) Unpause() error {
 
 func (sch *schedule) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 
 	go func() {
 		defer wg.Done()
@@ -169,8 +176,16 @@ func (sch *schedule) Run(ctx context.Context) error {
 		}
 	}()
 
+	go func() {
+		defer wg.Done()
+		if err := sch.orgSync(ctx); err != nil {
+			sch.log.Error("failure while running the admin configuration sync", "err", err)
+		}
+	}()
+
 	wg.Wait()
 	return nil
+
 }
 
 // SyncAndApplyConfigFromDatabase looks for the admin configuration in the database and adjusts the sender(s) accordingly.
@@ -395,6 +410,21 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 
 			sch.stateManager.Close()
 			return waitErr
+		}
+	}
+}
+
+func (sch *schedule) orgSync(ctx context.Context) error {
+	for {
+		select {
+		case <-time.After(OrgPollingInterval):
+			orgs, err := sch.orgStore.GetOrgs()
+			if err != nil {
+				sch.log.Error("unable to sync organisations", "err", err)
+			}
+			sch.notifier.UpdateInstances(orgs...)
+		case <-ctx.Done():
+			return nil
 		}
 	}
 }
