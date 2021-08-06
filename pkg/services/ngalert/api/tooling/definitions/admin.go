@@ -1,5 +1,17 @@
 package definitions
 
+import v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+
+// swagger:route GET /api/v1/ngalert/alertmanagers configuration RouteGetAlertmanagers
+//
+//  Get the discovered and dropped Alertmanagers of the user's organization based on the specified configuration.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//		 200: GettableAlertmanagers
+
 // swagger:route GET /api/v1/ngalert/admin_config configuration RouteGetNGalertConfig
 //
 //  Get the NGalert configuration of the user's organization, returns 404 if no configuration is present.
@@ -48,4 +60,10 @@ type PostableNGalertConfig struct {
 // swagger:model
 type GettableNGalertConfig struct {
 	Alertmanagers []string `json:"alertmanagers"`
+}
+
+// swagger:model
+type GettableAlertmanagers struct {
+	Status string                 `json:"status"`
+	Data   v1.AlertManagersResult `json:"data"`
 }

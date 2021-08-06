@@ -33,6 +33,8 @@ type ScheduleService interface {
 	Run(context.Context) error
 	Pause() error
 	Unpause() error
+	AlertmanagersFor(orgID int64) []*url.URL
+	DroppedAlertmanagersFor(orgID int64) []*url.URL
 
 	// the following are used by tests only used for tests
 	evalApplied(models.AlertRuleKey, time.Time)

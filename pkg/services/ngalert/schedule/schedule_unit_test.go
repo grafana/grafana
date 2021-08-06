@@ -27,7 +27,7 @@ import (
 func TestSendingToExternalAlertmanager(t *testing.T) {
 	t.Cleanup(registry.ClearOverrides)
 
-	fakeAM := newFakeExternalAlertmanager(t)
+	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := newFakeRuleStore(t)
 	fakeInstanceStore := &fakeInstanceStore{}
@@ -95,7 +95,7 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	t.Cleanup(registry.ClearOverrides)
 
-	fakeAM := newFakeExternalAlertmanager(t)
+	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := newFakeRuleStore(t)
 	fakeInstanceStore := &fakeInstanceStore{}
@@ -161,7 +161,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	}, 20*time.Second, 200*time.Millisecond)
 
 	// 2. Next, let's modify the configuration of an organization by adding an extra alertmanager.
-	fakeAM2 := newFakeExternalAlertmanager(t)
+	fakeAM2 := NewFakeExternalAlertmanager(t)
 	adminConfig2 = &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.server.URL, fakeAM2.server.URL}}
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
