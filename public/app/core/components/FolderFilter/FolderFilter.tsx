@@ -50,6 +50,7 @@ export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderF
         </span>
       )}
       <AsyncMultiSelect
+        menuShouldPortal
         {...selectOptions}
         isLoading={loading}
         loadOptions={debouncedLoadOptions}

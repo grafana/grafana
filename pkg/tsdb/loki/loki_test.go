@@ -1,23 +1,20 @@
 package loki
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/loki/pkg/loghttp"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
 
 func TestLoki(t *testing.T) {
-	dsInfo := &models.DataSource{
-		JsonData: simplejson.New(),
-	}
-
 	t.Run("converting metric name", func(t *testing.T) {
 		metric := map[p.LabelName]p.LabelValue{
 			p.LabelName("app"):    p.LabelValue("backend"),
@@ -46,71 +43,89 @@ func TestLoki(t *testing.T) {
 	})
 
 	t.Run("parsing query model with step", func(t *testing.T) {
-		json := `{
-				"expr": "go_goroutines",
-				"format": "time_series",
-				"refId": "A"
-			}`
-		jsonModel, err := simplejson.NewJson([]byte(json))
-		require.NoError(t, err)
-		timeRange := plugins.NewDataTimeRange("12h", "now")
-		queryContext := plugins.DataQuery{
-			Queries: []plugins.DataSubQuery{
-				{Model: jsonModel},
+		queryContext := &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
+				{
+					JSON: []byte(`
+					{
+						"expr": "go_goroutines",
+						"format": "time_series",
+						"refId": "A"
+					}`,
+					),
+					TimeRange: backend.TimeRange{
+						From: time.Now().Add(-30 * time.Second),
+						To:   time.Now(),
+					},
+				},
 			},
-			TimeRange: &timeRange,
 		}
-
-		exe, err := New(httpclient.NewProvider())(dsInfo)
-		require.NoError(t, err)
-		lokiExecutor := exe.(*LokiExecutor)
-		models, err := lokiExecutor.parseQuery(dsInfo, queryContext)
+		service := &Service{
+			intervalCalculator: mockCalculator{
+				interval: tsdb.Interval{
+					Value: time.Second * 30,
+				},
+			},
+		}
+		dsInfo := &datasourceInfo{}
+		models, err := service.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, models[0].Step)
 	})
 
 	t.Run("parsing query model without step parameter", func(t *testing.T) {
-		json := `{
-				"expr": "go_goroutines",
-				"format": "time_series",
-				"refId": "A"
-			}`
-		jsonModel, err := simplejson.NewJson([]byte(json))
-		require.NoError(t, err)
-		timeRange := plugins.NewDataTimeRange("48h", "now")
-		queryContext := plugins.DataQuery{
-			TimeRange: &timeRange,
-			Queries: []plugins.DataSubQuery{
-				{Model: jsonModel},
+		queryContext := &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
+				{
+					JSON: []byte(`
+					{
+						"expr": "go_goroutines",
+						"format": "time_series",
+						"refId": "A"
+					}`,
+					),
+					TimeRange: backend.TimeRange{
+						From: time.Now().Add(-48 * time.Hour),
+						To:   time.Now(),
+					},
+				},
 			},
 		}
-		exe, err := New(httpclient.NewProvider())(dsInfo)
-		require.NoError(t, err)
-		lokiExecutor := exe.(*LokiExecutor)
-		models, err := lokiExecutor.parseQuery(dsInfo, queryContext)
+		service := &Service{
+			intervalCalculator: mockCalculator{
+				interval: tsdb.Interval{
+					Value: time.Minute * 2,
+				},
+			},
+		}
+		dsInfo := &datasourceInfo{}
+		models, err := service.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*2, models[0].Step)
 
-		timeRange = plugins.NewDataTimeRange("1h", "now")
-		queryContext.TimeRange = &timeRange
-		models, err = lokiExecutor.parseQuery(dsInfo, queryContext)
+		service = &Service{
+			intervalCalculator: mockCalculator{
+				interval: tsdb.Interval{
+					Value: time.Second * 2,
+				},
+			},
+		}
+		models, err = service.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
+		fmt.Println(models)
 		require.Equal(t, time.Second*2, models[0].Step)
 	})
 }
 
 func TestParseResponse(t *testing.T) {
 	t.Run("value is not of type matrix", func(t *testing.T) {
-		//nolint: staticcheck // plugins.DataPlugin deprecated
-		queryRes := plugins.DataQueryResult{}
-
+		queryRes := data.Frames{}
 		value := loghttp.QueryResponse{
 			Data: loghttp.QueryResponseData{
 				Result: loghttp.Vector{},
 			},
 		}
 		res, err := parseResponse(&value, nil)
-
 		require.Equal(t, queryRes, res)
 		require.Error(t, err)
 	})
@@ -137,22 +152,36 @@ func TestParseResponse(t *testing.T) {
 		query := &lokiQuery{
 			LegendFormat: "legend {{app}}",
 		}
-		res, err := parseResponse(&value, query)
+		frame, err := parseResponse(&value, query)
 		require.NoError(t, err)
 
-		decoded, _ := res.Dataframes.Decoded()
-		require.Len(t, decoded, 1)
-		require.Equal(t, decoded[0].Name, "legend Application")
-		require.Len(t, decoded[0].Fields, 2)
-		require.Len(t, decoded[0].Fields[0].Labels, 0)
-		require.Equal(t, decoded[0].Fields[0].Name, "time")
-		require.Len(t, decoded[0].Fields[1].Labels, 2)
-		require.Equal(t, decoded[0].Fields[1].Labels.String(), "app=Application, tag2=tag2")
-		require.Equal(t, decoded[0].Fields[1].Name, "value")
-		require.Equal(t, decoded[0].Fields[1].Config.DisplayNameFromDS, "legend Application")
+		labels, err := data.LabelsFromString("app=Application, tag2=tag2")
+		require.NoError(t, err)
+		field1 := data.NewField("time", nil, []time.Time{
+			time.Date(1970, 1, 1, 0, 0, 1, 0, time.UTC),
+			time.Date(1970, 1, 1, 0, 0, 2, 0, time.UTC),
+			time.Date(1970, 1, 1, 0, 0, 3, 0, time.UTC),
+			time.Date(1970, 1, 1, 0, 0, 4, 0, time.UTC),
+			time.Date(1970, 1, 1, 0, 0, 5, 0, time.UTC),
+		})
+		field2 := data.NewField("value", labels, []float64{1, 2, 3, 4, 5})
+		field2.SetConfig(&data.FieldConfig{DisplayNameFromDS: "legend Application"})
+		testFrame := data.NewFrame("legend Application", field1, field2)
 
-		// Ensure the timestamps are UTC zoned
-		testValue := decoded[0].Fields[0].At(0)
-		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
+		if diff := cmp.Diff(testFrame, frame[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 	})
+}
+
+type mockCalculator struct {
+	interval tsdb.Interval
+}
+
+func (m mockCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration, intervalMode tsdb.IntervalMode) (tsdb.Interval, error) {
+	return m.interval, nil
+}
+
+func (m mockCalculator) CalculateSafeInterval(timerange backend.TimeRange, resolution int64) tsdb.Interval {
+	return m.interval
 }

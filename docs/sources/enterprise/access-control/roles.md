@@ -10,6 +10,7 @@ weight = 105
 A role represents set of permissions that allow you to perform specific actions on Grafana resources. Refer to [Permissions]({{< relref "./permissions.md" >}}) to understand how permissions work.
 
 There are two types of roles:
+
 - [Fixed roles]({{< relref "./roles.md#fixed-roles" >}}), which provide granular access for specific resources within Grafana and are managed by the Grafana itself.
 - [Custom roles]({{< relref "./roles.md#custom-roles.md" >}}), which provide granular access based on the user specified set of permissions.
 
@@ -25,7 +26,7 @@ Fixed roles provide convenience and guarantee of consistent behaviour by combini
 There are few basic rules for fixed roles:
 
 - All fixed roles are _global_.
-- All fixed roles have a `fixed:` prefix. 
+- All fixed roles have a `fixed:` prefix.
 - You can’t change or delete a fixed role.
 
 For more information, refer to [Fine-grained access control references]({{< relref "./fine-grained-access-control-references.md#fine-grained-access-fixed-roles" >}}).
@@ -68,7 +69,7 @@ Note that you won't be able to create, update or delete a custom role with permi
 
 ## Built-in role assignments
 
-To control what your users can access or not, you can assign or unassign [Custom roles]({{< ref "#custom-roles" >}}) or [Fixed roles]({{< ref "#fixed-roles" >}}) to the existing [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) or to [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) role. 
+To control what your users can access or not, you can assign or unassign [Custom roles]({{< ref "#custom-roles" >}}) or [Fixed roles]({{< ref "#fixed-roles" >}}) to the existing [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) or to [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) role.
 These assignments are called built-in role assignments.
 
 During startup, Grafana will create default assignments for you. When you make any changes to the built-on role assignments, Grafana will take them into account and won’t overwrite during next start.

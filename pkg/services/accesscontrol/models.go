@@ -4,6 +4,13 @@ import (
 	"time"
 )
 
+// RoleRegistration stores a role and its assignments to built-in roles
+// (Viewer, Editor, Admin, Grafana Admin)
+type RoleRegistration struct {
+	Role   RoleDTO
+	Grants []string
+}
+
 type Role struct {
 	Version     int64  `json:"version"`
 	UID         string `json:"uid"`
@@ -36,9 +43,6 @@ func (p RoleDTO) Role() Role {
 
 const (
 	// Permission actions
-
-	// Provisioning actions
-	ActionProvisioningReload = "provisioning:reload"
 
 	// Users actions
 	ActionUsersRead     = "users:read"
@@ -83,18 +87,19 @@ const (
 	// Datasources actions
 	ActionDatasourcesExplore = "datasources:explore"
 
+	// Plugin actions
+	ActionPluginsManage = "plugins:manage"
+
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"
 
-	// Users scopes
-	ScopeUsersSelf = "users:self"
-	ScopeUsersAll  = "users:*"
+	// Users scope
+	ScopeUsersAll = "users:*"
 
 	// Settings scope
 	ScopeSettingsAll = "settings:**"
-
-	// Services Scopes
-	ScopeServicesAll = "service:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
+
+const FixedRolePrefix = "fixed:"

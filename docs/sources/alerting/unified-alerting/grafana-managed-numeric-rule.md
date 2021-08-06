@@ -28,40 +28,40 @@ If there are string columns then those columns become labels. The name of column
 
 For a MySQL table called "DiskSpace":
 
-| Time        | Host | Disk | PercentFree
-| ----------- | ---  | -----| --------
-| 2021-June-7 | web1 | /etc | 3
-| 2021-June-7 | web2 | /var | 4
-| 2021-June-7 | web3 | /var | 8
-| ...         | ...  | ...  | ...
+| Time        | Host | Disk | PercentFree |
+| ----------- | ---- | ---- | ----------- |
+| 2021-June-7 | web1 | /etc | 3           |
+| 2021-June-7 | web2 | /var | 4           |
+| 2021-June-7 | web3 | /var | 8           |
+| ...         | ...  | ...  | ...         |
 
 You can query the data filtering on time, but without returning the time series to Grafana. For example, an alert that would trigger per Host, Disk when there is less than 5% free space:
 
 ```sql
 SELECT Host, Disk, CASE WHEN PercentFree < 5.0 THEN PercentFree ELSE 0 END FROM (
-  SELECT 
-      Host, 
-      Disk, 
-      Avg(PercentFree) 
+  SELECT
+      Host,
+      Disk,
+      Avg(PercentFree)
   FROM DiskSpace
-  Group By 
-    Host, 
+  Group By
+    Host,
     Disk
   Where __timeFilter(Time)
 ```
 
 This query returns the following Table response to Grafana:
 
-| Host | Disk | PercentFree
-| ---  | -----| --------
-| web1 | /etc | 3
-| web2 | /var | 4
-| web3 | /var | 0
+| Host | Disk | PercentFree |
+| ---- | ---- | ----------- |
+| web1 | /etc | 3           |
+| web2 | /var | 4           |
+| web3 | /var | 0           |
 
 When this query is used as the **condition** in an alert rule, then the non-zero will be alerting. As a result, three alert instances are produced:
 
-| Labels                | Status
-| ----------------------| ------
-| {Host=web1,disk=/etc} | Alerting
-| {Host=web2,disk=/var} | Alerting
-| {Host=web3,disk=/var} | Normal
+| Labels                | Status   |
+| --------------------- | -------- |
+| {Host=web1,disk=/etc} | Alerting |
+| {Host=web2,disk=/var} | Alerting |
+| {Host=web3,disk=/var} | Normal   |

@@ -20,7 +20,7 @@ These short-lived tokens are rotated each `token_rotation_interval_minutes` for 
 
 An active authenticated user that gets it token rotated will extend the `login_maximum_inactive_lifetime_duration` time from "now" that Grafana will remember the user.
 This means that a user can close its browser and come back before `now + login_maximum_inactive_lifetime_duration` and still being authenticated.
- This is true as long as the time since user login is less than `login_maximum_lifetime_duration`.
+This is true as long as the time since user login is less than `login_maximum_lifetime_duration`.
 
 #### Remote logout
 

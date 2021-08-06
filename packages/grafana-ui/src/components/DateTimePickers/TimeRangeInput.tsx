@@ -141,6 +141,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, disabled = false) => {
       inputStyles.suffix,
       css`
         position: relative;
+        top: -1px;
         margin-left: ${theme.v1.spacing.xs};
       `
     ),
