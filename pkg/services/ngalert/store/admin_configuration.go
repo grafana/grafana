@@ -27,7 +27,7 @@ type AdminConfigurationStore interface {
 func (st *DBstore) GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfiguration, error) {
 	cfg := &ngmodels.AdminConfiguration{}
 	err := st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		ok, err := sess.Table("ngalert_configuration").Where("org_id = ?", orgID).Limit(1).Get(cfg)
+		ok, err := sess.Table("ngalert_configuration").Where("org_id = ?", orgID).Get(cfg)
 		if err != nil {
 			return err
 		}
@@ -76,7 +76,7 @@ func (st DBstore) DeleteAdminConfiguration(orgID int64) error {
 
 func (st DBstore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		has, err := sess.Table("ngalert_configuration").Where("org_id = ?", cmd.AdminConfiguration.OrgID).Limit(1, 0).Exist()
+		has, err := sess.Table("ngalert_configuration").Where("org_id = ?", cmd.AdminConfiguration.OrgID).Exist()
 		if err != nil {
 			return err
 		}
