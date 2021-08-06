@@ -119,7 +119,15 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         label: logGroup,
       }));
     } catch (err) {
-      dispatch(notifyApp(createErrorNotification(err)));
+      let errMessage = 'unknown error';
+      if (typeof err !== 'string') {
+        try {
+          errMessage = JSON.stringify(err);
+        } catch (e) {}
+      } else {
+        errMessage = err;
+      }
+      dispatch(notifyApp(createErrorNotification(errMessage)));
       return [];
     }
   };
