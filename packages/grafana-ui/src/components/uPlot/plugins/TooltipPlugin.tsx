@@ -29,6 +29,15 @@ interface TooltipPluginProps {
   renderTooltip?: (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => React.ReactNode;
 }
 
+const eqArrays = (a: any[], b: any[]) => {
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+  return true;
+};
+
 const TOOLTIP_OFFSET = 10;
 
 /**
@@ -114,13 +123,16 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         })(u);
       });
     } else {
-      config.addHook('setLegend', (u) => {
-        setFocusedPointIdx(u.cursor.idx!);
-        setFocusedPointIdxs(u.cursor.idxs!.slice());
-      });
+      let prevIdx: number | null = null;
+      let prevIdxs: Array<number | null> | null = null;
 
       // default series/datapoint idx retireval
       config.addHook('setCursor', (u) => {
+        if (u.cursor.idx !== prevIdx || prevIdxs == null || !eqArrays(prevIdxs, u.cursor.idxs!)) {
+          setFocusedPointIdx((prevIdx = u.cursor.idx!));
+          setFocusedPointIdxs((prevIdxs = u.cursor.idxs!.slice()));
+        }
+
         const bbox = plotCtx.getCanvasBoundingBox();
         if (!bbox) {
           return;
@@ -138,7 +150,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         setFocusedSeriesIdx(idx);
       });
     }
-  }, [plotCtx, config, setFocusedPointIdx, setFocusedSeriesIdx, setCoords]);
+  }, [plotCtx, config]);
 
   if (!plotInstance || focusedPointIdx === null || (!isActive && sync === DashboardCursorSync.Crosshair)) {
     return null;
