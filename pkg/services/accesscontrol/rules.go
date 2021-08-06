@@ -1,4 +1,4 @@
-package rules
+package accesscontrol
 
 import (
 	"bytes"
@@ -31,25 +31,25 @@ func Parameter(key string) string {
 type Evaluator interface {
 	// Evaluate permissions that are grouped by action
 	Evaluate(permissions map[string]map[string]struct{}) (bool, error)
-	// Inject params into the evaluator's templated scopes. Eg. "settings:" + eval.Parameters(":id") and returns a new Evaluator
+	// Inject params into the evaluator's templated scopes. e.g. "settings:" + eval.Parameters(":id") and returns a new Evaluator
 	Inject(params map[string]string) (Evaluator, error)
-	// String returns a string representation of permission rules
+	// String returns a string representation of permissionEvaluator rules
 	String() string
 }
 
-var _ Evaluator = new(permission)
+var _ Evaluator = new(permissionEvaluator)
 
-// Permission creates a new permission rule that will require all scopes in combination with action to match
-func Permission(action string, scopes ...string) Evaluator {
-	return permission{Action: action, Scopes: scopes}
+// EvalPermission creates a new permission evaluator that will require allEvaluator scopes in combination with action to match
+func EvalPermission(action string, scopes ...string) Evaluator {
+	return permissionEvaluator{Action: action, Scopes: scopes}
 }
 
-type permission struct {
+type permissionEvaluator struct {
 	Action string
 	Scopes []string
 }
 
-func (p permission) Evaluate(permissions map[string]map[string]struct{}) (bool, error) {
+func (p permissionEvaluator) Evaluate(permissions map[string]map[string]struct{}) (bool, error) {
 	userScopes, ok := permissions[p.Action]
 	if !ok {
 		return false, nil
@@ -92,7 +92,7 @@ func match(scope, target string) (bool, error) {
 	return false, nil
 }
 
-func (p permission) Inject(params map[string]string) (Evaluator, error) {
+func (p permissionEvaluator) Inject(params map[string]string) (Evaluator, error) {
 	scopes := make([]string, 0, len(p.Scopes))
 	for _, scope := range p.Scopes {
 		tmpl, err := template.New("scope").Parse(scope)
@@ -105,24 +105,24 @@ func (p permission) Inject(params map[string]string) (Evaluator, error) {
 		}
 		scopes = append(scopes, buf.String())
 	}
-	return Permission(p.Action, scopes...), nil
+	return EvalPermission(p.Action, scopes...), nil
 }
 
-func (p permission) String() string {
+func (p permissionEvaluator) String() string {
 	return ""
 }
 
-var _ Evaluator = new(all)
+var _ Evaluator = new(allEvaluator)
 
-func All(allOf ...Evaluator) Evaluator {
-	return all{allOf: allOf}
+func EvalAll(allOf ...Evaluator) Evaluator {
+	return allEvaluator{allOf: allOf}
 }
 
-type all struct {
+type allEvaluator struct {
 	allOf []Evaluator
 }
 
-func (a all) Evaluate(permissions map[string]map[string]struct{}) (bool, error) {
+func (a allEvaluator) Evaluate(permissions map[string]map[string]struct{}) (bool, error) {
 	for _, e := range a.allOf {
 		if ok, err := e.Evaluate(permissions); !ok || err != nil {
 			return false, err
@@ -131,7 +131,7 @@ func (a all) Evaluate(permissions map[string]map[string]struct{}) (bool, error) 
 	return true, nil
 }
 
-func (a all) Inject(params map[string]string) (Evaluator, error) {
+func (a allEvaluator) Inject(params map[string]string) (Evaluator, error) {
 	var injected []Evaluator
 	for _, e := range a.allOf {
 		i, err := e.Inject(params)
@@ -140,24 +140,24 @@ func (a all) Inject(params map[string]string) (Evaluator, error) {
 		}
 		injected = append(injected, i)
 	}
-	return All(injected...), nil
+	return EvalAll(injected...), nil
 }
 
-func (a all) String() string {
+func (a allEvaluator) String() string {
 	return ""
 }
 
-var _ Evaluator = new(any)
+var _ Evaluator = new(anyEvaluator)
 
-func Any(anyOf ...Evaluator) Evaluator {
-	return any{anyOf: anyOf}
+func EvalAny(anyOf ...Evaluator) Evaluator {
+	return anyEvaluator{anyOf: anyOf}
 }
 
-type any struct {
+type anyEvaluator struct {
 	anyOf []Evaluator
 }
 
-func (a any) Evaluate(permissions map[string]map[string]struct{}) (bool, error) {
+func (a anyEvaluator) Evaluate(permissions map[string]map[string]struct{}) (bool, error) {
 	for _, e := range a.anyOf {
 		ok, err := e.Evaluate(permissions)
 		if err != nil {
@@ -170,7 +170,7 @@ func (a any) Evaluate(permissions map[string]map[string]struct{}) (bool, error) 
 	return false, nil
 }
 
-func (a any) Inject(params map[string]string) (Evaluator, error) {
+func (a anyEvaluator) Inject(params map[string]string) (Evaluator, error) {
 	var injected []Evaluator
 	for _, e := range a.anyOf {
 		i, err := e.Inject(params)
@@ -179,9 +179,9 @@ func (a any) Inject(params map[string]string) (Evaluator, error) {
 		}
 		injected = append(injected, i)
 	}
-	return Any(injected...), nil
+	return EvalAny(injected...), nil
 }
 
-func (a any) String() string {
+func (a anyEvaluator) String() string {
 	return ""
 }

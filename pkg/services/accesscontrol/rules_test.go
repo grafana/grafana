@@ -1,4 +1,4 @@
-package rules
+package accesscontrol
 
 import (
 	"testing"
@@ -26,7 +26,7 @@ func TestPermission_Evaluate(t *testing.T) {
 		{
 			desc:      "should evaluate to true",
 			expected:  true,
-			evaluator: Permission("reports:read", "reports:1"),
+			evaluator: EvalPermission("reports:read", "reports:1"),
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
 					"reports:1": struct{}{},
@@ -34,9 +34,9 @@ func TestPermission_Evaluate(t *testing.T) {
 			},
 		},
 		{
-			desc:      "should evaluate to true when all required scopes matches",
+			desc:      "should evaluate to true when allEvaluator required scopes matches",
 			expected:  true,
-			evaluator: Permission("reports:read", "reports:1", "reports:2"),
+			evaluator: EvalPermission("reports:read", "reports:1", "reports:2"),
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
 					"reports:1": struct{}{},
@@ -47,7 +47,7 @@ func TestPermission_Evaluate(t *testing.T) {
 		{
 			desc:      "should evaluate to true for empty scope",
 			expected:  true,
-			evaluator: Permission("reports:read"),
+			evaluator: EvalPermission("reports:read"),
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
 					"reports:1": struct{}{},
@@ -57,7 +57,7 @@ func TestPermission_Evaluate(t *testing.T) {
 		{
 			desc:      "should evaluate to false when only one of required scopes exists",
 			expected:  false,
-			evaluator: Permission("reports:read", "reports:1", "reports:2"),
+			evaluator: EvalPermission("reports:read", "reports:1", "reports:2"),
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
 					"reports:1": struct{}{},
@@ -80,7 +80,7 @@ func TestPermission_Inject(t *testing.T) {
 		{
 			desc:      "should inject correct param",
 			expected:  true,
-			evaluator: Permission("reports:read", Combine("reports", Parameter(":reportId"))),
+			evaluator: EvalPermission("reports:read", Combine("reports", Parameter(":reportId"))),
 			params: map[string]string{
 				":id":       "10",
 				":reportId": "1",
@@ -94,7 +94,7 @@ func TestPermission_Inject(t *testing.T) {
 		{
 			desc:      "should fail for nil params",
 			expected:  false,
-			evaluator: Permission("reports:read", Combine("reports", Parameter(":reportId"))),
+			evaluator: EvalPermission("reports:read", Combine("reports", Parameter(":reportId"))),
 			params:    nil,
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
@@ -103,9 +103,9 @@ func TestPermission_Inject(t *testing.T) {
 			},
 		},
 		{
-			desc:      "should inject several parameters to one permission",
+			desc:      "should inject several parameters to one permissionEvaluator",
 			expected:  true,
-			evaluator: Permission("reports:read", Combine("reports", Parameter(":reportId"), Parameter(":reportId2"))),
+			evaluator: EvalPermission("reports:read", Combine("reports", Parameter(":reportId"), Parameter(":reportId2"))),
 			params: map[string]string{
 				":reportId":  "report",
 				":reportId2": "report2",
@@ -133,8 +133,8 @@ func TestAll_Evaluate(t *testing.T) {
 	tests := []evaluateTestCase{
 		{
 			desc: "should return true for one that matches",
-			evaluator: All(
-				Permission("settings:write", Combine("settings", ScopeAll)),
+			evaluator: EvalAll(
+				EvalPermission("settings:write", Combine("settings", ScopeAll)),
 			),
 			permissions: map[string]map[string]struct{}{
 				"settings:write": {"settings:**": struct{}{}},
@@ -143,9 +143,9 @@ func TestAll_Evaluate(t *testing.T) {
 		},
 		{
 			desc: "should return true for several that matches",
-			evaluator: All(
-				Permission("settings:write", Combine("settings", ScopeAll)),
-				Permission("settings:read", Combine("settings", "auth.saml", ScopeAll)),
+			evaluator: EvalAll(
+				EvalPermission("settings:write", Combine("settings", ScopeAll)),
+				EvalPermission("settings:read", Combine("settings", "auth.saml", ScopeAll)),
 			),
 			permissions: map[string]map[string]struct{}{
 				"settings:write": {"settings:**": struct{}{}},
@@ -155,10 +155,10 @@ func TestAll_Evaluate(t *testing.T) {
 		},
 		{
 			desc: "should return false if one does not match",
-			evaluator: All(
-				Permission("settings:write", Combine("settings", ScopeAll)),
-				Permission("settings:read", Combine("settings", "auth.saml", ScopeAll)),
-				Permission("report:read", Combine("reports", ScopeAll)),
+			evaluator: EvalAll(
+				EvalPermission("settings:write", Combine("settings", ScopeAll)),
+				EvalPermission("settings:read", Combine("settings", "auth.saml", ScopeAll)),
+				EvalPermission("report:read", Combine("reports", ScopeAll)),
 			),
 			permissions: map[string]map[string]struct{}{
 				"settings:write": {"settings:**": struct{}{}},
@@ -183,9 +183,9 @@ func TestAll_Inject(t *testing.T) {
 		{
 			desc:     "should inject correct param",
 			expected: true,
-			evaluator: All(
-				Permission("reports:read", Combine("reports", Parameter(":reportId"))),
-				Permission("settings:read", Combine("settings", Parameter(":settingsId"))),
+			evaluator: EvalAll(
+				EvalPermission("reports:read", Combine("reports", Parameter(":reportId"))),
+				EvalPermission("settings:read", Combine("settings", Parameter(":settingsId"))),
 			),
 			params: map[string]string{
 				":id":         "10",
@@ -204,9 +204,9 @@ func TestAll_Inject(t *testing.T) {
 		{
 			desc:     "should fail for nil params",
 			expected: false,
-			evaluator: All(
-				Permission("settings:read", Combine("reports", Parameter(":settingsId"))),
-				Permission("reports:read", Combine("reports", Parameter(":reportId"))),
+			evaluator: EvalAll(
+				EvalPermission("settings:read", Combine("reports", Parameter(":settingsId"))),
+				EvalPermission("reports:read", Combine("reports", Parameter(":reportId"))),
 			),
 			params: nil,
 			permissions: map[string]map[string]struct{}{
@@ -235,8 +235,8 @@ func TestAny_Evaluate(t *testing.T) {
 	tests := []evaluateTestCase{
 		{
 			desc: "should return true for one that matches",
-			evaluator: Any(
-				Permission("settings:write", Combine("settings", ScopeAll)),
+			evaluator: EvalAny(
+				EvalPermission("settings:write", Combine("settings", ScopeAll)),
 			),
 			permissions: map[string]map[string]struct{}{
 				"settings:write": {"settings:**": struct{}{}},
@@ -245,10 +245,10 @@ func TestAny_Evaluate(t *testing.T) {
 		},
 		{
 			desc: "should return true when at least one matches",
-			evaluator: Any(
-				Permission("settings:write", Combine("settings", "auth.saml", ScopeAll)),
-				Permission("report:read", Combine("reports", "1")),
-				Permission("report:write", Combine("reports", "10")),
+			evaluator: EvalAny(
+				EvalPermission("settings:write", Combine("settings", "auth.saml", ScopeAll)),
+				EvalPermission("report:read", Combine("reports", "1")),
+				EvalPermission("report:write", Combine("reports", "10")),
 			),
 			permissions: map[string]map[string]struct{}{
 				"settings:write": {"settings:**": struct{}{}},
@@ -257,10 +257,10 @@ func TestAny_Evaluate(t *testing.T) {
 		},
 		{
 			desc: "should return false when there is no match",
-			evaluator: Any(
-				Permission("settings:write", Combine("settings", "auth.saml", ScopeAll)),
-				Permission("report:read", Combine("reports", "1")),
-				Permission("report:write", Combine("reports", "10")),
+			evaluator: EvalAny(
+				EvalPermission("settings:write", Combine("settings", "auth.saml", ScopeAll)),
+				EvalPermission("report:read", Combine("reports", "1")),
+				EvalPermission("report:write", Combine("reports", "10")),
 			),
 			permissions: map[string]map[string]struct{}{
 				"permissions:write": {"permissions:delegate": struct{}{}},
@@ -283,9 +283,9 @@ func TestAny_Inject(t *testing.T) {
 		{
 			desc:     "should inject correct param",
 			expected: true,
-			evaluator: Any(
-				Permission("reports:read", Combine("reports", Parameter(":reportId"))),
-				Permission("settings:read", Combine("settings", Parameter(":settingsId"))),
+			evaluator: EvalAny(
+				EvalPermission("reports:read", Combine("reports", Parameter(":reportId"))),
+				EvalPermission("settings:read", Combine("settings", Parameter(":settingsId"))),
 			),
 			params: map[string]string{
 				":id":         "10",
@@ -304,9 +304,9 @@ func TestAny_Inject(t *testing.T) {
 		{
 			desc:     "should fail for nil params",
 			expected: false,
-			evaluator: Any(
-				Permission("settings:read", Combine("reports", Parameter(":settingsId"))),
-				Permission("reports:read", Combine("reports", Parameter(":reportId"))),
+			evaluator: EvalAny(
+				EvalPermission("settings:read", Combine("reports", Parameter(":settingsId"))),
+				EvalPermission("reports:read", Combine("reports", Parameter(":reportId"))),
 			),
 			params: nil,
 			permissions: map[string]map[string]struct{}{
@@ -342,11 +342,11 @@ func TestEval(t *testing.T) {
 	tests := []combinedTestCase{
 		{
 			desc: "should return true when first is true",
-			evaluator: Any(
-				Permission("settings:write", Combine("settings", ScopeAll)),
-				All(
-					Permission("settings:write", "settings:auth.saml:enabled"),
-					Permission("settings:write", "settings:auth.saml:max_issue_delay"),
+			evaluator: EvalAny(
+				EvalPermission("settings:write", Combine("settings", ScopeAll)),
+				EvalAll(
+					EvalPermission("settings:write", "settings:auth.saml:enabled"),
+					EvalPermission("settings:write", "settings:auth.saml:max_issue_delay"),
 				),
 			),
 			expected: true,
@@ -355,12 +355,12 @@ func TestEval(t *testing.T) {
 			},
 		},
 		{
-			desc: "should return true when first is false and all is true",
-			evaluator: Any(
-				Permission("settings:write", Combine("settings", ScopeAll)),
-				All(
-					Permission("settings:write", "settings:auth.saml:enabled"),
-					Permission("settings:write", "settings:auth.saml:max_issue_delay"),
+			desc: "should return true when first is false and allEvaluator is true",
+			evaluator: EvalAny(
+				EvalPermission("settings:write", Combine("settings", ScopeAll)),
+				EvalAll(
+					EvalPermission("settings:write", "settings:auth.saml:enabled"),
+					EvalPermission("settings:write", "settings:auth.saml:max_issue_delay"),
 				),
 			),
 			expected: true,
@@ -373,11 +373,11 @@ func TestEval(t *testing.T) {
 		},
 		{
 			desc: "should return false when both are false",
-			evaluator: Any(
-				Permission("settings:write", Combine("settings", ScopeAll)),
-				All(
-					Permission("settings:write", "settings:auth.saml:enabled"),
-					Permission("settings:write", "settings:auth.saml:max_issue_delay"),
+			evaluator: EvalAny(
+				EvalPermission("settings:write", Combine("settings", ScopeAll)),
+				EvalAll(
+					EvalPermission("settings:write", "settings:auth.saml:enabled"),
+					EvalPermission("settings:write", "settings:auth.saml:max_issue_delay"),
 				),
 			),
 			expected: false,

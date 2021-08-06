@@ -12,7 +12,7 @@ func TestPredefinedRoles(t *testing.T) {
 	for name, r := range FixedRoles {
 		assert.Truef(t,
 			strings.HasPrefix(name, "fixed:"),
-			"expected all fixed roles to be prefixed by 'fixed:', found role '%s'", name,
+			"expected allEvaluator fixed roles to be prefixed by 'fixed:', found role '%s'", name,
 		)
 		assert.Equal(t, name, r.Name)
 		assert.NotZero(t, r.Version)

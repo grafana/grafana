@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/rules"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -72,7 +71,7 @@ type userTestCase struct {
 }
 
 type endpointTestCase struct {
-	evaluator rules.Evaluator
+	evaluator accesscontrol.Evaluator
 }
 
 func TestEvaluatingPermissions(t *testing.T) {
@@ -85,8 +84,8 @@ func TestEvaluatingPermissions(t *testing.T) {
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
-				{evaluator: rules.Permission(accesscontrol.ActionUsersDisable, accesscontrol.ScopeGlobalUsersAll)},
-				{evaluator: rules.Permission(accesscontrol.ActionUsersEnable, accesscontrol.ScopeGlobalUsersAll)},
+				{evaluator: accesscontrol.EvalPermission(accesscontrol.ActionUsersDisable, accesscontrol.ScopeGlobalUsersAll)},
+				{evaluator: accesscontrol.EvalPermission(accesscontrol.ActionUsersEnable, accesscontrol.ScopeGlobalUsersAll)},
 			},
 			evalResult: true,
 		},
@@ -98,7 +97,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
-				{evaluator: rules.Permission(accesscontrol.ActionUsersCreate, accesscontrol.ScopeGlobalUsersAll)},
+				{evaluator: accesscontrol.EvalPermission(accesscontrol.ActionUsersCreate, accesscontrol.ScopeGlobalUsersAll)},
 			},
 			evalResult: false,
 		},

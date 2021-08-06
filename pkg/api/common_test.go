@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/rules"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -240,7 +239,7 @@ type fakeAccessControl struct {
 	permissions []*accesscontrol.Permission
 }
 
-func (f *fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator rules.Evaluator) (bool, error) {
+func (f *fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
 	permissions, _ := f.GetUserPermissions(ctx, user)
 	return evaluator.Evaluate(accesscontrol.GroupPermissionsByAction(permissions))
 }

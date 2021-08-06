@@ -13,14 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/rules"
 )
 
 type middlewareTestCase struct {
 	desc           string
 	expectFallback bool
 	expectEndpoint bool
-	evaluator      rules.Evaluator
+	evaluator      accesscontrol.Evaluator
 	ac             accesscontrol.AccessControl
 }
 
@@ -38,7 +37,7 @@ func TestMiddleware(t *testing.T) {
 				isDisabled:  false,
 				permissions: []*accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
 			},
-			evaluator:      rules.Permission("users:read", "users:*"),
+			evaluator:      accesscontrol.EvalPermission("users:read", "users:*"),
 			expectFallback: false,
 			expectEndpoint: true,
 		},
@@ -48,7 +47,7 @@ func TestMiddleware(t *testing.T) {
 				isDisabled:  false,
 				permissions: []*accesscontrol.Permission{{Action: "users:read", Scope: "users:1"}},
 			},
-			evaluator:      rules.Permission("users:read", "users:*"),
+			evaluator:      accesscontrol.EvalPermission("users:read", "users:*"),
 			expectFallback: false,
 			expectEndpoint: false,
 		},
@@ -104,7 +103,7 @@ type fakeAccessControl struct {
 	permissions []*accesscontrol.Permission
 }
 
-func (f fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator rules.Evaluator) (bool, error) {
+func (f fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
 	permissions, _ := f.GetUserPermissions(ctx, user)
 	return evaluator.Evaluate(accesscontrol.GroupPermissionsByAction(permissions))
 }

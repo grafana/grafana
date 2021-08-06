@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/rules"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -191,7 +190,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit
 	}
 
-	if setting.ExploreEnabled && hasAccess(canExplore, rules.Permission(ac.ActionDatasourcesExplore)) {
+	if setting.ExploreEnabled && hasAccess(canExplore, ac.EvalPermission(ac.ActionDatasourcesExplore)) {
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Explore",
 			Id:         "explore",
@@ -264,7 +263,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if hasAccess(ac.ReqOrgAdmin, rules.Permission(ac.ActionOrgUsersRead, ac.ScopeUsersAll)) {
+	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead, ac.ScopeUsersAll)) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Users",
 			Id:          "users",
@@ -359,7 +358,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	adminNavLinks := []*dtos.NavLink{}
 
-	if hasAccess(ac.ReqGrafanaAdmin, rules.Permission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {
+	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Users", Id: "global-users", Url: hs.Cfg.AppSubURL + "/admin/users", Icon: "user",
 		})
@@ -371,13 +370,13 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		})
 	}
 
-	if hasAccess(ac.ReqGrafanaAdmin, rules.Permission(ac.ActionSettingsRead)) {
+	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Settings", Id: "server-settings", Url: hs.Cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
 		})
 	}
 
-	if hasAccess(ac.ReqGrafanaAdmin, rules.Permission(ac.ActionServerStatsRead)) {
+	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Stats", Id: "server-stats", Url: hs.Cfg.AppSubURL + "/admin/stats", Icon: "graph-bar",
 		})
@@ -391,7 +390,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		}
 	}
 
-	if hs.Cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, rules.Permission(ac.ActionLDAPStatusRead)) {
+	if hs.Cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "LDAP", Id: "ldap", Url: hs.Cfg.AppSubURL + "/admin/ldap", Icon: "book",
 		})

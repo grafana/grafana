@@ -9,12 +9,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/rules"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, rules.Evaluator) macaron.Handler {
-	return func(fallback macaron.Handler, evaluator rules.Evaluator) macaron.Handler {
+func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, accesscontrol.Evaluator) macaron.Handler {
+	return func(fallback macaron.Handler, evaluator accesscontrol.Evaluator) macaron.Handler {
 		if ac.IsDisabled() {
 			return fallback
 		}

@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/rules"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -55,7 +54,7 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 }
 
 // Evaluate evaluates access to the given resources
-func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator rules.Evaluator) (bool, error) {
+func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
 	timer := prometheus.NewTimer(metrics.MAccessEvaluationsSummary)
 	defer timer.ObserveDuration()
 	metrics.MAccessEvaluationCount.Inc()

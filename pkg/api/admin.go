@@ -8,8 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/rules"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,10 +36,10 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 	}
 
 	evaluate := func(scope string) (bool, error) {
-		return hs.AccessControl.Evaluate(ctx, user, rules.Permission(accesscontrol.ActionSettingsRead, scope))
+		return hs.AccessControl.Evaluate(ctx, user, ac.EvalPermission(ac.ActionSettingsRead, scope))
 	}
 
-	ok, err := evaluate(accesscontrol.ScopeSettingsAll)
+	ok, err := evaluate(ac.ScopeSettingsAll)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +50,7 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 	authorizedBag := make(setting.SettingsBag)
 
 	for section, keys := range bag {
-		ok, err := evaluate(getSettingsScope(section, rules.ScopeAll))
+		ok, err := evaluate(getSettingsScope(section, ac.ScopeAll))
 		if err != nil {
 			return nil, err
 		}

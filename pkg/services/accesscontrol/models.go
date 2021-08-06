@@ -44,13 +44,13 @@ const (
 	ActionUsersRead     = "users:read"
 	ActionUsersWrite    = "users:write"
 	ActionUsersTeamRead = "users.teams:read"
-	// We can ignore gosec G101 since this does not contain any credentials
+	// We can ignore gosec G101 since this does not contain anyEvaluator credentials
 	// nolint:gosec
 	ActionUsersAuthTokenList = "users.authtoken:list"
-	// We can ignore gosec G101 since this does not contain any credentials
+	// We can ignore gosec G101 since this does not contain anyEvaluator credentials
 	// nolint:gosec
 	ActionUsersAuthTokenUpdate = "users.authtoken:update"
-	// We can ignore gosec G101 since this does not contain any credentials
+	// We can ignore gosec G101 since this does not contain anyEvaluator credentials
 	// nolint:gosec
 	ActionUsersPasswordUpdate    = "users.password:update"
 	ActionUsersDelete            = "users:delete"
