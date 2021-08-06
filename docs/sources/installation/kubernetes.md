@@ -7,12 +7,13 @@ weight = 700
 
 ## Deploy Grafana on Kubernetes
 
-This page explains how to install and run Grafana on Kubernetes (K8S). It uses Kubernetes manifests for the setup. If you prefer Helm, refer to the [Grafana Helm community charts](https://github.com/grafana/helm-charts). 
+This page explains how to install and run Grafana on Kubernetes (K8S). It uses Kubernetes manifests for the setup. If you prefer Helm, refer to the [Grafana Helm community charts](https://github.com/grafana/helm-charts).
 
 If you are interested in Grafana Enterprise (not Grafana OS), jump to [Deploy Grafana Enterprise on Kubernetes](#deploy-grafana-enterprise-on-kubernetes) section.
 
 ### Create Grafana Kubernetes manifest
-1. Create a file called `grafana.yaml`, then paste the contents below. 
+
+1. Create a file called `grafana.yaml`, then paste the contents below.
 
 ```yaml
 ---
@@ -45,7 +46,7 @@ spec:
       securityContext:
         fsGroup: 472
         supplementalGroups:
-        - 0    
+          - 0
       containers:
         - name: grafana
           image: grafana/grafana:7.5.2
@@ -71,7 +72,7 @@ spec:
             successThreshold: 1
             tcpSocket:
               port: 3000
-            timeoutSeconds: 1            
+            timeoutSeconds: 1
           resources:
             requests:
               cpu: 250m
@@ -99,34 +100,40 @@ spec:
   type: LoadBalancer
 ```
 
-
 ### Send manifest to Kubernetes API server
 
-1. Run the following command: 
-`kubectl apply -f grafana.yaml`
+1. Run the following command:
+   `kubectl apply -f grafana.yaml`
 
 1. Check that it worked by running the following:
-`kubectl port-forward service/grafana 3000:3000`
+   `kubectl port-forward service/grafana 3000:3000`
 
-1. Navigate to `localhost:3000` in your browser. You should see a Grafana login page. 
+1. Navigate to `localhost:3000` in your browser. You should see a Grafana login page.
 
 1. Use `admin` for both the username and password to login.
 
 ## Deploy Grafana Enterprise on Kubernetes
+
 The process for deploying Grafana Enterprise is almost identical to the process above, except for some extra steps required to add in your license file. They are described in the following sections.
 
 ### Obtain Grafana Enterprise license
-To run Grafana Enterprise, you need a valid license. [Contact a Grafana Labs representative](https://grafana.com/contact?about=grafana-enterprise) to obtain the license. This topic assumes that you already have done this and have a `license.jwt` file. Your license should also be associated with a URL, which we will use later in the topic. 
+
+To run Grafana Enterprise, you need a valid license. [Contact a Grafana Labs representative](https://grafana.com/contact?about=grafana-enterprise) to obtain the license. This topic assumes that you already have done this and have a `license.jwt` file. Your license should also be associated with a URL, which we will use later in the topic.
 
 ### Create License Secret
+
 Create a Kubernetes secret from your license file using the following command:
+
 ```bash
 kubectl create secret generic ge-license --from-file=/path/to/your/license.jwt
 ```
 
 ### Create Grafana Enterprise configuration
-Create a Grafana configuration file with the name `grafana.ini`. Then paste the content below. 
->**Note:** You will have to update the `root_url` field to the url associated with the license you were given. 
+
+Create a Grafana configuration file with the name `grafana.ini`. Then paste the content below.
+
+> **Note:** You will have to update the `root_url` field to the url associated with the license you were given.
+
 ```yaml
 [enterprise]
 license_path = /etc/grafana/license/license.jwt
@@ -136,12 +143,16 @@ root_url =/your/license/root/url
 ```
 
 ### Create Configmap for Grafana Enterprise Config
+
 Create a Kubernetes Configmap from your `grafana.ini` file with the following command:
+
 ```bash
 kubectl create configmap ge-config --from-file=/path/to/your/config.ini
 ```
+
 ### Create Grafana Enterprise Kubernetes manifest
-Create a `grafana.yaml` file, then paste the content below. This YAML is identical to the one for Grafana OS install except for the additional references to the Configmap which has your Grafana configuration file and the Secret that has your license. 
+
+Create a `grafana.yaml` file, then paste the content below. This YAML is identical to the one for Grafana OS install except for the additional references to the Configmap which has your Grafana configuration file and the Secret that has your license.
 
 ```yaml
 ---
@@ -228,14 +239,14 @@ spec:
   sessionAffinity: None
   type: LoadBalancer
 ```
- 
+
 1. Send manifest to Kubernetes API Server
-`kubectl apply -f grafana.yaml`
+   `kubectl apply -f grafana.yaml`
 
 1. Check that it worked by running the following:
-`kubectl port-forward service/grafana 3000:3000`
+   `kubectl port-forward service/grafana 3000:3000`
 
-1. Navigate to `localhost:3000` in your browser. You should see the Grafana login page. 
+1. Navigate to `localhost:3000` in your browser. You should see the Grafana login page.
 
 1. Use `admin` for both the username and password to login.
-If it worked, you should see `Enterprise (Licensed)` at the bottom of the page. 
+   If it worked, you should see `Enterprise (Licensed)` at the bottom of the page.
