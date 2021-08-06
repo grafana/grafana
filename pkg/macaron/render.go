@@ -49,6 +49,9 @@ type tmpl struct {
 
 func (t *tmpl) compile() error {
 	return fs.WalkDir(t.fs, ".", func(path string, d fs.DirEntry, e error) error {
+		if e != nil {
+			return nil // skip unreadable or erroneous filesystem items
+		}
 		if d.IsDir() {
 			return nil
 		}
