@@ -257,3 +257,8 @@ func ErrResp(status int, err error, msg string, args ...interface{}) *response.N
 	}
 	return response.Error(status, err.Error(), nil)
 }
+
+// accessForbiddenResp creates a response of forbidden access.
+func accessForbiddenResp() response.Response {
+	return ErrResp(http.StatusForbidden, errors.New("Permission denied"), "")
+}

@@ -19,41 +19,39 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
 
-type TestingApiService interface {
-	RouteEvalQueries(*models.ReqContext, apimodels.EvalQueriesPayload) response.Response
-	RouteTestReceiverConfig(*models.ReqContext, apimodels.ExtendedReceiver) response.Response
-	RouteTestRuleConfig(*models.ReqContext, apimodels.TestRulePayload) response.Response
+type ConfigurationApiService interface {
+	RouteDeleteNGalertConfig(*models.ReqContext) response.Response
+	RouteGetNGalertConfig(*models.ReqContext) response.Response
+	RoutePostNGalertConfig(*models.ReqContext, apimodels.PostableNGalertConfig) response.Response
 }
 
-func (api *API) RegisterTestingApiEndpoints(srv TestingApiService, m *metrics.Metrics) {
+func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApiService, m *metrics.Metrics) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Post(
-			toMacaronPath("/api/v1/eval"),
-			binding.Bind(apimodels.EvalQueriesPayload{}),
+		group.Delete(
+			toMacaronPath("/api/v1/ngalert/admin_config"),
 			metrics.Instrument(
-				http.MethodPost,
-				"/api/v1/eval",
-				srv.RouteEvalQueries,
+				http.MethodDelete,
+				"/api/v1/ngalert/admin_config",
+				srv.RouteDeleteNGalertConfig,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/v1/ngalert/admin_config"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/ngalert/admin_config",
+				srv.RouteGetNGalertConfig,
 				m,
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/v1/receiver/test/{Recipient}"),
-			binding.Bind(apimodels.ExtendedReceiver{}),
+			toMacaronPath("/api/v1/ngalert/admin_config"),
+			binding.Bind(apimodels.PostableNGalertConfig{}),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/v1/receiver/test/{Recipient}",
-				srv.RouteTestReceiverConfig,
-				m,
-			),
-		)
-		group.Post(
-			toMacaronPath("/api/v1/rule/test/{Recipient}"),
-			binding.Bind(apimodels.TestRulePayload{}),
-			metrics.Instrument(
-				http.MethodPost,
-				"/api/v1/rule/test/{Recipient}",
-				srv.RouteTestRuleConfig,
+				"/api/v1/ngalert/admin_config",
+				srv.RoutePostNGalertConfig,
 				m,
 			),
 		)

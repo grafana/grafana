@@ -96,7 +96,7 @@ require (
 	github.com/xorcare/pointer v1.1.0
 	github.com/yudai/gojsondiff v1.0.0
 	go.opentelemetry.io/collector v0.31.0
-	go.opentelemetry.io/collector/model v0.31.0 // indirect
+	go.opentelemetry.io/collector/model v0.31.0
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f // indirect
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e

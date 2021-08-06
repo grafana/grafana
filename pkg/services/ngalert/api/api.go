@@ -3,18 +3,16 @@ package api
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/quota"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -41,18 +39,19 @@ type Alertmanager interface {
 
 // API handlers.
 type API struct {
-	Cfg             *setting.Cfg
-	DatasourceCache datasources.CacheService
-	RouteRegister   routing.RouteRegister
-	DataService     *tsdb.Service
-	QuotaService    *quota.QuotaService
-	Schedule        schedule.ScheduleService
-	RuleStore       store.RuleStore
-	InstanceStore   store.InstanceStore
-	AlertingStore   store.AlertingStore
-	DataProxy       *datasourceproxy.DatasourceProxyService
-	Alertmanager    Alertmanager
-	StateManager    *state.Manager
+	Cfg              *setting.Cfg
+	DatasourceCache  datasources.CacheService
+	RouteRegister    routing.RouteRegister
+	DataService      *tsdb.Service
+	QuotaService     *quota.QuotaService
+	Schedule         schedule.ScheduleService
+	RuleStore        store.RuleStore
+	InstanceStore    store.InstanceStore
+	AlertingStore    store.AlertingStore
+	AdminConfigStore store.AdminConfigurationStore
+	DataProxy        *datasourceproxy.DatasourceProxyService
+	Alertmanager     Alertmanager
+	StateManager     *state.Manager
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -86,5 +85,9 @@ func (api *API) RegisterAPIEndpoints(m *metrics.Metrics) {
 		DataService:     api.DataService,
 		DatasourceCache: api.DatasourceCache,
 		log:             logger,
+	}, m)
+	api.RegisterConfigurationApiEndpoints(AdminSrv{
+		store: api.AdminConfigStore,
+		log:   logger,
 	}, m)
 }

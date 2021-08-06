@@ -19,6 +19,9 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 
 	// Create Alertmanager configurations
 	AddAlertmanagerConfigMigrations(mg)
+
+	// Create Admin Configuration
+	AddAlertAdminConfigMigrations(mg)
 }
 
 // AddAlertDefinitionMigrations should not be modified.
@@ -264,4 +267,24 @@ func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("alert alert_configuration alertmanager_configuration column from TEXT to MEDIUMTEXT if mysql", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE alert_configuration MODIFY alertmanager_configuration MEDIUMTEXT;"))
+}
+
+func AddAlertAdminConfigMigrations(mg *migrator.Migrator) {
+	adminConfiguration := migrator.Table{
+		Name: "ngalert_configuration",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "alertmanagers", Type: migrator.DB_Text, Nullable: true},
+
+			{Name: "created_at", Type: migrator.DB_Int, Nullable: false},
+			{Name: "updated_at", Type: migrator.DB_Int, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"org_id"}, Type: migrator.UniqueIndex},
+		},
+	}
+
+	mg.AddMigration("create_ngalert_configuration_table", migrator.NewAddTableMigration(adminConfiguration))
+	mg.AddMigration("add index in ngalert_configuration on org_id column", migrator.NewAddIndexMigration(adminConfiguration, adminConfiguration.Indices[0]))
 }

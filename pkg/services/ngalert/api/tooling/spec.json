@@ -781,6 +781,95 @@
         }
       }
     },
+    "/api/v1/ngalert/admin_config": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "configuration"
+        ],
+        "summary": "Get the NGalert configuration of the user's organization, returns 404 if no configuration is present.",
+        "operationId": "RouteGetNGalertConfig",
+        "responses": {
+          "200": {
+            "description": "GettableNGalertConfig",
+            "schema": {
+              "$ref": "#/definitions/GettableNGalertConfig"
+            }
+          },
+          "404": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/Failure"
+            }
+          },
+          "500": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/Failure"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "configuration"
+        ],
+        "summary": "Creates or updates the NGalert configuration of the user's organization.",
+        "operationId": "RoutePostNGalertConfig",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/PostableNGalertConfig"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "configuration"
+        ],
+        "summary": "Deletes the NGalert configuration of the user's organization.",
+        "operationId": "RouteDeleteNGalertConfig",
+        "responses": {
+          "200": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "500": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/Failure"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/receiver/test/{Recipient}": {
       "post": {
         "description": "Test receiver",
@@ -927,7 +1016,7 @@
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
     "AlertGroup": {
-      "$ref": "#/definitions/AlertGroup"
+      "$ref": "#/definitions/alertGroup"
     },
     "AlertGroups": {
       "$ref": "#/definitions/alertGroups"
@@ -1625,6 +1714,19 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
+    "GettableNGalertConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanagers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Alertmanagers"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
     "GettableRuleGroupConfig": {
       "type": "object",
       "properties": {
@@ -1646,10 +1748,10 @@
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
     "GettableSilence": {
-      "$ref": "#/definitions/gettableSilence"
+      "$ref": "#/definitions/GettableSilence"
     },
     "GettableSilences": {
-      "$ref": "#/definitions/gettableSilences"
+      "$ref": "#/definitions/GettableSilences"
     },
     "GettableStatus": {
       "type": "object",
@@ -2416,6 +2518,19 @@
         "uid": {
           "type": "string",
           "x-go-name": "UID"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "PostableNGalertConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanagers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Alertmanagers"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -3310,7 +3425,7 @@
           "description": "alerts",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/GettableAlert"
+            "$ref": "#/definitions/gettableAlert"
           },
           "x-go-name": "Alerts"
         },
@@ -3318,7 +3433,7 @@
           "$ref": "#/definitions/labelSet"
         },
         "receiver": {
-          "$ref": "#/definitions/receiver"
+          "$ref": "#/definitions/Receiver"
         }
       },
       "x-go-name": "AlertGroup",
@@ -3491,7 +3606,7 @@
           "description": "receivers",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/receiver"
+            "$ref": "#/definitions/Receiver"
           },
           "x-go-name": "Receivers"
         },
@@ -3518,7 +3633,7 @@
       "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
-        "$ref": "#/definitions/GettableAlert"
+        "$ref": "#/definitions/gettableAlert"
       },
       "x-go-name": "GettableAlerts",
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
@@ -3584,7 +3699,7 @@
       "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
-        "$ref": "#/definitions/gettableSilence"
+        "$ref": "#/definitions/GettableSilence"
       },
       "x-go-name": "GettableSilences",
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
