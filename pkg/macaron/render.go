@@ -264,8 +264,8 @@ func (r *TplRender) renderBytes(setName, tplName string, data interface{}) (*byt
 	return out, nil
 }
 
-func (r *TplRender) renderHTML(status int, setName, tplName string, data interface{}) {
-	out, err := r.renderBytes(setName, tplName, data)
+func (r *TplRender) HTML(status int, name string, data interface{}) {
+	out, err := r.renderBytes(DEFAULT_TPL_SET_NAME, name, data)
 	if err != nil {
 		http.Error(r, err.Error(), http.StatusInternalServerError)
 		return
@@ -278,8 +278,4 @@ func (r *TplRender) renderHTML(status int, setName, tplName string, data interfa
 		out.Reset()
 	}
 	bufpool.Put(out)
-}
-
-func (r *TplRender) HTML(status int, name string, data interface{}) {
-	r.renderHTML(status, DEFAULT_TPL_SET_NAME, name, data)
 }
