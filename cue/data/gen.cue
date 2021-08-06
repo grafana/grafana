@@ -69,6 +69,7 @@ Family: scuemata.#Family & {
                 refresh?: string | false
                 // Version of the JSON schema, incremented each time a Grafana update brings
                 // changes to said schema.
+                // FIXME this is the old schema numbering system, and will be replaced by scuemata
                 schemaVersion: number | *30
                 // Version of the dashboard, incremented each time the dashboard is updated.
                 version?: number
@@ -93,7 +94,7 @@ Family: scuemata.#Family & {
                 // TODO docs
                 #Threshold: {
                     // TODO docs
-                    // FIXME the corresponding typescript field is required/non-optional, but some dashboard json apparently omits this field
+                    // FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
                     value?: number
                     // TODO docs
                     color: string
@@ -111,6 +112,15 @@ Family: scuemata.#Family & {
                     // Must be sorted by 'value', first value is always -Infinity
                     steps: [...#Threshold]
                 } @cuetsy(targetType="interface")
+
+                // Schema for panel targets is specified by datasource
+                // plugins. We use a placeholder definition, which the Go
+                // schema loader either left open/as-is with the Base
+                // variant of the Dashboard and Panel families, or filled
+                // with types derived from plugins in the Instance variant.
+                // When working directly from CUE, importers can extend this
+                // type directly to achieve the same effect.
+                #Target: {...}
 
                 // Dashboard panels. Panels are canonically defined inline
                 // because they share a version timeline with the dashboard
@@ -139,6 +149,9 @@ Family: scuemata.#Family & {
                     // The major and minor versions of the panel plugin for this schema.
                     // TODO 2-tuple list instead of struct?
                     panelSchema?: { maj: number, min: number }
+
+                    // TODO docs
+                    targets?: [...#Target]
 
                     // Panel title.
                     title?: string
@@ -174,14 +187,6 @@ Family: scuemata.#Family & {
                     // Direction to repeat in if 'repeat' is set.
                     // "h" for horizontal, "v" for vertical.
                     repeatDirection: *"h" | "v"
-                    // Schema for panel targets is specified by datasource
-                    // plugins. We use a placeholder definition, which the Go
-                    // schema loader either left open/as-is with the Base
-                    // variant of the Dashboard and Panel families, or filled
-                    // with types derived from plugins in the Instance variant.
-                    // When working directly from CUE, importers can extend this
-                    // type directly to achieve the same effect.
-                    targets?: [...{...}]
 
                     // TODO docs
                     maxDataPoints?: number
