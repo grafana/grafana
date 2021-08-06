@@ -67,8 +67,6 @@ type (
 		Directory string
 		// Delims sets the action delimiters to the specified strings in the Delims struct.
 		Delims Delims
-		// Outputs human readable JSON.
-		IndentJSON bool
 	}
 
 	Render interface {
@@ -224,7 +222,7 @@ func (r *TplRender) JSON(status int, v interface{}) {
 		result []byte
 		err    error
 	)
-	if r.Opt.IndentJSON {
+	if Env != PROD {
 		result, err = json.MarshalIndent(v, "", "  ")
 	} else {
 		result, err = json.Marshal(v)
