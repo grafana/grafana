@@ -679,6 +679,96 @@ class GraphElement {
       ticks: ticks,
       timeformat: graphTimeFormat(ticks, min, max),
       tickFormatter: graphTickFormatter,
+      transform: function(d) {
+        var x = new Date(d).getTime();
+        var h = new Date(x).getUTCHours()
+        var m = new Date(x).getUTCMinutes()
+        var s = new Date(x).getUTCSeconds();
+        var ms = new Date(x).getUTCMilliseconds()
+        var dayStart = x - h * 60 * 60 * 1000 - m * 60 * 1000 - s * 1000 - ms
+        var r1 = dayStart + 3 * 60 * 60 * 1000 + 45 * 60 * 1000 // 9:15 ist
+        var r2 = dayStart + 10 * 60 * 60 * 1000 // 15:30 ist
+        // defining resolution at 1 second i.e. 22500 items in a day / 6.25 hrs
+        // 1st index referes to time between 12 to 09:15 and last index refers to 15:30 to 24:00
+        // i.e. today indexs in a day = 22502
+
+        var numDays = dayStart / (24 * 60 * 60 * 1000)
+        var numWeeks = (numDays - numDays % 7) / 7 // week starts with thursday - 1970-01-01 was a thursday
+        // M Tu W Th Fr Sa Su - weekdays
+        // 1 2 3  4  5  6  7 -- getDay Response
+        // 4 5 6  0  1  2  3 -- remainer numDays % 7 with startTime = day 00:00
+
+        if (numDays % 7 == 2) { // saturday
+          var index = numWeeks * (5 * 22502 + 2) + 2 * 22502 + (x - dayStart) / (24 * 60 * 60 * 1000)
+        }
+        else if (numDays % 7 == 3) { // sunday
+          var index = numWeeks * (5 * 22502 + 2) + 2 * 22502 + 1 + (x - dayStart) / (24 * 60 * 60 * 1000)
+        }
+        else if (numDays % 7 == 0 || numDays % 7 == 1) { // thursday / friday
+          var index = numWeeks * (5 * 22502 + 2) + (numDays % 7) * 22502
+          if (x < r1) {
+            index = index + (x - dayStart) / (r1 - dayStart)
+          }
+          else if (x < r2) {
+            index = index + (x - r1) / 1000 + 1
+          }
+          else {
+            index = index + (x - r2) / (dayStart + 24 * 60 * 60 * 1000 - r2) + 22501
+          }
+        }
+        else if (numDays % 7 == 4 || numDays % 7 == 5 || numDays % 7 == 6) {
+          var index = numWeeks * (5 * 22502 + 2) + 2 * 22502 + 2 + (numDays % 7 - 4) * 22502
+          if (x < r1) {
+            index = index + (x - dayStart) / (r1 - dayStart)
+          }
+          else if (x < r2) {
+            index = index + (x - r1) / 1000 + 1
+          }
+          else {
+            index = index + (x - r2) / (dayStart + 24 * 60 * 60 * 1000 - r2) + 22501
+          }
+        }
+        return index
+      },
+      inverseTransform: function(d) {
+        var numIndexInaWeek = 5 * 22502 + 2
+        var numWeeks = parseInt(d / numIndexInaWeek)
+        var weekDelta = d - numWeeks * numIndexInaWeek
+
+        function getTimeRelativeToDayStart(x) {
+          if (x <= 1) {
+            return (3 * 60 * 60 * 1000 + 45 * 60 * 1000) * x
+          }
+          else if (x <= 22501) {
+            return (3 * 60 * 60 * 1000 + 45 * 60 * 1000) + (x - 1) * 1000
+          }
+          else {
+            return 10 * 60 * 60 * 1000 + 14 * 60 * 60 * 1000 * (x - 22501)
+          }
+        }
+
+        if (weekDelta <= 22502) { // thursday
+          //console.log("thursday")
+          return numWeeks * 7 * 24 * 60 * 60 * 1000 + getTimeRelativeToDayStart(weekDelta)
+        }
+        else if (weekDelta <= 22502 * 2) { // friday
+          //console.log("friday")
+          return (numWeeks * 7 + 1) * 24 * 60 * 60 * 1000 + getTimeRelativeToDayStart(weekDelta - 22502)
+        }
+        else if (weekDelta <= 22502 * 2 + 1) { // saturday
+          //console.log("sat")
+          return (numWeeks * 7 + 2) * 24 * 60 * 60 * 1000 + (weekDelta - 22502 * 2) * 24 * 60 * 60 * 1000
+        }
+        else if (weekDelta <= 22502 * 2 + 2) { // sunday
+          //console.log("sun")
+          return (numWeeks * 7 + 3) * 24 * 60 * 60 * 1000 + (weekDelta - 22502 * 2 - 1) * 24 * 60 * 60 * 1000
+        }
+        else { // rest of the days
+          //console.log("mon, tu, wed")
+          var dayQuotient = parseInt((weekDelta - 22502 * 2 - 2) / 22502)
+          return (numWeeks * 7 + 4 + dayQuotient) * 24 * 60 * 60 * 1000 + getTimeRelativeToDayStart(weekDelta - 22502 * 2 - 2 - dayQuotient * 22502)
+        }
+      }
     };
   }
 
