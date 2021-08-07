@@ -1,3 +1,17 @@
+## FORK REPO NOTICE - 
+
+This Repo is a fork from the original Grafana Repo with customization done in the Branch xAxisTransformation
+
+The customization leverage the transform and inverseTransform functionality available with Flot Charts - https://github.com/flot/flot/blob/master/docs/API.md#customizing-the-axes, allowing us the customize the time window displayed (instead of the default 24 hrs). 
+
+The functionality implemented successfully skips (read : reduces the width of all points outside 3:45 UTC to 10 UTC and weekends) on the graph, ideal for use-cases like trading data representation. 
+
+The modifications have been implemented directly on the "Graph" Panel Plugin with as minimal changes as possible. I invite folks more well-versed with the grafana repo to help generalize the use-case further if possible. 
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+##  ORIGINAL DOCUMENTATION
+
 ![Grafana](docs/logo-horizontal.png)
 
 The open-source platform for monitoring and observability.
