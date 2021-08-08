@@ -68,6 +68,7 @@ export function getScaleGradientFn(
     const ctx = getCanvasContext();
     const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
     const canvasHeight = plot.bbox.height;
+    const canvasTop = plot.bbox.top;
     const series = plot.series[seriesIdx];
     const scale = plot.scales[series.scale!];
     const scaleMin = scale.min ?? 0;
@@ -75,7 +76,7 @@ export function getScaleGradientFn(
     const scaleRange = scaleMax - scaleMin;
 
     const addColorStop = (value: number, color: string) => {
-      const pos = plot.valToPos(value, series.scale!, true);
+      const pos = plot.valToPos(value, series.scale!, true) - canvasTop;
       // when above range we get negative values here
       if (pos < 0) {
         return;
