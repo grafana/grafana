@@ -16,6 +16,7 @@ package macaron
 
 import (
 	"encoding/json"
+	"html/template"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -48,7 +49,7 @@ type Context struct {
 	Req      Request
 	Resp     ResponseWriter
 	params   Params
-	template *tmpl
+	template *template.Template
 	Data     map[string]interface{}
 }
 
@@ -117,11 +118,6 @@ const (
 
 // HTML renders the HTML with default template set.
 func (ctx *Context) HTML(status int, name string, data interface{}) {
-	if Env == DEV {
-		if err := ctx.template.compile(); err != nil {
-			panic("Context.HTML:" + err.Error())
-		}
-	}
 	ctx.Resp.Header().Set(headerContentType, contentTypeHTML)
 	ctx.Resp.WriteHeader(status)
 	if err := ctx.template.ExecuteTemplate(ctx.Resp, name, data); err != nil {
