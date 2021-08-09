@@ -13,13 +13,13 @@ type Evaluator interface {
 	Evaluate(permissions map[string]map[string]struct{}) (bool, error)
 	// Inject params into the evaluator's templated scopes. e.g. "settings:" + eval.Parameters(":id") and returns a new Evaluator
 	Inject(params map[string]string) (Evaluator, error)
-	// String returns a string representation of permissionEvaluator rules
+	// String returns a string representation of permission required by the evaluator
 	String() string
 }
 
 var _ Evaluator = new(permissionEvaluator)
 
-// EvalPermission creates a new permission evaluator that will require allEvaluator scopes in combination with action to match
+// EvalPermission returns an evaluator that will require all scopes in combination with action to match
 func EvalPermission(action string, scopes ...string) Evaluator {
 	return permissionEvaluator{Action: action, Scopes: scopes}
 }
@@ -104,6 +104,7 @@ func (p permissionEvaluator) String() string {
 
 var _ Evaluator = new(allEvaluator)
 
+// EvalAll returns evaluator that requires all passed evaluators to evaluate to true
 func EvalAll(allOf ...Evaluator) Evaluator {
 	return allEvaluator{allOf: allOf}
 }
@@ -146,6 +147,7 @@ func (a allEvaluator) String() string {
 
 var _ Evaluator = new(anyEvaluator)
 
+// EvalAny returns evaluator that requires at least one of passed evaluators to evaluate to true
 func EvalAny(anyOf ...Evaluator) Evaluator {
 	return anyEvaluator{anyOf: anyOf}
 }
