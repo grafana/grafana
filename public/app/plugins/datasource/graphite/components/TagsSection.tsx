@@ -33,8 +33,8 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
   // Options are reloaded while user is typing with backend taking care of auto-complete (auto-complete cannot be
   // implemented in front-end because backend returns only limited number of entries)
   const getTagsAsSegmentsOptions = useCallback(
-    (inputValue: string) => {
-      return getTagsAsSegmentsSelectables(state, inputValue);
+    (inputValue?: string) => {
+      return getTagsAsSegmentsSelectables(state, inputValue || '');
     },
     [state]
   );
