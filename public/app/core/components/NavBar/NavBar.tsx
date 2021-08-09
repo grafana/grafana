@@ -1,10 +1,11 @@
 import React, { FC, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
+import { logger } from '@percona/platform-core';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { Icon, IconName, useTheme2 } from '@grafana/ui';
-import { locationService, getBackendSrv } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
 import { KioskMode } from 'app/types';
@@ -20,6 +21,8 @@ import { OrgSwitcher } from '../OrgSwitcher';
 import NavBarItem from './NavBarItem';
 import { NavBarSection } from './NavBarSection';
 import { NavBarMenu } from './NavBarMenu';
+import { SettingsService } from 'app/percona/settings/Settings.service';
+import { isPmmAdmin } from 'app/percona/shared/helpers/permissions';
 
 const homeUrl = config.appSubUrl || '/';
 
@@ -56,41 +59,45 @@ export const NavBar: FC = React.memo(() => {
 
   useEffect(() => {
     const updateMenu = async () => {
-      const { settings } = await getBackendSrv().post(`${window.location.origin}/v1/Settings/Get`);
-      const newItems: NavModelItem[] = [...topItems];
+      try {
+        const settings = await SettingsService.getSettings(undefined, true);
+        const newItems: NavModelItem[] = [...topItems];
 
-      if (settings.alerting_enabled) {
-        buildIntegratedAlertingMenuItem(newItems);
-      }
+        if (settings.alertingEnabled) {
+          buildIntegratedAlertingMenuItem(newItems);
+        }
 
-      if (settings.stt_enabled) {
+        if (settings.sttEnabled) {
+          newItems.push({
+            id: 'databsase-checks',
+            icon: 'percona-database-checks',
+            text: 'Security Checks',
+            url: `${config.appSubUrl}/pmm-database-checks`,
+          });
+        }
+
+        if (settings.dbaasEnabled) {
+          newItems.push({
+            id: 'dbaas',
+            text: 'DBaaS',
+            icon: 'database',
+            url: `${config.appSubUrl}/dbaas`,
+          });
+        }
+
         newItems.push({
-          id: 'databsase-checks',
-          icon: 'percona-database-checks',
-          text: 'Security Checks',
-          url: `${config.appSubUrl}/pmm-database-checks`,
+          id: 'backup',
+          icon: 'history',
+          text: 'Backup',
+          url: `${config.appSubUrl}/backup`,
         });
+
+        setTopItems(newItems);
+      } catch (e) {
+        logger.error(e);
       }
-
-      if (settings.dbaas_enabled) {
-        newItems.push({
-          id: 'dbaas',
-          text: 'DBaaS',
-          icon: 'database',
-          url: `${config.appSubUrl}/dbaas`,
-        });
-      }
-
-      newItems.push({
-        id: 'backup',
-        icon: 'history',
-        text: 'Backup',
-        url: `${config.appSubUrl}/backup`,
-      });
-
-      setTopItems(newItems);
     };
-    if (config.bootData.user.isGrafanaAdmin) {
+    if (isPmmAdmin(config.bootData.user)) {
       updateMenu();
     }
   }, [topItems]);
