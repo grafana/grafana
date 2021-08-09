@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo, useState } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import { Form as FormFinal } from 'react-final-form';
 import { Button, useTheme } from '@grafana/ui';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -69,26 +69,23 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
       case InstanceTypes.haproxy:
         return <HAProxyConnectionDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
       default:
-        return <MainDetails remoteInstanceCredentials={remoteInstanceCredentials} />;
+        return <MainDetails form={form} remoteInstanceCredentials={remoteInstanceCredentials} />;
     }
   };
 
-  const formParts = useMemo(
-    () => (form: FormApi) => (
-      <>
-        <ConnectionDetails form={form} type={type} />
-        <Labels />
-        {type !== InstanceTypes.external && (
-          <AdditionalOptions
-            remoteInstanceCredentials={remoteInstanceCredentials}
-            loading={loading}
-            instanceType={type}
-            form={form}
-          />
-        )}
-      </>
-    ),
-    []
+  const formParts = (form: FormApi) => (
+    <>
+      <ConnectionDetails form={form} type={type} />
+      <Labels />
+      {type !== InstanceTypes.external && (
+        <AdditionalOptions
+          remoteInstanceCredentials={remoteInstanceCredentials}
+          loading={loading}
+          instanceType={type}
+          form={form}
+        />
+      )}
+    </>
   );
 
   const getHeader = (databaseType: string) => {

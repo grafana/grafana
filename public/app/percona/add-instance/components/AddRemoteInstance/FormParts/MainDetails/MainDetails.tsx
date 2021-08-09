@@ -7,11 +7,14 @@ import { MainDetailsFormPartProps } from '../FormParts.types';
 import { getStyles } from '../FormParts.styles';
 import { Messages } from '../FormParts.messages';
 
-export const MainDetailsFormPart: FC<MainDetailsFormPartProps> = ({ remoteInstanceCredentials }) => {
+export const MainDetailsFormPart: FC<MainDetailsFormPartProps> = ({ form, remoteInstanceCredentials }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
+  const formValues = form && form.getState().values;
+  const tlsFlag = formValues && formValues['tls'];
 
   const portValidators = useMemo(() => [validators.required, Validators.validatePort], []);
+  const userPassValidators = useMemo(() => (tlsFlag ? [] : [validators.required]), [tlsFlag]);
 
   return (
     <div className={styles.groupWrapper}>
@@ -45,18 +48,20 @@ export const MainDetailsFormPart: FC<MainDetailsFormPartProps> = ({ remoteInstan
         <LinkTooltip tooltipText={Messages.form.tooltips.mainDetails.username} icon="info-circle" />
       </div>
       <TextInputField
+        key={`username-${tlsFlag}`}
         name="username"
         placeholder={Messages.form.placeholders.mainDetails.username}
-        validators={[validators.required]}
+        validators={userPassValidators}
       />
       <div className={styles.labelWrapper} data-qa="password-label">
         <span>{Messages.form.labels.mainDetails.password}</span>
         <LinkTooltip tooltipText={Messages.form.tooltips.mainDetails.password} icon="info-circle" />
       </div>
       <PasswordInputField
+        key={`password-${tlsFlag}`}
         name="password"
         placeholder={Messages.form.placeholders.mainDetails.password}
-        validators={[validators.required]}
+        validators={userPassValidators}
       />
     </div>
   );
