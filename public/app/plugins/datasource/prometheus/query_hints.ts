@@ -131,8 +131,7 @@ export function getQueryHints(
   }
 
   //Check if interval is below safeInterval
-  const currentInterval = datasource?.currentInterval;
-  if (currentInterval && safeInterval && currentInterval === safeInterval) {
+  if (datasource?.isBelowSafeInterval) {
     hints.push({
       type: 'SAFE_INTERVAL',
       label:

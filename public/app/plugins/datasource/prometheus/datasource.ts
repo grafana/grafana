@@ -59,8 +59,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   withCredentials: any;
   metricsNameCache = new LRU<string, string[]>(10);
   interval: string;
-  safeInterval: number;
-  currentInterval: number;
+  isBelowSafeInterval: boolean;
   queryTimeout: string;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
@@ -451,7 +450,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         ...this.getRangeScopedVars(options.range),
       });
     }
-    this.currentInterval = interval;
     query.step = interval;
 
     let expr = target.expr;
@@ -489,6 +487,18 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
   }
 
+  // Prometheus will drop queries that might return more than 11000 data points.
+  // Calculate a safe interval as an additional minimum to take into account.
+  // Fractional safeIntervals are allowed, however serve little purpose if the interval is greater than 1
+  // If this is the case take the ceil of the value.
+  getSafeInterval(range: number) {
+    let safeInterval = range / 11000;
+    if (safeInterval > 1) {
+      safeInterval = Math.ceil(safeInterval);
+    }
+    return safeInterval;
+  }
+
   adjustInterval(
     dynamicInterval: number,
     stepInterval: number,
@@ -496,15 +506,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     intervalFactor: number,
     stepMode: StepMode
   ) {
-    // Prometheus will drop queries that might return more than 11000 data points.
-    // Calculate a safe interval as an additional minimum to take into account.
-    // Fractional safeIntervals are allowed, however serve little purpose if the interval is greater than 1
-    // If this is the case take the ceil of the value.
-    let safeInterval = range / 11000;
-    if (safeInterval > 1) {
-      safeInterval = Math.ceil(safeInterval);
-    }
-    this.safeInterval = safeInterval;
+    const safeInterval = this.getSafeInterval(range);
 
     //Calculate adjusted interval based on the current step option
     let adjustedInterval = safeInterval;
@@ -518,6 +520,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     } else if (stepMode === 'exact') {
       adjustedInterval = Math.max(stepInterval * intervalFactor, safeInterval);
     }
+
+    if (adjustedInterval < safeInterval) {
+      this.isBelowSafeInterval = true;
+    } else {
+      this.isBelowSafeInterval = false;
+    }
+
     return adjustedInterval;
   }
 
@@ -774,7 +783,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return expandedQueries;
   }
 
-  getQueryHints(query: PromQuery, result: any[], safeInterval: number) {
+  getQueryHints(query: PromQuery, result: any[], safeInterval?: number) {
     return getQueryHints(query.expr ?? '', result, this, safeInterval);
   }
 
