@@ -1,11 +1,11 @@
 import React, { ChangeEvent } from 'react';
 import { css } from '@emotion/css';
-import { dateTime, dateTimeFormat } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 import { DatePicker } from '../DatePicker/DatePicker';
 import { Props as InputProps, Input } from '../../Input/Input';
 import { useStyles } from '../../../themes';
 
-export const formatDate = (date: Date | string) => dateTimeFormat(date, { format: 'L' });
+export const formatDate = (date: Date | string) => dateTime(date).format('L');
 
 /** @public */
 export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'value' | 'onChange'> {
