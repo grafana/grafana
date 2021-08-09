@@ -24,11 +24,19 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
         <>
           <span className={styles.error}>{error.message}</span>
           {retryUpload && (
-            <IconButton aria-label="Retry" name="sync" tooltip="Retry" tooltipPlacement="top" onClick={retryUpload} />
+            <IconButton
+              type="button"
+              aria-label="Retry"
+              name="sync"
+              tooltip="Retry"
+              tooltipPlacement="top"
+              onClick={retryUpload}
+            />
           )}
           {removeFile && (
             <IconButton
               className={retryUpload ? styles.marginLeft : ''}
+              type="button"
               name="trash-alt"
               onClick={() => removeFile(customFile)}
               tooltip={REMOVE_FILE}
@@ -59,6 +67,7 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
           onClick={() => removeFile(customFile)}
           tooltip={REMOVE_FILE}
           aria-label={REMOVE_FILE}
+          type="button"
           tooltipPlacement="top"
         />
       )
