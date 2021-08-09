@@ -2,6 +2,7 @@ import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanag
 import React from 'react';
 import { useStyles2 } from '@grafana/ui';
 import { getNotificationsTextColors } from '../../styles/notifications';
+import pluralize from 'pluralize';
 
 interface Props {
   group: AlertmanagerGroup;
@@ -21,7 +22,7 @@ export const AmNotificationsGroupHeader = ({ group }: Props) => {
 
   return (
     <div>
-      {`${total} alert${total > 1 ? 's' : ''}: `}
+      {`${total} ${pluralize('alert', total)}: `}
       {Object.entries(countByStatus).map(([state, count], index) => {
         return (
           <span
