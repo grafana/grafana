@@ -58,6 +58,13 @@ func Test_accessForbidden(t *testing.T) {
 			accessForbidden: false,
 		},
 		{
+			name: "ext case is ignored",
+			t: testCase{
+				filename: "scripts/runThis.SH",
+			},
+			accessForbidden: true,
+		},
+		{
 			name: "no file ext is forbidden",
 			t: testCase{
 				filename: "scripts/runThis",

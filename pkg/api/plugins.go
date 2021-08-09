@@ -454,8 +454,8 @@ func accessForbidden(pluginFilename string) bool {
 
 	for _, permittedExt := range permittedFileExts {
 		if strings.EqualFold(permittedExt, ext) {
-			return true
+			return false
 		}
 	}
-	return false
+	return true
 }
