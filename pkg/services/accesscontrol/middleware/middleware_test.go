@@ -115,3 +115,7 @@ func (f fakeAccessControl) GetUserPermissions(ctx context.Context, user *models.
 func (f fakeAccessControl) IsDisabled() bool {
 	return f.isDisabled
 }
+
+func (f fakeAccessControl) DeclareFixedRoles(registration ...accesscontrol.RoleRegistration) error {
+	return nil
+}
