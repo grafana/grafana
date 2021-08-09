@@ -2,12 +2,69 @@ package pushhttp
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/live/pipeline"
 )
+
+type ConditionChecker interface {
+	CheckCondition(ctx context.Context, frame *data.Frame) (bool, error)
+}
+
+type Float64CompareCondition struct {
+	FieldName string
+	Op        string
+	Value     float64
+}
+
+func (f Float64CompareCondition) CheckCondition(ctx context.Context, frame *data.Frame) (bool, error) {
+	for _, field := range frame.Fields {
+		if field.Name == f.FieldName && (field.Type() == data.FieldTypeNullableFloat64) {
+			value, ok := field.At(0).(*float64)
+			if !ok {
+				return false, fmt.Errorf("unexpected value type: %T", field.At(0))
+			}
+			if value != nil && *value >= f.Value {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+func NewFloat64CompareCondition(fieldName string, op string, value float64) *Float64CompareCondition {
+	return &Float64CompareCondition{FieldName: fieldName, Op: op, Value: value}
+}
+
+type ChannelOutputConfig struct {
+	Channel    string
+	Conditions []ConditionChecker
+}
+
+type ChannelOutput struct {
+	ruleProcessor *RuleProcessor
+	config        ChannelOutputConfig
+}
+
+func NewChannelOutput(ruleProcessor *RuleProcessor, config ChannelOutputConfig) *ChannelOutput {
+	return &ChannelOutput{ruleProcessor: ruleProcessor, config: config}
+}
+
+func (l ChannelOutput) Output(ctx context.Context, vars pipeline.OutputVars, frame *data.Frame) error {
+	for _, c := range l.config.Conditions {
+		ok, err := c.CheckCondition(ctx, frame)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return nil
+		}
+	}
+	return l.ruleProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, frame)
+}
 
 type LiveChangeLogOutputConfig struct {
 	Fields  []string

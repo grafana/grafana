@@ -29,6 +29,8 @@ func TimeSeriesFromFrames(frames ...*data.Frame) []prompb.TimeSeries {
 	var entries = make(map[metricKey]prompb.TimeSeries)
 	var keys []metricKey // sorted keys.
 
+	fmt.Println(len(frames))
+
 	for _, frame := range frames {
 		timeFieldIndex, ok := timeFieldIndex(frame)
 		if !ok {
@@ -103,27 +105,29 @@ func TimeSeriesFromFramesLabelsColumn(frames ...*data.Frame) []prompb.TimeSeries
 			continue
 		}
 
-		labelsField := frame.Fields[0]
-		if labelsField.Type() != data.FieldTypeString {
-			continue
-		}
+		isLabelsColumnFrame := frame.Fields[0].Type() == data.FieldTypeString
 
-		labels := make([][]prompb.Label, labelsField.Len())
-		for i := 0; i < labelsField.Len(); i++ {
-			val, ok := labelsField.ConcreteAt(i)
-			if !ok {
-				continue
-			}
-			parts := strings.Split(val.(string), ", ")
-			promLabels := make([]prompb.Label, 0)
-			for _, part := range parts {
-				labelParts := strings.SplitN(part, "=", 2)
-				if len(labelParts) != 2 {
+		var labels [][]prompb.Label
+
+		if isLabelsColumnFrame {
+			labelsField := frame.Fields[0]
+			labels = make([][]prompb.Label, labelsField.Len())
+			for i := 0; i < labelsField.Len(); i++ {
+				val, ok := labelsField.ConcreteAt(i)
+				if !ok {
 					continue
 				}
-				promLabels = append(promLabels, prompb.Label{Name: labelParts[0], Value: labelParts[1]})
+				parts := strings.Split(val.(string), ", ")
+				promLabels := make([]prompb.Label, 0)
+				for _, part := range parts {
+					labelParts := strings.SplitN(part, "=", 2)
+					if len(labelParts) != 2 {
+						continue
+					}
+					promLabels = append(promLabels, prompb.Label{Name: labelParts[0], Value: labelParts[1]})
+				}
+				labels[i] = promLabels
 			}
-			labels[i] = promLabels
 		}
 
 		for _, field := range frame.Fields {
@@ -137,8 +141,16 @@ func TimeSeriesFromFramesLabelsColumn(frames ...*data.Frame) []prompb.TimeSeries
 			}
 
 			for i := 0; i < field.Len(); i++ {
-				labelsCopy := make([]prompb.Label, len(labels[i]), len(labels[i])+1)
-				copy(labelsCopy, labels[i])
+				var labelsCopy []prompb.Label
+				if isLabelsColumnFrame && labels != nil {
+					labelsCopy = make([]prompb.Label, len(labels[i]), len(labels[i])+1)
+					copy(labelsCopy, labels[i])
+				} else {
+					labelsCopy = make([]prompb.Label, 0, len(field.Labels)+1)
+					for k, v := range field.Labels {
+						labelsCopy = append(labelsCopy, prompb.Label{Name: k, Value: v})
+					}
+				}
 
 				val, ok := field.ConcreteAt(i)
 				if !ok {
@@ -162,7 +174,6 @@ func TimeSeriesFromFramesLabelsColumn(frames ...*data.Frame) []prompb.TimeSeries
 					Name:  "__name__",
 					Value: metricName,
 				})
-
 				key := makeMetricKey(metricName, labelsCopy)
 
 				promTimeSeries := prompb.TimeSeries{Labels: labelsCopy, Samples: []prompb.Sample{sample}}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/live/pipeline"
@@ -93,15 +94,8 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 			OrgId:   1,
 			Pattern: "stream/test/auto",
 			Mode:    "auto",
-			Processors: []pipeline.Processor{
-				newDropFieldsProcessor("value2"),
-			},
 			Outputs: []pipeline.Outputter{
 				newManagedStreamOutput(f.gLive),
-				pipeline.NewRemoteWriteOutput(pipeline.RemoteWriteConfig{
-					Enabled:  true,
-					Endpoint: "",
-				}),
 			},
 		},
 		{
@@ -123,10 +117,6 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 			},
 			Outputs: []pipeline.Outputter{
 				newManagedStreamOutput(f.gLive),
-				pipeline.NewRemoteWriteOutput(pipeline.RemoteWriteConfig{
-					Enabled:  true,
-					Endpoint: "",
-				}),
 			},
 		},
 		{
@@ -172,14 +162,13 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					Value: "$.annotation",
 				},
 			},
-			Processors: []pipeline.Processor{
-				newDropFieldsProcessor("value2"),
-			},
 			Outputs: []pipeline.Outputter{
 				newManagedStreamOutput(f.gLive),
 				pipeline.NewRemoteWriteOutput(pipeline.RemoteWriteConfig{
 					Enabled:  true,
-					Endpoint: "",
+					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
 				}),
 				NewLiveChangeLogOutput(f.frameStorage, f.ruleProcessor, LiveChangeLogOutputConfig{
 					Fields:  []string{"value3"},
@@ -189,6 +178,12 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					Fields:  []string{"annotation"},
 					Channel: "stream/test/exact/annotation/changes",
 				}),
+				NewChannelOutput(f.ruleProcessor, ChannelOutputConfig{
+					Channel: "stream/test/exact/threshold",
+					Conditions: []ConditionChecker{
+						NewFloat64CompareCondition("value1", "gte", 4.0),
+					},
+				}),
 			},
 		},
 		{
@@ -197,11 +192,25 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 			Mode:    "auto",
 			Outputs: []pipeline.Outputter{
 				newManagedStreamOutput(f.gLive),
+				pipeline.NewRemoteWriteOutput(pipeline.RemoteWriteConfig{
+					Enabled:  true,
+					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+				}),
 			},
 		},
 		{
 			OrgId:   1,
 			Pattern: "stream/test/exact/annotation/changes",
+			Mode:    "auto",
+			Outputs: []pipeline.Outputter{
+				newManagedStreamOutput(f.gLive),
+			},
+		},
+		{
+			OrgId:   1,
+			Pattern: "stream/test/exact/threshold",
 			Mode:    "auto",
 			Outputs: []pipeline.Outputter{
 				newManagedStreamOutput(f.gLive),
