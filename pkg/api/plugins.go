@@ -300,7 +300,7 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	if accessForbidden(fi) {
+	if accessForbidden(fi.Name()) {
 		c.JsonApiErr(403, "Plugin file access forbidden",
 			fmt.Errorf("access is forbidden to plugin file %s", pluginFilePath))
 		return
@@ -449,8 +449,8 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	return response.Error(500, "Plugin request failed", err)
 }
 
-func accessForbidden(fi os.FileInfo) bool {
-	ext := filepath.Ext(fi.Name())
+func accessForbidden(pluginFilename string) bool {
+	ext := filepath.Ext(pluginFilename)
 
 	match := false
 	for _, permittedExt := range permittedFileExts {
@@ -458,10 +458,5 @@ func accessForbidden(fi os.FileInfo) bool {
 			match = true
 		}
 	}
-	if match {
-		return false
-	}
-
-	// ext not permitted or is UNIX executable
-	return !match || fi.Mode()&0111 == 0111
+	return !match
 }
