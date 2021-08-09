@@ -5,9 +5,9 @@ weight = 300
 
 # Rows to fields transform
 
-> **Note:** This is a new beta transformation introduced in v8.1. 
+> **Note:** This is a new beta transformation introduced in v8.1.
 
-This transforms rows into separate fields. This can be useful as fields can be styled and configured individually, something rows cannot. It can also use additional fields as sources for dynamic field  configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
+This transforms rows into separate fields. This can be useful as fields can be styled and configured individually, something rows cannot. It can also use additional fields as sources for dynamic field configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
 
 Useful when visualizing data in:
 
@@ -69,4 +69,4 @@ Output:
 | -------------------------------- | -------------------------------- |
 | 10                               | 20                               |
 
-The extra labels can now be used in the field display name provide more complete field names. 
+The extra labels can now be used in the field display name provide more complete field names.

@@ -509,6 +509,7 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 			},
 			UpdatedAt: now,
 		}
+
 		for k, v := range a.Labels {
 			if len(v) == 0 || k == ngmodels.NamespaceUIDLabel { // Skip empty and namespace UID labels.
 				continue

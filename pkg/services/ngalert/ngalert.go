@@ -47,6 +47,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 	}
 	baseInterval *= time.Second
 	logger := log.New("ngalert")
+
 	store := &store.DBstore{
 		BaseInterval:           baseInterval,
 		DefaultIntervalSeconds: defaultIntervalSeconds,
@@ -87,19 +88,21 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		stateManager:    stateManager,
 		schedule:        schedule,
 	}
+
 	api := api.API{
-		Cfg:             ng.Cfg,
-		DatasourceCache: ng.DataSourceCache,
-		RouteRegister:   ng.RouteRegister,
-		DataService:     ng.DataService,
-		Schedule:        ng.schedule,
-		DataProxy:       ng.DataProxy,
-		QuotaService:    ng.QuotaService,
-		InstanceStore:   store,
-		RuleStore:       store,
-		AlertingStore:   store,
-		Alertmanager:    ng.Alertmanager,
-		StateManager:    ng.stateManager,
+		Cfg:              ng.Cfg,
+		DatasourceCache:  ng.DataSourceCache,
+		RouteRegister:    ng.RouteRegister,
+		DataService:      ng.DataService,
+		Schedule:         ng.schedule,
+		DataProxy:        ng.DataProxy,
+		QuotaService:     ng.QuotaService,
+		InstanceStore:    store,
+		RuleStore:        store,
+		AlertingStore:    store,
+		AdminConfigStore: store,
+		Alertmanager:     ng.Alertmanager,
+		StateManager:     ng.stateManager,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics)
 
