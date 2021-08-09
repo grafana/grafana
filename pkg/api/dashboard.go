@@ -75,6 +75,9 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 //
 // Will return the dashboard given the dashboard unique identifier (uid).
 //
+// security:
+//   - Bearer: []
+//
 // Responses:
 // 200: DashboardResponse
 // 401: unauthorisedError

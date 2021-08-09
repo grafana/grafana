@@ -4,8 +4,8 @@
   "schemes": ["http", "https"],
   "swagger": "2.0",
   "info": {
-    "description": "The Grafana backend exposes an HTTP API, the same API is used by the frontend to do\neverything from saving dashboards, creating users and updating data sources.",
-    "title": "Grafana HTTP API.",
+    "description": "API of the Prometheus Alertmanager (https://github.com/prometheus/alertmanager)\nSchemes:\nhttp",
+    "title": "Alertmanager API",
     "contact": {
       "name": "Grafana Labs",
       "url": "https://grafana.com",
@@ -17,8 +17,8 @@
     },
     "version": "0.0.1"
   },
-  "host": "localhost:3000",
-  "basePath": "/api",
+  "host": "localhost",
+  "basePath": "/",
   "paths": {
     "/alerts": {
       "get": {
@@ -204,6 +204,11 @@
     },
     "/dashboards/uid/{uid}": {
       "get": {
+        "security": [
+          {
+            "Bearer": ["[]"]
+          }
+        ],
         "description": "Will return the dashboard given the dashboard unique identifier (uid).",
         "tags": ["dashboards"],
         "summary": "Get dashboard by uid",
@@ -1363,6 +1368,11 @@
     }
   },
   "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "KEY",
+      "in": "header"
+    },
     "basic": {
       "type": "basic"
     }
