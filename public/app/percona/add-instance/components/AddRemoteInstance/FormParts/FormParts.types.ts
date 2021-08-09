@@ -4,6 +4,7 @@ import { InstanceTypes, RemoteInstanceCredentials } from 'app/percona/add-instan
 
 export interface MainDetailsFormPartProps {
   remoteInstanceCredentials: RemoteInstanceCredentials;
+  form?: FormApi;
 }
 
 export interface FormPartProps {
