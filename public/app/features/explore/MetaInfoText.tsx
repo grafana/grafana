@@ -29,7 +29,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   metaValue: css`
     font-family: ${theme.typography.fontFamilyMonospace};
-    font-size: ${theme.typography.size.sm};
+    font-size: ${theme.typography.bodySmall.fontSize};
   `,
 });
 
