@@ -11,15 +11,15 @@ import {
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { from, merge, Observable, throwError } from 'rxjs';
+import { from, merge, Observable, of, throwError } from 'rxjs';
 import { map, mergeMap, toArray } from 'rxjs/operators';
 import { LokiOptions, LokiQuery } from '../loki/types';
-import { transformTrace, transformTraceList } from './resultTransformer';
+import { transformTrace, transformTraceList, transformFromOTLP as transformFromOTEL } from './resultTransformer';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 import { mapPromMetricsToServiceMap, serviceMapMetrics } from './graphTransform';
 
-export type TempoQueryType = 'search' | 'traceId' | 'serviceMap';
+export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload';
 
 export interface TempoJsonData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
@@ -40,6 +40,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   serviceMap?: {
     datasourceUid?: string;
   };
+  uploadedJson?: string | ArrayBuffer | null = null;
 
   constructor(instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
     super(instanceSettings);
@@ -80,6 +81,19 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           })
         )
       );
+    }
+
+    if (targets.upload?.length) {
+      if (this.uploadedJson) {
+        const otelTraceData = JSON.parse(this.uploadedJson as string);
+        if (!otelTraceData.batches) {
+          subQueries.push(of({ error: { message: 'JSON is not valid opentelemetry format' }, data: [] }));
+        } else {
+          subQueries.push(of(transformFromOTEL(otelTraceData.batches)));
+        }
+      } else {
+        subQueries.push(of({ data: [], state: LoadingState.Done }));
+      }
     }
 
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {

@@ -2,6 +2,7 @@ import {
   DataFrame,
   dataFrameToJSON,
   DataSourceInstanceSettings,
+  FieldType,
   getDefaultTimeRange,
   LoadingState,
   MutableDataFrame,
@@ -11,6 +12,7 @@ import { Observable, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { TempoDatasource } from './datasource';
 import { FetchResponse, setBackendSrv, BackendDataSourceResponse, setDataSourceSrv } from '@grafana/runtime';
+import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
   it('parses json fields from backend', async () => {
@@ -100,6 +102,21 @@ describe('Tempo data source', () => {
 
     expect(response.state).toBe(LoadingState.Done);
   });
+
+  it('should handle json file upload', async () => {
+    const ds = new TempoDatasource(defaultSettings);
+    ds.uploadedJson = JSON.stringify(mockJson);
+    const response = await ds
+      .query({
+        targets: [{ queryType: 'upload', refId: 'A' }],
+      } as any)
+      .toPromise();
+    const field = response.data[0].fields[0];
+    expect(field.name).toBe('traceID');
+    expect(field.type).toBe(FieldType.string);
+    expect(field.values.get(0)).toBe('60ba2abb44f13eae');
+    expect(field.values.length).toBe(6);
+  });
 });
 
 const backendSrvWithPrometheus = {
@@ -136,6 +153,7 @@ const defaultSettings: DataSourceInstanceSettings = {
   uid: '0',
   type: 'tracing',
   name: 'tempo',
+  access: 'proxy',
   meta: {
     id: 'tempo',
     name: 'tempo',

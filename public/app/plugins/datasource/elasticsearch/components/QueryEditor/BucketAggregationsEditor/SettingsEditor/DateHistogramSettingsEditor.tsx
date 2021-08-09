@@ -46,7 +46,8 @@ interface Props {
 export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
   const dispatch = useDispatch();
 
-  const handleIntervalChange = (v: string) => dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', v));
+  const handleIntervalChange = (newValue: string) =>
+    dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'interval', newValue }));
 
   return (
     <>
@@ -66,7 +67,11 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
 
       <InlineField label="Min Doc Count" {...inlineFieldProps}>
         <Input
-          onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
+          onBlur={(e) =>
+            dispatch(
+              changeBucketAggregationSetting({ bucketAgg, settingName: 'min_doc_count', newValue: e.target.value })
+            )
+          }
           defaultValue={
             bucketAgg.settings?.min_doc_count || bucketAggregationConfig.date_histogram.defaultSettings?.min_doc_count
           }
@@ -75,7 +80,9 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
 
       <InlineField label="Trim Edges" {...inlineFieldProps} tooltip="Trim the edges on the timeseries datapoints">
         <Input
-          onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'trimEdges', e.target.value!))}
+          onBlur={(e) =>
+            dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'trimEdges', newValue: e.target.value }))
+          }
           defaultValue={
             bucketAgg.settings?.trimEdges || bucketAggregationConfig.date_histogram.defaultSettings?.trimEdges
           }
@@ -88,7 +95,9 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
         tooltip="Change the start value of each bucket by the specified positive (+) or negative offset (-) duration, such as 1h for an hour, or 1d for a day"
       >
         <Input
-          onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'offset', e.target.value!))}
+          onBlur={(e) =>
+            dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'offset', newValue: e.target.value }))
+          }
           defaultValue={bucketAgg.settings?.offset || bucketAggregationConfig.date_histogram.defaultSettings?.offset}
         />
       </InlineField>

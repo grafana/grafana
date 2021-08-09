@@ -1,7 +1,17 @@
+import { css } from '@emotion/css';
 import { DataSourceApi, ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, InlineLabel, LegacyForms, RadioButtonGroup } from '@grafana/ui';
+import {
+  FileDropzone,
+  InlineField,
+  InlineFieldRow,
+  InlineLabel,
+  LegacyForms,
+  RadioButtonGroup,
+  Themeable2,
+  withTheme2,
+} from '@grafana/ui';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import React from 'react';
 import { LokiQueryField } from '../loki/components/LokiQueryField';
@@ -11,7 +21,8 @@ import { LokiQuery } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import useAsync from 'react-use/lib/useAsync';
 
-type Props = ExploreQueryFieldProps<TempoDatasource, TempoQuery>;
+interface Props extends ExploreQueryFieldProps<TempoDatasource, TempoQuery>, Themeable2 {}
+
 const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceId';
 
 interface State {
@@ -20,7 +31,7 @@ interface State {
   serviceMapDatasourceUid?: string;
   serviceMapDatasource?: PrometheusDatasource;
 }
-export class TempoQueryField extends React.PureComponent<Props, State> {
+class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
   state = {
     linkedDatasourceUid: undefined,
     linkedDatasource: undefined,
@@ -73,6 +84,7 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
     const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
       { value: 'search', label: 'Search' },
       { value: 'traceId', label: 'TraceID' },
+      { value: 'upload', label: 'JSON file' },
     ];
 
     if (config.featureToggles.tempoServiceGraph) {
@@ -103,6 +115,17 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
             onRunQuery={this.onRunLinkedQuery}
             onChange={this.onChangeLinkedQuery}
           />
+        )}
+        {query.queryType === 'upload' && (
+          <div className={css({ padding: this.props.theme.spacing(2) })}>
+            <FileDropzone
+              options={{ multiple: false }}
+              onLoad={(result) => {
+                this.props.datasource.uploadedJson = result;
+                this.props.onRunQuery();
+              }}
+            />
+          </div>
         )}
         {query.queryType === 'traceId' && (
           <LegacyForms.FormField
@@ -217,3 +240,5 @@ async function getDS(uid?: string): Promise<DataSourceApi | undefined> {
     return undefined;
   }
 }
+
+export const TempoQueryField = withTheme2(TempoQueryFieldComponent);
