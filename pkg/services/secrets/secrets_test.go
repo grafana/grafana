@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/services/secrets/encryption"
 	"gopkg.in/ini.v1"
 
@@ -23,7 +25,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 	t.Run("encrypting with no entity_id should create DEK", func(t *testing.T) {
 		plaintext := []byte("very secret string")
 
-		encrypted, err := svc.Encrypt(plaintext, "")
+		encrypted, err := svc.Encrypt(plaintext, util.WithoutScope())
 		require.NoError(t, err)
 
 		decrypted, err := svc.Decrypt(encrypted)
@@ -37,7 +39,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 	t.Run("encrypting another secret with no entity_id should use the same DEK", func(t *testing.T) {
 		plaintext := []byte("another very secret string")
 
-		encrypted, err := svc.Encrypt(plaintext, "")
+		encrypted, err := svc.Encrypt(plaintext, util.WithoutScope())
 		require.NoError(t, err)
 
 		decrypted, err := svc.Decrypt(encrypted)
@@ -51,7 +53,7 @@ func TestSecrets_EnvelopeEncryption(t *testing.T) {
 	t.Run("encrypting with entity_id provided should create a new DEK", func(t *testing.T) {
 		plaintext := []byte("some test data")
 
-		encrypted, err := svc.Encrypt(plaintext, "user:100")
+		encrypted, err := svc.Encrypt(plaintext, util.WithScope("user:100"))
 		require.NoError(t, err)
 
 		decrypted, err := svc.Decrypt(encrypted)

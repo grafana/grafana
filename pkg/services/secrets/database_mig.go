@@ -9,7 +9,7 @@ func (s *SecretsService) AddMigration(mg *migrator.Migrator) {
 		Columns: []*migrator.Column{
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},
 			{Name: "active", Type: migrator.DB_Bool},
-			{Name: "entity_id", Type: migrator.DB_NVarchar, Length: 30, Nullable: false},
+			{Name: "scope", Type: migrator.DB_NVarchar, Length: 30, Nullable: false},
 			{Name: "provider", Type: migrator.DB_NVarchar, Length: 50, Nullable: false},
 			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},

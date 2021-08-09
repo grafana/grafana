@@ -12,7 +12,7 @@ var (
 type DataKey struct {
 	Active        bool
 	Name          string
-	EntityID      string `xorm:"entity_id"`
+	Scope         string
 	Provider      string
 	EncryptedData []byte
 	Created       time.Time

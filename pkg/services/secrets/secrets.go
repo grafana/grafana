@@ -71,7 +71,7 @@ func (s *SecretsService) Init() error {
 }
 
 // newDataKey creates a new random DEK, caches it and returns its value
-func (s *SecretsService) newDataKey(ctx context.Context, name string, entityID string) ([]byte, error) {
+func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string) ([]byte, error) {
 	// 1. Create new DEK
 	dataKey, err := newRandomDataKey()
 	provider, exists := s.providers[s.defaultProvider]
@@ -91,7 +91,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, entityID s
 		Name:          name,
 		Provider:      s.defaultProvider,
 		EncryptedData: encrypted,
-		EntityID:      entityID,
+		Scope:         scope,
 	})
 	if err != nil {
 		return nil, err
@@ -117,16 +117,14 @@ func newRandomDataKey() ([]byte, error) {
 
 var b64 = base64.RawStdEncoding
 
-func (s *SecretsService) Encrypt(payload []byte, entityID string) ([]byte, error) {
-	if entityID == "" {
-		entityID = "root"
-	}
-	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), entityID, s.defaultProvider)
+func (s *SecretsService) Encrypt(payload []byte, opt util.EncryptionOption) ([]byte, error) {
+	scope := opt()
+	keyName := fmt.Sprintf("%s/%s@%s", time.Now().Format("2006-01-02"), scope, s.defaultProvider)
 
 	dataKey, err := s.dataKey(keyName)
 	if err != nil {
 		if errors.Is(err, ErrDataKeyNotFound) {
-			dataKey, err = s.newDataKey(context.TODO(), keyName, entityID)
+			dataKey, err = s.newDataKey(context.TODO(), keyName, scope)
 			if err != nil {
 				return nil, err
 			}
