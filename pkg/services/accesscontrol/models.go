@@ -92,6 +92,9 @@ const (
 	// Datasources actions
 	ActionDatasourcesExplore = "datasources:explore"
 
+	// Plugin actions
+	ActionPluginsManage = "plugins:manage"
+
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"
 

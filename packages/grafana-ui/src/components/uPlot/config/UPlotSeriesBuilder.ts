@@ -30,6 +30,7 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   show?: boolean;
   dataFrameFieldIndex?: DataFrameFieldIndex;
   theme: GrafanaTheme2;
+  value?: uPlot.Series.Value;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
@@ -114,6 +115,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     return {
       scale: scaleKey,
       spanGaps: typeof spanNulls === 'number' ? false : spanNulls,
+      value: () => '',
       pxAlign,
       show,
       fill: this.getFill(),

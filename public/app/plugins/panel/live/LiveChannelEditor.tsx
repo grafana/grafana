@@ -107,13 +107,19 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
         <div>
           <div className={style.dropWrap}>
             <Label>Scope</Label>
-            <Select options={scopes} value={scopes.find((s) => s.value === scope)} onChange={this.onScopeChanged} />
+            <Select
+              menuShouldPortal
+              options={scopes}
+              value={scopes.find((s) => s.value === scope)}
+              onChange={this.onScopeChanged}
+            />
           </div>
 
           {scope && (
             <div className={style.dropWrap}>
               <Label>Namespace</Label>
               <Select
+                menuShouldPortal
                 options={namespaces}
                 value={
                   namespaces.find((s) => s.value === namespace) ??
@@ -130,6 +136,7 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
             <div className={style.dropWrap}>
               <Label>Path</Label>
               <Select
+                menuShouldPortal
                 options={paths}
                 value={findPathOption(paths, path)}
                 onChange={this.onPathChanged}

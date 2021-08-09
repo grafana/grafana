@@ -30,8 +30,10 @@ func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error
 	}
 
 	calculator := tsdb.NewCalculator(tsdb.CalculatorOptions{})
-
-	i := calculator.Calculate(queryContext.Queries[0].TimeRange, query.Interval)
+	i, err := calculator.Calculate(queryContext.Queries[0].TimeRange, query.Interval, tsdb.Min)
+	if err != nil {
+		return "", err
+	}
 
 	res = strings.ReplaceAll(res, "$timeFilter", query.renderTimeFilter(queryContext))
 	res = strings.ReplaceAll(res, "$interval", i.Text)

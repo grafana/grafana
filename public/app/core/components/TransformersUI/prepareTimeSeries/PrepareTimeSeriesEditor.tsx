@@ -53,6 +53,7 @@ export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSer
       <InlineFieldRow>
         <InlineField label="Format" labelWidth={12}>
           <Select
+            menuShouldPortal
             width={35}
             options={formats}
             value={formats.find((v) => v.value === options.format) || formats[0]}
@@ -85,9 +86,9 @@ export const prepareTimeseriesTransformerRegistryItem: TransformerRegistryItem<P
   name: prepareTimeSeriesTransformer.name,
   description: prepareTimeSeriesTransformer.description,
   help: `
-  ### Use cases 
-  
-  This will take query results and transform them into a predictable timeseries format.  
+  ### Use cases
+
+  This takes query results and transforms them into a predictable timeseries format.
   This transformer may be especially useful when using old panels that only expect the
   many-frame timeseries format.
   `,

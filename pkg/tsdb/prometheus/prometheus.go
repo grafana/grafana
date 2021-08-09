@@ -218,6 +218,9 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 
 func (s *Service) parseQuery(queries []backend.DataQuery) (
 	[]*PrometheusQuery, error) {
+	var intervalMode string
+	var adjustedInterval time.Duration
+
 	qs := []*PrometheusQuery{}
 	for _, queryModel := range queries {
 		jsonModel, err := simplejson.NewJson(queryModel.JSON)
@@ -235,13 +238,34 @@ func (s *Service) parseQuery(queries []backend.DataQuery) (
 		end := queryModel.TimeRange.To
 
 		dsInterval, err := tsdb.GetIntervalFrom("", "", 0, 15*time.Second)
+		hasQueryInterval := queryModel.Model.Get("interval").MustString("") != ""
+		// Only use stepMode if we have interval in query, otherwise use "min"
+		if hasQueryInterval {
+			intervalMode = queryModel.Model.Get("stepMode").MustString("min")
+		} else {
+			intervalMode = "min"
+		}
+
+		// Calculate interval value from query or data source settings or use default value
+		intervalValue, err := interval.GetIntervalFrom(dsInfo, queryModel.Model, time.Second*15)
 		if err != nil {
 			return nil, err
 		}
 
-		intervalFactor := jsonModel.Get("intervalFactor").MustInt64(1)
-		interval := s.intervalCalculator.Calculate(queries[0].TimeRange, dsInterval)
-		step := time.Duration(int64(interval.Value) * intervalFactor)
+		calculatedInterval, err := e.intervalCalculator.Calculate(*query.TimeRange, intervalValue, intervalMode)
+		if err != nil {
+			return nil, err
+		}
+		safeInterval := e.intervalCalculator.CalculateSafeInterval(*query.TimeRange, safeRes)
+
+		if calculatedInterval.Value > safeInterval.Value {
+			adjustedInterval = calculatedInterval.Value
+		} else {
+			adjustedInterval = safeInterval.Value
+		}
+
+		intervalFactor := queryModel.Model.Get("intervalFactor").MustInt64(1)
+		step := time.Duration(int64(adjustedInterval) * intervalFactor)
 
 		qs = append(qs, &PrometheusQuery{
 			Expr:         expr,
