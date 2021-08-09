@@ -1,12 +1,11 @@
 {
   "type": "panel",
   "name": "Alertmanager notifications",
-  "id": "alertmanager-notifications",
+  "id": "alertGroups",
 
   "skipDataQuery": true,
-
   "info": {
-    "description": "Shows list of alertmanager alerts and their current status",
+    "description": "Shows alertmanager alerts grouped by labels",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
