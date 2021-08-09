@@ -18,7 +18,10 @@ const form: Partial<FormApi> = {
 xdescribe('MainDetailsFormPart ::', () => {
   it('should disable fields with sat isRDS flag', async () => {
     const root = mount(
-      <Form onSubmit={jest.fn()} render={() => <MainDetailsFormPart remoteInstanceCredentials={{ isRDS: true }} />} />
+      <Form
+        onSubmit={jest.fn()}
+        render={({ form }) => <MainDetailsFormPart form={form} remoteInstanceCredentials={{ isRDS: true }} />}
+      />
     );
 
     const fields = root.find('input');
@@ -33,7 +36,10 @@ xdescribe('MainDetailsFormPart ::', () => {
 
   it('should disable fields with not sat isRDS flag', async () => {
     const root = mount(
-      <Form onSubmit={jest.fn()} render={() => <MainDetailsFormPart remoteInstanceCredentials={{ isRDS: false }} />} />
+      <Form
+        onSubmit={jest.fn()}
+        render={({ form }) => <MainDetailsFormPart form={form} remoteInstanceCredentials={{ isRDS: false }} />}
+      />
     );
 
     const fields = root.find('input');

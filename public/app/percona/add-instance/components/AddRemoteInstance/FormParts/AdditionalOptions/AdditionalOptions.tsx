@@ -10,6 +10,7 @@ import { TablestatOptionsInterface } from './AdditionalOptions.types';
 import { FormApi } from 'final-form';
 import { InstanceTypes } from '../../../../panel.types';
 import { MysqlTLSCertificate } from './MysqlTLSCertificate';
+import { MongodbTLSCertificate } from './MongodbTLSCertificate';
 import { PostgreTLSCertificate } from './PostgreTLSCertificate';
 
 export const AdditionalOptionsFormPart: FC<AdditionalOptionsFormPartProps> = ({
@@ -149,8 +150,7 @@ export const getAdditionalOptions = (type: InstanceTypes, remoteInstanceCredenti
       return (
         <>
           <CheckboxField label={Messages.form.labels.additionalOptions.tls} name="tls" />
-          {/*TODO: return when backend part will be merged*/}
-          {/*<MongodbTLSCertificate form={form} />*/}
+          <MongodbTLSCertificate form={form} />
           <CheckboxField label={Messages.form.labels.additionalOptions.tlsSkipVerify} name="tls_skip_verify" />
           <CheckboxField
             label={Messages.form.labels.additionalOptions.qanMongodbProfiler}

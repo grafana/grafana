@@ -3,6 +3,7 @@ import { FormApi } from 'final-form';
 
 export interface MainDetailsFormPartProps {
   remoteInstanceCredentials: RemoteInstanceCredentials;
+  form?: FormApi;
 }
 
 export interface FormPartProps {
