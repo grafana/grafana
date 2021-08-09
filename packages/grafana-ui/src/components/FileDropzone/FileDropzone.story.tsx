@@ -23,5 +23,5 @@ export const Basic: Story<FileDropzoneProps> = (args) => {
 };
 
 export const WithCustomFileList: Story<FileDropzoneProps> = () => {
-  return <FileDropzone fileListRenderer={(file) => <div>{file.file.name}</div>} />;
+  return <FileDropzone fileListRenderer={(file) => <div>Custom rendered item {file.file.name}</div>} />;
 };
