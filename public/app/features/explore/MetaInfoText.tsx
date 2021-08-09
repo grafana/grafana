@@ -19,7 +19,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: baseline;
 
     .logs-meta-item__error {
-      color: ${theme.colors.warning.main};
+      color: ${theme.colors.error.text};
     }
   `,
   metaLabel: css`
