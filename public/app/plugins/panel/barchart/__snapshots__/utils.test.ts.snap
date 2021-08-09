@@ -103,7 +103,9 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
+    Object {
+      "value": [Function],
+    },
     Object {
       "fill": [Function],
       "paths": [Function],
@@ -118,6 +120,7 @@ Object {
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],
@@ -228,7 +231,9 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
+    Object {
+      "value": [Function],
+    },
     Object {
       "fill": [Function],
       "paths": [Function],
@@ -243,6 +248,7 @@ Object {
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],
@@ -353,7 +359,9 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
+    Object {
+      "value": [Function],
+    },
     Object {
       "fill": [Function],
       "paths": [Function],
@@ -368,6 +376,7 @@ Object {
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],
@@ -478,7 +487,9 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
+    Object {
+      "value": [Function],
+    },
     Object {
       "fill": [Function],
       "paths": [Function],
@@ -493,6 +504,7 @@ Object {
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],
@@ -603,7 +615,9 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
+    Object {
+      "value": [Function],
+    },
     Object {
       "fill": [Function],
       "paths": [Function],
@@ -618,6 +632,7 @@ Object {
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],
@@ -728,7 +743,9 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
+    Object {
+      "value": [Function],
+    },
     Object {
       "fill": [Function],
       "paths": [Function],
@@ -743,6 +760,7 @@ Object {
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],
@@ -853,7 +871,9 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
+    Object {
+      "value": [Function],
+    },
     Object {
       "fill": [Function],
       "paths": [Function],
@@ -868,6 +888,7 @@ Object {
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],
@@ -978,7 +999,9 @@ Object {
   },
   "select": undefined,
   "series": Array [
-    Object {},
+    Object {
+      "value": [Function],
+    },
     Object {
       "fill": [Function],
       "paths": [Function],
@@ -993,6 +1016,7 @@ Object {
       "show": true,
       "spanGaps": undefined,
       "stroke": "#808080",
+      "value": [Function],
       "width": 2,
     },
   ],

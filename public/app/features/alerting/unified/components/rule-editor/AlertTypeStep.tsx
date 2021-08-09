@@ -73,7 +73,12 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
         >
           <InputControl
             render={({ field: { onChange, ref, ...field } }) => (
-              <Select {...field} options={alertTypeOptions} onChange={(v: SelectableValue) => onChange(v?.value)} />
+              <Select
+                menuShouldPortal
+                {...field}
+                options={alertTypeOptions}
+                onChange={(v: SelectableValue) => onChange(v?.value)}
+              />
             )}
             name="type"
             control={control}
