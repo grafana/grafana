@@ -51,6 +51,11 @@ export interface AzureMetricQuery {
 
   /** @deprecated Remove this once angular is removed */
   allowedTimeGrainsMs?: number[];
+
+  /** @deprecated migrated to dimensionFilters */
+  dimension?: string;
+  /** @deprecated migrated to dimensionFilters */
+  dimensionFilter?: string;
 }
 
 /**
@@ -86,6 +91,9 @@ export interface ApplicationInsightsQuery {
   dimension?: string[]; // Was string before 7.1
   dimensionFilter?: string;
   alias?: string;
+
+  /** @deprecated Migrated to Insights Analytics query  */
+  rawQuery?: string;
 }
 
 /**
