@@ -34,6 +34,8 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 | `Label name`              | Add the name of the field in the label object.                                                                                                                                                                                                                    |
 | `URL`                     | If the link is external, then enter the full link URL. You can interpolate the value from the field with `${__value.raw }` macro.                                                                                                                                 |
 | `Internal link`           | Select if the link is internal or external. In the case of an internal link, a data source selector allows you to select the target data source. Supports tracing data sources only.                                                                              |
+| `Manage alerts via Alerting UI` | Uncheck if you do not want to use [Grafana Alerting UI]({{< relref "../alerting/unified-alerting/_index.md" >}}) to manage alerts for this Prometheus datasource. |
+| `Custom ruler URL` | Cortex only. If running Cortex in microservices mode, check this to configure URL and authentication options separately for the ruler service. |
 
 ## Prometheus query editor
 

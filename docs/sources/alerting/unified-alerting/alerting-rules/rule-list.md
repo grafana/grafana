@@ -52,3 +52,7 @@ To edit or delete a rule:
 ## Opt-out a Loki or Prometheus data source
 
 If you do not want rules to be loaded from a Prometheus or Loki data source, go to its settings page and clear the **Manage alerts via Alerting UI** checkbox.
+
+## Configure ruler service HTTP options separately
+
+If Cortex or Loki is running in microservices mode and the ruler service has a different URL or auth settings than the Cortex / Loki data source, go to data source settings, toggle **Custom ruler URL** and fill out alternative HTTP settings for the ruler.
