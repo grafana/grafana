@@ -452,11 +452,10 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 func accessForbidden(pluginFilename string) bool {
 	ext := filepath.Ext(pluginFilename)
 
-	match := false
 	for _, permittedExt := range permittedFileExts {
 		if strings.EqualFold(permittedExt, ext) {
-			match = true
+			return true
 		}
 	}
-	return !match
+	return false
 }
