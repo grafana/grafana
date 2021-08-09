@@ -95,10 +95,19 @@ export function getScaleGradientFn(
 
         if (thresholds.mode === ThresholdsMode.Absolute) {
           const value = step.value === -Infinity ? scaleMin : step.value;
+
+          // Skip this colorstop if next value is the same  as this
+          if (thresholds.steps.length > idx + 1) {
+            const nextValue = thresholds.steps[idx + 1].value;
+            if (nextValue === value) {
+              continue;
+            }
+          }
+
           addColorStop(value, step.color);
 
+          // To make the gradient stops discrete we add the same color for the next value
           if (thresholds.steps.length > idx + 1) {
-            // to make the gradient discrete
             addColorStop(thresholds.steps[idx + 1].value - 0.00000001, step.color);
           }
         } else {
