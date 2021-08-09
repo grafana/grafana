@@ -66,7 +66,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
           }
 
           let x0 = u.valToPos(annotation.time, 'x', true);
-          var color = theme.visualization.getColorByName(annotation.color);
+          const color = theme.visualization.getColorByName(annotation.color);
 
           renderLine(x0, color);
 
