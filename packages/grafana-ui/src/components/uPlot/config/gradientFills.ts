@@ -108,7 +108,8 @@ export function getScaleGradientFn(
 
           // To make the gradient stops discrete we add the same color for the next value
           if (thresholds.steps.length > idx + 1) {
-            addColorStop(thresholds.steps[idx + 1].value - 0.00000001, step.color);
+            const belowValue = Math.abs(thresholds.steps[idx + 1].value * 0.001);
+            addColorStop(thresholds.steps[idx + 1].value - belowValue, step.color);
           }
         } else {
           const percent = step.value === -Infinity ? 0 : step.value;
