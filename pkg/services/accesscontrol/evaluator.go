@@ -9,7 +9,7 @@ import (
 	"github.com/gobwas/glob"
 )
 
-// Scope builds scopes from components seperated by ":"
+// Scope builds scope from components seperated by ":"
 func Scope(components ...string) string {
 	b := strings.Builder{}
 	for i, c := range components {
