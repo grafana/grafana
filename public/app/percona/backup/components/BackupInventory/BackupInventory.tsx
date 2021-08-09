@@ -32,6 +32,7 @@ import { RestoreBackupModal } from './RestoreBackupModal';
 
 export const BackupInventory: FC = () => {
   const [pending, setPending] = useState(true);
+  const [deletePending, setDeletePending] = useState(false);
   const [restoreModalVisible, setRestoreModalVisible] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<Backup | null>(null);
   const [backupModalVisible, setBackupModalVisible] = useState(false);
@@ -137,6 +138,8 @@ export const BackupInventory: FC = () => {
         getData(true);
       } catch (e) {
         logger.error(e);
+      } finally {
+        setDeletePending(false);
       }
     },
     [getData, selectedBackup]
@@ -225,6 +228,7 @@ export const BackupInventory: FC = () => {
         forceLabel={Messages.backupInventory.deleteFromStorage}
         onDelete={handleDelete}
         initialForceValue={true}
+        loading={deletePending}
         showForce
       />
     </>
