@@ -71,7 +71,7 @@ export const Messages = {
         retention: 'Retention',
         frequency: 'Frequency',
         location: 'Location',
-        lastBackup: 'Last backup',
+        lastBackup: 'Last backup (local time)',
         type: 'Type',
         actions: 'Actions',
       },
