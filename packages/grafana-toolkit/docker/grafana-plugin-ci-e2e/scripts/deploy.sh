@@ -5,12 +5,12 @@ source "/etc/profile"
 source "./deploy-slim.sh"
 source "./deploy-common.sh"
 
-NODEVER="v12.19.0-linux-x64"
+NODEVER="v14.17.3"
 # Install Node
-wget -O - "https://nodejs.org/dist/v12.19.0/node-${NODEVER}.tar.xz" | tar Jvxf - -C "/tmp"
+wget -O - "https://nodejs.org/dist/${NODEVER}/node-${NODEVER}-linux-x64.tar.xz" | tar Jvxf - -C "/tmp"
 
 # Move node to /usr/local so it's in the path
-pushd /tmp/node-${NODEVER}
+pushd /tmp/node-${NODEVER}-linux-x64
 /bin/rm -f CHANGELOG.md README.md LICENSE
 /bin/cp -r * /usr/local
 popd

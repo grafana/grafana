@@ -16,7 +16,7 @@ To share data source queries with another panel:
 1. [Create a dashboard]({{< relref "../getting-started/getting-started.md#create-a-dashboard" >}}).
 1. [Add a panel]({{< relref "add-a-panel.md" >}}) to the dashboard.
 1. Change the title to "Source panel". You'll use this panel as a source for the other panels.
-Define the [query]({{< relref "queries.md" >}}) or queries that will be shared. If you don't have a data source available at the moment, then you can use the **Grafana** data source, which returns a random time series that you can use for testing.
+   Define the [query]({{< relref "queries.md" >}}) or queries that will be shared. If you don't have a data source available at the moment, then you can use the **Grafana** data source, which returns a random time series that you can use for testing.
 1. Add a second panel and select the **Dashboard** data source in the query editor.
 1. In the **Use results from panel list**, select the first panel you created.
 

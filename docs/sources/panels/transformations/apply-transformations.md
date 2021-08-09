@@ -1,12 +1,11 @@
 +++
 title = "Apply a transformation"
-weight = 300
+weight = 1
 +++
-
 
 # Apply transformations
 
-You can apply transformations from the Transform tab of the Grafana panel editor, which is located next to the Queries tab. See also, [Debug  transformations](#debug-transformations).
+You can apply transformations from the Transform tab of the Grafana panel editor, which is located next to the Queries tab. See also, [Debug transformations](#debug-transformations).
 
 To apply a transformation:
 

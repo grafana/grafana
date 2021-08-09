@@ -3,13 +3,12 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -21,6 +20,14 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var permittedFileExts = []string{
+	".html", ".xhtml", ".css", ".js", ".json", ".jsonld", ".map", ".mjs",
+	".jpeg", ".jpg", ".png", ".gif", ".svg", ".webp", ".ico",
+	".woff", ".woff2", ".eot", ".ttf", ".otf",
+	".wav", ".mp3",
+	".md", ".pdf", ".txt",
+}
 
 func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	typeFilter := c.Query("type")
@@ -262,7 +269,7 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 	pluginID := c.Params("pluginId")
 	plugin := hs.PluginManager.GetPlugin(pluginID)
 	if plugin == nil {
-		c.Handle(hs.Cfg, 404, "Plugin not found", nil)
+		c.JsonApiErr(404, "Plugin not found", nil)
 		return
 	}
 
@@ -275,10 +282,10 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 	f, err := os.Open(pluginFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			c.Handle(hs.Cfg, 404, "Could not find plugin file", err)
+			c.JsonApiErr(404, "Plugin file not found", err)
 			return
 		}
-		c.Handle(hs.Cfg, 500, "Could not open plugin file", err)
+		c.JsonApiErr(500, "Could not open plugin file", err)
 		return
 	}
 	defer func() {
@@ -289,26 +296,21 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 
 	fi, err := f.Stat()
 	if err != nil {
-		c.Handle(hs.Cfg, 500, "Plugin file exists but could not open", err)
+		c.JsonApiErr(500, "Plugin file exists but could not open", err)
 		return
 	}
 
-	if shouldExclude(fi) {
-		c.Handle(hs.Cfg, 404, "Plugin file not found", nil)
+	if accessForbidden(fi.Name()) {
+		c.JsonApiErr(403, "Plugin file access forbidden",
+			fmt.Errorf("access is forbidden to plugin file %s", pluginFilePath))
 		return
-	}
-
-	headers := func(c *macaron.Context) {
-		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
 	if hs.Cfg.Env == setting.Dev {
-		headers = func(c *macaron.Context) {
-			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
-		}
+		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+	} else {
+		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
-
-	headers(c.Context)
 
 	http.ServeContent(c.Resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
 }
@@ -393,8 +395,9 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPlugin
 		if errors.As(err, &versionNotFoundErr) {
 			return response.Error(http.StatusNotFound, "Plugin version not found", err)
 		}
-		if errors.Is(err, installer.ErrPluginNotFound) {
-			return response.Error(http.StatusNotFound, "Plugin not found", err)
+		var clientError installer.Response4xxError
+		if errors.As(err, &clientError) {
+			return response.Error(clientError.StatusCode, clientError.Message, err)
 		}
 		if errors.Is(err, plugins.ErrInstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)
@@ -446,12 +449,13 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	return response.Error(500, "Plugin request failed", err)
 }
 
-func shouldExclude(fi os.FileInfo) bool {
-	normalizedFilename := strings.ToLower(fi.Name())
+func accessForbidden(pluginFilename string) bool {
+	ext := filepath.Ext(pluginFilename)
 
-	isUnixExecutable := fi.Mode()&0111 == 0111
-	isWindowsExecutable := strings.HasSuffix(normalizedFilename, ".exe")
-	isScript := strings.HasSuffix(normalizedFilename, ".sh")
-
-	return isUnixExecutable || isWindowsExecutable || isScript
+	for _, permittedExt := range permittedFileExts {
+		if strings.EqualFold(permittedExt, ext) {
+			return false
+		}
+	}
+	return true
 }

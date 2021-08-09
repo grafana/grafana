@@ -36,13 +36,12 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 		edition = "enterprise"
 	}
 	report := UsageReport{
-		Version:         version,
-		Metrics:         metrics,
-		Os:              runtime.GOOS,
-		Arch:            runtime.GOARCH,
-		Edition:         edition,
-		HasValidLicense: uss.License.HasValidLicense(),
-		Packaging:       uss.Cfg.Packaging,
+		Version:   version,
+		Metrics:   metrics,
+		Os:        runtime.GOOS,
+		Arch:      runtime.GOARCH,
+		Edition:   edition,
+		Packaging: uss.Cfg.Packaging,
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
@@ -74,11 +73,11 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.alert_rules.count"] = statsQuery.Result.AlertRules
 	metrics["stats.library_panels.count"] = statsQuery.Result.LibraryPanels
 	metrics["stats.library_variables.count"] = statsQuery.Result.LibraryVariables
-	validLicCount := 0
-	if uss.License.HasValidLicense() {
-		validLicCount = 1
-	}
-	metrics["stats.valid_license.count"] = validLicCount
+	metrics["stats.dashboards_viewers_can_edit.count"] = statsQuery.Result.DashboardsViewersCanEdit
+	metrics["stats.dashboards_viewers_can_admin.count"] = statsQuery.Result.DashboardsViewersCanAdmin
+	metrics["stats.folders_viewers_can_edit.count"] = statsQuery.Result.FoldersViewersCanEdit
+	metrics["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
+
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
 	if uss.Cfg.IsEnterprise {
@@ -89,6 +88,13 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.edition.enterprise.count"] = enterpriseEditionCount
 
 	uss.registerExternalMetrics(metrics)
+
+	// must run after registration of external metrics
+	if v, ok := metrics["stats.valid_license.count"]; ok {
+		report.HasValidLicense = v == 1
+	} else {
+		metrics["stats.valid_license.count"] = 0
+	}
 
 	userCount := statsQuery.Result.Users
 	avgAuthTokensPerUser := statsQuery.Result.AuthTokens
@@ -109,7 +115,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	// as sending that name could be sensitive information
 	dsOtherCount := 0
 	for _, dsStat := range dsStats.Result {
-		if uss.shouldBeReported(dsStat.Type) {
+		if uss.ShouldBeReported(dsStat.Type) {
 			metrics["stats.ds."+dsStat.Type+".count"] = dsStat.Count
 		} else {
 			dsOtherCount += dsStat.Count
@@ -152,7 +158,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 
 	alertingOtherCount := 0
 	for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
-		if uss.shouldBeReported(dsType) {
+		if uss.ShouldBeReported(dsType) {
 			addAlertingUsageStats(dsType, usageCount)
 		} else {
 			alertingOtherCount += usageCount
@@ -179,7 +185,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 
 		access := strings.ToLower(dsAccessStat.Access)
 
-		if uss.shouldBeReported(dsAccessStat.Type) {
+		if uss.ShouldBeReported(dsAccessStat.Type) {
 			metrics["stats.ds_access."+dsAccessStat.Type+"."+access+".count"] = dsAccessStat.Count
 		} else {
 			old := dsAccessOtherCount[access]
@@ -336,7 +342,7 @@ func (uss *UsageStatsService) updateTotalStats() {
 	}
 }
 
-func (uss *UsageStatsService) shouldBeReported(dsType string) bool {
+func (uss *UsageStatsService) ShouldBeReported(dsType string) bool {
 	ds := uss.PluginManager.GetDataSource(dsType)
 	if ds == nil {
 		return false

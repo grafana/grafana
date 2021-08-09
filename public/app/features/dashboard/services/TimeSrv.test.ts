@@ -163,6 +163,28 @@ describe('timeSrv', () => {
         expect(time.from.valueOf()).toEqual(1410337640000);
         expect(time.to.valueOf()).toEqual(1410337650000);
       });
+
+      it('corrects inverted from/to dates in ms', () => {
+        locationService.push('/d/id?from=1621436828909&to=1621436818909');
+
+        timeSrv = new TimeSrv(new ContextSrvStub() as any);
+
+        timeSrv.init(_dashboard);
+        const time = timeSrv.timeRange();
+        expect(time.from.valueOf()).toEqual(1621436818909);
+        expect(time.to.valueOf()).toEqual(1621436828909);
+      });
+
+      it('corrects inverted from/to dates as relative times', () => {
+        locationService.push('/d/id?from=now&to=now-1h');
+
+        timeSrv = new TimeSrv(new ContextSrvStub() as any);
+
+        timeSrv.init(_dashboard);
+        const time = timeSrv.timeRange();
+        expect(time.raw.from).toBe('now-1h');
+        expect(time.raw.to).toBe('now');
+      });
     });
   });
 

@@ -13,7 +13,7 @@ import (
 )
 
 // nolint:staticcheck // plugins.DataQuery deprecated
-func dataPluginQueryAdapter(pluginID string, handler backend.QueryDataHandler) plugins.DataPluginFunc {
+func dataPluginQueryAdapter(pluginID string, handler backend.QueryDataHandler, oAuthService *oauthtoken.Service) plugins.DataPluginFunc {
 	return plugins.DataPluginFunc(func(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
 		instanceSettings, err := modelToInstanceSettings(ds)
 		if err != nil {
@@ -24,8 +24,8 @@ func dataPluginQueryAdapter(pluginID string, handler backend.QueryDataHandler) p
 			query.Headers = make(map[string]string)
 		}
 
-		if oauthtoken.IsOAuthPassThruEnabled(ds) {
-			if token := oauthtoken.GetCurrentOAuthToken(ctx, query.User); token != nil {
+		if oAuthService.IsOAuthPassThruEnabled(ds) {
+			if token := oAuthService.GetCurrentOAuthToken(ctx, query.User); token != nil {
 				delete(query.Headers, "Authorization")
 				query.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
 			}

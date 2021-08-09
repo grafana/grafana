@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -43,26 +42,30 @@ func TestMetrics(t *testing.T) {
 		var getSystemStatsQuery *models.GetSystemStatsQuery
 		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
 			query.Result = &models.SystemStats{
-				Dashboards:            1,
-				Datasources:           2,
-				Users:                 3,
-				ActiveUsers:           4,
-				Orgs:                  5,
-				Playlists:             6,
-				Alerts:                7,
-				Stars:                 8,
-				Folders:               9,
-				DashboardPermissions:  10,
-				FolderPermissions:     11,
-				ProvisionedDashboards: 12,
-				Snapshots:             13,
-				Teams:                 14,
-				AuthTokens:            15,
-				DashboardVersions:     16,
-				Annotations:           17,
-				AlertRules:            18,
-				LibraryPanels:         19,
-				LibraryVariables:      20,
+				Dashboards:                1,
+				Datasources:               2,
+				Users:                     3,
+				ActiveUsers:               4,
+				Orgs:                      5,
+				Playlists:                 6,
+				Alerts:                    7,
+				Stars:                     8,
+				Folders:                   9,
+				DashboardPermissions:      10,
+				FolderPermissions:         11,
+				ProvisionedDashboards:     12,
+				Snapshots:                 13,
+				Teams:                     14,
+				AuthTokens:                15,
+				DashboardVersions:         16,
+				Annotations:               17,
+				AlertRules:                18,
+				LibraryPanels:             19,
+				LibraryVariables:          20,
+				DashboardsViewersCanAdmin: 3,
+				DashboardsViewersCanEdit:  2,
+				FoldersViewersCanAdmin:    1,
+				FoldersViewersCanEdit:     5,
 			}
 			getSystemStatsQuery = query
 			return nil
@@ -308,6 +311,10 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, getSystemStatsQuery.Result.ProvisionedDashboards, metrics.Get("stats.provisioned_dashboards.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Snapshots, metrics.Get("stats.snapshots.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Teams, metrics.Get("stats.teams.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DashboardsViewersCanEdit, metrics.Get("stats.dashboards_viewers_can_edit.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.DashboardsViewersCanAdmin, metrics.Get("stats.dashboards_viewers_can_admin.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.FoldersViewersCanEdit, metrics.Get("stats.folders_viewers_can_edit.count").MustInt64())
+			assert.Equal(t, getSystemStatsQuery.Result.FoldersViewersCanAdmin, metrics.Get("stats.folders_viewers_can_admin.count").MustInt64())
 			assert.Equal(t, 15, metrics.Get("stats.total_auth_token.count").MustInt())
 			assert.Equal(t, 5, metrics.Get("stats.avg_auth_token_per_user.count").MustInt())
 			assert.Equal(t, 16, metrics.Get("stats.dashboard_versions.count").MustInt())
@@ -598,7 +605,6 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStatsService {
 		Bus:                bus.New(),
 		Cfg:                &cfg,
 		SQLStore:           sqlstore.InitTestDB(t),
-		License:            &licensing.OSSLicensingService{},
 		AlertingUsageStats: &alertingUsageMock{},
 		externalMetrics:    make([]MetricsFunc, 0),
 		PluginManager:      &fakePluginManager{},

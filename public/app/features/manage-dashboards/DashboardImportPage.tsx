@@ -2,6 +2,7 @@ import React, { FormEvent, PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from '@emotion/css';
 import { AppEvents, GrafanaTheme2, NavModel } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   Button,
   stylesFactory,
@@ -121,10 +122,13 @@ class UnthemedDashboardImport extends PureComponent<Props> {
                       required: 'Need a dashboard JSON model',
                       validate: validateDashboardJson,
                     })}
+                    data-testid={selectors.components.DashboardImportPage.textarea}
                     rows={10}
                   />
                 </Field>
-                <Button type="submit">Load</Button>
+                <Button type="submit" data-testid={selectors.components.DashboardImportPage.submit}>
+                  Load
+                </Button>
               </>
             )}
           </Form>

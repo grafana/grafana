@@ -12,6 +12,7 @@ export * from './openPanelMenuItem';
 export * from './revertAllChanges';
 export * from './saveDashboard';
 export * from './selectOption';
+export * from './importDashboard';
 
 export {
   VISUALIZATION_ALERT_LIST,

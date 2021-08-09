@@ -11,7 +11,6 @@ import {
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from 'app/core/store';
 import { pick } from 'lodash';
-import { locationService } from '@grafana/runtime';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return (dispatch) => {
@@ -31,12 +30,6 @@ export function discardPanelChanges(): ThunkResult<void> {
     const { getPanel } = getStore().panelEditor;
     getPanel().configRev = 0;
     dispatch(setDiscardChanges(true));
-  };
-}
-
-export function exitPanelEditor(): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    locationService.partial({ editPanel: null, tab: null });
   };
 }
 
@@ -74,8 +67,8 @@ function updateDuplicateLibraryPanels(modifiedPanel: PanelModel, dashboard: Dash
   }
 }
 
-export function panelEditorCleanUp(): ThunkResult<void> {
-  return (dispatch, getStore) => {
+export function exitPanelEditor(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
     const { getPanel, getSourcePanel, shouldDiscardChanges } = getStore().panelEditor;
 
@@ -98,7 +91,7 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       sourcePanel.plugin = panel.plugin;
 
       if (panelTypeChanged) {
-        dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }));
+        await dispatch(panelModelAndPluginReady({ panelId: sourcePanel.id, plugin: panel.plugin! }));
       }
 
       // Resend last query result on source panel query runner
