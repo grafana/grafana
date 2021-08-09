@@ -9,10 +9,6 @@ import (
 	"github.com/gobwas/glob"
 )
 
-const (
-	ScopeAll = "*"
-)
-
 func Combine(scopes ...string) string {
 	b := strings.Builder{}
 	for i, s := range scopes {

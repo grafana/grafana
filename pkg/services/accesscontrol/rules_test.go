@@ -134,7 +134,7 @@ func TestAll_Evaluate(t *testing.T) {
 		{
 			desc: "should return true for one that matches",
 			evaluator: EvalAll(
-				EvalPermission("settings:write", Combine("settings", ScopeAll)),
+				EvalPermission("settings:write", Combine("settings", "*")),
 			),
 			permissions: map[string]map[string]struct{}{
 				"settings:write": {"settings:**": struct{}{}},
@@ -144,8 +144,8 @@ func TestAll_Evaluate(t *testing.T) {
 		{
 			desc: "should return true for several that matches",
 			evaluator: EvalAll(
-				EvalPermission("settings:write", Combine("settings", ScopeAll)),
-				EvalPermission("settings:read", Combine("settings", "auth.saml", ScopeAll)),
+				EvalPermission("settings:write", Combine("settings", "*")),
+				EvalPermission("settings:read", Combine("settings", "auth.saml", "*")),
 			),
 			permissions: map[string]map[string]struct{}{
 				"settings:write": {"settings:**": struct{}{}},
@@ -156,9 +156,9 @@ func TestAll_Evaluate(t *testing.T) {
 		{
 			desc: "should return false if one does not match",
 			evaluator: EvalAll(
-				EvalPermission("settings:write", Combine("settings", ScopeAll)),
-				EvalPermission("settings:read", Combine("settings", "auth.saml", ScopeAll)),
-				EvalPermission("report:read", Combine("reports", ScopeAll)),
+				EvalPermission("settings:write", Combine("settings", "*")),
+				EvalPermission("settings:read", Combine("settings", "auth.saml", "*")),
+				EvalPermission("report:read", Combine("reports", "*")),
 			),
 			permissions: map[string]map[string]struct{}{
 				"settings:write": {"settings:**": struct{}{}},
@@ -236,7 +236,7 @@ func TestAny_Evaluate(t *testing.T) {
 		{
 			desc: "should return true for one that matches",
 			evaluator: EvalAny(
-				EvalPermission("settings:write", Combine("settings", ScopeAll)),
+				EvalPermission("settings:write", Combine("settings", "*")),
 			),
 			permissions: map[string]map[string]struct{}{
 				"settings:write": {"settings:**": struct{}{}},
@@ -246,7 +246,7 @@ func TestAny_Evaluate(t *testing.T) {
 		{
 			desc: "should return true when at least one matches",
 			evaluator: EvalAny(
-				EvalPermission("settings:write", Combine("settings", "auth.saml", ScopeAll)),
+				EvalPermission("settings:write", Combine("settings", "auth.saml", "*")),
 				EvalPermission("report:read", Combine("reports", "1")),
 				EvalPermission("report:write", Combine("reports", "10")),
 			),
@@ -258,7 +258,7 @@ func TestAny_Evaluate(t *testing.T) {
 		{
 			desc: "should return false when there is no match",
 			evaluator: EvalAny(
-				EvalPermission("settings:write", Combine("settings", "auth.saml", ScopeAll)),
+				EvalPermission("settings:write", Combine("settings", "auth.saml", "*")),
 				EvalPermission("report:read", Combine("reports", "1")),
 				EvalPermission("report:write", Combine("reports", "10")),
 			),
@@ -343,7 +343,7 @@ func TestEval(t *testing.T) {
 		{
 			desc: "should return true when first is true",
 			evaluator: EvalAny(
-				EvalPermission("settings:write", Combine("settings", ScopeAll)),
+				EvalPermission("settings:write", Combine("settings", "*")),
 				EvalAll(
 					EvalPermission("settings:write", "settings:auth.saml:enabled"),
 					EvalPermission("settings:write", "settings:auth.saml:max_issue_delay"),
@@ -357,7 +357,7 @@ func TestEval(t *testing.T) {
 		{
 			desc: "should return true when first is false and allEvaluator is true",
 			evaluator: EvalAny(
-				EvalPermission("settings:write", Combine("settings", ScopeAll)),
+				EvalPermission("settings:write", Combine("settings", "*")),
 				EvalAll(
 					EvalPermission("settings:write", "settings:auth.saml:enabled"),
 					EvalPermission("settings:write", "settings:auth.saml:max_issue_delay"),
@@ -374,7 +374,7 @@ func TestEval(t *testing.T) {
 		{
 			desc: "should return false when both are false",
 			evaluator: EvalAny(
-				EvalPermission("settings:write", Combine("settings", ScopeAll)),
+				EvalPermission("settings:write", Combine("settings", "*")),
 				EvalAll(
 					EvalPermission("settings:write", "settings:auth.saml:enabled"),
 					EvalPermission("settings:write", "settings:auth.saml:max_issue_delay"),
