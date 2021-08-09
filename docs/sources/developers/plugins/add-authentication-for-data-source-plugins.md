@@ -287,7 +287,7 @@ If your data source uses the same OAuth provider as Grafana itself, for example 
 
 To allow Grafana to pass the access token to the plugin, update the data source configuration and set the` jsonData.oauthPassThru` property to `true`. The [DataSourceHttpSettings](https://developers.grafana.com/ui/latest/index.html?path=/story/data-source-datasourcehttpsettings--basic) provides a toggle, the **Forward OAuth Identity** option, for this. You can also build an appropriate toggle to set `jsonData.oauthPassThru` in your data source configuration page UI.
 
-The Authorization header is available on the `DataQuery` object on the query data request in your backend data source.
+When configured, Grafana will pass the user's token to the plugin in an Authorization header, available on the `QueryDataRequest` object on the `QueryData` request in your backend data source.
 
 ```go
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
