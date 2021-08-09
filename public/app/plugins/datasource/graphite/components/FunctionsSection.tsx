@@ -13,7 +13,7 @@ export function FunctionsSection({ functions = [], funcDefs }: Props) {
   return (
     <Section label="Functions" fill={true}>
       {functions.map((func: FuncInstance, index: number) => {
-        return <GraphiteFunctionEditor key={index} func={func} />;
+        return !func.hidden && <GraphiteFunctionEditor key={index} func={func} />;
       })}
       <AddGraphiteFunction funcDefs={funcDefs} />
     </Section>
