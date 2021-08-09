@@ -415,14 +415,18 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 }
 
 func (sch *schedule) orgSync(ctx context.Context) error {
+	doStuff := func() {
+		orgs, err := sch.orgStore.GetOrgs()
+		if err != nil {
+			sch.log.Error("unable to sync organisations", "err", err)
+		}
+		sch.notifier.UpdateInstances(orgs...)
+	}
+	doStuff()
 	for {
 		select {
 		case <-time.After(OrgPollingInterval):
-			orgs, err := sch.orgStore.GetOrgs()
-			if err != nil {
-				sch.log.Error("unable to sync organisations", "err", err)
-			}
-			sch.notifier.UpdateInstances(orgs...)
+			doStuff()
 		case <-ctx.Done():
 			return nil
 		}
