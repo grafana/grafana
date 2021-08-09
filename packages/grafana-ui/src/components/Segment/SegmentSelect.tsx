@@ -11,7 +11,9 @@ export interface Props<T> extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onC
   value?: SelectableValue<T>;
   options: Array<SelectableValue<T>>;
   onChange: (item: SelectableValue<T>) => void;
-  // if provided - AsyncSelect will be used allowing to reload options when the value in the input changes
+  /**
+   * If provided - AsyncSelect will be used allowing to reload options when the value in the input changes
+   */
   loadOptions?: (inputValue: string) => Promise<Array<SelectableValue<T>>>;
   onClickOutside: () => void;
   width: number;
