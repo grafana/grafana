@@ -29,6 +29,8 @@ ha_engine = redis
 ha_engine_address = 127.0.0.1:6379
 ```
 
+For additional information, refer to the [ha_engine]({{< relref "../administration/configuration.md#ha_engine" >}}) and [ha_engine_address]({{< relref "../administration/configuration.md#ha_engine_address" >}}) options.
+
 After running:
 
 - All built-in real-time notifications like dashboard changes are delivered to all Grafana server instances and broadcasted to all subscribers.
@@ -37,7 +39,8 @@ After running:
 
 At the moment we only support single Redis node.
 
-> **Note:**  It's possible to use Redis Sentinel and Haproxy to achieve a highly available Redis setup. Redis nodes should be managed by [Redis Sentinel](https://redis.io/topics/sentinel) to achieve automatic failover. Haproxy configuration example:
+> **Note:** It's possible to use Redis Sentinel and Haproxy to achieve a highly available Redis setup. Redis nodes should be managed by [Redis Sentinel](https://redis.io/topics/sentinel) to achieve automatic failover. Haproxy configuration example:
+>
 > ```
 > listen redis
 >   server redis-01 127.0.0.1:6380 check port 6380 check inter 2s weight 1 inter 2s downinter 5s rise 10 fall 2 on-marked-down shutdown-sessions on-marked-up shutdown-backup-sessions
@@ -55,4 +58,5 @@ At the moment we only support single Redis node.
 >   tcp-check expect string +OK
 >   balance roundrobin
 > ```
+>
 > Next, point Grafana Live to Haproxy address:port.

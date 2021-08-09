@@ -9,31 +9,31 @@ weight = 900
 
 Grafana has global built-in variables that can be used in expressions in the query editor. This topic lists them in alphabetical order and defines them. These variables are useful in queries, dashboard links, panel links, and data links.
 
-## $__dashboard
+## $\_\_dashboard
 
 > Only available in Grafana v6.7+. In Grafana 7.1, the variable changed from showing the UID of the current dashboard to the name of the current dashboard.
 
 This variable is the name of the current dashboard.
 
-## $__from and $__to
+## $**from and $**to
 
 Grafana has two built in time range variables: `$__from` and `$__to`. They are currently always interpolated as epoch milliseconds by default but you can control date formatting.
 
 > This special formatting syntax is only available in Grafan a 7.1.2+
 
-| Syntax                   | Example result           | Description |
-| ------------------------ | ------------------------ | ----------- |
-| `${__from}`              | 1594671549254            | Unix millisecond epoch |
-| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No args, defaults to ISO 8601/RFC 3339 |
-| `${__from:date:iso}`     | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339 |
-| `${__from:date:seconds}` | 1594671549               | Unix seconds epoch |
+| Syntax                   | Example result           | Description                                                                                               |
+| ------------------------ | ------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `${__from}`              | 1594671549254            | Unix millisecond epoch                                                                                    |
+| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No args, defaults to ISO 8601/RFC 3339                                                                    |
+| `${__from:date:iso}`     | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339                                                                                         |
+| `${__from:date:seconds}` | 1594671549               | Unix seconds epoch                                                                                        |
 | `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) that does not include the `:` character |
 
 The above syntax works with `${__to}` as well.
 
 You can use this variable in URLs as well. For example, send a user to a dashboard that shows a time range from six hours ago until now: https://play.grafana.org/d/000000012/grafana-play-home?viewPanel=2&orgId=1?from=now-6h&to=now
 
-## $__interval
+## $\_\_interval
 
 You can use the `$__interval` variable as a parameter to group by time (for InfluxDB, MySQL, Postgres, MSSQL), Date histogram interval (for Elasticsearch), or as a _summarize_ function parameter (for Graphite).
 
@@ -47,20 +47,20 @@ In the InfluxDB data source, the legacy variable `$interval` is the same variabl
 
 The InfluxDB and Elasticsearch data sources have `Group by time interval` fields that are used to hard code the interval or to set the minimum limit for the `$__interval` variable (by using the `>` syntax -> `>10m`).
 
-## $__interval_ms
+## $\_\_interval_ms
 
 This variable is the `$__interval` variable in milliseconds, not a time interval formatted string. For example, if the `$__interval` is `20m` then the `$__interval_ms` is `1200000`.
 
-## $__name
+## $\_\_name
 
 This variable is only available in the Singlestat panel and can be used in the prefix or suffix fields on the Options tab. The variable will be replaced with the series name or alias.
 
-## $__org
+## $\_\_org
 
 This variable is the ID of the current organization.
 `${__org.name}` is the name of the current organization.
 
-## $__user
+## $\_\_user
 
 > Only available in Grafana v7.1+
 
@@ -68,15 +68,15 @@ This variable is the ID of the current organization.
 `${__user.login}` is the login handle of the current user.
 `${__user.email}` is the email for the current user.
 
-## $__range
+## $\_\_range
 
 Currently only supported for Prometheus and Loki data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond and a second representation called `$__range_ms` and `$__range_s`.
 
-## $__rate_interval
+## $\_\_rate_interval
 
 Currently only supported for Prometheus data sources. The `$__rate_interval` variable is meant to be used in the rate function. Refer to [Prometheus query variables]({{< relref "../../datasources/prometheus.md">}}) for details.
 
-## $timeFilter or $__timeFilter
+## $timeFilter or $\_\_timeFilter
 
 The `$timeFilter` variable returns the currently selected time range as an expression. For example, the time range interval `Last 7 days` expression is `time > now() - 7d`.
 

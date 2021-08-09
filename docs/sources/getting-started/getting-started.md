@@ -34,15 +34,15 @@ To create your first dashboard:
 1. Click the **+** icon on the side menu.
 1. On the dashboard, click **Add an empty panel**.
 1. In the New dashboard/Edit panel view, go to the **Query** tab.
-1. Configure your [query]({{< relref "../panels/queries.md" >}}) by selecting ``-- Grafana --`` from the [data source selector]({{< relref "../panels/queries.md/#data-source-selector" >}}). This generates the Random Walk dashboard.
-1. Click the  **Save** icon in the top right corner of your screen to save the dashboard.
+1. Configure your [query]({{< relref "../panels/queries.md" >}}) by selecting `-- Grafana --` from the [data source selector]({{< relref "../panels/queries.md/#data-source-selector" >}}). This generates the Random Walk dashboard.
+1. Click the **Save** icon in the top right corner of your screen to save the dashboard.
 1. Add a descriptive name, and then click **Save**.
 
- Congratulations, you have created your first dashboard and it is displaying results.
+Congratulations, you have created your first dashboard and it is displaying results.
 
 ## Next steps
 
- Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/_index.md" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}). The following topics will be of interest to you:
+Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/_index.md" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}). The following topics will be of interest to you:
 
 - [Panels]({{< relref "../panels/_index.md" >}})
 - [Dashboards]({{< relref "../dashboards/_index.md" >}})
