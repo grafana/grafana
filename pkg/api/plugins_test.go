@@ -35,14 +35,24 @@ func Test_accessForbidden(t *testing.T) {
 			accessForbidden: true,
 		},
 		{
-			name: "UNIX executables are forbidden",
+			name: "UNIX executables with non-permitted ext are forbidden",
+			t: testCase{
+				fi: testFileInfo{
+					name:       "bin/malicious.dmg",
+					executable: true,
+				},
+			},
+			accessForbidden: true,
+		},
+		{
+			name: "UNIX executables with permitted ext are not forbidden",
 			t: testCase{
 				fi: testFileInfo{
 					name:       "logo.svg",
 					executable: true,
 				},
 			},
-			accessForbidden: true,
+			accessForbidden: false,
 		},
 		{
 			name: "js is not forbidden",

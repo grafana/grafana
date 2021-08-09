@@ -458,10 +458,10 @@ func accessForbidden(fi os.FileInfo) bool {
 			match = true
 		}
 	}
-	if !match {
-		return true
+	if match {
+		return false
 	}
 
-	// is UNIX executable
-	return fi.Mode()&0111 == 0111
+	// ext not permitted or is UNIX executable
+	return !match || fi.Mode()&0111 == 0111
 }
