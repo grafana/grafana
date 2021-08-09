@@ -109,14 +109,15 @@ type alertmanager struct {
 	config          []byte
 }
 
-func new(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*alertmanager, error) {
+func new(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics, orgID int64) (*alertmanager, error) {
+	orgRegistry := m.GetOrCreateOrgRegistry(orgID)
 	am := &alertmanager{
 		Settings:          cfg,
 		stopc:             make(chan struct{}),
 		logger:            log.New("alertmanager"),
-		marker:            types.NewMarker(m.Registerer),
-		stageMetrics:      notify.NewMetrics(m.Registerer),
-		dispatcherMetrics: dispatch.NewDispatcherMetrics(m.Registerer),
+		marker:            types.NewMarker(orgRegistry),
+		stageMetrics:      notify.NewMetrics(orgRegistry),
+		dispatcherMetrics: dispatch.NewDispatcherMetrics(orgRegistry),
 		Store:             store,
 		Metrics:           m,
 	}
@@ -136,7 +137,7 @@ func new(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*aler
 	}
 	// Initialize silences
 	am.silences, err = silence.New(silence.Options{
-		Metrics:      m.Registerer,
+		Metrics:      orgRegistry,
 		SnapshotFile: filepath.Join(am.WorkingDirPath(), "silences"),
 		Retention:    retentionNotificationsAndSilences,
 	})
