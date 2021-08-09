@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { PanelProps } from '@grafana/data';
 import { CustomScrollbar } from '@grafana/ui';
+import { config } from '@grafana/runtime';
 
 import { AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { fetchAlertGroupsAction } from 'app/features/alerting/unified/state/actions';
@@ -16,12 +17,11 @@ import { useFilteredGroups } from './useFilteredGroups';
 
 export const AlertGroupsPanel = (props: PanelProps<AlertGroupPanelOptions>) => {
   const dispatch = useDispatch();
+  const isAlertingEnabled = config.featureToggles.ngalert;
 
   const alertManagerSourceName = props.options.alertmanager;
 
   const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups) || initialAsyncRequestState;
-  const loading = alertGroups[alertManagerSourceName || '']?.loading;
-  const error = alertGroups[alertManagerSourceName || '']?.error;
   const results: AlertmanagerGroup[] = alertGroups[alertManagerSourceName || '']?.result || [];
   const matchers: Matcher[] = props.options.labels ? parseMatchers(props.options.labels) : [];
 
@@ -40,16 +40,19 @@ export const AlertGroupsPanel = (props: PanelProps<AlertGroupPanelOptions>) => {
     };
   }, [dispatch, alertManagerSourceName]);
 
+  const hasResults = filteredResults.length > 0;
+
   return (
     <CustomScrollbar autoHeightMax="100%" autoHeightMin="100%">
-      <div>
-        {!error &&
-          !loading &&
-          results &&
-          filteredResults.map((group) => {
-            return <AlertGroup key={JSON.stringify(group.labels)} group={group} />;
-          })}
-      </div>
+      {isAlertingEnabled && (
+        <div>
+          {hasResults &&
+            filteredResults.map((group) => {
+              return <AlertGroup key={JSON.stringify(group.labels)} group={group} />;
+            })}
+          {!hasResults && 'No alerts'}
+        </div>
+      )}
     </CustomScrollbar>
   );
 };

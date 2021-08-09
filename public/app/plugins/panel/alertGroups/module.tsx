@@ -6,11 +6,6 @@ import { AlertManagerPicker } from 'app/features/alerting/unified/components/Ale
 
 export const plugin = new PanelPlugin<AlertGroupPanelOptions>(AlertGroupsPanel).setPanelOptions((builder) => {
   return builder
-    .addTextInput({
-      name: 'Labels',
-      path: 'labels',
-      category: ['Filter'],
-    })
     .addCustomEditor({
       name: 'Alertmanager',
       path: 'alertmanager',
@@ -26,5 +21,11 @@ export const plugin = new PanelPlugin<AlertGroupPanelOptions>(AlertGroupsPanel).
           />
         );
       },
+    })
+    .addTextInput({
+      description: 'Filter results by matching labels, ex: env=production,severity=~critical|warning',
+      name: 'Labels',
+      path: 'labels',
+      category: ['Filter'],
     });
 });
