@@ -59,7 +59,7 @@ const TopSection: FC<any> = () => {
   };
   const updateMenu = async () => {
     try {
-      const settings = await SettingsService.getSettings();
+      const settings = await SettingsService.getSettings(undefined, true);
 
       setShowDBaaS(!!settings.dbaasEnabled);
       setShowSTT(settings.sttEnabled);
