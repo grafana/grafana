@@ -109,7 +109,17 @@ func (p permissionEvaluator) Inject(params map[string]string) (Evaluator, error)
 }
 
 func (p permissionEvaluator) String() string {
-	return ""
+	b := strings.Builder{}
+	b.WriteString("action:")
+	b.WriteString(p.Action)
+	b.WriteString(" scopes:")
+	for i, scope := range p.Scopes {
+		if i != 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(scope)
+	}
+	return b.String()
 }
 
 var _ Evaluator = new(allEvaluator)
@@ -144,7 +154,14 @@ func (a allEvaluator) Inject(params map[string]string) (Evaluator, error) {
 }
 
 func (a allEvaluator) String() string {
-	return ""
+	b := strings.Builder{}
+	for i, a := range a.allOf {
+		if i != 0 {
+			b.WriteRune(' ')
+		}
+		b.WriteString(a.String())
+	}
+	return b.String()
 }
 
 var _ Evaluator = new(anyEvaluator)
@@ -183,5 +200,12 @@ func (a anyEvaluator) Inject(params map[string]string) (Evaluator, error) {
 }
 
 func (a anyEvaluator) String() string {
-	return ""
+	b := strings.Builder{}
+	for i, a := range a.anyOf {
+		if i != 0 {
+			b.WriteRune(' ')
+		}
+		b.WriteString(a.String())
+	}
+	return b.String()
 }
