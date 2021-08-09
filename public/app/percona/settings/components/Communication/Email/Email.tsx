@@ -73,7 +73,7 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings }) => {
                 icon="info-circle"
               />
             </div>
-            <TextInputField name="from" validators={[validators.required]} />
+            <TextInputField name="from" validators={[validators.required, validators.email]} />
 
             <div className={settingsStyles.labelWrapper}>
               <span>{Messages.fields.type.label}</span>
