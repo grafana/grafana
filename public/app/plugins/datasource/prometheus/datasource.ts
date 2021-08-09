@@ -521,7 +521,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       adjustedInterval = Math.max(stepInterval * intervalFactor, safeInterval);
     }
 
-    if (adjustedInterval < safeInterval) {
+    if (adjustedInterval === safeInterval) {
       this.isBelowSafeInterval = true;
     } else {
       this.isBelowSafeInterval = false;
