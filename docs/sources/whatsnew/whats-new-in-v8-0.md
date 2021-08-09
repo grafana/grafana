@@ -276,6 +276,7 @@ Support for Singlestat panel has been discontinued. When you upgrade to version 
 Stat panel is available as plugin.
 
 ### Grafana license update
+
 Grafana has updated its license from Apache 2.0 to the GNU Affero General Public License (AGPL). Please see the related [blog post](https://grafana.com/blog/2021/04/20/grafana-loki-tempo-relicensing-to-agplv3/), [Q&A](https://grafana.com/blog/2021/04/20/qa-with-our-ceo-on-relicensing/) and [license](https://github.com/grafana/grafana/blob/main/LICENSE) for more details.
 
 ## Enterprise features

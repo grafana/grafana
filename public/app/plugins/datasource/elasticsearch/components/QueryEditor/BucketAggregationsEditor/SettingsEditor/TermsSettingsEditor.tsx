@@ -23,7 +23,9 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
       <InlineField label="Order" {...inlineFieldProps}>
         <Select
           menuShouldPortal
-          onChange={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'order', e.value!))}
+          onChange={(e) =>
+            dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'order', newValue: e.value }))
+          }
           options={orderOptions}
           value={bucketAgg.settings?.order || bucketAggregationConfig.terms.defaultSettings?.order}
         />
@@ -36,8 +38,8 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
           {...useCreatableSelectPersistedBehaviour({
             options: sizeOptions,
             value: bucketAgg.settings?.size || bucketAggregationConfig.terms.defaultSettings?.size,
-            onChange(value) {
-              dispatch(changeBucketAggregationSetting(bucketAgg, 'size', value));
+            onChange(newValue) {
+              dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'size', newValue }));
             },
           })}
         />
@@ -45,7 +47,11 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
 
       <InlineField label="Min Doc Count" {...inlineFieldProps}>
         <Input
-          onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
+          onBlur={(e) =>
+            dispatch(
+              changeBucketAggregationSetting({ bucketAgg, settingName: 'min_doc_count', newValue: e.target.value })
+            )
+          }
           defaultValue={
             bucketAgg.settings?.min_doc_count || bucketAggregationConfig.terms.defaultSettings?.min_doc_count
           }
@@ -55,7 +61,9 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
       <InlineField label="Order By" {...inlineFieldProps}>
         <Select
           menuShouldPortal
-          onChange={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'orderBy', e.value!))}
+          onChange={(e) =>
+            dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'orderBy', newValue: e.value }))
+          }
           options={orderBy}
           value={bucketAgg.settings?.orderBy || bucketAggregationConfig.terms.defaultSettings?.orderBy}
         />
@@ -63,7 +71,9 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
 
       <InlineField label="Missing" {...inlineFieldProps}>
         <Input
-          onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'missing', e.target.value!))}
+          onBlur={(e) =>
+            dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'missing', newValue: e.target.value }))
+          }
           defaultValue={bucketAgg.settings?.missing || bucketAggregationConfig.terms.defaultSettings?.missing}
         />
       </InlineField>
