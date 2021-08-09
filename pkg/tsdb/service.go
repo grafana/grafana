@@ -18,22 +18,18 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
 // NewService returns a new Service.
 func NewService(cfg *setting.Cfg, _ *cloudwatch.CloudWatchService,
 	cloudMonitoringService *cloudmonitoring.Service, _ *azuremonitor.Service,
 	pluginManager plugins.Manager, postgresService *postgres.PostgresService,
-	httpClientProvider httpclient.Provider, _ *testdatasource.TestDataPlugin,
-	backendPluginManager backendplugin.Manager, _ *opentsdb.Service,
-	_ *graphite.Service, oauthTokenService *oauthtoken.Service) *Service {
+	httpClientProvider httpclient.Provider, backendPluginManager backendplugin.Manager,
+	_ *opentsdb.Service, _ *graphite.Service, oauthTokenService *oauthtoken.Service) *Service {
 	s := newService(cfg, pluginManager, backendPluginManager, oauthTokenService)
 
 	// register backend data sources using legacy plugin
 	// contracts/non-SDK contracts
-	s.registry["prometheus"] = prometheus.New(httpClientProvider)
 	s.registry["mssql"] = mssql.NewExecutor
 	s.registry["postgres"] = postgresService.NewExecutor
 	s.registry["mysql"] = mysql.New(httpClientProvider)
