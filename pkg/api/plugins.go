@@ -21,6 +21,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var permittedFileExts = []string{
+	".html", ".xhtml", ".css", ".js", ".json", ".jsonld", ".map", ".mjs",
+	".jpeg", ".jpg", ".png", ".gif", ".svg", ".webp", ".ico",
+	".woff", ".woff2", ".eot", ".ttf", ".otf",
+	".wav", ".mp3",
+	".md", ".pdf", ".txt",
+}
+
 func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
@@ -292,9 +300,9 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	if accessForbidden(fi, c.Req.URL.Path, plugin) {
+	if accessForbidden(fi) {
 		c.JsonApiErr(403, "Plugin file access forbidden",
-			fmt.Errorf("access is forbidden to executable plugin file %s", pluginFilePath))
+			fmt.Errorf("access is forbidden to plugin file %s", pluginFilePath))
 		return
 	}
 
@@ -441,22 +449,19 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	return response.Error(500, "Plugin request failed", err)
 }
 
-func accessForbidden(fi os.FileInfo, reqPath string, p *plugins.PluginBase) bool {
-	reqPath = strings.TrimPrefix(reqPath, "/")
-	isLogo := strings.EqualFold(reqPath, p.Info.Logos.Small) || strings.EqualFold(reqPath, p.Info.Logos.Large)
-	if isLogo {
-		return false
+func accessForbidden(fi os.FileInfo) bool {
+	ext := filepath.Ext(fi.Name())
+
+	match := false
+	for _, permittedExt := range permittedFileExts {
+		if strings.EqualFold(permittedExt, ext) {
+			match = true
+		}
+	}
+	if !match {
+		return true
 	}
 
-	fileNoExt := strings.TrimSuffix(reqPath, filepath.Ext(reqPath))
-	isModuleJS := strings.HasSuffix(fileNoExt, p.Module) && strings.HasSuffix(reqPath, "module.js")
-	if isModuleJS {
-		return false
-	}
-
-	isUnixExecutable := fi.Mode()&0111 == 0111
-	isWindowsExecutable := strings.EqualFold(filepath.Ext(fi.Name()), ".exe")
-	isScript := strings.EqualFold(filepath.Ext(fi.Name()), ".sh")
-
-	return isUnixExecutable || isWindowsExecutable || isScript
+	// is UNIX executable
+	return fi.Mode()&0111 == 0111
 }
