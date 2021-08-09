@@ -9,10 +9,10 @@ import (
 	"github.com/gobwas/glob"
 )
 
-// Scope builds scope from components seperated by ":"
-func Scope(components ...string) string {
+// Scope builds scope from parts seperated by ":"
+func Scope(parts ...string) string {
 	b := strings.Builder{}
-	for i, c := range components {
+	for i, c := range parts {
 		if i != 0 {
 			b.WriteRune(':')
 		}
@@ -21,7 +21,8 @@ func Scope(components ...string) string {
 	return b.String()
 }
 
-// Parameter returns scope injectable scope component
+// Parameter returns injectable scope part
+// e.g. Scope("users", Parameter(":id")) or "users:" + Parameter(":id")
 func Parameter(key string) string {
 	return fmt.Sprintf(`{{ index . "%s" }}`, key)
 }
