@@ -13,13 +13,11 @@
       ]
     },
     "editable": true,
-    "gnetId": null,
     "graphTooltip": 0,
     "id": 625,
     "links": [],
     "panels": [
       {
-        "datasource": null,
         "gridPos": {
           "h": 4,
           "w": 24,
@@ -38,13 +36,10 @@
             "target": ""
           }
         ],
-        "timeFrom": null,
-        "timeShift": null,
         "transparent": true,
         "type": "text"
       },
       {
-        "cacheTimeout": null,
         "datasource": "gdev-testdata",
         "gridPos": {
           "h": 8,
@@ -107,8 +102,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -166,7 +160,6 @@
         "type": "state-timeline"
       },
       {
-        "cacheTimeout": null,
         "datasource": "gdev-testdata",
         "gridPos": {
           "h": 15,
@@ -207,8 +200,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "blue",
-                  "value": null
+                  "color": "blue"
                 },
                 {
                   "color": "green",
@@ -293,8 +285,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "blue",
-                  "value": null
+                  "color": "blue"
                 },
                 {
                   "color": "green",
@@ -343,7 +334,6 @@
         "type": "timeseries"
       },
       {
-        "cacheTimeout": null,
         "datasource": "gdev-testdata",
         "gridPos": {
           "h": 13,
@@ -386,8 +376,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "blue",
-                  "value": null
+                  "color": "blue"
                 },
                 {
                   "color": "#EAB839",
@@ -473,8 +462,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "blue",
-                  "value": null
+                  "color": "blue"
                 },
                 {
                   "color": "#EAB839",
@@ -522,7 +510,6 @@
         "type": "status-history"
       },
       {
-        "cacheTimeout": null,
         "datasource": "gdev-testdata",
         "gridPos": {
           "h": 3,
@@ -573,8 +560,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -713,8 +699,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "blue",
-                  "value": null
+                  "color": "blue"
                 }
               ]
             },
@@ -757,7 +742,6 @@
         "type": "barchart"
       },
       {
-        "cacheTimeout": null,
         "datasource": "gdev-testdata",
         "gridPos": {
           "h": 3,
@@ -783,7 +767,6 @@
         "type": "text"
       },
       {
-        "cacheTimeout": null,
         "datasource": "gdev-testdata",
         "gridPos": {
           "h": 6,
@@ -848,8 +831,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -924,8 +906,6 @@
             "stringInput": ""
           }
         ],
-        "timeFrom": null,
-        "timeShift": null,
         "title": "Interpolation mode: smooth",
         "type": "timeseries"
       },
@@ -969,8 +949,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -1045,8 +1024,6 @@
             "stringInput": "1,20,90,30,5,0"
           }
         ],
-        "timeFrom": null,
-        "timeShift": null,
         "title": "Interpolation mode: Step before",
         "type": "timeseries"
       },
@@ -1090,8 +1067,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -1166,13 +1142,10 @@
             "stringInput": "1,20,90,30,5,0"
           }
         ],
-        "timeFrom": null,
-        "timeShift": null,
         "title": "Interpolation mode: Step after",
         "type": "timeseries"
       },
       {
-        "cacheTimeout": null,
         "datasource": "gdev-testdata",
         "gridPos": {
           "h": 8,
@@ -1240,8 +1213,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -1300,8 +1272,6 @@
             "stringInput": "10,11,12,11,10,11,12,12,11,10,9,10,11,12,10,10,11,12,13,11,10,9,10,11,12,13,14,10,10"
           }
         ],
-        "timeFrom": null,
-        "timeShift": null,
         "title": "Auto min max",
         "type": "timeseries"
       },
@@ -1351,8 +1321,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -1411,8 +1380,6 @@
             "stringInput": "10,11,12,11,10,11,12,12,11,10,9,10,11,12,200,10,11,12,13,11,10,9,10,11,12,13,14,10,10"
           }
         ],
-        "timeFrom": null,
-        "timeShift": null,
         "title": "Hard min 0, max 30",
         "type": "timeseries"
       },
@@ -1462,8 +1429,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -1522,13 +1488,10 @@
             "stringInput": "10,11,12,11,10,11,12,12,11,10,9,10,11,12,200,10,11,12,13,11,10,9,10,11,12,13,14,10,10"
           }
         ],
-        "timeFrom": null,
-        "timeShift": null,
         "title": "Soft min 0, soft max 30",
         "type": "timeseries"
       },
       {
-        "cacheTimeout": null,
         "datasource": "gdev-testdata",
         "gridPos": {
           "h": 5,
@@ -1595,8 +1558,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -1769,7 +1731,6 @@
         "type": "timeseries"
       },
       {
-        "cacheTimeout": null,
         "datasource": "gdev-testdata",
         "gridPos": {
           "h": 5,
@@ -1844,8 +1805,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -2170,8 +2130,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -2493,8 +2452,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -2573,7 +2531,6 @@
         "type": "timeseries"
       },
       {
-        "cacheTimeout": null,
         "datasource": "gdev-testdata",
         "gridPos": {
           "h": 3,
@@ -2620,8 +2577,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -2655,7 +2611,6 @@
           "y": 83
         },
         "id": 49,
-        "maxDataPoints": null,
         "options": {
           "bucketOffset": 0,
           "bucketSize": 10,
@@ -2719,8 +2674,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -2754,7 +2708,6 @@
           "y": 83
         },
         "id": 77,
-        "maxDataPoints": null,
         "options": {
           "showHeader": true
         },

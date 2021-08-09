@@ -19,12 +19,10 @@
     ]
   },
   "editable": true,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
     {
-      "datasource": null,
       "gridPos": {
         "h": 26,
         "w": 6,
@@ -34,7 +32,6 @@
       "id": 7,
       "links": [],
       "options": {
-        "folderId": null,
         "maxItems": 100,
         "query": "",
         "showHeadings": true,
@@ -45,13 +42,10 @@
       },
       "pluginVersion": "8.1.0-pre",
       "tags": [],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Starred",
       "type": "dashlist"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -75,13 +69,10 @@
       "tags": [
         "panel-tests"
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "tag: panel-tests",
       "type": "dashlist"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -91,7 +82,6 @@
       "id": 3,
       "links": [],
       "options": {
-        "folderId": null,
         "maxItems": 1000,
         "query": "",
         "showHeadings": false,
@@ -108,13 +98,10 @@
         "gdev",
         "demo"
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "tag: dashboard-demo",
       "type": "dashlist"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 26,
         "w": 6,
@@ -124,7 +111,6 @@
       "id": 5,
       "links": [],
       "options": {
-        "folderId": null,
         "maxItems": 1000,
         "query": "",
         "showHeadings": false,
@@ -141,13 +127,10 @@
         "gdev",
         "datasource-test"
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Data source tests",
       "type": "dashlist"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -173,13 +156,10 @@
         "templating",
         "gdev"
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "tag: templating ",
       "type": "dashlist"
     },
     {
-      "datasource": null,
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -205,8 +185,6 @@
         "gdev",
         "demo"
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "tag: transforms",
       "type": "dashlist"
     }
