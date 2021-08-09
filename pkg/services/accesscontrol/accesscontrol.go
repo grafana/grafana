@@ -13,7 +13,7 @@ type AccessControl interface {
 	// GetUserPermissions returns user permissions.
 	GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*Permission, error)
 
-	// Middleware checks if service disabled or not to switch to fallback authorization.
+	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 
 	// DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their

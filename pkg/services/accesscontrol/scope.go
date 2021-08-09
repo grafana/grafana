@@ -5,7 +5,8 @@ import (
 	"strings"
 )
 
-// Scope builds scope from parts seperated by ":"
+// Scope builds scope from parts
+// e.g. Scope("users", "*") return "users:*"
 func Scope(parts ...string) string {
 	b := strings.Builder{}
 	for i, c := range parts {
