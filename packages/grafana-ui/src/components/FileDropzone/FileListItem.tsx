@@ -54,7 +54,7 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
           <span className={styles.paddingLeft}>{Math.round((progress / file.size) * 100)}%</span>
           {abortUpload && (
             <Button variant="secondary" type="button" fill="text" onClick={abortUpload}>
-              Cancel
+              Cancel upload
             </Button>
           )}
         </>
@@ -79,7 +79,7 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
   return (
     <div className={styles.fileListContainer}>
       <span className={styles.fileNameWrapper}>
-        <Icon name="file-blank" size="lg" />
+        <Icon name="file-blank" size="lg" aria-hidden={true} />
         <span className={styles.padding}>{trimFileName(file.name)}</span>
         <span>{formattedValueToString(valueFormat)}</span>
       </span>
