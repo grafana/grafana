@@ -73,8 +73,6 @@ const (
 	}
 }
 `
-	//TODO: temporary until fix org isolation
-	mainOrgID = 1
 )
 
 type alertmanager struct {
@@ -277,7 +275,7 @@ func (am *alertmanager) SyncAndApplyConfigFromDatabase() error {
 	defer am.reloadConfigMtx.Unlock()
 
 	// First, let's get the configuration we need from the database.
-	q := &ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: mainOrgID}
+	q := &ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: am.orgID}
 	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
 		// If there's no configuration in the database, let's use the default configuration.
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
@@ -408,7 +406,7 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 }
 
 func (am *alertmanager) WorkingDirPath() string {
-	return filepath.Join(am.Settings.DataPath, workingDir, strconv.Itoa(mainOrgID))
+	return filepath.Join(am.Settings.DataPath, workingDir, strconv.Itoa(int(am.orgID)))
 }
 
 // buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
