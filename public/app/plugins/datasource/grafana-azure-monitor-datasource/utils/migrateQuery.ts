@@ -90,17 +90,20 @@ function migrateLogAnalyticsToFromTimes(query: AzureMonitorQuery): AzureMonitorQ
 
 function migrateToDefaultNamespace(query: AzureMonitorQuery): AzureMonitorQuery {
   if (
-    query.azureMonitor?.metricNamespace &&
-    query.azureMonitor.metricNamespace !== OLD_DEFAULT_DROPDOWN_VALUE &&
-    query.azureMonitor.metricDefinition
+    !query.azureMonitor ||
+    (query.azureMonitor?.metricNamespace &&
+      query.azureMonitor.metricNamespace !== OLD_DEFAULT_DROPDOWN_VALUE &&
+      query.azureMonitor.metricDefinition)
   ) {
     return query;
   }
 
-  if (!query.azureMonitor) {
+  if (!query.azureMonitor.metricDefinition) {
     return query;
   }
 
+  console.log('Performing migrateToDefaultNamespace migration');
+  // TODO: I'm still not totally sure of the intention of this migration - it still seems to trigger frequently on new queries...
   return {
     ...query,
     azureMonitor: {
