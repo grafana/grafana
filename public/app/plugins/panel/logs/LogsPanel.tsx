@@ -27,7 +27,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles(title, isAscending));
   const [scrollTop, setScrollTop] = useState(0);
-  const logsContainerRef = useRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>;
+  const logsContainerRef = useRef<HTMLDivElement>(null);
 
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
@@ -44,7 +44,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     } else {
       setScrollTop(0);
     }
-  }, [isAscending]);
+  }, [isAscending, logRows]);
 
   const getFieldLinks = useCallback(
     (field: Field, rowIndex: number) => {
