@@ -21,6 +21,7 @@ export const Messages = {
   fullLogs: 'Full logs',
   enabled: 'Enabled',
   retention: 'Retention (Number of backups - 0 for unlimited)',
+  scheduleSection: 'Schedule - UTC time',
   getModalTitle: (scheduleMode: boolean, edit: boolean) => {
     if (edit) {
       return scheduleMode ? 'Edit Scheduled backup' : 'Edit Backup on demand';
