@@ -115,5 +115,15 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
       "refId": "A",
     }
   }
+  range={
+    Object {
+      "from": "2020-01-01T00:00:00.000Z",
+      "raw": Object {
+        "from": "2020-01-01T00:00:00.000Z",
+        "to": "2020-01-02T00:00:00.000Z",
+      },
+      "to": "2020-01-02T00:00:00.000Z",
+    }
+  }
 />
 `;
