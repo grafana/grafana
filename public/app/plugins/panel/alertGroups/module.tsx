@@ -22,6 +22,12 @@ export const plugin = new PanelPlugin<AlertGroupPanelOptions>(AlertGroupsPanel).
         );
       },
     })
+    .addBooleanSwitch({
+      name: 'Expand all by default',
+      path: 'expandAll',
+      defaultValue: false,
+      category: ['Options'],
+    })
     .addTextInput({
       description: 'Filter results by matching labels, ex: env=production,severity=~critical|warning',
       name: 'Labels',

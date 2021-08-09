@@ -19,6 +19,7 @@ export const AlertGroupsPanel = (props: PanelProps<AlertGroupPanelOptions>) => {
   const dispatch = useDispatch();
   const isAlertingEnabled = config.featureToggles.ngalert;
 
+  const expandAll = props.options.expandAll;
   const alertManagerSourceName = props.options.alertmanager;
 
   const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups) || initialAsyncRequestState;
@@ -48,7 +49,7 @@ export const AlertGroupsPanel = (props: PanelProps<AlertGroupPanelOptions>) => {
         <div>
           {hasResults &&
             filteredResults.map((group) => {
-              return <AlertGroup key={JSON.stringify(group.labels)} group={group} />;
+              return <AlertGroup key={JSON.stringify(group.labels)} group={group} expandAll={expandAll} />;
             })}
           {!hasResults && 'No alerts'}
         </div>

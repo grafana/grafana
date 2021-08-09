@@ -11,10 +11,11 @@ import { getNotificationsTextColors } from 'app/features/alerting/unified/styles
 
 type Props = {
   group: AlertmanagerGroup;
+  expandAll: boolean;
 };
 
-export const AlertGroup = ({ group }: Props) => {
-  const [showAlerts, setShowAlerts] = useState(false);
+export const AlertGroup = ({ group, expandAll }: Props) => {
+  const [showAlerts, setShowAlerts] = useState(expandAll);
   const styles = useStyles2(getStyles);
   const textStyles = useStyles2(getNotificationsTextColors);
 
