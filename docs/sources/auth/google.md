@@ -29,15 +29,18 @@ First, you need to create a Google OAuth Client:
 Specify the Client ID and Secret in the [Grafana configuration file]({{< relref "../administration/configuration.md#config-file-locations" >}}). For example:
 
 ```bash
+#################################### Google Auth #########################
 [auth.google]
-enabled = true
-client_id = CLIENT_ID
-client_secret = CLIENT_SECRET
+enabled = false
+allow_sign_up = true
+client_id = some_client_id
+client_secret =
 scopes = https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
 auth_url = https://accounts.google.com/o/oauth2/auth
 token_url = https://accounts.google.com/o/oauth2/token
+api_url = https://www.googleapis.com/oauth2/v1/userinfo
 allowed_domains = mycompany.com mycompany.org
-allow_sign_up = true
+hosted_domain =
 ```
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
