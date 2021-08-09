@@ -9,17 +9,19 @@ import (
 	"github.com/gobwas/glob"
 )
 
-func Combine(scopes ...string) string {
+// Scope builds scopes from components seperated by ":"
+func Scope(components ...string) string {
 	b := strings.Builder{}
-	for i, s := range scopes {
+	for i, c := range components {
 		if i != 0 {
 			b.WriteRune(':')
 		}
-		b.WriteString(s)
+		b.WriteString(c)
 	}
 	return b.String()
 }
 
+// Parameter returns scope injectable scope component
 func Parameter(key string) string {
 	return fmt.Sprintf(`{{ index . "%s" }}`, key)
 }

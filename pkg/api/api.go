@@ -163,7 +163,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// users (admin permission required)
 		apiRoute.Group("/users", func(usersRoute routing.RouteRegister) {
-			userIDScope := ac.Combine("global", "users", ac.Parameter(":id"))
+			userIDScope := ac.Scope("global", "users", ac.Parameter(":id"))
 			usersRoute.Get("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(SearchUsers))
 			usersRoute.Get("/search", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(SearchUsersWithPaging))
 			usersRoute.Get("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(GetUserByID))
@@ -202,7 +202,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// current org
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
-			userIDScope := ac.Combine("users", ac.Parameter(":userId"))
+			userIDScope := ac.Scope("users", ac.Parameter(":userId"))
 			orgRoute.Put("/", reqOrgAdmin, bind(dtos.UpdateOrgForm{}), routing.Wrap(UpdateOrgCurrent))
 			orgRoute.Put("/address", reqOrgAdmin, bind(dtos.UpdateOrgAddressForm{}), routing.Wrap(UpdateOrgAddressCurrent))
 			orgRoute.Get("/users", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead, ac.ScopeUsersAll)), routing.Wrap(hs.GetOrgUsersForCurrentOrg))
@@ -234,7 +234,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// orgs (admin routes)
 		apiRoute.Group("/orgs/:orgId", func(orgsRoute routing.RouteRegister) {
-			userIDScope := ac.Combine("users", ac.Parameter(":userId"))
+			userIDScope := ac.Scope("users", ac.Parameter(":userId"))
 			orgsRoute.Get("/", reqGrafanaAdmin, routing.Wrap(GetOrgByID))
 			orgsRoute.Put("/", reqGrafanaAdmin, bind(dtos.UpdateOrgForm{}), routing.Wrap(UpdateOrg))
 			orgsRoute.Put("/address", reqGrafanaAdmin, bind(dtos.UpdateOrgAddressForm{}), routing.Wrap(UpdateOrgAddress))
@@ -456,7 +456,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Administering users
 	r.Group("/api/admin/users", func(adminUserRoute routing.RouteRegister) {
-		userIDScope := ac.Combine("global", "users", ac.Parameter(":id"))
+		userIDScope := ac.Scope("global", "users", ac.Parameter(":id"))
 
 		adminUserRoute.Post("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersCreate)), bind(dtos.AdminCreateUserForm{}), routing.Wrap(hs.AdminCreateUser))
 		adminUserRoute.Put("/:id/password", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersPasswordUpdate, userIDScope)), bind(dtos.AdminUpdateUserPasswordForm{}), routing.Wrap(AdminUpdateUserPassword))

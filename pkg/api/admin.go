@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -76,5 +75,5 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 }
 
 func getSettingsScope(section, key string) string {
-	return fmt.Sprintf("settings:%s:%s", section, key)
+	return ac.Scope("settings", section, key)
 }
