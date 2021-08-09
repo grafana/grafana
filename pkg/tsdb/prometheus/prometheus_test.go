@@ -69,9 +69,12 @@ func TestPrometheus(t *testing.T) {
 			"stepMode": "exact",
 			"interval": "7s"
 		}`)
-		timerange := plugins.NewDataTimeRange("12h", "now")
-		query.TimeRange = &timerange
-		models, err := executor.parseQuery(dsInfo, query)
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+		query.TimeRange = timeRange
+		models, err := service.parseQuery([]backend.DataQuery{query})
 		require.NoError(t, err)
 		require.Equal(t, time.Second*7, models[0].Step)
 	})
@@ -84,9 +87,12 @@ func TestPrometheus(t *testing.T) {
 			"stepMode": "max",
 			"interval": "6s"
 		}`)
-		timerange := plugins.NewDataTimeRange("12h", "now")
-		query.TimeRange = &timerange
-		models, err := executor.parseQuery(dsInfo, query)
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+		query.TimeRange = timeRange
+		models, err := service.parseQuery([]backend.DataQuery{query})
 		require.NoError(t, err)
 		require.Equal(t, time.Second*6, models[0].Step)
 	})
@@ -99,9 +105,12 @@ func TestPrometheus(t *testing.T) {
 			"stepMode": "max",
 			"interval": "100s"
 		}`)
-		timerange := plugins.NewDataTimeRange("12h", "now")
-		query.TimeRange = &timerange
-		models, err := executor.parseQuery(dsInfo, query)
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+		query.TimeRange = timeRange
+		models, err := service.parseQuery([]backend.DataQuery{query})
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, models[0].Step)
 	})
@@ -114,9 +123,12 @@ func TestPrometheus(t *testing.T) {
 			"stepMode": "max",
 			"interval": "2s"
 		}`)
-		timerange := plugins.NewDataTimeRange("12h", "now")
-		query.TimeRange = &timerange
-		models, err := executor.parseQuery(dsInfo, query)
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+		query.TimeRange = timeRange
+		models, err := service.parseQuery([]backend.DataQuery{query})
 		require.NoError(t, err)
 		require.Equal(t, time.Second*5, models[0].Step)
 	})

@@ -30,6 +30,7 @@ import (
 var (
 	plog         = log.New("tsdb.prometheus")
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	safeRes      = 11000
 )
 
 type DatasourceInfo struct {
@@ -236,27 +237,27 @@ func (s *Service) parseQuery(queries []backend.DataQuery) (
 
 		start := queryModel.TimeRange.From
 		end := queryModel.TimeRange.To
+		queryInterval := jsonModel.Get("interval").MustString("")
 
-		dsInterval, err := tsdb.GetIntervalFrom("", "", 0, 15*time.Second)
-		hasQueryInterval := queryModel.Model.Get("interval").MustString("") != ""
+		dsInterval, err := tsdb.GetIntervalFrom(queryInterval, "", 0, 15*time.Second)
+		hasQueryInterval := queryInterval != ""
 		// Only use stepMode if we have interval in query, otherwise use "min"
 		if hasQueryInterval {
-			intervalMode = queryModel.Model.Get("stepMode").MustString("min")
+			intervalMode = jsonModel.Get("stepMode").MustString("min")
 		} else {
 			intervalMode = "min"
 		}
 
 		// Calculate interval value from query or data source settings or use default value
-		intervalValue, err := interval.GetIntervalFrom(dsInfo, queryModel.Model, time.Second*15)
 		if err != nil {
 			return nil, err
 		}
 
-		calculatedInterval, err := e.intervalCalculator.Calculate(*query.TimeRange, intervalValue, intervalMode)
+		calculatedInterval, err := s.intervalCalculator.Calculate(queries[0].TimeRange, dsInterval, tsdb.IntervalMode(intervalMode))
 		if err != nil {
 			return nil, err
 		}
-		safeInterval := e.intervalCalculator.CalculateSafeInterval(*query.TimeRange, safeRes)
+		safeInterval := s.intervalCalculator.CalculateSafeInterval(queries[0].TimeRange, int64(safeRes))
 
 		if calculatedInterval.Value > safeInterval.Value {
 			adjustedInterval = calculatedInterval.Value
@@ -264,7 +265,7 @@ func (s *Service) parseQuery(queries []backend.DataQuery) (
 			adjustedInterval = safeInterval.Value
 		}
 
-		intervalFactor := queryModel.Model.Get("intervalFactor").MustInt64(1)
+		intervalFactor := jsonModel.Get("intervalFactor").MustInt64(1)
 		step := time.Duration(int64(adjustedInterval) * intervalFactor)
 
 		qs = append(qs, &PrometheusQuery{
