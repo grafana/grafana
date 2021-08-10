@@ -1,5 +1,5 @@
-import { GrafanaTheme, urlUtil } from '@grafana/data';
-import { useStyles, LinkButton, withErrorBoundary } from '@grafana/ui';
+import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { useStyles2, LinkButton, withErrorBoundary } from '@grafana/ui';
 import React, { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -28,7 +28,7 @@ const VIEWS = {
 export const RuleList = withErrorBoundary(
   () => {
     const dispatch = useDispatch();
-    const styles = useStyles(getStyles);
+    const styles = useStyles2(getStyles);
     const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
     const location = useLocation();
 
@@ -97,15 +97,15 @@ export const RuleList = withErrorBoundary(
   { style: 'page' }
 );
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   break: css`
     width: 100%;
     height: 0;
-    margin-bottom: ${theme.spacing.md};
-    border-bottom: solid 1px ${theme.colors.border2};
+    margin-bottom: ${theme.spacing(2)};
+    border-bottom: solid 1px ${theme.colors.border.medium};
   `,
   buttonsContainer: css`
-    margin-bottom: ${theme.spacing.md};
+    margin-bottom: ${theme.spacing(2)};
     display: flex;
     justify-content: space-between;
   `,

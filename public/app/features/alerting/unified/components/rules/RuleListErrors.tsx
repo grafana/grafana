@@ -1,5 +1,6 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
-import { Alert, Button } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { useMemo, ReactElement, useState } from 'react';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -8,8 +9,10 @@ import { isRulerNotSupportedResponse } from '../../utils/rules';
 
 export function RuleListErrors(): ReactElement {
   const [expanded, setExpanded] = useState(false);
+  const [closed, setClosed] = useState(false);
   const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
+  const styles = useStyles2(getStyles);
 
   const errors = useMemo((): JSX.Element[] => {
     const [promRequestErrors, rulerRequestErrors] = [promRuleRequests, rulerRuleRequests].map((requests) =>
@@ -59,14 +62,19 @@ export function RuleListErrors(): ReactElement {
 
   return (
     <>
-      {errors.length && (
-        <Alert data-testid="cloud-rulessource-errors" title="Errors loading rules" severity="error">
+      {errors.length && !closed && (
+        <Alert
+          data-testid="cloud-rulessource-errors"
+          title="Errors loading rules"
+          severity="error"
+          onRemove={() => setClosed(true)}
+        >
           {expanded && errors.map((item, idx) => <div key={idx}>{item}</div>)}
           {!expanded && (
             <>
               <div>{errors[0]}</div>
               {errors.length >= 2 && (
-                <Button variant="link" onClick={() => setExpanded(true)}>
+                <Button className={styles.moreButton} variant="link" size="sm" onClick={() => setExpanded(true)}>
                   {errors.length - 1} more error{errors.length === 2 ? '' : 's'}
                 </Button>
               )}
@@ -77,3 +85,9 @@ export function RuleListErrors(): ReactElement {
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  moreButton: css`
+    padding: 0;
+  `,
+});
