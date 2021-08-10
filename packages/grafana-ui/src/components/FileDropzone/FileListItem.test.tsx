@@ -30,7 +30,7 @@ describe('The FileListItem component', () => {
   it('should show a progressbar when the progress prop has a value', () => {
     render(<FileListItem file={{ file: file({}), id: '1', error: null, progress: 6 }} />);
 
-    expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
+    expect(screen.queryByText('Cancel upload')).not.toBeInTheDocument();
     expect(screen.getByText('46%')).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
@@ -45,7 +45,7 @@ describe('The FileListItem component', () => {
     const abortUpload = jest.fn();
     render(<FileListItem file={{ file: file({}), id: '1', error: null, progress: 6, abortUpload }} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
     expect(abortUpload).toBeCalledTimes(1);
   });
