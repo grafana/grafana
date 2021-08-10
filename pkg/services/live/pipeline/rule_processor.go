@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
@@ -10,58 +9,48 @@ import (
 
 type RuleProcessor struct {
 	pipeline           *Pipeline
-	autoJsonConverter  *autoJsonConverter
-	exactJsonConverter *exactJsonConverter
+	autoJsonConverter  *AutoJsonConverter
+	exactJsonConverter *ExactJsonConverter
 	frameStorage       *FrameStorage
 }
 
 func NewRuleProcessor(pipeline *Pipeline) *RuleProcessor {
 	return &RuleProcessor{
-		pipeline:           pipeline,
-		autoJsonConverter:  newJSONConverter(),
-		exactJsonConverter: newExactJsonConverter(),
-		frameStorage:       NewFrameStorage(),
+		pipeline:     pipeline,
+		frameStorage: NewFrameStorage(),
 	}
 }
 
-func (p *RuleProcessor) DataToFrame(_ context.Context, orgID int64, channel string, body []byte) (*data.Frame, error) {
+func (p *RuleProcessor) DataToFrame(ctx context.Context, orgID int64, channel string, body []byte) (*data.Frame, bool, error) {
 	rule, ruleOk, err := p.pipeline.Get(orgID, channel)
 	if err != nil {
 		logger.Error("Error getting rule", "error", err, "data", string(body))
-		return nil, err
+		return nil, false, err
 	}
 	if !ruleOk {
-		return nil, nil
+		return nil, false, nil
 	}
 
 	liveChannel, _ := live.ParseChannel(channel)
 
-	var frame *data.Frame
-
-	if rule.ConversionMode == ConversionModeAuto || rule.ConversionMode == ConversionModeTip {
-		fields := map[string]Field{}
-		if rule.Fields != nil {
-			for _, field := range rule.Fields {
-				fields[field.Name] = field
-			}
-		}
-		frame, err = p.autoJsonConverter.Convert(liveChannel.Path, body, fields)
-		if err != nil {
-			logger.Error("Error converting JSON", "error", err)
-			return nil, err
-		}
-	} else if rule.ConversionMode == ConversionModeExact {
-		frame, err = p.exactJsonConverter.Convert(liveChannel.Path, body, rule.Fields)
-		if err != nil {
-			logger.Error("Error converting JSON", "error", err)
-			return nil, err
-		}
-	} else {
-		logger.Error("Unknown mode", "mode", rule.ConversionMode)
-		return nil, errors.New("unknown mode")
+	vars := Vars{
+		OrgID:     orgID,
+		Scope:     liveChannel.Scope,
+		Namespace: liveChannel.Namespace,
+		Path:      liveChannel.Path,
 	}
 
-	return frame, nil
+	if rule.Converter == nil {
+		return nil, false, nil
+	}
+
+	frame, err := rule.Converter.Convert(ctx, vars, body)
+	if err != nil {
+		logger.Error("Error converting data", "error", err)
+		return nil, false, err
+	}
+
+	return frame, true, nil
 }
 
 func (p *RuleProcessor) ProcessFrame(ctx context.Context, orgID int64, channel string, frame *data.Frame) error {
@@ -76,11 +65,11 @@ func (p *RuleProcessor) ProcessFrame(ctx context.Context, orgID int64, channel s
 
 	liveChannel, _ := live.ParseChannel(channel)
 	vars := ProcessorVars{
-		Scope:     liveChannel.Scope,
-		Namespace: liveChannel.Namespace,
-		Path:      liveChannel.Path,
 		Vars: Vars{
-			OrgID: orgID,
+			OrgID:     orgID,
+			Scope:     liveChannel.Scope,
+			Namespace: liveChannel.Namespace,
+			Path:      liveChannel.Path,
 		},
 	}
 

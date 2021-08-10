@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"time"
@@ -10,7 +11,13 @@ import (
 	"github.com/ohler55/ojg/oj"
 )
 
-type exactJsonConverter struct{}
+type ExactJsonConverter struct {
+	Fields []Field
+}
+
+func NewExactJsonConverter(fields []Field) *ExactJsonConverter {
+	return &ExactJsonConverter{Fields: fields}
+}
 
 // Automatic conversion works this way:
 // * Time added automatically
@@ -18,7 +25,7 @@ type exactJsonConverter struct{}
 // To preserve nulls and extract time we need tips from a user:
 // * Field types
 // * Time column with time format
-func (c *exactJsonConverter) Convert(name string, payload []byte, exactFields []Field) (*data.Frame, error) {
+func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, payload []byte) (*data.Frame, error) {
 	obj, err := oj.Parse(payload)
 	if err != nil {
 		return nil, err
@@ -26,7 +33,7 @@ func (c *exactJsonConverter) Convert(name string, payload []byte, exactFields []
 
 	var fields []*data.Field
 
-	for _, f := range exactFields {
+	for _, f := range c.Fields {
 		field := data.NewFieldFromFieldType(f.Type, 1)
 		field.Name = f.Name
 		if strings.HasPrefix(f.Value, "$") {
@@ -108,12 +115,8 @@ func (c *exactJsonConverter) Convert(name string, payload []byte, exactFields []
 		fields = append(fields, field)
 	}
 
-	frame := data.NewFrame(name, fields...)
+	frame := data.NewFrame(vars.Path, fields...)
 	//s, _ := frame.StringTable(10, 10)
 	//println(s)
 	return frame, nil
-}
-
-func newExactJsonConverter() *exactJsonConverter {
-	return &exactJsonConverter{}
 }

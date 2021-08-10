@@ -45,33 +45,31 @@ type fakeStorage struct {
 func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChannelRuleCommand) ([]*pipeline.LiveChannelRule, error) {
 	return []*pipeline.LiveChannelRule{
 		{
-			OrgId:          1,
-			Pattern:        "stream/test/auto",
-			ConversionMode: pipeline.ConversionModeAuto,
-			Outputter:      pipeline.NewManagedStreamOutput(f.gLive),
+			OrgId:     1,
+			Pattern:   "stream/test/auto",
+			Converter: pipeline.NewAutoJsonConverter(nil),
+			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
 		},
 		{
-			OrgId:          1,
-			Pattern:        "stream/test/tip",
-			ConversionMode: pipeline.ConversionModeTip,
-			Fields: []pipeline.Field{
-				{
+			OrgId:   1,
+			Pattern: "stream/test/tip",
+			Converter: pipeline.NewAutoJsonConverter(map[string]pipeline.Field{
+				"value3": {
 					Name: "value3",
 					Type: data.FieldTypeNullableFloat64,
 				},
-				{
+				"value4": {
 					Name: "value4",
 					Type: data.FieldTypeNullableFloat64,
 				},
-			},
+			}),
 			Processor: pipeline.NewDropFieldsProcessor("value2"),
 			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
 		},
 		{
-			OrgId:          1,
-			Pattern:        "stream/test/exact",
-			ConversionMode: pipeline.ConversionModeExact,
-			Fields: []pipeline.Field{
+			OrgId:   1,
+			Pattern: "stream/test/exact",
+			Converter: pipeline.NewExactJsonConverter([]pipeline.Field{
 				{
 					Name:  "time",
 					Type:  data.FieldTypeTime,
@@ -124,7 +122,7 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					Type:  data.FieldTypeNullableFloat64,
 					Value: "{Object.keys(JSON.parse(x).map).length}",
 				},
-			},
+			}),
 			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
 				pipeline.NewManagedStreamOutput(f.gLive),
 				pipeline.NewRemoteWriteOutput(pipeline.RemoteWriteConfig{
@@ -156,9 +154,8 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 			}),
 		},
 		{
-			OrgId:          1,
-			Pattern:        "stream/test/exact/value3/changes",
-			ConversionMode: pipeline.ConversionModeAuto,
+			OrgId:   1,
+			Pattern: "stream/test/exact/value3/changes",
 			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
 				pipeline.NewManagedStreamOutput(f.gLive),
 				pipeline.NewRemoteWriteOutput(pipeline.RemoteWriteConfig{
@@ -170,17 +167,15 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 			}),
 		},
 		{
-			OrgId:          1,
-			Pattern:        "stream/test/exact/annotation/changes",
-			ConversionMode: pipeline.ConversionModeAuto,
-			Outputter:      pipeline.NewManagedStreamOutput(f.gLive),
+			OrgId:     1,
+			Pattern:   "stream/test/exact/annotation/changes",
+			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
 		},
 		{
-			OrgId:          1,
-			Pattern:        "stream/test/exact/threshold",
-			ConversionMode: pipeline.ConversionModeAuto,
-			Processor:      pipeline.NewDropFieldsProcessor("running"),
-			Outputter:      pipeline.NewManagedStreamOutput(f.gLive),
+			OrgId:     1,
+			Pattern:   "stream/test/exact/threshold",
+			Processor: pipeline.NewDropFieldsProcessor("running"),
+			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
 		},
 	}, nil
 }
@@ -273,10 +268,13 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 
 	channel := "stream/" + streamID + "/" + path
 
-	frame, err := g.ruleProcessor.DataToFrame(context.Background(), ctx.OrgId, channel, body)
+	frame, ok, err := g.ruleProcessor.DataToFrame(context.Background(), ctx.OrgId, channel, body)
 	if err != nil {
 		logger.Error("Error data to frame", "error", err, "body", string(body))
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if !ok {
 		return
 	}
 

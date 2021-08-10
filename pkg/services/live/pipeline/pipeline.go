@@ -28,12 +28,11 @@ func (s *Pipeline) Get(orgID int64, channel string) (*LiveChannelRule, bool, err
 }
 
 type LiveChannelRule struct {
-	OrgId          int64
-	Pattern        string
-	ConversionMode ConversionMode
-	Fields         []Field
-	Processor      Processor
-	Outputter      Outputter
+	OrgId     int64
+	Pattern   string
+	Converter Converter
+	Processor Processor
+	Outputter Outputter
 }
 
 type Label struct {
@@ -64,14 +63,14 @@ type Storage interface {
 }
 
 type Vars struct {
-	OrgID int64
+	OrgID     int64
+	Scope     string
+	Namespace string
+	Path      string
 }
 
 type ProcessorVars struct {
 	Vars
-	Scope     string
-	Namespace string
-	Path      string
 }
 
 type OutputVars struct {
