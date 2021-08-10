@@ -67,4 +67,5 @@ const defaultSettings: DataSourceInstanceSettings = {
   name: 'zipkin',
   meta: {} as any,
   jsonData: {},
+  access: 'proxy',
 };
