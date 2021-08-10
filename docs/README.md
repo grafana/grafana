@@ -58,6 +58,6 @@ Images are currently hosted in the grafana/website repo.
 When a PR is merged with changes in the `docs/sources` directory, those changes are automatically synced by a GitHub action (`.github/workflows/publish.yml`) to the grafana/website repo.
 
 * A PR targeting the `main` branch will sync to the `content/docs/grafana/next` directory in the website repo, and publish to https://grafana.com/docs/grafana/next/.
-* A PR targeting the latest/current release branch will sync to the `content/docs/grafana/latest` directory in the website repo, and publish to https://grafana.com/docs/grafana/latest/.
+* A PR targeting the `latest/current` release branch syncs to the `content/docs/grafana/latest` directory in the `website` repository, and publishes to `https://grafana.com/docs/grafana/latest/`.
 
 Once the sync is complete, the website will automatically publish to production - no further action is needed.
