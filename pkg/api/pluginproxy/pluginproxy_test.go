@@ -5,6 +5,11 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/encryption"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
@@ -16,6 +21,8 @@ import (
 )
 
 func TestPluginProxy(t *testing.T) {
+	_ = setupSecretService(t)
+
 	t.Run("When getting proxy headers", func(t *testing.T) {
 		route := &plugins.AppPluginRoute{
 			Headers: []plugins.AppPluginRouteHeader{
@@ -26,7 +33,7 @@ func TestPluginProxy(t *testing.T) {
 		setting.SecretKey = "password"
 
 		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
-			key, err := util.Encrypt([]byte("123"), "password")
+			key, err := util.Encrypt([]byte("123"), util.WithoutScope())
 			if err != nil {
 				return err
 			}
@@ -200,4 +207,22 @@ func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.
 	require.NoError(t, err)
 	proxy.Director(req)
 	return req
+}
+
+func setupSecretService(t *testing.T) secrets.SecretsService {
+	t.Helper()
+	raw, err := ini.Load([]byte(`
+[security]
+secret_key = SdlklWklckeLS
+`))
+	require.NoError(t, err)
+	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
+
+	s := secrets.SecretsService{
+		SQLStore: sqlstore.InitTestDB(t),
+		Enc:      &encryption.OSSEncryptionService{},
+		Settings: settings,
+	}
+	require.NoError(t, s.Init())
+	return s
 }

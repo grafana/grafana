@@ -8,6 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/encryption"
+	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -26,6 +31,7 @@ func TestUserAuth(t *testing.T) {
 		UserProtectionService: OSSUserProtectionImpl{},
 	}
 	srv.Init()
+	_ = setupSecretService(t)
 
 	t.Run("Given 5 users", func(t *testing.T) {
 		for i := 0; i < 5; i++ {
@@ -256,4 +262,22 @@ func TestUserAuth(t *testing.T) {
 			require.Nil(t, user)
 		})
 	})
+}
+
+func setupSecretService(t *testing.T) secrets.SecretsService {
+	t.Helper()
+	raw, err := ini.Load([]byte(`
+[security]
+secret_key = SdlklWklckeLS
+`))
+	require.NoError(t, err)
+	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
+
+	s := secrets.SecretsService{
+		SQLStore: sqlstore.InitTestDB(t),
+		Enc:      &encryption.OSSEncryptionService{},
+		Settings: settings,
+	}
+	require.NoError(t, s.Init())
+	return s
 }

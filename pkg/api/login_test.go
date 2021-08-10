@@ -110,6 +110,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 		License:          &licensing.OSSLicensingService{},
 		SocialService:    &mockSocialService{},
 	}
+	_ = setupSecretService(t)
 
 	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
 		hs.LoginView(c)
@@ -121,7 +122,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	setting.OAuthAutoLogin = true
 
 	oauthError := errors.New("User not a member of one of the required organizations")
-	encryptedError, err := util.Encrypt([]byte(oauthError.Error()))
+	encryptedError, err := util.Encrypt([]byte(oauthError.Error()), util.WithoutScope())
 	require.NoError(t, err)
 	expCookiePath := "/"
 	if len(setting.AppSubUrl) > 0 {

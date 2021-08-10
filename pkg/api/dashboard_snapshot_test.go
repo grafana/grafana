@@ -26,6 +26,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 		t.Cleanup(s.Close)
 		return s
 	}
+	_ = setupSecretService(t)
 
 	jsonModel, err := simplejson.NewJson([]byte(`{"id":100}`))
 	require.NoError(t, err)

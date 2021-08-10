@@ -8,6 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/encryption"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"gopkg.in/ini.v1"
+
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -21,6 +26,8 @@ import (
 
 //nolint:goconst
 func TestDataSource_GetHttpTransport(t *testing.T) {
+	_ = setupSecretService(t)
+
 	t.Run("Should use cached proxy", func(t *testing.T) {
 		var configuredTransport *http.Transport
 		provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
@@ -66,7 +73,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 
-		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
+		tlsCaCert, err := util.Encrypt([]byte(caCert), util.WithoutScope())
 		require.NoError(t, err)
 		ds := DataSource{
 			Id:             1,
@@ -112,9 +119,9 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsAuth", true)
 
-		tlsClientCert, err := util.Encrypt([]byte(clientCert), "password")
+		tlsClientCert, err := util.Encrypt([]byte(clientCert), util.WithoutScope())
 		require.NoError(t, err)
-		tlsClientKey, err := util.Encrypt([]byte(clientKey), "password")
+		tlsClientKey, err := util.Encrypt([]byte(clientKey), util.WithoutScope())
 		require.NoError(t, err)
 
 		ds := DataSource{
@@ -152,7 +159,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		json.Set("tlsAuthWithCACert", true)
 		json.Set("serverName", "server-name")
 
-		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
+		tlsCaCert, err := util.Encrypt([]byte(caCert), util.WithoutScope())
 		require.NoError(t, err)
 
 		ds := DataSource{
@@ -216,7 +223,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		json := simplejson.NewFromAny(map[string]interface{}{
 			"httpHeaderName1": "Authorization",
 		})
-		encryptedData, err := util.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), setting.SecretKey)
+		encryptedData, err := util.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), util.WithoutScope())
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -573,3 +580,21 @@ Wtnpl+TdAoGAGqKqo2KU3JoY3IuTDUk1dsNAm8jd9EWDh+s1x4aG4N79mwcss5GD
 FF8MbFPneK7xQd8L6HisKUDAUi2NOyynM81LAftPkvN6ZuUVeFDfCL4vCA0HUXLD
 +VrOhtUZkNNJlLMiVRJuQKUOGlg8PpObqYbstQAf/0/yFJMRHG82Tcg=
 -----END RSA PRIVATE KEY-----`
+
+func setupSecretService(t *testing.T) secrets.SecretsService {
+	t.Helper()
+	raw, err := ini.Load([]byte(`
+[security]
+secret_key = SdlklWklckeLS
+`))
+	require.NoError(t, err)
+	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
+
+	s := secrets.SecretsService{
+		SQLStore: sqlstore.InitTestDB(t),
+		Enc:      &encryption.OSSEncryptionService{},
+		Settings: settings,
+	}
+	require.NoError(t, s.Init())
+	return s
+}

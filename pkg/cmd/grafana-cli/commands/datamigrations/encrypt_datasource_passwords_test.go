@@ -5,6 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/encryption"
+	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
@@ -18,6 +23,7 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	sqlstore := sqlstore.InitTestDB(t)
 	session := sqlstore.NewSession(context.Background())
 	defer session.Close()
+	_ = setupSecretService(t)
 
 	datasources := []*models.DataSource{
 		{Type: "influxdb", Name: "influxdb", Password: "foobar", Uid: "influx"},
@@ -89,4 +95,22 @@ func TestPasswordMigrationCommand(t *testing.T) {
 			assert.Equal(t, key, "value", "expected existing key to be kept intact in securejson")
 		}
 	}
+}
+
+func setupSecretService(t *testing.T) secrets.SecretsService {
+	t.Helper()
+	raw, err := ini.Load([]byte(`
+[security]
+secret_key = SdlklWklckeLS
+`))
+	require.NoError(t, err)
+	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
+
+	s := secrets.SecretsService{
+		SQLStore: sqlstore.InitTestDB(t),
+		Enc:      &encryption.OSSEncryptionService{},
+		Settings: settings,
+	}
+	require.NoError(t, s.Init())
+	return s
 }

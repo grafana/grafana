@@ -30,6 +30,7 @@ import (
 
 func TestDataSourceProxy_routeRule(t *testing.T) {
 	httpClientProvider := httpclient.NewProvider()
+	_ = setupSecretService(t)
 
 	t.Run("Plugin with routes", func(t *testing.T) {
 		plugin := &plugins.DataSourcePlugin{
@@ -85,7 +86,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password" //nolint:goconst
 
-		key, err := util.Encrypt([]byte("123"), "password")
+		key, err := util.Encrypt([]byte("123"), util.WithoutScope())
 		require.NoError(t, err)
 
 		ds := &models.DataSource{
@@ -223,7 +224,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password"
 
-		key, err := util.Encrypt([]byte("123"), "password")
+		key, err := util.Encrypt([]byte("123"), util.WithoutScope())
 		require.NoError(t, err)
 
 		ds := &models.DataSource{
