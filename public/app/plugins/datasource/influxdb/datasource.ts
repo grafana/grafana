@@ -182,10 +182,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return true;
   }
 
-  /**
-   * Only applied on flux queries
-   */
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
+    // this only works in flux-mode, it should not be called in non-flux-mode
+    if (!this.isFlux) {
+      throw new Error('applyTemplateVariables called in influxql-mode. this should never happen');
+    }
+
     return {
       ...query,
       query: this.templateSrv.replace(query.query ?? '', scopedVars), // The raw query text
