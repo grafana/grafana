@@ -1,5 +1,11 @@
 import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta, ScopedVars } from '@grafana/data';
-import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+import {
+  GrafanaAlertStateDecision,
+  GrafanaRuleDefinition,
+  PromAlertingRuleState,
+  PromRuleType,
+  RulerGrafanaRuleDTO,
+} from 'app/types/unified-alerting-dto';
 import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
@@ -17,7 +23,7 @@ let nextDataSourceId = 1;
 export const mockDataSource = (
   partial: Partial<DataSourceInstanceSettings> = {},
   meta: Partial<DataSourcePluginMeta> = {}
-): DataSourceInstanceSettings => {
+): DataSourceInstanceSettings<any> => {
   const id = partial.id ?? nextDataSourceId++;
 
   return {
@@ -53,6 +59,40 @@ export const mockPromAlert = (partial: Partial<Alert> = {}): Alert => ({
   value: '1e+00',
   ...partial,
 });
+
+export const mockRulerGrafanaRule = (
+  partial: Partial<RulerGrafanaRuleDTO> = {},
+  partialDef: Partial<GrafanaRuleDefinition> = {}
+): RulerGrafanaRuleDTO => {
+  return {
+    for: '1m',
+    grafana_alert: {
+      uid: '123',
+      title: 'myalert',
+      namespace_uid: '123',
+      namespace_id: 1,
+      condition: 'A',
+      no_data_state: GrafanaAlertStateDecision.Alerting,
+      exec_err_state: GrafanaAlertStateDecision.Alerting,
+      data: [
+        {
+          datasourceUid: '123',
+          refId: 'A',
+          queryType: 'huh',
+          model: {} as any,
+        },
+      ],
+      ...partialDef,
+    },
+    annotations: {
+      message: 'alert with severity "{{.warning}}}"',
+    },
+    labels: {
+      severity: 'warning',
+    },
+    ...partial,
+  };
+};
 
 export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): AlertingRule => {
   return {

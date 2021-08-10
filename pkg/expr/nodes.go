@@ -186,7 +186,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 	}
 
 	var floatIntervalMS float64
-	if rawIntervalMS := rn.Query["intervalMs"]; ok {
+	if rawIntervalMS, ok := rn.Query["intervalMs"]; ok {
 		if floatIntervalMS, ok = rawIntervalMS.(float64); !ok {
 			return nil, fmt.Errorf("expected intervalMs to be an float64, got type %T for refId %v", rawIntervalMS, rn.RefID)
 		}
@@ -194,7 +194,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 	}
 
 	var floatMaxDP float64
-	if rawMaxDP := rn.Query["maxDataPoints"]; ok {
+	if rawMaxDP, ok := rn.Query["maxDataPoints"]; ok {
 		if floatMaxDP, ok = rawMaxDP.(float64); !ok {
 			return nil, fmt.Errorf("expected maxDataPoints to be an float64, got type %T for refId %v", rawMaxDP, rn.RefID)
 		}
