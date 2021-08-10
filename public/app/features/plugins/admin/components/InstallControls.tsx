@@ -82,9 +82,19 @@ export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, ha
 
   if (isEnterprise && !config.licenseInfo?.hasValidLicense) {
     return (
-      <div className={styles.message}>
-        Marketplace doesn&#39;t support installing Enterprise plugins yet. Stay tuned!
-      </div>
+      <HorizontalGroup height="auto" align="center">
+        <span className={styles.message}>No valid Grafana Enterprise license detected.</span>
+        <LinkButton
+          href={`${getExternalManageLink(plugin)}?utm_source=grafana_catalog_learn_more`}
+          target="_blank"
+          rel="noopener noreferrer"
+          size="sm"
+          fill="text"
+          icon="external-link-alt"
+        >
+          Learn more
+        </LinkButton>
+      </HorizontalGroup>
     );
   }
 
@@ -92,6 +102,12 @@ export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, ha
     return (
       <div className={styles.message}>This is a development build of the plugin and can&#39;t be uninstalled.</div>
     );
+  }
+
+  if (!hasPermission && !isExternallyManaged) {
+    const pluginStatus = isInstalled ? 'uninstall' : hasUpdate ? 'update' : 'install';
+    const message = `You do not have permission to ${pluginStatus} this plugin.`;
+    return <div className={styles.message}>{message}</div>;
   }
 
   if (isInstalled) {
@@ -122,7 +138,6 @@ export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, ha
                 Please refresh your browser window before using this plugin.
               </div>
             )}
-            {!hasPermission && <div className={styles.message}>You need admin privileges to manage this plugin.</div>}
           </>
         )}
       </HorizontalGroup>
@@ -149,7 +164,6 @@ export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, ha
           <Button disabled={isInflight || !hasPermission} onClick={onInstall}>
             {isInflight ? 'Installing' : 'Install'}
           </Button>
-          {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
         </>
       )}
     </HorizontalGroup>

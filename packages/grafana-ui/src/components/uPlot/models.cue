@@ -50,9 +50,12 @@ AxisConfig: {
 HideSeriesConfig: {
   tooltip: bool
   legend: bool
-  graph: bool
+  viz: bool
 } @cuetsy(targetType="interface")
 
+// TODO This is the same composition as what's used in the timeseries panel's
+// PanelFieldConfig. If that's the only place it's used, it probably shouldn't
+// be assembled here, too
 GraphFieldConfig: LineConfig & FillConfig & PointsConfig & AxisConfig & {
   drawStyle?: DrawStyle
   gradientMode?: GraphGradientMode

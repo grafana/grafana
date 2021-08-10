@@ -15,6 +15,7 @@ To share a dashboard:
 1. Click on the share icon in the top navigation. The share dialog opens and shows the Link tab.
 
 ![Dashboard share direct link](/static/img/docs/sharing/share-dashboard-direct-link-7-3.png)
+
 ## Use direct link
 
 The Link tab has the current time range, template variables and theme selected by default. You can optionally select a shortened URL to share.

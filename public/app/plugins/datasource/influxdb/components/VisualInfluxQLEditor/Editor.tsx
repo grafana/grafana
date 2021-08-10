@@ -22,7 +22,7 @@ import {
   removeGroupByPart,
   changeSelectPart,
   changeGroupByPart,
-} from '../queryUtils';
+} from '../../queryUtils';
 import { FormatAsSection } from './FormatAsSection';
 import { SectionLabel } from './SectionLabel';
 import { SectionFill } from './SectionFill';
