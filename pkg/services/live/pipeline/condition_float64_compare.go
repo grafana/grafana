@@ -7,10 +7,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type ConditionChecker interface {
-	CheckCondition(ctx context.Context, frame *data.Frame) (bool, error)
-}
-
 type Float64CompareCondition struct {
 	FieldName string
 	Op        string

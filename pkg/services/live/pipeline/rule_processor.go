@@ -38,7 +38,7 @@ func (p *RuleProcessor) DataToFrame(_ context.Context, orgID int64, channel stri
 
 	var frame *data.Frame
 
-	if rule.Mode == "auto" || rule.Mode == "tip" {
+	if rule.ConversionMode == ConversionModeAuto || rule.ConversionMode == ConversionModeTip {
 		fields := map[string]Field{}
 		if rule.Fields != nil {
 			for _, field := range rule.Fields {
@@ -50,21 +50,21 @@ func (p *RuleProcessor) DataToFrame(_ context.Context, orgID int64, channel stri
 			logger.Error("Error converting JSON", "error", err)
 			return nil, err
 		}
-	} else if rule.Mode == "exact" {
+	} else if rule.ConversionMode == ConversionModeExact {
 		frame, err = p.exactJsonConverter.Convert(liveChannel.Path, body, rule.Fields)
 		if err != nil {
 			logger.Error("Error converting JSON", "error", err)
 			return nil, err
 		}
 	} else {
-		logger.Error("Unknown mode", "mode", rule.Mode)
+		logger.Error("Unknown mode", "mode", rule.ConversionMode)
 		return nil, errors.New("unknown mode")
 	}
 
 	return frame, nil
 }
 
-func (p *RuleProcessor) ProcessFrame(_ context.Context, orgID int64, channel string, frame *data.Frame) error {
+func (p *RuleProcessor) ProcessFrame(ctx context.Context, orgID int64, channel string, frame *data.Frame) error {
 	rule, ruleOk, err := p.pipeline.Get(orgID, channel)
 	if err != nil {
 		logger.Error("Error getting rule", "error", err)
@@ -84,8 +84,8 @@ func (p *RuleProcessor) ProcessFrame(_ context.Context, orgID int64, channel str
 		},
 	}
 
-	for _, p := range rule.Processors {
-		frame, err = p.Process(context.Background(), vars, frame)
+	if rule.Processor != nil {
+		frame, err = rule.Processor.Process(ctx, vars, frame)
 		if err != nil {
 			logger.Error("Error processing frame", "error", err)
 			return err
@@ -96,8 +96,8 @@ func (p *RuleProcessor) ProcessFrame(_ context.Context, orgID int64, channel str
 		ProcessorVars: vars,
 	}
 
-	for _, out := range rule.Outputs {
-		err = out.Output(context.Background(), outputVars, frame)
+	if rule.Outputter != nil {
+		err = rule.Outputter.Output(ctx, outputVars, frame)
 		if err != nil {
 			logger.Error("Error outputting frame", "error", err)
 			return err

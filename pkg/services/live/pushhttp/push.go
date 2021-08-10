@@ -33,51 +33,7 @@ type Gateway struct {
 	GrafanaLive *live.GrafanaLive `inject:""`
 
 	converter     *convert.Converter
-	pipeline      *pipeline.Pipeline
-	frameStorage  *pipeline.FrameStorage
 	ruleProcessor *pipeline.RuleProcessor
-}
-
-type dropFieldsProcessor struct {
-	drop []string
-}
-
-func removeIndex(s []*data.Field, index int) []*data.Field {
-	return append(s[:index], s[index+1:]...)
-}
-
-func newDropFieldsProcessor(drop ...string) *dropFieldsProcessor {
-	return &dropFieldsProcessor{drop: drop}
-}
-
-func (d dropFieldsProcessor) Process(_ context.Context, _ pipeline.ProcessorVars, frame *data.Frame) (*data.Frame, error) {
-	for _, f := range d.drop {
-	inner:
-		for i, field := range frame.Fields {
-			if f == field.Name {
-				frame.Fields = removeIndex(frame.Fields, i)
-				continue inner
-			}
-		}
-	}
-	return frame, nil
-}
-
-type managedStreamOutput struct {
-	GrafanaLive *live.GrafanaLive
-}
-
-func newManagedStreamOutput(gLive *live.GrafanaLive) *managedStreamOutput {
-	return &managedStreamOutput{GrafanaLive: gLive}
-}
-
-func (l managedStreamOutput) Output(_ context.Context, vars pipeline.OutputVars, frame *data.Frame) error {
-	stream, err := l.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(vars.OrgID, vars.Namespace)
-	if err != nil {
-		logger.Error("Error getting stream", "error", err)
-		return err
-	}
-	return stream.Push(vars.Path, frame)
 }
 
 type fakeStorage struct {
@@ -89,17 +45,15 @@ type fakeStorage struct {
 func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChannelRuleCommand) ([]*pipeline.LiveChannelRule, error) {
 	return []*pipeline.LiveChannelRule{
 		{
-			OrgId:   1,
-			Pattern: "stream/test/auto",
-			Mode:    "auto",
-			Outputs: []pipeline.Outputter{
-				newManagedStreamOutput(f.gLive),
-			},
+			OrgId:          1,
+			Pattern:        "stream/test/auto",
+			ConversionMode: pipeline.ConversionModeAuto,
+			Outputter:      pipeline.NewManagedStreamOutput(f.gLive),
 		},
 		{
-			OrgId:   1,
-			Pattern: "stream/test/tip",
-			Mode:    "tip",
+			OrgId:          1,
+			Pattern:        "stream/test/tip",
+			ConversionMode: pipeline.ConversionModeTip,
 			Fields: []pipeline.Field{
 				{
 					Name: "value3",
@@ -110,17 +64,13 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					Type: data.FieldTypeNullableFloat64,
 				},
 			},
-			Processors: []pipeline.Processor{
-				newDropFieldsProcessor("value2"),
-			},
-			Outputs: []pipeline.Outputter{
-				newManagedStreamOutput(f.gLive),
-			},
+			Processor: pipeline.NewDropFieldsProcessor("value2"),
+			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
 		},
 		{
-			OrgId:   1,
-			Pattern: "stream/test/exact",
-			Mode:    "exact",
+			OrgId:          1,
+			Pattern:        "stream/test/exact",
+			ConversionMode: pipeline.ConversionModeExact,
 			Fields: []pipeline.Field{
 				{
 					Name:  "time",
@@ -175,8 +125,8 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					Value: "{Object.keys(JSON.parse(x).map).length}",
 				},
 			},
-			Outputs: []pipeline.Outputter{
-				newManagedStreamOutput(f.gLive),
+			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
+				pipeline.NewManagedStreamOutput(f.gLive),
 				pipeline.NewRemoteWriteOutput(pipeline.RemoteWriteConfig{
 					Enabled:  true,
 					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
@@ -203,40 +153,34 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 						Channel: "stream/test/exact/threshold",
 					}),
 				),
-			},
+			}),
 		},
 		{
-			OrgId:   1,
-			Pattern: "stream/test/exact/value3/changes",
-			Mode:    "auto",
-			Outputs: []pipeline.Outputter{
-				newManagedStreamOutput(f.gLive),
+			OrgId:          1,
+			Pattern:        "stream/test/exact/value3/changes",
+			ConversionMode: pipeline.ConversionModeAuto,
+			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
+				pipeline.NewManagedStreamOutput(f.gLive),
 				pipeline.NewRemoteWriteOutput(pipeline.RemoteWriteConfig{
 					Enabled:  true,
 					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
 					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
 					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
 				}),
-			},
+			}),
 		},
 		{
-			OrgId:   1,
-			Pattern: "stream/test/exact/annotation/changes",
-			Mode:    "auto",
-			Outputs: []pipeline.Outputter{
-				newManagedStreamOutput(f.gLive),
-			},
+			OrgId:          1,
+			Pattern:        "stream/test/exact/annotation/changes",
+			ConversionMode: pipeline.ConversionModeAuto,
+			Outputter:      pipeline.NewManagedStreamOutput(f.gLive),
 		},
 		{
-			OrgId:   1,
-			Pattern: "stream/test/exact/threshold",
-			Mode:    "auto",
-			Processors: []pipeline.Processor{
-				newDropFieldsProcessor("running"),
-			},
-			Outputs: []pipeline.Outputter{
-				newManagedStreamOutput(f.gLive),
-			},
+			OrgId:          1,
+			Pattern:        "stream/test/exact/threshold",
+			ConversionMode: pipeline.ConversionModeAuto,
+			Processor:      pipeline.NewDropFieldsProcessor("running"),
+			Outputter:      pipeline.NewManagedStreamOutput(f.gLive),
 		},
 	}, nil
 }
@@ -247,8 +191,9 @@ func (g *Gateway) Init() error {
 
 	g.converter = convert.NewConverter()
 	storage := &fakeStorage{gLive: g.GrafanaLive, frameStorage: pipeline.NewFrameStorage()}
-	g.ruleProcessor = pipeline.NewRuleProcessor(pipeline.New(storage))
-	storage.ruleProcessor = g.ruleProcessor
+	ruleProcessor := pipeline.NewRuleProcessor(pipeline.New(storage))
+	storage.ruleProcessor = ruleProcessor
+	g.ruleProcessor = ruleProcessor
 	return nil
 }
 

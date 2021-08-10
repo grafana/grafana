@@ -7,14 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/live/remotewrite"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/services/live/remotewrite"
 )
-
-type Outputter interface {
-	Output(ctx context.Context, vars OutputVars, frame *data.Frame) error
-}
 
 type RemoteWriteConfig struct {
 	// Enabled to enable remote write for a channel.
@@ -42,7 +37,7 @@ func NewRemoteWriteOutput(config RemoteWriteConfig) *RemoteWriteOutput {
 	}
 }
 
-func (r RemoteWriteOutput) Output(ctx context.Context, vars OutputVars, frame *data.Frame) error {
+func (r RemoteWriteOutput) Output(_ context.Context, _ OutputVars, frame *data.Frame) error {
 	if r.config.Endpoint == "" {
 		logger.Debug("Skip sending to remote write: no url")
 		return nil

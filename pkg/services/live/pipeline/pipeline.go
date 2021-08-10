@@ -6,13 +6,20 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+type ConversionMode string
+
+const (
+	ConversionModeAuto  ConversionMode = "auto"
+	ConversionModeTip   ConversionMode = "tip"
+	ConversionModeExact ConversionMode = "exact"
+)
+
 type Pipeline struct {
 	cache *Cache
 }
 
 func New(s Storage) *Pipeline {
-	// TODO: temporary for development, remove.
-	go postTestData()
+	go postTestData() // TODO: temporary for development, remove.
 	return &Pipeline{cache: NewCache(s)}
 }
 
@@ -21,17 +28,17 @@ func (s *Pipeline) Get(orgID int64, channel string) (*LiveChannelRule, bool, err
 }
 
 type LiveChannelRule struct {
-	OrgId      int64
-	Pattern    string
-	Mode       string
-	Fields     []Field
-	Processors []Processor
-	Outputs    []Outputter
+	OrgId          int64
+	Pattern        string
+	ConversionMode ConversionMode
+	Fields         []Field
+	Processor      Processor
+	Outputter      Outputter
 }
 
 type Label struct {
 	Name  string
-	Value string // Can be JSONPath if starts with $.
+	Value string // Can be JSONPath or Goja script.
 }
 
 type TimeOptions struct {
