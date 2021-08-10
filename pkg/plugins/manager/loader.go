@@ -15,6 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var (
+	InvalidPluginJSON = errors.New("did not find valid type or id properties in plugin.json")
+)
+
 type Loader struct {
 	Cfg *setting.Cfg `inject:""`
 
@@ -166,16 +170,16 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 		l.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
 	}
 
-	if !isValidPluginJSON(plugin) {
-		return plugins.JSONData{}, errors.New("did not find type or id properties in plugin.json")
+	if err := validatePluginJSON(plugin); err != nil {
+		return plugins.JSONData{}, err
 	}
 
 	return plugin, nil
 }
 
-func isValidPluginJSON(data plugins.JSONData) bool {
-	if data.ID == "" || data.Type == "" {
-		return false
+func validatePluginJSON(data plugins.JSONData) error {
+	if data.ID == "" || !data.Type.IsValid() {
+		return InvalidPluginJSON
 	}
-	return true
+	return nil
 }

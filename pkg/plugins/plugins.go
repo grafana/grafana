@@ -257,3 +257,11 @@ const (
 	App        PluginType = "app"
 	Renderer   PluginType = "renderer"
 )
+
+func (pt PluginType) IsValid() bool {
+	switch pt {
+	case DataSource, Panel, App, Renderer:
+		return true
+	}
+	return false
+}
