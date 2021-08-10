@@ -27,6 +27,7 @@ import {
   HistoryItem,
   TimeRange,
   PanelData,
+  rangeUtil,
 } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
@@ -160,8 +161,14 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     if (this.props.range) {
       const start = datasource.getPrometheusTime(this.props.range.from, false);
       const end = datasource.getPrometheusTime(this.props.range.to, true);
-      const range = end - start;
-      queryHints = datasource.getQueryHints(query, result, datasource.getSafeInterval(range));
+      const range = Math.ceil(end - start);
+      const interval = rangeUtil.intervalToSeconds(datasource.interval);
+      const stepInterval = rangeUtil.intervalToSeconds(query.interval ?? datasource.interval);
+      const stepMode = query.stepMode ?? 'min';
+      const intervalFactor = query.intervalFactor ?? 1;
+      const adjustedInterval = datasource.adjustInterval(interval, stepInterval, range, intervalFactor, stepMode);
+      const safeInterval = datasource.getSafeInterval(range);
+      queryHints = datasource.getQueryHints(query, result, safeInterval, adjustedInterval);
     } else {
       queryHints = datasource.getQueryHints(query, result);
     }

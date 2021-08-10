@@ -59,7 +59,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   withCredentials: any;
   metricsNameCache = new LRU<string, string[]>(10);
   interval: string;
-  isBelowSafeInterval: boolean;
   queryTimeout: string;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
@@ -499,32 +498,20 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return safeInterval;
   }
 
-  adjustInterval(
-    dynamicInterval: number,
-    stepInterval: number,
-    range: number,
-    intervalFactor: number,
-    stepMode: StepMode
-  ) {
+  adjustInterval(interval: number, stepInterval: number, range: number, intervalFactor: number, stepMode: StepMode) {
     const safeInterval = this.getSafeInterval(range);
 
     //Calculate adjusted interval based on the current step option
     let adjustedInterval = safeInterval;
     if (stepMode === 'min') {
-      adjustedInterval = Math.max(dynamicInterval * intervalFactor, stepInterval, safeInterval);
+      adjustedInterval = Math.max(interval * intervalFactor, stepInterval, safeInterval);
     } else if (stepMode === 'max') {
-      adjustedInterval = Math.min(dynamicInterval * intervalFactor, stepInterval);
+      adjustedInterval = Math.min(interval * intervalFactor, stepInterval);
       if (adjustedInterval < safeInterval) {
         adjustedInterval = safeInterval;
       }
     } else if (stepMode === 'exact') {
       adjustedInterval = Math.max(stepInterval * intervalFactor, safeInterval);
-    }
-
-    if (adjustedInterval === safeInterval) {
-      this.isBelowSafeInterval = true;
-    } else {
-      this.isBelowSafeInterval = false;
     }
 
     return adjustedInterval;
@@ -783,8 +770,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return expandedQueries;
   }
 
-  getQueryHints(query: PromQuery, result: any[], safeInterval?: number) {
-    return getQueryHints(query.expr ?? '', result, this, safeInterval);
+  getQueryHints(query: PromQuery, result: any[], safeInterval?: number, currentInterval?: number) {
+    return getQueryHints(query.expr ?? '', result, this, safeInterval, currentInterval);
   }
 
   getInitHints() {
