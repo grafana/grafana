@@ -4,6 +4,7 @@ package server
 
 import (
 	"github.com/google/wire"
+
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -53,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
+	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
@@ -124,7 +126,6 @@ var wireBasicSet = wire.NewSet(
 	metrics.ProvideService,
 	testdatasource.ProvideService,
 	opentsdb.ProvideService,
-	graphite.ProvideService,
 	social.ProvideService,
 	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*social.SocialService)),
@@ -132,7 +133,9 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 	tempo.ProvideService,
 	loki.ProvideService,
+	graphite.ProvideService,
 	prometheus.ProvideService,
+	elasticsearch.ProvideService,
 )
 
 var wireSet = wire.NewSet(
