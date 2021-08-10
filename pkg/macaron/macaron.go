@@ -182,7 +182,6 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		index:    0,
 		Router:   m.Router,
 		Resp:     NewResponseWriter(req.Method, rw),
-		Render:   &DummyRender{rw},
 		Data:     make(map[string]interface{}),
 	}
 	req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
