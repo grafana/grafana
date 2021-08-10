@@ -140,7 +140,8 @@ func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *models.ReqContext) response.
 		c.Query("receiver"),
 	)
 	if err != nil {
-		if errors.Is(err, notifier.ErrGetAlertGroupsBadPayload) {
+		var errGetAlertGroupsBadPayload notifier.ErrGetAlertGroupsBadPayload
+		if errors.As(err, &errGetAlertGroupsBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error
@@ -160,10 +161,12 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Respo
 		c.Query("receiver"),
 	)
 	if err != nil {
-		if errors.Is(err, notifier.ErrGetAlertsBadPayload) {
+		var errGetAlertGroupsBadPayload notifier.ErrGetAlertGroupsBadPayload
+		if errors.As(err, &errGetAlertGroupsBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
-		if errors.Is(err, notifier.ErrGetAlertsUnavailable) {
+		var errGetAlertsUnavailable notifier.ErrGetAlertsUnavailable
+		if errors.As(err, &errGetAlertsUnavailable) {
 			return ErrResp(http.StatusServiceUnavailable, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error

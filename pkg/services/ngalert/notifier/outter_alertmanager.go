@@ -167,7 +167,7 @@ func (am *Alertmanager) UpdateInstances(orgIDs ...int64) error {
 		_, ok := am.getInstance(orgID)
 		if !ok {
 			// new org
-			am.logger.Debug("starting Alertmanager instance", "org_id", orgID)
+			am.logger.Debug("starting Alertmanager instance", "org", orgID)
 			am.addInstance(orgID)
 		}
 	}
@@ -175,7 +175,7 @@ func (am *Alertmanager) UpdateInstances(orgIDs ...int64) error {
 	for item := range am.iterInstances() {
 		_, ok := found[item.orgID]
 		if !ok {
-			am.logger.Debug("stopping Alertmanager instance", "org_id", item.orgID)
+			am.logger.Debug("stopping Alertmanager instance", "org", item.orgID)
 			item.instance.StopAndWait()
 		}
 	}

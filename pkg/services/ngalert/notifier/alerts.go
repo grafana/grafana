@@ -14,13 +14,45 @@ import (
 	prometheus_model "github.com/prometheus/common/model"
 )
 
-var (
-	ErrGetAlertsInternal        = fmt.Errorf("unable to retrieve alerts(s) due to an internal error")
-	ErrGetAlertsUnavailable     = fmt.Errorf("unable to retrieve alerts(s) as alertmanager is not initialised yet")
-	ErrGetAlertsBadPayload      = fmt.Errorf("unable to retrieve alerts")
-	ErrGetAlertGroupsBadPayload = fmt.Errorf("unable to retrieve alerts groups")
-	ErrGetAlertsNotFound        = fmt.Errorf("unable to retrieve alertmanager")
-)
+type ErrGetAlertsInternal struct {
+	OrgID int64
+}
+
+func (e ErrGetAlertsInternal) Error() string {
+	return fmt.Sprintf("unable to retrieve alerts(s) for org %d due to an internal error", e.OrgID)
+}
+
+type ErrGetAlertsBadPayload struct {
+	OrgID int64
+}
+
+func (e ErrGetAlertsBadPayload) Error() string {
+	return fmt.Sprintf("unable to retrieve alerts(s) for org %d as alertmanager is not initialised yet", e.OrgID)
+}
+
+type ErrGetAlertsUnavailable struct {
+	OrgID int64
+}
+
+func (e ErrGetAlertsUnavailable) Error() string {
+	return fmt.Sprintf("unable to retrieve alerts for org %d", e.OrgID)
+}
+
+type ErrGetAlertGroupsBadPayload struct {
+	OrgID int64
+}
+
+func (e ErrGetAlertGroupsBadPayload) Error() string {
+	return fmt.Sprintf("unable to retrieve alerts groups for org %d", e.OrgID)
+}
+
+type ErrGetAlertsNotFound struct {
+	OrgID int64
+}
+
+func (e ErrGetAlertsNotFound) Error() string {
+	return fmt.Sprintf("unable to retrieve alertmanager for org %d", e.OrgID)
+}
 
 func (am *Alertmanager) GetAlerts(orgID int64, active, silenced, inhibited bool, filter []string, receivers string) (apimodels.GettableAlerts, error) {
 	var (
@@ -30,25 +62,25 @@ func (am *Alertmanager) GetAlerts(orgID int64, active, silenced, inhibited bool,
 	)
 
 	if !am.Ready(orgID) {
-		return res, ErrGetAlertsUnavailable
+		return res, ErrGetAlertsUnavailable{OrgID: orgID}
 	}
 
 	matchers, err := parseFilter(filter)
 	if err != nil {
 		am.logger.Error("failed to parse matchers", "err", err)
-		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsBadPayload)
+		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsBadPayload{OrgID: orgID})
 	}
 
 	receiverFilter, err := parseReceivers(receivers)
 	if err != nil {
 		am.logger.Error("failed to parse receiver regex", "err", err)
-		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsBadPayload)
+		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsBadPayload{OrgID: orgID})
 	}
 
 	amInstance, err := am.GetAM(orgID)
 	if err != nil {
 		am.logger.Error("failed to get alertmanager instance", "error", err.Error(), "orgID", orgID)
-		return nil, fmt.Errorf(" %s: %w", err.Error(), ErrGetAlertsNotFound)
+		return nil, fmt.Errorf(" %s: %w", err.Error(), ErrGetAlertsNotFound{OrgID: orgID})
 	}
 	alerts := amInstance.alerts.GetPending()
 	defer alerts.Close()
@@ -84,7 +116,7 @@ func (am *Alertmanager) GetAlerts(orgID int64, active, silenced, inhibited bool,
 
 	if err != nil {
 		am.logger.Error("failed to iterate through the alerts", "err", err)
-		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsInternal)
+		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsInternal{OrgID: orgID})
 	}
 	sort.Slice(res, func(i, j int) bool {
 		return *res[i].Fingerprint < *res[j].Fingerprint
@@ -96,14 +128,14 @@ func (am *Alertmanager) GetAlerts(orgID int64, active, silenced, inhibited bool,
 func (am *alertmanager) GetAlertGroups(active, silenced, inhibited bool, filter []string, receivers string) (apimodels.AlertGroups, error) {
 	matchers, err := parseFilter(filter)
 	if err != nil {
-		am.logger.Error("msg", "failed to parse matchers", "err", err)
-		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertGroupsBadPayload)
+		am.logger.Error("msg", "failed to parse matchers", "err", err, "org", am.orgID)
+		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertGroupsBadPayload{OrgID: am.orgID})
 	}
 
 	receiverFilter, err := parseReceivers(receivers)
 	if err != nil {
 		am.logger.Error("msg", "failed to compile receiver regex", "err", err)
-		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertGroupsBadPayload)
+		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertGroupsBadPayload{OrgID: am.orgID})
 	}
 
 	rf := func(receiverFilter *regexp.Regexp) func(r *dispatch.Route) bool {
