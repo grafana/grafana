@@ -217,10 +217,7 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	require.Truef(t, exists, "Views should be in %q", viewsPath)
 
 	sc.m = macaron.New()
-	sc.m.Use(macaron.Renderer(macaron.RenderOptions{
-		Directory: viewsPath,
-		Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-	}))
+	sc.m.UseMiddleware(macaron.Renderer(viewsPath, "[[", "]]"))
 	sc.m.Use(getContextHandler(t, cfg).Middleware)
 
 	return sc

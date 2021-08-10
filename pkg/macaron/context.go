@@ -15,6 +15,8 @@
 package macaron
 
 import (
+	"encoding/json"
+	"html/template"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -44,11 +46,11 @@ type Context struct {
 	index    int
 
 	*Router
-	Req    Request
-	Resp   ResponseWriter
-	params Params
-	Render
-	Data map[string]interface{}
+	Req      Request
+	Resp     ResponseWriter
+	params   Params
+	template *template.Template
+	Data     map[string]interface{}
 }
 
 func (ctx *Context) handler() Handler {
@@ -108,19 +110,31 @@ func (ctx *Context) RemoteAddr() string {
 	return addr
 }
 
-func (ctx *Context) renderHTML(status int, setName, tplName string, data ...interface{}) {
-	if len(data) <= 0 {
-		ctx.Render.HTMLSet(status, setName, tplName, ctx.Data)
-	} else if len(data) == 1 {
-		ctx.Render.HTMLSet(status, setName, tplName, data[0])
-	} else {
-		ctx.Render.HTMLSet(status, setName, tplName, data[0], data[1].(HTMLOptions))
+const (
+	headerContentType = "Content-Type"
+	contentTypeJSON   = "application/json; charset=UTF-8"
+	contentTypeHTML   = "text/html; charset=UTF-8"
+)
+
+// HTML renders the HTML with default template set.
+func (ctx *Context) HTML(status int, name string, data interface{}) {
+	ctx.Resp.Header().Set(headerContentType, contentTypeHTML)
+	ctx.Resp.WriteHeader(status)
+	if err := ctx.template.ExecuteTemplate(ctx.Resp, name, data); err != nil {
+		panic("Context.HTML:" + err.Error())
 	}
 }
 
-// HTML renders the HTML with default template set.
-func (ctx *Context) HTML(status int, name string, data ...interface{}) {
-	ctx.renderHTML(status, DEFAULT_TPL_SET_NAME, name, data...)
+func (ctx *Context) JSON(status int, data interface{}) {
+	ctx.Resp.Header().Set(headerContentType, contentTypeJSON)
+	ctx.Resp.WriteHeader(status)
+	enc := json.NewEncoder(ctx.Resp)
+	if Env != PROD {
+		enc.SetIndent("", "  ")
+	}
+	if err := enc.Encode(data); err != nil {
+		panic("Context.JSON: " + err.Error())
+	}
 }
 
 // Redirect sends a redirect response
@@ -142,7 +156,7 @@ func (ctx *Context) parseForm() {
 		return
 	}
 
-	contentType := ctx.Req.Header.Get(_CONTENT_TYPE)
+	contentType := ctx.Req.Header.Get(headerContentType)
 	if (ctx.Req.Method == "POST" || ctx.Req.Method == "PUT") &&
 		len(contentType) > 0 && strings.Contains(contentType, "multipart/form-data") {
 		_ = ctx.Req.ParseMultipartForm(MaxMemory)

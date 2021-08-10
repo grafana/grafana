@@ -111,7 +111,7 @@ func TestMiddlewareContext(t *testing.T) {
 				Settings: map[string]interface{}{},
 				NavTree:  []*dtos.NavLink{},
 			}
-			t.Log("Calling HTML", "data", data, "render", c.Render)
+			t.Log("Calling HTML", "data", data)
 			c.HTML(200, "index-template", data)
 			t.Log("Returned HTML with code 200")
 		}
@@ -633,10 +633,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.m = macaron.New()
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
 		sc.m.UseMiddleware(AddCSPHeader(cfg, logger))
-		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
-			Directory: viewsPath,
-			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-		}))
+		sc.m.UseMiddleware(macaron.Renderer(viewsPath, "[[", "]]"))
 
 		ctxHdlr := getContextHandler(t, cfg)
 		sc.sqlStore = ctxHdlr.SQLStore
