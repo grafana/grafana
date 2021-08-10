@@ -496,7 +496,7 @@ def test_a11y_frontend_step(edition):
         },
         'failure': 'ignore',
         'commands': [
-            'yarn run test:accessibility',
+            'npm run test:accessibility',
         ],
     }
 
