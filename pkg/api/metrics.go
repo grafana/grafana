@@ -6,15 +6,13 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -77,10 +75,6 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 
 	resp, err := hs.DataService.HandleRequest(c.Req.Context(), ds, request)
 	if err != nil {
-		var requestError *cloudwatch.RequestError
-		if ok := errors.As(errors.Unwrap(err), &requestError); ok {
-			return response.Error(requestError.StatusCode(), "Metric request error", err)
-		}
 		return response.Error(http.StatusInternalServerError, "Metric request error", err)
 	}
 
