@@ -213,9 +213,9 @@ export const Components = {
     items: 'Search items',
   },
   DashboardLinks: {
-    container: 'Dashboard link container',
-    dropDown: 'Dashboard link dropdown',
-    link: 'Dashboard link',
+    container: 'data-testid Dashboard link container',
+    dropDown: 'data-testid Dashboard link dropdown',
+    link: 'data-testid Dashboard link',
   },
   LoadingIndicator: {
     icon: 'Loading indicator',
