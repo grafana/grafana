@@ -1,20 +1,23 @@
-import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
 import React, { useState } from 'react';
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, LinkButton } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 import { AlertLabels } from 'app/features/alerting/unified/components/AlertLabels';
 import { AmNotificationsGroupHeader } from 'app/features/alerting/unified/components/amnotifications/AmNotificationsGroupHeader';
 import { CollapseToggle } from 'app/features/alerting/unified/components/CollapseToggle';
 import { getNotificationsTextColors } from 'app/features/alerting/unified/styles/notifications';
+import { makeAMLink } from 'app/features/alerting/unified/utils/misc';
+import { getMatcherQueryParams } from 'app/features/alerting/unified/utils/matchers';
 
 type Props = {
+  alertManagerSourceName: string;
   group: AlertmanagerGroup;
   expandAll: boolean;
 };
 
-export const AlertGroup = ({ group, expandAll }: Props) => {
+export const AlertGroup = ({ alertManagerSourceName, group, expandAll }: Props) => {
   const [showAlerts, setShowAlerts] = useState(expandAll);
   const styles = useStyles2(getStyles);
   const textStyles = useStyles2(getNotificationsTextColors);
@@ -47,6 +50,38 @@ export const AlertGroup = ({ group, expandAll }: Props) => {
                 <div>
                   <AlertLabels labels={alert.labels} />
                 </div>
+                <div className={styles.actionsRow}>
+                  {alert.status.state === AlertState.Suppressed && (
+                    <LinkButton
+                      href={`${makeAMLink(
+                        '/alerting/silences',
+                        alertManagerSourceName
+                      )}&silenceIds=${alert.status.silencedBy.join(',')}`}
+                      className={styles.button}
+                      icon={'bell'}
+                      size={'sm'}
+                    >
+                      Manage silences
+                    </LinkButton>
+                  )}
+                  {alert.status.state === AlertState.Active && (
+                    <LinkButton
+                      href={`${makeAMLink('/alerting/silence/new', alertManagerSourceName)}&${getMatcherQueryParams(
+                        alert.labels
+                      )}`}
+                      className={styles.button}
+                      icon={'bell-slash'}
+                      size={'sm'}
+                    >
+                      Silence
+                    </LinkButton>
+                  )}
+                  {alert.generatorURL && (
+                    <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
+                      See source
+                    </LinkButton>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -78,5 +113,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     & + & {
       border-top: 1px solid ${theme.colors.border.medium};
     }
+  `,
+  button: css`
+    & + & {
+      margin-left: ${theme.spacing(1)};
+    }
+  `,
+  actionsRow: css`
+    padding: ${theme.spacing(1, 0)};
   `,
 });

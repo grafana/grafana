@@ -49,7 +49,14 @@ export const AlertGroupsPanel = (props: PanelProps<AlertGroupPanelOptions>) => {
         <div>
           {hasResults &&
             filteredResults.map((group) => {
-              return <AlertGroup key={JSON.stringify(group.labels)} group={group} expandAll={expandAll} />;
+              return (
+                <AlertGroup
+                  alertManagerSourceName={alertManagerSourceName}
+                  key={JSON.stringify(group.labels)}
+                  group={group}
+                  expandAll={expandAll}
+                />
+              );
             })}
           {!hasResults && 'No alerts'}
         </div>

@@ -4,7 +4,7 @@ import { AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 export const getNotificationsTextColors = (theme: GrafanaTheme2) => ({
   [AlertState.Active]: css`
-    color: ${theme.colors.error.main};
+    color: ${theme.colors.error.text};
   `,
   [AlertState.Suppressed]: css`
     color: ${theme.colors.primary.main};
