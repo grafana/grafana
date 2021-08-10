@@ -1,6 +1,5 @@
 import React from 'react';
 import { css } from '@emotion/css';
-
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TabsBar, TabContent, Tab, Icon, Alert } from '@grafana/ui';
 
@@ -34,6 +33,7 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
   } = state;
   const tab = tabs[activeTab];
   const styles = useStyles2(getStyles);
+  const breadcrumbHref = match.url.substring(0, match.url.lastIndexOf('/'));
 
   if (loading) {
     return (
@@ -49,9 +49,10 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
         <PluginPage>
           <div className={styles.headerContainer}>
             <PluginLogo
+              alt={`${plugin.name} logo`}
               src={plugin.info.logos.small}
               className={css`
-                object-fit: cover;
+                object-fit: contain;
                 width: 100%;
                 height: 68px;
                 max-width: 68px;
@@ -59,11 +60,27 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
             />
 
             <div className={styles.headerWrapper}>
-              <h1>{plugin.name}</h1>
+              <nav className={styles.breadcrumb} aria-label="Breadcrumb">
+                <ol>
+                  <li>
+                    <a
+                      className={css`
+                        text-decoration: underline;
+                      `}
+                      href={breadcrumbHref}
+                    >
+                      Plugins
+                    </a>
+                  </li>
+                  <li>
+                    <a href={`${match.url}`} aria-current="page">
+                      {plugin.name}
+                    </a>
+                  </li>
+                </ol>
+              </nav>
               <div className={styles.headerLinks}>
-                <a className={styles.headerOrgName} href={'/plugins'}>
-                  {plugin.orgName}
-                </a>
+                <span>{plugin.orgName}</span>
                 {plugin.links.map((link: any) => (
                   <a key={link.name} href={link.url}>
                     {link.name}
@@ -126,12 +143,26 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     headerContainer: css`
       display: flex;
-      margin-bottom: 24px;
-      margin-top: 24px;
+      margin-bottom: ${theme.spacing(3)};
+      margin-top: ${theme.spacing(3)};
       min-height: 120px;
     `,
     headerWrapper: css`
       margin-left: ${theme.spacing(3)};
+    `,
+    breadcrumb: css`
+      font-size: ${theme.typography.h2.fontSize};
+      li {
+        display: inline;
+        list-style: none;
+        &::after {
+          content: '/';
+          padding: 0 0.25ch;
+        }
+        &:last-child::after {
+          content: '';
+        }
+      }
     `,
     headerLinks: css`
       display: flex;
@@ -144,9 +175,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
           content: '|';
           padding: 0 ${theme.spacing()};
         }
-      }
-      & > *:last-child {
-        &::after {
+        &:last-child::after {
           content: '';
           padding-right: 0;
         }

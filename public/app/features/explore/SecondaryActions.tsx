@@ -1,7 +1,7 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, Button, HorizontalGroup, useTheme } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, HorizontalGroup, useTheme2 } from '@grafana/ui';
 
 type Props = {
   addQueryRowButtonDisabled?: boolean;
@@ -14,15 +14,15 @@ type Props = {
   onClickQueryInspectorButton: () => void;
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     containerMargin: css`
-      margin-top: ${theme.spacing.md};
+      margin-top: ${theme.spacing(2)};
     `,
   };
-});
+};
 export function SecondaryActions(props: Props) {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme);
   return (
     <div className={styles.containerMargin}>

@@ -112,6 +112,7 @@ export type DerivedFieldConfig = {
   matcherRegex: string;
   name: string;
   url?: string;
+  urlDisplayLabel?: string;
   datasourceUid?: string;
 };
 

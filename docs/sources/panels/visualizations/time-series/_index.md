@@ -10,7 +10,7 @@ weight = 1200
 
 Time series visualization is the default and primary way to visualize time series data. It can render as a line, a path of dots, or a series of bars. It is versatile enough to display almost any time-series data. [ This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples for how this visualization can be configured and styled.
 
-> **Note:** You can migrate Graph panel visualizations to Time series visualizations. To migrate, open the panel and then select the  **Time series** visualization. Grafana transfers all applicable settings.
+> **Note:** You can migrate Graph panel visualizations to Time series visualizations. To migrate, open the panel and then select the **Time series** visualization. Grafana transfers all applicable settings.
 
 ## Common time series options
 

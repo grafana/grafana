@@ -248,6 +248,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   event:
   - pull_request
@@ -578,6 +581,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   branch:
   - main
@@ -677,6 +683,9 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
+
+node:
+  type: no-parallel
 
 trigger:
   branch:
@@ -1019,6 +1028,9 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
+
+node:
+  type: no-parallel
 
 trigger:
   ref:
@@ -1492,6 +1504,9 @@ services:
 image_pull_secrets:
 - dockerconfigjson
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
   - refs/tags/v*
@@ -1631,6 +1646,9 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
+
+node:
+  type: no-parallel
 
 trigger:
   ref:
@@ -1962,6 +1980,9 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
+
+node:
+  type: no-parallel
 
 trigger:
   event:
@@ -2429,6 +2450,9 @@ services:
 image_pull_secrets:
 - dockerconfigjson
 
+node:
+  type: no-parallel
+
 trigger:
   event:
   - custom
@@ -2568,6 +2592,9 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
+
+node:
+  type: no-parallel
 
 trigger:
   event:
@@ -2874,6 +2901,9 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
+
+node:
+  type: no-parallel
 
 trigger:
   ref:
@@ -3340,6 +3370,9 @@ services:
 image_pull_secrets:
 - dockerconfigjson
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
   - refs/heads/v*
@@ -3511,6 +3544,6 @@ get:
 
 ---
 kind: signature
-hmac: ed778bbb2d9554f4647021ff64551ad5117351e8c34118d5acc9f887e2c89480
+hmac: 9819c631ea5d67cb69724b3234e706664372465b0c629dc30e9e3a0ccf1a957a
 
 ...
