@@ -58,6 +58,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 			"name":      ds.Name,
 			"url":       url,
 			"isDefault": ds.IsDefault,
+			"access":    ds.Access,
 		}
 
 		meta, exists := enabledPlugins.DataSources[ds.Type]
@@ -247,7 +248,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
 		"sentry":                           hs.Cfg.Sentry,
 		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
-		"pluginAdminEnabled":               (c.IsGrafanaAdmin || hs.Cfg.PluginAdminExternalManageEnabled) && hs.Cfg.PluginAdminEnabled,
+		"pluginAdminEnabled":               hs.Cfg.PluginAdminEnabled,
 		"pluginAdminExternalManageEnabled": hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
 		"expressionsEnabled":               hs.Cfg.ExpressionsEnabled,
 		"awsAllowedAuthProviders":          hs.Cfg.AWSAllowedAuthProviders,
@@ -259,6 +260,13 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"caching": map[string]bool{
 			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
+	}
+
+	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {
+		jsonObj["geomapDefaultBaseLayerConfig"] = hs.Cfg.GeomapDefaultBaseLayerConfig
+	}
+	if !hs.Cfg.GeomapEnableCustomBaseLayers {
+		jsonObj["geomapDisableCustomBaseLayer"] = true
 	}
 
 	return jsonObj, nil

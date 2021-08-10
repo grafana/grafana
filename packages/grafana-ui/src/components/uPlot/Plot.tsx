@@ -73,7 +73,7 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
       ...this.props.config.getConfig(),
     };
 
-    pluginLog('UPlot', false, 'Reinitializing plot');
+    pluginLog('UPlot', false, 'Reinitializing plot', config);
     const plot = new uPlot(config, this.props.data, this.plotContainer!.current!);
 
     if (plotRef) {
@@ -95,15 +95,6 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
 
   componentWillUnmount() {
     this.state.ctx.plot?.destroy();
-  }
-
-  shouldComponentUpdate(nextProps: PlotProps, nextState: UPlotChartState) {
-    return (
-      nextState.ctx !== this.state.ctx ||
-      !sameDims(this.props, nextProps) ||
-      !sameData(this.props, nextProps) ||
-      !sameConfig(this.props, nextProps)
-    );
   }
 
   componentDidUpdate(prevProps: PlotProps) {

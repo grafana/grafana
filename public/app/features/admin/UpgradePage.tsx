@@ -148,8 +148,14 @@ const FeatureListing: React.FC = () => {
           <Item title="New Relic" />
           <Item title="DataDog" />
           <Item title="AppDynamics" />
-          <Item title="Amazon Timestream" />
           <Item title="SAP HANA®" />
+          <Item title="Gitlab" />
+          <Item title="Honeycomb" />
+          <Item title="Jira" />
+          <Item title="MongoDB" />
+          <Item title="Salesforce" />
+          <Item title="Snowflake" />
+          <Item title="Wavefront" />
         </List>
       </Item>
     </List>

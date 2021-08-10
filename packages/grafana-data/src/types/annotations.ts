@@ -3,13 +3,14 @@ import { ComponentType } from 'react';
 
 import { QueryEditorProps } from './datasource';
 import { DataFrame } from './dataFrame';
-import { DataQuery } from './query';
+import { DataQuery, DatasourceRef } from './query';
 
 /**
  * This JSON object is stored in the dashboard json model.
  */
 export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
-  datasource?: string | null;
+  datasource?: DatasourceRef | string | null;
+
   enable: boolean;
   name: string;
   iconColor: string;

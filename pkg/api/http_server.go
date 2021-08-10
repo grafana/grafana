@@ -117,8 +117,7 @@ func (hs *HTTPServer) Init() error {
 
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
-
-	return nil
+	return hs.declareFixedRoles()
 }
 
 func (hs *HTTPServer) AddMiddleware(middleware macaron.Handler) {
@@ -336,7 +335,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(middleware.Logger(hs.Cfg))
 
 	if hs.Cfg.EnableGzip {
-		m.Use(middleware.Gziper())
+		m.UseMiddleware(middleware.Gziper())
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
@@ -355,11 +354,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.SetURLPrefix(hs.Cfg.AppSubURL)
 	}
 
-	m.Use(macaron.Renderer(macaron.RenderOptions{
-		Directory:  filepath.Join(hs.Cfg.StaticRootPath, "views"),
-		IndentJSON: macaron.Env != macaron.PROD,
-		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
-	}))
+	m.UseMiddleware(macaron.Renderer(filepath.Join(hs.Cfg.StaticRootPath, "views"), "[[", "]]"))
 
 	// These endpoints are used for monitoring the Grafana instance
 	// and should not be redirected or rejected.
@@ -376,7 +371,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.HandleNoCacheHeader)
-	m.Use(middleware.AddCSPHeader(hs.Cfg, hs.log))
+	m.UseMiddleware(middleware.AddCSPHeader(hs.Cfg, hs.log))
 
 	for _, mw := range hs.middlewares {
 		m.Use(mw)
@@ -409,7 +404,7 @@ func (hs *HTTPServer) healthzHandler(ctx *macaron.Context) {
 		return
 	}
 
-	ctx.WriteHeader(200)
+	ctx.Resp.WriteHeader(200)
 	_, err := ctx.Resp.Write([]byte("Ok"))
 	if err != nil {
 		hs.log.Error("could not write to response", "err", err)

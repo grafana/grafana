@@ -2,18 +2,17 @@ import React, { useCallback, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
 import {
-  DataFrame,
   DataTransformerID,
   GrafanaTheme,
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
-  getFieldDisplayName,
 } from '@grafana/data';
 import { stylesFactory, useTheme, Input, IconButton, Icon, FieldValidationMessage } from '@grafana/ui';
 
 import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
 import { createOrderFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
+import { useAllFieldNamesFromDataFrames } from './utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 
@@ -21,7 +20,7 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
   const { options, input, onChange } = props;
   const { indexByName, excludeByName, renameByName } = options;
 
-  const fieldNames = useMemo(() => getAllFieldNamesFromDataFrames(input), [input]);
+  const fieldNames = useAllFieldNamesFromDataFrames(input);
   const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
 
   const onToggleVisibility = useCallback(
@@ -203,26 +202,6 @@ const orderFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string
   }
   const comparer = createOrderFieldsComparer(indexByName);
   return fieldNames.sort(comparer);
-};
-
-export const getAllFieldNamesFromDataFrames = (input: DataFrame[]): string[] => {
-  if (!Array.isArray(input)) {
-    return [] as string[];
-  }
-
-  return Object.keys(
-    input.reduce((names, frame) => {
-      if (!frame || !Array.isArray(frame.fields)) {
-        return names;
-      }
-
-      return frame.fields.reduce((names, field) => {
-        const t = getFieldDisplayName(field, frame, input);
-        names[t] = true;
-        return names;
-      }, names);
-    }, {} as Record<string, boolean>)
-  );
 };
 
 export const organizeFieldsTransformRegistryItem: TransformerRegistryItem<OrganizeFieldsTransformerOptions> = {

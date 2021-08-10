@@ -3,9 +3,10 @@ import { Input } from '@grafana/ui';
 
 import { Field } from '../Field';
 import { AzureQueryEditorFieldProps } from '../../types';
+import { setLegendAlias } from './setQueryValue';
 
 const LegendFormatField: React.FC<AzureQueryEditorFieldProps> = ({ onQueryChange, query }) => {
-  const [value, setValue] = useState<string>(query.azureMonitor.alias ?? '');
+  const [value, setValue] = useState<string>(query.azureMonitor?.alias ?? '');
 
   // As calling onQueryChange initiates a the datasource refresh, we only want to call it once
   // the field loses focus
@@ -16,13 +17,8 @@ const LegendFormatField: React.FC<AzureQueryEditorFieldProps> = ({ onQueryChange
   }, []);
 
   const handleBlur = useCallback(() => {
-    onQueryChange({
-      ...query,
-      azureMonitor: {
-        ...query.azureMonitor,
-        alias: value,
-      },
-    });
+    const newQuery = setLegendAlias(query, value);
+    onQueryChange(newQuery);
   }, [onQueryChange, query, value]);
 
   return (

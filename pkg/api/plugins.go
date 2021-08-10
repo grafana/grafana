@@ -21,6 +21,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var permittedFileExts = []string{
+	".html", ".xhtml", ".css", ".js", ".json", ".jsonld", ".map", ".mjs",
+	".jpeg", ".jpg", ".png", ".gif", ".svg", ".webp", ".ico",
+	".woff", ".woff2", ".eot", ".ttf", ".otf",
+	".wav", ".mp3",
+	".md", ".pdf", ".txt",
+}
+
 func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
@@ -257,11 +265,12 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 // GetPluginAssets returns public plugin assets (images, JS, etc.)
 //
 // /public/plugins/:pluginId/*
-func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 	pluginID := c.Params("pluginId")
 	plugin := hs.PluginManager.GetPlugin(pluginID)
 	if plugin == nil {
-		return response.Error(404, "Plugin not found", nil)
+		c.JsonApiErr(404, "Plugin not found", nil)
+		return
 	}
 
 	requestedFile := filepath.Clean(c.Params("*"))
@@ -273,9 +282,11 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) response.Response {
 	f, err := os.Open(pluginFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return response.Error(404, "Plugin file not found", err)
+			c.JsonApiErr(404, "Plugin file not found", err)
+			return
 		}
-		return response.Error(500, "Could not open plugin file", err)
+		c.JsonApiErr(500, "Could not open plugin file", err)
+		return
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -285,26 +296,23 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) response.Response {
 
 	fi, err := f.Stat()
 	if err != nil {
-		return response.Error(500, "Plugin file exists but could not open", err)
+		c.JsonApiErr(500, "Plugin file exists but could not open", err)
+		return
 	}
 
-	if shouldExclude(fi) {
-		return response.Error(403, "Plugin file access forbidden",
-			fmt.Errorf("access is forbidden to executable plugin file %s", pluginFilePath))
+	if accessForbidden(fi.Name()) {
+		c.JsonApiErr(403, "Plugin file access forbidden",
+			fmt.Errorf("access is forbidden to plugin file %s", pluginFilePath))
+		return
 	}
-
-	resp := response.CreateNormalResponse(
-		http.Header{"Cache-Control": []string{"public", "max-age=3600"}},
-		[]byte{},
-		200)
 
 	if hs.Cfg.Env == setting.Dev {
-		resp.SetHeader("Cache-Control", "max-age=0, must-revalidate, no-cache")
+		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+	} else {
+		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
-	http.ServeContent(resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
-
-	return resp
+	http.ServeContent(c.Resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
 }
 
 // CheckHealth returns the health of a plugin.
@@ -387,8 +395,9 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext, dto dtos.InstallPlugin
 		if errors.As(err, &versionNotFoundErr) {
 			return response.Error(http.StatusNotFound, "Plugin version not found", err)
 		}
-		if errors.Is(err, installer.ErrPluginNotFound) {
-			return response.Error(http.StatusNotFound, "Plugin not found", err)
+		var clientError installer.Response4xxError
+		if errors.As(err, &clientError) {
+			return response.Error(clientError.StatusCode, clientError.Message, err)
 		}
 		if errors.Is(err, plugins.ErrInstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)
@@ -440,12 +449,13 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	return response.Error(500, "Plugin request failed", err)
 }
 
-func shouldExclude(fi os.FileInfo) bool {
-	normalizedFilename := strings.ToLower(fi.Name())
+func accessForbidden(pluginFilename string) bool {
+	ext := filepath.Ext(pluginFilename)
 
-	isUnixExecutable := fi.Mode()&0111 == 0111
-	isWindowsExecutable := strings.HasSuffix(normalizedFilename, ".exe")
-	isScript := strings.HasSuffix(normalizedFilename, ".sh")
-
-	return isUnixExecutable || isWindowsExecutable || isScript
+	for _, permittedExt := range permittedFileExts {
+		if strings.EqualFold(permittedExt, ext) {
+			return false
+		}
+	}
+	return true
 }

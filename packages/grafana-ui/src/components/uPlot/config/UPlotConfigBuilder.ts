@@ -1,4 +1,4 @@
-import uPlot, { Cursor, Band, Hooks, Select } from 'uplot';
+import uPlot, { Cursor, Band, Hooks, Select, AlignedData } from 'uplot';
 import { merge } from 'lodash';
 import {
   DataFrame,
@@ -35,6 +35,8 @@ const cursorDefaults: Cursor = {
   },
 };
 
+type PrepData = (frame: DataFrame) => AlignedData;
+
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
@@ -55,6 +57,8 @@ export class UPlotConfigBuilder {
    * that sets tooltips state.
    */
   tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
+
+  prepData: PrepData | undefined = undefined;
 
   constructor(timeZone: TimeZone = DefaultTimeZone) {
     this.tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
@@ -153,6 +157,10 @@ export class UPlotConfigBuilder {
     this.tooltipInterpolator = interpolator;
   }
 
+  setPrepData(prepData: PrepData) {
+    this.prepData = prepData;
+  }
+
   setSync() {
     this.sync = true;
   }
@@ -162,7 +170,13 @@ export class UPlotConfigBuilder {
   }
 
   getConfig() {
-    const config: PlotConfig = { series: [{}] };
+    const config: PlotConfig = {
+      series: [
+        {
+          value: () => '',
+        },
+      ],
+    };
     config.axes = this.ensureNonOverlappingAxes(Object.values(this.axes)).map((a) => a.getConfig());
     config.series = [...config.series, ...this.series.map((s) => s.getConfig())];
     config.scales = this.scales.reduce((acc, s) => {

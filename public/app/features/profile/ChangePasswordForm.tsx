@@ -1,10 +1,11 @@
 import React, { FC } from 'react';
 import { css } from '@emotion/css';
-import { Button, Field, Form, HorizontalGroup, Input, LinkButton } from '@grafana/ui';
+import { Button, Field, Form, HorizontalGroup, LinkButton } from '@grafana/ui';
 
 import config from 'app/core/config';
 import { UserDTO } from 'app/types';
 import { ChangePasswordFields } from './types';
+import { PasswordField } from '../../core/components/PasswordField/PasswordField';
 
 export interface Props {
   user: UserDTO;
@@ -34,17 +35,17 @@ export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving
           return (
             <>
               <Field label="Old password" invalid={!!errors.oldPassword} error={errors?.oldPassword?.message}>
-                <Input
-                  id="old-password"
-                  type="password"
+                <PasswordField
+                  id="current-password"
+                  autoComplete="current-password"
                   {...register('oldPassword', { required: 'Old password is required' })}
                 />
               </Field>
 
               <Field label="New password" invalid={!!errors.newPassword} error={errors?.newPassword?.message}>
-                <Input
+                <PasswordField
                   id="new-password"
-                  type="password"
+                  autoComplete="new-password"
                   {...register('newPassword', {
                     required: 'New password is required',
                     validate: {
@@ -56,9 +57,9 @@ export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving
               </Field>
 
               <Field label="Confirm password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
-                <Input
+                <PasswordField
                   id="confirm-new-password"
-                  type="password"
+                  autoComplete="new-password"
                   {...register('confirmNew', {
                     required: 'New password confirmation is required',
                     validate: (v) => v === getValues().newPassword || 'Passwords must match',

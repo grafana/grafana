@@ -115,7 +115,6 @@ in sync with dashboards in Grafana's database. The dashboard provisioner has mul
 which makes it possible to star them, use one as the home dashboard, set permissions and other features in Grafana that
 expects the dashboards to exist in the database. More info in the [dashboard provisioning docs]({{< relref "../administration/provisioning.md" >}})
 
-
 ## Graphite Tags and Integrated Function Docs
 
 {{< figure src="/static/img/docs/v50/graphite_tags.png" max-width="1000px" class="docs-image--right" >}}
@@ -133,7 +132,7 @@ We are introducing a new unique identifier (`uid`) in the dashboard JSON model. 
 generated if not provided when creating a dashboard and will have a length of 9-12 characters.
 
 The unique identifier allows having persistent URLs for accessing dashboards, sharing them
-between instances and when using [dashboard provisioning]((/administration/provisioning/#reusable-dashboard-urls)). This means that dashboard can
+between instances and when using [dashboard provisioning](<(/administration/provisioning/#reusable-dashboard-urls)>). This means that dashboard can
 be renamed without breaking any links. We're changing the URL format for dashboards
 from `/dashboard/db/:slug` to `/d/:uid/:slug`. We'll keep supporting the old slug-based URLs for dashboards
 and redirects to the new one for backward compatibility. Please note that the old slug-based URLs
@@ -144,5 +143,6 @@ This might seem like a small change, but we are incredibly excited about it sinc
 much easier to manage, collaborate and navigate between dashboards.
 
 ### API changes
+
 New uid-based routes in the dashboard API have been introduced to retrieve and delete dashboards.
 The corresponding slug-based routes have been deprecated and will be removed in a future release.

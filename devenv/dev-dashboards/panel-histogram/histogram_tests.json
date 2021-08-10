@@ -13,13 +13,11 @@
       ]
     },
     "editable": true,
-    "gnetId": null,
     "graphTooltip": 0,
     "id": 632,
     "links": [],
     "panels": [
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -40,8 +38,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -100,8 +97,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -139,7 +135,6 @@
         "type": "histogram"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -160,8 +155,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -212,7 +206,6 @@
         "type": "histogram"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -233,8 +226,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -285,7 +277,6 @@
         "type": "histogram"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -300,8 +291,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",
@@ -353,7 +343,6 @@
         "type": "table"
       },
       {
-        "datasource": null,
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -368,8 +357,7 @@
               "mode": "absolute",
               "steps": [
                 {
-                  "color": "green",
-                  "value": null
+                  "color": "green"
                 },
                 {
                   "color": "red",

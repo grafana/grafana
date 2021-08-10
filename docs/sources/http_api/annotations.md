@@ -86,9 +86,9 @@ Content-Type: application/json
 
 Creates an annotation in the Grafana database. The `dashboardId` and `panelId` fields are optional.
 If they are not specified then a global annotation is created and can be queried in any dashboard that adds
-the Grafana annotations data source. When creating a region annotation include the timeEnd property. 
+the Grafana annotations data source. When creating a region annotation include the timeEnd property.
 
-The format for `time` and `timeEnd` should be epoch numbers in millisecond resolution. 
+The format for `time` and `timeEnd` should be epoch numbers in millisecond resolution.
 
 `POST /api/annotations`
 
@@ -122,8 +122,8 @@ Content-Type: application/json
 ```
 
 > The response for this HTTP request is slightly different in versions prior to v6.4. In prior versions you would
-also get an endId if you where creating a region. But in 6.4 regions are represented using a single event with time and
-timeEnd properties.
+> also get an endId if you where creating a region. But in 6.4 regions are represented using a single event with time and
+> timeEnd properties.
 
 ## Create Annotation in Graphite format
 
@@ -193,6 +193,7 @@ Content-Type: application/json
 ```
 
 ## Patch Annotation
+
 > This is available in Grafana 6.0.0-beta2 and above.
 
 `PATCH /api/annotations/:id`
@@ -249,5 +250,43 @@ Content-Type: application/json
 
 {
     "message":"Annotation deleted"
+}
+```
+
+## Find Annotations Tags
+
+`GET /api/annotations/tags`
+
+Find all the event tags created in the annotations.
+
+**Example Request**:
+
+```http
+GET /api/annotations/tags?tag=out HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+Query Parameters:
+
+- `tag`: Optional. A string that you can use to filter tags.
+- `limit`: Optional. A number, where the default is 100. Max limit for results returned.
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+    "result": {
+        "tags": [
+            {
+                "tag": "outage",
+                "count": 1
+            }
+        ]
+    }
 }
 ```

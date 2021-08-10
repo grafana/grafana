@@ -143,7 +143,7 @@ func TestGenerateConnectionString(t *testing.T) {
 }
 
 // To run this test, set runPostgresTests=true
-// Or from the commandline: GRAFANA_TEST_DB=postgres go test -v ./pkg/tsdb/postgres
+// Or from the commandline: GRAFANA_TEST_DB=postgres go test -tags=integration -v ./pkg/tsdb/postgres
 // The tests require a PostgreSQL db named grafanadstest and a user/password grafanatest/grafanatest!
 // Use the docker/blocks/postgres_tests/docker-compose.yaml to spin up a
 // preconfigured Postgres server suitable for running these tests.
@@ -214,7 +214,8 @@ func TestPostgres(t *testing.T) {
 				c13_time time without time zone,
 				c14_timetz time with time zone,
 				time date,
-				c15_interval interval
+				c15_interval interval,
+				c16_smallint smallint
 			);
 		`
 		_, err := sess.Exec(sql)
@@ -226,7 +227,8 @@ func TestPostgres(t *testing.T) {
 				4.5,6.7,1.1,1.2,
 				'char10','varchar10','text',
 
-				now(),now(),now(),now(),now(),now(),'15m'::interval
+				now(),now(),now(),now(),now(),now(),'15m'::interval,
+				null
 			);
 		`
 		_, err = sess.Exec(sql)
@@ -252,9 +254,9 @@ func TestPostgres(t *testing.T) {
 
 			frames, _ := queryResult.Dataframes.Decoded()
 			require.Len(t, frames, 1)
-			require.Len(t, frames[0].Fields, 17)
+			require.Len(t, frames[0].Fields, 18)
 
-			require.Equal(t, int16(1), frames[0].Fields[0].At(0).(int16))
+			require.Equal(t, int16(1), *frames[0].Fields[0].At(0).(*int16))
 			require.Equal(t, int32(2), *frames[0].Fields[1].At(0).(*int32))
 			require.Equal(t, int64(3), *frames[0].Fields[2].At(0).(*int64))
 
@@ -280,6 +282,7 @@ func TestPostgres(t *testing.T) {
 			_, ok = frames[0].Fields[15].At(0).(*time.Time)
 			require.True(t, ok)
 			require.Equal(t, "00:15:00", *frames[0].Fields[16].At(0).(*string))
+			require.Nil(t, frames[0].Fields[17].At(0))
 		})
 	})
 
@@ -480,6 +483,58 @@ func TestPostgres(t *testing.T) {
 			frames, _ := queryResult.Dataframes.Decoded()
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, 1.5, *frames[0].Fields[1].At(3).(*float64))
+		})
+	})
+
+	t.Run("Given a table with one data point", func(t *testing.T) {
+		type metric struct {
+			Time  time.Time
+			Value int64
+		}
+
+		startTime := time.Now().UTC().Add(-time.Minute * 5)
+		series := []*metric{
+			{
+				Time:  startTime,
+				Value: 33,
+			},
+		}
+
+		_, err = sess.InsertMulti(series)
+		require.NoError(t, err)
+
+		t.Run("querying with time group with default value", func(t *testing.T) {
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
+					{
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"rawSql": "WITH data AS (SELECT now()-'3m'::interval AS ts, 42 AS n) SELECT $__timeGroup(ts, '1m', 0), n FROM data",
+							"format": "time_series",
+						}),
+						RefID: "A",
+					},
+				},
+				TimeRange: &plugins.DataTimeRange{
+					From: fmt.Sprintf("%v", startTime.Unix()*1000),
+					To:   fmt.Sprintf("%v", startTime.Add(5*time.Minute).Unix()*1000),
+				},
+			}
+
+			resp, err := exe.DataQuery(context.Background(), nil, query)
+			require.NoError(t, err)
+			queryResult := resp.Results["A"]
+			require.NoError(t, queryResult.Error)
+
+			frames, _ := queryResult.Dataframes.Decoded()
+			require.Equal(t, 1, len(frames))
+			require.Equal(t, "Time", frames[0].Fields[0].Name)
+			require.Equal(t, "n", frames[0].Fields[1].Name)
+			require.Equal(t, float64(0), *frames[0].Fields[1].At(0).(*float64))
+			require.Equal(t, float64(0), *frames[0].Fields[1].At(1).(*float64))
+			require.Equal(t, float64(42), *frames[0].Fields[1].At(2).(*float64))
+			require.Equal(t, float64(0), *frames[0].Fields[1].At(3).(*float64))
+			require.Equal(t, float64(0), *frames[0].Fields[1].At(4).(*float64))
+			require.Equal(t, float64(0), *frames[0].Fields[1].At(5).(*float64))
 		})
 	})
 

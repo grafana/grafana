@@ -991,7 +991,7 @@ function migrateSinglestat(panel: PanelModel) {
   return panel;
 }
 
-function migrateDatasourceNameToRef(name: string): DatasourceRef | null {
+export function migrateDatasourceNameToRef(name: string): DatasourceRef | null {
   if (!name || name === 'default') {
     return null;
   }
@@ -1008,7 +1008,12 @@ function upgradeValueMappingsForPanel(panel: PanelModel) {
     return panel;
   }
 
-  fieldConfig.defaults.mappings = upgradeValueMappings(fieldConfig.defaults.mappings, fieldConfig.defaults.thresholds);
+  if (fieldConfig.defaults) {
+    fieldConfig.defaults.mappings = upgradeValueMappings(
+      fieldConfig.defaults.mappings,
+      fieldConfig.defaults.thresholds
+    );
+  }
 
   // Protect against no overrides
   if (Array.isArray(fieldConfig.overrides)) {

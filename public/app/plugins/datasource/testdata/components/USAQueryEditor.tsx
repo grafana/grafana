@@ -14,25 +14,13 @@ export function USAQueryEditor({ query, onChange }: Props) {
       <InlineFieldRow>
         <InlineField labelWidth={14} label="Mode">
           <Select
+            menuShouldPortal
             options={usaQueryModes}
             onChange={(v) => {
               onChange({ ...query, mode: v.value });
             }}
             width={32}
             value={usaQueryModes.find((ep) => ep.value === query.mode)}
-          />
-        </InlineField>
-
-        <InlineField label="Fields">
-          <Select
-            options={fieldNames}
-            onChange={(vals: SelectableValue[]) => {
-              onChange({ ...query, fields: vals.map((v) => v.value) });
-            }}
-            width={28}
-            isMulti={true}
-            placeholder="all"
-            value={query.fields}
           />
         </InlineField>
         <InlineField label="Period">
@@ -48,6 +36,7 @@ export function USAQueryEditor({ query, onChange }: Props) {
       <InlineFieldRow>
         <InlineField labelWidth={14} label="Fields">
           <Select
+            menuShouldPortal
             options={fieldNames}
             onChange={(vals: SelectableValue[]) => {
               onChange({ ...query, fields: vals.map((v) => v.value) });
@@ -60,6 +49,7 @@ export function USAQueryEditor({ query, onChange }: Props) {
         </InlineField>
         <InlineField label="States" grow>
           <Select
+            menuShouldPortal
             options={stateNames}
             onChange={(vals: SelectableValue[]) => {
               onChange({ ...query, states: vals.map((v) => v.value) });

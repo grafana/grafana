@@ -48,8 +48,8 @@ describe('ChangePassword Page', () => {
     render(<ChangePasswordPage {...props} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
-    expect(await screen.findByText('New password is required')).toBeInTheDocument();
-    expect(screen.getByText('Confirmed password is required')).toBeInTheDocument();
+    expect(await screen.findByText('New Password is required')).toBeInTheDocument();
+    expect(screen.getByText('Confirmed Password is required')).toBeInTheDocument();
 
     await act(async () => {
       await userEvent.type(screen.getByLabelText('New password'), 'admin');

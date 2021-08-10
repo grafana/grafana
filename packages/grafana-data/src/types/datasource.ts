@@ -516,6 +516,7 @@ export interface DataSourceJsonData {
   authType?: string;
   defaultRegion?: string;
   profile?: string;
+  manageAlerts?: boolean;
 }
 
 /**
@@ -564,6 +565,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   password?: string; // when access is direct, for some legacy datasources
   database?: string;
   isDefault?: boolean;
+  access: 'direct' | 'proxy'; // Currently we support 2 options - direct (browser) and proxy (server)
 
   /**
    * This is the full Authorization header if basic auth is enabled.

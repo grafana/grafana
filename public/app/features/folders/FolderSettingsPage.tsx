@@ -66,10 +66,11 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
     evt.stopPropagation();
     evt.preventDefault();
 
+    const confirmationText = `Do you want to delete this folder and all its dashboards and alerts?`;
     appEvents.publish(
       new ShowConfirmModalEvent({
         title: 'Delete',
-        text: `Do you want to delete this folder and all its dashboards?`,
+        text: confirmationText,
         icon: 'trash-alt',
         yesText: 'Delete',
         onConfirm: () => {

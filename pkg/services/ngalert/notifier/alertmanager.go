@@ -156,6 +156,16 @@ func New(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*Aler
 	return am, nil
 }
 
+func (am *Alertmanager) Ready() bool {
+	// We consider AM as ready only when the config has been
+	// applied at least once successfully. Until then, some objects
+	// can still be nil.
+	am.reloadConfigMtx.RLock()
+	defer am.reloadConfigMtx.RUnlock()
+
+	return len(am.config) > 0
+}
+
 func (am *Alertmanager) Run(ctx context.Context) error {
 	// Make sure dispatcher starts. We can tolerate future reload failures.
 	if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
@@ -188,6 +198,37 @@ func (am *Alertmanager) StopAndWait() error {
 	close(am.stopc)
 
 	am.wg.Wait()
+	return nil
+}
+
+// SaveAndApplyDefaultConfig saves the default configuration the database and applies the configuration to the Alertmanager.
+// It rollbacks the save if we fail to apply the configuration.
+func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
+	am.reloadConfigMtx.Lock()
+	defer am.reloadConfigMtx.Unlock()
+
+	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
+		Default:                   true,
+		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+	}
+
+	cfg, err := Load([]byte(alertmanagerDefaultConfiguration))
+	if err != nil {
+		return err
+	}
+
+	err = am.Store.SaveAlertmanagerConfigurationWithCallback(cmd, func() error {
+		if err := am.applyConfig(cfg, []byte(alertmanagerDefaultConfiguration)); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	am.Metrics.ActiveConfigurations.Set(1)
+
 	return nil
 }
 
@@ -269,7 +310,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It is not safe to call concurrently.
-func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) error {
+func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) (err error) {
 	// First, let's make sure this config is not already loaded
 	var configChanged bool
 	if rawConfig == nil {
@@ -434,7 +475,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewDiscordNotifier(cfg, tmpl)
 		case "googlechat":
 			n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
-		case "line":
+		case "LINE":
 			n, err = channels.NewLineNotifier(cfg, tmpl)
 		case "threema":
 			n, err = channels.NewThreemaNotifier(cfg, tmpl)
@@ -470,6 +511,7 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 			},
 			UpdatedAt: now,
 		}
+
 		for k, v := range a.Labels {
 			if len(v) == 0 || k == ngmodels.NamespaceUIDLabel { // Skip empty and namespace UID labels.
 				continue
@@ -620,7 +662,12 @@ func (am *Alertmanager) createReceiverStage(name string, integrations []notify.I
 }
 
 func waitFunc() time.Duration {
-	return setting.AlertingNotificationTimeout
+	// When it's a single instance, we don't need additional wait. The routing policies will have their own group wait.
+	// We need >0 wait here in case we have peers to sync the notification state with. 0 wait in that case can result
+	// in duplicate notifications being sent.
+	// TODO: we have setting.AlertingNotificationTimeout in legacy settings. Either use that or separate set of config
+	// for clustering with intuitive name, like "PeerTimeout".
+	return 0
 }
 
 func timeoutFunc(d time.Duration) time.Duration {

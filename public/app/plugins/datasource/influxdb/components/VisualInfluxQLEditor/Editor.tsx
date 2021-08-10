@@ -22,7 +22,7 @@ import {
   removeGroupByPart,
   changeSelectPart,
   changeGroupByPart,
-} from '../queryUtils';
+} from '../../queryUtils';
 import { FormatAsSection } from './FormatAsSection';
 import { SectionLabel } from './SectionLabel';
 import { SectionFill } from './SectionFill';
@@ -130,7 +130,7 @@ export const Editor = (props: Props): JSX.Element => {
           onChange={handleTagsSectionChange}
           getTagKeyOptions={getTagKeys}
           getTagValueOptions={(key: string) =>
-            withTemplateVariableOptions(getTagValues(key, measurement, policy, datasource))
+            withTemplateVariableOptions(getTagValues(key, measurement, policy, query.tags ?? [], datasource))
           }
         />
       </SectionWrap>

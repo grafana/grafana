@@ -1,5 +1,5 @@
 export { Icon } from './Icon/Icon';
-export { IconButton } from './IconButton/IconButton';
+export { IconButton, IconButtonVariant } from './IconButton/IconButton';
 export { ConfirmButton } from './ConfirmButton/ConfirmButton';
 export { DeleteButton } from './ConfirmButton/DeleteButton';
 export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
@@ -145,8 +145,8 @@ export {
   withErrorBoundary,
 } from './ErrorBoundary/ErrorBoundary';
 export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
-export { AlphaNotice } from './AlphaNotice/AlphaNotice';
 export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
+export { AlertingSettings } from './DataSourceSettings/AlertingSettings';
 export { TLSAuthSettings } from './DataSourceSettings/TLSAuthSettings';
 export { CertificationKey } from './DataSourceSettings/CertificationKey';
 export { Spinner } from './Spinner/Spinner';
@@ -186,6 +186,7 @@ export { InlineFieldRow } from './Forms/InlineFieldRow';
 export { FieldArray } from './Forms/FieldArray';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
+export { selectOptionInTest } from './Select/test-utils';
 export * from './Select/Select';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
@@ -200,6 +201,7 @@ export { Checkbox } from './Forms/Checkbox';
 
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
+export * from './FileDropzone';
 export { TimeRangeInput } from './DateTimePickers/TimeRangeInput';
 export { RelativeTimeRangePicker } from './DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker';
 export { Card, Props as CardProps, getCardStyles } from './Card/Card';
@@ -253,3 +255,4 @@ export { preparePlotFrame } from './GraphNG/utils';
 export { GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
+export { Label as BrowserLabel } from './BrowserLabel/Label';

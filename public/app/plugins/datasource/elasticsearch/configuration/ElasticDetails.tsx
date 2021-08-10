@@ -5,7 +5,7 @@ import { ElasticsearchOptions, Interval } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { gte, lt } from 'semver';
 
-const indexPatternTypes = [
+const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'No pattern', value: 'none' },
   { label: 'Hourly', value: 'Hourly', example: '[logstash-]YYYY.MM.DD.HH' },
   { label: 'Daily', value: 'Daily', example: '[logstash-]YYYY.MM.DD' },
@@ -53,6 +53,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
               label="Pattern"
               inputEl={
                 <Select
+                  menuShouldPortal
                   options={indexPatternTypes}
                   onChange={intervalHandler(value, onChange)}
                   value={indexPatternTypes.find(
@@ -82,6 +83,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             label="Version"
             inputEl={
               <Select
+                menuShouldPortal
                 options={esVersions}
                 onChange={(option) => {
                   const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
@@ -145,17 +147,29 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
         </div>
         <div className="gf-form-inline">
           <Switch
-            label="X-Pack Enabled"
-            labelClass="width-13"
+            label="X-Pack enabled"
+            labelClass="width-10"
             checked={value.jsonData.xpack || false}
             onChange={jsonDataSwitchChangeHandler('xpack', value, onChange)}
           />
         </div>
+
+        {gte(value.jsonData.esVersion, '6.6.0') && value.jsonData.xpack && (
+          <div className="gf-form-inline">
+            <Switch
+              label="Include frozen indices"
+              labelClass="width-10"
+              checked={value.jsonData.includeFrozen ?? false}
+              onChange={jsonDataSwitchChangeHandler('includeFrozen', value, onChange)}
+            />
+          </div>
+        )}
       </div>
     </>
   );
 };
 
+// TODO: Use change handlers from @grafana/data
 const changeHandler = (
   key: keyof DataSourceSettings<ElasticsearchOptions>,
   value: Props['value'],
@@ -167,6 +181,7 @@ const changeHandler = (
   });
 };
 
+// TODO: Use change handlers from @grafana/data
 const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['value'], onChange: Props['onChange']) => (
   event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
 ) => {

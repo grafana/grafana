@@ -1,11 +1,11 @@
+import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta, ScopedVars } from '@grafana/data';
 import {
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
-  ScopedVars,
-} from '@grafana/data';
-import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+  GrafanaAlertStateDecision,
+  GrafanaRuleDefinition,
+  PromAlertingRuleState,
+  PromRuleType,
+  RulerGrafanaRuleDTO,
+} from 'app/types/unified-alerting-dto';
 import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
@@ -17,18 +17,21 @@ import {
   AlertState,
   GrafanaManagedReceiverConfig,
 } from 'app/plugins/datasource/alertmanager/types';
-import { of } from 'rxjs';
 
 let nextDataSourceId = 1;
 
-export const mockDataSource = (partial: Partial<DataSourceInstanceSettings> = {}): DataSourceInstanceSettings => {
+export const mockDataSource = (
+  partial: Partial<DataSourceInstanceSettings> = {},
+  meta: Partial<DataSourcePluginMeta> = {}
+): DataSourceInstanceSettings<any> => {
   const id = partial.id ?? nextDataSourceId++;
 
-  const ds = {
+  return {
     id,
     uid: `mock-ds-${nextDataSourceId}`,
     type: 'prometheus',
     name: `Prometheus-${id}`,
+    access: 'proxy',
     jsonData: {},
     meta: ({
       info: {
@@ -37,13 +40,10 @@ export const mockDataSource = (partial: Partial<DataSourceInstanceSettings> = {}
           large: 'https://prometheus.io/assets/prometheus_logo_grey.svg',
         },
       },
+      ...meta,
     } as any) as DataSourcePluginMeta,
     ...partial,
   };
-  if (!ds.meta.id) {
-    ds.meta.id = ds.type;
-  }
-  return ds;
 };
 
 export const mockPromAlert = (partial: Partial<Alert> = {}): Alert => ({
@@ -59,6 +59,40 @@ export const mockPromAlert = (partial: Partial<Alert> = {}): Alert => ({
   value: '1e+00',
   ...partial,
 });
+
+export const mockRulerGrafanaRule = (
+  partial: Partial<RulerGrafanaRuleDTO> = {},
+  partialDef: Partial<GrafanaRuleDefinition> = {}
+): RulerGrafanaRuleDTO => {
+  return {
+    for: '1m',
+    grafana_alert: {
+      uid: '123',
+      title: 'myalert',
+      namespace_uid: '123',
+      namespace_id: 1,
+      condition: 'A',
+      no_data_state: GrafanaAlertStateDecision.Alerting,
+      exec_err_state: GrafanaAlertStateDecision.Alerting,
+      data: [
+        {
+          datasourceUid: '123',
+          refId: 'A',
+          queryType: 'huh',
+          model: {} as any,
+        },
+      ],
+      ...partialDef,
+    },
+    annotations: {
+      message: 'alert with severity "{{.warning}}}"',
+    },
+    labels: {
+      severity: 'warning',
+    },
+    ...partial,
+  };
+};
 
 export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): AlertingRule => {
   return {
@@ -150,23 +184,8 @@ export const mockAlertGroup = (partial: Partial<AlertmanagerGroup> = {}): Alertm
   };
 };
 
-class DataSourceApiEX extends DataSourceApi {
-  /**
-   * Query for data, and optionally stream results
-   */
-  query(request: DataQueryRequest) {
-    return of({ data: [] });
-  }
-
-  /**
-   * Test & verify datasource settings & connection details
-   */
-  testDatasource(): Promise<any> {
-    return Promise.resolve({});
-  }
-}
-
 export class MockDataSourceSrv implements DataSourceSrv {
+  datasources: Record<string, DataSourceApi> = {};
   // @ts-ignore
   private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
@@ -176,25 +195,29 @@ export class MockDataSourceSrv implements DataSourceSrv {
     getVariables: () => [],
     replace: (name: any) => name,
   };
+  defaultName = '';
 
-  constructor(private datasources: DataSourceInstanceSettings[]) {
-    this.settingsMapByName = datasources.reduce<Record<string, DataSourceInstanceSettings>>((acc, ds) => {
-      if (!ds.uid) {
-        ds.uid = ds.name;
-      }
-      acc[ds.name] = ds;
-      acc[ds.uid] = ds;
-      return acc;
-    }, {});
+  constructor(datasources: Record<string, DataSourceInstanceSettings>) {
+    this.datasources = {};
+    this.settingsMapByName = Object.values(datasources).reduce<Record<string, DataSourceInstanceSettings>>(
+      (acc, ds) => {
+        acc[ds.name] = ds;
+        return acc;
+      },
+      {}
+    );
     for (const dsSettings of Object.values(this.settingsMapByName)) {
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
       this.settingsMapById[dsSettings.id] = dsSettings;
+      if (dsSettings.isDefault) {
+        this.defaultName = dsSettings.name;
+      }
     }
   }
 
   get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
-    const v = new DataSourceApiEX(this.getInstanceSettings(name)!);
-    return Promise.resolve(v);
+    return DatasourceSrv.prototype.get.call(this, name, scopedVars);
+    //return Promise.reject(new Error('not implemented'));
   }
 
   /**
@@ -208,11 +231,14 @@ export class MockDataSourceSrv implements DataSourceSrv {
    * Get settings and plugin metadata by name or uid
    */
   getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined {
-    const v = DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid) || this.datasources[0];
-    if (!v) {
-      return ({ meta: { info: { logos: {} } } } as unknown) as DataSourceInstanceSettings;
-    }
-    return v;
+    return (
+      DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid) ||
+      (({ meta: { info: { logos: {} } } } as unknown) as DataSourceInstanceSettings)
+    );
+  }
+
+  async loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
+    return DatasourceSrv.prototype.loadDatasource.call(this, name);
   }
 }
 

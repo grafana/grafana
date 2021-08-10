@@ -65,10 +65,13 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
       tags,
     });
 
+  const onFormatCreateLabel = (input: string) => `Use custom value: ${input}`;
+
   return (
     <FieldSet className={styles.container}>
       <Field label="Filter by">
         <Select
+          menuShouldPortal
           inputId="grafana-annotations__filter-by"
           options={annotationTypes}
           value={type}
@@ -77,6 +80,7 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
       </Field>
       <Field label="Max limit">
         <Select
+          menuShouldPortal
           inputId="grafana-annotations__limit"
           width={16}
           options={limitOptions}
@@ -92,6 +96,7 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
           <Field label="Tags" description={tagsTooltipContent}>
             <TagFilter
               allowCustomValue
+              formatCreateLabel={onFormatCreateLabel}
               inputId="grafana-annotations__tags"
               onChange={onTagsChange}
               tagOptions={getAnnotationTags}
