@@ -45,7 +45,7 @@ If you are copying an existing page as the basis for a new one, be sure to remov
 
 The side menu is automatically build from the file structure. Use the [weight](https://gohugo.io/templates/lists/#by-weight) front matter parameter to order pages.
 
-Use the front matter param `menuTitle` to specify different menu text from the page title.
+To specify different menu text from the page title, use the front matter parameter `menuTitle`.
 
 ### Add images
 
