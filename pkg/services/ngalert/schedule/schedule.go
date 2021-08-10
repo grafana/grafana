@@ -23,7 +23,7 @@ import (
 )
 
 // OrgPollingPollingInterval of how often we sync admin configuration.
-const OrgPollingInterval = 5 * time.Minute
+var OrgPollingInterval = 5 * time.Minute
 
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now

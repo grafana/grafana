@@ -6,16 +6,25 @@ import (
 	"net/http"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
+	// override polling interval for fetching orgs
+	origOrgPollingInterval := schedule.OrgPollingInterval
+	schedule.OrgPollingInterval = 1 * time.Millisecond
+	defer func() {
+		schedule.OrgPollingInterval = origOrgPollingInterval
+	}()
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
