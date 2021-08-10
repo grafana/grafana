@@ -19,15 +19,30 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
+	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
+	"github.com/grafana/grafana/pkg/tsdb/graphite"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb"
+	"github.com/grafana/grafana/pkg/tsdb/loki"
+	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus"
+	"github.com/grafana/grafana/pkg/tsdb/tempo"
+	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
-func ProvideBackgroundServiceRegistry(httpServer *api.HTTPServer, ng *ngalert.AlertNG, cleanup *cleanup.CleanUpService,
+func ProvideBackgroundServiceRegistry(
+	httpServer *api.HTTPServer, ng *ngalert.AlertNG, cleanup *cleanup.CleanUpService,
 	live *live.GrafanaLive, pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService,
 	rendering *rendering.RenderingService, tokenService *auth.UserAuthTokenService,
 	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, pm *manager.PluginManager,
 	dashSvc *plugindashboards.Service, backendPM *backendmanager.Manager, metrics *metrics.InternalMetricsService,
-	usageStats *usagestats.UsageStatsService, tracing *tracing.TracingService,
-	remoteCache *remotecache.RemoteCache) *BackgroundServiceRegistry {
+	usageStats *usagestats.UsageStatsService, tracing *tracing.TracingService, remoteCache *remotecache.RemoteCache,
+	// Need to make sure these are initialized, is there a better place to put them?
+	_ *azuremonitor.Service, _ *cloudwatch.CloudWatchService, _ *elasticsearch.Service, _ *graphite.Service, _ *influxdb.Service,
+	_ *loki.Service, _ *opentsdb.Service, _ *prometheus.Service, _ *tempo.Service, _ *testdatasource.TestDataPlugin,
+
+) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
 		ng,
