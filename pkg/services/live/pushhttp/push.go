@@ -133,6 +133,11 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					Value: "$.value1",
 				},
 				{
+					Name:  "value2",
+					Type:  data.FieldTypeNullableFloat64,
+					Value: "$.value2",
+				},
+				{
 					Name:  "value3",
 					Type:  data.FieldTypeNullableFloat64,
 					Value: "$.value3",
@@ -187,9 +192,13 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					Channel: "stream/test/exact/annotation/changes",
 				}),
 				pipeline.NewConditionalOutput(
-					[]pipeline.ConditionChecker{
-						pipeline.NewFloat64CompareCondition("value1", "gte", 4.0),
-					},
+					pipeline.NewMultipleConditionChecker(
+						[]pipeline.ConditionChecker{
+							pipeline.NewFloat64CompareCondition("value1", "gte", 3.0),
+							pipeline.NewFloat64CompareCondition("value2", "gte", 3.0),
+						},
+						pipeline.ConditionAll,
+					),
 					pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
 						Channel: "stream/test/exact/threshold",
 					}),

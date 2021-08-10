@@ -7,23 +7,21 @@ import (
 )
 
 type ConditionalOutput struct {
-	Conditions []ConditionChecker
-	Outputter  Outputter
+	Condition ConditionChecker
+	Outputter Outputter
 }
 
-func NewConditionalOutput(conditions []ConditionChecker, outputter Outputter) *ConditionalOutput {
-	return &ConditionalOutput{Conditions: conditions, Outputter: outputter}
+func NewConditionalOutput(condition ConditionChecker, outputter Outputter) *ConditionalOutput {
+	return &ConditionalOutput{Condition: condition, Outputter: outputter}
 }
 
 func (l ConditionalOutput) Output(ctx context.Context, vars OutputVars, frame *data.Frame) error {
-	for _, c := range l.Conditions {
-		ok, err := c.CheckCondition(ctx, frame)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return nil
-		}
+	ok, err := l.Condition.CheckCondition(ctx, frame)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return nil
 	}
 	return l.Outputter.Output(ctx, vars, frame)
 }
