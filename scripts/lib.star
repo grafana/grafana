@@ -495,7 +495,7 @@ def test_a11y_main_step(edition):
         },
         'failure': 'ignore',
         'commands': [
-            'yarn run test-accessibility',
+            'yarn run test:accessibility',
         ],
     }
 
