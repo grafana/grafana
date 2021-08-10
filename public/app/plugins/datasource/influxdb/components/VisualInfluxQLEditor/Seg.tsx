@@ -101,7 +101,7 @@ const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: Sel
   const [loadState, doLoad] = useAsyncFn(loadOptions, [loadOptions]);
 
   useEffect(() => {
-    doLoad();
+    doLoad('');
   }, [doLoad, loadOptions]);
 
   return (

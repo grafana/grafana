@@ -56,6 +56,7 @@ Dashboards exported from Grafana 3.1+ have a new json section `__inputs`
 that define what data sources and metric prefixes the dashboard uses.
 
 Example:
+
 ```json
 {
   "__inputs": [
@@ -76,7 +77,6 @@ Example:
     }
   ]
 }
-
 ```
 
 These are then referenced in the dashboard panels like this:
@@ -84,14 +84,14 @@ These are then referenced in the dashboard panels like this:
 ```json
 {
   "rows": [
-      {
-        "panels": [
-          {
-            "type": "graph",
-            "datasource": "${DS_GRAPHITE}"
-          }
-        ]
-      }
+    {
+      "panels": [
+        {
+          "type": "graph",
+          "datasource": "${DS_GRAPHITE}"
+        }
+      ]
+    }
   ]
 }
 ```
@@ -106,4 +106,5 @@ data source. Another alternative is to open the json file in a text editor and u
 to value that matches a name of your data source.
 
 ## Note
+
 In Grafana v5.3.4+ the export modal has new checkbox for sharing for external use (other instances). If the checkbox is not checked then the `__inputs` section will not be included in the exported JSON file.

@@ -5,7 +5,7 @@ weight = 300
 
 # Config from query results transform
 
-> **Note:** This is a new beta transformation introduced in v8.1. 
+> **Note:** This is a new beta transformation introduced in v8.1.
 
 This transformation allow you select one query and from it extract [standard options]({{< relref "../standard-options.md" >}}) like **Min**, **Max**, **Unit** and **Thresholds** and apply it to other query results. This enables dynamic query driven visualization configuration.
 
@@ -19,7 +19,7 @@ If you want to extract a unique config for every row in the config query result 
 
 ### Field mapping table
 
-This transformation includes a field table which lists all fields in the data returned by the config query. This table gives you control over what field should be mapped to each config property (the *Use as** option). You can also choose which value to select if there are multiple rows in the returned data. 
+This transformation includes a field table which lists all fields in the data returned by the config query. This table gives you control over what field should be mapped to each config property (the \*Use as\*\* option). You can also choose which value to select if there are multiple rows in the returned data.
 
 ## Example
 
@@ -48,7 +48,7 @@ As you can see each row in the source data becomes a separate field. Each field 
 
 ## Value mappings
 
-You can also transform a query result into value mappings. This is is a bit different as here every row in the config query result will be used to define a single value mapping row. See example below. 
+You can also transform a query result into value mappings. This is is a bit different as here every row in the config query result will be used to define a single value mapping row. See example below.
 
 Config query result:
 

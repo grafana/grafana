@@ -215,6 +215,7 @@ const defaultSettings: DataSourceInstanceSettings = {
   type: 'tracing',
   name: 'jaeger',
   url: 'http://grafana.com',
+  access: 'proxy',
   meta: {
     id: 'jaeger',
     name: 'jaeger',
