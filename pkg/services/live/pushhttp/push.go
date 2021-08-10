@@ -179,19 +179,21 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
 				}),
 				pipeline.NewChangeLogOutput(f.frameStorage, f.ruleProcessor, pipeline.ChangeLogOutputConfig{
-					Fields:  []string{"value3"},
+					Field:   "value3",
 					Channel: "stream/test/exact/value3/changes",
 				}),
 				pipeline.NewChangeLogOutput(f.frameStorage, f.ruleProcessor, pipeline.ChangeLogOutputConfig{
-					Fields:  []string{"annotation"},
+					Field:   "annotation",
 					Channel: "stream/test/exact/annotation/changes",
 				}),
-				pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
-					Channel: "stream/test/exact/threshold",
-					Conditions: []pipeline.ConditionChecker{
+				pipeline.NewConditionalOutput(
+					[]pipeline.ConditionChecker{
 						pipeline.NewFloat64CompareCondition("value1", "gte", 4.0),
 					},
-				}),
+					pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
+						Channel: "stream/test/exact/threshold",
+					}),
+				),
 			},
 		},
 		{

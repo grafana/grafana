@@ -9,7 +9,7 @@ import (
 )
 
 type ChangeLogOutputConfig struct {
-	Fields  []string
+	Field   string
 	Channel string
 }
 
@@ -35,38 +35,38 @@ func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.
 		return nil
 	}
 
-	for _, fieldName := range l.config.Fields {
-		previousFrameFieldIndex := -1
-		currentFrameFieldIndex := -1
+	fieldName := l.config.Field
 
-		for i, f := range previousFrame.Fields {
-			if f.Name == fieldName {
-				previousFrameFieldIndex = i
-			}
-		}
-		for i, f := range frame.Fields {
-			if f.Name == fieldName {
-				currentFrameFieldIndex = i
-			}
-		}
+	previousFrameFieldIndex := -1
+	currentFrameFieldIndex := -1
 
-		if previousFrameFieldIndex >= 0 && currentFrameFieldIndex >= 0 {
-			if !reflect.DeepEqual(
-				previousFrame.Fields[previousFrameFieldIndex].At(0),
-				frame.Fields[currentFrameFieldIndex].At(0),
-			) {
-				fTime := data.NewFieldFromFieldType(data.FieldTypeTime, 1)
-				fTime.Name = "time"
-				fTime.Set(0, time.Now())
-				f1 := data.NewFieldFromFieldType(previousFrame.Fields[previousFrameFieldIndex].Type(), 1)
-				f1.Set(0, previousFrame.Fields[previousFrameFieldIndex].At(0))
-				f1.Name = "old"
-				f2 := data.NewFieldFromFieldType(frame.Fields[currentFrameFieldIndex].Type(), 1)
-				f2.Set(0, frame.Fields[currentFrameFieldIndex].At(0))
-				f2.Name = "new"
-				changeFrame := data.NewFrame("change", fTime, f1, f2)
-				return l.ruleProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, changeFrame)
-			}
+	for i, f := range previousFrame.Fields {
+		if f.Name == fieldName {
+			previousFrameFieldIndex = i
+		}
+	}
+	for i, f := range frame.Fields {
+		if f.Name == fieldName {
+			currentFrameFieldIndex = i
+		}
+	}
+
+	if previousFrameFieldIndex >= 0 && currentFrameFieldIndex >= 0 {
+		if !reflect.DeepEqual(
+			previousFrame.Fields[previousFrameFieldIndex].At(0),
+			frame.Fields[currentFrameFieldIndex].At(0),
+		) {
+			fTime := data.NewFieldFromFieldType(data.FieldTypeTime, 1)
+			fTime.Name = "time"
+			fTime.Set(0, time.Now())
+			f1 := data.NewFieldFromFieldType(previousFrame.Fields[previousFrameFieldIndex].Type(), 1)
+			f1.Set(0, previousFrame.Fields[previousFrameFieldIndex].At(0))
+			f1.Name = "old"
+			f2 := data.NewFieldFromFieldType(frame.Fields[currentFrameFieldIndex].Type(), 1)
+			f2.Set(0, frame.Fields[currentFrameFieldIndex].At(0))
+			f2.Name = "new"
+			changeFrame := data.NewFrame("change", fTime, f1, f2)
+			return l.ruleProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, changeFrame)
 		}
 	}
 	return nil

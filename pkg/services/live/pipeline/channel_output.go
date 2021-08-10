@@ -7,8 +7,7 @@ import (
 )
 
 type ChannelOutputConfig struct {
-	Channel    string
-	Conditions []ConditionChecker
+	Channel string
 }
 
 type ChannelOutput struct {
@@ -21,14 +20,5 @@ func NewChannelOutput(ruleProcessor *RuleProcessor, config ChannelOutputConfig) 
 }
 
 func (l ChannelOutput) Output(ctx context.Context, vars OutputVars, frame *data.Frame) error {
-	for _, c := range l.config.Conditions {
-		ok, err := c.CheckCondition(ctx, frame)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return nil
-		}
-	}
-	return l.ruleProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, frame)
+	return l.ruleProcessor.ProcessFrame(ctx, vars.OrgID, l.config.Channel, frame)
 }
