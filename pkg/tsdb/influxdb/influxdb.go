@@ -34,12 +34,11 @@ type Service struct {
 var ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
 
 func ProvideService(httpClient httpclient.Provider, backendPluginManager backendplugin.Manager) (*Service, error) {
-	glog := log.New("tsdb.influxdb")
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClient))
 	s := &Service{
 		QueryParser:    &InfluxdbQueryParser{},
 		ResponseParser: &ResponseParser{},
-		glog:           glog,
+		glog:           log.New("tsdb.influxdb"),
 		im:             im,
 	}
 
@@ -48,7 +47,7 @@ func ProvideService(httpClient httpclient.Provider, backendPluginManager backend
 	})
 
 	if err := backendPluginManager.RegisterAndStart(context.Background(), "influxdb", factory); err != nil {
-		glog.Error("Failed to register plugin", "error", err)
+		s.glog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}
 
