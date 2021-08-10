@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
-import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
+import { DataSourceInstanceSettings, dateTime, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
 import { getDataSourceSrv, PanelRenderer } from '@grafana/runtime';
-import { Alert, CodeEditor, LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, CodeEditor, DateTimePicker, LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { PanelOptions } from 'app/plugins/panel/table/models.gen';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -62,6 +62,7 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
                   <span className={styles.dataSource}>({dsSettings.name})</span>
                 </div>
                 <div className={styles.actions}>
+                  {!isExpressionQuery(query.model) ? <DateTimePicker date={dateTime()} onChange={() => {}} /> : null}
                   <PanelPluginsButtonGroup onChange={setPanel} value={panel} size="sm" />
                   {!isExpressionQuery(query.model) && (
                     <>
