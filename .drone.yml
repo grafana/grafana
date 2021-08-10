@@ -143,7 +143,7 @@ steps:
   - end-to-end-tests-server
 
 - name: test-a11y_frontend
-  image: grafana/ci-e2e:12.19.0-1
+  image: alpeware/chrome-headless-trunk
   commands:
   - yarn run test:accessibility
   environment:
@@ -3542,6 +3542,6 @@ get:
 
 ---
 kind: signature
-hmac: a39e6fc13dafec17ca2e287dbf41290cef870938176014b6225aa0f2cf28ebe9
+hmac: 1081a5a4170511d0102363e651489c8d9bef00d9768e69815505395b8a6b50e1
 
 ...
