@@ -11,6 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+// GetAPIKeys swagger:route GET /auth/keys
+//
+// responses:
+// 200: ApikeyResponse
+// 400: badRequestError
+// 404: notFoundError
+// 409: conflictError
+// 500: internalServerError
 func GetAPIKeys(c *models.ReqContext) response.Response {
 	query := models.GetApiKeysQuery{OrgId: c.OrgId, IncludeExpired: c.QueryBool("includeExpired")}
 

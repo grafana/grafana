@@ -58,6 +58,13 @@ type BadRequestError struct {
 	GenericError
 }
 
+// ConflictError
+//
+// swagger:response conflictError
+type ConflictError struct {
+	GenericError
+}
+
 // PreconditionFailedError
 //
 // swagger:response preconditionFailedError
