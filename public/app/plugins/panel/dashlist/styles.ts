@@ -5,7 +5,7 @@ import { styleMixins } from '@grafana/ui';
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   dashlistSectionHeader: css`
-    margin-bottom: ${theme.spacing(1)};
+    margin-bottom: ${theme.spacing(2)};
     color: ${theme.v1.colors.textWeak};
   `,
 

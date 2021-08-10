@@ -51,7 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       cursor: default;
 
       &:hover {
-        background-color: ${theme.v1.colors.panelBg};
+        background-color: ${theme.colors.background.primary};
       }
     `,
   };

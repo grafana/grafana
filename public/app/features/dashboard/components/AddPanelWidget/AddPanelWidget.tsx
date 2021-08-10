@@ -297,7 +297,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: 38px;
       flex-shrink: 0;
       width: 100%;
-      font-size: ${theme.v1.typography.size.md};
+      font-size: ${theme.typography.fontSize};
       font-weight: ${theme.typography.fontWeightMedium};
       padding-left: ${theme.spacing(1)};
       transition: background-color 0.1s ease-in-out;
@@ -312,7 +312,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
       cursor: pointer;
       padding-left: ${theme.spacing(0.5)};
-      width: ${theme.v1.spacing.xl};
+      width: ${theme.spacing(4)};
     `,
     noMargin: css`
       margin: 0;
