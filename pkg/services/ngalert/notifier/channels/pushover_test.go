@@ -137,11 +137,13 @@ func TestPushoverNotifier(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
+			secureSettings := make(map[string][]byte)
 
 			m := &NotificationChannelConfig{
-				Name:     "pushover_testing",
-				Type:     "pushover",
-				Settings: settingsJSON,
+				Name:           "pushover_testing",
+				Type:           "pushover",
+				Settings:       settingsJSON,
+				SecureSettings: secureSettings,
 			}
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())

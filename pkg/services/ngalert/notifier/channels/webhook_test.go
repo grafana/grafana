@@ -182,12 +182,14 @@ func TestWebhookNotifier(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
+			secureSettings := make(map[string][]byte)
 
 			m := &NotificationChannelConfig{
-				Name:     "webhook_testing",
-				Type:     "webhook",
-				Settings: settingsJSON,
-				OrgID:    orgID,
+				OrgID:          orgID,
+				Name:           "webhook_testing",
+				Type:           "webhook",
+				Settings:       settingsJSON,
+				SecureSettings: secureSettings,
 			}
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())

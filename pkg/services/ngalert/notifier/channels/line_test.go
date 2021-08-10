@@ -83,11 +83,13 @@ func TestLineNotifier(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
+			secureSettings := make(map[string][]byte)
 
 			m := &NotificationChannelConfig{
-				Name:     "line_testing",
-				Type:     "line",
-				Settings: settingsJSON,
+				Name:           "line_testing",
+				Type:           "line",
+				Settings:       settingsJSON,
+				SecureSettings: secureSettings,
 			}
 
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
