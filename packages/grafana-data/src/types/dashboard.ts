@@ -11,9 +11,6 @@ export enum DashboardCursorSync {
  * @public
  */
 export interface PanelModel<TOptions = any, TCustomFieldConfig extends object = any> {
-  /** the plugin ID for panel type */
-  type: string;
-
   /** ID of the panel within the current dashboard */
   id: number;
 
