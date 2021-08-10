@@ -155,7 +155,7 @@ steps:
 - name: test-a11y-frontend
   image: grafana/ci-e2e:12.19.0-1
   commands:
-  - yarn run test-accessibility
+  - yarn run test:accessibility
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
@@ -3544,6 +3544,6 @@ get:
 
 ---
 kind: signature
-hmac: 9819c631ea5d67cb69724b3234e706664372465b0c629dc30e9e3a0ccf1a957a
+hmac: 74c2bc29c8b6cbad8c095df0ec19b2b30eb947681b80bb630d88c15b62ed1db3
 
 ...
