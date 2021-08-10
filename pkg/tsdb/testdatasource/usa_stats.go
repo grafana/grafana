@@ -192,7 +192,10 @@ func getStateValues(t time.Time, field string, query usaQuery) []float64 {
 	values := make([]float64, len(query.States))
 	for i := range query.States {
 		tv += incr
-		values[i] = fn(float64(int64(tv) % int64(pn)))
+		value := fn(float64(int64(tv) % int64(pn)))
+		// We shall truncate float64 to a certain precision, because otherwise we might
+		// get different cos/tan results across different CPU architectures and compilers.
+		values[i] = float64(int(value*1e10)) / 1e10
 	}
 	return values
 }
