@@ -36,8 +36,11 @@ export interface AzureMonitorQuery extends DataQuery {
  */
 export interface AzureMetricQuery {
   resourceGroup?: string;
-  resourceName?: string;
+
+  /** Resource type */
   metricDefinition?: string;
+
+  resourceName?: string;
   metricNamespace?: string;
   metricName?: string;
   timeGrain?: string;

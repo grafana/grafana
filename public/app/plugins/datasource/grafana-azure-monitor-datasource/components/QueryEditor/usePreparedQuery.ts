@@ -30,7 +30,6 @@ const usePreparedQuery = (query: AzureMonitorQuery, onChangeQuery: (newQuery: Az
 
   useEffect(() => {
     if (preparedQuery !== query) {
-      console.log('changing default query', { from: query, to: preparedQuery });
       onChangeQuery(preparedQuery);
     }
   }, [preparedQuery, query, onChangeQuery]);
