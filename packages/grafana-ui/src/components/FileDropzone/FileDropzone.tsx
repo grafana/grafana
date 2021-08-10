@@ -30,6 +30,11 @@ export interface FileDropzoneProps {
    * Use the onLoad function to get the result from FileReader.
    */
   onLoad?: (result: string | ArrayBuffer | null) => void;
+  /**
+   * The fileListRenderer property can be used to overwrite the list of files. To not to show
+   * any list return null in the function.
+   */
+  fileListRenderer?: (file: DropzoneFile, removeFile: (file: DropzoneFile) => void) => ReactNode;
 }
 
 export interface DropzoneFile {
@@ -41,7 +46,7 @@ export interface DropzoneFile {
   retryUpload?: () => void;
 }
 
-export function FileDropzone({ options, children, readAs, onLoad }: FileDropzoneProps) {
+export function FileDropzone({ options, children, readAs, onLoad, fileListRenderer }: FileDropzoneProps) {
   const [files, setFiles] = useState<DropzoneFile[]>([]);
 
   const setFileProperty = useCallback(
@@ -133,7 +138,12 @@ export function FileDropzone({ options, children, readAs, onLoad }: FileDropzone
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ ...options, onDrop });
   const theme = useTheme2();
   const styles = getStyles(theme, isDragActive);
-  const fileList = files.map((file) => <FileListItem key={file.id} file={file} removeFile={removeFile} />);
+  const fileList = files.map((file) => {
+    if (fileListRenderer) {
+      return fileListRenderer(file, removeFile);
+    }
+    return <FileListItem key={file.id} file={file} removeFile={removeFile} />;
+  });
 
   return (
     <div className={styles.container}>
