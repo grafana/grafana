@@ -7,16 +7,18 @@ import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 import { RowVector } from '../../vector/RowVector';
 import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
-import { AsNumberVector } from '../../vector/AsNumberVector';
 import { getTimeField } from '../../dataframe/processDataFrame';
 import { defaults } from 'lodash';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
 import { ensureColumnsTransformer } from './ensureColumns';
 import { getFieldDisplayName } from '../../field';
 import { noopTransformer } from './noop';
+import { parseEquation } from '../../utils/math';
+import { FunctionalVector } from '../../vector/FunctionalVector';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
+  MathField = 'math',
   BinaryOperation = 'binary',
 }
 
@@ -32,6 +34,11 @@ export interface BinaryOptions {
   right: string;
 }
 
+export interface MathOptions {
+  expr: string;
+  symbols: Record<string, string>;
+}
+
 const defaultReduceOptions: ReduceOptions = {
   reducer: ReducerID.sum,
 };
@@ -42,6 +49,11 @@ const defaultBinaryOptions: BinaryOptions = {
   right: '',
 };
 
+const defaultMathOptions: MathOptions = {
+  expr: '',
+  symbols: {},
+};
+
 export interface CalculateFieldTransformerOptions {
   // True/False or auto
   timeSeries?: boolean;
@@ -50,6 +62,7 @@ export interface CalculateFieldTransformerOptions {
   // Only one should be filled
   reduce?: ReduceOptions;
   binary?: BinaryOptions;
+  math?: MathOptions;
 
   // Remove other fields
   replaceFields?: boolean;
@@ -78,13 +91,20 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     return outerSource.pipe(
       operator,
       map((data) => {
-        const mode = options.mode ?? CalculateFieldMode.ReduceRow;
         let creator: ValuesCreator | undefined = undefined;
 
-        if (mode === CalculateFieldMode.ReduceRow) {
-          creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
-        } else if (mode === CalculateFieldMode.BinaryOperation) {
-          creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions), data);
+        switch (options.mode) {
+          case CalculateFieldMode.BinaryOperation:
+            creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions), data);
+            break;
+
+          case CalculateFieldMode.MathField:
+            creator = getMathCreator(defaults(options.math, defaultMathOptions), data);
+            break;
+
+          case CalculateFieldMode.ReduceRow:
+          default:
+            creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
         }
 
         // Nothing configured
@@ -136,9 +156,7 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
   if (options.include && options.include.length) {
     matcher = getFieldMatcher({
       id: FieldMatcherID.byNames,
-      options: {
-        names: options.include,
-      },
+      options: options.include,
     });
   }
 
@@ -188,9 +206,6 @@ function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string, allFr
 
   for (const f of frame.fields) {
     if (name === getFieldDisplayName(f, frame, allFrames)) {
-      if (f.type === FieldType.boolean) {
-        return new AsNumberVector(f.values);
-      }
       return f.values;
     }
   }
@@ -201,6 +216,62 @@ function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string, allFr
   }
 
   return undefined;
+}
+
+function getMathCreator(options: MathOptions, allFrames: DataFrame[]): ValuesCreator {
+  // No equation configured
+  if (!options.expr) {
+    return () => {
+      return (undefined as unknown) as Vector;
+    };
+  }
+  const info = parseEquation(options.expr);
+  if (info.err) {
+    return () => {
+      return (undefined as unknown) as Vector; // ?? or throw an error?
+    };
+  }
+
+  return (frame: DataFrame) => {
+    const scope: Record<string, Vector<any>> = {};
+    for (const [k, v] of Object.entries(options.symbols)) {
+      const f = findFieldValuesWithNameOrConstant(frame, v, allFrames);
+      if (!f) {
+        return (undefined as unknown) as Vector; // ?? or throw an error?
+      }
+      scope[k] = f;
+    }
+
+    // Make sure every symbol has a value and use symbol as lookup
+    for (const k of info.symbols) {
+      if (!scope[k]) {
+        const f = findFieldValuesWithNameOrConstant(frame, k, allFrames);
+        if (!f) {
+          return (undefined as unknown) as Vector; // ?? or throw an error?
+        }
+        scope[k] = f;
+      }
+    }
+
+    return new CalculatedVector(info.eval, scope, frame.length);
+  };
+}
+export class CalculatedVector<T = any> extends FunctionalVector<T> {
+  constructor(private evalFn: math.EvalFunction, private scope: Record<string, Vector<any>>, private len: number) {
+    super();
+  }
+
+  get length() {
+    return this.len;
+  }
+
+  get(index: number): T {
+    const scope: any = {};
+    for (const [k, v] of Object.entries(this.scope)) {
+      scope[k] = v.get(index);
+    }
+    return this.evalFn.evaluate(scope);
+  }
 }
 
 function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): ValuesCreator {

@@ -21,13 +21,29 @@ const buildCjsPackage = ({ env }) => {
         globals: {},
       },
     ],
-    external: ['lodash', 'rxjs'], // Use Lodash, rxjs from grafana
+    external: ['lodash', 'rxjs', 'apache-arrow', 'mathjs'], // Use Lodash, rxjs & arrow from grafana
     plugins: [
       json({
         include: ['../../node_modules/moment-timezone/data/packed/latest.json'],
       }),
       commonjs({
         include: /node_modules/,
+        namedExports: {
+          '../../node_modules/lodash/lodash.js': [
+            'flatten',
+            'find',
+            'upperFirst',
+            'debounce',
+            'isNil',
+            'isNumber',
+            'flattenDeep',
+            'map',
+            'chunk',
+            'sortBy',
+            'uniqueId',
+            'zip',
+          ],
+        },
       }),
       resolve(),
       sourceMaps(),

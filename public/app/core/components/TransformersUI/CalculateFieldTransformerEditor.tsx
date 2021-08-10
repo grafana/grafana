@@ -12,17 +12,20 @@ import {
   ReducerID,
   SelectableValue,
   standardTransformers,
-  TransformerRegistryItem,
+  TransformerRegistyItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
+import { Icon, FilterPill, HorizontalGroup, InlineLabel, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
 import {
   BinaryOptions,
   CalculateFieldMode,
   CalculateFieldTransformerOptions,
   getNameFromOptions,
+  MathOptions,
   ReduceOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
+
+import { parseEquation } from '@grafana/data/src/utils/math';
 
 import { defaults } from 'lodash';
 
@@ -37,9 +40,8 @@ interface CalculateFieldTransformerEditorState {
 const calculationModes = [
   { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
   { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
+  { value: CalculateFieldMode.MathField, label: 'Math' },
 ];
-
-const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string]);
 
 export class CalculateFieldTransformerEditor extends React.PureComponent<
   CalculateFieldTransformerEditorProps,
@@ -88,7 +90,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
 
           for (const frame of input) {
             for (const field of frame.fields) {
-              if (!okTypes.has(field.type)) {
+              if (field.type !== FieldType.number) {
                 continue;
               }
 
@@ -228,6 +230,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
               stats={[options.reducer]}
               onChange={this.onStatsChange}
               defaultStat={ReducerID.sum}
+              menuPlacement="bottom"
             />
           </div>
         </div>
@@ -300,32 +303,122 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         </div>
         <div className="gf-form">
           <Select
-            menuShouldPortal
             allowCustomValue={true}
             placeholder="Field or number"
             options={leftNames}
             className="min-width-18 gf-form-spacing"
             value={options?.left}
             onChange={this.onBinaryLeftChanged}
+            menuPlacement="bottom"
           />
           <Select
-            menuShouldPortal
             className="width-8 gf-form-spacing"
             options={ops}
             value={options.operator ?? ops[0].value}
             onChange={this.onBinaryOperationChanged}
+            menuPlacement="bottom"
           />
           <Select
-            menuShouldPortal
             allowCustomValue={true}
             placeholder="Field or number"
             className="min-width-10"
             options={rightNames}
             value={options?.right}
             onChange={this.onBinaryRightChanged}
+            menuPlacement="bottom"
           />
         </div>
       </div>
+    );
+  }
+
+  onEquationChanged = (evt: ChangeEvent<HTMLInputElement>) => {
+    const { options } = this.props;
+    const math = { ...defaults(options.math, { expr: '', symbols: {} }) };
+    math.expr = evt.target.value;
+    this.props.onChange({
+      ...options,
+      math,
+    });
+  };
+
+  onMathSymbolChanged = (k: string, v?: string) => {
+    const { options } = this.props;
+    const math = { ...defaults(options.math, { expr: '', symbols: {} }) };
+    if (v) {
+      math.symbols[k] = v;
+    } else {
+      delete math.symbols[k];
+    }
+    this.props.onChange({
+      ...options,
+      math,
+    });
+  };
+
+  renderMathOperation(options?: MathOptions) {
+    options = defaults(options, { expr: '', symbols: {} })!;
+
+    const info = parseEquation(options.expr);
+
+    const allNames = this.state.names.map((n) => ({
+      value: n,
+      label: n,
+    }));
+    const byKey: Record<string, SelectableValue<string>> = {};
+    for (const [key, value] of Object.entries(options.symbols)) {
+      if (value) {
+        let found = allNames.find((v) => v.value === value);
+        if (!found) {
+          found = { value, label: value };
+          allNames.push(found);
+        }
+        byKey[key] = found;
+      }
+    }
+
+    return (
+      <>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <div className="gf-form-label width-8">Equation</div>
+          </div>
+          <div className="gf-form">
+            <Input
+              className="width-18"
+              value={options.expr ?? ''}
+              placeholder="Enter an equation"
+              onChange={this.onEquationChanged}
+            />
+          </div>
+          {info.err && (
+            <div className="gf-form">
+              <InlineLabel>
+                <Icon name="exclamation-triangle" />
+              </InlineLabel>
+            </div>
+          )}
+        </div>
+        {info.symbols.map((k) => (
+          <div key={k} className="gf-form-inline">
+            <div className="gf-form">
+              <div className="gf-form-label query-keyword width-8">{k}</div>
+            </div>
+            <div className="gf-form">
+              <Select
+                allowCustomValue={true}
+                placeholder={k}
+                className="min-width-10"
+                options={allNames}
+                value={byKey[k] || ''}
+                onChange={(v) => this.onMathSymbolChanged(k, v.value)}
+                menuPlacement="bottom"
+              />
+            </div>
+          </div>
+        ))}
+        {info.err && <pre>{JSON.stringify(info, null, 2)}</pre>}
+      </>
     );
   }
 
@@ -344,16 +437,17 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
           <div className="gf-form">
             <div className="gf-form-label width-8">Mode</div>
             <Select
-              menuShouldPortal
               className="width-18"
               options={calculationModes}
               value={calculationModes.find((v) => v.value === mode)}
               onChange={this.onModeChanged}
+              menuPlacement="bottom"
             />
           </div>
         </div>
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
         {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
+        {mode === CalculateFieldMode.MathField && this.renderMathOperation(options.math)}
         <div className="gf-form-inline">
           <div className="gf-form">
             <div className="gf-form-label width-8">Alias</div>
@@ -380,7 +474,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   }
 }
 
-export const calculateFieldTransformRegistryItem: TransformerRegistryItem<CalculateFieldTransformerOptions> = {
+export const calculateFieldTransformRegistryItem: TransformerRegistyItem<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,
   editor: CalculateFieldTransformerEditor,
   transformation: standardTransformers.calculateFieldTransformer,
