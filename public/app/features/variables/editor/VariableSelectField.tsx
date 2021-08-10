@@ -33,6 +33,7 @@ export function VariableSelectField({
       </InlineFormLabel>
       <div aria-label={ariaLabel}>
         <Select
+          menuShouldPortal
           onChange={onChange}
           value={value}
           width={width ?? 25}

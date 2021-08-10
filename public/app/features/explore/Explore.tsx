@@ -47,6 +47,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       // Need to override normal css class and don't want to count on ordering of the classes in html.
       height: auto !important;
       flex: unset !important;
+      display: unset !important;
       padding: ${theme.spacing(1)};
     `,
   };

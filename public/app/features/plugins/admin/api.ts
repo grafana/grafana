@@ -1,8 +1,8 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
-import { Plugin, PluginDetails, Org, LocalPlugin } from './types';
+import { PluginDetails, Org, LocalPlugin, RemotePlugin } from './types';
 
-async function getRemotePlugins(): Promise<Plugin[]> {
+async function getRemotePlugins(): Promise<RemotePlugin[]> {
   const res = await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins`);
   return res.items;
 }
@@ -23,7 +23,7 @@ async function getPlugin(slug: string): Promise<PluginDetails> {
   };
 }
 
-async function getRemotePlugin(slug: string, local: LocalPlugin | undefined): Promise<Plugin | undefined> {
+async function getRemotePlugin(slug: string, local: LocalPlugin | undefined): Promise<RemotePlugin | undefined> {
   try {
     return await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${slug}`);
   } catch (error) {

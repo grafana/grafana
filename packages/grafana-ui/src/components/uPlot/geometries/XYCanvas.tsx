@@ -1,5 +1,5 @@
 import { usePlotContext } from '../context';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 
 interface XYCanvasProps {}
@@ -16,16 +16,14 @@ export const XYCanvas: React.FC<XYCanvasProps> = ({ children }) => {
     return null;
   }
 
-  return (
-    <div
-      className={css`
-        position: absolute;
-        overflow: visible;
-        left: ${plotInstance.bbox.left / window.devicePixelRatio}px;
-        top: ${plotInstance.bbox.top / window.devicePixelRatio}px;
-      `}
-    >
-      {children}
-    </div>
-  );
+  const className = useMemo(() => {
+    return css`
+      position: absolute;
+      overflow: visible;
+      left: ${plotInstance.bbox.left / window.devicePixelRatio}px;
+      top: ${plotInstance.bbox.top / window.devicePixelRatio}px;
+    `;
+  }, [plotInstance.bbox.left, plotInstance.bbox.top]);
+
+  return <div className={className}>{children}</div>;
 };

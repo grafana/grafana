@@ -63,5 +63,4 @@ datasources:
       httpHeaderName1: 'Authorization'
     secureJsonData:
       httpHeaderValue1: 'Token <token>'
-
 ```

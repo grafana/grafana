@@ -25,6 +25,7 @@ export const mockDataSource = (
     uid: `mock-ds-${nextDataSourceId}`,
     type: 'prometheus',
     name: `Prometheus-${id}`,
+    access: 'proxy',
     jsonData: {},
     meta: ({
       info: {
