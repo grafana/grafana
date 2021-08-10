@@ -375,7 +375,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.HandleNoCacheHeader)
-	m.Use(middleware.AddCSPHeader(hs.Cfg, hs.log))
+	m.UseMiddleware(middleware.AddCSPHeader(hs.Cfg, hs.log))
 
 	for _, mw := range hs.middlewares {
 		m.Use(mw)

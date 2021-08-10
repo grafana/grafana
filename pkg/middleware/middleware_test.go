@@ -632,7 +632,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 
 		sc.m = macaron.New()
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
-		sc.m.Use(AddCSPHeader(cfg, logger))
+		sc.m.UseMiddleware(AddCSPHeader(cfg, logger))
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: viewsPath,
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
