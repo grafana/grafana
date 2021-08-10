@@ -45,7 +45,7 @@ describe('The FileListItem component', () => {
     const abortUpload = jest.fn();
     render(<FileListItem file={{ file: file({}), id: '1', error: null, progress: 6, abortUpload }} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel upload' }));
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
     expect(abortUpload).toBeCalledTimes(1);
   });
