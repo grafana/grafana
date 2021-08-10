@@ -13,14 +13,28 @@ import {
 import { DataSourceWithBackend } from '@grafana/runtime';
 
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import { TraceToLogsData, TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { compact, identity, pick, pickBy } from 'lodash';
+import { from, merge, Observable, of, throwError } from 'rxjs';
+import { map, mergeMap, toArray } from 'rxjs/operators';
 import { LokiOptions, LokiQuery } from '../loki/types';
 import { transformTrace, transformTraceList, transformFromOTLP as transformFromOTEL } from './resultTransformer';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 import { mapPromMetricsToServiceMap, serviceMapMetrics } from './graphTransform';
+import { map, mergeMap } from 'rxjs/operators';
+import { LokiOptions, LokiQuery } from '../loki/types';
+import {
+  createTableFrameFromSearch,
+  transformFromOTLP as transformFromOTEL,
+  transformTrace,
+  transformTraceList,
+} from './resultTransformer';
 
-export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload';
+export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'lokiSearch';
 
 export interface TempoJsonData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
@@ -33,7 +47,11 @@ export type TempoQuery = {
   query: string;
   // Query to find list of traces, e.g., via Loki
   linkedQuery?: LokiQuery;
+  search: string;
   queryType: TempoQueryType;
+  minDuration?: string;
+  maxDuration?: string;
+  limit?: number;
 } & DataQuery;
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
@@ -43,7 +61,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   };
   uploadedJson?: string | ArrayBuffer | null = null;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
+  constructor(private instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
     super(instanceSettings);
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
@@ -116,6 +134,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     return merge(...subQueries);
+  }
+
+  async metadataRequest(url: string, params = {}) {
+    return await this._request(url, params, { method: 'GET', hideFromInspector: true }).toPromise();
+  }
+
+  private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
+    const params = data ? serializeParams(data) : '';
+    const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
+    const req = { ...options, url };
+
+    return getBackendSrv().fetch(req);
   }
 
   async testDatasource(): Promise<any> {

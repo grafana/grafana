@@ -2,6 +2,7 @@ import {
   ArrayVector,
   DataFrame,
   DataQueryResponse,
+  DataSourceInstanceSettings,
   Field,
   FieldType,
   MutableDataFrame,
@@ -313,6 +314,67 @@ function parseJsonFields(frame: DataFrame) {
       frame.fields[fieldIndex] = newField;
     }
   }
+}
+
+type SearchResponse = {
+  traceID: string;
+  rootServiceName: string;
+  rootTraceName: string;
+  startTimeUnixNano: string;
+  durationMs: number;
+};
+
+export function createTableFrameFromSearch(data: SearchResponse[], instanceSettings: DataSourceInstanceSettings) {
+  const frame = new MutableDataFrame({
+    fields: [
+      {
+        name: 'traceID',
+        type: FieldType.string,
+        config: {
+          displayNameFromDS: 'Trace ID',
+          links: [
+            {
+              title: 'Trace: ${__value.raw}',
+              url: '',
+              internal: {
+                datasourceUid: instanceSettings.uid,
+                datasourceName: instanceSettings.name,
+                query: {
+                  query: '${__value.raw}',
+                },
+              },
+            },
+          ],
+        },
+      },
+      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' } },
+      { name: 'startTime', type: FieldType.time, config: { displayNameFromDS: 'Start time' } },
+      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
+    ],
+    meta: {
+      preferredVisualisationType: 'table',
+    },
+  });
+  if (!data?.length) {
+    return frame;
+  }
+  // Show the most recent traces
+  const traceData = data.map(transformToTraceData).sort((a, b) => b?.startTime! - a?.startTime!);
+
+  for (const trace of traceData) {
+    frame.add(trace);
+  }
+
+  return frame;
+}
+
+function transformToTraceData(data: SearchResponse) {
+  return {
+    traceID: data.traceID,
+    startTime: parseInt(data.startTimeUnixNano, 10) / 1000 / 1000,
+    duration: data.durationMs,
+    traceName: data.rootServiceName + ' ' + data.rootTraceName,
+  };
 }
 
 const emptyDataQueryResponse = {
