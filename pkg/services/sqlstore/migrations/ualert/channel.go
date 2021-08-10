@@ -258,7 +258,7 @@ func (m *migration) addDefaultChannels(amConfigsPerOrg amConfigsPerOrg, allChann
 	return nil
 }
 
-func (m *migration) addUnmigratedChannels(orgID int64, amConfigsPerOrg *PostableUserConfig, allChannels map[interface{}]*notificationChannel, defaultChannels []*notificationChannel) error {
+func (m *migration) addUnmigratedChannels(orgID int64, amConfigs *PostableUserConfig, allChannels map[interface{}]*notificationChannel, defaultChannels []*notificationChannel) error {
 	// Unmigrated channels.
 	portedChannels := []*PostableGrafanaReceiver{}
 	receiver := &PostableApiReceiver{
@@ -295,7 +295,7 @@ func (m *migration) addUnmigratedChannels(orgID int64, amConfigsPerOrg *Postable
 	}
 	receiver.GrafanaManagedReceivers = portedChannels
 	if len(portedChannels) > 0 {
-		amConfigsPerOrg.AlertmanagerConfig.Receivers = append(amConfigsPerOrg.AlertmanagerConfig.Receivers, receiver)
+		amConfigs.AlertmanagerConfig.Receivers = append(amConfigs.AlertmanagerConfig.Receivers, receiver)
 	}
 
 	return nil
