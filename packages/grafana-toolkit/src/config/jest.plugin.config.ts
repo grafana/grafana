@@ -50,7 +50,7 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
   const setupFile = getSetupFile(setupFilePath);
   const shimsFile = getSetupFile(shimsFilePath);
 
-  const setupFiles = [setupFile, shimsFile, 'jest-canvas-mock'].filter((f) => f);
+  const setupFiles = [setupFile, shimsFile, `${__dirname}/matchMedia.js`, 'jest-canvas-mock'].filter((f) => f);
   const defaultJestConfig = {
     preset: 'ts-jest',
     verbose: false,
