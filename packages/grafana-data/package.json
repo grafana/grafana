@@ -54,7 +54,7 @@
     "rollup-plugin-visualizer": "4.2.0",
     "sinon": "8.1.1",
     "tinycolor2": "1.4.1",
-    "typescript": "4.2.4"
+    "typescript": "4.3.4"
   },
   "volta": {
     "extends": "../../package.json"

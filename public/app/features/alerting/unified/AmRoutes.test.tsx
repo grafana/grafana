@@ -13,20 +13,7 @@ import { mockDataSource, MockDataSourceSrv } from './mocks';
 import { getAllDataSources } from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import userEvent from '@testing-library/user-event';
-
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: jest.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-});
+import { selectOptionInTest } from '@grafana/ui';
 
 jest.mock('./api/alertmanager');
 jest.mock('./utils/config');
@@ -54,7 +41,7 @@ const renderAmRoutes = () => {
 
 const dataSources = {
   am: mockDataSource({
-    name: 'Alert Manager',
+    name: 'Alertmanager',
     type: DataSourceType.Alertmanager,
   }),
 };
@@ -239,7 +226,7 @@ describe('AmRoutes', () => {
 
     // configure receiver & group by
     const receiverSelect = await ui.receiverSelect.find();
-    clickSelectOption(receiverSelect, 'critical');
+    await clickSelectOption(receiverSelect, 'critical');
 
     const groupSelect = ui.groupSelect.get();
     await userEvent.type(byRole('textbox').get(groupSelect), 'namespace{enter}');
@@ -298,7 +285,7 @@ describe('AmRoutes', () => {
 
     // configure receiver & group by
     const receiverSelect = await ui.receiverSelect.find();
-    clickSelectOption(receiverSelect, 'default');
+    await clickSelectOption(receiverSelect, 'default');
 
     const groupSelect = ui.groupSelect.get();
     await userEvent.type(byRole('textbox').get(groupSelect), 'severity{enter}');
@@ -343,7 +330,7 @@ describe('AmRoutes', () => {
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
   userEvent.click(byRole('textbox').get(selectElement));
-  userEvent.click(byText(optionText).get(selectElement));
+  await selectOptionInTest(selectElement, optionText);
 };
 
 const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit: string): Promise<void> => {
@@ -351,5 +338,5 @@ const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit:
   expect(inputs).toHaveLength(2);
   await userEvent.type(inputs[0], value);
   userEvent.click(inputs[1]);
-  userEvent.click(byText(timeUnit).get(selectElement));
+  await selectOptionInTest(selectElement, timeUnit);
 };

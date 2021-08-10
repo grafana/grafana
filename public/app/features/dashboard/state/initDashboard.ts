@@ -151,6 +151,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     const timeSrv: TimeSrv = getTimeSrv();
     const dashboardSrv: DashboardSrv = getDashboardSrv();
 
+    // legacy srv state, we need this value updated for built-in annotations
+    dashboardSrv.setCurrent(dashboard);
+
     timeSrv.init(dashboard);
     const runner = createDashboardQueryRunner({ dashboard, timeSrv });
     runner.run({ dashboard, range: timeSrv.timeRange() });
@@ -193,9 +196,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       const { panelId, queries } = storeState.dashboard.modifiedQueries;
       updateQueriesWhenComingFromExplore(dispatch, dashboard, panelId, queries);
     }
-
-    // legacy srv state
-    dashboardSrv.setCurrent(dashboard);
 
     // send open dashboard event
     if (args.routeName !== DashboardRoutes.New) {

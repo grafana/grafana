@@ -51,9 +51,9 @@ e2e.scenario({
       .should('be.visible')
       .within(() => {
         e2e.components.Select.input().eq(0).should('be.visible').click();
-
-        cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').eq(0).click();
       });
+
+    cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').eq(0).click();
 
     // Disable / enable row
     expectInspectorResultAndClose((keys) => {

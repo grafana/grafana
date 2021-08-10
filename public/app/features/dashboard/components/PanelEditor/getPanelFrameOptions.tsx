@@ -110,7 +110,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
               return (
                 <RepeatRowSelect
                   repeat={panel.repeat}
-                  onChange={(value: string | null) => {
+                  onChange={(value?: string | null) => {
                     onPanelConfigChange('repeat', value);
                   }}
                 />
@@ -146,6 +146,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
               const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
               return (
                 <Select
+                  menuShouldPortal
                   options={maxPerRowOptions}
                   value={panel.maxPerRow}
                   onChange={(value) => onPanelConfigChange('maxPerRow', value.value)}

@@ -181,3 +181,23 @@ type searchLibraryElementsQuery struct {
 	excludeUID    string
 	folderFilter  string
 }
+
+// LibraryElementResponse is a response struct for LibraryElementDTO.
+type LibraryElementResponse struct {
+	Result LibraryElementDTO `json:"result"`
+}
+
+// LibraryElementSearchResponse is a response struct for LibraryElementSearchResult.
+type LibraryElementSearchResponse struct {
+	Result LibraryElementSearchResult `json:"result"`
+}
+
+// LibraryElementArrayResponse is a response struct for an array of LibraryElementDTO.
+type LibraryElementArrayResponse struct {
+	Result []LibraryElementDTO `json:"result"`
+}
+
+// LibraryElementConnectionsResponse is a response struct for an array of LibraryElementConnectionDTO.
+type LibraryElementConnectionsResponse struct {
+	Result []LibraryElementConnectionDTO `json:"result"`
+}

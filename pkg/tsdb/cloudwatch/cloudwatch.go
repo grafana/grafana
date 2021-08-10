@@ -157,9 +157,6 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
-	ec2Client  ec2iface.EC2API
-	rgtaClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-
 	logsService *LogsService
 	im          instancemgmt.InstanceManager
 	cfg         *setting.Cfg
@@ -209,32 +206,22 @@ func (e *cloudWatchExecutor) getCWLogsClient(region string, pluginCtx backend.Pl
 }
 
 func (e *cloudWatchExecutor) getEC2Client(region string, pluginCtx backend.PluginContext) (ec2iface.EC2API, error) {
-	if e.ec2Client != nil {
-		return e.ec2Client, nil
-	}
-
 	sess, err := e.newSession(region, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
-	e.ec2Client = newEC2Client(sess)
 
-	return e.ec2Client, nil
+	return newEC2Client(sess), nil
 }
 
 func (e *cloudWatchExecutor) getRGTAClient(region string, pluginCtx backend.PluginContext) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
 	error) {
-	if e.rgtaClient != nil {
-		return e.rgtaClient, nil
-	}
-
 	sess, err := e.newSession(region, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
-	e.rgtaClient = newRGTAClient(sess)
 
-	return e.rgtaClient, nil
+	return newRGTAClient(sess), nil
 }
 
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,

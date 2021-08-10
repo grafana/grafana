@@ -80,6 +80,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index) // deprecated
 	r.Get("/plugins/:id/page/:page", reqSignedIn, hs.Index)
 	r.Get("/a/:id/*", reqSignedIn, hs.Index) // App Root Page
+	r.Get("/a/:id", reqSignedIn, hs.Index)
 
 	r.Get("/d/:uid/:slug", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
@@ -94,7 +95,12 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
-	r.Get("/explore", reqSignedIn, middleware.EnsureEditorOrViewerCanEdit, hs.Index)
+	r.Get("/explore", authorize(func(c *models.ReqContext) {
+		if f, ok := reqSignedIn.(func(c *models.ReqContext)); ok {
+			f(c)
+		}
+		middleware.EnsureEditorOrViewerCanEdit(c)
+	}, accesscontrol.ActionDatasourcesExplore), hs.Index)
 
 	r.Get("/playlists/", reqSignedIn, hs.Index)
 	r.Get("/playlists/*", reqSignedIn, hs.Index)
@@ -281,12 +287,10 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/plugins/:pluginId/resources/*", hs.CallResource)
 		apiRoute.Get("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
 
-		if hs.Cfg.PluginAdminEnabled {
-			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
-				pluginRoute.Post("/:pluginId/install", bind(dtos.InstallPluginCommand{}), routing.Wrap(hs.InstallPlugin))
-				pluginRoute.Post("/:pluginId/uninstall", routing.Wrap(hs.UninstallPlugin))
-			}, reqGrafanaAdmin)
-		}
+		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
+			pluginRoute.Post("/:pluginId/install", bind(dtos.InstallPluginCommand{}), routing.Wrap(hs.InstallPlugin))
+			pluginRoute.Post("/:pluginId/uninstall", routing.Wrap(hs.UninstallPlugin))
+		}, reqGrafanaAdmin)
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", routing.Wrap(hs.GetPluginDashboards))
@@ -410,6 +414,7 @@ func (hs *HTTPServer) registerRoutes() {
 			annotationsRoute.Put("/:annotationId", bind(dtos.UpdateAnnotationsCmd{}), routing.Wrap(UpdateAnnotation))
 			annotationsRoute.Patch("/:annotationId", bind(dtos.PatchAnnotationsCmd{}), routing.Wrap(PatchAnnotation))
 			annotationsRoute.Post("/graphite", reqEditorRole, bind(dtos.PostGraphiteAnnotationsCmd{}), routing.Wrap(PostGraphiteAnnotation))
+			annotationsRoute.Get("/tags", routing.Wrap(GetAnnotationTags))
 		})
 
 		apiRoute.Post("/frontend-metrics", bind(metrics.PostFrontendMetricsCommand{}), routing.Wrap(hs.PostFrontendMetrics))
@@ -438,10 +443,11 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, accesscontrol.ActionServerStatsRead), routing.Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, bind(dtos.PauseAllAlertsCommand{}), routing.Wrap(PauseAllAlerts))
 
-		adminRoute.Post("/provisioning/dashboards/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadDashboards))
-		adminRoute.Post("/provisioning/plugins/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadPlugins))
-		adminRoute.Post("/provisioning/datasources/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadDatasources))
-		adminRoute.Post("/provisioning/notifications/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadNotifications))
+		adminRoute.Post("/provisioning/dashboards/reload", authorize(reqGrafanaAdmin, ActionProvisioningReload, ScopeProvisionersDashboards), routing.Wrap(hs.AdminProvisioningReloadDashboards))
+		adminRoute.Post("/provisioning/plugins/reload", authorize(reqGrafanaAdmin, ActionProvisioningReload, ScopeProvisionersPlugins), routing.Wrap(hs.AdminProvisioningReloadPlugins))
+		adminRoute.Post("/provisioning/datasources/reload", authorize(reqGrafanaAdmin, ActionProvisioningReload, ScopeProvisionersDatasources), routing.Wrap(hs.AdminProvisioningReloadDatasources))
+		adminRoute.Post("/provisioning/notifications/reload", authorize(reqGrafanaAdmin, ActionProvisioningReload, ScopeProvisionersNotifications), routing.Wrap(hs.AdminProvisioningReloadNotifications))
+
 		adminRoute.Post("/ldap/reload", authorize(reqGrafanaAdmin, accesscontrol.ActionLDAPConfigReload), routing.Wrap(hs.ReloadLDAPCfg))
 		adminRoute.Post("/ldap/sync/:id", authorize(reqGrafanaAdmin, accesscontrol.ActionLDAPUsersSync), routing.Wrap(hs.PostSyncUserWithLDAP))
 		adminRoute.Get("/ldap/:username", authorize(reqGrafanaAdmin, accesscontrol.ActionLDAPUsersRead), routing.Wrap(hs.GetUserFromLDAP))

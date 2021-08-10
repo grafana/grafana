@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestPagerdutyNotifier(t *testing.T) {
@@ -33,7 +32,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		settings     string
 		alerts       []*types.Alert
 		expMsg       *pagerDutyMessage
-		expInitError error
+		expInitError string
 		expMsgError  error
 	}{
 		{
@@ -52,7 +51,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
 				Description: "[FIRING:1]  (val1)",
 				EventAction: "trigger",
-				Payload: &pagerDutyPayload{
+				Payload: pagerDutyPayload{
 					Summary:   "[FIRING:1]  (val1)",
 					Source:    hostname,
 					Severity:  "critical",
@@ -70,8 +69,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				ClientURL: "http://localhost",
 				Links:     []pagerDutyLink{{HRef: "http://localhost", Text: "External URL"}},
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name: "Custom config with multiple alerts",
 			settings: `{
@@ -99,7 +97,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
 				Description: "[FIRING:2]  ",
 				EventAction: "trigger",
-				Payload: &pagerDutyPayload{
+				Payload: pagerDutyPayload{
 					Summary:   "[FIRING:2]  ",
 					Source:    hostname,
 					Severity:  "warning",
@@ -117,12 +115,11 @@ func TestPagerdutyNotifier(t *testing.T) {
 				ClientURL: "http://localhost",
 				Links:     []pagerDutyLink{{HRef: "http://localhost", Text: "External URL"}},
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find integration key property in settings"},
+			expInitError: `failed to validate receiver "pageduty_testing" of type "pagerduty": could not find integration key property in settings`,
 		},
 	}
 
@@ -138,9 +135,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 			}
 
 			pn, err := NewPagerdutyNotifier(m, tmpl)
-			if c.expInitError != nil {
+			if c.expInitError != "" {
 				require.Error(t, err)
-				require.Equal(t, c.expInitError.Error(), err.Error())
+				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)

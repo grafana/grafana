@@ -30,6 +30,7 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   show?: boolean;
   dataFrameFieldIndex?: DataFrameFieldIndex;
   theme: GrafanaTheme2;
+  value?: uPlot.Series.Value;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
@@ -46,7 +47,6 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       barWidthFactor,
       barMaxWidth,
       showPoints,
-      pointColor,
       pointSize,
       scaleKey,
       pxAlign,
@@ -55,15 +55,16 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
+    const lineColor = this.getLineColor();
 
     if (pathBuilder != null) {
       lineConfig.paths = pathBuilder;
-      lineConfig.stroke = this.getLineColor();
+      lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
     } else if (drawStyle === DrawStyle.Points) {
       lineConfig.paths = () => null;
     } else if (drawStyle != null) {
-      lineConfig.stroke = this.getLineColor();
+      lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
       if (lineStyle && lineStyle.fill !== 'solid') {
         if (lineStyle.fill === 'dot') {
@@ -85,8 +86,8 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     const pointsConfig: Partial<Series> = {
       points: {
-        stroke: pointColor,
-        fill: pointColor,
+        stroke: lineColor,
+        fill: lineColor,
         size: pointSize,
         filter: pointsFilter,
       },
@@ -114,6 +115,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     return {
       scale: scaleKey,
       spanGaps: typeof spanNulls === 'number' ? false : spanNulls,
+      value: () => '',
       pxAlign,
       show,
       fill: this.getFill(),
@@ -123,10 +125,10 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   }
 
   private getLineColor(): Series.Stroke {
-    const { lineColor, gradientMode, colorMode, thresholds } = this.props;
+    const { lineColor, gradientMode, colorMode, thresholds, theme } = this.props;
 
     if (gradientMode === GraphGradientMode.Scheme) {
-      return getScaleGradientFn(1, colorMode, thresholds);
+      return getScaleGradientFn(1, theme, colorMode, thresholds);
     }
 
     return lineColor ?? FALLBACK_COLOR;
@@ -148,7 +150,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       case GraphGradientMode.Hue:
         return getHueGradientFn((fillColor ?? lineColor)!, opacityPercent, theme);
       case GraphGradientMode.Scheme:
-        return getScaleGradientFn(opacityPercent, colorMode, thresholds);
+        return getScaleGradientFn(opacityPercent, theme, colorMode, thresholds);
       default:
         if (opacityPercent > 0) {
           return tinycolor(lineColor).setAlpha(opacityPercent).toString();

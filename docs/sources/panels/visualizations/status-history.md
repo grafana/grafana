@@ -7,13 +7,13 @@ weight = 900
 
 # Status history
 
-The Status history visualization shows periodic states over time. Each field or series is rendered as a horizontal row. Boxes are rendered and centered around each value. 
+The Status history visualization shows periodic states over time. Each field or series is rendered as a horizontal row. Boxes are rendered and centered around each value.
 
 {{< figure src="/static/img/docs/status-history-panel/status-history-example-v8-0.png" max-width="1025px" caption="Status history example" >}}
 
-## Supported data 
+## Supported data
 
-Status history visualization works with string, boolean and numerical fields or time series. A time field is required. You can use value mappings to color strings or assign text values to numerical ranges.  
+Status history visualization works with string, boolean and numerical fields or time series. A time field is required. You can use value mappings to color strings or assign text values to numerical ranges.
 
 ## Display options
 

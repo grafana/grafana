@@ -18,18 +18,19 @@ var (
 	logger = log.New("live.runstream")
 )
 
-//go:generate mockgen -destination=mock.go -package=runstream github.com/grafana/grafana/pkg/services/live/runstream ChannelSender,PresenceGetter,StreamRunner,PluginContextGetter
+//go:generate mockgen -destination=mock.go -package=runstream github.com/grafana/grafana/pkg/services/live/runstream ChannelLocalPublisher,NumLocalSubscribersGetter,StreamRunner,PluginContextGetter
 
-type ChannelSender interface {
-	Send(channel string, data []byte) error
+type ChannelLocalPublisher interface {
+	PublishLocal(channel string, data []byte) error
 }
 
 type PluginContextGetter interface {
 	GetPluginContext(user *models.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error)
 }
 
-type PresenceGetter interface {
-	GetNumSubscribers(channel string) (int, error)
+type NumLocalSubscribersGetter interface {
+	// GetNumSubscribers returns number of channel subscribers throughout all nodes.
+	GetNumLocalSubscribers(channel string) (int, error)
 }
 
 type StreamRunner interface {
@@ -37,12 +38,12 @@ type StreamRunner interface {
 }
 
 type packetSender struct {
-	channelSender ChannelSender
-	channel       string
+	channelLocalPublisher ChannelLocalPublisher
+	channel               string
 }
 
 func (p *packetSender) Send(packet *backend.StreamPacket) error {
-	return p.channelSender.Send(p.channel, packet.Data)
+	return p.channelLocalPublisher.PublishLocal(p.channel, packet.Data)
 }
 
 // Manager manages streams from Grafana to plugins (i.e. RunStream method).
@@ -51,9 +52,9 @@ type Manager struct {
 	baseCtx                 context.Context
 	streams                 map[string]streamContext
 	datasourceStreams       map[string]map[string]struct{}
-	presenceGetter          PresenceGetter
+	presenceGetter          NumLocalSubscribersGetter
 	pluginContextGetter     PluginContextGetter
-	channelSender           ChannelSender
+	channelSender           ChannelLocalPublisher
 	registerCh              chan submitRequest
 	closedCh                chan struct{}
 	checkInterval           time.Duration
@@ -79,7 +80,7 @@ const (
 )
 
 // NewManager creates new Manager.
-func NewManager(channelSender ChannelSender, presenceGetter PresenceGetter, pluginContextGetter PluginContextGetter, opts ...ManagerOption) *Manager {
+func NewManager(channelSender ChannelLocalPublisher, presenceGetter NumLocalSubscribersGetter, pluginContextGetter PluginContextGetter, opts ...ManagerOption) *Manager {
 	sm := &Manager{
 		streams:                 make(map[string]streamContext),
 		datasourceStreams:       map[string]map[string]struct{}{},
@@ -201,9 +202,9 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 				}
 			}
 		case <-presenceTicker.C:
-			numSubscribers, err := s.presenceGetter.GetNumSubscribers(sr.Channel)
+			numSubscribers, err := s.presenceGetter.GetNumLocalSubscribers(sr.Channel)
 			if err != nil {
-				logger.Error("Error checking num subscribers", "channel", sr.Channel, "path", sr.Path)
+				logger.Error("Error checking num subscribers", "channel", sr.Channel, "path", sr.Path, "error", err)
 				continue
 			}
 			if numSubscribers > 0 {
@@ -301,7 +302,7 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 				PluginContext: pluginCtx,
 				Path:          sr.Path,
 			},
-			backend.NewStreamSender(&packetSender{channelSender: s.channelSender, channel: sr.Channel}),
+			backend.NewStreamSender(&packetSender{channelLocalPublisher: s.channelSender, channel: sr.Channel}),
 		)
 		if err != nil {
 			if errors.Is(ctx.Err(), context.Canceled) {

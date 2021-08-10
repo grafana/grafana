@@ -6,7 +6,6 @@ import { useDatasource, useQuery } from '../ElasticsearchQueryContext';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { getStyles } from './styles';
 import { SettingsEditor } from './SettingsEditor';
-import { MetricAggregationAction } from './state/types';
 import { metricAggregationConfig } from './utils';
 import { changeMetricField, changeMetricType } from './state/actions';
 import { MetricPicker } from '../../MetricPicker';
@@ -65,7 +64,7 @@ export const MetricEditor = ({ value }: Props) => {
   const styles = getStyles(useTheme2(), !!value.hide);
   const datasource = useDatasource();
   const query = useQuery();
-  const dispatch = useDispatch<MetricAggregationAction>();
+  const dispatch = useDispatch();
   const getFields = useFields(value.type);
 
   const loadOptions = useCallback(async () => {
@@ -90,7 +89,7 @@ export const MetricEditor = ({ value }: Props) => {
         <Segment
           className={cx(styles.color, segmentStyles)}
           options={getTypeOptions(previousMetrics, datasource.esVersion, datasource.xpack)}
-          onChange={(e) => dispatch(changeMetricType(value.id, e.value!))}
+          onChange={(e) => dispatch(changeMetricType({ id: value.id, type: e.value! }))}
           value={toOption(value)}
         />
 
@@ -98,7 +97,7 @@ export const MetricEditor = ({ value }: Props) => {
           <SegmentAsync
             className={cx(styles.color, segmentStyles)}
             loadOptions={loadOptions}
-            onChange={(e) => dispatch(changeMetricField(value.id, e.value!))}
+            onChange={(e) => dispatch(changeMetricField({ id: value.id, field: e.value! }))}
             placeholder="Select Field"
             value={value.field}
           />
@@ -107,7 +106,7 @@ export const MetricEditor = ({ value }: Props) => {
         {isPipelineAggregation(value) && !isPipelineAggregationWithMultipleBucketPaths(value) && (
           <MetricPicker
             className={cx(styles.color, segmentStyles)}
-            onChange={(e) => dispatch(changeMetricField(value.id, e.value?.id!))}
+            onChange={(e) => dispatch(changeMetricField({ id: value.id, field: e.value?.id! }))}
             options={previousMetrics}
             value={value.field}
           />

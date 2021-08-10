@@ -81,7 +81,7 @@ func DistDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 	// Value.Fill() can't target definitions. Need new method based on cue.Path;
 	// a CL has been merged that creates FillPath and will be in the next
 	// release of CUE.
-	dummy, _ := rt.Compile("mergeStruct", `
+	dummy, _ := rt.Compile("glue-unifyPanelDashboard", `
 	obj: {}
 	dummy: {
 		#Panel: obj
@@ -125,7 +125,11 @@ type compositeDashboardSchema struct {
 
 // Validate checks that the resource is correct with respect to the schema.
 func (cds *compositeDashboardSchema) Validate(r schema.Resource) error {
-	rv, err := rt.Compile("resource", r.Value)
+	name := r.Name
+	if name == "" {
+		name = "resource"
+	}
+	rv, err := rt.Compile(name, r.Value)
 	if err != nil {
 		return err
 	}

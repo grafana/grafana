@@ -46,7 +46,7 @@ const getModalBody = (panels: PanelModel[], title: string) => {
       <p>Do you want to delete this dashboard?</p>
       <p>
         This dashboard contains {totalAlerts} alert{totalAlerts > 1 ? 's' : ''}. Deleting this dashboard also deletes
-        deletes those alerts
+        those alerts.
       </p>
     </>
   ) : (

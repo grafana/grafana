@@ -644,7 +644,7 @@ describe('getLinksSupplier', () => {
     expect(links[0]).toEqual(
       expect.objectContaining({
         title: 'testDS',
-        href: '/explore?left={"datasource":"testDS","queries":["12345"]}',
+        href: `/explore?left=${encodeURIComponent('{"datasource":"testDS","queries":["12345"]}')}`,
         onClick: undefined,
       })
     );

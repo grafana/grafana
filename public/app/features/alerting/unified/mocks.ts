@@ -1,13 +1,29 @@
 import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta, ScopedVars } from '@grafana/data';
-import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+import {
+  GrafanaAlertStateDecision,
+  GrafanaRuleDefinition,
+  PromAlertingRuleState,
+  PromRuleType,
+  RulerGrafanaRuleDTO,
+} from 'app/types/unified-alerting-dto';
 import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
-import { AlertManagerCortexConfig, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertmanagerAlert,
+  AlertManagerCortexConfig,
+  AlertmanagerGroup,
+  AlertmanagerStatus,
+  AlertState,
+  GrafanaManagedReceiverConfig,
+} from 'app/plugins/datasource/alertmanager/types';
 
 let nextDataSourceId = 1;
 
-export const mockDataSource = (partial: Partial<DataSourceInstanceSettings> = {}): DataSourceInstanceSettings => {
+export const mockDataSource = (
+  partial: Partial<DataSourceInstanceSettings> = {},
+  meta: Partial<DataSourcePluginMeta> = {}
+): DataSourceInstanceSettings<any> => {
   const id = partial.id ?? nextDataSourceId++;
 
   return {
@@ -15,6 +31,7 @@ export const mockDataSource = (partial: Partial<DataSourceInstanceSettings> = {}
     uid: `mock-ds-${nextDataSourceId}`,
     type: 'prometheus',
     name: `Prometheus-${id}`,
+    access: 'proxy',
     jsonData: {},
     meta: ({
       info: {
@@ -23,6 +40,7 @@ export const mockDataSource = (partial: Partial<DataSourceInstanceSettings> = {}
           large: 'https://prometheus.io/assets/prometheus_logo_grey.svg',
         },
       },
+      ...meta,
     } as any) as DataSourcePluginMeta,
     ...partial,
   };
@@ -41,6 +59,40 @@ export const mockPromAlert = (partial: Partial<Alert> = {}): Alert => ({
   value: '1e+00',
   ...partial,
 });
+
+export const mockRulerGrafanaRule = (
+  partial: Partial<RulerGrafanaRuleDTO> = {},
+  partialDef: Partial<GrafanaRuleDefinition> = {}
+): RulerGrafanaRuleDTO => {
+  return {
+    for: '1m',
+    grafana_alert: {
+      uid: '123',
+      title: 'myalert',
+      namespace_uid: '123',
+      namespace_id: 1,
+      condition: 'A',
+      no_data_state: GrafanaAlertStateDecision.Alerting,
+      exec_err_state: GrafanaAlertStateDecision.Alerting,
+      data: [
+        {
+          datasourceUid: '123',
+          refId: 'A',
+          queryType: 'huh',
+          model: {} as any,
+        },
+      ],
+      ...partialDef,
+    },
+    annotations: {
+      message: 'alert with severity "{{.warning}}}"',
+    },
+    labels: {
+      severity: 'warning',
+    },
+    ...partial,
+  };
+};
 
 export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): AlertingRule => {
   return {
@@ -95,7 +147,45 @@ export const mockPromRuleNamespace = (partial: Partial<RuleNamespace> = {}): Rul
   };
 };
 
+export const mockAlertmanagerAlert = (partial: Partial<AlertmanagerAlert> = {}): AlertmanagerAlert => {
+  return {
+    annotations: {
+      summary: 'US-Central region is on fire',
+    },
+    endsAt: '2021-06-22T21:49:28.562Z',
+    fingerprint: '88e013643c3df34ac3',
+    receivers: [{ name: 'pagerduty' }],
+    startsAt: '2021-06-21T17:25:28.562Z',
+    status: { inhibitedBy: [], silencedBy: [], state: AlertState.Active },
+    updatedAt: '2021-06-22T21:45:28.564Z',
+    generatorURL: 'https://play.grafana.com/explore',
+    labels: { severity: 'warning', region: 'US-Central' },
+    ...partial,
+  };
+};
+
+export const mockAlertGroup = (partial: Partial<AlertmanagerGroup> = {}): AlertmanagerGroup => {
+  return {
+    labels: {
+      severity: 'warning',
+      region: 'US-Central',
+    },
+    receiver: {
+      name: 'pagerduty',
+    },
+    alerts: [
+      mockAlertmanagerAlert(),
+      mockAlertmanagerAlert({
+        status: { state: AlertState.Suppressed, silencedBy: ['123456abcdef'], inhibitedBy: [] },
+        labels: { severity: 'warning', region: 'US-Central', foo: 'bar' },
+      }),
+    ],
+    ...partial,
+  };
+};
+
 export class MockDataSourceSrv implements DataSourceSrv {
+  datasources: Record<string, DataSourceApi> = {};
   // @ts-ignore
   private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
@@ -105,8 +195,10 @@ export class MockDataSourceSrv implements DataSourceSrv {
     getVariables: () => [],
     replace: (name: any) => name,
   };
+  defaultName = '';
 
   constructor(datasources: Record<string, DataSourceInstanceSettings>) {
+    this.datasources = {};
     this.settingsMapByName = Object.values(datasources).reduce<Record<string, DataSourceInstanceSettings>>(
       (acc, ds) => {
         acc[ds.name] = ds;
@@ -117,11 +209,15 @@ export class MockDataSourceSrv implements DataSourceSrv {
     for (const dsSettings of Object.values(this.settingsMapByName)) {
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
       this.settingsMapById[dsSettings.id] = dsSettings;
+      if (dsSettings.isDefault) {
+        this.defaultName = dsSettings.name;
+      }
     }
   }
 
   get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
-    return Promise.reject(new Error('not implemented'));
+    return DatasourceSrv.prototype.get.call(this, name, scopedVars);
+    //return Promise.reject(new Error('not implemented'));
   }
 
   /**
@@ -139,6 +235,10 @@ export class MockDataSourceSrv implements DataSourceSrv {
       DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid) ||
       (({ meta: { info: { logos: {} } } } as unknown) as DataSourceInstanceSettings)
     );
+  }
+
+  async loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
+    return DatasourceSrv.prototype.loadDatasource.call(this, name);
   }
 }
 
@@ -171,6 +271,37 @@ export const someGrafanaAlertManagerConfig: AlertManagerCortexConfig = {
       {
         name: 'critical',
         grafana_managed_receiver_configs: [mockGrafanaReceiver('slack'), mockGrafanaReceiver('pagerduty')],
+      },
+    ],
+  },
+};
+
+export const someCloudAlertManagerStatus: AlertmanagerStatus = {
+  cluster: {
+    peers: [],
+    status: 'ok',
+  },
+  uptime: '10 hours',
+  versionInfo: {
+    branch: '',
+    version: '',
+    goVersion: '',
+    buildDate: '',
+    buildUser: '',
+    revision: '',
+  },
+  config: {
+    route: {
+      receiver: 'default-email',
+    },
+    receivers: [
+      {
+        name: 'default-email',
+        email_configs: [
+          {
+            to: 'example@example.com',
+          },
+        ],
       },
     ],
   },
