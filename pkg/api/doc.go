@@ -20,7 +20,11 @@
 //
 // SecurityDefinitions:
 // basic:
-//  type: basic
+//   type: basic
+// api_key:
+//   type: apiKey
+//   name: Authorization
+//   in: header
 //
 // Extensions:
 // x-tagGroups:
