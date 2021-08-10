@@ -43,6 +43,8 @@ const calculationModes = [
   { value: CalculateFieldMode.MathField, label: 'Math' },
 ];
 
+const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string]);
+
 export class CalculateFieldTransformerEditor extends React.PureComponent<
   CalculateFieldTransformerEditorProps,
   CalculateFieldTransformerEditorState
@@ -90,7 +92,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
 
           for (const frame of input) {
             for (const field of frame.fields) {
-              if (field.type !== FieldType.number) {
+              if (!okTypes.has(field.type)) {
                 continue;
               }
 
@@ -303,29 +305,29 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         </div>
         <div className="gf-form">
           <Select
+            menuShouldPortal
             allowCustomValue={true}
             placeholder="Field or number"
             options={leftNames}
             className="min-width-18 gf-form-spacing"
             value={options?.left}
             onChange={this.onBinaryLeftChanged}
-            menuPlacement="bottom"
           />
           <Select
+            menuShouldPortal
             className="width-8 gf-form-spacing"
             options={ops}
             value={options.operator ?? ops[0].value}
             onChange={this.onBinaryOperationChanged}
-            menuPlacement="bottom"
           />
           <Select
+            menuShouldPortal
             allowCustomValue={true}
             placeholder="Field or number"
             className="min-width-10"
             options={rightNames}
             value={options?.right}
             onChange={this.onBinaryRightChanged}
-            menuPlacement="bottom"
           />
         </div>
       </div>
@@ -406,13 +408,13 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             </div>
             <div className="gf-form">
               <Select
+                menuShouldPortal
                 allowCustomValue={true}
                 placeholder={k}
                 className="min-width-10"
                 options={allNames}
                 value={byKey[k] || ''}
                 onChange={(v) => this.onMathSymbolChanged(k, v.value)}
-                menuPlacement="bottom"
               />
             </div>
           </div>
@@ -437,11 +439,11 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
           <div className="gf-form">
             <div className="gf-form-label width-8">Mode</div>
             <Select
+              menuShouldPortal
               className="width-18"
               options={calculationModes}
               value={calculationModes.find((v) => v.value === mode)}
               onChange={this.onModeChanged}
-              menuPlacement="bottom"
             />
           </div>
         </div>
