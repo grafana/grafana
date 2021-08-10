@@ -485,7 +485,7 @@ def test_frontend_step():
 def test_a11y_frontend_step(edition):
     return {
         'name': 'test-a11y_frontend',
-        'image': 'grafana/ci-e2e:12.19.0-1',
+        'image': 'alpeware/chrome-headless-trunk',
         'depends_on': [
           'build-frontend',
           'end-to-end-tests-server' + enterprise2_sfx(edition),
