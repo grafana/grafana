@@ -108,7 +108,7 @@ func updateRows(session *sqlstore.DBSession, rows []map[string][]byte, passwordF
 }
 
 func getUpdatedSecureJSONData(row map[string][]byte, passwordFieldName string) (map[string]interface{}, error) {
-	encryptedPassword, err := util.Encrypt(row[passwordFieldName])
+	encryptedPassword, err := util.Encrypt(row[passwordFieldName], util.WithoutScope())
 	if err != nil {
 		return nil, err
 	}

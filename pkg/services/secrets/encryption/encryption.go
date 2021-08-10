@@ -23,6 +23,8 @@ func init() {
 	})
 }
 
+const saltLength = 8
+
 type EncryptionServiceImpl interface {
 	Encrypt(payload, secret []byte) ([]byte, error)
 	Decrypt(payload, secret []byte) ([]byte, error)
@@ -41,8 +43,6 @@ func (s OSSEncryptionService) Encrypt(payload, secret []byte) ([]byte, error) {
 func (s OSSEncryptionService) Decrypt(payload, secret []byte) ([]byte, error) {
 	return decrypt(payload, secret)
 }
-
-const saltLength = 8
 
 // Decrypt decrypts a payload with a given secret.
 func decrypt(payload, secret []byte) ([]byte, error) {

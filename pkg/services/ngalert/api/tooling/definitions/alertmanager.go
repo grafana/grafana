@@ -351,7 +351,7 @@ func (c *PostableUserConfig) ProcessConfig() error {
 		case GrafanaReceiverType:
 			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 				for k, v := range gr.SecureSettings {
-					encryptedData, err := util.Encrypt([]byte(v))
+					encryptedData, err := util.Encrypt([]byte(v), util.WithoutScope())
 					if err != nil {
 						return fmt.Errorf("failed to encrypt secure settings: %w", err)
 					}

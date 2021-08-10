@@ -180,7 +180,7 @@ func decodeAndDecrypt(s string) (string, error) {
 // encryptAndEncode will encrypt a string with grafana's secretKey, and
 // then encode it with the standard bas64 encoder
 func encryptAndEncode(s string) (string, error) {
-	encrypted, err := util.Encrypt([]byte(s), "")
+	encrypted, err := util.Encrypt([]byte(s), util.WithoutScope())
 	if err != nil {
 		return "", err
 	}
