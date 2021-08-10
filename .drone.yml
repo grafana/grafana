@@ -152,10 +152,10 @@ steps:
   depends_on:
   - package
 
-- name: publish-frontend-metrics
-  image: grafana/build-container:1.4.1
+- name: test-a11y-frontend
+  image: grafana/ci-e2e:12.19.0-1
   commands:
-  - ./scripts/ci-frontend-metrics.sh
+  - yarn run test-accessibility
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
@@ -3511,6 +3511,6 @@ get:
 
 ---
 kind: signature
-hmac: dd35920d8e2b1eb66c7d1ecb9fb3d711b8569d5aeef53c427ff1f34cc87a3a62
+hmac: ed778bbb2d9554f4647021ff64551ad5117351e8c34118d5acc9f887e2c89480
 
 ...

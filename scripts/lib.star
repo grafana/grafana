@@ -472,6 +472,24 @@ def test_frontend_step():
         ],
     }
 
+def test_a11y_main_step(edition):
+    return {
+        'name': 'test-a11y-frontend',
+        'image': 'grafana/ci-e2e:12.19.0-1',
+        'depends_on': [
+          'build-frontend',
+          'end-to-end-tests-server' + enterprise2_sfx(edition),
+        ],
+        'environment': {
+            'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
+            'HOST': 'end-to-end-tests-server' + enterprise2_sfx(edition),
+        },
+        'failure': 'ignore',
+        'commands': [
+            'yarn run test-accessibility',
+        ],
+    }
+
 def frontend_metrics_step(edition):
     if edition in ('enterprise', 'enterprise2'):
         return None
