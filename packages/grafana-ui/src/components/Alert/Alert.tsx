@@ -92,6 +92,7 @@ const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: bool
       background: ${theme.colors.background.secondary};
       box-shadow: ${elevated ? theme.shadows.z3 : theme.shadows.z1};
       margin-bottom: ${theme.spacing(bottomSpacing ?? 2)};
+      border: 2px solid ${color.main};
 
       &:before {
         content: '';
