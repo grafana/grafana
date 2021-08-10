@@ -26,17 +26,32 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   tooltipPlacement?: TooltipPlacement;
   /** Variant to change the color of the Icon */
   variant?: IconButtonVariant;
+  /** Text avilable ony for screenscreen readers. Will use tooltip text as fallback. */
+  ariaLabel?: string;
 }
 
 type SurfaceType = 'dashboard' | 'panel' | 'header';
 
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
-  ({ name, size = 'md', iconType, tooltip, tooltipPlacement, className, variant = 'secondary', ...restProps }, ref) => {
+  (
+    {
+      name,
+      size = 'md',
+      iconType,
+      tooltip,
+      tooltipPlacement,
+      ariaLabel,
+      className,
+      variant = 'secondary',
+      ...restProps
+    },
+    ref
+  ) => {
     const theme = useTheme2();
     const styles = getStyles(theme, size, variant);
 
     const button = (
-      <button ref={ref} {...restProps} className={cx(styles.button, className)}>
+      <button ref={ref} aria-label={ariaLabel || tooltip || ''} {...restProps} className={cx(styles.button, className)}>
         <Icon name={name} size={size} className={styles.icon} type={iconType} />
       </button>
     );
@@ -61,9 +76,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size: IconSize, variant: 
   let iconColor = theme.colors.text.primary;
 
   if (variant === 'primary') {
-    iconColor = theme.colors.primary.main;
+    iconColor = theme.colors.primary.text;
   } else if (variant === 'destructive') {
-    iconColor = theme.colors.error.main;
+    iconColor = theme.colors.error.text;
   }
 
   return {

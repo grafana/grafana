@@ -67,6 +67,9 @@ import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 import * as nodeGraph from 'app/plugins/panel/nodeGraph/module';
 import * as histogramPanel from 'app/plugins/panel/histogram/module';
 
+// Async loaded panels
+const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
+
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
   'app/plugins/datasource/cloudwatch/module': cloudwatchPlugin,
@@ -95,6 +98,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/status-history/module': statusHistoryPanel,
   'app/plugins/panel/graph/module': graphPanel,
   'app/plugins/panel/xychart/module': xyChartPanel,
+  'app/plugins/panel/geomap/module': geomapPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,
   'app/plugins/panel/pluginlist/module': pluginsListPanel,
   'app/plugins/panel/alertlist/module': alertListPanel,

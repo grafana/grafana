@@ -57,6 +57,7 @@ export class ConcatenateTransformerEditor extends React.PureComponent<Concatenat
           <div className="gf-form">
             <div className="gf-form-label width-8">Name</div>
             <Select
+              menuShouldPortal
               className="width-18"
               options={nameModes}
               value={nameModes.find((v) => v.value === frameNameMode)}

@@ -10,6 +10,7 @@ var (
 	ErrUserNotFound      = errors.New("user not found")
 	ErrUserAlreadyExists = errors.New("user already exists")
 	ErrLastGrafanaAdmin  = errors.New("cannot remove last grafana admin")
+	ErrProtectedUser     = errors.New("cannot adopt protected user")
 )
 
 type Password string

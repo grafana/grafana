@@ -27,7 +27,7 @@ export const AnnotationListItemTags: FC<Props> = ({ tags, remove, onClick }) => 
   }
 
   return (
-    <div>
+    <>
       {tags.map((tag) => {
         return (
           <span key={tag} onClick={(e) => onTagClicked(e, tag)} className={styles.pointer}>
@@ -35,14 +35,13 @@ export const AnnotationListItemTags: FC<Props> = ({ tags, remove, onClick }) => 
           </span>
         );
       })}
-    </div>
+    </>
   );
 };
 
 function getStyles(theme: GrafanaTheme) {
   return {
     pointer: css`
-      label: pointer;
       cursor: pointer;
       padding: ${theme.spacing.xxs};
     `,

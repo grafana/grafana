@@ -298,7 +298,7 @@ func (r *SQLAnnotationRepo) FindTags(query *annotations.TagsQuery) (annotations.
 	sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue)
 	sql.WriteString(` ` + dialect.Limit(query.Limit))
 
-	var items []*annotations.Tags
+	var items []*annotations.Tag
 	if err := x.SQL(sql.String(), params...).Find(&items); err != nil {
 		return annotations.FindTagsResult{Tags: []*annotations.TagsDTO{}}, err
 	}

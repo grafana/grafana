@@ -3,6 +3,7 @@ import { Portal } from '../../Portal/Portal';
 import { usePlotContext } from '../context';
 import {
   CartesianCoords2D,
+  DashboardCursorSync,
   DataFrame,
   FALLBACK_COLOR,
   FieldType,
@@ -22,10 +23,20 @@ interface TooltipPluginProps {
   data: DataFrame;
   config: UPlotConfigBuilder;
   mode?: TooltipDisplayMode;
+  sync?: DashboardCursorSync;
   // Allows custom tooltip content rendering. Exposes aligned data frame with relevant indexes for data inspection
   // Use field.state.origin indexes from alignedData frame field to get access to original data frame and field index.
   renderTooltip?: (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => React.ReactNode;
 }
+
+const eqArrays = (a: any[], b: any[]) => {
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+  return true;
+};
 
 const TOOLTIP_OFFSET = 10;
 
@@ -34,6 +45,7 @@ const TOOLTIP_OFFSET = 10;
  */
 export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   mode = TooltipDisplayMode.Single,
+  sync,
   timeZone,
   config,
   renderTooltip,
@@ -43,8 +55,10 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   const plotCtx = usePlotContext();
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
+  const [focusedPointIdxs, setFocusedPointIdxs] = useState<Array<number | null>>([]);
   const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
   const plotInstance = plotCtx.plot;
+  const [isActive, setIsActive] = useState<boolean>(false);
 
   const pluginId = `TooltipPlugin`;
 
@@ -56,19 +70,35 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   useEffect(() => {
     const plotMouseLeave = () => {
       setCoords(null);
+      setIsActive(false);
+      if (plotCtx.plot) {
+        plotCtx.plot.root.classList.remove('plot-active');
+      }
+    };
+
+    const plotMouseEnter = () => {
+      setIsActive(true);
+      if (plotCtx.plot) {
+        plotCtx.plot.root.classList.add('plot-active');
+      }
     };
 
     if (plotCtx && plotCtx.plot) {
       plotCtx.plot.over.addEventListener('mouseleave', plotMouseLeave);
+      plotCtx.plot.over.addEventListener('mouseenter', plotMouseEnter);
+      if (sync === DashboardCursorSync.Crosshair) {
+        plotCtx.plot.root.classList.add('shared-crosshair');
+      }
     }
 
     return () => {
       setCoords(null);
       if (plotCtx && plotCtx.plot) {
         plotCtx.plot.over.removeEventListener('mouseleave', plotMouseLeave);
+        plotCtx.plot.over.removeEventListener('mouseenter', plotMouseEnter);
       }
     };
-  }, [plotCtx.plot?.root, setCoords]);
+  }, [plotCtx.plot?.root]);
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
@@ -93,9 +123,15 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         })(u);
       });
     } else {
+      let prevIdx: number | null = null;
+      let prevIdxs: Array<number | null> | null = null;
+
       // default series/datapoint idx retireval
       config.addHook('setCursor', (u) => {
-        setFocusedPointIdx(u.cursor.idx === undefined ? u.posToIdx(u.cursor.left || 0) : u.cursor.idx);
+        if (u.cursor.idx !== prevIdx || prevIdxs == null || !eqArrays(prevIdxs, u.cursor.idxs!)) {
+          setFocusedPointIdx((prevIdx = u.cursor.idx!));
+          setFocusedPointIdxs((prevIdxs = u.cursor.idxs!.slice()));
+        }
 
         const bbox = plotCtx.getCanvasBoundingBox();
         if (!bbox) {
@@ -114,9 +150,9 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         setFocusedSeriesIdx(idx);
       });
     }
-  }, [plotCtx, config, setFocusedPointIdx, setFocusedSeriesIdx, setCoords]);
+  }, [plotCtx, config]);
 
-  if (!plotInstance || focusedPointIdx === null || mode === TooltipDisplayMode.None) {
+  if (!plotInstance || focusedPointIdx === null || (!isActive && sync === DashboardCursorSync.Crosshair)) {
     return null;
   }
 
@@ -134,6 +170,10 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     // when interacting with a point in single mode
     if (mode === TooltipDisplayMode.Single && focusedSeriesIdx !== null) {
       const field = otherProps.data.fields[focusedSeriesIdx];
+
+      if (!field) {
+        return null;
+      }
 
       const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
       const display = fieldFmt(field.values.get(focusedPointIdx));
@@ -160,15 +200,17 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         const frame = otherProps.data;
         const field = frame.fields[i];
         if (
+          !field ||
           field === xField ||
           field.type === FieldType.time ||
           field.type !== FieldType.number ||
-          field.config.custom?.hideFrom?.tooltip
+          field.config.custom?.hideFrom?.tooltip ||
+          field.config.custom?.hideFrom?.viz
         ) {
           continue;
         }
 
-        const display = field.display!(otherProps.data.fields[i].values.get(focusedPointIdx));
+        const display = field.display!(otherProps.data.fields[i].values.get(focusedPointIdxs[i]!));
 
         series.push({
           color: display.color || FALLBACK_COLOR,

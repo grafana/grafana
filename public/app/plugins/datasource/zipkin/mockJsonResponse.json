@@ -1,0 +1,45 @@
+[
+  {
+    "traceId": "efe9cb8857f68c8f",
+    "parentId": "efe9cb8857f68c8f",
+    "id": "8608dc6ce5cafe8e",
+    "kind": "SERVER",
+    "name": "get /api",
+    "timestamp": 1627975249601797,
+    "duration": 23457,
+    "localEndpoint": { "serviceName": "backend", "ipv4": "127.0.0.1", "port": 9000 },
+    "tags": {
+      "http.method": "GET",
+      "http.path": "/api",
+      "jaxrs.resource.class": "Resource",
+      "jaxrs.resource.method": "printDate"
+    },
+    "shared": true
+  },
+  {
+    "traceId": "efe9cb8857f68c8f",
+    "parentId": "efe9cb8857f68c8f",
+    "id": "8608dc6ce5cafe8e",
+    "kind": "CLIENT",
+    "name": "get",
+    "timestamp": 1627975249491667,
+    "duration": 148265,
+    "localEndpoint": { "serviceName": "frontend", "ipv4": "127.0.0.1", "port": 8081 },
+    "tags": { "http.method": "GET", "http.path": "/api" }
+  },
+  {
+    "traceId": "efe9cb8857f68c8f",
+    "id": "efe9cb8857f68c8f",
+    "kind": "SERVER",
+    "name": "get",
+    "timestamp": 1627975249258448,
+    "duration": 413469,
+    "localEndpoint": { "serviceName": "frontend", "ipv4": "127.0.0.1", "port": 8081 },
+    "tags": {
+      "http.method": "GET",
+      "http.path": "/",
+      "jaxrs.resource.class": "Resource",
+      "jaxrs.resource.method": "callBackend"
+    }
+  }
+]
