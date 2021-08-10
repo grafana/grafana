@@ -475,7 +475,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewDiscordNotifier(cfg, tmpl)
 		case "googlechat":
 			n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
-		case "line":
+		case "LINE":
 			n, err = channels.NewLineNotifier(cfg, tmpl)
 		case "threema":
 			n, err = channels.NewThreemaNotifier(cfg, tmpl)
@@ -511,6 +511,7 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 			},
 			UpdatedAt: now,
 		}
+
 		for k, v := range a.Labels {
 			if len(v) == 0 || k == ngmodels.NamespaceUIDLabel { // Skip empty and namespace UID labels.
 				continue

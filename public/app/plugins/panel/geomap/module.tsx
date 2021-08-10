@@ -68,13 +68,6 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       })
       .addBooleanSwitch({
         category,
-        path: 'controls.showLegend',
-        name: 'Show legend',
-        description: 'Show legend',
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        category,
         path: 'controls.showAttribution',
         name: 'Show attribution',
         description: 'Show the map source attribution info in the lower right',

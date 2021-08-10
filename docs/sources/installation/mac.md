@@ -17,7 +17,8 @@ Use [Homebrew](http://brew.sh/) to install the most recent released version of G
 
 1. On the Homebrew homepage, search for Grafana. The last stable and released version is listed.
 1. Open a terminal and enter:
-    ```
+
+   ```
    brew update
    brew install grafana
    ```
@@ -31,25 +32,25 @@ Use [Homebrew](http://brew.sh/) to install the most recent released version of G
 
 ## Install standalone macOS binaries
 
-To install a nightly build, or to install the latest version of Grafana  without Homebrew, go to the [Grafana download page](https://grafana.com/grafana/download/7.3.0-381ff45epre?platform=mac).
+To install a nightly build, or to install the latest version of Grafana without Homebrew, go to the [Grafana download page](https://grafana.com/grafana/download/7.3.0-381ff45epre?platform=mac).
 
 1. Select the Grafana version you want to install. By default, the most recent released version is selected.
 
    > **Note:** The downloads page lists only finished releases. If you want to install a beta version, click [Nightly ] **Nightly Builds** and then select a version.
 
 1. Select an **Edition**.
-   * **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
-   * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
+   - **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
+   - **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
 1. Click **Mac**.
 1. Open a terminal and download the binary using the cURL command. The following example shows Grafana 7.1.5 version:
    ```bash
    curl -O https://dl.grafana.com/oss/release/grafana-7.1.5.darwin-amd64.tar.gz
-      ```
-1.  Untar the gz file and copy the files to the location of your preference.
-1.  To start Grafana service, go to the directory and run the command:
-      ```bash
-      ./bin/grafana-server web
-      ```
+   ```
+1. Untar the gz file and copy the files to the location of your preference.
+1. To start Grafana service, go to the directory and run the command:
+   ```bash
+   ./bin/grafana-server web
+   ```
 
 ## Next steps
 
