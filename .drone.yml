@@ -145,7 +145,7 @@ steps:
 - name: test-a11y_frontend
   image: alpeware/chrome-headless-trunk
   commands:
-  - yarn run test:accessibility
+  - npm run test:accessibility
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
@@ -3542,6 +3542,6 @@ get:
 
 ---
 kind: signature
-hmac: 1081a5a4170511d0102363e651489c8d9bef00d9768e69815505395b8a6b50e1
+hmac: 4ab51b97c07b39a95cee4edf154bca1c858f50b895d07729804f29e2f55968fc
 
 ...
