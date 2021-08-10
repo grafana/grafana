@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -41,7 +42,7 @@ func (f *Finder) Find(pluginsDir string) ([]string, error) {
 	var pluginJSONPaths []string
 	if !exists {
 		if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
-			f.log.Error("Failed to create plugins directory", "dir", pluginsDir, "error", err)
+			f.log.Error("Failed to create external plugins directory", "dir", pluginsDir, "error", err)
 		} else {
 			f.log.Info("External plugins directory created", "directory", pluginsDir)
 		}
@@ -71,6 +72,12 @@ func (f *Finder) Find(pluginsDir string) ([]string, error) {
 func (f *Finder) getPluginJSONPaths(rootDirPath string) ([]string, error) {
 	var pluginJSONPaths []string
 
+	var err error
+	rootDirPath, err = filepath.Abs(rootDirPath)
+	if err != nil {
+		return []string{}, err
+	}
+
 	if err := util.Walk(rootDirPath, true, true,
 		func(currentPath string, fi os.FileInfo, err error) error {
 			// We scan all the sub-folders for plugin.json (with some exceptions) so that we also load embedded plugins, for
@@ -80,7 +87,7 @@ func (f *Finder) getPluginJSONPaths(rootDirPath string) ([]string, error) {
 				return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
 			}
 
-			if fi.Name() == "node_modules" || fi.Name() == "Chromium.app" {
+			if fi.Name() == "node_modules" {
 				return util.ErrWalkSkipDir
 			}
 
