@@ -21,10 +21,11 @@ datasources:
     access: proxy
     database: site
     user: grafana
-    password: grafana
     url: http://localhost:8086
     jsonData:
       httpMode: GET
+    secureJsonData:
+      password: grafana
 ```
 
 ## InfluxDB 2.x for Flux example
