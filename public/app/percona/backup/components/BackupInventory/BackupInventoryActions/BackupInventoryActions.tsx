@@ -13,7 +13,7 @@ export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({ backup
   const styles = useStyles(getStyles);
   const handeClick = () => onRestore(backup);
   const handleBackup = () => onBackup(backup);
-  const handleDelete = () => onDelete(backup);
+  // const handleDelete = () => onDelete(backup);
 
   return (
     <div className={styles.actionsWrapper}>
@@ -32,7 +32,7 @@ export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({ backup
         role="button"
         onClick={handleBackup}
       />
-      <DBIcon
+      {/* <DBIcon
         tooltipText={Messages.deleteBackup}
         type="delete"
         disabled={
@@ -43,7 +43,7 @@ export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({ backup
         data-qa="delete-backup-artifact-button"
         role="button"
         onClick={handleDelete}
-      />
+      /> */}
     </div>
   );
 };
