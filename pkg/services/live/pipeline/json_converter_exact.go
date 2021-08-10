@@ -1,4 +1,4 @@
-package pushhttp
+package pipeline
 
 import (
 	"errors"
@@ -6,13 +6,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/live/pipeline"
-
 	"github.com/ohler55/ojg/jp"
 	"github.com/ohler55/ojg/oj"
 )
 
-type jsonPathConverter struct{}
+type exactJsonConverter struct{}
 
 // Automatic conversion works this way:
 // * Time added automatically
@@ -20,7 +18,7 @@ type jsonPathConverter struct{}
 // To preserve nulls and extract time we need tips from a user:
 // * Field types
 // * Time column with time format
-func (c *jsonPathConverter) Convert(name string, payload []byte, exactFields []pipeline.Field) (*data.Frame, error) {
+func (c *exactJsonConverter) Convert(name string, payload []byte, exactFields []Field) (*data.Frame, error) {
 	obj, err := oj.Parse(payload)
 	if err != nil {
 		return nil, err
@@ -65,6 +63,22 @@ func (c *jsonPathConverter) Convert(name string, payload []byte, exactFields []p
 			} else {
 				return nil, errors.New("too many values")
 			}
+		} else if strings.HasPrefix(f.Value, "{") {
+			script := strings.Trim(f.Value, "{}")
+			switch f.Type {
+			case data.FieldTypeNullableBool:
+				v, err := GetBool(payload, script)
+				if err != nil {
+					return nil, err
+				}
+				field.SetConcrete(0, v)
+			case data.FieldTypeNullableFloat64:
+				v, err := GetFloat64(payload, script)
+				if err != nil {
+					return nil, err
+				}
+				field.SetConcrete(0, v)
+			}
 		} else if f.Value == "#{now}" {
 			field.SetConcrete(0, time.Now())
 		}
@@ -97,10 +111,9 @@ func (c *jsonPathConverter) Convert(name string, payload []byte, exactFields []p
 	frame := data.NewFrame(name, fields...)
 	//s, _ := frame.StringTable(10, 10)
 	//println(s)
-
 	return frame, nil
 }
 
-func newJsonPathConverter() *jsonPathConverter {
-	return &jsonPathConverter{}
+func newExactJsonConverter() *exactJsonConverter {
+	return &exactJsonConverter{}
 }

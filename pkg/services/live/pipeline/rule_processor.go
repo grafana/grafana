@@ -1,4 +1,4 @@
-package pushhttp
+package pipeline
 
 import (
 	"context"
@@ -6,23 +6,21 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
-
-	"github.com/grafana/grafana/pkg/services/live/pipeline"
 )
 
 type RuleProcessor struct {
-	pipeline          *pipeline.Pipeline
-	autoJsonConverter *autoJsonConverter
-	jsonPathConverter *jsonPathConverter
-	frameStorage      *FrameStorage
+	pipeline           *Pipeline
+	autoJsonConverter  *autoJsonConverter
+	exactJsonConverter *exactJsonConverter
+	frameStorage       *FrameStorage
 }
 
-func NewRuleProcessor(pipeline *pipeline.Pipeline) *RuleProcessor {
+func NewRuleProcessor(pipeline *Pipeline) *RuleProcessor {
 	return &RuleProcessor{
-		pipeline:          pipeline,
-		autoJsonConverter: newJSONConverter(),
-		jsonPathConverter: newJsonPathConverter(),
-		frameStorage:      NewFrameStorage(),
+		pipeline:           pipeline,
+		autoJsonConverter:  newJSONConverter(),
+		exactJsonConverter: newExactJsonConverter(),
+		frameStorage:       NewFrameStorage(),
 	}
 }
 
@@ -41,7 +39,7 @@ func (p *RuleProcessor) DataToFrame(_ context.Context, orgID int64, channel stri
 	var frame *data.Frame
 
 	if rule.Mode == "auto" || rule.Mode == "tip" {
-		fields := map[string]pipeline.Field{}
+		fields := map[string]Field{}
 		if rule.Fields != nil {
 			for _, field := range rule.Fields {
 				fields[field.Name] = field
@@ -53,7 +51,7 @@ func (p *RuleProcessor) DataToFrame(_ context.Context, orgID int64, channel stri
 			return nil, err
 		}
 	} else if rule.Mode == "exact" {
-		frame, err = p.jsonPathConverter.Convert(liveChannel.Path, body, rule.Fields)
+		frame, err = p.exactJsonConverter.Convert(liveChannel.Path, body, rule.Fields)
 		if err != nil {
 			logger.Error("Error converting JSON", "error", err)
 			return nil, err
@@ -77,11 +75,11 @@ func (p *RuleProcessor) ProcessFrame(_ context.Context, orgID int64, channel str
 	}
 
 	liveChannel, _ := live.ParseChannel(channel)
-	vars := pipeline.ProcessorVars{
+	vars := ProcessorVars{
 		Scope:     liveChannel.Scope,
 		Namespace: liveChannel.Namespace,
 		Path:      liveChannel.Path,
-		Vars: pipeline.Vars{
+		Vars: Vars{
 			OrgID: orgID,
 		},
 	}
@@ -94,7 +92,7 @@ func (p *RuleProcessor) ProcessFrame(_ context.Context, orgID int64, channel str
 		}
 	}
 
-	outputVars := pipeline.OutputVars{
+	outputVars := OutputVars{
 		ProcessorVars: vars,
 	}
 

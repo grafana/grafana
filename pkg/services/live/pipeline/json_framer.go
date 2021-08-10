@@ -1,11 +1,9 @@
-package pushhttp
+package pipeline
 
 import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/grafana/grafana/pkg/services/live/pipeline"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
@@ -17,7 +15,7 @@ type doc struct {
 
 	fields     []*data.Field
 	fieldNames map[string]struct{}
-	fieldTips  map[string]pipeline.Field
+	fieldTips  map[string]Field
 }
 
 func (d *doc) next() error {
@@ -102,7 +100,7 @@ func (d *doc) addNil() {
 	}
 }
 
-func JSONDocToFrame(name string, body []byte, fields map[string]pipeline.Field) (*data.Frame, error) {
+func JSONDocToFrame(name string, body []byte, fields map[string]Field) (*data.Frame, error) {
 	d := doc{
 		iter:       jsoniter.ParseBytes(jsoniter.ConfigDefault, body),
 		path:       make([]string, 0),

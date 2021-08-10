@@ -11,6 +11,8 @@ type Pipeline struct {
 }
 
 func New(s Storage) *Pipeline {
+	// TODO: temporary for development, remove.
+	go postTestData()
 	return &Pipeline{cache: NewCache(s)}
 }
 
@@ -40,7 +42,7 @@ type TimeOptions struct {
 type Field struct {
 	Name   string
 	Type   data.FieldType
-	Value  string // Can be JSONPath if starts with $.
+	Value  string // Can be JSONPath or Goja script.
 	Labels []Label
 
 	TimeOptions *TimeOptions

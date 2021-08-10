@@ -32,12 +32,10 @@ type Gateway struct {
 	Cfg         *setting.Cfg      `inject:""`
 	GrafanaLive *live.GrafanaLive `inject:""`
 
-	converter         *convert.Converter
-	autoJsonConverter *autoJsonConverter
-	jsonPathConverter *jsonPathConverter
-	pipeline          *pipeline.Pipeline
-	frameStorage      *FrameStorage
-	ruleProcessor     *RuleProcessor
+	converter     *convert.Converter
+	pipeline      *pipeline.Pipeline
+	frameStorage  *pipeline.FrameStorage
+	ruleProcessor *pipeline.RuleProcessor
 }
 
 type dropFieldsProcessor struct {
@@ -84,8 +82,8 @@ func (l managedStreamOutput) Output(_ context.Context, vars pipeline.OutputVars,
 
 type fakeStorage struct {
 	gLive         *live.GrafanaLive
-	frameStorage  *FrameStorage
-	ruleProcessor *RuleProcessor
+	frameStorage  *pipeline.FrameStorage
+	ruleProcessor *pipeline.RuleProcessor
 }
 
 func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChannelRuleCommand) ([]*pipeline.LiveChannelRule, error) {
@@ -161,6 +159,16 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					Type:  data.FieldTypeNullableString,
 					Value: "$.annotation",
 				},
+				{
+					Name:  "running",
+					Type:  data.FieldTypeNullableBool,
+					Value: "{JSON.parse(x).status === 'running'}",
+				},
+				{
+					Name:  "num_map_colors",
+					Type:  data.FieldTypeNullableFloat64,
+					Value: "{Object.keys(JSON.parse(x).map).length}",
+				},
 			},
 			Outputs: []pipeline.Outputter{
 				newManagedStreamOutput(f.gLive),
@@ -170,18 +178,18 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
 					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
 				}),
-				NewLiveChangeLogOutput(f.frameStorage, f.ruleProcessor, LiveChangeLogOutputConfig{
+				pipeline.NewChangeLogOutput(f.frameStorage, f.ruleProcessor, pipeline.ChangeLogOutputConfig{
 					Fields:  []string{"value3"},
 					Channel: "stream/test/exact/value3/changes",
 				}),
-				NewLiveChangeLogOutput(f.frameStorage, f.ruleProcessor, LiveChangeLogOutputConfig{
+				pipeline.NewChangeLogOutput(f.frameStorage, f.ruleProcessor, pipeline.ChangeLogOutputConfig{
 					Fields:  []string{"annotation"},
 					Channel: "stream/test/exact/annotation/changes",
 				}),
-				NewChannelOutput(f.ruleProcessor, ChannelOutputConfig{
+				pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
 					Channel: "stream/test/exact/threshold",
-					Conditions: []ConditionChecker{
-						NewFloat64CompareCondition("value1", "gte", 4.0),
+					Conditions: []pipeline.ConditionChecker{
+						pipeline.NewFloat64CompareCondition("value1", "gte", 4.0),
 					},
 				}),
 			},
@@ -212,6 +220,9 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 			OrgId:   1,
 			Pattern: "stream/test/exact/threshold",
 			Mode:    "auto",
+			Processors: []pipeline.Processor{
+				newDropFieldsProcessor("running"),
+			},
 			Outputs: []pipeline.Outputter{
 				newManagedStreamOutput(f.gLive),
 			},
@@ -224,8 +235,8 @@ func (g *Gateway) Init() error {
 	logger.Info("Live Push Gateway initialization")
 
 	g.converter = convert.NewConverter()
-	storage := &fakeStorage{gLive: g.GrafanaLive, frameStorage: NewFrameStorage()}
-	g.ruleProcessor = NewRuleProcessor(pipeline.New(storage))
+	storage := &fakeStorage{gLive: g.GrafanaLive, frameStorage: pipeline.NewFrameStorage()}
+	g.ruleProcessor = pipeline.NewRuleProcessor(pipeline.New(storage))
 	storage.ruleProcessor = g.ruleProcessor
 	return nil
 }

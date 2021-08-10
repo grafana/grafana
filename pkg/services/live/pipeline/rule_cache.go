@@ -6,10 +6,7 @@ import (
 	"time"
 
 	"github.com/fanyang01/radix"
-	"github.com/grafana/grafana/pkg/infra/log"
 )
-
-var logger = log.New("channel-rule-cache")
 
 type Cache struct {
 	radixMu sync.RWMutex

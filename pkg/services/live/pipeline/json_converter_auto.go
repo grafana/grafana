@@ -1,8 +1,7 @@
-package pushhttp
+package pipeline
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/live/pipeline"
 )
 
 type autoJsonConverter struct{}
@@ -13,7 +12,7 @@ type autoJsonConverter struct{}
 // To preserve nulls and extract time we need tips from a user:
 // * Field types
 // * Time column with time format
-func (c *autoJsonConverter) Convert(name string, data []byte, fields map[string]pipeline.Field) (*data.Frame, error) {
+func (c *autoJsonConverter) Convert(name string, data []byte, fields map[string]Field) (*data.Frame, error) {
 	return JSONDocToFrame(name, data, fields)
 }
 
