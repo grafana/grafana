@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -80,17 +81,44 @@ func NewOpsgenieNotifier(model *NotificationChannelConfig, t *template.Template)
 	}, nil
 }
 
-// Notify sends an alert notification to Opsgenie
 func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
+	if success, errors := on.NotifyMultiple(ctx, as); !success {
+		count := 0
+		for _, err := range errors {
+			if err != nil {
+				count += 1
+			}
+		}
+		return false, fmt.Errorf("sending Opsgenie notifications on %d alerts", count)
+	}
+
+	return true, nil
+}
+
+func (on *OpsgenieNotifier) NotifyMultiple(ctx context.Context, as []*types.Alert) (bool, []error) {
+	errors := make([]error, len(as))
+	success := true
+
+	for index, alert := range as {
+		if _, err := on.NotifySingle(ctx, alert); err != nil {
+			errors[index] = err
+			success = false
+		}
+	}
+
+	return success, errors
+}
+
+// Notify sends an alert notification to Opsgenie
+func (on *OpsgenieNotifier) NotifySingle(ctx context.Context, alert *types.Alert) (bool, error) {
 	on.log.Debug("Executing Opsgenie notification", "notification", on.Name)
 
-	alerts := types.Alerts(as...)
-	if alerts.Status() == model.AlertResolved && !on.SendResolved() {
-		on.log.Debug("Not sending a trigger to Opsgenie", "status", alerts.Status(), "auto resolve", on.SendResolved())
+	if alert.Status() == model.AlertResolved && !on.SendResolved() {
+		on.log.Debug("Not sending a trigger to Opsgenie", "status", alert.Status, "auto resolve", on.SendResolved())
 		return true, nil
 	}
 
-	bodyJSON, url, err := on.buildOpsgenieMessage(ctx, alerts, as)
+	bodyJSON, url, err := on.buildOpsgenieMessage(ctx, alert)
 	if err != nil {
 		return false, fmt.Errorf("build Opsgenie message: %w", err)
 	}
@@ -123,11 +151,12 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	return true, nil
 }
 
-func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts model.Alerts, as []*types.Alert) (payload *simplejson.Json, apiURL string, err error) {
-	key, err := notify.ExtractGroupKey(ctx)
+func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alert *types.Alert) (payload *simplejson.Json, apiURL string, err error) {
 	if err != nil {
 		return nil, "", err
 	}
+
+	key := ExtractAlertKey(alert)
 
 	var (
 		alias    = key.Hash()
@@ -135,7 +164,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		details  = simplejson.New()
 	)
 
-	if alerts.Status() == model.AlertResolved {
+	if alert.Status() == model.AlertResolved {
 		// For resolved notification, we only need the source.
 		// Don't need to run other templates.
 		if on.AutoClose {
@@ -150,7 +179,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	ruleURL := joinUrlPath(on.tmpl.ExternalURL.String(), "/alerting/list", on.log)
 
 	var tmplErr error
-	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
+	tmpl, data := TmplText(ctx, on.tmpl, []*types.Alert{alert}, on.log, &tmplErr)
 
 	title := tmpl(`{{ template "default.title" . }}`)
 	description := fmt.Sprintf(
@@ -219,4 +248,23 @@ func (on *OpsgenieNotifier) sendDetails() bool {
 
 func (on *OpsgenieNotifier) sendTags() bool {
 	return on.SendTagsAs == OpsgenieSendTags || on.SendTagsAs == OpsgenieSendBoth
+}
+
+// ExtractAlertKey gets the alert key based on the label set.
+func ExtractAlertKey(alert *types.Alert) notify.Key {
+	var sb strings.Builder
+
+	labels := make([]string, len(alert.Labels))
+	i := 0
+	for key := range alert.Labels {
+		labels[i] = string(key)
+		i++
+	}
+	sort.Strings(labels)
+
+	for _, label := range labels {
+		sb.WriteString(fmt.Sprintf("%s=%s ", label, alert.Labels[model.LabelName(label)]))
+	}
+
+	return notify.Key(sb.String())
 }
