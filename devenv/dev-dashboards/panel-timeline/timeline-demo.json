@@ -13,12 +13,10 @@
     ]
   },
   "editable": true,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "panels": [
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -55,8 +53,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -113,7 +110,6 @@
       "type": "state-timeline"
     },
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -151,8 +147,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -207,7 +202,6 @@
       "type": "state-timeline"
     },
     {
-      "datasource": null,
       "description": "Should show gaps",
       "fieldConfig": {
         "defaults": {
@@ -246,8 +240,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -301,7 +294,6 @@
       "type": "state-timeline"
     },
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -319,8 +311,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -339,7 +330,6 @@
         "y": 19
       },
       "id": 4,
-      "interval": null,
       "maxDataPoints": 20,
       "options": {
         "alignValue": "center",
