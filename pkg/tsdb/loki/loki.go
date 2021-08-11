@@ -211,7 +211,11 @@ func (s *Service) parseQuery(dsInfo *datasourceInfo, queryContext *backend.Query
 			return nil, err
 		}
 
-		resolution := model.Resolution
+		var resolution int64 = 1
+		if model.Resolution >= 1 && model.Resolution <= 5 || model.Resolution == 10 {
+			resolution = model.Resolution
+		}
+
 		step := time.Duration(int64(interval.Value) * resolution)
 
 		qs = append(qs, &lokiQuery{
