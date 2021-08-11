@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/secrets/types"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 
 	"github.com/grafana/grafana/pkg/registry"
@@ -17,8 +19,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 
+	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/encryption"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -33,7 +35,7 @@ func init() {
 }
 
 type SecretsService struct {
-	SQLStore *sqlstore.SQLStore               `inject:""`
+	Store    database.SecretsStore            `inject:""`
 	Bus      bus.Bus                          `inject:""`
 	Enc      encryption.EncryptionServiceImpl `inject:""`
 	Settings setting.Provider                 `inject:""`
@@ -86,7 +88,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	}
 
 	// 3. Store its encrypted value in db
-	err = s.CreateDataKey(ctx, DataKey{
+	err = s.Store.CreateDataKey(ctx, types.DataKey{
 		Active:        true, // TODO: right now we do never mark a key as deactivated
 		Name:          name,
 		Provider:      s.defaultProvider,
@@ -123,7 +125,7 @@ func (s *SecretsService) Encrypt(payload []byte, opt util.EncryptionOption) ([]b
 
 	dataKey, err := s.dataKey(keyName)
 	if err != nil {
-		if errors.Is(err, ErrDataKeyNotFound) {
+		if errors.Is(err, types.ErrDataKeyNotFound) {
 			dataKey, err = s.newDataKey(context.TODO(), keyName, scope)
 			if err != nil {
 				return nil, err
@@ -194,7 +196,7 @@ func (s *SecretsService) dataKey(name string) ([]byte, error) {
 	}
 
 	// 1. get encrypted data key from database
-	dataKey, err := s.GetDataKey(context.Background(), name)
+	dataKey, err := s.Store.GetDataKey(context.Background(), name)
 	if err != nil {
 		return nil, err
 	}
