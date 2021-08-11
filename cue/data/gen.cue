@@ -192,6 +192,77 @@ Family: scuemata.#Family & {
                     maxDataPoints?: number
 
                     // TODO docs
+                    dashLength?: number | *10
+
+                    // TODO docs
+                    fill?: number
+
+                    // TODO docs
+                    bars?: bool
+
+                    // TODO docs
+                    dashes?: bool | *false
+
+                    // TODO docs
+                    fillGradient?: number | *0
+
+                    // TODO docs
+                    aliasColors?: {...}
+                    
+                    // TODO docs
+                    nullPointMode?: *"null" | "connected" | "null as zero"
+
+                    // TODO docs
+                    legend?: {...}
+
+                    // TODO docs
+                    linewidth?: number | *1
+
+                    // TODO docs
+                    lines?: bool | *true
+
+                    // TODO docs
+                    hiddenSeries?: bool | *false
+
+                    // TODO docs
+                    percentage?: bool | *false
+
+                    // TODO docs
+                    renderer?: string | *"flot"
+
+                    // TODO docs
+                    seriesOverrides?: [...]
+
+                    // TODO docs
+                    spaceLength?: number | *10
+
+                    // TODO docs
+                    points?: bool | *false
+
+                    // TODO docs
+                    stack?: bool | *false
+
+                    // TODO docs
+                    steppedLine?: bool | *false
+                    
+                    // TODO docs
+                    tooltip?: {...}
+
+                    // TODO docs
+                    xaxis?: {...}
+                    yaxis?: {...}
+                    yaxes?: [...]
+
+                    // TODO docs
+                    pointradius?: number
+
+                    // TODO docs
+                    thresholds?: [...]
+
+                    // TODO docs
+                    timeRegions?: [...]
+
+                    // TODO docs
                     // TODO tighter constraint
                     interval?: string
 
