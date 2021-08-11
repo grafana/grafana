@@ -1,5 +1,5 @@
 import { toDataFrame, ArrayVector, DataFrame, FieldType, toDataFrameDTO, DataFrameDTO } from '@grafana/data';
-import { prepareTimeSeries, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
+import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
 describe('Prepair time series transformer', () => {
   it('should transform wide to many', () => {
@@ -19,7 +19,7 @@ describe('Prepair time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMany,
     };
 
-    expect(prepareTimeSeries(source, config)).toEqual([
+    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([
       toEquableDataFrame({
         name: 'wide',
         refId: 'A',
@@ -59,7 +59,7 @@ describe('Prepair time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMany,
     };
 
-    expect(prepareTimeSeries(source, config)).toEqual([
+    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([
       toEquableDataFrame({
         name: 'wide',
         refId: 'A',
@@ -107,7 +107,7 @@ describe('Prepair time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMany,
     };
 
-    expect(prepareTimeSeries(source, config)).toEqual([
+    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([
       toEquableDataFrame({
         name: 'wide',
         refId: 'A',
@@ -162,7 +162,9 @@ describe('Prepair time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMany,
     };
 
-    expect(toEquableDataFrames(prepareTimeSeries(source, config))).toEqual(toEquableDataFrames(source));
+    expect(toEquableDataFrames(prepareTimeSeriesTransformer.transformer(config)(source))).toEqual(
+      toEquableDataFrames(source)
+    );
   });
 
   it('should return empty array when no timeseries exist', () => {
@@ -191,7 +193,7 @@ describe('Prepair time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMany,
     };
 
-    expect(prepareTimeSeries(source, config)).toEqual([]);
+    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([]);
   });
 });
 
