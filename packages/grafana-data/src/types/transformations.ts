@@ -14,6 +14,13 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
   operator: (options: TOptions) => MonoTypeOperatorFunction<DataFrame[]>;
 }
 
+/**
+ * Many transforms can be called with a simple function
+ */
+export interface SynchronousDataTransformerInfo<TOptions = any> extends DataTransformerInfo<TOptions> {
+  transform: (frames: DataFrame[], options: TOptions) => DataFrame[];
+}
+
 export interface DataTransformerConfig<TOptions = any> {
   /**
    * Unique identifier of transformer
