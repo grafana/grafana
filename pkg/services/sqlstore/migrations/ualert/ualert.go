@@ -69,6 +69,49 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 	}
 }
 
+// RerunDashAlertMigration force the dashboard alert migration to run
+// to make sure that the Alertmanager configurations will be created for each organisation
+func RerunDashAlertMigration(mg *migrator.Migrator) {
+	logs, err := mg.GetMigrationLog()
+	if err != nil {
+		mg.Logger.Crit("alert migration failure: could not get migration log", "error", err)
+		os.Exit(1)
+	}
+
+	cloneMigTitle := fmt.Sprintf("clone %s", migTitle)
+	cloneRmMigTitle := fmt.Sprintf("clone %s", rmMigTitle)
+
+	_, migrationRun := logs[cloneMigTitle]
+
+	ngEnabled := mg.Cfg.IsNgAlertEnabled()
+
+	switch {
+	case ngEnabled && !migrationRun:
+		// removes all unified alerting data
+		mg.AddMigration(cloneRmMigTitle, &rmMigration{})
+
+		// Remove the migration entry that removes all unified alerting data. This is so when the feature
+		// flag is removed in future the "remove unified alerting data" migration will be run again.
+		err = mg.ClearMigrationEntry(cloneRmMigTitle)
+		if err != nil {
+			mg.Logger.Error("alert migration error: could not clear clone alert migration for removing data", "error", err)
+		}
+		mg.AddMigration(cloneMigTitle, &migration{
+			seenChannelUIDs:        make(map[string]struct{}),
+			migratedChannelsPerOrg: make(map[int64]map[*notificationChannel]struct{}),
+			portedChannelGroups:    make(map[string]string),
+		})
+	case !ngEnabled && migrationRun:
+		// Remove the migration entry that creates unified alerting data. This is so when the feature
+		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
+		err = mg.ClearMigrationEntry(cloneMigTitle)
+		if err != nil {
+			mg.Logger.Error("alert migration error: could not clear clone dashboard alert migration", "error", err)
+		}
+		mg.AddMigration(cloneRmMigTitle, &rmMigration{})
+	}
+}
+
 type migration struct {
 	migrator.MigrationBase
 	// session and mg are attached for convenience.
