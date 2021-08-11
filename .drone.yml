@@ -143,9 +143,9 @@ steps:
   - end-to-end-tests-server
 
 - name: test-a11y_frontend
-  image: alpeware/chrome-headless-trunk
+  image: buildkite/puppeteer
   commands:
-  - npm run test:accessibility
+  - yarn test:accessibility
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
