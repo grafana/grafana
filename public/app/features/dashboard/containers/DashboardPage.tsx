@@ -328,7 +328,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return (
       <div className={containerClassNames}>
         {kioskMode !== KioskMode.Full && (
-          <header aria-label={selectors.pages.Dashboard.DashNav.nav}>
+          <header data-testid={selectors.pages.Dashboard.DashNav.nav}>
             <DashNav
               dashboard={dashboard}
               title={dashboard.title}

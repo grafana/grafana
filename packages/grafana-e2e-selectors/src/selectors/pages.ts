@@ -38,7 +38,7 @@ export const Pages = {
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
     DashNav: {
-      nav: 'Dashboard navigation',
+      nav: 'data-testid Dashboard navigation',
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
