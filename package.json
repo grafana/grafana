@@ -270,7 +270,7 @@
     "@opentelemetry/semantic-conventions": "0.23.0",
     "papaparse": "5.3.0",
     "pluralize": "^8.0.0",
-    "prismjs": "1.23.0",
+    "prismjs": "1.24.0",
     "prop-types": "15.7.2",
     "rc-cascader": "1.0.1",
     "re-resizable": "^6.2.0",
