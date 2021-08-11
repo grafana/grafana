@@ -25,6 +25,7 @@
   "panels": [
     {
       "datasource": null,
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -70,7 +71,7 @@
               },
               {
                 "color": "orange",
-                "value": 20
+                "value": 15
               },
               {
                 "color": "red",
@@ -84,7 +85,7 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 0
       },
@@ -107,11 +108,12 @@
           "stringInput": "1,10,20,30,40,50"
         }
       ],
-      "title": "20 Orange, 30 red",
+      "title": "15 orange, 30 red",
       "type": "timeseries"
     },
     {
       "datasource": null,
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -157,7 +159,7 @@
               },
               {
                 "color": "orange",
-                "value": 20
+                "value": 15
               },
               {
                 "color": "red",
@@ -171,8 +173,8 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 12,
-        "x": 12,
+        "w": 8,
+        "x": 8,
         "y": 0
       },
       "id": 12,
@@ -194,7 +196,94 @@
           "stringInput": "1,10,20,30,40,50"
         }
       ],
-      "title": "20 Orange, 30 red,  min 20",
+      "title": "15 orange, 30 red",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 37,
+            "gradientMode": "scheme",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "max": 50,
+          "min": 20,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 15
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "degree"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 13,
+      "maxDataPoints": 45,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,10,20,30,40,50"
+        }
+      ],
+      "title": "15 orange, 50 red",
       "type": "timeseries"
     },
     {
@@ -769,5 +858,5 @@
   "timezone": "",
   "title": "Panel Tests - Graph NG - By value color schemes",
   "uid": "aBXrJ0R7z",
-  "version": 7
+  "version": 11
 }

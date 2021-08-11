@@ -23478,10 +23478,9 @@ update-notifier@^2.5.0:
     semver-diff "^2.0.0"
     xdg-basedir "^3.0.0"
 
-uplot@1.6.14:
+uplot@leeoniya/uPlot#edea617403a1f1542368f5c0e0a16537d3ef5939:
   version "1.6.14"
-  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.6.14.tgz#49edfaea3090a9c71d8ae389780b90635aeda3e0"
-  integrity sha512-I/fO/pujHe6uurtCEVy6L0Vy6/p7AclbrUGu3Mw+oW0PTGPo0khnAWLyyDqSRyMyOwIin8y5HbBEiN3g4qOLuw==
+  resolved "https://codeload.github.com/leeoniya/uPlot/tar.gz/edea617403a1f1542368f5c0e0a16537d3ef5939"
 
 upper-case@^1.1.1:
   version "1.1.3"

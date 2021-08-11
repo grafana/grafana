@@ -25,10 +25,31 @@ const cursorDefaults: Cursor = {
     size: (u, seriesIdx) => u.series[seriesIdx].points.size * 2,
     /*@ts-ignore*/
     width: (u, seriesIdx, size) => size / 4,
+    stroke: (u, seriesIdx) => {
+      /*@ts-ignore*/
+      let s = u.series[seriesIdx].points._stroke;
+
+      if (typeof s === 'string') {
+        return s + '80';
+      }
+
+      console.log('TODO: interpolate stroke for gradients or thresholds');
+
+      return s;
+    },
     /*@ts-ignore*/
-    stroke: (u, seriesIdx) => u.series[seriesIdx].points.stroke(u, seriesIdx) + '80',
-    /*@ts-ignore*/
-    fill: (u, seriesIdx) => u.series[seriesIdx].points.stroke(u, seriesIdx),
+    fill: (u, seriesIdx) => {
+      /*@ts-ignore*/
+      let s = u.series[seriesIdx].points._stroke;
+
+      if (typeof s === 'string') {
+        return s;
+      }
+
+      console.log('TODO: interpolate fill for gradients or thresholds');
+
+      return s;
+    },
   },
   focus: {
     prox: 30,

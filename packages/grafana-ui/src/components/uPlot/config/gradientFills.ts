@@ -18,8 +18,8 @@ export function getOpacityGradientFn(
     const ctx = getCanvasContext();
     const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
 
-    gradient.addColorStop(0, tinycolor(color).setAlpha(opacity).toRgbString());
-    gradient.addColorStop(1, tinycolor(color).setAlpha(0).toRgbString());
+    gradient.addColorStop(0, colorManipulator.alpha(color, opacity));
+    gradient.addColorStop(1, colorManipulator.alpha(color, 0));
 
     return gradient;
   };
@@ -138,10 +138,6 @@ function scaleGradient(
   return grd;
 }
 
-/**
- * Experimental & quick and dirty test
- * Not being used
- */
 export function getScaleGradientFn(
   opacity: number,
   theme: GrafanaTheme2,
@@ -222,10 +218,10 @@ export function getScaleGradientFn(
         }
 
         const percent = Math.max(pos / canvasHeight, 0);
-        const realColor = tinycolor(theme.visualization.getColorByName(color)).setAlpha(opacity).toString();
+        const realColor = colorManipulator.alpha(theme.visualization.getColorByName(color), opacity);
         const colorStopPos = Math.min(percent, 1);
 
-        gradient.addColorStop(colorStopPos, realColor);
+        (gradient as CanvasGradient).addColorStop(colorStopPos, realColor);
       };
 
       const colors = colorMode.getColors(theme);
