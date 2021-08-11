@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	secrets "github.com/grafana/grafana/pkg/services/secrets/manager"
+
 	"github.com/grafana/grafana/pkg/services/secrets/types"
 
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -139,7 +141,7 @@ func TestSecretsService_DataKeys(t *testing.T) {
 	})
 }
 
-func setupSecretService(t *testing.T) SecretsService {
+func setupSecretService(t *testing.T) secrets.SecretsService {
 	t.Helper()
 	raw, err := ini.Load([]byte(`
 [security]
@@ -148,7 +150,7 @@ secret_key = SdlklWklckeLS
 	require.NoError(t, err)
 	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
 
-	s := SecretsService{
+	s := secrets.SecretsService{
 		Store:    &database.SecretsStoreImpl{SQLStore: sqlstore.InitTestDB(t)},
 		Enc:      &encryption.OSSEncryptionService{},
 		Settings: settings,

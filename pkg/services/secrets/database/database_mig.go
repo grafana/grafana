@@ -1,9 +1,10 @@
-package secrets
+package database
 
-import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
-// AddMigration adds migration
-func (s *SecretsService) AddMigration(mg *migrator.Migrator) {
+func (ss *SecretsStoreImpl) AddMigration(mg *migrator.Migrator) {
 	dataKeysV1 := migrator.Table{
 		Name: "data_keys",
 		Columns: []*migrator.Column{
