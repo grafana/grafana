@@ -9,6 +9,9 @@ import (
 	"testing"
 	"time"
 
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -22,8 +25,9 @@ import (
 
 func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		DisableAnonymous:     true,
+		EnableFeatureToggles:              []string{"ngalert"},
+		DisableAnonymous:                  true,
+		NGAlertAdminConfigIntervalSeconds: 2,
 	})
 
 	s := testinfra.SetUpDatabase(t, dir)
@@ -85,6 +89,64 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 			require.NoError(t, json.Unmarshal(b, &alertmanagers))
 
 			return len(alertmanagers.Data.Active) == 2
-		}, 80*time.Second, 10*time.Second)
+		}, 80*time.Second, 4*time.Second)
+	}
+
+	// Now, let's set an alert that should fire as quickly as possible.
+	{
+		// create the namespace we'll save our alerts to
+		_, err := createFolder(t, s, 0, "default")
+		require.NoError(t, err)
+		interval, err := model.ParseDuration("10s")
+		require.NoError(t, err)
+
+		rules := apimodels.PostableRuleGroupConfig{
+			Name:     "arulegroup",
+			Interval: interval,
+			Rules: []apimodels.PostableExtendedRuleNode{
+				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         interval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					// this rule does not explicitly set no data and error states
+					// therefore it should get the default values
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "AlwaysFiring",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: "-100",
+								Model: json.RawMessage(`{
+								"type": "math",
+								"expression": "2 + 3 > 1"
+								}`),
+							},
+						},
+					},
+				},
+			},
+		}
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err = enc.Encode(&rules)
+		require.NoError(t, err)
+
+		ruleURL := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+		// nolint
+		_ = postRequest(t, ruleURL, buf.String(), http.StatusAccepted)
+	}
+
+	//Eventually, our Alertmanagers should receiver the alert.
+	{
+		require.Eventually(t, func() bool {
+			return fakeAM1.AlertsCount() == 1 && fakeAM2.AlertsCount() == 1
+		}, 60*time.Second, 5*time.Second)
 	}
 }

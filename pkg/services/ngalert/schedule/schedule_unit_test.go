@@ -61,7 +61,6 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 		cancel()
 	})
 	go func() {
-		AdminConfigPollingInterval = 10 * time.Minute // Do not poll in unit tests.
 		err := sched.Run(ctx)
 		require.NoError(t, err)
 	}()
@@ -130,7 +129,6 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 		cancel()
 	})
 	go func() {
-		AdminConfigPollingInterval = 10 * time.Minute // Do not poll in unit tests.
 		err := sched.Run(ctx)
 		require.NoError(t, err)
 	}()
@@ -238,16 +236,17 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 	logger := log.New("ngalert schedule test")
 	nilMetrics := metrics.NewMetrics(nil)
 	schedCfg := SchedulerCfg{
-		C:                mockedClock,
-		BaseInterval:     time.Second,
-		MaxAttempts:      1,
-		Evaluator:        eval.Evaluator{Cfg: &setting.Cfg{ExpressionsEnabled: true}, Log: logger},
-		RuleStore:        rs,
-		InstanceStore:    is,
-		AdminConfigStore: acs,
-		Notifier:         &fakeNotifier{},
-		Logger:           logger,
-		Metrics:          metrics.NewMetrics(prometheus.NewRegistry()),
+		C:                       mockedClock,
+		BaseInterval:            time.Second,
+		MaxAttempts:             1,
+		Evaluator:               eval.Evaluator{Cfg: &setting.Cfg{ExpressionsEnabled: true}, Log: logger},
+		RuleStore:               rs,
+		InstanceStore:           is,
+		AdminConfigStore:        acs,
+		Notifier:                &fakeNotifier{},
+		Logger:                  logger,
+		Metrics:                 metrics.NewMetrics(prometheus.NewRegistry()),
+		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
 	st := state.NewManager(schedCfg.Logger, nilMetrics, rs, is)
 	return NewScheduler(schedCfg, nil, "http://localhost", st), mockedClock
