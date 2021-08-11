@@ -54,14 +54,6 @@ func (invoke handlerFuncInvoker) Invoke(params []interface{}) ([]reflect.Value, 
 	return nil, nil
 }
 
-// internalServerErrorInvoker is an inject.FastInvoker wrapper of func(rw http.ResponseWriter, err error).
-type internalServerErrorInvoker func(rw http.ResponseWriter, err error)
-
-func (invoke internalServerErrorInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
-	invoke(params[0].(http.ResponseWriter), params[1].(error))
-	return nil, nil
-}
-
 // validateAndWrapHandler makes sure a handler is a callable function, it panics if not.
 // When the handler is also potential to be any built-in inject.FastInvoker,
 // it wraps the handler automatically to have some performance gain.
@@ -76,8 +68,6 @@ func validateAndWrapHandler(h Handler) Handler {
 			return ContextInvoker(v)
 		case func(http.ResponseWriter, *http.Request):
 			return handlerFuncInvoker(v)
-		case func(http.ResponseWriter, error):
-			return internalServerErrorInvoker(v)
 		}
 	}
 	return h
@@ -109,9 +99,6 @@ func New() *Macaron {
 	m := &Macaron{Router: NewRouter()}
 	m.Router.m = m
 	m.NotFound(http.NotFound)
-	m.InternalServerError(func(rw http.ResponseWriter, err error) {
-		http.Error(rw, err.Error(), 500)
-	})
 	return m
 }
 
