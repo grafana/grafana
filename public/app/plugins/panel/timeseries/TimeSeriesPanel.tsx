@@ -9,11 +9,8 @@ import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { TimeSeriesOptions } from './types';
 import { prepareGraphableFields } from './utils';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
-// import { withLiveTimeRange } from './LiveRefreshComponent';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
-
-const LiveTimeSeries = TimeSeries; // withLiveTimeRange(TimeSeries);
 
 export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   data,
@@ -43,7 +40,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   return (
-    <LiveTimeSeries
+    <TimeSeries
       frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
@@ -114,6 +111,6 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
           </>
         );
       }}
-    </LiveTimeSeries>
+    </TimeSeries>
   );
 };

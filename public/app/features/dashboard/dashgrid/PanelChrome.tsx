@@ -21,7 +21,6 @@ import {
   EventFilterOptions,
   FieldConfigSource,
   getDefaultTimeRange,
-  LiveDashboardTick,
   LoadingState,
   PanelData,
   PanelPlugin,
@@ -37,6 +36,7 @@ import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/ove
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { liveTimer } from './liveTimer';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -139,35 +139,30 @@ export class PanelChrome extends Component<Props, State> {
         })
     );
 
-    // TODO? check if the panel has X=time?
-    // Note these events will only be broadcast if the dashboard is enabled
-    if (this.props.plugin) {
-      this.subs.add(
-        this.props.dashboard.events.getStream(LiveDashboardTick).subscribe({
-          next: (e) => {
-            const { data } = this.state;
-            const liveTime = e.payload;
-            if (data.timeRange) {
-              const delta = liveTime.to.valueOf() - data.timeRange.to.valueOf();
-              if (delta < 100) {
-                // 10hz
-                console.log('Skip tick render', this.props.panel.title, delta);
-                return;
-              }
-            }
-            this.setState({ liveTime });
-          },
-        })
-      );
-    }
+    // Listen for live timer events
+    liveTimer.listen(this);
   }
 
   componentWillUnmount() {
     this.subs.unsubscribe();
+    liveTimer.remove(this);
+  }
+
+  liveTimeChanged(liveTime: TimeRange) {
+    const { data } = this.state;
+    if (data.timeRange) {
+      const delta = liveTime.to.valueOf() - data.timeRange.to.valueOf();
+      if (delta < 100) {
+        // 10hz
+        console.log('Skip tick render', this.props.panel.title, delta);
+        return;
+      }
+    }
+    this.setState({ liveTime });
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { isInView, isEditing } = this.props;
+    const { isInView, isEditing, width } = this.props;
 
     if (prevProps.dashboard.graphTooltip !== this.props.dashboard.graphTooltip) {
       this.setState((s) => {
@@ -193,6 +188,11 @@ export class PanelChrome extends Component<Props, State> {
           this.onRefresh();
         }
       }
+    }
+
+    // The timer depends on panel width
+    if (width !== prevProps.width) {
+      liveTimer.updateInterval(this);
     }
   }
 

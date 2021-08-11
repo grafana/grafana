@@ -1,4 +1,4 @@
-import { DataFrame, TimeRange, AnnotationEvent } from '../types';
+import { AnnotationEvent, DataFrame } from '../types';
 import { BusEventWithPayload } from './types';
 
 /**
@@ -38,16 +38,4 @@ export class DataSelectEvent extends BusEventWithPayload<DataHoverPayload> {
 /** @alpha */
 export class AnnotationChangeEvent extends BusEventWithPayload<Partial<AnnotationEvent>> {
   static type = 'annotation-event';
-}
-
-/**
- * This event is fired when the time on a dashboard should update, even if the data has not
- * been refreshed.  This will help support panels that should "move left" while in live mode
- *
- * These events will fire depending on the curent time window and browser width
- *
- * @alpha
- */
-export class LiveDashboardTick extends BusEventWithPayload<TimeRange> {
-  static type = 'live-tick';
 }

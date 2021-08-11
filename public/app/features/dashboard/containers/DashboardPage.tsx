@@ -25,13 +25,12 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getTimeSrv } from '../services/TimeSrv';
 import { getKioskMode } from 'app/core/navigation/kiosk';
-import { dateMath, GrafanaTheme2, LiveDashboardTick, UrlQueryValue } from '@grafana/data';
+import { GrafanaTheme2, TimeRange, UrlQueryValue } from '@grafana/data';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import classnames from 'classnames';
-import { getLiveTimerInterval } from '../utils/liveTimer';
-import { perf } from 'app/features/live/perf';
+import { liveTimer } from '../dashgrid/liveTimer';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -92,7 +91,6 @@ export interface State {
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
-  liveTimerID = 0;
 
   getCleanState(): State {
     return {
@@ -113,7 +111,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     this.closeDashboard();
-    clearInterval(this.liveTimerID);
   }
 
   closeDashboard() {
@@ -137,7 +134,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       fixUrl: true,
     });
 
-    this.checkLiveTimer();
+    // small delay to start live updates
+    setTimeout(this.updateLiveTimer, 250);
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
@@ -151,7 +149,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     // if we just got dashboard update title
     if (prevProps.dashboard !== dashboard) {
       document.title = dashboard.title + ' - ' + Branding.AppTitle;
-      this.checkLiveTimer();
     }
 
     if (
@@ -169,7 +166,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
       if (urlParams?.from !== prevUrlParams?.from || urlParams?.to !== prevUrlParams?.to) {
         getTimeSrv().updateTimeRangeFromUrl();
-        this.checkLiveTimer();
+        this.updateLiveTimer();
       }
 
       if (!prevUrlParams?.refresh && urlParams?.refresh) {
@@ -204,38 +201,12 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
   }
 
-  checkLiveTimer = () => {
-    clearInterval(this.liveTimerID);
-    if (!this.props.dashboard?.liveNow) {
-      return;
+  updateLiveTimer = () => {
+    let tr: TimeRange | undefined = undefined;
+    if (this.props.dashboard?.liveNow) {
+      tr = getTimeSrv().timeRange();
     }
-
-    const tr = getTimeSrv().timeRange();
-    if (tr.raw.to === 'now') {
-      const interval = getLiveTimerInterval(tr, window.innerWidth);
-      if (interval > 0) {
-        console.log('Starting live timer', interval, tr);
-        this.liveTimerID = setInterval(this.liveTimerTick, interval) as any;
-      }
-    }
-  };
-
-  lastLiveTick = -1;
-  liveTimerTick = () => {
-    const { dashboard } = this.props;
-    // Only send tick events if system performace is OK
-    const elapsed = perf.last - this.lastLiveTick;
-    if (dashboard && (elapsed > 1000 || perf.ok)) {
-      const raw = getTimeSrv().timeRange().raw;
-      dashboard.events.publish(
-        new LiveDashboardTick({
-          raw,
-          from: dateMath.parse(raw.from, false)!,
-          to: dateMath.parse(raw.to, true)!,
-        })
-      );
-      this.lastLiveTick = perf.last;
-    }
+    liveTimer.setLiveTimeRange(tr);
   };
 
   static getDerivedStateFromProps(props: Props, state: State) {
