@@ -19,9 +19,7 @@ package macaron // import "gopkg.in/macaron.v1"
 
 import (
 	"context"
-	"log"
 	"net/http"
-	"os"
 	"reflect"
 	"strings"
 )
@@ -99,28 +97,17 @@ func validateAndWrapHandlers(handlers []Handler) []Handler {
 // Macaron represents the top level web application.
 // Injector methods can be invoked to map services on a global level.
 type Macaron struct {
-	Injector
-	befores  []BeforeHandler
 	handlers []Handler
 
-	hasURLPrefix bool
-	urlPrefix    string // For suburl support.
+	urlPrefix string // For suburl support.
 	*Router
-
-	logger *log.Logger
 }
 
 // New creates a bare bones Macaron instance.
 // Use this method if you want to have full control over the middleware that is used.
 func New() *Macaron {
-	m := &Macaron{
-		Injector: NewInjector(),
-		Router:   NewRouter(),
-		logger:   log.New(os.Stdout, "[Macaron] ", 0),
-	}
+	m := &Macaron{Router: NewRouter()}
 	m.Router.m = m
-	m.Map(m.logger)
-	m.Map(defaultReturnHandler())
 	m.NotFound(http.NotFound)
 	m.InternalServerError(func(rw http.ResponseWriter, err error) {
 		http.Error(rw, err.Error(), 500)
@@ -185,7 +172,7 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		Data:     make(map[string]interface{}),
 	}
 	req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))
-	c.SetParent(m)
+	c.Map(defaultReturnHandler())
 	c.Map(c)
 	c.MapTo(c.Resp, (*http.ResponseWriter)(nil))
 	c.Map(req)
@@ -197,19 +184,11 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 // Useful if you want to control your own HTTP server.
 // Be aware that none of middleware will run without registering any router.
 func (m *Macaron) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if m.hasURLPrefix {
-		req.URL.Path = strings.TrimPrefix(req.URL.Path, m.urlPrefix)
-	}
-	for _, h := range m.befores {
-		if h(rw, req) {
-			return
-		}
-	}
+	req.URL.Path = strings.TrimPrefix(req.URL.Path, m.urlPrefix)
 	m.Router.ServeHTTP(rw, req)
 }
 
 // SetURLPrefix sets URL prefix of router layer, so that it support suburl.
 func (m *Macaron) SetURLPrefix(prefix string) {
 	m.urlPrefix = prefix
-	m.hasURLPrefix = len(m.urlPrefix) > 0
 }
