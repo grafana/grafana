@@ -38,6 +38,7 @@ type DatasourceInfo struct {
 	HTTPClientOpts sdkhttpclient.Options
 	URL            string
 	HTTPMethod     string
+	TimeInterval   string
 }
 
 func init() {
@@ -84,11 +85,17 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			return nil, errors.New("no http method provided")
 		}
 
+		timeInterval, ok := jsonData["timeInterval"].(string)
+		if !ok {
+			return nil, errors.New("invalid time-interval provided")
+		}
+
 		mdl := DatasourceInfo{
 			ID:             settings.ID,
 			URL:            settings.URL,
 			HTTPClientOpts: httpCliOpts,
 			HTTPMethod:     httpMethod,
+			TimeInterval:   timeInterval,
 		}
 		return mdl, nil
 	}
@@ -123,7 +130,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		Responses: backend.Responses{},
 	}
 
-	queries, err := s.parseQuery(req.Queries)
+	queries, err := s.parseQuery(req.Queries, dsInfo)
 	if err != nil {
 		return &result, err
 	}
@@ -217,7 +224,7 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 	return string(result)
 }
 
-func (s *Service) parseQuery(queries []backend.DataQuery) (
+func (s *Service) parseQuery(queries []backend.DataQuery, dsInfo *DatasourceInfo) (
 	[]*PrometheusQuery, error) {
 	var intervalMode string
 	var adjustedInterval time.Duration
@@ -239,7 +246,7 @@ func (s *Service) parseQuery(queries []backend.DataQuery) (
 		end := queryModel.TimeRange.To
 		queryInterval := jsonModel.Get("interval").MustString("")
 
-		dsInterval, err := tsdb.GetIntervalFrom(queryInterval, "", 0, 15*time.Second)
+		foundInterval, err := tsdb.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, 0, 15*time.Second)
 		hasQueryInterval := queryInterval != ""
 		// Only use stepMode if we have interval in query, otherwise use "min"
 		if hasQueryInterval {
@@ -253,7 +260,7 @@ func (s *Service) parseQuery(queries []backend.DataQuery) (
 			return nil, err
 		}
 
-		calculatedInterval, err := s.intervalCalculator.Calculate(queries[0].TimeRange, dsInterval, tsdb.IntervalMode(intervalMode))
+		calculatedInterval, err := s.intervalCalculator.Calculate(queries[0].TimeRange, foundInterval, tsdb.IntervalMode(intervalMode))
 		if err != nil {
 			return nil, err
 		}
