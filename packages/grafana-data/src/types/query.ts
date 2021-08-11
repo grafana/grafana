@@ -1,3 +1,5 @@
+import { ModelVersion } from './dashboard';
+
 /**
  * Attached to query results (not persisted)
  *
@@ -7,10 +9,18 @@ export enum DataTopic {
   Annotations = 'annotations',
 }
 
-/** This will identify the datasource */
+/**
+ * @public
+ */
 export interface DatasourceRef {
+  /** The plugin type-id */
   type?: string;
+
+  /** Specific datasource instance */
   uid?: string;
+
+  /** The schema version for query target JSON  */
+  modelVersion?: ModelVersion;
 }
 
 /**
