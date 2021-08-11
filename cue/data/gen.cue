@@ -22,7 +22,7 @@ Family: scuemata.#Family & {
                 // Theme of dashboard.
                 style: *"light" | "dark"
                 // Timezone of dashboard,
-                timezone?: *"browser" | "utc"
+                timezone?: *"browser" | "utc" | ""
                 // Whether a dashboard is editable or not.
                 editable: bool | *true
                 // 0 for no shared crosshair or tooltip (default).
@@ -66,13 +66,61 @@ Family: scuemata.#Family & {
                     showIn:   number | *0
                 }]
                 // Auto-refresh interval.
-                refresh?: string
+                refresh?: string | false
                 // Version of the JSON schema, incremented each time a Grafana update brings
                 // changes to said schema.
-                schemaVersion: number | *25
+                // FIXME this is the old schema numbering system, and will be replaced by scuemata
+                schemaVersion: number | *30
                 // Version of the dashboard, incremented each time the dashboard is updated.
                 version?: number
                 panels?: [...#Panel]
+
+                // TODO docs
+                #FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(targetType="enum")
+
+                // TODO docs
+                #FieldColorSeriesByMode: "min" | "max" | "last" @cuetsy(targetType="type")
+
+                // TODO docs
+                #FieldColor: {
+                    // The main color scheme mode
+                    mode: #FieldColorModeId | string
+                    // Stores the fixed color value if mode is fixed
+                    fixedColor?: string
+                    // Some visualizations need to know how to assign a series color from by value color schemes
+                    seriesBy?: #FieldColorSeriesByMode
+                } @cuetsy(targetType="interface")
+
+                // TODO docs
+                #Threshold: {
+                    // TODO docs
+                    // FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
+                    value?: number
+                    // TODO docs
+                    color: string
+                    // TODO docs
+                    // TODO are the values here enumerable into a disjunction?
+                    // Some seem to be listed in typescript comment
+                    state?: string
+                } @cuetsy(targetType="interface")
+
+                #ThresholdsMode: "absolute" | "percentage" @cuetsy(targetType="enum")
+
+                #ThresholdsConfig: {
+                    mode: #ThresholdsMode
+
+                    // Must be sorted by 'value', first value is always -Infinity
+                    steps: [...#Threshold]
+                } @cuetsy(targetType="interface")
+
+                // Schema for panel targets is specified by datasource
+                // plugins. We use a placeholder definition, which the Go
+                // schema loader either left open/as-is with the Base
+                // variant of the Dashboard and Panel families, or filled
+                // with types derived from plugins in the Instance variant.
+                // When working directly from CUE, importers can extend this
+                // type directly to achieve the same effect.
+                #Target: {...}
 
                 // Dashboard panels. Panels are canonically defined inline
                 // because they share a version timeline with the dashboard
@@ -83,6 +131,15 @@ Family: scuemata.#Family & {
                     // The panel plugin type id. 
                     type: !=""
 
+                    // TODO docs
+                    id?: number
+
+                    // FIXME this almost certainly has to be changed in favor of scuemata versions
+                    pluginVersion?: string
+
+                    // TODO docs
+                    tags?: [...string]
+
                     // Internal - the exact major and minor versions of the panel plugin
                     // schema. Hidden and therefore not a part of the data model, but
                     // expected to be filled with panel plugin schema versions so that it's
@@ -92,6 +149,9 @@ Family: scuemata.#Family & {
                     // The major and minor versions of the panel plugin for this schema.
                     // TODO 2-tuple list instead of struct?
                     panelSchema?: { maj: number, min: number }
+
+                    // TODO docs
+                    targets?: [...#Target]
 
                     // Panel title.
                     title?: string
@@ -115,20 +175,33 @@ Family: scuemata.#Family & {
                         static?: bool
                     }
                     // Panel links.
-                    // links?: [..._panelLink]
+                    // FIXME this is temporarily specified as a closed list so
+                    // that validation will pass when no links are present, but
+                    // to force a failure as soon as it's checked against there
+                    // being anything in the list so it can be fixed in
+                    // accordance with that object
+                    links?: []
+
                     // Name of template variable to repeat for.
                     repeat?: string
                     // Direction to repeat in if 'repeat' is set.
                     // "h" for horizontal, "v" for vertical.
                     repeatDirection: *"h" | "v"
-                    // Schema for panel targets is specified by datasource
-                    // plugins. We use a placeholder definition, which the Go
-                    // schema loader either left open/as-is with the Base
-                    // variant of the Dashboard and Panel families, or filled
-                    // with types derived from plugins in the Instance variant.
-                    // When working directly from CUE, importers can extend this
-                    // type directly to achieve the same effect.
-                    targets?: [...{...}]
+
+                    // TODO docs
+                    maxDataPoints?: number
+
+                    // TODO docs
+                    // TODO tighter constraint
+                    interval?: string
+
+                    // TODO docs
+                    // TODO tighter constraint
+                    timeFrom?: string
+
+                    // TODO docs
+                    // TODO tighter constraint
+                    timeShift?: string
 
                     // The values depend on panel type
                     options: {...}
@@ -166,17 +239,25 @@ Family: scuemata.#Family & {
                             min?: number
                             max?: number
 
-                            //   // Convert input values into a display string
-                            //   mappings?: ValueMapping[];
+                            // Convert input values into a display string
+                            //
+                            // TODO this one corresponds to a complex type with
+                            // generics on the typescript side. Ouch. Will
+                            // either need special care, or we'll just need to
+                            // accept a very loosely specified schema. It's very
+                            // unlikely we'll be able to translate cue to
+                            // typescript generics in the general case, though
+                            // this particular one *may* be able to work.
+                            mappings?: [...{...}]
 
-                            //   // Map numeric values to states
-                            //   thresholds?: ThresholdsConfig;
+                            // Map numeric values to states
+                            thresholds?: #ThresholdsConfig
 
                             //   // Map values to a display color
-                            //   color?: FieldColor;
+                            color?: #FieldColor
 
                             //   // Used when reducing field values
-                            //   nullValueMode?: NullValueMode;
+                            //   nullValueMode?: NullValueMode
 
                             //   // The behavior when clicking on a result
                             links?: [...]
@@ -184,10 +265,17 @@ Family: scuemata.#Family & {
                             // Alternative to empty string
                             noValue?: string
 
+                            // TODO conundrum: marking this struct as open would
+                            // - i think - preclude closed validation of
+                            // plugin-defined config bits. But, marking it
+                            // closed makes it impossible to use just this
+                            // schema (the "base" variant) to validate the base
+                            // components of a dashboard.
+                            //
                             // Can always exist. Valid fields within this are
                             // defined by the panel plugin - that's the
                             // PanelFieldConfig that comes from the plugin.
-                            custom?: {}
+                            custom?: {...}
                         }
                         overrides: [...{
                             matcher: {

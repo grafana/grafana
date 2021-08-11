@@ -8,16 +8,18 @@ weight = 50
 
 # Permissions
 
-> Refer to [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise for managing access with fine-grained permissions. 
+> Refer to [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise for managing access with fine-grained permissions.
 
 What you can do in Grafana is defined by the _permissions_ associated with your user account.
 
 There are three types of permissions:
+
 - Permissions granted as a Grafana Server Admin
 - Permissions associated with your role in an organization
 - Permissions granted to a specific folder or dashboard
 
 You can be granted permissions based on:
+
 - Grafana Server Admin status.
 - Organization role (Admin, Editor, or Viewer).
 - Folder or dashboard permissions assigned to your team (Admin, Editor, or Viewer).

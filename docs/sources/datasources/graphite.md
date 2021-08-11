@@ -18,22 +18,22 @@ Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instruct
 
 To access Graphite settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Graphite data source.
 
-Name                  | Description
---------------------- | -------------
-`Name`                | The data source name. This is how you refer to the data source in panels and queries.
-`Default`             | Default data source means that it will be pre-selected for new panels.
-`URL`                 | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.
-`Access`              | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
-`Auth`                | Refer to [Authentication]({{< relref "../auth/_index.md" >}}) for more information.
-`Basic Auth`          | Enable basic authentication to the data source.
-`User`                | User name for basic authentication.
-`Password`            | Password for basic authentication.
-`Custom HTTP Headers` | Click **Add header** to add a custom HTTP header.
-`Header`              | Enter the custom header name.
-`Value`               |  Enter the custom header value.
-`Graphite details`    |
-`Version`             | Select your version of Graphite.
-`Type`                | Select your type of Graphite.
+| Name                  | Description                                                                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`                | The data source name. This is how you refer to the data source in panels and queries.                                                 |
+| `Default`             | Default data source means that it will be pre-selected for new panels.                                                                |
+| `URL`                 | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.                                                         |
+| `Access`              | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
+| `Auth`                | Refer to [Authentication]({{< relref "../auth/_index.md" >}}) for more information.                                                   |
+| `Basic Auth`          | Enable basic authentication to the data source.                                                                                       |
+| `User`                | User name for basic authentication.                                                                                                   |
+| `Password`            | Password for basic authentication.                                                                                                    |
+| `Custom HTTP Headers` | Click **Add header** to add a custom HTTP header.                                                                                     |
+| `Header`              | Enter the custom header name.                                                                                                         |
+| `Value`               | Enter the custom header value.                                                                                                        |
+| `Graphite details`    |
+| `Version`             | Select your version of Graphite.                                                                                                      |
+| `Type`                | Select your type of Graphite.                                                                                                         |
 
 Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else is stated.
 
@@ -62,6 +62,7 @@ Click **Select metric** to start navigating the metric space. Once you start, yo
 
 Click the plus icon next to **Function** to add a function. You can search for the function or select it from the menu. Once
 a function is selected, it will be added and your focus will be in the text box of the first parameter.
+
 - To edit or change a parameter, click on it and it will turn into a text box.
 - To delete a function, click the function name followed by the x icon.
 
@@ -78,13 +79,13 @@ If you want consistent ordering, use sortByName. This can be particularly annoyi
 
 ### Nested queries
 
-You can reference queries by the row “letter” that they’re on (similar to  Microsoft Excel). If you add a second query to a graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.
+You can reference queries by the row “letter” that they’re on (similar to Microsoft Excel). If you add a second query to a graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.
 
 ### Avoiding many queries by using wildcards
 
 Occasionally one would like to see multiple time series plotted on the same graph. For example we might want to see how the CPU is being utilized on a machine. You might
 initially create the graph by adding a query for each time series, such as `cpu.percent.user.g`,
-`cpu.percent.system.g`, and so on.  This results in *n* queries made to the data source, which is inefficient.
+`cpu.percent.system.g`, and so on. This results in _n_ queries made to the data source, which is inefficient.
 
 To be more efficient one can use wildcards in your search, returning all the time series in one query. For example, `cpu.percent.*.g`.
 
@@ -114,7 +115,7 @@ When exploring data, previously-selected tags are used to filter the remaining r
 The Grafana query builder does this for you automatically when you select a tag.
 
 > **Tip:** The regular expression search can be quite slow on high-cardinality tags, so try to use other tags to reduce the scope first.
-Starting off with a particular name/namespace can help reduce the results.
+> Starting off with a particular name/namespace can help reduce the results.
 
 ## Template variables
 
@@ -126,13 +127,13 @@ For more information, refer to [Variables and templates]({{< relref "../variable
 
 Graphite 1.1 introduced tags and Grafana added support for Graphite queries with tags in version 5.0. To create a variable using tag values, use the Grafana functions `tags` and `tag_values`.
 
-Query                                                       | Description
------------------------------------------------------------ | -------------
-`tags()`                                                    | Returns all tags.
-`tags(server=~backend\*)`                                   | Returns only tags that occur in series matching the filter expression.
-`tag_values(server)`                                        | Return tag values for the specified tag.
-`tag_values(server, server=~backend\*)`                     | Returns filtered tag values that occur for the specified tag in series matching those expressions.
-`tag_values(server, server=~backend\*, app=~${apps:regex})` | Multiple filter expressions and expressions can contain other variables.
+| Query                                                       | Description                                                                                        |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `tags()`                                                    | Returns all tags.                                                                                  |
+| `tags(server=~backend\*)`                                   | Returns only tags that occur in series matching the filter expression.                             |
+| `tag_values(server)`                                        | Return tag values for the specified tag.                                                           |
+| `tag_values(server, server=~backend\*)`                     | Returns filtered tag values that occur for the specified tag in series matching those expressions. |
+| `tag_values(server, server=~backend\*, app=~${apps:regex})` | Multiple filter expressions and expressions can contain other variables.                           |
 
 For more details, see the [Graphite docs on the autocomplete API for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
 
@@ -149,20 +150,21 @@ use expand function (`expand(*.servers.*)`).
 The expanded query returns the full names of matching metrics. In combination with regex, it can extract any part of the metric name. By contrast, a non-expanded query only returns the last part of the metric name. It does not allow you to extract other parts of metric names.
 
 Here are some example metrics:
+
 - `prod.servers.001.cpu`
 - `prod.servers.002.cpu`
 - `test.servers.001.cpu`
 
 The following examples show how expanded and non-expanded queries can be used to fetch specific parts of the metrics name.
 
-| non-expanded query | results | expanded query | expanded results |
-|--------------|---------|----------------|------------------|
-| `*` | prod, test | `expand(*)` | prod, test
-| `*.servers` | servers | `expand(*.servers)` | prod.servers, test.servers |
-| `test.servers` | servers | `expand(test.servers)` | test.servers |
-| `*.servers.*` | 001,002 | `expand(*.servers.*)` | prod.servers.001, prod.servers.002, test.servers.001 |
-| `test.servers.*` | 001 | `expand(test.servers.*)` | test.servers.001 |
-| `*.servers.*.cpu` | cpu | `expand(*.servers.*.cpu)` | prod.servers.001.cpu, prod.servers.002.cpu, test.servers.001.cpu |
+| non-expanded query | results    | expanded query            | expanded results                                                 |
+| ------------------ | ---------- | ------------------------- | ---------------------------------------------------------------- |
+| `*`                | prod, test | `expand(*)`               | prod, test                                                       |
+| `*.servers`        | servers    | `expand(*.servers)`       | prod.servers, test.servers                                       |
+| `test.servers`     | servers    | `expand(test.servers)`    | test.servers                                                     |
+| `*.servers.*`      | 001,002    | `expand(*.servers.*)`     | prod.servers.001, prod.servers.002, test.servers.001             |
+| `test.servers.*`   | 001        | `expand(test.servers.*)`  | test.servers.001                                                 |
+| `*.servers.*.cpu`  | cpu        | `expand(*.servers.*.cpu)` | prod.servers.001.cpu, prod.servers.002.cpu, test.servers.001.cpu |
 
 As you can see from the results, the non-expanded query is the same as an expanded query with a regex matching the last part of the name.
 
@@ -170,6 +172,7 @@ You can also create nested variables that use other variables in their definitio
 `apps.$app.servers.*` uses the variable `$app` in its query definition.
 
 #### Using `__searchFilter` to filter query variable results
+
 > Available from Grafana 6.5 and above
 
 Using `__searchFilter` in the query field will filter the query result based on what the user types in the dropdown select box.
@@ -178,11 +181,13 @@ When nothing has been entered by the user the default value for `__searchFilter`
 The example below shows how to use `__searchFilter` as part of the query field to enable searching for `server` while the user types in the dropdown select box.
 
 Query
+
 ```bash
 apps.$app.servers.$__searchFilter
 ```
 
 TagValues
+
 ```bash
 tag_values(server, server=~${__searchFilter:regex})
 ```
@@ -194,11 +199,11 @@ You can use a variable in a metric node path or as a parameter to a function.
 
 There are two syntaxes:
 
-- `$<varname>`  Example: apps.frontend.$server.requests.count
+- `$<varname>` Example: apps.frontend.$server.requests.count
 - `${varname}` Example: apps.frontend.${server}.requests.count
 
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. Use
-the second syntax in expressions like  `my.server${serverNumber}.count`.
+the second syntax in expressions like `my.server${serverNumber}.count`.
 
 Example:
 [Graphite Templated Dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)
@@ -242,7 +247,7 @@ datasources:
     access: proxy
     url: http://localhost:8080
     jsonData:
-      graphiteVersion: "1.1"
+      graphiteVersion: '1.1'
 ```
 
 ## Integration with Loki

@@ -10,18 +10,18 @@ Grafana provides many ways to authenticate users. Some authentication integratio
 
 Here is a table showing all supported authentication providers and the features available for them. [Team sync]({{< relref "../enterprise/team-sync.md" >}}) and [active sync]({{< relref "../enterprise/enhanced_ldap.md#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
 
-Provider | Support | Role mapping | Team sync<br> *(Enterprise only)* | Active sync<br> *(Enterprise only)*
--------- | :-----: | :----------: | :-------: | :---------:
-[Auth Proxy]({{< relref "auth-proxy.md" >}})       | v2.1+ | - | v6.3+ | -
-[Azure AD OAuth]({{< relref "azuread.md" >}})      | v6.7+ | v6.7+ | v6.7+ | -
-[Generic OAuth]({{< relref "generic-oauth.md" >}}) | v4.0+ | v6.5+ | - | -
-[GitHub OAuth]({{< relref "github.md" >}})         | v2.0+ | - | v6.3+ | -
-[GitLab OAuth]({{< relref "gitlab.md" >}})         | v5.3+ | - | v6.4+ | -
-[Google OAuth]({{< relref "google.md" >}})         | v2.0+ | - | - | -
-[JWT]({{< relref "jwt.md" >}})                     | v8.0+ | - | - | -
-[LDAP]({{< relref "ldap.md" >}})                   | v2.1+ | v2.1+ | v5.3+ | v6.3+
-[Okta OAuth]({{< relref "okta.md" >}})             | v7.0+ | v7.0+ | v7.0+ | -
-[SAML]({{< relref "../enterprise/saml.md" >}}) (Enterprise only)    | v6.3+ | v7.0+ | v7.0+ | -
+| Provider                                                         | Support | Role mapping | Team sync<br> _(Enterprise only)_ | Active sync<br> _(Enterprise only)_ |
+| ---------------------------------------------------------------- | :-----: | :----------: | :-------------------------------: | :---------------------------------: |
+| [Auth Proxy]({{< relref "auth-proxy.md" >}})                     |  v2.1+  |      -       |               v6.3+               |                  -                  |
+| [Azure AD OAuth]({{< relref "azuread.md" >}})                    |  v6.7+  |    v6.7+     |               v6.7+               |                  -                  |
+| [Generic OAuth]({{< relref "generic-oauth.md" >}})               |  v4.0+  |    v6.5+     |                 -                 |                  -                  |
+| [GitHub OAuth]({{< relref "github.md" >}})                       |  v2.0+  |      -       |               v6.3+               |                  -                  |
+| [GitLab OAuth]({{< relref "gitlab.md" >}})                       |  v5.3+  |      -       |               v6.4+               |                  -                  |
+| [Google OAuth]({{< relref "google.md" >}})                       |  v2.0+  |      -       |                 -                 |                  -                  |
+| [JWT]({{< relref "jwt.md" >}})                                   |  v8.0+  |      -       |                 -                 |                  -                  |
+| [LDAP]({{< relref "ldap.md" >}})                                 |  v2.1+  |    v2.1+     |               v5.3+               |                v6.3+                |
+| [Okta OAuth]({{< relref "okta.md" >}})                           |  v7.0+  |    v7.0+     |               v7.0+               |                  -                  |
+| [SAML]({{< relref "../enterprise/saml.md" >}}) (Enterprise only) |  v6.3+  |    v7.0+     |               v7.0+               |                  -                  |
 
 ## Grafana Auth
 
@@ -38,7 +38,7 @@ These short-lived tokens are rotated each `token_rotation_interval_minutes` for 
 
 An active authenticated user that gets it token rotated will extend the `login_maximum_inactive_lifetime_duration` time from "now" that Grafana will remember the user.
 This means that a user can close its browser and come back before `now + login_maximum_inactive_lifetime_duration` and still being authenticated.
- This is true as long as the time since user login is less than `login_maximum_lifetime_duration`.
+This is true as long as the time since user login is less than `login_maximum_lifetime_duration`.
 
 #### Remote logout
 
@@ -138,4 +138,3 @@ URL to redirect the user to after signing out from Grafana. This can for example
 [auth]
 signout_redirect_url =
 ```
-
