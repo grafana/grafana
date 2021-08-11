@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/encryption"
+	"github.com/grafana/grafana/pkg/services/secrets/types"
 	"gopkg.in/ini.v1"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -590,10 +592,40 @@ secret_key = SdlklWklckeLS
 	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
 
 	s := secrets.SecretsService{
-		Store:    nil,
+		Store:    &SecretsServiceMock{store: make(map[string]*types.DataKey, 0)},
 		Enc:      &encryption.OSSEncryptionService{},
 		Settings: settings,
 	}
 	require.NoError(t, s.Init())
 	return s
+}
+
+type SecretsServiceMock struct {
+	store map[string]*types.DataKey
+}
+
+func (ss *SecretsServiceMock) GetDataKey(ctx context.Context, name string) (*types.DataKey, error) {
+	key, ok := ss.store[name]
+	if !ok {
+		return nil, types.ErrDataKeyNotFound
+	}
+	return key, nil
+}
+
+func (ss *SecretsServiceMock) GetAllDataKeys(ctx context.Context) ([]*types.DataKey, error) {
+	result := make([]*types.DataKey, 0)
+	for _, key := range ss.store {
+		result = append(result, key)
+	}
+	return result, nil
+}
+
+func (ss *SecretsServiceMock) CreateDataKey(ctx context.Context, dataKey types.DataKey) error {
+	ss.store[dataKey.Name] = &dataKey
+	return nil
+}
+
+func (ss *SecretsServiceMock) DeleteDataKey(ctx context.Context, name string) error {
+	delete(ss.store, name)
+	return nil
 }
