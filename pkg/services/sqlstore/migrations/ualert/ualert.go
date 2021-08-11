@@ -23,6 +23,8 @@ var migTitle = "move dashboard alerts to unified alerting"
 
 var rmMigTitle = "remove unified alerting data"
 
+const clearMigrationEntryTitle = "clear migration entry %q"
+
 type MigrationError struct {
 	AlertId int64
 	Err     error
@@ -49,7 +51,10 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 	case ngEnabled && !migrationRun:
 		// Remove the migration entry that removes all unified alerting data. This is so when the feature
 		// flag is removed in future the "remove unified alerting data" migration will be run again.
-		err = mg.ClearMigrationEntry(rmMigTitle)
+		// Add migration for running in the same transaction.
+		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, rmMigTitle), &clearMigrationEntry{
+			migrationID: rmMigTitle,
+		})
 		if err != nil {
 			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
 		}
@@ -61,7 +66,10 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 	case !ngEnabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
-		err = mg.ClearMigrationEntry(migTitle)
+		// Add migration for running in the same transaction.
+		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, migTitle), &clearMigrationEntry{
+			migrationID: migTitle,
+		})
 		if err != nil {
 			mg.Logger.Error("alert migration error: could not clear dashboard alert migration", "error", err)
 		}
@@ -88,28 +96,48 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 	switch {
 	case ngEnabled && !migrationRun:
 		// removes all unified alerting data
-		mg.AddMigration(cloneRmMigTitle, &rmMigration{})
+		mg.AddMigration(cloneRmMigTitle, &rmMigrationWithoutLogging{})
 
-		// Remove the migration entry that removes all unified alerting data. This is so when the feature
-		// flag is removed in future the "remove unified alerting data" migration will be run again.
-		err = mg.ClearMigrationEntry(cloneRmMigTitle)
-		if err != nil {
-			mg.Logger.Error("alert migration error: could not clear clone alert migration for removing data", "error", err)
-		}
 		mg.AddMigration(cloneMigTitle, &migration{
 			seenChannelUIDs:        make(map[string]struct{}),
 			migratedChannelsPerOrg: make(map[int64]map[*notificationChannel]struct{}),
 			portedChannelGroups:    make(map[string]string),
 		})
+
 	case !ngEnabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
-		err = mg.ClearMigrationEntry(cloneMigTitle)
+		// Add migration for running in the same transaction.
+		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, cloneMigTitle), &clearMigrationEntry{
+			migrationID: cloneMigTitle,
+		})
 		if err != nil {
 			mg.Logger.Error("alert migration error: could not clear clone dashboard alert migration", "error", err)
 		}
-		mg.AddMigration(cloneRmMigTitle, &rmMigration{})
+		mg.AddMigration(cloneRmMigTitle, &rmMigrationWithoutLogging{})
 	}
+}
+
+type clearMigrationEntry struct {
+	migrator.MigrationBase
+
+	migrationID string
+}
+
+func (m *clearMigrationEntry) SQL(dialect migrator.Dialect) string {
+	return "clear migration entry code migration"
+}
+
+func (m *clearMigrationEntry) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	_, err := sess.SQL(`DELETE from migration_log where migration_id = ?`, m.migrationID).Query()
+	if err != nil {
+		return fmt.Errorf("failed to clear migration entry %v: %w", m.migrationID, err)
+	}
+	return nil
+}
+
+func (m *clearMigrationEntry) SkipMigrationLog() bool {
+	return true
 }
 
 type migration struct {
@@ -390,4 +418,10 @@ func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	}
 
 	return nil
+}
+
+type rmMigrationWithoutLogging = rmMigration
+
+func (m *rmMigrationWithoutLogging) SkipMigrationLog() bool {
+	return true
 }

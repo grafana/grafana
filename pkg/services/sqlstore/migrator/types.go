@@ -19,6 +19,7 @@ type Migration interface {
 	Id() string
 	SetId(string)
 	GetCondition() MigrationCondition
+	SkipMigrationLog() bool
 }
 
 type CodeMigration interface {
