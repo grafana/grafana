@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import { DataFrame, DataTransformerInfo, Field, FieldType, NullValueMode, Vector } from '../../types';
+import { DataFrame, Field, FieldType, NullValueMode, SynchronousDataTransformerInfo, Vector } from '../../types';
 import { DataTransformerID } from './ids';
 import { doStandardCalcs, fieldReducers, ReducerID } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
@@ -12,7 +12,6 @@ import { defaults } from 'lodash';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
 import { ensureColumnsTransformer } from './ensureColumns';
 import { getFieldDisplayName } from '../../field';
-import { noopTransformer } from './noop';
 import { parseEquation } from '../../utils/math';
 import { FunctionalVector } from '../../vector/FunctionalVector';
 
@@ -74,7 +73,7 @@ export interface CalculateFieldTransformerOptions {
 
 type ValuesCreator = (data: DataFrame) => Vector;
 
-export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransformerOptions> = {
+export const calculateFieldTransformer: SynchronousDataTransformerInfo<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,
   name: 'Add field from calculation',
   description: 'Use the row values to calculate a new field',
@@ -84,67 +83,65 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
-  operator: (options) => (outerSource) => {
-    const operator =
-      options && options.timeSeries !== false ? ensureColumnsTransformer.operator(null) : noopTransformer.operator({});
 
-    return outerSource.pipe(
-      operator,
-      map((data) => {
-        let creator: ValuesCreator | undefined = undefined;
+  operator: (options) => (source) => source.pipe(map((data) => calculateFieldTransformer.transform(data, options))),
 
-        switch (options.mode) {
-          case CalculateFieldMode.BinaryOperation:
-            creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions), data);
-            break;
+  transform: (data: DataFrame[], options: CalculateFieldTransformerOptions) => {
+    if (options.timeSeries !== false && data.length > 1) {
+      data = ensureColumnsTransformer.transform(data, {});
+    }
+    let creator: ValuesCreator | undefined = undefined;
 
-          case CalculateFieldMode.MathField:
-            creator = getMathCreator(defaults(options.math, defaultMathOptions), data);
-            break;
+    switch (options.mode) {
+      case CalculateFieldMode.BinaryOperation:
+        creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions), data);
+        break;
 
-          case CalculateFieldMode.ReduceRow:
-          default:
-            creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
+      case CalculateFieldMode.MathField:
+        creator = getMathCreator(defaults(options.math, defaultMathOptions), data);
+        break;
+
+      case CalculateFieldMode.ReduceRow:
+      default:
+        creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
+    }
+
+    // Nothing configured
+    if (!creator) {
+      return data;
+    }
+
+    return data.map((frame) => {
+      // delegate field creation to the specific function
+      const values = creator!(frame);
+      if (!values) {
+        return frame;
+      }
+
+      const field = {
+        name: getNameFromOptions(options),
+        type: FieldType.number,
+        config: {},
+        values,
+      };
+      let fields: Field[] = [];
+
+      // Replace all fields with the single field
+      if (options.replaceFields) {
+        const { timeField } = getTimeField(frame);
+        if (timeField && options.timeSeries !== false) {
+          fields = [timeField, field];
+        } else {
+          fields = [field];
         }
-
-        // Nothing configured
-        if (!creator) {
-          return data;
-        }
-
-        return data.map((frame) => {
-          // delegate field creation to the specific function
-          const values = creator!(frame);
-          if (!values) {
-            return frame;
-          }
-
-          const field = {
-            name: getNameFromOptions(options),
-            type: FieldType.number,
-            config: {},
-            values,
-          };
-          let fields: Field[] = [];
-
-          // Replace all fields with the single field
-          if (options.replaceFields) {
-            const { timeField } = getTimeField(frame);
-            if (timeField && options.timeSeries !== false) {
-              fields = [timeField, field];
-            } else {
-              fields = [field];
-            }
-          } else {
-            fields = [...frame.fields, field];
-          }
-          return {
-            ...frame,
-            fields,
-          };
-        });
-      })
-    );
+      } else {
+        fields = [...frame.fields, field];
+      }
+      return {
+        ...frame,
+        fields,
+      };
+    });
   },
 };
 
