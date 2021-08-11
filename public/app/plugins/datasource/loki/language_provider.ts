@@ -424,7 +424,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     const res = await this.request(url, timeRange);
     if (Array.isArray(res)) {
-      this.labelKeys = res.slice().sort();
+      const labels = res
+        .slice()
+        .sort()
+        .filter((label) => label !== '__name__');
+      this.labelKeys = labels;
     }
 
     return [];
