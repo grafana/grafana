@@ -1,3 +1,8 @@
+/**
+ * Attached to query results (not persisted)
+ *
+ * @public
+ */
 export enum DataTopic {
   Annotations = 'annotations',
 }
@@ -12,6 +17,8 @@ export interface DatasourceRef {
  * These are the common properties available to all queries in all datasources
  * Specific implementations will *extend* this interface adding the required properties
  * for the given context
+ *
+ * @public
  */
 export interface DataQuery {
   /**

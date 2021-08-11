@@ -1,30 +1,33 @@
 import { FieldConfigSource } from './fieldOverrides';
 import { DataQuery, DatasourceRef } from './query';
 
-/** The scuemata version for the panel plugin */
-export type ModelVersion = [number, number];
-
 export enum DashboardCursorSync {
   Off,
   Crosshair,
   Tooltip,
 }
 
-export interface PanelModel<TOptions = any> {
+/**
+ * @public
+ */
+export interface PanelModel<TOptions = any, TCustomFieldConfig extends object = any> {
   /** ID of the panel within the current dashboard */
   id: number;
+
+  /** Panel title */
+  title?: string;
+
+  /** Description */
+  description?: string;
 
   /** Panel options */
   options: TOptions;
 
   /** Field options configuration */
-  fieldConfig: FieldConfigSource;
+  fieldConfig: FieldConfigSource<TCustomFieldConfig>;
 
   /** Version of the panel plugin */
   pluginVersion?: string;
-
-  /** The model version for the plugin */
-  pluginModel?: ModelVersion;
 
   /** The datasource used in all targets */
   datasource?: DatasourceRef | null;
@@ -34,7 +37,4 @@ export interface PanelModel<TOptions = any> {
 
   /** alerting v1 object */
   alert?: any;
-
-  // // runtime?
-  // scopedVars?: ScopedVars;
 }

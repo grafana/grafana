@@ -207,7 +207,7 @@ abstract class DataSourceApi<
     this.meta = {} as DataSourcePluginMeta;
     this.uid = instanceSettings.uid;
     if (!this.uid) {
-      this.uid = this.name;
+      this.uid = this.name; // Internal datasources do not have a UID (-- Grafana --)
     }
   }
 

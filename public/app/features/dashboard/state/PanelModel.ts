@@ -146,7 +146,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   panels?: any;
   declare targets: DataQuery[];
   transformations?: DataTransformerConfig[];
-  datasource: DatasourceRef | null;
+  datasource: DatasourceRef | null = null;
   thresholds?: any;
   pluginVersion?: string;
 
