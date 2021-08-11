@@ -13,13 +13,6 @@ import (
 
 const dataKeysTable = "data_keys"
 
-type SecretsStore interface {
-	GetDataKey(ctx context.Context, name string) (*types.DataKey, error)
-	GetAllDataKeys(ctx context.Context) ([]*types.DataKey, error)
-	CreateDataKey(ctx context.Context, dataKey types.DataKey) error
-	DeleteDataKey(ctx context.Context, name string) error
-}
-
 type SecretsStoreImpl struct {
 	SQLStore *sqlstore.SQLStore `inject:""`
 }

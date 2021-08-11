@@ -19,7 +19,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/encryption"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,8 +33,15 @@ func init() {
 	})
 }
 
+type SecretsStore interface {
+	GetDataKey(ctx context.Context, name string) (*types.DataKey, error)
+	GetAllDataKeys(ctx context.Context) ([]*types.DataKey, error)
+	CreateDataKey(ctx context.Context, dataKey types.DataKey) error
+	DeleteDataKey(ctx context.Context, name string) error
+}
+
 type SecretsService struct {
-	Store    database.SecretsStore            `inject:""`
+	Store    SecretsStore                     `inject:""`
 	Bus      bus.Bus                          `inject:""`
 	Enc      encryption.EncryptionServiceImpl `inject:""`
 	Settings setting.Provider                 `inject:""`

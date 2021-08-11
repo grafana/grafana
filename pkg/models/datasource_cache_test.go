@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/database"
-
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/encryption"
 	"gopkg.in/ini.v1"
@@ -592,7 +590,7 @@ secret_key = SdlklWklckeLS
 	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
 
 	s := secrets.SecretsService{
-		Store:    &database.SecretsStoreImpl{}, // TODO: change to mock
+		Store:    nil,
 		Enc:      &encryption.OSSEncryptionService{},
 		Settings: settings,
 	}
