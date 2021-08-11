@@ -14,6 +14,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -38,6 +39,7 @@ type DatasourceInfo struct {
 	HTTPClientOpts sdkhttpclient.Options
 	URL            string
 	HTTPMethod     string
+	TimeInterval   string
 }
 
 func init() {
@@ -84,11 +86,17 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			return nil, errors.New("no http method provided")
 		}
 
+		timeInterval, ok := jsonData["timeInterval"].(string)
+		if !ok {
+			return nil, errors.New("invalid time-interval provided")
+		}
+
 		mdl := DatasourceInfo{
 			ID:             settings.ID,
 			URL:            settings.URL,
 			HTTPClientOpts: httpCliOpts,
 			HTTPMethod:     httpMethod,
+			TimeInterval:   timeInterval,
 		}
 		return mdl, nil
 	}
@@ -123,7 +131,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		Responses: backend.Responses{},
 	}
 
-	queries, err := s.parseQuery(req.Queries)
+	queries, err := s.parseQuery(req.Queries, dsInfo)
 	if err != nil {
 		return &result, err
 	}
@@ -217,10 +225,82 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 	return string(result)
 }
 
-func (s *Service) parseQuery(queries []backend.DataQuery) (
+// when DataQuery.Interval is zero, we have to manually calculate the interval-value
+// this happens when old-alerting
+func calculateMissingInterval(jsonModel *simplejson.Json, dsInfo *DatasourceInfo, timeRange backend.TimeRange) (time.Duration, error) {
+	// NOTE: when old-alerting happens,
+	// two values are stored in the same json-attribute,
+	// so they overwrite each other:
+	// - panel_query_options/min_interval
+	// - query_editor/step_value
+	// there is no way to find out what happened.
+	// here we need panel_query_options/min_interval,
+	// so we have to assume it is that one.
+	panelMinInterval := jsonModel.Get("interval").MustString("")
+	dataSourceMinInterval := dsInfo.TimeInterval
+
+	minInterval, err := tsdb.GetIntervalFrom(dataSourceMinInterval, panelMinInterval, 0, 15*time.Second)
+	if err != nil {
+		return 0, err
+	}
+
+	calculator := tsdb.NewCalculator(tsdb.CalculatorOptions{})
+	// NOTE: here we only use the `min` mode, it does not matter what is in the step-mode
+	// setting. here we only want to calculate the interval using the minValue.
+	calculatedInterval, err := calculator.Calculate(timeRange, minInterval, tsdb.Min)
+	if err != nil {
+		return 0, err
+	}
+
+	return calculatedInterval.Value, nil
+}
+
+// if step-value is specified, we use it to modify the interval-value,
+// otherwise just return the original value
+func adjustIntervalByStepIfExists(interval time.Duration, jsonModel *simplejson.Json) (time.Duration, error) {
+	// NOTE: when old-alerting happens,
+	// two values are stored in the same json-attribute,
+	// so they overwrite each other:
+	// - panel_query_options/min_interval
+	// - query_editor/step_value
+	// there is no way to find out what happened.
+	// here we need query_editor/step_value
+	// so we have to assume it is that one.
+	stepValue := jsonModel.Get("interval").MustString("")
+	hasStepValue := stepValue != ""
+
+	// if no step-interval is specified, we keep the original interval-value
+	if !hasStepValue {
+		return interval, nil
+	}
+
+	stepMode := jsonModel.Get("stepMode").MustString("min")
+	stepDuration, err := gtime.ParseDuration(stepValue)
+	if err != nil {
+		return 0, err
+	}
+
+	// FIXME: do we need to handle step-interval-values that look like `>4s` or `<5s`
+	switch stepMode {
+	case "min":
+		if interval < stepDuration {
+			interval = stepDuration
+		}
+	case "max":
+		if interval > stepDuration {
+			interval = stepDuration
+		}
+	case "exact":
+		interval = stepDuration
+	default:
+		return 0, fmt.Errorf("unrecognized step-mode: %v", stepMode)
+	}
+
+	return interval, nil
+}
+
+func (s *Service) parseQuery(queries []backend.DataQuery, dsInfo *DatasourceInfo) (
 	[]*PrometheusQuery, error) {
-	var intervalMode string
-	var adjustedInterval time.Duration
 
 	qs := []*PrometheusQuery{}
 	for _, queryModel := range queries {
@@ -237,36 +317,36 @@ func (s *Service) parseQuery(queries []backend.DataQuery) (
 
 		start := queryModel.TimeRange.From
 		end := queryModel.TimeRange.To
-		queryInterval := jsonModel.Get("interval").MustString("")
 
-		dsInterval, err := tsdb.GetIntervalFrom(queryInterval, "", 0, 15*time.Second)
-		hasQueryInterval := queryInterval != ""
-		// Only use stepMode if we have interval in query, otherwise use "min"
-		if hasQueryInterval {
-			intervalMode = jsonModel.Get("stepMode").MustString("min")
-		} else {
-			intervalMode = "min"
+		// this is the interval-value that is calculated
+		// in a generic way for every datasource
+		interval := queryModel.Interval
+
+		// if interval is not available, we calculate it manually.
+		// this happens when old-alerting
+		if interval == time.Nanosecond*0 {
+			interval, err = calculateMissingInterval(jsonModel, dsInfo, queryModel.TimeRange)
+			if err != nil {
+				return nil, err
+			}
 		}
 
-		// Calculate interval value from query or data source settings or use default value
+		// we adjust the interval by the step-value, if it was specified
+		interval, err = adjustIntervalByStepIfExists(interval, jsonModel)
 		if err != nil {
 			return nil, err
 		}
 
-		calculatedInterval, err := s.intervalCalculator.Calculate(queries[0].TimeRange, dsInterval, tsdb.IntervalMode(intervalMode))
-		if err != nil {
-			return nil, err
-		}
+		// we make sure the interval-value is not lower than the safe-interval
 		safeInterval := s.intervalCalculator.CalculateSafeInterval(queries[0].TimeRange, int64(safeRes))
 
-		if calculatedInterval.Value > safeInterval.Value {
-			adjustedInterval = calculatedInterval.Value
-		} else {
-			adjustedInterval = safeInterval.Value
+		if interval < safeInterval.Value {
+			interval = safeInterval.Value
 		}
 
+		// we multiply interval by intervalFactor to get the prometheus-step-attribute
 		intervalFactor := jsonModel.Get("intervalFactor").MustInt64(1)
-		step := time.Duration(int64(adjustedInterval) * intervalFactor)
+		step := time.Duration(int64(interval) * intervalFactor)
 
 		qs = append(qs, &PrometheusQuery{
 			Expr:         expr,
