@@ -5,7 +5,7 @@ import {
   createResetHandler,
   PasswordFieldEnum,
 } from '../../../features/datasources/utils/passwordHandlers';
-import { MySQLQuery } from './types';
+import { MySQLQuery } from './models.gen';
 import { DataSourcePlugin } from '@grafana/data';
 
 class MysqlConfigCtrl {

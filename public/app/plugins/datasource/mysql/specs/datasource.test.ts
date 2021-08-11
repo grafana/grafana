@@ -13,7 +13,7 @@ import { backendSrv } from 'app/core/services/backend_srv'; // will use the vers
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 import { FetchResponse, setBackendSrv } from '@grafana/runtime';
-import { MySQLOptions, MySQLQuery } from './../types';
+import { MySQLOptions, MySQLQuery } from './../models.gen';
 
 describe('MySQLDatasource', () => {
   const setupTextContext = (response: any) => {

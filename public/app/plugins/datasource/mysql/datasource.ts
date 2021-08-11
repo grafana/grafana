@@ -4,7 +4,8 @@ import { getBackendSrv, DataSourceWithBackend, FetchResponse, BackendDataSourceR
 import { DataSourceInstanceSettings, ScopedVars, MetricFindValue, AnnotationEvent } from '@grafana/data';
 import MySQLQueryModel from 'app/plugins/datasource/mysql/mysql_query_model';
 import ResponseParser from './response_parser';
-import { MysqlQueryForInterpolation, MySQLOptions, MySQLQuery } from './types';
+import { MysqlQueryForInterpolation } from './types';
+import { MySQLOptions, MySQLQuery } from './models.gen';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
