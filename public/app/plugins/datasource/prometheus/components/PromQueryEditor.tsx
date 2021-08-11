@@ -80,6 +80,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
 
   onFieldChange = (query: PromQuery, override?: any) => {
     this.query.expr = query.expr;
+    this.props.onChange({ ...this.query });
   };
 
   onFormatChange = (option: SelectableValue<string>) => {

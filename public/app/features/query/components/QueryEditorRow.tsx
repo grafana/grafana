@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent, ReactNode } from 'react';
 import classNames from 'classnames';
-import { has, cloneDeep } from 'lodash';
+import { has, cloneDeep, debounce } from 'lodash';
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
@@ -261,6 +261,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.onToggleHelp();
   };
 
+  onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && (event.shiftKey || event.ctrlKey)) {
+      this.props.onRunQuery();
+    }
+  };
+
+  debounceOnKeyDown = debounce(this.onKeyDown, 500);
+
+  runOnKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    this.debounceOnKeyDown(event);
+  };
+
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
     if (datasource?.getQueryDisplayText) {
@@ -349,7 +361,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
 
     return (
-      <div aria-label={selectors.components.QueryEditorRows.rows}>
+      <div aria-label={selectors.components.QueryEditorRows.rows} onKeyDown={this.runOnKeyDown}>
         <QueryOperationRow
           id={id}
           draggable={true}
