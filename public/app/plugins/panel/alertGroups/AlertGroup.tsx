@@ -23,7 +23,7 @@ export const AlertGroup = ({ alertManagerSourceName, group, expandAll }: Props) 
   const textStyles = useStyles2(getNotificationsTextColors);
 
   return (
-    <div className={styles.group}>
+    <div className={styles.group} data-testid="alert-group">
       {Object.keys(group.labels).length > 0 ? (
         <AlertLabels labels={group.labels} />
       ) : (
