@@ -52,7 +52,7 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
   const id = uuidv4();
 
   return (
-    <li className={cx(styles.container, selected && styles.selected)}>
+    <li onClick={() => onSelect(value)} className={cx(styles.container, selected && styles.selected)}>
       <input
         className={styles.radio}
         checked={selected}

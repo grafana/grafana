@@ -405,9 +405,15 @@ export function dateTimeSystemFormatter(
   value: number,
   decimals: DecimalCount,
   scaledDecimals: DecimalCount,
-  timeZone?: TimeZone
+  timeZone?: TimeZone,
+  showMs?: boolean
 ): FormattedValue {
-  return { text: dateTimeFormat(value, { format: systemDateFormats.fullDate, timeZone }) };
+  return {
+    text: dateTimeFormat(value, {
+      format: showMs ? systemDateFormats.fullDateMS : systemDateFormats.fullDate,
+      timeZone,
+    }),
+  };
 }
 
 export function dateTimeFromNow(

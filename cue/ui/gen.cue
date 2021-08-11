@@ -33,7 +33,7 @@ ScaleDistribution:    "linear" | "log"                                        @c
 GraphGradientMode:    "none" | "opacity" | "hue" | "scheme"                   @cuetsy(targetType="enum")
 LineStyle: {
 	fill?: "solid" | "dash" | "dot" | "square"
-	dash?: [number]
+	dash?: [...number]
 } @cuetsy(targetType="interface")
 LineConfig: {
 	lineColor?:         string
@@ -68,7 +68,7 @@ AxisConfig: {
 HideSeriesConfig: {
 	tooltip: bool
 	legend:  bool
-	graph:   bool
+	viz:   bool
 } @cuetsy(targetType="interface")
 LegendPlacement:   "bottom" | "right"          @cuetsy(targetType="type")
 LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(targetType="enum")
@@ -86,7 +86,7 @@ GraphFieldConfig: LineConfig & FillConfig & PointsConfig & AxisConfig & {
 VizLegendOptions: {
 	displayMode: LegendDisplayMode
 	placement:   LegendPlacement
-	calcs: [string]
+	calcs: [...string]
 } @cuetsy(targetType="interface")
 VizTooltipOptions: {
 	mode: TooltipDisplayMode
