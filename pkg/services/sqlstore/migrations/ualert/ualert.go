@@ -249,11 +249,11 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 
 		if _, ok := amConfigPerOrg[rule.OrgID]; !ok {
-			return fmt.Errorf("no configuration found for org: %d", rule.OrgID)
-		}
-
-		if err := m.updateReceiverAndRoute(allChannelsPerOrg, defaultChannelsPerOrg, da, rule, amConfigPerOrg[rule.OrgID]); err != nil {
-			return err
+			m.mg.Logger.Info("no configuration found", "org", rule.OrgID)
+		} else {
+			if err := m.updateReceiverAndRoute(allChannelsPerOrg, defaultChannelsPerOrg, da, rule, amConfigPerOrg[rule.OrgID]); err != nil {
+				return err
+			}
 		}
 
 		if strings.HasPrefix(mg.Dialect.DriverName(), migrator.Postgres) {
