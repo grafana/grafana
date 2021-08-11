@@ -245,11 +245,6 @@ func (r *Router) Route(pattern, methods string, h ...Handler) (route *Route) {
 	return route
 }
 
-// Combo returns a combo router.
-func (r *Router) Combo(pattern string, h ...Handler) *ComboRouter {
-	return &ComboRouter{r, pattern, h, map[string]bool{}, nil}
-}
-
 // NotFound configurates http.HandlerFunc which is called when no matching route is
 // found. If it is not set, http.NotFound is used.
 // Be sure to set 404 response code in your handler.
@@ -293,66 +288,4 @@ func (r *Router) URLFor(name string, pairs ...string) string {
 		panic("route with given name does not exists: " + name)
 	}
 	return leaf.URLPath(pairs...)
-}
-
-// ComboRouter represents a combo router.
-type ComboRouter struct {
-	router   *Router
-	pattern  string
-	handlers []Handler
-	methods  map[string]bool // Registered methods.
-
-	lastRoute *Route
-}
-
-func (cr *ComboRouter) checkMethod(name string) {
-	if cr.methods[name] {
-		panic("method '" + name + "' has already been registered")
-	}
-	cr.methods[name] = true
-}
-
-func (cr *ComboRouter) route(fn func(string, ...Handler) *Route, method string, h ...Handler) *ComboRouter {
-	cr.checkMethod(method)
-	cr.lastRoute = fn(cr.pattern, append(cr.handlers, h...)...)
-	return cr
-}
-
-func (cr *ComboRouter) Get(h ...Handler) *ComboRouter {
-	if cr.router.autoHead {
-		cr.Head(h...)
-	}
-	return cr.route(cr.router.Get, "GET", h...)
-}
-
-func (cr *ComboRouter) Patch(h ...Handler) *ComboRouter {
-	return cr.route(cr.router.Patch, "PATCH", h...)
-}
-
-func (cr *ComboRouter) Post(h ...Handler) *ComboRouter {
-	return cr.route(cr.router.Post, "POST", h...)
-}
-
-func (cr *ComboRouter) Put(h ...Handler) *ComboRouter {
-	return cr.route(cr.router.Put, "PUT", h...)
-}
-
-func (cr *ComboRouter) Delete(h ...Handler) *ComboRouter {
-	return cr.route(cr.router.Delete, "DELETE", h...)
-}
-
-func (cr *ComboRouter) Options(h ...Handler) *ComboRouter {
-	return cr.route(cr.router.Options, "OPTIONS", h...)
-}
-
-func (cr *ComboRouter) Head(h ...Handler) *ComboRouter {
-	return cr.route(cr.router.Head, "HEAD", h...)
-}
-
-// Name sets name of ComboRouter route.
-func (cr *ComboRouter) Name(name string) {
-	if cr.lastRoute == nil {
-		panic("no corresponding route to be named")
-	}
-	cr.lastRoute.Name(name)
 }
