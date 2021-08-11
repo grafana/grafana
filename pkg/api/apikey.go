@@ -11,7 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// GetAPIKeys swagger:route GET /auth/keys
+// GetAPIKeys swagger:route GET /auth/keys apikeys getAPIKeys
+//
+// Get auth key
+//
+// Will return auth keys.
+//
+// security:
+//   - Basic: []
 //
 // responses:
 // 200: ApikeyResponse
