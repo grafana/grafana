@@ -78,7 +78,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
     const response = await this.request(`/api/search/tag/${tagName}/values`, []);
     const suggestions: CompletionItemGroup[] = [];
 
-    if (response) {
+    if (response && response.tagValues) {
       suggestions.push({
         label: `TagValues`,
         items: response.tagValues.map((tagValue: string) => ({ label: tagValue })),

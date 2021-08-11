@@ -8,6 +8,7 @@ import {
   InlineField,
   InlineFieldRow,
   InlineLabel,
+  Input,
   LegacyForms,
   QueryField,
   RadioButtonGroup,
@@ -23,7 +24,6 @@ import React from 'react';
 import { Node } from 'slate';
 import { LokiQueryField } from '../loki/components/LokiQueryField';
 import { LokiQuery } from '../loki/types';
-import { AdvancedOptions } from './AdvancedOptions';
 import { TempoDatasource, TempoQuery, TempoQueryType } from './datasource';
 import LokiDatasource from '../loki/datasource';
 import { PrometheusDatasource } from '../prometheus/datasource';
@@ -43,6 +43,7 @@ interface State {
 }
 
 const PRISM_LANGUAGE = 'tempo';
+const durationPlaceholder = 'e.g. 1.2s, 100ms, 500us';
 const plugins = [
   BracesPlugin(),
   SlatePrism({
