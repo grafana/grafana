@@ -22,7 +22,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// OrgPollingPollingInterval of how often we sync admin configuration.
+// OrgPollingInterval of how often we sync admin configuration.
 var OrgPollingInterval = 5 * time.Minute
 
 // timeNow makes it possible to test usage of time
@@ -45,7 +45,7 @@ type ScheduleService interface {
 
 // Notifier handles the delivery of alert notifications to the end user
 type Notifier interface {
-	UpdateInstances(orgIDs ...int64) error
+	UpdateInstances(orgIDs ...int64)
 	PutAlerts(orgID int64, alerts apimodels.PostableAlerts) error
 }
 
@@ -185,7 +185,6 @@ func (sch *schedule) Run(ctx context.Context) error {
 
 	wg.Wait()
 	return nil
-
 }
 
 // SyncAndApplyConfigFromDatabase looks for the admin configuration in the database and adjusts the sender(s) accordingly.

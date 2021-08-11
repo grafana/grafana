@@ -160,7 +160,7 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 	return am.children.Wait()
 }
 
-func (am *Alertmanager) UpdateInstances(orgIDs ...int64) error {
+func (am *Alertmanager) UpdateInstances(orgIDs ...int64) {
 	found := make(map[int64]struct{})
 	for _, orgID := range orgIDs {
 		found[orgID] = struct{}{}
@@ -168,7 +168,9 @@ func (am *Alertmanager) UpdateInstances(orgIDs ...int64) error {
 		if !ok {
 			// new org
 			am.logger.Debug("starting Alertmanager instance", "org", orgID)
-			am.addInstance(orgID)
+			if err := am.addInstance(orgID); err != nil {
+				am.logger.Error("failed to start Alertmanager instance", "org", orgID, "error", err)
+			}
 		}
 	}
 
@@ -176,10 +178,11 @@ func (am *Alertmanager) UpdateInstances(orgIDs ...int64) error {
 		_, ok := found[item.orgID]
 		if !ok {
 			am.logger.Debug("stopping Alertmanager instance", "org", item.orgID)
-			item.instance.StopAndWait()
+			if err := item.instance.StopAndWait(); err != nil {
+				am.logger.Error("failed to stop Alertmanager instance", "org", item.orgID, "error", err)
+			}
 		}
 	}
-	return nil
 }
 
 func (am *Alertmanager) getInstance(orgID int64) (*alertmanager, bool) {
