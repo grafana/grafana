@@ -13,7 +13,7 @@
     "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
     "test": "jest --notify --watch",
-    "test:accessibility": "pa11y-ci",
+    "test:accessibility": "pa11y-ci --config .pa11yci.conf.js",
     "lint": "yarn run lint:ts && yarn run lint:sass",
     "lint:ts": "eslint . --ext .js,.tsx,.ts --cache",
     "lint:sass": "yarn run sass-lint -c public/sass/.sass-lint.yml 'public/sass/**/*.scss, packages/**/*.scss' -v -i '**/node_modules/**/*.scss'",

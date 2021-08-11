@@ -482,7 +482,7 @@ def test_frontend_step():
     }
 
 
-def test_a11y_frontend_step(edition):
+def test_a11y_frontend_step(edition, port=3001):
     return {
         'name': 'test-a11y_frontend',
         'image': 'buildkite/puppeteer',
@@ -493,6 +493,7 @@ def test_a11y_frontend_step(edition):
          'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
             'HOST': 'end-to-end-tests-server' + enterprise2_sfx(edition),
+            'PORT': port,
         },
         'failure': 'ignore',
         'commands': [
