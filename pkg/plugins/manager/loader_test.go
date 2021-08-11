@@ -68,8 +68,20 @@ func TestLoader_LoadAll(t *testing.T) {
 		want    []*plugins.PluginV2
 		wantErr bool
 	}{
-		// TODO: Add test cases.
-		{},
+		{
+			name: "Load Core plugins",
+			fields: fields{
+				Cfg:                           setting.NewCfg(),
+				allowUnsignedPluginsCondition: nil,
+				log:                           &FakeLogger{},
+			},
+			args: args{
+				pluginJSONPaths: []string{"../../../public/app/plugins"},
+				class:           plugins.Core,
+			},
+			want:    nil,
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

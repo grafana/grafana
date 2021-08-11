@@ -51,7 +51,6 @@ func (l *Loader) Load(pluginJSONPath string, class plugins.PluginClass) (*plugin
 
 func (l *Loader) LoadAll(pluginJSONPaths []string, class plugins.PluginClass) ([]*plugins.PluginV2, error) {
 	var foundPlugins = make(map[string]plugins.JSONData)
-	var loadingErrors = make(map[string]error)
 
 	// load plugin.json files and map directory to JSON data map
 	for _, pluginJSONPath := range pluginJSONPaths {
@@ -109,12 +108,13 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, class plugins.PluginClass) ([
 	}
 
 	// validate signatures
+	var errs = make(map[string]error)
 	for _, plugin := range loadedPlugins {
 		signingError := newSignatureValidator(l.Cfg, class, l.allowUnsignedPluginsCondition).validate(plugin)
 		if signingError != nil {
 			l.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.ID,
 				"signature", plugin.Signature, "status", signingError)
-			loadingErrors[plugin.ID] = signingError
+			errs[plugin.ID] = signingError
 			continue
 		}
 
@@ -132,9 +132,9 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, class plugins.PluginClass) ([
 		}
 	}
 
-	if len(loadingErrors) > 0 {
+	if len(errs) > 0 {
 		var errStr []string
-		for _, err := range loadingErrors {
+		for _, err := range errs {
 			errStr = append(errStr, err.Error())
 		}
 		logger.Warn("Some plugin loading errors occurred", "errors", strings.Join(errStr, ", "))
