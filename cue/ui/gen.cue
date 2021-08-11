@@ -40,7 +40,7 @@ LineConfig: {
 	lineWidth?:         number
 	lineInterpolation?: LineInterpolation
 	lineStyle?:         LineStyle
-	spanNulls?:         bool
+	spanNulls?:         bool | number
 } @cuetsy(targetType="interface")
 FillConfig: {
 	fillColor?:   string
@@ -69,6 +69,7 @@ HideSeriesConfig: {
 	tooltip: bool
 	legend:  bool
 	viz:   bool
+	graph?: bool
 } @cuetsy(targetType="interface")
 LegendPlacement:   "bottom" | "right"          @cuetsy(targetType="type")
 LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(targetType="enum")
@@ -86,6 +87,8 @@ GraphFieldConfig: LineConfig & FillConfig & PointsConfig & AxisConfig & {
 VizLegendOptions: {
 	displayMode: LegendDisplayMode
 	placement:   LegendPlacement
+	asTable: bool | *false
+	isVisible: bool | *false
 	calcs: [...string]
 } @cuetsy(targetType="interface")
 VizTooltipOptions: {

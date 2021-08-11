@@ -202,6 +202,8 @@ Family: scuemata.#Family & {
                     collapsed?: bool | *false
 
                     // TODO docs
+                    panels?: [...]
+                    // TODO docs
                     bars?: bool
 
                     // TODO docs

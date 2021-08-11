@@ -32,7 +32,7 @@ Family: {
                     ui.PointsConfig
                     ui.AxisConfig
                     drawStyle?:    ui.DrawStyle
-                    gradientMode?: ui.GraphGradientMode
+                    gradientMode?: ui.GraphGradientMode | {label:string, value:string}
                     hideFrom?:     ui.HideSeriesConfig
                 }
             }
