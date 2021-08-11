@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -94,8 +93,6 @@ var wireBasicSet = wire.NewSet(
 	postgres.ProvideService,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
-	auth.ProvideUserAuthTokenService,
-	wire.Bind(new(models.UserTokenService), new(*auth.UserAuthTokenService)),
 	serverlock.ProvideService,
 	cleanup.ProvideService,
 	shorturls.ProvideService,

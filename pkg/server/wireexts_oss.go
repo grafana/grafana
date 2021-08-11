@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -20,6 +21,8 @@ import (
 )
 
 var wireExtsBasicSet = wire.NewSet(
+	auth.ProvideUserAuthTokenService,
+	wire.Bind(new(models.UserTokenService), new(*auth.UserAuthTokenService)),
 	licensing.ProvideService,
 	wire.Bind(new(models.Licensing), new(*licensing.OSSLicensingService)),
 	setting.ProvideProvider,
