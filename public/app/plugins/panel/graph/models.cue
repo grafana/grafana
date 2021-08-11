@@ -19,12 +19,9 @@ Family: {
         [
             {
                 PanelOptions: {
-
                 }
                 PanelFieldConfig: {
-
                 }
-                bars: bool
             }
         ]
     ]

@@ -198,6 +198,10 @@ Family: scuemata.#Family & {
                     fill?: number
 
                     // TODO docs
+                    transformations?: [...]
+                    collapsed?: bool | *false
+
+                    // TODO docs
                     bars?: bool
 
                     // TODO docs
