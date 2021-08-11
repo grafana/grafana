@@ -485,7 +485,7 @@ def test_frontend_step():
 def test_a11y_frontend_step(edition):
     return {
         'name': 'test-a11y_frontend',
-        'image': 'alpeware/chrome-headless-trunk',
+        'image': 'buildkite/puppeteer',
         'depends_on': [
           'build-frontend',
           'end-to-end-tests-server' + enterprise2_sfx(edition),
@@ -496,7 +496,7 @@ def test_a11y_frontend_step(edition):
         },
         'failure': 'ignore',
         'commands': [
-            'npm run test:accessibility',
+            'npm install -g pa11y-ci',
         ],
     }
 
