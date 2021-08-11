@@ -1,5 +1,11 @@
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { TimeZone } from '@grafana/data';
+import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
+
+export type MatcherField = {
+  name: string;
+  value: string;
+  operator: MatcherOperator;
+};
 
 export type SilenceFormFields = {
   id: string;
@@ -8,7 +14,7 @@ export type SilenceFormFields = {
   timeZone: TimeZone;
   duration: string;
   comment: string;
-  matchers: Matcher[];
+  matchers: MatcherField[];
   createdBy: string;
   matcherName: string;
   matcherValue: string;

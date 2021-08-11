@@ -1,8 +1,8 @@
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherField } from './silence-form';
 
 export interface FormAmRoute {
   id: string;
-  matchers: Matcher[];
+  matchers: MatcherField[];
   continue: boolean;
   receiver: string;
   groupBy: string[];

@@ -3,7 +3,6 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
-  Checkbox,
   Field,
   FieldArray,
   Form,
@@ -27,6 +26,7 @@ import {
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
 import { getFormStyles } from './formStyles';
+import { MatcherOperatorOptions } from 'app/plugins/datasource/alertmanager/types';
 
 export interface AmRoutesExpandedFormProps {
   onCancel: () => void;
@@ -34,6 +34,8 @@ export interface AmRoutesExpandedFormProps {
   receivers: AmRouteReceiver[];
   routes: FormAmRoute;
 }
+
+const matcherOptions = Object.values(MatcherOperatorOptions).map((value) => ({ value, label: value }));
 
 export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, onSave, receivers, routes }) => {
   const styles = useStyles2(getStyles);
@@ -71,6 +73,24 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                             placeholder="label"
                           />
                         </Field>
+                        <Field label={'Operator'}>
+                          <InputControl
+                            render={({ field: { onChange, ref, ...field } }) => (
+                              <Select
+                                {...field}
+                                onChange={(value) => onChange(value?.value)}
+                                options={matcherOptions}
+                              />
+                            )}
+                            defaultValue={{
+                              label: field.operator,
+                              value: field.operator,
+                            }}
+                            control={control}
+                            name={`${localPath}.operator` as const}
+                            rules={{ required: { value: true, message: 'Required.' } }}
+                          />
+                        </Field>
                         <Field
                           label="Value"
                           invalid={!!errors.matchers?.[index]?.value}
@@ -82,12 +102,12 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                             placeholder="value"
                           />
                         </Field>
-                        <Field className={styles.matcherRegexField} label="Regex">
+                        {/* <Field className={styles.matcherRegexField} label="Regex">
                           <Checkbox {...register(`${localPath}.isRegex`)} defaultChecked={field.isRegex} />
                         </Field>
                         <Field className={styles.matcherRegexField} label="Equal">
                           <Checkbox {...register(`${localPath}.isEqual`)} defaultChecked={field.isEqual} />
-                        </Field>
+                        </Field> */}
                         <IconButton
                           className={styles.removeButton}
                           tooltip="Remove matcher"
