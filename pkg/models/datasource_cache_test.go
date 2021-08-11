@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/encryption"
-	secrets "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"gopkg.in/ini.v1"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"

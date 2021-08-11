@@ -18,11 +18,7 @@ type SecretsStoreImpl struct {
 }
 
 func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "SecretsStore",
-		Instance:     &SecretsStoreImpl{},
-		InitPriority: registry.High,
-	})
+	registry.RegisterService(&SecretsStoreImpl{})
 }
 
 func (ss *SecretsStoreImpl) Init() error {
