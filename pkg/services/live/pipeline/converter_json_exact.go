@@ -71,6 +71,7 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, payload []byt
 				return nil, errors.New("too many values")
 			}
 		} else if strings.HasPrefix(f.Value, "{") {
+			// TODO: reuse vm for JSON parsing.
 			script := strings.Trim(f.Value, "{}")
 			switch f.Type {
 			case data.FieldTypeNullableBool:

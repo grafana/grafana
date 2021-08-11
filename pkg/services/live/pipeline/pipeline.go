@@ -6,20 +6,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type ConversionMode string
-
-const (
-	ConversionModeAuto  ConversionMode = "auto"
-	ConversionModeTip   ConversionMode = "tip"
-	ConversionModeExact ConversionMode = "exact"
-)
-
 type Pipeline struct {
 	cache *Cache
 }
 
 func New(s Storage) *Pipeline {
-	go postTestData() // TODO: temporary for development, remove.
+	//go postTestData() // TODO: temporary for development, remove.
 	return &Pipeline{cache: NewCache(s)}
 }
 

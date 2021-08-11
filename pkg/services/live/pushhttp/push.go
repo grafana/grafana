@@ -142,8 +142,8 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 				pipeline.NewConditionalOutput(
 					pipeline.NewMultipleConditionChecker(
 						[]pipeline.ConditionChecker{
-							pipeline.NewFloat64CompareCondition("value1", "gte", 3.0),
-							pipeline.NewFloat64CompareCondition("value2", "gte", 3.0),
+							pipeline.NewNumberCompareCondition("value1", "gte", 3.0),
+							pipeline.NewNumberCompareCondition("value2", "gte", 3.0),
 						},
 						pipeline.ConditionAll,
 					),
@@ -177,6 +177,25 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 			Processor: pipeline.NewDropFieldsProcessor("running"),
 			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
 		},
+		{
+			OrgId:     1,
+			Pattern:   "stream/telegraf/cpu",
+			Processor: pipeline.NewKeepFieldsProcessor("labels", "time", "usage_user"),
+			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
+				pipeline.NewManagedStreamOutput(f.gLive),
+				pipeline.NewConditionalOutput(
+					pipeline.NewNumberCompareCondition("usage_user", "gte", 50),
+					pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
+						Channel: "stream/telegraf/cpu/spikes",
+					}),
+				),
+			}),
+		},
+		{
+			OrgId:     1,
+			Pattern:   "stream/telegraf/cpu/spikes",
+			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
+		},
 	}, nil
 }
 
@@ -201,12 +220,12 @@ func (g *Gateway) Run(ctx context.Context) error {
 func (g *Gateway) Handle(ctx *models.ReqContext) {
 	streamID := ctx.Params(":streamId")
 
-	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, streamID)
-	if err != nil {
-		logger.Error("Error getting stream", "error", err)
-		ctx.Resp.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	//stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, streamID)
+	//if err != nil {
+	//	logger.Error("Error getting stream", "error", err)
+	//	ctx.Resp.WriteHeader(http.StatusInternalServerError)
+	//	return
+	//}
 
 	// TODO Grafana 8: decide which formats to use or keep all.
 	urlValues := ctx.Req.URL.Query()
@@ -240,12 +259,20 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 	// interval = "1s" vs flush_interval = "5s"
 
 	for _, mf := range metricFrames {
-		err := stream.Push(mf.Key(), mf.Frame())
+		frame := mf.Frame()
+		channel := "stream/" + streamID + "/" + mf.Key()
+		err = g.ruleProcessor.ProcessFrame(context.Background(), ctx.OrgId, channel, frame)
 		if err != nil {
-			logger.Error("Error pushing frame", "error", err, "data", string(body))
+			logger.Error("Error processing frame", "error", err, "data", string(body))
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		//err := stream.Push(mf.Key(), mf.Frame())
+		//if err != nil {
+		//	logger.Error("Error pushing frame", "error", err, "data", string(body))
+		//	ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		//	return
+		//}
 	}
 }
 
