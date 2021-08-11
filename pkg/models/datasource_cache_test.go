@@ -8,6 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/encryption"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"gopkg.in/ini.v1"
+
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -21,6 +26,8 @@ import (
 
 //nolint:goconst
 func TestDataSource_GetHttpTransport(t *testing.T) {
+	_ = setupSecretService(t)
+
 	t.Run("Should use cached proxy", func(t *testing.T) {
 		var configuredTransport *http.Transport
 		provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
@@ -573,3 +580,21 @@ Wtnpl+TdAoGAGqKqo2KU3JoY3IuTDUk1dsNAm8jd9EWDh+s1x4aG4N79mwcss5GD
 FF8MbFPneK7xQd8L6HisKUDAUi2NOyynM81LAftPkvN6ZuUVeFDfCL4vCA0HUXLD
 +VrOhtUZkNNJlLMiVRJuQKUOGlg8PpObqYbstQAf/0/yFJMRHG82Tcg=
 -----END RSA PRIVATE KEY-----`
+
+func setupSecretService(t *testing.T) secrets.SecretsService {
+	t.Helper()
+	raw, err := ini.Load([]byte(`
+[security]
+secret_key = SdlklWklckeLS
+`))
+	require.NoError(t, err)
+	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
+
+	s := secrets.SecretsService{
+		SQLStore: sqlstore.InitTestDB(t),
+		Enc:      &encryption.OSSEncryptionService{},
+		Settings: settings,
+	}
+	require.NoError(t, s.Init())
+	return s
+}
