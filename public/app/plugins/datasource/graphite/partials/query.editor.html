@@ -10,46 +10,7 @@
         <label class="gf-form-label width-6 query-keyword">Series</label>
       </div>
 
-      <div ng-if="ctrl.state.queryModel.seriesByTagUsed" ng-repeat="tag in ctrl.state.queryModel.tags" class="gf-form">
-        <gf-form-dropdown
-          model="tag.key"
-          allow-custom="true"
-          label-mode="true"
-          debounce="true"
-          placeholder="Tag key"
-          css-class="query-segment-key"
-          get-options="ctrl.getTags($index, $query)"
-          on-change="ctrl.tagChanged(tag, $index)"
-        ></gf-form-dropdown>
-
-        <gf-form-dropdown
-          model="tag.operator"
-          label-mode="true"
-          css-class="query-segment-operator"
-          get-options="ctrl.getTagOperators()"
-          on-change="ctrl.tagChanged(tag, $index)"
-          min-input-width="30"
-        ></gf-form-dropdown>
-        <gf-form-dropdown
-          model="tag.value"
-          allow-custom="true"
-          label-mode="true"
-          debounce="true"
-          css-class="query-segment-value"
-          placeholder="Tag value"
-          get-options="ctrl.getTagValues(tag, $index, $query)"
-          on-change="ctrl.tagChanged(tag, $index)"
-        ></gf-form-dropdown>
-        <label class="gf-form-label query-keyword" ng-if="$index !== ctrl.state.queryModel.tags.length - 1">AND</label>
-      </div>
-
-      <div ng-if="ctrl.state.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.state.addTagSegments" role="menuitem" class="gf-form">
-        <metric-segment segment="segment" get-options="ctrl.getTagsAsSegments($query)" on-change="ctrl.addNewTag(segment)" debounce="true" />
-      </div>
-
-      <div ng-if="!ctrl.state.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.state.segments" role="menuitem" class="gf-form">
-        <metric-segment segment="segment" get-options="ctrl.getAltSegments($index, $query)" on-change="ctrl.segmentValueChanged(segment, $index)" />
-      </div>
+      <series-section dispatch="ctrl.dispatch" tags="ctrl.state.queryModel.tags" addTagSegments="ctrl.state.addTagSegments" state="ctrl.state"  segments="ctrl.state.segments" rawQuery="ctrl.state.target.target"></series-section>
 
       <div ng-if="ctrl.state.paused" class="gf-form">
         <play-button dispatch="ctrl.dispatch" />

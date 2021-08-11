@@ -12,7 +12,7 @@ import { FuncInstance } from '../gfunc';
 const init = createAction<GraphiteQueryEditorAngularDependencies>('init');
 
 // Metrics & Tags
-const segmentValueChanged = createAction<{ segment: GraphiteSegment; index: number }>('segment-value-changed');
+const segmentValueChanged = createAction<{ segment: GraphiteSegment | string; index: number }>('segment-value-changed');
 
 // Tags
 const addNewTag = createAction<{ segment: GraphiteSegment }>('add-new-tag');

@@ -29,6 +29,7 @@ import { GraphiteTextEditor } from '../plugins/datasource/graphite/components/Gr
 import { PlayButton } from '../plugins/datasource/graphite/components/PlayButton';
 import { AddGraphiteFunction } from '../plugins/datasource/graphite/components/AddGraphiteFunction';
 import { GraphiteFunctionEditor } from '../plugins/datasource/graphite/components/GraphiteFunctionEditor';
+import { SeriesSection } from '../plugins/datasource/graphite/components/SeriesSection';
 
 const { SecretFormField } = LegacyForms;
 
@@ -211,4 +212,5 @@ export function registerAngularDirectives() {
   react2AngularDirective('playButton', PlayButton, ['dispatch']);
   react2AngularDirective('addGraphiteFunction', AddGraphiteFunction, ['funcDefs', 'dispatch']);
   react2AngularDirective('graphiteFunctionEditor', GraphiteFunctionEditor, ['func', 'dispatch']);
+  react2AngularDirective('seriesSection', SeriesSection, ['state', 'dispatch']);
 }
