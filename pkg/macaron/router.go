@@ -79,9 +79,8 @@ type Router struct {
 	*routeMap
 	namedRoutes map[string]*Leaf
 
-	groups              []group
-	notFound            http.HandlerFunc
-	internalServerError func(*Context, error)
+	groups   []group
+	notFound http.HandlerFunc
 }
 
 func NewRouter() *Router {
@@ -261,19 +260,6 @@ func (r *Router) NotFound(handlers ...Handler) {
 		c.handlers = make([]Handler, 0, len(r.m.handlers)+len(handlers))
 		c.handlers = append(c.handlers, r.m.handlers...)
 		c.handlers = append(c.handlers, handlers...)
-		c.run()
-	}
-}
-
-// InternalServerError configurates handler which is called when route handler returns
-// error. If it is not set, default handler is used.
-// Be sure to set 500 response code in your handler.
-func (r *Router) InternalServerError(handlers ...Handler) {
-	handlers = validateAndWrapHandlers(handlers)
-	r.internalServerError = func(c *Context, err error) {
-		c.index = 0
-		c.handlers = handlers
-		c.Map(err)
 		c.run()
 	}
 }
