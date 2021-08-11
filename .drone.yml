@@ -143,8 +143,9 @@ steps:
   - end-to-end-tests-server
 
 - name: test-a11y_frontend
-  image: alpeware/chrome-headless-trunk
+  image: buildkite/puppeteer:10.0.0
   commands:
+  - npm install --global --unsafe-perm pa11y-ci
   - npm run test:accessibility
   environment:
     GRAFANA_MISC_STATS_API_KEY:
@@ -3539,9 +3540,5 @@ name: drone_token
 get:
   path: infra/data/ci/drone
   name: machine-user-token
-
----
-kind: signature
-hmac: 4ab51b97c07b39a95cee4edf154bca1c858f50b895d07729804f29e2f55968fc
 
 ...
