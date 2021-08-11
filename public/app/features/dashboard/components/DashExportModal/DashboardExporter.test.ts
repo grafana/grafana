@@ -9,39 +9,41 @@ import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 
-const stubs = [
-  mockDataSource({
-    name: 'gfdb',
-    meta: { info: { version: '1.2.1' }, name: 'TestDB' } as any,
-  }),
-  mockDataSource({
-    name: 'other',
-    meta: { uid: 'other', info: { version: '1.2.1' }, name: 'OtherDB' } as any,
-  }),
-  mockDataSource({
-    name: 'other2',
-    meta: { uid: 'other2', info: { version: '1.2.1' }, name: 'OtherDB_2' } as any,
-  }),
-  mockDataSource({
-    name: 'mixed',
-    meta: {
-      info: { version: '1.2.1' },
-      name: 'Mixed',
-      builtIn: true,
-    } as any,
-  }),
-  mockDataSource({
-    name: '-- Grafana --',
-    meta: {
-      info: { version: '1.2.1' },
-      name: 'grafana',
-      builtIn: true,
-    } as any,
-  }),
-].map((v) => {
-  v.uid = v.name;
-  return v;
-});
+const stubs = Object.fromEntries(
+  [
+    mockDataSource({
+      name: 'gfdb',
+      meta: { info: { version: '1.2.1' }, name: 'TestDB' } as any,
+    }),
+    mockDataSource({
+      name: 'other',
+      meta: { uid: 'other', info: { version: '1.2.1' }, name: 'OtherDB' } as any,
+    }),
+    mockDataSource({
+      name: 'other2',
+      meta: { uid: 'other2', info: { version: '1.2.1' }, name: 'OtherDB_2' } as any,
+    }),
+    mockDataSource({
+      name: 'mixed',
+      meta: {
+        info: { version: '1.2.1' },
+        name: 'Mixed',
+        builtIn: true,
+      } as any,
+    }),
+    mockDataSource({
+      name: '-- Grafana --',
+      meta: {
+        info: { version: '1.2.1' },
+        name: 'grafana',
+        builtIn: true,
+      } as any,
+    }),
+  ].map((v) => {
+    v.uid = v.name;
+    return [v.name, v];
+  })
+);
 
 const mockDsSrv = new MockDataSourceSrv(stubs);
 

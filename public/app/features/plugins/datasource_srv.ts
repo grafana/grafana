@@ -177,7 +177,9 @@ export class DatasourceSrv implements DataSourceService {
       this.datasources[instance.uid] = instance;
       return instance;
     } catch (err) {
-      this.$rootScope.appEvent(AppEvents.alertError, [dsConfig.name + ' plugin failed', err.toString()]);
+      if (this.$rootScope) {
+        this.$rootScope.appEvent(AppEvents.alertError, [dsConfig.name + ' plugin failed', err.toString()]);
+      }
       return Promise.reject({ message: `Datasource: ${key} was not found` });
     }
   }
