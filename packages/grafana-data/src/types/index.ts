@@ -2,6 +2,7 @@ export * from './data';
 export * from './dataFrame';
 export * from './dataLink';
 export * from './dashboard';
+export * from './query';
 export * from './annotations';
 export * from './logs';
 export * from './navModel';
