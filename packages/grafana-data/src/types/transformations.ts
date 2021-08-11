@@ -5,6 +5,8 @@ import { RegistryItemWithOptions } from '../utils/Registry';
 
 /**
  * Function that transform data frames (AKA transformer)
+ *
+ * @public
  */
 export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOptions {
   /**
@@ -15,12 +17,18 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
 }
 
 /**
- * Many transforms can be called with a simple function
+ * Many transformations can be called with a simple synchronous function.
+ * When a transformer is defined, it should have identical behavior to using the operator
+ *
+ * @public
  */
 export interface SynchronousDataTransformerInfo<TOptions = any> extends DataTransformerInfo<TOptions> {
-  transform: (frames: DataFrame[], options: TOptions) => DataFrame[];
+  transformer: (options: TOptions) => (frames: DataFrame[]) => DataFrame[];
 }
 
+/**
+ * @public
+ */
 export interface DataTransformerConfig<TOptions = any> {
   /**
    * Unique identifier of transformer

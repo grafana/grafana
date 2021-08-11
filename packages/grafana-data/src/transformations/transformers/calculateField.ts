@@ -85,64 +85,66 @@ export const calculateFieldTransformer: SynchronousDataTransformerInfo<Calculate
     },
   },
 
-  operator: (options) => (source) => source.pipe(map((data) => calculateFieldTransformer.transform(data, options))),
+  operator: (options) => (source) => source.pipe(map((data) => calculateFieldTransformer.transformer(options)(data))),
 
-  transform: (data: DataFrame[], options: CalculateFieldTransformerOptions) => {
-    if (options.timeSeries !== false && data.length > 1) {
-      data = ensureColumnsTransformer.transform(data, {});
-    }
-    let creator: ValuesCreator | undefined = undefined;
+  transformer: (options: CalculateFieldTransformerOptions) => {
+    return (data: DataFrame[]) => {
+      if (options.timeSeries !== false && data.length > 1) {
+        data = ensureColumnsTransformer.transformer({})(data);
+      }
+      let creator: ValuesCreator | undefined = undefined;
 
-    switch (options.mode) {
-      case CalculateFieldMode.BinaryOperation:
-        creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions), data);
-        break;
+      switch (options.mode) {
+        case CalculateFieldMode.BinaryOperation:
+          creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions), data);
+          break;
 
-      case CalculateFieldMode.MathField:
-        creator = getMathCreator(defaults(options.math, defaultMathOptions), data);
-        break;
+        case CalculateFieldMode.MathField:
+          creator = getMathCreator(defaults(options.math, defaultMathOptions), data);
+          break;
 
-      case CalculateFieldMode.ReduceRow:
-      default:
-        creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
-    }
-
-    // Nothing configured
-    if (!creator) {
-      return data;
-    }
-
-    return data.map((frame) => {
-      // delegate field creation to the specific function
-      const values = creator!(frame);
-      if (!values) {
-        return frame;
+        case CalculateFieldMode.ReduceRow:
+        default:
+          creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
       }
 
-      const field = {
-        name: getNameFromOptions(options),
-        type: FieldType.number,
-        config: {},
-        values,
-      };
-      let fields: Field[] = [];
+      // Nothing configured
+      if (!creator) {
+        return data;
+      }
 
-      // Replace all fields with the single field
-      if (options.replaceFields) {
-        const { timeField } = getTimeField(frame);
-        if (timeField && options.timeSeries !== false) {
-          fields = [timeField, field];
-        } else {
-          fields = [field];
+      return data.map((frame) => {
+        // delegate field creation to the specific function
+        const values = creator!(frame);
+        if (!values) {
+          return frame;
         }
-      } else {
-        fields = [...frame.fields, field];
-      }
-      return {
-        ...frame,
-        fields,
-      };
-    });
+
+        const field = {
+          name: getNameFromOptions(options),
+          type: FieldType.number,
+          config: {},
+          values,
+        };
+        let fields: Field[] = [];
+
+        // Replace all fields with the single field
+        if (options.replaceFields) {
+          const { timeField } = getTimeField(frame);
+          if (timeField && options.timeSeries !== false) {
+            fields = [timeField, field];
+          } else {
+            fields = [field];
+          }
+        } else {
+          fields = [...frame.fields, field];
+        }
+        return {
+          ...frame,
+          fields,
+        };
+      });
+    };
   },
 };
 

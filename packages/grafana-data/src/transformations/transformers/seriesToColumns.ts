@@ -18,19 +18,21 @@ export const seriesToColumnsTransformer: SynchronousDataTransformerInfo<SeriesTo
     byField: undefined, // DEFAULT_KEY_FIELD,
   },
 
-  operator: (options) => (source) => source.pipe(map((data) => seriesToColumnsTransformer.transform(data, options))),
+  operator: (options) => (source) => source.pipe(map((data) => seriesToColumnsTransformer.transformer(options)(data))),
 
-  transform: (data: DataFrame[], options: SeriesToColumnsOptions) => {
-    if (data.length > 1) {
-      let joinBy: FieldMatcher | undefined = undefined;
-      if (options.byField) {
-        joinBy = fieldMatchers.get(FieldMatcherID.byName).get(options.byField);
+  transformer: (options: SeriesToColumnsOptions) => {
+    let joinBy: FieldMatcher | undefined = undefined;
+    return (data: DataFrame[]) => {
+      if (data.length > 1) {
+        if (options.byField && !joinBy) {
+          joinBy = fieldMatchers.get(FieldMatcherID.byName).get(options.byField);
+        }
+        const joined = outerJoinDataFrames({ frames: data, joinBy });
+        if (joined) {
+          return [joined];
+        }
       }
-      const joined = outerJoinDataFrames({ frames: data, joinBy });
-      if (joined) {
-        return [joined];
-      }
-    }
-    return data;
+      return data;
+    };
   },
 };
