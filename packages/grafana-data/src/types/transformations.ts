@@ -15,10 +15,10 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
 }
 
 /**
- * Many transforms can be called with a simple function
+ * Many transformations can be called with a simple synchronous function
  */
 export interface SynchronousDataTransformerInfo<TOptions = any> extends DataTransformerInfo<TOptions> {
-  transform: (frames: DataFrame[], options: TOptions) => DataFrame[];
+  transformer: (options: TOptions) => (frames: DataFrame[]) => DataFrame[];
 }
 
 export interface DataTransformerConfig<TOptions = any> {
