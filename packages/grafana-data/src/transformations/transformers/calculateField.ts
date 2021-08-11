@@ -14,6 +14,7 @@ import { ensureColumnsTransformer } from './ensureColumns';
 import { getFieldDisplayName } from '../../field';
 import { parseEquation } from '../../utils/math';
 import { FunctionalVector } from '../../vector/FunctionalVector';
+import { ByNamesMatcherMode } from '../matchers/nameMatcher';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
@@ -153,7 +154,10 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
   if (options.include && options.include.length) {
     matcher = getFieldMatcher({
       id: FieldMatcherID.byNames,
-      options: options.include,
+      options: {
+        mode: ByNamesMatcherMode.include,
+        names: options.include,
+      },
     });
   }
 
