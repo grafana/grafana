@@ -65,7 +65,7 @@ export const usePluginsByFilter = (queries: PluginsByFilterType): FilteredPlugin
   const { loading, error, plugins } = usePlugins();
 
   const filteredPlugins = plugins.filter((plugin) =>
-    Object.keys(queries).every((query: keyof PluginsByFilterType) =>
+    (Object.keys(queries) as Array<keyof PluginsByFilterType>).every((query) =>
       typeof URLFilterHandlers[query] === 'function' ? URLFilterHandlers[query](plugin, queries[query]) : true
     )
   );
