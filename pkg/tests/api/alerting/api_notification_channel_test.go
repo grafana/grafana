@@ -1692,7 +1692,7 @@ var expNonEmailNotifications = map[string][]string{
 	},
 	"opsgenie_recv/opsgenie_test": {
 		`{
-		  "alias": "47e92f0f6ef9fe99f3954e0d6155f8d09c4b9a038d8c3105e82c0cee4c62956e",
+		  "alias": "56ab9af043c62fa3c2e98c4e4e316fdac3410be4fc03ab98178c1d0ebd15d0e7",
 		  "description": "[FIRING:1] OpsGenieAlert \nhttp://localhost:3000/alerting/list\n\n**Firing**\n\nLabels:\n - alertname = OpsGenieAlert\nAnnotations:\nSource: http://localhost:3000/alerting/UID_OpsGenieAlert/edit\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DOpsGenieAlert\n",
 		  "details": {
 			"url": "http://localhost:3000/alerting/list"
