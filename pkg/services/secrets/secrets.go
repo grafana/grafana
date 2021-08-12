@@ -71,7 +71,7 @@ func (s *SecretsService) Init() error {
 	s.log = log.New("secrets")
 	logger.Debug("configured secrets provider", s.defaultProvider)
 
-	s.dataKeyCache = make(map[string]dataKeyCacheItem, 0)
+	s.dataKeyCache = make(map[string]dataKeyCacheItem)
 
 	util.Encrypt = s.Encrypt
 	util.Decrypt = s.Decrypt
@@ -83,6 +83,9 @@ func (s *SecretsService) Init() error {
 func (s *SecretsService) newDataKey(ctx context.Context, name string, scope string) ([]byte, error) {
 	// 1. Create new DEK
 	dataKey, err := newRandomDataKey()
+	if err != nil {
+		return nil, err
+	}
 	provider, exists := s.providers[s.defaultProvider]
 	if !exists {
 		return nil, fmt.Errorf("could not find encryption provider '%s'", s.defaultProvider)
