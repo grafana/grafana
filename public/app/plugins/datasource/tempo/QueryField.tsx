@@ -128,13 +128,20 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     const graphDatasourceUid = datasource.serviceMap?.datasourceUid;
 
     const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
-      { value: 'search', label: 'Search' },
       { value: 'traceId', label: 'TraceID' },
       { value: 'upload', label: 'JSON file' },
     ];
 
     if (config.featureToggles.tempoServiceGraph) {
       queryTypeOptions.push({ value: 'serviceMap', label: 'Service Map' });
+    }
+
+    if (config.featureToggles.tempoSearch) {
+      queryTypeOptions.unshift({ value: 'search', label: 'Search' });
+    }
+
+    if (logsDatasourceUid) {
+      queryTypeOptions.push({ value: 'lokiSearch', label: 'Loki Search' });
     }
 
     return (
