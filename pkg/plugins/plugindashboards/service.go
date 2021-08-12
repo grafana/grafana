@@ -1,7 +1,6 @@
 package plugindashboards
 
 import (
-	"fmt"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -11,7 +10,6 @@ import (
 )
 
 func ProvideService(dataService *tsdb.Service, pluginManager plugins.Manager, sqlStore *sqlstore.SQLStore) *Service {
-	fmt.Println("Run")
 	s := &Service{
 		DataService:   dataService,
 		PluginManager: pluginManager,
