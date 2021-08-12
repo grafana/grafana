@@ -73,7 +73,7 @@ Family: scuemata.#Family & {
                 schemaVersion: number | *30
                 // Version of the dashboard, incremented each time the dashboard is updated.
                 version?: number
-                panels?: [...#Panel]
+                panels?: [...(#Panel | #GraphPanel | #RowPanel)]
 
                 // TODO docs
                 #FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(targetType="enum")
@@ -205,6 +205,7 @@ Family: scuemata.#Family & {
 
                     // The values depend on panel type
                     options: {...}
+
                     fieldConfig: {
                         defaults: {
                             // The display value for this field.  This supports template variables blank is auto
@@ -288,6 +289,102 @@ Family: scuemata.#Family & {
                             }]
                         }]
                     }
+                }
+                // Row panel
+                #RowPanel: {
+                    type: "row"
+                    collapsed: bool | *false
+                    title?: string
+
+                    // Name of default datasource.
+                    datasource?: string
+
+                    gridPos?: {
+                        // Panel
+                        h: number & >0 | *9
+                        // Panel
+                        w: number & >0 & <=24 | *12
+                        // Panel x
+                        x: number & >=0 & <24 | *0
+                        // Panel y
+                        y: number & >=0 | *0
+                        // true if fixed
+                        static?: bool
+                    }
+                    id: number
+                    panels: [...#Panel | #GraphPanel]
+                }
+                // Support for legacy graph panels.
+                #GraphPanel: {
+                    ...
+                    type: "graph"
+                    thresholds: [...{...}]
+                    timeRegions: [...{...}]
+                    // FIXME this one is quite complicated, as it duplicates the #Panel object's own structure (...?)
+                    seriesOverrides: [...{...}]
+
+                    // TODO docs
+                    // TODO tighter constraint
+                    aliasColors?: [string]: string
+
+                    // TODO docs
+                    bars: bool | *false
+                    // TODO docs
+                    dashes: bool | *false
+                    // TODO docs
+                    dashLength: number | *10
+                    // TODO docs
+                    // TODO tighter constraint
+                    fill?: number
+                    // TODO docs
+                    // TODO tighter constraint
+                    fillGradient?: number
+
+                    // TODO docs
+                    hiddenSeries: bool | *false
+
+                    // FIXME idk where this comes from, leaving it very open and very wrong for now
+                    legend: {...}
+
+                    // TODO docs
+                    // TODO tighter constraint
+                    lines: bool | *false
+                    // TODO docs
+                    linewidth?: number
+                    // TODO docs
+                    nullPointMode: *"null" | "connected" | "null as zero"
+                    // TODO docs
+                    percentage: bool | *false
+                    // TODO docs
+                    points: bool | *false
+                    // TODO docs
+                    // FIXME this is the kind of case that makes
+                    // optional/non-default tricky: it's optional because it
+                    // only makes sense when points is true (right?), but if it
+                    // is, then there actually is a default value. Easier way to
+                    // represent this would be to wrap up this handling into a
+                    // struct
+                    pointradius?: number
+                    // TODO docs
+                    // TODO tighter constraint
+                    renderer: string
+                    // TODO docs
+                    spaceLength: number | *10
+                    // TODO docs
+                    stack: bool | *false
+                    // TODO docs
+                    steppedLine: bool | *false
+                    // TODO docs
+                    tooltip?: {
+                        // TODO docs
+                        shared?: bool
+                        // TODO docs
+                        sort: number | *0
+                        // TODO docs
+                        // FIXME literally no idea if these values are sane
+                        value_type: *"individual" | "cumulative"
+                    }
+
                 }
             }
 		]
