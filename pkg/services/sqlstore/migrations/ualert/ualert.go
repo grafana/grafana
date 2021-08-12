@@ -51,7 +51,6 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 	case ngEnabled && !migrationRun:
 		// Remove the migration entry that removes all unified alerting data. This is so when the feature
 		// flag is removed in future the "remove unified alerting data" migration will be run again.
-		// Add migration for running in the same transaction.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, rmMigTitle), &clearMigrationEntry{
 			migrationID: rmMigTitle,
 		})
@@ -66,7 +65,6 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 	case !ngEnabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
-		// Add migration for running in the same transaction.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, migTitle), &clearMigrationEntry{
 			migrationID: migTitle,
 		})
@@ -107,7 +105,6 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 	case !ngEnabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
-		// Add migration for running in the same transaction.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, cloneMigTitle), &clearMigrationEntry{
 			migrationID: cloneMigTitle,
 		})
@@ -118,6 +115,8 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 	}
 }
 
+// clearMigrationEntry removes an entry fromt the migration_log table.
+// This migration is not recorded in the migration_log so that it can re-run several times.
 type clearMigrationEntry struct {
 	migrator.MigrationBase
 
@@ -368,6 +367,7 @@ type AlertConfiguration struct {
 	CreatedAt                 int64 `xorm:"created"`
 }
 
+// rmMigration removes Grafana 8 alert data
 type rmMigration struct {
 	migrator.MigrationBase
 }
@@ -420,6 +420,8 @@ func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	return nil
 }
 
+// rmMigrationWithoutLogging is similar migration to rmMigration
+// but is not recorded in the migration_log table so that it can rerun in the future
 type rmMigrationWithoutLogging = rmMigration
 
 func (m *rmMigrationWithoutLogging) SkipMigrationLog() bool {
