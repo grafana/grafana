@@ -1,4 +1,4 @@
-import { GrafanaTheme2, Threshold, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
+import { GrafanaTheme2, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import { GraphThresholdsStyleConfig, GraphTresholdsStyleMode } from '../config';
 
@@ -79,10 +79,10 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
           color.setAlpha(0.7);
         }
 
-        let x0 = u.valToPos(xMin!, 'x', true);
-        let y0 = u.valToPos(step.value, scaleKey, true);
-        let x1 = u.valToPos(xMax!, 'x', true);
-        let y1 = u.valToPos(step.value, scaleKey, true);
+        let x0 = Math.round(u.valToPos(xMin!, 'x', true));
+        let y0 = Math.round(u.valToPos(step.value, scaleKey, true));
+        let x1 = Math.round(u.valToPos(xMax!, 'x', true));
+        let y1 = Math.round(u.valToPos(step.value, scaleKey, true));
 
         ctx.beginPath();
         ctx.lineWidth = 2;
@@ -128,10 +128,10 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
         let value = step.value === -Infinity ? yMin : step.value;
         let nextValue = nextStep.value === Infinity || nextStep.value > yMax! ? yMax : nextStep.value;
 
-        let x0 = u.valToPos(xMin ?? 0, 'x', true);
-        let y0 = u.valToPos(value ?? 0, scaleKey, true);
-        let x1 = u.valToPos(xMax ?? 1, 'x', true);
-        let y1 = u.valToPos(nextValue ?? 1, scaleKey, true);
+        let x0 = Math.round(u.valToPos(xMin ?? 0, 'x', true));
+        let y0 = Math.round(u.valToPos(value ?? 0, scaleKey, true));
+        let x1 = Math.round(u.valToPos(xMax ?? 1, 'x', true));
+        let y1 = Math.round(u.valToPos(nextValue ?? 1, scaleKey, true));
 
         ctx.save();
         ctx.fillStyle = color.toString();
