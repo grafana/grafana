@@ -192,6 +192,12 @@ Family: scuemata.#Family & {
                     maxDataPoints?: number
 
                     // TODO docs
+                    thresholds?: [...]
+
+                    // TODO docs
+                    timeRegions?: [...]
+
+                    // TODO docs
                     // TODO tighter constraint
                     interval?: string
 

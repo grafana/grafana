@@ -40,7 +40,7 @@ LineConfig: {
 	lineWidth?:         number
 	lineInterpolation?: LineInterpolation
 	lineStyle?:         LineStyle
-	spanNulls?:         bool
+	spanNulls?:         bool | number
 } @cuetsy(targetType="interface")
 FillConfig: {
 	fillColor?:   string
@@ -86,6 +86,8 @@ GraphFieldConfig: LineConfig & FillConfig & PointsConfig & AxisConfig & {
 VizLegendOptions: {
 	displayMode: LegendDisplayMode
 	placement:   LegendPlacement
+	asTable: bool | *false
+	isVisible: bool | *false
 	calcs: [...string]
 } @cuetsy(targetType="interface")
 VizTooltipOptions: {

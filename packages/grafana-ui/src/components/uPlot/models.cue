@@ -17,7 +17,7 @@ LineConfig: {
   lineWidth?: number
   lineInterpolation?: LineInterpolation
   lineStyle?: LineStyle
-  spanNulls?: bool
+  spanNulls?: bool | number
 } @cuetsy(targetType="interface")
 
 FillConfig: {
