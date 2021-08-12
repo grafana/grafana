@@ -361,7 +361,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
 
     return (
-      <div aria-label={selectors.components.QueryEditorRows.rows} onKeyDown={this.runOnKeyDown}>
+      <div data-testid={selectors.components.QueryEditorRows.rows} onKeyDown={this.runOnKeyDown}>
         <QueryOperationRow
           id={id}
           draggable={true}
