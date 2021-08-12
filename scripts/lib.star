@@ -1,7 +1,7 @@
 load('scripts/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 grabpl_version = '2.3.2'
-build_image = 'grafana/build-container:1.4.1'
+build_image = 'grafana/bbuild-container:uild-container:1.4.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -497,7 +497,7 @@ def test_a11y_frontend_step(edition, port=3001):
         },
         'failure': 'ignore',
         'commands': [
-            'yarn test:accessibility',
+            'yarn -s test:accessibility --json > pa11y-ci-results.json',
         ],
     }
 
@@ -510,13 +510,14 @@ def frontend_metrics_step(edition):
         'image': build_image,
         'depends_on': [
             'build-frontend',
+            'test_a11y_frontend_step',
         ],
         'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
         },
         'failure': 'ignore',
         'commands': [
-            './scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
+            './scripts/ci-frontend-metrics.sh',
         ],
     }
 
