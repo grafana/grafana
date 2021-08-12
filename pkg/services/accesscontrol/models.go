@@ -99,7 +99,7 @@ const (
 	ScopeGlobalUsersAll = "global:users:any"
 
 	// Users scope
-	ScopeUsersAll = "users:any"
+	ScopeUsersAll = "users:all"
 
 	// Settings scope
 	ScopeSettingsAll = "settings:any"
