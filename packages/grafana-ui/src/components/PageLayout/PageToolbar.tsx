@@ -63,7 +63,7 @@ export const PageToolbar: FC<Props> = React.memo(
             />
           </div>
         )}
-        <nav className={styles.navElement}>
+        <nav aria-label="Search links" className={styles.navElement}>
           {parent && parentHref && (
             <>
               <Link

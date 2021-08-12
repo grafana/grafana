@@ -44,7 +44,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
         error={error}
       />
       <div className={className}>
-        <PanelHeaderMenuTrigger aria-label={selectors.components.Panels.Panel.title(title)}>
+        <PanelHeaderMenuTrigger data-testid={selectors.components.Panels.Panel.title(title)}>
           {({ closeMenu, panelMenuOpen }) => {
             return (
               <div className="panel-title">
