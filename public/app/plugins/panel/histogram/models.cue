@@ -1,5 +1,7 @@
 package grafanaschema
 
+import ui "github.com/grafana/grafana/cue/ui:grafanaschema"
+
 Family: {
     lineages: [
         [
@@ -10,7 +12,9 @@ Family: {
                     combine?: bool
                 }
 
-                // TODO: FieldConfig
+                PanelFieldConfig: {
+                    ui.GraphFieldConfig
+                }
             }
         ]
     ]
