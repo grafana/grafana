@@ -1105,7 +1105,7 @@ For more information about the NGAlert feature in Grafana, refer to [Unified Ale
 
 ### admin_config_poll_interval_seconds
 
-Specify the frequency of polling for admin config changes. The default value is `60`
+Specify the frequency of polling for admin config changes. The default value is `60`.
 
 <hr>
 
