@@ -31,7 +31,7 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
 
       // get in-view y range for this scale
       u.series.forEach((ser) => {
-        if (ser.show && ser.scale === scaleKey) {
+        if (ser.scale === scaleKey) {
           min = Math.min(min, ser.min!);
           max = Math.max(max, ser.max!);
         }
