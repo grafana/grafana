@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -16,6 +18,7 @@ import (
 
 func TestDashboardSnapshotDBAccess(t *testing.T) {
 	InitTestDB(t)
+	util.SetEncryptionVariables(t)
 
 	origSecret := setting.SecretKey
 	setting.SecretKey = "dashboard_snapshot_testing"
@@ -129,6 +132,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 
 func TestDeleteExpiredSnapshots(t *testing.T) {
 	sqlstore := InitTestDB(t)
+	util.SetEncryptionVariables(t)
 
 	t.Run("Testing dashboard snapshots clean up", func(t *testing.T) {
 		setting.SnapShotRemoveExpired = true
