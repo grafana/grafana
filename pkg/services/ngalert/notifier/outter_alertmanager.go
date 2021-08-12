@@ -181,6 +181,7 @@ func (am *Alertmanager) UpdateInstances(orgIDs ...int64) {
 			if err := item.instance.StopAndWait(); err != nil {
 				am.logger.Error("failed to stop Alertmanager instance", "org", item.orgID, "error", err)
 			}
+			am.deleteInstance(item.orgID)
 		}
 	}
 }
@@ -190,6 +191,12 @@ func (am *Alertmanager) getInstance(orgID int64) (*alertmanager, bool) {
 	defer am.instanceMtx.RUnlock()
 	instance, ok := am.Instances[orgID]
 	return instance, ok
+}
+
+func (am *Alertmanager) deleteInstance(orgID int64) {
+	am.instanceMtx.RLock()
+	defer am.instanceMtx.RUnlock()
+	delete(am.Instances, orgID)
 }
 
 func (am *Alertmanager) addInstance(orgID int64) error {
