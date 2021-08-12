@@ -8,6 +8,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DatasourceRef,
   isValidLiveChannelAddress,
   parseLiveChannelAddress,
   StreamingFrameOptions,
@@ -17,6 +18,7 @@ import {
 import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from './types';
 import AnnotationQueryEditor from './components/AnnotationQueryEditor';
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import { isString } from 'lodash';
 
 let counter = 100;
 
@@ -37,7 +39,11 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
         return json;
       },
       prepareQuery(anno: AnnotationQuery<GrafanaAnnotationQuery>): GrafanaQuery {
-        return { ...anno, refId: anno.name, queryType: GrafanaQueryType.Annotations };
+        let datasource: DatasourceRef | undefined | null = undefined;
+        if (isString(anno.datasource)) {
+          datasource = anno.datasource as DatasourceRef;
+        }
+        return { ...anno, refId: anno.name, queryType: GrafanaQueryType.Annotations, datasource };
       },
     };
   }
