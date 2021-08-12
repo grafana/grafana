@@ -12,6 +12,7 @@ import {
   LegacyForms,
   QueryField,
   RadioButtonGroup,
+  Select,
   SlatePrism,
   Themeable2,
   TypeaheadInput,
@@ -40,6 +41,10 @@ interface State {
   serviceMapDatasourceUid?: string;
   serviceMapDatasource?: PrometheusDatasource;
   hasSyntaxLoaded: boolean;
+  serviceNameOptions: Array<SelectableValue<string>>;
+  spanNameOptions: Array<SelectableValue<string>>;
+  serviceName: SelectableValue<string> | null;
+  spanName: SelectableValue<string> | null;
 }
 
 const PRISM_LANGUAGE = 'tempo';
@@ -61,6 +66,10 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     serviceMapDatasourceUid: undefined,
     serviceMapDatasource: undefined,
     hasSyntaxLoaded: false,
+    serviceNameOptions: [] as Array<SelectableValue<string>>,
+    spanNameOptions: [] as Array<SelectableValue<string>>,
+    serviceName: null,
+    spanName: null,
   };
 
   constructor(props: Props) {
@@ -91,8 +100,11 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
   }
 
   async fetchAutocomplete() {
-    await this.props.datasource.languageProvider.start();
-    this.setState({ hasSyntaxLoaded: true });
+    const lp = this.props.datasource.languageProvider;
+    await lp.start();
+    const serviceNameOptions = await lp.getOptions('service.name');
+    const spanNameOptions = await lp.getOptions('name');
+    this.setState({ hasSyntaxLoaded: true, serviceNameOptions, spanNameOptions });
   }
 
   onChangeLinkedQuery = (value: LokiQuery) => {

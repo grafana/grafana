@@ -49,6 +49,8 @@ export type TempoQuery = {
   linkedQuery?: LokiQuery;
   search: string;
   queryType: TempoQueryType;
+  serviceName?: string;
+  spanName?: string;
   minDuration?: string;
   maxDuration?: string;
   limit?: number;

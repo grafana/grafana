@@ -1,4 +1,4 @@
-import { HistoryItem, LanguageProvider } from '@grafana/data';
+import { HistoryItem, LanguageProvider, SelectableValue } from '@grafana/data';
 import { CompletionItemGroup, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 import { Value } from 'slate';
 import { TempoDatasource } from './datasource';
@@ -85,5 +85,19 @@ export default class TempoLanguageProvider extends LanguageProvider {
       });
     }
     return { suggestions };
+  }
+
+  async getOptions(tag: string): Promise<Array<SelectableValue<string>>> {
+    const response = await this.request(`/api/search/tag/${tag}/values`, []);
+    let options: Array<SelectableValue<string>> = [];
+
+    if (response && response.tagValues) {
+      options = response.tagValues.map((v: string) => ({
+        value: v,
+        label: v,
+      }));
+    }
+
+    return options;
   }
 }
