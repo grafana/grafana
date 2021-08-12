@@ -69,8 +69,6 @@ HideSeriesConfig: {
 	tooltip: bool
 	legend:  bool
 	viz:   bool
-	// FIXME seems like this field doesn't exist anymore, but a few devenv dashboards still have it
-	graph?: bool
 } @cuetsy(targetType="interface")
 LegendPlacement:   "bottom" | "right"          @cuetsy(targetType="type")
 LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(targetType="enum")

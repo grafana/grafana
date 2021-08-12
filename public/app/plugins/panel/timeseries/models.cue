@@ -32,7 +32,8 @@ Family: {
                     ui.PointsConfig
                     ui.AxisConfig
                     drawStyle?:    ui.DrawStyle
-                    gradientMode?: ui.GraphGradientMode | {label:string, value:string}
+                    // This is to cover the specific case in new_features_in_v8.json, needs to be reviewed
+                    gradientMode?: ui.GraphGradientMode
                     hideFrom?:     ui.HideSeriesConfig
                 }
             }
