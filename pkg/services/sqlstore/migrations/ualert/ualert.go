@@ -93,7 +93,8 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 
 	switch {
 	case ngEnabled && !migrationRun:
-		// removes all unified alerting data
+		// Removes all unified alerting data.  It is not recorded so when the feature
+		// flag is removed in future the "clone remove unified alerting data" migration will be run again.
 		mg.AddMigration(cloneRmMigTitle, &rmMigrationWithoutLogging{})
 
 		mg.AddMigration(cloneMigTitle, &migration{
@@ -111,6 +112,8 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 		if err != nil {
 			mg.Logger.Error("alert migration error: could not clear clone dashboard alert migration", "error", err)
 		}
+		// Removes all unified alerting data. It is not recorded so when the feature
+		// flag is enabled in future the "clone remove unified alerting data" migration will be run again.
 		mg.AddMigration(cloneRmMigTitle, &rmMigrationWithoutLogging{})
 	}
 }
