@@ -174,7 +174,11 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, orgID int64, channelUid
 	}
 
 	var receiverName string
-	if rn, ok := m.portedChannelGroups[chanKey]; ok {
+
+	if _, ok := m.portedChannelGroupsPerOrg[orgID]; !ok {
+		m.portedChannelGroupsPerOrg[orgID] = make(map[string]string)
+	}
+	if rn, ok := m.portedChannelGroupsPerOrg[orgID][chanKey]; ok {
 		// We have ported these exact set of channels already. Re-use it.
 		receiverName = rn
 		if receiverName == "autogen-contact-point-default" {
@@ -195,7 +199,7 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, orgID int64, channelUid
 			receiverName = fmt.Sprintf("autogen-contact-point-%d", m.lastReceiverID)
 		}
 
-		m.portedChannelGroups[chanKey] = receiverName
+		m.portedChannelGroupsPerOrg[orgID][chanKey] = receiverName
 		receiver = &PostableApiReceiver{
 			Name:                    receiverName,
 			GrafanaManagedReceivers: portedChannels,

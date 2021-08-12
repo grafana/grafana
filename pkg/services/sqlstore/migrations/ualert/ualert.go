@@ -58,9 +58,9 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
 		}
 		mg.AddMigration(migTitle, &migration{
-			seenChannelUIDs:        make(map[string]struct{}),
-			migratedChannelsPerOrg: make(map[int64]map[*notificationChannel]struct{}),
-			portedChannelGroups:    make(map[string]string),
+			seenChannelUIDs:           make(map[string]struct{}),
+			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
+			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
 		})
 	case !ngEnabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
@@ -98,9 +98,9 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 		mg.AddMigration(cloneRmMigTitle, &rmMigrationWithoutLogging{})
 
 		mg.AddMigration(cloneMigTitle, &migration{
-			seenChannelUIDs:        make(map[string]struct{}),
-			migratedChannelsPerOrg: make(map[int64]map[*notificationChannel]struct{}),
-			portedChannelGroups:    make(map[string]string),
+			seenChannelUIDs:           make(map[string]struct{}),
+			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
+			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
 		})
 
 	case !ngEnabled && migrationRun:
@@ -148,11 +148,11 @@ type migration struct {
 	sess *xorm.Session
 	mg   *migrator.Migrator
 
-	seenChannelUIDs        map[string]struct{}
-	migratedChannelsPerOrg map[int64]map[*notificationChannel]struct{}
-	silences               []*pb.MeshSilence
-	portedChannelGroups    map[string]string // Channel group key -> receiver name.
-	lastReceiverID         int               // For the auto generated receivers.
+	seenChannelUIDs           map[string]struct{}
+	migratedChannelsPerOrg    map[int64]map[*notificationChannel]struct{}
+	silences                  []*pb.MeshSilence
+	portedChannelGroupsPerOrg map[int64]map[string]string // Org -> Channel group key -> receiver name.
+	lastReceiverID            int                         // For the auto generated receivers.
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
