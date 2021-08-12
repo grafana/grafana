@@ -91,7 +91,7 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 build-docker-dev: ## Build Docker image for development (fast).
 	@echo "build development container"
 	@echo "\033[92mInfo:\033[0m the frontend code is expected to be built already."
-	$(GO) run build.go -goos linux -pkg-arch amd64 ${OPT} build pkg-archive latest
+	$(GO) run build.go -goos linux -pkg-arch amd64 ${OPT} build latest
 	cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
 	cd packaging/docker && docker build --tag grafana/grafana:dev .
 
@@ -141,7 +141,7 @@ clean: ## Clean up intermediate build artifacts.
 	rm -rf public/build
 
 # This repository's configuration is protected (https://readme.drone.io/signature/).
-# Use this make target to regenerate the configuration YAML files when 
+# Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
 drone:
 	drone starlark
