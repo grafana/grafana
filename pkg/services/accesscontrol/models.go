@@ -96,13 +96,13 @@ const (
 	ActionPluginsManage = "plugins:manage"
 
 	// Global Scopes
-	ScopeGlobalUsersAll = "global:users:*"
+	ScopeGlobalUsersAll = "global:users:any"
 
 	// Users scope
-	ScopeUsersAll = "users:*"
+	ScopeUsersAll = "users:any"
 
 	// Settings scope
-	ScopeSettingsAll = "settings:**"
+	ScopeSettingsAll = "settings:any"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

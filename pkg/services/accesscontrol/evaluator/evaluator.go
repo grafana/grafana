@@ -2,6 +2,9 @@ package evaluator
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"strings"
 
 	"github.com/gobwas/glob"
 
@@ -37,8 +40,12 @@ func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, 
 	}
 
 	for _, s := range targetScopes {
+
 		var match bool
 		for dbScope := range dbScopes {
+			if strings.ContainsAny(s, "*?") {
+				panic(fmt.Sprintf("Invalid scope: %v should not contain meta-characters like * or ?", s, dbScope))
+			}
 			rule, err := glob.Compile(dbScope, ':', '/')
 			if err != nil {
 				return false, err
@@ -46,11 +53,13 @@ func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, 
 
 			match = rule.Match(s)
 			if match {
+				log.Printf("Access control: matched scope %v against permission %v\n", s, dbScope)
 				return true, nil
 			}
 		}
 	}
 
+	log.Printf("Access control: failed!  Could not match scopes  %v against permissions %v\n", targetScopes, dbScopes)
 	return false, nil
 }
 
