@@ -105,7 +105,7 @@ func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Respon
 
 	cmd := &models.DeleteDataSourceCommand{ID: id, OrgID: c.OrgId}
 
-	err = bus.Dispatch(cmd)
+	err = bus.Broadcast(cmd)
 	if err != nil {
 		return response.Error(500, "Failed to delete datasource", err)
 	}
@@ -152,7 +152,7 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Respo
 
 	cmd := &models.DeleteDataSourceCommand{UID: uid, OrgID: c.OrgId}
 
-	err = bus.Dispatch(cmd)
+	err = bus.Broadcast(cmd)
 	if err != nil {
 		return response.Error(500, "Failed to delete datasource", err)
 	}
@@ -182,7 +182,7 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Resp
 	}
 
 	cmd := &models.DeleteDataSourceCommand{Name: name, OrgID: c.OrgId}
-	err := bus.Dispatch(cmd)
+	err := bus.Broadcast(cmd)
 	if err != nil {
 		return response.Error(500, "Failed to delete datasource", err)
 	}

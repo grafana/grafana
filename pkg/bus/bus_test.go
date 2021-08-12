@@ -144,3 +144,25 @@ func TestEvent_NoRegisteredListener(t *testing.T) {
 	err := bus.Publish(&testQuery{})
 	require.NoError(t, err, "unable to publish event")
 }
+
+func TestBroadcast(t *testing.T) {
+	bus := New()
+
+	var dispatched bool
+	bus.AddHandler(func(query *testQuery) error {
+		dispatched = true
+		return nil
+	})
+
+	var published bool
+	bus.AddEventListener(func(query *testQuery) error {
+		published = true
+		return nil
+	})
+
+	err := bus.Broadcast(&testQuery{})
+	require.NoError(t, err, "failed to dispatch and publish")
+
+	require.True(t, dispatched)
+	require.True(t, published)
+}

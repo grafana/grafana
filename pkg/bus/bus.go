@@ -30,6 +30,7 @@ type Bus interface {
 	Dispatch(msg Msg) error
 	DispatchCtx(ctx context.Context, msg Msg) error
 	Publish(msg Msg) error
+	Broadcast(msg Msg) error
 
 	// InTransaction starts a transaction and store it in the context.
 	// The caller can then pass a function with multiple DispatchCtx calls that
@@ -176,6 +177,19 @@ func (b *InProcBus) Publish(msg Msg) error {
 	return nil
 }
 
+// Broadcast dispatches and publishes the message to anything interested
+func (b *InProcBus) Broadcast(msg Msg) error {
+	if err := b.Dispatch(msg); err != nil {
+		return err
+	}
+
+	if err := b.Publish(msg); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (b *InProcBus) AddHandler(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(0).Elem().Name()
@@ -231,6 +245,10 @@ func DispatchCtx(ctx context.Context, msg Msg) error {
 
 func Publish(msg Msg) error {
 	return globalBus.Publish(msg)
+}
+
+func Broadcast(msg Msg) error {
+	return globalBus.Broadcast(msg)
 }
 
 func GetHandlerCtx(name string) HandlerFunc {
