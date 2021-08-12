@@ -96,7 +96,7 @@ const (
 	ActionPluginsManage = "plugins:manage"
 
 	// Global Scopes
-	ScopeGlobalUsersAll = "global:users:any"
+	ScopeGlobalUsersAll = "global:users:all"
 
 	// Users scope
 	ScopeUsersAll = "users:all"
