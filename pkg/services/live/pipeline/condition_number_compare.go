@@ -33,6 +33,8 @@ func (f NumberCompareCondition) CheckCondition(_ context.Context, frame *data.Fr
 				return *value <= f.Value, nil
 			case "lt":
 				return *value < f.Value, nil
+			default:
+				return false, fmt.Errorf("unknown operator: %s", f.Op)
 			}
 		}
 	}

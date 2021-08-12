@@ -11,12 +11,16 @@ import (
 	"github.com/ohler55/ojg/oj"
 )
 
-type ExactJsonConverter struct {
+type ExactJsonConverterConfig struct {
 	Fields []Field
 }
 
-func NewExactJsonConverter(fields []Field) *ExactJsonConverter {
-	return &ExactJsonConverter{Fields: fields}
+type ExactJsonConverter struct {
+	config ExactJsonConverterConfig
+}
+
+func NewExactJsonConverter(c ExactJsonConverterConfig) *ExactJsonConverter {
+	return &ExactJsonConverter{config: c}
 }
 
 // Automatic conversion works this way:
@@ -33,10 +37,11 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, payload []byt
 
 	var fields []*data.Field
 
-	for _, f := range c.Fields {
+	for _, f := range c.config.Fields {
 		field := data.NewFieldFromFieldType(f.Type, 1)
 		field.Name = f.Name
 		if strings.HasPrefix(f.Value, "$") {
+			// JSON path.
 			x, err := jp.ParseString(f.Value[1:])
 			if err != nil {
 				return nil, err
@@ -71,6 +76,7 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, payload []byt
 				return nil, errors.New("too many values")
 			}
 		} else if strings.HasPrefix(f.Value, "{") {
+			// Goja script.
 			// TODO: reuse vm for JSON parsing.
 			script := strings.Trim(f.Value, "{}")
 			switch f.Type {
@@ -88,6 +94,8 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, payload []byt
 				field.SetConcrete(0, v)
 			}
 		} else if f.Value == "#{now}" {
+			// Variable.
+			// TODO: make consistent with Grafana variables?
 			field.SetConcrete(0, time.Now())
 		}
 
@@ -109,10 +117,16 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, payload []byt
 				} else {
 					return nil, errors.New("too many values for a label")
 				}
+			} else if strings.HasPrefix(label.Value, "{") {
+				script := strings.Trim(f.Value, "{}")
+				v, err := GetString(payload, script)
+				if err != nil {
+					return nil, err
+				}
+				labels[label.Name] = v
 			}
 		}
 		field.Labels = labels
-
 		fields = append(fields, field)
 	}
 

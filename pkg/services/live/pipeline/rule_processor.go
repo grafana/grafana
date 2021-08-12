@@ -21,8 +21,8 @@ func NewRuleProcessor(pipeline *Pipeline) *RuleProcessor {
 	}
 }
 
-func (p *RuleProcessor) DataToFrame(ctx context.Context, orgID int64, channel string, body []byte) (*data.Frame, bool, error) {
-	rule, ruleOk, err := p.pipeline.Get(orgID, channel)
+func (p *RuleProcessor) DataToFrame(ctx context.Context, orgID int64, channelID string, body []byte) (*data.Frame, bool, error) {
+	rule, ruleOk, err := p.pipeline.Get(orgID, channelID)
 	if err != nil {
 		logger.Error("Error getting rule", "error", err, "data", string(body))
 		return nil, false, err
@@ -30,18 +30,21 @@ func (p *RuleProcessor) DataToFrame(ctx context.Context, orgID int64, channel st
 	if !ruleOk {
 		return nil, false, nil
 	}
+	if rule.Converter == nil {
+		return nil, false, nil
+	}
 
-	liveChannel, _ := live.ParseChannel(channel)
+	channel, err := live.ParseChannel(channelID)
+	if err != nil {
+		logger.Error("Error parsing channel", "error", err, "channel", channelID)
+		return nil, false, err
+	}
 
 	vars := Vars{
 		OrgID:     orgID,
-		Scope:     liveChannel.Scope,
-		Namespace: liveChannel.Namespace,
-		Path:      liveChannel.Path,
-	}
-
-	if rule.Converter == nil {
-		return nil, false, nil
+		Scope:     channel.Scope,
+		Namespace: channel.Namespace,
+		Path:      channel.Path,
 	}
 
 	frame, err := rule.Converter.Convert(ctx, vars, body)
@@ -53,23 +56,29 @@ func (p *RuleProcessor) DataToFrame(ctx context.Context, orgID int64, channel st
 	return frame, true, nil
 }
 
-func (p *RuleProcessor) ProcessFrame(ctx context.Context, orgID int64, channel string, frame *data.Frame) error {
-	rule, ruleOk, err := p.pipeline.Get(orgID, channel)
+func (p *RuleProcessor) ProcessFrame(ctx context.Context, orgID int64, channelID string, frame *data.Frame) error {
+	rule, ruleOk, err := p.pipeline.Get(orgID, channelID)
 	if err != nil {
 		logger.Error("Error getting rule", "error", err)
 		return err
 	}
 	if !ruleOk {
+		logger.Debug("Rule not found", "channel", channelID)
 		return nil
 	}
 
-	liveChannel, _ := live.ParseChannel(channel)
+	channel, err := live.ParseChannel(channelID)
+	if err != nil {
+		logger.Error("Error parsing channel", "error", err, "channel", channelID)
+		return err
+	}
+
 	vars := ProcessorVars{
 		Vars: Vars{
 			OrgID:     orgID,
-			Scope:     liveChannel.Scope,
-			Namespace: liveChannel.Namespace,
-			Path:      liveChannel.Path,
+			Scope:     channel.Scope,
+			Namespace: channel.Namespace,
+			Path:      channel.Path,
 		},
 	}
 

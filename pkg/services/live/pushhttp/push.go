@@ -47,20 +47,22 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 		{
 			OrgId:     1,
 			Pattern:   "stream/test/auto",
-			Converter: pipeline.NewAutoJsonConverter(nil),
+			Converter: pipeline.NewAutoJsonConverter(pipeline.AutoJsonConverterConfig{}),
 			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
 		},
 		{
 			OrgId:   1,
 			Pattern: "stream/test/tip",
-			Converter: pipeline.NewAutoJsonConverter(map[string]pipeline.Field{
-				"value3": {
-					Name: "value3",
-					Type: data.FieldTypeNullableFloat64,
-				},
-				"value4": {
-					Name: "value4",
-					Type: data.FieldTypeNullableFloat64,
+			Converter: pipeline.NewAutoJsonConverter(pipeline.AutoJsonConverterConfig{
+				FieldTips: map[string]pipeline.Field{
+					"value3": {
+						Name: "value3",
+						Type: data.FieldTypeNullableFloat64,
+					},
+					"value4": {
+						Name: "value4",
+						Type: data.FieldTypeNullableFloat64,
+					},
 				},
 			}),
 			Processor: pipeline.NewDropFieldsProcessor("value2"),
@@ -69,58 +71,60 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 		{
 			OrgId:   1,
 			Pattern: "stream/test/exact",
-			Converter: pipeline.NewExactJsonConverter([]pipeline.Field{
-				{
-					Name:  "time",
-					Type:  data.FieldTypeTime,
-					Value: "#{now}",
-				},
-				{
-					Name:  "value1",
-					Type:  data.FieldTypeNullableFloat64,
-					Value: "$.value1",
-				},
-				{
-					Name:  "value2",
-					Type:  data.FieldTypeNullableFloat64,
-					Value: "$.value2",
-				},
-				{
-					Name:  "value3",
-					Type:  data.FieldTypeNullableFloat64,
-					Value: "$.value3",
-					Labels: []pipeline.Label{
-						{
-							Name:  "host",
-							Value: "$.host",
+			Converter: pipeline.NewExactJsonConverter(pipeline.ExactJsonConverterConfig{
+				Fields: []pipeline.Field{
+					{
+						Name:  "time",
+						Type:  data.FieldTypeTime,
+						Value: "#{now}",
+					},
+					{
+						Name:  "value1",
+						Type:  data.FieldTypeNullableFloat64,
+						Value: "$.value1",
+					},
+					{
+						Name:  "value2",
+						Type:  data.FieldTypeNullableFloat64,
+						Value: "$.value2",
+					},
+					{
+						Name:  "value3",
+						Type:  data.FieldTypeNullableFloat64,
+						Value: "$.value3",
+						Labels: []pipeline.Label{
+							{
+								Name:  "host",
+								Value: "$.host",
+							},
 						},
 					},
-				},
-				{
-					Name:  "map.red",
-					Type:  data.FieldTypeNullableFloat64,
-					Value: "$.map.red",
-					Labels: []pipeline.Label{
-						{
-							Name:  "host",
-							Value: "$.host",
+					{
+						Name:  "map.red",
+						Type:  data.FieldTypeNullableFloat64,
+						Value: "$.map.red",
+						Labels: []pipeline.Label{
+							{
+								Name:  "host",
+								Value: "$.host",
+							},
 						},
 					},
-				},
-				{
-					Name:  "annotation",
-					Type:  data.FieldTypeNullableString,
-					Value: "$.annotation",
-				},
-				{
-					Name:  "running",
-					Type:  data.FieldTypeNullableBool,
-					Value: "{JSON.parse(x).status === 'running'}",
-				},
-				{
-					Name:  "num_map_colors",
-					Type:  data.FieldTypeNullableFloat64,
-					Value: "{Object.keys(JSON.parse(x).map).length}",
+					{
+						Name:  "annotation",
+						Type:  data.FieldTypeNullableString,
+						Value: "$.annotation",
+					},
+					{
+						Name:  "running",
+						Type:  data.FieldTypeNullableBool,
+						Value: "{JSON.parse(x).status === 'running'}",
+					},
+					{
+						Name:  "num_map_colors",
+						Type:  data.FieldTypeNullableFloat64,
+						Value: "{Object.keys(JSON.parse(x).map).length}",
+					},
 				},
 			}),
 			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{

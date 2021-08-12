@@ -6,20 +6,24 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type AutoJsonConverter struct {
+type AutoJsonConverterConfig struct {
 	FieldTips map[string]Field
 }
 
-func NewAutoJsonConverter(fieldTips map[string]Field) *AutoJsonConverter {
-	return &AutoJsonConverter{FieldTips: fieldTips}
+type AutoJsonConverter struct {
+	config AutoJsonConverterConfig
+}
+
+func NewAutoJsonConverter(c AutoJsonConverterConfig) *AutoJsonConverter {
+	return &AutoJsonConverter{config: c}
 }
 
 // Automatic conversion works this way:
 // * Time added automatically
 // * Nulls dropped
-// To preserve nulls and extract time we need tips from a user:
-// * Field types
-// * Time column with time format
+// To preserve nulls we need FieldTips from a user.
+// Custom time can be injected on Processor stage theoretically.
+// Custom labels can be injected on Processor stage theoretically.
 func (c *AutoJsonConverter) Convert(_ context.Context, vars Vars, data []byte) (*data.Frame, error) {
-	return JSONDocToFrame(vars.Path, data, c.FieldTips)
+	return JSONDocToFrame(vars.Path, data, c.config.FieldTips)
 }
