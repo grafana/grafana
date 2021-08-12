@@ -3,7 +3,7 @@ import { render, waitFor } from '@testing-library/react';
 import { configureStore } from 'app/store/configureStore';
 import { Provider } from 'react-redux';
 import { RuleList } from './RuleList';
-import { byTestId, byText } from 'testing-library-selector';
+import { byRole, byTestId, byText } from 'testing-library-selector';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { getAllDataSources } from './utils/config';
 import { fetchRules } from './api/prometheus';
@@ -77,6 +77,7 @@ const ui = {
   ruleRow: byTestId('row'),
   expandedContent: byTestId('expanded-content'),
   rulesFilterInput: byTestId('search-query-input'),
+  moreErrorsButton: byRole('button', { name: /more errors/ }),
 };
 
 describe('RuleList', () => {
@@ -164,6 +165,10 @@ describe('RuleList', () => {
 
     const errors = await ui.cloudRulesSourceErrors.find();
 
+    expect(errors).not.toHaveTextContent(
+      'Failed to load rules state from Prometheus-broken: this datasource is broken'
+    );
+    userEvent.click(ui.moreErrorsButton.get());
     expect(errors).toHaveTextContent('Failed to load rules state from Prometheus-broken: this datasource is broken');
   });
 
