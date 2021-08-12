@@ -3,8 +3,9 @@ package evaluator
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/gobwas/glob"
 
@@ -39,12 +40,13 @@ func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, 
 		return true, nil
 	}
 
+	logger := log.New("accesscontrol.permissioncheck")
 	for _, s := range targetScopes {
 
 		var match bool
 		for dbScope := range dbScopes {
 			if strings.ContainsAny(s, "*?") {
-				panic(fmt.Sprintf("Invalid scope: %v should not contain meta-characters like * or ?", s, dbScope))
+				logger.Error(fmt.Sprintf("Invalid scope: %v should not contain meta-characters like * or ?", s, dbScope))
 			}
 			rule, err := glob.Compile(dbScope, ':', '/')
 			if err != nil {
@@ -53,13 +55,13 @@ func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, 
 
 			match = rule.Match(s)
 			if match {
-				log.Printf("Access control: matched scope %v against permission %v\n", s, dbScope)
+				logger.Debug(fmt.Sprintf("Access control: matched scope %v against permission %v", s, dbScope))
 				return true, nil
 			}
 		}
 	}
 
-	log.Printf("Access control: failed!  Could not match scopes  %v against permissions %v\n", targetScopes, dbScopes)
+	logger.Debug(fmt.Sprintf("Access control: failed!  Could not match scopes  %v against permissions %v", targetScopes, dbScopes))
 	return false, nil
 }
 
