@@ -175,7 +175,7 @@ steps:
       from_secret: grafana_misc_stats_api_key
   failure: ignore
   depends_on:
-  - build-frontend
+  - test-a11y-frontend
 
 - name: build-frontend-docs
   image: grafana/build-container:1.4.1
@@ -469,7 +469,7 @@ steps:
       from_secret: grafana_misc_stats_api_key
   failure: ignore
   depends_on:
-  - build-frontend
+  - test-a11y-frontend
 
 - name: build-frontend-docs
   image: grafana/build-container:1.4.1
@@ -3551,9 +3551,5 @@ name: drone_token
 get:
   path: infra/data/ci/drone
   name: machine-user-token
-
----
-kind: signature
-hmac: 502ed3111788446049b243b8949c5145858ce7f5fd9a7bc2cc270be24e5bc987
 
 ...
