@@ -101,10 +101,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) 
 		for _, ancestor := range ancestors {
 			pluginPath = filepath.Join(pluginPath, ancestor)
 			if parentPlugin, ok := loadedPlugins[pluginPath]; ok {
-				plugin.Parent = &plugins.PluginV2{
-					JSONData:  parentPlugin.JSONData,
-					PluginDir: pluginPath,
-				}
+				plugin.Parent = parentPlugin
 				plugin.Parent.Children = append(plugin.Parent.Children, plugin)
 				break
 			}

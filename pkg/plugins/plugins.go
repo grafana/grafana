@@ -21,6 +21,7 @@ type PluginV2 struct {
 	Pinned          bool
 
 	// signature fields
+	Signature     PluginSignatureStatus
 	SignatureType PluginSignatureType
 	SignatureOrg  string
 	Parent        *PluginV2
@@ -37,20 +38,19 @@ type PluginV2 struct {
 // JSONData represents the plugin's plugin.json
 type JSONData struct {
 	// Common settings
-	Type         PluginType            `json:"type"`
-	Name         string                `json:"name"`
-	ID           string                `json:"id"`
-	Info         PluginInfo            `json:"info"`
-	Dependencies PluginDependencies    `json:"dependencies"`
-	Includes     []*PluginInclude      `json:"includes"`
-	Module       string                `json:"module"`
-	BaseURL      string                `json:"baseUrl"`
-	Category     string                `json:"category"`
-	HideFromList bool                  `json:"hideFromList,omitempty"`
-	Preload      bool                  `json:"preload"`
-	State        PluginState           `json:"state,omitempty"`
-	Signature    PluginSignatureStatus `json:"signature"`
-	Backend      bool                  `json:"backend"`
+	ID           string             `json:"id"`
+	Type         PluginType         `json:"type"`
+	Name         string             `json:"name"`
+	Info         PluginInfo         `json:"info"`
+	Dependencies PluginDependencies `json:"dependencies"`
+	Includes     []*PluginInclude   `json:"includes"`
+	State        PluginState        `json:"state,omitempty"`
+	Module       string             `json:"module"`
+	BaseURL      string             `json:"baseUrl"`
+	Category     string             `json:"category"`
+	HideFromList bool               `json:"hideFromList,omitempty"`
+	Preload      bool               `json:"preload"`
+	Backend      bool               `json:"backend"`
 
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`

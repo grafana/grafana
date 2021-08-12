@@ -4,7 +4,10 @@ import (
 	"errors"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/google/go-cmp/cmp"
 
@@ -102,7 +105,6 @@ func TestLoader_LoadAll(t *testing.T) {
 							{Name: "RDS", Path: "dashboards/RDS.json", Type: "dashboard"},
 						},
 						Category:     "cloud",
-						Signature:    "internal",
 						Annotations:  true,
 						Metrics:      true,
 						Alerting:     true,
@@ -110,6 +112,7 @@ func TestLoader_LoadAll(t *testing.T) {
 						QueryOptions: map[string]bool{"minInterval": true},
 					},
 					PluginDir: filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch"),
+					Signature: "internal",
 					Class:     "core",
 				},
 			},
@@ -134,11 +137,11 @@ func TestLoader_LoadAll(t *testing.T) {
 							},
 							Description: "Test",
 						},
-						Backend:   true,
-						Signature: "unsigned",
-						State:     "alpha",
+						Backend: true,
+						State:   "alpha",
 					},
 					PluginDir: filepath.Join(currentPath, "testdata/unsigned-datasource/plugin/"),
+					Signature: "unsigned",
 					Class:     "bundled",
 				},
 			},
@@ -163,6 +166,85 @@ func TestLoader_LoadAll(t *testing.T) {
 	}
 }
 
+func TestLoader_loadNestedPlugins(t *testing.T) {
+	currentPath, err := filepath.Abs(".")
+	if err != nil {
+		t.Errorf("could not construct absolute path of current dir")
+		return
+	}
+	parent := &plugins.PluginV2{
+		JSONData: plugins.JSONData{
+			ID:   "test-ds",
+			Type: "datasource",
+			Name: "Parent",
+			Info: plugins.PluginInfo{
+				Author: plugins.PluginInfoLink{
+					Name: "Grafana Labs",
+					Url:  "http://grafana.com",
+				},
+				Description: "Parent plugin",
+				Version:     "1.0.0",
+				Updated:     "2020-10-20",
+			},
+			Backend: true,
+		},
+		PluginDir:     filepath.Join(currentPath, "testdata/nested-plugins/parent"),
+		Signature:     "valid",
+		SignatureType: plugins.GrafanaType,
+		SignatureOrg:  "Grafana Labs",
+		Class:         "external",
+	}
+
+	child := &plugins.PluginV2{
+		JSONData: plugins.JSONData{
+			ID:   "test-panel",
+			Type: "panel",
+			Name: "Child",
+			Info: plugins.PluginInfo{
+				Author: plugins.PluginInfoLink{
+					Name: "Grafana Labs",
+					Url:  "http://grafana.com",
+				},
+				Description: "Child plugin",
+				Version:     "1.0.1",
+				Updated:     "2020-10-30",
+			},
+		},
+		PluginDir:     filepath.Join(currentPath, "testdata/nested-plugins/parent/nested"),
+		Signature:     "valid",
+		SignatureType: plugins.GrafanaType,
+		SignatureOrg:  "Grafana Labs",
+		Class:         "external",
+	}
+
+	parent.Children = []*plugins.PluginV2{child}
+	child.Parent = parent
+
+	expected := []*plugins.PluginV2{parent, child}
+
+	t.Run("Load nested External plugins", func(t *testing.T) {
+		l := &Loader{
+			Cfg: &setting.Cfg{
+				PluginsPath: filepath.Join(currentPath, "testdata/nested-plugins"),
+			},
+			log: &FakeLogger{},
+		}
+		pluginJSONPaths := []string{
+			"./testdata/nested-plugins/parent/plugin.json",
+			"./testdata/nested-plugins/parent/nested/plugin.json",
+		}
+		got, err := l.LoadAll(pluginJSONPaths)
+		assert.NoError(t, err)
+		assert.Len(t, got, 2)
+
+		// to ensure we can compare with expected
+		sort.SliceStable(got, func(i, j int) bool {
+			return got[i].ID < got[j].ID
+		})
+
+		assert.True(t, cmp.Equal(got, expected))
+	})
+}
 func TestLoader_readPluginJSON(t *testing.T) {
 	tests := []struct {
 		name           string
