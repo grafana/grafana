@@ -74,7 +74,6 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
-
 	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: c.OrgId}
 	if err := srv.store.GetLatestAlertmanagerConfiguration(&query); err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {

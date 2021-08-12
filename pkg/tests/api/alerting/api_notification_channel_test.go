@@ -727,7 +727,7 @@ const alertmanagerConfig = `
         "grafana_managed_receiver_configs": [
           {
             "name": "line_test",
-            "type": "line",
+            "type": "LINE",
             "settings": {},
             "secureSettings": {
               "token": "mysecrettoken"
@@ -1221,7 +1221,7 @@ var expAlertmanagerConfigFromAPI = `
           {
             "uid": "",
             "name": "line_test",
-            "type": "line",
+            "type": "LINE",
             "disableResolveMessage": false,
             "settings": {},
             "secureFields": {

@@ -4,7 +4,7 @@ import { GrafanaPlugin, PluginMeta } from './plugin';
 import { PanelData } from './panel';
 import { LogRowModel } from './logs';
 import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotations';
-import { DataTopic, KeyValue, LoadingState, TableData, TimeSeries } from './data';
+import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
@@ -12,6 +12,7 @@ import { CoreApp } from './app';
 import { LiveChannelSupport } from './live';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
+import { DataQuery } from './query';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -205,6 +206,9 @@ abstract class DataSourceApi<
     this.type = instanceSettings.type;
     this.meta = {} as DataSourcePluginMeta;
     this.uid = instanceSettings.uid;
+    if (!this.uid) {
+      this.uid = this.name; // Internal datasources do not have a UID (-- Grafana --)
+    }
   }
 
   /**
@@ -428,44 +432,6 @@ export interface DataQueryResponse {
    * Defaults to LoadingState.Done if state is not defined
    */
   state?: LoadingState;
-}
-
-/**
- * These are the common properties available to all queries in all datasources
- * Specific implementations will extend this interface adding the required properties
- * for the given context
- */
-export interface DataQuery {
-  /**
-   * A - Z
-   */
-  refId: string;
-
-  /**
-   * true if query is disabled (ie should not be returned to the dashboard)
-   */
-  hide?: boolean;
-
-  /**
-   * Unique, guid like, string used in explore mode
-   */
-  key?: string;
-
-  /**
-   * Specify the query flavor
-   */
-  queryType?: string;
-
-  /**
-   * The data topic results should be attached to
-   */
-  dataTopic?: DataTopic;
-
-  /**
-   * For mixed data sources the selected datasource is on the query level.
-   * For non mixed scenarios this is undefined.
-   */
-  datasource?: string | null;
 }
 
 export enum DataQueryErrorType {

@@ -6,7 +6,9 @@ import {
   handleMetricsAutoCompleteError,
   handleTagsAutoCompleteError,
 } from './helpers';
-import { AngularDropdownOptions, GraphiteSegment, GraphiteTag } from '../types';
+import { GraphiteSegment, GraphiteTag, GraphiteTagOperator } from '../types';
+import { mapSegmentsToSelectables, mapStringsToSelectables } from '../components/helpers';
+import { SelectableValue } from '@grafana/data';
 
 /**
  * Providers are hooks for views to provide temporal data for autocomplete. They don't modify the state.
@@ -19,7 +21,7 @@ import { AngularDropdownOptions, GraphiteSegment, GraphiteTag } from '../types';
  * - mixed list of metrics and tags (only when nothing was selected)
  * - list of metric names (if a metric name was selected for this segment)
  */
-export async function getAltSegments(
+async function getAltSegments(
   state: GraphiteQueryEditorState,
   index: number,
   prefix: string
@@ -90,25 +92,29 @@ export async function getAltSegments(
   return [];
 }
 
-export function getTagOperators(): AngularDropdownOptions[] {
-  return mapToDropdownOptions(GRAPHITE_TAG_OPERATORS);
+export async function getAltSegmentsSelectables(
+  state: GraphiteQueryEditorState,
+  index: number,
+  prefix: string
+): Promise<Array<SelectableValue<GraphiteSegment>>> {
+  return mapSegmentsToSelectables(await getAltSegments(state, index, prefix));
+}
+
+export function getTagOperatorsSelectables(): Array<SelectableValue<GraphiteTagOperator>> {
+  return mapStringsToSelectables(GRAPHITE_TAG_OPERATORS);
 }
 
 /**
  * Returns tags as dropdown options
  */
-export async function getTags(
-  state: GraphiteQueryEditorState,
-  index: number,
-  tagPrefix: string
-): Promise<AngularDropdownOptions[]> {
+async function getTags(state: GraphiteQueryEditorState, index: number, tagPrefix: string): Promise<string[]> {
   try {
     const tagExpressions = state.queryModel.renderTagExpressions(index);
     const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
 
     const altTags = map(values, 'text');
     altTags.splice(0, 0, state.removeTagValue);
-    return mapToDropdownOptions(altTags);
+    return altTags;
   } catch (err) {
     handleTagsAutoCompleteError(state, err);
   }
@@ -116,15 +122,20 @@ export async function getTags(
   return [];
 }
 
+export async function getTagsSelectables(
+  state: GraphiteQueryEditorState,
+  index: number,
+  tagPrefix: string
+): Promise<Array<SelectableValue<string>>> {
+  return mapStringsToSelectables(await getTags(state, index, tagPrefix));
+}
+
 /**
  * List of tags when a tag is added. getTags is used for editing.
  * When adding - segment is used. When editing - dropdown is used.
  */
-export async function getTagsAsSegments(
-  state: GraphiteQueryEditorState,
-  tagPrefix: string
-): Promise<GraphiteSegment[]> {
-  let tagsAsSegments: GraphiteSegment[] = [];
+async function getTagsAsSegments(state: GraphiteQueryEditorState, tagPrefix: string): Promise<GraphiteSegment[]> {
+  let tagsAsSegments: GraphiteSegment[];
   try {
     const tagExpressions = state.queryModel.renderTagExpressions();
     const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
@@ -143,12 +154,19 @@ export async function getTagsAsSegments(
   return tagsAsSegments;
 }
 
-export async function getTagValues(
+export async function getTagsAsSegmentsSelectables(
+  state: GraphiteQueryEditorState,
+  tagPrefix: string
+): Promise<Array<SelectableValue<GraphiteSegment>>> {
+  return mapSegmentsToSelectables(await getTagsAsSegments(state, tagPrefix));
+}
+
+async function getTagValues(
   state: GraphiteQueryEditorState,
   tag: GraphiteTag,
   index: number,
   valuePrefix: string
-): Promise<AngularDropdownOptions[]> {
+): Promise<string[]> {
   const tagExpressions = state.queryModel.renderTagExpressions(index);
   const tagKey = tag.key;
   const values = await state.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix, {});
@@ -158,7 +176,16 @@ export async function getTagValues(
     altValues.push('${' + variable.name + ':regex}');
   });
 
-  return mapToDropdownOptions(altValues);
+  return altValues;
+}
+
+export async function getTagValuesSelectables(
+  state: GraphiteQueryEditorState,
+  tag: GraphiteTag,
+  index: number,
+  valuePrefix: string
+): Promise<Array<SelectableValue<string>>> {
+  return mapStringsToSelectables(await getTagValues(state, tag, index, valuePrefix));
 }
 
 /**
@@ -181,10 +208,4 @@ async function addAltTagSegments(
 
 function removeTaggedEntry(altSegments: GraphiteSegment[]) {
   remove(altSegments, (s) => s.value === '_tagged');
-}
-
-function mapToDropdownOptions(results: string[]) {
-  return map(results, (value) => {
-    return { text: value, value: value };
-  });
 }

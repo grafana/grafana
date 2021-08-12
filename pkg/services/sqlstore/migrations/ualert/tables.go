@@ -268,7 +268,6 @@ func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("alert alert_configuration alertmanager_configuration column from TEXT to MEDIUMTEXT if mysql", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE alert_configuration MODIFY alertmanager_configuration MEDIUMTEXT;"))
 
-	// add org_id column; set default to 1 (Main org.)
 	mg.AddMigration("add column org_id in alert_configuration", migrator.NewAddColumnMigration(alertConfiguration, &migrator.Column{
 		Name: "org_id", Type: migrator.DB_BigInt, Nullable: false, Default: "0",
 	}))

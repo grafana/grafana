@@ -73,6 +73,8 @@ const (
 	}
 }
 `
+	//TODO: temporary until fix org isolation
+	mainOrgID = 1
 )
 
 type alertmanager struct {
@@ -208,7 +210,7 @@ func (am *alertmanager) StopAndWait() error {
 
 // SaveAndApplyDefaultConfig saves the default configuration the database and applies the configuration to the alertmanager.
 // It rollbacks the save if we fail to apply the configuration.
-func (am *alertmanager) SaveAndApplyDefaultConfig() error {
+func (am *alertmanager) SaveAndApplyDefaultConfig(orgID int64) error {
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
@@ -240,7 +242,7 @@ func (am *alertmanager) SaveAndApplyDefaultConfig() error {
 
 // SaveAndApplyConfig saves the configuration the database and applies the configuration to the alertmanager.
 // It rollbacks the save if we fail to apply the configuration.
-func (am *alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
+func (am *alertmanager) SaveAndApplyConfig(orgID int64, cfg *apimodels.PostableUserConfig) error {
 	rawConfig, err := json.Marshal(&cfg)
 	if err != nil {
 		return fmt.Errorf("failed to serialize to the Alertmanager configuration for org %d: %w", am.orgID, err)
@@ -483,7 +485,7 @@ func (am *alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewDiscordNotifier(cfg, tmpl)
 		case "googlechat":
 			n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
-		case "line":
+		case "LINE":
 			n, err = channels.NewLineNotifier(cfg, tmpl)
 		case "threema":
 			n, err = channels.NewThreemaNotifier(cfg, tmpl)

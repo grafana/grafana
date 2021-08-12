@@ -23,6 +23,8 @@ var migTitle = "move dashboard alerts to unified alerting"
 
 var rmMigTitle = "remove unified alerting data"
 
+const clearMigrationEntryTitle = "clear migration entry %q"
+
 type MigrationError struct {
 	AlertId int64
 	Err     error
@@ -49,24 +51,95 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 	case ngEnabled && !migrationRun:
 		// Remove the migration entry that removes all unified alerting data. This is so when the feature
 		// flag is removed in future the "remove unified alerting data" migration will be run again.
-		err = mg.ClearMigrationEntry(rmMigTitle)
+		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, rmMigTitle), &clearMigrationEntry{
+			migrationID: rmMigTitle,
+		})
 		if err != nil {
 			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
 		}
 		mg.AddMigration(migTitle, &migration{
-			seenChannelUIDs:        make(map[string]struct{}),
-			migratedChannelsPerOrg: make(map[int64]map[*notificationChannel]struct{}),
-			portedChannelGroups:    make(map[string]string),
+			seenChannelUIDs:           make(map[string]struct{}),
+			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
+			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
 		})
 	case !ngEnabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
-		err = mg.ClearMigrationEntry(migTitle)
+		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, migTitle), &clearMigrationEntry{
+			migrationID: migTitle,
+		})
 		if err != nil {
 			mg.Logger.Error("alert migration error: could not clear dashboard alert migration", "error", err)
 		}
 		mg.AddMigration(rmMigTitle, &rmMigration{})
 	}
+}
+
+// RerunDashAlertMigration force the dashboard alert migration to run
+// to make sure that the Alertmanager configurations will be created for each organisation
+func RerunDashAlertMigration(mg *migrator.Migrator) {
+	logs, err := mg.GetMigrationLog()
+	if err != nil {
+		mg.Logger.Crit("alert migration failure: could not get migration log", "error", err)
+		os.Exit(1)
+	}
+
+	cloneMigTitle := fmt.Sprintf("clone %s", migTitle)
+	cloneRmMigTitle := fmt.Sprintf("clone %s", rmMigTitle)
+
+	_, migrationRun := logs[cloneMigTitle]
+
+	ngEnabled := mg.Cfg.IsNgAlertEnabled()
+
+	switch {
+	case ngEnabled && !migrationRun:
+		// Removes all unified alerting data.  It is not recorded so when the feature
+		// flag is removed in future the "clone remove unified alerting data" migration will be run again.
+		mg.AddMigration(cloneRmMigTitle, &rmMigrationWithoutLogging{})
+
+		mg.AddMigration(cloneMigTitle, &migration{
+			seenChannelUIDs:           make(map[string]struct{}),
+			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
+			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
+		})
+
+	case !ngEnabled && migrationRun:
+		// Remove the migration entry that creates unified alerting data. This is so when the feature
+		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
+		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, cloneMigTitle), &clearMigrationEntry{
+			migrationID: cloneMigTitle,
+		})
+		if err != nil {
+			mg.Logger.Error("alert migration error: could not clear clone dashboard alert migration", "error", err)
+		}
+		// Removes all unified alerting data. It is not recorded so when the feature
+		// flag is enabled in future the "clone remove unified alerting data" migration will be run again.
+		mg.AddMigration(cloneRmMigTitle, &rmMigrationWithoutLogging{})
+	}
+}
+
+// clearMigrationEntry removes an entry fromt the migration_log table.
+// This migration is not recorded in the migration_log so that it can re-run several times.
+type clearMigrationEntry struct {
+	migrator.MigrationBase
+
+	migrationID string
+}
+
+func (m *clearMigrationEntry) SQL(dialect migrator.Dialect) string {
+	return "clear migration entry code migration"
+}
+
+func (m *clearMigrationEntry) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	_, err := sess.SQL(`DELETE from migration_log where migration_id = ?`, m.migrationID).Query()
+	if err != nil {
+		return fmt.Errorf("failed to clear migration entry %v: %w", m.migrationID, err)
+	}
+	return nil
+}
+
+func (m *clearMigrationEntry) SkipMigrationLog() bool {
+	return true
 }
 
 type migration struct {
@@ -75,11 +148,11 @@ type migration struct {
 	sess *xorm.Session
 	mg   *migrator.Migrator
 
-	seenChannelUIDs        map[string]struct{}
-	migratedChannelsPerOrg map[int64]map[*notificationChannel]struct{}
-	silences               []*pb.MeshSilence
-	portedChannelGroups    map[string]string // Channel group key -> receiver name.
-	lastReceiverID         int               // For the auto generated receivers.
+	seenChannelUIDs           map[string]struct{}
+	migratedChannelsPerOrg    map[int64]map[*notificationChannel]struct{}
+	silences                  []*pb.MeshSilence
+	portedChannelGroupsPerOrg map[int64]map[string]string // Org -> Channel group key -> receiver name.
+	lastReceiverID            int                         // For the auto generated receivers.
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
@@ -206,11 +279,11 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 
 		if _, ok := amConfigPerOrg[rule.OrgID]; !ok {
-			return fmt.Errorf("no configuration found for org: %d", rule.OrgID)
-		}
-
-		if err := m.updateReceiverAndRoute(allChannelsPerOrg, defaultChannelsPerOrg, da, rule, amConfigPerOrg[rule.OrgID]); err != nil {
-			return err
+			m.mg.Logger.Info("no configuration found", "org", rule.OrgID)
+		} else {
+			if err := m.updateReceiverAndRoute(allChannelsPerOrg, defaultChannelsPerOrg, da, rule, amConfigPerOrg[rule.OrgID]); err != nil {
+				return err
+			}
 		}
 
 		if strings.HasPrefix(mg.Dialect.DriverName(), migrator.Postgres) {
@@ -297,6 +370,7 @@ type AlertConfiguration struct {
 	CreatedAt                 int64 `xorm:"created"`
 }
 
+// rmMigration removes Grafana 8 alert data
 type rmMigration struct {
 	migrator.MigrationBase
 }
@@ -347,4 +421,12 @@ func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	}
 
 	return nil
+}
+
+// rmMigrationWithoutLogging is similar migration to rmMigration
+// but is not recorded in the migration_log table so that it can rerun in the future
+type rmMigrationWithoutLogging = rmMigration
+
+func (m *rmMigrationWithoutLogging) SkipMigrationLog() bool {
+	return true
 }

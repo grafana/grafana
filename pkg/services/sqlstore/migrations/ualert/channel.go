@@ -174,7 +174,11 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, orgID int64, channelUid
 	}
 
 	var receiverName string
-	if rn, ok := m.portedChannelGroups[chanKey]; ok {
+
+	if _, ok := m.portedChannelGroupsPerOrg[orgID]; !ok {
+		m.portedChannelGroupsPerOrg[orgID] = make(map[string]string)
+	}
+	if rn, ok := m.portedChannelGroupsPerOrg[orgID][chanKey]; ok {
 		// We have ported these exact set of channels already. Re-use it.
 		receiverName = rn
 		if receiverName == "autogen-contact-point-default" {
@@ -195,7 +199,7 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, orgID int64, channelUid
 			receiverName = fmt.Sprintf("autogen-contact-point-%d", m.lastReceiverID)
 		}
 
-		m.portedChannelGroups[chanKey] = receiverName
+		m.portedChannelGroupsPerOrg[orgID][chanKey] = receiverName
 		receiver = &PostableApiReceiver{
 			Name:                    receiverName,
 			GrafanaManagedReceivers: portedChannels,
@@ -238,7 +242,14 @@ func makeKeyForChannelGroup(channelUids map[interface{}]struct{}) (string, error
 func (m *migration) addDefaultChannels(amConfigsPerOrg amConfigsPerOrg, allChannels channelsPerOrg, defaultChannels defaultChannelsPerOrg) error {
 	for orgID := range allChannels {
 		if _, ok := amConfigsPerOrg[orgID]; !ok {
-			amConfigsPerOrg[orgID] = &PostableUserConfig{}
+			amConfigsPerOrg[orgID] = &PostableUserConfig{
+				AlertmanagerConfig: PostableApiAlertingConfig{
+					Receivers: make([]*PostableApiReceiver, 0),
+					Route: &Route{
+						Routes: make([]*Route, 0),
+					},
+				},
+			}
 		}
 		// Default route and receiver.
 		recv, route, err := m.makeReceiverAndRoute("default_route", orgID, nil, defaultChannels[orgID], allChannels[orgID])
@@ -258,7 +269,7 @@ func (m *migration) addDefaultChannels(amConfigsPerOrg amConfigsPerOrg, allChann
 	return nil
 }
 
-func (m *migration) addUnmigratedChannels(orgID int64, amConfigsPerOrg *PostableUserConfig, allChannels map[interface{}]*notificationChannel, defaultChannels []*notificationChannel) error {
+func (m *migration) addUnmigratedChannels(orgID int64, amConfigs *PostableUserConfig, allChannels map[interface{}]*notificationChannel, defaultChannels []*notificationChannel) error {
 	// Unmigrated channels.
 	portedChannels := []*PostableGrafanaReceiver{}
 	receiver := &PostableApiReceiver{
@@ -295,7 +306,7 @@ func (m *migration) addUnmigratedChannels(orgID int64, amConfigsPerOrg *Postable
 	}
 	receiver.GrafanaManagedReceivers = portedChannels
 	if len(portedChannels) > 0 {
-		amConfigsPerOrg.AlertmanagerConfig.Receivers = append(amConfigsPerOrg.AlertmanagerConfig.Receivers, receiver)
+		amConfigs.AlertmanagerConfig.Receivers = append(amConfigs.AlertmanagerConfig.Receivers, receiver)
 	}
 
 	return nil
