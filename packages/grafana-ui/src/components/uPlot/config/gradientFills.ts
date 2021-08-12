@@ -47,7 +47,7 @@ export function getHueGradientFn(
   };
 }
 
-enum GradientDirection {
+export enum GradientDirection {
   'Right' = 0,
   'Up' = 1,
 }
@@ -56,7 +56,7 @@ type ValueStop = [value: number, color: string];
 
 type ScaleValueStops = ValueStop[];
 
-function scaleGradient(
+export function scaleGradient(
   u: uPlot,
   scaleKey: string,
   dir: GradientDirection,
@@ -99,8 +99,8 @@ function scaleGradient(
     maxStopVal = scale.max!;
   }
 
-  let minStopPos = u.valToPos(minStopVal, scaleKey, true);
-  let maxStopPos = u.valToPos(maxStopVal, scaleKey, true);
+  let minStopPos = Math.round(u.valToPos(minStopVal, scaleKey, true));
+  let maxStopPos = Math.round(u.valToPos(maxStopVal, scaleKey, true));
 
   let range = maxStopPos - minStopPos;
 
@@ -125,7 +125,9 @@ function scaleGradient(
   for (let i = minStopIdx!; i <= maxStopIdx!; i++) {
     let s = scaleStops[i];
 
-    let stopPos = i === minStopIdx ? minStopPos : i === maxStopIdx ? maxStopPos : u.valToPos(s[0], scaleKey, true);
+    let stopPos =
+      i === minStopIdx ? minStopPos : i === maxStopIdx ? maxStopPos : Math.round(u.valToPos(s[0], scaleKey, true));
+
     let pct = (stopPos - minStopPos) / range;
 
     if (discrete && i > minStopIdx!) {

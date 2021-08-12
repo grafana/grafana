@@ -1,6 +1,7 @@
 import { GrafanaTheme2, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import { GraphThresholdsStyleConfig, GraphTresholdsStyleMode } from '../config';
+import { GradientDirection, scaleGradient } from './gradientFills';
 
 export interface UPlotThresholdOptions {
   scaleKey: string;
@@ -95,49 +96,26 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     }
 
     function addAreas() {
-      for (let idx = 0; idx < steps.length; idx++) {
-        const step = steps[idx];
+      let grd = scaleGradient(
+        u,
+        u.series[1].scale!,
+        GradientDirection.Up,
+        steps.map((step) => {
+          let color = tinycolor(theme.visualization.getColorByName(step.color));
 
-        // skip thresholds that cannot be seen
-        if (step.value > yMax!) {
-          continue;
-        }
+          if (color.getAlpha() === 1) {
+            color.setAlpha(0.15);
+          }
 
-        // if this is the last step make the next step the same color but +Infinity
-        const nextStep =
-          idx + 1 < steps.length
-            ? steps[idx + 1]
-            : {
-                ...step,
-                value: Infinity,
-              };
+          return [step.value, color.toString()];
+        }),
+        true
+      );
 
-        let color = tinycolor(theme.visualization.getColorByName(step.color));
-
-        // Ignore fully transparent colors
-        const alpha = color.getAlpha();
-        if (alpha === 0) {
-          continue;
-        }
-
-        /// if no alpha set automatic alpha
-        if (alpha === 1) {
-          color = color.setAlpha(0.15);
-        }
-
-        let value = step.value === -Infinity ? yMin : step.value;
-        let nextValue = nextStep.value === Infinity || nextStep.value > yMax! ? yMax : nextStep.value;
-
-        let x0 = Math.round(u.valToPos(xMin ?? 0, 'x', true));
-        let y0 = Math.round(u.valToPos(value ?? 0, scaleKey, true));
-        let x1 = Math.round(u.valToPos(xMax ?? 1, 'x', true));
-        let y1 = Math.round(u.valToPos(nextValue ?? 1, scaleKey, true));
-
-        ctx.save();
-        ctx.fillStyle = color.toString();
-        ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-        ctx.restore();
-      }
+      ctx.save();
+      ctx.fillStyle = grd;
+      ctx.fillRect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+      ctx.restore();
     }
 
     switch (config.mode) {
