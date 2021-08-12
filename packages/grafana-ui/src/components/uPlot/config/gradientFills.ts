@@ -148,7 +148,7 @@ export function getDataRange(plot: uPlot, scaleKey: string) {
 
   plot.series.forEach((ser, seriesIdx) => {
     if (ser.show && ser.scale === scaleKey) {
-      // when a scale has a pre-defined range defined, uPlot skips finding data min/max, so we have to do it here
+      // uPlot skips finding data min/max when a scale has a pre-defined range
       if (ser.min == null) {
         let data = plot.data[seriesIdx];
         for (let i = 0; i < data.length; i++) {
