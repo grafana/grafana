@@ -194,7 +194,7 @@ export function getScaleGradientFn(
         let valueStops = thresholds.steps.map(
           (step) =>
             [
-              min + range * step.value,
+              min + range * (step.value / 100),
               colorManipulator.alpha(theme.visualization.getColorByName(step.color), opacity),
             ] as ValueStop
         );
