@@ -52,7 +52,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn run precommit"
+      "pre-commit": "yarn run precommit-temp"
     }
   },
   "lint-staged": {
