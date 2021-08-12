@@ -16,14 +16,14 @@ export interface VizTextDisplayOptions {
  * @public
  */
 export interface OptionsWithLegend {
-  legend: VizLegendOptions;
+  legend?: VizLegendOptions;
 }
 
 /**
  * @public
  */
 export interface OptionsWithTooltip {
-  tooltip: VizTooltipOptions;
+  tooltip?: VizTooltipOptions;
 }
 
 /**
