@@ -73,8 +73,6 @@ const (
 	}
 }
 `
-	//TODO: temporary until fix org isolation
-	mainOrgID = 1
 )
 
 type alertmanager struct {
