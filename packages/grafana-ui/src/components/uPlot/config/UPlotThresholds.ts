@@ -1,4 +1,4 @@
-import { getColorForTheme, GrafanaTheme2, ThresholdsConfig } from '@grafana/data';
+import { GrafanaTheme2, Threshold, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import { GraphThresholdsStyleConfig, GraphTresholdsStyleMode } from '../config';
 
@@ -13,12 +13,41 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
   return (u: uPlot) => {
     const ctx = u.ctx;
     const { scaleKey, thresholds, theme, config } = options;
-    const { steps } = thresholds;
     const { min: xMin, max: xMax } = u.scales.x;
     const { min: yMin, max: yMax } = u.scales[scaleKey];
 
     if (xMin === undefined || xMax === undefined || yMin === undefined || yMax === undefined) {
       return;
+    }
+
+    let { steps, mode } = thresholds;
+
+    // a close copy of the version in ./gradientFills.ts
+    if (mode === ThresholdsMode.Percentage) {
+      let sc = u.scales[scaleKey];
+
+      let min = Infinity;
+      let max = -Infinity;
+
+      // get in-view y range for this scale
+      u.series.forEach((ser) => {
+        if (ser.show && ser.scale === scaleKey) {
+          min = Math.min(min, ser.min!);
+          max = Math.max(max, ser.max!);
+        }
+      });
+
+      let range = max - min;
+
+      if (range === 0) {
+        range = sc.max! - sc.min!;
+        min = sc.min!;
+      }
+
+      steps = steps.map((step) => ({
+        ...step,
+        value: min + range * (step.value / 100),
+      }));
     }
 
     function addLines() {
@@ -40,9 +69,9 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
 
         // if we are below a transparent index treat this a less then threshold, use previous thresholds color
         if (transparentIndex >= idx && idx > 0) {
-          color = tinycolor(getColorForTheme(steps[idx - 1].color, theme.v1));
+          color = tinycolor(theme.visualization.getColorByName(steps[idx - 1].color));
         } else {
-          color = tinycolor(getColorForTheme(step.color, theme.v1));
+          color = tinycolor(theme.visualization.getColorByName(step.color));
         }
 
         // Unless alpha specififed set to default value
@@ -83,7 +112,7 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
                 value: Infinity,
               };
 
-        let color = tinycolor(getColorForTheme(step.color, theme.v1));
+        let color = tinycolor(theme.visualization.getColorByName(step.color));
 
         // Ignore fully transparent colors
         const alpha = color.getAlpha();
