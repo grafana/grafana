@@ -49,9 +49,6 @@ func TestScuemataBasics(t *testing.T) {
 }
 
 func TestDevenvDashboardValidity(t *testing.T) {
-	// TODO un-skip when tests pass on all devenv dashboards
-	t.Skip()
-	// validdir := os.DirFS(filepath.Join("..", "..", "..", "devenv", "dev-dashboards"))
 	validdir := filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
 
 	dash, err := BaseDashboardFamily(p)
@@ -87,7 +84,9 @@ func TestDevenvDashboardValidity(t *testing.T) {
 					return nil
 				} else {
 					if !(oldschemav.(float64) > 29) {
-						t.Logf("schemaVersion is %v, older than 30, skipping %s", oldschemav, path)
+						if testing.Verbose() {
+							t.Logf("schemaVersion is %v, older than 30, skipping %s", oldschemav, path)
+						}
 						return nil
 					}
 				}
@@ -107,8 +106,10 @@ func TestDevenvDashboardValidity(t *testing.T) {
 
 	// TODO will need to expand this appropriately when the scuemata contain
 	// more than one schema
-	t.Run("base", doTest(dash))
 	t.Run("dist", doTest(ddash))
+	// TODO disabled because base variant validation currently must fail in order for
+	// dist/instance validation to do closed validation of plugin-specified fields
+	// t.Run("base", doTest(dash))
 }
 
 func TestPanelValidity(t *testing.T) {
