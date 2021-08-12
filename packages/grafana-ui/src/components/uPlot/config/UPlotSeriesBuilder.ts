@@ -162,7 +162,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
         return getScaleGradientFn(opacityPercent, theme, colorMode, thresholds);
       default:
         if (opacityPercent > 0) {
-          return colorManipulator.alpha(lineColor!, opacityPercent);
+          return colorManipulator.alpha(lineColor ?? '', opacityPercent);
         }
     }
 
