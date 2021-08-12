@@ -25,31 +25,6 @@ const cursorDefaults: Cursor = {
     size: (u, seriesIdx) => u.series[seriesIdx].points.size * 2,
     /*@ts-ignore*/
     width: (u, seriesIdx, size) => size / 4,
-    stroke: (u, seriesIdx) => {
-      /*@ts-ignore*/
-      let s = u.series[seriesIdx].points._stroke;
-
-      if (typeof s === 'string') {
-        return s + '80';
-      }
-
-      console.log('TODO: interpolate stroke for gradients or thresholds');
-
-      return s;
-    },
-    /*@ts-ignore*/
-    fill: (u, seriesIdx) => {
-      /*@ts-ignore*/
-      let s = u.series[seriesIdx].points._stroke;
-
-      if (typeof s === 'string') {
-        return s;
-      }
-
-      console.log('TODO: interpolate fill for gradients or thresholds');
-
-      return s;
-    },
   },
   focus: {
     prox: 30,
@@ -57,6 +32,11 @@ const cursorDefaults: Cursor = {
 };
 
 type PrepData = (frame: DataFrame) => AlignedData;
+
+interface CursorPointStyle {
+  fill: uPlot.Series.Fill;
+  stroke: uPlot.Series.Stroke;
+}
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
@@ -78,6 +58,8 @@ export class UPlotConfigBuilder {
    * that sets tooltips state.
    */
   tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
+
+  cursorPointStyle: CursorPointStyle | undefined = undefined;
 
   prepData: PrepData | undefined = undefined;
 
@@ -178,6 +160,10 @@ export class UPlotConfigBuilder {
     this.tooltipInterpolator = interpolator;
   }
 
+  setCursorPointStyle(cursorPointStyle: CursorPointStyle) {
+    this.cursorPointStyle = cursorPointStyle;
+  }
+
   setPrepData(prepData: PrepData) {
     this.prepData = prepData;
   }
@@ -208,7 +194,7 @@ export class UPlotConfigBuilder {
 
     config.select = this.select;
 
-    config.cursor = merge({}, cursorDefaults, this.cursor);
+    config.cursor = merge({}, cursorDefaults, this.cursor, { points: this.cursorPointStyle });
 
     config.tzDate = this.tzDate;
 

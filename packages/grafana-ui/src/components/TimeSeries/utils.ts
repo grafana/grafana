@@ -47,6 +47,33 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   const builder = new UPlotConfigBuilder(timeZone);
 
   builder.setPrepData(preparePlotData);
+  builder.setCursorPointStyle({
+    stroke: (u, seriesIdx) => {
+      /*@ts-ignore*/
+      let s = u.series[seriesIdx].points._stroke;
+
+      // interpolate for gradients/thresholds
+      if (typeof s !== 'string') {
+        let field = frame.fields[seriesIdx];
+        s = field.display!(field.values.get(u.cursor.idxs![seriesIdx]!)).color!;
+      }
+
+      return s + '80';
+    },
+    /*@ts-ignore*/
+    fill: (u, seriesIdx) => {
+      /*@ts-ignore*/
+      let s = u.series[seriesIdx].points._stroke;
+
+      // interpolate for gradients/thresholds
+      if (typeof s !== 'string') {
+        let field = frame.fields[seriesIdx];
+        s = field.display!(field.values.get(u.cursor.idxs![seriesIdx]!)).color!;
+      }
+
+      return s;
+    },
+  });
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];
