@@ -1100,12 +1100,12 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 <hr>
 
 ## [ngalerting]
+
 For more information about the NGAlert feature in Grafana, refer to [Unified Alerting]({{< relref "../unified-alerting/_index.md" >}}}).
 
 ### admin_config_poll_interval_seconds
 
-How frequently we poll for admin config changes. Default value is `60`.
-
+Specify the frequency of polling for admin config changes. The default value is `60`
 
 <hr>
 
