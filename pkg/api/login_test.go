@@ -110,7 +110,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 		License:          &licensing.OSSLicensingService{},
 		SocialService:    &mockSocialService{},
 	}
-	_ = setupSecretService(t)
+	util.SetEncryptionVariables(t)
 
 	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
 		hs.LoginView(c)

@@ -21,21 +21,7 @@ import (
 
 //nolint:goconst
 func TestDataSource_GetHttpTransport(t *testing.T) {
-	encr := util.Encrypt
-	decr := util.Decrypt
-
-	defer func() {
-		util.Encrypt = encr
-		util.Decrypt = decr
-	}()
-
-	util.Encrypt = func(payload []byte, opt util.EncryptionOption) ([]byte, error) {
-		return payload, nil
-	}
-
-	util.Decrypt = func(payload []byte) ([]byte, error) {
-		return payload, nil
-	}
+	util.SetEncryptionVariables(t)
 
 	t.Run("Should use cached proxy", func(t *testing.T) {
 		var configuredTransport *http.Transport
@@ -355,21 +341,7 @@ func TestDataSource_getTimeout(t *testing.T) {
 }
 
 func TestDataSource_DecryptedValue(t *testing.T) {
-	encr := util.Encrypt
-	decr := util.Decrypt
-
-	defer func() {
-		util.Encrypt = encr
-		util.Decrypt = decr
-	}()
-
-	util.Encrypt = func(payload []byte, opt util.EncryptionOption) ([]byte, error) {
-		return payload, nil
-	}
-
-	util.Decrypt = func(payload []byte) ([]byte, error) {
-		return payload, nil
-	}
+	util.SetEncryptionVariables(t)
 
 	t.Run("When datasource hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
 		ClearDSDecryptionCache()

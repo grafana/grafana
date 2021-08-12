@@ -30,7 +30,7 @@ import (
 
 func TestDataSourceProxy_routeRule(t *testing.T) {
 	httpClientProvider := httpclient.NewProvider()
-	_ = setupSecretService(t)
+	util.SetEncryptionVariables(t)
 
 	t.Run("Plugin with routes", func(t *testing.T) {
 		plugin := &plugins.DataSourcePlugin{

@@ -20,21 +20,7 @@ func clearPluginSettingDecryptionCache() {
 }
 
 func TestPluginSettingDecryptionCache(t *testing.T) {
-	encr := util.Encrypt
-	decr := util.Decrypt
-
-	defer func() {
-		util.Encrypt = encr
-		util.Decrypt = decr
-	}()
-
-	util.Encrypt = func(payload []byte, opt util.EncryptionOption) ([]byte, error) {
-		return payload, nil
-	}
-
-	util.Decrypt = func(payload []byte) ([]byte, error) {
-		return payload, nil
-	}
+	util.SetEncryptionVariables(t)
 
 	t.Run("When plugin settings hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
 		clearPluginSettingDecryptionCache()
