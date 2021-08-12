@@ -193,5 +193,4 @@ func setUpDatabase(t *testing.T, store *sqlstore.SQLStore) {
 	// Make sure changes are synced with other goroutines
 	err = store.Sync()
 	require.NoError(t, err)
-
 }
