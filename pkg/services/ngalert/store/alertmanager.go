@@ -19,7 +19,7 @@ func (st *DBstore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAle
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		c := &models.AlertConfiguration{}
 		// The ID is already an auto incremental column, using the ID as an order should guarantee the latest.
-		ok, err := sess.Desc("id").Limit(1).Get(c)
+		ok, err := sess.Desc("id").Where("org_id = ?", query.OrgID).Limit(1).Get(c)
 		if err != nil {
 			return err
 		}
@@ -48,6 +48,7 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(cmd *models.SaveAler
 			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 			ConfigurationVersion:      cmd.ConfigurationVersion,
 			Default:                   cmd.Default,
+			OrgID:                     cmd.OrgID,
 		}
 		if _, err := sess.Insert(config); err != nil {
 			return err

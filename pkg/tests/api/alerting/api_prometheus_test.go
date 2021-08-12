@@ -34,7 +34,11 @@ func TestPrometheusRules(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a user to make authenticated requests
-	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "password",
+		Login:          "grafana",
+	})
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
@@ -270,7 +274,11 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create a user to make authenticated requests
-	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "password",
+		Login:          "grafana",
+	})
 
 	// Create a namespace under default organisation (orgID = 1) where we'll save some alerts.
 	_, err := createFolder(t, store, 0, "folder1")

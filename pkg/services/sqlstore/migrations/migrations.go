@@ -41,6 +41,7 @@ func AddMigrations(mg *Migrator) {
 	ualert.AddTablesMigrations(mg)
 	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
+	ualert.RerunDashAlertMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

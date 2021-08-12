@@ -48,7 +48,7 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) respo
 	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
-	if err := srv.am.SaveAndApplyDefaultConfig(); err != nil {
+	if err := srv.am.SaveAndApplyDefaultConfig(c.OrgId); err != nil {
 		srv.log.Error("unable to save and apply default alertmanager configuration", "err", err)
 		return ErrResp(http.StatusInternalServerError, err, "failed to save and apply default Alertmanager configuration")
 	}
@@ -74,7 +74,8 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
-	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{}
+
+	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: c.OrgId}
 	if err := srv.store.GetLatestAlertmanagerConfiguration(&query); err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -201,7 +202,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	}
 
 	// Get the last known working configuration
-	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{}
+	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: c.OrgId}
 	if err := srv.store.GetLatestAlertmanagerConfiguration(&query); err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
@@ -255,7 +256,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
 	}
 
-	if err := srv.am.SaveAndApplyConfig(&body); err != nil {
+	if err := srv.am.SaveAndApplyConfig(c.OrgId, &body); err != nil {
 		srv.log.Error("unable to save and apply alertmanager configuration", "err", err)
 		return ErrResp(http.StatusBadRequest, err, "failed to save and apply Alertmanager configuration")
 	}
