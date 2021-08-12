@@ -36,7 +36,11 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, s)
 
 	// Create a user to make authenticated requests
-	require.NoError(t, createUser(t, s, models.ROLE_ADMIN, "grafana", "password"))
+	createUser(t, s, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_ADMIN),
+		Login:          "grafana",
+		Password:       "password",
+	})
 
 	// Create a couple of "fake" Alertmanagers
 	fakeAM1 := schedule.NewFakeExternalAlertmanager(t)
