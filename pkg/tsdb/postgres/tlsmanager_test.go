@@ -135,6 +135,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 // Test getFileName
 
 func TestGetFileName(t *testing.T) {
+	util.SetEncryptionVariables(t)
 	testCases := []struct {
 		desc                  string
 		datadir               string
@@ -173,6 +174,8 @@ func TestGetFileName(t *testing.T) {
 func TestGetTLSSettings(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
+
+	util.SetEncryptionVariables(t)
 
 	mockValidateCertFilePaths()
 	t.Cleanup(resetValidateCertFilePaths)
