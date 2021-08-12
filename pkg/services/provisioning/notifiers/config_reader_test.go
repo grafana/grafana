@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -28,6 +30,7 @@ var (
 
 func TestNotificationAsConfig(t *testing.T) {
 	logger := log.New("fake.log")
+	util.SetEncryptionVariables(t)
 
 	Convey("Testing notification as configuration", t, func() {
 		sqlstore.InitTestDB(t)

@@ -8,6 +8,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -25,6 +27,7 @@ var writeCertFileCallNum int
 func TestDataSourceCacheManager(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
+	util.SetEncryptionVariables(t)
 	mng := tlsManager{
 		logger:          log.New("tsdb.postgres"),
 		dsCacheInstance: datasourceCacheManager{locker: newLocker()},

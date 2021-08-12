@@ -3,6 +3,8 @@ package notifiers
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -11,6 +13,7 @@ import (
 )
 
 func TestSlackNotifier(t *testing.T) {
+	util.SetEncryptionVariables(t)
 	t.Run("empty settings should return error", func(t *testing.T) {
 		json := `{ }`
 
