@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 
+	_ "github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/encryption"
 
 	"github.com/grafana/grafana/pkg/infra/log"
