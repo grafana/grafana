@@ -7,7 +7,7 @@ import {
   OptionsWithLegend,
   OptionsWithTextFormatting,
   OptionsWithTooltip,
-  StackingMode,
+  StackingConfig,
 } from '@grafana/ui';
 
 /**
@@ -15,7 +15,7 @@ import {
  */
 export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip, OptionsWithTextFormatting {
   orientation: VizOrientation;
-  stacking: StackingMode;
+  stacking: StackingConfig;
   showValue: BarValueVisibility;
   barWidth: number;
   groupWidth: number;
