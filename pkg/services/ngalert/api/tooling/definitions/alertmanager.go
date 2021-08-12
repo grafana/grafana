@@ -197,28 +197,28 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 }
 
 // swagger:model
-type PostableSilence = amv2.PostableSilence
+type PostableSilence amv2.PostableSilence
 
 // swagger:model
-type GettableSilences = amv2.GettableSilences
+type GettableSilences amv2.GettableSilences
 
 // swagger:model
-type GettableSilence = amv2.GettableSilence
+type GettableSilence amv2.GettableSilence
 
 // swagger:model
-type GettableAlerts = amv2.GettableAlerts
+type GettableAlerts amv2.GettableAlerts
 
 // swagger:model
-type GettableAlert = amv2.GettableAlert
+type GettableAlert amv2.GettableAlert
 
 // swagger:model
-type AlertGroups = amv2.AlertGroups
+type AlertGroups amv2.AlertGroups
 
 // swagger:model
-type AlertGroup = amv2.AlertGroup
+type AlertGroup amv2.AlertGroup
 
 // swagger:model
-type Receiver = amv2.Receiver
+type Receiver amv2.Receiver
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups
 type AlertsParams struct {

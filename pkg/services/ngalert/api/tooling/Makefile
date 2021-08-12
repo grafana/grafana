@@ -16,6 +16,10 @@ spec.json: $(GO_PKG_FILES)
 		quay.io/goswagger/swagger:$(SWAGGER_TAG) \
 		generate spec -m -o $@
 
+spec.json-mac: $(GO_PKG_FILES)
+	brew install go-swagger
+	swagger generate spec -m -w $(API_DIR) -o spec.json
+
 post.json: spec.json
 	go run cmd/clean-swagger/main.go -if $(<) -of $@
 
