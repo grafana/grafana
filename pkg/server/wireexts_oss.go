@@ -23,6 +23,7 @@ import (
 var wireExtsBasicSet = wire.NewSet(
 	auth.ProvideUserAuthTokenService,
 	wire.Bind(new(models.UserTokenService), new(*auth.UserAuthTokenService)),
+	wire.Bind(new(models.UserTokenBackgroundService), new(*auth.UserAuthTokenService)),
 	licensing.ProvideService,
 	wire.Bind(new(models.Licensing), new(*licensing.OSSLicensingService)),
 	setting.ProvideProvider,
