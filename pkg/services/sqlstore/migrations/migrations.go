@@ -51,6 +51,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	if mg.Cfg != nil || mg.Cfg.IsLiveConfigEnabled() {
 		addLiveChannelMigrations(mg)
 	}
+	ualert.RerunDashAlertMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

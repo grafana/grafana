@@ -259,10 +259,9 @@
               "fillOpacity": 0,
               "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
-                "tooltip": false,
-                "viz": false
+                "tooltip": false
               },
               "lineInterpolation": "linear",
               "lineWidth": 1,
@@ -549,7 +548,7 @@
               "fillOpacity": 74,
               "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -665,7 +664,7 @@
               "fillOpacity": 80,
               "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -806,7 +805,7 @@
               "fillOpacity": 50,
               "gradientMode": "hue",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -924,7 +923,7 @@
               "fillOpacity": 40,
               "gradientMode": "hue",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -1042,7 +1041,7 @@
               "fillOpacity": 40,
               "gradientMode": "hue",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -1183,12 +1182,9 @@
               "barAlignment": 0,
               "drawStyle": "line",
               "fillOpacity": 10,
-              "gradientMode": {
-                "label": "None",
-                "value": "none"
-              },
+              "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -1289,12 +1285,9 @@
               "barAlignment": 0,
               "drawStyle": "line",
               "fillOpacity": 10,
-              "gradientMode": {
-                "label": "None",
-                "value": "none"
-              },
+              "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -1399,12 +1392,9 @@
               "barAlignment": 0,
               "drawStyle": "line",
               "fillOpacity": 10,
-              "gradientMode": {
-                "label": "None",
-                "value": "none"
-              },
+              "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -1533,7 +1523,7 @@
               "fillOpacity": 0,
               "gradientMode": "opacity",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -1768,12 +1758,9 @@
               "barAlignment": 0,
               "drawStyle": "line",
               "fillOpacity": 0,
-              "gradientMode": {
-                "label": "None",
-                "value": "none"
-              },
+              "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -2093,12 +2080,9 @@
               "barAlignment": 0,
               "drawStyle": "line",
               "fillOpacity": 0,
-              "gradientMode": {
-                "label": "None",
-                "value": "none"
-              },
+              "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -2420,7 +2404,7 @@
               "fillOpacity": 82,
               "gradientMode": "hue",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -2566,7 +2550,7 @@
               "fillOpacity": 80,
               "gradientMode": "hue",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
