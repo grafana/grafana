@@ -57,11 +57,13 @@ type Service struct {
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
 	if factory, exists := s.registry[ds.Type]; exists {
 		var err error
 		plugin, err := factory(ds)
 		if err != nil {
+			//nolint: staticcheck // plugins.DataPlugin deprecated
 			return plugins.DataResponse{}, fmt.Errorf("could not instantiate endpoint for data plugin %q: %w",
 				ds.Type, err)
 		}
