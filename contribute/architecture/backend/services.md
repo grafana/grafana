@@ -67,6 +67,7 @@ func (s *Service) Run(ctx context.Context) error {
 ```
 
 [wire.go](/pkg/server/wire.go)
+
 ```go
 // +build wireinject
 
@@ -129,6 +130,8 @@ Grafana OSS and Grafana Enterprise shares code and dependencies. Grafana Enterpr
 There's a [wireexts_oss.go](/pkg/server/wireexts_oss.go) that has the `wireinject` and `oss` build tags as requirements. Here services that might have other implementations, e.g. Grafana Enterprise, can be registered.
 
 Similarly, there's a wireexts_enterprise.go file in the Enterprise source code repository where other service implementations can be overridden/be registered.
+
+To extend oss background service create a specific background interface for that type and inject that type to [ProvideBackgroundServiceRegistry](/pkg/server/backgroundsvcs/background_services.go) instead of the concrete type. Then add a wire binding for that interface in [wireexts_oss.go](/pkg/server/wireexts_oss.go) and in the enterprise wireexts file.
 
 ## Methods
 
