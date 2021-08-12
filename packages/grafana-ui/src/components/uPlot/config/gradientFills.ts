@@ -102,7 +102,7 @@ export function scaleGradient(
   let minStopPos = Math.round(u.valToPos(minStopVal, scaleKey, true));
   let maxStopPos = Math.round(u.valToPos(maxStopVal, scaleKey, true));
 
-  let range = maxStopPos - minStopPos;
+  let range = minStopPos - maxStopPos;
 
   let x0, y0, x1, y1;
 
@@ -128,7 +128,7 @@ export function scaleGradient(
     let stopPos =
       i === minStopIdx ? minStopPos : i === maxStopIdx ? maxStopPos : Math.round(u.valToPos(s[0], scaleKey, true));
 
-    let pct = (stopPos - minStopPos) / range;
+    let pct = (minStopPos - stopPos) / range;
 
     if (discrete && i > minStopIdx!) {
       grd.addColorStop(pct, prevColor!);
@@ -138,6 +138,38 @@ export function scaleGradient(
   }
 
   return grd;
+}
+
+export function getDataRange(plot: uPlot, scaleKey: string) {
+  let sc = plot.scales[scaleKey];
+
+  let min = Infinity;
+  let max = -Infinity;
+
+  plot.series.forEach((ser, seriesIdx) => {
+    if (ser.show && ser.scale === scaleKey) {
+      // when a scale has a pre-defined range defined, uPlot skips finding data min/max, so we have to do it here
+      if (ser.min == null) {
+        let data = plot.data[seriesIdx];
+        for (let i = 0; i < data.length; i++) {
+          if (data[i] != null) {
+            min = Math.min(min, data[i]!);
+            max = Math.max(max, data[i]!);
+          }
+        }
+      } else {
+        min = Math.min(min, ser.min!);
+        max = Math.max(max, ser.max!);
+      }
+    }
+  });
+
+  if (max === min) {
+    min = sc.min!;
+    max = sc.max!;
+  }
+
+  return [min, max];
 }
 
 export function getScaleGradientFn(
@@ -155,83 +187,41 @@ export function getScaleGradientFn(
   }
 
   return (plot: uPlot, seriesIdx: number) => {
-    // A uplot bug (I think) where this is called before there is bbox
-    // Color used for cursor highlight, not sure what to do here as this is called before we have bbox
-    // and only once so same color is used for all points
-    if (plot.bbox.top == null) {
-      return theme.colors.text.primary;
-    }
-
-    let s = plot.series[seriesIdx];
-    let sc = plot.scales[s.scale!];
+    let scaleKey = plot.series[seriesIdx].scale!;
 
     let gradient: CanvasGradient | string = '';
 
     if (colorMode.id === FieldColorModeId.Thresholds) {
       if (thresholds.mode === ThresholdsMode.Absolute) {
-        let valueStops = thresholds.steps.map(
+        const valueStops = thresholds.steps.map(
           (step) =>
             [step.value, colorManipulator.alpha(theme.visualization.getColorByName(step.color), opacity)] as ValueStop
         );
-        gradient = scaleGradient(plot, s.scale!, GradientDirection.Up, valueStops, true);
+        gradient = scaleGradient(plot, scaleKey, GradientDirection.Up, valueStops, true);
       } else {
-        let min = Infinity;
-        let max = -Infinity;
-
-        // get in-view y range for this scale
-        plot.series.forEach((ser) => {
-          if (ser.show && ser.scale === s.scale) {
-            min = Math.min(min, ser.min!);
-            max = Math.max(max, ser.max!);
-          }
-        });
-
-        let range = max - min;
-
-        if (range === 0) {
-          range = sc.max! - sc.min!;
-          min = sc.min!;
-        }
-
-        let valueStops = thresholds.steps.map(
+        const [min, max] = getDataRange(plot, scaleKey);
+        const range = max - min;
+        const valueStops = thresholds.steps.map(
           (step) =>
             [
               min + range * (step.value / 100),
               colorManipulator.alpha(theme.visualization.getColorByName(step.color), opacity),
             ] as ValueStop
         );
-        gradient = scaleGradient(plot, s.scale!, GradientDirection.Up, valueStops, true);
+        gradient = scaleGradient(plot, scaleKey, GradientDirection.Up, valueStops, true);
       }
     } else if (colorMode.getColors) {
-      const ctx = getCanvasContext();
-      gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
-      const canvasHeight = plot.bbox.height;
-      const canvasTop = plot.bbox.top;
-      const series = plot.series[seriesIdx];
-      const scale = plot.scales[series.scale!];
-      const scaleMin = scale.min ?? 0;
-      const scaleMax = scale.max ?? 100;
-
-      const addColorStop = (value: number, color: string) => {
-        const pos = plot.valToPos(value, series.scale!, true) - canvasTop;
-        // when above range we get negative values here
-        if (pos < 0) {
-          return;
-        }
-
-        const percent = Math.max(pos / canvasHeight, 0);
-        const realColor = colorManipulator.alpha(theme.visualization.getColorByName(color), opacity);
-        const colorStopPos = Math.min(percent, 1);
-
-        (gradient as CanvasGradient).addColorStop(colorStopPos, realColor);
-      };
-
       const colors = colorMode.getColors(theme);
-      const stepValue = (scaleMax - scaleMin) / colors.length;
-
-      for (let idx = 0; idx < colors.length; idx++) {
-        addColorStop(scaleMin + stepValue * idx, colors[idx]);
-      }
+      const [min, max] = getDataRange(plot, scaleKey);
+      const range = max - min;
+      const valueStops = colors.map(
+        (color, i) =>
+          [
+            min + range * (i / (colors.length - 1)),
+            colorManipulator.alpha(theme.visualization.getColorByName(color), opacity),
+          ] as ValueStop
+      );
+      gradient = scaleGradient(plot, scaleKey, GradientDirection.Up, valueStops, false);
     }
 
     return gradient;
