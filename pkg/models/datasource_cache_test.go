@@ -1,18 +1,12 @@
 package models
 
 import (
-	"context"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
-
-	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/secrets/encryption"
-	"github.com/grafana/grafana/pkg/services/secrets/types"
-	"gopkg.in/ini.v1"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
@@ -27,7 +21,21 @@ import (
 
 //nolint:goconst
 func TestDataSource_GetHttpTransport(t *testing.T) {
-	_ = setupSecretService(t)
+	encr := util.Encrypt
+	decr := util.Decrypt
+
+	defer func() {
+		util.Encrypt = encr
+		util.Decrypt = decr
+	}()
+
+	util.Encrypt = func(payload []byte, opt util.EncryptionOption) ([]byte, error) {
+		return payload, nil
+	}
+
+	util.Decrypt = func(payload []byte) ([]byte, error) {
+		return payload, nil
+	}
 
 	t.Run("Should use cached proxy", func(t *testing.T) {
 		var configuredTransport *http.Transport
@@ -347,6 +355,22 @@ func TestDataSource_getTimeout(t *testing.T) {
 }
 
 func TestDataSource_DecryptedValue(t *testing.T) {
+	encr := util.Encrypt
+	decr := util.Decrypt
+
+	defer func() {
+		util.Encrypt = encr
+		util.Decrypt = decr
+	}()
+
+	util.Encrypt = func(payload []byte, opt util.EncryptionOption) ([]byte, error) {
+		return payload, nil
+	}
+
+	util.Decrypt = func(payload []byte) ([]byte, error) {
+		return payload, nil
+	}
+
 	t.Run("When datasource hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
 		ClearDSDecryptionCache()
 
@@ -581,51 +605,3 @@ Wtnpl+TdAoGAGqKqo2KU3JoY3IuTDUk1dsNAm8jd9EWDh+s1x4aG4N79mwcss5GD
 FF8MbFPneK7xQd8L6HisKUDAUi2NOyynM81LAftPkvN6ZuUVeFDfCL4vCA0HUXLD
 +VrOhtUZkNNJlLMiVRJuQKUOGlg8PpObqYbstQAf/0/yFJMRHG82Tcg=
 -----END RSA PRIVATE KEY-----`
-
-func setupSecretService(t *testing.T) secrets.SecretsService {
-	t.Helper()
-	raw, err := ini.Load([]byte(`
-[security]
-secret_key = SdlklWklckeLS
-`))
-	require.NoError(t, err)
-	settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
-
-	s := secrets.SecretsService{
-		Store:    &SecretsServiceMock{store: make(map[string]*types.DataKey, 0)},
-		Enc:      &encryption.OSSEncryptionService{},
-		Settings: settings,
-	}
-	require.NoError(t, s.Init())
-	return s
-}
-
-type SecretsServiceMock struct {
-	store map[string]*types.DataKey
-}
-
-func (ss *SecretsServiceMock) GetDataKey(ctx context.Context, name string) (*types.DataKey, error) {
-	key, ok := ss.store[name]
-	if !ok {
-		return nil, types.ErrDataKeyNotFound
-	}
-	return key, nil
-}
-
-func (ss *SecretsServiceMock) GetAllDataKeys(ctx context.Context) ([]*types.DataKey, error) {
-	result := make([]*types.DataKey, 0)
-	for _, key := range ss.store {
-		result = append(result, key)
-	}
-	return result, nil
-}
-
-func (ss *SecretsServiceMock) CreateDataKey(ctx context.Context, dataKey types.DataKey) error {
-	ss.store[dataKey.Name] = &dataKey
-	return nil
-}
-
-func (ss *SecretsServiceMock) DeleteDataKey(ctx context.Context, name string) error {
-	delete(ss.store, name)
-	return nil
-}
