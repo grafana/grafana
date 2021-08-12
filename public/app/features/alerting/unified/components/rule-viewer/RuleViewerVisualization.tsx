@@ -63,12 +63,12 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
                 </div>
                 <div className={styles.actions}>
                   {!isExpressionQuery(query.model) ? <DateTimePicker date={dateTime()} onChange={() => {}} /> : null}
-                  <PanelPluginsButtonGroup onChange={setPanel} value={panel} size="sm" />
+                  <PanelPluginsButtonGroup onChange={setPanel} value={panel} size="md" />
                   {!isExpressionQuery(query.model) && (
                     <>
                       <div className={styles.spacing} />
                       <LinkButton
-                        size="sm"
+                        size="md"
                         variant="secondary"
                         icon="compass"
                         target="_blank"

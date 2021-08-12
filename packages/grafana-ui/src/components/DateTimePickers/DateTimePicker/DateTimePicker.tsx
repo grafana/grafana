@@ -3,7 +3,7 @@ import { useMedia } from 'react-use';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { css, cx } from '@emotion/css';
 import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
-import { Button, ClickOutsideWrapper, Field, HorizontalGroup, Icon, Input, Portal } from '../..';
+import { Button, ClickOutsideWrapper, HorizontalGroup, Icon, InlineField, Input, Portal } from '../..';
 import { TimeOfDayPicker } from '../TimeOfDayPicker';
 import { getBodyStyles, getStyles as getCalendarStyles } from '../TimeRangePicker/TimePickerCalendar';
 import { useStyles2, useTheme2 } from '../../../themes';
@@ -127,11 +127,13 @@ const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, on
 
   const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
   return (
-    <Field
+    <InlineField
       label={label}
       onClick={stopPropagation}
       invalid={!!(internalDate.value && internalDate.invalid)}
-      error="Incorrect date format"
+      className={css`
+        margin-bottom: 0;
+      `}
     >
       <Input
         onClick={stopPropagation}
@@ -143,7 +145,7 @@ const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, on
         data-testid="date-time-input"
         placeholder="Select date/time"
       />
-    </Field>
+    </InlineField>
   );
 };
 
@@ -210,6 +212,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 1px ${theme.colors.border.weak} solid;
     border-radius: ${theme.shape.borderRadius(1)};
     background-color: ${theme.colors.background.primary};
+    z-index: ${theme.zIndex.modal};
   `,
   fullScreen: css`
     position: absolute;
