@@ -1,0 +1,29 @@
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "grafana",
+  "signedByOrg": "grafana",
+  "signedByOrgName": "Grafana Labs",
+  "plugin": "test-ds",
+  "version": "1.0.0",
+  "time": 1628776180219,
+  "keyId": "7e4d0c6a708866e7",
+  "files": {
+    "plugin.json": "64e98031f30cfada473e0ad4b989ac10cd0c86844aab8c0d3fc36d8a9537a0b8",
+    "nested/MANIFEST.txt": "63c42cf1efe0b93b5d53be7be9f5f9d20ade830a510940b0d360db00afd08c71",
+    "nested/plugin.json": "e64abd35cd211e0e4682974ad5cdd1be7a0b7cd24951d302a16d9e2cb6cefea4"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+Version: OpenPGP.js v4.10.1
+Comment: https://openpgpjs.org
+
+wqIEARMKAAYFAmEVJvQACgkQfk0ManCIZudtawIJATeVNHi6ewCnow4QYG4+
+1nYs6RCxjA6RFF7IU2BmJhGhkF3xQ5ehl2pA1CwxJLEvI381OPbaNRnRX2NW
+v6f5LZuaAgkBM5euxUHGuUBXumbpAugpJBKjgRcMsfgHZWWBy/n6kXFnJm4w
+3NxSxv0abXRagA8TA9SLAv63r5orTSxmoxMHiy0=
+=ZWTX
+-----END PGP SIGNATURE-----
