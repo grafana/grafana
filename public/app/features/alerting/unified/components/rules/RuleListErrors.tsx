@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { SerializedError } from '@reduxjs/toolkit';
+import pluralize from 'pluralize';
 import React, { useMemo, ReactElement, useState } from 'react';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getRulesDataSources, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -75,7 +76,7 @@ export function RuleListErrors(): ReactElement {
               <div>{errors[0]}</div>
               {errors.length >= 2 && (
                 <Button className={styles.moreButton} variant="link" size="sm" onClick={() => setExpanded(true)}>
-                  {errors.length - 1} more error{errors.length === 2 ? '' : 's'}
+                  {errors.length - 1} more {pluralize('error', errors.length - 1)}
                 </Button>
               )}
             </>
