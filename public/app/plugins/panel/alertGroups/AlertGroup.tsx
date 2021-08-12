@@ -1,5 +1,5 @@
 import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { useStyles2, LinkButton } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -21,6 +21,8 @@ export const AlertGroup = ({ alertManagerSourceName, group, expandAll }: Props) 
   const [showAlerts, setShowAlerts] = useState(expandAll);
   const styles = useStyles2(getStyles);
   const textStyles = useStyles2(getNotificationsTextColors);
+
+  useEffect(() => setShowAlerts(expandAll), [expandAll]);
 
   return (
     <div className={styles.group} data-testid="alert-group">
