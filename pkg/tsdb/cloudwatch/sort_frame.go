@@ -37,5 +37,13 @@ func (a ByTime) Less(i, j int) bool {
 		return false
 	}
 
+	if timeField.At(i).(*time.Time) == nil {
+		return false
+	}
+
+	if timeField.At(j).(*time.Time) == nil {
+		return true
+	}
+
 	return (timeField.At(i).(*time.Time)).Before(*timeField.At(j).(*time.Time))
 }
