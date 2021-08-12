@@ -43,7 +43,7 @@ export const AlertGroup = ({ alertManagerSourceName, group, expandAll }: Props) 
             });
 
             return (
-              <div className={styles.alert} key={`${alert.fingerprint}-${index}`}>
+              <div data-testid={'alert-group-alert'} className={styles.alert} key={`${alert.fingerprint}-${index}`}>
                 <div>
                   <span className={textStyles[alert.status.state]}>{state} </span>for {interval}
                 </div>
