@@ -238,7 +238,14 @@ func makeKeyForChannelGroup(channelUids map[interface{}]struct{}) (string, error
 func (m *migration) addDefaultChannels(amConfigsPerOrg amConfigsPerOrg, allChannels channelsPerOrg, defaultChannels defaultChannelsPerOrg) error {
 	for orgID := range allChannels {
 		if _, ok := amConfigsPerOrg[orgID]; !ok {
-			amConfigsPerOrg[orgID] = &PostableUserConfig{}
+			amConfigsPerOrg[orgID] = &PostableUserConfig{
+				AlertmanagerConfig: PostableApiAlertingConfig{
+					Receivers: make([]*PostableApiReceiver, 0),
+					Route: &Route{
+						Routes: make([]*Route, 0),
+					},
+				},
+			}
 		}
 		// Default route and receiver.
 		recv, route, err := m.makeReceiverAndRoute("default_route", orgID, nil, defaultChannels[orgID], allChannels[orgID])
