@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -46,7 +47,9 @@ func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, 
 		var match bool
 		for dbScope := range dbScopes {
 			if strings.ContainsAny(s, "*?") {
-				logger.Error(fmt.Sprintf("Invalid scope: %v should not contain meta-characters like * or ?", s, dbScope))
+				msg := fmt.Sprintf("Invalid scope: %v should not contain meta-characters like * or ?", s)
+				logger.Error(msg)
+				return false, errors.New(msg)
 			}
 			rule, err := glob.Compile(dbScope, ':', '/')
 			if err != nil {
