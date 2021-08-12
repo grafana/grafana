@@ -113,6 +113,13 @@ Family: scuemata.#Family & {
                     steps: [...#Threshold]
                 } @cuetsy(targetType="interface")
 
+                // TODO docs
+                // FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
+                #Transformation: {
+                    id: string
+                    options: {...}
+                }
+
                 // Schema for panel targets is specified by datasource
                 // plugins. We use a placeholder definition, which the Go
                 // schema loader either left open/as-is with the Base
@@ -196,6 +203,8 @@ Family: scuemata.#Family & {
 
                     // TODO docs
                     timeRegions?: [...]
+
+                    transformations: [...#Transformation]
 
                     // TODO docs
                     // TODO tighter constraint
