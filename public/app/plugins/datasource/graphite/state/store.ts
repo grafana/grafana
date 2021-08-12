@@ -1,5 +1,5 @@
 import GraphiteQuery from '../graphite_query';
-import { GraphiteActionDispatcher, GraphiteSegment, GraphiteTagOperator } from '../types';
+import { GraphiteSegment, GraphiteTagOperator } from '../types';
 import { GraphiteDatasource } from '../datasource';
 import { TemplateSrv } from '../../../../features/templating/template_srv';
 import { actions } from './actions';
@@ -17,8 +17,9 @@ import {
   smartlyHandleNewAliasByNode,
   spliceSegments,
 } from './helpers';
-import { Action } from 'redux';
+import { Action, Dispatch } from 'redux';
 import { FuncDefs } from '../gfunc';
+import { AnyAction } from '@reduxjs/toolkit';
 
 export type GraphiteQueryEditorState = {
   /**
@@ -129,7 +130,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   }
   if (actions.unpause.match(action)) {
     state.paused = false;
-    state.panelCtrl.refresh();
+    state.panelCtrl.refresh(state.target.target);
   }
   if (actions.addFunction.match(action)) {
     const newFunc = state.datasource.createFuncInstance(action.payload.name, {
@@ -172,7 +173,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   if (actions.runQuery.match(action)) {
     // handleTargetChanged() builds target from segments/tags/functions only,
     // it doesn't handle refresh when target is change explicitly
-    state.panelCtrl.refresh();
+    state.panelCtrl.refresh(state.target.target);
   }
   if (actions.toggleEditorMode.match(action)) {
     state.target.textEditor = !state.target.textEditor;
@@ -182,15 +183,13 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   return { ...state };
 };
 
-export const createStore = (
-  onChange: (state: GraphiteQueryEditorState) => void
-): [GraphiteActionDispatcher, GraphiteQueryEditorState] => {
+export const createStore = (onChange: (state: GraphiteQueryEditorState) => void): Dispatch<AnyAction> => {
   let state = {} as GraphiteQueryEditorState;
 
-  const dispatch = async (action: Action) => {
+  const dispatch = async (action: AnyAction) => {
     state = await reducer(action, state);
     onChange(state);
   };
 
-  return [dispatch, state];
+  return dispatch as Dispatch<AnyAction>;
 };

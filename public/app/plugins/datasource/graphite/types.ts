@@ -58,7 +58,7 @@ export type GraphiteMetricLokiMatcher = {
 
 export type GraphiteSegment = {
   value: string;
-  type?: 'tag' | 'metric' | 'series-ref';
+  type?: 'tag' | 'metric' | 'series-ref' | 'template';
   expandable?: boolean;
   fake?: boolean;
 };
@@ -70,8 +70,6 @@ export type GraphiteTag = {
   operator: GraphiteTagOperator;
   value: string;
 };
-
-export type GraphiteActionDispatcher = (action: any) => Promise<void>;
 
 export type GraphiteQueryEditorAngularDependencies = {
   panelCtrl: any;

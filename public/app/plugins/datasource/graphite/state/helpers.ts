@@ -31,8 +31,9 @@ export async function parseTarget(state: GraphiteQueryEditorState): Promise<void
  * Create segments out of the current metric path + add "select metrics" if it's possible to add more to the path
  */
 export async function buildSegments(state: GraphiteQueryEditorState, modifyLastSegment = true): Promise<void> {
+  // TODO: This is just a copy of query model segments. Check if queryModel segments could be used directly
   state.segments = map(state.queryModel.segments, (segment) => {
-    return state.uiSegmentSrv.newSegment(segment);
+    return segment;
   });
 
   const checkOtherSegmentsIndex = state.queryModel.checkOtherSegmentsIndex || 0;
@@ -49,7 +50,7 @@ export async function buildSegments(state: GraphiteQueryEditorState, modifyLastS
  */
 export function addSelectMetricSegment(state: GraphiteQueryEditorState): void {
   state.queryModel.addSelectMetricSegment();
-  state.segments.push(state.uiSegmentSrv.newSelectMetric());
+  state.segments.push({ value: 'select metric', fake: true });
 }
 
 /**
@@ -144,7 +145,8 @@ export function smartlyHandleNewAliasByNode(state: GraphiteQueryEditorState, fun
  */
 export function fixTagSegments(state: GraphiteQueryEditorState): void {
   // Adding tag with the same name as just removed works incorrectly if single segment is used (instead of array)
-  state.addTagSegments = [state.uiSegmentSrv.newPlusButton()];
+  // TODO: The segment data is not being used.
+  state.addTagSegments = [{ value: '+', fake: true }];
 }
 
 /**
@@ -168,7 +170,7 @@ export function handleTargetChanged(state: GraphiteQueryEditorState): void {
   state.queryModel.updateModelTarget(state.panelCtrl.panel.targets);
 
   if (state.queryModel.target.target !== oldTarget && !state.paused) {
-    state.panelCtrl.refresh();
+    state.panelCtrl.refresh(state.target.target);
   }
 }
 

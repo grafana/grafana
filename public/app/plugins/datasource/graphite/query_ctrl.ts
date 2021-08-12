@@ -4,7 +4,9 @@ import { auto } from 'angular';
 import { TemplateSrv } from '@grafana/runtime';
 import { actions } from './state/actions';
 import { createStore, GraphiteQueryEditorState } from './state/store';
-import { GraphiteActionDispatcher, GraphiteQueryEditorAngularDependencies } from './types';
+import { GraphiteQueryEditorAngularDependencies } from './types';
+import { Dispatch } from 'redux';
+import { AnyAction } from '@reduxjs/toolkit';
 
 /**
  * @deprecated Moved to state/store
@@ -23,7 +25,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   paused = false;
 
   state: GraphiteQueryEditorState;
-  readonly dispatch: GraphiteActionDispatcher;
+  readonly dispatch: Dispatch<AnyAction>;
 
   /** @ngInject */
   constructor(
@@ -61,15 +63,15 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       templateSrv: this.templateSrv,
     };
 
-    const [dispatch, state] = createStore((state) => {
+    const dispatch = createStore((state) => {
       this.state = state;
       // HACK: inefficient but not invoked frequently. It's needed to inform angular watcher about state changes
       // for state shared between React/AngularJS. Actions invoked from React component will not mark the scope
       // as dirty and the view won't be updated. It has to happen manually on each state change.
       this.$scope.$digest();
+      this.state = state;
     });
 
-    this.state = state;
     this.dispatch = dispatch;
 
     this.dispatch(actions.init(deps as GraphiteQueryEditorAngularDependencies));
