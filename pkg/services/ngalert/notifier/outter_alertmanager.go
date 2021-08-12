@@ -28,7 +28,7 @@ func (am *Alertmanager) SaveAndApplyConfig(orgID int64, config *apimodels.Postab
 		am.logger.Error("unable to retrieve alertmanager", "orgID", orgID)
 		return fmt.Errorf("unable to retrieve alertmanager")
 	}
-	return amInstance.SaveAndApplyConfig(config)
+	return amInstance.SaveAndApplyConfig(orgID, config)
 }
 
 func (am *Alertmanager) SaveAndApplyDefaultConfig(orgID int64) error {
@@ -39,7 +39,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(orgID int64) error {
 		am.logger.Error("unable to retrieve alertmanager", "orgID", orgID)
 		return fmt.Errorf("unable to retrieve alertmanager")
 	}
-	return amInstance.SaveAndApplyDefaultConfig()
+	return amInstance.SaveAndApplyDefaultConfig(orgID)
 }
 
 func (am *Alertmanager) GetStatus(orgID int64) apimodels.GettableStatus {

@@ -233,7 +233,7 @@ func (f *fakeAdminConfigStore) UpdateAdminConfiguration(cmd store.UpdateAdminCon
 // fakeNotifier represents a fake internal Alertmanager.
 type fakeNotifier struct{}
 
-func (n *fakeNotifier) PutAlerts(alerts apimodels.PostableAlerts) error {
+func (n *fakeNotifier) PutAlerts(orgID int64, alerts apimodels.PostableAlerts) error {
 	return nil
 }
 
