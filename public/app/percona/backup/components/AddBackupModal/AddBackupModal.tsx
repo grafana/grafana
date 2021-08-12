@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 import {
   CheckboxField,
@@ -42,7 +42,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
   onBackup,
 }) => {
   const styles = useStyles(getStyles);
-  const initialValues = toFormBackup(backup);
+  const initialValues = useMemo(() => toFormBackup(backup), [backup]);
   const { Form } = withTypes<AddBackupFormProps>();
 
   const handleSubmit = (values: AddBackupFormProps) =>
