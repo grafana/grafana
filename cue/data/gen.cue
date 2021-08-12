@@ -291,7 +291,7 @@ Family: scuemata.#Family & {
                             // Can always exist. Valid fields within this are
                             // defined by the panel plugin - that's the
                             // PanelFieldConfig that comes from the plugin.
-                            custom?: {...}
+                            custom?: {}
                         }
                         overrides: [...{
                             matcher: {
