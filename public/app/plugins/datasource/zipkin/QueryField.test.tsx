@@ -1,9 +1,10 @@
-import React from 'react';
-import { QueryField, useLoadOptions, useServices } from './QueryField';
-import { ZipkinDatasource, ZipkinQuery } from './datasource';
-import { shallow } from 'enzyme';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
-import { renderHook, act } from '@testing-library/react-hooks';
+import { act, renderHook } from '@testing-library/react-hooks';
+import { shallow } from 'enzyme';
+import React from 'react';
+import { ZipkinDatasource } from './datasource';
+import { QueryField, useLoadOptions, useServices } from './QueryField';
+import { ZipkinQuery } from './types';
 
 describe('QueryField', () => {
   it('renders properly', () => {

@@ -1,6 +1,6 @@
 import React, { HTMLProps, useRef } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Select } from '../Select/Select';
+import { AsyncSelect, Select } from '../Select/Select';
 import { useTheme2 } from '../../themes/ThemeContext';
 
 /** @internal
@@ -11,21 +11,34 @@ export interface Props<T> extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onC
   value?: SelectableValue<T>;
   options: Array<SelectableValue<T>>;
   onChange: (item: SelectableValue<T>) => void;
+  /**
+   * If provided - AsyncSelect will be used allowing to reload options when the value in the input changes
+   */
+  loadOptions?: (inputValue: string) => Promise<Array<SelectableValue<T>>>;
   onClickOutside: () => void;
   width: number;
   noOptionsMessage?: string;
   allowCustomValue?: boolean;
+  /**
+   * If true, empty value will be passed to onChange callback otherwise using empty value
+   * will work as canceling and using the previous value
+   */
+  allowEmptyValue?: boolean;
+  placeholder?: string;
 }
 
 /** @internal */
 export function SegmentSelect<T>({
   value,
+  placeholder = '',
   options = [],
   onChange,
   onClickOutside,
+  loadOptions = undefined,
   width: widthPixels,
   noOptionsMessage = '',
   allowCustomValue = false,
+  allowEmptyValue = false,
   ...rest
 }: React.PropsWithChildren<Props<T>>) {
   const ref = useRef<HTMLDivElement>(null);
@@ -33,12 +46,22 @@ export function SegmentSelect<T>({
 
   let width = widthPixels > 0 ? widthPixels / theme.spacing.gridSize : undefined;
 
+  let Component;
+  let asyncOptions = {};
+  if (loadOptions) {
+    Component = AsyncSelect;
+    asyncOptions = { loadOptions, defaultOptions: true };
+  } else {
+    Component = Select;
+  }
+
   return (
     <div {...rest} ref={ref}>
-      <Select
+      <Component
+        menuShouldPortal
         width={width}
         noOptionsMessage={noOptionsMessage}
-        placeholder=""
+        placeholder={placeholder}
         autoFocus={true}
         isOpen={true}
         onChange={onChange}
@@ -53,7 +76,7 @@ export function SegmentSelect<T>({
             // https://github.com/JedWatson/react-select/issues/188#issuecomment-279240292
             // Unfortunately there's no other way of retrieving the value (not yet) created new option
             const input = ref.current.querySelector('input[id^="react-select-"]') as HTMLInputElement;
-            if (input && input.value) {
+            if (input && (input.value || allowEmptyValue)) {
               onChange({ value: input.value as any, label: input.value });
             } else {
               onClickOutside();
@@ -61,6 +84,7 @@ export function SegmentSelect<T>({
           }
         }}
         allowCustomValue={allowCustomValue}
+        {...asyncOptions}
       />
     </div>
   );

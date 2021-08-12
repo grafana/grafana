@@ -57,7 +57,7 @@ export default function filterSpans(textFilter: string, spans: TraceSpan[] | TNi
     isTextInFilters(includeFilters, span.operationName) ||
     isTextInFilters(includeFilters, span.process.serviceName) ||
     isTextInKeyValues(span.tags) ||
-    span.logs.some((log) => isTextInKeyValues(log.fields)) ||
+    (span.logs !== null && span.logs.some((log) => isTextInKeyValues(log.fields))) ||
     isTextInKeyValues(span.process.tags) ||
     includeFilters.some((filter) => filter === span.spanID);
 
