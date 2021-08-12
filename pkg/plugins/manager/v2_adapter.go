@@ -201,17 +201,22 @@ func appFromV2(v2 *plugins.PluginV2) *plugins.AppPlugin {
 			ReqRole:  models.RoleType(route.ReqRole),
 			URL:      route.URL,
 			AuthType: route.AuthType,
-			TokenAuth: &plugins.JwtTokenAuth{
+			Body:     route.Body,
+		}
+
+		if route.TokenAuth != nil {
+			r.TokenAuth = &plugins.JwtTokenAuth{
 				Url:    route.TokenAuth.Url,
 				Scopes: route.TokenAuth.Scopes,
 				Params: route.TokenAuth.Params,
-			},
-			JwtTokenAuth: &plugins.JwtTokenAuth{
+			}
+		}
+		if route.JwtTokenAuth != nil {
+			r.JwtTokenAuth = &plugins.JwtTokenAuth{
 				Url:    route.JwtTokenAuth.Url,
 				Scopes: route.JwtTokenAuth.Scopes,
 				Params: route.JwtTokenAuth.Params,
-			},
-			Body: route.Body,
+			}
 		}
 
 		for _, urlParam := range route.URLParams {

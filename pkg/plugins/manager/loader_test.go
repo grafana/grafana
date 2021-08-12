@@ -2,6 +2,7 @@ package manager
 
 import (
 	"errors"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -20,7 +21,6 @@ func TestLoader_Load(t *testing.T) {
 	}
 	type args struct {
 		pluginJSONPath string
-		class          plugins.PluginClass
 	}
 	tests := []struct {
 		name    string
@@ -39,7 +39,7 @@ func TestLoader_Load(t *testing.T) {
 				allowUnsignedPluginsCondition: tt.fields.allowUnsignedPluginsCondition,
 				log:                           tt.fields.log,
 			}
-			got, err := l.Load(tt.args.pluginJSONPath, tt.args.class)
+			got, err := l.Load(tt.args.pluginJSONPath)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -52,51 +52,112 @@ func TestLoader_Load(t *testing.T) {
 }
 
 func TestLoader_LoadAll(t *testing.T) {
-	type fields struct {
-		Cfg                           *setting.Cfg
-		allowUnsignedPluginsCondition unsignedPluginV2ConditionFunc
-		log                           log.Logger
+	corePluginDir, err := filepath.Abs("./../../../public")
+	if err != nil {
+		t.Errorf("could not construct absolute path of core plugins dir")
+		return
 	}
-	type args struct {
-		pluginJSONPaths []string
-		class           plugins.PluginClass
+	currentPath, err := filepath.Abs(".")
+	if err != nil {
+		t.Errorf("could not construct absolute path of current dir")
+		return
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    []*plugins.PluginV2
-		wantErr bool
+		name            string
+		cfg             *setting.Cfg
+		log             log.Logger
+		pluginJSONPaths []string
+		want            []*plugins.PluginV2
+		wantErr         bool
 	}{
 		{
-			name: "Load Core plugins",
-			fields: fields{
-				Cfg:                           setting.NewCfg(),
-				allowUnsignedPluginsCondition: nil,
-				log:                           &FakeLogger{},
+			name: "Load a Core plugin",
+			cfg: &setting.Cfg{
+				StaticRootPath: corePluginDir,
 			},
-			args: args{
-				pluginJSONPaths: []string{"../../../public/app/plugins"},
-				class:           plugins.Core,
+			log:             &FakeLogger{},
+			pluginJSONPaths: []string{filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch/plugin.json")},
+			want: []*plugins.PluginV2{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "cloudwatch",
+						Type: "datasource",
+						Name: "CloudWatch",
+						Info: plugins.PluginInfo{
+							Author: plugins.PluginInfoLink{
+								Name: "Grafana Labs",
+								Url:  "https://grafana.com",
+							},
+							Description: "Data source for Amazon AWS monitoring service",
+							Logos: plugins.PluginLogos{
+								Small: "img/amazon-web-services.png",
+								Large: "img/amazon-web-services.png",
+							},
+						},
+						Includes: []*plugins.PluginInclude{
+							{Name: "EC2", Path: "dashboards/ec2.json", Type: "dashboard"},
+							{Name: "EBS", Path: "dashboards/EBS.json", Type: "dashboard"},
+							{Name: "Lambda", Path: "dashboards/Lambda.json", Type: "dashboard"},
+							{Name: "Logs", Path: "dashboards/Logs.json", Type: "dashboard"},
+							{Name: "RDS", Path: "dashboards/RDS.json", Type: "dashboard"},
+						},
+						Category:     "cloud",
+						Signature:    "internal",
+						Annotations:  true,
+						Metrics:      true,
+						Alerting:     true,
+						Logs:         true,
+						QueryOptions: map[string]bool{"minInterval": true},
+					},
+					PluginDir: filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch"),
+					Class:     "core",
+				},
 			},
-			want:    nil,
+			wantErr: false,
+		}, {
+			name: "Load a Bundled plugin",
+			cfg: &setting.Cfg{
+				BundledPluginsPath: filepath.Join(currentPath, "testdata/unsigned-datasource"),
+			},
+			log:             &FakeLogger{},
+			pluginJSONPaths: []string{"./testdata/unsigned-datasource/plugin/plugin.json"},
+			want: []*plugins.PluginV2{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "test",
+						Type: "datasource",
+						Name: "Test",
+						Info: plugins.PluginInfo{
+							Author: plugins.PluginInfoLink{
+								Name: "Grafana Labs",
+								Url:  "https://grafana.com",
+							},
+							Description: "Test",
+						},
+						Backend:   true,
+						Signature: "unsigned",
+						State:     "alpha",
+					},
+					PluginDir: filepath.Join(currentPath, "testdata/unsigned-datasource/plugin/"),
+					Class:     "bundled",
+				},
+			},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := &Loader{
-				Cfg:                           tt.fields.Cfg,
-				allowUnsignedPluginsCondition: tt.fields.allowUnsignedPluginsCondition,
-				log:                           tt.fields.log,
+				Cfg: tt.cfg,
+				log: tt.log,
 			}
-			got, err := l.LoadAll(tt.args.pluginJSONPaths, tt.args.class)
+			got, err := l.LoadAll(tt.pluginJSONPaths)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LoadAll() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("LoadAll() got = %v, want %v", got, tt.want)
+			if !cmp.Equal(got, tt.want) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want))
 			}
 		})
 	}

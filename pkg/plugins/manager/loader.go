@@ -16,7 +16,8 @@ import (
 )
 
 var (
-	InvalidPluginJSON = errors.New("did not find valid type or id properties in plugin.json")
+	InvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
+	InvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
 )
 
 type Loader struct {
@@ -40,8 +41,8 @@ func (l *Loader) Init() error {
 	return nil
 }
 
-func (l *Loader) Load(pluginJSONPath string, class plugins.PluginClass) (*plugins.PluginV2, error) {
-	p, err := l.LoadAll([]string{pluginJSONPath}, class)
+func (l *Loader) Load(pluginJSONPath string) (*plugins.PluginV2, error) {
+	p, err := l.LoadAll([]string{pluginJSONPath})
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +50,7 @@ func (l *Loader) Load(pluginJSONPath string, class plugins.PluginClass) (*plugin
 	return p[0], nil
 }
 
-func (l *Loader) LoadAll(pluginJSONPaths []string, class plugins.PluginClass) ([]*plugins.PluginV2, error) {
+func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) {
 	var foundPlugins = make(map[string]plugins.JSONData)
 
 	// load plugin.json files and map directory to JSON data map
@@ -59,7 +60,12 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, class plugins.PluginClass) ([
 			return nil, err
 		}
 
-		foundPlugins[filepath.Dir(pluginJSONPath)] = plugin
+		pluginJSONAbsPath, err := filepath.Abs(pluginJSONPath)
+		if err != nil {
+			return nil, err
+		}
+
+		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
 	}
 
 	// calculate initial signature state
@@ -68,7 +74,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, class plugins.PluginClass) ([
 		plugin := &plugins.PluginV2{
 			JSONData:  pluginJSON,
 			PluginDir: pluginDir,
-			Class:     class,
+			Class:     l.pluginClass(pluginDir),
 		}
 
 		signatureState, err := pluginSignatureState(l.log, plugin)
@@ -110,7 +116,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, class plugins.PluginClass) ([
 	// validate signatures
 	var errs = make(map[string]error)
 	for _, plugin := range loadedPlugins {
-		signingError := newSignatureValidator(l.Cfg, class, l.allowUnsignedPluginsCondition).validate(plugin)
+		signingError := newSignatureValidator(l.Cfg, plugin.Class, l.allowUnsignedPluginsCondition).validate(plugin)
 		if signingError != nil {
 			l.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.ID,
 				"signature", plugin.Signature, "status", signingError)
@@ -153,6 +159,10 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, class plugins.PluginClass) ([
 func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
 	l.log.Debug("Loading plugin", "path", pluginJSONPath)
 
+	if !strings.EqualFold(filepath.Ext(pluginJSONPath), ".json") {
+		return plugins.JSONData{}, InvalidPluginJSONFilePath
+	}
+
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `currentPath` is based
 	// on plugin the folder structure on disk and not user input.
@@ -182,4 +192,34 @@ func validatePluginJSON(data plugins.JSONData) error {
 		return InvalidPluginJSON
 	}
 	return nil
+}
+
+func (l *Loader) pluginClass(pluginDir string) plugins.PluginClass {
+	isSubDir := func(base, target string) bool {
+		path, err := filepath.Rel(base, target)
+		if err != nil {
+			return false
+		}
+
+		if !strings.HasPrefix(path, "..") {
+			return true
+		}
+
+		return false
+	}
+
+	corePluginsDir := filepath.Join(l.Cfg.StaticRootPath, "app/plugins")
+	if isSubDir(corePluginsDir, pluginDir) {
+		return plugins.Core
+	}
+
+	if isSubDir(l.Cfg.BundledPluginsPath, pluginDir) {
+		return plugins.Bundled
+	}
+
+	if isSubDir(l.Cfg.PluginsPath, pluginDir) {
+		return plugins.External
+	}
+
+	return plugins.Unknown
 }

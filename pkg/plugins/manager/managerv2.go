@@ -31,7 +31,7 @@ import (
 
 var _ plugins.ManagerV2 = (*PluginManagerV2)(nil)
 
-var externalManagedCorePlugins = map[string]string{
+var corePluginJSONPaths = map[string]string{
 	"cloudwatch":                       "datasource/cloudwatch/plugin.json",
 	"testdata":                         "datasource/testdata/plugin.json",
 	"graphite":                         "datasource/graphite/plugin.json",
@@ -71,18 +71,17 @@ func (m *PluginManagerV2) Init() error {
 	m.pluginInstaller = installer.New(false, m.Cfg.BuildVersion, NewInstallerLogger("plugin.installer", true))
 
 	// install Core plugins
-	err := m.installPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins"), plugins.Core)
+	err := m.installPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins"))
 	if err != nil {
 		return err
 	}
 
 	// install Bundled plugins
-	err = m.installPlugins(m.Cfg.BundledPluginsPath, plugins.Bundled)
+	err = m.installPlugins(m.Cfg.BundledPluginsPath)
 	if err != nil {
 		return err
 	}
 
-	// install External plugins
 	externalPluginsDir := m.Cfg.PluginsPath
 	exists, err := fs.Exists(externalPluginsDir)
 	if err != nil {
@@ -90,11 +89,14 @@ func (m *PluginManagerV2) Init() error {
 	}
 
 	if !exists {
-		if err = os.MkdirAll(m.Cfg.PluginsPath, os.ModePerm); err != nil {
+		if err = os.MkdirAll(externalPluginsDir, os.ModePerm); err != nil {
 			m.log.Error("Failed to create plugins directory", "dir", externalPluginsDir, "error", err)
 		}
+		return nil
 	}
-	err = m.installPlugins(m.Cfg.PluginsPath, plugins.External)
+
+	// install External plugins
+	err = m.installPlugins(externalPluginsDir)
 	if err != nil {
 		return err
 	}
@@ -114,9 +116,9 @@ func (m *PluginManagerV2) IsDisabled() bool {
 }
 
 func (m *PluginManagerV2) InitCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
-	fullPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", externalManagedCorePlugins[pluginID])
+	fullPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", corePluginJSONPaths[pluginID])
 
-	plugin, err := m.PluginLoader.Load(fullPath, plugins.Core)
+	plugin, err := m.PluginLoader.Load(fullPath)
 	if err != nil {
 		return err
 	}
@@ -133,7 +135,7 @@ func (m *PluginManagerV2) InitCorePlugin(ctx context.Context, pluginID string, f
 	return nil
 }
 
-func (m *PluginManagerV2) installPlugins(path string, class plugins.PluginClass) error {
+func (m *PluginManagerV2) installPlugins(path string) error {
 	exists, err := fs.Exists(path)
 	if err != nil {
 		return err
@@ -148,7 +150,7 @@ func (m *PluginManagerV2) installPlugins(path string, class plugins.PluginClass)
 		return err
 	}
 
-	loadedPlugins, err := m.PluginLoader.LoadAll(pluginJSONPaths, class)
+	loadedPlugins, err := m.PluginLoader.LoadAll(pluginJSONPaths)
 	if err != nil {
 		return err
 	}
@@ -186,7 +188,7 @@ func (m *PluginManagerV2) filterOutDuplicates(loadedPlugins []*plugins.PluginV2)
 		}
 
 		// temporary check to ignore Core plugins that are programmatically managed
-		if _, canIgnore := externalManagedCorePlugins[scannedPlugin.ID]; canIgnore {
+		if _, canIgnore := corePluginJSONPaths[scannedPlugin.ID]; canIgnore {
 			continue
 		}
 
@@ -614,7 +616,7 @@ func (m *PluginManagerV2) Install(ctx context.Context, pluginID, version string)
 		return err
 	}
 
-	err = m.installPlugins(m.Cfg.PluginsPath, plugins.External)
+	err = m.installPlugins(m.Cfg.PluginsPath)
 	if err != nil {
 		return err
 	}
