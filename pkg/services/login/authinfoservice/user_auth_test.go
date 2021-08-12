@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -26,7 +28,7 @@ func TestUserAuth(t *testing.T) {
 		UserProtectionService: OSSUserProtectionImpl{},
 	}
 	srv.Init()
-	util.SetupEncryptionVariables(t)
+	util.SetEncryptionVariables(t)
 
 	t.Run("Given 5 users", func(t *testing.T) {
 		for i := 0; i < 5; i++ {
