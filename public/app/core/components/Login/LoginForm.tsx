@@ -16,12 +16,14 @@ interface Props {
 
 const wrapperStyles = css`
   width: 100%;
-  padding-bottom: 16px;
+  padding-bottom: 0px;
 `;
 
 export const submitButton = css`
   justify-content: center;
-  width: 100%;
+  width: 50%;
+  display: flex;
+  margin: 50px auto 0 auto;
 `;
 
 export const LoginForm: FC<Props> = ({ children, onSubmit, isLoggingIn, passwordHint, loginHint }) => {
@@ -30,7 +32,7 @@ export const LoginForm: FC<Props> = ({ children, onSubmit, isLoggingIn, password
       <Form onSubmit={onSubmit} validateOn="onChange">
         {({ register, errors }) => (
           <>
-            <Field label="Email or username" invalid={!!errors.user} error={errors.user?.message}>
+            <Field label="Username" invalid={!!errors.user} error={errors.user?.message}>
               <Input
                 {...register('user', { required: 'Email or username is required' })}
                 autoFocus
@@ -48,7 +50,7 @@ export const LoginForm: FC<Props> = ({ children, onSubmit, isLoggingIn, password
               />
             </Field>
             <Button aria-label={selectors.pages.Login.submit} className={submitButton} disabled={isLoggingIn}>
-              {isLoggingIn ? 'Logging in...' : 'Log in'}
+              {isLoggingIn ? 'Signing in...' : 'Sign In'}
             </Button>
             {children}
           </>

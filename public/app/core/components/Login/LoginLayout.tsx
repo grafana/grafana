@@ -50,10 +50,12 @@ to{
 
 export const getLoginStyles = (theme: GrafanaTheme2) => {
   const bgColor = theme.isDark ? '#000' : theme.colors.background.canvas;
+  const loginContentBoxBg = theme.isDark ? 'red' : '#fff';
 
   return {
     container: css({
       minHeight: '100vh',
+      maxWidth: '800px',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
       backgroundColor: bgColor,
@@ -71,6 +73,19 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
 
       .login-content-box {
         opacity: 1;
+        background: ${loginContentBoxBg};
+        box-shadow: 1px 1px 25px 4px rgba(105, 105, 105, 0.49);
+        -webkit-box-shadow: 1px 1px 25px 4px rgba(105, 105, 105, 0.49);
+        -moz-box-shadow: 1px 1px 25px 4px rgba(105, 105, 105, 0.49);
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
+        .login-content-box {
+          margin-left: auto;
+          margin-right: 20%;
+        }
       }
     `,
     submitButton: css`
@@ -83,7 +98,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       margin-bottom: 15px;
 
       @media ${styleMixins.mediaUp(theme.v1.breakpoints.sm)} {
-        max-width: 100px;
+        max-width: 120px;
       }
     `,
     loginLogoWrapper: css`
@@ -108,7 +123,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.secondary};
     `,
     loginContent: css`
-      max-width: 478px;
+      max-width: 370px;
       width: calc(100% - 2rem);
       display: flex;
       align-items: stretch;
@@ -118,7 +133,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       z-index: 1;
       min-height: 320px;
       border-radius: ${theme.shape.borderRadius(4)};
-      padding: ${theme.spacing(2, 0)};
+      padding: ${theme.spacing(2)};
       opacity: 0;
       transition: opacity 0.5s ease-in-out;
 
