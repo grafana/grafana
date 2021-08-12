@@ -38,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
-	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -99,7 +98,6 @@ type HTTPServer struct {
 	ContextHandler         *contexthandler.ContextHandler
 	SQLStore               *sqlstore.SQLStore
 	DataService            *tsdb.Service
-	PluginDashboardService *plugindashboards.Service
 	AlertEngine            *alerting.AlertEngine
 	LoadSchemaService      *schemaloader.SchemaLoaderService
 	AlertNG                *ngalert.AlertNG
@@ -130,7 +128,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginService login.Service, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
-	contextHandler *contexthandler.ContextHandler, pluginDashboardService *plugindashboards.Service,
+	contextHandler *contexthandler.ContextHandler,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
@@ -171,7 +169,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		LivePushGateway:        livePushGateway,
 		PluginContextProvider:  plugCtxProvider,
 		ContextHandler:         contextHandler,
-		PluginDashboardService: pluginDashboardService,
 		LoadSchemaService:      schemaService,
 		AlertNG:                alertNG,
 		LibraryPanelService:    libraryPanelService,

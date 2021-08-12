@@ -1,8 +1,7 @@
 package plugindashboards
 
 import (
-	"context"
-
+	"fmt"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -12,6 +11,7 @@ import (
 )
 
 func ProvideService(dataService *tsdb.Service, pluginManager plugins.Manager, sqlStore *sqlstore.SQLStore) *Service {
+	fmt.Println("Run")
 	s := &Service{
 		DataService:   dataService,
 		PluginManager: pluginManager,
@@ -19,6 +19,7 @@ func ProvideService(dataService *tsdb.Service, pluginManager plugins.Manager, sq
 		logger:        log.New("plugindashboards"),
 	}
 	bus.AddEventListener(s.handlePluginStateChanged)
+	s.updateAppDashboards()
 	return s
 }
 
@@ -28,11 +29,6 @@ type Service struct {
 	SQLStore      *sqlstore.SQLStore
 
 	logger log.Logger
-}
-
-func (s *Service) Run(ctx context.Context) error {
-	s.updateAppDashboards()
-	return nil
 }
 
 func (s *Service) updateAppDashboards() {
