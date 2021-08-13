@@ -280,22 +280,19 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 		// the "statsGroups" parameter is sent along with the query to the backend so that we
 		// can correctly group the CloudWatch logs response.
 		statsGroups := model.Get("statsGroups").MustStringArray()
-		if len(statsGroups) > 0 && len(dataFrame.Fields) > 0 {
-			groupedFrames, err := groupResults(dataFrame, statsGroups)
-			if err != nil {
-				return retryer.FuncError, err
-			}
-
-			dataFrames = groupedFrames
-		} else {
-			if dataFrame.Meta != nil {
-				dataFrame.Meta.PreferredVisualization = "logs"
-			} else {
-				dataFrame.Meta = &data.FrameMeta{
-					PreferredVisualization: "logs",
+		if hasTimeField(dataFrame) {
+			if len(statsGroups) > 0 && len(dataFrame.Fields) > 0  {
+				groupedFrames, err := groupResults(dataFrame, statsGroups)
+				if err != nil {
+					return retryer.FuncError, err
 				}
-			}
 
+				dataFrames = groupedFrames
+			} else {
+				setPreferredVisType(dataFrame, "logs")
+				dataFrames = data.Frames{dataFrame}
+			}
+		} else {
 			dataFrames = data.Frames{dataFrame}
 		}
 
@@ -315,6 +312,25 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 
 		return retryer.FuncSuccess, nil
 	}, maxAttempts, minRetryDelay, maxRetryDelay)
+}
+
+func hasTimeField(frame *data.Frame) bool {
+	for _, field := range frame.Fields {
+		if field.Type() == data.FieldTypeNullableTime {
+			return true
+		}
+	}
+	return false
+}
+
+func setPreferredVisType(frame *data.Frame, visType data.VisType) {
+	if frame.Meta != nil {
+		frame.Meta.PreferredVisualization = visType
+	} else {
+		frame.Meta = &data.FrameMeta{
+			PreferredVisualization: visType,
+		}
+	}
 }
 
 // Service quotas client factory.
