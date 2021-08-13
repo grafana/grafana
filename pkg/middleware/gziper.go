@@ -58,7 +58,6 @@ func Gziper() func(http.Handler) http.Handler {
 
 			for _, pathMatcher := range gzipIgnoredPaths {
 				if pathMatcher(requestPath) {
-					fmt.Println("skip path", requestPath)
 					next.ServeHTTP(rw, req)
 					return
 				}

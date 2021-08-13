@@ -31,7 +31,11 @@ func TestAlertRulePermissions(t *testing.T) {
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create a user to make authenticated requests
-	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "password",
+		Login:          "grafana",
+	})
 
 	// Create the namespace we'll save our alerts to.
 	_, err := createFolder(t, store, 0, "folder1")
@@ -320,7 +324,11 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create user
-	require.NoError(t, createUser(t, store, models.ROLE_ADMIN, "admin", "admin"))
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_ADMIN),
+		Password:       "admin",
+		Login:          "admin",
+	})
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)

@@ -22,8 +22,10 @@ var timeNow = time.Now
 
 type Alertmanager interface {
 	// Configuration
-	SaveAndApplyConfig(config *apimodels.PostableUserConfig) error
-	SaveAndApplyDefaultConfig() error
+	// temporary add orgID parameter; this will move to the Alertmanager wrapper when it will be available
+	SaveAndApplyConfig(orgID int64, config *apimodels.PostableUserConfig) error
+	// temporary add orgID parameter; this will move to the Alertmanager wrapper when it will be available
+	SaveAndApplyDefaultConfig(orgID int64) error
 	GetStatus() apimodels.GettableStatus
 
 	// Silences
