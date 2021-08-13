@@ -1,13 +1,13 @@
-import React, { PureComponent } from 'react';
+import React from 'react';
 
 import { CanvasSceneContext, CanvasElementItem, CanvasElementProps, LineConfig } from '../base';
-import { config } from '@grafana/runtime';
 import SVG from 'react-inlinesvg';
 import { ColorDimensionConfig } from '../../geomap/dims/types';
 import { ColorDimensionEditor } from '../../geomap/dims/editors/ColorDimensionEditor';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { stylesFactory } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
+import IconSelector from '../components/IconSelector';
 
 interface IconConfig {
   path?: string;
@@ -21,20 +21,23 @@ interface IconData {
   stroke?: number;
 }
 
-class IconDisplay extends PureComponent<CanvasElementProps<IconConfig, IconData>> {
-  iconRoot = (window as any).__grafana_public_path__ + 'img/icons/unicons/';
-  styles = getStyles(config.theme2);
-
-  render() {
-    const { config, width, height, data } = this.props;
-    let path = config?.path ?? 'question-circle.svg';
-    if (path.indexOf(':/') < 0) {
-      path = this.iconRoot + path;
-    }
-
-    console.log('SVG', data);
-    return <SVG src={path} width={width} height={height} />;
+export function IconDisplay(props: CanvasElementProps) {
+  const { config, width, height, data } = props;
+  console.log(config);
+  const iconRoot = (window as any).__grafana_public_path__ + 'img/icons/unicons/';
+  // TODO: do we need this?
+  const styles = useStyles2(getStyles);
+  const svgStyle = {
+    fill: data?.fill,
+    stroke: data?.strokeColor,
+    strokeWidth: data?.stroke,
+  };
+  let path = config?.path ?? 'question-circle.svg';
+  if (path.indexOf(':/') < 0) {
+    path = iconRoot + path;
   }
+
+  return <SVG src={path} width={width} height={height} style={svgStyle} />;
 }
 
 export const iconItem: CanvasElementItem<IconConfig, IconData> = {
@@ -46,12 +49,12 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
   defaultOptions: {
     path: 'question-circle.svg',
-    fill: { fixed: '#F00' },
+    fill: { fixed: '#FFF899' },
   },
 
   defaultSize: {
-    width: 75,
-    height: 75,
+    width: 50,
+    height: 50,
   },
 
   // Called when data changes
@@ -70,9 +73,12 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
     builder
-      .addTextInput({
+      .addCustomEditor({
+        id: 'iconSelector',
         path: 'config.path',
-        name: 'SVG Path (TODO, selector)',
+        name: 'SVG Path',
+        description: 'Select an icon to show',
+        editor: IconSelector,
       })
       .addCustomEditor({
         id: 'config.fill',
@@ -109,7 +115,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
   },
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrap: css`
     border: 1px solid pink;
   `,
@@ -119,4 +125,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     left: 4px;
     top: 4px;
   `,
-}));
+});

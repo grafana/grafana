@@ -6,6 +6,7 @@ import { defaultPanelOptions, PanelOptions } from './models.gen';
 
 export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
   .setNoPadding() // extend to panel edges
+  .useFieldConfig()
   .setPanelOptions((builder) => {
     builder.addCustomEditor({
       category: ['Selected Element'],

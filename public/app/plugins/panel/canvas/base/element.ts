@@ -29,7 +29,7 @@ export interface CanvasGroupOptions extends CanvasElementOptions {
   // layout? // absolute, list, grid?
 }
 
-export interface CanvasElementProps<TConfig = any, TData = PanelData> {
+export interface CanvasElementProps<TConfig = any, TData = any> {
   // Saved config
   config: TConfig;
 
