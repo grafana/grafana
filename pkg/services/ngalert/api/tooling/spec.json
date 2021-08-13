@@ -75,9 +75,9 @@
         ],
         "responses": {
           "200": {
-            "description": "GettableAlerts",
+            "description": "gettableAlerts",
             "schema": {
-              "$ref": "#/definitions/GettableAlerts"
+              "$ref": "#/definitions/gettableAlerts"
             }
           },
           "400": {
@@ -188,9 +188,9 @@
         ],
         "responses": {
           "200": {
-            "description": "AlertGroups",
+            "description": "alertGroups",
             "schema": {
-              "$ref": "#/definitions/AlertGroups"
+              "$ref": "#/definitions/alertGroups"
             }
           },
           "400": {
@@ -226,9 +226,9 @@
         ],
         "responses": {
           "200": {
-            "description": "GettableSilence",
+            "description": "gettableSilence",
             "schema": {
-              "$ref": "#/definitions/GettableSilence"
+              "$ref": "#/definitions/gettableSilence"
             }
           },
           "400": {
@@ -303,9 +303,9 @@
         ],
         "responses": {
           "200": {
-            "description": "GettableSilences",
+            "description": "gettableSilences",
             "schema": {
-              "$ref": "#/definitions/GettableSilences"
+              "$ref": "#/definitions/gettableSilences"
             }
           },
           "400": {
@@ -327,7 +327,7 @@
             "name": "Silence",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/PostableSilence"
+              "$ref": "#/definitions/postableSilence"
             }
           },
           {
@@ -340,9 +340,9 @@
         ],
         "responses": {
           "201": {
-            "description": "GettableSilence",
+            "description": "gettableSilence",
             "schema": {
-              "$ref": "#/definitions/GettableSilence"
+              "$ref": "#/definitions/gettableSilence"
             }
           },
           "400": {
@@ -1015,12 +1015,6 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
-    "AlertGroup": {
-      "$ref": "#/definitions/alertGroup"
-    },
-    "AlertGroups": {
-      "$ref": "#/definitions/alertGroups"
-    },
     "AlertInstancesResponse": {
       "type": "object",
       "properties": {
@@ -1438,12 +1432,6 @@
     "Failure": {
       "$ref": "#/definitions/ResponseDetails"
     },
-    "GettableAlert": {
-      "$ref": "#/definitions/gettableAlert"
-    },
-    "GettableAlerts": {
-      "$ref": "#/definitions/gettableAlerts"
-    },
     "GettableApiAlertingConfig": {
       "type": "object",
       "properties": {
@@ -1746,12 +1734,6 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-    },
-    "GettableSilence": {
-      "$ref": "#/definitions/gettableSilence"
-    },
-    "GettableSilences": {
-      "$ref": "#/definitions/gettableSilences"
     },
     "GettableStatus": {
       "type": "object",
@@ -2555,9 +2537,6 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
-    "PostableSilence": {
-      "$ref": "#/definitions/postableSilence"
-    },
     "PostableUserConfig": {
       "type": "object",
       "properties": {
@@ -2693,7 +2672,7 @@
           "x-go-name": "WechatConfigs"
         }
       },
-      "$ref": "#/definitions/receiver"
+      "x-go-package": "github.com/prometheus/alertmanager/config"
     },
     "Regexp": {
       "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
@@ -3437,8 +3416,7 @@
           "$ref": "#/definitions/receiver"
         }
       },
-      "x-go-name": "AlertGroup",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
       "description": "AlertGroups alert groups",
@@ -3446,8 +3424,7 @@
       "items": {
         "$ref": "#/definitions/alertGroup"
       },
-      "x-go-name": "AlertGroups",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      "$ref": "#/definitions/alertGroups"
     },
     "alertStatus": {
       "description": "AlertStatus alert status",
@@ -3627,20 +3604,18 @@
           "x-go-name": "UpdatedAt"
         }
       },
-      "x-go-name": "GettableAlert",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       },
       "x-go-name": "GettableAlerts",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
+      "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -3694,7 +3669,8 @@
         }
       },
       "x-go-name": "GettableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
+      "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
       "description": "GettableSilences gettable silences",
@@ -3702,8 +3678,7 @@
       "items": {
         "$ref": "#/definitions/gettableSilence"
       },
-      "x-go-name": "GettableSilences",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      "$ref": "#/definitions/gettableSilences"
     },
     "labelSet": {
       "description": "LabelSet label set",
@@ -3873,8 +3848,7 @@
           "x-go-name": "StartsAt"
         }
       },
-      "x-go-name": "PostableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
       "description": "Receiver receiver",
@@ -3889,8 +3863,7 @@
           "x-go-name": "Name"
         }
       },
-      "x-go-name": "Receiver",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      "$ref": "#/definitions/receiver"
     },
     "silence": {
       "description": "Silence silence",
