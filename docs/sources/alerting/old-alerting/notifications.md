@@ -147,6 +147,8 @@ To set up PagerDuty, all you have to do is to provide an integration key.
 
 > **Note:** The `state` tag overrides the current alert state inside the `custom_details` payload.
 
+> **Note:** Grafana uses the `Events API V2` integration. This can be configured for each service.
+
 ### VictorOps
 
 To configure VictorOps, provide the URL from the Grafana Integration and substitute `$routing_key` with a valid key.
