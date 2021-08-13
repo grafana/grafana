@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { Button, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
+import { AppEvents, GrafanaTheme2, urlUtil } from '@grafana/data';
+import { Button, ConfirmModal, ClipboardButton, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import React, { FC, useState } from 'react';
@@ -12,6 +12,7 @@ import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { createExploreLink, createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
+import { appEvents } from 'app/core/core';
 
 interface Props {
   rule: CombinedRule;
@@ -134,6 +135,24 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     const editURL = urlUtil.renderUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
       returnTo,
     });
+
+    if (isViewMode) {
+      rightButtons.push(
+        <ClipboardButton
+          onClipboardCopy={() => {
+            appEvents.emit(AppEvents.alertSuccess, ['URL copied!']);
+          }}
+          onClipboardError={(e) => {
+            appEvents.emit(AppEvents.alertError, ['Error while copying URL', e.text]);
+          }}
+          className={style.button}
+          size="sm"
+          getText={() => 'link/to/rule'}
+        >
+          Copy link to rule
+        </ClipboardButton>
+      );
+    }
 
     rightButtons.push(
       <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
