@@ -1,4 +1,4 @@
-import React, { createContext, Dispatch, PropsWithChildren, useContext, useMemo, useState } from 'react';
+import React, { createContext, Dispatch, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 import { AnyAction } from '@reduxjs/toolkit';
 import { QueryEditorProps } from '@grafana/data';
 import { GraphiteDatasource } from '../datasource';
@@ -35,6 +35,10 @@ export const GraphiteQueryEditorContext = ({
       setState(state);
     });
   }, []);
+
+  useEffect(() => {
+    dispatch(actions.updateTimeRange(range));
+  }, [range]);
 
   if (!state) {
     dispatch(
