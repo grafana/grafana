@@ -498,6 +498,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return safeInterval;
   }
 
+  getRange(timeRange: TimeRange) {
+    const start = this.getPrometheusTime(timeRange.from, false);
+    const end = this.getPrometheusTime(timeRange.to, true);
+    const range = Math.ceil(end - start);
+    return range;
+  }
+
   adjustInterval(interval: number, stepInterval: number, range: number, intervalFactor: number, stepMode: StepMode) {
     const safeInterval = this.getSafeInterval(range);
 
@@ -770,8 +777,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return expandedQueries;
   }
 
-  getQueryHints(query: PromQuery, result: any[], safeInterval?: number, currentInterval?: number) {
-    return getQueryHints(query.expr ?? '', result, this, safeInterval, currentInterval);
+  getQueryHints(query: PromQuery, result: any[], range?: TimeRange) {
+    return getQueryHints(query, result, this, range);
   }
 
   getInitHints() {
