@@ -46,7 +46,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
   if (isEditing) {
     return (
       <div className={cx(style.container, style.editContainer)}>
-        <div aria-label={selectors.components.TimeZonePicker.container} className={style.timeZoneContainer}>
+        <section aria-label={selectors.components.TimeZonePicker.container} className={style.timeZoneContainer}>
           <TimeZonePicker
             includeInternal={true}
             onChange={(timeZone) => {
@@ -59,13 +59,13 @@ export const TimePickerFooter: FC<Props> = (props) => {
             autoFocus={true}
             onBlur={onToggleChangeTz}
           />
-        </div>
+        </section>
       </div>
     );
   }
 
   return (
-    <div className={style.container}>
+    <section aria-label="Time zone selection" className={style.container}>
       <div className={style.timeZoneContainer}>
         <div className={style.timeZone}>
           <TimeZoneTitle title={info.name} />
@@ -78,7 +78,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
       <Button variant="secondary" onClick={onToggleChangeTz} size="sm">
         Change time zone
       </Button>
-    </div>
+    </section>
   );
 };
 

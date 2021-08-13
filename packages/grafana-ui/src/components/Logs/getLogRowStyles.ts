@@ -48,13 +48,13 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
       font-family: ${theme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.h6.fontSize};
       width: 100%;
-      overflow: hidden;
     `,
     context: css`
       label: context;
       visibility: hidden;
       white-space: nowrap;
       position: relative;
+      margin-left: 10px;
     `,
     logsRow: css`
       label: logs-row;
@@ -66,7 +66,6 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
         .log-row-context {
           visibility: visible;
           z-index: 1;
-          margin-left: 10px;
           text-decoration: underline;
           &:hover {
             color: ${theme.colors.warning.main};

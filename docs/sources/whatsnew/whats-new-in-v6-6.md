@@ -42,7 +42,7 @@ Grafana 6.6 comes with a lot of new features and enhancements:
 
 {{< figure src="/static/img/docs/v66/stat_panel_dark2.png" max-width="1024px" caption="Stat panel" >}}
 
-This release adds a new panel named `Stat`. This panel is designed to replace the current `Singlestat` as the primary way to show big single number panels along with a sparkline. This panel is of course building on our new panel infrastructure and option design. So, you can use the new threshold UI and data links. It also supports the same repeating feature as the Gauge and  Bar Gauge panels, meaning it will repeat a separate visualization for every series or row
+This release adds a new panel named `Stat`. This panel is designed to replace the current `Singlestat` as the primary way to show big single number panels along with a sparkline. This panel is of course building on our new panel infrastructure and option design. So, you can use the new threshold UI and data links. It also supports the same repeating feature as the Gauge and Bar Gauge panels, meaning it will repeat a separate visualization for every series or row
 in the query result.
 
 Key features:
@@ -160,21 +160,21 @@ Customize the login page, side menu bar, and footer links.
 
 Now you can install the enterprise edition from the APT and YUM repository. The following table shows the APT repository for each Grafana version (for instructions read the [installation notes]({{< relref "../installation/debian/#install-from-apt-repository" >}})) :
 
-| Grafana Version | Package | Repository |
-|-----------------|---------|------------|
-| Grafana OSS     | grafana | `https://packages.grafana.com/oss/deb stable main` |
-| Grafana OSS (Beta)     | grafana | `https://packages.grafana.com/oss/deb beta main` |
-| Grafana Enterprise     | grafana-enterprise | `https://packages.grafana.com/enterprise/deb stable main` |
-| Grafana Enterprise (Beta)     | grafana-enterprise | `https://packages.grafana.com/enterprise/deb beta main` |
+| Grafana Version           | Package            | Repository                                                |
+| ------------------------- | ------------------ | --------------------------------------------------------- |
+| Grafana OSS               | grafana            | `https://packages.grafana.com/oss/deb stable main`        |
+| Grafana OSS (Beta)        | grafana            | `https://packages.grafana.com/oss/deb beta main`          |
+| Grafana Enterprise        | grafana-enterprise | `https://packages.grafana.com/enterprise/deb stable main` |
+| Grafana Enterprise (Beta) | grafana-enterprise | `https://packages.grafana.com/enterprise/deb beta main`   |
 
 The following table shows the YUM repositories for each Grafana version (for instructions read the [installation notes]({{< relref "../installation/rpm/#install-from-yum-repository" >}})) :
 
-| Grafana Version            | Package            | Repository                                         |
-|----------------------------|--------------------|----------------------------------------------------|
-| Grafana OSS                | grafana            | `https://packages.grafana.com/oss/rpm`             |
-| Grafana OSS (Beta)         | grafana            | `https://packages.grafana.com/oss/rpm-beta`        |
-| Grafana Enterprise         | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm`      |
-| Grafana Enterprise (Beta)  | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm-beta` |
+| Grafana Version           | Package            | Repository                                         |
+| ------------------------- | ------------------ | -------------------------------------------------- |
+| Grafana OSS               | grafana            | `https://packages.grafana.com/oss/rpm`             |
+| Grafana OSS (Beta)        | grafana            | `https://packages.grafana.com/oss/rpm-beta`        |
+| Grafana Enterprise        | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm`      |
+| Grafana Enterprise (Beta) | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm-beta` |
 
 We recommend all users to install the Enterprise Edition of Grafana, which can be seamlessly upgraded with a Grafana Enterprise [subscription](https://grafana.com/products/enterprise/?utm_source=grafana-install-page).
 

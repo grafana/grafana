@@ -4,11 +4,11 @@ import { SelectableValue, dateTimeParse, GrafanaTheme2 } from '@grafana/data';
 import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { useLocation } from 'react-router-dom';
 import { locationSearchToObject } from '@grafana/runtime';
-
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
 import { useHistory } from '../hooks/useHistory';
-import { CatalogPlugin } from '../types';
+import { CatalogPlugin, PluginAdminRoutes } from '../types';
 import { Page as PluginPage } from '../components/Page';
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { Page } from 'app/core/components/Page/Page';
@@ -17,16 +17,17 @@ import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 import { getNavModel } from 'app/core/selectors/navModel';
 
-export default function Browse(): ReactElement | null {
+export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
   const location = useLocation();
   const query = locationSearchToObject(location.search);
-  const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, 'plugins'));
+  const navModelId = getNavModelId(route.routeName);
+  const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, navModelId));
   const styles = useStyles2(getStyles);
 
   const q = (query.q as string) ?? '';
   const filterBy = (query.filterBy as string) ?? 'installed';
   const filterByType = (query.filterByType as string) ?? 'all';
-  const sortBy = (query.sortBy as string) ?? 'name';
+  const sortBy = (query.sortBy as string) ?? 'nameAsc';
 
   const { plugins, isLoading, error } = usePluginsByFilter({ searchBy: q, filterBy, filterByType });
   const sortedPlugins = plugins.sort(sorters[sortBy]);
@@ -85,11 +86,13 @@ export default function Browse(): ReactElement | null {
               </div>
               <div>
                 <Select
+                  menuShouldPortal
                   width={24}
                   value={sortBy}
                   onChange={onSortByChange}
                   options={[
-                    { value: 'name', label: 'Sort by name (A-Z)' },
+                    { value: 'nameAsc', label: 'Sort by name (A-Z)' },
+                    { value: 'nameDesc', label: 'Sort by name (Z-A)' },
                     { value: 'updated', label: 'Sort by updated date' },
                     { value: 'published', label: 'Sort by published date' },
                     { value: 'downloads', label: 'Sort by downloads' },
@@ -127,8 +130,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
+// Because the component is used under multiple paths (/plugins and /admin/plugins) we need to get
+// the correct navModel from the store
+const getNavModelId = (routeName?: string) => {
+  if (routeName === PluginAdminRoutes.HomeAdmin || routeName === PluginAdminRoutes.BrowseAdmin) {
+    return 'admin-plugins';
+  }
+
+  return 'plugins';
+};
+
 const sorters: { [name: string]: (a: CatalogPlugin, b: CatalogPlugin) => number } = {
-  name: (a: CatalogPlugin, b: CatalogPlugin) => a.name.localeCompare(b.name),
+  nameAsc: (a: CatalogPlugin, b: CatalogPlugin) => a.name.localeCompare(b.name),
+  nameDesc: (a: CatalogPlugin, b: CatalogPlugin) => b.name.localeCompare(a.name),
   updated: (a: CatalogPlugin, b: CatalogPlugin) =>
     dateTimeParse(b.updatedAt).valueOf() - dateTimeParse(a.updatedAt).valueOf(),
   published: (a: CatalogPlugin, b: CatalogPlugin) =>

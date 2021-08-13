@@ -46,6 +46,7 @@ export const AlertManagerPicker: FC<Props> = ({ onChange, current, disabled = fa
       data-testid="alertmanager-picker"
     >
       <Select
+        menuShouldPortal
         width={29}
         className="ds-picker select-container"
         backspaceRemovesValue={false}

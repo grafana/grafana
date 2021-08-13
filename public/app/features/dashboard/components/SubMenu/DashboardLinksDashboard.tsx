@@ -1,5 +1,5 @@
 import React, { useRef, useState, useLayoutEffect } from 'react';
-import { Icon, Tooltip } from '@grafana/ui';
+import { Icon, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
@@ -7,6 +7,7 @@ import { DashboardLink } from '../../state/DashboardModel';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { useAsync } from 'react-use';
+import { css, cx } from '@emotion/css';
 
 interface Props {
   link: DashboardLink;
@@ -21,33 +22,45 @@ export const DashboardLinksDashboard: React.FC<Props> = (props) => {
   const [opened, setOpened] = useState(0);
   const resolvedLinks = useResolvedLinks(props, opened);
 
+  const buttonStyle = useStyles2(
+    (theme) =>
+      css`
+        color: ${theme.colors.text.primary};
+      `
+  );
+
   useLayoutEffect(() => {
     setDropdownCssClass(getDropdownLocationCssClass(listRef.current));
   }, [resolvedLinks]);
 
   if (link.asDropdown) {
     return (
-      <LinkElement link={link} key="dashlinks-dropdown" aria-label={selectors.components.DashboardLinks.dropDown}>
+      <LinkElement link={link} key="dashlinks-dropdown" data-testid={selectors.components.DashboardLinks.dropDown}>
         <>
-          <a
+          <ToolbarButton
             onClick={() => setOpened(Date.now())}
-            className="gf-form-label gf-form-label--dashlink"
+            className={cx('gf-form-label gf-form-label--dashlink', buttonStyle)}
             data-placement="bottom"
             data-toggle="dropdown"
+            aria-expanded={!!opened}
+            aria-controls="dropdown-list"
+            aria-haspopup="menu"
           >
-            <Icon name="bars" style={{ marginRight: '4px' }} />
+            <Icon aria-hidden name="bars" style={{ marginRight: '4px' }} />
             <span>{linkInfo.title}</span>
-          </a>
-          <ul className={`dropdown-menu ${dropdownCssClass}`} role="menu" ref={listRef}>
+          </ToolbarButton>
+          <ul id="dropdown-list" className={`dropdown-menu ${dropdownCssClass}`} role="menu" ref={listRef}>
             {resolvedLinks.length > 0 &&
               resolvedLinks.map((resolvedLink, index) => {
                 return (
-                  <li key={`dashlinks-dropdown-item-${resolvedLink.id}-${index}`}>
+                  <li role="none" key={`dashlinks-dropdown-item-${resolvedLink.id}-${index}`}>
                     <a
+                      role="menuitem"
                       href={resolvedLink.url}
                       target={link.targetBlank ? '_blank' : undefined}
                       rel="noreferrer"
-                      aria-label={selectors.components.DashboardLinks.link}
+                      data-testid={selectors.components.DashboardLinks.link}
+                      aria-label={`${resolvedLink.title} dashboard`}
                     >
                       {resolvedLink.title}
                     </a>
@@ -68,16 +81,17 @@ export const DashboardLinksDashboard: React.FC<Props> = (props) => {
             <LinkElement
               link={link}
               key={`dashlinks-list-item-${resolvedLink.id}-${index}`}
-              aria-label={selectors.components.DashboardLinks.container}
+              data-testid={selectors.components.DashboardLinks.container}
             >
               <a
                 className="gf-form-label gf-form-label--dashlink"
                 href={resolvedLink.url}
                 target={link.targetBlank ? '_blank' : undefined}
                 rel="noreferrer"
-                aria-label={selectors.components.DashboardLinks.link}
+                data-testid={selectors.components.DashboardLinks.link}
+                aria-label={`${resolvedLink.title} dashboard`}
               >
-                <Icon name="apps" style={{ marginRight: '4px' }} />
+                <Icon aria-hidden name="apps" style={{ marginRight: '4px' }} />
                 <span>{resolvedLink.title}</span>
               </a>
             </LinkElement>
@@ -89,7 +103,6 @@ export const DashboardLinksDashboard: React.FC<Props> = (props) => {
 
 interface LinkElementProps {
   link: DashboardLink;
-  'aria-label': string;
   key: string;
   children: JSX.Element;
 }

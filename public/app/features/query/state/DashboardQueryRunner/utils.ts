@@ -59,9 +59,9 @@ export function translateQueryResult(annotation: AnnotationQuery, results: Annot
     item.type = annotation.name;
     item.isRegion = Boolean(item.timeEnd && item.time !== item.timeEnd);
 
-    switch (item.newState) {
+    switch (item.newState?.toLowerCase()) {
       case 'pending':
-        item.color = 'gray';
+        item.color = 'yellow';
         break;
       case 'alerting':
         item.color = 'red';
@@ -69,7 +69,13 @@ export function translateQueryResult(annotation: AnnotationQuery, results: Annot
       case 'ok':
         item.color = 'green';
         break;
+      case 'normal': // ngalert ("normal" instead of "ok")
+        item.color = 'green';
+        break;
       case 'no_data':
+        item.color = 'gray';
+        break;
+      case 'nodata': // ngalert
         item.color = 'gray';
         break;
     }
