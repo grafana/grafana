@@ -155,8 +155,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     dashboardSrv.setCurrent(dashboard);
 
     timeSrv.init(dashboard);
-    const runner = createDashboardQueryRunner({ dashboard, timeSrv });
-    runner.run({ dashboard, range: timeSrv.timeRange() });
 
     if (storeState.dashboard.modifiedQueries) {
       const { panelId, queries } = storeState.dashboard.modifiedQueries;
@@ -165,6 +163,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // template values service needs to initialize completely before the rest of the dashboard can load
     await dispatch(initVariablesTransaction(args.urlUid!, dashboard));
+
+    const runner = createDashboardQueryRunner({ dashboard, timeSrv });
+    runner.run({ dashboard, range: timeSrv.timeRange() });
 
     if (getState().templating.transaction.uid !== args.urlUid) {
       // if a previous dashboard has slow running variable queries the batch uid will be the new one
