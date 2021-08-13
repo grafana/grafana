@@ -296,7 +296,7 @@
     "regenerator-runtime": "0.13.3",
     "reselect": "4.0.0",
     "rst2html": "github:thoward/rst2html#990cb89",
-    "rxjs": "6.6.3",
+    "rxjs": "7.3.0",
     "search-query-parser": "1.5.4",
     "semver": "^7.1.3",
     "slate": "0.47.8",
