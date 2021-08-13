@@ -1,6 +1,7 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import TopSection from './TopSection';
+import { before } from '../../../../../packages/jaeger-ui-components/node_modules/@types/lodash';
 
 jest.mock('../../config', () => ({
   bootData: {
@@ -9,33 +10,21 @@ jest.mock('../../config', () => ({
       { id: '2', hideFromMenu: true },
       { id: '3', hideFromMenu: false },
       { id: '4', hideFromMenu: true },
+      { id: '4', hideFromMenu: false },
     ],
   },
 }));
 
-const setup = (propOverrides?: object) => {
-  const props = Object.assign(
-    {
-      mainLinks: [],
-    },
-    propOverrides
-  );
-
-  return shallow(<TopSection {...props} />);
-};
-
 describe('Render', () => {
-  it('should render component', () => {
-    const wrapper = setup();
+  it('should render search when empty', () => {
+    render(<TopSection />);
 
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByText('Search dashboards')).toBeInTheDocument();
   });
 
-  it('should render items', () => {
-    const wrapper = setup({
-      mainLinks: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }],
-    });
+  it('should render items and search item', () => {
+    render(<TopSection />);
 
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByTestId('top-section-items').children.length).toBe(3);
   });
 });
