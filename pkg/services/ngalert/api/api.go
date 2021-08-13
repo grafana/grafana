@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/url"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -20,10 +21,17 @@ import (
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
+type Scheduler interface {
+	AlertmanagersFor(orgID int64) []*url.URL
+	DroppedAlertmanagersFor(orgID int64) []*url.URL
+}
+
 type Alertmanager interface {
 	// Configuration
-	SaveAndApplyConfig(config *apimodels.PostableUserConfig) error
-	SaveAndApplyDefaultConfig() error
+	// temporary add orgID parameter; this will move to the Alertmanager wrapper when it will be available
+	SaveAndApplyConfig(orgID int64, config *apimodels.PostableUserConfig) error
+	// temporary add orgID parameter; this will move to the Alertmanager wrapper when it will be available
+	SaveAndApplyDefaultConfig(orgID int64) error
 	GetStatus() apimodels.GettableStatus
 
 	// Silences
@@ -61,19 +69,19 @@ func (api *API) RegisterAPIEndpoints(m *metrics.Metrics) {
 		DataProxy: api.DataProxy,
 	}
 
-	// Register endpoints for proxing to Alertmanager-compatible backends.
+	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
 		AlertmanagerSrv{store: api.AlertingStore, am: api.Alertmanager, log: logger},
 	), m)
-	// Register endpoints for proxing to Prometheus-compatible backends.
+	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
 		PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore},
 	), m)
-	// Register endpoints for proxing to Cortex Ruler-compatible backends.
+	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
@@ -87,7 +95,8 @@ func (api *API) RegisterAPIEndpoints(m *metrics.Metrics) {
 		log:             logger,
 	}, m)
 	api.RegisterConfigurationApiEndpoints(AdminSrv{
-		store: api.AdminConfigStore,
-		log:   logger,
+		store:     api.AdminConfigStore,
+		log:       logger,
+		scheduler: api.Schedule,
 	}, m)
 }
