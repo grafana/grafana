@@ -34,6 +34,7 @@ import {
   TimeRange,
   TimeZone,
   UrlQueryValue,
+  PanelModel as IPanelModel,
 } from '@grafana/data';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
@@ -43,6 +44,7 @@ import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
 import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent, TimeRangeUpdatedEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
+import { mergePanels } from '../utils/merge';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -237,6 +239,16 @@ export class DashboardModel {
     };
 
     return copy;
+  }
+
+  /** This will load a new dashboard, but keep existing panels unchanged */
+  merge(panels: IPanelModel[]) {
+    const info = mergePanels(this.panels, panels ?? []);
+    if (info.changed) {
+      this.panels = info.panels ?? [];
+      this.sortPanelsByGridPos();
+      this.events.publish(new DashboardPanelsChangedEvent());
+    }
   }
 
   private getPanelSaveModels() {
