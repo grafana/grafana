@@ -237,17 +237,17 @@ func (n *fakeNotifier) PutAlerts(alerts apimodels.PostableAlerts) error {
 	return nil
 }
 
-type fakeExternalAlertmanager struct {
+type FakeExternalAlertmanager struct {
 	t      *testing.T
 	mtx    sync.Mutex
 	alerts amv2.PostableAlerts
 	server *httptest.Server
 }
 
-func newFakeExternalAlertmanager(t *testing.T) *fakeExternalAlertmanager {
+func NewFakeExternalAlertmanager(t *testing.T) *FakeExternalAlertmanager {
 	t.Helper()
 
-	am := &fakeExternalAlertmanager{
+	am := &FakeExternalAlertmanager{
 		t:      t,
 		alerts: amv2.PostableAlerts{},
 	}
@@ -256,7 +256,11 @@ func newFakeExternalAlertmanager(t *testing.T) *fakeExternalAlertmanager {
 	return am
 }
 
-func (am *fakeExternalAlertmanager) AlertNamesCompare(expected []string) bool {
+func (am *FakeExternalAlertmanager) URL() string {
+	return am.server.URL
+}
+
+func (am *FakeExternalAlertmanager) AlertNamesCompare(expected []string) bool {
 	n := []string{}
 	alerts := am.Alerts()
 
@@ -275,20 +279,20 @@ func (am *fakeExternalAlertmanager) AlertNamesCompare(expected []string) bool {
 	return assert.ObjectsAreEqual(expected, n)
 }
 
-func (am *fakeExternalAlertmanager) AlertsCount() int {
+func (am *FakeExternalAlertmanager) AlertsCount() int {
 	am.mtx.Lock()
 	defer am.mtx.Unlock()
 
 	return len(am.alerts)
 }
 
-func (am *fakeExternalAlertmanager) Alerts() amv2.PostableAlerts {
+func (am *FakeExternalAlertmanager) Alerts() amv2.PostableAlerts {
 	am.mtx.Lock()
 	defer am.mtx.Unlock()
 	return am.alerts
 }
 
-func (am *fakeExternalAlertmanager) Handler() func(w http.ResponseWriter, r *http.Request) {
+func (am *FakeExternalAlertmanager) Handler() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
 		require.NoError(am.t, err)
@@ -302,6 +306,6 @@ func (am *fakeExternalAlertmanager) Handler() func(w http.ResponseWriter, r *htt
 	}
 }
 
-func (am *fakeExternalAlertmanager) Close() {
+func (am *FakeExternalAlertmanager) Close() {
 	am.server.Close()
 }

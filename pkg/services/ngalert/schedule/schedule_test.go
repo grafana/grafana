@@ -99,9 +99,10 @@ func TestWarmStateCache(t *testing.T) {
 		BaseInterval: time.Second,
 		Logger:       log.New("ngalert cache warming test"),
 
-		RuleStore:     dbstore,
-		InstanceStore: dbstore,
-		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
+		RuleStore:               dbstore,
+		InstanceStore:           dbstore,
+		Metrics:                 metrics.NewMetrics(prometheus.NewRegistry()),
+		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
 	st := state.NewManager(schedCfg.Logger, nilMetrics, dbstore, dbstore)
 	st.Warm()
@@ -143,10 +144,11 @@ func TestAlertingTicker(t *testing.T) {
 		StopAppliedFunc: func(alertDefKey models.AlertRuleKey) {
 			stopAppliedCh <- alertDefKey
 		},
-		RuleStore:     dbstore,
-		InstanceStore: dbstore,
-		Logger:        log.New("ngalert schedule test"),
-		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
+		RuleStore:               dbstore,
+		InstanceStore:           dbstore,
+		Logger:                  log.New("ngalert schedule test"),
+		Metrics:                 metrics.NewMetrics(prometheus.NewRegistry()),
+		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
 	st := state.NewManager(schedCfg.Logger, nilMetrics, dbstore, dbstore)
 	sched := schedule.NewScheduler(schedCfg, nil, "http://localhost", st)
