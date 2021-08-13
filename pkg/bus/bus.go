@@ -55,8 +55,8 @@ func (b *InProcBus) InTransaction(ctx context.Context, fn func(ctx context.Conte
 // InProcBus defines the bus structure
 type InProcBus struct {
 	logger          log.Logger
-	handlers        map[string]HandlerFunc
-	handlersWithCtx map[string]HandlerFunc
+	handlers        map[string][]HandlerFunc
+	handlersWithCtx map[string][]HandlerFunc
 	listeners       map[string][]HandlerFunc
 	txMng           TransactionManager
 }
@@ -69,8 +69,8 @@ func New() Bus {
 	bus := &InProcBus{
 		logger: log.New("bus"),
 	}
-	bus.handlers = make(map[string]HandlerFunc)
-	bus.handlersWithCtx = make(map[string]HandlerFunc)
+	bus.handlers = make(map[string][]HandlerFunc)
+	bus.handlersWithCtx = make(map[string][]HandlerFunc)
 	bus.listeners = make(map[string][]HandlerFunc)
 	bus.txMng = &noopTransactionManager{}
 
@@ -97,11 +97,11 @@ func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 	span.SetTag("msg", msgName)
 
 	withCtx := true
-	var handler = b.handlersWithCtx[msgName]
-	if handler == nil {
+	var handlers = b.handlersWithCtx[msgName]
+	if len(handlers) == 0 {
 		withCtx = false
-		handler = b.handlers[msgName]
-		if handler == nil {
+		handlers = b.handlers[msgName]
+		if len(handlers) == 0 {
 			return ErrHandlerNotFound
 		}
 	}
@@ -114,12 +114,15 @@ func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 	}
 	params = append(params, reflect.ValueOf(msg))
 
-	ret := reflect.ValueOf(handler).Call(params)
-	err := ret[0].Interface()
-	if err == nil {
-		return nil
+	for _, h := range handlers {
+		ret := reflect.ValueOf(h).Call(params)
+		err := ret[0].Interface()
+		if err != nil {
+			return err.(error)
+		}
 	}
-	return err.(error)
+
+	return nil
 }
 
 // Dispatch function dispatch a message to the bus.
@@ -127,11 +130,11 @@ func (b *InProcBus) Dispatch(msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
 	withCtx := true
-	handler := b.handlersWithCtx[msgName]
-	if handler == nil {
+	handlers := b.handlersWithCtx[msgName]
+	if len(handlers) == 0 {
 		withCtx = false
-		handler = b.handlers[msgName]
-		if handler == nil {
+		handlers = b.handlers[msgName]
+		if len(handlers) == 0 {
 			return ErrHandlerNotFound
 		}
 	}
@@ -145,12 +148,15 @@ func (b *InProcBus) Dispatch(msg Msg) error {
 	}
 	params = append(params, reflect.ValueOf(msg))
 
-	ret := reflect.ValueOf(handler).Call(params)
-	err := ret[0].Interface()
-	if err == nil {
-		return nil
+	for _, h := range handlers {
+		ret := reflect.ValueOf(h).Call(params)
+		err := ret[0].Interface()
+		if err != nil {
+			return err.(error)
+		}
 	}
-	return err.(error)
+
+	return nil
 }
 
 // Publish function publish a message to the bus listener.
@@ -179,17 +185,25 @@ func (b *InProcBus) Publish(msg Msg) error {
 func (b *InProcBus) AddHandler(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(0).Elem().Name()
-	b.handlers[queryTypeName] = handler
+	_, exists := b.handlers[queryTypeName]
+	if !exists {
+		b.handlers[queryTypeName] = make([]HandlerFunc, 0)
+	}
+	b.handlers[queryTypeName] = append(b.handlers[queryTypeName], handler)
 }
 
 func (b *InProcBus) AddHandlerCtx(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(1).Elem().Name()
-	b.handlersWithCtx[queryTypeName] = handler
+	_, exists := b.handlersWithCtx[queryTypeName]
+	if !exists {
+		b.handlersWithCtx[queryTypeName] = make([]HandlerFunc, 0)
+	}
+	b.handlersWithCtx[queryTypeName] = append(b.handlersWithCtx[queryTypeName], handler)
 }
 
-// GetHandlerCtx returns the handler function for the given struct name.
-func (b *InProcBus) GetHandlerCtx(name string) HandlerFunc {
+// GetHandlersCtx returns the handler functions for the given struct name.
+func (b *InProcBus) GetHandlersCtx(name string) []HandlerFunc {
 	return b.handlersWithCtx[name]
 }
 
@@ -233,8 +247,8 @@ func Publish(msg Msg) error {
 	return globalBus.Publish(msg)
 }
 
-func GetHandlerCtx(name string) HandlerFunc {
-	return globalBus.(*InProcBus).GetHandlerCtx(name)
+func GetHandlersCtx(name string) []HandlerFunc {
+	return globalBus.(*InProcBus).GetHandlersCtx(name)
 }
 
 func ClearBusHandlers() {

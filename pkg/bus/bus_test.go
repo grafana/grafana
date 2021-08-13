@@ -16,17 +16,23 @@ type testQuery struct {
 func TestDispatch(t *testing.T) {
 	bus := New()
 
-	var invoked bool
-
+	var firstInvoked bool
 	bus.AddHandler(func(query *testQuery) error {
-		invoked = true
+		firstInvoked = true
+		return nil
+	})
+
+	var secondInvoked bool
+	bus.AddHandler(func(query *testQuery) error {
+		secondInvoked = true
 		return nil
 	})
 
 	err := bus.Dispatch(&testQuery{})
 	require.NoError(t, err)
 
-	require.True(t, invoked, "expected handler to be called")
+	require.True(t, firstInvoked, "expected handler to be called")
+	require.True(t, secondInvoked, "expected handler to be called")
 }
 
 func TestDispatch_NoRegisteredHandler(t *testing.T) {

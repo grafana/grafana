@@ -371,7 +371,7 @@ func TestNotificationChannels(t *testing.T) {
 		channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
 		channels.LineNotifyURL, channels.ThreemaGwBaseURL
 	originalTemplate := channels.DefaultTemplateString
-	originalEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
+	originalEmailBus := bus.GetHandlersCtx("SendEmailCommandSync")[0]
 	t.Cleanup(func() {
 		channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 			channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
