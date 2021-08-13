@@ -24,7 +24,6 @@ const useDefaultQuery = (query: AzureMonitorQuery, onChangeQuery: (newQuery: Azu
 
   useEffect(() => {
     if (queryWithDefaults !== query) {
-      console.log('changing default query');
       onChangeQuery(queryWithDefaults);
     }
   }, [queryWithDefaults, query, onChangeQuery]);

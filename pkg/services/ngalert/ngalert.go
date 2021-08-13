@@ -61,15 +61,17 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 	}
 
 	schedCfg := schedule.SchedulerCfg{
-		C:             clock.New(),
-		BaseInterval:  baseInterval,
-		Logger:        logger,
-		MaxAttempts:   maxAttempts,
-		Evaluator:     eval.Evaluator{Cfg: cfg, Log: logger},
-		InstanceStore: store,
-		RuleStore:     store,
-		Notifier:      alertmanager,
-		Metrics:       m,
+		C:                       clock.New(),
+		BaseInterval:            baseInterval,
+		Logger:                  log.New("ngalert.scheduler"),
+		MaxAttempts:             maxAttempts,
+		Evaluator:               eval.Evaluator{Cfg: cfg, Log: logger},
+		InstanceStore:           store,
+		RuleStore:               store,
+		AdminConfigStore:        store,
+		Notifier:                alertmanager,
+		Metrics:                 m,
+		AdminConfigPollInterval: cfg.AdminConfigPollInterval,
 	}
 	stateManager := state.NewManager(logger, m, store, store)
 	schedule := schedule.NewScheduler(schedCfg, dataService, cfg.AppURL, stateManager)
