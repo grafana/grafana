@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"encoding/json"
 	"errors"
 	"regexp"
 	"sort"
@@ -42,7 +43,7 @@ var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, d
 	}
 }
 
-// nolint:staticcheck // plugins.DataResponse deprecated
+// nolint:staticcheck
 func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
@@ -93,7 +94,7 @@ func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
 	return &result, nil
 }
 
-// nolint:staticcheck // plugins.* deprecated
+// nolint:staticcheck
 func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Query,
 	queryResult *backend.DataResponse, props map[string]string, depth int) error {
 	var err error
@@ -172,11 +173,15 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 	return nil
 }
 
-// nolint:staticcheck,gocyclo // plugins.* deprecated
+// nolint:staticcheck,gocyclo
 func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataResponse,
 	props map[string]string) error {
 	frames := data.Frames{}
 	esAggBuckets := esAgg.Get("buckets").MustArray()
+	propsJson, err := json.Marshal(props)
+	if err != nil {
+		return err
+	}
 
 	for _, metric := range target.Metrics {
 		if metric.Hide {
@@ -203,7 +208,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 			tags["metric"] = countType
 			frames = append(frames, data.NewFrame(metric.Field,
 				data.NewField("time", nil, timeVector),
-				data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: rp.getMetricName(tags["metric"]) + " " + metric.Field})))
+				data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: string(propsJson)})))
 		case percentilesType:
 			buckets := esAggBuckets
 			if len(buckets) == 0 {
@@ -237,7 +242,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				}
 				frames = append(frames, data.NewFrame(metric.Field,
 					data.NewField("time", nil, timeVector),
-					data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: rp.getMetricName(tags["metric"]) + " " + metric.Field})))
+					data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: string(propsJson)})))
 			}
 		case topMetricsType:
 			buckets := esAggBuckets
@@ -279,7 +284,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 
 				frames = append(frames, data.NewFrame(metricField.(string),
 					data.NewField("time", nil, timeVector),
-					data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: rp.getMetricName(tags["metric"]) + " " + metricField.(string)}),
+					data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: string(propsJson)}),
 				))
 			}
 
@@ -326,7 +331,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				labels := tags
 				frames = append(frames, data.NewFrame(metric.Field,
 					data.NewField("time", nil, timeVector),
-					data.NewField("value", labels, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: rp.getMetricName(tags["metric"]) + " " + metric.Field})))
+					data.NewField("value", labels, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: string(propsJson)})))
 			}
 		default:
 			for k, v := range props {
@@ -354,7 +359,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 			}
 			frames = append(frames, data.NewFrame(metric.Field,
 				data.NewField("time", nil, timeVector),
-				data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: rp.getMetricName(tags["metric"]) + " " + metric.Field})))
+				data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: string(propsJson)})))
 		}
 	}
 	if query.Frames != nil {
@@ -365,7 +370,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 	return nil
 }
 
-// nolint:staticcheck // plugins.* deprecated
+// nolint:staticcheck
 func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query,
 	queryResult *backend.DataResponse, props map[string]string) error {
 	propKeys := make([]string, 0)
@@ -517,8 +522,7 @@ func extractDataField(name string, v interface{}) *data.Field {
 	}
 }
 
-// TODO remove deprecations
-// nolint:staticcheck // plugins.DataQueryResult deprecated
+// nolint:staticcheck
 func (rp *responseParser) trimDatapoints(queryResult backend.DataResponse, target *Query) {
 	var histogram *BucketAgg
 	for _, bucketAgg := range target.BucketAggs {
@@ -552,7 +556,7 @@ func (rp *responseParser) trimDatapoints(queryResult backend.DataResponse, targe
 	}
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
+// nolint:staticcheck
 func (rp *responseParser) nameFields(queryResult backend.DataResponse, target *Query) {
 	set := make(map[string]struct{})
 	frames := queryResult.Frames
@@ -573,7 +577,7 @@ func (rp *responseParser) nameFields(queryResult backend.DataResponse, target *Q
 
 var aliasPatternRegex = regexp.MustCompile(`\{\{([\s\S]+?)\}\}`)
 
-// nolint:staticcheck // plugins.* deprecated
+// nolint:staticcheck
 func (rp *responseParser) getFieldName(dataField data.Field, target *Query, metricTypeCount int) string {
 	metricType := dataField.Labels["metric"]
 	metricName := rp.getMetricName(metricType)
@@ -706,7 +710,7 @@ func findAgg(target *Query, aggID string) (*BucketAgg, error) {
 	return nil, errors.New("can't found aggDef, aggID:" + aggID)
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
+// nolint:staticcheck
 func getErrorFromElasticResponse(response *es.SearchResponse) string {
 	var errorString string
 	json := simplejson.NewFromAny(response.Error)
