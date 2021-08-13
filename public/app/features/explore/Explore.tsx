@@ -6,15 +6,8 @@ import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  ErrorBoundaryAlert,
-  stylesFactory,
-  withTheme,
-  CustomScrollbar,
-  Collapse,
-  TooltipDisplayMode,
-} from '@grafana/ui';
-import { AbsoluteTimeRange, DataQuery, GrafanaTheme, LoadingState, RawTimeRange, DataFrame } from '@grafana/data';
+import { ErrorBoundaryAlert, CustomScrollbar, Collapse, TooltipDisplayMode, withTheme2, Themeable2 } from '@grafana/ui';
+import { AbsoluteTimeRange, DataQuery, LoadingState, RawTimeRange, DataFrame, GrafanaTheme2 } from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
@@ -37,7 +30,7 @@ import { NodeGraphContainer } from './NodeGraphContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     exploreMain: css`
       label: exploreMain;
@@ -55,14 +48,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       height: auto !important;
       flex: unset !important;
       display: unset !important;
-      padding: ${theme.panelPadding}px;
+      padding: ${theme.spacing(1)};
     `,
   };
-});
+};
 
-export interface ExploreProps {
+export interface ExploreProps extends Themeable2 {
   exploreId: ExploreId;
-  theme: GrafanaTheme;
+  theme: GrafanaTheme2;
 }
 
 enum ExploreDrawer {
@@ -195,12 +188,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
   renderGraphPanel(width: number) {
     const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme } = this.props;
+    const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     return (
       <Collapse label="Graph" loading={loading} isOpen>
         <ExploreGraphNGPanel
           data={graphResult!}
           height={400}
-          width={width - theme.panelPadding * 2}
+          width={width - spacing}
           tooltipDisplayMode={TooltipDisplayMode.Single}
           absoluteRange={absoluteRange}
           timeZone={timeZone}
@@ -226,12 +220,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
   renderLogsPanel(width: number) {
     const { exploreId, syncedTimes, theme } = this.props;
-
+    const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     return (
       <LogsContainer
         exploreId={exploreId}
         syncedTimes={syncedTimes}
-        width={width - theme.panelPadding * 2}
+        width={width - spacing}
         onClickFilterLabel={this.onClickFilterLabel}
         onClickFilterOutLabel={this.onClickFilterOutLabel}
         onStartScanning={this.onStartScanning}
@@ -413,4 +407,4 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export default compose(hot(module), connector, withTheme)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;
+export default compose(hot(module), connector, withTheme2)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;
