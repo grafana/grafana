@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -248,9 +249,19 @@ func (s *Service) toDataFrames(response *http.Response) (frames data.Frames, err
 			values = append(values, value)
 		}
 
+		tags := make(map[string]string)
+		for name, value := range series.Tags {
+			switch value.(type) {
+			case string:
+				tags[name] = value.(string)
+			case float64:
+				tags[name] = strconv.FormatFloat(value.(float64), 'f', -1, 64)
+			}
+		}
+
 		frames = append(frames, data.NewFrame(name,
 			data.NewField("time", nil, timeVector),
-			data.NewField("value", series.Tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
+			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
 
 		if setting.Env == setting.Dev {
 			s.logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
