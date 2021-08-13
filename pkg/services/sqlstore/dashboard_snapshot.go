@@ -40,23 +40,23 @@ func DeleteExpiredSnapshots(cmd *models.DeleteExpiredSnapshotsCommand) error {
 }
 
 func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
+	// never
+	var expires = time.Now().Add(time.Hour * 24 * 365 * 50)
+	if cmd.Expires > 0 {
+		expires = time.Now().Add(time.Second * time.Duration(cmd.Expires))
+	}
+
+	marshalledData, err := cmd.Dashboard.Encode()
+	if err != nil {
+		return err
+	}
+
+	encryptedDashboard, err := securedata.Encrypt(marshalledData)
+	if err != nil {
+		return err
+	}
+
 	return inTransaction(func(sess *DBSession) error {
-		// never
-		var expires = time.Now().Add(time.Hour * 24 * 365 * 50)
-		if cmd.Expires > 0 {
-			expires = time.Now().Add(time.Second * time.Duration(cmd.Expires))
-		}
-
-		marshalledData, err := cmd.Dashboard.Encode()
-		if err != nil {
-			return err
-		}
-
-		encryptedDashboard, err := securedata.Encrypt(marshalledData)
-		if err != nil {
-			return err
-		}
-
 		snapshot := &models.DashboardSnapshot{
 			Name:               cmd.Name,
 			Key:                cmd.Key,

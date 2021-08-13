@@ -150,6 +150,8 @@ func DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
 }
 
 func AddDataSource(cmd *models.AddDataSourceCommand) error {
+	encryptedJsonData := securejsondata.GetEncryptedJsonData(cmd.SecureJsonData)
+
 	return inTransaction(func(sess *DBSession) error {
 		existing := models.DataSource{OrgId: cmd.OrgId, Name: cmd.Name}
 		has, _ := sess.Get(&existing)
@@ -185,7 +187,7 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 			BasicAuthPassword: cmd.BasicAuthPassword,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
-			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
+			SecureJsonData:    encryptedJsonData,
 			Created:           time.Now(),
 			Updated:           time.Now(),
 			Version:           1,
@@ -220,6 +222,8 @@ func updateIsDefaultFlag(ds *models.DataSource, sess *DBSession) error {
 }
 
 func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
+	encryptedJsonData := securejsondata.GetEncryptedJsonData(cmd.SecureJsonData)
+
 	return inTransaction(func(sess *DBSession) error {
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
@@ -241,7 +245,7 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 			BasicAuthPassword: cmd.BasicAuthPassword,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
-			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
+			SecureJsonData:    encryptedJsonData,
 			Updated:           time.Now(),
 			ReadOnly:          cmd.ReadOnly,
 			Version:           cmd.Version + 1,

@@ -282,6 +282,8 @@ func getAlertNotificationWithUidInternal(query *models.GetAlertNotificationsWith
 }
 
 func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) error {
+	encryptedJsonData := securejsondata.GetEncryptedJsonData(cmd.SecureSettings)
+
 	return inTransaction(func(sess *DBSession) error {
 		if cmd.Uid == "" {
 			uid, uidGenerationErr := generateNewAlertNotificationUid(sess, cmd.OrgId)
@@ -337,7 +339,7 @@ func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) 
 			Name:                  cmd.Name,
 			Type:                  cmd.Type,
 			Settings:              cmd.Settings,
-			SecureSettings:        securejsondata.GetEncryptedJsonData(cmd.SecureSettings),
+			SecureSettings:        encryptedJsonData,
 			SendReminder:          cmd.SendReminder,
 			DisableResolveMessage: cmd.DisableResolveMessage,
 			Frequency:             frequency,
@@ -372,6 +374,8 @@ func generateNewAlertNotificationUid(sess *DBSession, orgId int64) (string, erro
 }
 
 func UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
+	encryptedJsonData := securejsondata.GetEncryptedJsonData(cmd.SecureSettings)
+
 	return inTransaction(func(sess *DBSession) (err error) {
 		current := models.AlertNotification{}
 
@@ -402,7 +406,7 @@ func UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
 
 		current.Updated = time.Now()
 		current.Settings = cmd.Settings
-		current.SecureSettings = securejsondata.GetEncryptedJsonData(cmd.SecureSettings)
+		current.SecureSettings = encryptedJsonData
 		current.Name = cmd.Name
 		current.Type = cmd.Type
 		current.IsDefault = cmd.IsDefault

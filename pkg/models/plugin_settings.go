@@ -47,10 +47,6 @@ type UpdatePluginSettingVersionCmd struct {
 	OrgId         int64  `json:"-"`
 }
 
-func (cmd *UpdatePluginSettingCmd) GetEncryptedJsonData() securejsondata.SecureJsonData {
-	return securejsondata.GetEncryptedJsonData(cmd.SecureJsonData)
-}
-
 // ---------------------
 // QUERIES
 
