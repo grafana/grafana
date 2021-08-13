@@ -72,7 +72,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
 
     await buildSegments(state, false);
   }
-  if (actions.updateTimeRange.match(action)) {
+  if (actions.timeRangeChanged.match(action)) {
     state.range = action.payload;
   }
   if (actions.segmentValueChanged.match(action)) {

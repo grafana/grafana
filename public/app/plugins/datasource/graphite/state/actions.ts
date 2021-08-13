@@ -8,7 +8,12 @@ import { TimeRange } from '@grafana/data';
  */
 
 const init = createAction<GraphiteQueryEditorDependencies>('init');
-const updateTimeRange = createAction<TimeRange | undefined>('update-time-range');
+
+/**
+ * Used only to sync it with selected range from Explore/Panel. This action
+ * does not allow to modify the currently selected range.
+ */
+const timeRangeChanged = createAction<TimeRange | undefined>('time-range-changed');
 
 // Metrics & Tags
 const segmentValueChanged = createAction<{ segment: GraphiteSegment | string; index: number }>('segment-value-changed');
@@ -31,7 +36,7 @@ const toggleEditorMode = createAction('toggle-editor');
 
 export const actions = {
   init,
-  updateTimeRange,
+  timeRangeChanged,
   segmentValueChanged,
   tagChanged,
   addNewTag,

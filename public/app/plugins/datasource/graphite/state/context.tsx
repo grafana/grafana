@@ -37,8 +37,8 @@ export const GraphiteQueryEditorContext = ({
   }, []);
 
   useEffect(() => {
-    dispatch(actions.updateTimeRange(range));
-  }, [range]);
+    dispatch(actions.timeRangeChanged(range));
+  }, [dispatch, range]);
 
   if (!state) {
     dispatch(
