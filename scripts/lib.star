@@ -486,7 +486,6 @@ def test_a11y_frontend_step(edition, port=3001):
         'name': 'test-a11y-frontend' + enterprise2_sfx(edition),
         'image': 'buildkite/puppeteer',
         'depends_on': [
-          'build-frontend',
           'end-to-end-tests-server' + enterprise2_sfx(edition),
         ],
          'environment': {
