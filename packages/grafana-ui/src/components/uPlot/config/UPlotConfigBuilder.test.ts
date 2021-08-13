@@ -436,7 +436,7 @@ describe('UPlotConfigBuilder', () => {
       theme: darkTheme,
     });
 
-    expect(builder.getConfig().series[1].fill).toBe('rgba(255, 170, 187, 0.5)');
+    expect(builder.getConfig().series[1].fill).toBe('#FFAABB80');
   });
 
   it('when fillColor is set ignore fillOpacity', () => {

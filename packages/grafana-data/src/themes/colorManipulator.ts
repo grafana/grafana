@@ -255,6 +255,10 @@ export function emphasize(color: string, coefficient = 0.15) {
  * @beta
  */
 export function alpha(color: string, value: number) {
+  if (color === '') {
+    return '#000000';
+  }
+
   value = clamp(value);
 
   // hex 6, hex 8 (w/alpha)
