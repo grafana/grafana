@@ -135,7 +135,7 @@ export const Components = {
     addQuery: 'Query editor add query button',
   },
   QueryEditorRows: {
-    rows: 'Query editor row',
+    rows: 'data-testid Query editor row',
   },
   QueryEditorRow: {
     actionButton: (title: string) => `${title} query operation action`,
