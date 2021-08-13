@@ -1,6 +1,6 @@
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
-import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
+import { dateMath, LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -43,6 +43,7 @@ export class KeybindingSrv {
       this.bind('g p', this.goToProfile);
       this.bind('s o', this.openSearch);
       this.bind('f', this.openSearch);
+      this.bind('y', this.makeExplorePermalink);
       this.bind('esc', this.exit);
       this.bindGlobal('esc', this.globalEsc);
     }
@@ -95,6 +96,22 @@ export class KeybindingSrv {
 
   private goToProfile() {
     locationService.push('/profile');
+  }
+
+  private makeExplorePermalink() {
+    if (locationService.getLocation().pathname === '/explore') {
+      const params = locationService.getSearchObject();
+      if (params.left) {
+        const exploreState = JSON.parse(params.left as string);
+        const from = dateMath.parse(exploreState[0])?.unix() as number;
+        const to = dateMath.parse(exploreState[1])?.unix() as number;
+        if (!isNaN(from) && !isNaN(to)) {
+          exploreState[0] = `${from * 1000}`;
+          exploreState[1] = `${to * 1000}`;
+          locationService.partial({ left: JSON.stringify(exploreState) }, true);
+        }
+      }
+    }
   }
 
   private showHelpModal() {
