@@ -21,7 +21,7 @@ const TopSectionItem: FC<Props> = ({ link, onClick }) => {
       {linkContent}
     </Link>
   ) : (
-    <a className="sidemenu-link" onClick={onClick}>
+    <a className="sidemenu-link" onClick={onClick} href="">
       {linkContent}
     </a>
   );
