@@ -142,6 +142,16 @@ steps:
   depends_on:
   - end-to-end-tests-server
 
+- name: build-storybook
+  image: grafana/build-container:1.4.1
+  commands:
+  - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
+  depends_on:
+  - package
+
 - name: test-a11y-frontend
   image: buildkite/puppeteer
   commands:
@@ -155,16 +165,6 @@ steps:
   depends_on:
   - build-frontend
   - end-to-end-tests-server
-
-- name: build-storybook
-  image: grafana/build-container:1.4.1
-  commands:
-  - yarn storybook:build
-  - ./bin/grabpl verify-storybook
-  environment:
-    NODE_OPTIONS: --max_old_space_size=4096
-  depends_on:
-  - package
 
 - name: publish-frontend-metrics
   image: grafana/build-container:1.4.1
@@ -459,6 +459,20 @@ steps:
   depends_on:
   - build-storybook
   - end-to-end-tests
+
+- name: test-a11y-frontend
+  image: buildkite/puppeteer
+  commands:
+  - yarn -s test:accessibility --json > pa11y-ci-results.json
+  environment:
+    GRAFANA_MISC_STATS_API_KEY:
+      from_secret: grafana_misc_stats_api_key
+    HOST: end-to-end-tests-server
+    PORT: 3001
+  failure: ignore
+  depends_on:
+  - build-frontend
+  - end-to-end-tests-server
 
 - name: publish-frontend-metrics
   image: grafana/build-container:1.4.1
@@ -3554,6 +3568,6 @@ get:
 
 ---
 kind: signature
-hmac: 0c55a5d30ba037e83969262b9f25e3bf8e57bc157687e55e201f2870429e7c2d
+hmac: a6a96caad2d5fe26e212edbfb65227c42d0d97750ac659d646dfb2c3346ada8f
 
 ...
