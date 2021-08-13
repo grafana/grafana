@@ -37,10 +37,6 @@ export async function buildSegments(state: GraphiteQueryEditorState, modifyLastS
   const checkOtherSegmentsIndex = state.queryModel.checkOtherSegmentsIndex || 0;
 
   await checkOtherSegments(state, checkOtherSegmentsIndex, modifyLastSegment);
-
-  if (state.queryModel.seriesByTagUsed) {
-    fixTagSegments(state);
-  }
 }
 
 /**
@@ -136,15 +132,6 @@ export function smartlyHandleNewAliasByNode(state: GraphiteQueryEditorState, fun
       return;
     }
   }
-}
-
-/**
- * Add "+" button for adding tags once at least one tag is selected
- */
-export function fixTagSegments(state: GraphiteQueryEditorState): void {
-  // Adding tag with the same name as just removed works incorrectly if single segment is used (instead of array)
-  // TODO: The segment data is not being used.
-  state.addTagSegments = [{ value: '+', fake: true }];
 }
 
 /**

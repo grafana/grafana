@@ -9,7 +9,6 @@ import {
   buildSegments,
   checkOtherSegments,
   emptySegments,
-  fixTagSegments,
   handleTargetChanged,
   parseTarget,
   pause,
@@ -23,11 +22,6 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { TimeRange } from '@grafana/data';
 
 export type GraphiteQueryEditorState = {
-  /**
-   * Extra segment with plus button when tags are rendered
-   */
-  addTagSegments: GraphiteSegment[];
-
   supportsTags: boolean;
   paused: boolean;
   removeTagValue: string;
@@ -130,7 +124,6 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     const newTag = { key: newTagKey, operator: '=' as GraphiteTagOperator, value: '' };
     state.queryModel.addTag(newTag);
     handleTargetChanged(state);
-    fixTagSegments(state);
   }
   if (actions.unpause.match(action)) {
     state.paused = false;

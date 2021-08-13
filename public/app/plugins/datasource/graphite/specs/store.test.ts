@@ -349,10 +349,6 @@ describe('Graphite actions', async () => {
       ];
       expect(ctx.state.queryModel.tags).toEqual(expected);
     });
-
-    it('should add plus button', () => {
-      expect(ctx.state.addTagSegments.length).toBe(1);
-    });
   });
 
   describe('when tag added', () => {
