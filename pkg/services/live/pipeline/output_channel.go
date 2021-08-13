@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
@@ -20,5 +21,7 @@ func NewChannelOutput(ruleProcessor *RuleProcessor, config ChannelOutputConfig) 
 }
 
 func (l ChannelOutput) Output(ctx context.Context, vars OutputVars, frame *data.Frame) error {
-	return l.ruleProcessor.ProcessFrame(ctx, vars.OrgID, l.config.Channel, frame)
+	channel := l.config.Channel
+	channel = strings.ReplaceAll(channel, "#{frame_name}", frame.Name)
+	return l.ruleProcessor.ProcessFrame(ctx, vars.OrgID, channel, frame)
 }

@@ -7,16 +7,16 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/live/pipeline"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/convert"
+	"github.com/grafana/grafana/pkg/services/live/pipeline"
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
 	"github.com/grafana/grafana/pkg/setting"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 var (
@@ -45,22 +45,58 @@ type fakeStorage struct {
 func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChannelRuleCommand) ([]*pipeline.LiveChannelRule, error) {
 	return []*pipeline.LiveChannelRule{
 		{
+			OrgId:   1,
+			Pattern: "stream/influx",
+			Converter: pipeline.NewInfluxConverter(pipeline.InfluxConverterConfig{
+				FrameFormat: "labels_column",
+			}),
+			Outputter: pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
+				Channel: "stream/influx/#{frame_name}",
+			}),
+		},
+		{
+			OrgId:   1,
+			Pattern: "stream/influx/*",
+			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
+				pipeline.NewManagedStreamOutput(f.gLive),
+			}),
+		},
+		{
 			OrgId:     1,
-			Pattern:   "stream/test/auto",
+			Pattern:   "stream/influx/cpu",
+			Processor: pipeline.NewKeepFieldsProcessor("labels", "time", "usage_user"),
+			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
+				pipeline.NewManagedStreamOutput(f.gLive),
+				pipeline.NewConditionalOutput(
+					pipeline.NewNumberCompareCondition("usage_user", "gte", 50),
+					pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
+						Channel: "stream/influx/cpu/spikes",
+					}),
+				),
+			}),
+		},
+		{
+			OrgId:     1,
+			Pattern:   "stream/influx/cpu/spikes",
+			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
+		},
+		{
+			OrgId:     1,
+			Pattern:   "stream/json/auto",
 			Converter: pipeline.NewAutoJsonConverter(pipeline.AutoJsonConverterConfig{}),
 			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
 		},
 		{
 			OrgId:   1,
-			Pattern: "stream/test/tip",
+			Pattern: "stream/json/tip",
 			Converter: pipeline.NewAutoJsonConverter(pipeline.AutoJsonConverterConfig{
 				FieldTips: map[string]pipeline.Field{
 					"value3": {
 						Name: "value3",
 						Type: data.FieldTypeNullableFloat64,
 					},
-					"value4": {
-						Name: "value4",
+					"value100": {
+						Name: "value100",
 						Type: data.FieldTypeNullableFloat64,
 					},
 				},
@@ -70,7 +106,7 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 		},
 		{
 			OrgId:   1,
-			Pattern: "stream/test/exact",
+			Pattern: "stream/json/exact",
 			Converter: pipeline.NewExactJsonConverter(pipeline.ExactJsonConverterConfig{
 				Fields: []pipeline.Field{
 					{
@@ -100,12 +136,21 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 						},
 					},
 					{
+						Name:  "value4",
+						Type:  data.FieldTypeNullableFloat64,
+						Value: "$.value4",
+					},
+					{
 						Name:  "map.red",
 						Type:  data.FieldTypeNullableFloat64,
 						Value: "$.map.red",
 						Labels: []pipeline.Label{
 							{
 								Name:  "host",
+								Value: "$.host",
+							},
+							{
+								Name:  "host2",
 								Value: "$.host",
 							},
 						},
@@ -137,11 +182,11 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 				}),
 				pipeline.NewChangeLogOutput(f.frameStorage, f.ruleProcessor, pipeline.ChangeLogOutputConfig{
 					Field:   "value3",
-					Channel: "stream/test/exact/value3/changes",
+					Channel: "stream/json/exact/value3/changes",
 				}),
 				pipeline.NewChangeLogOutput(f.frameStorage, f.ruleProcessor, pipeline.ChangeLogOutputConfig{
 					Field:   "annotation",
-					Channel: "stream/test/exact/annotation/changes",
+					Channel: "stream/json/exact/annotation/changes",
 				}),
 				pipeline.NewConditionalOutput(
 					pipeline.NewMultipleConditionChecker(
@@ -152,14 +197,32 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 						pipeline.ConditionAll,
 					),
 					pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
-						Channel: "stream/test/exact/threshold",
+						Channel: "stream/json/exact/condition",
 					}),
 				),
+				pipeline.NewThresholdOutput(f.frameStorage, f.ruleProcessor, pipeline.ThresholdOutputConfig{
+					Channel:   "stream/json/exact/value4/state",
+					FieldName: "value4",
+					Thresholds: []data.Threshold{
+						{
+							Value: 2,
+							State: "normal",
+						},
+						{
+							Value: 6,
+							State: "warning",
+						},
+						{
+							Value: 8,
+							State: "critical",
+						},
+					},
+				}),
 			}),
 		},
 		{
 			OrgId:   1,
-			Pattern: "stream/test/exact/value3/changes",
+			Pattern: "stream/json/exact/value3/changes",
 			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
 				pipeline.NewManagedStreamOutput(f.gLive),
 				pipeline.NewRemoteWriteOutput(pipeline.RemoteWriteConfig{
@@ -172,32 +235,18 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 		},
 		{
 			OrgId:     1,
-			Pattern:   "stream/test/exact/annotation/changes",
+			Pattern:   "stream/json/exact/annotation/changes",
 			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
 		},
 		{
 			OrgId:     1,
-			Pattern:   "stream/test/exact/threshold",
+			Pattern:   "stream/json/exact/condition",
 			Processor: pipeline.NewDropFieldsProcessor("running"),
 			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
 		},
 		{
 			OrgId:     1,
-			Pattern:   "stream/telegraf/cpu",
-			Processor: pipeline.NewKeepFieldsProcessor("labels", "time", "usage_user"),
-			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
-				pipeline.NewManagedStreamOutput(f.gLive),
-				pipeline.NewConditionalOutput(
-					pipeline.NewNumberCompareCondition("usage_user", "gte", 50),
-					pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
-						Channel: "stream/telegraf/cpu/spikes",
-					}),
-				),
-			}),
-		},
-		{
-			OrgId:     1,
-			Pattern:   "stream/telegraf/cpu/spikes",
+			Pattern:   "stream/json/exact/value4/state",
 			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
 		},
 	}, nil
@@ -221,15 +270,15 @@ func (g *Gateway) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (g *Gateway) Handle(ctx *models.ReqContext) {
+func (g *Gateway) HandleOld(ctx *models.ReqContext) {
 	streamID := ctx.Params(":streamId")
 
-	//stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, streamID)
-	//if err != nil {
-	//	logger.Error("Error getting stream", "error", err)
-	//	ctx.Resp.WriteHeader(http.StatusInternalServerError)
-	//	return
-	//}
+	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, streamID)
+	if err != nil {
+		logger.Error("Error getting stream", "error", err)
+		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	// TODO Grafana 8: decide which formats to use or keep all.
 	urlValues := ctx.Req.URL.Query()
@@ -259,24 +308,50 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 		return
 	}
 
-	// TODO -- make sure all packets are combined together!
-	// interval = "1s" vs flush_interval = "5s"
-
 	for _, mf := range metricFrames {
-		frame := mf.Frame()
-		channel := "stream/" + streamID + "/" + mf.Key()
-		err = g.ruleProcessor.ProcessFrame(context.Background(), ctx.OrgId, channel, frame)
+		err := stream.Push(mf.Key(), mf.Frame())
+		if err != nil {
+			logger.Error("Error pushing frame", "error", err, "data", string(body))
+			ctx.Resp.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func (g *Gateway) Handle(ctx *models.ReqContext) {
+	streamID := ctx.Params(":streamId")
+
+	body, err := io.ReadAll(ctx.Req.Request.Body)
+	if err != nil {
+		logger.Error("Error reading body", "error", err)
+		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	logger.Debug("Live Push request",
+		"protocol", "http",
+		"streamId", streamID,
+		"bodyLength", len(body),
+	)
+
+	channelID := "stream/" + streamID
+
+	frames, ok, err := g.ruleProcessor.DataToFrames(context.Background(), ctx.OrgId, channelID, body)
+	if err != nil {
+		logger.Error("Error data to frame", "error", err, "body", string(body))
+		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if !ok {
+		return
+	}
+
+	for _, frame := range frames {
+		err = g.ruleProcessor.ProcessFrame(context.Background(), ctx.OrgId, channelID, frame)
 		if err != nil {
 			logger.Error("Error processing frame", "error", err, "data", string(body))
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		//err := stream.Push(mf.Key(), mf.Frame())
-		//if err != nil {
-		//	logger.Error("Error pushing frame", "error", err, "data", string(body))
-		//	ctx.Resp.WriteHeader(http.StatusInternalServerError)
-		//	return
-		//}
 	}
 }
 
@@ -297,9 +372,9 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 		"bodyLength", len(body),
 	)
 
-	channel := "stream/" + streamID + "/" + path
+	channelID := "stream/" + streamID + "/" + path
 
-	frame, ok, err := g.ruleProcessor.DataToFrame(context.Background(), ctx.OrgId, channel, body)
+	frames, ok, err := g.ruleProcessor.DataToFrames(context.Background(), ctx.OrgId, channelID, body)
 	if err != nil {
 		logger.Error("Error data to frame", "error", err, "body", string(body))
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
@@ -309,10 +384,12 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 		return
 	}
 
-	err = g.ruleProcessor.ProcessFrame(context.Background(), ctx.OrgId, channel, frame)
-	if err != nil {
-		logger.Error("Error processing frame", "error", err, "data", string(body))
-		ctx.Resp.WriteHeader(http.StatusInternalServerError)
-		return
+	for _, frame := range frames {
+		err = g.ruleProcessor.ProcessFrame(context.Background(), ctx.OrgId, channelID, frame)
+		if err != nil {
+			logger.Error("Error processing frame", "error", err, "data", string(body))
+			ctx.Resp.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 }

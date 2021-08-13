@@ -7,5 +7,5 @@ import (
 )
 
 type Converter interface {
-	Convert(ctx context.Context, vars Vars, data []byte) (*data.Frame, error)
+	Convert(ctx context.Context, vars Vars, body []byte) ([]*data.Frame, error)
 }

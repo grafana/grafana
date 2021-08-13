@@ -2,9 +2,11 @@ package pipeline
 
 import (
 	"context"
+	"strings"
+
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
 type RuleProcessor struct {
@@ -21,7 +23,25 @@ func NewRuleProcessor(pipeline *Pipeline) *RuleProcessor {
 	}
 }
 
-func (p *RuleProcessor) DataToFrame(ctx context.Context, orgID int64, channelID string, body []byte) (*data.Frame, bool, error) {
+func splitChannel(chID string) (live.Channel, error) {
+	parts := strings.SplitN(chID, "/", 3)
+	ch := live.Channel{}
+	if len(parts) == 3 {
+		ch.Scope = parts[0]
+		ch.Namespace = parts[1]
+		ch.Path = parts[2]
+	} else if len(parts) == 2 {
+		ch.Scope = parts[0]
+		ch.Namespace = parts[1]
+	} else if len(parts) == 1 {
+		ch.Scope = parts[0]
+	} else {
+		return ch, live.ErrInvalidChannelID
+	}
+	return ch, nil
+}
+
+func (p *RuleProcessor) DataToFrames(ctx context.Context, orgID int64, channelID string, body []byte) ([]*data.Frame, bool, error) {
 	rule, ruleOk, err := p.pipeline.Get(orgID, channelID)
 	if err != nil {
 		logger.Error("Error getting rule", "error", err, "data", string(body))
@@ -34,9 +54,9 @@ func (p *RuleProcessor) DataToFrame(ctx context.Context, orgID int64, channelID 
 		return nil, false, nil
 	}
 
-	channel, err := live.ParseChannel(channelID)
+	channel, err := splitChannel(channelID)
 	if err != nil {
-		logger.Error("Error parsing channel", "error", err, "channel", channelID)
+		logger.Error("Error splitting channel", "error", err, "channel", channelID)
 		return nil, false, err
 	}
 
@@ -47,13 +67,13 @@ func (p *RuleProcessor) DataToFrame(ctx context.Context, orgID int64, channelID 
 		Path:      channel.Path,
 	}
 
-	frame, err := rule.Converter.Convert(ctx, vars, body)
+	frames, err := rule.Converter.Convert(ctx, vars, body)
 	if err != nil {
 		logger.Error("Error converting data", "error", err)
 		return nil, false, err
 	}
 
-	return frame, true, nil
+	return frames, true, nil
 }
 
 func (p *RuleProcessor) ProcessFrame(ctx context.Context, orgID int64, channelID string, frame *data.Frame) error {
@@ -67,18 +87,18 @@ func (p *RuleProcessor) ProcessFrame(ctx context.Context, orgID int64, channelID
 		return nil
 	}
 
-	channel, err := live.ParseChannel(channelID)
+	ch, err := splitChannel(channelID)
 	if err != nil {
-		logger.Error("Error parsing channel", "error", err, "channel", channelID)
+		logger.Error("Error splitting channel", "error", err, "channel", channelID)
 		return err
 	}
 
 	vars := ProcessorVars{
 		Vars: Vars{
 			OrgID:     orgID,
-			Scope:     channel.Scope,
-			Namespace: channel.Namespace,
-			Path:      channel.Path,
+			Scope:     ch.Scope,
+			Namespace: ch.Namespace,
+			Path:      ch.Path,
 		},
 	}
 

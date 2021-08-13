@@ -24,6 +24,7 @@ func NewAutoJsonConverter(c AutoJsonConverterConfig) *AutoJsonConverter {
 // To preserve nulls we need FieldTips from a user.
 // Custom time can be injected on Processor stage theoretically.
 // Custom labels can be injected on Processor stage theoretically.
-func (c *AutoJsonConverter) Convert(_ context.Context, vars Vars, data []byte) (*data.Frame, error) {
-	return JSONDocToFrame(vars.Path, data, c.config.FieldTips)
+func (c *AutoJsonConverter) Convert(_ context.Context, vars Vars, body []byte) ([]*data.Frame, error) {
+	frame, err := JSONDocToFrame(vars.Path, body, c.config.FieldTips)
+	return []*data.Frame{frame}, err
 }

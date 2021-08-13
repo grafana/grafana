@@ -29,8 +29,8 @@ func NewExactJsonConverter(c ExactJsonConverterConfig) *ExactJsonConverter {
 // To preserve nulls and extract time we need tips from a user:
 // * Field types
 // * Time column with time format
-func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, payload []byte) (*data.Frame, error) {
-	obj, err := oj.Parse(payload)
+func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) ([]*data.Frame, error) {
+	obj, err := oj.Parse(body)
 	if err != nil {
 		return nil, err
 	}
@@ -81,13 +81,13 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, payload []byt
 			script := strings.Trim(f.Value, "{}")
 			switch f.Type {
 			case data.FieldTypeNullableBool:
-				v, err := GetBool(payload, script)
+				v, err := GetBool(body, script)
 				if err != nil {
 					return nil, err
 				}
 				field.SetConcrete(0, v)
 			case data.FieldTypeNullableFloat64:
-				v, err := GetFloat64(payload, script)
+				v, err := GetFloat64(body, script)
 				if err != nil {
 					return nil, err
 				}
@@ -119,7 +119,7 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, payload []byt
 				}
 			} else if strings.HasPrefix(label.Value, "{") {
 				script := strings.Trim(f.Value, "{}")
-				v, err := GetString(payload, script)
+				v, err := GetString(body, script)
 				if err != nil {
 					return nil, err
 				}
@@ -133,5 +133,5 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, payload []byt
 	frame := data.NewFrame(vars.Path, fields...)
 	//s, _ := frame.StringTable(10, 10)
 	//println(s)
-	return frame, nil
+	return []*data.Frame{frame}, nil
 }

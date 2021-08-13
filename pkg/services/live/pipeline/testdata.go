@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -13,6 +14,7 @@ type Data struct {
 	Value1     float64                `json:"value1"`
 	Value2     float64                `json:"value2"`
 	Value3     *float64               `json:"value3"`
+	Value4     float64                `json:"value4"`
 	Annotation string                 `json:"annotation"`
 	Array      []float64              `json:"array"`
 	Map        map[string]interface{} `json:"map"`
@@ -30,6 +32,7 @@ func postTestData() {
 		d := Data{
 			Value1:     float64(num1),
 			Value2:     float64(num2),
+			Value4:     float64(i % 10),
 			Annotation: "odd",
 			Array:      []float64{float64(rand.Intn(10)), float64(rand.Intn(10))},
 			Map: map[string]interface{}{
@@ -54,20 +57,20 @@ func postTestData() {
 		}
 		data, _ := json.Marshal(d)
 		log.Println(string(data))
-		req, _ := http.NewRequest("POST", "http://localhost:3000/api/live/push/test/auto", bytes.NewReader(data))
-		req.Header.Set("Authorization", "Bearer eyJrIjoiVTVqVURKOU1weUNaTFZZNGxJR1VscWZkU0FvTUVtNjQiLCJuIjoiVGVsZWdyYWYiLCJpZCI6MX0=")
+		req, _ := http.NewRequest("POST", "http://localhost:3000/api/live/push/json/auto", bytes.NewReader(data))
+		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
 		_, err := http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
-		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/test/tip", bytes.NewReader(data))
-		req.Header.Set("Authorization", "Bearer eyJrIjoiVTVqVURKOU1weUNaTFZZNGxJR1VscWZkU0FvTUVtNjQiLCJuIjoiVGVsZWdyYWYiLCJpZCI6MX0=")
+		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/json/tip", bytes.NewReader(data))
+		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
 		_, err = http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
-		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/test/exact", bytes.NewReader(data))
-		req.Header.Set("Authorization", "Bearer eyJrIjoiVTVqVURKOU1weUNaTFZZNGxJR1VscWZkU0FvTUVtNjQiLCJuIjoiVGVsZWdyYWYiLCJpZCI6MX0=")
+		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/json/exact", bytes.NewReader(data))
+		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
 		_, err = http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)

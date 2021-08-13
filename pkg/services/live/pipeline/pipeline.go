@@ -32,18 +32,11 @@ type Label struct {
 	Value string // Can be JSONPath or Goja script.
 }
 
-type TimeOptions struct {
-	Now    bool
-	Format string
-}
-
 type Field struct {
 	Name   string
 	Type   data.FieldType
 	Value  string // Can be JSONPath or Goja script.
 	Labels []Label
-
-	TimeOptions *TimeOptions
 }
 
 type ListLiveChannelRuleCommand struct {
