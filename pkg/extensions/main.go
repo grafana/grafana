@@ -18,6 +18,7 @@ import (
 	_ "github.com/grpc-ecosystem/go-grpc-middleware"
 	_ "github.com/jung-kurt/gofpdf"
 	_ "github.com/linkedin/goavro/v2"
+	_ "github.com/m3db/prometheus_remote_client_golang/promremote"
 	_ "github.com/pkg/errors"
 	_ "github.com/robfig/cron"
 	_ "github.com/robfig/cron/v3"
