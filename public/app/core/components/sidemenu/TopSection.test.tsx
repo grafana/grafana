@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import TopSection from './TopSection';
-import { before } from '../../../../../packages/jaeger-ui-components/node_modules/@types/lodash';
 
 jest.mock('../../config', () => ({
   bootData: {
