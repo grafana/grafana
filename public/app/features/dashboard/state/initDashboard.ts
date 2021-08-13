@@ -164,6 +164,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // template values service needs to initialize completely before the rest of the dashboard can load
     await dispatch(initVariablesTransaction(args.urlUid!, dashboard));
 
+    // DashboardQueryRunner needs to run after all variables have been resolved so that any annotation query including a variable
+    // will be correctly resolved
     const runner = createDashboardQueryRunner({ dashboard, timeSrv });
     runner.run({ dashboard, range: timeSrv.timeRange() });
 
