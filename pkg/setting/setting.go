@@ -1357,8 +1357,8 @@ func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
 }
 
 func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
-	ng := iniFile.Section("unified_alerting")
-	s := ng.Key("admin_config_poll_interval_seconds").MustInt(60)
+	ua := iniFile.Section("unified_alerting")
+	s := ua.Key("admin_config_poll_interval_seconds").MustInt(60)
 	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
 	return nil
 }
