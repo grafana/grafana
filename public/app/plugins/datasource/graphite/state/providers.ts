@@ -31,7 +31,7 @@ async function getAltSegments(
     query = state.queryModel.getSegmentPathUpTo(index) + '.' + query;
   }
   const options = {
-    range: state.panelCtrl.range,
+    range: state.range,
     requestId: 'get-alt-segments',
   };
 
@@ -46,22 +46,6 @@ async function getAltSegments(
 
     if (index > 0 && altSegments.length === 0) {
       return altSegments;
-    }
-
-    // add query references
-    if (index === 0) {
-      // TODO: it seems it's not supported anyway and possibly could be removed
-      eachRight(state.panelCtrl.panel.targets, (target) => {
-        if (target.refId === state.queryModel.target.refId) {
-          return;
-        }
-
-        altSegments.unshift({
-          type: 'series-ref',
-          value: '#' + target.refId,
-          expandable: false,
-        });
-      });
     }
 
     // add template variables

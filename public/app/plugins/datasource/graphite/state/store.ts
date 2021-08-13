@@ -20,6 +20,7 @@ import {
 import { Action, Dispatch } from 'redux';
 import { FuncDefs } from '../gfunc';
 import { AnyAction } from '@reduxjs/toolkit';
+import { TimeRange } from '@grafana/data';
 
 export type GraphiteQueryEditorState = {
   /**
@@ -33,9 +34,9 @@ export type GraphiteQueryEditorState = {
 
   datasource: GraphiteDatasource;
 
-  uiSegmentSrv: any;
   templateSrv: TemplateSrv;
-  panelCtrl: any;
+  range?: TimeRange;
+  refresh: (target: string) => void;
 
   target: { target: string; textEditor: boolean };
 
@@ -70,6 +71,9 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     };
 
     await buildSegments(state, false);
+  }
+  if (actions.updateTimeRange.match(action)) {
+    state.range = action.payload;
   }
   if (actions.segmentValueChanged.match(action)) {
     const { segment: segmentOrString, index: segmentIndex } = action.payload;
@@ -130,7 +134,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   }
   if (actions.unpause.match(action)) {
     state.paused = false;
-    state.panelCtrl.refresh(state.target.target);
+    state.refresh(state.target.target);
   }
   if (actions.addFunction.match(action)) {
     const newFunc = state.datasource.createFuncInstance(action.payload.name, {
@@ -173,7 +177,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   if (actions.runQuery.match(action)) {
     // handleTargetChanged() builds target from segments/tags/functions only,
     // it doesn't handle refresh when target is change explicitly
-    state.panelCtrl.refresh(state.target.target);
+    state.refresh(state.target.target);
   }
   if (actions.toggleEditorMode.match(action)) {
     state.target.textEditor = !state.target.textEditor;

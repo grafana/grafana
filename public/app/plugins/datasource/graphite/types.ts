@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, DataSourceJsonData, TimeRange } from '@grafana/data';
 import { GraphiteDatasource } from './datasource';
 import { TemplateSrv } from '../../../features/templating/template_srv';
 
@@ -71,12 +71,12 @@ export type GraphiteTag = {
   value: string;
 };
 
-export type GraphiteQueryEditorAngularDependencies = {
-  panelCtrl: any;
+export type GraphiteQueryEditorDependencies = {
   target: any;
   datasource: GraphiteDatasource;
-  uiSegmentSrv: any;
+  range?: TimeRange;
   templateSrv: TemplateSrv;
+  refresh: (target: string) => void;
 };
 
 export type AngularDropdownOptions = {

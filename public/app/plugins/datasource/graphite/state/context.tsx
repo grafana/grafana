@@ -37,21 +37,18 @@ export const GraphiteQueryEditorContext = ({
   }, []);
 
   if (!state) {
-    const deps = {
-      panelCtrl: {
+    dispatch(
+      actions.init({
+        target: query,
+        datasource: datasource,
         range: range,
-        panel: { targets: [] },
+        templateSrv: getTemplateSrv(),
         refresh: (target: string) => {
           onChange({ ...query, target: target });
           onRunQuery();
         },
-      },
-      target: query,
-      datasource: datasource,
-      uiSegmentSrv: undefined,
-      templateSrv: getTemplateSrv(),
-    };
-    dispatch(actions.init(deps));
+      })
+    );
     return null;
   } else {
     return (

@@ -167,10 +167,10 @@ export function handleTargetChanged(state: GraphiteQueryEditorState): void {
   }
 
   const oldTarget = state.queryModel.target.target;
-  state.queryModel.updateModelTarget(state.panelCtrl.panel.targets);
+  state.queryModel.updateModelTarget();
 
   if (state.queryModel.target.target !== oldTarget && !state.paused) {
-    state.panelCtrl.refresh(state.target.target);
+    state.refresh(state.target.target);
   }
 }
 

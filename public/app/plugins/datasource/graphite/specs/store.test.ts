@@ -44,10 +44,6 @@ describe('Graphite actions', async () => {
     },
   } as any;
 
-  ctx.panelCtrl.panel = {
-    targets: [ctx.target],
-  };
-
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -60,10 +56,9 @@ describe('Graphite actions', async () => {
       actions.init({
         datasource: ctx.datasource,
         target: ctx.target,
-        uiSegmentSrv: undefined,
+        refresh: jest.fn(),
         //@ts-ignore
         templateSrv: new TemplateSrvStub(),
-        panelCtrl: ctx.panelCtrl,
       })
     );
   });
@@ -314,37 +309,6 @@ describe('Graphite actions', async () => {
 
     it('target should remain the same', () => {
       expect(ctx.state.target.target).toBe('scaleToSeconds(#A, 60)');
-    });
-
-    it('targetFull should include nested queries', async () => {
-      ctx.state.panelCtrl.panel.targets = [
-        {
-          target: 'nested.query.count',
-          refId: 'A',
-        },
-      ];
-
-      await changeTarget(ctx, ctx.target.target);
-
-      expect(ctx.state.target.target).toBe('scaleToSeconds(#A, 60)');
-
-      expect(ctx.state.target.targetFull).toBe('scaleToSeconds(nested.query.count, 60)');
-    });
-  });
-
-  describe('when updating target used in other query', () => {
-    beforeEach(async () => {
-      ctx.state.datasource.metricFindQuery = () => Promise.resolve([{ expandable: false }]);
-      ctx.state.target.refId = 'A';
-      await changeTarget(ctx, 'metrics.foo.count');
-
-      ctx.state.panelCtrl.panel.targets = [ctx.state.target, { target: 'sumSeries(#A)', refId: 'B' }];
-
-      await changeTarget(ctx, 'metrics.bar.count');
-    });
-
-    it('targetFull of other query should update', () => {
-      expect(ctx.state.panelCtrl.panel.targets[1].targetFull).toBe('sumSeries(metrics.bar.count)');
     });
   });
 

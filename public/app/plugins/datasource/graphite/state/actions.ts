@@ -1,15 +1,14 @@
-import { GraphiteQueryEditorAngularDependencies, GraphiteSegment, GraphiteTag } from '../types';
+import { GraphiteQueryEditorDependencies, GraphiteSegment, GraphiteTag } from '../types';
 import { createAction } from '@reduxjs/toolkit';
 import { FuncInstance } from '../gfunc';
+import { TimeRange } from '@grafana/data';
 
 /**
  * List of possible actions changing the state of QueryEditor
  */
 
-/**
- * This is used only during the transition to react. It will be removed after migrating all components.
- */
-const init = createAction<GraphiteQueryEditorAngularDependencies>('init');
+const init = createAction<GraphiteQueryEditorDependencies>('init');
+const updateTimeRange = createAction<TimeRange | undefined>('update-time-range');
 
 // Metrics & Tags
 const segmentValueChanged = createAction<{ segment: GraphiteSegment | string; index: number }>('segment-value-changed');
@@ -32,6 +31,7 @@ const toggleEditorMode = createAction('toggle-editor');
 
 export const actions = {
   init,
+  updateTimeRange,
   segmentValueChanged,
   tagChanged,
   addNewTag,

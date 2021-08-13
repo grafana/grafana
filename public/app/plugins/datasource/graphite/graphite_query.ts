@@ -1,4 +1,4 @@
-import { compact, each, findIndex, flatten, get, join, keyBy, last, map, reduce, without } from 'lodash';
+import { compact, each, findIndex, flatten, get, join, last, map, reduce, without } from 'lodash';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { Parser } from './parser';
 import { TemplateSrv } from '@grafana/runtime';
@@ -172,7 +172,7 @@ export default class GraphiteQuery {
     arrayMove(this.functions, index, index + offset);
   }
 
-  updateModelTarget(targets: any) {
+  updateModelTarget() {
     const wrapFunction = (target: string, func: any) => {
       return func.render(target, (value: string) => {
         return this.templateSrv.replace(value, this.scopedVars);
@@ -184,74 +184,8 @@ export default class GraphiteQuery {
       this.target.target = reduce(this.functions, wrapFunction, metricPath);
     }
 
-    this.updateRenderedTarget(this.target, targets);
-
-    // loop through other queries and update targetFull as needed
-    for (const target of targets || []) {
-      if (target.refId !== this.target.refId) {
-        this.updateRenderedTarget(target, targets);
-      }
-    }
-
     // clean-up added param
     this.functions.forEach((func) => (func.added = false));
-  }
-
-  updateRenderedTarget(target: { refId: string | number; target: any; targetFull: any }, targets: any) {
-    // render nested query
-    const targetsByRefId = keyBy(targets, 'refId');
-
-    // no references to self
-    delete targetsByRefId[target.refId];
-
-    const nestedSeriesRefRegex = /\#([A-Z])/g;
-    let targetWithNestedQueries = target.target;
-
-    // Use ref count to track circular references
-    function countTargetRefs(targetsByRefId: any, refId: string) {
-      let refCount = 0;
-      each(targetsByRefId, (t, id) => {
-        if (id !== refId) {
-          const match = nestedSeriesRefRegex.exec(t.target);
-          const count = match && match.length ? match.length - 1 : 0;
-          refCount += count;
-        }
-      });
-      targetsByRefId[refId].refCount = refCount;
-    }
-    each(targetsByRefId, (t, id) => {
-      countTargetRefs(targetsByRefId, id);
-    });
-
-    // Keep interpolating until there are no query references
-    // The reason for the loop is that the referenced query might contain another reference to another query
-    while (targetWithNestedQueries.match(nestedSeriesRefRegex)) {
-      const updated = targetWithNestedQueries.replace(nestedSeriesRefRegex, (match: string, g1: string) => {
-        const t = targetsByRefId[g1];
-        if (!t) {
-          return match;
-        }
-
-        // no circular references
-        if (t.refCount === 0) {
-          delete targetsByRefId[g1];
-        }
-        t.refCount--;
-
-        return t.target;
-      });
-
-      if (updated === targetWithNestedQueries) {
-        break;
-      }
-
-      targetWithNestedQueries = updated;
-    }
-
-    delete target.targetFull;
-    if (target.target !== targetWithNestedQueries) {
-      target.targetFull = targetWithNestedQueries;
-    }
   }
 
   splitSeriesByTagParams(func: { params: any }) {
