@@ -146,6 +146,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const params = data ? serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = { ...options, url };
+    console.log('Req: ', req);
 
     return getBackendSrv().fetch(req);
   }
@@ -168,6 +169,33 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   getQueryDisplayText(query: TempoQuery) {
     return query.query;
+  }
+
+  buildSearchQuery(query: TempoQuery) {
+    const tags = query.search ? query.search.split(/\s+(?=([^"]*"[^"]*")*[^"]*$)/g) : [];
+    // Compact to remove empty values from array
+    const tagsQuery = compact(tags)
+      .map((tag) => {
+        const parts = tag.split('=');
+        if (parts.length === 2) {
+          const extractedString = parts[1].replace(/^"(.*)"$/, '$1');
+          return { [parts[0]]: extractedString };
+        } else {
+          return null; // To filter out incomplete tag queries
+        }
+      })
+      .filter((v) => !!v);
+    let tempoQuery = pick(query, ['minDuration', 'maxDuration', 'limit']);
+    // Remove empty properties
+    tempoQuery = pickBy(tempoQuery, identity);
+    if (query.serviceName) {
+      tagsQuery.push({ ['service.name']: query.serviceName });
+    }
+    if (query.spanName) {
+      tagsQuery.push({ ['name']: query.spanName });
+    }
+    const tagsQueryObject = tagsQuery.reduce((tagQuery, item) => ({ ...tagQuery, ...item }), {});
+    return { ...tagsQueryObject, ...tempoQuery };
   }
 }
 
