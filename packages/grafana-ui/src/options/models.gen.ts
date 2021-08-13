@@ -23,7 +23,7 @@ export interface OptionsWithLegend {
  * @public
  */
 export interface OptionsWithTooltip {
-  tooltip?: VizTooltipOptions;
+  tooltip: VizTooltipOptions;
 }
 
 /**
