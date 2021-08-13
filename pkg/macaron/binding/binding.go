@@ -29,7 +29,6 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/unknwon/com"
 	"gopkg.in/macaron.v1"
 )
 
@@ -508,8 +507,16 @@ VALIDATE_RULES:
 			if len(nums) != 2 {
 				break VALIDATE_RULES
 			}
-			val := com.StrTo(fmt.Sprintf("%v", fieldValue)).MustInt()
-			if val < com.StrTo(nums[0]).MustInt() || val > com.StrTo(nums[1]).MustInt() {
+			if min, err := strconv.Atoi(nums[0]); err != nil {
+				errors.Add([]string{field.Name}, ERR_RANGE, "Range")
+				break VALIDATE_RULES
+			} else if max, err := strconv.Atoi(nums[1]); err != nil {
+				errors.Add([]string{field.Name}, ERR_RANGE, "Range")
+				break VALIDATE_RULES
+			} else if val, err := strconv.Atoi(fmt.Sprintf("%v", fieldValue)); err != nil {
+				errors.Add([]string{field.Name}, ERR_RANGE, "Range")
+				break VALIDATE_RULES
+			} else if val < min || val > max {
 				errors.Add([]string{field.Name}, ERR_RANGE, "Range")
 				break VALIDATE_RULES
 			}
