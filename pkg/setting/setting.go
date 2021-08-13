@@ -406,7 +406,7 @@ type Cfg struct {
 	GeomapDefaultBaseLayerConfig map[string]interface{}
 	GeomapEnableCustomBaseLayers bool
 
-	// NGAlerting
+	// Unified Alerting
 	AdminConfigPollInterval time.Duration
 }
 
@@ -901,7 +901,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 
-	if err := cfg.readNGAlertingSettings(iniFile); err != nil {
+	if err := cfg.readUnifiedAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1356,8 +1356,8 @@ func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
-func (cfg *Cfg) readNGAlertingSettings(iniFile *ini.File) error {
-	ng := iniFile.Section("ngalerting")
+func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
+	ng := iniFile.Section("unified_alerting")
 	s := ng.Key("admin_config_poll_interval_seconds").MustInt(60)
 	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
 	return nil
