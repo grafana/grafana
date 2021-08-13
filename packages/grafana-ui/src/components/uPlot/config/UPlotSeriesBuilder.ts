@@ -62,8 +62,10 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     let lineConfig: Partial<Series> = {};
 
+    let lineColor = this.getLineColor();
+
     // DrawStyle.Points mode also needs this for fill/stroke sharing & re-use in series.points. see getColor() below.
-    lineConfig.stroke = this.getLineColor();
+    lineConfig.stroke = lineColor;
 
     if (pathBuilder != null) {
       lineConfig.paths = pathBuilder;
@@ -90,13 +92,14 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       };
     }
 
-    // @ts-ignore
-    const getColor: uPlot.Series.Fill | uPlot.Series.Stroke = (u, seriesIdx) => u.series[seriesIdx]._stroke;
+    const useColor: uPlot.Series.Stroke =
+      // @ts-ignore
+      typeof lineColor === 'string' ? lineColor : (u, seriesIdx) => u.series[seriesIdx]._stroke;
 
     const pointsConfig: Partial<Series> = {
       points: {
-        stroke: getColor,
-        fill: getColor,
+        stroke: useColor,
+        fill: useColor,
         size: pointSize,
         filter: pointsFilter,
       },
@@ -140,7 +143,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       return getScaleGradientFn(1, theme, colorMode, thresholds);
     }
 
-    return () => lineColor ?? FALLBACK_COLOR;
+    return lineColor ?? FALLBACK_COLOR;
   }
 
   private getFill(): Series.Fill | undefined {
