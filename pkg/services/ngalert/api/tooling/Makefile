@@ -16,8 +16,10 @@ spec.json: $(GO_PKG_FILES)
 		quay.io/goswagger/swagger:$(SWAGGER_TAG) \
 		generate spec -m -o $@
 
-spec.json-mac: $(GO_PKG_FILES)
-	brew install go-swagger
+ensure_go-swagger_mac:
+	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
+
+spec.json-mac: ensure_go-swagger_mac $(GO_PKG_FILES)
 	swagger generate spec -m -w $(API_DIR) -o spec.json
 
 post.json: spec.json
