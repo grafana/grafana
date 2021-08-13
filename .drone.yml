@@ -163,7 +163,6 @@ steps:
     PORT: 3001
   failure: ignore
   depends_on:
-  - build-frontend
   - end-to-end-tests-server
 
 - name: publish-frontend-metrics
@@ -471,7 +470,6 @@ steps:
     PORT: 3001
   failure: ignore
   depends_on:
-  - build-frontend
   - end-to-end-tests-server
 
 - name: publish-frontend-metrics
@@ -3568,6 +3566,6 @@ get:
 
 ---
 kind: signature
-hmac: a6a96caad2d5fe26e212edbfb65227c42d0d97750ac659d646dfb2c3346ada8f
+hmac: 452d863023b13537a1b7da0c7a5dc6b8ff8672223cf8805c10e33662ad19539a
 
 ...
