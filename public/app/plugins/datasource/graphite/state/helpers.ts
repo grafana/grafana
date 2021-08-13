@@ -1,5 +1,5 @@
 import { GraphiteQueryEditorState } from './store';
-import { map } from 'lodash';
+import { clone } from 'lodash';
 import { dispatch } from '../../../../store/store';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { createErrorNotification } from '../../../../core/copy/appNotification';
@@ -31,10 +31,8 @@ export async function parseTarget(state: GraphiteQueryEditorState): Promise<void
  * Create segments out of the current metric path + add "select metrics" if it's possible to add more to the path
  */
 export async function buildSegments(state: GraphiteQueryEditorState, modifyLastSegment = true): Promise<void> {
-  // TODO: This is just a copy of query model segments. Check if queryModel segments could be used directly
-  state.segments = map(state.queryModel.segments, (segment) => {
-    return segment;
-  });
+  // Start with a shallow copy from the model, then check if "select metric" segment should be added at the end
+  state.segments = clone(state.queryModel.segments);
 
   const checkOtherSegmentsIndex = state.queryModel.checkOtherSegmentsIndex || 0;
 
