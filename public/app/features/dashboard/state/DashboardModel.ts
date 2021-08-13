@@ -44,7 +44,7 @@ import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
 import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent, TimeRangeUpdatedEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
-import { mergePanels } from '../utils/merge';
+import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -242,13 +242,14 @@ export class DashboardModel {
   }
 
   /** This will load a new dashboard, but keep existing panels unchanged */
-  merge(panels: IPanelModel[]) {
+  updatePanels(panels: IPanelModel[]): PanelMergeInfo {
     const info = mergePanels(this.panels, panels ?? []);
     if (info.changed) {
       this.panels = info.panels ?? [];
       this.sortPanelsByGridPos();
       this.events.publish(new DashboardPanelsChangedEvent());
     }
+    return info;
   }
 
   private getPanelSaveModels() {
