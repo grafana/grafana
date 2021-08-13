@@ -146,6 +146,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   });
 
   builder.setCursor({
+    points: { show: false },
     drag: {
       x: true,
       y: false,
