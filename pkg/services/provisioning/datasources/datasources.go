@@ -46,7 +46,6 @@ func (dc *DatasourceProvisioner) apply(cfg *configs) error {
 		cmd := &models.GetDataSourceQuery{OrgId: ds.OrgID, Name: ds.Name}
 		err := bus.Dispatch(cmd)
 		if err != nil && !errors.Is(err, models.ErrDataSourceNotFound) {
-			dc.log.Info("datasource from configuration error", "error", err)
 			return err
 		}
 
@@ -54,7 +53,6 @@ func (dc *DatasourceProvisioner) apply(cfg *configs) error {
 			dc.log.Info("inserting datasource from configuration ", "name", ds.Name, "uid", ds.UID)
 			insertCmd := createInsertCommand(ds)
 			if err := bus.Dispatch(insertCmd); err != nil {
-				dc.log.Info("inserting datasource from configuration error", "error", err)
 				return err
 			}
 		} else {

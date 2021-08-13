@@ -25,17 +25,15 @@ func WithoutScope() EncryptionOption {
 }
 
 // Decrypt decrypts a payload with a given secret.
-
-// ALERT: This method could rely on database, so
-// you should not use it within database transactions.
+// ALERT: This method interacts with the database, so
+// you should not be used within a database transactions.
 var Decrypt = func(_ []byte) ([]byte, error) {
 	return nil, ErrNotInitialized
 }
 
 // Encrypt encrypts a payload with a given secret.
-//
-// ALERT: This method could rely on database, so
-// you should not use it within database transactions.
+// ALERT: This method interacts with the database, so
+// you should not be used within a database transactions.
 var Encrypt = func(_ []byte, opt EncryptionOption) ([]byte, error) {
 	return nil, ErrNotInitialized
 }

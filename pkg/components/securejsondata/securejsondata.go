@@ -15,7 +15,6 @@ func (s SecureJsonData) DecryptedValue(key string) (string, bool) {
 	if value, ok := s[key]; ok {
 		decryptedData, err := util.Decrypt(value)
 		if err != nil {
-			log.Infof("%s", err.Error())
 			log.Fatalf(4, err.Error())
 		}
 		return string(decryptedData), true
@@ -30,7 +29,6 @@ func (s SecureJsonData) Decrypt() map[string]string {
 	for key, data := range s {
 		decryptedData, err := util.Decrypt(data)
 		if err != nil {
-			log.Infof("%s", err.Error())
 			log.Fatalf(4, err.Error())
 		}
 
