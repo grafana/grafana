@@ -1,6 +1,6 @@
 // Libraries
 import { cloneDeep, isEmpty, map as lodashMap } from 'lodash';
-import { merge, Observable, of, throwError } from 'rxjs';
+import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import Prism from 'prismjs';
 
@@ -36,7 +36,7 @@ import {
   lokiStreamsToDataFrames,
   processRangeQueryResponse,
 } from './result_transformer';
-import { getHighlighterExpressionsFromQuery, queryHasPipeParser, addParsedLabelToQuery } from './query_utils';
+import { addParsedLabelToQuery, getHighlighterExpressionsFromQuery, queryHasPipeParser } from './query_utils';
 
 import {
   LokiOptions,
@@ -319,7 +319,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   async metadataRequest(url: string, params?: Record<string, string | number>) {
-    const res = await this._request(url, params, { hideFromInspector: true }).toPromise();
+    const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
     return res.data.data || res.data.values || [];
   }
 
@@ -455,8 +455,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     );
 
     const reverse = options && options.direction === 'FORWARD';
-    return this._request(RANGE_QUERY_ENDPOINT, target)
-      .pipe(
+    return lastValueFrom(
+      this._request(RANGE_QUERY_ENDPOINT, target).pipe(
         catchError((err: any) => {
           if (err.status === 404) {
             return of(err);
@@ -475,7 +475,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           })
         )
       )
-      .toPromise();
+    );
   };
 
   prepareLogRowContextQueryTarget = (row: LogRowModel, limit: number, direction: 'BACKWARD' | 'FORWARD') => {
@@ -520,8 +520,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     // Consider only last 10 minutes otherwise request takes too long
     const startMs = Date.now() - 10 * 60 * 1000;
     const start = `${startMs}000000`; // API expects nanoseconds
-    return this._request(`${LOKI_ENDPOINT}/label`, { start })
-      .pipe(
+    return lastValueFrom(
+      this._request(`${LOKI_ENDPOINT}/label`, { start }).pipe(
         map((res) => {
           const values: any[] = res?.data?.data || res?.data?.values || [];
           const testResult =
@@ -554,7 +554,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           return of({ status: 'error', message: message });
         })
       )
-      .toPromise();
+    );
   }
 
   async annotationQuery(options: any): Promise<AnnotationEvent[]> {
@@ -567,8 +567,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const interpolatedExpr = this.templateSrv.replace(expr, {}, this.interpolateQueryExpr);
     const query = { refId: `annotation-${options.annotation.name}`, expr: interpolatedExpr, maxLines, instant };
     const { data } = instant
-      ? await this.runInstantQuery(query, options as any).toPromise()
-      : await this.runRangeQuery(query, options as any).toPromise();
+      ? await lastValueFrom(this.runInstantQuery(query, options as any))
+      : await lastValueFrom(this.runRangeQuery(query, options as any));
 
     const annotations: AnnotationEvent[] = [];
     const splitKeys: string[] = tagKeys.split(',').filter((v: string) => v !== '');

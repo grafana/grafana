@@ -147,7 +147,7 @@ export interface BackendSrv {
 
   /**
    * @deprecated Use the fetch function instead. If you prefer to work with a promise
-   * call the toPromise() function on the Observable returned by fetch.
+   * wrap the call with the lastValueFrom function on the Observable returned by fetch.
    */
   request(options: BackendSrvRequest): Promise<any>;
 

@@ -1,3 +1,6 @@
+import { from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
+import { DataSourceWithBackend } from '@grafana/runtime';
 import {
   DataQuery,
   DataQueryRequest,
@@ -6,11 +9,9 @@ import {
   DataSourceInstanceSettings,
   LoadingState,
 } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
+
 import { TraceToLogsData, TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { from, merge, Observable, of, throwError } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
 import { LokiOptions } from '../loki/types';
 import { transformFromOTLP as transformFromOTEL, transformTrace, transformTraceList } from './resultTransformer';
 
@@ -103,7 +104,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLo
 
   async testDatasource(): Promise<any> {
     // to test Tempo we send a dummy traceID and verify Tempo answers with 'trace not found'
-    const response = await super.query({ targets: [{ query: '0' }] } as any).toPromise();
+    const response = await lastValueFrom(super.query({ targets: [{ query: '0' }] } as any));
 
     const errorMessage = response.error?.message;
     if (

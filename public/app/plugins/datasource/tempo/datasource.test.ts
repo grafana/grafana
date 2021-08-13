@@ -1,3 +1,4 @@
+import { lastValueFrom, Observable, of } from 'rxjs';
 import {
   DataFrame,
   dataFrameToJSON,
@@ -7,7 +8,7 @@ import {
   PluginType,
 } from '@grafana/data';
 import { BackendDataSourceResponse, FetchResponse, setBackendSrv } from '@grafana/runtime';
-import { Observable, of } from 'rxjs';
+
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { TempoDatasource } from './datasource';
 import mockJson from './mockJsonResponse.json';
@@ -31,7 +32,7 @@ describe('Tempo data source', () => {
       })
     );
     const ds = new TempoDatasource(defaultSettings);
-    const response = await ds.query({ targets: [{ refId: 'refid1' }] } as any).toPromise();
+    const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1' }] } as any));
 
     expect(
       (response.data[0] as DataFrame).fields.map((f) => ({
@@ -80,11 +81,11 @@ describe('Tempo data source', () => {
   it('should handle json file upload', async () => {
     const ds = new TempoDatasource(defaultSettings);
     ds.uploadedJson = JSON.stringify(mockJson);
-    const response = await ds
-      .query({
+    const response = await lastValueFrom(
+      ds.query({
         targets: [{ queryType: 'upload', refId: 'A' }],
       } as any)
-      .toPromise();
+    );
     const field = response.data[0].fields[0];
     expect(field.name).toBe('traceID');
     expect(field.type).toBe(FieldType.string);
