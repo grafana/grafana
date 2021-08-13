@@ -59,22 +59,24 @@ export const useSubscriptions: DataHook = (query, datasource, onChange, setError
   const { subscription } = query;
   const defaultSubscription = datasource.azureMonitorDatasource.defaultSubscriptionId;
 
-  return useAsyncState(
+  const subscriptionOptions = useAsyncState(
     async () => {
       const results = await datasource.azureMonitorDatasource.getSubscriptions();
-      const options = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
-
-      if (!subscription && defaultSubscription && hasOption(options, defaultSubscription)) {
-        onChange(setSubscriptionID(query, defaultSubscription));
-      } else if ((!subscription && options.length) || options.length === 1) {
-        onChange(setSubscriptionID(query, options[0].value));
-      }
-
-      return options;
+      return results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
     },
     setError,
     []
   );
+
+  useEffect(() => {
+    if (!subscription && defaultSubscription && hasOption(subscriptionOptions, defaultSubscription)) {
+      onChange(setSubscriptionID(query, defaultSubscription));
+    } else if ((!subscription && subscriptionOptions.length) || subscriptionOptions.length === 1) {
+      onChange(setSubscriptionID(query, subscriptionOptions[0].value));
+    }
+  }, [subscriptionOptions, query, subscription, defaultSubscription, onChange]);
+
+  return subscriptionOptions;
 };
 
 export const useResourceGroups: DataHook = (query, datasource, onChange, setError) => {
