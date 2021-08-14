@@ -109,7 +109,7 @@ export function DashList(props: PanelProps<DashListOptions>) {
       .then((data) => {
         const dash = data.dashboard;
         console.log('About to merge/update', dash);
-        alert(`About to merge/update: ${dash.uid} // ${dash.title}`);
+        // alert(`About to merge/update: ${dash.uid} // ${dash.title}`);
         const info = getDashboardSrv().getCurrent()!.updatePanels(dash.panels);
         console.log('INFO', info);
       });

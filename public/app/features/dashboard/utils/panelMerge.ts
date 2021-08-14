@@ -1,4 +1,4 @@
-import { PanelModel as IPanelModel } from '@grafana/data';
+import { PanelModel as IPanelModel, Threshold, ThresholdsConfig } from '@grafana/data';
 import { isEqual } from 'lodash';
 import { PanelModel } from '../state';
 
@@ -48,28 +48,24 @@ export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMe
     }
 
     // All new properties are the same
-    const save = panel.getSaveModel();
-    let same = true;
+    const save = normalizeSaveModel(panel.getSaveModel());
+    const changed: string[] = [];
     for (const [key, value] of Object.entries(target)) {
       if (!isEqual(value, save[key])) {
-        if (key === 'fieldConfig') {
-          console.log('IGNORE different', key, panel.id, panel.title);
-          continue; // ?????
-        }
-        console.log('REPLACE', panel.id, key);
-        console.log('OLD > ', JSON.stringify(save[key]));
-        console.log('NEW > ', JSON.stringify(value));
-
-        same = false;
-        panels.push(new PanelModel(target));
-        info.changed = true;
-        info.actions.replace.push(panel.id);
-        panel.destroy();
-        break;
+        changed.push(key);
       }
     }
 
-    if (same) {
+    if (changed.length) {
+      panel.destroy();
+      console.log('CHANGED', panel.id, panel.title, changed);
+
+      const next = new PanelModel(target);
+      next.key = `${next.id}-update-${Date.now()}`; // force react replacement
+      panels.push(next);
+      info.changed = true;
+      info.actions.replace.push(panel.id);
+    } else {
       panels.push(panel);
       info.actions.noop.push(panel.id);
     }
@@ -83,4 +79,15 @@ export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMe
   }
 
   return info;
+}
+
+// Some values (like -Infinity) don't save the same in the panel
+export function normalizeSaveModel(model: any): any {
+  const t = model.fieldConfig?.defaults?.thresholds?.steps as Threshold[];
+  if (t) {
+    if (t[0].value === -Infinity) {
+      t[0].value = null as any;
+    }
+  }
+  return model;
 }
