@@ -14,7 +14,6 @@ import {
   parseTarget,
   pause,
   removeTagPrefix,
-  setSegmentFocus,
   smartlyHandleNewAliasByNode,
   spliceSegments,
 } from './helpers';
@@ -72,9 +71,22 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     await buildSegments(state, false);
   }
   if (actions.segmentValueChanged.match(action)) {
-    const { segment, index: segmentIndex } = action.payload;
+    const { segment: segmentOrString, index: segmentIndex } = action.payload;
+
+    let segment;
+    // is segment was changed to a string - create a new segment
+    if (typeof segmentOrString === 'string') {
+      segment = {
+        value: segmentOrString,
+        expandable: true,
+        fake: false,
+      };
+    } else {
+      segment = segmentOrString as GraphiteSegment;
+    }
 
     state.error = null;
+    state.segments[segmentIndex] = segment;
     state.queryModel.updateSegmentValue(segment, segmentIndex);
 
     if (state.queryModel.functions.length > 0 && state.queryModel.functions[0].def.fake) {
@@ -88,21 +100,24 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
       return state;
     }
 
+    // if newly selected segment can be expanded -> check if the path is correct
     if (segment.expandable) {
       await checkOtherSegments(state, segmentIndex + 1);
-      setSegmentFocus(state, segmentIndex + 1);
-      handleTargetChanged(state);
     } else {
+      // if not expandable -> remove all other segments
       spliceSegments(state, segmentIndex + 1);
     }
 
-    setSegmentFocus(state, segmentIndex + 1);
     handleTargetChanged(state);
   }
   if (actions.tagChanged.match(action)) {
     const { tag, index: tagIndex } = action.payload;
     state.queryModel.updateTag(tag, tagIndex);
     handleTargetChanged(state);
+    if (state.queryModel.tags.length === 0) {
+      await checkOtherSegments(state, 0);
+      state.paused = false;
+    }
   }
   if (actions.addNewTag.match(action)) {
     const segment = action.payload.segment;

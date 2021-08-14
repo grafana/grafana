@@ -36,6 +36,7 @@ export const Service: React.FC<Props> = ({ query, templateVariableOptions, onCha
   return (
     <QueryEditorRow label="Service">
       <Select
+        menuShouldPortal
         width={SELECT_WIDTH}
         allowCustomValue
         value={query?.serviceId && { value: query?.serviceId, label: query?.serviceName || query?.serviceId }}

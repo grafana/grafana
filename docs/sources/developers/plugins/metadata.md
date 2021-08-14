@@ -14,7 +14,7 @@ The plugin.json file is required for all plugins. When Grafana starts, it scans 
 ## Properties
 
 | Property        | Type                    | Required | Description                                                                                                                                                                                                                                                                                                                                                                                             |
-|-----------------|-------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| --------------- | ----------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `dependencies`  | [object](#dependencies) | **Yes**  | Dependencies needed by the plugin.                                                                                                                                                                                                                                                                                                                                                                      |
 | `id`            | string                  | **Yes**  | Unique name of the plugin. If the plugin is published on grafana.com, then the plugin id has to follow the naming conventions.                                                                                                                                                                                                                                                                          |
 | `info`          | [object](#info)         | **Yes**  | Metadata for the plugin. Some fields are used on the plugins page in Grafana and others on grafana.com if the plugin is published.                                                                                                                                                                                                                                                                      |
@@ -33,7 +33,7 @@ The plugin.json file is required for all plugins. When Grafana starts, it scans 
 | `metrics`       | boolean                 | No       | For data source plugins. If the plugin supports metric queries. Used in the Explore feature.                                                                                                                                                                                                                                                                                                            |
 | `preload`       | boolean                 | No       | Initialize plugin on startup. By default, the plugin initializes on first use.                                                                                                                                                                                                                                                                                                                          |
 | `queryOptions`  | [object](#queryoptions) | No       | For data source plugins. There is a query options section in the plugin's query editor and these options can be turned on if needed.                                                                                                                                                                                                                                                                    |
-| `routes`        | [object](#routes)[]     | No       | For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Add authentication for data source plugins]({{< relref "add-authentication-for-data-source-plugins.md">}}).                                                                                                                       |
+| `routes`        | [object](#routes)[]     | No       | For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Add authentication for data source plugins]({{< relref "add-authentication-for-data-source-plugins.md">}}).                                                                                                                                |
 | `skipDataQuery` | boolean                 | No       | For panel plugins. Hides the query editor.                                                                                                                                                                                                                                                                                                                                                              |
 | `state`         | string                  | No       | Marks a plugin as a pre-release. Possible values are: `alpha`, `beta`.                                                                                                                                                                                                                                                                                                                                  |
 | `streaming`     | boolean                 | No       | For data source plugins. If the plugin supports streaming.                                                                                                                                                                                                                                                                                                                                              |
@@ -47,7 +47,7 @@ Dependencies needed by the plugin.
 ### Properties
 
 | Property            | Type                 | Required | Description                                                                                                                   |
-|---------------------|----------------------|----------|-------------------------------------------------------------------------------------------------------------------------------|
+| ------------------- | -------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `grafanaDependency` | string               | **Yes**  | Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.                                 |
 | `grafanaVersion`    | string               | No       | (Deprecated) Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x. |
 | `plugins`           | [object](#plugins)[] | No       | An array of required plugins on which this plugin depends.                                                                    |
@@ -59,7 +59,7 @@ Plugin dependency. Used to display information about plugin dependencies in the 
 #### Properties
 
 | Property  | Type   | Required | Description                                        |
-|-----------|--------|----------|----------------------------------------------------|
+| --------- | ------ | -------- | -------------------------------------------------- |
 | `id`      | string | **Yes**  |                                                    |
 | `name`    | string | **Yes**  |                                                    |
 | `type`    | string | **Yes**  | Possible values are: `app`, `datasource`, `panel`. |
@@ -70,7 +70,7 @@ Plugin dependency. Used to display information about plugin dependencies in the 
 ### Properties
 
 | Property     | Type    | Required | Description                                                                                                                                                                                     |
-|--------------|---------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------ | ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `addToNav`   | boolean | No       | Add the include to the side menu.                                                                                                                                                               |
 | `component`  | string  | No       | (Legacy) The Angular component to use for a page.                                                                                                                                               |
 | `defaultNav` | boolean | No       | Page or dashboard when user clicks the icon in the side menu.                                                                                                                                   |
@@ -87,7 +87,7 @@ Metadata for the plugin. Some fields are used on the plugins page in Grafana and
 ### Properties
 
 | Property      | Type                     | Required | Description                                                                                                                   |
-|---------------|--------------------------|----------|-------------------------------------------------------------------------------------------------------------------------------|
+| ------------- | ------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `keywords`    | string[]                 | **Yes**  | Array of plugin keywords. Used for search on grafana.com.                                                                     |
 | `logos`       | [object](#logos)         | **Yes**  | SVG images that are used as plugin icons.                                                                                     |
 | `updated`     | string                   | **Yes**  | Date when this plugin was built.                                                                                              |
@@ -105,7 +105,7 @@ Information about the plugin author.
 #### Properties
 
 | Property | Type   | Required | Description               |
-|----------|--------|----------|---------------------------|
+| -------- | ------ | -------- | ------------------------- |
 | `email`  | string | No       | Author's name.            |
 | `name`   | string | No       | Author's name.            |
 | `url`    | string | No       | Link to author's website. |
@@ -117,7 +117,7 @@ Build information
 #### Properties
 
 | Property | Type   | Required | Description                                          |
-|----------|--------|----------|------------------------------------------------------|
+| -------- | ------ | -------- | ---------------------------------------------------- |
 | `branch` | string | No       | Git branch the plugin was built from.                |
 | `hash`   | string | No       | Git hash of the commit the plugin was built from     |
 | `number` | number | No       |                                                      |
@@ -130,7 +130,7 @@ Build information
 #### Properties
 
 | Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
+| -------- | ------ | -------- | ----------- |
 | `name`   | string | No       |             |
 | `url`    | string | No       |             |
 
@@ -141,7 +141,7 @@ SVG images that are used as plugin icons.
 #### Properties
 
 | Property | Type   | Required | Description                                                                                                                  |
-|----------|--------|----------|------------------------------------------------------------------------------------------------------------------------------|
+| -------- | ------ | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `large`  | string | **Yes**  | Link to the "large" version of the plugin logo, which must be an SVG image. "Large" and "small" logos can be the same image. |
 | `small`  | string | **Yes**  | Link to the "small" version of the plugin logo, which must be an SVG image. "Large" and "small" logos can be the same image. |
 
@@ -150,7 +150,7 @@ SVG images that are used as plugin icons.
 #### Properties
 
 | Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
+| -------- | ------ | -------- | ----------- |
 | `name`   | string | No       |             |
 | `path`   | string | No       |             |
 
@@ -161,7 +161,7 @@ For data source plugins. There is a query options section in the plugin's query 
 ### Properties
 
 | Property        | Type    | Required | Description                                                                                                                |
-|-----------------|---------|----------|----------------------------------------------------------------------------------------------------------------------------|
+| --------------- | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `cacheTimeout`  | boolean | No       | For data source plugins. If the `cache timeout` option should be shown in the query options section in the query editor.   |
 | `maxDataPoints` | boolean | No       | For data source plugins. If the `max data points` option should be shown in the query options section in the query editor. |
 | `minInterval`   | boolean | No       | For data source plugins. If the `min interval` option should be shown in the query options section in the query editor.    |
@@ -173,7 +173,7 @@ For data source plugins. Proxy routes used for plugin authentication and adding 
 ### Properties
 
 | Property       | Type                    | Required | Description                                                                                             |
-|----------------|-------------------------|----------|---------------------------------------------------------------------------------------------------------|
+| -------------- | ----------------------- | -------- | ------------------------------------------------------------------------------------------------------- |
 | `body`         | [object](#body)         | No       | For data source plugins. Route headers set the body content and length to the proxied request.          |
 | `headers`      | array                   | No       | For data source plugins. Route headers adds HTTP headers to the proxied request.                        |
 | `jwtTokenAuth` | [object](#jwttokenauth) | No       | For data source plugins. Token authentication section used with an JWT OAuth API.                       |
@@ -189,7 +189,7 @@ For data source plugins. Proxy routes used for plugin authentication and adding 
 For data source plugins. Route headers set the body content and length to the proxied request.
 
 | Property | Type | Required | Description |
-|----------|------|----------|-------------|
+| -------- | ---- | -------- | ----------- |
 
 ### jwtTokenAuth
 
@@ -198,7 +198,7 @@ For data source plugins. Token authentication section used with an JWT OAuth API
 #### Properties
 
 | Property | Type              | Required | Description                                          |
-|----------|-------------------|----------|------------------------------------------------------|
+| -------- | ----------------- | -------- | ---------------------------------------------------- |
 | `params` | [object](#params) | No       | Parameters for the JWT token authentication request. |
 | `scopes` | string            | No       |                                                      |
 | `url`    | string            | No       | URL to fetch the JWT token.                          |
@@ -210,7 +210,7 @@ Parameters for the JWT token authentication request.
 ##### Properties
 
 | Property       | Type     | Required | Description |
-|----------------|----------|----------|-------------|
+| -------------- | -------- | -------- | ----------- |
 | `client_email` | string   | No       |             |
 | `private_key`  | string   | No       |             |
 | `scopes`       | string[] | No       |             |
@@ -223,7 +223,7 @@ For data source plugins. Token authentication section used with an OAuth API.
 #### Properties
 
 | Property | Type              | Required | Description                                      |
-|----------|-------------------|----------|--------------------------------------------------|
+| -------- | ----------------- | -------- | ------------------------------------------------ |
 | `params` | [object](#params) | No       | Parameters for the token authentication request. |
 | `scopes` | string            | No       |                                                  |
 | `url`    | string            | No       | URL to fetch the authentication token.           |
@@ -235,10 +235,8 @@ Parameters for the token authentication request.
 ##### Properties
 
 | Property        | Type   | Required | Description                                                                               |
-|-----------------|--------|----------|-------------------------------------------------------------------------------------------|
+| --------------- | ------ | -------- | ----------------------------------------------------------------------------------------- |
 | `client_id`     | string | No       | OAuth client ID                                                                           |
 | `client_secret` | string | No       | OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob. |
 | `grant_type`    | string | No       | OAuth grant type                                                                          |
 | `resource`      | string | No       | OAuth resource                                                                            |
-
-

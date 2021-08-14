@@ -11,7 +11,7 @@ To enable the GitHub OAuth2 you must register your application with GitHub. GitH
 
 ## Configure GitHub OAuth application
 
-You need to create a GitHub OAuth application (you  will find this under the GitHub
+You need to create a GitHub OAuth application (you will find this under the GitHub
 settings page). When you create the application you will need to specify
 a callback URL. Specify this as callback:
 
@@ -96,7 +96,7 @@ allowed_organizations = github google
 
 ### Team Sync (Enterprise only)
 
->  Only available in Grafana Enterprise v6.3+
+> Only available in Grafana Enterprise v6.3+
 
 With Team Sync you can map your GitHub org teams to teams in Grafana so that your users will automatically be added to
 the correct teams.

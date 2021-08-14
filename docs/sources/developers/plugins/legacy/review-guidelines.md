@@ -48,20 +48,19 @@ A minimal `plugin.json` file:
 
   "dependencies": {
     "grafanaVersion": "3.x.x",
-    "plugins": [ ]
+    "plugins": []
   }
 }
 ```
 
 - The convention for the plugin id is **[grafana.com username/org]-[plugin name]-[datasource|app|panel]** and it has to be unique. The org **cannot** be `grafana` unless it is a plugin created by the Grafana core team.
 
-    Examples:
+  Examples:
 
-    - raintank-worldping-app
-    - ryantxu-ajax-panel
-    - alexanderzobnin-zabbix-app
-    - hawkular-datasource
-
+  - raintank-worldping-app
+  - ryantxu-ajax-panel
+  - alexanderzobnin-zabbix-app
+  - hawkular-datasource
 
 - The `type` field should be either `datasource` `app` or `panel`.
 - The `version` field should be in the form: x.x.x e.g. `1.0.0` or `0.4.1`.
@@ -118,11 +117,23 @@ Below is a minimal example of an editor row with one form group and two fields, 
     <div class="gf-form">
       <label class="gf-form-label width-10">Label1</label>
       <div class="gf-form-select-wrapper max-width-10">
-        <select class="input-small gf-form-input" ng-model="ctrl.panel.mySelectProperty" ng-options="t for t in ['option1', 'option2', 'option3']" ng-change="ctrl.onSelectChange()"></select>
+        <select
+          class="input-small gf-form-input"
+          ng-model="ctrl.panel.mySelectProperty"
+          ng-options="t for t in ['option1', 'option2', 'option3']"
+          ng-change="ctrl.onSelectChange()"
+        ></select>
       </div>
       <div class="gf-form">
         <label class="gf-form-label width-10">Label2</label>
-        <input type="text" class="input-small gf-form-input width-10" ng-model="ctrl.panel.myProperty" ng-change="ctrl.onFieldChange()" placeholder="suggestion for user" ng-model-onblur />
+        <input
+          type="text"
+          class="input-small gf-form-input width-10"
+          ng-model="ctrl.panel.myProperty"
+          ng-change="ctrl.onFieldChange()"
+          placeholder="suggestion for user"
+          ng-model-onblur
+        />
       </div>
     </div>
   </div>
@@ -132,21 +143,18 @@ Below is a minimal example of an editor row with one form group and two fields, 
 Use the `width-x` and `max-width-x` classes to control the width of your labels and input fields. Try to get labels and input fields to line up neatly by having the same width for all the labels in a group and the same width for all inputs in a group if possible.
 
 ## Data Sources
+
 For more information about data sources, refer to the [basic guide for data sources](http://docs.grafana.org/plugins/developing/datasources/).
 
 ### Configuration Page Guidelines
 
 - It should be as easy as possible for a user to configure a URL. If the data source is using the `datasource-http-settings` component, it should use the `suggest-url` attribute to suggest the default URL or a URL that is similar to what it should be (especially important if the URL refers to a REST endpoint that is not common knowledge for most users e.g. `https://yourserver:4000/api/custom-endpoint`).
 
-    ```html
-    <datasource-http-settings
-      current="ctrl.current"
-      suggest-url="http://localhost:8080">
-    </datasource-http-settings>
-    ```
+  ```html
+  <datasource-http-settings current="ctrl.current" suggest-url="http://localhost:8080"> </datasource-http-settings>
+  ```
 
 - The `testDatasource` function should make a query to the data source that will also test that the authentication details are correct. This is so the data source is correctly configured when the user tries to write a query in a new dashboard.
-
 
 #### Password Security
 
@@ -156,9 +164,8 @@ Read more here about how [authentication for data sources]({{< relref "../add-au
 
 If using the proxy feature, the Configuration page should use the `secureJsonData` blob like this:
 
-  - good: `<input type="password" class="gf-form-input" ng-model='ctrl.current.secureJsonData.password' placeholder="password"></input>`
-  - bad: `<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder="password"></input>`
-
+- good: `<input type="password" class="gf-form-input" ng-model='ctrl.current.secureJsonData.password' placeholder="password"></input>`
+- bad: `<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder="password"></input>`
 
 ### Query Editor
 

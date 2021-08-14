@@ -53,6 +53,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
       <InlineFieldRow>
         <InlineField label="Service" labelWidth={21} grow>
           <Select
+            menuShouldPortal
             options={serviceOptions}
             value={serviceOptions?.find((v) => v.value === query.service) || null}
             onChange={(v) => {
@@ -69,6 +70,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
       <InlineFieldRow>
         <InlineField label="Operation" labelWidth={21} grow disabled={!query.service}>
           <Select
+            menuShouldPortal
             options={operationOptions}
             value={operationOptions?.find((v) => v.value === query.operation) || null}
             onChange={(v) =>
