@@ -19,6 +19,7 @@ import { getEqualValueMatchers } from './matchers/valueMatchers/equalMatchers';
 import { getRangeValueMatchers } from './matchers/valueMatchers/rangeMatchers';
 import { getSimpleFieldMatchers } from './matchers/simpleFieldMatcher';
 import { getRegexValueMatcher } from './matchers/valueMatchers/regexMatchers';
+import { getUndefinedValueMatchers } from './matchers/valueMatchers/undefinedMatchers';
 
 /**
  * Registry that contains all of the built in field matchers.
@@ -52,6 +53,7 @@ export const frameMatchers = new Registry<FrameMatcherInfo>(() => {
 export const valueMatchers = new Registry<ValueMatcherInfo>(() => {
   return [
     ...getNullValueMatchers(),
+    ...getUndefinedValueMatchers(),
     ...getNumericValueMatchers(),
     ...getEqualValueMatchers(),
     ...getRangeValueMatchers(),

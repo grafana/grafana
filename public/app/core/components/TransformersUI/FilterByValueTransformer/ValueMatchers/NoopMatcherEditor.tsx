@@ -18,5 +18,15 @@ export const getNoopValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<any>>
       id: ValueMatcherID.isNotNull,
       component: NoopMatcherEditor,
     },
+    {
+      name: 'Is undefined',
+      id: ValueMatcherID.isUndefined,
+      component: NoopMatcherEditor,
+    },
+    {
+      name: 'Is not undefined',
+      id: ValueMatcherID.isNotUndefined,
+      component: NoopMatcherEditor,
+    },
   ];
 };

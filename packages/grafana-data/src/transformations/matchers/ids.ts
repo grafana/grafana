@@ -45,6 +45,8 @@ export enum ValueMatcherID {
   regex = 'regex',
   isNull = 'isNull',
   isNotNull = 'isNotNull',
+  isUndefined = 'isUndefined',
+  isNotUndefined = 'isNotUndefined',
   greater = 'greater',
   greaterOrEqual = 'greaterOrEqual',
   lower = 'lower',
