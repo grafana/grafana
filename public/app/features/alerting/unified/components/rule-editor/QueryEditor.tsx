@@ -85,7 +85,10 @@ export class QueryEditor extends PureComponent<Props, State> {
         datasourceUid: defaultDataSource.uid,
         model: {
           refId: '',
-          datasource: defaultDataSource.name,
+          datasource: {
+            type: defaultDataSource.type,
+            uid: defaultDataSource.uid,
+          },
         },
       })
     );
