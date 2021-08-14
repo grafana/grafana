@@ -2,50 +2,11 @@ import { find } from 'lodash';
 import config from 'app/core/config';
 import { DashboardExporter } from './DashboardExporter';
 import { DashboardModel } from '../../state/DashboardModel';
-import { PanelPluginMeta } from '@grafana/data';
+import { DataSourceInstanceSettings, DatasourceRef, PanelPluginMeta } from '@grafana/data';
 import { variableAdapters } from '../../../variables/adapters';
 import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
-import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
-
-const stubs = Object.fromEntries(
-  [
-    mockDataSource({
-      name: 'gfdb',
-      meta: { info: { version: '1.2.1' }, name: 'TestDB' } as any,
-    }),
-    mockDataSource({
-      name: 'other',
-      meta: { uid: 'other', info: { version: '1.2.1' }, name: 'OtherDB' } as any,
-    }),
-    mockDataSource({
-      name: 'other2',
-      meta: { uid: 'other2', info: { version: '1.2.1' }, name: 'OtherDB_2' } as any,
-    }),
-    mockDataSource({
-      name: 'mixed',
-      meta: {
-        info: { version: '1.2.1' },
-        name: 'Mixed',
-        builtIn: true,
-      } as any,
-    }),
-    mockDataSource({
-      name: '-- Grafana --',
-      meta: {
-        info: { version: '1.2.1' },
-        name: 'grafana',
-        builtIn: true,
-      } as any,
-    }),
-  ].map((v) => {
-    v.uid = v.name;
-    return [v.name, v];
-  })
-);
-
-const mockDsSrv = new MockDataSourceSrv(stubs);
 
 jest.mock('app/core/store', () => {
   return {
@@ -56,7 +17,16 @@ jest.mock('app/core/store', () => {
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  getDataSourceSrv: () => mockDsSrv,
+  getDataSourceSrv: () => {
+    return {
+      get: (v: any) => {
+        const s = getStubInstanceSettings(v);
+        // console.log('GET', v, s);
+        return Promise.resolve(s);
+      },
+      getInstanceSettings: getStubInstanceSettings,
+    };
+  },
   config: {
     buildInfo: {},
     panels: {},
@@ -266,7 +236,51 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should add datasources only use via datasource variable to requires', () => {
+    console.log('EXPORTED:', exported.__requires);
     const require: any = find(exported.__requires, { name: 'OtherDB_2' });
     expect(require.id).toBe('other2');
   });
 });
+
+function getStubInstanceSettings(v: string | DatasourceRef): DataSourceInstanceSettings {
+  console.log('GET INSTANCE', v);
+  let key = (v as DatasourceRef)?.type ?? v;
+  return (stubs[(key as any) ?? 'gfdb'] ?? stubs['gfdb']) as any;
+}
+
+// Stub responses
+const stubs: { [key: string]: {} } = {};
+stubs['gfdb'] = {
+  name: 'gfdb',
+  meta: { id: 'testdb', info: { version: '1.2.1' }, name: 'TestDB' },
+};
+
+stubs['other'] = {
+  name: 'other',
+  meta: { id: 'other', info: { version: '1.2.1' }, name: 'OtherDB' },
+};
+
+stubs['other2'] = {
+  name: 'other2',
+  meta: { id: 'other2', info: { version: '1.2.1' }, name: 'OtherDB_2' },
+};
+
+stubs['-- Mixed --'] = {
+  name: 'mixed',
+  meta: {
+    id: 'mixed',
+    info: { version: '1.2.1' },
+    name: 'Mixed',
+    builtIn: true,
+  },
+};
+
+stubs['-- Grafana --'] = {
+  name: '-- Grafana --',
+  meta: {
+    id: 'grafana',
+    info: { version: '1.2.1' },
+    name: 'grafana',
+    builtIn: true,
+  },
+};
