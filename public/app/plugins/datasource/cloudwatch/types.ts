@@ -65,8 +65,8 @@ export interface CloudWatchJsonData extends AwsAuthDataSourceJsonData {
 }
 
 export interface CloudWatchSecureJsonData extends AwsAuthDataSourceSecureJsonData {
-  accessKey: string;
-  secretKey: string;
+  accessKey?: string;
+  secretKey?: string;
 }
 
 export interface GetQueryResultsRequest {

@@ -11,7 +11,8 @@ export const useSpinner = async (label: string, fn: () => Promise<any>, killProc
 
     if (err.stdout) {
       console.error(err.stdout);
-    } else {
+    } else if (err.message) {
+      // Return stack trace if error object
       console.trace(err); // eslint-disable-line no-console
     }
 
