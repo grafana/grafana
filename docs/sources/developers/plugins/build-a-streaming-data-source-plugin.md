@@ -120,6 +120,7 @@ query(options: DataQueryRequest<MyQuery>): Observable<DataQueryResponse> {
         subscriber.next({
           data: [frame],
           key: query.refId,
+          state: LoadingState.Streaming,
         });
       }, 100);
 
