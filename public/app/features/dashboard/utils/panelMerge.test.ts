@@ -21,6 +21,20 @@ describe('Merge dashbaord panels', () => {
           {
             id: 3,
             type: 'table',
+            fieldConfig: {
+              defaults: {
+                thresholds: {
+                  mode: 'absolute',
+                  steps: [
+                    { color: 'green', value: null },
+                    { color: 'red', value: 80 },
+                  ],
+                },
+                mappings: [],
+                color: { mode: 'thresholds' },
+              },
+              overrides: [],
+            },
           },
         ],
       });
@@ -64,6 +78,33 @@ describe('Merge dashbaord panels', () => {
       const info = dashboard.updatePanels(rawPanels);
       expect(info.changed).toBeTruthy();
       expect(info.actions['remove']).toEqual([1]);
+    });
+
+    it('should allow change in key order for nested elements', () => {
+      (rawPanels[2] as any).fieldConfig = {
+        defaults: {
+          color: { mode: 'thresholds' },
+          mappings: [],
+          thresholds: {
+            steps: [
+              { color: 'green', value: null },
+              { color: 'red', value: 80 },
+            ],
+            mode: 'absolute',
+          },
+        },
+        overrides: [],
+      };
+
+      // Same config, different order
+      const js0 = JSON.stringify(dashboard.panels[2].fieldConfig);
+      const js1 = JSON.stringify(rawPanels[2].fieldConfig);
+      expect(js1).not.toEqual(js0);
+      expect(js1.length).toEqual(js0.length);
+
+      // no real changes here
+      const info = dashboard.updatePanels(rawPanels);
+      expect(info.changed).toBeFalsy();
     });
 
     it('should replace a type change', () => {

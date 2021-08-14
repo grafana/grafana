@@ -29,7 +29,7 @@ export interface State {
 }
 
 export class DashboardGrid extends PureComponent<Props, State> {
-  private panelMap: { [id: string]: PanelModel } = {};
+  private panelMap: { [key: string]: PanelModel } = {};
   private eventSubs = new Subscription();
   private windowHeight = 1200;
   private gridWidth = 0;
@@ -56,7 +56,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.panelMap = {};
 
     for (const panel of this.props.dashboard.panels) {
-      const stringId = panel.id.toString();
+      const stringId = panel.key;
       this.panelMap[stringId] = panel;
 
       if (!panel.gridPos) {
@@ -157,7 +157,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
-      const itemKey = panel.id.toString();
+      const itemKey = panel.key;
 
       // Update is in view state
       panel.isInView = this.isInView(panel);

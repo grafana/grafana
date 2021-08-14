@@ -26,26 +26,53 @@ export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMe
   }
 
   for (const panel of current) {
-    const target = inputPanels.get(panel.id); // the same model
+    const target = inputPanels.get(panel.id) as PanelModel; // the same model
     if (!target) {
       info.changed = true;
       info.actions.remove.push(panel.id);
+      panel.destroy();
       continue;
     }
     inputPanels.delete(panel.id);
-    const save = panel.getSaveModel();
-    if (isEqual(save, target)) {
-      panels.push(panel);
-      info.actions.noop.push(panel.id);
+
+    // Type changed trigger full refresh
+    if (panel.type !== target.type) {
+      panel.destroy();
+
+      const next = new PanelModel(target);
+      next.key = `${next.id}-update-${Date.now()}`; // force react replacement
+      panels.push(next);
+      info.changed = true;
+      info.actions.replace.push(panel.id);
       continue;
     }
 
-    // Full replace for now
-    // TODO: try to just update the models
-    panels.push(new PanelModel(target));
-    info.changed = true;
-    info.actions.replace.push(panel.id);
-    console.log('REPLACE', save, 'with', target);
+    // All new properties are the same
+    const save = panel.getSaveModel();
+    let same = true;
+    for (const [key, value] of Object.entries(target)) {
+      if (!isEqual(value, save[key])) {
+        if (key === 'fieldConfig') {
+          console.log('IGNORE different', key, panel.id, panel.title);
+          continue; // ?????
+        }
+        console.log('REPLACE', panel.id, key);
+        console.log('OLD > ', JSON.stringify(save[key]));
+        console.log('NEW > ', JSON.stringify(value));
+
+        same = false;
+        panels.push(new PanelModel(target));
+        info.changed = true;
+        info.actions.replace.push(panel.id);
+        panel.destroy();
+        break;
+      }
+    }
+
+    if (same) {
+      panels.push(panel);
+      info.actions.noop.push(panel.id);
+    }
   }
 
   // Add the new panels
