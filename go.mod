@@ -52,7 +52,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/grafana-aws-sdk v0.7.0
-	github.com/grafana/grafana-plugin-sdk-go v0.111.0
+	github.com/grafana/grafana-plugin-sdk-go v0.112.0
 	github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.1
@@ -67,6 +67,7 @@ require (
 	github.com/laher/mergefs v0.1.1
 	github.com/lib/pq v1.10.0
 	github.com/linkedin/goavro/v2 v2.10.0
+	github.com/m3db/prometheus_remote_client_golang v0.4.4 // indirect
 	github.com/magefile/mage v1.11.0
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.7

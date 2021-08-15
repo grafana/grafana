@@ -5,6 +5,8 @@ import { GraphiteQueryCtrl } from '../query_ctrl';
 import { TemplateSrvStub } from 'test/specs/helpers';
 import { silenceConsoleOutput } from 'test/core/utils/silenceConsoleOutput';
 import { actions } from '../state/actions';
+import { getAltSegmentsSelectables, getTagsSelectables, getTagsAsSegmentsSelectables } from '../state/providers';
+import { GraphiteSegment } from '../types';
 
 jest.mock('app/core/utils/promiseToDigest', () => ({
   promiseToDigest: (scope: any) => {
@@ -105,8 +107,8 @@ describe('GraphiteQueryCtrl', () => {
 
   describe('when middle segment value of test.prod.* is changed', () => {
     beforeEach(async () => {
-      const segment = { type: 'segment', value: 'test', expandable: true };
-      await ctx.ctrl.segmentValueChanged(segment, 1);
+      const segment: GraphiteSegment = { type: 'metric', value: 'test', expandable: true };
+      await ctx.ctrl.dispatch(actions.segmentValueChanged({ segment: segment, index: 1 }));
     });
 
     it('should validate metric key exists', () => {
@@ -129,7 +131,7 @@ describe('GraphiteQueryCtrl', () => {
     beforeEach(async () => {
       ctx.ctrl.state.datasource.metricFindQuery = () => Promise.resolve([{ expandable: false }]);
       await changeTarget(ctx, 'test.prod.*.count');
-      await ctx.ctrl.addFunction(gfunc.getFuncDef('aliasByNode'));
+      await ctx.ctrl.dispatch(actions.addFunction({ name: 'aliasByNode' }));
     });
 
     it('should add function with correct node number', () => {
@@ -149,7 +151,7 @@ describe('GraphiteQueryCtrl', () => {
     beforeEach(async () => {
       ctx.ctrl.state.datasource.metricFindQuery = () => Promise.resolve([{ expandable: true }]);
       await changeTarget(ctx, '');
-      await ctx.ctrl.addFunction(gfunc.getFuncDef('asPercent'));
+      await ctx.ctrl.dispatch(actions.addFunction({ name: 'asPercent' }));
     });
 
     it('should add function and remove select metric link', () => {
@@ -191,7 +193,7 @@ describe('GraphiteQueryCtrl', () => {
     beforeEach(async () => {
       ctx.ctrl.state.datasource.metricFindQuery = () => Promise.resolve([]);
       await changeTarget(ctx, 'test.count');
-      ctx.altSegments = await ctx.ctrl.getAltSegments(1, '');
+      ctx.altSegments = await getAltSegmentsSelectables(ctx.ctrl.state, 1, '');
     });
 
     it('should have no segments', () => {
@@ -210,9 +212,9 @@ describe('GraphiteQueryCtrl', () => {
       );
     });
 
-    it('getAltSegments should handle autocomplete errors', async () => {
+    it('getAltSegmentsSelectables should handle autocomplete errors', async () => {
       await expect(async () => {
-        await ctx.ctrl.getAltSegments(0, 'any');
+        await getAltSegmentsSelectables(ctx.ctrl.state, 0, 'any');
         expect(mockDispatch).toBeCalledWith(
           expect.objectContaining({
             type: 'appNotifications/notifyApp',
@@ -221,11 +223,11 @@ describe('GraphiteQueryCtrl', () => {
       }).not.toThrow();
     });
 
-    it('getAltSegments should display the error message only once', async () => {
-      await ctx.ctrl.getAltSegments(0, 'any');
+    it('getAltSegmentsSelectables should display the error message only once', async () => {
+      await getAltSegmentsSelectables(ctx.ctrl.state, 0, 'any');
       expect(mockDispatch.mock.calls.length).toBe(1);
 
-      await ctx.ctrl.getAltSegments(0, 'any');
+      await getAltSegmentsSelectables(ctx.ctrl.state, 0, 'any');
       expect(mockDispatch.mock.calls.length).toBe(1);
     });
   });
@@ -241,9 +243,9 @@ describe('GraphiteQueryCtrl', () => {
       );
     });
 
-    it('getTags should handle autocomplete errors', async () => {
+    it('getTagsSelectables should handle autocomplete errors', async () => {
       await expect(async () => {
-        await ctx.ctrl.getTags(0, 'any');
+        await getTagsSelectables(ctx.ctrl.state, 0, 'any');
         expect(mockDispatch).toBeCalledWith(
           expect.objectContaining({
             type: 'appNotifications/notifyApp',
@@ -252,17 +254,17 @@ describe('GraphiteQueryCtrl', () => {
       }).not.toThrow();
     });
 
-    it('getTags should display the error message only once', async () => {
-      await ctx.ctrl.getTags(0, 'any');
+    it('getTagsSelectables should display the error message only once', async () => {
+      await getTagsSelectables(ctx.ctrl.state, 0, 'any');
       expect(mockDispatch.mock.calls.length).toBe(1);
 
-      await ctx.ctrl.getTags(0, 'any');
+      await getTagsSelectables(ctx.ctrl.state, 0, 'any');
       expect(mockDispatch.mock.calls.length).toBe(1);
     });
 
-    it('getTagsAsSegments should handle autocomplete errors', async () => {
+    it('getTagsAsSegmentsSelectables should handle autocomplete errors', async () => {
       await expect(async () => {
-        await ctx.ctrl.getTagsAsSegments('any');
+        await getTagsAsSegmentsSelectables(ctx.ctrl.state, 'any');
         expect(mockDispatch).toBeCalledWith(
           expect.objectContaining({
             type: 'appNotifications/notifyApp',
@@ -271,11 +273,11 @@ describe('GraphiteQueryCtrl', () => {
       }).not.toThrow();
     });
 
-    it('getTagsAsSegments should display the error message only once', async () => {
-      await ctx.ctrl.getTagsAsSegments('any');
+    it('getTagsAsSegmentsSelectables should display the error message only once', async () => {
+      await getTagsAsSegmentsSelectables(ctx.ctrl.state, 'any');
       expect(mockDispatch.mock.calls.length).toBe(1);
 
-      await ctx.ctrl.getTagsAsSegments('any');
+      await getTagsAsSegmentsSelectables(ctx.ctrl.state, 'any');
       expect(mockDispatch.mock.calls.length).toBe(1);
     });
   });
@@ -350,7 +352,7 @@ describe('GraphiteQueryCtrl', () => {
     beforeEach(async () => {
       ctx.ctrl.state.datasource.metricFindQuery = () => Promise.resolve([{ expandable: false }]);
       await changeTarget(ctx, '');
-      await ctx.ctrl.addFunction(gfunc.getFuncDef('seriesByTag'));
+      await ctx.ctrl.dispatch(actions.addFunction({ name: 'seriesByTag' }));
     });
 
     it('should update functions', () => {
@@ -393,7 +395,7 @@ describe('GraphiteQueryCtrl', () => {
     beforeEach(async () => {
       ctx.ctrl.state.datasource.metricFindQuery = () => Promise.resolve([{ expandable: false }]);
       await changeTarget(ctx, 'seriesByTag()');
-      await ctx.ctrl.addNewTag({ value: 'tag1' });
+      await ctx.ctrl.dispatch(actions.addNewTag({ segment: { value: 'tag1' } }));
     });
 
     it('should update tags with default value', () => {
@@ -411,7 +413,9 @@ describe('GraphiteQueryCtrl', () => {
     beforeEach(async () => {
       ctx.ctrl.state.datasource.metricFindQuery = () => Promise.resolve([{ expandable: false }]);
       await changeTarget(ctx, "seriesByTag('tag1=value1', 'tag2!=~value2')");
-      await ctx.ctrl.tagChanged({ key: 'tag1', operator: '=', value: 'new_value' }, 0);
+      await ctx.ctrl.dispatch(
+        actions.tagChanged({ tag: { key: 'tag1', operator: '=', value: 'new_value' }, index: 0 })
+      );
     });
 
     it('should update tags', () => {
@@ -432,7 +436,9 @@ describe('GraphiteQueryCtrl', () => {
     beforeEach(async () => {
       ctx.ctrl.state.datasource.metricFindQuery = () => Promise.resolve([{ expandable: false }]);
       await changeTarget(ctx, "seriesByTag('tag1=value1', 'tag2!=~value2')");
-      await ctx.ctrl.tagChanged({ key: ctx.ctrl.state.removeTagValue });
+      await ctx.ctrl.dispatch(
+        actions.tagChanged({ tag: { key: ctx.ctrl.state.removeTagValue, operator: '=', value: '' }, index: 0 })
+      );
     });
 
     it('should update tags', () => {
