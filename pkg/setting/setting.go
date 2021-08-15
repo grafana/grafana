@@ -196,6 +196,8 @@ type Cfg struct {
 	ServeFromSubPath bool
 	StaticRootPath   string
 	Protocol         Scheme
+	SocketGid        int
+	SocketMode       int
 	SocketPath       string
 	RouterLogging    bool
 	Domain           string
@@ -1423,6 +1425,14 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	}
 	if protocolStr == "socket" {
 		cfg.Protocol = SocketScheme
+		cfg.SocketGid, err = server.Key("socket_gid").Int()
+		if err != nil {
+			log.Fatalf(4, err.Error())
+		}
+		cfg.SocketMode, err = server.Key("socket_mode").Int()
+		if err != nil {
+			log.Fatalf(4, err.Error())
+		}
 		cfg.SocketPath = server.Key("socket").String()
 	}
 
@@ -1430,6 +1440,8 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.HTTPAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
 	cfg.HTTPPort = valueAsString(server, "http_port", "3000")
 	cfg.RouterLogging = server.Key("router_logging").MustBool(false)
+	cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+	cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
 
 	cfg.EnableGzip = server.Key("enable_gzip").MustBool(false)
 	cfg.EnforceDomain = server.Key("enforce_domain").MustBool(false)
