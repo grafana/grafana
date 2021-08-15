@@ -1,19 +1,20 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 import { CanvasSceneContext, CanvasElementItem, CanvasElementProps, LineConfig } from '../base';
-import SVG from 'react-inlinesvg';
-import { ColorDimensionConfig } from '../../geomap/dims/types';
+import { ColorDimensionConfig, ResourceDimensionConfig } from '../../geomap/dims/types';
 import { ColorDimensionEditor } from '../../geomap/dims/editors/ColorDimensionEditor';
-import IconSelector from '../components/IconSelector';
+import { IconDimensionEditor } from '../../geomap/dims/editors/IconDimensionEditor';
+import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
 
 interface IconConfig {
-  path?: string;
+  path?: ResourceDimensionConfig;
   fill?: ColorDimensionConfig;
   stroke?: LineConfig;
 }
 
 interface IconData {
+  path: string;
   fill: string;
   strokeColor?: string;
   stroke?: number;
@@ -27,22 +28,20 @@ const svgStrokePathClass = css`
 `;
 
 export function IconDisplay(props: CanvasElementProps) {
-  const { config, width, height, data } = props;
-  console.log(config);
-  const iconRoot = (window as any).__grafana_public_path__ + 'img/icons/unicons/';
-  const svgStyle = {
+  const { width, height, data } = props;
+  if (!data?.path) {
+    return null;
+  }
+
+  const svgStyle: CSSProperties = {
     fill: data?.fill,
     stroke: data?.strokeColor,
     strokeWidth: data?.stroke,
   };
-  let path = config?.path ?? 'question-circle.svg';
-  if (path.indexOf(':/') < 0) {
-    path = iconRoot + path;
-  }
 
   return (
     <SVG
-      src={path}
+      src={data.path}
       width={width}
       height={height}
       style={svgStyle}
@@ -70,13 +69,29 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
   // Called when data changes
   prepareData: (ctx: CanvasSceneContext, cfg: IconConfig) => {
+    const iconRoot = (window as any).__grafana_public_path__ + 'img/icons/unicons/';
+    let path: string | undefined = undefined;
+    if (cfg.path) {
+      path = ctx.getResource(cfg.path).value();
+    }
+    if (!path) {
+      // must be something?
+      path = 'question-circle.svg';
+    }
+    if (path.indexOf(':/') < 0) {
+      path = iconRoot + path;
+    }
+
     const data: IconData = {
-      fill: ctx.getColor(cfg.fill ?? { fixed: '#CCC' }).value(),
+      path,
+      fill: cfg.fill ? ctx.getColor(cfg.fill).value() : '#CCC',
     };
 
     if (cfg.stroke?.width && cfg.stroke.color) {
-      data.stroke = cfg.stroke?.width;
-      data.strokeColor = ctx.getColor(cfg.stroke.color).value();
+      if (cfg.stroke.width > 0) {
+        data.stroke = cfg.stroke?.width;
+        data.strokeColor = ctx.getColor(cfg.stroke.color).value();
+      }
     }
     return data;
   },
@@ -88,7 +103,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         id: 'iconSelector',
         path: 'config.path',
         name: 'SVG Path',
-        editor: IconSelector,
+        editor: IconDimensionEditor,
       })
       .addCustomEditor({
         id: 'config.fill',

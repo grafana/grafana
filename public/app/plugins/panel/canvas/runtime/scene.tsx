@@ -7,8 +7,8 @@ import { CanvasElementItem, CanvasElementOptions, CanvasGroupOptions, CanvasScen
 import { notFoundItem } from '../elements/notFound';
 import { canvasElementRegistry, DEFAULT_ELEMENT_CONFIG } from '../elements/registry';
 import { ReplaySubject } from 'rxjs';
-import { ColorDimensionConfig, ScaleDimensionConfig } from '../../geomap/dims/types';
-import { getColorDimensionFromData, getScaleDimensionFromData } from './utils';
+import { ColorDimensionConfig, ResourceDimensionConfig, ScaleDimensionConfig } from '../../geomap/dims/types';
+import { getColorDimensionFromData, getScaleDimensionFromData, getResourceDimensionFromData } from './utils';
 
 let counter = 100;
 
@@ -208,6 +208,7 @@ export class Scene {
   context: CanvasSceneContext = {
     getColor: (color: ColorDimensionConfig) => getColorDimensionFromData(this.data, color),
     getScale: (scale: ScaleDimensionConfig) => getScaleDimensionFromData(this.data, scale),
+    getResource: (res: ResourceDimensionConfig) => getResourceDimensionFromData(this.data, res),
   };
 
   updateData(data: PanelData) {

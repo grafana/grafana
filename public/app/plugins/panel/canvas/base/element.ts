@@ -1,7 +1,12 @@
 import { ComponentType } from 'react';
-import { RegistryItemWithOptions, PanelOptionsEditorBuilder, PanelData } from '@grafana/data';
+import { RegistryItemWithOptions, PanelOptionsEditorBuilder } from '@grafana/data';
 import { Anchor, BackgroundConfig, LineConfig, Placement } from './types';
-import { ColorDimensionConfig, DimensionSupplier, ScaleDimensionConfig } from '../../geomap/dims/types';
+import {
+  ColorDimensionConfig,
+  DimensionSupplier,
+  ResourceDimensionConfig,
+  ScaleDimensionConfig,
+} from '../../geomap/dims/types';
 
 /**
  * This gets saved in panel json
@@ -44,6 +49,7 @@ export interface CanvasElementProps<TConfig = any, TData = any> {
 export interface CanvasSceneContext {
   getColor(color: ColorDimensionConfig): DimensionSupplier<string>;
   getScale(scale: ScaleDimensionConfig): DimensionSupplier<number>;
+  getResource(resource: ResourceDimensionConfig): DimensionSupplier<string>;
 }
 
 /**

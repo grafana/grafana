@@ -48,3 +48,20 @@ export interface ScaleDimensionOptions {
 
 /** Use the color value from field configs */
 export interface ColorDimensionConfig extends BaseDimensionConfig<string> {}
+
+/** Places that use the value */
+export interface ResourceDimensionOptions {
+  // ?? prefered path ??
+}
+
+export enum ResourceDimensionMode {
+  Fixed = 'fixed',
+  Field = 'field',
+  Mapping = 'mapping',
+  // pattern? uses field in the pattern
+}
+
+/** Get the path to a resource (URL) */
+export interface ResourceDimensionConfig extends BaseDimensionConfig<string> {
+  mode: ResourceDimensionMode;
+}
