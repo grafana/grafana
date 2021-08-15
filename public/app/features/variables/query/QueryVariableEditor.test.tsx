@@ -9,7 +9,8 @@ import { initialVariableEditorState } from '../editor/reducer';
 import { describe, expect } from '../../../../test/lib/common';
 import { NEW_VARIABLE_ID } from '../state/types';
 import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
@@ -34,10 +35,20 @@ const setupTestContext = (options: Partial<Props>) => {
   return { rerender, props };
 };
 
-setDataSourceSrv({
-  getInstanceSettings: () => null,
-  getList: () => [],
-} as any);
+const mockDS = mockDataSource({
+  name: 'CloudManager',
+  type: DataSourceType.Alertmanager,
+});
+
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
+  return {
+    getDataSourceSrv: () => ({
+      get: () => Promise.resolve(mockDS),
+      getList: () => [mockDS],
+      getInstanceSettings: () => mockDS,
+    }),
+  };
+});
 
 describe('QueryVariableEditor', () => {
   describe('when the component is mounted', () => {
