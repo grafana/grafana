@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Select } from '@grafana/ui';
-import { StandardEditorProps } from '../../../../../../packages/grafana-data/src';
+import { SelectableValue, StandardEditorProps } from '../../../../../../packages/grafana-data/src';
 import { Settings } from 'app/core/config';
 
 interface Icon {
@@ -8,7 +8,7 @@ interface Icon {
   label: string;
 }
 const IconSelector: React.FC<StandardEditorProps<string, Settings>> = ({ onChange }) => {
-  const [icons, setIcons] = useState([]);
+  const [icons, setIcons] = useState<SelectableValue[]>([]);
   const [icon, setIcon] = useState<string>();
   const iconRoot = (window as any).__grafana_public_path__ + 'img/icons/unicons/';
   const onChangeIcon = (value: string) => {

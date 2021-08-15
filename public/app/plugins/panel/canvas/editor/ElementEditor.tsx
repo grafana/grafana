@@ -124,6 +124,16 @@ export const CanvasElementEditor: FC<CanvasElementEditorProps> = ({ options, onC
       },
     });
 
+    builder.addSliderInput({
+      path: 'border.width',
+      name: 'Border Width',
+      defaultValue: 2,
+      settings: {
+        min: 0,
+        max: 20,
+      },
+    });
+
     builder.addCustomEditor({
       id: 'border.color',
       path: 'border.color',
@@ -134,16 +144,7 @@ export const CanvasElementEditor: FC<CanvasElementEditorProps> = ({ options, onC
         // Configured values
         fixed: '',
       },
-    });
-
-    builder.addSliderInput({
-      path: 'border.width',
-      name: 'Border Width',
-      defaultValue: 2,
-      settings: {
-        min: 0,
-        max: 20,
-      },
+      showIf: (cfg) => Boolean(cfg.border?.width),
     });
 
     return builder;
