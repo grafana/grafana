@@ -64,6 +64,12 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 	}
 }
 
+func runCueCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) error {
+	return func(context *cli.Context) error {
+		return command(&utils.ContextCommandLine{Context: context})
+	}
+}
+
 // Command contains command state.
 type Command struct {
 	Client utils.ApiClient
@@ -138,7 +144,7 @@ var cueCommands = []*cli.Command{
 	{
 		Name:   "validate-schema",
 		Usage:  "validate known *.cue files in the Grafana project",
-		Action: runPluginCommand(cmd.validateScuemata),
+		Action: runCueCommand(cmd.validateScuemata),
 		Description: `validate-schema checks that all CUE schema files are valid with respect
 to basic standards - valid CUE, valid scuemata, etc. Note that this
 command checks only paths that existed when grafana-cli was compiled,
@@ -153,7 +159,7 @@ so must be recompiled to validate newly-added CUE files.`,
 	{
 		Name:   "validate-resource",
 		Usage:  "validate resource files (e.g. dashboard JSON) against schema",
-		Action: runPluginCommand(cmd.validateResources),
+		Action: runCueCommand(cmd.validateResources),
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "dashboard",

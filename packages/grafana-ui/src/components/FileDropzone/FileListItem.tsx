@@ -24,11 +24,19 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
         <>
           <span className={styles.error}>{error.message}</span>
           {retryUpload && (
-            <IconButton aria-label="Retry" name="sync" tooltip="Retry" tooltipPlacement="top" onClick={retryUpload} />
+            <IconButton
+              type="button"
+              aria-label="Retry"
+              name="sync"
+              tooltip="Retry"
+              tooltipPlacement="top"
+              onClick={retryUpload}
+            />
           )}
           {removeFile && (
             <IconButton
               className={retryUpload ? styles.marginLeft : ''}
+              type="button"
               name="trash-alt"
               onClick={() => removeFile(customFile)}
               tooltip={REMOVE_FILE}
@@ -46,7 +54,7 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
           <span className={styles.paddingLeft}>{Math.round((progress / file.size) * 100)}%</span>
           {abortUpload && (
             <Button variant="secondary" type="button" fill="text" onClick={abortUpload}>
-              Cancel
+              Cancel upload
             </Button>
           )}
         </>
@@ -59,6 +67,7 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
           onClick={() => removeFile(customFile)}
           tooltip={REMOVE_FILE}
           aria-label={REMOVE_FILE}
+          type="button"
           tooltipPlacement="top"
         />
       )
@@ -70,7 +79,7 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
   return (
     <div className={styles.fileListContainer}>
       <span className={styles.fileNameWrapper}>
-        <Icon name="file-blank" size="lg" />
+        <Icon name="file-blank" size="lg" aria-hidden={true} />
         <span className={styles.padding}>{trimFileName(file.name)}</span>
         <span>{formattedValueToString(valueFormat)}</span>
       </span>

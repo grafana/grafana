@@ -90,6 +90,7 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
   return (
     <div>
       <Select
+        menuShouldPortal
         options={frameNames}
         value={frameNames.find((v) => v.value === value?.frame) ?? frameNames[0]}
         onChange={(v) => {
@@ -102,6 +103,7 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
       <br />
       <Label>X Field</Label>
       <Select
+        menuShouldPortal
         options={info.numberFields}
         value={info.xAxis}
         onChange={(v) => {

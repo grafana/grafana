@@ -40,6 +40,7 @@ These options allow you to limit alerts shown to only those that match the query
 ## State filter
 
 Choose which alert states to display in this panel.
+
 - Ok
 - Paused
 - No data

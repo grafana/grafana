@@ -31,6 +31,7 @@ import { getBackendSrv, DataSourceWithBackend, frameToMetricFindValue } from '@g
 import { Observable, throwError, of } from 'rxjs';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
 import { catchError, map } from 'rxjs/operators';
+import { buildRawQuery } from './queryUtils';
 
 // we detect the field type based on the value-array
 function getFieldType(values: unknown[]): FieldType {
@@ -181,10 +182,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return true;
   }
 
-  /**
-   * Only applied on flux queries
-   */
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
+    // this only works in flux-mode, it should not be called in non-flux-mode
+    if (!this.isFlux) {
+      throw new Error('applyTemplateVariables called in influxql-mode. this should never happen');
+    }
+
     return {
       ...query,
       query: this.templateSrv.replace(query.query ?? '', scopedVars), // The raw query text
@@ -321,21 +324,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   targetContainsTemplate(target: any) {
-    for (const group of target.groupBy) {
-      for (const param of group.params) {
-        if (this.templateSrv.variableExists(param)) {
-          return true;
-        }
-      }
-    }
+    // for flux-mode we just take target.query,
+    // for influxql-mode we use InfluxQueryModel to create the text-representation
+    const queryText = this.isFlux ? target.query : buildRawQuery(target);
 
-    for (const i in target.tags) {
-      if (this.templateSrv.variableExists(target.tags[i].value)) {
-        return true;
-      }
-    }
-
-    return false;
+    return this.templateSrv.variableExists(queryText);
   }
 
   interpolateVariablesInQueries(queries: InfluxQuery[], scopedVars: ScopedVars): InfluxQuery[] {
@@ -353,7 +346,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           policy: this.templateSrv.replace(query.policy ?? '', scopedVars, 'regex'),
         };
 
-        if (query.rawQuery) {
+        if (query.rawQuery || this.isFlux) {
           expandedQuery.query = this.templateSrv.replace(query.query ?? '', scopedVars, 'regex');
         }
 

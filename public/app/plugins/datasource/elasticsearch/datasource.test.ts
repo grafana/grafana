@@ -100,6 +100,7 @@ function getTestContext({
     name: 'test-elastic',
     type: 'type',
     uid: 'uid',
+    access: 'proxy',
     url: ELASTICSEARCH_MOCK_URL,
     database,
     jsonData,

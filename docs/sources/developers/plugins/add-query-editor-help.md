@@ -13,9 +13,7 @@ By adding a help component to your plugin, you can for example create "cheat she
    import { QueryEditorHelpProps } from '@grafana/data';
 
    export default (props: QueryEditorHelpProps) => {
-     return (
-       <h2>My cheat sheet</h2>
-     );
+     return <h2>My cheat sheet</h2>;
    };
    ```
 
@@ -62,7 +60,7 @@ By adding a help component to your plugin, you can for example create "cheat she
              {item.expression ? (
                <div
                  className="cheat-sheet-item__example"
-                 onClick={e => props.onClickExample({ refId: 'A', queryText: item.expression } as DataQuery)}
+                 onClick={(e) => props.onClickExample({ refId: 'A', queryText: item.expression } as DataQuery)}
                >
                  <code>{item.expression}</code>
                </div>
