@@ -25,11 +25,18 @@ const TopSectionItem: FC<Props> = ({ link, onClick }) => {
   );
 
   const anchor = link.url ? (
-    <Link className="sidemenu-link" href={link.url} target={link.target} onClick={onClick}>
+    <Link
+      className="sidemenu-link"
+      href={link.url}
+      target={link.target}
+      aria-label={link.text}
+      onClick={onClick}
+      aria-haspopup="true"
+    >
       {linkContent}
     </Link>
   ) : (
-    <button className={cx(resetButtonStyles, 'sidemenu-link')} onClick={onClick}>
+    <button className={cx(resetButtonStyles, 'sidemenu-link')} onClick={onClick} aria-label={link.text}>
       {linkContent}
     </button>
   );

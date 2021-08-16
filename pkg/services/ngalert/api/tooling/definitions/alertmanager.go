@@ -54,7 +54,7 @@ import (
 // get alertmanager alerts
 //
 //     Responses:
-//       200: GettableAlerts
+//       200: gettableAlerts
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{Recipient}/api/v2/alerts alertmanager RoutePostAMAlerts
@@ -70,7 +70,7 @@ import (
 // get alertmanager alerts
 //
 //     Responses:
-//       200: AlertGroups
+//       200: alertGroups
 //       400: ValidationError
 
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteGetSilences
@@ -78,7 +78,7 @@ import (
 // get silences
 //
 //     Responses:
-//       200: GettableSilences
+//       200: gettableSilences
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteCreateSilence
@@ -86,7 +86,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: GettableSilence
+//       201: gettableSilence
 //       400: ValidationError
 
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteGetSilence
@@ -94,7 +94,7 @@ import (
 // get silence
 //
 //     Responses:
-//       200: GettableSilence
+//       200: gettableSilence
 //       400: ValidationError
 
 // swagger:route DELETE /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteDeleteSilence
@@ -196,28 +196,28 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 	}
 }
 
-// swagger:model
+// swagger:model postableSilence
 type PostableSilence = amv2.PostableSilence
 
-// swagger:model
+// swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
 
-// swagger:model
+// swagger:model gettableSilence
 type GettableSilence = amv2.GettableSilence
 
-// swagger:model
+// swagger:model gettableAlerts
 type GettableAlerts = amv2.GettableAlerts
 
-// swagger:model
+// swagger:model gettableAlert
 type GettableAlert = amv2.GettableAlert
 
-// swagger:model
+// swagger:model alertGroups
 type AlertGroups = amv2.AlertGroups
 
-// swagger:model
+// swagger:model alertGroup
 type AlertGroup = amv2.AlertGroup
 
-// swagger:model
+// swagger:model receiver
 type Receiver = amv2.Receiver
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups

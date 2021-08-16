@@ -477,7 +477,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 	}
 
 	if resp.Status != backend.HealthStatusOk {
-		return response.JSON(503, payload)
+		return response.JSON(400, payload)
 	}
 
 	return response.JSON(200, payload)
