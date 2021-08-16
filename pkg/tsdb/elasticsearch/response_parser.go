@@ -1,7 +1,6 @@
 package elasticsearch
 
 import (
-	"encoding/json"
 	"errors"
 	"regexp"
 	"sort"
@@ -178,10 +177,6 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 	props map[string]string) error {
 	frames := data.Frames{}
 	esAggBuckets := esAgg.Get("buckets").MustArray()
-	propsJson, err := json.Marshal(props)
-	if err != nil {
-		return err
-	}
 
 	for _, metric := range target.Metrics {
 		if metric.Hide {
@@ -208,7 +203,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 			tags["metric"] = countType
 			frames = append(frames, data.NewFrame(metric.Field,
 				data.NewField("time", nil, timeVector),
-				data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: string(propsJson)})))
+				data.NewField("value", tags, values)))
 		case percentilesType:
 			buckets := esAggBuckets
 			if len(buckets) == 0 {
@@ -242,7 +237,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				}
 				frames = append(frames, data.NewFrame(metric.Field,
 					data.NewField("time", nil, timeVector),
-					data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: string(propsJson)})))
+					data.NewField("value", tags, values)))
 			}
 		case topMetricsType:
 			buckets := esAggBuckets
@@ -284,7 +279,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 
 				frames = append(frames, data.NewFrame(metricField.(string),
 					data.NewField("time", nil, timeVector),
-					data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: string(propsJson)}),
+					data.NewField("value", tags, values),
 				))
 			}
 
@@ -331,7 +326,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				labels := tags
 				frames = append(frames, data.NewFrame(metric.Field,
 					data.NewField("time", nil, timeVector),
-					data.NewField("value", labels, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: string(propsJson)})))
+					data.NewField("value", labels, values)))
 			}
 		default:
 			for k, v := range props {
@@ -359,7 +354,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 			}
 			frames = append(frames, data.NewFrame(metric.Field,
 				data.NewField("time", nil, timeVector),
-				data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: string(propsJson)})))
+				data.NewField("value", tags, values)))
 		}
 	}
 	if query.Frames != nil {
@@ -572,6 +567,9 @@ func (rp *responseParser) nameFields(queryResult backend.DataResponse, target *Q
 	metricTypeCount := len(set)
 	for i := range frames {
 		frames[i].Name = rp.getFieldName(*frames[i].Fields[1], target, metricTypeCount)
+		for _, field := range frames[i].Fields {
+			field.SetConfig(&data.FieldConfig{DisplayNameFromDS: rp.getFieldName(*frames[i].Fields[1], target, metricTypeCount)})
+		}
 	}
 }
 
