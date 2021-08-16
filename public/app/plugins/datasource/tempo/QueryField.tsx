@@ -3,33 +3,24 @@ import { DataSourceApi, ExploreQueryFieldProps, SelectableValue } from '@grafana
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
-  BracesPlugin,
   FileDropzone,
   InlineField,
   InlineFieldRow,
   InlineLabel,
-  Input,
   LegacyForms,
-  QueryField,
   RadioButtonGroup,
-  Select,
-  SlatePrism,
   Themeable2,
-  TypeaheadInput,
-  TypeaheadOutput,
   withTheme2,
 } from '@grafana/ui';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
-import Prism from 'prismjs';
 import React from 'react';
-import { Node } from 'slate';
 import { LokiQueryField } from '../loki/components/LokiQueryField';
 import { LokiQuery } from '../loki/types';
 import { TempoDatasource, TempoQuery, TempoQueryType } from './datasource';
 import LokiDatasource from '../loki/datasource';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import useAsync from 'react-use/lib/useAsync';
-import { tokenizer } from './syntax';
+import NativeSearch from './NativeSearch';
 
 interface Props extends ExploreQueryFieldProps<TempoDatasource, TempoQuery>, Themeable2 {}
 
@@ -46,18 +37,6 @@ interface State {
   serviceName: SelectableValue<string> | null;
   spanName: SelectableValue<string> | null;
 }
-
-const PRISM_LANGUAGE = 'tempo';
-const durationPlaceholder = 'e.g. 1.2s, 100ms, 500us';
-const plugins = [
-  BracesPlugin(),
-  SlatePrism({
-    onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
-    getSyntax: () => PRISM_LANGUAGE,
-  }),
-];
-
-Prism.languages[PRISM_LANGUAGE] = tokenizer;
 
 class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
   state = {
@@ -119,19 +98,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     this.props.onRunQuery();
   };
 
-  onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    const languageProvider = this.props.datasource.languageProvider;
-    return await languageProvider.provideCompletionItems(typeahead);
-  };
-
-  cleanText = (text: string) => {
-    const splittedText = text.split(/\s+(?=([^"]*"[^"]*")*[^"]*$)/g);
-    if (splittedText.length > 1) {
-      return splittedText[splittedText.length - 1];
-    }
-    return text;
-  };
-
   render() {
     const { query, onChange, datasource } = this.props;
     // Find query field from linked datasource
@@ -149,11 +115,11 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     }
 
     if (config.featureToggles.tempoSearch) {
-      queryTypeOptions.unshift({ value: 'search', label: 'Search' });
+      queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search' });
     }
 
     if (logsDatasourceUid) {
-      queryTypeOptions.push({ value: 'lokiSearch', label: 'Loki Search' });
+      queryTypeOptions.push({ value: 'search', label: 'Loki Search' });
     }
 
     return (
@@ -179,6 +145,15 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             query={query}
             onRunQuery={this.onRunLinkedQuery}
             onChange={this.onChangeLinkedQuery}
+          />
+        )}
+        {query.queryType === 'nativeSearch' && (
+          <NativeSearch
+            languageProvider={this.props.datasource.languageProvider}
+            query={query}
+            onChange={onChange}
+            onBlur={this.props.onBlur}
+            onRunQuery={this.props.onRunQuery}
           />
         )}
         {query.queryType === 'upload' && (

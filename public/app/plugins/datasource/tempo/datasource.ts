@@ -34,7 +34,8 @@ import {
   transformTraceList,
 } from './resultTransformer';
 
-export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'lokiSearch';
+// search = Loki search, nativeSearch = Tempo search for backwards compatibility
+export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch';
 
 export interface TempoJsonData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
@@ -146,7 +147,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const params = data ? serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = { ...options, url };
-    console.log('Req: ', req);
 
     return getBackendSrv().fetch(req);
   }
