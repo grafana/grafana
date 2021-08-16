@@ -185,21 +185,19 @@ func (b *InProcBus) Publish(msg Msg) error {
 func (b *InProcBus) AddHandler(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(0).Elem().Name()
-	_, exists := b.handlers[queryTypeName]
-	if !exists {
-		b.handlers[queryTypeName] = make([]HandlerFunc, 0)
-	}
 	b.handlers[queryTypeName] = append(b.handlers[queryTypeName], handler)
 }
 
 func (b *InProcBus) AddHandlerCtx(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(1).Elem().Name()
-	_, exists := b.handlersWithCtx[queryTypeName]
-	if !exists {
-		b.handlersWithCtx[queryTypeName] = make([]HandlerFunc, 0)
-	}
 	b.handlersWithCtx[queryTypeName] = append(b.handlersWithCtx[queryTypeName], handler)
+}
+
+func (b *InProcBus) SetHandlerCtx(handler HandlerFunc) {
+	handlerType := reflect.TypeOf(handler)
+	queryTypeName := handlerType.In(1).Elem().Name()
+	b.handlersWithCtx[queryTypeName] = []HandlerFunc{handler}
 }
 
 // GetHandlersCtx returns the handler functions for the given struct name.
@@ -249,6 +247,10 @@ func Publish(msg Msg) error {
 
 func GetHandlersCtx(name string) []HandlerFunc {
 	return globalBus.(*InProcBus).GetHandlersCtx(name)
+}
+
+func SetHandlerCtx(handler HandlerFunc) {
+	globalBus.(*InProcBus).SetHandlerCtx(handler)
 }
 
 func ClearBusHandlers() {

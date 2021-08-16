@@ -371,14 +371,14 @@ func TestNotificationChannels(t *testing.T) {
 		channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
 		channels.LineNotifyURL, channels.ThreemaGwBaseURL
 	originalTemplate := channels.DefaultTemplateString
-	originalEmailBus := bus.GetHandlersCtx("SendEmailCommandSync")[0]
+
 	t.Cleanup(func() {
 		channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 			channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
 			channels.LineNotifyURL, channels.ThreemaGwBaseURL = os, opa, ot, opu, ogb, ol, oth
 		channels.DefaultTemplateString = originalTemplate
-		bus.AddHandlerCtx("", originalEmailBus)
 	})
+
 	channels.DefaultTemplateString = channels.TemplateForTestsString
 	channels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
 	channels.PagerdutyEventAPIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
@@ -387,7 +387,9 @@ func TestNotificationChannels(t *testing.T) {
 	channels.LineNotifyURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
 	channels.ThreemaGwBaseURL = fmt.Sprintf("http://%s/threema_recv/threema_test", mockChannel.server.Addr)
 	channels.GetBoundary = func() string { return "abcd" }
-	bus.AddHandlerCtx("", mockEmail.sendEmailCommandHandlerSync)
+
+	bus.SetHandlerCtx(mockEmail.sendEmailCommandHandlerSync)
+	bus.SetHandlerCtx(bus.GetHandlersCtx("SendWebhookSync")[0]) //ensure that there's only one handler for the webhooks
 
 	// Create a user to make authenticated requests
 	createUser(t, s, models.CreateUserCommand{
