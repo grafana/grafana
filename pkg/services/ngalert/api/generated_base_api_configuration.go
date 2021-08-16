@@ -21,6 +21,7 @@ import (
 
 type ConfigurationApiService interface {
 	RouteDeleteNGalertConfig(*models.ReqContext) response.Response
+	RouteGetAlertmanagers(*models.ReqContext) response.Response
 	RouteGetNGalertConfig(*models.ReqContext) response.Response
 	RoutePostNGalertConfig(*models.ReqContext, apimodels.PostableNGalertConfig) response.Response
 }
@@ -33,6 +34,15 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApiService, m
 				http.MethodDelete,
 				"/api/v1/ngalert/admin_config",
 				srv.RouteDeleteNGalertConfig,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/v1/ngalert/alertmanagers"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/ngalert/alertmanagers",
+				srv.RouteGetAlertmanagers,
 				m,
 			),
 		)
