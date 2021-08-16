@@ -49,10 +49,6 @@
               },
               "showPoints": "auto",
               "spanNulls": false,
-              "stacking": {
-                "group": "A",
-                "mode": "none"
-              },
               "thresholdsStyle": {
                 "mode": "line"
               }

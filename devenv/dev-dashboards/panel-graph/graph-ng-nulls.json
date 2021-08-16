@@ -42,7 +42,7 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
+              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -149,7 +149,7 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
+              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -265,7 +265,7 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
+              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -400,7 +400,7 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
+              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -507,7 +507,7 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
+              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -623,7 +623,7 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
+              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -758,7 +758,7 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
+              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -902,7 +902,7 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
+              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -1045,7 +1045,7 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
+              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false

@@ -68,7 +68,11 @@ func TestNotificationChannels(t *testing.T) {
 	bus.AddHandlerCtx("", mockEmail.sendEmailCommandHandlerSync)
 
 	// Create a user to make authenticated requests
-	require.NoError(t, createUser(t, s, models.ROLE_EDITOR, "grafana", "password"))
+	createUser(t, s, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "password",
+		Login:          "grafana",
+	})
 
 	{
 		// There are no notification channel config initially - so it returns the default configuration.
