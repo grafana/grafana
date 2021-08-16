@@ -7,9 +7,9 @@ export const getNotificationsTextColors = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.error.text};
   `,
   [AlertState.Suppressed]: css`
-    color: ${theme.colors.primary.main};
+    color: ${theme.colors.primary.text};
   `,
   [AlertState.Unprocessed]: css`
-    color: ${theme.colors.secondary.main};
+    color: ${theme.colors.secondary.text};
   `,
 });
