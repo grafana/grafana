@@ -17,11 +17,18 @@ const TopSectionItem: FC<Props> = ({ link, onClick }) => {
   );
 
   const anchor = link.url ? (
-    <Link className="sidemenu-link" href={link.url} target={link.target} onClick={onClick}>
+    <Link
+      className="sidemenu-link"
+      href={link.url}
+      target={link.target}
+      aria-label={link.text}
+      onClick={onClick}
+      aria-haspopup="true"
+    >
       {linkContent}
     </Link>
   ) : (
-    <a className="sidemenu-link" onClick={onClick}>
+    <a className="sidemenu-link" onClick={onClick} aria-label={link.text}>
       {linkContent}
     </a>
   );
