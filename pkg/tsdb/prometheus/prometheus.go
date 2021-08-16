@@ -85,9 +85,18 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			return nil, errors.New("no http method provided")
 		}
 
-		timeInterval, ok := jsonData["timeInterval"].(string)
-		if !ok {
-			return nil, errors.New("invalid time-interval provided")
+		// timeInterval can be a string or can be missing.
+		// if it is missing, we set it to empty-string
+
+		timeInterval := ""
+
+		timeIntervalJson := jsonData["timeInterval"]
+		if timeIntervalJson != nil {
+			// if it is not nil, it must be a string
+			timeInterval, ok = timeIntervalJson.(string)
+			if !ok {
+				return nil, errors.New("invalid time-interval provided")
+			}
 		}
 
 		mdl := DatasourceInfo{
