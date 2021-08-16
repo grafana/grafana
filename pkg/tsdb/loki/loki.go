@@ -56,6 +56,7 @@ type ResponseModel struct {
 	LegendFormat string `json:"legendFormat"`
 	Interval     string `json:"interval"`
 	IntervalMS   int    `json:"intervalMS"`
+	Resolution   int64  `json:"resolution"`
 }
 
 func init() {
@@ -210,7 +211,12 @@ func (s *Service) parseQuery(dsInfo *datasourceInfo, queryContext *backend.Query
 			return nil, err
 		}
 
-		step := time.Duration(int64(interval.Value))
+		var resolution int64 = 1
+		if model.Resolution >= 1 && model.Resolution <= 5 || model.Resolution == 10 {
+			resolution = model.Resolution
+		}
+
+		step := time.Duration(int64(interval.Value) * resolution)
 
 		qs = append(qs, &lokiQuery{
 			Expr:         model.Expr,
