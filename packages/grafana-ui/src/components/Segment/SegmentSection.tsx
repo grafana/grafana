@@ -32,7 +32,7 @@ export const SegmentSection = ({
         {children}
         {fill && (
           <div className={styles.fill}>
-            <InlineLabel> </InlineLabel>
+            <InlineLabel>{''}</InlineLabel>
           </div>
         )}
       </InlineFieldRow>
