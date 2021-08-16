@@ -6,7 +6,7 @@ import { styleMixins } from '@grafana/ui';
 export const getStyles = (theme: GrafanaTheme2) => ({
   dashlistSectionHeader: css`
     margin-bottom: ${theme.spacing(2)};
-    color: ${theme.v1.colors.textWeak};
+    color: ${theme.colors.secondary.text};
   `,
 
   dashlistSection: css`
@@ -25,15 +25,15 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   dashlistStar: css`
     display: flex;
     align-items: center;
-    color: ${theme.v1.colors.textWeak};
+    color: ${theme.colors.secondary.text};
     cursor: pointer;
     z-index: 1;
   `,
 
   dashlistFolder: css`
-    color: ${theme.v1.colors.textWeak};
+    color: ${theme.colors.secondary.text};
     font-size: ${theme.typography.h6.fontSize};
-    line-height: ${theme.v1.typography.lineHeight.sm};
+    line-height: ${theme.typography.body.lineHeight};
   `,
 
   dashlistTitle: css`

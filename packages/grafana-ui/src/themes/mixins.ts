@@ -8,7 +8,7 @@ export function cardChrome(theme: GrafanaTheme2): string {
     &:hover {
       background: ${hoverColor(theme.colors.background.secondary, theme)};
     }
-    box-shadow: ${theme.v1.shadows.listItem};
+    box-shadow: ${theme.components.panel.boxShadow};
     border-radius: ${theme.shape.borderRadius(2)};
 `;
 }
