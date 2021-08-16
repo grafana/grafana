@@ -3,7 +3,13 @@ import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
-import { CanvasElementItem, CanvasElementOptions, CanvasGroupOptions, CanvasSceneContext } from '../base';
+import {
+  BackroundImageSize,
+  CanvasElementItem,
+  CanvasElementOptions,
+  CanvasGroupOptions,
+  CanvasSceneContext,
+} from '../base';
 import { notFoundItem } from '../elements/notFound';
 import { canvasElementRegistry, DEFAULT_ELEMENT_CONFIG } from '../elements/registry';
 import { ReplaySubject } from 'rxjs';
@@ -60,16 +66,35 @@ export class ElementState {
 
     const { background, border } = this.options;
     const css: CSSProperties = {};
-    if (background && background.color) {
-      const color = ctx.getColor(background.color);
-      css.backgroundColor = color.value();
-
-      // TODO?? configure/save background images!
-      // if (background.image) {
-      //   css.backgroundImage = 'url(public/plugins/edge-draw-panel/img/' + background.image + ')';
-      //   css.backgroundRepeat = 'no-repeat';
-      //   css.backgroundSize = '100% 100%';
-      // }
+    if (background) {
+      if (background.color) {
+        const color = ctx.getColor(background.color);
+        css.backgroundColor = color.value();
+      }
+      if (background.image) {
+        const image = ctx.getResource(background.image);
+        if (image) {
+          const v = image.value();
+          if (v) {
+            css.backgroundImage = `url("${v}")`;
+            switch (background.size ?? BackroundImageSize.Fit) {
+              case BackroundImageSize.Fit:
+                css.backgroundSize = 'contain';
+                css.backgroundRepeat = 'no-repeat';
+                break;
+              case BackroundImageSize.Original:
+                css.backgroundRepeat = 'no-repeat';
+                break;
+              case BackroundImageSize.Tile:
+                css.backgroundRepeat = 'repeat';
+                break;
+              case BackroundImageSize.Strech:
+                css.backgroundSize = '100% 100%';
+                break;
+            }
+          }
+        }
+      }
     }
 
     if (border && border.color && border.width) {
@@ -79,6 +104,11 @@ export class ElementState {
       // css.borderWidth = border.width;
       // css.borderBlockStyle = 'solid';
       // css.borderColor = color.get(0);
+
+      // Move the image to inside the border
+      if (css.backgroundImage) {
+        css.backgroundOrigin = 'padding-box';
+      }
     }
 
     css.width = this.width;
@@ -262,6 +292,8 @@ export const groupItemDummy: CanvasElementItem = {
   id: 'group',
   name: 'Group',
   description: 'Group',
+
+  defaultConfig: {},
 
   // eslint-disable-next-line react/display-name
   display: () => {

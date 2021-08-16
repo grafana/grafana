@@ -1,7 +1,7 @@
 import React, { CSSProperties } from 'react';
 
 import { CanvasSceneContext, CanvasElementItem, CanvasElementProps, LineConfig } from '../base';
-import { ColorDimensionConfig, ResourceDimensionConfig } from 'app/features/dimensions';
+import { ColorDimensionConfig, ResourceDimensionConfig, ResourceDimensionMode } from 'app/features/dimensions';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
@@ -57,8 +57,11 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
   display: IconDisplay,
 
-  defaultOptions: {
-    path: 'question-circle.svg',
+  defaultConfig: {
+    path: {
+      mode: ResourceDimensionMode.Fixed,
+      fixed: 'question-circle.svg',
+    },
     fill: { fixed: '#FFF899' },
   },
 

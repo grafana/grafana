@@ -7,6 +7,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVizualizationOptions';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
+import { cloneDeep } from 'lodash';
 
 export interface CanvasElementEditorProps<TConfig = any> {
   options?: CanvasElementOptions<TConfig>;
@@ -67,6 +68,7 @@ export const CanvasElementEditor: FC<CanvasElementEditorProps> = ({ options, onC
           options: [
             { value: BackroundImageSize.Fit, label: 'Fit' },
             { value: BackroundImageSize.Original, label: 'Original' },
+            { value: BackroundImageSize.Strech, label: 'Strech' },
             { value: BackroundImageSize.Tile, label: 'Tile' },
           ],
         },
@@ -116,10 +118,10 @@ export const CanvasElementEditor: FC<CanvasElementEditorProps> = ({ options, onC
       options: options,
     };
 
-    const currentOptions = { ...options, type: layer.id, config: { ...layer.defaultOptions, ...options?.config } };
+    const currentOptions = { ...options, type: layer.id, config: { ...layer.defaultConfig, ...options?.config } };
 
     // Update the panel options if not set
-    if (!options || (layer.defaultOptions && !options.config)) {
+    if (!options || (layer.defaultConfig && !options.config)) {
       onChange(currentOptions as any);
     }
 
@@ -150,6 +152,7 @@ export const CanvasElementEditor: FC<CanvasElementEditorProps> = ({ options, onC
   return (
     <div>
       <Select
+        menuShouldPortal
         options={layerTypes.options}
         value={layerTypes.current}
         onChange={(v) => {
@@ -162,7 +165,7 @@ export const CanvasElementEditor: FC<CanvasElementEditorProps> = ({ options, onC
           onChange({
             ...options, // keep current options
             type: layer.id,
-            config: { ...layer.defaultOptions }, // clone?
+            config: cloneDeep(layer.defaultConfig ?? {}),
           });
         }}
       />

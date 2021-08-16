@@ -47,7 +47,7 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
 
   display: TextBoxDisplay,
 
-  defaultOptions: {
+  defaultConfig: {
     align: Align.Left,
     valign: VAlign.Middle,
   },

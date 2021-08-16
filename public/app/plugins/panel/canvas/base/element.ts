@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { RegistryItemWithOptions, PanelOptionsEditorBuilder } from '@grafana/data';
+import { PanelOptionsEditorBuilder, RegistryItem } from '@grafana/data';
 import { Anchor, BackgroundConfig, LineConfig, Placement } from './types';
 import {
   ColorDimensionConfig,
@@ -59,9 +59,11 @@ export interface CanvasSceneContext {
  *
  * @alpha
  */
-export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryItemWithOptions {
+export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryItem {
   /** The default width/height to use when adding  */
   defaultSize?: Placement;
+
+  defaultConfig: TConfig;
 
   prepareData?: (ctx: CanvasSceneContext, cfg: TConfig) => TData;
 

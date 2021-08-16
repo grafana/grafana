@@ -20,6 +20,7 @@ export interface Anchor {
 export enum BackroundImageSize {
   Fit = 'fit',
   Original = 'original',
+  Strech = 'strech',
   Tile = 'tile',
 }
 
