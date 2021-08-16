@@ -82,6 +82,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.borderRadius(),
     marginRight: theme.spacing(0.5),
     padding: `0 ${theme.spacing(1)}`,
+    height: `${theme.v1.spacing.formInputHeight}px`,
   }),
   error: css`
     border: 1px solid ${theme.colors.error.main};

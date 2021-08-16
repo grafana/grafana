@@ -4,7 +4,7 @@ import { SegmentInput, Icon, SegmentSection } from '@grafana/ui';
 
 const SegmentFrame = ({ children }: any) => (
   <>
-    <SegmentSection label="Section Name">{children}</SegmentSection>
+    <SegmentSection label="Segment Name">{children}</SegmentSection>
   </>
 );
 
