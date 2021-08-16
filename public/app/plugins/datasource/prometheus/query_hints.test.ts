@@ -1,13 +1,17 @@
 import { getQueryHints, SUM_HINT_THRESHOLD_COUNT } from './query_hints';
 import { PrometheusDatasource } from './datasource';
+import { PromOptions, PromQuery } from './types';
+import { DataSourceInstanceSettings, dateTime, TimeRange } from '../../../../../packages/grafana-data/src';
 
 describe('getQueryHints()', () => {
   it('returns no hints for no series', () => {
-    expect(getQueryHints('', [])).toEqual([]);
+    const promQuery: PromQuery = { refId: 'bar', expr: '' };
+    expect(getQueryHints(promQuery, [])).toEqual([]);
   });
 
   it('returns no hints for empty series', () => {
-    expect(getQueryHints('', [{ datapoints: [] }])).toEqual([]);
+    const promQuery: PromQuery = { refId: 'bar', expr: '' };
+    expect(getQueryHints(promQuery, [{ datapoints: [] }])).toEqual([]);
   });
 
   it('returns a rate hint for a counter metric', () => {
@@ -19,7 +23,8 @@ describe('getQueryHints()', () => {
         ],
       },
     ];
-    const hints = getQueryHints('metric_total', series);
+    const promQuery = { refId: 'bar', expr: 'metric_total' };
+    const hints = getQueryHints(promQuery, series);
 
     expect(hints!.length).toBe(1);
     expect(hints![0]).toMatchObject({
@@ -44,8 +49,9 @@ describe('getQueryHints()', () => {
     ];
     const mock: unknown = { languageProvider: { metricsMetadata: { foo: [{ type: 'counter' }] } } };
     const datasource = mock as PrometheusDatasource;
+    let promQuery = { refId: 'bar', expr: 'foo' };
 
-    let hints = getQueryHints('foo', series, datasource);
+    let hints = getQueryHints(promQuery, series, datasource);
     expect(hints!.length).toBe(1);
     expect(hints![0]).toMatchObject({
       label: 'Metric foo is a counter.',
@@ -57,8 +63,9 @@ describe('getQueryHints()', () => {
       },
     });
 
+    promQuery = { ...promQuery, expr: 'foo_foo' };
     // Test substring match not triggering hint
-    hints = getQueryHints('foo_foo', series, datasource);
+    hints = getQueryHints(promQuery, series, datasource);
     expect(hints).toEqual([]);
   });
 
@@ -71,7 +78,8 @@ describe('getQueryHints()', () => {
         ],
       },
     ];
-    const hints = getQueryHints('rate(metric_total[1m])', series);
+    const promQuery = { refId: 'bar', expr: 'rate(metric_total[1m])' };
+    const hints = getQueryHints(promQuery, series);
     expect(hints).toEqual([]);
   });
 
@@ -84,7 +92,8 @@ describe('getQueryHints()', () => {
         ],
       },
     ];
-    const hints = getQueryHints('increase(metric_total[1m])', series);
+    const promQuery = { refId: 'bar', expr: 'increase(metric_total[1m])' };
+    const hints = getQueryHints(promQuery, series);
     expect(hints).toEqual([]);
   });
 
@@ -97,15 +106,17 @@ describe('getQueryHints()', () => {
         ],
       },
     ];
-    const hints = getQueryHints('sum(metric_total)', series);
+    const promQuery = { refId: 'bar', expr: 'sum(metric_total)' };
+    const hints = getQueryHints(promQuery, series);
     expect(hints!.length).toBe(1);
     expect(hints![0].label).toContain('rate()');
     expect(hints![0].fix).toBeUndefined();
   });
 
   it('returns a histogram hint for a bucket series', () => {
+    const promQuery = { refId: 'bar', expr: 'metric_bucket' };
     const series = [{ datapoints: [[23, 1000]] }];
-    const hints = getQueryHints('metric_bucket', series);
+    const hints = getQueryHints(promQuery, series);
     expect(hints!.length).toBe(1);
     expect(hints![0]).toMatchObject({
       label: 'Time series has buckets, you probably wanted a histogram.',
@@ -126,7 +137,8 @@ describe('getQueryHints()', () => {
         [0, 0],
       ],
     }));
-    const hints = getQueryHints('metric', series);
+    const promQuery = { refId: 'bar', expr: 'metric' };
+    const hints = getQueryHints(promQuery, series);
     expect(hints!.length).toBe(1);
     expect(hints![0]).toMatchObject({
       type: 'ADD_SUM',
@@ -139,6 +151,55 @@ describe('getQueryHints()', () => {
           preventSubmit: true,
         },
       },
+    });
+  });
+
+  it('returns an interval hint when the interval is below the safe interval', () => {
+    const instanceSettings = ({
+      url: 'proxied',
+      directUrl: 'direct',
+      user: 'test',
+      password: 'mupp',
+      jsonData: {
+        customQueryParameters: '',
+      } as any,
+    } as unknown) as DataSourceInstanceSettings<PromOptions>;
+    const templateSrvStub = {
+      getAdhocFilters: jest.fn(() => [] as any[]),
+      replace: jest.fn((a: string, ...rest: any) => a),
+    };
+    const timeSrvStub = {
+      timeRange(): any {
+        return {
+          from: dateTime(1531468681),
+          to: dateTime(1531489712),
+        };
+      },
+    };
+    const datasource = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+    const from = dateTime('2019-12-17T07:48:27.433Z');
+    const to = dateTime('2019-12-17T13:48:27.433Z');
+    const timeRange: TimeRange = {
+      to,
+      from,
+      raw: { to, from },
+    };
+    datasource.getRange(timeRange);
+    const promQuery = { refId: 'bar', expr: 'go_goroutines{}', interval: '1s' };
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
+    const hints = getQueryHints(promQuery, series, datasource, timeRange);
+    expect(hints!.length).toBe(1);
+    expect(hints![0]).toMatchObject({
+      type: 'SAFE_INTERVAL',
+      label:
+        'The specified step interval is lower than the safe interval and has been changed to 2s. Consider increasing the step interval or changing the time range',
     });
   });
 });
