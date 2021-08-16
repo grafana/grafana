@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/services/live/telemetry"
 	"github.com/grafana/grafana/pkg/services/live/telemetry/telegraf"
 )
@@ -27,7 +29,7 @@ func NewConverter() *Converter {
 
 var ErrUnsupportedFrameFormat = errors.New("unsupported frame format")
 
-func (c *Converter) Convert(data []byte, frameFormat string) ([]telemetry.FrameWrapper, error) {
+func (c *Converter) Convert(data []byte, frameFormat string, channelFormat string) ([]*data.Frame, error) {
 	var converter telemetry.Converter
 	switch frameFormat {
 	case "wide":
@@ -38,7 +40,7 @@ func (c *Converter) Convert(data []byte, frameFormat string) ([]telemetry.FrameW
 		return nil, ErrUnsupportedFrameFormat
 	}
 
-	metricFrames, err := converter.Convert(data)
+	metricFrames, err := converter.Convert(data, channelFormat)
 	if err != nil {
 		return nil, fmt.Errorf("error converting metrics: %w", err)
 	}

@@ -11,7 +11,7 @@ type Pipeline struct {
 }
 
 func New(s Storage) *Pipeline {
-	go postTestData() // TODO: temporary for development, remove.
+	//go postTestData() // TODO: temporary for development, remove.
 	return &Pipeline{cache: NewCache(s)}
 }
 
@@ -37,6 +37,7 @@ type Field struct {
 	Type   data.FieldType
 	Value  string // Can be JSONPath or Goja script.
 	Labels []Label
+	Config *data.FieldConfig
 }
 
 type ListLiveChannelRuleCommand struct {

@@ -22,6 +22,8 @@ func NewChannelOutput(ruleProcessor *RuleProcessor, config ChannelOutputConfig) 
 
 func (l ChannelOutput) Output(ctx context.Context, vars OutputVars, frame *data.Frame) error {
 	channel := l.config.Channel
-	channel = strings.ReplaceAll(channel, "#{frame_name}", frame.Name)
+	if frame.Meta != nil {
+		channel = strings.ReplaceAll(channel, "#{frame_channel}", frame.Meta.Channel)
+	}
 	return l.ruleProcessor.ProcessFrame(ctx, vars.OrgID, channel, frame)
 }

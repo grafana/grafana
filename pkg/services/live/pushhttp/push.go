@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
 var (
@@ -46,38 +47,43 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 	return []*pipeline.LiveChannelRule{
 		{
 			OrgId:   1,
-			Pattern: "stream/influx",
+			Pattern: "stream/influx/input",
 			Converter: pipeline.NewInfluxConverter(pipeline.InfluxConverterConfig{
-				FrameFormat: "labels_column",
+				FrameFormat:  "labels_column",
+				FrameChannel: "stream/influx/input/#{metric_name}",
 			}),
 			Outputter: pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
-				Channel: "stream/influx/#{frame_name}",
+				Channel: "#{frame_channel}",
 			}),
 		},
 		{
 			OrgId:   1,
-			Pattern: "stream/influx/*",
+			Pattern: "stream/influx/input/*",
 			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
 				pipeline.NewManagedStreamOutput(f.gLive),
 			}),
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/influx/cpu",
+			OrgId:   1,
+			Pattern: "stream/influx/input/cpu",
+			// TODO: Would be fine to have KeepLabelsProcessor, but we need to know frame type
+			// since there are cases when labels attached to a field, and cases where labels
+			// set in a first frame column (in Influx converter). For example, this will allow
+			// to leave only "total-cpu" data while dropping individual CPUs.
 			Processor: pipeline.NewKeepFieldsProcessor("labels", "time", "usage_user"),
 			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
 				pipeline.NewManagedStreamOutput(f.gLive),
 				pipeline.NewConditionalOutput(
 					pipeline.NewNumberCompareCondition("usage_user", "gte", 50),
 					pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
-						Channel: "stream/influx/cpu/spikes",
+						Channel: "stream/influx/input/cpu/spikes",
 					}),
 				),
 			}),
 		},
 		{
 			OrgId:     1,
-			Pattern:   "stream/influx/cpu/spikes",
+			Pattern:   "stream/influx/input/cpu/spikes",
 			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
 		},
 		{
@@ -139,6 +145,25 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 						Name:  "value4",
 						Type:  data.FieldTypeNullableFloat64,
 						Value: "$.value4",
+						Config: &data.FieldConfig{
+							Thresholds: &data.ThresholdsConfig{
+								Mode: data.ThresholdsModeAbsolute,
+								Steps: []data.Threshold{
+									{
+										Value: 2,
+										State: "normal",
+									},
+									{
+										Value: 6,
+										State: "warning",
+									},
+									{
+										Value: 8,
+										State: "critical",
+									},
+								},
+							},
+						},
 					},
 					{
 						Name:  "map.red",
@@ -201,22 +226,8 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					}),
 				),
 				pipeline.NewThresholdOutput(f.frameStorage, f.ruleProcessor, pipeline.ThresholdOutputConfig{
-					Channel:   "stream/json/exact/value4/state",
 					FieldName: "value4",
-					Thresholds: []data.Threshold{
-						{
-							Value: 2,
-							State: "normal",
-						},
-						{
-							Value: 6,
-							State: "warning",
-						},
-						{
-							Value: 8,
-							State: "critical",
-						},
-					},
+					Channel:   "stream/json/exact/value4/state",
 				}),
 			}),
 		},
@@ -270,7 +281,7 @@ func (g *Gateway) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (g *Gateway) HandleOld(ctx *models.ReqContext) {
+func (g *Gateway) Handle(ctx *models.ReqContext) {
 	streamID := ctx.Params(":streamId")
 
 	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, streamID)
@@ -297,7 +308,7 @@ func (g *Gateway) HandleOld(ctx *models.ReqContext) {
 		"frameFormat", frameFormat,
 	)
 
-	metricFrames, err := g.converter.Convert(body, frameFormat)
+	frames, err := g.converter.Convert(body, frameFormat, "stream/"+streamID+"/#{metric_name}")
 	if err != nil {
 		logger.Error("Error converting metrics", "error", err, "frameFormat", frameFormat)
 		if errors.Is(err, convert.ErrUnsupportedFrameFormat) {
@@ -308,47 +319,24 @@ func (g *Gateway) HandleOld(ctx *models.ReqContext) {
 		return
 	}
 
-	for _, mf := range metricFrames {
-		err := stream.Push(mf.Key(), mf.Frame())
+	for _, f := range frames {
+		if f.Meta == nil {
+			logger.Error("Meta is nil in frame", "error", err, "data", string(body))
+			continue
+		}
+		if f.Meta.Channel == "" {
+			logger.Error("Empty channel in frame", "error", err, "data", string(body))
+			continue
+		}
+		ch, err := liveDto.ParseChannel(f.Meta.Channel)
 		if err != nil {
-			logger.Error("Error pushing frame", "error", err, "data", string(body))
+			logger.Error("Malformed channel in frame", "error", err, "data", string(body))
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-	}
-}
-
-func (g *Gateway) Handle(ctx *models.ReqContext) {
-	streamID := ctx.Params(":streamId")
-
-	body, err := io.ReadAll(ctx.Req.Request.Body)
-	if err != nil {
-		logger.Error("Error reading body", "error", err)
-		ctx.Resp.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	logger.Debug("Live Push request",
-		"protocol", "http",
-		"streamId", streamID,
-		"bodyLength", len(body),
-	)
-
-	channelID := "stream/" + streamID
-
-	frames, ok, err := g.ruleProcessor.DataToFrames(context.Background(), ctx.OrgId, channelID, body)
-	if err != nil {
-		logger.Error("Error data to frame", "error", err, "body", string(body))
-		ctx.Resp.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	if !ok {
-		return
-	}
-
-	for _, frame := range frames {
-		err = g.ruleProcessor.ProcessFrame(context.Background(), ctx.OrgId, channelID, frame)
+		err = stream.Push(ch.Path, f)
 		if err != nil {
-			logger.Error("Error processing frame", "error", err, "data", string(body))
+			logger.Error("Error pushing frame", "error", err, "data", string(body))
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -365,7 +353,7 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	logger.Debug("Live Push request",
+	logger.Debug("Live channel push request",
 		"protocol", "http",
 		"streamId", streamID,
 		"path", path,
@@ -381,6 +369,8 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 		return
 	}
 	if !ok {
+		logger.Error("No conversion rule for a channel", "error", err, "channel", channelID)
+		ctx.Resp.WriteHeader(http.StatusNotFound)
 		return
 	}
 

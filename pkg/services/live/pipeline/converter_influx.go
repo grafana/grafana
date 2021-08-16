@@ -9,7 +9,8 @@ import (
 )
 
 type InfluxConverterConfig struct {
-	FrameFormat string
+	FrameFormat  string
+	FrameChannel string
 }
 
 type InfluxConverter struct {
@@ -22,13 +23,5 @@ func NewInfluxConverter(config InfluxConverterConfig) *InfluxConverter {
 }
 
 func (i InfluxConverter) Convert(_ context.Context, _ Vars, body []byte) ([]*data.Frame, error) {
-	metricFrames, err := i.converter.Convert(body, i.config.FrameFormat)
-	if err != nil {
-		return nil, err
-	}
-	frames := make([]*data.Frame, 0, len(metricFrames))
-	for _, mf := range metricFrames {
-		frames = append(frames, mf.Frame())
-	}
-	return frames, nil
+	return i.converter.Convert(body, i.config.FrameFormat, i.config.FrameChannel)
 }

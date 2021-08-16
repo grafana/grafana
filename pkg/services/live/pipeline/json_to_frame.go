@@ -128,6 +128,7 @@ func JSONDocToFrame(name string, body []byte, fields map[string]Field) (*data.Fr
 		f := data.NewFieldFromFieldType(tip.Type, 1)
 		f.Name = name
 		f.Set(0, nil)
+		f.Config = tip.Config
 		d.fields = append(d.fields, f)
 	}
 

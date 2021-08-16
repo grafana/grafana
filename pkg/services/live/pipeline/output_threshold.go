@@ -2,15 +2,15 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type ThresholdOutputConfig struct {
-	FieldName  string
-	Thresholds []data.Threshold
-	Channel    string
+	FieldName string
+	Channel   string
 }
 
 type ThresholdOutput struct {
@@ -51,8 +51,25 @@ func (l ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data.
 		return nil
 	}
 
+	if frame.Fields[currentFrameFieldIndex].Config == nil {
+		return nil
+	}
+
+	if frame.Fields[currentFrameFieldIndex].Config.Thresholds == nil {
+		return nil
+	}
+
+	mode := frame.Fields[currentFrameFieldIndex].Config.Thresholds.Mode
+	if mode != data.ThresholdsModeAbsolute {
+		return fmt.Errorf("unsupported threshold mode: %s", mode)
+	}
+
+	if len(frame.Fields[currentFrameFieldIndex].Config.Thresholds.Steps) == 0 {
+		return nil
+	}
+
 	var currentThreshold data.Threshold
-	for _, threshold := range l.config.Thresholds {
+	for _, threshold := range frame.Fields[currentFrameFieldIndex].Config.Thresholds.Steps {
 		if *value >= float64(threshold.Value) {
 			currentThreshold = threshold
 			continue

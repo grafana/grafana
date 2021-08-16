@@ -40,6 +40,7 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 	for _, f := range c.config.Fields {
 		field := data.NewFieldFromFieldType(f.Type, 1)
 		field.Name = f.Name
+		field.Config = f.Config
 		if strings.HasPrefix(f.Value, "$") {
 			// JSON path.
 			x, err := jp.ParseString(f.Value[1:])

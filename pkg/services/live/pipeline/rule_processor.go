@@ -2,11 +2,9 @@ package pipeline
 
 import (
 	"context"
-	"strings"
-
-	"github.com/grafana/grafana-plugin-sdk-go/live"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
 type RuleProcessor struct {
@@ -23,24 +21,6 @@ func NewRuleProcessor(pipeline *Pipeline) *RuleProcessor {
 	}
 }
 
-func splitChannel(chID string) (live.Channel, error) {
-	parts := strings.SplitN(chID, "/", 3)
-	ch := live.Channel{}
-	if len(parts) == 3 {
-		ch.Scope = parts[0]
-		ch.Namespace = parts[1]
-		ch.Path = parts[2]
-	} else if len(parts) == 2 {
-		ch.Scope = parts[0]
-		ch.Namespace = parts[1]
-	} else if len(parts) == 1 {
-		ch.Scope = parts[0]
-	} else {
-		return ch, live.ErrInvalidChannelID
-	}
-	return ch, nil
-}
-
 func (p *RuleProcessor) DataToFrames(ctx context.Context, orgID int64, channelID string, body []byte) ([]*data.Frame, bool, error) {
 	rule, ruleOk, err := p.pipeline.Get(orgID, channelID)
 	if err != nil {
@@ -54,9 +34,9 @@ func (p *RuleProcessor) DataToFrames(ctx context.Context, orgID int64, channelID
 		return nil, false, nil
 	}
 
-	channel, err := splitChannel(channelID)
+	channel, err := live.ParseChannel(channelID)
 	if err != nil {
-		logger.Error("Error splitting channel", "error", err, "channel", channelID)
+		logger.Error("Error parsing channel", "error", err, "channel", channelID)
 		return nil, false, err
 	}
 
@@ -87,9 +67,9 @@ func (p *RuleProcessor) ProcessFrame(ctx context.Context, orgID int64, channelID
 		return nil
 	}
 
-	ch, err := splitChannel(channelID)
+	ch, err := live.ParseChannel(channelID)
 	if err != nil {
-		logger.Error("Error splitting channel", "error", err, "channel", channelID)
+		logger.Error("Error parsing channel", "error", err, "channel", channelID)
 		return err
 	}
 
