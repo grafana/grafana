@@ -46,6 +46,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   fill: css`
     flex-grow: 1;
-    margin-bottom: 4px;
+    margin-bottom: ${theme.spacing(0.5)};
   `,
 });
