@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { Validate } from 'react-hook-form';
-import { MatcherOperatorOptions, Route } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 import { FormAmRoute } from '../types/amroutes';
 import { parseInterval, timeOptions } from './time';
 import { matcherToMatcherField, matcherFieldToMatcher, parseMatcher, stringifyMatcher } from './alertmanager';
@@ -16,7 +16,7 @@ const matchersToArrayFieldMatchers = (matchers: Record<string, string> | undefin
       {
         name,
         value,
-        operator: isRegex ? MatcherOperatorOptions.regex : MatcherOperatorOptions.equal,
+        operator: isRegex ? MatcherOperator.regex : MatcherOperator.equal,
       },
     ],
     [] as MatcherField[]
@@ -46,7 +46,7 @@ const selectableValuesToStrings = (arr: Array<SelectableValue<string>> | undefin
 export const emptyArrayFieldMatcher: MatcherField = {
   name: '',
   value: '',
-  operator: MatcherOperatorOptions.equal,
+  operator: MatcherOperator.equal,
 };
 
 export const emptyRoute: FormAmRoute = {

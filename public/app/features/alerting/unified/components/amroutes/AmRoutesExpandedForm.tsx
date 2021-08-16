@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
   Field,
@@ -26,7 +26,7 @@ import {
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
 import { getFormStyles } from './formStyles';
-import { MatcherOperatorOptions } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
 export interface AmRoutesExpandedFormProps {
   onCancel: () => void;
@@ -35,7 +35,12 @@ export interface AmRoutesExpandedFormProps {
   routes: FormAmRoute;
 }
 
-const matcherOptions = Object.values(MatcherOperatorOptions).map((value) => ({ value, label: value }));
+const matcherFieldOptions: SelectableValue[] = [
+  { label: MatcherOperator.equal, description: 'Equals', value: MatcherOperator.equal },
+  { label: MatcherOperator.notEqual, description: 'Does not equal', value: MatcherOperator.notEqual },
+  { label: MatcherOperator.regex, description: 'Matches regex', value: MatcherOperator.regex },
+  { label: MatcherOperator.notRegex, description: 'Does not match regex', value: MatcherOperator.notRegex },
+];
 
 export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, onSave, receivers, routes }) => {
   const styles = useStyles2(getStyles);
@@ -79,13 +84,10 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                               <Select
                                 {...field}
                                 onChange={(value) => onChange(value?.value)}
-                                options={matcherOptions}
+                                options={matcherFieldOptions}
                               />
                             )}
-                            defaultValue={{
-                              label: field.operator,
-                              value: field.operator,
-                            }}
+                            defaultValue={field.operator}
                             control={control}
                             name={`${localPath}.operator` as const}
                             rules={{ required: { value: true, message: 'Required.' } }}

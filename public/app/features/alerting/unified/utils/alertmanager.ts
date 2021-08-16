@@ -1,10 +1,4 @@
-import {
-  AlertManagerCortexConfig,
-  MatcherOperator,
-  Route,
-  Matcher,
-  MatcherOperatorOptions,
-} from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, MatcherOperator, Route, Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 import { MatcherField } from '../types/silence-form';
 
@@ -62,34 +56,6 @@ export function matcherOperatorToValue(operator: MatcherOperator) {
     case MatcherOperator.notRegex:
       return { isEqual: false, isRegex: true };
   }
-}
-
-export function matcherToOperatorOption(matcher: Matcher): MatcherOperatorOptions {
-  if (matcher.isEqual) {
-    if (matcher.isRegex) {
-      return MatcherOperatorOptions.regex;
-    } else {
-      return MatcherOperatorOptions.equal;
-    }
-  } else if (matcher.isRegex) {
-    return MatcherOperatorOptions.notRegex;
-  } else {
-    return MatcherOperatorOptions.notEqual;
-  }
-}
-
-export function matcherOptionToOperatorValue(matcherOption: MatcherOperatorOptions) {
-  if (matcherOption === MatcherOperatorOptions.notEqual) {
-    return { isEqual: false, isRegex: false };
-  }
-  if (matcherOption === MatcherOperatorOptions.regex) {
-    return { isEqual: true, isRegex: true };
-  }
-  if (matcherOption === MatcherOperatorOptions.notRegex) {
-    return { isEqual: false, isRegex: true };
-  }
-  // Default matcherOption === MatcherOperatorOptions.isEqual
-  return { isEqual: true, isRegex: false };
 }
 
 export function matcherToMatcherField(matcher: Matcher): MatcherField {

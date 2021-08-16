@@ -162,13 +162,6 @@ export enum MatcherOperator {
   notRegex = '!~',
 }
 
-export enum MatcherOperatorOptions {
-  equal = 'Equals',
-  notEqual = 'Does not equal',
-  regex = 'Matches regex',
-  notRegex = 'Does not match regex',
-}
-
 export type Silence = {
   id: string;
   matchers?: Matcher[];
