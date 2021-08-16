@@ -17,7 +17,8 @@ import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafan
 import { TraceToLogsData, TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { compact, identity, pick, pickBy } from 'lodash';
+import { identity, pick, pickBy } from 'lodash';
+import Prism from 'prismjs';
 import { from, merge, Observable, of, throwError } from 'rxjs';
 import { map, mergeMap, toArray } from 'rxjs/operators';
 import { LokiOptions, LokiQuery } from '../loki/types';
@@ -33,6 +34,7 @@ import {
   transformTrace,
   transformTraceList,
 } from './resultTransformer';
+import { tokenizer } from './syntax';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
 export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch';
@@ -172,19 +174,27 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   buildSearchQuery(query: TempoQuery) {
-    const tags = query.search ? query.search.split(/\s+(?=([^"]*"[^"]*")*[^"]*$)/g) : [];
-    // Compact to remove empty values from array
-    const tagsQuery = compact(tags)
-      .map((tag) => {
-        const parts = tag.split('=');
-        if (parts.length === 2) {
-          const extractedString = parts[1].replace(/^"(.*)"$/, '$1');
-          return { [parts[0]]: extractedString };
-        } else {
-          return null; // To filter out incomplete tag queries
-        }
-      })
-      .filter((v) => !!v);
+    const tokens = Prism.tokenize(query.search, tokenizer) ?? [];
+
+    // Build key value pairs
+    let tagsQuery: Array<{ [key: string]: string }> = [];
+    for (let i = 0; i < tokens.length - 1; i++) {
+      const token = tokens[i];
+      const lookupToken = tokens[i + 2];
+
+      // Ensure there is a valid key value pair with accurate types
+      if (
+        typeof token !== 'string' &&
+        token.type === 'key' &&
+        typeof token.content === 'string' &&
+        typeof lookupToken !== 'string' &&
+        lookupToken.type === 'value' &&
+        typeof lookupToken.content === 'string'
+      ) {
+        tagsQuery.push({ [token.content]: lookupToken.content });
+      }
+    }
+
     let tempoQuery = pick(query, ['minDuration', 'maxDuration', 'limit']);
     // Remove empty properties
     tempoQuery = pickBy(tempoQuery, identity);
