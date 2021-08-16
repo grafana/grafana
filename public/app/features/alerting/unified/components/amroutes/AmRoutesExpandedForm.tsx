@@ -83,6 +83,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                             render={({ field: { onChange, ref, ...field } }) => (
                               <Select
                                 {...field}
+                                className={styles.matchersOperator}
                                 onChange={(value) => onChange(value?.value)}
                                 options={matcherFieldOptions}
                               />
@@ -104,12 +105,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                             placeholder="value"
                           />
                         </Field>
-                        {/* <Field className={styles.matcherRegexField} label="Regex">
-                          <Checkbox {...register(`${localPath}.isRegex`)} defaultChecked={field.isRegex} />
-                        </Field>
-                        <Field className={styles.matcherRegexField} label="Equal">
-                          <Checkbox {...register(`${localPath}.isEqual`)} defaultChecked={field.isEqual} />
-                        </Field> */}
                         <IconButton
                           className={styles.removeButton}
                           tooltip="Remove matcher"
@@ -316,8 +311,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(1, 4.6, 1, 1.5)};
       width: fit-content;
     `,
-    matcherRegexField: css`
-      margin-left: ${theme.spacing(6)};
+    matchersOperator: css`
+      min-width: 140px;
     `,
     nestedPolicies: css`
       margin-top: ${commonSpacing};
