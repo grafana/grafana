@@ -39,9 +39,6 @@ describe('Graphite actions', async () => {
       getTagsAutoComplete: jest.fn().mockReturnValue(Promise.resolve([])),
     },
     target: { target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)' },
-    panelCtrl: {
-      refresh: jest.fn(),
-    },
   } as any;
 
   beforeEach(async () => {
@@ -138,7 +135,7 @@ describe('Graphite actions', async () => {
     });
 
     it('should call refresh', () => {
-      expect(ctx.panelCtrl.refresh).toHaveBeenCalled();
+      expect(ctx.state.refresh).toHaveBeenCalled();
     });
   });
 
@@ -288,8 +285,8 @@ describe('Graphite actions', async () => {
       expect(ctx.state.target.target).toBe('aliasByNode(scaleToSeconds(test.prod.*, 1), 2)');
     });
 
-    it('should call panelCtrl.refresh', () => {
-      expect(ctx.panelCtrl.refresh).toHaveBeenCalled();
+    it('should call refresh', () => {
+      expect(ctx.state.refresh).toHaveBeenCalled();
     });
   });
 
@@ -332,7 +329,7 @@ describe('Graphite actions', async () => {
     });
 
     it('should call refresh', () => {
-      expect(ctx.panelCtrl.refresh).toHaveBeenCalled();
+      expect(ctx.state.refresh).toHaveBeenCalled();
     });
   });
 
