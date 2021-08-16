@@ -15,6 +15,7 @@ export interface FieldsToLabelsTransformOptions {
 export const fieldsToLabelsTransformer: DataTransformerInfo<FieldsToLabelsTransformOptions> = {
   id: DataTransformerID.fieldsToLabels,
   name: 'Fields to labels',
+  description: 'Extract time series labels or tags from fields (columns)',
   defaultOptions: {},
 
   operator: (options) => (source) =>
