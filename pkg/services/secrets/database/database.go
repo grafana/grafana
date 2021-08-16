@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/types"
-
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/secrets/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 const dataKeysTable = "data_keys"
+
+var logger = log.New("secrets-store")
 
 type SecretsStoreImpl struct {
 	SQLStore *sqlstore.SQLStore `inject:""`
@@ -42,7 +44,7 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, name string) (*types
 	}
 
 	if err != nil {
-		// s.log.Error("Failed getting data key", "err", err, "name", name)
+		logger.Error("Failed getting data key", "err", err, "name", name)
 		return nil, fmt.Errorf("failed getting data key: %w", err)
 	}
 

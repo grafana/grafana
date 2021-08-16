@@ -9,22 +9,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/types"
-
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-
-	"github.com/grafana/grafana/pkg/registry"
-
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/bus"
-
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry"
 	_ "github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/encryption"
-
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/secrets/types"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+var logger = log.New("secrets")
 
 func init() {
 	registry.Register(&registry.Descriptor{
@@ -47,7 +42,6 @@ type SecretsService struct {
 	Enc      encryption.EncryptionServiceImpl `inject:""`
 	Settings setting.Provider                 `inject:""`
 
-	log             log.Logger
 	defaultProvider string
 	providers       map[string]Provider
 	dataKeyCache    map[string]dataKeyCacheItem
@@ -68,7 +62,6 @@ func (s *SecretsService) Init() error {
 		"grafana-provider": newGrafanaProvider(s.Settings, s.Enc),
 	}
 	s.defaultProvider = "grafana-provider"
-	s.log = log.New("secrets")
 	logger.Debug("configured secrets provider", s.defaultProvider)
 
 	s.dataKeyCache = make(map[string]dataKeyCacheItem)
