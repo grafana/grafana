@@ -26,7 +26,9 @@ import {
 import { FormatAsSection } from './FormatAsSection';
 import { DEFAULT_RESULT_FORMAT } from '../constants';
 import { getNewSelectPartOptions, getNewGroupByPartOptions, makePartList } from './partListUtils';
-import { SegmentSection, SegmentSectionLabel } from '@grafana/ui';
+import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { css } from '@emotion/css';
 
 type Props = {
   query: InfluxQuery;
@@ -51,6 +53,7 @@ function withTemplateVariableOptions(optionsPromise: Promise<string[]>): Promise
 }
 
 export const Editor = (props: Props): JSX.Element => {
+  const styles = useStyles2(getStyles);
   const query = normalizeQuery(props.query);
   const { datasource } = props;
   const { measurement, policy } = query;
@@ -115,7 +118,9 @@ export const Editor = (props: Props): JSX.Element => {
           }
           onChange={handleFromSectionChange}
         />
-        <SegmentSectionLabel name="WHERE" />
+        <InlineLabel width="auto" className={styles.inlineLabel}>
+          WHERE
+        </InlineLabel>
         <TagsSection
           tags={query.tags ?? []}
           onChange={handleTagsSectionChange}
@@ -167,7 +172,9 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, tz });
           }}
         />
-        <SegmentSectionLabel name="ORDER BY TIME" />
+        <InlineLabel width="auto" className={styles.inlineLabel}>
+          ORDER BY TIME
+        </InlineLabel>
         <OrderByTimeSection
           value={query.orderByTime === 'DESC' ? 'DESC' : 'ASC' /* FIXME: make this shared with influx_query_model */}
           onChange={(v) => {
@@ -188,7 +195,9 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, limit });
           }}
         />
-        <SegmentSectionLabel name="SLIMIT" />
+        <InlineLabel width="auto" className={styles.inlineLabel}>
+          SLIMIT
+        </InlineLabel>
         <InputSection
           placeholder="(optional)"
           value={query.slimit?.toString()}
@@ -206,7 +215,9 @@ export const Editor = (props: Props): JSX.Element => {
         />
         {query.resultFormat !== 'table' && (
           <>
-            <SegmentSectionLabel name="ALIAS" />
+            <InlineLabel width="auto" className={styles.inlineLabel}>
+              ALIAS
+            </InlineLabel>
             <InputSection
               isWide
               placeholder="Naming pattern"
@@ -221,3 +232,11 @@ export const Editor = (props: Props): JSX.Element => {
     </div>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    inlineLabel: css`
+      color: ${theme.colors.primary.text};
+    `,
+  };
+}
