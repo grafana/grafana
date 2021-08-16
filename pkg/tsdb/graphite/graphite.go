@@ -251,11 +251,11 @@ func (s *Service) toDataFrames(response *http.Response) (frames data.Frames, err
 
 		tags := make(map[string]string)
 		for name, value := range series.Tags {
-			switch value.(type) {
+			switch value := value.(type) {
 			case string:
-				tags[name] = value.(string)
+				tags[name] = value
 			case float64:
-				tags[name] = strconv.FormatFloat(value.(float64), 'f', -1, 64)
+				tags[name] = strconv.FormatFloat(value, 'f', -1, 64)
 			}
 		}
 
