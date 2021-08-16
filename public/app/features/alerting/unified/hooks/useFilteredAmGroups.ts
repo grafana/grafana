@@ -17,7 +17,12 @@ export const useFilteredAmGroups = (groups: AlertmanagerGroup[]) => {
         return labelsMatch && filtersMatch;
       });
       if (alerts.length > 0) {
-        filteredGroup.push({ ...group, alerts });
+        // The ungrouped alerts should be first in the results
+        if (Object.keys(group.labels).length === 0) {
+          filteredGroup.unshift({ ...group, alerts });
+        } else {
+          filteredGroup.push({ ...group, alerts });
+        }
       }
       return filteredGroup;
     }, [] as AlertmanagerGroup[]);
