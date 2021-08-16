@@ -137,13 +137,18 @@ export function getQueryHints(
     const range = datasource?.getRange(timeRange);
     const safeInterval = datasource?.getSafeInterval(range ?? 0);
     const interval = rangeUtil.intervalToSeconds(promQuery.interval ?? '15s');
+    let label =
+      'The specified step interval is lower than the safe interval. Consider increasing the step interval or changing the time range';
+    if (promQuery.stepMode === 'exact') {
+      label =
+        'The specified step interval is lower than the safe interval and has been changed to ' +
+        safeInterval +
+        's. Consider increasing the step interval or changing the time range';
+    }
     if (safeInterval && interval < safeInterval) {
       hints.push({
         type: 'SAFE_INTERVAL',
-        label:
-          'The specified step interval is lower than the safe interval and has been changed to ' +
-          safeInterval +
-          's. Consider increasing the step interval or changing the time range',
+        label,
       });
     }
   }
