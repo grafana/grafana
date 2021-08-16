@@ -230,3 +230,19 @@ export interface AlertmanagerStatus {
 export interface TestReceiversPayload {
   receivers?: Receiver[];
 }
+
+interface TestReceiversResultGrafanaReceiverConfig {
+  name: string;
+  uid?: string;
+  error?: string;
+  status: 'failed';
+}
+
+interface TestReceiversResultReceiver {
+  name: string;
+  grafana_managed_receiver_configs: TestReceiversResultGrafanaReceiverConfig[];
+}
+export interface TestReceiversResult {
+  notified_at: string;
+  receivers: TestReceiversResultReceiver[];
+}
