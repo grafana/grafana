@@ -89,10 +89,10 @@ export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Re
     {
       id,
       matchers: [
-        ...(route.matchers?.map(parseMatcher) ?? []),
+        ...(route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? []),
         ...matchersToArrayFieldMatchers(route.match, false),
         ...matchersToArrayFieldMatchers(route.match_re, true),
-      ].map(matcherToMatcherField),
+      ],
       continue: route.continue ?? false,
       receiver: route.receiver ?? '',
       groupBy: route.group_by ?? [],
