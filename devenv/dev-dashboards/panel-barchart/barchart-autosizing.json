@@ -35,7 +35,6 @@
             "fillOpacity": 80,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -106,7 +105,6 @@
             "fillOpacity": 80,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -177,7 +175,6 @@
             "fillOpacity": 80,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -247,7 +244,6 @@
             "fillOpacity": 80,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -318,7 +314,6 @@
             "fillOpacity": 80,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -388,7 +383,6 @@
             "fillOpacity": 80,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -460,7 +454,6 @@
             "fillOpacity": 80,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
