@@ -17,7 +17,7 @@ def cronjobs(edition):
     steps=[
         scan_docker_image_unkown_low_medium_vulnerabilities_step(edition),
         scan_docker_image_high_critical_vulnerabilities_step(edition),
-        slack_job_failed_step('grafana-backend'),
+        slack_job_failed_step('grafana-backend-ops'),
     ]
     return [
         {
