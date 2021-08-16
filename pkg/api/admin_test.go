@@ -37,7 +37,7 @@ func TestAPI_AdminGetSettings(t *testing.T) {
 			permissions: []*accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionSettingsRead,
-					Scope:  "settings:auth.saml:*",
+					Scope:  "settings:auth.saml:any",
 				},
 			},
 		},
