@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Alert groups",
   "id": "alertGroups",
+  "state": "alpha",
 
   "skipDataQuery": true,
   "info": {
