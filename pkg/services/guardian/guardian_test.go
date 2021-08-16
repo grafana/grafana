@@ -683,7 +683,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 	Convey("Get hidden ACL tests", t, func() {
 		bus.ClearBusHandlers()
 
-		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+		bus.SetHandler(func(query *models.GetDashboardAclInfoListQuery) error {
 			query.Result = []*models.DashboardAclInfoDTO{
 				{Inherited: false, UserId: 1, UserLogin: "user1", Permission: models.PERMISSION_EDIT},
 				{Inherited: false, UserId: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
@@ -731,7 +731,7 @@ func TestGuardianGetAclWithoutDuplicates(t *testing.T) {
 	t.Run("Get hidden ACL tests", func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
-		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+		bus.SetHandler(func(query *models.GetDashboardAclInfoListQuery) error {
 			query.Result = []*models.DashboardAclInfoDTO{
 				{Inherited: true, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_EDIT},
 				{Inherited: false, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},

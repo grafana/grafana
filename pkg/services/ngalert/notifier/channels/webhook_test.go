@@ -192,7 +192,7 @@ func TestWebhookNotifier(t *testing.T) {
 			require.NoError(t, err)
 
 			var payload *models.SendWebhookSync
-			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
+			bus.SetHandlerCtx(func(ctx context.Context, webhook *models.SendWebhookSync) error {
 				payload = webhook
 				return nil
 			})

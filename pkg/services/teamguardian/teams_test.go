@@ -29,7 +29,7 @@ func TestUpdateTeam(t *testing.T) {
 
 		Convey("Given an editor and a team he isn't a member of", func() {
 			Convey("Should not be able to update the team", func() {
-				bus.AddHandler("test", func(cmd *models.GetTeamMembersQuery) error {
+				bus.SetHandler(func(cmd *models.GetTeamMembersQuery) error {
 					cmd.Result = []*models.TeamMemberDTO{}
 					return nil
 				})
@@ -41,7 +41,7 @@ func TestUpdateTeam(t *testing.T) {
 
 		Convey("Given an editor and a team he is an admin in", func() {
 			Convey("Should be able to update the team", func() {
-				bus.AddHandler("test", func(cmd *models.GetTeamMembersQuery) error {
+				bus.SetHandler(func(cmd *models.GetTeamMembersQuery) error {
 					cmd.Result = []*models.TeamMemberDTO{{
 						OrgId:      testTeam.OrgId,
 						TeamId:     testTeam.Id,
@@ -63,7 +63,7 @@ func TestUpdateTeam(t *testing.T) {
 			}
 
 			Convey("Shouldn't be able to update the team", func() {
-				bus.AddHandler("test", func(cmd *models.GetTeamMembersQuery) error {
+				bus.SetHandler(func(cmd *models.GetTeamMembersQuery) error {
 					cmd.Result = []*models.TeamMemberDTO{{
 						OrgId:      testTeamOtherOrg.OrgId,
 						TeamId:     testTeamOtherOrg.Id,

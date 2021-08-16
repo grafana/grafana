@@ -47,22 +47,22 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 			External:  true,
 		}
 
-		bus.AddHandler("test", func(query *models.GetDashboardSnapshotQuery) error {
+		bus.SetHandler(func(query *models.GetDashboardSnapshotQuery) error {
 			query.Result = mockSnapshotResult
 			return nil
 		})
 
-		bus.AddHandler("test", func(cmd *models.DeleteDashboardSnapshotCommand) error {
+		bus.SetHandler(func(cmd *models.DeleteDashboardSnapshotCommand) error {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+		bus.SetHandler(func(query *models.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
 		})
 
 		teamResp := []*models.TeamDTO{}
-		bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
+		bus.SetHandler(func(query *models.GetTeamsByUserQuery) error {
 			query.Result = teamResp
 			return nil
 		})
@@ -278,7 +278,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 				setUpSnapshotTest(t)
 
-				bus.AddHandler("test", func(query *models.GetDashboardSnapshotQuery) error {
+				bus.SetHandler(func(query *models.GetDashboardSnapshotQuery) error {
 					query.Result = mockSnapshotResult
 					return nil
 				})

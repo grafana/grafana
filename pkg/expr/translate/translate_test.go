@@ -132,7 +132,7 @@ func alertRuleByRefId(cond *ngmodels.Condition, refID string) (ngmodels.AlertQue
 }
 
 func registerGetDsInfoHandler() {
-	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
+	bus.SetHandler(func(query *models.GetDataSourceQuery) error {
 		switch {
 		case query.Id == 2:
 			query.Result = &models.DataSource{Id: 2, OrgId: 1, Uid: "000000002"}

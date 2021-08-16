@@ -133,12 +133,12 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		}
 
 		setUp := func() {
-			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+			bus.SetHandler(func(query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = aclMockResp
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
+			bus.SetHandler(func(query *models.GetTeamsByUserQuery) error {
 				query.Result = []*models.TeamDTO{}
 				return nil
 			})

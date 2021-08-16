@@ -16,7 +16,7 @@ import (
 )
 
 func setUpGetOrgUsersHandler() {
-	bus.AddHandler("test", func(query *models.GetOrgUsersQuery) error {
+	bus.SetHandler(func(query *models.GetOrgUsersQuery) error {
 		query.Result = []*models.OrgUserDTO{
 			{Email: "testUser@grafana.com", Login: testUserLogin},
 			{Email: "user1@grafana.com", Login: "user1"},
@@ -97,11 +97,11 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET as an editor with no team / folder permissions on",
 		"api/org/users/lookup", func(sc *scenarioContext) {
 			setUpGetOrgUsersHandler()
-			bus.AddHandler("test", func(query *models.HasAdminPermissionInFoldersQuery) error {
+			bus.SetHandler(func(query *models.HasAdminPermissionInFoldersQuery) error {
 				query.Result = false
 				return nil
 			})
-			bus.AddHandler("test", func(query *models.IsAdminOfTeamsQuery) error {
+			bus.SetHandler(func(query *models.IsAdminOfTeamsQuery) error {
 				query.Result = false
 				return nil
 			})

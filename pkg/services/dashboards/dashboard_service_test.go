@@ -284,7 +284,7 @@ func setupDeleteHandlers(t *testing.T, fakeStore *fakeDashboardStore, provisione
 	}
 
 	result := &Result{}
-	bus.AddHandler("test", func(cmd *models.DeleteDashboardCommand) error {
+	bus.SetHandler(func(cmd *models.DeleteDashboardCommand) error {
 		So(cmd.Id, ShouldEqual, 1)
 		So(cmd.OrgId, ShouldEqual, 1)
 		result.deleteWasCalled = true

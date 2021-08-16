@@ -25,7 +25,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 
 	loggedInUserScenario(t, "When calling GET on", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
-		bus.AddHandler("test", func(query *models.GetUserProfileQuery) error {
+		bus.SetHandler(func(query *models.GetUserProfileQuery) error {
 			query.Result = models.UserProfileDTO{
 				Id:             int64(1),
 				Email:          "daniel@grafana.com",
@@ -41,7 +41,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *models.GetAuthInfoQuery) error {
+		bus.SetHandler(func(query *models.GetAuthInfoQuery) error {
 			query.Result = &models.UserAuth{
 				AuthModule: models.AuthModuleLDAP,
 			}
@@ -78,7 +78,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 
 	loggedInUserScenario(t, "When calling GET on", "/api/users/lookup", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
-		bus.AddHandler("test", func(query *models.GetUserByLoginQuery) error {
+		bus.SetHandler(func(query *models.GetUserByLoginQuery) error {
 			require.Equal(t, "danlee", query.LoginOrEmail)
 
 			query.Result = &models.User{
@@ -125,7 +125,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "/api/users", func(sc *scenarioContext) {
 		var sentLimit int
 		var sendPage int
-		bus.AddHandler("test", func(query *models.SearchUsersQuery) error {
+		bus.SetHandler(func(query *models.SearchUsersQuery) error {
 			query.Result = mockResult
 
 			sentLimit = query.Limit
@@ -148,7 +148,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET with page and limit querystring parameters on", "/api/users", func(sc *scenarioContext) {
 		var sentLimit int
 		var sendPage int
-		bus.AddHandler("test", func(query *models.SearchUsersQuery) error {
+		bus.SetHandler(func(query *models.SearchUsersQuery) error {
 			query.Result = mockResult
 
 			sentLimit = query.Limit
@@ -167,7 +167,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "/api/users/search", func(sc *scenarioContext) {
 		var sentLimit int
 		var sendPage int
-		bus.AddHandler("test", func(query *models.SearchUsersQuery) error {
+		bus.SetHandler(func(query *models.SearchUsersQuery) error {
 			query.Result = mockResult
 
 			sentLimit = query.Limit
@@ -192,7 +192,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET with page and perpage querystring parameters on", "/api/users/search", func(sc *scenarioContext) {
 		var sentLimit int
 		var sendPage int
-		bus.AddHandler("test", func(query *models.SearchUsersQuery) error {
+		bus.SetHandler(func(query *models.SearchUsersQuery) error {
 			query.Result = mockResult
 
 			sentLimit = query.Limit

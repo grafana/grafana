@@ -23,7 +23,7 @@ const (
 func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", func(sc *scenarioContext) {
 		// Stubs the database query
-		bus.AddHandler("test", func(query *models.GetDataSourcesQuery) error {
+		bus.SetHandler(func(query *models.GetDataSourcesQuery) error {
 			assert.Equal(t, testOrgID, query.OrgId)
 			query.Result = []*models.DataSource{
 				{Name: "mmm"},
@@ -93,7 +93,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 	const url = "localhost:5432"
 
 	// Stub handler
-	bus.AddHandler("sql", func(cmd *models.AddDataSourceCommand) error {
+	bus.SetHandler(func(cmd *models.AddDataSourceCommand) error {
 		assert.Equal(t, name, cmd.Name)
 		assert.Equal(t, url, cmd.Url)
 
@@ -141,7 +141,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	const url = "localhost:5432"
 
 	// Stub handler
-	bus.AddHandler("sql", func(cmd *models.AddDataSourceCommand) error {
+	bus.SetHandler(func(cmd *models.AddDataSourceCommand) error {
 		assert.Equal(t, name, cmd.Name)
 		assert.Equal(t, url, cmd.Url)
 

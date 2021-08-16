@@ -25,7 +25,7 @@ func TestPluginProxy(t *testing.T) {
 
 		setting.SecretKey = "password"
 
-		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
+		bus.SetHandler(func(query *models.GetPluginSettingByIdQuery) error {
 			key, err := util.Encrypt([]byte("123"), "password")
 			if err != nil {
 				return err
@@ -104,7 +104,7 @@ func TestPluginProxy(t *testing.T) {
 			Method: "GET",
 		}
 
-		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
+		bus.SetHandler(func(query *models.GetPluginSettingByIdQuery) error {
 			query.Result = &models.PluginSetting{
 				JsonData: map[string]interface{}{
 					"dynamicUrl": "https://dynamic.grafana.com",
@@ -133,7 +133,7 @@ func TestPluginProxy(t *testing.T) {
 			Method: "GET",
 		}
 
-		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
+		bus.SetHandler(func(query *models.GetPluginSettingByIdQuery) error {
 			query.Result = &models.PluginSetting{}
 			return nil
 		})
@@ -158,7 +158,7 @@ func TestPluginProxy(t *testing.T) {
 			Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
 		}
 
-		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
+		bus.SetHandler(func(query *models.GetPluginSettingByIdQuery) error {
 			query.Result = &models.PluginSetting{
 				JsonData: map[string]interface{}{
 					"dynamicUrl": "https://dynamic.grafana.com",

@@ -32,7 +32,7 @@ var (
 )
 
 func init() {
-	bus.AddHandlerCtx("alerting", handleNotificationTestCommand)
+	bus.SetHandlerCtx(handleNotificationTestCommand)
 }
 
 func handleNotificationTestCommand(ctx context.Context, cmd *NotificationTestCommand) error {

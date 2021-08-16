@@ -36,7 +36,7 @@ func TestService(t *testing.T) {
 	s.DataService.RegisterQueryHandler("test", func(*models.DataSource) (plugins.DataPlugin, error) {
 		return me, nil
 	})
-	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
+	bus.SetHandler(func(query *models.GetDataSourceQuery) error {
 		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test"}
 		return nil
 	})

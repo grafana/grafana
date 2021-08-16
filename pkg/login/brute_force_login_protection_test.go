@@ -72,7 +72,7 @@ func TestSaveInvalidLoginAttempt(t *testing.T) {
 		t.Cleanup(func() { bus.ClearBusHandlers() })
 
 		createLoginAttemptCmd := &models.CreateLoginAttemptCommand{}
-		bus.AddHandler("test", func(cmd *models.CreateLoginAttemptCommand) error {
+		bus.SetHandler(func(cmd *models.CreateLoginAttemptCommand) error {
 			createLoginAttemptCmd = cmd
 			return nil
 		})
@@ -94,7 +94,7 @@ func TestSaveInvalidLoginAttempt(t *testing.T) {
 		t.Cleanup(func() { bus.ClearBusHandlers() })
 
 		var createLoginAttemptCmd *models.CreateLoginAttemptCommand
-		bus.AddHandler("test", func(cmd *models.CreateLoginAttemptCommand) error {
+		bus.SetHandler(func(cmd *models.CreateLoginAttemptCommand) error {
 			createLoginAttemptCmd = cmd
 			return nil
 		})
@@ -127,7 +127,7 @@ func cfgWithBruteForceLoginProtectionEnabled(t *testing.T) *setting.Cfg {
 
 func withLoginAttempts(t *testing.T, loginAttempts int64) {
 	t.Helper()
-	bus.AddHandler("test", func(query *models.GetUserLoginAttemptCountQuery) error {
+	bus.SetHandler(func(query *models.GetUserLoginAttemptCountQuery) error {
 		query.Result = loginAttempts
 		return nil
 	})

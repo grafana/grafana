@@ -40,7 +40,7 @@ func TestGetHomeDashboard(t *testing.T) {
 		Cfg: cfg, Bus: bus.New(),
 		PluginManager: &fakePluginManager{},
 	}
-	hs.Bus.AddHandlerCtx(func(_ context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
+	hs.Bus.SetHandlerCtx(func(_ context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
 		query.Result = &models.Preferences{
 			HomeDashboardId: 0,
 		}
@@ -108,7 +108,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			fakeDash.FolderId = 1
 			fakeDash.HasAcl = false
 
-			bus.AddHandler("test", func(query *models.GetDashboardsBySlugQuery) error {
+			bus.SetHandler(func(query *models.GetDashboardsBySlugQuery) error {
 				dashboards := []*models.Dashboard{fakeDash}
 				query.Result = dashboards
 				return nil
@@ -116,7 +116,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			state := &testState{}
 
-			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+			bus.SetHandlerCtx(func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = fakeDash
 				state.dashQueries = append(state.dashQueries, query)
 				return nil
@@ -130,12 +130,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 			}
 
-			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+			bus.SetHandler(func(query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = aclMockResp
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
+			bus.SetHandler(func(query *models.GetTeamsByUserQuery) error {
 				query.Result = []*models.TeamDTO{}
 				return nil
 			})
@@ -262,7 +262,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			})
 			setting.ViewersCanEdit = false
 
-			bus.AddHandler("test", func(query *models.GetDashboardsBySlugQuery) error {
+			bus.SetHandler(func(query *models.GetDashboardsBySlugQuery) error {
 				dashboards := []*models.Dashboard{fakeDash}
 				query.Result = dashboards
 				return nil
@@ -276,18 +276,18 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				},
 			}
 
-			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+			bus.SetHandler(func(query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = aclMockResp
 				return nil
 			})
 
-			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+			bus.SetHandlerCtx(func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = fakeDash
 				state.dashQueries = append(state.dashQueries, query)
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
+			bus.SetHandler(func(query *models.GetTeamsByUserQuery) error {
 				query.Result = []*models.TeamDTO{}
 				return nil
 			})
@@ -391,7 +391,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			setUpInner := func() *testState {
 				state := setUp()
-				bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+				bus.SetHandler(func(query *models.GetDashboardAclInfoListQuery) error {
 					query.Result = mockResult
 					return nil
 				})
@@ -443,7 +443,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
 				}
 
-				bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+				bus.SetHandler(func(query *models.GetDashboardAclInfoListQuery) error {
 					query.Result = mockResult
 					return nil
 				})
@@ -487,7 +487,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				mockResult := []*models.DashboardAclInfoDTO{
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_ADMIN},
 				}
-				bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+				bus.SetHandler(func(query *models.GetDashboardAclInfoListQuery) error {
 					query.Result = mockResult
 					return nil
 				})
@@ -537,7 +537,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				mockResult := []*models.DashboardAclInfoDTO{
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
 				}
-				bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+				bus.SetHandler(func(query *models.GetDashboardAclInfoListQuery) error {
 					query.Result = mockResult
 					return nil
 				})
@@ -588,7 +588,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		dashTwo.FolderId = 3
 		dashTwo.HasAcl = false
 
-		bus.AddHandler("test", func(query *models.GetDashboardsBySlugQuery) error {
+		bus.SetHandler(func(query *models.GetDashboardsBySlugQuery) error {
 			dashboards := []*models.Dashboard{dashOne, dashTwo}
 			query.Result = dashboards
 			return nil
@@ -778,12 +778,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given two dashboards being compared", func(t *testing.T) {
 		setUp := func() {
 			mockResult := []*models.DashboardAclInfoDTO{}
-			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+			bus.SetHandler(func(query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = mockResult
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetDashboardVersionQuery) error {
+			bus.SetHandler(func(query *models.GetDashboardVersionQuery) error {
 				query.Result = &models.DashboardVersion{
 					Data: simplejson.NewFromAny(map[string]interface{}{
 						"title": fmt.Sprintf("Dash%d", query.DashboardId),
@@ -836,12 +836,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			fakeDash.FolderId = folderID
 			fakeDash.HasAcl = false
 
-			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+			bus.SetHandlerCtx(func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = fakeDash
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetDashboardVersionQuery) error {
+			bus.SetHandler(func(query *models.GetDashboardVersionQuery) error {
 				query.Result = &models.DashboardVersion{
 					DashboardId: 2,
 					Version:     1,
@@ -884,12 +884,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			fakeDash.Id = 2
 			fakeDash.HasAcl = false
 
-			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+			bus.SetHandlerCtx(func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = fakeDash
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetDashboardVersionQuery) error {
+			bus.SetHandler(func(query *models.GetDashboardVersionQuery) error {
 				query.Result = &models.DashboardVersion{
 					DashboardId: 2,
 					Version:     1,
@@ -928,11 +928,11 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 	t.Run("Given provisioned dashboard", func(t *testing.T) {
 		setUp := func() {
-			bus.AddHandler("test", func(query *models.GetDashboardsBySlugQuery) error {
+			bus.SetHandler(func(query *models.GetDashboardsBySlugQuery) error {
 				query.Result = []*models.Dashboard{{}}
 				return nil
 			})
-			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+			bus.SetHandlerCtx(func(ctx context.Context, query *models.GetDashboardQuery) error {
 				dataValue, err := simplejson.NewJson([]byte(`{"id": 1, "editable": true, "style": "dark"}`))
 				require.NoError(t, err)
 				query.Result = &models.Dashboard{Id: 1, Data: dataValue}
@@ -947,7 +947,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return &models.DashboardProvisioning{ExternalId: "/tmp/grafana/dashboards/test/dashboard1.json"}, nil
 			}
 
-			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+			bus.SetHandler(func(query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = []*models.DashboardAclInfoDTO{
 					{OrgId: testOrgID, DashboardId: 1, UserId: testUserID, Permission: models.PERMISSION_EDIT},
 				}
@@ -1049,7 +1049,7 @@ func callGetDashboard(sc *scenarioContext, hs *HTTPServer) {
 }
 
 func callGetDashboardVersion(sc *scenarioContext) {
-	bus.AddHandler("test", func(query *models.GetDashboardVersionQuery) error {
+	bus.SetHandler(func(query *models.GetDashboardVersionQuery) error {
 		query.Result = &models.DashboardVersion{}
 		return nil
 	})
@@ -1059,7 +1059,7 @@ func callGetDashboardVersion(sc *scenarioContext) {
 }
 
 func callGetDashboardVersions(sc *scenarioContext) {
-	bus.AddHandler("test", func(query *models.GetDashboardVersionsQuery) error {
+	bus.SetHandler(func(query *models.GetDashboardVersionsQuery) error {
 		query.Result = []*models.DashboardVersionDTO{}
 		return nil
 	})
@@ -1069,7 +1069,7 @@ func callGetDashboardVersions(sc *scenarioContext) {
 }
 
 func callDeleteDashboardBySlug(sc *scenarioContext, hs *HTTPServer) {
-	bus.AddHandler("test", func(cmd *models.DeleteDashboardCommand) error {
+	bus.SetHandler(func(cmd *models.DeleteDashboardCommand) error {
 		return nil
 	})
 
@@ -1078,7 +1078,7 @@ func callDeleteDashboardBySlug(sc *scenarioContext, hs *HTTPServer) {
 }
 
 func callDeleteDashboardByUID(sc *scenarioContext, hs *HTTPServer) {
-	bus.AddHandler("test", func(cmd *models.DeleteDashboardCommand) error {
+	bus.SetHandler(func(cmd *models.DeleteDashboardCommand) error {
 		return nil
 	})
 

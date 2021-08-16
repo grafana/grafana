@@ -31,11 +31,11 @@ func TestDatasourceAsConfig(t *testing.T) {
 	Convey("Testing datasource as configuration", t, func() {
 		fakeRepo = &fakeRepository{}
 		bus.ClearBusHandlers()
-		bus.AddHandler("test", mockDelete)
-		bus.AddHandler("test", mockInsert)
-		bus.AddHandler("test", mockUpdate)
-		bus.AddHandler("test", mockGet)
-		bus.AddHandler("test", mockGetOrg)
+		bus.SetHandler(mockDelete)
+		bus.SetHandler(mockInsert)
+		bus.SetHandler(mockUpdate)
+		bus.SetHandler(mockGet)
+		bus.SetHandler(mockGetOrg)
 
 		Convey("apply default values when missing", func() {
 			dc := newDatasourceProvisioner(logger)

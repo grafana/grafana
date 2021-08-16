@@ -94,7 +94,7 @@ func mockPasswordValidation(valid bool, sc *grafanaLoginScenarioContext) {
 }
 
 func (sc *grafanaLoginScenarioContext) getUserByLoginQueryReturns(user *models.User) {
-	bus.AddHandler("test", func(query *models.GetUserByLoginQuery) error {
+	bus.SetHandler(func(query *models.GetUserByLoginQuery) error {
 		if user == nil {
 			return models.ErrUserNotFound
 		}

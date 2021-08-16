@@ -24,7 +24,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 		t.Run("Given dashboard not exists", func(t *testing.T) {
 			setUp := func() {
-				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+				bus.SetHandler(func(query *models.GetDashboardQuery) error {
 					return models.ErrDashboardNotFound
 				})
 			}
@@ -66,7 +66,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			getDashboardQueryResult := models.NewDashboard("Dash")
 
 			setUp := func() {
-				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+				bus.SetHandlerCtx(func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -118,7 +118,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			setUp := func() {
 				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+				bus.SetHandlerCtx(func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -171,7 +171,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			setUp := func() {
 				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+				bus.SetHandlerCtx(func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -242,7 +242,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			setUp := func() {
 				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+				bus.SetHandlerCtx(func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -293,7 +293,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			setUp := func() {
 				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
+				bus.SetHandlerCtx(func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})

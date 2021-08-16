@@ -96,7 +96,7 @@ func TestDashboardFileReader(t *testing.T) {
 		})
 		fakeService = mockDashboardProvisioningService()
 
-		bus.AddHandler("test", mockGetDashboardQuery)
+		bus.SetHandler(mockGetDashboardQuery)
 		logger := log.New("test.logger")
 
 		Convey("Reading dashboards from disk", func() {
