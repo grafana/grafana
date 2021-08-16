@@ -26,9 +26,7 @@ export const SegmentSection = ({
   return (
     <>
       <div className={styles.container}>
-        <div>
-          <SegmentSectionLabel name={label} className="width-7" />
-        </div>
+        <SegmentSectionLabel name={label} className="width-7" />
         {children}
         {fill && <SegmentSectionFill />}
       </div>
