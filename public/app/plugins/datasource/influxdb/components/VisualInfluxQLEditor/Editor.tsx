@@ -26,7 +26,7 @@ import {
 import { FormatAsSection } from './FormatAsSection';
 import { DEFAULT_RESULT_FORMAT } from '../constants';
 import { getNewSelectPartOptions, getNewGroupByPartOptions, makePartList } from './partListUtils';
-import { Section, SectionLabel } from '@grafana/ui';
+import { SegmentSection, SegmentSectionLabel } from '@grafana/ui';
 
 type Props = {
   query: InfluxQuery;
@@ -103,7 +103,7 @@ export const Editor = (props: Props): JSX.Element => {
 
   return (
     <div>
-      <Section label="FROM" fill={true}>
+      <SegmentSection label="FROM" fill={true}>
         <FromSection
           policy={policy}
           measurement={measurement}
@@ -115,7 +115,7 @@ export const Editor = (props: Props): JSX.Element => {
           }
           onChange={handleFromSectionChange}
         />
-        <SectionLabel name="WHERE" />
+        <SegmentSectionLabel name="WHERE" />
         <TagsSection
           tags={query.tags ?? []}
           onChange={handleTagsSectionChange}
@@ -124,9 +124,9 @@ export const Editor = (props: Props): JSX.Element => {
             withTemplateVariableOptions(getTagValues(key, measurement, policy, query.tags ?? [], datasource))
           }
         />
-      </Section>
+      </SegmentSection>
       {selectLists.map((sel, index) => (
-        <Section key={index} label={index === 0 ? 'SELECT' : ''} fill={true}>
+        <SegmentSection key={index} label={index === 0 ? 'SELECT' : ''} fill={true}>
           <PartListSection
             parts={sel}
             getNewPartOptions={() => Promise.resolve(getNewSelectPartOptions())}
@@ -141,9 +141,9 @@ export const Editor = (props: Props): JSX.Element => {
               onAppliedChange(removeSelectPart(query, partIndex, index));
             }}
           />
-        </Section>
+        </SegmentSection>
       ))}
-      <Section label="GROUP BY" fill={true}>
+      <SegmentSection label="GROUP BY" fill={true}>
         <PartListSection
           parts={groupByList}
           getNewPartOptions={() => getNewGroupByPartOptions(query, getTagKeys)}
@@ -158,8 +158,8 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange(removeGroupByPart(query, partIndex));
           }}
         />
-      </Section>
-      <Section label="TIMEZONE" fill={true}>
+      </SegmentSection>
+      <SegmentSection label="TIMEZONE" fill={true}>
         <InputSection
           placeholder="(optional)"
           value={query.tz}
@@ -167,20 +167,20 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, tz });
           }}
         />
-        <SectionLabel name="ORDER BY TIME" />
+        <SegmentSectionLabel name="ORDER BY TIME" />
         <OrderByTimeSection
           value={query.orderByTime === 'DESC' ? 'DESC' : 'ASC' /* FIXME: make this shared with influx_query_model */}
           onChange={(v) => {
             onAppliedChange({ ...query, orderByTime: v });
           }}
         />
-      </Section>
+      </SegmentSection>
       {/* query.fill is ignored in the query-editor, and it is deleted whenever
           query-editor changes. the influx_query_model still handles it, but the new
           approach seem to be to handle "fill" inside query.groupBy. so, if you
           have a panel where in the json you have query.fill, it will be applied,
           as long as you do not edit that query. */}
-      <Section label="LIMIT" fill={true}>
+      <SegmentSection label="LIMIT" fill={true}>
         <InputSection
           placeholder="(optional)"
           value={query.limit?.toString()}
@@ -188,7 +188,7 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, limit });
           }}
         />
-        <SectionLabel name="SLIMIT" />
+        <SegmentSectionLabel name="SLIMIT" />
         <InputSection
           placeholder="(optional)"
           value={query.slimit?.toString()}
@@ -196,8 +196,8 @@ export const Editor = (props: Props): JSX.Element => {
             onAppliedChange({ ...query, slimit });
           }}
         />
-      </Section>
-      <Section label="FORMAT AS" fill={true}>
+      </SegmentSection>
+      <SegmentSection label="FORMAT AS" fill={true}>
         <FormatAsSection
           format={query.resultFormat ?? DEFAULT_RESULT_FORMAT}
           onChange={(format) => {
@@ -206,7 +206,7 @@ export const Editor = (props: Props): JSX.Element => {
         />
         {query.resultFormat !== 'table' && (
           <>
-            <SectionLabel name="ALIAS" />
+            <SegmentSectionLabel name="ALIAS" />
             <InputSection
               isWide
               placeholder="Naming pattern"
@@ -217,7 +217,7 @@ export const Editor = (props: Props): JSX.Element => {
             />
           </>
         )}
-      </Section>
+      </SegmentSection>
     </div>
   );
 };

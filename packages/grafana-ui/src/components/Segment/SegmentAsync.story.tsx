@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AsyncState } from 'react-use/lib/useAsync';
 import { action } from '@storybook/addon-actions';
 import { SelectableValue } from '@grafana/data';
-import { SegmentAsync, Icon, Section } from '@grafana/ui';
+import { SegmentAsync, Icon, SegmentSection } from '@grafana/ui';
 
 const AddButton = (
   <a className="gf-form-label query-part">
@@ -21,14 +21,14 @@ const loadOptionsErr = (): Promise<Array<SelectableValue<string>>> =>
 
 const SegmentFrame = ({ loadOptions, children }: any) => (
   <>
-    <Section label="Segment Name">
+    <SegmentSection label="Segment Name">
       {children}
       <SegmentAsync
         Component={AddButton}
         onChange={(value) => action('New value added')(value)}
         loadOptions={() => loadOptions(options)}
       />
-    </Section>
+    </SegmentSection>
   </>
 );
 
