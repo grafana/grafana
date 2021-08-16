@@ -23,6 +23,8 @@ export const notFoundItem: CanvasElementItem<NotFoundConfig> = {
   name: 'Not found',
   description: 'Display when element type is not found in the registry',
 
+  defaultConfig: {},
+
   display: NotFoundDisplay,
 
   defaultSize: {

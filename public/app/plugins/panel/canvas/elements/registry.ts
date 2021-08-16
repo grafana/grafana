@@ -5,7 +5,7 @@ import { textBoxItem } from './textBox';
 
 export const DEFAULT_ELEMENT_CONFIG: CanvasElementOptions = {
   type: iconItem.id,
-  config: { ...iconItem.defaultOptions },
+  config: { ...iconItem.defaultConfig },
   placement: { ...iconItem.defaultSize },
 };
 

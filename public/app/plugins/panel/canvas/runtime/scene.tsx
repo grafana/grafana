@@ -35,8 +35,8 @@ export class ElementState {
   style: CSSProperties = {};
 
   // Calculated
-  width: number;
-  height: number;
+  width = 100;
+  height = 100;
   data?: any; // depends on the type
 
   constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
@@ -224,7 +224,7 @@ export class Scene {
   width = 0;
   height = 0;
   style: CSSProperties = {};
-  data: PanelData;
+  data?: PanelData;
 
   constructor(cfg: CanvasGroupOptions, public onSave: (cfg: CanvasGroupOptions) => void) {
     this.root = new GroupState(
