@@ -10,7 +10,6 @@ const TopSection: FC<any> = () => {
   const searchLink = {
     text: 'Search dashboards',
     icon: 'search',
-    url: '&search=open',
   };
 
   const onOpenSearch = () => {
