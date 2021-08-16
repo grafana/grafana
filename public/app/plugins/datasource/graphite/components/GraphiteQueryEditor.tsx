@@ -28,8 +28,8 @@ function GraphiteQueryEditorContent() {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={css({ display: 'flex' })}>
-      <div className={css({ flexGrow: 1 })}>
+    <div className={styles.container}>
+      <div className={styles.visualEditor}>
         {state.target?.textEditor && <GraphiteTextEditor rawQuery={state.target.target} />}
         {!state.target?.textEditor && (
           <>
@@ -52,6 +52,12 @@ function GraphiteQueryEditorContent() {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    container: css`
+      display: flex;
+    `,
+    visualEditor: css`
+      flex-grow: 1;
+    `,
     toggleButton: css`
       margin-left: ${theme.spacing(0.5)};
     `,
