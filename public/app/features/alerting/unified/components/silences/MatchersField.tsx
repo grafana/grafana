@@ -1,11 +1,11 @@
 import React, { FC } from 'react';
 import { Button, Field, Input, IconButton, InputControl, useStyles2, Select } from '@grafana/ui';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { SilenceFormFields } from '../../types/silence-form';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
-import { matcherToOperator, matcherFieldToMatcher } from '../../utils/alertmanager';
+import { matcherToOperator, matcherFieldToMatcher, matcherFieldOptions } from '../../utils/alertmanager';
 
 interface Props {
   className?: string;
@@ -19,13 +19,6 @@ const MatchersField: FC<Props> = ({ className }) => {
     register,
     formState: { errors },
   } = formApi;
-
-  const matcherFieldOptions: SelectableValue[] = [
-    { label: MatcherOperator.equal, description: 'Equals', value: MatcherOperator.equal },
-    { label: MatcherOperator.notEqual, description: 'Does not equal', value: MatcherOperator.notEqual },
-    { label: MatcherOperator.regex, description: 'Matches regex', value: MatcherOperator.regex },
-    { label: MatcherOperator.notRegex, description: 'Does not match regex', value: MatcherOperator.notRegex },
-  ];
 
   const { fields: matchers = [], append, remove } = useFieldArray<SilenceFormFields>({ name: 'matchers' });
 

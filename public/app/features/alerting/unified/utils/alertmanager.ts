@@ -1,6 +1,7 @@
 import { AlertManagerCortexConfig, MatcherOperator, Route, Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 import { MatcherField } from '../types/silence-form';
+import { SelectableValue } from '@grafana/data';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -73,6 +74,13 @@ export function matcherFieldToMatcher(field: MatcherField): Matcher {
     ...matcherOperatorToValue(field.operator),
   };
 }
+
+export const matcherFieldOptions: SelectableValue[] = [
+  { label: MatcherOperator.equal, description: 'Equals', value: MatcherOperator.equal },
+  { label: MatcherOperator.notEqual, description: 'Does not equal', value: MatcherOperator.notEqual },
+  { label: MatcherOperator.regex, description: 'Matches regex', value: MatcherOperator.regex },
+  { label: MatcherOperator.notRegex, description: 'Does not match regex', value: MatcherOperator.notRegex },
+];
 
 const matcherOperators = [
   MatcherOperator.regex,
