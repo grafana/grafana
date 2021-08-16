@@ -1,4 +1,4 @@
-import { PanelModel as IPanelModel, Threshold, ThresholdsConfig } from '@grafana/data';
+import { PanelModel as IPanelModel, Threshold } from '@grafana/data';
 import { isEqual } from 'lodash';
 import { PanelModel } from '../state';
 
