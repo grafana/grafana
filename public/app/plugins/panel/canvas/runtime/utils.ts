@@ -5,10 +5,12 @@ import {
   DimensionSupplier,
   ResourceDimensionConfig,
   ScaleDimensionConfig,
+  TextDimensionConfig,
 } from '../../geomap/dims/types';
 import { config } from '@grafana/runtime';
 import { getScaledDimension } from '../../geomap/dims/scale';
 import { getResourceDimension } from '../../geomap/dims/resource';
+import { getTextDimension } from '../../geomap/dims/text';
 
 export function getColorDimensionFromData(
   data: PanelData | undefined,
@@ -53,4 +55,19 @@ export function getResourceDimensionFromData(
     }
   }
   return getResourceDimension(undefined, cfg);
+}
+
+export function getTextDimensionFromData(
+  data: PanelData | undefined,
+  cfg: TextDimensionConfig
+): DimensionSupplier<string> {
+  if (data?.series && cfg.field) {
+    for (const frame of data.series) {
+      const d = getTextDimension(frame, cfg);
+      if (!d.isAssumed || data.series.length === 1) {
+        return d;
+      }
+    }
+  }
+  return getTextDimension(undefined, cfg);
 }

@@ -8,7 +8,7 @@ import IconSelector from './IconSelector';
 const resourceOptions = [
   { label: 'Fixed', value: ResourceDimensionMode.Fixed, description: 'Fixed value' },
   { label: 'Field', value: ResourceDimensionMode.Field, description: 'Use a string field result' },
-  { label: 'Mapping', value: ResourceDimensionMode.Mapping, description: 'Map the results of a value to an svg' },
+  //  { label: 'Mapping', value: ResourceDimensionMode.Mapping, description: 'Map the results of a value to an svg' },
 ];
 
 const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
@@ -18,7 +18,8 @@ const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerCon
 export const IconDimensionEditor: FC<StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, any>> = (
   props
 ) => {
-  const { value, context, onChange } = props;
+  const { value, context, onChange, item } = props;
+  const resourceType = item.settings?.resourceType ?? 'icon';
   const labelWidth = 9;
 
   const onModeChange = useCallback(
@@ -74,7 +75,7 @@ export const IconDimensionEditor: FC<StandardEditorProps<ResourceDimensionConfig
       )}
       {mode === ResourceDimensionMode.Fixed && (
         <InlineFieldRow>
-          <InlineField label="Icon" labelWidth={labelWidth} grow={true}>
+          <InlineField label={resourceType === 'icon' ? 'Icon' : 'Image'} labelWidth={labelWidth} grow={true}>
             <IconSelector value={value?.fixed} onChange={onFixedChange} />
           </InlineField>
         </InlineFieldRow>

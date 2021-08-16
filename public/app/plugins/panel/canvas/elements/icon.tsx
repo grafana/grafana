@@ -3,7 +3,7 @@ import React, { CSSProperties } from 'react';
 import { CanvasSceneContext, CanvasElementItem, CanvasElementProps, LineConfig } from '../base';
 import { ColorDimensionConfig, ResourceDimensionConfig } from '../../geomap/dims/types';
 import { ColorDimensionEditor } from '../../geomap/dims/editors/ColorDimensionEditor';
-import { IconDimensionEditor } from '../../geomap/dims/editors/IconDimensionEditor';
+import { IconDimensionEditor } from '../../geomap/dims/editors/ResourceDimensionEditor';
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
 

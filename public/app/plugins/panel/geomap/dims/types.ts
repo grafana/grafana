@@ -46,12 +46,26 @@ export interface ScaleDimensionOptions {
   hideRange?: boolean; // false
 }
 
+export interface TextDimensionOptions {
+  // anything?
+}
+
+export enum TextDimensionMode {
+  Fixed = 'fixed',
+  Field = 'field',
+  Template = 'template',
+}
+
+export interface TextDimensionConfig extends BaseDimensionConfig<string> {
+  mode: TextDimensionMode;
+}
+
 /** Use the color value from field configs */
 export interface ColorDimensionConfig extends BaseDimensionConfig<string> {}
 
 /** Places that use the value */
 export interface ResourceDimensionOptions {
-  // ?? prefered path ??
+  resourceType: 'icon' | 'image';
 }
 
 export enum ResourceDimensionMode {
