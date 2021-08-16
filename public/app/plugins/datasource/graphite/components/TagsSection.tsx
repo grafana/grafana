@@ -40,7 +40,7 @@ export function TagsSection({ tags, state }: Props) {
   ]);
 
   return (
-    <div className={styles.container}>
+    <>
       {tags.map((tag, index) => {
         return <TagEditor key={index} tagIndex={index} tag={tag} state={state} />;
       })}
@@ -56,16 +56,12 @@ export function TagsSection({ tags, state }: Props) {
         />
       )}
       {state.paused && <PlayButton />}
-    </div>
+    </>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    container: css`
-      display: flex;
-      flex-direction: row;
-    `,
     button: css`
       margin-right: ${theme.spacing(0.5)};
     `,

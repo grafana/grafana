@@ -2,7 +2,7 @@ import React from 'react';
 import { GraphiteQueryEditorState } from '../state/store';
 import { TagsSection } from './TagsSection';
 import { MetricsSection } from './MetricsSection';
-import { Section } from '@grafana/ui';
+import { SegmentSection } from '@grafana/ui';
 
 type Props = {
   state: GraphiteQueryEditorState;
@@ -16,8 +16,8 @@ export function SeriesSection({ state }: Props) {
   );
 
   return (
-    <Section label="Series" fill={true}>
+    <SegmentSection label="Series" fill={true}>
       {sectionContent}
-    </Section>
+    </SegmentSection>
   );
 }

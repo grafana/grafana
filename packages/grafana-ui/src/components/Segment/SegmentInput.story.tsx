@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { action } from '@storybook/addon-actions';
-import { SegmentInput, Icon, Section } from '@grafana/ui';
+import { SegmentInput, Icon, SegmentSection } from '@grafana/ui';
 
 const SegmentFrame = ({ children }: any) => (
   <>
-    <Section label="Section Name">{children}</Section>
+    <SegmentSection label="Segment Name">{children}</SegmentSection>
   </>
 );
 
