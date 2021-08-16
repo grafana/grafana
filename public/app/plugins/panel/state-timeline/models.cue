@@ -22,8 +22,11 @@ Family: {
     lineages: [
         [
             {
+                #TimelineMode: "changes" | "samples" @cuetsy(targetType="enum")
                 #TimelineValueAlignment: "center" | "left" | "right" @cuetsy(targetType="type")
                 PanelOptions: {
+                    // FIXME ts comments indicate this shouldn't be in the saved model, but currently is emitted
+                    mode?: #TimelineMode
                     ui.OptionsWithLegend
                     ui.OptionsWithTooltip
                     showValue: ui.BarValueVisibility | *"auto"

@@ -28,6 +28,7 @@ Family: {
                     showValue: ui.BarValueVisibility
                     rowHeight: number
                     colWidth?: number
+                    alignValue: "center" | *"left" | "right"
                 }
                 PanelFieldConfig: {
                     ui.HideableFieldConfig

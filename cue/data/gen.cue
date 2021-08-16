@@ -218,8 +218,10 @@ Family: scuemata.#Family & {
                     // TODO tighter constraint
                     timeShift?: string
 
-                    // The values depend on panel type
-                    options: {...}
+                    // The allowable options are specified by the panel plugin's
+                    // schema.
+                    // FIXME same conundrum as with the closed validation for fieldConfig.
+                    options: {}
 
                     fieldConfig: {
                         defaults: {

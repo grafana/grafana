@@ -21,6 +21,8 @@ Family: {
         [
             {
                 PanelOptions: {
+                    ui.OptionsWithLegend
+                    ui.OptionsWithTooltip
                     bucketSize?: int
                     bucketOffset: int | *0
                     combine?: bool
