@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -89,7 +90,12 @@ func TestDevenvDashboardValidity(t *testing.T) {
 					err := sch.Validate(schema.Resource{Value: byt, Name: path})
 					if err != nil {
 						// Testify trims errors to short length. We want the full text
-						t.Fatal(errors.Details(err, nil))
+						errstr := errors.Details(err, nil)
+						t.Log(errstr)
+						if strings.Contains(errstr, "null") {
+							t.Log("validation failure appears to involve nulls - see if scripts/stripnulls.sh has any effect?")
+						}
+						t.FailNow()
 					}
 				})
 
