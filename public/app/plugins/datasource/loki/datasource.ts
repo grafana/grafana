@@ -51,6 +51,7 @@ import LanguageProvider from './language_provider';
 import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import syntax from './syntax';
+import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -186,8 +187,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const startNs = this.getTime(options.range.from, false);
       const endNs = this.getTime(options.range.to, true);
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
+
+      const resolution = target.resolution || (DEFAULT_RESOLUTION.value as number);
+
       const adjustedInterval =
-        this.adjustInterval((options as DataQueryRequest<LokiQuery>).intervalMs || 1000, rangeMs) / 1000;
+        this.adjustInterval((options as DataQueryRequest<LokiQuery>).intervalMs || 1000, resolution, rangeMs) / 1000;
       // We want to ceil to 3 decimal places
       const step = Math.ceil(adjustedInterval * 1000) / 1000;
 
@@ -558,14 +562,28 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   async annotationQuery(options: any): Promise<AnnotationEvent[]> {
-    const { expr, maxLines, instant, tagKeys = '', titleFormat = '', textFormat = '' } = options.annotation;
+    const {
+      expr,
+      maxLines,
+      instant,
+      stepInterval,
+      tagKeys = '',
+      titleFormat = '',
+      textFormat = '',
+    } = options.annotation;
 
     if (!expr) {
       return [];
     }
 
     const interpolatedExpr = this.templateSrv.replace(expr, {}, this.interpolateQueryExpr);
-    const query = { refId: `annotation-${options.annotation.name}`, expr: interpolatedExpr, maxLines, instant };
+    const query = {
+      refId: `annotation-${options.annotation.name}`,
+      expr: interpolatedExpr,
+      maxLines,
+      instant,
+      stepInterval,
+    };
     const { data } = instant
       ? await this.runInstantQuery(query, options as any).toPromise()
       : await this.runRangeQuery(query, options as any).toPromise();
@@ -634,14 +652,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return error;
   }
 
-  adjustInterval(interval: number, range: number) {
+  adjustInterval(dynamicInterval: number, resolution: number, range: number) {
     // Loki will drop queries that might return more than 11000 data points.
     // Calibrate interval if it is too small.
-    if (interval !== 0 && range / interval > 11000) {
-      interval = Math.ceil(range / 11000);
+    let safeInterval = range / 11000;
+    if (safeInterval > 1) {
+      safeInterval = Math.ceil(safeInterval);
     }
-    // The min interval is set to 1ms
-    return Math.max(interval, 1);
+
+    let adjustedInterval = Math.max(resolution * dynamicInterval, safeInterval);
+    return adjustedInterval;
   }
 
   addAdHocFilters(queryExpr: string) {
