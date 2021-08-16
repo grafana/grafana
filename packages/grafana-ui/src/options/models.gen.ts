@@ -16,7 +16,7 @@ export interface VizTextDisplayOptions {
  * @public
  */
 export interface OptionsWithLegend {
-  legend?: VizLegendOptions;
+  legend: VizLegendOptions;
 }
 
 /**

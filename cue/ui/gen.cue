@@ -146,10 +146,12 @@ ReduceDataOptions: {
 VizOrientation: "auto" | "vertical" | "horizontal" @cuetsy(targetType="enum")
 // TODO copy back to appropriate place
 OptionsWithTooltip: {
+	// FIXME this field is non-optional in the corresponding TS type
 	tooltip?: VizTooltipOptions
 } @cuetsy(targetType="interface")
 // TODO copy back to appropriate place
 OptionsWithLegend: {
+	// FIXME this field is non-optional in the corresponding TS type
 	legend?: VizLegendOptions
 } @cuetsy(targetType="interface")
 // TODO copy back to appropriate place
