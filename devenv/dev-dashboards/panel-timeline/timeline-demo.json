@@ -79,7 +79,6 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "changes",
         "rowHeight": 0.98,
         "showValue": "always"
       },
@@ -339,7 +338,6 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "samples",
         "rowHeight": 0.98,
         "showValue": "always"
       },
