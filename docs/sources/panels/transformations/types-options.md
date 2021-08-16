@@ -372,6 +372,8 @@ The available conditions for all fields are:
 - **Regex:** Match a regex expression
 - **Is Null:** Match if the value is null
 - **Is Not Null:** Match if the value is not null
+- **Is Undefined:** Match if the value is undefined
+- **Is Not Undefined:** Match if the value is not undefined
 - **Equal:** Match if the value is equal to the specified value
 - **Different:** match if the value is different than the specified value
 
