@@ -27,7 +27,8 @@ Family: {
                     ui.OptionsWithTooltip
                     ui.OptionsWithTextFormatting
                     orientation: ui.VizOrientation
-                    stacking: ui.StackingMode
+                    // TODO this default is a guess based on common devenv values
+                    stacking: ui.StackingMode | *"none"
                     showValue: ui.BarValueVisibility
                     barWidth: number
                     groupWidth: number
