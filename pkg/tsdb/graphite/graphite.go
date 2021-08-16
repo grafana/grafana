@@ -267,7 +267,7 @@ func (s *Service) toDataFrames(response *http.Response) (frames data.Frames, err
 			s.logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
 		}
 	}
-	return
+	return frames, nil
 }
 
 func (s *Service) createRequest(dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
