@@ -199,7 +199,7 @@ describe('getQueryHints()', () => {
     expect(hints![0]).toMatchObject({
       type: 'SAFE_INTERVAL',
       label:
-        'The specified step interval is lower than the safe interval and has been changed to 2s. Consider increasing the step interval or changing the time range',
+        'The specified step interval is lower than the safe interval. Consider increasing the step interval or changing the time range',
     });
   });
 });
