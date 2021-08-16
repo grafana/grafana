@@ -2,9 +2,10 @@ import React, { CSSProperties } from 'react';
 
 import { CanvasSceneContext, CanvasElementItem, CanvasElementProps, LineConfig } from '../base';
 import { ColorDimensionConfig, ResourceDimensionConfig } from 'app/features/dimensions';
-import { ColorDimensionEditor, IconDimensionEditor } from 'app/features/dimensions/editors';
+import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
+import { isString } from 'lodash';
 
 interface IconConfig {
   path?: ResourceDimensionConfig;
@@ -73,7 +74,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
     if (cfg.path) {
       path = ctx.getResource(cfg.path).value();
     }
-    if (!path) {
+    if (!path || !isString(path)) {
       // must be something?
       path = 'question-circle.svg';
     }
@@ -102,7 +103,10 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         id: 'iconSelector',
         path: 'config.path',
         name: 'SVG Path',
-        editor: IconDimensionEditor,
+        editor: ResourceDimensionEditor,
+        settings: {
+          resourceType: 'icon',
+        },
       })
       .addCustomEditor({
         id: 'config.fill',

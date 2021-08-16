@@ -1,12 +1,12 @@
 import React, { FC, useMemo } from 'react';
 import { Select } from '@grafana/ui';
 import { DataFrame, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
-import { CanvasElementItem, CanvasElementOptions } from '../base';
+import { BackroundImageSize, CanvasElementItem, CanvasElementOptions } from '../base';
 import { canvasElementRegistry, DEFAULT_ELEMENT_CONFIG } from '../elements/registry';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVizualizationOptions';
-import { ColorDimensionEditor } from '../../../../features/dimensions/editors/ColorDimensionEditor';
+import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 
 export interface CanvasElementEditorProps<TConfig = any> {
   options?: CanvasElementOptions<TConfig>;
@@ -34,83 +34,9 @@ export const CanvasElementEditor: FC<CanvasElementEditorProps> = ({ options, onC
     }
 
     const builder = new PanelOptionsEditorBuilder<CanvasElementOptions>();
-    // if (layer.showLocation) {
-    //   builder
-    //     .addRadio({
-    //       path: 'location.mode',
-    //       name: 'Location',
-    //       description: '',
-    //       defaultValue: FrameGeometrySourceMode.Auto,
-    //       settings: {
-    //         options: [
-    //           { value: FrameGeometrySourceMode.Auto, label: 'Auto' },
-    //           { value: FrameGeometrySourceMode.Coords, label: 'Coords' },
-    //           { value: FrameGeometrySourceMode.Geohash, label: 'Geohash' },
-    //           { value: FrameGeometrySourceMode.Lookup, label: 'Lookup' },
-    //         ],
-    //       },
-    //     })
-    //     .addFieldNamePicker({
-    //       path: 'location.latitude',
-    //       name: 'Latitude Field',
-    //       settings: {
-    //         filter: (f: Field) => f.type === FieldType.number,
-    //         noFieldsMessage: 'No numeric fields found',
-    //       },
-    //       showIf: (opts: MapCanvasElementOptions) => opts.location?.mode === FrameGeometrySourceMode.Coords,
-    //     })
-    //     .addFieldNamePicker({
-    //       path: 'location.longitude',
-    //       name: 'Longitude Field',
-    //       settings: {
-    //         filter: (f: Field) => f.type === FieldType.number,
-    //         noFieldsMessage: 'No numeric fields found',
-    //       },
-    //       showIf: (opts: MapCanvasElementOptions) => opts.location?.mode === FrameGeometrySourceMode.Coords,
-    //     })
-    //     .addFieldNamePicker({
-    //       path: 'location.geohash',
-    //       name: 'Geohash Field',
-    //       settings: {
-    //         filter: (f: Field) => f.type === FieldType.string,
-    //         noFieldsMessage: 'No strings fields found',
-    //       },
-    //       showIf: (opts: MapCanvasElementOptions) => opts.location?.mode === FrameGeometrySourceMode.Geohash,
-    //       // eslint-disable-next-line react/display-name
-    //       // info: (props) => <div>HELLO</div>,
-    //     })
-    //     .addFieldNamePicker({
-    //       path: 'location.lookup',
-    //       name: 'Lookup Field',
-    //       settings: {
-    //         filter: (f: Field) => f.type === FieldType.string,
-    //         noFieldsMessage: 'No strings fields found',
-    //       },
-    //       showIf: (opts: MapCanvasElementOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
-    //     })
-    //     .addCustomEditor({
-    //       id: 'gazetteer',
-    //       path: 'location.gazetteer',
-    //       name: 'Gazetteer',
-    //       editor: GazetteerPathEditor,
-    //       showIf: (opts: MapCanvasElementOptions) => opts.location?.mode === FrameGeometrySourceMode.Lookup,
-    //     });
-    // }
     if (layer.registerOptionsUI) {
       layer.registerOptionsUI(builder);
     }
-
-    // export interface BackgroundConfig {
-    //   color?: ColorDimensionConfig;
-    //   image?: string;
-    //   // repeat // https://developer.mozilla.org/en-US/docs/Web/CSS/background-repeat
-    //   // position ?
-    // }
-
-    // export interface LineConfig {
-    //   color?: ColorDimensionConfig;
-    //   width?: number;
-    // }
 
     builder.addCustomEditor({
       id: 'background.color',
@@ -123,6 +49,29 @@ export const CanvasElementEditor: FC<CanvasElementEditorProps> = ({ options, onC
         fixed: '',
       },
     });
+
+    builder
+      .addCustomEditor({
+        id: 'background.image',
+        path: 'background.image',
+        name: 'Background Image',
+        editor: ResourceDimensionEditor,
+        settings: {
+          resourceType: 'image',
+        },
+      })
+      .addRadio({
+        path: 'background.size',
+        name: 'Backround image size',
+        settings: {
+          options: [
+            { value: BackroundImageSize.Fit, label: 'Fit' },
+            { value: BackroundImageSize.Original, label: 'Original' },
+            { value: BackroundImageSize.Tile, label: 'Tile' },
+          ],
+        },
+        defaultValue: BackroundImageSize.Fit,
+      });
 
     builder.addSliderInput({
       path: 'border.width',

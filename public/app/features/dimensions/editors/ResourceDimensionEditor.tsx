@@ -1,7 +1,12 @@
 import React, { FC, useCallback } from 'react';
-import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+import {
+  FieldNamePickerConfigSettings,
+  StandardEditorProps,
+  StandardEditorsRegistryItem,
+  StringFieldConfigSettings,
+} from '@grafana/data';
 import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOptions } from '../types';
-import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
+import { InlineField, InlineFieldRow, RadioButtonGroup, StringValueEditor } from '@grafana/ui';
 import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
 import IconSelector from './IconSelector';
 
@@ -15,9 +20,15 @@ const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerCon
   settings: {},
 } as any;
 
-export const IconDimensionEditor: FC<StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, any>> = (
-  props
-) => {
+const dummyImageStringSettings: StandardEditorsRegistryItem<string, StringFieldConfigSettings> = {
+  settings: {
+    placeholder: 'Enter image URL',
+  },
+} as any;
+
+export const ResourceDimensionEditor: FC<
+  StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, any>
+> = (props) => {
   const { value, context, onChange, item } = props;
   const resourceType = item.settings?.resourceType ?? 'icon';
   const labelWidth = 9;
@@ -75,9 +86,21 @@ export const IconDimensionEditor: FC<StandardEditorProps<ResourceDimensionConfig
       )}
       {mode === ResourceDimensionMode.Fixed && (
         <InlineFieldRow>
-          <InlineField label={resourceType === 'icon' ? 'Icon' : 'Image'} labelWidth={labelWidth} grow={true}>
-            <IconSelector value={value?.fixed} onChange={onFixedChange} />
-          </InlineField>
+          {resourceType === 'icon' && (
+            <InlineField label="Icon" labelWidth={labelWidth} grow={true}>
+              <IconSelector value={value?.fixed} onChange={onFixedChange} />
+            </InlineField>
+          )}
+          {resourceType === 'image' && (
+            <InlineField label="Image" labelWidth={labelWidth} grow={true}>
+              <StringValueEditor
+                context={context}
+                value={value?.fixed}
+                onChange={onFixedChange}
+                item={dummyImageStringSettings}
+              />
+            </InlineField>
+          )}
         </InlineFieldRow>
       )}
       {mode === ResourceDimensionMode.Mapping && (

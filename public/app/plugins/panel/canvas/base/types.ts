@@ -1,4 +1,4 @@
-import { ColorDimensionConfig } from 'app/features/dimensions/types';
+import { ColorDimensionConfig, ResourceDimensionConfig } from 'app/features/dimensions/types';
 
 export interface Placement {
   top?: number;
@@ -17,11 +17,16 @@ export interface Anchor {
   bottom?: boolean;
 }
 
+export enum BackroundImageSize {
+  Fit = 'fit',
+  Original = 'original',
+  Tile = 'tile',
+}
+
 export interface BackgroundConfig {
   color?: ColorDimensionConfig;
-  image?: string;
-  // repeat // https://developer.mozilla.org/en-US/docs/Web/CSS/background-repeat
-  // position ?
+  image?: ResourceDimensionConfig;
+  size?: BackroundImageSize;
 }
 
 export interface LineConfig {

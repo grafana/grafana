@@ -30,6 +30,7 @@ const IconSelector: React.FC<Props> = ({ value, onChange }) => {
   }, [iconRoot]);
   return (
     <Select
+      menuShouldPortal
       options={icons}
       value={icon}
       onChange={(selectedValue) => {
