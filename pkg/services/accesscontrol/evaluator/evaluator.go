@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	l "log"
 
 	"github.com/gobwas/glob"
+	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -18,7 +19,7 @@ import (
 
 // Evaluate evaluates access to the given resource, using provided AccessControl instance.
 // Scopes are evaluated with an `OR` relationship.
-func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.SignedInUser, action string, scope ...string) (bool, error) {
+func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.SignedInUser, action string, resourceScopes ...string) (bool, error) {
 	timer := prometheus.NewTimer(metrics.MAccessEvaluationsSummary)
 	defer timer.ObserveDuration()
 	metrics.MAccessEvaluationCount.Inc()
@@ -27,44 +28,50 @@ func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.
 		return false, err
 	}
 
-	ok, dbScopes := extractScopes(userPermissions, action)
+	ok, requestScopes := extractScopes(userPermissions, action)
 	if !ok {
 		return false, nil
 	}
 
-	res, err := evaluateScope(dbScopes, scope...)
+	res, err := evaluateScope(requestScopes, resourceScopes...)
 	return res, err
 }
 
-func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, error) {
-	if len(targetScopes) == 0 {
+func evaluateScope(requestScopes map[string]struct{}, resourceScopes ...string) (bool, error) {
+	if len(resourceScopes) == 0 {
 		return true, nil
 	}
 
 	logger := log.New("accesscontrol.permissioncheck")
-	for _, s := range targetScopes {
+	for _, resourceScope := range resourceScopes {
 
 		var match bool
-		for dbScope := range dbScopes {
-			if strings.ContainsAny(s, "*?") {
-				msg := fmt.Sprintf("Invalid scope: %v should not contain meta-characters like * or ?", s)
+		for requestScope := range requestScopes {
+			if strings.ContainsAny(resourceScope, "*?") {
+				msg := fmt.Sprintf("Invalid scope: %v should not contain meta-characters like * or ?", resourceScope)
+				l.Println(msg)
 				logger.Error(msg)
+				panic(msg)
 				return false, errors.New(msg)
 			}
-			rule, err := glob.Compile(dbScope, ':', '/')
+			rule, err := glob.Compile(requestScope, ':', '/')
 			if err != nil {
 				return false, err
 			}
 
-			match = rule.Match(s)
+			match = rule.Match(resourceScope)
 			if match {
-				logger.Debug(fmt.Sprintf("Access control: matched scope %v against permission %v", s, dbScope))
+				msg := fmt.Sprintf("Access control: matched request scope %v against resource scope %v", requestScope, resourceScope)
+				l.Println(msg)
+				logger.Debug(msg)
 				return true, nil
 			}
 		}
 	}
-
-	logger.Debug(fmt.Sprintf("Access control: failed!  Could not match scopes  %v against permissions %v", targetScopes, dbScopes))
+	msg := fmt.Sprintf("Access control: failed!  Could not match resource scopes  %v with request scope %v", resourceScopes, requestScopes)
+	l.Println(msg)
+	logger.Debug(msg)
+	panic(msg)
 	return false, nil
 }
 

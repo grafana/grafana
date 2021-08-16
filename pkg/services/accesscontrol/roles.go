@@ -62,7 +62,7 @@ var (
 		Permissions: []Permission{
 			{
 				Action: ActionSettingsRead,
-				Scope:  ScopeSettingsAll,
+				Scope:  RoleScopeSettingsAll,
 			},
 		},
 	}
@@ -73,7 +73,7 @@ var (
 		Permissions: []Permission{
 			{
 				Action: ActionOrgUsersRead,
-				Scope:  ScopeUsersAll,
+				Scope:  RoleScopeUsersAll,
 			},
 		},
 	}
@@ -84,15 +84,15 @@ var (
 		Permissions: ConcatPermissions(usersOrgReadRole.Permissions, []Permission{
 			{
 				Action: ActionOrgUsersAdd,
-				Scope:  ScopeUsersAll,
+				Scope:  RoleScopeUsersAll,
 			},
 			{
 				Action: ActionOrgUsersRoleUpdate,
-				Scope:  ScopeUsersAll,
+				Scope:  RoleScopeUsersAll,
 			},
 			{
 				Action: ActionOrgUsersRemove,
-				Scope:  ScopeUsersAll,
+				Scope:  RoleScopeUsersAll,
 			},
 		}),
 	}
@@ -103,19 +103,19 @@ var (
 		Permissions: []Permission{
 			{
 				Action: ActionUsersRead,
-				Scope:  ScopeGlobalUsersAll,
+				Scope:  RoleScopeGlobalUsersAll,
 			},
 			{
 				Action: ActionUsersTeamRead,
-				Scope:  ScopeGlobalUsersAll,
+				Scope:  RoleScopeGlobalUsersAll,
 			},
 			{
 				Action: ActionUsersAuthTokenList,
-				Scope:  ScopeGlobalUsersAll,
+				Scope:  RoleScopeGlobalUsersAll,
 			},
 			{
 				Action: ActionUsersQuotasList,
-				Scope:  ScopeGlobalUsersAll,
+				Scope:  RoleScopeGlobalUsersAll,
 			},
 		},
 	}
@@ -126,42 +126,42 @@ var (
 		Permissions: ConcatPermissions(usersAdminReadRole.Permissions, []Permission{
 			{
 				Action: ActionUsersPasswordUpdate,
-				Scope:  ScopeGlobalUsersAll,
+				Scope:  RoleScopeGlobalUsersAll,
 			},
 			{
 				Action: ActionUsersCreate,
 			},
 			{
 				Action: ActionUsersWrite,
-				Scope:  ScopeGlobalUsersAll,
+				Scope:  RoleScopeGlobalUsersAll,
 			},
 			{
 				Action: ActionUsersDelete,
-				Scope:  ScopeGlobalUsersAll,
+				Scope:  RoleScopeGlobalUsersAll,
 			},
 			{
 				Action: ActionUsersEnable,
-				Scope:  ScopeGlobalUsersAll,
+				Scope:  RoleScopeGlobalUsersAll,
 			},
 			{
 				Action: ActionUsersDisable,
-				Scope:  ScopeGlobalUsersAll,
+				Scope:  RoleScopeGlobalUsersAll,
 			},
 			{
 				Action: ActionUsersPermissionsUpdate,
-				Scope:  ScopeGlobalUsersAll,
+				Scope:  RoleScopeGlobalUsersAll,
 			},
 			{
 				Action: ActionUsersLogout,
-				Scope:  ScopeGlobalUsersAll,
+				Scope:  RoleScopeGlobalUsersAll,
 			},
 			{
 				Action: ActionUsersAuthTokenUpdate,
-				Scope:  ScopeGlobalUsersAll,
+				Scope:  RoleScopeGlobalUsersAll,
 			},
 			{
 				Action: ActionUsersQuotasUpdate,
-				Scope:  ScopeGlobalUsersAll,
+				Scope:  RoleScopeGlobalUsersAll,
 			},
 		}),
 	}

@@ -39,7 +39,7 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 		return hs.AccessControl.Evaluate(ctx, user, accesscontrol.ActionSettingsRead, scopes...)
 	}
 
-	ok, err := eval(accesscontrol.ScopeSettingsAll)
+	ok, err := eval(accesscontrol.ResourceScopeSettingsAll)
 	if err != nil {
 		return nil, err
 	}

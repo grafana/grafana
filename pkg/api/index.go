@@ -263,7 +263,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if hasAccess(ac.ReqOrgAdmin, ac.ActionOrgUsersRead, ac.ScopeUsersAll) {
+	if hasAccess(ac.ReqOrgAdmin, ac.ActionOrgUsersRead, ac.ResourceScopeUsersAll) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Users",
 			Id:          "users",
@@ -358,7 +358,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	adminNavLinks := []*dtos.NavLink{}
 
-	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionUsersRead, ac.ScopeGlobalUsersAll) {
+	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionUsersRead, ac.ResourceScopeGlobalUsersAll) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Users", Id: "global-users", Url: hs.Cfg.AppSubURL + "/admin/users", Icon: "user",
 		})
