@@ -168,8 +168,6 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     handleTargetChanged(state);
   }
   if (actions.runQuery.match(action)) {
-    // handleTargetChanged() builds target from segments/tags/functions only,
-    // it doesn't handle refresh when target is change explicitly
     state.refresh(state.target.target);
   }
   if (actions.toggleEditorMode.match(action)) {

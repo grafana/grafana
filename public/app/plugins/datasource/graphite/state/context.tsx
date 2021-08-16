@@ -36,6 +36,7 @@ export const GraphiteQueryEditorContext = ({
     });
   }, []);
 
+  // synchronise changes provided in props with editor's state
   useEffect(() => {
     dispatch(actions.timeRangeChanged(range));
   }, [dispatch, range]);
