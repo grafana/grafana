@@ -39,7 +39,14 @@ import {
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
-import { hasLegacyVariableSupport, hasOptions, hasStandardVariableSupport, isMulti, isQuery } from '../guard';
+import {
+  hasCurrent,
+  hasLegacyVariableSupport,
+  hasOptions,
+  hasStandardVariableSupport,
+  isMulti,
+  isQuery,
+} from '../guard';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { createErrorNotification } from '../../../core/copy/appNotification';
@@ -51,7 +58,7 @@ import {
 } from './transactionReducer';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { cleanVariables } from './variablesReducer';
-import { ensureStringValues, getCurrentText, getVariableRefresh } from '../utils';
+import { ensureStringValues, ExtendedUrlQueryMap, getCurrentText, getVariableRefresh } from '../utils';
 import { store } from 'app/store/store';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { cleanEditorState } from '../editor/reducer';
@@ -576,21 +583,40 @@ const timeRangeUpdated = (identifier: VariableIdentifier): ThunkResult<Promise<v
   }
 };
 
-export const templateVarsChangedInUrl = (vars: UrlQueryMap): ThunkResult<void> => async (dispatch, getState) => {
+export const templateVarsChangedInUrl = (vars: ExtendedUrlQueryMap): ThunkResult<void> => async (
+  dispatch,
+  getState
+) => {
   const update: Array<Promise<any>> = [];
+  const dashboard = getState().dashboard.getModel();
   for (const variable of getVariables(getState())) {
     const key = `var-${variable.name}`;
-    if (vars.hasOwnProperty(key)) {
-      if (isVariableUrlValueDifferentFromCurrent(variable, vars[key])) {
-        const promise = variableAdapters.get(variable.type).setValueFromUrl(variable, vars[key]);
-        update.push(promise);
+    if (!vars.hasOwnProperty(key)) {
+      // key not found quick exit
+      continue;
+    }
+
+    if (!isVariableUrlValueDifferentFromCurrent(variable, vars[key].value)) {
+      // variable values doesn't differ quick exit
+      continue;
+    }
+
+    let value = vars[key].value; // as the default the value is set to the value passed into templateVarsChangedInUrl
+    if (vars[key].removed) {
+      // for some reason (panel|data link without variable) the variable url value (var-xyz) has been removed from the url
+      // so we need to revert the value to the value stored in dashboard json
+      const variableInModel = dashboard?.templating.list.find((v) => v.name === variable.name);
+      if (variableInModel && hasCurrent(variableInModel)) {
+        value = variableInModel.current.value; // revert value to the value stored in dashboard json
       }
     }
+
+    const promise = variableAdapters.get(variable.type).setValueFromUrl(variable, value);
+    update.push(promise);
   }
 
   if (update.length) {
     await Promise.all(update);
-    const dashboard = getState().dashboard.getModel();
     dashboard?.templateVariableValueUpdated();
     dashboard?.startRefresh();
   }
