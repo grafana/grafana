@@ -23,7 +23,7 @@ export function listItem(theme: GrafanaTheme2): string {
   &:hover {
     background: ${hoverColor(theme.colors.background.secondary, theme)};
   }
-  box-shadow: ${theme.v1.shadows.listItem};
+  box-shadow: ${theme.components.panel.boxShadow};
   border-radius: ${theme.shape.borderRadius(2)};
 `;
 }
@@ -31,7 +31,7 @@ export function listItem(theme: GrafanaTheme2): string {
 export function listItemSelected(theme: GrafanaTheme2): string {
   return `
     background: ${hoverColor(theme.colors.background.secondary, theme)};
-    color: ${theme.v1.colors.textStrong};
+    color: ${theme.colors.text.maxContrast};
 `;
 }
 
