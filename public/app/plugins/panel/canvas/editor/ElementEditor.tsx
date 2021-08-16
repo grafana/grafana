@@ -6,7 +6,7 @@ import { canvasElementRegistry, DEFAULT_ELEMENT_CONFIG } from '../elements/regis
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVizualizationOptions';
-import { ColorDimensionEditor } from '../../geomap/dims/editors/ColorDimensionEditor';
+import { ColorDimensionEditor } from '../../../../features/dimensions/editors/ColorDimensionEditor';
 
 export interface CanvasElementEditorProps<TConfig = any> {
   options?: CanvasElementOptions<TConfig>;

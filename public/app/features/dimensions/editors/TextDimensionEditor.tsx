@@ -7,7 +7,7 @@ import {
 } from '@grafana/data';
 import { TextDimensionConfig, TextDimensionMode, TextDimensionOptions } from '../types';
 import { InlineField, InlineFieldRow, RadioButtonGroup, StringValueEditor } from '@grafana/ui';
-import { FieldNamePicker } from '../../../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
+import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
 
 const textOptions = [
   { label: 'Fixed', value: TextDimensionMode.Fixed, description: 'Fixed value' },

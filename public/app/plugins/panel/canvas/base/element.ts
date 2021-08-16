@@ -7,7 +7,7 @@ import {
   ResourceDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
-} from '../../geomap/dims/types';
+} from 'app/features/dimensions/types';
 
 /**
  * This gets saved in panel json

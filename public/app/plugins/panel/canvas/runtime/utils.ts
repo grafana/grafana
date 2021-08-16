@@ -1,16 +1,16 @@
 import { PanelData } from '@grafana/data';
-import { getColorDimension } from '../../geomap/dims/color';
 import {
+  getColorDimension,
+  getScaledDimension,
+  getTextDimension,
+  getResourceDimension,
   ColorDimensionConfig,
   DimensionSupplier,
   ResourceDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
-} from '../../geomap/dims/types';
+} from 'app/features/dimensions';
 import { config } from '@grafana/runtime';
-import { getScaledDimension } from '../../geomap/dims/scale';
-import { getResourceDimension } from '../../geomap/dims/resource';
-import { getTextDimension } from '../../geomap/dims/text';
 
 export function getColorDimensionFromData(
   data: PanelData | undefined,

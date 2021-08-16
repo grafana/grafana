@@ -17,7 +17,7 @@ export interface DimensionSupplier<T = any> {
   field?: Field;
 
   /**
-   * Explicit value -- if == null, then need a value pr index
+   * Explicit value -- if == null, then need a value for each index
    */
   fixed?: T;
 

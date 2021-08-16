@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
-import { ColorDimensionEditor } from '../../geomap/dims/editors/ColorDimensionEditor';
-import { TextDimensionEditor } from '../../geomap/dims/editors/TextDimensionEditor';
-import { ColorDimensionConfig, TextDimensionConfig } from '../../geomap/dims/types';
+import { ColorDimensionEditor } from '../../../../features/dimensions/editors/ColorDimensionEditor';
+import { TextDimensionEditor } from '../../../../features/dimensions/editors/TextDimensionEditor';
+import { ColorDimensionConfig, TextDimensionConfig } from 'app/features/dimensions/types';
 
 import { CanvasElementItem, CanvasElementProps, CanvasSceneContext } from '../base';
 

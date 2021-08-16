@@ -1,9 +1,8 @@
 import React, { CSSProperties } from 'react';
 
 import { CanvasSceneContext, CanvasElementItem, CanvasElementProps, LineConfig } from '../base';
-import { ColorDimensionConfig, ResourceDimensionConfig } from '../../geomap/dims/types';
-import { ColorDimensionEditor } from '../../geomap/dims/editors/ColorDimensionEditor';
-import { IconDimensionEditor } from '../../geomap/dims/editors/ResourceDimensionEditor';
+import { ColorDimensionConfig, ResourceDimensionConfig } from 'app/features/dimensions';
+import { ColorDimensionEditor, IconDimensionEditor } from 'app/features/dimensions/editors';
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
 

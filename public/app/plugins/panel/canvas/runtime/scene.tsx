@@ -12,7 +12,7 @@ import {
   ResourceDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
-} from '../../geomap/dims/types';
+} from 'app/features/dimensions';
 import {
   getColorDimensionFromData,
   getScaleDimensionFromData,

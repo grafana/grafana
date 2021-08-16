@@ -1,4 +1,4 @@
-import { ColorDimensionConfig } from '../../geomap/dims/types';
+import { ColorDimensionConfig } from 'app/features/dimensions/types';
 
 export interface Placement {
   top?: number;
