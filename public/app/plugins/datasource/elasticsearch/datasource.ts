@@ -183,16 +183,16 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
     const listLen = indexList.length;
 
-    return generate(
-      0,
-      (i) => i < Math.min(listLen, maxTraversals),
-      (i) => i + 1
-    ).pipe(
+    return generate({
+      initialState: 0,
+      condition: (i) => i < Math.min(listLen, maxTraversals),
+      iterate: (i) => i + 1,
+    }).pipe(
       mergeMap((index) => {
         // catch all errors and emit an object with an err property to simplify checks later in the pipeline
         return this.request('GET', indexList[listLen - index - 1]).pipe(catchError((err) => of({ err })));
       }),
-      skipWhile((resp) => resp.err && resp.err.status === 404), // skip all requests that fail because missing Elastic index
+      skipWhile((resp) => resp?.err?.status === 404), // skip all requests that fail because missing Elastic index
       throwIfEmpty(() => 'Could not find an available index for this time range.'), // when i === Math.min(listLen, maxTraversals) generate will complete but without emitting any values which means we didn't find a valid index
       first(), // take the first value that isn't skipped
       map((resp) => {
