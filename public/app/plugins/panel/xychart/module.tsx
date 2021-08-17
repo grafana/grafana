@@ -4,8 +4,7 @@ import { XYChartPanel } from './XYChartPanel';
 import { Options } from './types';
 import { XYDimsEditor } from './XYDimsEditor';
 import { getGraphFieldConfig, defaultGraphConfig } from '../timeseries/config';
-import { ColorDimensionEditor } from '../geomap/dims/editors/ColorDimensionEditor';
-import { ScaleDimensionEditor } from '../geomap/dims/editors/ScaleDimensionEditor';
+import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
   .useFieldConfig(

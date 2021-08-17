@@ -3,9 +3,9 @@ import { DataFrame, Field } from '@grafana/data';
 import {
   ColorDimensionConfig,
   DimensionSupplier,
-  LabelDimensionConfig,
+  TextDimensionConfig,
   ScaleDimensionConfig,
-} from '../geomap/dims/types';
+} from 'app/features/dimensions';
 export interface XYDimensionConfig {
   frame: number;
   x?: string; // name | first
@@ -35,7 +35,7 @@ export interface SeriesConfig {
 
   size?: ScaleDimensionConfig;
   color?: ColorDimensionConfig;
-  label?: LabelDimensionConfig;
+  label?: TextDimensionConfig;
 }
 
 export interface Options extends OptionsWithLegend, OptionsWithTooltip {

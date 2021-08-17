@@ -1,7 +1,5 @@
 import { DataFrame } from '@grafana/data';
-import { getColorDimension } from '../geomap/dims/color';
-import { getScaledDimension } from '../geomap/dims/scale';
-import { findField } from '../geomap/dims/utils';
+import { getColorDimension, getScaledDimension, findField } from 'app/features/dimensions';
 import { Options, ScatterSeries } from './types';
 import { config } from '@grafana/runtime';
 

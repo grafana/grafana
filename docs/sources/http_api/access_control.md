@@ -26,7 +26,6 @@ Returns an indicator to check if fine-grained access control is enabled or not.
 | -------------------- | ---------------------- |
 | status:accesscontrol | services:accesscontrol |
 
-
 #### Example request
 
 ```http
@@ -256,7 +255,6 @@ Content-Type: application/json; charset=UTF-8
 
 #### Status codes
 
-
 | Code | Description                                                                        |
 | ---- | ---------------------------------------------------------------------------------- |
 | 200  | Role is updated.                                                                   |
@@ -278,7 +276,6 @@ For example, if a user does not have required permissions for creating users, th
 | Action      | Scope                |
 | ----------- | -------------------- |
 | roles:write | permissions:delegate |
-
 
 #### Example request
 
@@ -376,7 +373,6 @@ For example, if a user does not have required permissions for creating users, th
 | Action       | Scope                |
 | ------------ | -------------------- |
 | roles:delete | permissions:delegate |
-
 
 #### Example request
 
