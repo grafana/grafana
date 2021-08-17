@@ -14,10 +14,10 @@ import { DataSourceWithBackend } from '@grafana/runtime';
 
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
-import { TraceToLogsData, TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { identity, pick, pickBy } from 'lodash';
+import { identity, pick, pickBy, groupBy } from 'lodash';
 import Prism from 'prismjs';
 import { from, merge, Observable, of, throwError } from 'rxjs';
 import { map, mergeMap, toArray } from 'rxjs/operators';
@@ -29,11 +29,15 @@ import { mapPromMetricsToServiceMap, serviceMapMetrics } from './graphTransform'
 import { map, mergeMap } from 'rxjs/operators';
 import { LokiOptions, LokiQuery } from '../loki/types';
 import {
-  createTableFrameFromSearch,
-  transformFromOTLP as transformFromOTEL,
   transformTrace,
   transformTraceList,
+  transformFromOTLP as transformFromOTEL,
+  createTableFrameFromSearch,
 } from './resultTransformer';
+import { PrometheusDatasource } from '../prometheus/datasource';
+import { PromQuery } from '../prometheus/types';
+import { mapPromMetricsToServiceMap, serviceMapMetrics } from './graphTransform';
+import TempoLanguageProvider from './language_provider';
 import { tokenizer } from './syntax';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
@@ -102,6 +106,19 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                 )
               );
             }
+          })
+        )
+      );
+    }
+
+    if (targets.nativeSearch?.length) {
+      const searchQuery = this.buildSearchQuery(targets.nativeSearch[0]);
+      subQueries.push(
+        this._request('/api/search', searchQuery).pipe(
+          map((response) => {
+            return {
+              data: [createTableFrameFromSearch(response.data.traces, this.instanceSettings)],
+            };
           })
         )
       );

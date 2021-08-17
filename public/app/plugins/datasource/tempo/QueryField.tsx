@@ -31,11 +31,6 @@ interface State {
   linkedDatasource?: LokiDatasource;
   serviceMapDatasourceUid?: string;
   serviceMapDatasource?: PrometheusDatasource;
-  hasSyntaxLoaded: boolean;
-  serviceNameOptions: Array<SelectableValue<string>>;
-  spanNameOptions: Array<SelectableValue<string>>;
-  serviceName: SelectableValue<string> | null;
-  spanName: SelectableValue<string> | null;
 }
 
 class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
@@ -44,11 +39,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     linkedDatasource: undefined,
     serviceMapDatasourceUid: undefined,
     serviceMapDatasource: undefined,
-    hasSyntaxLoaded: false,
-    serviceNameOptions: [] as Array<SelectableValue<string>>,
-    spanNameOptions: [] as Array<SelectableValue<string>>,
-    serviceName: null,
-    spanName: null,
   };
 
   constructor(props: Props) {
@@ -72,18 +62,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       serviceMapDatasourceUid: serviceMapDsUid,
       serviceMapDatasource: serviceMapDs as PrometheusDatasource,
     });
-
-    if (config.featureToggles.tempoSearch) {
-      await this.fetchAutocomplete();
-    }
-  }
-
-  async fetchAutocomplete() {
-    const lp = this.props.datasource.languageProvider;
-    await lp.start();
-    const serviceNameOptions = await lp.getOptions('service.name');
-    const spanNameOptions = await lp.getOptions('name');
-    this.setState({ hasSyntaxLoaded: true, serviceNameOptions, spanNameOptions });
   }
 
   onChangeLinkedQuery = (value: LokiQuery) => {
