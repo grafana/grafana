@@ -3,8 +3,8 @@ import { Label, stylesFactory } from '@grafana/ui';
 import { formattedValueToString, getFieldColorModeForField, GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
-import { DimensionSupplier } from '../../dims/types';
-import { getMinMaxAndDelta } from '../../../../../../../packages/grafana-data/src/field/scale'; 
+import { DimensionSupplier } from 'app/features/dimensions';
+import { getMinMaxAndDelta } from '../../../../../../../packages/grafana-data/src/field/scale';
 
 export interface MarkersLegendProps {
   color?: DimensionSupplier<string>;
