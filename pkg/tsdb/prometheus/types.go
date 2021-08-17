@@ -9,4 +9,6 @@ type PrometheusQuery struct {
 	Start        time.Time
 	End          time.Time
 	RefId        string
+	RangeQuery   bool
+	InstantQuery bool
 }
