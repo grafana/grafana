@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
-	ot_pdata "go.opentelemetry.io/collector/consumer/pdata"
+	otlp "go.opentelemetry.io/collector/model/otlp"
 )
 
 func TestTraceToFrame(t *testing.T) {
@@ -19,7 +19,7 @@ func TestTraceToFrame(t *testing.T) {
 		proto, err := ioutil.ReadFile("testData/tempo_proto_response")
 		require.NoError(t, err)
 
-		otTrace, err := ot_pdata.TracesFromOtlpProtoBytes(proto)
+		otTrace, err := otlp.NewProtobufTracesUnmarshaler().UnmarshalTraces(proto)
 		require.NoError(t, err)
 
 		frame, err := TraceToFrame(otTrace)

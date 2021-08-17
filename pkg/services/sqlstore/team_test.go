@@ -90,8 +90,6 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 			Convey("Should return latest auth module for users when getting team members", func() {
 				userId := userIds[1]
-				err := SetAuthInfo(&models.SetAuthInfoCommand{UserId: userId, AuthModule: "oauth_github", AuthId: "1234567"})
-				So(err, ShouldBeNil)
 
 				teamQuery := &models.SearchTeamsQuery{OrgId: testOrgID, Name: "group1 name", Page: 1, Limit: 10}
 				err = SearchTeams(teamQuery)
@@ -111,7 +109,6 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				So(memberQuery.Result[0].Login, ShouldEqual, "loginuser1")
 				So(memberQuery.Result[0].OrgId, ShouldEqual, testOrgID)
 				So(memberQuery.Result[0].External, ShouldEqual, true)
-				So(memberQuery.Result[0].AuthModule, ShouldEqual, "oauth_github")
 			})
 
 			Convey("Should be able to update users in a team", func() {

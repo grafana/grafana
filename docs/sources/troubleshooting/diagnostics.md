@@ -6,7 +6,7 @@ weight = 200
 # Enable diagnostics
 
 You can set up the `grafana-server` process to enable certain diagnostics when it starts. This can be helpful
-when investigating certain performance problems. It's *not* recommended to have these enabled by default.
+when investigating certain performance problems. It's _not_ recommended to have these enabled by default.
 
 ## Turn on profiling
 

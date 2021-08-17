@@ -63,24 +63,36 @@ export const PageToolbar: FC<Props> = React.memo(
             />
           </div>
         )}
-        {parent && parentHref && (
-          <>
-            <Link className={cx(styles.titleText, styles.parentLink, styles.titleLink)} href={parentHref}>
-              {parent} <span className={styles.parentIcon}></span>
-            </Link>
-            {titleHref && (
-              <span className={cx(styles.titleText, styles.titleDivider, styles.parentLink)} aria-hidden>
-                /
-              </span>
-            )}
-          </>
-        )}
-        {titleHref && (
-          <Link className={cx(styles.titleText, styles.titleLink)} href={titleHref}>
-            {title}
-          </Link>
-        )}
-        {!titleHref && <div className={styles.titleText}>{title}</div>}
+        <nav aria-label="Search links" className={styles.navElement}>
+          {parent && parentHref && (
+            <>
+              <Link
+                aria-label={`Search dashboard in the ${parent} folder`}
+                className={cx(styles.titleText, styles.parentLink, styles.titleLink)}
+                href={parentHref}
+              >
+                {parent} <span className={styles.parentIcon}></span>
+              </Link>
+              {titleHref && (
+                <span className={cx(styles.titleText, styles.titleDivider, styles.parentLink)} aria-hidden>
+                  /
+                </span>
+              )}
+            </>
+          )}
+          {titleHref && (
+            <h1 className={styles.h1Styles}>
+              <Link
+                aria-label="Search dashboard by name"
+                className={cx(styles.titleText, styles.titleLink)}
+                href={titleHref}
+              >
+                {title}
+              </Link>
+            </h1>
+          )}
+          {!titleHref && <h1 className={styles.titleText}>{title}</h1>}
+        </nav>
         {leftItems?.map((child, index) => (
           <div className={styles.leftActionItem} key={index}>
             {child}
@@ -146,6 +158,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
       min-width: 0;
       overflow: hidden;
+    `,
+    navElement: css`
+      display: flex;
+    `,
+    h1Styles: css`
+      margin: 0;
+      line-height: inherit;
+      display: flex;
     `,
     parentIcon: css`
       margin-left: ${theme.spacing(0.5)};

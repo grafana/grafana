@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -400,6 +401,13 @@ type Cfg struct {
 
 	// Grafana.com URL
 	GrafanaComURL string
+
+	// Geomap base layer config
+	GeomapDefaultBaseLayerConfig map[string]interface{}
+	GeomapEnableCustomBaseLayers bool
+
+	// Unified Alerting
+	AdminConfigPollInterval time.Duration
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -893,6 +901,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 
+	if err := cfg.readUnifiedAlertingSettings(iniFile); err != nil {
+		return err
+	}
+
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
 
@@ -965,6 +977,19 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		Name:    dbName,
 		ConnStr: connStr,
 	}
+
+	geomapSection := iniFile.Section("geomap")
+	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
+	if basemapJSON != "" {
+		layer := make(map[string]interface{})
+		err = json.Unmarshal([]byte(basemapJSON), &layer)
+		if err != nil {
+			cfg.Logger.Error("Error reading json from default_baselayer_config", "error", err)
+		} else {
+			cfg.GeomapDefaultBaseLayerConfig = layer
+		}
+	}
+	cfg.GeomapEnableCustomBaseLayers = geomapSection.Key("enable_custom_baselayers").MustBool(true)
 
 	cfg.readDateFormats()
 	cfg.readSentryConfig()
@@ -1328,6 +1353,13 @@ func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
+	return nil
+}
+
+func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
+	ua := iniFile.Section("unified_alerting")
+	s := ua.Key("admin_config_poll_interval_seconds").MustInt(60)
+	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
 	return nil
 }
 

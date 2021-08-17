@@ -33,7 +33,6 @@ func init() {
 	bus.AddHandler("sql", SearchDashboards)
 	bus.AddHandler("sql", GetDashboardTags)
 	bus.AddHandler("sql", GetDashboardSlugById)
-	bus.AddHandler("sql", GetDashboardUIDById)
 	bus.AddHandler("sql", GetDashboardsByPluginId)
 	bus.AddHandler("sql", GetDashboardPermissionsForUser)
 	bus.AddHandler("sql", GetDashboardsBySlug)
@@ -41,6 +40,10 @@ func init() {
 	bus.AddHandler("sql", HasAdminPermissionInFolders)
 
 	prometheus.MustRegister(shadowSearchCounter)
+}
+
+func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
+	bus.AddHandlerCtx("sql", ss.GetDashboardUIDById)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
@@ -473,16 +476,27 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 			}
 		}
 
-		// clean ngalert tables
-		ngalertDeletes := []string{
-			"DELETE FROM alert_rule WHERE namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
-			"DELETE FROM alert_rule_version WHERE rule_namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
+		var existingRuleID int64
+		exists, err := sess.Table("alert_rule").Where("namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", dashboard.Id).Cols("id").Get(&existingRuleID)
+		if err != nil {
+			return err
 		}
+		if exists {
+			if !cmd.ForceDeleteFolderRules {
+				return fmt.Errorf("folder cannot be deleted: %w", models.ErrFolderContainsAlertRules)
+			}
 
-		for _, sql := range ngalertDeletes {
-			_, err := sess.Exec(sql, dashboard.Id)
-			if err != nil {
-				return err
+			// Delete all rules under this folder.
+			deleteNGAlertsByFolder := []string{
+				"DELETE FROM alert_rule WHERE namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
+				"DELETE FROM alert_rule_version WHERE rule_namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
+			}
+
+			for _, sql := range deleteNGAlertsByFolder {
+				_, err := sess.Exec(sql, dashboard.Id)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -623,21 +637,23 @@ func GetDashboardsBySlug(query *models.GetDashboardsBySlugQuery) error {
 	return nil
 }
 
-func GetDashboardUIDById(query *models.GetDashboardRefByIdQuery) error {
-	var rawSQL = `SELECT uid, slug from dashboard WHERE Id=?`
+func (ss *SQLStore) GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error {
+	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
+		var rawSQL = `SELECT uid, slug from dashboard WHERE Id=?`
 
-	us := &models.DashboardRef{}
+		us := &models.DashboardRef{}
 
-	exists, err := x.SQL(rawSQL, query.Id).Get(us)
+		exists, err := dbSession.SQL(rawSQL, query.Id).Get(us)
 
-	if err != nil {
-		return err
-	} else if !exists {
-		return models.ErrDashboardNotFound
-	}
+		if err != nil {
+			return err
+		} else if !exists {
+			return models.ErrDashboardNotFound
+		}
 
-	query.Result = us
-	return nil
+		query.Result = us
+		return nil
+	})
 }
 
 func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, dash *models.Dashboard, overwrite bool) (bool, error) {

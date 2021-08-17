@@ -1,6 +1,6 @@
 load('scripts/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.2.8'
+grabpl_version = '2.3.2'
 build_image = 'grafana/build-container:1.4.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -17,20 +17,28 @@ def pipeline(
     ):
     if platform != 'windows':
         platform_conf = {
-            'os': 'linux',
-            'arch': 'amd64',
+            'platform': {
+                'os': 'linux',
+                'arch': 'amd64'
+            },
+            # A shared cache is used on the host
+            # To avoid issues with parallel builds, we run this repo on single build agents
+            'node': {
+                'type': 'no-parallel'
+            }
         }
     else:
         platform_conf = {
-            'os': 'windows',
-            'arch': 'amd64',
-            'version': '1809',
+            'platform': {
+                'os': 'windows',
+                'arch': 'amd64',
+                'version': '1809',
+            }
         }
 
     pipeline = {
         'kind': 'pipeline',
         'type': 'docker',
-        'platform': platform_conf,
         'name': name,
         'trigger': trigger,
         'services': services,
@@ -39,6 +47,7 @@ def pipeline(
         ) + steps,
         'depends_on': depends_on,
     }
+    pipeline.update(platform_conf)
 
     if edition in ('enterprise', 'enterprise2'):
         pipeline['image_pull_secrets'] = [pull_secret]
@@ -1076,6 +1085,6 @@ def validate_scuemata():
             'build-backend',
         ],
         'commands': [
-            './bin/linux-amd64/grafana-cli cue validate-schema',
+            './bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .',
         ],
     }

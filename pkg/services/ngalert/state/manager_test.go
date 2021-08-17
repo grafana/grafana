@@ -4,6 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -862,5 +865,109 @@ func TestProcessEvalResults(t *testing.T) {
 				assert.Equal(t, s, cachedState)
 			}
 		})
+	}
+}
+
+func TestStaleResultsHandler(t *testing.T) {
+	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
+	if err != nil {
+		t.Fatalf("error parsing date format: %s", err.Error())
+	}
+
+	dbstore := tests.SetupTestEnv(t, 1)
+
+	rule := tests.CreateTestAlertRule(t, dbstore, 600)
+
+	saveCmd1 := &models.SaveAlertInstanceCommand{
+		RuleOrgID:         rule.OrgID,
+		RuleUID:           rule.UID,
+		Labels:            models.InstanceLabels{"test1": "testValue1"},
+		State:             models.InstanceStateNormal,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+	}
+
+	_ = dbstore.SaveAlertInstance(saveCmd1)
+
+	saveCmd2 := &models.SaveAlertInstanceCommand{
+		RuleOrgID:         rule.OrgID,
+		RuleUID:           rule.UID,
+		Labels:            models.InstanceLabels{"test2": "testValue2"},
+		State:             models.InstanceStateFiring,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+	}
+	_ = dbstore.SaveAlertInstance(saveCmd2)
+
+	t.Cleanup(registry.ClearOverrides)
+
+	testCases := []struct {
+		desc               string
+		evalResults        []eval.Results
+		expectedStates     map[string]*state.State
+		startingStateCount int
+		finalStateCount    int
+	}{
+		{
+			desc: "stale cache entries are removed",
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:    data.Labels{"test1": "testValue1"},
+						State:       eval.Normal,
+						EvaluatedAt: evaluationTime.Add(3 * time.Minute),
+					},
+				},
+			},
+			expectedStates: map[string]*state.State{
+				`[["__alert_rule_namespace_uid__","namespace"],["__alert_rule_uid__","` + rule.UID + `"],["alertname","` + rule.Title + `"],["test1","testValue1"]]`: {
+					AlertRuleUID: rule.UID,
+					OrgID:        1,
+					CacheId:      `[["__alert_rule_namespace_uid__","namespace"],["__alert_rule_uid__","` + rule.UID + `"],["alertname","` + rule.Title + `"],["test1","testValue1"]]`,
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "namespace",
+						"__alert_rule_uid__":           rule.UID,
+						"alertname":                    rule.Title,
+						"test1":                        "testValue1",
+					},
+					State: eval.Normal,
+					Results: []state.Evaluation{
+						{
+							EvaluationTime:  evaluationTime.Add(3 * time.Minute),
+							EvaluationState: eval.Normal,
+							Values:          make(map[string]state.EvaluationValue),
+						},
+					},
+					LastEvaluationTime: evaluationTime.Add(3 * time.Minute),
+					EvaluationDuration: 0,
+					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+				},
+			},
+			startingStateCount: 2,
+			finalStateCount:    1,
+		},
+	}
+
+	for _, tc := range testCases {
+		st := state.NewManager(log.New("test_stale_results_handler"), nilMetrics, dbstore, dbstore)
+		st.Warm()
+		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+
+		// We have loaded the expected number of entries from the db
+		assert.Equal(t, tc.startingStateCount, len(existingStatesForRule))
+		for _, res := range tc.evalResults {
+			st.ProcessEvalResults(rule, res)
+			for _, s := range tc.expectedStates {
+				cachedState, err := st.Get(s.OrgID, s.AlertRuleUID, s.CacheId)
+				require.NoError(t, err)
+				assert.Equal(t, s, cachedState)
+			}
+		}
+		existingStatesForRule = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+
+		// The expected number of state entries remains after results are processed
+		assert.Equal(t, tc.finalStateCount, len(existingStatesForRule))
 	}
 }

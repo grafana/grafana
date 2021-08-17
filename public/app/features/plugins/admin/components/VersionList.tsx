@@ -13,30 +13,28 @@ export const VersionList = ({ versions }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (versions.length === 0) {
-    return <div className={styles.container}>No version history was found.</div>;
+    return <p>No version history was found.</p>;
   }
 
   return (
-    <div className={styles.container}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Version</th>
-            <th>Last updated</th>
-          </tr>
-        </thead>
-        <tbody>
-          {versions.map((version) => {
-            return (
-              <tr key={version.version}>
-                <td>{version.version}</td>
-                <td>{dateTimeFormatTimeAgo(version.createdAt)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+    <table className={styles.table}>
+      <thead>
+        <tr>
+          <th>Version</th>
+          <th>Last updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        {versions.map((version) => {
+          return (
+            <tr key={version.version}>
+              <td>{version.version}</td>
+              <td>{dateTimeFormatTimeAgo(version.createdAt)}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 };
 

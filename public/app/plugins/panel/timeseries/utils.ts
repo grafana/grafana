@@ -7,7 +7,7 @@ import {
   GrafanaTheme2,
   isBooleanUnit,
 } from '@grafana/data';
-import { GraphFieldConfig, LineInterpolation } from '@grafana/ui';
+import { GraphFieldConfig, LineInterpolation, StackingMode } from '@grafana/ui';
 
 // This will return a set of frames with only graphable values included
 export function prepareGraphableFields(
@@ -46,6 +46,12 @@ export function prepareGraphableFields(
               })
             ),
           };
+
+          if (copy.config.custom?.stacking?.mode === StackingMode.Percent) {
+            copy.config.unit = 'percentunit';
+            copy.display = getDisplayProcessor({ field: copy, theme });
+          }
+
           fields.push(copy);
           break; // ok
         case FieldType.boolean:

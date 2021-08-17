@@ -5,7 +5,6 @@ aliases =["/docs/grafana/latest/reference/search/"]
 weight = 5
 +++
 
-
 # Dashboard Search
 
 Dashboards can be searched by the dashboard name, filtered by one (or many) tags or filtered by starred status. The dashboard search is accessed through the dashboard picker, available in the dashboard top nav area. The dashboard search can also be opened by using the shortcut `F`.
@@ -26,9 +25,10 @@ When using only a keyboard, you can use your keyboard arrow keys to navigate the
 Begin typing any part of the desired dashboard names in the search bar. Search will return results for any partial string match in real-time, as you type.
 
 Dashboard search is:
+
 - Real-time
-- *Not* case sensitive
-- Functional across stored *and* file based dashboards.
+- _Not_ case sensitive
+- Functional across stored _and_ file based dashboards.
 
 ## Filter by Tag(s)
 
@@ -38,6 +38,6 @@ To filter the dashboard list by tag, click on any tag appearing in the right col
 
 Alternately, to see a list of all available tags, click the tags dropdown menu. All tags will be shown, and when a tag is selected, the dashboard search will be instantly filtered:
 
-When using only a keyboard: `tab` to focus on the *tags* link, `▼` down arrow key to find a tag and select with the `Enter` key.
+When using only a keyboard: `tab` to focus on the _tags_ link, `▼` down arrow key to find a tag and select with the `Enter` key.
 
 > **Note:** When multiple tags are selected, Grafana will show dashboards that include **all**.
