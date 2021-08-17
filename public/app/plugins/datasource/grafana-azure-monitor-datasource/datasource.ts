@@ -3,13 +3,7 @@ import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import ResourcePickerData from './resourcePicker/resourcePickerData';
-import {
-  AzureDataSourceJsonData,
-  AzureMonitorQuery,
-  AzureQueryType,
-  DatasourceValidationResult,
-  InsightsAnalyticsQuery,
-} from './types';
+import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from './types';
 import {
   DataFrame,
   DataQueryRequest,
@@ -22,7 +16,7 @@ import {
 import { forkJoin, Observable, of } from 'rxjs';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
-import { migrateMetricsDimensionFilters } from './query_ctrl';
+import { datasourceMigrations } from './utils/migrateQuery';
 import { map } from 'rxjs/operators';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
 import { getAzureCloud } from './credentials';
@@ -82,9 +76,9 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
     const byType = new Map<AzureQueryType, DataQueryRequest<AzureMonitorQuery>>();
 
-    for (const target of options.targets) {
-      // Migrate old query structure
-      migrateQuery(target);
+    for (const baseTarget of options.targets) {
+      // Migrate old query structures
+      const target = datasourceMigrations(baseTarget);
 
       // Skip hidden or invalid queries or ones without properties
       if (!target.queryType || target.hide || !hasQueryForType(target)) {
@@ -295,23 +289,6 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   getVariables() {
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
-  }
-}
-
-function migrateQuery(target: AzureMonitorQuery) {
-  if (target.queryType === AzureQueryType.ApplicationInsights) {
-    if ((target.appInsights as any).rawQuery) {
-      target.queryType = AzureQueryType.InsightsAnalytics;
-      target.insightsAnalytics = (target.appInsights as unknown) as InsightsAnalyticsQuery;
-      delete target.appInsights;
-    }
-  }
-  if (!target.queryType) {
-    target.queryType = AzureQueryType.AzureMonitor;
-  }
-
-  if (target.queryType === AzureQueryType.AzureMonitor && target.azureMonitor) {
-    migrateMetricsDimensionFilters(target.azureMonitor);
   }
 }
 
