@@ -20,12 +20,12 @@ You can install Grafana from a YUM repository, manually using YUM, manually usin
 
 If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo yum update`.
 
-| Grafana Version           | Package            | Repository                                         |
-| ------------------------- | ------------------ | -------------------------------------------------- |
-| Grafana OSS               | grafana            | `https://packages.grafana.com/oss/rpm`             |
-| Grafana OSS (Beta)        | grafana            | `https://packages.grafana.com/oss/rpm-beta`        |
-| Grafana Enterprise        | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm`      |
-| Grafana Enterprise (Beta) | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm-beta` |
+| Grafana Version           | Package            | Repository                                      |
+| ------------------------- | ------------------ | ----------------------------------------------- |
+| Grafana OSS               | grafana            | `https://packages.grafana.com/oss/rpm`          |
+| Grafana OSS (Beta)        | grafana            | `https://packages.grafana.com/oss/rpm-beta`     |
+| Grafana Enterprise        | grafana-enterprise | `https://packages.grafana.com/grafana/rpm`      |
+| Grafana Enterprise (Beta) | grafana-enterprise | `https://packages.grafana.com/grafana/rpm-beta` |
 
 Add a new file to your YUM repo using the method of your choice. The command below uses `nano`.
 
@@ -42,7 +42,7 @@ For Enterprise releases:
 ```bash
 [grafana]
 name=grafana
-baseurl=https://packages.grafana.com/enterprise/rpm
+baseurl=https://packages.grafana.com/grafana/rpm
 repo_gpgcheck=1
 enabled=1
 gpgcheck=1
