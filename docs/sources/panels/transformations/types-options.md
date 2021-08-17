@@ -10,6 +10,7 @@ Grafana comes with the following transformations:
 - [Add field from calculation]({{< relref "./types-options.md#add-field-from-calculation" >}})
 - [Concatenate fields]({{< relref "./types-options.md#concatenate-fields" >}})
 - [Config from query results]({{< relref "./config-from-query.md" >}})
+- [Fields to labels]({{< relref "./fields-to-labels.md" >}})
 - [Filter data by name]({{< relref "./types-options.md#filter-data-by-name" >}})
 - [Filter data by query]({{< relref "./types-options.md#filter-data-by-query" >}})
 - [Filter data by value]({{< relref "./types-options.md#filter-data-by-value" >}})
