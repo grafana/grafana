@@ -21,15 +21,11 @@ Family: {
         [
             {
                 PanelOptions: {
-                    ui.OptionsWithLegend
-                    ui.OptionsWithTooltip
-                    bucketSize?: int
-                    bucketOffset: int | *0
-                    combine?: bool
-                }
-
-                PanelFieldConfig: {
-                    ui.GraphFieldConfig
+                    ui.SingleStatBaseOptions
+                    graphMode: ui.BigValueGraphMode
+                    colorMode: ui.BigValueColorMode
+                    justifyMode: ui.BigValueJustifyMode
+                    textMode: ui.BigValueTextMode
                 }
             }
         ]

@@ -113,6 +113,13 @@ Family: scuemata.#Family & {
                     steps: [...#Threshold]
                 } @cuetsy(targetType="interface")
 
+                // TODO docs
+                // FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
+                #Transformation: {
+                    id: string
+                    options: {...}
+                }
+
                 // Schema for panel targets is specified by datasource
                 // plugins. We use a placeholder definition, which the Go
                 // schema loader either left open/as-is with the Base
@@ -197,6 +204,8 @@ Family: scuemata.#Family & {
                     // TODO docs
                     timeRegions?: [...]
 
+                    transformations: [...#Transformation]
+
                     // TODO docs
                     // TODO tighter constraint
                     interval?: string
@@ -209,8 +218,10 @@ Family: scuemata.#Family & {
                     // TODO tighter constraint
                     timeShift?: string
 
-                    // The values depend on panel type
-                    options: {...}
+                    // The allowable options are specified by the panel plugin's
+                    // schema.
+                    // FIXME same conundrum as with the closed validation for fieldConfig.
+                    options: {}
 
                     fieldConfig: {
                         defaults: {
@@ -282,7 +293,7 @@ Family: scuemata.#Family & {
                             // Can always exist. Valid fields within this are
                             // defined by the panel plugin - that's the
                             // PanelFieldConfig that comes from the plugin.
-                            custom?: {...}
+                            custom?: {}
                         }
                         overrides: [...{
                             matcher: {

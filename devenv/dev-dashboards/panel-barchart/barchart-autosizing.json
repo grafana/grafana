@@ -354,7 +354,7 @@
         "orientation": "auto",
         "showValue": "auto",
         "text": {
-          "size": 10,
+          "titleSize": 10,
           "valueSize": 25
         },
         "tooltip": {

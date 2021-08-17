@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -49,16 +50,7 @@ func TestScuemataBasics(t *testing.T) {
 }
 
 func TestDevenvDashboardValidity(t *testing.T) {
-	// TODO un-skip when tests pass on all devenv dashboards
-	t.Skip()
-	// validdir := os.DirFS(filepath.Join("..", "..", "..", "devenv", "dev-dashboards"))
 	validdir := filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
-
-	dash, err := BaseDashboardFamily(p)
-	require.NoError(t, err, "error while loading base dashboard scuemata")
-
-	ddash, err := DistDashboardFamily(p)
-	require.NoError(t, err, "error while loading dist dashboard scuemata")
 
 	doTest := func(sch schema.VersionedCueSchema) func(t *testing.T) {
 		return func(t *testing.T) {
@@ -87,7 +79,9 @@ func TestDevenvDashboardValidity(t *testing.T) {
 					return nil
 				} else {
 					if !(oldschemav.(float64) > 29) {
-						t.Logf("schemaVersion is %v, older than 30, skipping %s", oldschemav, path)
+						if testing.Verbose() {
+							t.Logf("schemaVersion is %v, older than 30, skipping %s", oldschemav, path)
+						}
 						return nil
 					}
 				}
@@ -96,7 +90,12 @@ func TestDevenvDashboardValidity(t *testing.T) {
 					err := sch.Validate(schema.Resource{Value: byt, Name: path})
 					if err != nil {
 						// Testify trims errors to short length. We want the full text
-						t.Fatal(errors.Details(err, nil))
+						errstr := errors.Details(err, nil)
+						t.Log(errstr)
+						if strings.Contains(errstr, "null") {
+							t.Log("validation failure appears to involve nulls - see if scripts/stripnulls.sh has any effect?")
+						}
+						t.FailNow()
 					}
 				})
 
@@ -107,7 +106,15 @@ func TestDevenvDashboardValidity(t *testing.T) {
 
 	// TODO will need to expand this appropriately when the scuemata contain
 	// more than one schema
-	t.Run("base", doTest(dash))
+
+	// TODO disabled because base variant validation currently must fail in order for
+	// dist/instance validation to do closed validation of plugin-specified fields
+	// t.Run("base", doTest(dash))
+	// dash, err := BaseDashboardFamily(p)
+	// require.NoError(t, err, "error while loading base dashboard scuemata")
+
+	ddash, err := DistDashboardFamily(p)
+	require.NoError(t, err, "error while loading dist dashboard scuemata")
 	t.Run("dist", doTest(ddash))
 }
 

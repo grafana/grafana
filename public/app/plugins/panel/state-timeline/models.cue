@@ -14,22 +14,31 @@
 
 package grafanaschema
 
-import ui "github.com/grafana/grafana/cue/ui:grafanaschema"
+import (
+    ui "github.com/grafana/grafana/cue/ui:grafanaschema"
+)
 
 Family: {
     lineages: [
         [
             {
+                #TimelineMode: "changes" | "samples" @cuetsy(targetType="enum")
+                #TimelineValueAlignment: "center" | "left" | "right" @cuetsy(targetType="type")
                 PanelOptions: {
+                    // FIXME ts comments indicate this shouldn't be in the saved model, but currently is emitted
+                    mode?: #TimelineMode
                     ui.OptionsWithLegend
                     ui.OptionsWithTooltip
-                    bucketSize?: int
-                    bucketOffset: int | *0
-                    combine?: bool
+                    showValue: ui.BarValueVisibility | *"auto"
+                    rowHeight: number | *0.9
+                    colWidth?: number
+                    mergeValues?: bool | *true
+                    alignValue?: #TimelineValueAlignment | *"left"
                 }
-
                 PanelFieldConfig: {
-                    ui.GraphFieldConfig
+                    ui.HideableFieldConfig
+                    lineWidth?: number | *0
+                    fillOpacity?: number | *70
                 }
             }
         ]

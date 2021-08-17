@@ -27,7 +27,7 @@
               "fillOpacity": 80,
               "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -86,7 +86,7 @@
               "fillOpacity": 80,
               "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -144,7 +144,7 @@
               "fillOpacity": 80,
               "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
@@ -215,7 +215,7 @@
               "fillOpacity": 80,
               "gradientMode": "none",
               "hideFrom": {
-                "graph": false,
+                "viz": false,
                 "legend": false,
                 "tooltip": false
               },
