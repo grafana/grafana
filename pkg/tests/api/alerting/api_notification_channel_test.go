@@ -74,11 +74,11 @@ func TestTestReceivers(t *testing.T) {
 			Password:       "password",
 		})
 
-		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
+		oldEmailBus := bus.GetHandlersCtx("SendEmailCommandSync")[0]
 		mockEmails := &mockEmailHandler{}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
+		bus.SetHandlerCtx(mockEmails.sendEmailCommandHandlerSync)
 		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
+			bus.SetHandlerCtx(oldEmailBus)
 		})
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
@@ -140,11 +140,11 @@ func TestTestReceivers(t *testing.T) {
 			Password:       "password",
 		})
 
-		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
+		oldEmailBus := bus.GetHandlersCtx("SendEmailCommandSync")[0]
 		mockEmails := &mockEmailHandler{}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
+		bus.SetHandlerCtx(mockEmails.sendEmailCommandHandlerSync)
 		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
+			bus.SetHandlerCtx(oldEmailBus)
 		})
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
@@ -202,13 +202,13 @@ func TestTestReceivers(t *testing.T) {
 			Password:       "password",
 		})
 
-		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
+		oldEmailBus := bus.GetHandlersCtx("SendEmailCommandSync")[0]
 		mockEmails := &mockEmailHandlerWithTimeout{
 			timeout: 5 * time.Second,
 		}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
+		bus.SetHandlerCtx(mockEmails.sendEmailCommandHandlerSync)
 		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
+			bus.SetHandlerCtx(oldEmailBus)
 		})
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
@@ -273,13 +273,13 @@ func TestTestReceivers(t *testing.T) {
 			Password:       "password",
 		})
 
-		oldEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
+		oldEmailBus := bus.GetHandlersCtx("SendEmailCommandSync")[0]
 		mockEmails := &mockEmailHandlerWithTimeout{
 			timeout: 5 * time.Second,
 		}
-		bus.AddHandlerCtx("", mockEmails.sendEmailCommandHandlerSync)
+		bus.SetHandlerCtx(mockEmails.sendEmailCommandHandlerSync)
 		t.Cleanup(func() {
-			bus.AddHandlerCtx("", oldEmailBus)
+			bus.SetHandlerCtx(oldEmailBus)
 		})
 
 		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
