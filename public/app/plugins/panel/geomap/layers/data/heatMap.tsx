@@ -11,9 +11,8 @@ import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
-import { ScaleDimensionConfig, } from '../../dims/types';
-import { ScaleDimensionEditor } from '../../dims/editors/ScaleDimensionEditor';
-import { getScaledDimension } from '../../dims/scale';
+import { ScaleDimensionConfig, getScaledDimension } from 'app/features/dimensions';
+import { ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
 // Configuration options for Heatmap overlays
 export interface HeatmapConfig {

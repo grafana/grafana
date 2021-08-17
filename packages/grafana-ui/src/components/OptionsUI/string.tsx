@@ -1,9 +1,9 @@
 import React, { useCallback } from 'react';
-import { FieldConfigEditorProps, StringFieldConfigSettings } from '@grafana/data';
+import { StandardEditorProps, StringFieldConfigSettings } from '@grafana/data';
 import { Input } from '../Input/Input';
 import { TextArea } from '../TextArea/TextArea';
 
-export const StringValueEditor: React.FC<FieldConfigEditorProps<string, StringFieldConfigSettings>> = ({
+export const StringValueEditor: React.FC<StandardEditorProps<string, StringFieldConfigSettings>> = ({
   value,
   onChange,
   item,
