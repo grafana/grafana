@@ -3,14 +3,14 @@ import { act, renderHook } from '@testing-library/react-hooks';
 import { shallow } from 'enzyme';
 import React from 'react';
 import { ZipkinDatasource } from './datasource';
-import { QueryField, useLoadOptions, useServices } from './QueryField';
+import { ZipkinQueryField, useLoadOptions, useServices } from './QueryField';
 import { ZipkinQuery } from './types';
 
 describe('QueryField', () => {
   it('renders properly', () => {
     const ds = {} as ZipkinDatasource;
     const wrapper = shallow(
-      <QueryField
+      <ZipkinQueryField
         history={[]}
         datasource={ds}
         query={{ query: '1234' } as ZipkinQuery}
