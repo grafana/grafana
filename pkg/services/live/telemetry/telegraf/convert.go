@@ -3,7 +3,6 @@ package telegraf
 import (
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -61,18 +60,18 @@ func getFrameKey(m influx.Metric) string {
 }
 
 // Convert metrics.
-func (c *Converter) Convert(body []byte, channelFormat string) ([]*data.Frame, error) {
+func (c *Converter) Convert(body []byte) ([]telemetry.FrameWrapper, error) {
 	metrics, err := c.parser.Parse(body)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing metrics: %w", err)
 	}
 	if !c.useLabelsColumn {
-		return c.convertWideFields(metrics, channelFormat)
+		return c.convertWideFields(metrics)
 	}
-	return c.convertWithLabelsColumn(metrics, channelFormat)
+	return c.convertWithLabelsColumn(metrics)
 }
 
-func (c *Converter) convertWideFields(metrics []influx.Metric, channelFormat string) ([]*data.Frame, error) {
+func (c *Converter) convertWideFields(metrics []influx.Metric) ([]telemetry.FrameWrapper, error) {
 	// maintain the order of frames as they appear in input.
 	var frameKeyOrder []string
 	metricFrames := make(map[string]*metricFrame)
@@ -97,20 +96,15 @@ func (c *Converter) convertWideFields(metrics []influx.Metric, channelFormat str
 		}
 	}
 
-	frames := make([]*data.Frame, 0, len(metricFrames))
+	frameWrappers := make([]telemetry.FrameWrapper, 0, len(metricFrames))
 	for _, key := range frameKeyOrder {
-		frame := metricFrames[key].Frame()
-		channel := strings.ReplaceAll(channelFormat, "#{metric_name}", metricFrames[key].Key())
-		frame.SetMeta(&data.FrameMeta{
-			Channel: channel,
-		})
-		frames = append(frames, frame)
+		frameWrappers = append(frameWrappers, metricFrames[key])
 	}
 
-	return frames, nil
+	return frameWrappers, nil
 }
 
-func (c *Converter) convertWithLabelsColumn(metrics []influx.Metric, channelFormat string) ([]*data.Frame, error) {
+func (c *Converter) convertWithLabelsColumn(metrics []influx.Metric) ([]telemetry.FrameWrapper, error) {
 	// maintain the order of frames as they appear in input.
 	var frameKeyOrder []string
 	metricFrames := make(map[string]*metricFrame)
@@ -135,28 +129,23 @@ func (c *Converter) convertWithLabelsColumn(metrics []influx.Metric, channelForm
 		}
 	}
 
-	frames := make([]*data.Frame, 0, len(metricFrames))
+	frameWrappers := make([]telemetry.FrameWrapper, 0, len(metricFrames))
 	for _, key := range frameKeyOrder {
-		metricFrame := metricFrames[key]
+		frame := metricFrames[key]
 		// For all fields except labels and time fill columns with nulls in
 		// case of unequal length.
-		for i := 2; i < len(metricFrame.fields); i++ {
-			if metricFrame.fields[i].Len() < metricFrame.fields[0].Len() {
-				numNulls := metricFrame.fields[0].Len() - metricFrame.fields[i].Len()
+		for i := 2; i < len(frame.fields); i++ {
+			if frame.fields[i].Len() < frame.fields[0].Len() {
+				numNulls := frame.fields[0].Len() - frame.fields[i].Len()
 				for j := 0; j < numNulls; j++ {
-					metricFrame.fields[i].Append(nil)
+					frame.fields[i].Append(nil)
 				}
 			}
 		}
-		frame := metricFrame.Frame()
-		channel := strings.ReplaceAll(channelFormat, "#{metric_name}", key)
-		frame.SetMeta(&data.FrameMeta{
-			Channel: channel,
-		})
-		frames = append(frames, frame)
+		frameWrappers = append(frameWrappers, frame)
 	}
 
-	return frames, nil
+	return frameWrappers, nil
 }
 
 type metricFrame struct {

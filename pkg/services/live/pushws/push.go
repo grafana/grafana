@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
 
 	"github.com/gorilla/websocket"
-	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
 var (
@@ -183,27 +182,14 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			"frameFormat", frameFormat,
 		)
 
-		frames, err := s.converter.Convert(body, frameFormat, "stream/"+streamID+"/#{metric_name}")
+		metricFrames, err := s.converter.Convert(body, frameFormat)
 		if err != nil {
 			logger.Error("Error converting metrics", "error", err, "frameFormat", frameFormat)
 			continue
 		}
 
-		for _, f := range frames {
-			if f.Meta == nil {
-				logger.Error("Meta is nil in frame", "error", err, "data", string(body))
-				continue
-			}
-			if f.Meta.Channel == "" {
-				logger.Error("Empty channel in frame", "error", err, "data", string(body))
-				continue
-			}
-			ch, err := liveDto.ParseChannel(f.Meta.Channel)
-			if err != nil {
-				logger.Error("Malformed channel in frame", "error", err, "data", string(body))
-				continue
-			}
-			err = stream.Push(ch.Path, f)
+		for _, mf := range metricFrames {
+			err := stream.Push(mf.Key(), mf.Frame())
 			if err != nil {
 				logger.Error("Error pushing frame", "error", err, "data", string(body))
 				return

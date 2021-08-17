@@ -2,8 +2,6 @@ package pipeline
 
 import (
 	"context"
-
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type AutoJsonConverterConfig struct {
@@ -24,7 +22,12 @@ func NewAutoJsonConverter(c AutoJsonConverterConfig) *AutoJsonConverter {
 // To preserve nulls we need FieldTips from a user.
 // Custom time can be injected on Processor stage theoretically.
 // Custom labels can be injected on Processor stage theoretically.
-func (c *AutoJsonConverter) Convert(_ context.Context, vars Vars, body []byte) ([]*data.Frame, error) {
+func (c *AutoJsonConverter) Convert(_ context.Context, vars Vars, body []byte) ([]*ChannelFrame, error) {
 	frame, err := JSONDocToFrame(vars.Path, body, c.config.FieldTips)
-	return []*data.Frame{frame}, err
+	if err != nil {
+		return nil, err
+	}
+	return []*ChannelFrame{
+		{Channel: "", Frame: frame},
+	}, nil
 }

@@ -29,7 +29,7 @@ func NewExactJsonConverter(c ExactJsonConverterConfig) *ExactJsonConverter {
 // To preserve nulls and extract time we need tips from a user:
 // * Field types
 // * Time column with time format
-func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) ([]*data.Frame, error) {
+func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) ([]*ChannelFrame, error) {
 	obj, err := oj.Parse(body)
 	if err != nil {
 		return nil, err
@@ -132,7 +132,7 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 	}
 
 	frame := data.NewFrame(vars.Path, fields...)
-	//s, _ := frame.StringTable(10, 10)
-	//println(s)
-	return []*data.Frame{frame}, nil
+	return []*ChannelFrame{
+		{Channel: "", Frame: frame},
+	}, nil
 }

@@ -21,6 +21,6 @@ func (m MultipleOutputter) Output(ctx context.Context, vars OutputVars, frame *d
 	return nil
 }
 
-func NewMultipleOutputter(outputters []Outputter) *MultipleOutputter {
+func NewMultipleOutputter(outputters ...Outputter) *MultipleOutputter {
 	return &MultipleOutputter{Outputters: outputters}
 }

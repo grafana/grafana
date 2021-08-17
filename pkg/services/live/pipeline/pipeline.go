@@ -11,7 +11,7 @@ type Pipeline struct {
 }
 
 func New(s Storage) *Pipeline {
-	//go postTestData() // TODO: temporary for development, remove.
+	go postTestData() // TODO: temporary for development, remove.
 	return &Pipeline{cache: NewCache(s)}
 }
 
@@ -50,6 +50,7 @@ type Storage interface {
 
 type Vars struct {
 	OrgID     int64
+	Channel   string
 	Scope     string
 	Namespace string
 	Path      string

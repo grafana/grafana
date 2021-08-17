@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
 var (
@@ -48,20 +47,14 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 		{
 			OrgId:   1,
 			Pattern: "stream/influx/input",
-			Converter: pipeline.NewInfluxConverter(pipeline.InfluxConverterConfig{
-				FrameFormat:  "labels_column",
-				FrameChannel: "stream/influx/input/#{metric_name}",
-			}),
-			Outputter: pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
-				Channel: "#{frame_channel}",
+			Converter: pipeline.NewAutoInfluxConverter(pipeline.AutoInfluxConverterConfig{
+				FrameFormat: "labels_column",
 			}),
 		},
 		{
-			OrgId:   1,
-			Pattern: "stream/influx/input/*",
-			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
-				pipeline.NewManagedStreamOutput(f.gLive),
-			}),
+			OrgId:     1,
+			Pattern:   "stream/influx/input/*",
+			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
 		},
 		{
 			OrgId:   1,
@@ -71,7 +64,7 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 			// set in a first frame column (in Influx converter). For example, this will allow
 			// to leave only "total-cpu" data while dropping individual CPUs.
 			Processor: pipeline.NewKeepFieldsProcessor("labels", "time", "usage_user"),
-			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
+			Outputter: pipeline.NewMultipleOutputter(
 				pipeline.NewManagedStreamOutput(f.gLive),
 				pipeline.NewConditionalOutput(
 					pipeline.NewNumberCompareCondition("usage_user", "gte", 50),
@@ -79,7 +72,7 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 						Channel: "stream/influx/input/cpu/spikes",
 					}),
 				),
-			}),
+			),
 		},
 		{
 			OrgId:     1,
@@ -197,7 +190,7 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					},
 				},
 			}),
-			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
+			Outputter: pipeline.NewMultipleOutputter(
 				pipeline.NewManagedStreamOutput(f.gLive),
 				pipeline.NewRemoteWriteOutput(pipeline.RemoteWriteConfig{
 					Enabled:  true,
@@ -229,12 +222,12 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					FieldName: "value4",
 					Channel:   "stream/json/exact/value4/state",
 				}),
-			}),
+			),
 		},
 		{
 			OrgId:   1,
 			Pattern: "stream/json/exact/value3/changes",
-			Outputter: pipeline.NewMultipleOutputter([]pipeline.Outputter{
+			Outputter: pipeline.NewMultipleOutputter(
 				pipeline.NewManagedStreamOutput(f.gLive),
 				pipeline.NewRemoteWriteOutput(pipeline.RemoteWriteConfig{
 					Enabled:  true,
@@ -242,7 +235,7 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
 					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
 				}),
-			}),
+			),
 		},
 		{
 			OrgId:     1,
@@ -308,7 +301,7 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 		"frameFormat", frameFormat,
 	)
 
-	frames, err := g.converter.Convert(body, frameFormat, "stream/"+streamID+"/#{metric_name}")
+	metricFrames, err := g.converter.Convert(body, frameFormat)
 	if err != nil {
 		logger.Error("Error converting metrics", "error", err, "frameFormat", frameFormat)
 		if errors.Is(err, convert.ErrUnsupportedFrameFormat) {
@@ -319,22 +312,11 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 		return
 	}
 
-	for _, f := range frames {
-		if f.Meta == nil {
-			logger.Error("Meta is nil in frame", "error", err, "data", string(body))
-			continue
-		}
-		if f.Meta.Channel == "" {
-			logger.Error("Empty channel in frame", "error", err, "data", string(body))
-			continue
-		}
-		ch, err := liveDto.ParseChannel(f.Meta.Channel)
-		if err != nil {
-			logger.Error("Malformed channel in frame", "error", err, "data", string(body))
-			ctx.Resp.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		err = stream.Push(ch.Path, f)
+	// TODO -- make sure all packets are combined together!
+	// interval = "1s" vs flush_interval = "5s"
+
+	for _, mf := range metricFrames {
+		err := stream.Push(mf.Key(), mf.Frame())
 		if err != nil {
 			logger.Error("Error pushing frame", "error", err, "data", string(body))
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
@@ -362,7 +344,7 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 
 	channelID := "stream/" + streamID + "/" + path
 
-	frames, ok, err := g.ruleProcessor.DataToFrames(context.Background(), ctx.OrgId, channelID, body)
+	channelFrames, ok, err := g.ruleProcessor.DataToFrames(context.Background(), ctx.OrgId, channelID, body)
 	if err != nil {
 		logger.Error("Error data to frame", "error", err, "body", string(body))
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
@@ -374,8 +356,12 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 		return
 	}
 
-	for _, frame := range frames {
-		err = g.ruleProcessor.ProcessFrame(context.Background(), ctx.OrgId, channelID, frame)
+	for _, channelFrame := range channelFrames {
+		var processorChannel = channelID
+		if channelFrame.Channel != "" {
+			processorChannel = channelFrame.Channel
+		}
+		err = g.ruleProcessor.ProcessFrame(context.Background(), ctx.OrgId, processorChannel, channelFrame.Frame)
 		if err != nil {
 			logger.Error("Error processing frame", "error", err, "data", string(body))
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
