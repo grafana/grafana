@@ -1,4 +1,4 @@
-import { ButtonCascader, CascaderOption } from '@grafana/ui';
+import { ButtonCascader, CascaderOption, QueryField } from '@grafana/ui';
 import { act, renderHook } from '@testing-library/react-hooks';
 import { shallow } from 'enzyme';
 import React from 'react';
@@ -20,8 +20,8 @@ describe('QueryField', () => {
     );
 
     expect(wrapper.find(ButtonCascader).length).toBe(1);
-    expect(wrapper.find('input').length).toBe(1);
-    expect(wrapper.find('input').props().value).toBe('1234');
+    expect(wrapper.find(QueryField).length).toBe(1);
+    expect(wrapper.find(QueryField).prop('query')).toBe('1234');
   });
 });
 
