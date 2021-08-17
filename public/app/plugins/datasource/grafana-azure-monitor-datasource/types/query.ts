@@ -55,9 +55,10 @@ export interface AzureMetricQuery {
   /** @deprecated Remove this once angular is removed */
   allowedTimeGrainsMs?: number[];
 
-  /** @deprecated migrated to dimensionFilters */
+  /** @deprecated This property was migrated to dimensionFilters and should only be accessed in the migration */
   dimension?: string;
-  /** @deprecated migrated to dimensionFilters */
+
+  /** @deprecated This property was migrated to dimensionFilters and should only be accessed in the migration */
   dimensionFilter?: string;
 }
 
