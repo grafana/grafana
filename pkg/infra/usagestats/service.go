@@ -42,6 +42,7 @@ type UsageStatsService struct {
 	externalMetrics          []MetricsFunc
 	concurrentUserStatsCache memoConcurrentUserStats
 	liveStats                liveUsageStats
+	startTime                time.Time
 }
 
 type liveUsageStats struct {
@@ -68,6 +69,7 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
 		grafanaLive:        grafanaLive,
 		kvStore:            kvStore,
 		log:                log.New("infra.usagestats"),
+		startTime:          time.Now(),
 	}
 	return s
 }

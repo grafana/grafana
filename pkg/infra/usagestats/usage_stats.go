@@ -272,6 +272,8 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.auth_token_per_user_le_15"] = concurrentUsersStats.BucketLE15
 	metrics["stats.auth_token_per_user_le_inf"] = concurrentUsersStats.BucketLEInf
 
+	metrics["stats.uptime"] = time.Since(uss.startTime).Seconds()
+
 	return report, nil
 }
 
