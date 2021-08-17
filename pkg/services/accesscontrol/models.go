@@ -96,10 +96,10 @@ const (
 	ActionPluginsManage = "plugins:manage"
 
 	// Global Scopes
-	ResourceScopeGlobalUsersAll = "global:users:all"
+	//ResourceScopeGlobalUsersAll = "global:users:all"
 
 	// Users scope
-	ResourceScopeUsersAll = "users:all"
+	//ResourceScopeUsersAll = "users:all"
 
 	// Settings scope
 	ResourceScopeSettingsAll = "settings:all"

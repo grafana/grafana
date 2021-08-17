@@ -44,17 +44,18 @@ func evaluateScope(requestScopes map[string]struct{}, resourceScopes ...string) 
 
 	logger := log.New("accesscontrol.permissioncheck")
 	for _, resourceScope := range resourceScopes {
+		if strings.ContainsAny(resourceScope, "*?") {
+			msg := fmt.Sprintf("Invalid scope: %v should not contain meta-characters like * or ?", resourceScope)
+			l.Println(msg)
+			logger.Error(msg)
+			panic(msg)
+			return false, errors.New(msg)
+		}
 
 		var match bool
 		for requestScope := range requestScopes {
-			if strings.ContainsAny(resourceScope, "*?") {
-				msg := fmt.Sprintf("Invalid scope: %v should not contain meta-characters like * or ?", resourceScope)
-				l.Println(msg)
-				logger.Error(msg)
-				panic(msg)
-				return false, errors.New(msg)
-			}
-			rule, err := glob.Compile(requestScope, ':', '/')
+
+			rule, err := glob.Compile(requestScope, '/')
 			if err != nil {
 				return false, err
 			}
@@ -71,7 +72,7 @@ func evaluateScope(requestScopes map[string]struct{}, resourceScopes ...string) 
 	msg := fmt.Sprintf("Access control: failed!  Could not match resource scopes  %v with request scope %v", resourceScopes, requestScopes)
 	l.Println(msg)
 	logger.Debug(msg)
-	panic(msg)
+	//panic(msg)
 	return false, nil
 }
 
