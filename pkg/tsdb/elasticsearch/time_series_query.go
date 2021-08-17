@@ -70,7 +70,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	if err != nil {
 		return err
 	}
-	intrvl, err := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval, tsdb.Min)
+	intrvl, err := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval, intervalv2.Min)
 	if err != nil {
 		return err
 	}

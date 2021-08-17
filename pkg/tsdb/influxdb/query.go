@@ -31,7 +31,7 @@ func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error
 
 	calculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
 
-	i, err := calculator.Calculate(queryContext.Queries[0].TimeRange, query.Interval, tsdb.Min)
+	i, err := calculator.Calculate(queryContext.Queries[0].TimeRange, query.Interval, intervalv2.Min)
 	if err != nil {
 		return "", err
 	}
