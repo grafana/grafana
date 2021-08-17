@@ -22,7 +22,7 @@ func NewRuleProcessor(pipeline *Pipeline) *RuleProcessor {
 }
 
 func (p *RuleProcessor) DataToFrames(ctx context.Context, orgID int64, channelID string, body []byte) ([]*ChannelFrame, bool, error) {
-	rule, ruleOk, err := p.pipeline.Get(orgID, channelID)
+	rule, _, ruleOk, err := p.pipeline.Get(orgID, channelID)
 	if err != nil {
 		logger.Error("Error getting rule", "error", err, "data", string(body))
 		return nil, false, err
@@ -58,7 +58,7 @@ func (p *RuleProcessor) DataToFrames(ctx context.Context, orgID int64, channelID
 }
 
 func (p *RuleProcessor) ProcessFrame(ctx context.Context, orgID int64, channelID string, frame *data.Frame) error {
-	rule, ruleOk, err := p.pipeline.Get(orgID, channelID)
+	rule, _, ruleOk, err := p.pipeline.Get(orgID, channelID)
 	if err != nil {
 		logger.Error("Error getting rule", "error", err)
 		return err

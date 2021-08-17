@@ -52,31 +52,24 @@ func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChan
 			}),
 		},
 		{
-			OrgId:     1,
-			Pattern:   "stream/influx/input/*",
-			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
-		},
-		{
 			OrgId:   1,
-			Pattern: "stream/influx/input/cpu",
-			// TODO: Would be fine to have KeepLabelsProcessor, but we need to know frame type
-			// since there are cases when labels attached to a field, and cases where labels
-			// set in a first frame column (in Influx converter). For example, this will allow
-			// to leave only "total-cpu" data while dropping individual CPUs.
-			Processor: pipeline.NewKeepFieldsProcessor("labels", "time", "usage_user"),
-			Outputter: pipeline.NewMultipleOutputter(
-				pipeline.NewManagedStreamOutput(f.gLive),
-				pipeline.NewConditionalOutput(
-					pipeline.NewNumberCompareCondition("usage_user", "gte", 50),
-					pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
-						Channel: "stream/influx/input/cpu/spikes",
-					}),
+			Pattern: "stream/influx/input/:metric",
+			Outputter: pipeline.NewMatchOutput("metric", map[string]pipeline.Outputter{
+				"cpu": pipeline.NewMultipleOutputter(
+					pipeline.NewManagedStreamOutput(f.gLive),
+					pipeline.NewConditionalOutput(
+						pipeline.NewNumberCompareCondition("usage_user", "gte", 50),
+						pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
+							Channel: "stream/influx/spikes/cpu",
+						}),
+					),
 				),
-			),
+				"*": pipeline.NewManagedStreamOutput(f.gLive),
+			}),
 		},
 		{
 			OrgId:     1,
-			Pattern:   "stream/influx/input/cpu/spikes",
+			Pattern:   "stream/influx/spikes/cpu",
 			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
 		},
 		{

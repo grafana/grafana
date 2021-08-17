@@ -3,19 +3,21 @@ package pipeline
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/live/pipeline/tree"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type Pipeline struct {
-	cache *Cache
+	cache *CacheAlt
 }
 
 func New(s Storage) *Pipeline {
 	go postTestData() // TODO: temporary for development, remove.
-	return &Pipeline{cache: NewCache(s)}
+	return &Pipeline{cache: NewCacheAlt(s)}
 }
 
-func (s *Pipeline) Get(orgID int64, channel string) (*LiveChannelRule, bool, error) {
+func (s *Pipeline) Get(orgID int64, channel string) (*LiveChannelRule, *tree.Params, bool, error) {
 	return s.cache.Get(orgID, channel)
 }
 

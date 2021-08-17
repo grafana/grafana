@@ -23,12 +23,6 @@ func NewExactJsonConverter(c ExactJsonConverterConfig) *ExactJsonConverter {
 	return &ExactJsonConverter{config: c}
 }
 
-// Automatic conversion works this way:
-// * Time added automatically
-// * Nulls dropped
-// To preserve nulls and extract time we need tips from a user:
-// * Field types
-// * Time column with time format
 func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) ([]*ChannelFrame, error) {
 	obj, err := oj.Parse(body)
 	if err != nil {
