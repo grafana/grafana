@@ -1,3 +1,5 @@
+
+import React, { ReactNode } from 'react';
 import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, FrameGeometrySourceMode } from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
@@ -6,17 +8,12 @@ import * as source from 'ol/source';
 
 import tinycolor from 'tinycolor2';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
-import { ColorDimensionConfig, ScaleDimensionConfig, } from '../../dims/types';
-import { getScaledDimension, } from '../../dims/scale';
-import { getColorDimension, } from '../../dims/color';
-import { ScaleDimensionEditor } from '../../dims/editors/ScaleDimensionEditor';
-import { ColorDimensionEditor } from '../../dims/editors/ColorDimensionEditor';
-import React from 'react';
+import { ColorDimensionConfig, ScaleDimensionConfig, getScaledDimension, getColorDimension } from 'app/features/dimensions';
+import { ScaleDimensionEditor, ColorDimensionEditor } from 'app/features/dimensions/editors';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
-import { ReplaySubject } from 'rxjs';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
-import { ReactNode } from 'react';
 import { circleMarker, markerMakers } from '../../utils/regularShapes';
+import { ReplaySubject } from 'rxjs';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {

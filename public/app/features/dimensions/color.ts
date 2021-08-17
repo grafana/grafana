@@ -1,13 +1,13 @@
 import { DataFrame, getFieldColorModeForField, getScaleCalculator, GrafanaTheme2 } from '@grafana/data';
 import { ColorDimensionConfig, DimensionSupplier } from './types';
-import { findField } from './utils';
+import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------
 // Color dimension
 //---------------------------------------------------------
 
 export function getColorDimension(
-  frame: DataFrame,
+  frame: DataFrame | undefined,
   config: ColorDimensionConfig,
   theme: GrafanaTheme2
 ): DimensionSupplier<string> {
@@ -17,6 +17,7 @@ export function getColorDimension(
     return {
       isAssumed: Boolean(config.field?.length) || !config.fixed,
       fixed: v,
+      value: () => v,
       get: (i) => v,
     };
   }
@@ -25,6 +26,7 @@ export function getColorDimension(
     const fixed = mode.getCalculator(field, theme)(0, 0);
     return {
       fixed,
+      value: () => fixed,
       get: (i) => fixed,
       field,
     };
@@ -36,5 +38,6 @@ export function getColorDimension(
       return scale(val).color;
     },
     field,
+    value: () => scale(getLastNotNullFieldValue(field)).color,
   };
 }

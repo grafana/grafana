@@ -5,8 +5,8 @@ import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import {
   useFieldDisplayNames,
   useSelectOptions,
-} from '../../../../../../../packages/grafana-ui/src/components/MatchersUI/utils';
-import { NumberInput } from '../../components/NumberInput';
+} from '../../../../../packages/grafana-ui/src/components/MatchersUI/utils';
+import { NumberInput } from './NumberInput';
 import { css } from '@emotion/css';
 import { validateScaleOptions, validateScaleConfig } from '../scale';
 
