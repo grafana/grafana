@@ -54,7 +54,7 @@ func setupAMTest(t *testing.T) *Alertmanager {
 
 func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
 	am := setupAMTest(t)
-	require.NoError(t, am.SyncAndApplyConfigFromDatabase())
+	require.NoError(t, am.SyncAndApplyConfigFromDatabase(mainOrgID))
 	require.NotNil(t, am.config)
 }
 

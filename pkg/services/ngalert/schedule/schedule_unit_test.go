@@ -27,7 +27,7 @@ import (
 func TestSendingToExternalAlertmanager(t *testing.T) {
 	t.Cleanup(registry.ClearOverrides)
 
-	fakeAM := newFakeExternalAlertmanager(t)
+	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := newFakeRuleStore(t)
 	fakeInstanceStore := &fakeInstanceStore{}
@@ -61,7 +61,6 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 		cancel()
 	})
 	go func() {
-		AdminConfigPollingInterval = 10 * time.Minute // Do not poll in unit tests.
 		err := sched.Run(ctx)
 		require.NoError(t, err)
 	}()
@@ -95,7 +94,7 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	t.Cleanup(registry.ClearOverrides)
 
-	fakeAM := newFakeExternalAlertmanager(t)
+	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := newFakeRuleStore(t)
 	fakeInstanceStore := &fakeInstanceStore{}
@@ -130,7 +129,6 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 		cancel()
 	})
 	go func() {
-		AdminConfigPollingInterval = 10 * time.Minute // Do not poll in unit tests.
 		err := sched.Run(ctx)
 		require.NoError(t, err)
 	}()
@@ -161,7 +159,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	}, 20*time.Second, 200*time.Millisecond)
 
 	// 2. Next, let's modify the configuration of an organization by adding an extra alertmanager.
-	fakeAM2 := newFakeExternalAlertmanager(t)
+	fakeAM2 := NewFakeExternalAlertmanager(t)
 	adminConfig2 = &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.server.URL, fakeAM2.server.URL}}
 	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
 	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
@@ -238,16 +236,17 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 	logger := log.New("ngalert schedule test")
 	nilMetrics := metrics.NewMetrics(nil)
 	schedCfg := SchedulerCfg{
-		C:                mockedClock,
-		BaseInterval:     time.Second,
-		MaxAttempts:      1,
-		Evaluator:        eval.Evaluator{Cfg: &setting.Cfg{ExpressionsEnabled: true}, Log: logger},
-		RuleStore:        rs,
-		InstanceStore:    is,
-		AdminConfigStore: acs,
-		Notifier:         &fakeNotifier{},
-		Logger:           logger,
-		Metrics:          metrics.NewMetrics(prometheus.NewRegistry()),
+		C:                       mockedClock,
+		BaseInterval:            time.Second,
+		MaxAttempts:             1,
+		Evaluator:               eval.Evaluator{Cfg: &setting.Cfg{ExpressionsEnabled: true}, Log: logger},
+		RuleStore:               rs,
+		InstanceStore:           is,
+		AdminConfigStore:        acs,
+		Notifier:                &fakeNotifier{},
+		Logger:                  logger,
+		Metrics:                 metrics.NewMetrics(prometheus.NewRegistry()),
+		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
 	st := state.NewManager(schedCfg.Logger, nilMetrics, rs, is)
 	return NewScheduler(schedCfg, nil, "http://localhost", st), mockedClock
