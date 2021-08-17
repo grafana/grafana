@@ -233,10 +233,12 @@ const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ children, o
 const getStyles = (theme: GrafanaTheme2) => {
   const pulsate = keyframes`
     0% {box-shadow: 0 0 0 2px ${theme.colors.background.canvas}, 0 0 0px 4px ${theme.colors.primary.main};}
-    50% {box-shadow: 0 0 0 2px ${theme.v1.colors.bodyBg}, 0 0 0px 4px ${tinycolor(theme.v1.colors.formFocusOutline)
+    50% {box-shadow: 0 0 0 2px ${theme.components.dashboard.background}, 0 0 0px 4px ${tinycolor(
+    theme.colors.primary.main
+  )
     .darken(20)
     .toHexString()};}
-    100% {box-shadow: 0 0 0 2px ${theme.v1.colors.bodyBg}, 0 0 0px 4px  ${theme.v1.colors.formFocusOutline};}
+    100% {box-shadow: 0 0 0 2px ${theme.components.dashboard.background}, 0 0 0px 4px  ${theme.colors.primary.main};}
   `;
 
   return {

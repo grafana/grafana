@@ -71,7 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     detailsOpen: css`
       &:hover {
-        background-color: ${styleMixins.hoverColor(theme.v1.colors.panelBg, theme)};
+        background-color: ${styleMixins.hoverColor(theme.colors.background.primary, theme)};
       }
     `,
     errorLogRow: css`

@@ -125,19 +125,19 @@ function getStyles(theme: GrafanaTheme2) {
       flex: auto;
       display: flex;
       justify-content: flex-end;
-      font-size: ${theme.typography.h6.fontSize};
+      font-size: ${theme.typography.bodySmall.fontSize};
     `,
     time: css`
       margin-left: ${theme.spacing(1)};
-      font-size: ${theme.typography.h6.fontSize};
-      color: ${theme.v1.colors.textWeak};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      color: ${theme.colors.text.secondary};
     `,
     avatar: css`
       padding: ${theme.spacing(0.5)};
       img {
         border-radius: 50%;
-        width: ${theme.v1.spacing.md};
-        height: ${theme.v1.spacing.md};
+        width: ${theme.spacing(2)};
+        height: ${theme.spacing(2)};
       }
     `,
   };

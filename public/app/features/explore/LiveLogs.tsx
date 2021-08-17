@@ -11,7 +11,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   logsRowsLive: css`
     label: logs-rows-live;
     font-family: ${theme.typography.fontFamilyMonospace};
-    font-size: ${theme.typography.h6.fontSize};
+    font-size: ${theme.typography.bodySmall.fontSize};
     display: flex;
     flex-flow: column nowrap;
     height: 60vh;
@@ -35,7 +35,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   logsRowsIndicator: css`
-    font-size: ${theme.typography.h5.fontSize};
+    font-size: ${theme.typography.h6.fontSize};
     padding-top: ${theme.spacing(1)};
     display: flex;
     align-items: center;

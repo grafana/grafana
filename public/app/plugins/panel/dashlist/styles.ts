@@ -32,7 +32,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
 
   dashlistFolder: css`
     color: ${theme.colors.secondary.text};
-    font-size: ${theme.typography.h6.fontSize};
+    font-size: ${theme.typography.bodySmall.fontSize};
     line-height: ${theme.typography.body.lineHeight};
   `,
 

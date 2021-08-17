@@ -4,7 +4,7 @@ import { styleMixins, stylesFactory } from '../../themes';
 
 export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: LogLevel) => {
   let logColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.gray2;
-  const hoverBgColor = styleMixins.hoverColor(theme.v1.colors.panelBg, theme);
+  const hoverBgColor = styleMixins.hoverColor(theme.colors.background.primary, theme);
 
   switch (logLevel) {
     case LogLevel.crit:
@@ -46,7 +46,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
     logsRowsTable: css`
       label: logs-rows;
       font-family: ${theme.typography.fontFamilyMonospace};
-      font-size: ${theme.typography.h6.fontSize};
+      font-size: ${theme.typography.bodySmall.fontSize};
       width: 100%;
     `,
     context: css`
@@ -137,7 +137,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
     //Log details specific CSS
     logDetailsContainer: css`
       label: logs-row-details-table;
-      border: 1px solid ${theme.v1.colors.border2};
+      border: 1px solid ${theme.colors.border.medium};
       padding: 0 ${theme.spacing(1)} ${theme.spacing(1)};
       border-radius: 3px;
       margin: 20px 8px 20px 16px;
