@@ -2,10 +2,8 @@ package cloudwatch
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"golang.org/x/sync/errgroup"
@@ -100,14 +98,11 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 	}
 
 	if err := eg.Wait(); err != nil {
-		var awsErr awserr.RequestFailure
-		if ok := errors.As(err, &awsErr); ok {
-			dataResponse := backend.DataResponse{
-				Error: fmt.Errorf("metric request error: %q", err),
-			}
-			resultChan <- &responseWrapper{
-				DataResponse: &dataResponse,
-			}
+		dataResponse := backend.DataResponse{
+			Error: fmt.Errorf("metric request error: %q", err),
+		}
+		resultChan <- &responseWrapper{
+			DataResponse: &dataResponse,
 		}
 		return nil, err
 	}
