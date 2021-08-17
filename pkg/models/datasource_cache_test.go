@@ -296,6 +296,12 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		})
 		clearDSProxyCache(t)
 
+		origSigV4Enabled := setting.SigV4AuthEnabled
+		setting.SigV4AuthEnabled = true
+		t.Cleanup(func() {
+			setting.SigV4AuthEnabled = origSigV4Enabled
+		})
+
 		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
 		require.NoError(t, err)
 
