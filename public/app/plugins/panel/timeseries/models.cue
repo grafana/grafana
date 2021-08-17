@@ -23,18 +23,12 @@ Family: {
         [
             {
                 PanelOptions: {
+                    // FIXME idk where this is coming from but various devenv dashes have it
+                    graph?: {...}
                     legend: ui.VizLegendOptions
                     tooltip: ui.VizTooltipOptions
                 }
-                PanelFieldConfig: {
-                    ui.LineConfig
-                    ui.FillConfig
-                    ui.PointsConfig
-                    ui.AxisConfig
-                    drawStyle?:    ui.DrawStyle
-                    gradientMode?: ui.GraphGradientMode
-                    hideFrom?:     ui.HideSeriesConfig
-                }
+                PanelFieldConfig: ui.GraphFieldConfig
             }
         ]
     ]
