@@ -2,7 +2,7 @@ import { DataSourceJsonData, PluginMeta } from '@grafana/data';
 import { alertRuleToQueries } from './query';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { CombinedRule } from 'app/types/unified-alerting';
-import { GrafanaAlertStateDecision, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 describe('alertRuleToQueries', () => {
   it('it should convert grafana alert', () => {
@@ -76,7 +76,7 @@ describe('alertRuleToQueries', () => {
   });
 });
 
-const grafanaAlert: GrafanaRuleDefinition = {
+const grafanaAlert = {
   condition: 'B',
   exec_err_state: GrafanaAlertStateDecision.Alerting,
   namespace_id: 11,
@@ -110,13 +110,11 @@ const grafanaAlert: GrafanaRuleDefinition = {
             type: 'query',
           },
         ],
-        datasource: {
-          type: '__expr__',
-        },
+        datasource: '__expr__',
         hide: false,
         refId: 'B',
         type: 'classic_conditions',
       },
     },
   ],
-} as any; // HACK???
+};

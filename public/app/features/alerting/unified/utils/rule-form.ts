@@ -6,7 +6,6 @@ import {
   getDefaultRelativeTimeRange,
   TimeRange,
   IntervalValues,
-  DatasourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -170,10 +169,7 @@ const getDefaultExpression = (refId: string): AlertQuery => {
     refId,
     hide: false,
     type: ExpressionQueryType.classic,
-    datasource: {
-      type: ExpressionDatasourceID,
-      uid: ExpressionDatasourceID,
-    },
+    datasource: ExpressionDatasourceID,
     conditions: [
       {
         type: 'query',
@@ -207,13 +203,13 @@ const dataQueriesToGrafanaQueries = async (
   queries: DataQuery[],
   relativeTimeRange: RelativeTimeRange,
   scopedVars: ScopedVars | {},
-  datasourceRef?: DatasourceRef,
+  datasourceName?: string,
   maxDataPoints?: number,
   minInterval?: string
 ): Promise<AlertQuery[]> => {
   const result: AlertQuery[] = [];
   for (const target of queries) {
-    const dsName = target.datasource || datasourceRef;
+    const dsName = target.datasource || datasourceName;
     const datasource = await getDataSourceSrv().get(dsName);
 
     const range = rangeUtil.relativeToTimeRange(relativeTimeRange);
