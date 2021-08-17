@@ -1,5 +1,11 @@
-import { DataFrameFieldIndex, FALLBACK_COLOR, FieldColorMode, GrafanaTheme2, ThresholdsConfig } from '@grafana/data';
-import tinycolor from 'tinycolor2';
+import {
+  colorManipulator,
+  DataFrameFieldIndex,
+  FALLBACK_COLOR,
+  FieldColorMode,
+  GrafanaTheme2,
+  ThresholdsConfig,
+} from '@grafana/data';
 import uPlot, { Series } from 'uplot';
 import {
   BarAlignment,
@@ -55,16 +61,18 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
-    const lineColor = this.getLineColor();
+
+    let lineColor = this.getLineColor();
+
+    // DrawStyle.Points mode also needs this for fill/stroke sharing & re-use in series.points. see getColor() below.
+    lineConfig.stroke = lineColor;
 
     if (pathBuilder != null) {
       lineConfig.paths = pathBuilder;
-      lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
     } else if (drawStyle === DrawStyle.Points) {
       lineConfig.paths = () => null;
     } else if (drawStyle != null) {
-      lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
       if (lineStyle && lineStyle.fill !== 'solid') {
         if (lineStyle.fill === 'dot') {
@@ -84,10 +92,14 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       };
     }
 
+    const useColor: uPlot.Series.Stroke =
+      // @ts-ignore
+      typeof lineColor === 'string' ? lineColor : (u, seriesIdx) => u.series[seriesIdx]._stroke;
+
     const pointsConfig: Partial<Series> = {
       points: {
-        stroke: lineColor,
-        fill: lineColor,
+        stroke: useColor,
+        fill: useColor,
         size: pointSize,
         filter: pointsFilter,
       },
@@ -153,7 +165,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
         return getScaleGradientFn(opacityPercent, theme, colorMode, thresholds);
       default:
         if (opacityPercent > 0) {
-          return tinycolor(lineColor).setAlpha(opacityPercent).toString();
+          return colorManipulator.alpha(lineColor ?? '', opacityPercent);
         }
     }
 

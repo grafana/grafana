@@ -58,11 +58,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 
 	m := macaron.New()
 	m.Use(getContextHandler(t, cfg).Middleware)
-	m.Use(macaron.Renderer(macaron.RenderOptions{
-		Directory:  filepath.Join(setting.StaticRootPath, "views"),
-		IndentJSON: true,
-		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
-	}))
+	m.UseMiddleware(macaron.Renderer(filepath.Join(setting.StaticRootPath, "views"), "[[", "]]"))
 	m.Get("/api/frontend/settings/", hs.GetFrontendSettings)
 
 	return m, hs

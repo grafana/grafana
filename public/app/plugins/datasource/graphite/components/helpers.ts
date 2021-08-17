@@ -2,6 +2,21 @@ import { FuncDefs, FuncInstance, ParamDef } from '../gfunc';
 import { forEach, sortBy } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { EditableParam } from './FunctionParamEditor';
+import { GraphiteSegment } from '../types';
+
+export function mapStringsToSelectables<T extends string>(values: T[]): Array<SelectableValue<T>> {
+  return values.map((value) => ({
+    value,
+    label: value,
+  }));
+}
+
+export function mapSegmentsToSelectables(segments: GraphiteSegment[]): Array<SelectableValue<GraphiteSegment>> {
+  return segments.map((segment) => ({
+    label: segment.value,
+    value: segment,
+  }));
+}
 
 export function mapFuncDefsToSelectables(funcDefs: FuncDefs): Array<SelectableValue<string>> {
   const categories: any = {};

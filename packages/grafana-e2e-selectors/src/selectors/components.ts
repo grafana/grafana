@@ -44,7 +44,7 @@ export const Components = {
   },
   Panels: {
     Panel: {
-      title: (title: string) => `Panel header ${title}`,
+      title: (title: string) => `data-testid Panel header ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
@@ -213,9 +213,9 @@ export const Components = {
     items: 'Search items',
   },
   DashboardLinks: {
-    container: 'Dashboard link container',
-    dropDown: 'Dashboard link dropdown',
-    link: 'Dashboard link',
+    container: 'data-testid Dashboard link container',
+    dropDown: 'data-testid Dashboard link dropdown',
+    link: 'data-testid Dashboard link',
   },
   LoadingIndicator: {
     icon: 'Loading indicator',
