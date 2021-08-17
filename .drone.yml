@@ -3500,7 +3500,7 @@ steps:
 - name: slack-notify-failure
   image: plugins/slack
   settings:
-    channel: grafana-backend
+    channel: grafana-backend-ops
     template: "Nightly docker image scan job for {{repo.name}} failed: {{build.link}}"
     webhook:
       from_secret: slack_webhook_backend
@@ -3540,6 +3540,6 @@ get:
 
 ---
 kind: signature
-hmac: 75b1fba95cdbb634ad105c0ba7c26e59d16cfc9536f4b36b4f0d0f65a9c72031
+hmac: a1fbd6f6ee08a7b5e44363713d58f4f4da9d552b0178958786d1ca9a9dded2a9
 
 ...
