@@ -485,6 +485,49 @@
         }
       }
     },
+    "/api/alertmanager/{Recipient}/config/api/v1/receivers/test": {
+      "post": {
+        "tags": [
+          "alertmanager"
+        ],
+        "summary": "Test Grafana managed receivers without saving them.",
+        "operationId": "RoutePostTestReceivers",
+        "parameters": [
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/PostableApiReceiver"
+            },
+            "x-go-name": "Receivers",
+            "name": "receivers",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "207": {
+            "$ref": "#/responses/MultiStatus"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          },
+          "408": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/Failure"
+            }
+          }
+        }
+      }
+    },
     "/api/prometheus/{Recipient}/api/v1/alerts": {
       "get": {
         "description": "gets the current alerts",
@@ -1707,6 +1750,7 @@
           "enum": [
             "Alerting"
           ],
+          "x-go-enum-desc": "Alerting AlertingErrState",
           "x-go-name": "ExecErrState"
         },
         "id": {
@@ -1735,6 +1779,7 @@
             "NoData",
             "OK"
           ],
+          "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK",
           "x-go-name": "NoDataState"
         },
         "orgId": {
@@ -2547,6 +2592,7 @@
           "enum": [
             "Alerting"
           ],
+          "x-go-enum-desc": "Alerting AlertingErrState",
           "x-go-name": "ExecErrState"
         },
         "no_data_state": {
@@ -2556,6 +2602,7 @@
             "NoData",
             "OK"
           ],
+          "x-go-enum-desc": "Alerting Alerting\nNoData NoData\nOK OK",
           "x-go-name": "NoDataState"
         },
         "title": {
@@ -3229,6 +3276,76 @@
       },
       "x-go-package": "github.com/prometheus/common/config"
     },
+    "TestReceiverConfigResult": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "x-go-name": "Error"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "UID"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "TestReceiverResult": {
+      "type": "object",
+      "properties": {
+        "grafana_managed_receiver_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestReceiverConfigResult"
+          },
+          "x-go-name": "Configs"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "TestReceiversConfig": {
+      "type": "object",
+      "properties": {
+        "receivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostableApiReceiver"
+          },
+          "x-go-name": "Receivers"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "TestReceiversResult": {
+      "type": "object",
+      "properties": {
+        "notified_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "NotifedAt"
+        },
+        "receivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestReceiverResult"
+          },
+          "x-go-name": "Receivers"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
     "TestRulePayload": {
       "type": "object",
       "properties": {
@@ -3483,11 +3600,12 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
       },
+      "x-go-name": "AlertGroups",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/alertGroups"
     },
     "alertStatus": {
@@ -3672,16 +3790,14 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       },
-      "x-go-name": "GettableAlerts",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -3734,6 +3850,8 @@
           "x-go-name": "UpdatedAt"
         }
       },
+      "x-go-name": "GettableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
@@ -3872,6 +3990,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -3912,8 +4031,6 @@
           "x-go-name": "StartsAt"
         }
       },
-      "x-go-name": "PostableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {

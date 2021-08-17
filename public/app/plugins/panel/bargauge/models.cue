@@ -21,15 +21,9 @@ Family: {
         [
             {
                 PanelOptions: {
-                    ui.OptionsWithLegend
-                    ui.OptionsWithTooltip
-                    bucketSize?: int
-                    bucketOffset: int | *0
-                    combine?: bool
-                }
-
-                PanelFieldConfig: {
-                    ui.GraphFieldConfig
+                    ui.SingleStatBaseOptions
+                    displayMode: ui.BarGaugeDisplayMode
+                    showUnfilled: bool
                 }
             }
         ]

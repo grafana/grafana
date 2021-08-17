@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/url"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -43,6 +45,9 @@ type Alertmanager interface {
 	// Alerts
 	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
 	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
+
+	// Testing
+	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigParams) (*notifier.TestReceiversResult, error)
 }
 
 // API handlers.
