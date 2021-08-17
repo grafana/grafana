@@ -14,7 +14,9 @@
 
 package grafanaschema
 
-import ui "github.com/grafana/grafana/cue/ui:grafanaschema"
+import (
+    ui "github.com/grafana/grafana/cue/ui:grafanaschema"
+)
 
 Family: {
     lineages: [
@@ -23,13 +25,15 @@ Family: {
                 PanelOptions: {
                     ui.OptionsWithLegend
                     ui.OptionsWithTooltip
-                    bucketSize?: int
-                    bucketOffset: int | *0
-                    combine?: bool
+                    showValue: ui.BarValueVisibility
+                    rowHeight: number
+                    colWidth?: number
+                    alignValue: "center" | *"left" | "right"
                 }
-
                 PanelFieldConfig: {
-                    ui.GraphFieldConfig
+                    ui.HideableFieldConfig
+                    lineWidth?: number | *1
+                    fillOpacity?: number | *70
                 }
             }
         ]

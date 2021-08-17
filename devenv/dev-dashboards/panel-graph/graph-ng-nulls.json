@@ -8,6 +8,12 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
@@ -42,7 +48,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -149,7 +154,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -265,7 +269,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -400,7 +403,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -507,7 +509,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -623,7 +624,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -758,7 +758,6 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -902,7 +901,6 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -1045,7 +1043,6 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -1232,5 +1229,5 @@
   "timezone": "",
   "title": "Panel Tests - Graph NG - Gaps and Connected",
   "uid": "8mmCAF1Mz",
-  "version": 12
+  "version": 2
 }
