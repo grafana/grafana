@@ -63,6 +63,13 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
+    const { query } = this.props;
+
+    // If there is no query type, set the default
+    if (!query.queryType) {
+      const defaultQueryType = this.queryTypes.find((v) => v.value === defaultQuery.queryType) || this.queryTypes[0];
+      this.onQueryTypeChange(defaultQueryType);
+    }
     this.loadChannelInfo();
   }
 
@@ -243,10 +250,8 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   render() {
-    const query = {
-      ...this.props.query,
-      ...defaultQuery,
-    };
+    const { query } = this.props;
+
     return (
       <>
         <div className="gf-form">
