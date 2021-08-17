@@ -21,7 +21,7 @@
 # https://s3-us-west-2.amazonaws.com/grafana-releases/release/
 #   grafana-{}.windows-amd64.zip
 #
-# https://dl.grafana.com/enterprise/release/
+# https://dl.grafana.com/grafana/release/
 #   grafana-enterprise-{}.windows-amd64.zip
 #
 import os

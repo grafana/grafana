@@ -42,10 +42,10 @@ func main() {
 	buildArtifacts := completeBuildArtifactConfigurations
 
 	if enterprise {
-		product = "grafana-enterprise"
-		baseURL = createBaseURL(archiveProviderRoot, "enterprise", product, nightly)
-	} else {
 		product = "grafana"
+		baseURL = createBaseURL(archiveProviderRoot, "grafana", product, nightly)
+	} else {
+		product = "grafana-oss"
 		baseURL = createBaseURL(archiveProviderRoot, "oss", product, nightly)
 	}
 
