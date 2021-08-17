@@ -1,18 +1,18 @@
+import React, { FC, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { AppEvents, GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Button, ConfirmModal, ClipboardButton, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
-import React, { FC, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { appEvents } from 'app/core/core';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
-import { deleteRuleAction } from '../../state/actions';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { createExploreLink, createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { appEvents } from 'app/core/core';
+import { deleteRuleAction } from '../../state/actions';
+import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
 interface Props {
   rule: CombinedRule;
