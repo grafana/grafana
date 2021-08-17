@@ -1,9 +1,9 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { SegmentSectionFill } from './SegmentSectionFill';
-import { SegmentSectionLabel } from './SegmentSectionLabel';
 import { useStyles2 } from '../../themes';
+import { InlineLabel } from '../Forms/InlineLabel';
+import { InlineFieldRow } from '../Forms/InlineFieldRow';
 
 /**
  * Horizontal section for editor components.
@@ -25,20 +25,27 @@ export const SegmentSection = ({
   const styles = useStyles2(getStyles);
   return (
     <>
-      <div className={styles.container}>
-        <SegmentSectionLabel name={label} className="width-7" />
+      <InlineFieldRow>
+        <InlineLabel width={12} className={styles.label}>
+          {label}
+        </InlineLabel>
         {children}
-        {fill && <SegmentSectionFill />}
-      </div>
+        {fill && (
+          <div className={styles.fill}>
+            <InlineLabel>{''}</InlineLabel>
+          </div>
+        )}
+      </InlineFieldRow>
     </>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    display: flex;
-    flex-wrap: wrap;
-    row-gap: ${theme.spacing(0.5)};
-    align-content: flex-start;
+  label: css`
+    color: ${theme.colors.primary.text};
+  `,
+  fill: css`
+    flex-grow: 1;
+    margin-bottom: ${theme.spacing(0.5)};
   `,
 });
