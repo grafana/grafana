@@ -2,63 +2,90 @@ package cloudmonitoring
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (e *Executor) executeAnnotationQuery(ctx context.Context, tsdbQuery plugins.DataQuery) (
-	plugins.DataResponse, error) {
-	result := plugins.DataResponse{
-		Results: make(map[string]plugins.DataQueryResult),
-	}
+type MetricQuery struct {
+	Title string `json:"title"`
+	Text  string `json:"text"`
+	Tags  string `json:"tags"`
+}
 
+func (s *Service) executeAnnotationQuery(ctx context.Context, tsdbQuery *backend.QueryDataRequest, dsInfo datasourceInfo) (
+	*backend.QueryDataResponse, error) {
+	// result := plugins.DataResponse{
+	// 	Results: make(map[string]plugins.DataQueryResult),
+	// }
+	result := backend.NewQueryDataResponse()
 	firstQuery := tsdbQuery.Queries[0]
 
-	queries, err := e.buildQueryExecutors(tsdbQuery)
+	queries, err := s.buildQueryExecutors(tsdbQuery)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return result, err
 	}
 
-	queryRes, resp, _, err := queries[0].run(ctx, tsdbQuery, e)
+	queryRes, resp, _, err := queries[0].run(ctx, tsdbQuery, s, dsInfo)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return result, err
 	}
 
-	metricQuery := firstQuery.Model.Get("metricQuery")
-	title := metricQuery.Get("title").MustString()
-	text := metricQuery.Get("text").MustString()
-	tags := metricQuery.Get("tags").MustString()
+	// metricQuery := firstQuery.Model.Get("metricQuery")
+	metricQuery := MetricQuery{}
+	err = json.Unmarshal(firstQuery.JSON, metricQuery)
+	if err != nil {
+		return result, nil
+	}
+	title := metricQuery.Title
+	text := metricQuery.Text
+	tags := metricQuery.Tags
 
-	err = queries[0].parseToAnnotations(&queryRes, resp, title, text, tags)
-	result.Results[firstQuery.RefID] = queryRes
+	err = queries[0].parseToAnnotations(queryRes, resp, title, text, tags, firstQuery.RefID)
+	result.Responses[firstQuery.RefID] = *queryRes
 
 	return result, err
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func transformAnnotationToTable(data []map[string]string, result *plugins.DataQueryResult) {
-	table := plugins.DataTable{
-		Columns: make([]plugins.DataTableColumn, 4),
-		Rows:    make([]plugins.DataRowValues, 0),
-	}
-	table.Columns[0].Text = "time"
-	table.Columns[1].Text = "title"
-	table.Columns[2].Text = "tags"
-	table.Columns[3].Text = "text"
+func transformAnnotationToFrame(annotationData []map[string]string, result *backend.DataResponse) {
+	// table := plugins.DataTable{
+	// 	Columns: make([]plugins.DataTableColumn, 4),
+	// 	Rows:    make([]plugins.DataRowValues, 0),
+	// }
+	frames := data.Frames{}
 
-	for _, r := range data {
-		values := make([]interface{}, 4)
-		values[0] = r["time"]
-		values[1] = r["title"]
-		values[2] = r["tags"]
-		values[3] = r["text"]
-		table.Rows = append(table.Rows, values)
+	// table.Columns[0].Text = "time"
+	// table.Columns[1].Text = "title"
+	// table.Columns[2].Text = "tags"
+	// table.Columns[3].Text = "text"
+
+	for _, r := range annotationData {
+		// values := make([]interface{}, 4)
+		// values[0] = r["time"]
+		// values[1] = r["title"]
+		// values[2] = r["tags"]
+		// values[3] = r["text"]
+		// table.Rows = append(table.Rows, values)
+		frame := &data.Frame{
+			Name: "Table",
+			Fields: []*data.Field{
+				data.NewField("time", nil, r["time"]),
+				data.NewField("title", nil, r["title"]),
+				data.NewField("tags", nil, r["tags"]),
+				data.NewField("text", nil, r["text"]),
+			},
+			Meta: &data.FrameMeta{
+				// Custom: interface,
+			},
+		}
+		frames = append(frames, frame)
 	}
-	result.Tables = append(result.Tables, table)
-	result.Meta.Set("rowCount", len(data))
-	slog.Info("anno", "len", len(data))
+	// result.Tables = append(result.Tables, table)
+	// result.Meta.Set("rowCount", len(data))
+	result.Frames = frames
+	slog.Info("anno", "len", len(annotationData))
 }
 
 func formatAnnotationText(annotationText string, pointValue string, metricType string, metricLabels map[string]string, resourceLabels map[string]string) string {

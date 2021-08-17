@@ -10,20 +10,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/opentracing/opentracing-go"
-	"golang.org/x/net/context/ctxhttp"
 )
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, tsdbQuery plugins.DataQuery,
-	e *Executor) (plugins.DataQueryResult, cloudMonitoringResponse, string, error) {
-	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesFilter.RefID}
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, tsdbQuery *backend.QueryDataRequest,
+	s *Service, dsInfo datasourceInfo) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	// queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesFilter.RefID}
+	queryResult := &backend.DataResponse{}
 	projectName := timeSeriesFilter.ProjectName
 	if projectName == "" {
-		defaultProject, err := e.getDefaultProject(ctx)
+		defaultProject, err := s.getDefaultProject(ctx, dsInfo)
 		if err != nil {
 			queryResult.Error = err
 			return queryResult, cloudMonitoringResponse{}, "", nil
@@ -32,7 +30,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
 
-	req, err := e.createRequest(ctx, e.dsInfo, path.Join("cloudmonitoringv3/projects", projectName, "timeSeries"), nil)
+	req, err := s.createRequest(ctx, &dsInfo, path.Join("cloudmonitoringv3/projects", projectName, "timeSeries"), nil)
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, cloudMonitoringResponse{}, "", nil
@@ -44,16 +42,19 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	if ok {
 		seconds, err := strconv.ParseInt(alignmentPeriodRe.FindString(alignmentPeriod[0]), 10, 64)
 		if err == nil {
-			queryResult.Meta.Set("alignmentPeriod", seconds)
+
+			queryResult.Frames[0].Meta = &data.FrameMeta{
+				Custom: seconds,
+			} //.Meta.Set("alignmentPeriod", seconds)
 		}
 	}
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "cloudMonitoring query")
 	span.SetTag("target", timeSeriesFilter.Target)
-	span.SetTag("from", tsdbQuery.TimeRange.From)
-	span.SetTag("until", tsdbQuery.TimeRange.To)
-	span.SetTag("datasource_id", e.dsInfo.Id)
-	span.SetTag("org_id", e.dsInfo.OrgId)
+	span.SetTag("from", tsdbQuery.Queries[0].TimeRange.From)
+	span.SetTag("until", tsdbQuery.Queries[0].TimeRange.To)
+	span.SetTag("datasource_id", dsInfo.ID)
+	span.SetTag("org_id", dsInfo.OrgID)
 
 	defer span.Finish()
 
@@ -65,7 +66,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
 
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	res, err := dsInfo.HTTPClient.Do(req)
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, cloudMonitoringResponse{}, "", nil
@@ -80,8 +81,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	return queryResult, data, req.URL.RawQuery, nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *plugins.DataQueryResult,
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
@@ -232,8 +232,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		dl := timeSeriesFilter.buildDeepLink()
 		frames = addConfigData(frames, dl, response.Unit)
 	}
-
-	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
+	queryRes.Frames = frames
 
 	labelsByKey := make(map[string][]string)
 	for key, values := range labels {
@@ -242,14 +241,13 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes 
 		}
 	}
 
-	queryRes.Meta.Set("labels", labelsByKey)
-	queryRes.Meta.Set("groupBys", timeSeriesFilter.GroupBys)
+	// queryRes.Meta.Set("labels", labelsByKey)
+	// queryRes.Meta.Set("groupBys", timeSeriesFilter.GroupBys)
 	return nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSeries(series timeSeries,
-	defaultMetricName string, seriesLabels map[string]string, queryRes *plugins.DataQueryResult,
+	defaultMetricName string, seriesLabels map[string]string, queryRes *backend.DataResponse,
 	frame *data.Frame) {
 	for i := 0; i < len(series.Points); i++ {
 		point := series.Points[i]
@@ -279,9 +277,8 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 	setDisplayNameAsFieldName(dataField)
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *plugins.DataQueryResult,
-	response cloudMonitoringResponse, title string, text string, tags string) error {
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *backend.DataResponse,
+	response cloudMonitoringResponse, title, text, tags, refID string) error {
 	frames := data.Frames{}
 	for _, series := range response.TimeSeries {
 		if len(series.Points) == 0 {
@@ -301,14 +298,14 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(quer
 			annotation["text"] = append(annotation["text"], formatAnnotationText(text, value, series.Metric.Type,
 				series.Metric.Labels, series.Resource.Labels))
 		}
-		frames = append(frames, data.NewFrame(queryRes.RefID,
+		frames = append(frames, data.NewFrame(refID,
 			data.NewField("time", nil, annotation["time"]),
 			data.NewField("title", nil, annotation["title"]),
 			data.NewField("tags", nil, annotation["tags"]),
 			data.NewField("text", nil, annotation["text"]),
 		))
 	}
-	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
+	queryRes.Frames = frames
 
 	return nil
 }

@@ -11,21 +11,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/opentracing/opentracing-go"
-	"golang.org/x/net/context/ctxhttp"
 )
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, tsdbQuery plugins.DataQuery,
-	e *Executor) (plugins.DataQueryResult, cloudMonitoringResponse, string, error) {
-	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesQuery.RefID}
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, tsdbQuery *backend.QueryDataRequest,
+	s *Service, dsInfo datasourceInfo) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	// queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesQuery.RefID}
+	queryResult := &backend.DataResponse{}
 	projectName := timeSeriesQuery.ProjectName
+
 	if projectName == "" {
-		defaultProject, err := e.getDefaultProject(ctx)
+		defaultProject, err := s.getDefaultProject(ctx, dsInfo)
 		if err != nil {
 			queryResult.Error = err
 			return queryResult, cloudMonitoringResponse{}, "", nil
@@ -34,18 +33,18 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
 
-	from, err := tsdbQuery.TimeRange.ParseFrom()
-	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
-	}
-	to, err := tsdbQuery.TimeRange.ParseTo()
-	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
-	}
-	intervalCalculator := interval.NewCalculator(interval.CalculatorOptions{})
-	interval, err := intervalCalculator.Calculate(*tsdbQuery.TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, "min")
+	from := tsdbQuery.Queries[0].TimeRange.From
+	// if err != nil {
+	// 	queryResult.Error = err
+	// 	return queryResult, cloudMonitoringResponse{}, "", nil
+	// }
+	to := tsdbQuery.Queries[0].TimeRange.To
+	// if err != nil {
+	// 	queryResult.Error = err
+	// 	return queryResult, cloudMonitoringResponse{}, "", nil
+	// }
+	intervalCalculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
+	interval, err := intervalCalculator.Calculate(tsdbQuery.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, intervalv2.Min)
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, cloudMonitoringResponse{}, "", nil
@@ -61,7 +60,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 		queryResult.Error = err
 		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
-	req, err := e.createRequest(ctx, e.dsInfo, path.Join("cloudmonitoringv3/projects", projectName, "timeSeries:query"), bytes.NewBuffer(buf))
+	req, err := s.createRequest(ctx, &dsInfo, path.Join("cloudmonitoringv3/projects", projectName, "timeSeries:query"), bytes.NewBuffer(buf))
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, cloudMonitoringResponse{}, "", nil
@@ -69,10 +68,10 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "cloudMonitoring MQL query")
 	span.SetTag("query", timeSeriesQuery.Query)
-	span.SetTag("from", tsdbQuery.TimeRange.From)
-	span.SetTag("until", tsdbQuery.TimeRange.To)
-	span.SetTag("datasource_id", e.dsInfo.Id)
-	span.SetTag("org_id", e.dsInfo.OrgId)
+	span.SetTag("from", tsdbQuery.Queries[0].TimeRange.From)
+	span.SetTag("until", tsdbQuery.Queries[0].TimeRange.To)
+	span.SetTag("datasource_id", dsInfo.ID)
+	span.SetTag("org_id", dsInfo.OrgID)
 
 	defer span.Finish()
 
@@ -84,7 +83,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 		return queryResult, cloudMonitoringResponse{}, "", nil
 	}
 
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	res, err := dsInfo.HTTPClient.Do(req)
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, cloudMonitoringResponse{}, "", nil
@@ -100,8 +99,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, t
 	return queryResult, data, timeSeriesQuery.Query, nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *plugins.DataQueryResult,
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
 	labels := make(map[string]map[string]bool)
 	frames := data.Frames{}
@@ -257,7 +255,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *pl
 		frames = addConfigData(frames, dl, response.Unit)
 	}
 
-	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
+	queryRes.Frames = frames
 
 	labelsByKey := make(map[string][]string)
 	for key, values := range labels {
@@ -266,14 +264,13 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *pl
 		}
 	}
 
-	queryRes.Meta.Set("labels", labelsByKey)
+	// queryRes.Meta.Set("labels", labelsByKey)
 
 	return nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *plugins.DataQueryResult,
-	data cloudMonitoringResponse, title string, text string, tags string) error {
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *backend.DataResponse,
+	data cloudMonitoringResponse, title, text, tags, refID string) error {
 	annotations := make([]map[string]string, 0)
 
 	for _, series := range data.TimeSeriesData {
@@ -321,7 +318,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRe
 		}
 	}
 
-	transformAnnotationToTable(annotations, queryRes)
+	transformAnnotationToFrame(annotations, queryRes)
 	return nil
 }
 
@@ -354,8 +351,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 		},
 		"timeSelection": map[string]string{
 			"timeRange": "custom",
-			"start":     timeSeriesQuery.timeRange.MustGetFrom().Format(time.RFC3339Nano),
-			"end":       timeSeriesQuery.timeRange.MustGetTo().Format(time.RFC3339Nano),
+			"start":     timeSeriesQuery.timeRange.From.Format(time.RFC3339Nano),
+			"end":       timeSeriesQuery.timeRange.To.Format(time.RFC3339Nano),
 		},
 	}
 

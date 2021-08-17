@@ -1,4 +1,4 @@
-package tsdb
+package intervalv2
 
 import (
 	"testing"
