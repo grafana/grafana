@@ -121,13 +121,20 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	found := false
 	for i := 0; i < 20; i++ {
 		rootDir = filepath.Join(rootDir, "..")
-		exists, err := fs.Exists(filepath.Join(rootDir, "public", "views"))
+
+		dir, err := filepath.Abs(rootDir)
 		require.NoError(t, err)
+
+		exists, err := fs.Exists(filepath.Join(dir, "public", "views"))
+		require.NoError(t, err)
+
 		if exists {
+			rootDir = dir
 			found = true
 			break
 		}
 	}
+
 	require.True(t, found, "Couldn't detect project root directory")
 
 	cfgDir := filepath.Join(tmpDir, "conf")
@@ -217,6 +224,13 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = featureSection.NewKey("enable", strings.Join(o.EnableFeatureToggles, " "))
 			require.NoError(t, err)
 		}
+		if o.NGAlertAdminConfigIntervalSeconds != 0 {
+			ngalertingSection, err := cfg.NewSection("ngalerting")
+			require.NoError(t, err)
+			_, err = ngalertingSection.NewKey("admin_config_poll_interval_seconds", fmt.Sprintf("%d", o.NGAlertAdminConfigIntervalSeconds))
+			require.NoError(t, err)
+		}
+
 		if o.AnonymousUserRole != "" {
 			_, err = anonSect.NewKey("org_role", string(o.AnonymousUserRole))
 			require.NoError(t, err)
@@ -258,12 +272,13 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 }
 
 type GrafanaOpts struct {
-	EnableCSP            bool
-	EnableFeatureToggles []string
-	AnonymousUserRole    models.RoleType
-	EnableQuota          bool
-	DisableAnonymous     bool
-	CatalogAppEnabled    bool
-	ViewersCanEdit       bool
-	PluginAdminEnabled   bool
+	EnableCSP                         bool
+	EnableFeatureToggles              []string
+	NGAlertAdminConfigIntervalSeconds int
+	AnonymousUserRole                 models.RoleType
+	EnableQuota                       bool
+	DisableAnonymous                  bool
+	CatalogAppEnabled                 bool
+	ViewersCanEdit                    bool
+	PluginAdminEnabled                bool
 }

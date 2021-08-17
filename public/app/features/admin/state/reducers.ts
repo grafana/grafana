@@ -15,10 +15,10 @@ import {
 
 const initialLdapState: LdapState = {
   connectionInfo: [],
-  syncInfo: null,
-  user: null,
-  connectionError: null,
-  userError: null,
+  syncInfo: undefined,
+  user: undefined,
+  connectionError: undefined,
+  userError: undefined,
 };
 
 const ldapSlice = createSlice({
@@ -27,7 +27,7 @@ const ldapSlice = createSlice({
   reducers: {
     ldapConnectionInfoLoadedAction: (state, action: PayloadAction<LdapConnectionInfo>): LdapState => ({
       ...state,
-      ldapError: null,
+      ldapError: undefined,
       connectionInfo: action.payload,
     }),
     ldapFailedAction: (state, action: PayloadAction<LdapError>): LdapState => ({
@@ -41,20 +41,20 @@ const ldapSlice = createSlice({
     userMappingInfoLoadedAction: (state, action: PayloadAction<LdapUser>): LdapState => ({
       ...state,
       user: action.payload,
-      userError: null,
+      userError: undefined,
     }),
     userMappingInfoFailedAction: (state, action: PayloadAction<LdapError>): LdapState => ({
       ...state,
-      user: null,
+      user: undefined,
       userError: action.payload,
     }),
     clearUserMappingInfoAction: (state, action: PayloadAction<undefined>): LdapState => ({
       ...state,
-      user: null,
+      user: undefined,
     }),
     clearUserErrorAction: (state, action: PayloadAction<undefined>): LdapState => ({
       ...state,
-      userError: null,
+      userError: undefined,
     }),
   },
 });
@@ -74,11 +74,11 @@ export const ldapReducer = ldapSlice.reducer;
 // UserAdminPage
 
 const initialUserAdminState: UserAdminState = {
-  user: null,
+  user: undefined,
   sessions: [],
   orgs: [],
   isLoading: true,
-  error: null,
+  error: undefined,
 };
 
 export const userAdminSlice = createSlice({

@@ -21,7 +21,7 @@ Use the following options to refine how your visualization displays the value:
 ### Show
 
 Choose how Grafana displays your data.
-  
+
 #### Calculate
 
 Show a calculated value based on all rows.
@@ -46,7 +46,7 @@ Choose a stacking direction.
 
 - **Auto -** Grafana selects what it thinks is the best orientation.
 - **Horizontal -** Bars stretch horizontally, left to right.
-- **Vertical -** Bars stretch vertically, top to bottom.
+- **Vertical -** Bars stretch vertically, bottom to top.
 
 ### Display mode
 

@@ -16,13 +16,18 @@ and the bar height represents the frequency (such as count) of values that fell 
 
 ## Histogram example
 
-This histogram shows the value distribution of a couple of time series. You can easily see that
+This _histogram_ shows the value distribution of a couple of time series. You can easily see that
 most values land between 240-300 with a peak between 260-280.
 
 ![](/static/img/docs/v43/heatmap_histogram.png)
 
-Histograms only look at _value distributions_ over a specific time range. The problem with histograms is you cannot see any trends or changes in the distribution over time.
-This is where heatmaps become useful.
+Here is an example showing height distribution of people.
+
+{{< figure src="/static/img/docs/histogram-panel/histogram-example-v8-0.png" max-width="625px" caption="Bar chart example" >}}
+
+For more information about histogram visualization options, refer to [Histogram]({{< relref "../panels/visualizations/histogram.md" >}}).
+
+Histograms only look at _value distributions_ over a specific time range. The problem with histograms is you cannot see any trends or changes in the distribution over time. This is where heatmaps become useful.
 
 ## Heatmaps
 
@@ -32,11 +37,13 @@ In this example, you can clearly see what values are more common and how they tr
 
 ![](/static/img/docs/v43/heatmap_histogram_over_time.png)
 
+For more information about heatmap visualization options, refer to [Heatmap]({{< relref "../panels/visualizations/heatmap.md" >}}).
+
 ## Pre-bucketed data
 
 There are a number of data sources supporting histogram over time like Elasticsearch (by using a Histogram bucket
 aggregation) or Prometheus (with [histogram](https://prometheus.io/docs/concepts/metric_types/#histogram) metric type
-and *Format as* option set to Heatmap). But generally, any data source could be used if it meets the requirements:
+and _Format as_ option set to Heatmap). But generally, any data source could be used if it meets the requirements:
 returns series with names representing bucket bound or returns series sorted by the bound in ascending order.
 
 ## Raw data vs aggregated

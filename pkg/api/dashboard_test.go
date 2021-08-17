@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"path/filepath"
 	"testing"
 
@@ -24,10 +26,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/macaron.v1"
 )
 
 func TestGetHomeDashboard(t *testing.T) {
-	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}}
+	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
+	require.NoError(t, err)
+	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &macaron.Context{Req: macaron.Request{Request: httpReq}}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
 
@@ -35,7 +40,7 @@ func TestGetHomeDashboard(t *testing.T) {
 		Cfg: cfg, Bus: bus.New(),
 		PluginManager: &fakePluginManager{},
 	}
-	hs.Bus.AddHandler(func(query *models.GetPreferencesWithDefaultsQuery) error {
+	hs.Bus.AddHandlerCtx(func(_ context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
 		query.Result = &models.Preferences{
 			HomeDashboardId: 0,
 		}
@@ -83,6 +88,7 @@ type testState struct {
 func newTestLive(t *testing.T) *live.GrafanaLive {
 	gLive := live.NewGrafanaLive()
 	gLive.RouteRegister = routing.NewRouteRegister()
+	gLive.Cfg = &setting.Cfg{AppURL: "http://localhost:3000/"}
 	err := gLive.Init()
 	require.NoError(t, err)
 	return gLive
@@ -110,7 +116,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			state := &testState{}
 
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = fakeDash
 				state.dashQueries = append(state.dashQueries, query)
 				return nil
@@ -275,7 +281,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = fakeDash
 				state.dashQueries = append(state.dashQueries, query)
 				return nil
@@ -830,7 +836,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			fakeDash.FolderId = folderID
 			fakeDash.HasAcl = false
 
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = fakeDash
 				return nil
 			})
@@ -878,7 +884,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			fakeDash.Id = 2
 			fakeDash.HasAcl = false
 
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = fakeDash
 				return nil
 			})
@@ -926,7 +932,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				query.Result = []*models.Dashboard{{}}
 				return nil
 			})
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				dataValue, err := simplejson.NewJson([]byte(`{"id": 1, "editable": true, "style": "dark"}`))
 				require.NoError(t, err)
 				query.Result = &models.Dashboard{Id: 1, Data: dataValue}

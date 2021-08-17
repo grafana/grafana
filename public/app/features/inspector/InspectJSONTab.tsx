@@ -105,6 +105,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           appEvents.emit(AppEvents.alertError, ['Unable to apply']);
         } else {
           const updates = JSON.parse(this.state.text);
+          dashboard!.shouldUpdateDashboardPanelFromJSON(updates, panel!);
           panel!.restoreModel(updates);
           panel!.refresh();
           appEvents.emit(AppEvents.alertSuccess, ['Panel model updated']);
@@ -131,7 +132,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
       <>
         <div className={styles.toolbar} aria-label={selectors.components.PanelInspector.Json.content}>
           <Field label="Select source" className="flex-grow-1">
-            <Select options={jsonOptions} value={selected} onChange={this.onSelectChanged} />
+            <Select menuShouldPortal options={jsonOptions} value={selected} onChange={this.onSelectChanged} />
           </Field>
           {this.hasPanelJSON && isPanelJSON && canEdit && (
             <Button className={styles.toolbarItem} onClick={this.onApplyPanelModel}>

@@ -16,8 +16,6 @@ const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type postgresMacroEngine struct {
 	*sqleng.SQLMacroEngineBase
-	timeRange   plugins.DataTimeRange
-	query       plugins.DataSubQuery
 	timescaledb bool
 }
 
@@ -30,8 +28,6 @@ func newPostgresMacroEngine(timescaledb bool) sqleng.SQLMacroEngine {
 
 func (m *postgresMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange,
 	sql string) (string, error) {
-	m.timeRange = timeRange
-	m.query = query
 	// TODO: Handle error
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
@@ -55,7 +51,7 @@ func (m *postgresMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange 
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
 		}
-		res, err := m.evaluateMacro(groups[1], args)
+		res, err := m.evaluateMacro(timeRange, query, groups[1], args)
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -71,7 +67,7 @@ func (m *postgresMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange 
 }
 
 //nolint: gocyclo
-func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string, error) {
+func (m *postgresMacroEngine) evaluateMacro(timeRange plugins.DataTimeRange, query plugins.DataSubQuery, name string, args []string) (string, error) {
 	switch name {
 	case "__time":
 		if len(args) == 0 {
@@ -88,11 +84,11 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 
-		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339Nano), m.timeRange.GetToAsTimeUTC().Format(time.RFC3339Nano)), nil
+		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], timeRange.GetFromAsTimeUTC().Format(time.RFC3339Nano), timeRange.GetToAsTimeUTC().Format(time.RFC3339Nano)), nil
 	case "__timeFrom":
-		return fmt.Sprintf("'%s'", m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339Nano)), nil
+		return fmt.Sprintf("'%s'", timeRange.GetFromAsTimeUTC().Format(time.RFC3339Nano)), nil
 	case "__timeTo":
-		return fmt.Sprintf("'%s'", m.timeRange.GetToAsTimeUTC().Format(time.RFC3339Nano)), nil
+		return fmt.Sprintf("'%s'", timeRange.GetToAsTimeUTC().Format(time.RFC3339Nano)), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
@@ -102,7 +98,7 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := sqleng.SetupFillmode(m.query, interval, args[2])
+			err := sqleng.SetupFillmode(query, interval, args[2])
 			if err != nil {
 				return "", err
 			}
@@ -118,7 +114,7 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			interval.Seconds(),
 		), nil
 	case "__timeGroupAlias":
-		tg, err := m.evaluateMacro("__timeGroup", args)
+		tg, err := m.evaluateMacro(timeRange, query, "__timeGroup", args)
 		if err == nil {
 			return tg + " AS \"time\"", nil
 		}
@@ -127,16 +123,16 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.GetFromAsSecondsEpoch(), args[0], m.timeRange.GetToAsSecondsEpoch()), nil
+		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], timeRange.GetFromAsSecondsEpoch(), args[0], timeRange.GetToAsSecondsEpoch()), nil
 	case "__unixEpochNanoFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.GetFromAsTimeUTC().UnixNano(), args[0], m.timeRange.GetToAsTimeUTC().UnixNano()), nil
+		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], timeRange.GetFromAsTimeUTC().UnixNano(), args[0], timeRange.GetToAsTimeUTC().UnixNano()), nil
 	case "__unixEpochNanoFrom":
-		return fmt.Sprintf("%d", m.timeRange.GetFromAsTimeUTC().UnixNano()), nil
+		return fmt.Sprintf("%d", timeRange.GetFromAsTimeUTC().UnixNano()), nil
 	case "__unixEpochNanoTo":
-		return fmt.Sprintf("%d", m.timeRange.GetToAsTimeUTC().UnixNano()), nil
+		return fmt.Sprintf("%d", timeRange.GetToAsTimeUTC().UnixNano()), nil
 	case "__unixEpochGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
@@ -146,14 +142,14 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := sqleng.SetupFillmode(m.query, interval, args[2])
+			err := sqleng.SetupFillmode(query, interval, args[2])
 			if err != nil {
 				return "", err
 			}
 		}
 		return fmt.Sprintf("floor(%s/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochGroupAlias":
-		tg, err := m.evaluateMacro("__unixEpochGroup", args)
+		tg, err := m.evaluateMacro(timeRange, query, "__unixEpochGroup", args)
 		if err == nil {
 			return tg + " AS \"time\"", nil
 		}

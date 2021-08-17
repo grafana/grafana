@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/pkg/errors"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
@@ -40,12 +41,20 @@ import (
 //       200: Ack
 //       400: ValidationError
 
+// swagger:route GET /api/alertmanager/{Recipient}/api/v2/status alertmanager RouteGetAMStatus
+//
+// get alertmanager status and configuration
+//
+//     Responses:
+//       200: GettableStatus
+//       400: ValidationError
+
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/alerts alertmanager RouteGetAMAlerts
 //
 // get alertmanager alerts
 //
 //     Responses:
-//       200: GettableAlerts
+//       200: gettableAlerts
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{Recipient}/api/v2/alerts alertmanager RoutePostAMAlerts
@@ -61,7 +70,7 @@ import (
 // get alertmanager alerts
 //
 //     Responses:
-//       200: AlertGroups
+//       200: alertGroups
 //       400: ValidationError
 
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteGetSilences
@@ -69,7 +78,7 @@ import (
 // get silences
 //
 //     Responses:
-//       200: GettableSilences
+//       200: gettableSilences
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteCreateSilence
@@ -77,7 +86,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: GettableSilence
+//       201: gettableSilence
 //       400: ValidationError
 
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteGetSilence
@@ -85,7 +94,7 @@ import (
 // get silence
 //
 //     Responses:
-//       200: GettableSilence
+//       200: gettableSilence
 //       400: ValidationError
 
 // swagger:route DELETE /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteDeleteSilence
@@ -115,27 +124,100 @@ type GetSilencesParams struct {
 }
 
 // swagger:model
+type GettableStatus struct {
+	// cluster
+	// Required: true
+	Cluster *amv2.ClusterStatus `json:"cluster"`
+
+	// config
+	// Required: true
+	Config *PostableApiAlertingConfig `json:"config"`
+
+	// uptime
+	// Required: true
+	// Format: date-time
+	Uptime *strfmt.DateTime `json:"uptime"`
+
+	// version info
+	// Required: true
+	VersionInfo *amv2.VersionInfo `json:"versionInfo"`
+}
+
+func (s *GettableStatus) UnmarshalJSON(b []byte) error {
+	amStatus := amv2.AlertmanagerStatus{}
+	if err := json.Unmarshal(b, &amStatus); err != nil {
+		return err
+	}
+
+	c := config.Config{}
+	if err := yaml.Unmarshal([]byte(*amStatus.Config.Original), &c); err != nil {
+		return err
+	}
+
+	s.Cluster = amStatus.Cluster
+	s.Config = &PostableApiAlertingConfig{Config: Config{
+		Global:       c.Global,
+		Route:        c.Route,
+		InhibitRules: c.InhibitRules,
+		Templates:    c.Templates,
+	}}
+	s.Uptime = amStatus.Uptime
+	s.VersionInfo = amStatus.VersionInfo
+
+	type overrides struct {
+		Receivers *[]*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+	}
+
+	if err := yaml.Unmarshal([]byte(*amStatus.Config.Original), &overrides{Receivers: &s.Config.Receivers}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
+	// In Grafana, the only field we support is Config.
+	cs := amv2.ClusterStatusStatusDisabled
+	na := "N/A"
+	return &GettableStatus{
+		Cluster: &amv2.ClusterStatus{
+			Status: &cs,
+			Peers:  []*amv2.PeerStatus{},
+		},
+		VersionInfo: &amv2.VersionInfo{
+			Branch:    &na,
+			BuildDate: &na,
+			BuildUser: &na,
+			GoVersion: &na,
+			Revision:  &na,
+			Version:   &na,
+		},
+		Config: cfg,
+	}
+}
+
+// swagger:model postableSilence
 type PostableSilence = amv2.PostableSilence
 
-// swagger:model
+// swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
 
-// swagger:model
+// swagger:model gettableSilence
 type GettableSilence = amv2.GettableSilence
 
-// swagger:model
+// swagger:model gettableAlerts
 type GettableAlerts = amv2.GettableAlerts
 
-// swagger:model
+// swagger:model gettableAlert
 type GettableAlert = amv2.GettableAlert
 
-// swagger:model
+// swagger:model alertGroups
 type AlertGroups = amv2.AlertGroups
 
-// swagger:model
+// swagger:model alertGroup
 type AlertGroup = amv2.AlertGroup
 
-// swagger:model
+// swagger:model receiver
 type Receiver = amv2.Receiver
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups
@@ -183,7 +265,7 @@ type BodyAlertingConfig struct {
 }
 
 // alertmanager routes
-// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
+// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
 // ruler routes
 // swagger:parameters RouteGetRulesConfig RoutePostNameRulesConfig RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig
 // prom routes

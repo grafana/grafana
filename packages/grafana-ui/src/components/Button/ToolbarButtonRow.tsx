@@ -23,8 +23,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: flex;
 
-    .button-group,
-    .toolbar-button {
+    > .button-group,
+    > .toolbar-button {
       margin-left: ${theme.spacing(1)};
 
       &:first-child {

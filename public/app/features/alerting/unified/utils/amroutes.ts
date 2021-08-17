@@ -4,11 +4,12 @@ import { Matcher, Route } from 'app/plugins/datasource/alertmanager/types';
 import { FormAmRoute } from '../types/amroutes';
 import { parseInterval, timeOptions } from './time';
 import { parseMatcher, stringifyMatcher } from './alertmanager';
+import { isUndefined, omitBy } from 'lodash';
 
 const defaultValueAndType: [string, string] = ['', timeOptions[0].value];
 
 const matchersToArrayFieldMatchers = (matchers: Record<string, string> | undefined, isRegex: boolean): Matcher[] =>
-  Object.entries(matchers ?? {}).reduce(
+  Object.entries(matchers ?? {}).reduce<Matcher[]>(
     (acc, [name, value]) => [
       ...acc,
       {
@@ -18,7 +19,7 @@ const matchersToArrayFieldMatchers = (matchers: Record<string, string> | undefin
         isEqual: true,
       },
     ],
-    []
+    [] as Matcher[]
   );
 
 const intervalToValueAndType = (strValue: string | undefined): [string, string] => {
@@ -51,8 +52,8 @@ export const emptyArrayFieldMatcher: Matcher = {
 
 export const emptyRoute: FormAmRoute = {
   id: '',
-  matchers: [emptyArrayFieldMatcher],
   groupBy: [],
+  matchers: [],
   routes: [],
   continue: false,
   receiver: '',
@@ -133,7 +134,7 @@ export const formAmRouteToAmRoute = (formAmRoute: FormAmRoute, id2ExistingRoute:
     amRoute.receiver = formAmRoute.receiver;
   }
 
-  return amRoute;
+  return omitBy(amRoute, isUndefined);
 };
 
 export const stringToSelectableValue = (str: string): SelectableValue<string> => ({

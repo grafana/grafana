@@ -10,7 +10,7 @@ import {
   FieldColorModeId,
   FieldConfigSource,
   getFrameDisplayName,
-  GrafanaTheme,
+  GrafanaTheme2,
   TimeZone,
 } from '@grafana/data';
 import {
@@ -23,7 +23,7 @@ import {
   TimeSeries,
   TooltipDisplayMode,
   TooltipPlugin,
-  useStyles,
+  useStyles2,
   useTheme2,
   ZoomPlugin,
 } from '@grafana/ui';
@@ -32,31 +32,32 @@ import { ContextMenuPlugin } from 'app/plugins/panel/timeseries/plugins/ContextM
 import { ExemplarsPlugin } from 'app/plugins/panel/timeseries/plugins/ExemplarsPlugin';
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { splitOpen } from './state/main';
 import { getFieldLinksForExplore } from './utils/links';
 import { usePrevious } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import appEvents from 'app/core/app_events';
 import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 import { identity } from 'lodash';
+import { SplitOpen } from 'app/types/explore';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
 interface Props {
   data: DataFrame[];
   height: number;
+  width: number;
   annotations?: DataFrame[];
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
   tooltipDisplayMode: TooltipDisplayMode;
-  splitOpenFn?: typeof splitOpen;
+  splitOpenFn?: SplitOpen;
 }
 
 export function ExploreGraphNGPanel({
   data,
   height,
+  width,
   timeZone,
   absoluteRange,
   onUpdateTimeRange,
@@ -92,7 +93,7 @@ export function ExploreGraphNGPanel({
     overrides: [],
   });
 
-  const style = useStyles(getStyles);
+  const style = useStyles2(getStyles);
   const timeRange = {
     from: dateTime(absoluteRange.from),
     to: dateTime(absoluteRange.to),
@@ -156,64 +157,55 @@ export function ExploreGraphNGPanel({
           >{`Show all ${dataWithConfig.length}`}</span>
         </div>
       )}
-      <AutoSizer disableHeight>
-        {({ width }) => (
-          <TimeSeries
-            frames={seriesToShow}
-            structureRev={structureRev}
-            width={width}
-            height={height}
-            timeRange={timeRange}
-            legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
-            timeZone={timeZone}
-          >
-            {(config, alignedDataFrame) => {
-              return (
-                <>
-                  <ZoomPlugin config={config} onZoom={onUpdateTimeRange} />
-                  <TooltipPlugin
-                    config={config}
-                    data={alignedDataFrame}
-                    mode={tooltipDisplayMode}
-                    timeZone={timeZone}
-                  />
-                  <ContextMenuPlugin config={config} data={alignedDataFrame} timeZone={timeZone} />
-                  {annotations && (
-                    <ExemplarsPlugin
-                      config={config}
-                      exemplars={annotations}
-                      timeZone={timeZone}
-                      getFieldLinks={getFieldLinks}
-                    />
-                  )}
-                </>
-              );
-            }}
-          </TimeSeries>
-        )}
-      </AutoSizer>
+      <TimeSeries
+        frames={seriesToShow}
+        structureRev={structureRev}
+        width={width}
+        height={height}
+        timeRange={timeRange}
+        legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
+        timeZone={timeZone}
+      >
+        {(config, alignedDataFrame) => {
+          return (
+            <>
+              <ZoomPlugin config={config} onZoom={onUpdateTimeRange} />
+              <TooltipPlugin config={config} data={alignedDataFrame} mode={tooltipDisplayMode} timeZone={timeZone} />
+              <ContextMenuPlugin config={config} data={alignedDataFrame} timeZone={timeZone} />
+              {annotations && (
+                <ExemplarsPlugin
+                  config={config}
+                  exemplars={annotations}
+                  timeZone={timeZone}
+                  getFieldLinks={getFieldLinks}
+                />
+              )}
+            </>
+          );
+        }}
+      </TimeSeries>
     </PanelContextProvider>
   );
 }
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   timeSeriesDisclaimer: css`
     label: time-series-disclaimer;
     width: 300px;
-    margin: ${theme.spacing.sm} auto;
+    margin: ${theme.spacing(1)} auto;
     padding: 10px 0;
-    border-radius: ${theme.border.radius.md};
+    border-radius: ${theme.spacing(2)};
     text-align: center;
-    background-color: ${theme.colors.bg1};
+    background-color: ${theme.colors.background.primary};
   `,
   disclaimerIcon: css`
     label: disclaimer-icon;
-    color: ${theme.palette.yellow};
-    margin-right: ${theme.spacing.xs};
+    color: ${theme.colors.warning.main};
+    margin-right: ${theme.spacing(0.5)};
   `,
   showAllTimeSeries: css`
     label: show-all-time-series;
     cursor: pointer;
-    color: ${theme.colors.linkExternal};
+    color: ${theme.colors.text.link};
   `,
 });

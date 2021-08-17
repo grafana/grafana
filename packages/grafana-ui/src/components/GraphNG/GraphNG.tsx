@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
 import { Themeable2 } from '../../types';
-import { findMidPointYPosition, pluginLog, preparePlotData } from '../uPlot/utils';
+import { findMidPointYPosition, pluginLog } from '../uPlot/utils';
 import {
   DataFrame,
   FieldMatcherID,
@@ -38,7 +38,7 @@ export interface GraphNGProps extends Themeable2 {
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
-  prepConfig: (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => UPlotConfigBuilder;
+  prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;
   propsToDiff?: string[];
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame;
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
@@ -98,16 +98,20 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
     pluginLog('GraphNG', false, 'data aligned', alignedFrame);
 
     if (alignedFrame) {
-      state = {
-        alignedFrame,
-        alignedData: preparePlotData(alignedFrame),
-      };
-      pluginLog('GraphNG', false, 'data prepared', state.alignedData);
+      let config = this.state?.config;
 
       if (withConfig) {
-        state.config = props.prepConfig(alignedFrame, this.getTimeRange);
-        pluginLog('GraphNG', false, 'config prepared', state.config);
+        config = props.prepConfig(alignedFrame, this.props.frames, this.getTimeRange);
+        pluginLog('GraphNG', false, 'config prepared', config);
       }
+
+      state = {
+        alignedFrame,
+        alignedData: config!.prepData!(alignedFrame),
+        config,
+      };
+
+      pluginLog('GraphNG', false, 'data prepared', state.alignedData);
     }
 
     return state;
@@ -123,7 +127,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
         .pipe(throttleTime(50))
         .subscribe({
           next: (evt) => {
-            const u = this.plotInstance?.current;
+            const u = this.plotInstance.current;
             if (u) {
               // Try finding left position on time axis
               const left = u.valToPos(evt.payload.point.time, 'time');
@@ -182,7 +186,8 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
           propsChanged;
 
         if (shouldReconfig) {
-          newState.config = this.props.prepConfig(newState.alignedFrame, this.getTimeRange);
+          newState.config = this.props.prepConfig(newState.alignedFrame, this.props.frames, this.getTimeRange);
+          newState.alignedData = newState.config.prepData!(newState.alignedFrame);
           pluginLog('GraphNG', false, 'config recreated', newState.config);
         }
       }

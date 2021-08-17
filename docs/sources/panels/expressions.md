@@ -11,9 +11,9 @@ Server-side expressions allow you to manipulate data returned from queries with 
 
 ## Using expressions
 
-The primary use case for expressions is for the upcoming next version of Grafana alerting. Like alerting, processing is done server-side, so expressions can operate without a browser session. However, expressions can be used with backend data sources and visualization as well.
+Expressions are primarily used by the new [Grafana 8 alerts]({{< relref "../alerting/unified-alerting/" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
 
-> **Note:** Expressions do not work with current Grafana alerting.
+> **Note:** Expressions do not work with legacy dashboard alerts.
 
 > **Note:** Expressions do not work with dashboard variables.
 
@@ -31,8 +31,8 @@ To reference the output of an individual expression or a data source query in an
 
 Expressions work with two types of data.
 
-- A collections of time series.
-- A collection of numbers, where each collection could be a single series or single number.
+- A collection of time series.
+- A collection of numbers, where each item in the collection is a single number.
 
 Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by it dimensions which are stored as [labels]({{< relref "../basics/timeseries-dimensions.md#labels" >}}) or key-value pairs.
 
@@ -44,10 +44,10 @@ Data source queries, when used with expressions, are executed by the expression 
 
 Currently, the only non-time series format (number) is supported when using data frames are you have a table response that returns a data frame with no time, string columns, and one number column:
 
-Loc | Host | Avg_CPU |
-----|------| ------- |
-MIA | A    | 1
-NYC | B    | 2
+| Loc | Host | Avg_CPU |
+| --- | ---- | ------- |
+| MIA | A    | 1       |
+| NYC | B    | 2       |
 
 will produce a number that works with expressions. The string columns become labels and the number column the corresponding value. For example `{"Loc": "MIA", "Host": "A"}` with a value of 1.
 

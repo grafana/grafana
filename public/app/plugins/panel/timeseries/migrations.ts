@@ -8,7 +8,7 @@ import {
   FieldMatcherID,
   fieldReducers,
   NullValueMode,
-  PanelModel,
+  PanelTypeChangedHandler,
   Threshold,
   ThresholdsMode,
 } from '@grafana/data';
@@ -22,6 +22,7 @@ import {
   LineInterpolation,
   LineStyle,
   PointVisibility,
+  ScaleDistribution,
   StackingMode,
   TooltipDisplayMode,
 } from '@grafana/ui';
@@ -32,15 +33,20 @@ import { defaultGraphConfig } from './config';
 /**
  * This is called when the panel changes from another panel
  */
-export const graphPanelChangedHandler = (
-  panel: PanelModel<Partial<TimeSeriesOptions>> | any,
-  prevPluginId: string,
-  prevOptions: any
+export const graphPanelChangedHandler: PanelTypeChangedHandler = (
+  panel,
+  prevPluginId,
+  prevOptions,
+  prevFieldConfig
 ) => {
   // Changing from angular/flot panel to react/uPlot
   if (prevPluginId === 'graph' && prevOptions.angular) {
-    const { fieldConfig, options } = flotToGraphOptions(prevOptions.angular);
+    const { fieldConfig, options } = flotToGraphOptions({
+      ...prevOptions.angular,
+      fieldConfig: prevFieldConfig,
+    });
     panel.fieldConfig = fieldConfig; // Mutates the incoming panel
+    panel.alert = prevOptions.angular.alert;
     return options;
   }
 
@@ -108,9 +114,10 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
       if (!seriesOverride.alias) {
         continue; // the matcher config
       }
+      const aliasIsRegex = seriesOverride.alias.startsWith('/') && seriesOverride.alias.endsWith('/');
       const rule: ConfigOverrideRule = {
         matcher: {
-          id: FieldMatcherID.byName,
+          id: aliasIsRegex ? FieldMatcherID.byRegexp : FieldMatcherID.byName,
           options: seriesOverride.alias,
         },
         properties: [],
@@ -222,6 +229,15 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
             rule.properties.push({
               id: 'custom.stacking',
               value: { mode: StackingMode.Normal, group: v },
+            });
+            break;
+          case 'color':
+            rule.properties.push({
+              id: 'color',
+              value: {
+                fixedColor: v,
+                mode: FieldColorModeId.Fixed,
+              },
             });
             break;
           default:
@@ -451,6 +467,15 @@ function getFieldConfigFromOldAxis(obj: any): FieldConfig<GraphFieldConfig> {
   };
   if (obj.label) {
     graph.axisLabel = obj.label;
+  }
+  if (obj.logBase) {
+    const log = obj.logBase as number;
+    if (log === 2 || log === 10) {
+      graph.scaleDistribution = {
+        type: ScaleDistribution.Log,
+        log,
+      };
+    }
   }
   return omitBy(
     {

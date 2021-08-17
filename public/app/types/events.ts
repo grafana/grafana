@@ -90,29 +90,17 @@ export interface PanelChangeViewPayload {}
  * Events
  */
 
-export const dashLinksUpdated = eventFactory('dash-links-updated');
-export const searchQuery = eventFactory('search-query');
-
 export const dsRequestResponse = eventFactory<DataSourceResponsePayload>('ds-request-response');
 export const dsRequestError = eventFactory<any>('ds-request-error');
-
 export const toggleSidemenuMobile = eventFactory('toggle-sidemenu-mobile');
 export const toggleSidemenuHidden = eventFactory('toggle-sidemenu-hidden');
-
-export const toggleKioskMode = eventFactory<ToggleKioskModePayload>('toggle-kiosk-mode');
-
-export const timeRangeUpdated = eventFactory<TimeRange>('time-range-updated');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
-
 export const graphClicked = eventFactory<GraphClickedPayload>('graph-click');
 
+/**
+ * @internal
+ */
 export const thresholdChanged = eventFactory<ThresholdChangedPayload>('threshold-changed');
-
-export const zoomOut = eventFactory<number>('zoom-out');
-
-export const shiftTime = eventFactory<number>('shift-time');
-
-export const routeUpdated = eventFactory('$routeUpdate');
 
 /**
  * Used for syncing queries badge count in panel edit queries tab
@@ -208,4 +196,8 @@ export class AnnotationQueryStarted extends BusEventWithPayload<AnnotationQuery>
 
 export class AnnotationQueryFinished extends BusEventWithPayload<AnnotationQuery> {
   static type = 'annotation-query-finished';
+}
+
+export class TimeRangeUpdatedEvent extends BusEventWithPayload<TimeRange> {
+  static type = 'time-range-updated';
 }

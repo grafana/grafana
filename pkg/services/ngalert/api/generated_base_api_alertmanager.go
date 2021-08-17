@@ -4,7 +4,6 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
-
 package api
 
 import (
@@ -26,6 +25,7 @@ type AlertmanagerApiService interface {
 	RouteDeleteSilence(*models.ReqContext) response.Response
 	RouteGetAMAlertGroups(*models.ReqContext) response.Response
 	RouteGetAMAlerts(*models.ReqContext) response.Response
+	RouteGetAMStatus(*models.ReqContext) response.Response
 	RouteGetAlertingConfig(*models.ReqContext) response.Response
 	RouteGetSilence(*models.ReqContext) response.Response
 	RouteGetSilences(*models.ReqContext) response.Response
@@ -78,6 +78,15 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService, m *
 				http.MethodGet,
 				"/api/alertmanager/{Recipient}/api/v2/alerts",
 				srv.RouteGetAMAlerts,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/alertmanager/{Recipient}/api/v2/status"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/alertmanager/{Recipient}/api/v2/status",
+				srv.RouteGetAMStatus,
 				m,
 			),
 		)

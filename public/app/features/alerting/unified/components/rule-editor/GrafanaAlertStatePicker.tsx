@@ -21,5 +21,5 @@ export const GrafanaAlertStatePicker: FC<Props> = ({ includeNoData, ...props }) 
     }
     return options.filter((opt) => opt.value !== GrafanaAlertStateDecision.NoData);
   }, [includeNoData]);
-  return <Select options={opts} {...props} />;
+  return <Select menuShouldPortal options={opts} {...props} />;
 };

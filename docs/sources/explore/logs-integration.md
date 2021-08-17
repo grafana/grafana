@@ -71,6 +71,10 @@ Shows or hides the unique labels column that includes only non-common labels. Al
 
 Set this to True if you want the display to use line wrapping. If set to False, it will result in horizontal scrolling.
 
+#### Prettify JSON
+
+Set this to `true` to pretty print all JSON logs. This setting does not affect logs in any format other than JSON.
+
 #### Deduping
 
 Log data can be very repetitive and Explore can help by hiding duplicate log lines. There are a few different deduplication algorithms that you can use:
@@ -104,7 +108,7 @@ If your logs are structured in `json` or `logfmt`, then you can show or hide det
 
 As mentioned, one of the log integrations is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. For more information about Grafana Loki, refer to [Grafana Loki](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
 
-For more information, refer to Loki's data source documentation]({{< relref "../datasources/loki.md" >}}) on how to query for log data.
+For more information, refer to [Loki's data source documentation]({{< relref "../datasources/loki.md" >}}) on how to query for log data.
 
 #### Switch from metrics to logs
 

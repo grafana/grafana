@@ -1,7 +1,7 @@
 import React from 'react';
-import { boolean, number } from '@storybook/addon-knobs';
 import { css, cx } from '@emotion/css';
 import { RenderFunction } from '../../types';
+import { StoryContext } from '@storybook/react';
 
 const StoryContainer: React.FC<{ width?: number; height?: number; showBoundaries: boolean }> = ({
   children,
@@ -43,38 +43,12 @@ const StoryContainer: React.FC<{ width?: number; height?: number; showBoundaries
   );
 };
 
-export const withStoryContainer = (story: RenderFunction) => {
-  const CONTAINER_GROUP = 'Container options';
-  // ---
-  const containerBoundary = boolean('Show container boundary', false, CONTAINER_GROUP);
-  const fullWidthContainer = boolean('Full width container', false, CONTAINER_GROUP);
-  const containerWidth = number(
-    'Container width',
-    300,
-    {
-      range: true,
-      min: 100,
-      max: 500,
-      step: 10,
-    },
-    CONTAINER_GROUP
-  );
-  const containerHeight = number(
-    'Container height',
-    0,
-    {
-      range: true,
-      min: 100,
-      max: 500,
-      step: 10,
-    },
-    CONTAINER_GROUP
-  );
+export const withStoryContainer = (story: RenderFunction, context: StoryContext) => {
   return (
     <StoryContainer
-      width={fullWidthContainer ? undefined : containerWidth}
-      height={containerHeight}
-      showBoundaries={containerBoundary}
+      width={context.args.containerWidth}
+      height={context.args.containerHeight}
+      showBoundaries={context.args.showBoundaries}
     >
       {story()}
     </StoryContainer>

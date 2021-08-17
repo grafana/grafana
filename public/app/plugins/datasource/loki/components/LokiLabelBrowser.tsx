@@ -1,26 +1,36 @@
 import React, { ChangeEvent } from 'react';
-import { Button, HorizontalGroup, Input, Label, LoadingPlaceholder, stylesFactory, withTheme } from '@grafana/ui';
+import {
+  Button,
+  HighlightPart,
+  HorizontalGroup,
+  Input,
+  Label,
+  LoadingPlaceholder,
+  withTheme2,
+  BrowserLabel as LokiLabel,
+  fuzzyMatch,
+} from '@grafana/ui';
 import LokiLanguageProvider from '../language_provider';
 import PromQlLanguageProvider from '../../prometheus/language_provider';
 import { css, cx } from '@emotion/css';
 import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
-
-import { GrafanaTheme } from '@grafana/data';
-import { LokiLabel } from './LokiLabel';
+import { GrafanaTheme2 } from '@grafana/data';
+import { sortBy } from 'lodash';
 
 // Hard limit on labels to render
 const MAX_LABEL_COUNT = 1000;
 const MAX_VALUE_COUNT = 10000;
 const MAX_AUTO_SELECT = 4;
 const EMPTY_SELECTOR = '{}';
+
 export const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
 export interface BrowserProps {
   // TODO #33976: Is it possible to use a common interface here? For example: LabelsLanguageProvider
   languageProvider: LokiLanguageProvider | PromQlLanguageProvider;
   onChange: (selector: string) => void;
-  theme: GrafanaTheme;
+  theme: GrafanaTheme2;
   autoSelect?: number;
   hide?: () => void;
 }
@@ -36,6 +46,8 @@ interface BrowserState {
 interface FacettableValue {
   name: string;
   selected?: boolean;
+  highlightParts?: HighlightPart[];
+  order?: number;
 }
 
 export interface SelectableLabel {
@@ -90,14 +102,14 @@ export function facetLabels(
   });
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
-    background-color: ${theme.colors.bg2};
-    padding: ${theme.spacing.md};
+    background-color: ${theme.colors.background.secondary};
+    padding: ${theme.spacing(2)};
     width: 100%;
   `,
   list: css`
-    margin-top: ${theme.spacing.sm};
+    margin-top: ${theme.spacing(1)};
     display: flex;
     flex-wrap: wrap;
     max-height: 200px;
@@ -105,17 +117,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   section: css`
     & + & {
-      margin: ${theme.spacing.md} 0;
+      margin: ${theme.spacing(2, 0)};
     }
     position: relative;
   `,
   selector: css`
-    font-family: ${theme.typography.fontFamily.monospace};
-    margin-bottom: ${theme.spacing.sm};
+    font-family: ${theme.typography.fontFamilyMonospace};
+    margin-bottom: ${theme.spacing(1)};
   `,
   status: css`
-    padding: ${theme.spacing.xs};
-    color: ${theme.colors.textSemiWeak};
+    padding: ${theme.spacing(0.5)};
+    color: ${theme.colors.text.secondary};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -131,34 +143,34 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     opacity: 1;
   `,
   error: css`
-    color: ${theme.palette.brandDanger};
+    color: ${theme.colors.error.main};
   `,
   valueList: css`
-    margin-right: ${theme.spacing.sm};
+    margin-right: ${theme.spacing(1)};
   `,
   valueListWrapper: css`
-    border-left: 1px solid ${theme.colors.border2};
-    margin: ${theme.spacing.sm} 0;
-    padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.sm};
+    border-left: 1px solid ${theme.colors.border.medium};
+    margin: ${theme.spacing(1, 0)};
+    padding: ${theme.spacing(1, 0, 1, 1)};
   `,
   valueListArea: css`
     display: flex;
     flex-wrap: wrap;
-    margin-top: ${theme.spacing.sm};
+    margin-top: ${theme.spacing(1)};
   `,
   valueTitle: css`
-    margin-left: -${theme.spacing.xs};
-    margin-bottom: ${theme.spacing.sm};
+    margin-left: -${theme.spacing(0.5)};
+    margin-bottom: ${theme.spacing(1)};
   `,
   validationStatus: css`
-    padding: ${theme.spacing.xs};
-    margin-bottom: ${theme.spacing.sm};
-    color: ${theme.colors.textStrong};
+    padding: ${theme.spacing(0.5)};
+    margin-bottom: ${theme.spacing(1)};
+    color: ${theme.colors.text.maxContrast};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   `,
-}));
+});
 
 export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, BrowserState> {
   state: BrowserState = {
@@ -378,15 +390,42 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       return <LoadingPlaceholder text="Loading labels..." />;
     }
     const styles = getStyles(theme);
-    let selectedLabels = labels.filter((label) => label.selected && label.values);
-    if (searchTerm) {
-      selectedLabels = selectedLabels.map((label) => ({
-        ...label,
-        values: label.values?.filter((value) => value.selected || value.name.includes(searchTerm)),
-      }));
-    }
     const selector = buildSelector(this.state.labels);
     const empty = selector === EMPTY_SELECTOR;
+
+    let selectedLabels = labels.filter((label) => label.selected && label.values);
+    if (searchTerm) {
+      selectedLabels = selectedLabels.map((label) => {
+        const searchResults = label.values!.filter((value) => {
+          // Always return selected values
+          if (value.selected) {
+            value.highlightParts = undefined;
+            return true;
+          }
+          const fuzzyMatchResult = fuzzyMatch(value.name.toLowerCase(), searchTerm.toLowerCase());
+          if (fuzzyMatchResult.found) {
+            value.highlightParts = fuzzyMatchResult.ranges;
+            value.order = fuzzyMatchResult.distance;
+            return true;
+          } else {
+            return false;
+          }
+        });
+        return {
+          ...label,
+          values: sortBy(searchResults, (value) => (value.selected ? -Infinity : value.order)),
+        };
+      });
+    } else {
+      // Clear highlight parts when searchTerm is cleared
+      selectedLabels = this.state.labels
+        .filter((label) => label.selected && label.values)
+        .map((label) => ({
+          ...label,
+          values: label?.values ? label.values.map((value) => ({ ...value, highlightParts: undefined })) : [],
+        }));
+    }
+
     return (
       <div className={styles.wrapper}>
         <div className={styles.section}>
@@ -431,7 +470,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
                 <FixedSizeList
                   height={200}
                   itemCount={label.values?.length || 0}
-                  itemSize={25}
+                  itemSize={28}
                   itemKey={(i) => (label.values as FacettableValue[])[i].name}
                   width={200}
                   className={styles.valueList}
@@ -447,6 +486,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
                           name={label.name}
                           value={value?.name}
                           active={value?.selected}
+                          highlightParts={value?.highlightParts}
                           onClick={this.onClickValue}
                           searchTerm={searchTerm}
                         />
@@ -497,4 +537,4 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   }
 }
 
-export const LokiLabelBrowser = withTheme(UnthemedLokiLabelBrowser);
+export const LokiLabelBrowser = withTheme2(UnthemedLokiLabelBrowser);

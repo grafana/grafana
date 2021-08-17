@@ -3,9 +3,11 @@ package postgres
 import (
 	"fmt"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
 )
@@ -213,4 +215,34 @@ func TestMacroEngine(t *testing.T) {
 			require.Equal(t, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339Nano), to.Format(time.RFC3339Nano)), sql)
 		})
 	})
+}
+
+func TestMacroEngineConcurrency(t *testing.T) {
+	engine := newPostgresMacroEngine(false)
+	query1 := plugins.DataSubQuery{
+		Model: simplejson.New(),
+	}
+	query2 := plugins.DataSubQuery{
+		Model: simplejson.New(),
+	}
+	from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
+	to := from.Add(5 * time.Minute)
+	timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: to}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func(query plugins.DataSubQuery) {
+		defer wg.Done()
+		_, err := engine.Interpolate(query, timeRange, "SELECT $__timeGroup(time_column,'5m')")
+		require.NoError(t, err)
+	}(query1)
+
+	go func(query plugins.DataSubQuery) {
+		_, err := engine.Interpolate(query, timeRange, "SELECT $__timeGroup(time_column,'5m')")
+		require.NoError(t, err)
+		defer wg.Done()
+	}(query2)
+
+	wg.Wait()
 }

@@ -1,32 +1,33 @@
 import React from 'react';
 import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import {
+  ArrayVector,
   DataFrame,
+  FALLBACK_COLOR,
+  Field,
+  FieldColorModeId,
   FieldConfig,
+  FieldType,
   formattedValueToString,
   getFieldDisplayName,
-  outerJoinDataFrames,
-  Field,
-  FALLBACK_COLOR,
-  FieldType,
-  ArrayVector,
-  FieldColorModeId,
   getValueFormat,
-  ThresholdsMode,
   GrafanaTheme2,
+  outerJoinDataFrames,
+  ThresholdsMode,
 } from '@grafana/data';
 import {
-  UPlotConfigBuilder,
   FIXED_UNIT,
   SeriesVisibilityChangeMode,
+  UPlotConfigBuilder,
   UPlotConfigPrepFn,
-  VizLegendOptions,
   VizLegendItem,
+  VizLegendOptions,
 } from '@grafana/ui';
-import { TimelineCoreOptions, getConfig } from './timeline';
+import { getConfig, TimelineCoreOptions } from './timeline';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
 import { TimelineFieldConfig, TimelineOptions } from './types';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
+import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
@@ -139,6 +140,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   };
 
   builder.setTooltipInterpolator(interpolateTooltip);
+
+  builder.setPrepData(preparePlotData);
 
   builder.setCursor(coreConfig.cursor);
 
@@ -401,12 +404,12 @@ export function findNextStateIndex(field: Field, datapointIdx: number) {
   let end;
   let rightPointer = datapointIdx + 1;
 
-  if (rightPointer === field.values.length) {
+  if (rightPointer >= field.values.length) {
     return null;
   }
 
   while (end === undefined) {
-    if (rightPointer === field.values.length) {
+    if (rightPointer >= field.values.length) {
       return null;
     }
     const rightValue = field.values.get(rightPointer);

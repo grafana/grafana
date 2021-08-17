@@ -1,5 +1,5 @@
 export { Icon } from './Icon/Icon';
-export { IconButton } from './IconButton/IconButton';
+export { IconButton, IconButtonVariant } from './IconButton/IconButton';
 export { ConfirmButton } from './ConfirmButton/ConfirmButton';
 export { DeleteButton } from './ConfirmButton/DeleteButton';
 export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
@@ -21,9 +21,14 @@ export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
-export { TimeRangePicker } from './TimePicker/TimeRangePicker';
-export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
-export { TimeZonePicker } from './TimePicker/TimeZonePicker';
+export { TimeRangePicker, TimeRangePickerProps } from './DateTimePickers/TimeRangePicker';
+export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
+export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
+export { DatePicker, DatePickerProps } from './DateTimePickers/DatePicker/DatePicker';
+export {
+  DatePickerWithInput,
+  DatePickerWithInputProps,
+} from './DateTimePickers/DatePickerWithInput/DatePickerWithInput';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
@@ -140,8 +145,8 @@ export {
   withErrorBoundary,
 } from './ErrorBoundary/ErrorBoundary';
 export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
-export { AlphaNotice } from './AlphaNotice/AlphaNotice';
 export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
+export { AlertingSettings } from './DataSourceSettings/AlertingSettings';
 export { TLSAuthSettings } from './DataSourceSettings/TLSAuthSettings';
 export { CertificationKey } from './DataSourceSettings/CertificationKey';
 export { Spinner } from './Spinner/Spinner';
@@ -181,6 +186,7 @@ export { InlineFieldRow } from './Forms/InlineFieldRow';
 export { FieldArray } from './Forms/FieldArray';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
+export { selectOptionInTest } from './Select/test-utils';
 export * from './Select/Select';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
@@ -195,8 +201,9 @@ export { Checkbox } from './Forms/Checkbox';
 
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
-export { TimeRangeInput } from './TimePicker/TimeRangeInput';
-export { RelativeTimeRangePicker } from './TimePicker/RelativeTimeRangePicker/RelativeTimeRangePicker';
+export * from './FileDropzone';
+export { TimeRangeInput } from './DateTimePickers/TimeRangeInput';
+export { RelativeTimeRangePicker } from './DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker';
 export { Card, Props as CardProps, getCardStyles } from './Card/Card';
 export { CardContainer, CardContainerProps } from './Card/CardContainer';
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
@@ -240,7 +247,7 @@ export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
 export { usePlotContext } from './uPlot/context';
-export { PlotTooltipInterpolator } from './uPlot/types';
+export { PlotTooltipInterpolator, PlotSelection } from './uPlot/types';
 export { GraphNG, GraphNGProps, FIXED_UNIT } from './GraphNG/GraphNG';
 export { TimeSeries } from './TimeSeries/TimeSeries';
 export { useGraphNGContext } from './GraphNG/hooks';
@@ -248,3 +255,4 @@ export { preparePlotFrame } from './GraphNG/utils';
 export { GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
+export { Label as BrowserLabel } from './BrowserLabel/Label';

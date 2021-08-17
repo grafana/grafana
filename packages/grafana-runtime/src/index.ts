@@ -7,9 +7,15 @@ export * from './services';
 export * from './config';
 export * from './types';
 export { loadPluginCss, SystemJS, PluginCssOptions } from './utils/plugin';
-export { reportMetaAnalytics } from './utils/analytics';
+export { reportMetaAnalytics, reportInteraction, reportPageview } from './utils/analytics';
 export { logInfo, logDebug, logWarning, logError } from './utils/logging';
-export { DataSourceWithBackend, HealthCheckResult, HealthStatus } from './utils/DataSourceWithBackend';
+export {
+  DataSourceWithBackend,
+  HealthCheckResult,
+  HealthCheckResultDetails,
+  HealthStatus,
+  StreamOptionsProvider,
+} from './utils/DataSourceWithBackend';
 export {
   toDataQueryError,
   toDataQueryResponse,

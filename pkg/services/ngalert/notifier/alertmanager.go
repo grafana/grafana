@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
@@ -72,6 +73,8 @@ const (
 	}
 }
 `
+	//TODO: temporary until fix org isolation
+	mainOrgID = 1
 )
 
 type Alertmanager struct {
@@ -156,9 +159,19 @@ func New(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*Aler
 	return am, nil
 }
 
+func (am *Alertmanager) Ready() bool {
+	// We consider AM as ready only when the config has been
+	// applied at least once successfully. Until then, some objects
+	// can still be nil.
+	am.reloadConfigMtx.RLock()
+	defer am.reloadConfigMtx.RUnlock()
+
+	return len(am.config) > 0
+}
+
 func (am *Alertmanager) Run(ctx context.Context) error {
 	// Make sure dispatcher starts. We can tolerate future reload failures.
-	if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
+	if err := am.SyncAndApplyConfigFromDatabase(mainOrgID); err != nil {
 		am.logger.Error("unable to sync configuration", "err", err)
 	}
 
@@ -167,7 +180,7 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return am.StopAndWait()
 		case <-time.After(pollInterval):
-			if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
+			if err := am.SyncAndApplyConfigFromDatabase(mainOrgID); err != nil {
 				am.logger.Error("unable to sync configuration", "err", err)
 			}
 		}
@@ -191,9 +204,41 @@ func (am *Alertmanager) StopAndWait() error {
 	return nil
 }
 
+// SaveAndApplyDefaultConfig saves the default configuration the database and applies the configuration to the Alertmanager.
+// It rollbacks the save if we fail to apply the configuration.
+func (am *Alertmanager) SaveAndApplyDefaultConfig(orgID int64) error {
+	am.reloadConfigMtx.Lock()
+	defer am.reloadConfigMtx.Unlock()
+
+	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
+		Default:                   true,
+		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+		OrgID:                     orgID,
+	}
+
+	cfg, err := Load([]byte(alertmanagerDefaultConfiguration))
+	if err != nil {
+		return err
+	}
+
+	err = am.Store.SaveAlertmanagerConfigurationWithCallback(cmd, func() error {
+		if err := am.applyConfig(cfg, []byte(alertmanagerDefaultConfiguration)); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	am.Metrics.ActiveConfigurations.Set(1)
+
+	return nil
+}
+
 // SaveAndApplyConfig saves the configuration the database and applies the configuration to the Alertmanager.
 // It rollbacks the save if we fail to apply the configuration.
-func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
+func (am *Alertmanager) SaveAndApplyConfig(orgID int64, cfg *apimodels.PostableUserConfig) error {
 	rawConfig, err := json.Marshal(&cfg)
 	if err != nil {
 		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
@@ -205,6 +250,7 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(rawConfig),
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+		OrgID:                     orgID,
 	}
 
 	err = am.Store.SaveAlertmanagerConfigurationWithCallback(cmd, func() error {
@@ -223,12 +269,12 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 
 // SyncAndApplyConfigFromDatabase picks the latest config from database and restarts
 // the components with the new config.
-func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
+func (am *Alertmanager) SyncAndApplyConfigFromDatabase(orgID int64) error {
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
 	// First, let's get the configuration we need from the database.
-	q := &ngmodels.GetLatestAlertmanagerConfigurationQuery{}
+	q := &ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: mainOrgID}
 	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
 		// If there's no configuration in the database, let's use the default configuration.
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
@@ -238,6 +284,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 				AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
 				Default:                   true,
 				ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+				OrgID:                     orgID,
 			}
 			if err := am.Store.SaveAlertmanagerConfiguration(savecmd); err != nil {
 				return err
@@ -269,7 +316,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It is not safe to call concurrently.
-func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) error {
+func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) (err error) {
 	// First, let's make sure this config is not already loaded
 	var configChanged bool
 	if rawConfig == nil {
@@ -358,7 +405,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 }
 
 func (am *Alertmanager) WorkingDirPath() string {
-	return filepath.Join(am.Settings.DataPath, workingDir)
+	return filepath.Join(am.Settings.DataPath, workingDir, strconv.Itoa(mainOrgID))
 }
 
 // buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
@@ -434,7 +481,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewDiscordNotifier(cfg, tmpl)
 		case "googlechat":
 			n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
-		case "line":
+		case "LINE":
 			n, err = channels.NewLineNotifier(cfg, tmpl)
 		case "threema":
 			n, err = channels.NewThreemaNotifier(cfg, tmpl)
@@ -470,6 +517,7 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 			},
 			UpdatedAt: now,
 		}
+
 		for k, v := range a.Labels {
 			if len(v) == 0 || k == ngmodels.NamespaceUIDLabel { // Skip empty and namespace UID labels.
 				continue
@@ -504,7 +552,7 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 			am.Metrics.Resolved().Inc()
 		}
 
-		if err := alert.Validate(); err != nil {
+		if err := validateAlert(alert); err != nil {
 			if validationErr == nil {
 				validationErr = &AlertValidationError{}
 			}
@@ -528,6 +576,59 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 	return nil
 }
 
+// validateAlert is a.Validate() while additionally allowing
+// space for label and annotation names.
+func validateAlert(a *types.Alert) error {
+	if a.StartsAt.IsZero() {
+		return fmt.Errorf("start time missing")
+	}
+	if !a.EndsAt.IsZero() && a.EndsAt.Before(a.StartsAt) {
+		return fmt.Errorf("start time must be before end time")
+	}
+	if err := validateLabelSet(a.Labels); err != nil {
+		return fmt.Errorf("invalid label set: %s", err)
+	}
+	if len(a.Labels) == 0 {
+		return fmt.Errorf("at least one label pair required")
+	}
+	if err := validateLabelSet(a.Annotations); err != nil {
+		return fmt.Errorf("invalid annotations: %s", err)
+	}
+	return nil
+}
+
+// validateLabelSet is ls.Validate() while additionally allowing
+// space for label names.
+func validateLabelSet(ls model.LabelSet) error {
+	for ln, lv := range ls {
+		if !isValidLabelName(ln) {
+			return fmt.Errorf("invalid name %q", ln)
+		}
+		if !lv.IsValid() {
+			return fmt.Errorf("invalid value %q", lv)
+		}
+	}
+	return nil
+}
+
+// isValidLabelName is ln.IsValid() while additionally allowing spaces.
+// The regex for Prometheus data model is ^[a-zA-Z_][a-zA-Z0-9_]*$
+// while we will follow ^[a-zA-Z_][a-zA-Z0-9_ ]*$
+func isValidLabelName(ln model.LabelName) bool {
+	if len(ln) == 0 {
+		return false
+	}
+	for i, b := range ln {
+		if !((b >= 'a' && b <= 'z') ||
+			(b >= 'A' && b <= 'Z') ||
+			b == '_' ||
+			(i > 0 && (b == ' ' || (b >= '0' && b <= '9')))) {
+			return false
+		}
+	}
+	return true
+}
+
 // AlertValidationError is the error capturing the validation errors
 // faced on the alerts.
 type AlertValidationError struct {
@@ -538,7 +639,7 @@ type AlertValidationError struct {
 func (e AlertValidationError) Error() string {
 	errMsg := ""
 	if len(e.Errors) != 0 {
-		errMsg := e.Errors[0].Error()
+		errMsg = e.Errors[0].Error()
 		for _, e := range e.Errors[1:] {
 			errMsg += ";" + e.Error()
 		}
@@ -567,7 +668,12 @@ func (am *Alertmanager) createReceiverStage(name string, integrations []notify.I
 }
 
 func waitFunc() time.Duration {
-	return setting.AlertingNotificationTimeout
+	// When it's a single instance, we don't need additional wait. The routing policies will have their own group wait.
+	// We need >0 wait here in case we have peers to sync the notification state with. 0 wait in that case can result
+	// in duplicate notifications being sent.
+	// TODO: we have setting.AlertingNotificationTimeout in legacy settings. Either use that or separate set of config
+	// for clustering with intuitive name, like "PeerTimeout".
+	return 0
 }
 
 func timeoutFunc(d time.Duration) time.Duration {

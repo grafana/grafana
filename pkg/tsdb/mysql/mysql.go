@@ -266,6 +266,44 @@ func (t *mysqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 			},
 		},
 		{
+			Name:           "handle TINYINT",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "TINYINT",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableInt64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseInt(*in, 10, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle SMALLINT",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "SMALLINT",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableInt64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseInt(*in, 10, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
 			Name:           "handle INT",
 			InputScanKind:  reflect.Struct,
 			InputTypeName:  "INT",

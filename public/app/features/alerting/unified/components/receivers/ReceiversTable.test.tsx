@@ -81,7 +81,7 @@ describe('ReceiversTable', () => {
     expect(rows[1].querySelectorAll('td')[1].textContent).toEqual('');
   });
 
-  it('render receivers with alert manager notifers', async () => {
+  it('render receivers with alertmanager notifers', async () => {
     const receivers: Receiver[] = [
       {
         name: 'with receivers',

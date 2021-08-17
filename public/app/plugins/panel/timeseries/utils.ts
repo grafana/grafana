@@ -7,7 +7,7 @@ import {
   GrafanaTheme2,
   isBooleanUnit,
 } from '@grafana/data';
-import { GraphFieldConfig, LineInterpolation } from '@grafana/ui';
+import { GraphFieldConfig, LineInterpolation, StackingMode } from '@grafana/ui';
 
 // This will return a set of frames with only graphable values included
 export function prepareGraphableFields(
@@ -17,12 +17,15 @@ export function prepareGraphableFields(
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
+  let copy: Field;
   let hasTimeseries = false;
   const frames: DataFrame[] = [];
+
   for (let frame of series) {
     let isTimeseries = false;
     let changed = false;
     const fields: Field[] = [];
+
     for (const field of frame.fields) {
       switch (field.type) {
         case FieldType.time:
@@ -31,7 +34,25 @@ export function prepareGraphableFields(
           fields.push(field);
           break;
         case FieldType.number:
-          fields.push(field);
+          changed = true;
+          copy = {
+            ...field,
+            values: new ArrayVector(
+              field.values.toArray().map((v) => {
+                if (!(Number.isFinite(v) || v == null)) {
+                  return null;
+                }
+                return v;
+              })
+            ),
+          };
+
+          if (copy.config.custom?.stacking?.mode === StackingMode.Percent) {
+            copy.config.unit = 'percentunit';
+            copy.display = getDisplayProcessor({ field: copy, theme });
+          }
+
+          fields.push(copy);
           break; // ok
         case FieldType.boolean:
           changed = true;
@@ -46,7 +67,7 @@ export function prepareGraphableFields(
           if (custom.lineInterpolation !== LineInterpolation.StepBefore) {
             custom.lineInterpolation = LineInterpolation.StepAfter;
           }
-          const copy = {
+          copy = {
             ...field,
             config,
             type: FieldType.number,
@@ -69,6 +90,7 @@ export function prepareGraphableFields(
           changed = true;
       }
     }
+
     if (isTimeseries && fields.length > 1) {
       hasTimeseries = true;
       if (changed) {

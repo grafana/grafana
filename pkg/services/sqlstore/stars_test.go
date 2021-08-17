@@ -3,6 +3,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -24,7 +25,7 @@ func TestUserStarsDataAccess(t *testing.T) {
 
 			Convey("IsStarredByUser should return true when starred", func() {
 				query := models.IsStarredByUserQuery{UserId: 12, DashboardId: 10}
-				err := IsStarredByUser(&query)
+				err := IsStarredByUserCtx(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result, ShouldBeTrue)
@@ -32,7 +33,7 @@ func TestUserStarsDataAccess(t *testing.T) {
 
 			Convey("IsStarredByUser should return false when not starred", func() {
 				query := models.IsStarredByUserQuery{UserId: 12, DashboardId: 12}
-				err := IsStarredByUser(&query)
+				err := IsStarredByUserCtx(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result, ShouldBeFalse)

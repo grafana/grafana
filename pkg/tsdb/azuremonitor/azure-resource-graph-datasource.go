@@ -6,7 +6,6 @@ import (
 
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -15,11 +14,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
@@ -28,8 +23,7 @@ import (
 
 // AzureResourceGraphDatasource calls the Azure Resource Graph API's
 type AzureResourceGraphDatasource struct {
-	pluginManager plugins.Manager
-	cfg           *setting.Cfg
+	proxy serviceProxy
 }
 
 // AzureResourceGraphQuery is the query request that is built from the saved values for
@@ -43,14 +37,18 @@ type AzureResourceGraphQuery struct {
 	TimeRange         backend.TimeRange
 }
 
-const argAPIVersion = "2018-09-01-preview"
+const argAPIVersion = "2021-03-01"
 const argQueryProviderName = "/providers/Microsoft.ResourceGraph/resources"
+
+func (e *AzureResourceGraphDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.proxy.Do(rw, req, cli)
+}
 
 // executeTimeSeriesQuery does the following:
 // 1. builds the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
+func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
 	result := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{},
 	}
@@ -61,7 +59,7 @@ func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Contex
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo, client, url)
 	}
 
 	return result, nil
@@ -103,7 +101,7 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery,
 	return azureResourceGraphQueries, nil
 }
 
-func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo datasourceInfo) backend.DataResponse {
+func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo datasourceInfo, client *http.Client, dsURL string) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	params := url.Values{}
@@ -132,6 +130,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	reqBody, err := json.Marshal(map[string]interface{}{
 		"subscriptions": model.Get("subscriptions").MustStringArray(),
 		"query":         query.InterpolatedQuery,
+		"options":       map[string]string{"resultFormat": "table"},
 	})
 
 	if err != nil {
@@ -139,7 +138,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return dataResponse
 	}
 
-	req, err := e.createRequest(ctx, dsInfo, reqBody)
+	req, err := e.createRequest(ctx, dsInfo, reqBody, dsURL)
 
 	if err != nil {
 		dataResponse.Error = err
@@ -166,7 +165,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	}
 
 	azlog.Debug("AzureResourceGraph", "Request ApiURL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, req)
+	res, err := ctxhttp.Do(ctx, client, req)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -180,70 +179,49 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
-	if frame.Meta == nil {
-		frame.Meta = &data.FrameMeta{}
-	}
-	frame.Meta.ExecutedQueryString = req.URL.RawQuery
 
-	dataResponse.Frames = data.Frames{frame}
+	azurePortalUrl, err := getAzurePortalUrl(dsInfo.Cloud)
+	if err != nil {
+		return dataResponseErrorWithExecuted(err)
+	}
+
+	url := azurePortalUrl + "/#blade/HubsExtension/ArgQueryBlade/query/" + url.PathEscape(query.InterpolatedQuery)
+	frameWithLink := addConfigData(*frame, url)
+	if frameWithLink.Meta == nil {
+		frameWithLink.Meta = &data.FrameMeta{}
+	}
+	frameWithLink.Meta.ExecutedQueryString = req.URL.RawQuery
+
+	dataResponse.Frames = data.Frames{&frameWithLink}
 	return dataResponse
 }
 
-func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, reqBody []byte) (*http.Request, error) {
-	// find plugin
-	plugin := e.pluginManager.GetDataSource(dsName)
-	if plugin == nil {
-		return nil, errors.New("unable to find datasource plugin Azure Monitor")
+func addConfigData(frame data.Frame, dl string) data.Frame {
+	for i := range frame.Fields {
+		if frame.Fields[i].Config == nil {
+			frame.Fields[i].Config = &data.FieldConfig{}
+		}
+		deepLink := data.DataLink{
+			Title:       "View in Azure Portal",
+			TargetBlank: true,
+			URL:         dl,
+		}
+		frame.Fields[i].Config.Links = append(frame.Fields[i].Config.Links, deepLink)
 	}
+	return frame
+}
 
-	argRoute, routeName, err := e.getPluginRoute(plugin, dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	u, err := url.Parse(dsInfo.URL)
-	if err != nil {
-		return nil, err
-	}
-	u.Path = path.Join(u.Path, "render")
-	req, err := http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(reqBody))
+func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, reqBody []byte, url string) (*http.Request, error) {
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("failed to create request", err)
 	}
-
+	req.URL.Path = "/"
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
-	// TODO: Use backend authentication instead
-	pluginproxy.ApplyRoute(ctx, req, routeName, argRoute, &models.DataSource{
-		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),
-		SecureJsonData: securejsondata.GetEncryptedJsonData(dsInfo.DecryptedSecureJSONData),
-	}, e.cfg)
-
 	return req, nil
-}
-
-func (e *AzureResourceGraphDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, dsInfo datasourceInfo) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, dsInfo)
-	if err != nil {
-		return nil, "", err
-	}
-
-	routeName, err := getManagementApiRoute(cloud)
-	if err != nil {
-		return nil, "", err
-	}
-
-	var pluginRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == routeName {
-			pluginRoute = route
-			break
-		}
-	}
-
-	return pluginRoute, routeName, nil
 }
 
 func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (AzureResourceGraphResponse, error) {
@@ -272,4 +250,19 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 	}
 
 	return data, nil
+}
+
+func getAzurePortalUrl(azureCloud string) (string, error) {
+	switch azureCloud {
+	case setting.AzurePublic:
+		return "https://portal.azure.com", nil
+	case setting.AzureChina:
+		return "https://portal.azure.cn", nil
+	case setting.AzureUSGovernment:
+		return "https://portal.azure.us", nil
+	case setting.AzureGermany:
+		return "https://portal.microsoftazure.de", nil
+	default:
+		return "", fmt.Errorf("the cloud is not supported")
+	}
 }

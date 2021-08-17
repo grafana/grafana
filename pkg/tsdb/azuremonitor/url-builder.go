@@ -23,13 +23,17 @@ func (ub *urlBuilder) Build() string {
 		subscription = ub.DefaultSubscription
 	}
 
-	if strings.Count(ub.MetricDefinition, "/") > 1 {
-		rn := strings.Split(ub.ResourceName, "/")
-		lastIndex := strings.LastIndex(ub.MetricDefinition, "/")
-		service := ub.MetricDefinition[lastIndex+1:]
-		md := ub.MetricDefinition[0:lastIndex]
-		return fmt.Sprintf("%s/resourceGroups/%s/providers/%s/%s/%s/%s/providers/microsoft.insights/metrics", subscription, ub.ResourceGroup, md, rn[0], service, rn[1])
+	metricDefinitionArray := strings.Split(ub.MetricDefinition, "/")
+	resourceNameArray := strings.Split(ub.ResourceName, "/")
+	provider := metricDefinitionArray[0]
+	metricDefinitionArray = metricDefinitionArray[1:]
+
+	urlArray := []string{subscription, "resourceGroups", ub.ResourceGroup, "providers", provider}
+
+	for i := range metricDefinitionArray {
+		urlArray = append(urlArray, metricDefinitionArray[i])
+		urlArray = append(urlArray, resourceNameArray[i])
 	}
 
-	return fmt.Sprintf("%s/resourceGroups/%s/providers/%s/%s/providers/microsoft.insights/metrics", subscription, ub.ResourceGroup, ub.MetricDefinition, ub.ResourceName)
+	return fmt.Sprintf("%s/providers/microsoft.insights/metrics", strings.Join(urlArray[:], "/"))
 }

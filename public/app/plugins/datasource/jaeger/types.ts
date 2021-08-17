@@ -63,4 +63,4 @@ export type JaegerQuery = {
   limit?: number;
 } & DataQuery;
 
-export type JaegerQueryType = 'search';
+export type JaegerQueryType = 'search' | 'upload';

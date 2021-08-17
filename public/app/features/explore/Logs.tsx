@@ -16,9 +16,9 @@ import {
   LogsSortOrder,
   LinkModel,
   Field,
-  GrafanaTheme,
   DataQuery,
   DataFrame,
+  GrafanaTheme2,
 } from '@grafana/data';
 import {
   RadioButtonGroup,
@@ -27,9 +27,9 @@ import {
   InlineField,
   InlineFieldRow,
   InlineSwitch,
-  withTheme,
-  stylesFactory,
+  withTheme2,
   TooltipDisplayMode,
+  Themeable2,
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
@@ -42,15 +42,17 @@ const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
   showTime: 'grafana.explore.logs.showTime',
   wrapLogMessage: 'grafana.explore.logs.wrapLogMessage',
+  prettifyLogMessage: 'grafana.explore.logs.prettifyLogMessage',
 };
 
-interface Props {
+interface Props extends Themeable2 {
+  width: number;
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: DataFrame[];
   logsQueries?: DataQuery[];
   visibleRange?: AbsoluteTimeRange;
-  theme: GrafanaTheme;
+  theme: GrafanaTheme2;
   highlighterExpressions?: string[];
   loading: boolean;
   absoluteRange: AbsoluteTimeRange;
@@ -73,6 +75,7 @@ interface State {
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
+  prettifyLogMessage: boolean;
   dedupStrategy: LogsDedupStrategy;
   hiddenLogLevels: LogLevel[];
   logsSortOrder: LogsSortOrder | null;
@@ -90,6 +93,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
     showTime: store.getBool(SETTINGS_KEYS.showTime, true),
     wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
+    prettifyLogMessage: store.getBool(SETTINGS_KEYS.prettifyLogMessage, false),
     dedupStrategy: LogsDedupStrategy.none,
     hiddenLogLevels: [],
     logsSortOrder: null,
@@ -165,6 +169,17 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
+  onChangePrettifyLogMessage = (event?: React.SyntheticEvent) => {
+    const target = event && (event.target as HTMLInputElement);
+    if (target) {
+      const prettifyLogMessage = target.checked;
+      this.setState({
+        prettifyLogMessage,
+      });
+      store.set(SETTINGS_KEYS.prettifyLogMessage, prettifyLogMessage);
+    }
+  };
+
   onToggleLogLevel = (hiddenRawLevels: string[]) => {
     const hiddenLogLevels = hiddenRawLevels.map((level) => LogLevel[level as LogLevel]);
     this.setState({ hiddenLogLevels });
@@ -233,6 +248,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
   render() {
     const {
+      width,
       logRows,
       logsMeta,
       logsSeries,
@@ -258,6 +274,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       showLabels,
       showTime,
       wrapLogMessage,
+      prettifyLogMessage,
       dedupStrategy,
       hiddenLogLevels,
       logsSortOrder,
@@ -266,7 +283,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       forceEscape,
     } = this.state;
 
-    const styles = getStyles(theme);
+    const styles = getStyles(theme, wrapLogMessage);
     const hasData = logRows && logRows.length > 0;
     const hasUnescapedContent = this.checkUnescapedContent(logRows);
 
@@ -284,6 +301,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           <ExploreGraphNGPanel
             data={logsSeries}
             height={150}
+            width={width}
             tooltipDisplayMode={TooltipDisplayMode.Multi}
             absoluteRange={visibleRange || absoluteRange}
             timeZone={timeZone}
@@ -302,9 +320,12 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             <InlineField label="Wrap lines" transparent>
               <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
             </InlineField>
+            <InlineField label="Prettify JSON" transparent>
+              <InlineSwitch value={prettifyLogMessage} onChange={this.onChangePrettifyLogMessage} transparent />
+            </InlineField>
             <InlineField label="Dedup" transparent>
               <RadioButtonGroup
-                options={Object.keys(LogsDedupStrategy).map((dedupType: LogsDedupStrategy) => ({
+                options={Object.values(LogsDedupStrategy).map((dedupType) => ({
                   label: capitalize(dedupType),
                   value: dedupType,
                   description: LogsDedupDescription[dedupType],
@@ -353,6 +374,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               enableLogDetails={true}
               forceEscape={forceEscape}
               wrapLogMessage={wrapLogMessage}
+              prettifyLogMessage={prettifyLogMessage}
               timeZone={timeZone}
               getFieldLinks={getFieldLinks}
               logsSortOrder={logsSortOrder}
@@ -396,9 +418,9 @@ export class UnthemedLogs extends PureComponent<Props, State> {
   }
 }
 
-export const Logs = withTheme(UnthemedLogs);
+export const Logs = withTheme2(UnthemedLogs);
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
   return {
     noData: css`
       > * {
@@ -410,17 +432,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: space-between;
       align-items: baseline;
       flex-wrap: wrap;
-      background-color: ${theme.colors.bg1};
-      padding: ${theme.spacing.sm} ${theme.spacing.md};
-      border-radius: ${theme.border.radius.md};
-      margin: ${theme.spacing.md} 0 ${theme.spacing.sm};
-      border: 1px solid ${theme.colors.border2};
+      background-color: ${theme.colors.background.primary};
+      padding: ${theme.spacing(1, 2)};
+      border-radius: ${theme.shape.borderRadius()};
+      margin: ${theme.spacing(2, 0, 1)};
+      border: 1px solid ${theme.colors.border.medium};
     `,
     flipButton: css`
-      margin: ${theme.spacing.xs} 0 0 ${theme.spacing.sm};
+      margin: ${theme.spacing(0.5, 0, 0, 1)};
     `,
     radioButtons: css`
-      margin: 0 ${theme.spacing.sm};
+      margin: 0 ${theme.spacing(1)};
     `,
     logsSection: css`
       display: flex;
@@ -428,11 +450,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: space-between;
     `,
     logRows: css`
-      overflow-x: scroll;
+      overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
+      overflow-y: visible;
+      width: 100%;
     `,
     infoText: css`
       font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
     `,
   };
-});
+};
