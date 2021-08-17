@@ -16,7 +16,8 @@ exports[`PromExploreQueryEditor should render component 1`] = `
       onChange={[MockFunction]}
       onKeyDownFunc={[Function]}
       onQueryTypeChange={[Function]}
-      onStepChange={[Function]}
+      onStepIntervalChange={[Function]}
+      onStepModeChange={[Function]}
       query={
         Object {
           "expr": "",
@@ -25,6 +26,7 @@ exports[`PromExploreQueryEditor should render component 1`] = `
         }
       }
       queryType="both"
+      stepMode="min"
       stepValue="1s"
     />
   }
