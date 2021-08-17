@@ -428,7 +428,6 @@ export class PanelChrome extends Component<Props, State> {
 
     const containerClassNames = classNames({
       'panel-container': true,
-      'panel-container--absolute': true,
       'panel-container--transparent': transparent,
       'panel-container--no-title': this.hasOverlayHeader(),
       [`panel-alert-state--${alertState}`]: alertState !== undefined,

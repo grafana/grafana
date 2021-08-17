@@ -366,10 +366,6 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 				e.log.Error("Failed to resample dataframe", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
 			}
-			if err := trim(frame, *qm); err != nil {
-				e.log.Error("Failed to trim dataframe", "err", err)
-				frame.AppendNotices(data.Notice{Text: "Failed to trim dataframe", Severity: data.NoticeSeverityWarning})
-			}
 		}
 	}
 
@@ -383,7 +379,10 @@ var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, tim
 	if err != nil {
 		return "", err
 	}
-	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
+	interval, err := sqlIntervalCalculator.Calculate(timeRange, minInterval, "min")
+	if err != nil {
+		return "", err
+	}
 
 	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
 	sql = strings.ReplaceAll(sql, "$__interval", interval.Text)

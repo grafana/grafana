@@ -192,6 +192,9 @@ export default class GraphiteQuery {
         this.updateRenderedTarget(target, targets);
       }
     }
+
+    // clean-up added param
+    this.functions.forEach((func) => (func.added = false));
   }
 
   updateRenderedTarget(target: { refId: string | number; target: any; targetFull: any }, targets: any) {
@@ -300,11 +303,15 @@ export default class GraphiteQuery {
 
     if (tag.key === this.removeTagValue) {
       this.removeTag(tagIndex);
+      if (this.tags.length === 0) {
+        this.removeFunction(this.getSeriesByTagFunc());
+        this.checkOtherSegmentsIndex = 0;
+        this.seriesByTagUsed = false;
+      }
       return;
     }
 
-    const newTagParam = renderTagString(tag);
-    this.getSeriesByTagFunc()!.params[tagIndex] = newTagParam;
+    this.getSeriesByTagFunc()!.params[tagIndex] = renderTagString(tag);
     this.tags[tagIndex] = tag;
   }
 

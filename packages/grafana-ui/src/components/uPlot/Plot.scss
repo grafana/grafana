@@ -17,3 +17,7 @@
   width: 100%;
   border-bottom: 1px dashed rgba(120, 120, 130, 0.5);
 }
+
+.shared-crosshair:not(.plot-active) .u-cursor-pt {
+  display: none !important;
+}

@@ -97,15 +97,6 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     this.state.ctx.plot?.destroy();
   }
 
-  shouldComponentUpdate(nextProps: PlotProps, nextState: UPlotChartState) {
-    return (
-      nextState.ctx !== this.state.ctx ||
-      !sameDims(this.props, nextProps) ||
-      !sameData(this.props, nextProps) ||
-      !sameConfig(this.props, nextProps)
-    );
-  }
-
   componentDidUpdate(prevProps: PlotProps) {
     let { ctx } = this.state;
 

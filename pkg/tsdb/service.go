@@ -13,12 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
-	"github.com/grafana/grafana/pkg/tsdb/loki"
-	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
-	_ "github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-	"github.com/grafana/grafana/pkg/tsdb/tempo"
 )
 
 // NewService returns a new Service.
@@ -54,10 +49,7 @@ type Service struct {
 
 // Init initialises the service.
 func (s *Service) Init() error {
-	s.registry["prometheus"] = prometheus.New(s.HTTPClientProvider)
 	s.registry["stackdriver"] = s.CloudMonitoringService.NewExecutor
-	s.registry["loki"] = loki.New(s.HTTPClientProvider)
-	s.registry["tempo"] = tempo.New(s.HTTPClientProvider)
 	return nil
 }
 

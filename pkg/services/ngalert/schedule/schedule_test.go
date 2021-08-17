@@ -8,26 +8,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests"
-	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
-
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 
 	"github.com/benbjohnson/clock"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var nilMetrics = metrics.NewMetrics(nil)
@@ -103,9 +99,10 @@ func TestWarmStateCache(t *testing.T) {
 		BaseInterval: time.Second,
 		Logger:       log.New("ngalert cache warming test"),
 
-		RuleStore:     dbstore,
-		InstanceStore: dbstore,
-		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
+		RuleStore:               dbstore,
+		InstanceStore:           dbstore,
+		Metrics:                 metrics.NewMetrics(prometheus.NewRegistry()),
+		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
 	st := state.NewManager(schedCfg.Logger, nilMetrics, dbstore, dbstore)
 	st.Warm()
@@ -147,10 +144,11 @@ func TestAlertingTicker(t *testing.T) {
 		StopAppliedFunc: func(alertDefKey models.AlertRuleKey) {
 			stopAppliedCh <- alertDefKey
 		},
-		RuleStore:     dbstore,
-		InstanceStore: dbstore,
-		Logger:        log.New("ngalert schedule test"),
-		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
+		RuleStore:               dbstore,
+		InstanceStore:           dbstore,
+		Logger:                  log.New("ngalert schedule test"),
+		Metrics:                 metrics.NewMetrics(prometheus.NewRegistry()),
+		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
 	st := state.NewManager(schedCfg.Logger, nilMetrics, dbstore, dbstore)
 	sched := schedule.NewScheduler(schedCfg, nil, "http://localhost", st)
@@ -158,7 +156,7 @@ func TestAlertingTicker(t *testing.T) {
 	ctx := context.Background()
 
 	go func() {
-		err := sched.Ticker(ctx)
+		err := sched.Run(ctx)
 		require.NoError(t, err)
 	}()
 	runtime.Gosched()

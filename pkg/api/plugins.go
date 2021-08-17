@@ -21,6 +21,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var permittedFileExts = []string{
+	".html", ".xhtml", ".css", ".js", ".json", ".jsonld", ".map", ".mjs",
+	".jpeg", ".jpg", ".png", ".gif", ".svg", ".webp", ".ico",
+	".woff", ".woff2", ".eot", ".ttf", ".otf",
+	".wav", ".mp3",
+	".md", ".pdf", ".txt",
+}
+
 func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
@@ -292,9 +300,9 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	if shouldExclude(fi) {
+	if accessForbidden(fi.Name()) {
 		c.JsonApiErr(403, "Plugin file access forbidden",
-			fmt.Errorf("access is forbidden to executable plugin file %s", pluginFilePath))
+			fmt.Errorf("access is forbidden to plugin file %s", pluginFilePath))
 		return
 	}
 
@@ -441,12 +449,13 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	return response.Error(500, "Plugin request failed", err)
 }
 
-func shouldExclude(fi os.FileInfo) bool {
-	normalizedFilename := strings.ToLower(fi.Name())
+func accessForbidden(pluginFilename string) bool {
+	ext := filepath.Ext(pluginFilename)
 
-	isUnixExecutable := fi.Mode()&0111 == 0111
-	isWindowsExecutable := strings.HasSuffix(normalizedFilename, ".exe")
-	isScript := strings.HasSuffix(normalizedFilename, ".sh")
-
-	return isUnixExecutable || isWindowsExecutable || isScript
+	for _, permittedExt := range permittedFileExts {
+		if strings.EqualFold(permittedExt, ext) {
+			return false
+		}
+	}
+	return true
 }

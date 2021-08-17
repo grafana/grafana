@@ -8,12 +8,17 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
   },
   "editable": true,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [
     {
@@ -43,7 +48,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -69,8 +73,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -132,8 +135,6 @@
           "target": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Show gaps",
       "type": "timeseries"
     },
@@ -153,7 +154,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -180,8 +180,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -251,8 +250,6 @@
           "target": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Gaps & null between every point for series B",
       "type": "timeseries"
     },
@@ -272,7 +269,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -299,8 +295,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -390,8 +385,6 @@
           "target": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "No nulls but unaligned series",
       "type": "timeseries"
     },
@@ -410,7 +403,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -436,8 +428,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -499,8 +490,6 @@
           "target": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Connected",
       "type": "timeseries"
     },
@@ -520,7 +509,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -547,8 +535,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -618,8 +605,6 @@
           "target": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Same as above but connected",
       "type": "timeseries"
     },
@@ -639,7 +624,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -666,8 +650,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -757,8 +740,6 @@
           "target": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Same as above but connected",
       "type": "timeseries"
     },
@@ -777,7 +758,6 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -803,8 +783,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -903,8 +882,6 @@
           "stringInput": "1,20,90,30,5,0"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Null values in first series & show gaps ",
       "transformations": [],
       "type": "timeseries"
@@ -924,7 +901,6 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -950,8 +926,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1050,14 +1025,11 @@
           "stringInput": "10,25,null,null,50,10"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Null values in second series show gaps (bugged)",
       "transformations": [],
       "type": "timeseries"
     },
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1071,7 +1043,6 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
-              "graph": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -1097,8 +1068,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1157,13 +1127,10 @@
           "stringInput": "1,20,90,null,30,5,0"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Span nulls below 1hr",
       "type": "timeseries"
     },
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1205,8 +1172,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1263,5 +1229,5 @@
   "timezone": "",
   "title": "Panel Tests - Graph NG - Gaps and Connected",
   "uid": "8mmCAF1Mz",
-  "version": 12
+  "version": 2
 }

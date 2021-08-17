@@ -55,6 +55,9 @@ export function getElementStyles(theme: GrafanaTheme2) {
     button {
       letter-spacing: ${theme.typography.body.letterSpacing};
 
+      &:focus-visible {
+        outline: ${getFocusStyles(theme)};
+      }
       &:focus {
         outline: none;
       }
