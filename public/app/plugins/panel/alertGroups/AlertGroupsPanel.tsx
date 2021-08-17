@@ -35,7 +35,7 @@ export const AlertGroupsPanel = (props: PanelProps<AlertGroupPanelOptions>) => {
       }
     }
     fetchNotifications();
-    const interval = setInterval(() => fetchNotifications, NOTIFICATIONS_POLL_INTERVAL_MS);
+    const interval = setInterval(fetchNotifications, NOTIFICATIONS_POLL_INTERVAL_MS);
     return () => {
       clearInterval(interval);
     };
