@@ -1,54 +1,66 @@
+import { groupBy } from 'lodash';
 import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataSourceJsonData,
   LoadingState,
 } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
-import { TraceToLogsData, TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { from, merge, Observable, of, throwError } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
-import { LokiOptions } from '../loki/types';
-import { transformFromOTLP as transformFromOTEL, transformTrace, transformTraceList } from './resultTransformer';
+import { map, mergeMap, toArray } from 'rxjs/operators';
+import { LokiOptions, LokiQuery } from '../loki/types';
+import { transformTrace, transformTraceList, transformFromOTLP as transformFromOTEL } from './resultTransformer';
+import { PrometheusDatasource } from '../prometheus/datasource';
+import { PromQuery } from '../prometheus/types';
+import { mapPromMetricsToServiceMap, serviceMapMetrics } from './graphTransform';
 
-export type TempoQueryType = 'search' | 'traceId' | 'upload';
+export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload';
+
+export interface TempoJsonData extends DataSourceJsonData {
+  tracesToLogs?: TraceToLogsOptions;
+  serviceMap?: {
+    datasourceUid?: string;
+  };
+}
 
 export type TempoQuery = {
   query: string;
   // Query to find list of traces, e.g., via Loki
-  linkedQuery?: DataQuery;
+  linkedQuery?: LokiQuery;
   queryType: TempoQueryType;
 } & DataQuery;
 
-export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLogsData> {
+export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
   tracesToLogs?: TraceToLogsOptions;
+  serviceMap?: {
+    datasourceUid?: string;
+  };
   uploadedJson?: string | ArrayBuffer | null = null;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<TraceToLogsData>) {
+  constructor(instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
     super(instanceSettings);
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
+    this.serviceMap = instanceSettings.jsonData.serviceMap;
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
     const subQueries: Array<Observable<DataQueryResponse>> = [];
     const filteredTargets = options.targets.filter((target) => !target.hide);
-    const searchTargets = filteredTargets.filter((target) => target.queryType === 'search');
-    const uploadTargets = filteredTargets.filter((target) => target.queryType === 'upload');
-    const traceTargets = filteredTargets.filter(
-      (target) => target.queryType === 'traceId' || target.queryType === undefined
-    );
+    const targets: { [type: string]: TempoQuery[] } = groupBy(filteredTargets, (t) => t.queryType || 'traceId');
 
     // Run search queries on linked datasource
-    if (this.tracesToLogs?.datasourceUid && searchTargets.length > 0) {
+    if (this.tracesToLogs?.datasourceUid && targets.search?.length > 0) {
       const dsSrv = getDatasourceSrv();
       subQueries.push(
         from(dsSrv.get(this.tracesToLogs.datasourceUid)).pipe(
           mergeMap((linkedDatasource: DataSourceApi) => {
             // Wrap linked query into a data request based on original request
-            const linkedRequest: DataQueryRequest = { ...options, targets: searchTargets.map((t) => t.linkedQuery!) };
+            const linkedRequest: DataQueryRequest = { ...options, targets: targets.search.map((t) => t.linkedQuery!) };
             // Find trace matchers in derived fields of the linked datasource that's identical to this datasource
             const settings: DataSourceInstanceSettings<LokiOptions> = (linkedDatasource as any).instanceSettings;
             const traceLinkMatcher: string[] =
@@ -71,7 +83,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLo
       );
     }
 
-    if (uploadTargets.length) {
+    if (targets.upload?.length) {
       if (this.uploadedJson) {
         const otelTraceData = JSON.parse(this.uploadedJson as string);
         if (!otelTraceData.batches) {
@@ -84,8 +96,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLo
       }
     }
 
-    if (traceTargets.length > 0) {
-      const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: traceTargets };
+    if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
+      subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid));
+    }
+
+    if (targets.traceId?.length > 0) {
+      const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: targets.traceId };
       subQueries.push(
         super.query(traceRequest).pipe(
           map((response) => {
@@ -120,4 +136,38 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLo
   getQueryDisplayText(query: TempoQuery) {
     return query.query;
   }
+}
+
+function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: string) {
+  return from(getDatasourceSrv().get(datasourceUid)).pipe(
+    mergeMap((ds) => {
+      return (ds as PrometheusDatasource).query(request);
+    })
+  );
+}
+
+function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
+  return queryServiceMapPrometheus(makePromServiceMapRequest(request), datasourceUid).pipe(
+    // Just collect all the responses first before processing into node graph data
+    toArray(),
+    map((responses: DataQueryResponse[]) => {
+      return {
+        data: mapPromMetricsToServiceMap(responses, request.range),
+        state: LoadingState.Done,
+      };
+    })
+  );
+}
+
+function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQueryRequest<PromQuery> {
+  return {
+    ...options,
+    targets: serviceMapMetrics.map((metric) => {
+      return {
+        refId: metric,
+        expr: `delta(${metric}[$__range])`,
+        instant: true,
+      };
+    }),
+  };
 }
