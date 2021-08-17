@@ -97,7 +97,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
-      subQueries.push(this.serviceMapQuery(options));
+      subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid));
     }
 
     if (targets.traceId?.length > 0) {
@@ -136,27 +136,27 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   getQueryDisplayText(query: TempoQuery) {
     return query.query;
   }
+}
 
-  private queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>) {
-    return from(getDatasourceSrv().get(this.serviceMap!.datasourceUid)).pipe(
-      mergeMap((ds) => {
-        return (ds as PrometheusDatasource).query(request);
-      })
-    );
-  }
+function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: string) {
+  return from(getDatasourceSrv().get(datasourceUid)).pipe(
+    mergeMap((ds) => {
+      return (ds as PrometheusDatasource).query(request);
+    })
+  );
+}
 
-  private serviceMapQuery(request: DataQueryRequest<TempoQuery>) {
-    return this.queryServiceMapPrometheus(makePromServiceMapRequest(request)).pipe(
-      // Just collect all the responses first before processing into node graph data
-      toArray(),
-      map((responses: DataQueryResponse[]) => {
-        return {
-          data: mapPromMetricsToServiceMap(responses, request.range),
-          state: LoadingState.Done,
-        };
-      })
-    );
-  }
+function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
+  return queryServiceMapPrometheus(makePromServiceMapRequest(request), datasourceUid).pipe(
+    // Just collect all the responses first before processing into node graph data
+    toArray(),
+    map((responses: DataQueryResponse[]) => {
+      return {
+        data: mapPromMetricsToServiceMap(responses, request.range),
+        state: LoadingState.Done,
+      };
+    })
+  );
 }
 
 function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQueryRequest<PromQuery> {
