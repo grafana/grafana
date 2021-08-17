@@ -147,7 +147,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
           }}
           className={style.button}
           size="sm"
-          getText={() => 'link/to/rule'}
+          getText={() => window.location.href.split('?')[0]}
         >
           Copy link to rule
         </ClipboardButton>
