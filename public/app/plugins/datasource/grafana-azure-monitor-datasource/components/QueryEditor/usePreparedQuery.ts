@@ -13,10 +13,6 @@ const prepareQuery = (query: AzureMonitorQuery) => {
   const withDefaults = defaults({}, query, DEFAULT_QUERY);
   const migratedQuery = migrateQuery(withDefaults);
 
-  if (migratedQuery !== withDefaults) {
-    console.log('Query changed from migration', { from: withDefaults, to: migratedQuery });
-  }
-
   // If we didn't make any changes to the object, then return the original object to keep the
   // identity the same, and not trigger any other useEffects or anything.
   return deepEqual(migratedQuery, query) ? query : migratedQuery;
