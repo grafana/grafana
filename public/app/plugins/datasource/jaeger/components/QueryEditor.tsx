@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { QueryEditorProps } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { FileDropzone, InlineField, InlineFieldRow, Input, QueryField, RadioButtonGroup, useTheme2 } from '@grafana/ui';
+import { FileDropzone, InlineField, InlineFieldRow, QueryField, RadioButtonGroup, useTheme2 } from '@grafana/ui';
 import React from 'react';
 import { JaegerDatasource } from '../datasource';
 import { JaegerQuery, JaegerQueryType } from '../types';
