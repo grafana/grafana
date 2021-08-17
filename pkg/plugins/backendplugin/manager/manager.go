@@ -39,6 +39,7 @@ type manager struct {
 	License                models.Licensing              `inject:""`
 	PluginRequestValidator models.PluginRequestValidator `inject:""`
 	PluginManagerV2        plugins.ManagerV2             `inject:""`
+	CorePluginInitializer  plugins.CorePluginInitializer `inject:""`
 	pluginsMu              sync.RWMutex
 	plugins                map[string]backendplugin.Plugin
 	logger                 log.Logger
@@ -57,7 +58,7 @@ func (m *manager) Run(ctx context.Context) error {
 // Register registers a backend plugin
 func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	if m.PluginManagerV2.IsEnabled() {
-		return m.PluginManagerV2.InitCorePlugin(context.Background(), pluginID, factory)
+		return m.CorePluginInitializer.InitializeCorePlugin(context.Background(), pluginID, factory)
 	}
 
 	m.logger.Debug("Registering backend plugin", "pluginId", pluginID)

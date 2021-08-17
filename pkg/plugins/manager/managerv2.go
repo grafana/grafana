@@ -37,6 +37,11 @@ var corePluginJSONPaths = map[string]string{
 	"graphite":                         "datasource/graphite/plugin.json",
 	"opentsdb":                         "datasource/opentsdb/plugin.json",
 	"grafana-azure-monitor-datasource": "datasource/grafana-azure-monitor-datasource/plugin.json",
+	"influxdb":                         "datasource/influxdb/plugin.json",
+	"prometheus":                       "datasource/prometheus/plugin.json",
+	"elasticsearch":                    "datasource/elasticsearch/plugin.json",
+	"loki":                             "datasource/loki/plugin.json",
+	"tempo":                            "datasource/tempo/plugin.json",
 }
 
 type PluginManagerV2 struct {
@@ -115,7 +120,7 @@ func (m *PluginManagerV2) IsDisabled() bool {
 	return !exists
 }
 
-func (m *PluginManagerV2) InitCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
+func (m *PluginManagerV2) InitializeCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	fullPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", corePluginJSONPaths[pluginID])
 
 	plugin, err := m.PluginLoader.Load(fullPath)
@@ -128,7 +133,7 @@ func (m *PluginManagerV2) InitCorePlugin(ctx context.Context, pluginID string, f
 		return err
 	}
 
-	if err := m.Register(plugin); err != nil {
+	if err := m.register(plugin); err != nil {
 		return err
 	}
 
@@ -503,7 +508,16 @@ func (m *PluginManagerV2) CheckHealth(ctx context.Context, pluginContext backend
 	return resp, nil
 }
 
-func (m *PluginManagerV2) Register(p *plugins.PluginV2) error {
+func (m *PluginManagerV2) isRegistered(pluginID string) bool {
+	p := m.Plugin(pluginID)
+	if p == nil {
+		return false
+	}
+
+	return !p.IsDecommissioned()
+}
+
+func (m *PluginManagerV2) register(p *plugins.PluginV2) error {
 	m.log.Debug("Registering plugin", "pluginId", p.ID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
@@ -519,12 +533,12 @@ func (m *PluginManagerV2) Register(p *plugins.PluginV2) error {
 }
 
 func (m *PluginManagerV2) registerAndStart(ctx context.Context, plugin *plugins.PluginV2) error {
-	err := m.Register(plugin)
+	err := m.register(plugin)
 	if err != nil {
 		return err
 	}
 
-	if !m.IsRegistered(plugin.ID) {
+	if !m.isRegistered(plugin.ID) {
 		return fmt.Errorf("plugin %s is not registered", plugin.ID)
 	}
 
@@ -533,7 +547,16 @@ func (m *PluginManagerV2) registerAndStart(ctx context.Context, plugin *plugins.
 	return nil
 }
 
-func (m *PluginManagerV2) UnregisterAndStop(ctx context.Context, pluginID string) error {
+func (m *PluginManagerV2) unregister(plugin *plugins.PluginV2) error {
+	m.pluginsMu.Lock()
+	defer m.pluginsMu.Unlock()
+
+	delete(m.plugins, plugin.ID)
+
+	return nil
+}
+
+func (m *PluginManagerV2) unregisterAndStop(ctx context.Context, pluginID string) error {
 	m.log.Debug("Unregistering plugin", "pluginId", pluginID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
@@ -560,24 +583,6 @@ func (m *PluginManagerV2) UnregisterAndStop(ctx context.Context, pluginID string
 
 func (m *PluginManagerV2) IsEnabled() bool {
 	return !m.IsDisabled()
-}
-
-func (m *PluginManagerV2) IsRegistered(pluginID string) bool {
-	p := m.Plugin(pluginID)
-	if p == nil {
-		return false
-	}
-
-	return !p.IsDecommissioned()
-}
-
-func (m *PluginManagerV2) IsSupported(pluginID string) bool {
-	for pID := range m.plugins {
-		if pID == pluginID {
-			return true
-		}
-	}
-	return false
 }
 
 func (m *PluginManagerV2) Install(ctx context.Context, pluginID, version string) error {
@@ -640,8 +645,8 @@ func (m *PluginManagerV2) Uninstall(ctx context.Context, pluginID string) error 
 		return plugins.ErrUninstallOutsideOfPluginDir
 	}
 
-	if m.IsRegistered(pluginID) {
-		err := m.UnregisterAndStop(ctx, pluginID)
+	if m.isRegistered(pluginID) {
+		err := m.unregisterAndStop(ctx, pluginID)
 		if err != nil {
 			return err
 		}
@@ -653,15 +658,6 @@ func (m *PluginManagerV2) Uninstall(ctx context.Context, pluginID string) error 
 	}
 
 	return m.pluginInstaller.Uninstall(ctx, plugin.PluginDir)
-}
-
-func (m *PluginManagerV2) unregister(plugin *plugins.PluginV2) error {
-	m.pluginsMu.Lock()
-	defer m.pluginsMu.Unlock()
-
-	delete(m.plugins, plugin.ID)
-
-	return nil
 }
 
 // start starts all managed backend plugins

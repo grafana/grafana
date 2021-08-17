@@ -248,7 +248,7 @@ func (pm *PluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
 		return ds
 	}
 
-	return dataSourceFromV2(pm.PluginManagerV2.PluginByType(id, plugins.DataSource))
+	return dataSourceFromV2(pm.PluginManagerV2.Plugin(id))
 }
 
 func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
@@ -350,7 +350,7 @@ func (pm *PluginManager) GetApp(id string) *plugins.AppPlugin {
 		return app
 	}
 
-	return appFromV2(pm.PluginManagerV2.PluginByType(id, plugins.App))
+	return appFromV2(pm.PluginManagerV2.Plugin(id))
 }
 
 func (pm *PluginManager) GrafanaLatestVersion() string {
@@ -775,7 +775,15 @@ func (pm *PluginManager) GetPluginMarkdown(pluginId string, name string) ([]byte
 
 func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 	if pm.PluginManagerV2.IsEnabled() {
-		return pm.PluginManagerV2.StaticRoutes()
+		var staticRoutes []*plugins.PluginStaticRoute
+
+		for _, p := range pm.PluginManagerV2.Plugins() {
+			staticRoutes = append(staticRoutes, &plugins.PluginStaticRoute{
+				PluginId:  p.ID,
+				Directory: p.PluginDir,
+			})
+		}
+		return staticRoutes
 	}
 
 	return pm.staticRoutes

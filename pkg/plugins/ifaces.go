@@ -120,21 +120,21 @@ type PluginInitializerV2 interface {
 	InitializeCorePluginWithBackend(p *PluginV2, factory backendplugin.PluginFactoryFunc) error
 }
 
+type CorePluginInitializer interface {
+	// InitializeCorePlugin loads and initializes a core plugin.
+	InitializeCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error
+}
+
 type ManagerV2 interface {
-	// IsEnabled confirms if the manager service is enabled or not.
+	// IsEnabled confirms if the manager service feature toggle is enabled or not.
 	IsEnabled() bool
 
 	// Plugin returns a plugin.
 	Plugin(pluginID string) *PluginV2
-	// PluginByType returns a plugin by type.
-	PluginByType(pluginID string, pluginType PluginType) *PluginV2
-	// Plugins returns all plugins.
+	// Plugins returns plugins by their type.
 	Plugins(pluginType ...PluginType) []*PluginV2
 	// Renderer returns a renderer plugin.
 	Renderer() *PluginV2
-
-	// StaticRoutes returns all static plugin routes.
-	StaticRoutes() []*PluginStaticRoute
 
 	// QueryData queries data from a plugin.
 	QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error)
@@ -144,13 +144,6 @@ type ManagerV2 interface {
 	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
 	// CheckHealth performs a health check on a plugin.
 	CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error)
-
-	// IsSupported determines if a plugin is supported by the manager.
-	IsSupported(pluginID string) bool
-	// IsRegistered checks if a plugin is registered with the manager.
-	IsRegistered(pluginID string) bool
-	// InitCorePlugin loads and initializes a core plugin.
-	InitCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error
 
 	// Install installs a plugin.
 	Install(ctx context.Context, pluginID, version string) error

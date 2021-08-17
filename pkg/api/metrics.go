@@ -77,7 +77,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
-	if hs.PluginManagerV2.IsSupported(ds.Type) && !hs.PluginManagerV2.(registry.CanBeDisabled).IsDisabled() {
+	if !hs.PluginManagerV2.(registry.CanBeDisabled).IsDisabled() {
 		req, err := createRequest(ds, request)
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Request formation error", err)
