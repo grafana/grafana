@@ -5,12 +5,15 @@ import { FormAmRoute } from '../types/amroutes';
 import { parseInterval, timeOptions } from './time';
 import { matcherToMatcherField, matcherFieldToMatcher, parseMatcher, stringifyMatcher } from './alertmanager';
 import { isUndefined, omitBy } from 'lodash';
-import { MatcherField } from '../types/silence-form';
+import { MatcherFieldValue } from '../types/silence-form';
 
 const defaultValueAndType: [string, string] = ['', timeOptions[0].value];
 
-const matchersToArrayFieldMatchers = (matchers: Record<string, string> | undefined, isRegex: boolean): MatcherField[] =>
-  Object.entries(matchers ?? {}).reduce<MatcherField[]>(
+const matchersToArrayFieldMatchers = (
+  matchers: Record<string, string> | undefined,
+  isRegex: boolean
+): MatcherFieldValue[] =>
+  Object.entries(matchers ?? {}).reduce<MatcherFieldValue[]>(
     (acc, [name, value]) => [
       ...acc,
       {
@@ -19,7 +22,7 @@ const matchersToArrayFieldMatchers = (matchers: Record<string, string> | undefin
         operator: isRegex ? MatcherOperator.regex : MatcherOperator.equal,
       },
     ],
-    [] as MatcherField[]
+    [] as MatcherFieldValue[]
   );
 
 const intervalToValueAndType = (strValue: string | undefined): [string, string] => {
@@ -43,7 +46,7 @@ const selectableValueToString = (selectableValue: SelectableValue<string>): stri
 const selectableValuesToStrings = (arr: Array<SelectableValue<string>> | undefined): string[] =>
   (arr ?? []).map(selectableValueToString);
 
-export const emptyArrayFieldMatcher: MatcherField = {
+export const emptyArrayFieldMatcher: MatcherFieldValue = {
   name: '',
   value: '',
   operator: MatcherOperator.equal,

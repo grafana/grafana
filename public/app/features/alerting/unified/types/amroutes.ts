@@ -1,8 +1,8 @@
-import { MatcherField } from './silence-form';
+import { MatcherFieldValue } from './silence-form';
 
 export interface FormAmRoute {
   id: string;
-  matchers: MatcherField[];
+  matchers: MatcherFieldValue[];
   continue: boolean;
   receiver: string;
   groupBy: string[];
