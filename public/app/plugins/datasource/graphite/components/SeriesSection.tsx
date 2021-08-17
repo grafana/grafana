@@ -1,23 +1,23 @@
 import React from 'react';
-import { Dispatch } from 'redux';
 import { GraphiteQueryEditorState } from '../state/store';
 import { TagsSection } from './TagsSection';
 import { MetricsSection } from './MetricsSection';
+import { SegmentSection } from '@grafana/ui';
 
 type Props = {
-  dispatch: Dispatch;
   state: GraphiteQueryEditorState;
 };
 
-export function SeriesSection({ dispatch, state }: Props) {
-  return state.queryModel?.seriesByTagUsed ? (
-    <TagsSection
-      dispatch={dispatch}
-      tags={state.queryModel?.tags}
-      addTagSegments={state.addTagSegments}
-      state={state}
-    />
+export function SeriesSection({ state }: Props) {
+  const sectionContent = state.queryModel?.seriesByTagUsed ? (
+    <TagsSection tags={state.queryModel?.tags} addTagSegments={state.addTagSegments} state={state} />
   ) : (
-    <MetricsSection dispatch={dispatch} segments={state.segments} state={state} />
+    <MetricsSection segments={state.segments} state={state} />
+  );
+
+  return (
+    <SegmentSection label="Series" fill={true}>
+      {sectionContent}
+    </SegmentSection>
   );
 }

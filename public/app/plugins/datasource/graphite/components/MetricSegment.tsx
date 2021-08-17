@@ -1,17 +1,16 @@
 import React, { useCallback, useMemo } from 'react';
 import { SegmentAsync } from '@grafana/ui';
 import { actions } from '../state/actions';
-import { Dispatch } from 'redux';
 import { GraphiteSegment } from '../types';
 import { SelectableValue } from '@grafana/data';
 import { getAltSegmentsSelectables } from '../state/providers';
 import { debounce } from 'lodash';
 import { GraphiteQueryEditorState } from '../state/store';
+import { useDispatch } from '../state/context';
 
 type Props = {
   segment: GraphiteSegment;
   metricIndex: number;
-  dispatch: Dispatch;
   state: GraphiteQueryEditorState;
 };
 
@@ -25,7 +24,8 @@ type Props = {
  * getAltSegmentsSelectables() also returns list of tags for segment with index=0. Once a tag is selected the editor
  * enters tag-adding mode (see SeriesSection and GraphiteQueryModel.seriesByTagUsed).
  */
-export function MetricSegment({ dispatch, metricIndex, segment, state }: Props) {
+export function MetricSegment({ metricIndex, segment, state }: Props) {
+  const dispatch = useDispatch();
   const loadOptions = useCallback(
     (value: string | undefined) => {
       return getAltSegmentsSelectables(state, metricIndex, value || '');

@@ -5,14 +5,14 @@ import { actions } from '../state/actions';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { mapFuncDefsToSelectables } from './helpers';
-import { Dispatch } from 'redux';
+import { useDispatch } from '../state/context';
 
 type Props = {
-  dispatch: Dispatch;
   funcDefs: FuncDefs;
 };
 
-export function AddGraphiteFunction({ dispatch, funcDefs }: Props) {
+export function AddGraphiteFunction({ funcDefs }: Props) {
+  const dispatch = useDispatch();
   const [value, setValue] = useState<SelectableValue<string> | undefined>(undefined);
   const styles = useStyles2(getStyles);
 
@@ -37,7 +37,7 @@ export function AddGraphiteFunction({ dispatch, funcDefs }: Props) {
       options={options}
       onChange={setValue}
       inputMinWidth={150}
-    ></Segment>
+    />
   );
 }
 

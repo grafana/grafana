@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo } from 'react';
-import { Dispatch } from 'redux';
 import { GraphiteSegment } from '../types';
 import { GraphiteTag } from '../graphite_query';
 import { GraphiteQueryEditorState } from '../state/store';
@@ -11,9 +10,10 @@ import { css } from '@emotion/css';
 import { mapSegmentsToSelectables } from './helpers';
 import { TagEditor } from './TagEditor';
 import { debounce } from 'lodash';
+import { useDispatch } from '../state/context';
+import { PlayButton } from './PlayButton';
 
 type Props = {
-  dispatch: Dispatch;
   tags: GraphiteTag[];
   addTagSegments: GraphiteSegment[];
   state: GraphiteQueryEditorState;
@@ -25,7 +25,8 @@ type Props = {
  * Options for tag names are reloaded while user is typing with backend taking care of auto-complete
  * (auto-complete cannot be implemented in front-end because backend returns only limited number of entries)
  */
-export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
+export function TagsSection({ tags, state, addTagSegments }: Props) {
+  const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
 
   const newTagsOptions = mapSegmentsToSelectables(addTagSegments || []);
@@ -43,9 +44,9 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
   ]);
 
   return (
-    <div className={styles.container}>
+    <>
       {tags.map((tag, index) => {
-        return <TagEditor key={index} tagIndex={index} tag={tag} dispatch={dispatch} state={state} />;
+        return <TagEditor key={index} tagIndex={index} tag={tag} state={state} />;
       })}
       {newTagsOptions.length && (
         <SegmentAsync<GraphiteSegment>
@@ -58,16 +59,13 @@ export function TagsSection({ dispatch, tags, state, addTagSegments }: Props) {
           Component={<Button icon="plus" variant="secondary" className={styles.button} />}
         />
       )}
-    </div>
+      {state.paused && <PlayButton />}
+    </>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    container: css`
-      display: flex;
-      flex-direction: row;
-    `,
     button: css`
       margin-right: ${theme.spacing(0.5)};
     `,

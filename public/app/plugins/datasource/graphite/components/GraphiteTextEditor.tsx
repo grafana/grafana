@@ -1,14 +1,15 @@
 import React, { useCallback } from 'react';
 import { QueryField } from '@grafana/ui';
 import { actions } from '../state/actions';
-import { Dispatch } from 'redux';
+import { useDispatch } from '../state/context';
 
 type Props = {
   rawQuery: string;
-  dispatch: Dispatch;
 };
 
-export function GraphiteTextEditor({ rawQuery, dispatch }: Props) {
+export function GraphiteTextEditor({ rawQuery }: Props) {
+  const dispatch = useDispatch();
+
   const updateQuery = useCallback(
     (query: string) => {
       dispatch(actions.updateQuery({ query }));
@@ -21,15 +22,13 @@ export function GraphiteTextEditor({ rawQuery, dispatch }: Props) {
   }, [dispatch]);
 
   return (
-    <>
-      <QueryField
-        query={rawQuery}
-        onChange={updateQuery}
-        onBlur={runQuery}
-        onRunQuery={runQuery}
-        placeholder={'Enter a Graphite query (run with Shift+Enter)'}
-        portalOrigin="graphite"
-      />
-    </>
+    <QueryField
+      query={rawQuery}
+      onChange={updateQuery}
+      onBlur={runQuery}
+      onRunQuery={runQuery}
+      placeholder={'Enter a Graphite query (run with Shift+Enter)'}
+      portalOrigin="graphite"
+    />
   );
 }

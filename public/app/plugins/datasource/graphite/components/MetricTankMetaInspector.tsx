@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { MetadataInspectorProps, rangeUtil } from '@grafana/data';
-import { GraphiteDatasource } from './datasource';
-import { GraphiteQuery, GraphiteOptions, MetricTankSeriesMeta } from './types';
-import { parseSchemaRetentions, getRollupNotice, getRuntimeConsolidationNotice } from './meta';
+import { GraphiteDatasource } from '../datasource';
+import { GraphiteQuery, GraphiteOptions, MetricTankSeriesMeta } from '../types';
+import { parseSchemaRetentions, getRollupNotice, getRuntimeConsolidationNotice } from '../meta';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 
