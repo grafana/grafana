@@ -69,10 +69,15 @@ export const useSubscriptions: DataHook = (query, datasource, onChange, setError
   );
 
   useEffect(() => {
-    if (!subscription && defaultSubscription && hasOption(subscriptionOptions, defaultSubscription)) {
-      onChange(setSubscriptionID(query, defaultSubscription));
-    } else if ((!subscription && subscriptionOptions.length) || subscriptionOptions.length === 1) {
-      onChange(setSubscriptionID(query, subscriptionOptions[0].value));
+    // Return early if subscriptions havent loaded, or if the query already has a subscription
+    if (!subscriptionOptions.length || (subscription && hasOption(subscriptionOptions, subscription))) {
+      return;
+    }
+
+    const defaultSub = defaultSubscription || subscriptionOptions[0].value;
+
+    if (!subscription && defaultSub && hasOption(subscriptionOptions, defaultSub)) {
+      onChange(setSubscriptionID(query, defaultSub));
     }
   }, [subscriptionOptions, query, subscription, defaultSubscription, onChange]);
 
