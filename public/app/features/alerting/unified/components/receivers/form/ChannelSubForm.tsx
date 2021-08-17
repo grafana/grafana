@@ -102,7 +102,7 @@ export function ChannelSubForm<R extends ChannelValues>({
               onClick={() => onTest()}
               icon={testingReceiver ? 'fa fa-spinner' : 'message'}
             >
-              Test contact point
+              Test
             </Button>
           )}
           <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">

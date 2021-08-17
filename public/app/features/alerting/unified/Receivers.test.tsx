@@ -69,7 +69,7 @@ const ui = {
   newContactPointButton: byRole('link', { name: /new contact point/i }),
   saveContactButton: byRole('button', { name: /save contact point/i }),
   newContactPointTypeButton: byRole('button', { name: /new contact point type/i }),
-  testContactPointButton: byRole('button', { name: /Test contact point/ }),
+  testContactPointButton: byRole('button', { name: /Test/ }),
 
   receiversTable: byTestId('receivers-table'),
   templatesTable: byTestId('templates-table'),
