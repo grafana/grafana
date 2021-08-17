@@ -23,8 +23,6 @@ Family: {
         [
             {
                 PanelOptions: {
-                    // FIXME idk where this is coming from but various devenv dashes have it
-                    graph?: {...}
                     legend: ui.VizLegendOptions
                     tooltip: ui.VizTooltipOptions
                 }
