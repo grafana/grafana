@@ -270,30 +270,9 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 
 		dataFrame.Name = query.RefID
 		dataFrame.RefID = query.RefID
-		var dataFrames data.Frames
-
-		// When a query of the form "stats ... by ..." is made, we want to return
-		// one series per group defined in the query, but due to the format
-		// the query response is in, there does not seem to be a way to tell
-		// by the response alone if/how the results should be grouped.
-		// Because of this, if the frontend sees that a "stats ... by ..." query is being made
-		// the "statsGroups" parameter is sent along with the query to the backend so that we
-		// can correctly group the CloudWatch logs response.
-		statsGroups := model.Get("statsGroups").MustStringArray()
-		if hasTimeField(dataFrame) {
-			if len(statsGroups) > 0 && len(dataFrame.Fields) > 0  {
-				groupedFrames, err := groupResults(dataFrame, statsGroups)
-				if err != nil {
-					return retryer.FuncError, err
-				}
-
-				dataFrames = groupedFrames
-			} else {
-				setPreferredVisType(dataFrame, "logs")
-				dataFrames = data.Frames{dataFrame}
-			}
-		} else {
-			dataFrames = data.Frames{dataFrame}
+		dataFrames, err := groupResponseFrame(dataFrame, model.Get("statsGroups").MustStringArray())
+		if err != nil {
+			return retryer.FuncError, fmt.Errorf("failed to group dataframe response: %v", err)
 		}
 
 		responseChannel <- &backend.QueryDataResponse{
@@ -312,6 +291,35 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 
 		return retryer.FuncSuccess, nil
 	}, maxAttempts, minRetryDelay, maxRetryDelay)
+}
+
+func groupResponseFrame(frame *data.Frame, statsGroups []string) (data.Frames, error) {
+	var dataFrames data.Frames
+
+	// When a query of the form "stats ... by ..." is made, we want to return
+	// one series per group defined in the query, but due to the format
+	// the query response is in, there does not seem to be a way to tell
+	// by the response alone if/how the results should be grouped.
+	// Because of this, if the frontend sees that a "stats ... by ..." query is being made
+	// the "statsGroups" parameter is sent along with the query to the backend so that we
+	// can correctly group the CloudWatch logs response.
+	// Check if we have time field though as it makes sense to split only for time series.
+	if hasTimeField(frame) {
+		if len(statsGroups) > 0 && len(frame.Fields) > 0 {
+			groupedFrames, err := groupResults(frame, statsGroups)
+			if err != nil {
+				return nil, err
+			}
+
+			dataFrames = groupedFrames
+		} else {
+			setPreferredVisType(frame, "logs")
+			dataFrames = data.Frames{frame}
+		}
+	} else {
+		dataFrames = data.Frames{frame}
+	}
+	return dataFrames, nil
 }
 
 func hasTimeField(frame *data.Frame) bool {
