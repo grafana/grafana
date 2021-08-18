@@ -50,5 +50,14 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
     }
   };
 
-  return <Input type="text" value={updatedValue} onChange={onChange} onBlur={onBlur} onKeyDown={onKeyDown} />;
+  return (
+    <Input
+      type="text"
+      value={updatedValue}
+      onChange={onChange}
+      onBlur={onBlur}
+      onKeyDown={onKeyDown}
+      placeholder="Enter variable value"
+    />
+  );
 }

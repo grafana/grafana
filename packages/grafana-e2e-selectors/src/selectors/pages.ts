@@ -42,7 +42,7 @@ export const Pages = {
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
-      submenuItem: 'template variable',
+      submenuItem: 'data-testid template variable',
       submenuItemLabels: (item: string) => `data-testid Dashboard template variables submenu Label ${item}`,
       submenuItemValueDropDownValueLinkTexts: (item: string) =>
         `Dashboard template variables Variable Value DropDown value link text ${item}`,

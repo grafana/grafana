@@ -5,6 +5,7 @@ export interface Props {
   onChange: (value: string) => void;
   onNavigate: (key: NavigationKey, clearOthers: boolean) => void;
   value: string | null;
+  id: string;
 }
 
 export class VariableInput extends PureComponent<Props> {
@@ -34,6 +35,8 @@ export class VariableInput extends PureComponent<Props> {
         value={this.props.value ?? ''}
         onChange={this.onChange}
         onKeyDown={this.onKeyDown}
+        placeholder="Enter variable value"
+        id={this.props.id}
       />
     );
   }

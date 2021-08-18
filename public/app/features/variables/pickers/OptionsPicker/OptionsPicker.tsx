@@ -94,6 +94,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
       return (
         <ClickOutsideWrapper onClick={this.onHideOptions}>
           <VariableInput
+            id={this.props.variable.name}
             value={picker.queryValue}
             onChange={this.props.filterOrSearchOptions}
             onNavigate={this.props.navigateOptions}

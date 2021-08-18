@@ -18,7 +18,7 @@ interface Props {
 export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, text, onCancel, id }) => {
   const styles = useStyles(getStyles);
   const onClick = useCallback(
-    (event: MouseEvent<HTMLAnchorElement>) => {
+    (event: MouseEvent<HTMLButtonElement>) => {
       event.stopPropagation();
       event.preventDefault();
       propsOnClick();
@@ -42,14 +42,14 @@ export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, text, 
 
   return (
     <button
-      onClick={() => onClick}
+      onClick={onClick}
       className={styles.container}
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(`${text}`)}
       title={text}
       id={id}
     >
       <VariableLinkText text={text} />
-      <Icon name="angle-down" size="sm" />
+      <Icon aria-hidden name="angle-down" size="sm" />
     </button>
   );
 };
