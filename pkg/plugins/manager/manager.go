@@ -778,10 +778,7 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 		var staticRoutes []*plugins.PluginStaticRoute
 
 		for _, p := range pm.PluginManagerV2.Plugins() {
-			staticRoutes = append(staticRoutes, &plugins.PluginStaticRoute{
-				PluginId:  p.ID,
-				Directory: p.PluginDir,
-			})
+			staticRoutes = append(staticRoutes, p.StaticRoute())
 		}
 		return staticRoutes
 	}

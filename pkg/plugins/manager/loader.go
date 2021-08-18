@@ -23,6 +23,8 @@ var (
 type Loader struct {
 	Cfg *setting.Cfg `inject:""`
 
+	// allowUnsignedPluginsCondition changes the policy for allowing unsigned plugins. Signature validation only
+	// runs when plugins are starting, therefore running plugins will not be terminated if they violate the new policy.
 	allowUnsignedPluginsCondition unsignedPluginV2ConditionFunc
 	log                           log.Logger
 }

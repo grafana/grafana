@@ -116,8 +116,8 @@ type PluginLoaderV2 interface {
 type PluginInitializerV2 interface {
 	// Initialize initializes a plugin.
 	Initialize(plugin *PluginV2) error
-	// InitializeCorePluginWithBackend initializes a plugin and configures its backend process.
-	InitializeCorePluginWithBackend(p *PluginV2, factory backendplugin.PluginFactoryFunc) error
+	// InitializeWithFactory initializes a plugin and configures its backend process.
+	InitializeWithFactory(p *PluginV2, factory backendplugin.PluginFactoryFunc) error
 }
 
 type CorePluginInitializer interface {

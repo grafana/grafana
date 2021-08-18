@@ -128,7 +128,7 @@ func (m *PluginManagerV2) InitializeCorePlugin(ctx context.Context, pluginID str
 		return err
 	}
 
-	err = m.PluginInitializer.InitializeCorePluginWithBackend(plugin, factory)
+	err = m.PluginInitializer.InitializeWithFactory(plugin, factory)
 	if err != nil {
 		return err
 	}
@@ -282,15 +282,6 @@ func (m *PluginManagerV2) Renderer() *plugins.PluginV2 {
 	}
 
 	return nil
-}
-
-func (m *PluginManagerV2) StaticRoutes() []*plugins.PluginStaticRoute {
-	var staticRoutes []*plugins.PluginStaticRoute
-	for _, plugin := range m.plugins {
-		staticRoutes = append(staticRoutes, plugin.GetStaticRoutes()...)
-	}
-
-	return staticRoutes
 }
 
 func (m *PluginManagerV2) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {

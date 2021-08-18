@@ -194,8 +194,8 @@ func (p *PluginV2) getPluginClient() (PluginClient, bool) {
 	return nil, false
 }
 
-func (p *PluginV2) GetStaticRoutes() []*PluginStaticRoute {
-	return []*PluginStaticRoute{{Directory: p.PluginDir, PluginId: p.ID}}
+func (p *PluginV2) StaticRoute() *PluginStaticRoute {
+	return &PluginStaticRoute{Directory: p.PluginDir, PluginId: p.ID}
 }
 
 func (p *PluginV2) IsRenderer() bool {

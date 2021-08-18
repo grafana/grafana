@@ -69,7 +69,7 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 		p.Info.Screenshots[i].Path = evalRelativePluginUrlPath(p.Info.Screenshots[i].Path, p.BaseURL, p.Type)
 	}
 
-	if p.Type == "app" {
+	if p.IsApp() {
 		for _, child := range p.Children {
 			i.setPathsBasedOnApp(p, child)
 		}
@@ -118,7 +118,7 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 	return nil
 }
 
-func (i *Initializer) InitializeCorePluginWithBackend(p *plugins.PluginV2, factory backendplugin.PluginFactoryFunc) error {
+func (i *Initializer) InitializeWithFactory(p *plugins.PluginV2, factory backendplugin.PluginFactoryFunc) error {
 	err := i.Initialize(p)
 	if err != nil {
 		return err
