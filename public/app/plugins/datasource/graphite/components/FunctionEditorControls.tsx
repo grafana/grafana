@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { Icon, Tooltip } from '@grafana/ui';
-import { FuncInstance } from './gfunc';
+import { FuncInstance } from '../gfunc';
 
 export interface FunctionEditorControlsProps {
   onMoveLeft: (func: FuncInstance) => void;
