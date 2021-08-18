@@ -13,8 +13,14 @@ export const DetailsStep: FC = () => {
   return (
     <RuleEditorSection
       stepNo={type === RuleFormType.cloudRecording ? 3 : 4}
-      title="Add details for your alert"
-      description="Write a summary and add labels to help you better manage your alerts"
+      title={
+        type === RuleFormType.cloudRecording ? 'Add details for your recording rule' : 'Add details for your alert'
+      }
+      description={
+        type === RuleFormType.cloudRecording
+          ? 'Add labels to help you better manage your rules'
+          : 'Write a summary and add labels to help you better manage your alerts'
+      }
     >
       {type !== RuleFormType.cloudRecording && <AnnotationsField />}
       <LabelsField />
