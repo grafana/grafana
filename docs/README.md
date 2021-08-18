@@ -45,6 +45,8 @@ If you are copying an existing page as the basis for a new one, be sure to remov
 
 The side menu is automatically build from the file structure. Use the [weight](https://gohugo.io/templates/lists/#by-weight) front matter parameter to order pages.
 
+To specify different menu text from the page title, use the front matter parameter `menuTitle`.
+
 ### Add images
 
 Images are currently hosted in the grafana/website repo.
@@ -53,6 +55,9 @@ Images are currently hosted in the grafana/website repo.
 
 ## Deploy changes to grafana.com
 
-When a PR is merged to main with changes in the `docs/sources` directory, those changes are automatically synced to the grafana/website repo and published to the staging site.
+When a PR is merged with changes in the `docs/sources` directory, those changes are automatically synced by a GitHub action (`.github/workflows/publish.yml`) to the grafana/website repo.
 
-Generally, someone from marketing will publish to production each day: so as long as the sync is successful your docs edits will be published. Alternatively, you can refer to [publishing to production](https://github.com/grafana/website#publishing-to-production-grafanacom) if you'd like to do it yourself.
+* A PR that targets the `main` branch syncs to the `content/docs/grafana/next` directory in the `website` repository, and publishes to `https://grafana.com/docs/grafana/next/`.
+* A PR targeting the `latest/current` release branch syncs to the `content/docs/grafana/latest` directory in the `website` repository, and publishes to `https://grafana.com/docs/grafana/latest/`.
+
+Once the sync is complete, the website will automatically publish to production - no further action is needed.
