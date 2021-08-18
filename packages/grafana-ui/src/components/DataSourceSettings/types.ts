@@ -11,6 +11,8 @@ export interface HttpSettingsBaseProps {
   dataSourceConfig: DataSourceSettings<any, any>;
   /** Callback for handling changes to the configuration object */
   onChange: (config: DataSourceSettings) => void;
+  /** Show the Forward OAuth identity option */
+  showForwardOAuthIdentityOption?: boolean;
 }
 
 export interface HttpSettingsProps extends HttpSettingsBaseProps {
@@ -22,6 +24,4 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   sigV4AuthToggleEnabled?: boolean;
   /** Azure authentication settings **/
   azureAuthSettings?: AzureAuthSettings;
-  /** Hide the Forward OAuth identity option */
-  hideForwardOAuthIdentityOption?: boolean;
 }
