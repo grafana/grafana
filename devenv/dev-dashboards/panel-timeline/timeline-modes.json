@@ -8,6 +8,12 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
@@ -60,7 +66,10 @@
         },
         "mergeValues": true,
         "rowHeight": 0.9,
-        "showValue": "always"
+        "showValue": "always",
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "pluginVersion": "7.5.0-pre",
       "targets": [
@@ -233,7 +242,10 @@
         },
         "mergeValues": true,
         "rowHeight": 0.9,
-        "showValue": "always"
+        "showValue": "always",
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "pluginVersion": "7.5.0-pre",
       "targets": [
@@ -305,7 +317,10 @@
           "placement": "bottom"
         },
         "rowHeight": 0.9,
-        "showValue": "always"
+        "showValue": "always",
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "pluginVersion": "7.5.0-pre",
       "targets": [
@@ -360,5 +375,5 @@
   "timezone": "utc",
   "title": "Timeline Modes",
   "uid": "mIJjFy8Gz",
-  "version": 12
+  "version": 13
 }

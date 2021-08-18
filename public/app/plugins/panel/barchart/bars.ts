@@ -324,6 +324,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     cursor: {
       x: false,
       y: false,
+      points: { show: false },
     },
     // scale & axis opts
     xValues,

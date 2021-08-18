@@ -36,7 +36,7 @@ build-server: ## Build Grafana server.
 	$(GO) run build.go build-server
 
 build-cli: ## Build Grafana CLI application.
-	@echo "build in CI environment"
+	@echo "build grafana-cli"
 	$(GO) run build.go build-cli
 
 build-js: ## Build frontend assets.
