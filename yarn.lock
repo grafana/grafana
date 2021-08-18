@@ -19027,10 +19027,10 @@ rc-animate@2.x:
     rc-util "^4.15.3"
     react-lifecycles-compat "^3.0.4"
 
-rc-cascader@1.4.3:
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/rc-cascader/-/rc-cascader-1.4.3.tgz#d91b0dcf8157b60ebe9ec3e58b4db054d5299464"
-  integrity sha512-Q4l9Mv8aaISJ+giVnM9IaXxDeMqHUGLvi4F+LksS6pHlaKlN4awop/L+IMjIXpL+ug/ojaCyv/ixcVopJYYCVA==
+rc-cascader@1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/rc-cascader/-/rc-cascader-1.5.0.tgz#e1b29a58e7f75de8222bd35d71054ac121c6d67d"
+  integrity sha512-A8GbWSStZdHMvqNq1ETGM0oX+hwOGQd0EQ10IoJ1qz8aZ5XazMfkZYAH64DPBEAtuHtXbyTemcknmSsUwLZmGw==
   dependencies:
     "@babel/runtime" "^7.12.5"
     array-tree-filter "^2.1.0"
