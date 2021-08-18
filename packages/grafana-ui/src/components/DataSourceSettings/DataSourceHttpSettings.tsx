@@ -62,6 +62,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
     onChange,
     showAccessOptions,
     sigV4AuthToggleEnabled,
+    hideForwardOAuthIdentityOption,
     azureAuthSettings,
   } = props;
   let urlTooltip;
@@ -246,7 +247,13 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             </div>
           )}
 
-          {dataSourceConfig.access === 'proxy' && <HttpProxySettings {...props} />}
+          {dataSourceConfig.access === 'proxy' && (
+            <HttpProxySettings
+              dataSourceConfig={dataSourceConfig}
+              onChange={(jsonData) => onSettingsChange({ jsonData })}
+              hideForwardOAuthIdentityOption={hideForwardOAuthIdentityOption}
+            />
+          )}
         </div>
         {dataSourceConfig.basicAuth && (
           <>
