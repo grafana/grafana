@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"strings"
 
@@ -125,7 +126,11 @@ func (a allEvaluator) Inject(params map[string]string) (Evaluator, error) {
 }
 
 func (a allEvaluator) String() string {
-	return 	return fmt.Sprintf("all(%s)", strings.Join(a.allOf, " "))
+	permissions := make([]string, 0, len(a.allOf))
+	for _, a := range a.allOf {
+		permissions = append(permissions, a.String())
+	}
+	return fmt.Sprintf("all(%s)", strings.Join(permissions, " "))
 }
 
 var _ Evaluator = new(anyEvaluator)
@@ -165,5 +170,9 @@ func (a anyEvaluator) Inject(params map[string]string) (Evaluator, error) {
 }
 
 func (a anyEvaluator) String() string {
-	return fmt.Sprintf("any(%s)", strings.Join(a.anyOf, " "))
+	permissions := make([]string, 0, len(a.anyOf))
+	for _, a := range a.anyOf {
+		permissions = append(permissions, a.String())
+	}
+	return fmt.Sprintf("any(%s)", strings.Join(permissions, " "))
 }
