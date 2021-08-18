@@ -9,7 +9,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
 import { getServerStats, ServerStat } from './state/apis';
 
-interface Props {
+export interface Props {
   navModel: NavModel;
   getServerStats: () => Promise<ServerStat | null>;
 }
