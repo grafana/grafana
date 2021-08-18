@@ -51,6 +51,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
         {series.x!.values.toArray().map((v: number, i: number) => (
           <div key={i}>
             {`${v}`} -- color: {series.color.get(i)} -- size: {series.size!.get(i)}
+            {series.label && <span>&nbsp; -- {series.label.get(i)}</span>}
           </div>
         ))}
       </div>

@@ -4,7 +4,7 @@ import { XYChartPanel } from './XYChartPanel';
 import { Options } from './types';
 import { XYDimsEditor } from './XYDimsEditor';
 import { getGraphFieldConfig, defaultGraphConfig } from '../timeseries/config';
-import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
+import { ColorDimensionEditor, ScaleDimensionEditor, TextDimensionEditor } from 'app/features/dimensions/editors';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
   .useFieldConfig(
@@ -61,6 +61,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
           // Configured values
           fixed: 'grey',
         },
+        showIf: (cfg) => cfg.mode === 'scatter',
       })
       .addCustomEditor({
         id: 'series.size',
@@ -77,6 +78,14 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
           min: 1,
           max: 20,
         },
+        showIf: (cfg) => cfg.mode === 'scatter',
+      })
+      .addCustomEditor({
+        id: 'series.label',
+        path: 'series.label',
+        name: 'Marker label',
+        editor: TextDimensionEditor,
+        showIf: (cfg) => cfg.mode === 'scatter',
       });
 
     commonOptionsBuilder.addTooltipOptions(builder);
