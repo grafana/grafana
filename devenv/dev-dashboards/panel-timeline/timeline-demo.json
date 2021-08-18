@@ -8,6 +8,12 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
@@ -79,9 +85,12 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "changes",
+        "mergeValues": true,
         "rowHeight": 0.98,
-        "showValue": "always"
+        "showValue": "always",
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "pluginVersion": "7.5.0-pre",
       "targets": [
@@ -168,9 +177,17 @@
       "options": {
         "alignValue": "center",
         "colWidth": 1,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "mergeValues": true,
         "mode": "changes",
         "rowHeight": 0.98,
-        "showValue": "always"
+        "showValue": "always",
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "targets": [
         {
@@ -261,9 +278,17 @@
       "options": {
         "alignValue": "center",
         "colWidth": 1,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "mergeValues": true,
         "mode": "changes",
         "rowHeight": 0.98,
-        "showValue": "always"
+        "showValue": "always",
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "targets": [
         {
@@ -339,9 +364,11 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "samples",
         "rowHeight": 0.98,
-        "showValue": "always"
+        "showValue": "always",
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "pluginVersion": "7.5.0-pre",
       "targets": [
@@ -400,5 +427,5 @@
   "timezone": "utc",
   "title": "Timeline Demo",
   "uid": "mIJjFy8Kz",
-  "version": 13
+  "version": 3
 }
