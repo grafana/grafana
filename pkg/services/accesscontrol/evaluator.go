@@ -165,12 +165,5 @@ func (a anyEvaluator) Inject(params map[string]string) (Evaluator, error) {
 }
 
 func (a anyEvaluator) String() string {
-	b := strings.Builder{}
-	for i, a := range a.anyOf {
-		if i != 0 {
-			b.WriteRune(' ')
-		}
-		b.WriteString(a.String())
-	}
-	return b.String()
+	return fmt.Sprintf("any(%s)", strings.Join(a.anyOf, " "))
 }
