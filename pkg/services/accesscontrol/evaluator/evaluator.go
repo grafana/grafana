@@ -2,9 +2,13 @@ package evaluator
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/gobwas/glob"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -39,18 +43,30 @@ func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, 
 	for _, s := range targetScopes {
 		var match bool
 		for dbScope := range dbScopes {
-			rule, err := glob.Compile(dbScope, ':', '/')
+
+			prefix := dbScope[0 : len(dbScope)-1]
+			if strings.ContainsAny(prefix, "*?") {
+				msg := fmt.Sprintf("Invalid scope: %v should not contain meta-characters like * or ?, except in the last position", dbScope)
+				logger.Error(msg, "scope", dbScope)
+				return false, errors.New(msg)
+			}
+
+			rule, err := glob.Compile(dbScope)
 			if err != nil {
 				return false, err
 			}
 
 			match = rule.Match(s)
 			if match {
+				msg := fmt.Sprintf("Access control: matched request scope %v against resource scope %v", dbScope, s)
+				logger.Debug(msg, "request scope", dbScope, "resource scope", s)
 				return true, nil
 			}
 		}
 	}
 
+	msg := fmt.Sprintf("Access control: failed!  Could not match resource scopes  %v with request scopes %v", dbScopes, targetScopes)
+	logger.Debug(msg, "request scope", dbScopes, "resource scope", targetScopes)
 	return false, nil
 }
 
