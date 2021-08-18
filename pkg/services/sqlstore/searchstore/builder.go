@@ -21,7 +21,7 @@ type Builder struct {
 }
 
 // ToSQL builds the SQL query and returns it as a string, together with the SQL parameters.
-func (b *Builder) ToSQL(limit, page int64) (string, []interface{}) {
+func (b *Builder) ToSQL(limitOffset string) (string, []interface{}) {
 	b.params = make([]interface{}, 0)
 	b.sql = bytes.Buffer{}
 
@@ -30,7 +30,7 @@ func (b *Builder) ToSQL(limit, page int64) (string, []interface{}) {
 	b.sql.WriteString("( ")
 	orderQuery := b.applyFilters()
 
-	b.sql.WriteString(b.Dialect.LimitOffset(limit, (page-1)*limit) + `) AS ids
+	b.sql.WriteString(limitOffset + `) AS ids
 		INNER JOIN dashboard ON ids.id = dashboard.id`)
 	b.sql.WriteString("\n")
 

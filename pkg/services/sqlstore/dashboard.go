@@ -320,6 +320,7 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 
 	var res []DashboardSearchProjection
 	sb := &searchstore.Builder{Dialect: dialect, Filters: filters}
+	var limitOffset string
 
 	limit := query.Limit
 	if limit < 1 {
@@ -327,11 +328,12 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 	}
 
 	page := query.Page
-	if page < 1 {
+	if page < 1 && query.Type != "dash-folder" {
 		page = 1
+		limitOffset = sb.Dialect.LimitOffset(limit, (page-1)*limit)
 	}
 
-	sql, params := sb.ToSQL(limit, page)
+	sql, params := sb.ToSQL(limitOffset)
 	err := x.SQL(sql, params...).Find(&res)
 	if err != nil {
 		return nil, err
