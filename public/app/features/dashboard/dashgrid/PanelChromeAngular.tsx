@@ -173,12 +173,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
   hasOverlayHeader() {
     const { panel } = this.props;
-    const { errorMessage, data } = this.state;
-
-    // always show normal header if we have an error message
-    if (errorMessage) {
-      return false;
-    }
+    const { data } = this.state;
 
     // always show normal header if we have time override
     if (data.request && data.request.timeInfo) {
@@ -197,7 +192,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
     const containerClassNames = classNames({
       'panel-container': true,
-      'panel-container--absolute': true,
       'panel-container--transparent': transparent,
       'panel-container--no-title': this.hasOverlayHeader(),
       'panel-has-alert': panel.alert !== undefined,

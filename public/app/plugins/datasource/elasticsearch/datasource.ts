@@ -73,6 +73,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
   languageProvider: LanguageProvider;
+  includeFrozen: boolean;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -99,6 +100,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     this.logMessageField = settingsData.logMessageField || '';
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
+    this.includeFrozen = settingsData.includeFrozen ?? false;
 
     if (this.logMessageField === '') {
       this.logMessageField = undefined;
@@ -761,11 +763,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   getMultiSearchUrl() {
+    const searchParams = new URLSearchParams();
+
     if (gte(this.esVersion, '7.0.0') && this.maxConcurrentShardRequests) {
-      return `_msearch?max_concurrent_shard_requests=${this.maxConcurrentShardRequests}`;
+      searchParams.append('max_concurrent_shard_requests', `${this.maxConcurrentShardRequests}`);
     }
 
-    return '_msearch';
+    if (gte(this.esVersion, '6.6.0') && this.xpack && this.includeFrozen) {
+      searchParams.append('ignore_throttled', 'false');
+    }
+
+    return ('_msearch?' + searchParams.toString()).replace(/\?$/, '');
   }
 
   metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
@@ -888,7 +896,7 @@ export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig
       const dsSettings = dataSourceSrv.getInstanceSettings(dataLinkConfig.datasourceUid);
 
       link = {
-        title: '',
+        title: dataLinkConfig.urlDisplayLabel || '',
         url: '',
         internal: {
           query: { query: dataLinkConfig.url },
@@ -898,7 +906,7 @@ export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig
       };
     } else {
       link = {
-        title: '',
+        title: dataLinkConfig.urlDisplayLabel || '',
         url: dataLinkConfig.url,
       };
     }

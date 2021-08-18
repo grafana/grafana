@@ -208,7 +208,6 @@ export type AlertmanagerGroup = {
   labels: { [key: string]: string };
   receiver: { name: string };
   alerts: AlertmanagerAlert[];
-  id: string;
 };
 
 export interface AlertmanagerStatus {
@@ -226,4 +225,24 @@ export interface AlertmanagerStatus {
     revision: string;
     version: string;
   };
+}
+
+export interface TestReceiversPayload {
+  receivers?: Receiver[];
+}
+
+interface TestReceiversResultGrafanaReceiverConfig {
+  name: string;
+  uid?: string;
+  error?: string;
+  status: 'failed';
+}
+
+interface TestReceiversResultReceiver {
+  name: string;
+  grafana_managed_receiver_configs: TestReceiversResultGrafanaReceiverConfig[];
+}
+export interface TestReceiversResult {
+  notified_at: string;
+  receivers: TestReceiversResultReceiver[];
 }

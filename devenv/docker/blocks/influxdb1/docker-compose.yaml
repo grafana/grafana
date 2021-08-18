@@ -1,5 +1,5 @@
   influxdb1:
-    image: influxdb:1.8.6
+    image: influxdb:1.8
     container_name: influxdb1
     ports:
       - '2004:2004'
@@ -22,7 +22,7 @@
       FD_PORT: 8086
 
   telegraf-influxdb1:
-    image: telegraf:1.10.4
+    image: telegraf:1.19.1
     links:
       - influxdb1
     volumes:

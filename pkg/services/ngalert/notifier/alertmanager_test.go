@@ -54,7 +54,7 @@ func setupAMTest(t *testing.T) *Alertmanager {
 
 func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
 	am := setupAMTest(t)
-	require.NoError(t, am.SyncAndApplyConfigFromDatabase())
+	require.NoError(t, am.SyncAndApplyConfigFromDatabase(mainOrgID))
 	require.NotNil(t, am.config)
 }
 
@@ -173,6 +173,36 @@ func TestPutAlert(t *testing.T) {
 						Alert: model.Alert{
 							Annotations:  model.LabelSet{"msg": "Alert4 annotation"},
 							Labels:       model.LabelSet{"alertname": "Alert4"},
+							StartsAt:     now,
+							EndsAt:       now.Add(defaultResolveTimeout),
+							GeneratorURL: "http://localhost/url1",
+						},
+						UpdatedAt: now,
+						Timeout:   true,
+					},
+				}
+			},
+		}, {
+			title: "Allow spaces in label and annotation name",
+			postableAlerts: apimodels.PostableAlerts{
+				PostableAlerts: []models.PostableAlert{
+					{
+						Annotations: models.LabelSet{"Dashboard URL": "http://localhost:3000"},
+						Alert: models.Alert{
+							Labels:       models.LabelSet{"alertname": "Alert4", "Spaced Label": "works"},
+							GeneratorURL: "http://localhost/url1",
+						},
+						StartsAt: strfmt.DateTime{},
+						EndsAt:   strfmt.DateTime{},
+					},
+				},
+			},
+			expAlerts: func(now time.Time) []*types.Alert {
+				return []*types.Alert{
+					{
+						Alert: model.Alert{
+							Annotations:  model.LabelSet{"Dashboard URL": "http://localhost:3000"},
+							Labels:       model.LabelSet{"alertname": "Alert4", "Spaced Label": "works"},
 							StartsAt:     now,
 							EndsAt:       now.Add(defaultResolveTimeout),
 							GeneratorURL: "http://localhost/url1",

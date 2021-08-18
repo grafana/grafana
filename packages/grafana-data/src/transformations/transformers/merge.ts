@@ -22,7 +22,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
   operator: (options) => (source) =>
     source.pipe(
       map((dataFrames) => {
-        if (!Array.isArray(dataFrames) || dataFrames.length === 0) {
+        if (!Array.isArray(dataFrames) || dataFrames.length <= 1) {
           return dataFrames;
         }
 

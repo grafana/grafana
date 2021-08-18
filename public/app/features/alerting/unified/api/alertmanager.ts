@@ -8,6 +8,9 @@ import {
   SilenceCreatePayload,
   Matcher,
   AlertmanagerStatus,
+  Receiver,
+  TestReceiversPayload,
+  TestReceiversResult,
 } from 'app/plugins/datasource/alertmanager/types';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -49,6 +52,17 @@ export async function updateAlertManagerConfig(
       method: 'POST',
       url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
       data: config,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
+}
+
+export async function deleteAlertManagerConfig(alertManagerSourceName: string): Promise<void> {
+  await getBackendSrv()
+    .fetch({
+      method: 'DELETE',
+      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
@@ -142,6 +156,34 @@ export async function fetchStatus(alertManagerSourceName: string): Promise<Alert
     .toPromise();
 
   return result.data;
+}
+
+export async function testReceivers(alertManagerSourceName: string, receivers: Receiver[]): Promise<void> {
+  const data: TestReceiversPayload = {
+    receivers,
+  };
+  const result = await getBackendSrv()
+    .fetch<TestReceiversResult>({
+      method: 'POST',
+      data,
+      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/receivers/test`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
+
+  // api returns 207 if one or more receivers has failed test. Collect errors in this case
+  if (result.status === 207) {
+    throw new Error(
+      result.data.receivers
+        .flatMap((receiver) =>
+          receiver.grafana_managed_receiver_configs
+            .filter((receiver) => receiver.status === 'failed')
+            .map((receiver) => receiver.error ?? 'Unknown error.')
+        )
+        .join('; ')
+    );
+  }
 }
 
 function escapeQuotes(value: string): string {

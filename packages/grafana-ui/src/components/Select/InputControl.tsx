@@ -42,6 +42,7 @@ const getInputControlStyles = stylesFactory(
           justify-content: space-between;
           position: relative;
           box-sizing: border-box;
+          cursor: ${disabled ? 'not-allowed' : 'pointer'};
         `,
         withPrefix &&
           css`

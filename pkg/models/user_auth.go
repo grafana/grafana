@@ -98,8 +98,6 @@ type GetUserByAuthInfoQuery struct {
 	UserId     int64
 	Email      string
 	Login      string
-
-	Result *User
 }
 
 type GetExternalUserInfoByLoginQuery struct {

@@ -22,6 +22,7 @@ import {
   LineInterpolation,
   LineStyle,
   PointVisibility,
+  ScaleDistribution,
   StackingMode,
   TooltipDisplayMode,
 } from '@grafana/ui';
@@ -45,6 +46,7 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
       fieldConfig: prevFieldConfig,
     });
     panel.fieldConfig = fieldConfig; // Mutates the incoming panel
+    panel.alert = prevOptions.angular.alert;
     return options;
   }
 
@@ -465,6 +467,15 @@ function getFieldConfigFromOldAxis(obj: any): FieldConfig<GraphFieldConfig> {
   };
   if (obj.label) {
     graph.axisLabel = obj.label;
+  }
+  if (obj.logBase) {
+    const log = obj.logBase as number;
+    if (log === 2 || log === 10) {
+      graph.scaleDistribution = {
+        type: ScaleDistribution.Log,
+        log,
+      };
+    }
   }
   return omitBy(
     {

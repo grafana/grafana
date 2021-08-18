@@ -6,12 +6,14 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, TagsInput, useStyles } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, TagsInput, useStyles } from '@grafana/ui';
 import React from 'react';
 
 export interface TraceToLogsOptions {
   datasourceUid?: string;
   tags?: string[];
+  spanStartTimeShift?: string;
+  spanEndTimeShift?: string;
 }
 
 export interface TraceToLogsData extends DataSourceJsonData {
@@ -63,6 +65,50 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
                 tags: tags,
               })
             }
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          label="Span start time shift"
+          labelWidth={26}
+          grow
+          tooltip="Shifts the start time of the span. Default 0 (Time units can be used here, for example: 5s, 1m, 3h)"
+        >
+          <Input
+            type="text"
+            placeholder="1h"
+            width={40}
+            onChange={(v) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
+                spanStartTimeShift: v.currentTarget.value,
+              })
+            }
+            value={options.jsonData.tracesToLogs?.spanStartTimeShift || ''}
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          label="Span end time shift"
+          labelWidth={26}
+          grow
+          tooltip="Shifts the end time of the span. Default 0 Time units can be used here, for example: 5s, 1m, 3h"
+        >
+          <Input
+            type="text"
+            placeholder="1h"
+            width={40}
+            onChange={(v) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
+                spanEndTimeShift: v.currentTarget.value,
+              })
+            }
+            value={options.jsonData.tracesToLogs?.spanEndTimeShift || ''}
           />
         </InlineField>
       </InlineFieldRow>

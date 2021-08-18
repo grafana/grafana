@@ -37,6 +37,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed = false
     modal: css`
       position: fixed;
       top: 20%;
+      left: 25%;
       width: 100%;
       z-index: ${theme.zIndex.modal};
     `,
@@ -209,13 +210,13 @@ export const TimePickerCalendar = memo<Props>((props) => {
   if (isFullscreen) {
     return (
       <ClickOutsideWrapper onClick={props.onClose}>
-        <div
+        <section
           className={styles.container}
           onClick={stopPropagation}
           aria-label={selectors.components.TimePicker.calendar}
         >
           <Body {...props} />
-        </div>
+        </section>
       </ClickOutsideWrapper>
     );
   }

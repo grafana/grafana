@@ -27,16 +27,35 @@ You can make a panel retrieve fresh data more frequently by increasing the **Max
 - Reduced API costs.
 - Reduced likelihood that APIs will rate-limit or throttle requests.
 
+## Data sources that work with query caching
+
+Query caching works for all [Enterprise data sources](https://grafana.com/grafana/plugins/?type=datasource&enterprise=1), and it works for the following [built-in data sources]({{< relref "../datasources/_index.md" >}}):
+
+- CloudWatch
+- Google Cloud Monitoring
+- InfluxDB
+- Microsoft SQL Server
+- MySQL
+- Postgres
+- Tempo
+
+Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana query caching does not improve performance.
+
+Query caching also works for all data sources that include a backend. More specifically, caching works with data sources that extend the `DataSourceWithBackend` class in the plugins SDK.
+
+To tell if a data source works with query caching, follow the instructions below to **Enable and Configure query caching**. If caching is enabled in Grafana but the Caching tab is not visible for the given data source, then query caching is not available for that data source.
+
 ## Enable and configure query caching
 
 You must be an Org admin or Grafana admin to enable query caching for a data source. For more information on Grafana roles and permissions, visit the [Permissions page]({{< relref "../permissions/_index.md" >}}).
 
 By default, data source queries are not cached. To enable query caching for a single data source:
+
 1. On the side menu, click Configuration > Data Sources.
 1. In the data source list, click the data source that you want to turn on caching for.
 1. In the Cache tab, click Enable.
 1. Open the Cache tab.
-1. Press the Enable button. 
+1. Press the Enable button.
 1. (Optional) Choose a custom TTL for that data source. If you skip this step, then Grafana uses the default TTL.
 
 > **Note:** If query caching is enabled and the Cache tab is not visible in a data source's settings, then query caching is not available for that data source.
@@ -45,7 +64,8 @@ To configure global settings for query caching, refer the the [Query caching sec
 
 ## Disable query caching
 
-To disable query caching for a single data source: 
+To disable query caching for a single data source:
+
 1. On the side menu, click Configuration > Data Sources.
 1. In the data source list, click the data source that you want to turn off caching for.
 1. In the Cache tab, click Disable.

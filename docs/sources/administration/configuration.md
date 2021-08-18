@@ -202,15 +202,13 @@ Or redirect port 80 to the Grafana port using:
 $ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
 ```
 
-Another way is put a webserver like Nginx or Apache in front of Grafana and have them proxy requests to Grafana.
+Another way is to put a web server like Nginx or Apache in front of Grafana and have them proxy requests to Grafana.
 
 ### domain
 
-This setting is only used in as a part of the `root_url` setting (see below). Important if you use GitHub or Google OAuth.
-
 ### enforce_domain
 
-Redirect to correct domain if host header does not match domain. Prevents DNS rebinding attacks. Default is `false`.
+Redirect to correct domain if the host header does not match the domain. Prevents DNS rebinding attacks. Default is `false`.
 
 ### root_url
 
@@ -425,6 +423,8 @@ The maximum number of idle connections that Grafana will maintain. Default is `1
 
 ### max_idle_connections_per_host
 
+[Deprecated - use max_idle_connections instead]
+
 The maximum number of idle connections per host that Grafana will maintain. Default is `2`. For more details check the [Transport.MaxIdleConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxIdleConnsPerHost) documentation.
 
 ### idle_conn_timeout_seconds
@@ -509,7 +509,7 @@ Sets the `SameSite` cookie attribute and prevents the browser from sending this 
 
 When `false`, the HTTP header `X-Frame-Options: deny` will be set in Grafana HTTP responses which will instruct
 browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`. The main goal is to
-mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking). Default is `false`.
+mitigate the risk of [Clickjacking](https://owasp.org/www-community/attacks/Clickjacking). Default is `false`.
 
 ### strict_transport_security
 
@@ -588,7 +588,7 @@ As of Grafana v7.3, this also limits the refresh interval options in Explore.
 
 Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json".
 
->**Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
+> **Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 
 <hr />
 
@@ -828,7 +828,7 @@ Azure cloud environment where Grafana is hosted:
 
 | Azure Cloud                                      | Value                  |
 | ------------------------------------------------ | ---------------------- |
-| Microsoft Azure public cloud                     | AzureCloud (*default*) |
+| Microsoft Azure public cloud                     | AzureCloud (_default_) |
 | Microsoft Chinese national cloud                 | AzureChinaCloud        |
 | US Government cloud                              | AzureUSGovernment      |
 | Microsoft German national cloud ("Black Forest") | AzureGermanCloud       |
@@ -909,7 +909,11 @@ Default is `false`.
 
 ### templates_pattern
 
-Default is `emails/*.html`.
+Enter a comma separated list of template patterns. Default is `emails/*.html, emails/*.txt`.
+
+### content_types
+
+Enter a comma-separated list of content types that should be included in the emails that are sent. List the content types according descending preference, e.g. `text/html, text/plain` for HTML as the most preferred. The order of the parts is significant as the mail clients will use the content type that is supported and most preferred by the sender. Supported content types are `text/html` and `text/plain`. Default is `text/html`.
 
 <hr>
 
@@ -1092,6 +1096,16 @@ Sets a global limit on number of users that can be logged in at one time. Defaul
 ### global_alert_rule
 
 Sets a global limit on number of alert rules that can be created. Default is -1 (unlimited).
+
+<hr>
+
+## [unified_alerting]
+
+For more information about the Unified Alerting feature in Grafana, refer to [Unified Alerting]({{< relref "../unified-alerting/_index.md" >}}}).
+
+### admin_config_poll_interval_seconds
+
+Specify the frequency of polling for admin config changes. The default value is `60`.
 
 <hr>
 
@@ -1508,6 +1522,47 @@ Refer to [Grafana Live configuration documentation]({{< relref "../live/configur
 
 0 disables Grafana Live, -1 means unlimited connections.
 
+### allowed_origins
+
+> **Note**: Available in Grafana v8.0.4 and later versions.
+
+The `allowed_origins` option is a comma-separated list of additional origins (`Origin` header of HTTP Upgrade request during WebSocket connection establishment) that will be accepted by Grafana Live.
+
+If not set (default), then the origin is matched over [root_url]({{< relref "#root_url" >}}) which should be sufficient for most scenarios.
+
+Origin patterns support wildcard symbol "\*".
+
+For example:
+
+```ini
+[live]
+allowed_origins = "https://*.example.com"
+```
+
+### ha_engine
+
+> **Note**: Available in Grafana v8.1 and later versions.
+
+**Experimental**
+
+The high availability (HA) engine name for Grafana Live. By default, it's not set. The only possible value is "redis".
+
+For more information, refer to [Configure Grafana Live HA setup]({{< relref "../live/live-ha-setup.md" >}}).
+
+### ha_engine_address
+
+> **Note**: Available in Grafana v8.1 and later versions.
+
+**Experimental**
+
+Address string of selected the high availability (HA) Live engine. For Redis, it's a `host:port` string. Example:
+
+```ini
+[live]
+ha_engine = redis
+ha_engine_address = 127.0.0.1:6379
+```
+
 <hr>
 
 ## [plugin.grafana-image-renderer]
@@ -1651,3 +1706,26 @@ Used as the default time zone for user preferences. Can be either `browser` for 
 ### enabled
 
 Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.
+
+## [geomap]
+
+This section controls the defaults settings for Geomap Plugin.
+
+### default_baselayer_config
+
+The json config used to define the default base map. Four base map options to choose from are `carto`, `esriXYZTiles`, `xyzTiles`, `standard`.
+For example, to set cartoDB light as the default base layer:
+
+```ini
+default_baselayer_config = `{
+  "type": "xyz",
+  "config": {
+    "attribution": "Open street map",
+    "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+  }
+}`
+```
+
+### enable_custom_baselayers
+
+Set this to `true` to disable loading other custom base maps and hide them in the Grafana UI. Default is `false`.

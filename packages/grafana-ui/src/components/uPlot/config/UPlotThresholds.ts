@@ -1,6 +1,7 @@
-import { getColorForTheme, GrafanaTheme2, ThresholdsConfig } from '@grafana/data';
+import { GrafanaTheme2, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import { GraphThresholdsStyleConfig, GraphTresholdsStyleMode } from '../config';
+import { getDataRange, GradientDirection, scaleGradient } from './gradientFills';
 
 export interface UPlotThresholdOptions {
   scaleKey: string;
@@ -13,12 +14,23 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
   return (u: uPlot) => {
     const ctx = u.ctx;
     const { scaleKey, thresholds, theme, config } = options;
-    const { steps } = thresholds;
     const { min: xMin, max: xMax } = u.scales.x;
     const { min: yMin, max: yMax } = u.scales[scaleKey];
 
     if (xMin === undefined || xMax === undefined || yMin === undefined || yMax === undefined) {
       return;
+    }
+
+    let { steps, mode } = thresholds;
+
+    if (mode === ThresholdsMode.Percentage) {
+      let [min, max] = getDataRange(u, scaleKey);
+      let range = max - min;
+
+      steps = steps.map((step) => ({
+        ...step,
+        value: min + range * (step.value / 100),
+      }));
     }
 
     function addLines() {
@@ -40,9 +52,9 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
 
         // if we are below a transparent index treat this a less then threshold, use previous thresholds color
         if (transparentIndex >= idx && idx > 0) {
-          color = tinycolor(getColorForTheme(steps[idx - 1].color, theme.v1));
+          color = tinycolor(theme.visualization.getColorByName(steps[idx - 1].color));
         } else {
-          color = tinycolor(getColorForTheme(step.color, theme.v1));
+          color = tinycolor(theme.visualization.getColorByName(step.color));
         }
 
         // Unless alpha specififed set to default value
@@ -50,10 +62,10 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
           color.setAlpha(0.7);
         }
 
-        let x0 = u.valToPos(xMin!, 'x', true);
-        let y0 = u.valToPos(step.value, scaleKey, true);
-        let x1 = u.valToPos(xMax!, 'x', true);
-        let y1 = u.valToPos(step.value, scaleKey, true);
+        let x0 = Math.round(u.valToPos(xMin!, 'x', true));
+        let y0 = Math.round(u.valToPos(step.value, scaleKey, true));
+        let x1 = Math.round(u.valToPos(xMax!, 'x', true));
+        let y1 = Math.round(u.valToPos(step.value, scaleKey, true));
 
         ctx.beginPath();
         ctx.lineWidth = 2;
@@ -66,49 +78,26 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     }
 
     function addAreas() {
-      for (let idx = 0; idx < steps.length; idx++) {
-        const step = steps[idx];
+      let grd = scaleGradient(
+        u,
+        u.series[1].scale!,
+        GradientDirection.Up,
+        steps.map((step) => {
+          let color = tinycolor(theme.visualization.getColorByName(step.color));
 
-        // skip thresholds that cannot be seen
-        if (step.value > yMax!) {
-          continue;
-        }
+          if (color.getAlpha() === 1) {
+            color.setAlpha(0.15);
+          }
 
-        // if this is the last step make the next step the same color but +Infinity
-        const nextStep =
-          idx + 1 < steps.length
-            ? steps[idx + 1]
-            : {
-                ...step,
-                value: Infinity,
-              };
+          return [step.value, color.toString()];
+        }),
+        true
+      );
 
-        let color = tinycolor(getColorForTheme(step.color, theme.v1));
-
-        // Ignore fully transparent colors
-        const alpha = color.getAlpha();
-        if (alpha === 0) {
-          continue;
-        }
-
-        /// if no alpha set automatic alpha
-        if (alpha === 1) {
-          color = color.setAlpha(0.15);
-        }
-
-        let value = step.value === -Infinity ? yMin : step.value;
-        let nextValue = nextStep.value === Infinity || nextStep.value > yMax! ? yMax : nextStep.value;
-
-        let x0 = u.valToPos(xMin ?? 0, 'x', true);
-        let y0 = u.valToPos(value ?? 0, scaleKey, true);
-        let x1 = u.valToPos(xMax ?? 1, 'x', true);
-        let y1 = u.valToPos(nextValue ?? 1, scaleKey, true);
-
-        ctx.save();
-        ctx.fillStyle = color.toString();
-        ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-        ctx.restore();
-      }
+      ctx.save();
+      ctx.fillStyle = grd;
+      ctx.fillRect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+      ctx.restore();
     }
 
     switch (config.mode) {
