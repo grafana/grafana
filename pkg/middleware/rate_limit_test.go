@@ -32,10 +32,7 @@ func rateLimiterScenario(t *testing.T, desc string, rps int, burst int, fn rateL
 		cfg := setting.NewCfg()
 
 		m := macaron.New()
-		m.Use(macaron.Renderer(macaron.RenderOptions{
-			Directory: "",
-			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-		}))
+		m.UseMiddleware(macaron.Renderer("../../public/views", "[[", "]]"))
 		m.Use(getContextHandler(t, cfg).Middleware)
 		m.Get("/foo", RateLimit(rps, burst, func() time.Time { return currentTime }), defaultHandler)
 

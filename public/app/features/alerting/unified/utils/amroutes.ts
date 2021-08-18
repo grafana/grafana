@@ -1,25 +1,28 @@
 import { SelectableValue } from '@grafana/data';
 import { Validate } from 'react-hook-form';
-import { Matcher, Route } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 import { FormAmRoute } from '../types/amroutes';
 import { parseInterval, timeOptions } from './time';
-import { parseMatcher, stringifyMatcher } from './alertmanager';
+import { matcherToMatcherField, matcherFieldToMatcher, parseMatcher, stringifyMatcher } from './alertmanager';
 import { isUndefined, omitBy } from 'lodash';
+import { MatcherFieldValue } from '../types/silence-form';
 
 const defaultValueAndType: [string, string] = ['', timeOptions[0].value];
 
-const matchersToArrayFieldMatchers = (matchers: Record<string, string> | undefined, isRegex: boolean): Matcher[] =>
-  Object.entries(matchers ?? {}).reduce<Matcher[]>(
+const matchersToArrayFieldMatchers = (
+  matchers: Record<string, string> | undefined,
+  isRegex: boolean
+): MatcherFieldValue[] =>
+  Object.entries(matchers ?? {}).reduce<MatcherFieldValue[]>(
     (acc, [name, value]) => [
       ...acc,
       {
         name,
         value,
-        isRegex: isRegex,
-        isEqual: true,
+        operator: isRegex ? MatcherOperator.regex : MatcherOperator.equal,
       },
     ],
-    [] as Matcher[]
+    [] as MatcherFieldValue[]
   );
 
 const intervalToValueAndType = (strValue: string | undefined): [string, string] => {
@@ -43,11 +46,10 @@ const selectableValueToString = (selectableValue: SelectableValue<string>): stri
 const selectableValuesToStrings = (arr: Array<SelectableValue<string>> | undefined): string[] =>
   (arr ?? []).map(selectableValueToString);
 
-export const emptyArrayFieldMatcher: Matcher = {
+export const emptyArrayFieldMatcher: MatcherFieldValue = {
   name: '',
   value: '',
-  isRegex: false,
-  isEqual: true,
+  operator: MatcherOperator.equal,
 };
 
 export const emptyRoute: FormAmRoute = {
@@ -90,7 +92,7 @@ export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Re
     {
       id,
       matchers: [
-        ...(route.matchers?.map(parseMatcher) ?? []),
+        ...(route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? []),
         ...matchersToArrayFieldMatchers(route.match, false),
         ...matchersToArrayFieldMatchers(route.match_re, true),
       ],
@@ -115,7 +117,9 @@ export const formAmRouteToAmRoute = (formAmRoute: FormAmRoute, id2ExistingRoute:
     ...(existing ?? {}),
     continue: formAmRoute.continue,
     group_by: formAmRoute.groupBy,
-    matchers: formAmRoute.matchers.length ? formAmRoute.matchers.map(stringifyMatcher) : undefined,
+    matchers: formAmRoute.matchers.length
+      ? formAmRoute.matchers.map((matcher) => stringifyMatcher(matcherFieldToMatcher(matcher)))
+      : undefined,
     match: undefined,
     match_re: undefined,
     group_wait: formAmRoute.groupWaitValue

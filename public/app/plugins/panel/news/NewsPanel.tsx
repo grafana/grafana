@@ -83,6 +83,7 @@ export class NewsPanel extends PureComponent<Props, State> {
             <article key={index} className={cx(styles.item, useWideLayout && styles.itemWide)}>
               {showImage && item.ogImage && (
                 <a
+                  tabIndex={-1}
                   href={textUtil.sanitizeUrl(item.link)}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -152,6 +153,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   `,
   link: css`
     color: ${theme.colors.text.link};
+    display: inline-block;
 
     &:hover {
       color: ${theme.colors.text.link};

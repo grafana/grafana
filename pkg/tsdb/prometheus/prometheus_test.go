@@ -56,7 +56,7 @@ func TestPrometheus(t *testing.T) {
 			To:   now.Add(12 * time.Hour),
 		}
 		query.TimeRange = timeRange
-		models, err := service.parseQuery([]backend.DataQuery{query})
+		models, err := service.parseQuery([]backend.DataQuery{query}, &DatasourceInfo{})
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, models[0].Step)
 	})
@@ -74,7 +74,7 @@ func TestPrometheus(t *testing.T) {
 			To:   now.Add(12 * time.Hour),
 		}
 		query.TimeRange = timeRange
-		models, err := service.parseQuery([]backend.DataQuery{query})
+		models, err := service.parseQuery([]backend.DataQuery{query}, &DatasourceInfo{})
 		require.NoError(t, err)
 		require.Equal(t, time.Second*7, models[0].Step)
 	})
@@ -92,7 +92,7 @@ func TestPrometheus(t *testing.T) {
 			To:   now.Add(12 * time.Hour),
 		}
 		query.TimeRange = timeRange
-		models, err := service.parseQuery([]backend.DataQuery{query})
+		models, err := service.parseQuery([]backend.DataQuery{query}, &DatasourceInfo{})
 		require.NoError(t, err)
 		require.Equal(t, time.Second*6, models[0].Step)
 	})
@@ -110,7 +110,7 @@ func TestPrometheus(t *testing.T) {
 			To:   now.Add(12 * time.Hour),
 		}
 		query.TimeRange = timeRange
-		models, err := service.parseQuery([]backend.DataQuery{query})
+		models, err := service.parseQuery([]backend.DataQuery{query}, &DatasourceInfo{})
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, models[0].Step)
 	})
@@ -128,7 +128,7 @@ func TestPrometheus(t *testing.T) {
 			To:   now.Add(12 * time.Hour),
 		}
 		query.TimeRange = timeRange
-		models, err := service.parseQuery([]backend.DataQuery{query})
+		models, err := service.parseQuery([]backend.DataQuery{query}, &DatasourceInfo{})
 		require.NoError(t, err)
 		require.Equal(t, time.Second*5, models[0].Step)
 	})
@@ -140,7 +140,7 @@ func TestPrometheus(t *testing.T) {
 			"intervalFactor": 1,
 			"refId": "A"
 		}`)
-		models, err := service.parseQuery([]backend.DataQuery{query})
+		models, err := service.parseQuery([]backend.DataQuery{query}, &DatasourceInfo{})
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*2, models[0].Step)
 
@@ -149,7 +149,7 @@ func TestPrometheus(t *testing.T) {
 			To:   now.Add(1 * time.Hour),
 		}
 		query.TimeRange = timeRange
-		models, err = service.parseQuery([]backend.DataQuery{query})
+		models, err = service.parseQuery([]backend.DataQuery{query}, &DatasourceInfo{})
 		require.NoError(t, err)
 		require.Equal(t, time.Second*15, models[0].Step)
 	})
@@ -160,7 +160,7 @@ func TestPrometheus(t *testing.T) {
 			"format": "time_series",
 			"intervalFactor": 10,
 			"refId": "A"
-		}`)})
+		}`)}, &DatasourceInfo{})
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*20, models[0].Step)
 	})
@@ -171,9 +171,22 @@ func TestPrometheus(t *testing.T) {
 			"format": "time_series",
 			"intervalFactor": 1,
 			"refId": "A"
-		}`)})
+		}`)}, &DatasourceInfo{})
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*2, models[0].Step)
+	})
+
+	t.Run("parsing query model specified scrape-interval in the data source", func(t *testing.T) {
+		models, err := service.parseQuery([]backend.DataQuery{queryContext(`{
+			"expr": "go_goroutines",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`)}, &DatasourceInfo{
+			TimeInterval: "240s",
+		})
+		require.NoError(t, err)
+		require.Equal(t, time.Minute*4, models[0].Step)
 	})
 }
 

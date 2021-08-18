@@ -10,11 +10,32 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/util"
+
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 type AdminSrv struct {
-	store store.AdminConfigurationStore
-	log   log.Logger
+	scheduler Scheduler
+	store     store.AdminConfigurationStore
+	log       log.Logger
+}
+
+func (srv AdminSrv) RouteGetAlertmanagers(c *models.ReqContext) response.Response {
+	urls := srv.scheduler.AlertmanagersFor(c.OrgId)
+	droppedURLs := srv.scheduler.DroppedAlertmanagersFor(c.OrgId)
+	ams := v1.AlertManagersResult{Active: make([]v1.AlertManager, len(urls)), Dropped: make([]v1.AlertManager, len(droppedURLs))}
+	for i, url := range urls {
+		ams.Active[i].URL = url.String()
+	}
+	for i, url := range droppedURLs {
+		ams.Dropped[i].URL = url.String()
+	}
+
+	return response.JSON(http.StatusOK, apimodels.GettableAlertmanagers{
+		Status: "success",
+		Data:   ams,
+	})
 }
 
 func (srv AdminSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Response {
@@ -56,7 +77,7 @@ func (srv AdminSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.
 		return ErrResp(http.StatusBadRequest, err, msg)
 	}
 
-	return response.JSON(http.StatusCreated, "admin configuration updated")
+	return response.JSON(http.StatusCreated, util.DynMap{"message": "admin configuration updated"})
 }
 
 func (srv AdminSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Response {
@@ -70,5 +91,5 @@ func (srv AdminSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Resp
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	return response.JSON(http.StatusOK, "admin configuration deleted")
+	return response.JSON(http.StatusOK, util.DynMap{"message": "admin configuration deleted"})
 }

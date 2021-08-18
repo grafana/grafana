@@ -60,7 +60,6 @@ export type GraphiteSegment = {
   value: string;
   type?: 'tag' | 'metric' | 'series-ref';
   expandable?: boolean;
-  focus?: boolean;
   fake?: boolean;
 };
 
