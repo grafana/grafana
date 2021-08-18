@@ -1,17 +1,19 @@
-import { css } from '@emotion/css';
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { Button, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import React, { FC, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import { css } from '@emotion/css';
+import { AppEvents, GrafanaTheme2, urlUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Button, ConfirmModal, ClipboardButton, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+import { appEvents } from 'app/core/core';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
-import { deleteRuleAction } from '../../state/actions';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { createExploreLink, createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
+import { deleteRuleAction } from '../../state/actions';
+import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
 interface Props {
   rule: CombinedRule;
@@ -44,6 +46,15 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
       dispatch(deleteRuleAction(identifier, { navigateTo: isViewMode ? '/alerting/list' : undefined }));
       setRuleToDelete(undefined);
     }
+  };
+
+  const buildShareUrl = () => {
+    if (isCloudRulesSource(rulesSource)) {
+      const ruleUrl = `${encodeURIComponent(rulesSource.name)}/${encodeURIComponent(rule.name)}`;
+      return `${config.appUrl}${config.appSubUrl ? '/' + config.appSubUrl : ''}alerting/${ruleUrl}/find`;
+    }
+
+    return window.location.href.split('?')[0];
   };
 
   // explore does not support grafana rule queries atm
@@ -134,6 +145,24 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     const editURL = urlUtil.renderUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
       returnTo,
     });
+
+    if (isViewMode) {
+      rightButtons.push(
+        <ClipboardButton
+          onClipboardCopy={() => {
+            appEvents.emit(AppEvents.alertSuccess, ['URL copied!']);
+          }}
+          onClipboardError={(e) => {
+            appEvents.emit(AppEvents.alertError, ['Error while copying URL', e.text]);
+          }}
+          className={style.button}
+          size="sm"
+          getText={buildShareUrl}
+        >
+          Copy link to rule
+        </ClipboardButton>
+      );
+    }
 
     rightButtons.push(
       <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
