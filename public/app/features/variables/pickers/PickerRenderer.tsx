@@ -27,6 +27,7 @@ export const PickerRenderer: FunctionComponent<Props> = (props) => {
 
 function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | null {
   const labelOrName = useMemo(() => variable.label || variable.name, [variable]);
+  const name = useMemo(() => variable.name, [variable]);
 
   if (variable.hide !== VariableHide.dontHide) {
     return null;
@@ -37,7 +38,8 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
       <Tooltip content={variable.description} placement={'bottom'}>
         <label
           className="gf-form-label gf-form-label--variable"
-          aria-label={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
+          data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
+          htmlFor={name}
         >
           {labelOrName}
         </label>
@@ -48,7 +50,8 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
   return (
     <label
       className="gf-form-label gf-form-label--variable"
-      aria-label={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
+      data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
+      htmlFor={name}
     >
       {labelOrName}
     </label>

@@ -75,7 +75,15 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
       const linkText = formatVariableLabel(variable);
       const loading = variable.state === LoadingState.Loading;
 
-      return <VariableLink text={linkText} onClick={this.onShowOptions} loading={loading} onCancel={this.onCancel} />;
+      return (
+        <VariableLink
+          id={variable.name}
+          text={linkText}
+          onClick={this.onShowOptions}
+          loading={loading}
+          onCancel={this.onCancel}
+        />
+      );
     }
 
     onCancel = () => {

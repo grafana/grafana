@@ -9,9 +9,13 @@ interface Props {
   text: string;
   loading: boolean;
   onCancel: () => void;
+  /**
+   *  htmlFor, needed for the label
+   */
+  id: string;
 }
 
-export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, text, onCancel }) => {
+export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, text, onCancel, id }) => {
   const styles = useStyles(getStyles);
   const onClick = useCallback(
     (event: MouseEvent<HTMLAnchorElement>) => {
@@ -26,8 +30,9 @@ export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, text, 
     return (
       <div
         className={styles.container}
-        aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(`${text}`)}
+        data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(`${text}`)}
         title={text}
+        id={id}
       >
         <VariableLinkText text={text} />
         <LoadingIndicator onCancel={onCancel} />
@@ -36,15 +41,16 @@ export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, text, 
   }
 
   return (
-    <a
-      onClick={onClick}
+    <button
+      onClick={() => onClick}
       className={styles.container}
-      aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(`${text}`)}
+      data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(`${text}`)}
       title={text}
+      id={id}
     >
       <VariableLinkText text={text} />
       <Icon name="angle-down" size="sm" />
-    </a>
+    </button>
   );
 };
 
