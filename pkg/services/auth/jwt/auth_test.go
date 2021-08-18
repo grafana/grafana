@@ -39,9 +39,9 @@ type configureFunc func(*testing.T, *setting.Cfg)
 type scenarioFunc func(*testing.T, scenarioContext)
 type cachingScenarioFunc func(*testing.T, cachingScenarioContext)
 
-func TestVerifyUsingPKIXPublicKeyFile(t *testing.T) {
-	subject := "foo-subj"
+const subject = "foo-subj"
 
+func TestVerifyUsingPKIXPublicKeyFile(t *testing.T) {
 	key := rsaKeys[0]
 	unknownKey := rsaKeys[1]
 
@@ -81,8 +81,6 @@ func TestVerifyUsingJWKSetFile(t *testing.T) {
 		cfg.JWTAuthJWKSetFile = file.Name()
 	}
 
-	subject := "foo-subj"
-
 	scenario(t, "verifies a token signed with a key from the set", func(t *testing.T, sc scenarioContext) {
 		token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject})
 		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
@@ -105,8 +103,6 @@ func TestVerifyUsingJWKSetFile(t *testing.T) {
 }
 
 func TestVerifyUsingJWKSetURL(t *testing.T) {
-	subject := "foo-subj"
-
 	t.Run("should refuse to start with non-https URL", func(t *testing.T) {
 		var err error
 
@@ -143,8 +139,6 @@ func TestVerifyUsingJWKSetURL(t *testing.T) {
 }
 
 func TestCachingJWKHTTPResponse(t *testing.T) {
-	subject := "foo-subj"
-
 	jwkCachingScenario(t, "caches the jwk response", func(t *testing.T, sc cachingScenarioContext) {
 		for i := 0; i < 5; i++ {
 			token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject})
@@ -364,8 +358,6 @@ func jwkCachingScenario(t *testing.T, desc string, fn cachingScenarioFunc, cbs .
 }
 
 func TestBase64Paddings(t *testing.T) {
-	subject := "foo-subj"
-
 	key := rsaKeys[0]
 
 	scenario(t, "verifies a token with base64 padding (non compliant rfc7515#section-2 but accepted)", func(t *testing.T, sc scenarioContext) {
