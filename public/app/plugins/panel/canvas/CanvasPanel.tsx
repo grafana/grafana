@@ -59,7 +59,7 @@ export class CanvasPanel extends Component<Props, State> {
       root,
     });
     this.setState({ refresh: this.state.refresh + 1 });
-    console.log('send changes', root);
+    // console.log('send changes', root);
   };
 
   shouldComponentUpdate(nextProps: Props) {
