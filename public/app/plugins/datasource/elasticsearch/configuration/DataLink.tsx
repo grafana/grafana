@@ -21,6 +21,12 @@ const getStyles = stylesFactory(() => ({
     display: flex;
     align-items: baseline;
   `,
+  urlField: css`
+    flex: 1;
+  `,
+  urlDisplayLabelField: css`
+    flex: 1;
+  `,
 }));
 
 type Props = {
@@ -83,9 +89,16 @@ export const DataLink = (props: Props) => {
               suggestions={suggestions}
             />
           }
-          className={css`
-            width: 100%;
-          `}
+          className={styles.urlField}
+        />
+        <FormField
+          className={styles.urlDisplayLabelField}
+          inputWidth={null}
+          label="URL Label"
+          type="text"
+          value={value.urlDisplayLabel}
+          onChange={handleChange('urlDisplayLabel')}
+          tooltip={'Use to override the button label.'}
         />
       </div>
 

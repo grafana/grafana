@@ -7,6 +7,7 @@ import {
   updateDatasourcePluginResetOption,
   updateDatasourcePluginSecureJsonDataOption,
 } from '@grafana/data';
+import { Alert } from '@grafana/ui';
 import { MonitorConfig } from './MonitorConfig';
 import { AnalyticsConfig } from './AnalyticsConfig';
 import { getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -18,9 +19,16 @@ import { routeNames } from '../utils/common';
 
 export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
+interface ErrorMessage {
+  title: string;
+  description: string;
+  details?: string;
+}
+
 export interface State {
   unsaved: boolean;
   appInsightsInitiallyConfigured: boolean;
+  error?: ErrorMessage;
 }
 
 export class ConfigEditor extends PureComponent<Props, State> {
@@ -60,36 +68,26 @@ export class ConfigEditor extends PureComponent<Props, State> {
     await this.saveOptions();
 
     const query = `?api-version=2019-03-01`;
-    const result = await getBackendSrv().datasourceRequest({
-      url: this.baseURL + query,
-      method: 'GET',
-    });
+    try {
+      const result = await getBackendSrv()
+        .fetch({
+          url: this.baseURL + query,
+          method: 'GET',
+        })
+        .toPromise();
 
-    return ResponseParser.parseSubscriptionsForSelect(result);
-  };
-
-  private getLogAnalyticsSubscriptions = async (): Promise<Array<SelectableValue<string>>> => {
-    await this.saveOptions();
-
-    const query = `?api-version=2019-03-01`;
-    const result = await getBackendSrv().datasourceRequest({
-      url: this.baseURL + query,
-      method: 'GET',
-    });
-
-    return ResponseParser.parseSubscriptionsForSelect(result);
-  };
-
-  private getWorkspaces = async (subscriptionId: string): Promise<Array<SelectableValue<string>>> => {
-    await this.saveOptions();
-
-    const workspaceURL = `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
-    const result = await getBackendSrv().datasourceRequest({
-      url: this.baseURL + workspaceURL,
-      method: 'GET',
-    });
-
-    return ResponseParser.parseWorkspacesForSelect(result);
+      this.setState({ error: undefined });
+      return ResponseParser.parseSubscriptionsForSelect(result);
+    } catch (err) {
+      this.setState({
+        error: {
+          title: 'Error requesting subscriptions',
+          description: 'Could not request subscriptions from Azure. Check your credentials and try again.',
+          details: err?.data?.message,
+        },
+      });
+      return Promise.resolve([]);
+    }
   };
 
   // TODO: Used only by InsightsConfig
@@ -113,18 +111,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
   render() {
     const { options } = this.props;
+    const { error } = this.state;
 
     return (
       <>
         <MonitorConfig options={options} updateOptions={this.updateOptions} getSubscriptions={this.getSubscriptions} />
-
-        <AnalyticsConfig
-          options={options}
-          updateOptions={this.updateOptions}
-          getSubscriptions={this.getLogAnalyticsSubscriptions}
-          getWorkspaces={this.getWorkspaces}
-        />
-
+        <AnalyticsConfig options={options} updateOptions={this.updateOptions} />
         {this.state.appInsightsInitiallyConfigured && (
           <InsightsConfig
             options={options}
@@ -132,6 +124,13 @@ export class ConfigEditor extends PureComponent<Props, State> {
             onUpdateSecureJsonDataOption={this.onUpdateSecureJsonDataOption}
             onResetOptionKey={this.resetSecureKey}
           />
+        )}
+
+        {error && (
+          <Alert severity="error" title={error.title}>
+            <p>{error.description}</p>
+            {error.details && <details style={{ whiteSpace: 'pre-wrap' }}>{error.details}</details>}
+          </Alert>
         )}
       </>
     );

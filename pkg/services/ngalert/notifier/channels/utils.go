@@ -26,6 +26,28 @@ const (
 	ColorAlertResolved = "#36a64f"
 )
 
+type receiverInitError struct {
+	Reason string
+	Err    error
+	Cfg    NotificationChannelConfig
+}
+
+func (e receiverInitError) Error() string {
+	name := ""
+	if e.Cfg.Name != "" {
+		name = fmt.Sprintf("%q ", e.Cfg.Name)
+	}
+
+	s := fmt.Sprintf("failed to validate receiver %sof type %q: %s", name, e.Cfg.Type, e.Reason)
+	if e.Err != nil {
+		return fmt.Sprintf("%s: %s", s, e.Err.Error())
+	}
+
+	return s
+}
+
+func (e receiverInitError) Unwrap() error { return e.Err }
+
 func getAlertStatusColor(status model.AlertStatus) string {
 	if status == model.AlertFiring {
 		return ColorAlertFiring

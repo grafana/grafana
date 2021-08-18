@@ -4,7 +4,7 @@ import { css, cx } from '@emotion/css';
 
 import { Alert } from '../Alert/Alert';
 import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';
-import { useStyles } from '../../themes/ThemeContext';
+import { useStyles, useTheme } from '../../themes/ThemeContext';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { List } from '../List/List';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
@@ -13,18 +13,41 @@ import { LogMessageAnsi } from './LogMessageAnsi';
 interface LogRowContextProps {
   row: LogRowModel;
   context: LogRowContextRows;
+  wrapLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   hasMoreContextRows?: HasMoreContextRows;
   onOutsideClick: () => void;
   onLoadMoreContext: () => void;
 }
 
-const getLogRowContextStyles = (theme: GrafanaTheme) => {
+const getLogRowContextStyles = (theme: GrafanaTheme, wrapLogMessage?: boolean) => {
+  /**
+   * This is workaround for displaying uncropped context when we have unwrapping log messages.
+   * We are using margins to correctly position context. Because non-wrapped logs have always 1 line of log
+   * and 1 line of Show/Hide context switch. Therefore correct position can be reliably achieved by margins.
+   * We also adjust width to 75%.
+   */
+
+  const afterContext = wrapLogMessage
+    ? css`
+        top: -250px;
+      `
+    : css`
+        margin-top: -250px;
+        width: 75%;
+      `;
+
+  const beforeContext = wrapLogMessage
+    ? css`
+        top: 100%;
+      `
+    : css`
+        margin-top: 40px;
+        width: 75%;
+      `;
   return {
     commonStyles: css`
       position: absolute;
-      width: calc(100% + 20px);
-      left: -13px;
       height: 250px;
       z-index: ${theme.zIndex.dropdown};
       overflow: hidden;
@@ -32,6 +55,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme) => {
       box-shadow: 0 0 10px ${theme.colors.dropdownShadow};
       border: 1px solid ${theme.colors.bg2};
       border-radius: ${theme.border.radius.md};
+      width: 100%;
     `,
     header: css`
       height: 30px;
@@ -44,6 +68,8 @@ const getLogRowContextStyles = (theme: GrafanaTheme) => {
       height: 220px;
       padding: 10px;
     `,
+    afterContext,
+    beforeContext,
   };
 };
 
@@ -56,7 +82,7 @@ interface LogRowContextGroupHeaderProps {
 }
 interface LogRowContextGroupProps extends LogRowContextGroupHeaderProps {
   rows: Array<string | DataQueryError>;
-  className: string;
+  className?: string;
   error?: string;
 }
 
@@ -122,11 +148,11 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   };
 
   return (
-    <div className={cx(className, commonStyles)}>
+    <div className={cx(commonStyles, className)}>
       {/* When displaying "after" context */}
       {shouldScrollToBottom && !error && <LogRowContextGroupHeader {...headerProps} />}
       <div className={logs}>
-        <CustomScrollbar autoHide scrollTop={scrollTop}>
+        <CustomScrollbar autoHide scrollTop={scrollTop} autoHeightMin={'210px'}>
           <div ref={listContainerRef}>
             {!error && (
               <List
@@ -161,6 +187,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   onOutsideClick,
   onLoadMoreContext,
   hasMoreContextRows,
+  wrapLogMessage,
 }) => {
   useEffect(() => {
     const handleEscKeyDown = (e: KeyboardEvent): void => {
@@ -173,6 +200,8 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
   }, [onOutsideClick]);
+  const theme = useTheme();
+  const { afterContext, beforeContext } = getLogRowContextStyles(theme, wrapLogMessage);
 
   return (
     <ClickOutsideWrapper onClick={onOutsideClick}>
@@ -184,9 +213,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             rows={context.after}
             error={errors && errors.after}
             row={row}
-            className={css`
-              top: -250px;
-            `}
+            className={afterContext}
             shouldScrollToBottom
             canLoadMoreRows={hasMoreContextRows ? hasMoreContextRows.after : false}
             onLoadMoreContext={onLoadMoreContext}
@@ -200,9 +227,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             row={row}
             rows={context.before}
             error={errors && errors.before}
-            className={css`
-              top: 100%;
-            `}
+            className={beforeContext}
           />
         )}
       </div>

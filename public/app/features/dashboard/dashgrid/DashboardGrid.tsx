@@ -32,6 +32,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
   private panelMap: { [id: string]: PanelModel } = {};
   private eventSubs = new Subscription();
   private windowHeight = 1200;
+  private windowWidth = 1920;
   private gridWidth = 0;
 
   constructor(props: Props) {
@@ -154,6 +155,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     // We assume here that if width change height might have changed as well
     if (this.gridWidth !== gridWidth) {
       this.windowHeight = window.innerHeight ?? 1000;
+      this.windowWidth = window.innerWidth;
       this.gridWidth = gridWidth;
     }
 
@@ -172,6 +174,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
           gridPos={panel.gridPos}
           gridWidth={gridWidth}
           windowHeight={this.windowHeight}
+          windowWidth={this.windowWidth}
           isViewing={panel.isViewing}
         >
           {(width: number, height: number) => {
@@ -261,6 +264,7 @@ interface GrafanaGridItemProps extends Record<string, any> {
   gridPos?: GridPos;
   isViewing: string;
   windowHeight: number;
+  windowWidth: number;
   children: any;
 }
 
@@ -272,15 +276,15 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
   let width = 100;
   let height = 100;
 
-  const { gridWidth, gridPos, isViewing, windowHeight, ...divProps } = props;
+  const { gridWidth, gridPos, isViewing, windowHeight, windowWidth, ...divProps } = props;
   const style: CSSProperties = props.style ?? {};
 
   if (isViewing) {
-    width = props.gridWidth!;
+    width = gridWidth!;
     height = windowHeight * 0.85;
     style.height = height;
     style.width = '100%';
-  } else if (props.gridWidth! < theme.breakpoints.values.md) {
+  } else if (windowWidth < theme.breakpoints.values.md) {
     width = props.gridWidth!;
     height = props.gridPos!.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
     style.height = height;

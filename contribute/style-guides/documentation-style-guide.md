@@ -50,6 +50,10 @@ The following guidelines are specific to Grafana documentation. For the most par
 
 ### General
 
+Per the [Voice and tone](https://developers.google.com/style/tone) section of the Google developer documentation style guide:
+
+> In your documents, aim for a voice and tone that's conversational, friendly, and respectful without being overly colloquial or frivolous; a voice that's casual and natural and approachable, not pedantic or pushy. Try to sound like a knowledgeable friend who understands what the developer wants to do.
+
 - Use active voice:
   - Active: Grafana displays the heatmap visualization.
   - Passive: The heatmap visualization is displayed.

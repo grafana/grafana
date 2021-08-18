@@ -10,8 +10,6 @@ list = false
 
 # What’s new in Grafana v8.0
 
-> **Note:** This topic will be updated frequently between now and the final release.
-
 This topic includes the release notes for Grafana v8.0. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Grafana OSS features
@@ -278,6 +276,7 @@ Support for Singlestat panel has been discontinued. When you upgrade to version 
 Stat panel is available as plugin.
 
 ### Grafana license update
+
 Grafana has updated its license from Apache 2.0 to the GNU Affero General Public License (AGPL). Please see the related [blog post](https://grafana.com/blog/2021/04/20/grafana-loki-tempo-relicensing-to-agplv3/), [Q&A](https://grafana.com/blog/2021/04/20/qa-with-our-ceo-on-relicensing/) and [license](https://github.com/grafana/grafana/blob/main/LICENSE) for more details.
 
 ## Enterprise features

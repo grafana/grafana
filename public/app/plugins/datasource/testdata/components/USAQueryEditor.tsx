@@ -1,5 +1,5 @@
 import React from 'react';
-import { InlineFieldRow, InlineField, Select, Input } from '@grafana/ui';
+import { InlineFieldRow, InlineField, Select, MultiSelect, Input } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { USAQuery } from '../types';
 
@@ -14,25 +14,13 @@ export function USAQueryEditor({ query, onChange }: Props) {
       <InlineFieldRow>
         <InlineField labelWidth={14} label="Mode">
           <Select
+            menuShouldPortal
             options={usaQueryModes}
             onChange={(v) => {
               onChange({ ...query, mode: v.value });
             }}
             width={32}
             value={usaQueryModes.find((ep) => ep.value === query.mode)}
-          />
-        </InlineField>
-
-        <InlineField label="Fields">
-          <Select
-            options={fieldNames}
-            onChange={(vals: SelectableValue[]) => {
-              onChange({ ...query, fields: vals.map((v) => v.value) });
-            }}
-            width={28}
-            isMulti={true}
-            placeholder="all"
-            value={query.fields}
           />
         </InlineField>
         <InlineField label="Period">
@@ -47,24 +35,24 @@ export function USAQueryEditor({ query, onChange }: Props) {
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField labelWidth={14} label="Fields">
-          <Select
+          <MultiSelect
+            menuShouldPortal
             options={fieldNames}
             onChange={(vals: SelectableValue[]) => {
               onChange({ ...query, fields: vals.map((v) => v.value) });
             }}
             width={32}
-            isMulti={true}
             placeholder="all"
             value={query.fields}
           />
         </InlineField>
         <InlineField label="States" grow>
-          <Select
+          <MultiSelect
+            menuShouldPortal
             options={stateNames}
             onChange={(vals: SelectableValue[]) => {
               onChange({ ...query, states: vals.map((v) => v.value) });
             }}
-            isMulti={true}
             placeholder="all"
             value={query.states}
           />
