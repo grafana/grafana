@@ -8,7 +8,7 @@ const TopSection: FC<any> = () => {
   const navTree = cloneDeep(config.bootData.navTree);
   const mainLinks = filter(navTree, (item) => !item.hideFromMenu);
   const searchLink = {
-    text: 'Search',
+    text: 'Search dashboards',
     icon: 'search',
   };
 
@@ -17,7 +17,7 @@ const TopSection: FC<any> = () => {
   };
 
   return (
-    <div className="sidemenu__top">
+    <div data-testid="top-section-items" className="sidemenu__top">
       <TopSectionItem link={searchLink} onClick={onOpenSearch} />
       {mainLinks.map((link, index) => {
         return <TopSectionItem link={link} key={`${link.id}-${index}`} />;

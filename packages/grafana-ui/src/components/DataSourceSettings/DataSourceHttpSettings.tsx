@@ -268,7 +268,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             <azureAuthSettings.azureSettingsUI dataSourceConfig={dataSourceConfig} onChange={onChange} />
           )}
 
-        {dataSourceConfig.jsonData.sigV4Auth && <SigV4AuthSettings {...props} />}
+        {dataSourceConfig.jsonData.sigV4Auth && sigV4AuthToggleEnabled && <SigV4AuthSettings {...props} />}
 
         {(dataSourceConfig.jsonData.tlsAuth || dataSourceConfig.jsonData.tlsAuthWithCACert) && (
           <TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
