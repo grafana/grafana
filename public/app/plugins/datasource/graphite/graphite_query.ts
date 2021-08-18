@@ -18,10 +18,6 @@ export type GraphiteTag = {
 type GraphiteTarget = {
   refId: string | number;
   target: string;
-  /**
-   * Contains full query after interpolating sub-queries (e.g. "function(#A)" referencing query with refId=A)
-   */
-  targetFull: string;
   textEditor: boolean;
   paused: boolean;
 };
