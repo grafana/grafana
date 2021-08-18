@@ -36,8 +36,11 @@ export interface AzureMonitorQuery extends DataQuery {
  */
 export interface AzureMetricQuery {
   resourceGroup?: string;
-  resourceName?: string;
+
+  /** Resource type */
   metricDefinition?: string;
+
+  resourceName?: string;
   metricNamespace?: string;
   metricName?: string;
   timeGrain?: string;
@@ -51,6 +54,12 @@ export interface AzureMetricQuery {
 
   /** @deprecated Remove this once angular is removed */
   allowedTimeGrainsMs?: number[];
+
+  /** @deprecated This property was migrated to dimensionFilters and should only be accessed in the migration */
+  dimension?: string;
+
+  /** @deprecated This property was migrated to dimensionFilters and should only be accessed in the migration */
+  dimensionFilter?: string;
 }
 
 /**
@@ -86,6 +95,9 @@ export interface ApplicationInsightsQuery {
   dimension?: string[]; // Was string before 7.1
   dimensionFilter?: string;
   alias?: string;
+
+  /** @deprecated Migrated to Insights Analytics query  */
+  rawQuery?: string;
 }
 
 /**

@@ -283,7 +283,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       forceEscape,
     } = this.state;
 
-    const styles = getStyles(theme);
+    const styles = getStyles(theme, wrapLogMessage);
     const hasData = logRows && logRows.length > 0;
     const hasUnescapedContent = this.checkUnescapedContent(logRows);
 
@@ -420,7 +420,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
 export const Logs = withTheme2(UnthemedLogs);
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
   return {
     noData: css`
       > * {
@@ -450,7 +450,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       justify-content: space-between;
     `,
     logRows: css`
-      overflow-x: scroll;
+      overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
+      overflow-y: visible;
       width: 100%;
     `,
     infoText: css`

@@ -90,6 +90,7 @@ export interface AnnotationFieldInfo {
   help?: string;
 }
 
+// These fields get added to the standard UI
 export const annotationEventNames: AnnotationFieldInfo[] = [
   {
     key: 'time',
@@ -109,9 +110,19 @@ export const annotationEventNames: AnnotationFieldInfo[] = [
   {
     key: 'id',
   },
-  // { key: 'userId' },
-  // { key: 'login' },
-  // { key: 'email' },
+];
+
+// Given legacy infrastructure, alert events are passed though the same annotation
+// pipeline, but include fields that should not be exposed generally
+const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
+  ...annotationEventNames,
+  { key: 'userId' },
+  { key: 'login' },
+  { key: 'email' },
+  { key: 'prevState' },
+  { key: 'newState' },
+  { key: 'data' as any },
+  { key: 'panelId' },
 ];
 
 export function getAnnotationsFromData(
@@ -140,7 +151,7 @@ export function getAnnotationsFromData(
 
       const fields: AnnotationEventFieldSetter[] = [];
 
-      for (const evts of annotationEventNames) {
+      for (const evts of alertEventAndAnnotationFields) {
         const opt = options[evts.key] || {}; //AnnotationEventFieldMapping
 
         if (opt.source === AnnotationEventFieldSource.Skip) {
