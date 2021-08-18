@@ -38,6 +38,7 @@ import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 import { mapPromMetricsToServiceMap, serviceMapMetrics } from './graphTransform';
 import { tokenizer } from './syntax';
+import TempoLanguageProvider from './language_provider';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
 export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch';
@@ -68,11 +69,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     datasourceUid?: string;
   };
   uploadedJson?: string | ArrayBuffer | null = null;
+  languageProvider: TempoLanguageProvider;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
     super(instanceSettings);
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
+    this.languageProvider = new TempoLanguageProvider(this);
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
