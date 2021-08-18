@@ -38,7 +38,6 @@ The next step is to create a `Page` representation in our E2E framework to glue 
 export const Login = {
   // Called via `Login.visit()`
   url: '/login',
-
   // Called via `Login.username()`
   username: 'Username input field',
 };
