@@ -56,7 +56,7 @@ export class VariableOptions extends PureComponent<Props> {
     return (
       <a key={`${option.value}`} className={highlightClass} onClick={this.onToggle(option)}>
         <span className="variable-option-icon"></span>
-        <span aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
+        <span data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
           {option.text}
         </span>
       </a>
