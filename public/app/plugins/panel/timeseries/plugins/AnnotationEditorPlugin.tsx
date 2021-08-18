@@ -31,7 +31,7 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
       plotInstance.setSelect({ top: 0, left: 0, width: 0, height: 0 });
     }
     setIsAddingAnnotation(false);
-  }, [setSelection, setIsAddingAnnotation, plotCtx]);
+  }, [plotCtx]);
 
   useLayoutEffect(() => {
     let annotating = false;
@@ -76,12 +76,12 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
       bind: {
         mousedown: (u, targ, handler) => (e) => {
           handler(e);
-          annotating = e.button === 0 && e.metaKey;
+          annotating = e.button === 0 && (e.metaKey || e.ctrlKey);
           return null;
         },
       },
     });
-  }, [config, setIsAddingAnnotation]);
+  }, [config]);
 
   const startAnnotating = useCallback<StartAnnotatingFn>(
     ({ coords }) => {
@@ -113,7 +113,7 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
       });
       setIsAddingAnnotation(true);
     },
-    [plotCtx, setSelection, setIsAddingAnnotation]
+    [plotCtx]
   );
 
   return (
