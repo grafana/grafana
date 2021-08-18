@@ -49,11 +49,8 @@ export class UPlotConfigBuilder {
   private frame: DataFrame | undefined = undefined;
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
-  /**
-   * Custom handler for closest datapoint and series lookup. Technicaly returns uPlots setCursor hook
-   * that sets tooltips state.
-   */
-  tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
+  // Custom handler for closest datapoint and series lookup
+  private tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
 
   prepData: PrepData | undefined = undefined;
 
@@ -152,6 +149,10 @@ export class UPlotConfigBuilder {
 
   setTooltipInterpolator(interpolator: PlotTooltipInterpolator) {
     this.tooltipInterpolator = interpolator;
+  }
+
+  getTooltipInterpolator() {
+    return this.tooltipInterpolator;
   }
 
   setPrepData(prepData: PrepData) {

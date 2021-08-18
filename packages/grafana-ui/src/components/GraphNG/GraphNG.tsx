@@ -27,6 +27,11 @@ import { UPlotChart } from '../uPlot/Plot';
  */
 export const FIXED_UNIT = '__fixed';
 
+/**
+ * @internal -- not a public API
+ */
+export type PropDiffFn<T extends any = any> = (prev: T, next: T) => boolean;
+
 export interface GraphNGProps extends Themeable2 {
   frames: DataFrame[];
   structureRev?: number; // a number that will change when the frames[] structure changes
@@ -39,14 +44,18 @@ export interface GraphNGProps extends Themeable2 {
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
   prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;
-  propsToDiff?: string[];
+  propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame;
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
 }
 
-function sameProps(prevProps: any, nextProps: any, propsToDiff: string[] = []) {
+function sameProps(prevProps: any, nextProps: any, propsToDiff: Array<string | PropDiffFn> = []) {
   for (const propName of propsToDiff) {
-    if (nextProps[propName] !== prevProps[propName]) {
+    if (typeof propName === 'function') {
+      if (!propName(prevProps, nextProps)) {
+        return false;
+      }
+    } else if (nextProps[propName] !== prevProps[propName]) {
       return false;
     }
   }
