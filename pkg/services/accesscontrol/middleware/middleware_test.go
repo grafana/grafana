@@ -61,7 +61,7 @@ func TestMiddleware(t *testing.T) {
 			}
 
 			server := macaron.New()
-			server.Use(macaron.Renderer())
+			server.UseMiddleware(macaron.Renderer("../../public/views", "[[", "]]"))
 
 			server.Use(contextProvider())
 			server.Use(Middleware(test.ac)(fallback, test.evaluator))
