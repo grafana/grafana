@@ -19,7 +19,7 @@ export const PickerRenderer: FunctionComponent<Props> = (props) => {
     <div className="gf-form">
       <PickerLabel variable={props.variable} />
       {props.variable.hide !== VariableHide.hideVariable && PickerToRender && (
-        <PickerToRender variable={props.variable} />
+        <PickerToRender variable={props.variable} id={props.variable.name} />
       )}
     </div>
   );

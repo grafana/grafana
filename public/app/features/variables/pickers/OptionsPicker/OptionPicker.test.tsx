@@ -32,6 +32,7 @@ function setupTestContext({ pickerState = {}, variable = {} }: Args = {}) {
   const onVariableChange = jest.fn();
   const props: VariablePickerProps<VariableWithMultiSupport | VariableWithOptions> = {
     variable: v,
+    id: 'unique-id',
     onVariableChange,
   };
   const Picker = optionPickerFactory();
