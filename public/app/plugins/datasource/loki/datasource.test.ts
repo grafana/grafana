@@ -112,7 +112,7 @@ describe('LokiDatasource', () => {
       const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
-      expect(adjustIntervalSpy).toHaveBeenCalledWith(1000, expect.anything());
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(1000, 1, expect.anything());
     });
 
     it('should use provided intervalMs', () => {
@@ -127,7 +127,7 @@ describe('LokiDatasource', () => {
       const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
-      expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, 1, expect.anything());
     });
 
     it('should set the minimal step to 1ms', () => {
@@ -142,7 +142,7 @@ describe('LokiDatasource', () => {
       const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
-      expect(adjustIntervalSpy).toHaveBeenCalledWith(0.0005, expect.anything());
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(0.0005, expect.anything(), 1000);
       // Step is in seconds (1 ms === 0.001 s)
       expect(req.step).toEqual(0.001);
     });
@@ -399,7 +399,7 @@ describe('LokiDatasource', () => {
 
     describe('__range, __range_s and __range_ms variables', () => {
       const options = {
-        targets: [{ expr: 'rate(process_cpu_seconds_total[$__range])', refId: 'A' }],
+        targets: [{ expr: 'rate(process_cpu_seconds_total[$__range])', refId: 'A', stepInterval: '2s' }],
         range: {
           from: rawRange.from,
           to: rawRange.to,
@@ -581,7 +581,7 @@ describe('LokiDatasource', () => {
           status: 'success',
         },
       } as unknown) as FetchResponse;
-      const { promise } = getTestContext(response);
+      const { promise } = getTestContext(response, { stepInterval: '15s' });
 
       const res = await promise;
 
@@ -613,7 +613,7 @@ describe('LokiDatasource', () => {
       } as unknown) as FetchResponse;
       describe('When tagKeys is set', () => {
         it('should only include selected labels', async () => {
-          const { promise } = getTestContext(response, { tagKeys: 'label2,label3' });
+          const { promise } = getTestContext(response, { tagKeys: 'label2,label3', stepInterval: '15s' });
 
           const res = await promise;
 
@@ -624,7 +624,7 @@ describe('LokiDatasource', () => {
       });
       describe('When textFormat is set', () => {
         it('should fromat the text accordingly', async () => {
-          const { promise } = getTestContext(response, { textFormat: 'hello {{label2}}' });
+          const { promise } = getTestContext(response, { textFormat: 'hello {{label2}}', stepInterval: '15s' });
 
           const res = await promise;
 
@@ -634,7 +634,7 @@ describe('LokiDatasource', () => {
       });
       describe('When titleFormat is set', () => {
         it('should fromat the title accordingly', async () => {
-          const { promise } = getTestContext(response, { titleFormat: 'Title {{label2}}' });
+          const { promise } = getTestContext(response, { titleFormat: 'Title {{label2}}', stepInterval: '15s' });
 
           const res = await promise;
 
@@ -779,6 +779,26 @@ describe('LokiDatasource', () => {
           });
         });
       });
+    });
+  });
+
+  describe('adjustInterval', () => {
+    const dynamicInterval = 15;
+    const range = 1642;
+    const resolution = 1;
+    const ds = createLokiDSForTests();
+    it('should return the interval as a factor of dynamicInterval and resolution', () => {
+      let interval = ds.adjustInterval(dynamicInterval, resolution, range);
+      expect(interval).toBe(resolution * dynamicInterval);
+    });
+    it('should not return a value less than the safe interval', () => {
+      let safeInterval = range / 11000;
+      if (safeInterval > 1) {
+        safeInterval = Math.ceil(safeInterval);
+      }
+      const unsafeInterval = safeInterval - 0.01;
+      let interval = ds.adjustInterval(unsafeInterval, resolution, range);
+      expect(interval).toBeGreaterThanOrEqual(safeInterval);
     });
   });
 });

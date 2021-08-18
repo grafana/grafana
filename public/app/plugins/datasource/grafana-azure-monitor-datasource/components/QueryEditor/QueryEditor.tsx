@@ -18,7 +18,7 @@ import ApplicationInsightsEditor from '../ApplicationInsightsEditor';
 import InsightsAnalyticsEditor from '../InsightsAnalyticsEditor';
 import { Space } from '../Space';
 import { debounce } from 'lodash';
-import useDefaultQuery from './useDefaultQuery';
+import usePreparedQuery from './usePreparedQuery';
 
 export type AzureMonitorQueryEditorProps = QueryEditorProps<
   AzureMonitorDatasource,
@@ -43,7 +43,7 @@ const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({
     [onChange, onRunQuery]
   );
 
-  const query = useDefaultQuery(baseQuery, onQueryChange);
+  const query = usePreparedQuery(baseQuery, onQueryChange);
 
   const subscriptionId = query.subscription || datasource.azureMonitorDatasource.defaultSubscriptionId;
   const variableOptionGroup = {
