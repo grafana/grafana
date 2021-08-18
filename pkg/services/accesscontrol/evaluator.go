@@ -89,17 +89,7 @@ func (p permissionEvaluator) Inject(params map[string]string) (Evaluator, error)
 }
 
 func (p permissionEvaluator) String() string {
-	b := strings.Builder{}
-	b.WriteString("action:")
-	b.WriteString(p.Action)
-	b.WriteString(" scopes:")
-	for i, scope := range p.Scopes {
-		if i != 0 {
-			b.WriteString(", ")
-		}
-		b.WriteString(scope)
-	}
-	return b.String()
+	return fmt.Sprintf("action:%s scopes:%s", p.Action, strings.Join(p.Scopes, ", "))
 }
 
 var _ Evaluator = new(allEvaluator)
