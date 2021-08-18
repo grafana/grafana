@@ -40,7 +40,7 @@ If you believe you've found a security vulnerability, please read our [security 
 
 ### Suggest enhancements
 
-If you have an idea of how to improve Grafana, submit an [enhancement request](https://github.com/grafana/grafana/issues/new?labels=type%3A+feature+request&template=2-feature_request.md).
+If you have an idea of how to improve Grafana, submit an [enhancement request](https://github.com/grafana/grafana/discussions/new).
 
 We want to make Grafana accessible to even more people. Submit an [accessibility issue](https://github.com/grafana/grafana/issues/new?labels=type%3A+accessibility&template=3-accessibility.md) to help us understand what we can improve.
 
