@@ -6,7 +6,7 @@ coreModule.directive('datasourceHttpSettings', () => {
       current: '=',
       suggestUrl: '@',
       noDirectAccess: '@',
-      hideForwardOAuthIdentityOption: '@',
+      showForwardOAuthIdentityOption: '@',
     },
     templateUrl: 'public/app/features/datasources/partials/http_settings_next.html',
     link: {
