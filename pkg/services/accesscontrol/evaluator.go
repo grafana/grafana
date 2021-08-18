@@ -125,14 +125,7 @@ func (a allEvaluator) Inject(params map[string]string) (Evaluator, error) {
 }
 
 func (a allEvaluator) String() string {
-	b := strings.Builder{}
-	for i, a := range a.allOf {
-		if i != 0 {
-			b.WriteRune(' ')
-		}
-		b.WriteString(a.String())
-	}
-	return b.String()
+	return 	return fmt.Sprintf("all(%s)", strings.Join(a.allOf, " "))
 }
 
 var _ Evaluator = new(anyEvaluator)
