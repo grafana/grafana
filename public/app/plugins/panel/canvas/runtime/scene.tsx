@@ -99,11 +99,9 @@ export class ElementState {
 
     if (border && border.color && border.width) {
       const color = ctx.getColor(border.color);
-      // size?
-      css.border = `${border.width}px solid ${color.value()}`;
-      // css.borderWidth = border.width;
-      // css.borderBlockStyle = 'solid';
-      // css.borderColor = color.get(0);
+      css.borderWidth = border.width;
+      css.borderStyle = 'solid';
+      css.borderColor = color.value();
 
       // Move the image to inside the border
       if (css.backgroundImage) {
@@ -227,6 +225,11 @@ export class Scene {
   data?: PanelData;
 
   constructor(cfg: CanvasGroupOptions, public onSave: (cfg: CanvasGroupOptions) => void) {
+    this.load(cfg);
+  }
+
+  load(cfg: CanvasGroupOptions) {
+    console.log('LOAD', cfg, this);
     this.root = new GroupState(
       cfg ?? {
         type: 'group',
@@ -235,6 +238,7 @@ export class Scene {
     );
 
     // Build the scene registry
+    this.lookup.clear();
     this.root.visit((v) => {
       this.lookup.set(v.UID, v);
 

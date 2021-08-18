@@ -15,7 +15,7 @@ import { DashboardEvent, DashboardEventAction } from './types';
 import { CoreGrafanaLiveFeature } from '../scopes';
 import { sessionId } from '../live';
 import { ShowModalReactEvent } from '../../../types/events';
-import { Unsubscribable } from 'rxjs';
+import { ReplaySubject, Unsubscribable } from 'rxjs';
 
 class DashboardWatcher {
   channel?: LiveChannelAddress; // path to the channel

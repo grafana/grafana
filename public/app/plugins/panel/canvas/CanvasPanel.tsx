@@ -3,7 +3,8 @@ import { PanelProps } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { Scene } from './runtime/scene';
 import { CanvasGroupOptions } from './base';
-import { ReplaySubject } from 'rxjs';
+import { ReplaySubject, Subscription } from 'rxjs';
+import { PanelEditFinishedEvent } from 'app/types/events';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -16,6 +17,8 @@ export const theScene = new ReplaySubject<Scene>(1);
 
 export class CanvasPanel extends Component<Props, State> {
   readonly scene: Scene;
+  private subs = new Subscription();
+  needsReload = false;
 
   constructor(props: Props) {
     super(props);
@@ -27,14 +30,24 @@ export class CanvasPanel extends Component<Props, State> {
     // later changs are all controled by the scene
     this.scene = new Scene(this.props.options.root, this.onUpdateScene);
     this.scene.updateSize(props.width, props.height);
-    theScene.next(this.scene);
-
-    this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
+    theScene.next(this.scene); // used in the editors
+
+    this.subs.add(
+      this.props.eventBus.subscribe(PanelEditFinishedEvent, (evt) => {
+        if (this.props.id === evt.payload) {
+          this.needsReload = true;
+        }
+      })
+    );
   }
 
   componentDidMount() {
     theScene.next(this.scene);
+  }
+
+  componentWillUnmount() {
+    this.subs.unsubscribe();
   }
 
   // NOTE, all changes to the scene flow through this function
@@ -58,6 +71,15 @@ export class CanvasPanel extends Component<Props, State> {
       changed = true;
     }
     if (data !== nextProps.data) {
+      this.scene.updateData(nextProps.data);
+      changed = true;
+    }
+
+    // After editing, the options are valid, but the scene was in a different panel
+    if (this.needsReload && this.props.options !== nextProps.options) {
+      this.needsReload = false;
+      this.scene.load(nextProps.options.root);
+      this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
       changed = true;
     }
