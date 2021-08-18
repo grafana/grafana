@@ -152,30 +152,6 @@ steps:
   depends_on:
   - package
 
-- name: test-a11y-frontend
-  image: buildkite/puppeteer
-  commands:
-  - yarn -s test:accessibility --json > pa11y-ci-results.json
-  environment:
-    GRAFANA_MISC_STATS_API_KEY:
-      from_secret: grafana_misc_stats_api_key
-    HOST: end-to-end-tests-server
-    PORT: 3001
-  failure: ignore
-  depends_on:
-  - end-to-end-tests-server
-
-- name: publish-frontend-metrics
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./scripts/ci-frontend-metrics.sh
-  environment:
-    GRAFANA_MISC_STATS_API_KEY:
-      from_secret: grafana_misc_stats_api_key
-  failure: ignore
-  depends_on:
-  - test-a11y-frontend
-
 - name: build-frontend-docs
   image: grafana/build-container:1.4.1
   commands:
@@ -475,7 +451,7 @@ steps:
 - name: publish-frontend-metrics
   image: grafana/build-container:1.4.1
   commands:
-  - ./scripts/ci-frontend-metrics.sh
+  - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
@@ -3566,6 +3542,6 @@ get:
 
 ---
 kind: signature
-hmac: 452d863023b13537a1b7da0c7a5dc6b8ff8672223cf8805c10e33662ad19539a
+hmac: 26efb11fdadde702bf10c709bdb62799772cfd8048a05eacd0d807997102bdea
 
 ...

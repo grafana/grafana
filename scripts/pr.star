@@ -6,7 +6,6 @@ load(
     'shellcheck_step',
     'test_backend_step',
     'test_frontend_step',
-    'test_a11y_frontend_step',
     'build_backend_step',
     'build_frontend_step',
     'build_plugins_step',
@@ -27,7 +26,6 @@ load(
     'ldap_service',
     'integration_test_services',
     'validate_scuemata',
-    'frontend_metrics_step',
 )
 
 ver_mode = 'pr'
@@ -66,9 +64,6 @@ def pr_pipelines(edition):
         e2e_tests_server_step(edition=edition),
         e2e_tests_step(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
-        test_a11y_frontend_step(edition=edition),
-
-        frontend_metrics_step(edition=edition),
         build_frontend_docs_step(edition=edition),
         build_docs_website_step(),
         copy_packages_for_docker_step(),
