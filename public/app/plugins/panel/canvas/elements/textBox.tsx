@@ -4,6 +4,10 @@ import { TextDimensionEditor } from '../../../../features/dimensions/editors/Tex
 import { ColorDimensionConfig, TextDimensionConfig } from 'app/features/dimensions/types';
 
 import { CanvasElementItem, CanvasElementProps, CanvasSceneContext } from '../base';
+import { css } from '@emotion/css';
+import { stylesFactory } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { config } from 'app/core/config';
 
 export enum Align {
   Left = 'left',
@@ -36,10 +40,29 @@ interface TextBoxConfig {
 class TextBoxDisplay extends PureComponent<CanvasElementProps<TextBoxConfig, TextBoxData>> {
   render() {
     const { data } = this.props;
-    return <div>{JSON.stringify(data, null, 2)}</div>;
+    const styles = getStyles(config.theme2, data);
+    return (
+      <div className={styles.container}>
+        <span className={styles.span}>{data?.text}</span>
+      </div>
+    );
   }
 }
-
+const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
+  container: css`
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    display: table;
+  `,
+  span: css`
+    display: table-cell;
+    vertical-align: ${data.valign};
+    text-align: ${data.align};
+    font-size: ${data?.size}px;
+    color: ${data?.color};
+  `,
+}));
 export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
   id: 'text-box',
   name: 'Text',
