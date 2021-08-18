@@ -48,8 +48,6 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     }
   };
 
-  console.log(config.appUrl);
-
   const buildShareUrl = () => {
     if (isCloudRulesSource(rulesSource)) {
       return `${config.appUrl}${config.appSubUrl ? '/' + config.appSubUrl : ''}alerting/${rulesSource.name}/${
