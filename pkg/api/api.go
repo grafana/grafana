@@ -303,7 +303,9 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/:id/resources", hs.CallDatasourceResource)
 		apiRoute.Any("/datasources/:id/resources/*", hs.CallDatasourceResource)
-		apiRoute.Any("/datasources/:id/health", authorize(reqNoAuth, ActionDatasourcesCheckHealth, ScopeDatasourceID), routing.Wrap(hs.CheckDatasourceHealth))
+		apiRoute.Any("/datasources/:id/health", routing.Wrap(hs.CheckDatasourceHealth))
+		// TODO: protect health check
+		// apiRoute.Any("/datasources/:id/health", authorize(reqNoAuth, ActionDatasourcesCheckHealth, ScopeDatasourceID), routing.Wrap(hs.CheckDatasourceHealth))
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {

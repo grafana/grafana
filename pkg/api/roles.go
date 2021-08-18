@@ -9,12 +9,12 @@ import (
 const (
 	ActionProvisioningReload = "provisioning:reload"
 
-	ActionDatasourcesRead        = "datasources:read"
-	ActionDatasourcesCreate      = "datasources:create"
-	ActionDatasourcesWrite       = "datasources:write"
-	ActionDatasourcesDelete      = "datasources:delete"
-	ActionDatasourcesIDRead      = "datasources:id:read"
-	ActionDatasourcesCheckHealth = "datasources:checkhealth"
+	ActionDatasourcesRead   = "datasources:read"
+	ActionDatasourcesCreate = "datasources:create"
+	ActionDatasourcesWrite  = "datasources:write"
+	ActionDatasourcesDelete = "datasources:delete"
+	ActionDatasourcesIDRead = "datasources:id:read"
+	// ActionDatasourcesCheckHealth = "datasources:checkhealth"
 )
 
 // API related scopes
@@ -89,20 +89,21 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
-	datasourcesHealthChecker := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
-			Version:     1,
-			Name:        "fixed:datasources:health:checker",
-			Description: "Gives access to check datasources health",
-			Permissions: []accesscontrol.Permission{
-				{
-					Action: ActionDatasourcesCheckHealth,
-					Scope:  ScopeDatasourcesAll,
-				},
-			},
-		},
-		Grants: []string{string(models.ROLE_VIEWER)},
-	}
+	// TODO protect health check
+	// datasourcesHealthChecker := accesscontrol.RoleRegistration{
+	// 	Role: accesscontrol.RoleDTO{
+	// 		Version:     1,
+	// 		Name:        "fixed:datasources:health:checker",
+	// 		Description: "Gives access to check datasources health",
+	// 		Permissions: []accesscontrol.Permission{
+	// 			{
+	// 				Action: ActionDatasourcesCheckHealth,
+	// 				Scope:  ScopeDatasourcesAll,
+	// 			},
+	// 		},
+	// 	},
+	// 	Grants: []string{string(models.ROLE_VIEWER)},
+	// }
 
-	return hs.AccessControl.DeclareFixedRoles(provisioningAdmin, datasourcesAdmin, datasourcesIDViewer, datasourcesHealthChecker)
+	return hs.AccessControl.DeclareFixedRoles(provisioningAdmin, datasourcesAdmin, datasourcesIDViewer)
 }
