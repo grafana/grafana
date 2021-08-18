@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
 import SideMenuDropDown from './SideMenuDropDown';
-import { Icon, Link } from '@grafana/ui';
+import { Icon, Link, useStyles2 } from '@grafana/ui';
 import { NavModelItem } from '@grafana/data';
+import { css, cx } from '@emotion/css';
 
 export interface Props {
   link: NavModelItem;
@@ -9,6 +10,13 @@ export interface Props {
 }
 
 const TopSectionItem: FC<Props> = ({ link, onClick }) => {
+  const resetButtonStyles = useStyles2(
+    () =>
+      css`
+        background-color: transparent;
+      `
+  );
+
   const linkContent = (
     <span className="icon-circle sidemenu-icon">
       {link.icon && <Icon name={link.icon as any} size="xl" />}
@@ -28,9 +36,9 @@ const TopSectionItem: FC<Props> = ({ link, onClick }) => {
       {linkContent}
     </Link>
   ) : (
-    <a className="sidemenu-link" onClick={onClick} aria-label={link.text}>
+    <button className={cx(resetButtonStyles, 'sidemenu-link')} onClick={onClick} aria-label={link.text}>
       {linkContent}
-    </a>
+    </button>
   );
   return (
     <div className="sidemenu-item dropdown">

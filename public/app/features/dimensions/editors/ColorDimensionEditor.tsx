@@ -5,7 +5,7 @@ import { Select, ColorPicker, useStyles2 } from '@grafana/ui';
 import {
   useFieldDisplayNames,
   useSelectOptions,
-} from '../../../../../../../packages/grafana-ui/src/components/MatchersUI/utils';
+} from '../../../../../packages/grafana-ui/src/components/MatchersUI/utils';
 import { css } from '@emotion/css';
 
 const fixedColorOption: SelectableValue<string> = {

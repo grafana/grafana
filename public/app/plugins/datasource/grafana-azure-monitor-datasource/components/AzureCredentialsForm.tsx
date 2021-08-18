@@ -252,7 +252,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
           <div className="gf-form-inline">
             <div className="gf-form">
               <InlineFormLabel className="width-12">Default Subscription</InlineFormLabel>
-              <div className="width-25">
+              <div className="width-30">
                 <Select
                   menuShouldPortal
                   value={

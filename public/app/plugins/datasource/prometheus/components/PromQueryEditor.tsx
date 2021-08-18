@@ -29,7 +29,7 @@ export const DEFAULT_STEP_MODE: SelectableValue<StepMode> = {
   label: 'Minimum',
 };
 
-const STEP_MODES: Array<SelectableValue<StepMode>> = [
+export const STEP_MODES: Array<SelectableValue<StepMode>> = [
   DEFAULT_STEP_MODE,
   {
     value: 'max',
