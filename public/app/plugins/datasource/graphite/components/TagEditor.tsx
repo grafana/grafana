@@ -1,16 +1,15 @@
 import React, { useCallback, useMemo } from 'react';
-import { Dispatch } from 'redux';
 import { Segment, SegmentAsync } from '@grafana/ui';
 import { actions } from '../state/actions';
 import { GraphiteTag, GraphiteTagOperator } from '../types';
 import { getTagOperatorsSelectables, getTagsSelectables, getTagValuesSelectables } from '../state/providers';
 import { GraphiteQueryEditorState } from '../state/store';
 import { debounce } from 'lodash';
+import { useDispatch } from '../state/context';
 
 type Props = {
   tag: GraphiteTag;
   tagIndex: number;
-  dispatch: Dispatch;
   state: GraphiteQueryEditorState;
 };
 
@@ -22,7 +21,8 @@ type Props = {
  * Options for tag names and values are reloaded while user is typing with backend taking care of auto-complete
  * (auto-complete cannot be implemented in front-end because backend returns only limited number of entries)
  */
-export function TagEditor({ dispatch, tag, tagIndex, state }: Props) {
+export function TagEditor({ tag, tagIndex, state }: Props) {
+  const dispatch = useDispatch();
   const getTagsOptions = useCallback(
     (inputValue: string | undefined) => {
       return getTagsSelectables(state, tagIndex, inputValue || '');
