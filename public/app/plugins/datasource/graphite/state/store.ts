@@ -1,4 +1,4 @@
-import GraphiteQuery from '../graphite_query';
+import GraphiteQuery, { GraphiteTarget } from '../graphite_query';
 import { GraphiteSegment, GraphiteTagOperator } from '../types';
 import { GraphiteDatasource } from '../datasource';
 import { TemplateSrv } from '../../../../features/templating/template_srv';
@@ -19,7 +19,7 @@ import {
 import { Action, Dispatch } from 'redux';
 import { FuncDefs } from '../gfunc';
 import { AnyAction } from '@reduxjs/toolkit';
-import { TimeRange } from '@grafana/data';
+import { DataQuery, TimeRange } from '@grafana/data';
 
 export type GraphiteQueryEditorState = {
   supportsTags: boolean;
@@ -30,9 +30,10 @@ export type GraphiteQueryEditorState = {
 
   templateSrv: TemplateSrv;
   range?: TimeRange;
+  queries?: DataQuery[];
   refresh: (target: string) => void;
 
-  target: { target: string; textEditor: boolean };
+  target: GraphiteTarget;
 
   funcDefs: FuncDefs | null;
 
@@ -68,6 +69,9 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   }
   if (actions.timeRangeChanged.match(action)) {
     state.range = action.payload;
+  }
+  if (actions.queriesChanged.match(action)) {
+    state.queries = action.payload;
   }
   if (actions.segmentValueChanged.match(action)) {
     const { segment: segmentOrString, index: segmentIndex } = action.payload;

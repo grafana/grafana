@@ -48,6 +48,21 @@ async function getAltSegments(
       return altSegments;
     }
 
+    // add query references
+    if (index === 0) {
+      eachRight(state.queries, (target) => {
+        if (target.refId === state.queryModel.target.refId) {
+          return;
+        }
+
+        altSegments.unshift({
+          type: 'series-ref',
+          value: '#' + target.refId,
+          expandable: false,
+        });
+      });
+    }
+
     // add template variables
     eachRight(state.templateSrv.getVariables(), (variable) => {
       altSegments.unshift({

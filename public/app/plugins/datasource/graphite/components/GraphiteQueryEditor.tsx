@@ -8,13 +8,21 @@ import { SeriesSection } from './SeriesSection';
 import { FunctionsSection } from './FunctionsSection';
 import { css } from '@emotion/css';
 
-export function GraphiteQueryEditor({ datasource, onRunQuery, onChange, query, range }: GraphiteQueryEditorProps) {
+export function GraphiteQueryEditor({
+  datasource,
+  onRunQuery,
+  onChange,
+  query,
+  range,
+  queries,
+}: GraphiteQueryEditorProps) {
   return (
     <GraphiteQueryEditorContext
       datasource={datasource}
       onRunQuery={onRunQuery}
       onChange={onChange}
       query={query}
+      queries={queries}
       range={range}
     >
       <GraphiteQueryEditorContent />

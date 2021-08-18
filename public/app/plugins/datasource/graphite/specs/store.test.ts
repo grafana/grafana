@@ -307,6 +307,37 @@ describe('Graphite actions', async () => {
     it('target should remain the same', () => {
       expect(ctx.state.target.target).toBe('scaleToSeconds(#A, 60)');
     });
+
+    it('targetFull should include nested queries', async () => {
+      ctx.state.queries = [
+        {
+          target: 'nested.query.count',
+          refId: 'A',
+        },
+      ];
+
+      await changeTarget(ctx, ctx.target.target);
+
+      expect(ctx.state.target.target).toBe('scaleToSeconds(#A, 60)');
+
+      expect(ctx.state.target.targetFull).toBe('scaleToSeconds(nested.query.count, 60)');
+    });
+  });
+
+  describe('when updating target used in other query', () => {
+    beforeEach(async () => {
+      ctx.datasource.metricFindQuery = () => Promise.resolve([{ expandable: false }]);
+      ctx.state.target.refId = 'A';
+      await changeTarget(ctx, 'metrics.foo.count');
+
+      ctx.state.queries = [ctx.state.target, { target: 'sumSeries(#A)', refId: 'B' }];
+
+      await changeTarget(ctx, 'metrics.bar.count');
+    });
+
+    it('targetFull of other query should update', () => {
+      expect(ctx.state.queries[1].targetFull).toBe('sumSeries(metrics.bar.count)');
+    });
   });
 
   describe('when adding seriesByTag function', () => {

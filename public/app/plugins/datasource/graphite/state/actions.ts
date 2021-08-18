@@ -1,7 +1,7 @@
 import { GraphiteQueryEditorDependencies, GraphiteSegment, GraphiteTag } from '../types';
 import { createAction } from '@reduxjs/toolkit';
 import { FuncInstance } from '../gfunc';
-import { TimeRange } from '@grafana/data';
+import { DataQuery, TimeRange } from '@grafana/data';
 
 /**
  * List of possible actions changing the state of QueryEditor
@@ -10,10 +10,11 @@ import { TimeRange } from '@grafana/data';
 const init = createAction<GraphiteQueryEditorDependencies>('init');
 
 /**
- * Used only to sync it with selected range from Explore/Panel. This action
- * does not allow to modify the currently selected range.
+ * Used only to sync it with selected range from Explore/Panel. These actions
+ * does not allow to modify the currently selected range or other queries.
  */
 const timeRangeChanged = createAction<TimeRange | undefined>('time-range-changed');
+const queriesChanged = createAction<DataQuery[] | undefined>('queries-changed');
 
 // Metrics & Tags
 const segmentValueChanged = createAction<{ segment: GraphiteSegment | string; index: number }>('segment-value-changed');
@@ -37,6 +38,7 @@ const toggleEditorMode = createAction('toggle-editor');
 export const actions = {
   init,
   timeRangeChanged,
+  queriesChanged,
   segmentValueChanged,
   tagChanged,
   addNewTag,

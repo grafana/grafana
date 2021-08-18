@@ -152,7 +152,7 @@ export function handleTargetChanged(state: GraphiteQueryEditorState): void {
   }
 
   const oldTarget = state.queryModel.target.target;
-  state.queryModel.updateModelTarget();
+  state.queryModel.updateModelTarget(state.queries);
 
   if (state.queryModel.target.target !== oldTarget && !state.paused) {
     state.refresh(state.target.target);

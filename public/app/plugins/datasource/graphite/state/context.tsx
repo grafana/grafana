@@ -25,6 +25,7 @@ export const GraphiteQueryEditorContext = ({
   onRunQuery,
   onChange,
   query,
+  queries,
   range,
   children,
 }: PropsWithChildren<GraphiteQueryEditorProps>) => {
@@ -40,6 +41,10 @@ export const GraphiteQueryEditorContext = ({
   useEffect(() => {
     dispatch(actions.timeRangeChanged(range));
   }, [dispatch, range]);
+
+  useEffect(() => {
+    dispatch(actions.queriesChanged(queries));
+  }, [dispatch, queries]);
 
   if (!state) {
     dispatch(
