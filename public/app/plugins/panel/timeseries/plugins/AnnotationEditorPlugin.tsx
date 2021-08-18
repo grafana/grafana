@@ -83,7 +83,7 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
         mousedown: (u, targ, handler) => (e) => {
           if (e.button === 0) {
             handler(e);
-            if (e.metaKey) {
+            if (e.metaKey || e.ctrlKey) {
               isClick = true;
               annotating = true;
             }
@@ -95,7 +95,7 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
           if (e.button === 0) {
             handler(e);
             // handle cmd+drag
-            if (e.metaKey) {
+            if (e.metaKey || e.ctrlKey) {
               isClick = false;
               annotating = true;
             }
@@ -105,7 +105,7 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
         },
         mouseup: (u, targ, handler) => (e) => {
           // handle cmd+click
-          if (isClick && u.cursor.left && e.button === 0 && e.metaKey) {
+          if (isClick && u.cursor.left && e.button === 0 && (e.metaKey || e.ctrlKey)) {
             u.setSelect({ left: u.cursor.left, width: 0, top: 0, height: 0 });
             annotating = true;
           }
