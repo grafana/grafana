@@ -30,7 +30,7 @@ export const FIXED_UNIT = '__fixed';
 /**
  * @internal -- not a public API
  */
-export type PropDiffFn = (prev: Object, next: Object) => boolean;
+export type PropDiffFn<T extends any = any> = (prev: T, next: T) => boolean;
 
 export interface GraphNGProps extends Themeable2 {
   frames: DataFrame[];
