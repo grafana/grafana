@@ -12,14 +12,15 @@ func TestProfilingDiagnostics(t *testing.T) {
 	tcs := []struct {
 		defaults   *profilingDiagnostics
 		enabledEnv string
+		addrEnv    string
 		portEnv    string
 		expected   *profilingDiagnostics
 	}{
-		{defaults: newProfilingDiagnostics(false, 6060), enabledEnv: "", portEnv: "", expected: newProfilingDiagnostics(false, 6060)},
-		{defaults: newProfilingDiagnostics(true, 8080), enabledEnv: "", portEnv: "", expected: newProfilingDiagnostics(true, 8080)},
-		{defaults: newProfilingDiagnostics(false, 6060), enabledEnv: "false", portEnv: "8080", expected: newProfilingDiagnostics(false, 8080)},
-		{defaults: newProfilingDiagnostics(false, 6060), enabledEnv: "true", portEnv: "8080", expected: newProfilingDiagnostics(true, 8080)},
-		{defaults: newProfilingDiagnostics(false, 6060), enabledEnv: "true", portEnv: "", expected: newProfilingDiagnostics(true, 6060)},
+		{defaults: newProfilingDiagnostics(false, "localhost", 6060), enabledEnv: "", addrEnv: "", portEnv: "", expected: newProfilingDiagnostics(false, "localhost", 6060)},
+		{defaults: newProfilingDiagnostics(true, "0.0.0.0", 8080), enabledEnv: "", addrEnv: "", portEnv: "", expected: newProfilingDiagnostics(true, "0.0.0.0", 8080)},
+		{defaults: newProfilingDiagnostics(false, "", 6060), enabledEnv: "false", addrEnv: "", portEnv: "8080", expected: newProfilingDiagnostics(false, "", 8080)},
+		{defaults: newProfilingDiagnostics(false, "localhost", 6060), enabledEnv: "true", addrEnv: "0.0.0.0", portEnv: "8080", expected: newProfilingDiagnostics(true, "0.0.0.0", 8080)},
+		{defaults: newProfilingDiagnostics(false, "127.0.0.1", 6060), enabledEnv: "true", addrEnv: "", portEnv: "", expected: newProfilingDiagnostics(true, "127.0.0.1", 6060)},
 	}
 
 	for i, tc := range tcs {
@@ -27,6 +28,10 @@ func TestProfilingDiagnostics(t *testing.T) {
 			os.Clearenv()
 			if tc.enabledEnv != "" {
 				err := os.Setenv(profilingEnabledEnvName, tc.enabledEnv)
+				assert.NoError(t, err)
+			}
+			if tc.addrEnv != "" {
+				err := os.Setenv(profilingAddrEnvName, tc.addrEnv)
 				assert.NoError(t, err)
 			}
 			if tc.portEnv != "" {

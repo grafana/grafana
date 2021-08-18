@@ -8,6 +8,7 @@ import (
 
 const (
 	profilingEnabledEnvName = "GF_DIAGNOSTICS_PROFILING_ENABLED"
+	profilingAddrEnvName    = "GF_DIAGNOSTICS_PROFILING_ADDR"
 	profilingPortEnvName    = "GF_DIAGNOSTICS_PROFILING_PORT"
 	tracingEnabledEnvName   = "GF_DIAGNOSTICS_TRACING_ENABLED"
 	tracingFileEnvName      = "GF_DIAGNOSTICS_TRACING_FILE"
@@ -15,12 +16,14 @@ const (
 
 type profilingDiagnostics struct {
 	enabled bool
+	addr    string
 	port    uint64
 }
 
-func newProfilingDiagnostics(enabled bool, port uint64) *profilingDiagnostics {
+func newProfilingDiagnostics(enabled bool, addr string, port uint64) *profilingDiagnostics {
 	return &profilingDiagnostics{
 		enabled: enabled,
+		addr:    addr,
 		port:    port,
 	}
 }
@@ -33,6 +36,11 @@ func (pd *profilingDiagnostics) overrideWithEnv() error {
 			return fmt.Errorf("failed to parse %s environment variable as bool", profilingEnabledEnvName)
 		}
 		pd.enabled = enabled
+	}
+
+	addrEnv := os.Getenv(profilingAddrEnvName)
+	if addrEnv != "" {
+		pd.addr = addrEnv
 	}
 
 	portEnv := os.Getenv(profilingPortEnvName)
