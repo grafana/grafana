@@ -26,15 +26,7 @@ Family: {
                     legend: ui.VizLegendOptions
                     tooltip: ui.VizTooltipOptions
                 }
-                PanelFieldConfig: {
-                    ui.LineConfig
-                    ui.FillConfig
-                    ui.PointsConfig
-                    ui.AxisConfig
-                    drawStyle?:    ui.DrawStyle
-                    gradientMode?: ui.GraphGradientMode
-                    hideFrom?:     ui.HideSeriesConfig
-                }
+                PanelFieldConfig: ui.GraphFieldConfig
             }
         ]
     ]

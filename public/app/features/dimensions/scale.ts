@@ -1,19 +1,23 @@
 import { DataFrame } from '@grafana/data';
-import { getMinMaxAndDelta } from '../../../../../../packages/grafana-data/src/field/scale';
+import { getMinMaxAndDelta } from '../../../../packages/grafana-data/src/field/scale';
 import { ScaleDimensionConfig, DimensionSupplier, ScaleDimensionOptions } from './types';
-import { findField } from './utils';
+import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------
 // Scale dimension
 //---------------------------------------------------------
 
-export function getScaledDimension(frame: DataFrame, config: ScaleDimensionConfig): DimensionSupplier<number> {
+export function getScaledDimension(
+  frame: DataFrame | undefined,
+  config: ScaleDimensionConfig
+): DimensionSupplier<number> {
   const field = findField(frame, config.field);
   if (!field) {
     const v = config.fixed ?? 0;
     return {
       isAssumed: Boolean(config.field?.length) || !config.fixed,
       fixed: v,
+      value: () => v,
       get: () => v,
     };
   }
@@ -23,24 +27,28 @@ export function getScaledDimension(frame: DataFrame, config: ScaleDimensionConfi
   if (values.length < 1 || delta <= 0 || info.delta <= 0) {
     return {
       fixed: config.min,
+      value: () => config.min,
       get: () => config.min,
     };
   }
 
+  const get = (i: number) => {
+    const value = field.values.get(i);
+    let percent = 0;
+    if (value !== -Infinity) {
+      percent = (value - info.min!) / info.delta;
+    }
+    if (percent > 1) {
+      percent = 1;
+    } else if (percent < 0) {
+      percent = 0;
+    }
+    return config.min + percent * delta;
+  };
+
   return {
-    get: (i) => {
-      const value = field.values.get(i);
-      let percent = 0;
-      if (value !== -Infinity) {
-        percent = (value - info.min!) / info.delta;
-      }
-      if (percent > 1) {
-        percent = 1;
-      } else if (percent < 0) {
-        percent = 0;
-      }
-      return config.min + percent * delta;
-    },
+    get,
+    value: () => get(getLastNotNullFieldValue(field)),
     field,
   };
 }

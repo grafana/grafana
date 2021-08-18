@@ -192,7 +192,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
     const containerClassNames = classNames({
       'panel-container': true,
-      'panel-container--absolute': true,
       'panel-container--transparent': transparent,
       'panel-container--no-title': this.hasOverlayHeader(),
       'panel-has-alert': panel.alert !== undefined,
