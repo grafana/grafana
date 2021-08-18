@@ -1,7 +1,7 @@
 import React, { FC, useMemo } from 'react';
 import { Select } from '@grafana/ui';
 import { DataFrame, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
-import { BackroundImageSize, CanvasElementItem, CanvasElementOptions } from '../base';
+import { BackgroundImageSize, CanvasElementItem, CanvasElementOptions } from '../base';
 import { canvasElementRegistry, DEFAULT_ELEMENT_CONFIG } from '../elements/registry';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
@@ -66,13 +66,14 @@ export const CanvasElementEditor: FC<CanvasElementEditorProps> = ({ options, onC
         name: 'Backround image size',
         settings: {
           options: [
-            { value: BackroundImageSize.Fit, label: 'Fit' },
-            { value: BackroundImageSize.Original, label: 'Original' },
-            { value: BackroundImageSize.Strech, label: 'Strech' },
-            { value: BackroundImageSize.Tile, label: 'Tile' },
+            { value: BackgroundImageSize.Original, label: 'Original' },
+            { value: BackgroundImageSize.Contain, label: 'Contain' },
+            { value: BackgroundImageSize.Cover, label: 'Cover' },
+            { value: BackgroundImageSize.Fill, label: 'Fill' },
+            { value: BackgroundImageSize.Tile, label: 'Tile' },
           ],
         },
-        defaultValue: BackroundImageSize.Fit,
+        defaultValue: BackgroundImageSize.Cover,
       });
 
     builder.addSliderInput({

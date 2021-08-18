@@ -4,7 +4,7 @@ import { config } from 'app/core/config';
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 import {
-  BackroundImageSize,
+  BackgroundImageSize,
   CanvasElementItem,
   CanvasElementOptions,
   CanvasGroupOptions,
@@ -77,18 +77,22 @@ export class ElementState {
           const v = image.value();
           if (v) {
             css.backgroundImage = `url("${v}")`;
-            switch (background.size ?? BackroundImageSize.Fit) {
-              case BackroundImageSize.Fit:
+            switch (background.size ?? BackgroundImageSize.Contain) {
+              case BackgroundImageSize.Contain:
                 css.backgroundSize = 'contain';
                 css.backgroundRepeat = 'no-repeat';
                 break;
-              case BackroundImageSize.Original:
+              case BackgroundImageSize.Cover:
+                css.backgroundSize = 'cover';
                 css.backgroundRepeat = 'no-repeat';
                 break;
-              case BackroundImageSize.Tile:
+              case BackgroundImageSize.Original:
+                css.backgroundRepeat = 'no-repeat';
+                break;
+              case BackgroundImageSize.Tile:
                 css.backgroundRepeat = 'repeat';
                 break;
-              case BackroundImageSize.Strech:
+              case BackgroundImageSize.Fill:
                 css.backgroundSize = '100% 100%';
                 break;
             }

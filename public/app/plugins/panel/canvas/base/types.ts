@@ -17,17 +17,18 @@ export interface Anchor {
   bottom?: boolean;
 }
 
-export enum BackroundImageSize {
-  Fit = 'fit',
+export enum BackgroundImageSize {
   Original = 'original',
-  Strech = 'strech',
+  Contain = 'contain',
+  Cover = 'cover',
+  Fill = 'fill',
   Tile = 'tile',
 }
 
 export interface BackgroundConfig {
   color?: ColorDimensionConfig;
   image?: ResourceDimensionConfig;
-  size?: BackroundImageSize;
+  size?: BackgroundImageSize;
 }
 
 export interface LineConfig {
