@@ -52,9 +52,9 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/profile/switch-org/:id", reqSignedInNoAnonymous, hs.ChangeActiveOrgAndRedirectToHome)
 	r.Get("/org/", reqOrgAdmin, hs.Index)
 	r.Get("/org/new", reqGrafanaAdmin, hs.Index)
-	r.Get("/datasources/", reqOrgAdmin, hs.Index)
-	r.Get("/datasources/new", reqOrgAdmin, hs.Index)
-	r.Get("/datasources/edit/*", reqOrgAdmin, hs.Index)
+	r.Get("/datasources/", authorize(reqOrgAdmin, ActionDatasourcesRead), hs.Index)
+	r.Get("/datasources/new", authorize(reqOrgAdmin, ActionDatasourcesCreate), hs.Index)
+	r.Get("/datasources/edit/*", authorize(reqOrgAdmin, ActionDatasourcesWrite), hs.Index)
 	r.Get("/org/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeUsersAll), hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/invite", authorize(reqOrgAdmin, accesscontrol.ActionUsersCreate), hs.Index)
@@ -266,18 +266,18 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
-			datasourceRoute.Get("/", routing.Wrap(hs.GetDataSources))
-			datasourceRoute.Post("/", quota("data_source"), bind(models.AddDataSourceCommand{}), routing.Wrap(AddDataSource))
-			datasourceRoute.Put("/:id", bind(models.UpdateDataSourceCommand{}), routing.Wrap(hs.UpdateDataSource))
-			datasourceRoute.Delete("/:id", routing.Wrap(hs.DeleteDataSourceById))
-			datasourceRoute.Delete("/uid/:uid", routing.Wrap(hs.DeleteDataSourceByUID))
-			datasourceRoute.Delete("/name/:name", routing.Wrap(hs.DeleteDataSourceByName))
-			datasourceRoute.Get("/:id", routing.Wrap(GetDataSourceById))
-			datasourceRoute.Get("/uid/:uid", routing.Wrap(GetDataSourceByUID))
-			datasourceRoute.Get("/name/:name", routing.Wrap(GetDataSourceByName))
-		}, reqOrgAdmin)
+			datasourceRoute.Get("/", authorize(reqOrgAdmin, ActionDatasourcesRead), routing.Wrap(hs.GetDataSources))
+			datasourceRoute.Post("/", authorize(reqOrgAdmin, ActionDatasourcesCreate), quota("data_source"), bind(models.AddDataSourceCommand{}), routing.Wrap(AddDataSource))
+			datasourceRoute.Put("/:id", authorize(reqOrgAdmin, ActionDatasourcesWrite, ScopeDatasourceID), bind(models.UpdateDataSourceCommand{}), routing.Wrap(hs.UpdateDataSource))
+			datasourceRoute.Delete("/:id", authorize(reqOrgAdmin, ActionDatasourcesDelete, ScopeDatasourceID), routing.Wrap(hs.DeleteDataSourceById))
+			datasourceRoute.Delete("/uid/:uid", authorize(reqOrgAdmin, ActionDatasourcesDelete, ScopeDatasourceUID), routing.Wrap(hs.DeleteDataSourceByUID))
+			datasourceRoute.Delete("/name/:name", authorize(reqOrgAdmin, ActionDatasourcesDelete, ScopeDatasourceName), routing.Wrap(hs.DeleteDataSourceByName))
+			datasourceRoute.Get("/:id", authorize(reqOrgAdmin, ActionDatasourcesRead, ScopeDatasourceID), routing.Wrap(GetDataSourceById))
+			datasourceRoute.Get("/uid/:uid", authorize(reqOrgAdmin, ActionDatasourcesRead, ScopeDatasourceUID), routing.Wrap(GetDataSourceByUID))
+			datasourceRoute.Get("/name/:name", authorize(reqOrgAdmin, ActionDatasourcesRead, ScopeDatasourceName), routing.Wrap(GetDataSourceByName))
+		})
 
-		apiRoute.Get("/datasources/id/:name", routing.Wrap(GetDataSourceIdByName), reqSignedIn)
+		apiRoute.Get("/datasources/id/:name", authorize(reqSignedIn, ActionDatasourcesIDRead, ScopeDatasourceName), routing.Wrap(GetDataSourceIdByName))
 
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(hs.GetPluginSettingByID))
@@ -303,7 +303,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/:id/resources", hs.CallDatasourceResource)
 		apiRoute.Any("/datasources/:id/resources/*", hs.CallDatasourceResource)
-		apiRoute.Any("/datasources/:id/health", routing.Wrap(hs.CheckDatasourceHealth))
+		apiRoute.Any("/datasources/:id/health", authorize(reqNoAuth, ActionDatasourcesCheckHealth, ScopeDatasourceID), routing.Wrap(hs.CheckDatasourceHealth))
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
