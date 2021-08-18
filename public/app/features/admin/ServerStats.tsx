@@ -1,7 +1,7 @@
-import React, { PureComponent } from 'react';
+import React, { useEffect, useState } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { CardContainer, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { CardContainer, Icon, LinkButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModel } from '@grafana/data';
 import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -11,66 +11,99 @@ import { css } from '@emotion/css';
 
 interface Props {
   navModel: NavModel;
-  getServerStats: () => Promise<ServerStat[]>;
+  getServerStats: () => Promise<any[]>;
 }
 
-interface State {
-  stats: ServerStat[];
-  isLoading: boolean;
-}
+export const ServerStats = ({ navModel, getServerStats }: Props) => {
+  const [stats, setStats] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const styles = useStyles2(getStyles);
 
-export class ServerStats extends PureComponent<Props, State> {
-  state: State = {
-    stats: [],
-    isLoading: true,
-  };
+  useEffect(() => {
+    getServerStats().then(setStats).catch(console.error);
+    setIsLoading(false);
+  }, [getServerStats]);
 
-  async componentDidMount() {
-    try {
-      const stats = await this.props.getServerStats();
-      this.setState({ stats, isLoading: false });
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  render() {
-    const { navModel } = this.props;
-    const { stats, isLoading } = this.state;
-
-    return (
-      <Page navModel={navModel}>
-        <Page.Contents isLoading={isLoading}>
-          <table className="filter-table form-inline">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody>{stats.map(StatItem)}</tbody>
-          </table>
-        </Page.Contents>
-      </Page>
-    );
-  }
-}
-
-function StatItem(stat: ServerStat) {
   return (
-    <tr key={stat.name}>
-      <td>
-        {stat.name}{' '}
-        {stat.tooltip && (
-          <Tooltip content={stat.tooltip} placement={'top'}>
-            <Icon name={'info-circle'} />
-          </Tooltip>
-        )}
-      </td>
-      <td>{stat.value}</td>
-    </tr>
+    <Page navModel={navModel}>
+      <Page.Contents isLoading={isLoading}>
+        <h3 className={styles.title}>Instance statistics</h3>
+        <div className={styles.row}>
+          <StatCard
+            content={[
+              { name: 'Dashboards (starred)', value: `${stats.dashboards} (${stats.stars})` },
+              { name: 'Tags', value: stats.tags },
+              { name: 'Playlists', value: stats.playlists },
+              { name: 'Snapshots', value: stats.snapshots },
+            ]}
+            footer={
+              <LinkButton href={'/dashboards'} variant={'secondary'}>
+                Manage dashboards
+              </LinkButton>
+            }
+          />
+
+          <div className={styles.doubleRow}>
+            <StatCard
+              content={[{ name: 'Data sources', value: stats.datasources }]}
+              footer={
+                <LinkButton href={'/datasources'} variant={'secondary'}>
+                  Manage data sources
+                </LinkButton>
+              }
+            />
+            <StatCard
+              content={[{ name: 'Alerts', value: stats.alerts }]}
+              footer={
+                <LinkButton href={'/alerting/list'} variant={'secondary'}>
+                  Alerts
+                </LinkButton>
+              }
+            />
+          </div>
+          <StatCard
+            content={[
+              { name: 'Organisations', value: stats.orgs },
+              { name: 'Users total', value: stats.users },
+              { name: 'Active users in last 30 days', value: stats.activeUsers },
+              { name: 'Active sessions', value: stats.activeSessions },
+            ]}
+            footer={
+              <LinkButton href={'/admin/users'} variant={'secondary'}>
+                Manage users
+              </LinkButton>
+            }
+          />
+        </div>
+      </Page.Contents>
+    </Page>
   );
-}
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    title: css`
+      margin-bottom: ${theme.spacing(4)};
+    `,
+    row: css`
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+
+      & > div:not(:last-of-type) {
+        margin-right: ${theme.spacing(2)};
+      }
+
+      & > div {
+        width: 33.3%;
+      }
+    `,
+    doubleRow: css`
+      display: flex;
+      flex-direction: column;
+    `,
+  };
+};
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'server-stats'),
@@ -83,30 +116,39 @@ type StatCardProps = {
 };
 
 const StatCard = ({ content, footer }: StatCardProps) => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getCardStyles);
   return (
     <CardContainer className={styles.container} disableHover>
-      <div className={styles.content}>
-        {content.map((item) => {
-          return (
-            <div key={item.name} className={styles.row}>
-              <span>{item.name}</span>
-              <span>{item.value}</span>
-            </div>
-          );
-        })}
+      <div className={styles.inner}>
+        <div className={styles.content}>
+          {content.map((item) => {
+            return (
+              <div key={item.name} className={styles.row}>
+                <span>{item.name}</span>
+                <span>{item.value}</span>
+              </div>
+            );
+          })}
+        </div>
+        {footer && <div>{footer}</div>}
       </div>
-      {footer && <div>{footer}</div>}
     </CardContainer>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getCardStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       padding: ${theme.spacing(2)};
     `,
-    content: css``,
+    inner: css`
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    `,
+    content: css`
+      flex: 1 0 auto;
+    `,
     row: css`
       display: flex;
       justify-content: space-between;

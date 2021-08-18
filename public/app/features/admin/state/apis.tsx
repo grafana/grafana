@@ -12,6 +12,7 @@ export interface ServerStat {
 const { hasLicense } = config.licenseInfo;
 
 export const getServerStats = async (): Promise<ServerStat[]> => {
+  return getBackendSrv().get('api/admin/stats');
   try {
     const res = await getBackendSrv().get('api/admin/stats');
     return [
