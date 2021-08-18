@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { AppEvents, GrafanaTheme2, urlUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button, ConfirmModal, ClipboardButton, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { appEvents } from 'app/core/core';
@@ -45,6 +46,18 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
       dispatch(deleteRuleAction(identifier, { navigateTo: isViewMode ? '/alerting/list' : undefined }));
       setRuleToDelete(undefined);
     }
+  };
+
+  console.log(config.appUrl);
+
+  const buildShareUrl = () => {
+    if (isCloudRulesSource(rulesSource)) {
+      return `${config.appUrl}${config.appSubUrl ? '/' + config.appSubUrl : ''}alerting/${rulesSource.name}/${
+        rule.name
+      }/find`;
+    }
+
+    return window.location.href.split('?')[0];
   };
 
   // explore does not support grafana rule queries atm
@@ -147,7 +160,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
           }}
           className={style.button}
           size="sm"
-          getText={() => window.location.href.split('?')[0]}
+          getText={buildShareUrl}
         >
           Copy link to rule
         </ClipboardButton>
