@@ -1,12 +1,11 @@
-
 <!-- 8.1.1 START -->
 
 # 8.1.1 (2021-08-09)
 
 ### Bug fixes
 
-* **CloudWatch Logs:** Fix crash when no region is selected. [#37639](https://github.com/grafana/grafana/pull/37639), [@aocenas](https://github.com/aocenas)
-* **Reporting:** Fix timezone parsing for scheduler (enterprise)
+- **CloudWatch Logs:** Fix crash when no region is selected. [#37639](https://github.com/grafana/grafana/pull/37639), [@aocenas](https://github.com/aocenas)
+- **Reporting:** Fix timezone parsing for scheduler (enterprise)
 
 <!-- 8.1.1 END -->
 <!-- 8.1.0 START -->

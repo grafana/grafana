@@ -152,11 +152,12 @@ export interface BackendSrv {
   request(options: BackendSrvRequest): Promise<any>;
 
   /**
-   * @deprecated Use the fetch function instead
    * Special function used to communicate with datasources that will emit core
    * events that the Grafana QueryInspector and QueryEditor is listening for to be able
    * to display datasource query information. Can be skipped by adding `option.silent`
    * when initializing the request.
+   *
+   * @deprecated Use the fetch function instead
    */
   datasourceRequest<T = any>(options: BackendSrvRequest): Promise<FetchResponse<T>>;
 
