@@ -11,26 +11,24 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/remotewrite"
 )
 
-type RemoteWriteConfig struct {
-	// Enabled to enable remote write for a channel.
-	Enabled bool
+type RemoteWriteOutputConfig struct {
 	// Endpoint to send streaming frames to.
-	Endpoint string
+	Endpoint string `json:"endpoint"`
 	// User is a user for remote write request.
-	User string
+	User string `json:"user"`
 	// Password ...
-	Password string
+	Password string `json:"password"`
 	// SampleMilliseconds allow setting minimal time before
 	// different remote writes for a channel. 0 means no sampling interval.
-	SampleMilliseconds int64
+	SampleMilliseconds int64 `json:"sampleMilliseconds"`
 }
 
 type RemoteWriteOutput struct {
-	config     RemoteWriteConfig
+	config     RemoteWriteOutputConfig
 	httpClient *http.Client
 }
 
-func NewRemoteWriteOutput(config RemoteWriteConfig) *RemoteWriteOutput {
+func NewRemoteWriteOutput(config RemoteWriteOutputConfig) *RemoteWriteOutput {
 	return &RemoteWriteOutput{
 		config:     config,
 		httpClient: &http.Client{Timeout: 2 * time.Second},

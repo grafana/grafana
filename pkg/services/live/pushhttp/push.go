@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"os"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -15,8 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pipeline"
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 var (
@@ -29,242 +26,17 @@ func init() {
 
 // Gateway receives data and translates it to Grafana Live publications.
 type Gateway struct {
-	Cfg         *setting.Cfg      `inject:""`
-	GrafanaLive *live.GrafanaLive `inject:""`
+	Cfg         *setting.Cfg       `inject:""`
+	GrafanaLive *live.GrafanaLive  `inject:""`
+	Pipeline    *pipeline.Pipeline `inject:""`
 
-	converter     *convert.Converter
-	ruleProcessor *pipeline.RuleProcessor
-}
-
-type fakeStorage struct {
-	gLive         *live.GrafanaLive
-	frameStorage  *pipeline.FrameStorage
-	ruleProcessor *pipeline.RuleProcessor
-}
-
-func (f fakeStorage) ListChannelRules(_ context.Context, _ pipeline.ListLiveChannelRuleCommand) ([]*pipeline.LiveChannelRule, error) {
-	return []*pipeline.LiveChannelRule{
-		{
-			OrgId:   1,
-			Pattern: "stream/influx/input",
-			Converter: pipeline.NewAutoInfluxConverter(pipeline.AutoInfluxConverterConfig{
-				FrameFormat: "labels_column",
-			}),
-		},
-		{
-			OrgId:     1,
-			Pattern:   "stream/influx/input/*",
-			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
-		},
-		{
-			OrgId:   1,
-			Pattern: "stream/influx/input/cpu",
-			// TODO: Would be fine to have KeepLabelsProcessor, but we need to know frame type
-			// since there are cases when labels attached to a field, and cases where labels
-			// set in a first frame column (in Influx converter). For example, this will allow
-			// to leave only "total-cpu" data while dropping individual CPUs.
-			Processor: pipeline.NewKeepFieldsProcessor("labels", "time", "usage_user"),
-			Outputter: pipeline.NewMultipleOutputter(
-				pipeline.NewManagedStreamOutput(f.gLive),
-				pipeline.NewConditionalOutput(
-					pipeline.NewNumberCompareCondition("usage_user", "gte", 50),
-					pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
-						Channel: "stream/influx/input/cpu/spikes",
-					}),
-				),
-			),
-		},
-		{
-			OrgId:     1,
-			Pattern:   "stream/influx/input/cpu/spikes",
-			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
-		},
-		{
-			OrgId:     1,
-			Pattern:   "stream/json/auto",
-			Converter: pipeline.NewAutoJsonConverter(pipeline.AutoJsonConverterConfig{}),
-			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
-		},
-		{
-			OrgId:   1,
-			Pattern: "stream/json/tip",
-			Converter: pipeline.NewAutoJsonConverter(pipeline.AutoJsonConverterConfig{
-				FieldTips: map[string]pipeline.Field{
-					"value3": {
-						Name: "value3",
-						Type: data.FieldTypeNullableFloat64,
-					},
-					"value100": {
-						Name: "value100",
-						Type: data.FieldTypeNullableFloat64,
-					},
-				},
-			}),
-			Processor: pipeline.NewDropFieldsProcessor("value2"),
-			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
-		},
-		{
-			OrgId:   1,
-			Pattern: "stream/json/exact",
-			Converter: pipeline.NewExactJsonConverter(pipeline.ExactJsonConverterConfig{
-				Fields: []pipeline.Field{
-					{
-						Name:  "time",
-						Type:  data.FieldTypeTime,
-						Value: "#{now}",
-					},
-					{
-						Name:  "value1",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.value1",
-					},
-					{
-						Name:  "value2",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.value2",
-					},
-					{
-						Name:  "value3",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.value3",
-						Labels: []pipeline.Label{
-							{
-								Name:  "host",
-								Value: "$.host",
-							},
-						},
-					},
-					{
-						Name:  "value4",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.value4",
-						Config: &data.FieldConfig{
-							Thresholds: &data.ThresholdsConfig{
-								Mode: data.ThresholdsModeAbsolute,
-								Steps: []data.Threshold{
-									{
-										Value: 2,
-										State: "normal",
-									},
-									{
-										Value: 6,
-										State: "warning",
-									},
-									{
-										Value: 8,
-										State: "critical",
-									},
-								},
-							},
-						},
-					},
-					{
-						Name:  "map.red",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.map.red",
-						Labels: []pipeline.Label{
-							{
-								Name:  "host",
-								Value: "$.host",
-							},
-							{
-								Name:  "host2",
-								Value: "$.host",
-							},
-						},
-					},
-					{
-						Name:  "annotation",
-						Type:  data.FieldTypeNullableString,
-						Value: "$.annotation",
-					},
-					{
-						Name:  "running",
-						Type:  data.FieldTypeNullableBool,
-						Value: "{JSON.parse(x).status === 'running'}",
-					},
-					{
-						Name:  "num_map_colors",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "{Object.keys(JSON.parse(x).map).length}",
-					},
-				},
-			}),
-			Outputter: pipeline.NewMultipleOutputter(
-				pipeline.NewManagedStreamOutput(f.gLive),
-				pipeline.NewRemoteWriteOutput(pipeline.RemoteWriteConfig{
-					Enabled:  true,
-					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
-				}),
-				pipeline.NewChangeLogOutput(f.frameStorage, f.ruleProcessor, pipeline.ChangeLogOutputConfig{
-					Field:   "value3",
-					Channel: "stream/json/exact/value3/changes",
-				}),
-				pipeline.NewChangeLogOutput(f.frameStorage, f.ruleProcessor, pipeline.ChangeLogOutputConfig{
-					Field:   "annotation",
-					Channel: "stream/json/exact/annotation/changes",
-				}),
-				pipeline.NewConditionalOutput(
-					pipeline.NewMultipleConditionChecker(
-						[]pipeline.ConditionChecker{
-							pipeline.NewNumberCompareCondition("value1", "gte", 3.0),
-							pipeline.NewNumberCompareCondition("value2", "gte", 3.0),
-						},
-						pipeline.ConditionAll,
-					),
-					pipeline.NewChannelOutput(f.ruleProcessor, pipeline.ChannelOutputConfig{
-						Channel: "stream/json/exact/condition",
-					}),
-				),
-				pipeline.NewThresholdOutput(f.frameStorage, f.ruleProcessor, pipeline.ThresholdOutputConfig{
-					FieldName: "value4",
-					Channel:   "stream/json/exact/value4/state",
-				}),
-			),
-		},
-		{
-			OrgId:   1,
-			Pattern: "stream/json/exact/value3/changes",
-			Outputter: pipeline.NewMultipleOutputter(
-				pipeline.NewManagedStreamOutput(f.gLive),
-				pipeline.NewRemoteWriteOutput(pipeline.RemoteWriteConfig{
-					Enabled:  true,
-					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
-				}),
-			),
-		},
-		{
-			OrgId:     1,
-			Pattern:   "stream/json/exact/annotation/changes",
-			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
-		},
-		{
-			OrgId:     1,
-			Pattern:   "stream/json/exact/condition",
-			Processor: pipeline.NewDropFieldsProcessor("running"),
-			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
-		},
-		{
-			OrgId:     1,
-			Pattern:   "stream/json/exact/value4/state",
-			Outputter: pipeline.NewManagedStreamOutput(f.gLive),
-		},
-	}, nil
+	converter *convert.Converter
 }
 
 // Init Gateway.
 func (g *Gateway) Init() error {
 	logger.Info("Live Push Gateway initialization")
-
 	g.converter = convert.NewConverter()
-	storage := &fakeStorage{gLive: g.GrafanaLive, frameStorage: pipeline.NewFrameStorage()}
-	ruleProcessor := pipeline.NewRuleProcessor(pipeline.New(storage))
-	storage.ruleProcessor = ruleProcessor
-	g.ruleProcessor = ruleProcessor
 	return nil
 }
 
@@ -344,7 +116,7 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 
 	channelID := "stream/" + streamID + "/" + path
 
-	channelFrames, ok, err := g.ruleProcessor.DataToFrames(context.Background(), ctx.OrgId, channelID, body)
+	channelFrames, ok, err := g.Pipeline.DataToChannelFrames(context.Background(), ctx.OrgId, channelID, body)
 	if err != nil {
 		logger.Error("Error data to frame", "error", err, "body", string(body))
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
@@ -356,16 +128,10 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 		return
 	}
 
-	for _, channelFrame := range channelFrames {
-		var processorChannel = channelID
-		if channelFrame.Channel != "" {
-			processorChannel = channelFrame.Channel
-		}
-		err = g.ruleProcessor.ProcessFrame(context.Background(), ctx.OrgId, processorChannel, channelFrame.Frame)
-		if err != nil {
-			logger.Error("Error processing frame", "error", err, "data", string(body))
-			ctx.Resp.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	err = g.Pipeline.ProcessChannelFrames(context.Background(), ctx.OrgId, channelID, channelFrames)
+	if err != nil {
+		logger.Error("Error processing frame", "error", err, "data", string(body))
+		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 }

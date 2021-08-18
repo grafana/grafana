@@ -9,8 +9,8 @@ import (
 )
 
 type ChangeLogOutputConfig struct {
-	Field   string
-	Channel string
+	FieldName string `json:"fieldName"`
+	Channel   string `json:"channel"`
 }
 
 type ChangeLogOutput struct {
@@ -35,7 +35,7 @@ func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.
 		return nil
 	}
 
-	fieldName := l.config.Field
+	fieldName := l.config.FieldName
 
 	previousFrameFieldIndex := -1
 	currentFrameFieldIndex := -1

@@ -5,7 +5,7 @@ import (
 )
 
 type AutoJsonConverterConfig struct {
-	FieldTips map[string]Field
+	FieldTips map[string]Field `json:"fieldTips"`
 }
 
 type AutoJsonConverter struct {

@@ -9,8 +9,8 @@ import (
 )
 
 type ThresholdOutputConfig struct {
-	FieldName string
-	Channel   string
+	FieldName string `json:"fieldName"`
+	Channel   string `json:"channel"`
 }
 
 type ThresholdOutput struct {
@@ -23,7 +23,7 @@ func NewThresholdOutput(frameStorage *FrameStorage, ruleProcessor *RuleProcessor
 	return &ThresholdOutput{frameStorage: frameStorage, ruleProcessor: ruleProcessor, config: config}
 }
 
-func (l ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) error {
+func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) error {
 	previousFrame, previousFrameOk, err := l.frameStorage.Get(vars.OrgID, l.config.Channel)
 	if err != nil {
 		return err
