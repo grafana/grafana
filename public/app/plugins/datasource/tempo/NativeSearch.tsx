@@ -56,8 +56,10 @@ const NativeSearch = ({ languageProvider, query, onChange, onBlur, onRunQuery }:
       setHasSyntaxLoaded(true);
       setAutocomplete({ serviceNameOptions, spanNameOptions });
     };
-    fetchAutocomplete();
-  }, []);
+    if (languageProvider) {
+      fetchAutocomplete();
+    }
+  }, [languageProvider]);
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
     return await languageProvider.provideCompletionItems(typeahead);

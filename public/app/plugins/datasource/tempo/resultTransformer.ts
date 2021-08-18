@@ -341,6 +341,7 @@ export function createTableFrameFromSearch(data: SearchResponse[], instanceSetti
                 datasourceName: instanceSettings.name,
                 query: {
                   query: '${__value.raw}',
+                  queryType: 'traceId',
                 },
               },
             },
@@ -369,11 +370,18 @@ export function createTableFrameFromSearch(data: SearchResponse[], instanceSetti
 }
 
 function transformToTraceData(data: SearchResponse) {
+  let traceName = '';
+  if (data.rootServiceName) {
+    traceName += data.rootServiceName + ' ';
+  }
+  if (data.rootTraceName) {
+    traceName += data.rootTraceName;
+  }
   return {
     traceID: data.traceID,
     startTime: parseInt(data.startTimeUnixNano, 10) / 1000 / 1000,
     duration: data.durationMs,
-    traceName: data.rootServiceName + ' ' + data.rootTraceName,
+    traceName,
   };
 }
 

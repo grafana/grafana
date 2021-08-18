@@ -37,7 +37,6 @@ import {
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 import { mapPromMetricsToServiceMap, serviceMapMetrics } from './graphTransform';
-import TempoLanguageProvider from './language_provider';
 import { tokenizer } from './syntax';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
@@ -191,7 +190,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   buildSearchQuery(query: TempoQuery) {
-    const tokens = Prism.tokenize(query.search, tokenizer) ?? [];
+    const tokens = query.search ? Prism.tokenize(query.search, tokenizer) : [];
 
     // Build key value pairs
     let tagsQuery: Array<{ [key: string]: string }> = [];
