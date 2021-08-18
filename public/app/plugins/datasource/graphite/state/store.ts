@@ -22,26 +22,22 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { DataQuery, TimeRange } from '@grafana/data';
 
 export type GraphiteQueryEditorState = {
+  // external dependencies
+  datasource: GraphiteDatasource;
+  target: GraphiteTarget;
+  refresh: (target: string) => void;
+  queries?: DataQuery[];
+  templateSrv: TemplateSrv;
+  range?: TimeRange;
+
+  // internal
   supportsTags: boolean;
   paused: boolean;
   removeTagValue: string;
-
-  datasource: GraphiteDatasource;
-
-  templateSrv: TemplateSrv;
-  range?: TimeRange;
-  queries?: DataQuery[];
-  refresh: (target: string) => void;
-
-  target: GraphiteTarget;
-
   funcDefs: FuncDefs | null;
-
   segments: GraphiteSegment[];
   queryModel: GraphiteQuery;
-
   error: Error | null;
-
   tagsAutoCompleteErrorShown: boolean;
   metricAutoCompleteErrorShown: boolean;
 };

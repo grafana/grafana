@@ -76,6 +76,7 @@ export type GraphiteQueryEditorDependencies = {
   datasource: GraphiteDatasource;
   range?: TimeRange;
   templateSrv: TemplateSrv;
+  queries: DataQuery[];
   refresh: (target: string) => void;
 };
 
