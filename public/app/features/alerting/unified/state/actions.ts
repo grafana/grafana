@@ -41,7 +41,7 @@ import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
 import { makeAMLink, retryWhile } from '../utils/misc';
 import { isFetchError, withAppEvents, withSerializedError } from '../utils/redux';
-import { formValuesToRulerAlertingRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
+import { formValuesToRulerRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
 import {
   isCloudRuleIdentifier,
   isGrafanaRuleIdentifier,
@@ -251,7 +251,7 @@ export function deleteRuleAction(
 
 async function saveLotexRule(values: RuleFormValues, existing?: RuleWithLocation): Promise<RuleIdentifier> {
   const { dataSourceName, group, namespace } = values;
-  const formRule = formValuesToRulerAlertingRuleDTO(values);
+  const formRule = formValuesToRulerRuleDTO(values);
   if (dataSourceName && group && namespace) {
     // if we're updating a rule...
     if (existing) {
@@ -373,7 +373,7 @@ export const saveRuleFormAction = createAsyncThunk(
           const { type } = values;
           // in case of system (cortex/loki)
           let identifier: RuleIdentifier;
-          if (type === RuleFormType.cloud) {
+          if (type === RuleFormType.cloudAlerting || type === RuleFormType.cloudRecording) {
             identifier = await saveLotexRule(values, existing);
             // in case of grafana managed
           } else if (type === RuleFormType.grafana) {

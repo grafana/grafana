@@ -64,7 +64,7 @@ function renderRuleEditor(identifier?: string) {
 
 const ui = {
   inputs: {
-    name: byLabelText('Alert name'),
+    name: byLabelText('Rule name'),
     alertType: byTestId('alert-type-picker'),
     dataSource: byTestId('datasource-picker'),
     folder: byTestId('folder-picker'),
