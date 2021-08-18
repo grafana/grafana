@@ -54,6 +54,7 @@ describe('Graphite actions', async () => {
         datasource: ctx.datasource,
         target: ctx.target,
         refresh: jest.fn(),
+        queries: [],
         //@ts-ignore
         templateSrv: new TemplateSrvStub(),
       })
