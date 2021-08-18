@@ -59,6 +59,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
       paused: false,
       removeTagValue: '-- remove tag --',
       funcDefs: deps.datasource.funcDefs,
+      queries: deps.queries,
     };
 
     await buildSegments(state, false);
