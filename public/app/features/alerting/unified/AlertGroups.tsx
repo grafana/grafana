@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -17,7 +16,6 @@ import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { useGroupedAlerts } from './hooks/useGroupedAlerts';
-import { useFlatAmAlerts } from './hooks/useFlatAmAlerts';
 import { useFilteredAmGroups } from './hooks/useFilteredAmGroups';
 import { css } from '@emotion/css';
 
@@ -28,15 +26,12 @@ const AlertGroups = () => {
   const { groupBy = [] } = getFiltersFromUrlParams(queryParams);
   const styles = useStyles2(getStyles);
 
-  const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups) || initialAsyncRequestState;
-  const loading = alertGroups[alertManagerSourceName || '']?.loading;
-  const error = alertGroups[alertManagerSourceName || '']?.error;
-  const results: AlertmanagerGroup[] = alertGroups[alertManagerSourceName || '']?.result || [];
+  const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
+  const { loading, error, result: results = [] } =
+    alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
 
-  const flattenedAlerts = useFlatAmAlerts(results);
-  const groupedAlerts = useGroupedAlerts(flattenedAlerts, groupBy);
-  const groupToFilter = groupBy.length > 0 ? groupedAlerts : results;
-  const filteredAlertGroups = useFilteredAmGroups(groupToFilter);
+  const groupedAlerts = useGroupedAlerts(results, groupBy);
+  const filteredAlertGroups = useFilteredAmGroups(groupedAlerts);
 
   useEffect(() => {
     function fetchNotifications() {
@@ -45,7 +40,7 @@ const AlertGroups = () => {
       }
     }
     fetchNotifications();
-    const interval = setInterval(() => fetchNotifications, NOTIFICATIONS_POLL_INTERVAL_MS);
+    const interval = setInterval(fetchNotifications, NOTIFICATIONS_POLL_INTERVAL_MS);
     return () => {
       clearInterval(interval);
     };

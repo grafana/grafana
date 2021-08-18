@@ -12,21 +12,12 @@ interface Props {
 }
 
 export const GroupBy = ({ className, groups, groupBy, onGroupingChange }: Props) => {
-  const labelKeyOptions = uniq(
-    groups.reduce((keys, group) => {
-      group.alerts.forEach(({ labels }) => {
-        Object.keys(labels).forEach((label) => keys.push(label));
-      });
-
-      return keys;
-    }, [] as string[])
-  ).map(
-    (key) =>
-      ({
-        label: key,
-        value: key,
-      } as SelectableValue)
-  );
+  const labelKeyOptions = uniq(groups.flatMap((group) => group.alerts).flatMap(({ labels }) => Object.keys(labels)))
+    .filter((label) => !(label.startsWith('__') && label.endsWith('__'))) // Filter out private labels
+    .map<SelectableValue>((key) => ({
+      label: key,
+      value: key,
+    }));
 
   return (
     <div data-testid={'group-by-container'} className={className}>

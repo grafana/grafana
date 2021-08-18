@@ -1,9 +1,13 @@
 import { useMemo } from 'react';
-import { AlertmanagerAlert, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from '@grafana/data';
 
-export const useGroupedAlerts = (alerts: AlertmanagerAlert[], groupBy: string[]) => {
+export const useGroupedAlerts = (groups: AlertmanagerGroup[], groupBy: string[]) => {
   return useMemo(() => {
+    if (groupBy.length === 0) {
+      return groups;
+    }
+    const alerts = groups.flatMap(({ alerts }) => alerts);
     return alerts.reduce((groupings, alert) => {
       const alertContainsGroupings = groupBy.every((groupByLabel) => Object.keys(alert.labels).includes(groupByLabel));
 
@@ -39,5 +43,5 @@ export const useGroupedAlerts = (alerts: AlertmanagerAlert[], groupBy: string[])
 
       return groupings;
     }, [] as AlertmanagerGroup[]);
-  }, [alerts, groupBy]);
+  }, [groups, groupBy]);
 };

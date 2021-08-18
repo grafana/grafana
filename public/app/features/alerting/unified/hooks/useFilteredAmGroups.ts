@@ -7,7 +7,7 @@ import { getFiltersFromUrlParams } from '../utils/misc';
 export const useFilteredAmGroups = (groups: AlertmanagerGroup[]) => {
   const [queryParams] = useQueryParams();
   const filters = getFiltersFromUrlParams(queryParams);
-  const matchers = parseMatchers(filters.queryString);
+  const matchers = parseMatchers(filters.queryString || '');
 
   return useMemo(() => {
     return groups.reduce((filteredGroup, group) => {
