@@ -1,28 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { CardContainer, Icon, LinkButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { CardContainer, LinkButton, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModel } from '@grafana/data';
 import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
 import { getServerStats, ServerStat } from './state/apis';
-import { css } from '@emotion/css';
 
 interface Props {
   navModel: NavModel;
-  getServerStats: () => Promise<any[]>;
+  getServerStats: () => Promise<ServerStat | null>;
 }
 
 export const ServerStats = ({ navModel, getServerStats }: Props) => {
-  const [stats, setStats] = useState<any[]>([]);
+  const [stats, setStats] = useState<ServerStat | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    getServerStats().then(setStats).catch(console.error);
+    getServerStats().then(setStats);
     setIsLoading(false);
   }, [getServerStats]);
+
+  if (!stats) {
+    return null;
+  }
 
   return (
     <Page navModel={navModel}>
@@ -107,11 +111,11 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'server-stats'),
-  getServerStats: getServerStats,
+  getServerStats,
 });
 
 type StatCardProps = {
-  content: Array<Record<string, string>>;
+  content: Array<Record<string, number | string>>;
   footer?: JSX.Element;
 };
 
