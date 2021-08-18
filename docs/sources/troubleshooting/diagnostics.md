@@ -10,8 +10,8 @@ when investigating certain performance problems. It's _not_ recommended to have 
 
 ## Turn on profiling
 
-The `grafana-server` can be started with the arguments `-profile` to enable profiling, `-profile-addr` to override the default HTTP address (`localhost`), and
-`-profile-port` to override the default HTTP port (`6060`) where the `pprof` debugging endpoints are available. For example:
+You can start the `grafana-server` with the following arguments: `-profile` to enable profiling, `-profile-addr` to override the default HTTP address (`localhost`), and
+		`-profile-port` to override the default HTTP port (`6060`) where the `pprof` debugging endpoints are available. For example:
 
 ```bash
 ./grafana-server -profile -profile-addr=0.0.0.0 -profile-port=8080
