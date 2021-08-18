@@ -3566,7 +3566,8 @@
         {
           "refCount": 0,
           "refId": "C",
-          "target": "alias(asPercent(sumSeries(keepLastValue(metrictank.stats.$environment.$instance.idx.memory.find-cache.ops.hit.rate32, 10)), alias(sumSeries(keepLastValue(metrictank.stats.$environment.$instance.idx.memory.find-cache.ops.*.rate32, 10)), 'sum')), 'hit-rate')"
+          "target": "alias(asPercent(sumSeries(keepLastValue(metrictank.stats.$environment.$instance.idx.memory.find-cache.ops.hit.rate32, 10)), #B), 'hit-rate')",
+          "targetFull": "alias(asPercent(sumSeries(keepLastValue(metrictank.stats.$environment.$instance.idx.memory.find-cache.ops.hit.rate32, 10)), alias(sumSeries(keepLastValue(metrictank.stats.$environment.$instance.idx.memory.find-cache.ops.*.rate32, 10)), 'sum')), 'hit-rate')"
         }
       ],
       "thresholds": [],
@@ -4077,7 +4078,8 @@
         {
           "refCount": 0,
           "refId": "C",
-          "target": "alias(divideSeries(alias(sumSeries(metrictank.stats.$environment.$instance.cache.size.used.gauge64), 'used'),alias(sumSeries(metrictank.stats.$environment.$instance.cache.size.max.gauge64), 'max')), 'utilisation')",
+          "target": "alias(divideSeries(#B,#A), 'utilisation')",
+          "targetFull": "alias(divideSeries(alias(sumSeries(metrictank.stats.$environment.$instance.cache.size.used.gauge64), 'used'),alias(sumSeries(metrictank.stats.$environment.$instance.cache.size.max.gauge64), 'max')), 'utilisation')",
           "textEditor": true
         },
         {
@@ -4090,7 +4092,8 @@
         {
           "refCount": 0,
           "refId": "E",
-          "target": "alias(sum(alias(sumSeries(metrictank.stats.$environment.$instance.cache.size.used.gauge64), 'used'), sortByName(groupByNodes(aliasByNode(metrictank.stats.$environment.$instance.cache.overhead.*.gauge64, 6), 'sum', 0))),'total used')",
+          "target": "alias(sum(#B, #D),'total used')",
+          "targetFull": "alias(sum(alias(sumSeries(metrictank.stats.$environment.$instance.cache.size.used.gauge64), 'used'), sortByName(groupByNodes(aliasByNode(metrictank.stats.$environment.$instance.cache.overhead.*.gauge64, 6), 'sum', 0))),'total used')",
           "textEditor": true
         }
       ],
@@ -4222,7 +4225,8 @@
           "hide": true,
           "refCount": 0,
           "refId": "D",
-          "target": "alias(divideSeries(alias(sumSeries(metrictank.stats.$environment.$instance.cache.accounting.queue.size.max.gauge64), 'max'),alias(sumSeries(metrictank.stats.$environment.$instance.cache.accounting.queue.size.used.max.gauge32), 'used')),'utilisation')",
+          "target": "alias(divideSeries(#A,#B),'utilisation')",
+          "targetFull": "alias(divideSeries(alias(sumSeries(metrictank.stats.$environment.$instance.cache.accounting.queue.size.max.gauge64), 'max'),alias(sumSeries(metrictank.stats.$environment.$instance.cache.accounting.queue.size.used.max.gauge32), 'used')),'utilisation')",
           "textEditor": true
         }
       ],

@@ -132,7 +132,12 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			return nil, err
 		}
 		s.logger.Debug("graphite", "query", model)
-		currTarget := model.Get("target").MustString()
+		currTarget := ""
+		if fullTarget, err := model.Get("targetFull").String(); err == nil {
+			currTarget = fullTarget
+		} else {
+			currTarget = model.Get("target").MustString()
+		}
 		if currTarget == "" {
 			s.logger.Debug("graphite", "empty query target", model)
 			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", model))
