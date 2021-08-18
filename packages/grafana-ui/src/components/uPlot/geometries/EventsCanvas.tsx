@@ -1,5 +1,5 @@
 import { DataFrame, DataFrameFieldIndex } from '@grafana/data';
-import React, { useLayoutEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { usePlotContext } from '../context';
 import { Marker } from './Marker';
 import { XYCanvas } from './XYCanvas';
@@ -21,12 +21,24 @@ export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords
   // render token required to re-render annotation markers. Rendering lines happens in uPlot and the props do not change
   // so we need to force the re-render when the draw hook was performed by uPlot
   const [renderToken, setRenderToken] = useState(0);
+  const isMounted = useRef(false);
 
   useLayoutEffect(() => {
+    if (isMounted.current === false) {
+      return;
+    }
     config.addHook('draw', () => {
       setRenderToken((s) => s + 1);
     });
   }, [config, setRenderToken]);
+
+  // clean up action to avoid memory leak
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const eventMarkers = useMemo(() => {
     const markers: React.ReactNode[] = [];
