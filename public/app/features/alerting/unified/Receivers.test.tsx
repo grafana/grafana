@@ -4,10 +4,10 @@ import { Router } from 'react-router-dom';
 import Receivers from './Receivers';
 import React from 'react';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { act, render } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import { getAllDataSources } from './utils/config';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
-import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus } from './api/alertmanager';
+import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus, testReceivers } from './api/alertmanager';
 import {
   mockDataSource,
   MockDataSourceSrv,
@@ -37,6 +37,7 @@ const mocks = {
     fetchStatus: typeAsJestMock(fetchStatus),
     updateConfig: typeAsJestMock(updateAlertManagerConfig),
     fetchNotifiers: typeAsJestMock(fetchNotifiers),
+    testReceivers: typeAsJestMock(testReceivers),
   },
 };
 
@@ -68,6 +69,7 @@ const ui = {
   newContactPointButton: byRole('link', { name: /new contact point/i }),
   saveContactButton: byRole('button', { name: /save contact point/i }),
   newContactPointTypeButton: byRole('button', { name: /new contact point type/i }),
+  testContactPointButton: byRole('button', { name: /Test/ }),
 
   receiversTable: byTestId('receivers-table'),
   templatesTable: byTestId('templates-table'),
@@ -78,7 +80,7 @@ const ui = {
   inputs: {
     name: byLabelText('Name'),
     email: {
-      addresses: byLabelText('Addresses'),
+      addresses: byLabelText(/Addresses/),
     },
     hipchat: {
       url: byLabelText('Hip Chat Url'),
@@ -149,6 +151,46 @@ describe('Receivers', () => {
     expect(locationService.getSearchObject()[ALERTMANAGER_NAME_QUERY_KEY]).toEqual('CloudManager');
   });
 
+  it('Grafana receiver can be tested', async () => {
+    mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
+
+    await renderReceivers();
+
+    // go to new contact point page
+    userEvent.click(await ui.newContactPointButton.find());
+
+    await byRole('heading', { name: /create contact point/i }).find();
+    expect(locationService.getLocation().pathname).toEqual('/alerting/notifications/receivers/new');
+
+    // type in a name for the new receiver
+    await userEvent.type(ui.inputs.name.get(), 'my new receiver');
+
+    // enter some email
+    const email = ui.inputs.email.addresses.get();
+    userEvent.clear(email);
+    await userEvent.type(email, 'tester@grafana.com');
+
+    // try to test the contact point
+    userEvent.click(ui.testContactPointButton.get());
+
+    await waitFor(() => expect(mocks.api.testReceivers).toHaveBeenCalled());
+
+    expect(mocks.api.testReceivers).toHaveBeenCalledWith('grafana', [
+      {
+        grafana_managed_receiver_configs: [
+          {
+            disableResolveMessage: false,
+            name: 'test',
+            secureSettings: {},
+            settings: { addresses: 'tester@grafana.com', singleEmail: false },
+            type: 'email',
+          },
+        ],
+        name: 'test',
+      },
+    ]);
+  });
+
   it('Grafana receiver can be created', async () => {
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
@@ -164,7 +206,7 @@ describe('Receivers', () => {
     await userEvent.type(byLabelText('Name').get(), 'my new receiver');
 
     // check that default email form is rendered
-    await ui.inputs.name.find();
+    await ui.inputs.email.addresses.find();
 
     // select hipchat
     await clickSelectOption(byTestId('items.0.type').get(), 'HipChat');

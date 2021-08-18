@@ -75,7 +75,13 @@ export function RuleListErrors(): ReactElement {
             <>
               <div>{errors[0]}</div>
               {errors.length >= 2 && (
-                <Button className={styles.moreButton} variant="link" size="sm" onClick={() => setExpanded(true)}>
+                <Button
+                  className={styles.moreButton}
+                  variant="link"
+                  icon="angle-right"
+                  size="sm"
+                  onClick={() => setExpanded(true)}
+                >
                   {errors.length - 1} more {pluralize('error', errors.length - 1)}
                 </Button>
               )}
