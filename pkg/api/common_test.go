@@ -240,7 +240,10 @@ type fakeAccessControl struct {
 }
 
 func (f *fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
-	permissions, _ := f.GetUserPermissions(ctx, user)
+	permissions, err := f.GetUserPermissions(ctx, user)
+	if err != nil {
+		return false, err
+	}
 	return evaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions))
 }
 
