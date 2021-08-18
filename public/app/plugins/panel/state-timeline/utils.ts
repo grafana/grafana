@@ -126,7 +126,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     updateActiveSeriesIdx,
     updateActiveDatapointIdx,
     updateTooltipPosition
-  ) => (u: uPlot) => {
+  ) => {
     if (shouldChangeHover) {
       if (hoveredSeriesIdx != null) {
         updateActiveSeriesIdx(hoveredSeriesIdx);
