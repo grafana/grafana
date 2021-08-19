@@ -46,26 +46,31 @@ func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, 
 	for _, s := range targetScopes {
 
 		for dbScope := range dbScopes {
-
-			prefix := dbScope[:len(dbScope)-1]
-			if !ValidateScope(prefix) {
-				msg := "Invalid scope"
-				reason := fmt.Sprintf("%v should not contain meta-characters like * or ?, except in the last position", dbScope)
-				logger.Error(msg, "reason", reason, "scope", dbScope)
-				return false, errors.New(msg)
-			}
-			msg := "Access control"
-			reason := fmt.Sprintf("matched request scope %v against resource scope %v", dbScope, s)
-			if dbScope[len(dbScope)-1] == "*"[0] { //Prefix match
-				match := strings.HasPrefix(s, prefix)
-				if match {
-					logger.Debug(msg, "reason", reason, "request scope", dbScope, "resource scope", s)
-					return true, nil
-				}
+			if dbScope == "" {
+				//Log an error?
 			} else {
-				if s == dbScope { //Exact match
-					logger.Debug(msg, "reason", reason, "request scope", dbScope, "resource scope", s)
-					return true, nil
+				prefix := dbScope[:len(dbScope)-1]
+				lastChar := dbScope[len(dbScope)-1]
+				if !ValidateScope(prefix) {
+					msg := "Invalid scope"
+					reason := fmt.Sprintf("%v should not contain meta-characters like * or ?, except in the last position", dbScope)
+					logger.Error(msg, "reason", reason, "scope", dbScope)
+					return false, errors.New(msg)
+				}
+
+				msg := "Access control"
+				reason := fmt.Sprintf("matched request scope %v against resource scope %v", dbScope, s)
+				if lastChar == "*"[0] { //Prefix match
+					match := strings.HasPrefix(s, prefix)
+					if match {
+						logger.Debug(msg, "reason", reason, "request scope", dbScope, "resource scope", s)
+						return true, nil
+					}
+				} else {
+					if s == dbScope { //Exact match
+						logger.Debug(msg, "reason", reason, "request scope", dbScope, "resource scope", s)
+						return true, nil
+					}
 				}
 			}
 		}
