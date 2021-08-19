@@ -3,18 +3,17 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { css } from '@emotion/css';
 import { CardContainer, LinkButton, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, NavModel } from '@grafana/data';
-import { StoreState } from 'app/types';
+import { GrafanaTheme2 } from '@grafana/data';
+import { AccessControlAction, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import Page from 'app/core/components/Page/Page';
 import { getServerStats, ServerStat } from './state/apis';
+import { contextSrv } from '../../core/services/context_srv';
 
 export interface Props {
-  navModel: NavModel;
   getServerStats: () => Promise<ServerStat | null>;
 }
 
-export const ServerStats = ({ navModel, getServerStats }: Props) => {
+export const ServerStats = ({ getServerStats }: Props) => {
   const [stats, setStats] = useState<ServerStat | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const styles = useStyles2(getStyles);
@@ -24,63 +23,61 @@ export const ServerStats = ({ navModel, getServerStats }: Props) => {
     setIsLoading(false);
   }, [getServerStats]);
 
-  if (!stats) {
+  if (!stats || isLoading || !contextSrv.hasPermission(AccessControlAction.ActionServerStatsRead)) {
     return null;
   }
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents isLoading={isLoading}>
-        <h3 className={styles.title}>Instance statistics</h3>
-        <div className={styles.row}>
+    <>
+      <h2 className={styles.title}>Instance statistics</h2>
+      <div className={styles.row}>
+        <StatCard
+          content={[
+            { name: 'Dashboards (starred)', value: `${stats.dashboards} (${stats.stars})` },
+            { name: 'Tags', value: stats.tags },
+            { name: 'Playlists', value: stats.playlists },
+            { name: 'Snapshots', value: stats.snapshots },
+          ]}
+          footer={
+            <LinkButton href={'/dashboards'} variant={'secondary'}>
+              Manage dashboards
+            </LinkButton>
+          }
+        />
+
+        <div className={styles.doubleRow}>
           <StatCard
-            content={[
-              { name: 'Dashboards (starred)', value: `${stats.dashboards} (${stats.stars})` },
-              { name: 'Tags', value: stats.tags },
-              { name: 'Playlists', value: stats.playlists },
-              { name: 'Snapshots', value: stats.snapshots },
-            ]}
+            content={[{ name: 'Data sources', value: stats.datasources }]}
             footer={
-              <LinkButton href={'/dashboards'} variant={'secondary'}>
-                Manage dashboards
+              <LinkButton href={'/datasources'} variant={'secondary'}>
+                Manage data sources
               </LinkButton>
             }
           />
-
-          <div className={styles.doubleRow}>
-            <StatCard
-              content={[{ name: 'Data sources', value: stats.datasources }]}
-              footer={
-                <LinkButton href={'/datasources'} variant={'secondary'}>
-                  Manage data sources
-                </LinkButton>
-              }
-            />
-            <StatCard
-              content={[{ name: 'Alerts', value: stats.alerts }]}
-              footer={
-                <LinkButton href={'/alerting/list'} variant={'secondary'}>
-                  Alerts
-                </LinkButton>
-              }
-            />
-          </div>
           <StatCard
-            content={[
-              { name: 'Organisations', value: stats.orgs },
-              { name: 'Users total', value: stats.users },
-              { name: 'Active users in last 30 days', value: stats.activeUsers },
-              { name: 'Active sessions', value: stats.activeSessions },
-            ]}
+            content={[{ name: 'Alerts', value: stats.alerts }]}
             footer={
-              <LinkButton href={'/admin/users'} variant={'secondary'}>
-                Manage users
+              <LinkButton href={'/alerting/list'} variant={'secondary'}>
+                Alerts
               </LinkButton>
             }
           />
         </div>
-      </Page.Contents>
-    </Page>
+        <StatCard
+          content={[
+            { name: 'Organisations', value: stats.orgs },
+            { name: 'Users total', value: stats.users },
+            { name: 'Active users in last 30 days', value: stats.activeUsers },
+            { name: 'Active sessions', value: stats.activeSessions },
+          ]}
+          footer={
+            <LinkButton href={'/admin/users'} variant={'secondary'}>
+              Manage users
+            </LinkButton>
+          }
+        />
+      </div>
+    </>
   );
 };
 
@@ -105,6 +102,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     doubleRow: css`
       display: flex;
       flex-direction: column;
+
+      & > div:first-of-type {
+        margin-bottom: ${theme.spacing(2)};
+      }
     `,
   };
 };
@@ -160,7 +161,6 @@ const getCardStyles = (theme: GrafanaTheme2) => {
       margin-bottom: ${theme.spacing(2)};
       align-items: center;
     `,
-    footer: css``,
   };
 };
 export default hot(module)(connect(mapStateToProps)(ServerStats));

@@ -1,13 +1,14 @@
 import React from 'react';
+import { connect } from 'react-redux';
+import { hot } from 'react-hot-loader';
 import { css } from '@emotion/css';
+import { LinkButton } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import Page from '../../core/components/Page/Page';
-import { LicenseChrome } from './LicenseChrome';
-import { LinkButton } from '@grafana/ui';
-import { hot } from 'react-hot-loader';
-import { StoreState } from '../../types';
 import { getNavModel } from '../../core/selectors/navModel';
-import { connect } from 'react-redux';
+import { LicenseChrome } from './LicenseChrome';
+import { StoreState } from '../../types';
+import ServerStats from './ServerStats';
 
 interface Props {
   navModel: NavModel;
@@ -17,6 +18,7 @@ export const UpgradePage: React.FC<Props> = ({ navModel }) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
+        <ServerStats />
         <UpgradeInfo
           editionNotice="You are running the open-source version of Grafana.
         You have to install the Enterprise edition in order enable Enterprise features."

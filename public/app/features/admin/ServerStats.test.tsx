@@ -1,10 +1,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ServerStats, Props } from './ServerStats';
-import { createNavModel } from 'test/mocks/common';
 import { ServerStat } from './state/apis';
 
-const navModel = createNavModel('Admin', 'stats');
 const stats: ServerStat = {
   activeAdmins: 1,
   activeEditors: 0,
@@ -31,7 +29,6 @@ const getServerStats = () => {
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
-    navModel,
     getServerStats,
   };
   Object.assign(props, propOverrides);
