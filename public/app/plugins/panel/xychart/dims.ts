@@ -20,7 +20,7 @@ export interface XYDimensions {
 }
 
 export function isGraphable(field: Field) {
-  return field.type === FieldType.number;
+  return field.type === FieldType.number || field.type === FieldType.string;
 }
 
 export function getXYDimensions(cfg?: XYDimensionConfig, data?: DataFrame[]): XYDimensions {

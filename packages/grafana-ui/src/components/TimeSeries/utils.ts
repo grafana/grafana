@@ -11,6 +11,7 @@ import {
   getFieldColorModeForField,
   getFieldSeriesColor,
   getFieldDisplayName,
+  getDisplayProcessor,
 } from '@grafana/data';
 
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
@@ -26,6 +27,7 @@ import {
 } from '../uPlot/config';
 import { collectStackingGroups, preparePlotData } from '../uPlot/utils';
 import uPlot from 'uplot';
+import { ScaleDistribution } from '../uPlot/models.gen';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -50,6 +52,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];
+
   if (!xField) {
     return builder; // empty frame with no options
   }
@@ -81,6 +84,15 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       theme,
     });
   } else {
+    const xFieldValueFormatter =
+      xField.display ||
+      getDisplayProcessor({
+        field: xField,
+        theme,
+        timeZone,
+      });
+    const xValueFormatter = (v: any) => formattedValueToString(xFieldValueFormatter(v));
+
     // Not time!
     if (xField.config.unit) {
       xScaleUnit = xField.config.unit;
@@ -90,11 +102,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       scaleKey: xScaleKey,
       orientation: ScaleOrientation.Horizontal,
       direction: ScaleDirection.Right,
+      distribution: ScaleDistribution.Ordinal,
     });
 
     builder.addAxis({
       scaleKey: xScaleKey,
+      isTime: false,
       placement: AxisPlacement.Bottom,
+      values: (u: uPlot) => u.data[0].map(xValueFormatter),
       theme,
     });
   }
