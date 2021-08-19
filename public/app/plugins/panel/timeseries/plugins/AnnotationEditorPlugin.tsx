@@ -36,17 +36,16 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
   useLayoutEffect(() => {
     let annotating = false;
 
-    const setSelect = (u: uPlot, left?: number) => {
+    const setSelect = (u: uPlot) => {
       if (annotating) {
-        left = left ?? u.select.left;
         setIsAddingAnnotation(true);
         setSelection({
-          min: u.posToVal(left, 'x'),
-          max: u.posToVal(left + u.select.width, 'x'),
+          min: u.posToVal(u.select.left, 'x'),
+          max: u.posToVal(u.select.left + u.select.width, 'x'),
           bbox: {
-            left,
+            left: u.select.left,
             top: 0,
-            height: u.bbox.height / window.devicePixelRatio,
+            height: u.select.height,
             width: u.select.width,
           },
         });
@@ -76,17 +75,21 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
     config.setCursor({
       bind: {
         mousedown: (u, targ, handler) => (e) => {
-          handler(e);
           annotating = e.button === 0 && (e.metaKey || e.ctrlKey);
+          handler(e);
           return null;
         },
         // setSelect will not fire on 0-width selections, so handle single-point clicks here
         mouseup: (u, targ, handler) => (e) => {
           if (annotating && u.select.width === 0) {
-            setSelect(u, u.cursor.left!);
-          } else {
-            handler(e);
+            u.setSelect({
+              left: u.cursor.left!,
+              top: 0,
+              width: 0,
+              height: u.bbox.height / window.devicePixelRatio,
+            });
           }
+          handler(e);
           return null;
         },
       },
