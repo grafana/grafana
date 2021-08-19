@@ -127,7 +127,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
         )}
         {query.queryType === 'nativeSearch' && (
           <NativeSearch
-            languageProvider={this.props.datasource.languageProvider}
+            datasource={this.props.datasource}
             query={query}
             onChange={onChange}
             onBlur={this.props.onBlur}

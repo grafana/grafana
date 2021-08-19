@@ -16,7 +16,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
   request = async (url: string, defaultValue: any, params = {}) => {
     try {
       const res = await this.datasource.metadataRequest(url, params);
-      return res.data;
+      return res?.data;
     } catch (error) {
       console.error(error);
     }

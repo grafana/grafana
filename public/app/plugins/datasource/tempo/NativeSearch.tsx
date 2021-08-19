@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   InlineFieldRow,
   InlineField,
@@ -16,10 +16,10 @@ import { Node } from 'slate';
 import { css } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 import TempoLanguageProvider from './language_provider';
-import { TempoQuery } from './datasource';
+import { TempoDatasource, TempoQuery } from './datasource';
 
 interface Props {
-  languageProvider: TempoLanguageProvider;
+  datasource: TempoDatasource;
   query: TempoQuery;
   onChange: (value: TempoQuery) => void;
   onBlur?: () => void;
@@ -38,7 +38,8 @@ const plugins = [
 
 Prism.languages[PRISM_LANGUAGE] = tokenizer;
 
-const NativeSearch = ({ languageProvider, query, onChange, onBlur, onRunQuery }: Props) => {
+const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props) => {
+  const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [hasSyntaxLoaded, setHasSyntaxLoaded] = useState(false);
   const [autocomplete, setAutocomplete] = useState<{
     serviceNameOptions: Array<SelectableValue<string>>;
