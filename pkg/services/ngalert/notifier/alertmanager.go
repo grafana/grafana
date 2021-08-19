@@ -204,7 +204,6 @@ func (am *Alertmanager) StopAndWait() {
 	close(am.stopc)
 
 	am.wg.Wait()
-	return
 }
 
 // SaveAndApplyDefaultConfig saves the default configuration the database and applies the configuration to the Alertmanager.

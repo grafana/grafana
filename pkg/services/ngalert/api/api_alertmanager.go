@@ -127,7 +127,6 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSile
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) response.Response {
-
 	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}

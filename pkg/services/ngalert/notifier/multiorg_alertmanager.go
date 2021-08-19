@@ -27,8 +27,7 @@ type MultiOrgAlertmanager struct {
 
 	settings *setting.Cfg
 
-	logger  log.Logger
-	metrics *metrics.Metrics
+	logger log.Logger
 
 	configStore store.AlertingStore
 	orgStore    store.OrgStore
@@ -145,7 +144,7 @@ func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (*Alertmanager, er
 		return nil, ErrNoAlertmanagerForOrg
 	}
 
-	if userAM.Ready() != true {
+	if !userAM.Ready() {
 		return nil, ErrAlertmanagerNotReady
 	}
 

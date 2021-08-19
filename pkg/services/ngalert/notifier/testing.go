@@ -38,7 +38,9 @@ func (f *FakeConfigStore) SaveAlertmanagerConfigurationWithCallback(cmd *models.
 		Default:                   cmd.Default,
 	}
 
-	callback()
+	if err := callback(); err != nil {
+		return err
+	}
 
 	return nil
 }
