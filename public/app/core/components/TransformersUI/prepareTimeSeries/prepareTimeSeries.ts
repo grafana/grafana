@@ -1,6 +1,7 @@
 import {
   SynchronousDataTransformerInfo,
   DataFrame,
+  DataFrameType,
   FieldType,
   DataTransformerID,
   outerJoinDataFrames,
@@ -8,7 +9,6 @@ import {
   FieldMatcherID,
 } from '@grafana/data';
 import { map } from 'rxjs/operators';
-import { DataFrameType } from '../../../../../../packages/grafana-data/src/types/dataFrameTypes';
 
 /**
  * There is currently an effort to figure out consistent names
