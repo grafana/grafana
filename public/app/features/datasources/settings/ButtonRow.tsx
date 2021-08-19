@@ -4,6 +4,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import config from 'app/core/config';
 import { Button, LinkButton } from '@grafana/ui';
 
+import { AccessControlAction } from 'app/types/';
+import { contextSrv } from 'app/core/core';
+
 export interface Props {
   exploreUrl: string;
   isReadOnly: boolean;
@@ -13,6 +16,9 @@ export interface Props {
 }
 
 const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest, exploreUrl }) => {
+  const canEditDataSources = !isReadOnly && contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+  const canDeleteDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesDelete);
+
   return (
     <div className="gf-form-button-row">
       <LinkButton variant="secondary" fill="solid" href={`${config.appSubUrl}/datasources`}>
@@ -21,16 +27,18 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest, exploreU
       <LinkButton variant="secondary" fill="solid" href={exploreUrl}>
         Explore
       </LinkButton>
-      <Button
-        type="button"
-        variant="destructive"
-        disabled={isReadOnly}
-        onClick={onDelete}
-        aria-label={selectors.pages.DataSource.delete}
-      >
-        Delete
-      </Button>
-      {!isReadOnly && (
+      {canDeleteDataSources && (
+        <Button
+          type="button"
+          variant="destructive"
+          disabled={isReadOnly}
+          onClick={onDelete}
+          aria-label={selectors.pages.DataSource.delete}
+        >
+          Delete
+        </Button>
+      )}
+      {canEditDataSources && (
         <Button
           type="submit"
           variant="primary"
@@ -41,7 +49,7 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest, exploreU
           Save &amp; test
         </Button>
       )}
-      {isReadOnly && (
+      {!canEditDataSources && (
         <Button type="submit" variant="primary" onClick={onTest}>
           Test
         </Button>
