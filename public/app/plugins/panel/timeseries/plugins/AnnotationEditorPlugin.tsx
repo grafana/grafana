@@ -79,15 +79,12 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
           handler(e);
           return null;
         },
-        // setSelect will not fire on 0-width selections, so handle single-point clicks here
         mouseup: (u, targ, handler) => (e) => {
+          // uPlot will not fire setSelect hooks for 0-width && 0-height selections
+          // so we force it to fire on single-point clicks by mutating left & height
           if (annotating && u.select.width === 0) {
-            u.setSelect({
-              left: u.cursor.left!,
-              top: 0,
-              width: 0,
-              height: u.bbox.height / window.devicePixelRatio,
-            });
+            u.select.left = u.cursor.left!;
+            u.select.height = u.bbox.height / window.devicePixelRatio;
           }
           handler(e);
           return null;
