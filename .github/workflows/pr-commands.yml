@@ -2,8 +2,7 @@ name: PR automation
 on:
   pull_request_target:
     types:
-      - opened
-      - synchronize
+      - review_requested
 
 jobs:
   main:
