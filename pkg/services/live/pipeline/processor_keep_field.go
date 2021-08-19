@@ -6,12 +6,16 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type KeepFieldsProcessor struct {
-	keep []string
+type KeepFieldsProcessorConfig struct {
+	FieldNames []string `json:"fieldNames"`
 }
 
-func NewKeepFieldsProcessor(keep ...string) *KeepFieldsProcessor {
-	return &KeepFieldsProcessor{keep: keep}
+type KeepFieldsProcessor struct {
+	config KeepFieldsProcessorConfig
+}
+
+func NewKeepFieldsProcessor(config KeepFieldsProcessorConfig) *KeepFieldsProcessor {
+	return &KeepFieldsProcessor{config: config}
 }
 
 func stringInSlice(str string, slice []string) bool {
@@ -26,7 +30,7 @@ func stringInSlice(str string, slice []string) bool {
 func (d KeepFieldsProcessor) Process(_ context.Context, _ ProcessorVars, frame *data.Frame) (*data.Frame, error) {
 	var fieldsToKeep []*data.Field
 	for _, field := range frame.Fields {
-		if stringInSlice(field.Name, d.keep) {
+		if stringInSlice(field.Name, d.config.FieldNames) {
 			fieldsToKeep = append(fieldsToKeep, field)
 		}
 	}

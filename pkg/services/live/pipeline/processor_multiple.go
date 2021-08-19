@@ -22,6 +22,6 @@ func (m MultipleProcessor) Process(ctx context.Context, vars ProcessorVars, fram
 	return frame, nil
 }
 
-func NewMultipleProcessor(processors []Processor) *MultipleProcessor {
+func NewMultipleProcessor(processors ...Processor) *MultipleProcessor {
 	return &MultipleProcessor{Processors: processors}
 }
