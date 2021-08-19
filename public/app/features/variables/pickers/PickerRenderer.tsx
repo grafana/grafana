@@ -19,7 +19,7 @@ export const PickerRenderer: FunctionComponent<Props> = (props) => {
     <div className="gf-form">
       <PickerLabel variable={props.variable} />
       {props.variable.hide !== VariableHide.hideVariable && PickerToRender && (
-        <PickerToRender variable={props.variable} id={props.variable.name} />
+        <PickerToRender variable={props.variable} />
       )}
     </div>
   );
@@ -27,7 +27,6 @@ export const PickerRenderer: FunctionComponent<Props> = (props) => {
 
 function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | null {
   const labelOrName = useMemo(() => variable.label || variable.name, [variable]);
-  const name = useMemo(() => variable.name, [variable]);
 
   if (variable.hide !== VariableHide.dontHide) {
     return null;
@@ -39,7 +38,7 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
         <label
           className="gf-form-label gf-form-label--variable"
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
-          htmlFor={name}
+          htmlFor={variable.id}
         >
           {labelOrName}
         </label>

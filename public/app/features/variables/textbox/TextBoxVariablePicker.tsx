@@ -10,7 +10,7 @@ import { useDispatch } from 'react-redux';
 
 export interface Props extends VariablePickerProps<TextBoxVariableModel> {}
 
-export function TextBoxVariablePicker({ variable, onVariableChange, id }: Props): ReactElement {
+export function TextBoxVariablePicker({ variable, onVariableChange }: Props): ReactElement {
   const dispatch = useDispatch();
   const [updatedValue, setUpdatedValue] = useState(variable.current.value);
   useEffect(() => {
@@ -58,7 +58,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange, id }: Props)
       onBlur={onBlur}
       onKeyDown={onKeyDown}
       placeholder="Enter variable value"
-      id={id}
+      id={variable.id}
     />
   );
 }
