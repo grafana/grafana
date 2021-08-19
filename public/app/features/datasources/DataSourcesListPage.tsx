@@ -2,6 +2,8 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { hot } from 'react-hot-loader';
+// Services & Utils
+import { contextSrv } from 'app/core/core';
 // Components
 import Page from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
@@ -10,6 +12,7 @@ import DataSourcesList from './DataSourcesList';
 // Types
 import { IconName } from '@grafana/ui';
 import { StoreState } from 'app/types';
+import { AccessControlAction } from 'app/types/';
 // Actions
 import { loadDataSources } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -70,9 +73,11 @@ export class DataSourcesListPage extends PureComponent<Props> {
       hasFetched,
     } = this.props;
 
+    const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
     const linkButton = {
       href: 'datasources/new',
       title: 'Add data source',
+      disabled: !canCreateDataSource,
     };
 
     return (
