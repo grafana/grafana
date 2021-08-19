@@ -29,11 +29,11 @@ jobs:
       - name: configure environment
         uses: actions/checkout@v1
       
-      - name: setup node
-        uses: actions/setup-node@v1
-        with:
-          node-version: '14.x'
-          registry-url: 'https://npm.pkg.github.com'
+      # - name: setup node
+      #   uses: actions/setup-node@v1
+      #   with:
+      #     node-version: '14.x'
+      #     registry-url: 'https://npm.pkg.github.com'
           
       - name: executing remote ssh commands using ssh key
         uses: appleboy/ssh-action@master
@@ -42,7 +42,12 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          script: whoami
+          script: |
+            cd /home/${{ secrets.SSH_USERNAME }}/grafana
+            pwd
+            git fetch
+            git checkout CORE-58/login-customization
+            sudo docker-compose down
       # - name: setup docker
       #   uses: docker-practice/actions-setup-docker@master
         
