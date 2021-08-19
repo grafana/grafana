@@ -1,4 +1,4 @@
-import { lastValueFrom, from, merge, Observable, of, throwError } from 'rxjs';
+import { from, merge, Observable, of, throwError } from 'rxjs';
 import { map, mergeMap, toArray } from 'rxjs/operators';
 import {
   DataQuery,
@@ -158,19 +158,16 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   async testDatasource(): Promise<any> {
-    // to test Tempo we send a dummy traceID and verify Tempo answers with 'trace not found'
-    const response = await lastValueFrom(super.query({ targets: [{ query: '0' }] } as any));
+    const options: BackendSrvRequest = {
+      headers: {},
+      method: 'GET',
+      url: `${this.instanceSettings.url}/api/echo`,
+    };
+    const response = await getBackendSrv().fetch<any>(options).toPromise();
 
-    const errorMessage = response.error?.message;
-    if (
-      errorMessage &&
-      errorMessage.startsWith('failed to get trace') &&
-      errorMessage.endsWith('trace not found in Tempo')
-    ) {
+    if (response?.ok) {
       return { status: 'success', message: 'Data source is working' };
     }
-
-    return { status: 'error', message: 'Data source is not working' + (errorMessage ? `: ${errorMessage}` : '') };
   }
 
   getQueryDisplayText(query: TempoQuery) {
