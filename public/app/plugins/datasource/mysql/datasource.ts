@@ -157,6 +157,9 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
         .pipe(
           map((rsp) => {
             return this.responseParser.transformMetricFindResponse(rsp);
+          }),
+          catchError((err) => {
+            return of([]);
           })
         )
     );
