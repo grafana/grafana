@@ -156,6 +156,9 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
       .pipe(
         map((rsp) => {
           return this.responseParser.transformMetricFindResponse(rsp);
+        }),
+        catchError((err) => {
+          return of([]);
         })
       )
       .toPromise();

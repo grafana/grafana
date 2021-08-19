@@ -145,6 +145,9 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
       .pipe(
         map((rsp) => {
           return this.responseParser.transformMetricFindResponse(rsp);
+        }),
+        catchError((err) => {
+          return of([]);
         })
       )
       .toPromise();
