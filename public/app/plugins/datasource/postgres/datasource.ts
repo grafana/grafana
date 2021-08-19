@@ -161,7 +161,6 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
             return this.responseParser.transformMetricFindResponse(rsp);
           }),
           catchError((err) => {
-            console.error('Error performing templating query', err);
             return of([]);
           })
         )
