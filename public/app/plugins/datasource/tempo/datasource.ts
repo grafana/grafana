@@ -165,7 +165,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     };
     const response = await getBackendSrv().fetch<any>(options).toPromise();
 
-    if (response.ok) {
+    if (response?.ok) {
       return { status: 'success', message: 'Data source is working' };
     }
   }
