@@ -102,7 +102,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
             value={picker.queryValue}
             onChange={this.props.filterOrSearchOptions}
             onNavigate={this.props.navigateOptions}
-            aria-expaned
+            aria-expanded
             aria-haspopup="true"
             aria-controls={`options-${id}`}
           />
