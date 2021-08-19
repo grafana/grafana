@@ -407,7 +407,7 @@ export function prepareTimelineFields(
   return { frames };
 }
 
-function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2): VizLegendItem[] {
+export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2): VizLegendItem[] {
   const items: VizLegendItem[] = [];
   const thresholds = fieldConfig.thresholds;
   if (!thresholds || !thresholds.steps.length) {

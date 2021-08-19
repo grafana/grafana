@@ -1,10 +1,11 @@
 import React from 'react';
-import { Label, stylesFactory } from '@grafana/ui';
+import { Label, stylesFactory, VizLegendItem } from '@grafana/ui';
 import { formattedValueToString, getFieldColorModeForField, GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { DimensionSupplier } from 'app/features/dimensions';
 import { getMinMaxAndDelta } from '../../../../../../../packages/grafana-data/src/field/scale';
+import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils';
 
 export interface MarkersLegendProps {
   color?: DimensionSupplier<string>;
@@ -18,7 +19,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
     )
   }
   const style = getStyles(config.theme);
-  
+
   const fmt = (v: any) => `${formattedValueToString(color.field!.display!(v))}`;
   const colorMode = getFieldColorModeForField(color!.field!);
   
@@ -50,33 +51,17 @@ export function MarkersLegend(props: MarkersLegendProps) {
     return <div className={style.infoWrap}>no thresholds????</div>;
   }
 
+  const items = getThresholdItems(color.field!.config, config.theme2);
   return (
     <div className={style.infoWrap}>
-      {thresholds && (
         <div className={style.legend}>
-          {thresholds.steps.map((step:any, idx:number) => {
-            const next = thresholds!.steps[idx + 1];
-            let info = <span>?</span>;
-            if (idx === 0) {
-              info = <span>&lt; {fmt(next.value)}</span>;
-            } else if (next) {
-              info = (
-                <span>
-                  {fmt(step.value)} - {fmt(next.value)}
-                </span>
-              );
-            } else {
-              info = <span>{fmt(step.value)} +</span>;
-            }
-            return (
-              <div key={`${idx}/${step.value}`} className={style.legendItem}>
-                <i style={{ background: config.theme2.visualization.getColorByName(step.color) }}></i>
-                {info}
+          {items.map((item: VizLegendItem, idx:number) => (
+              <div key={`${idx}/${item.label}`} className={style.legendItem}>
+                <i style={{ background: item.color }}></i>
+                {item.label}
               </div>
-            );
-          })}
+            ))}
         </div>
-      )}
     </div>
   )
 }
