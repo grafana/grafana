@@ -97,7 +97,7 @@ func TestEvaluatePermissions(t *testing.T) {
 				"users:*":              {},
 				"permissions:delegate": {},
 			},
-			NeedAnyScope: []string{"teams1", "permissions:delegate"},
+			NeedAnyScope: []string{"teams1", "permissions:nodelegate"},
 			Valid:        false,
 		},
 	}
