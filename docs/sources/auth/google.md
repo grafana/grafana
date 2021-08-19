@@ -43,8 +43,10 @@ allowed_domains = mycompany.com mycompany.org
 hosted_domain =
 ```
 
+For more information on these properties, refer to [Using OAuth 2.0 to Access Google APIs](https://developers.google.com/identity/protocols/oauth2/openid-connect).
+
 You may have to set the `root_url` option of `[server]` for the callback URL to be
-correct. For example in case you are serving Grafana behind a proxy.
+correct. For example in case you are serving Grafana behind a proxy. 
 
 Restart the Grafana back-end. You should now see a Google login button
 on the login page. You can now login or sign up with your Google
