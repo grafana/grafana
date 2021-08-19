@@ -54,7 +54,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/org/new", reqGrafanaAdmin, hs.Index)
 	r.Get("/datasources/", authorize(reqOrgAdmin, ActionDatasourcesRead), hs.Index)
 	r.Get("/datasources/new", authorize(reqOrgAdmin, ActionDatasourcesCreate), hs.Index)
-	r.Get("/datasources/edit/*", authorize(reqOrgAdmin, ActionDatasourcesWrite), hs.Index)
+	r.Get("/datasources/edit/*", authorize(reqOrgAdmin, ActionDatasourcesRead), hs.Index)
 	r.Get("/org/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeUsersAll), hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/invite", authorize(reqOrgAdmin, accesscontrol.ActionUsersCreate), hs.Index)
