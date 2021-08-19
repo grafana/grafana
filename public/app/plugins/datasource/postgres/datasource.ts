@@ -1,6 +1,6 @@
 import { map as _map } from 'lodash';
-import { lastValueFrom } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { lastValueFrom, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { BackendDataSourceResponse, DataSourceWithBackend, FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { AnnotationEvent, DataSourceInstanceSettings, MetricFindValue, ScopedVars } from '@grafana/data';
 
@@ -159,6 +159,9 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
         .pipe(
           map((rsp) => {
             return this.responseParser.transformMetricFindResponse(rsp);
+          }),
+          catchError((err) => {
+            return of([]);
           })
         )
     );

@@ -26,10 +26,12 @@ Report a bug by submitting a [bug report](https://github.com/grafana/grafana/iss
 Follow the issue template and add additional information that will help us replicate the problem.
 
 For data visualization issues:
+
 - Query results from the inspect drawer (data tab & query inspector)
 - Panel settings can be extracted in the panel inspect drawer JSON tab
 
 For a dashboard related issues:
+
 - Dashboard JSON can be found in the dashboard settings JSON model view
 
 For authentication and alerting Grafana server logs are useful.
