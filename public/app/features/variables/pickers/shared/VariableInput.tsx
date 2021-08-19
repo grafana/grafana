@@ -22,7 +22,7 @@ export class VariableInput extends PureComponent<Props> {
   };
 
   render() {
-    const { value, id, ...restProps } = this.props;
+    const { value, id, onNavigate, ...restProps } = this.props;
     return (
       <input
         {...restProps}

@@ -35,7 +35,8 @@ export class VariableOptions extends PureComponent<Props> {
   }
 
   render() {
-    const { multi, values, ...restProps } = this.props;
+    // Don't want to pass faulty rest props to the div
+    const { multi, values, highlightIndex, selectedValues, onToggle, onToggleAll, ...restProps } = this.props;
 
     return (
       <div
