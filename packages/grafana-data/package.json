@@ -28,7 +28,7 @@
     "eventemitter3": "4.0.7",
     "lodash": "4.17.21",
     "marked": "2.0.1",
-    "rxjs": "6.6.3",
+    "rxjs": "7.3.0",
     "xss": "1.0.6"
   },
   "devDependencies": {

@@ -15,12 +15,12 @@ import { PieChartLegendOptions, PieChartLegendValues, PieChartOptions } from './
 import { Subscription } from 'rxjs';
 import {
   LegendDisplayMode,
+  SeriesVisibilityChangeBehavior,
   usePanelContext,
   useTheme2,
   VizLayout,
   VizLegend,
   VizLegendItem,
-  SeriesVisibilityChangeBehavior,
 } from '@grafana/ui';
 
 const defaultLegendOptions: PieChartLegendOptions = {
@@ -140,9 +140,9 @@ function useSliceHighlightState() {
       setHighlightedTitle(undefined);
     };
 
-    const subs = new Subscription()
-      .add(eventBus.getStream(DataHoverEvent).subscribe({ next: setHighlightedSlice }))
-      .add(eventBus.getStream(DataHoverClearEvent).subscribe({ next: resetHighlightedSlice }));
+    const subs = new Subscription();
+    subs.add(eventBus.getStream(DataHoverEvent).subscribe({ next: setHighlightedSlice }));
+    subs.add(eventBus.getStream(DataHoverClearEvent).subscribe({ next: resetHighlightedSlice }));
 
     return () => {
       subs.unsubscribe();

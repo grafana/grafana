@@ -1,4 +1,5 @@
 import { map as _map } from 'lodash';
+import { lastValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { BackendDataSourceResponse, DataSourceWithBackend, FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { AnnotationEvent, DataSourceInstanceSettings, MetricFindValue, ScopedVars } from '@grafana/data';
@@ -101,24 +102,25 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
       format: 'table',
     };
 
-    return getBackendSrv()
-      .fetch<BackendDataSourceResponse>({
-        url: '/api/ds/query',
-        method: 'POST',
-        data: {
-          from: options.range.from.valueOf().toString(),
-          to: options.range.to.valueOf().toString(),
-          queries: [query],
-        },
-        requestId: options.annotation.name,
-      })
-      .pipe(
-        map(
-          async (res: FetchResponse<BackendDataSourceResponse>) =>
-            await this.responseParser.transformAnnotationResponse(options, res.data)
+    return lastValueFrom(
+      getBackendSrv()
+        .fetch<BackendDataSourceResponse>({
+          url: '/api/ds/query',
+          method: 'POST',
+          data: {
+            from: options.range.from.valueOf().toString(),
+            to: options.range.to.valueOf().toString(),
+            queries: [query],
+          },
+          requestId: options.annotation.name,
+        })
+        .pipe(
+          map(
+            async (res: FetchResponse<BackendDataSourceResponse>) =>
+              await this.responseParser.transformAnnotationResponse(options, res.data)
+          )
         )
-      )
-      .toPromise();
+    );
   }
 
   metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
@@ -142,23 +144,24 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
 
     const range = this.timeSrv.timeRange();
 
-    return getBackendSrv()
-      .fetch<BackendDataSourceResponse>({
-        url: '/api/ds/query',
-        method: 'POST',
-        data: {
-          from: range.from.valueOf().toString(),
-          to: range.to.valueOf().toString(),
-          queries: [interpolatedQuery],
-        },
-        requestId: refId,
-      })
-      .pipe(
-        map((rsp) => {
-          return this.responseParser.transformMetricFindResponse(rsp);
+    return lastValueFrom(
+      getBackendSrv()
+        .fetch<BackendDataSourceResponse>({
+          url: '/api/ds/query',
+          method: 'POST',
+          data: {
+            from: range.from.valueOf().toString(),
+            to: range.to.valueOf().toString(),
+            queries: [interpolatedQuery],
+          },
+          requestId: refId,
         })
-      )
-      .toPromise();
+        .pipe(
+          map((rsp) => {
+            return this.responseParser.transformMetricFindResponse(rsp);
+          })
+        )
+    );
   }
 
   getVersion(): Promise<any> {

@@ -1,14 +1,15 @@
 import { map as _map } from 'lodash';
+import { lastValueFrom, of } from 'rxjs';
 import { catchError, map, mapTo } from 'rxjs/operators';
-import { getBackendSrv, DataSourceWithBackend, FetchResponse, BackendDataSourceResponse } from '@grafana/runtime';
-import { DataSourceInstanceSettings, ScopedVars, MetricFindValue, AnnotationEvent } from '@grafana/data';
+import { BackendDataSourceResponse, DataSourceWithBackend, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { AnnotationEvent, DataSourceInstanceSettings, MetricFindValue, ScopedVars } from '@grafana/data';
+
 import MySQLQueryModel from 'app/plugins/datasource/mysql/mysql_query_model';
 import ResponseParser from './response_parser';
-import { MysqlQueryForInterpolation, MySQLOptions, MySQLQuery } from './types';
+import { MySQLOptions, MySQLQuery, MysqlQueryForInterpolation } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { of } from 'rxjs';
 import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 
 export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOptions> {
@@ -99,24 +100,25 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
       format: 'table',
     };
 
-    return getBackendSrv()
-      .fetch<BackendDataSourceResponse>({
-        url: '/api/ds/query',
-        method: 'POST',
-        data: {
-          from: options.range.from.valueOf().toString(),
-          to: options.range.to.valueOf().toString(),
-          queries: [query],
-        },
-        requestId: options.annotation.name,
-      })
-      .pipe(
-        map(
-          async (res: FetchResponse<BackendDataSourceResponse>) =>
-            await this.responseParser.transformAnnotationResponse(options, res.data)
+    return lastValueFrom(
+      getBackendSrv()
+        .fetch<BackendDataSourceResponse>({
+          url: '/api/ds/query',
+          method: 'POST',
+          data: {
+            from: options.range.from.valueOf().toString(),
+            to: options.range.to.valueOf().toString(),
+            queries: [query],
+          },
+          requestId: options.annotation.name,
+        })
+        .pipe(
+          map(
+            async (res: FetchResponse<BackendDataSourceResponse>) =>
+              await this.responseParser.transformAnnotationResponse(options, res.data)
+          )
         )
-      )
-      .toPromise();
+    );
   }
 
   metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
@@ -140,52 +142,54 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
 
     const range = this.timeSrv.timeRange();
 
-    return getBackendSrv()
-      .fetch<BackendDataSourceResponse>({
-        url: '/api/ds/query',
-        method: 'POST',
-        data: {
-          from: range.from.valueOf().toString(),
-          to: range.to.valueOf().toString(),
-          queries: [interpolatedQuery],
-        },
-        requestId: refId,
-      })
-      .pipe(
-        map((rsp) => {
-          return this.responseParser.transformMetricFindResponse(rsp);
+    return lastValueFrom(
+      getBackendSrv()
+        .fetch<BackendDataSourceResponse>({
+          url: '/api/ds/query',
+          method: 'POST',
+          data: {
+            from: range.from.valueOf().toString(),
+            to: range.to.valueOf().toString(),
+            queries: [interpolatedQuery],
+          },
+          requestId: refId,
         })
-      )
-      .toPromise();
+        .pipe(
+          map((rsp) => {
+            return this.responseParser.transformMetricFindResponse(rsp);
+          })
+        )
+    );
   }
 
   testDatasource(): Promise<any> {
-    return getBackendSrv()
-      .fetch({
-        url: '/api/ds/query',
-        method: 'POST',
-        data: {
-          from: '5m',
-          to: 'now',
-          queries: [
-            {
-              refId: 'A',
-              intervalMs: 1,
-              maxDataPoints: 1,
-              datasourceId: this.id,
-              rawSql: 'SELECT 1',
-              format: 'table',
-            },
-          ],
-        },
-      })
-      .pipe(
-        mapTo({ status: 'success', message: 'Database Connection OK' }),
-        catchError((err) => {
-          return of(toTestingStatus(err));
+    return lastValueFrom(
+      getBackendSrv()
+        .fetch({
+          url: '/api/ds/query',
+          method: 'POST',
+          data: {
+            from: '5m',
+            to: 'now',
+            queries: [
+              {
+                refId: 'A',
+                intervalMs: 1,
+                maxDataPoints: 1,
+                datasourceId: this.id,
+                rawSql: 'SELECT 1',
+                format: 'table',
+              },
+            ],
+          },
         })
-      )
-      .toPromise();
+        .pipe(
+          mapTo({ status: 'success', message: 'Database Connection OK' }),
+          catchError((err) => {
+            return of(toTestingStatus(err));
+          })
+        )
+    );
   }
 
   targetContainsTemplate(target: any) {

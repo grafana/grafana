@@ -1,4 +1,8 @@
-import { cloneDeep, find, isNumber, isObject, isString, first as _first, map as _map } from 'lodash';
+import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
+import { generate, lastValueFrom, Observable, of, throwError } from 'rxjs';
+import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
+import { gte, lt, satisfies } from 'semver';
+import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   DataFrame,
   DataLink,
@@ -22,7 +26,6 @@ import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
-import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
@@ -37,10 +40,7 @@ import {
   BucketAggregation,
   isBucketAggregationWithField,
 } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
-import { generate, Observable, of, throwError } from 'rxjs';
-import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
 import { coerceESVersion, getScriptValue } from './utils';
-import { gte, lt, satisfies } from 'semver';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -183,16 +183,16 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
     const listLen = indexList.length;
 
-    return generate(
-      0,
-      (i) => i < Math.min(listLen, maxTraversals),
-      (i) => i + 1
-    ).pipe(
+    return generate({
+      initialState: 0,
+      condition: (i) => i < Math.min(listLen, maxTraversals),
+      iterate: (i) => i + 1,
+    }).pipe(
       mergeMap((index) => {
         // catch all errors and emit an object with an err property to simplify checks later in the pipeline
         return this.request('GET', indexList[listLen - index - 1]).pipe(catchError((err) => of({ err })));
       }),
-      skipWhile((resp) => resp.err && resp.err.status === 404), // skip all requests that fail because missing Elastic index
+      skipWhile((resp) => resp?.err?.status === 404), // skip all requests that fail because missing Elastic index
       throwIfEmpty(() => 'Could not find an available index for this time range.'), // when i === Math.min(listLen, maxTraversals) generate will complete but without emitting any values which means we didn't find a valid index
       first(), // take the first value that isn't skipped
       map((resp) => {
@@ -279,8 +279,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     const payload = JSON.stringify(header) + '\n' + JSON.stringify(data) + '\n';
 
-    return this.post('_msearch', payload)
-      .pipe(
+    return lastValueFrom(
+      this.post('_msearch', payload).pipe(
         map((res) => {
           const list = [];
           const hits = res.responses[0].hits.hits;
@@ -351,7 +351,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
           return list;
         })
       )
-      .toPromise();
+    );
   }
 
   private interpolateLuceneQuery(queryString: string, scopedVars: ScopedVars) {
@@ -397,8 +397,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   testDatasource() {
     // validate that the index exist and has date field
-    return this.getFields(['date'])
-      .pipe(
+    return lastValueFrom(
+      this.getFields(['date']).pipe(
         mergeMap((dateFields) => {
           const timeField: any = find(dateFields, { text: this.timeField });
           if (!timeField) {
@@ -415,7 +415,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
           }
         })
       )
-      .toPromise();
+    );
   }
 
   getQueryHeader(searchType: any, timeFrom?: DateTime, timeTo?: DateTime): string {
@@ -524,7 +524,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
     const payload = [header, esQuery].join('\n') + '\n';
     const url = this.getMultiSearchUrl();
-    const response = await this.post(url, payload).toPromise();
+    const response = await lastValueFrom(this.post(url, payload));
     const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [{ type: 'logs', id: '1' }] }];
     const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
     const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
@@ -782,13 +782,13 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     if (query) {
       if (parsedQuery.find === 'fields') {
         parsedQuery.type = this.templateSrv.replace(parsedQuery.type, {}, 'lucene');
-        return this.getFields(parsedQuery.type, range).toPromise();
+        return lastValueFrom(this.getFields(parsedQuery.type, range));
       }
 
       if (parsedQuery.find === 'terms') {
         parsedQuery.field = this.templateSrv.replace(parsedQuery.field, {}, 'lucene');
         parsedQuery.query = this.templateSrv.replace(parsedQuery.query || '*', {}, 'lucene');
-        return this.getTerms(parsedQuery, range).toPromise();
+        return lastValueFrom(this.getTerms(parsedQuery, range));
       }
     }
 
@@ -796,11 +796,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   getTagKeys() {
-    return this.getFields().toPromise();
+    return lastValueFrom(this.getFields());
   }
 
   getTagValues(options: any) {
-    return this.getTerms({ field: options.key, query: '*' }).toPromise();
+    return lastValueFrom(this.getTerms({ field: options.key, query: '*' }));
   }
 
   targetContainsTemplate(target: any) {

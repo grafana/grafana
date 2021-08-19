@@ -1,7 +1,7 @@
 import React from 'react';
 import angular from 'angular';
 import { find, isEmpty, isString, set } from 'lodash';
-import { merge, Observable, of, throwError, zip } from 'rxjs';
+import { lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
 import {
   catchError,
   concatMap,
@@ -15,7 +15,7 @@ import {
   takeWhile,
   tap,
 } from 'rxjs/operators';
-import { getBackendSrv, getGrafanaLiveSrv, toDataQueryResponse, DataSourceWithBackend } from '@grafana/runtime';
+import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, toDataQueryResponse } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import {
   DataFrame,
@@ -464,14 +464,14 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
   }
 
   async describeLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
-    const dataFrames = await this.makeLogActionRequest('DescribeLogGroups', [params]).toPromise();
+    const dataFrames = await lastValueFrom(this.makeLogActionRequest('DescribeLogGroups', [params]));
 
     const logGroupNames = dataFrames[0]?.fields[0]?.values.toArray() ?? [];
     return logGroupNames;
   }
 
   async getLogGroupFields(params: GetLogGroupFieldsRequest): Promise<GetLogGroupFieldsResponse> {
-    const dataFrames = await this.makeLogActionRequest('GetLogGroupFields', [params]).toPromise();
+    const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogGroupFields', [params]));
 
     const fieldNames = dataFrames[0].fields[0].values.toArray();
     const fieldPercentages = dataFrames[0].fields[1].values.toArray();
@@ -516,7 +516,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       requestParams.startTime = row.timeEpochMs;
     }
 
-    const dataFrames = await this.makeLogActionRequest('GetLogEvents', [requestParams]).toPromise();
+    const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogEvents', [requestParams]));
 
     return {
       data: dataFrames,
@@ -591,27 +591,27 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
 
   doMetricQueryRequest(subtype: string, parameters: any): Promise<Array<{ text: any; label: any; value: any }>> {
     const range = this.timeSrv.timeRange();
-    return this.awsRequest(DS_QUERY_ENDPOINT, {
-      from: range.from.valueOf().toString(),
-      to: range.to.valueOf().toString(),
-      queries: [
-        {
-          refId: 'metricFindQuery',
-          intervalMs: 1, // dummy
-          maxDataPoints: 1, // dummy
-          datasourceId: this.id,
-          type: 'metricFindQuery',
-          subtype: subtype,
-          ...parameters,
-        },
-      ],
-    })
-      .pipe(
+    return lastValueFrom(
+      this.awsRequest(DS_QUERY_ENDPOINT, {
+        from: range.from.valueOf().toString(),
+        to: range.to.valueOf().toString(),
+        queries: [
+          {
+            refId: 'metricFindQuery',
+            intervalMs: 1, // dummy
+            maxDataPoints: 1, // dummy
+            datasourceId: this.id,
+            type: 'metricFindQuery',
+            subtype: subtype,
+            ...parameters,
+          },
+        ],
+      }).pipe(
         map((r) => {
           return this.transformSuggestDataFromDataframes(r);
         })
       )
-      .toPromise();
+    );
   }
 
   makeLogActionRequest(
@@ -843,19 +843,19 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       alarmNamePrefix: annotation.alarmNamePrefix || '',
     };
 
-    return this.awsRequest(DS_QUERY_ENDPOINT, {
-      from: options.range.from.valueOf().toString(),
-      to: options.range.to.valueOf().toString(),
-      queries: [
-        {
-          refId: 'annotationQuery',
-          datasourceId: this.id,
-          type: 'annotationQuery',
-          ...parameters,
-        },
-      ],
-    })
-      .pipe(
+    return lastValueFrom(
+      this.awsRequest(DS_QUERY_ENDPOINT, {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries: [
+          {
+            refId: 'annotationQuery',
+            datasourceId: this.id,
+            type: 'annotationQuery',
+            ...parameters,
+          },
+        ],
+      }).pipe(
         map((r) => {
           const frames = toDataQueryResponse({ data: r }).data as DataFrame[];
           const table = toLegacyResponseData(frames[0]) as TableData;
@@ -868,7 +868,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
           }));
         })
       )
-      .toPromise();
+    );
   }
 
   targetContainsTemplate(target: any) {

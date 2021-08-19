@@ -1,5 +1,7 @@
+import { lastValueFrom } from 'rxjs';
 import { urlUtil } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -17,13 +19,13 @@ import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasour
 // "grafana" for grafana-managed, otherwise a datasource name
 export async function fetchAlertManagerConfig(alertManagerSourceName: string): Promise<AlertManagerCortexConfig> {
   try {
-    const result = await getBackendSrv()
-      .fetch<AlertManagerCortexConfig>({
+    const result = await lastValueFrom(
+      getBackendSrv().fetch<AlertManagerCortexConfig>({
         url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
         showErrorAlert: false,
         showSuccessAlert: false,
       })
-      .toPromise();
+    );
     return {
       template_files: result.data.template_files ?? {},
       alertmanager_config: result.data.alertmanager_config ?? {},
@@ -47,36 +49,36 @@ export async function updateAlertManagerConfig(
   alertManagerSourceName: string,
   config: AlertManagerCortexConfig
 ): Promise<void> {
-  await getBackendSrv()
-    .fetch({
+  await lastValueFrom(
+    getBackendSrv().fetch({
       method: 'POST',
       url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
       data: config,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
-    .toPromise();
+  );
 }
 
 export async function deleteAlertManagerConfig(alertManagerSourceName: string): Promise<void> {
-  await getBackendSrv()
-    .fetch({
+  await lastValueFrom(
+    getBackendSrv().fetch({
       method: 'DELETE',
       url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
-    .toPromise();
+  );
 }
 
 export async function fetchSilences(alertManagerSourceName: string): Promise<Silence[]> {
-  const result = await getBackendSrv()
-    .fetch<Silence[]>({
+  const result = await lastValueFrom(
+    getBackendSrv().fetch<Silence[]>({
       url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/api/v2/silences`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
-    .toPromise();
+  );
   return result.data;
 }
 
@@ -85,15 +87,15 @@ export async function createOrUpdateSilence(
   alertmanagerSourceName: string,
   payload: SilenceCreatePayload
 ): Promise<Silence> {
-  const result = await getBackendSrv()
-    .fetch<Silence>({
+  const result = await lastValueFrom(
+    getBackendSrv().fetch<Silence>({
       url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences`,
       data: payload,
       showErrorAlert: false,
       showSuccessAlert: false,
       method: 'POST',
     })
-    .toPromise();
+  );
   return result.data;
 }
 
@@ -121,39 +123,39 @@ export async function fetchAlerts(
         )
         .join('&') || '';
 
-  const result = await getBackendSrv()
-    .fetch<AlertmanagerAlert[]>({
+  const result = await lastValueFrom(
+    getBackendSrv().fetch<AlertmanagerAlert[]>({
       url:
         `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/alerts` +
         (filters ? '?' + filters : ''),
       showErrorAlert: false,
       showSuccessAlert: false,
     })
-    .toPromise();
+  );
 
   return result.data;
 }
 
 export async function fetchAlertGroups(alertmanagerSourceName: string): Promise<AlertmanagerGroup[]> {
-  const result = await getBackendSrv()
-    .fetch<AlertmanagerGroup[]>({
+  const result = await lastValueFrom(
+    getBackendSrv().fetch<AlertmanagerGroup[]>({
       url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/alerts/groups`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
-    .toPromise();
+  );
 
   return result.data;
 }
 
 export async function fetchStatus(alertManagerSourceName: string): Promise<AlertmanagerStatus> {
-  const result = await getBackendSrv()
-    .fetch<AlertmanagerStatus>({
+  const result = await lastValueFrom(
+    getBackendSrv().fetch<AlertmanagerStatus>({
       url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/api/v2/status`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
-    .toPromise();
+  );
 
   return result.data;
 }
@@ -162,15 +164,15 @@ export async function testReceivers(alertManagerSourceName: string, receivers: R
   const data: TestReceiversPayload = {
     receivers,
   };
-  const result = await getBackendSrv()
-    .fetch<TestReceiversResult>({
+  const result = await lastValueFrom(
+    getBackendSrv().fetch<TestReceiversResult>({
       method: 'POST',
       data,
       url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/receivers/test`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
-    .toPromise();
+  );
 
   // api returns 207 if one or more receivers has failed test. Collect errors in this case
   if (result.status === 207) {

@@ -1,5 +1,10 @@
 import { Components } from './components';
 
+/**
+ * Selectors grouped/defined in Pages
+ *
+ * @alpha
+ */
 export const Pages = {
   Login: {
     url: '/login',

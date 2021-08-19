@@ -1,4 +1,4 @@
-import { of, throwError } from 'rxjs';
+import { lastValueFrom, of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeSeries, toUtc } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
@@ -219,56 +219,56 @@ describe('LokiDatasource', () => {
 
     it('should run logs instant if only instant is selected', async () => {
       const { ds, options } = setup(logsQuery, CoreApp.Explore, true, false);
-      await ds.query(options).toPromise();
+      await lastValueFrom(ds.query(options));
       expect(ds.runInstantQuery).toBeCalled();
       expect(ds.runRangeQuery).not.toBeCalled();
     });
 
     it('should run metrics instant if only instant is selected', async () => {
       const { ds, options } = setup(metricsQuery, CoreApp.Explore, true, false);
-      await ds.query(options).toPromise();
+      lastValueFrom(await ds.query(options));
       expect(ds.runInstantQuery).toBeCalled();
       expect(ds.runRangeQuery).not.toBeCalled();
     });
 
     it('should run only logs range query if only range is selected', async () => {
       const { ds, options } = setup(logsQuery, CoreApp.Explore, false, true);
-      await ds.query(options).toPromise();
+      lastValueFrom(await ds.query(options));
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
     it('should run only metrics range query if only range is selected', async () => {
       const { ds, options } = setup(metricsQuery, CoreApp.Explore, false, true);
-      await ds.query(options).toPromise();
+      lastValueFrom(await ds.query(options));
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
     it('should run only logs range query if no query type is selected in Explore', async () => {
       const { ds, options } = setup(logsQuery, CoreApp.Explore);
-      await ds.query(options).toPromise();
+      lastValueFrom(await ds.query(options));
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
     it('should run only metrics range query if no query type is selected in Explore', async () => {
       const { ds, options } = setup(metricsQuery, CoreApp.Explore);
-      await ds.query(options).toPromise();
+      lastValueFrom(await ds.query(options));
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
     it('should run only logs range query in Dashboard', async () => {
       const { ds, options } = setup(logsQuery, CoreApp.Dashboard);
-      await ds.query(options).toPromise();
+      lastValueFrom(await ds.query(options));
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
     it('should run only metrics range query in Dashboard', async () => {
       const { ds, options } = setup(metricsQuery, CoreApp.Dashboard);
-      await ds.query(options).toPromise();
+      lastValueFrom(await ds.query(options));
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
@@ -349,7 +349,7 @@ describe('LokiDatasource', () => {
       });
 
       it('should not modify expression with no filters', async () => {
-        await ds.query(options as any).toPromise();
+        await lastValueFrom(ds.query(options as any));
         expect(ds.runRangeQuery).toBeCalledWith({ expr: DEFAULT_EXPR }, expect.anything(), expect.anything());
       });
 
@@ -367,7 +367,7 @@ describe('LokiDatasource', () => {
           },
         ]);
 
-        await ds.query(options as any).toPromise();
+        await lastValueFrom(ds.query(options as any));
         expect(ds.runRangeQuery).toBeCalledWith(
           { expr: 'rate({bar="baz",job="foo",k1="v1",k2!="v2"} |= "bar" [5m])' },
           expect.anything(),
@@ -388,7 +388,7 @@ describe('LokiDatasource', () => {
             value: `v'.*`,
           },
         ]);
-        await ds.query(options as any).toPromise();
+        await lastValueFrom(ds.query(options as any));
         expect(ds.runRangeQuery).toBeCalledWith(
           { expr: 'rate({bar="baz",job="foo",k1=~"v.*",k2=~"v\\\\\'.*"} |= "bar" [5m])' },
           expect.anything(),
