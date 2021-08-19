@@ -44,7 +44,7 @@ func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, 
 		var match bool
 		for dbScope := range dbScopes {
 
-			prefix := dbScope[0 : len(dbScope)-1]
+			prefix := dbScope[:len(dbScope)-1]
 			if strings.ContainsAny(prefix, "*?") {
 				msg := fmt.Sprintf("Invalid scope: %v should not contain meta-characters like * or ?, except in the last position", dbScope)
 				logger.Error(msg, "scope", dbScope)
