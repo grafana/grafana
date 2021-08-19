@@ -2,6 +2,7 @@ import { FieldConfig } from './dataFrame';
 import { DataTransformerConfig } from './transformations';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
 import { PanelPluginDataSupport } from '.';
+import { DataTopic } from './query';
 
 export type KeyValue<T = any> = Record<string, T>;
 
@@ -15,10 +16,6 @@ export enum LoadingState {
   Streaming = 'Streaming',
   Done = 'Done',
   Error = 'Error',
-}
-
-export enum DataTopic {
-  Annotations = 'annotations',
 }
 
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
@@ -128,7 +125,6 @@ export interface QueryResultBase {
 export interface Labels {
   [key: string]: string;
 }
-
 export interface Column {
   text: string; // For a Column, the 'text' is the field name
   filterable?: boolean;

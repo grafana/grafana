@@ -12,12 +12,11 @@ import {
   DataSourceHttpSettings,
   GraphContextMenu,
   Icon,
-  Spinner,
   LegacyForms,
   SeriesColorPickerPopoverWithTheme,
+  Spinner,
   UnitPicker,
 } from '@grafana/ui';
-import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
@@ -25,6 +24,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SearchField, SearchResults, SearchResultsFilter } from '../features/search';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import QueryEditor from 'app/plugins/datasource/grafana-azure-monitor-datasource/components/QueryEditor/QueryEditor';
+import { GraphiteQueryEditor } from '../plugins/datasource/graphite/components/GraphiteQueryEditor';
 
 const { SecretFormField } = LegacyForms;
 
@@ -38,7 +38,6 @@ export function registerAngularDirectives() {
   ]);
   react2AngularDirective('spinner', Spinner, ['inline']);
   react2AngularDirective('helpModal', HelpModal, []);
-  react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
   react2AngularDirective('pageHeader', PageHeader, ['model', 'noTabs']);
   react2AngularDirective('emptyListCta', EmptyListCTA, [
     'title',
@@ -201,4 +200,7 @@ export function registerAngularDirectives() {
     ['datasource', { watchDepth: 'reference' }],
     'onChange',
   ]);
+
+  // Temporal wrappers for Graphite migration
+  react2AngularDirective('graphiteQueryEditor', GraphiteQueryEditor, ['state', 'dispatch']);
 }

@@ -173,7 +173,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	return result, nil
 }
 
-//nolint: staticcheck // plugins.DataQueryResult deprecated
+//nolint: staticcheck,gocyclo // plugins.DataQueryResult deprecated
 func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup, queryContext plugins.DataQuery,
 	ch chan plugins.DataQueryResult) {
 	defer wg.Done()
@@ -292,6 +292,10 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 				continue
 			}
 
+			if t := frame.Fields[i].Type(); t == data.FieldTypeString || t == data.FieldTypeNullableString {
+				continue
+			}
+
 			var err error
 			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
 				errAppendDebug("convert value to float failed", err, interpolatedQuery)
@@ -331,10 +335,6 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 				e.log.Error("Failed to resample dataframe", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
 			}
-			if err := trim(frame, *qm); err != nil {
-				e.log.Error("Failed to trim dataframe", "err", err)
-				frame.AppendNotices(data.Notice{Text: "Failed to trim dataframe", Severity: data.NoticeSeverityWarning})
-			}
 		}
 	}
 
@@ -348,7 +348,10 @@ var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRan
 	if err != nil {
 		return "", err
 	}
-	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
+	interval, err := sqlIntervalCalculator.Calculate(timeRange, minInterval, "min")
+	if err != nil {
+		return "", err
+	}
 
 	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
 	sql = strings.ReplaceAll(sql, "$__interval", interval.Text)
@@ -892,7 +895,7 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 	default:
 		convertUnknownToZero(frame.Fields[Index], newField)
 		frame.Fields[Index] = newField
-		return frame, fmt.Errorf("metricIndex %d type can't be converted to float", Index)
+		return frame, fmt.Errorf("metricIndex %d type %s can't be converted to float", Index, valueType)
 	}
 	frame.Fields[Index] = newField
 

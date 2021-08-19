@@ -3,6 +3,7 @@ import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
 import { SystemDateFormatSettings } from '../datetime';
 import { GrafanaTheme2 } from '../themes';
+import { MapLayerOptions } from '../geo/layer';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -47,6 +48,8 @@ export interface FeatureToggles {
   ngalert: boolean;
   trimDefaults: boolean;
   accesscontrol: boolean;
+  tempoServiceGraph: boolean;
+  tempoSearch: boolean;
 }
 
 /**
@@ -125,4 +128,6 @@ export interface GrafanaConfig {
   dateFormats?: SystemDateFormatSettings;
   sentry: SentryConfig;
   customTheme?: any;
+  geomapDefaultBaseLayer?: MapLayerOptions;
+  geomapDisableCustomBaseLayer?: boolean;
 }

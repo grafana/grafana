@@ -1,30 +1,108 @@
-import { cloneDeep, map as _map, reduce, get, has, extend, omit, pick, isString } from 'lodash';
-
+import { cloneDeep, extend, get, has, isString, map as _map, omit, pick, reduce } from 'lodash';
+import { lastValueFrom, Observable, of, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { v4 as uuidv4 } from 'uuid';
+import { DataSourceWithBackend, frameToMetricFindValue, getBackendSrv } from '@grafana/runtime';
 import {
-  dateMath,
-  DataSourceInstanceSettings,
-  ScopedVars,
+  AnnotationEvent,
+  AnnotationQueryRequest,
+  ArrayVector,
+  DataFrame,
+  DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
+  DataSourceInstanceSettings,
+  dateMath,
   dateTime,
+  FieldType,
   LoadingState,
-  QueryResultMeta,
   MetricFindValue,
-  AnnotationQueryRequest,
-  AnnotationEvent,
-  DataQueryError,
+  QueryResultMeta,
+  ScopedVars,
+  TIME_SERIES_TIME_FIELD_NAME,
+  TIME_SERIES_VALUE_FIELD_NAME,
+  TimeSeries,
 } from '@grafana/data';
-import { v4 as uuidv4 } from 'uuid';
+
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
-import { InfluxQuery, InfluxOptions, InfluxVersion } from './types';
+import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { getBackendSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
-import { Observable, throwError, of } from 'rxjs';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
-import { catchError, map } from 'rxjs/operators';
+import { buildRawQuery } from './queryUtils';
+
+// we detect the field type based on the value-array
+function getFieldType(values: unknown[]): FieldType {
+  // the values-array may contain a lot of nulls.
+  // we need the first not-null item
+  const firstNotNull = values.find((v) => v !== null);
+
+  if (firstNotNull === undefined) {
+    // we could not find any not-null values
+    return FieldType.number;
+  }
+
+  const valueType = typeof firstNotNull;
+
+  switch (valueType) {
+    case 'string':
+      return FieldType.string;
+    case 'boolean':
+      return FieldType.boolean;
+    case 'number':
+      return FieldType.number;
+    default:
+      // this should never happen, influxql values
+      // can only be numbers, strings and booleans.
+      throw new Error(`InfluxQL: invalid value type ${valueType}`);
+  }
+}
+
+// this conversion function is specialized to work with the timeseries
+// data returned by InfluxDatasource.getTimeSeries()
+function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
+  const times: number[] = [];
+  const values: unknown[] = [];
+
+  // the data we process here is not correctly typed.
+  // the typescript types say every data-point is number|null,
+  // but in fact it can be string or boolean too.
+
+  const points = timeSeries.datapoints;
+  for (const point of points) {
+    values.push(point[0]);
+    times.push(point[1] as number);
+  }
+
+  const timeField = {
+    name: TIME_SERIES_TIME_FIELD_NAME,
+    type: FieldType.time,
+    config: {},
+    values: new ArrayVector<number>(times),
+  };
+
+  const valueField = {
+    name: TIME_SERIES_VALUE_FIELD_NAME,
+    type: getFieldType(values),
+    config: {
+      displayNameFromDS: timeSeries.title,
+    },
+    values: new ArrayVector<unknown>(values),
+    labels: timeSeries.tags,
+  };
+
+  const fields = [timeField, valueField];
+
+  return {
+    name: timeSeries.target,
+    refId: timeSeries.refId,
+    meta: timeSeries.meta,
+    fields,
+    length: values.length,
+  };
+}
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
   type: string;
@@ -104,10 +182,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return true;
   }
 
-  /**
-   * Only applied on flux queries
-   */
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
+    // this only works in flux-mode, it should not be called in non-flux-mode
+    if (!this.isFlux) {
+      throw new Error('applyTemplateVariables called in influxql-mode. this should never happen');
+    }
+
     return {
       ...query,
       query: this.templateSrv.replace(query.query ?? '', scopedVars), // The raw query text
@@ -200,7 +280,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
             default: {
               const timeSeries = influxSeries.getTimeSeries();
               for (y = 0; y < timeSeries.length; y++) {
-                seriesList.push(timeSeries[y]);
+                seriesList.push(timeSeriesToDataFrame(timeSeries[y]));
               }
               break;
             }
@@ -230,35 +310,23 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     let query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = this.templateSrv.replace(query, undefined, 'regex');
 
-    return this._seriesQuery(query, options)
-      .toPromise()
-      .then((data: any) => {
-        if (!data || !data.results || !data.results[0]) {
-          throw { message: 'No results in response from InfluxDB' };
-        }
-        return new InfluxSeries({
-          series: data.results[0].series,
-          annotation: options.annotation,
-        }).getAnnotations();
-      });
+    return lastValueFrom(this._seriesQuery(query, options)).then((data: any) => {
+      if (!data || !data.results || !data.results[0]) {
+        throw { message: 'No results in response from InfluxDB' };
+      }
+      return new InfluxSeries({
+        series: data.results[0].series,
+        annotation: options.annotation,
+      }).getAnnotations();
+    });
   }
 
   targetContainsTemplate(target: any) {
-    for (const group of target.groupBy) {
-      for (const param of group.params) {
-        if (this.templateSrv.variableExists(param)) {
-          return true;
-        }
-      }
-    }
+    // for flux-mode we just take target.query,
+    // for influxql-mode we use InfluxQueryModel to create the text-representation
+    const queryText = this.isFlux ? target.query : buildRawQuery(target);
 
-    for (const i in target.tags) {
-      if (this.templateSrv.variableExists(target.tags[i].value)) {
-        return true;
-      }
-    }
-
-    return false;
+    return this.templateSrv.variableExists(queryText);
   }
 
   interpolateVariablesInQueries(queries: InfluxQuery[], scopedVars: ScopedVars): InfluxQuery[] {
@@ -276,7 +344,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           policy: this.templateSrv.replace(query.policy ?? '', scopedVars, 'regex'),
         };
 
-        if (query.rawQuery) {
+        if (query.rawQuery || this.isFlux) {
           expandedQuery.query = this.templateSrv.replace(query.query ?? '', scopedVars, 'regex');
         }
 
@@ -300,27 +368,24 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         refId: 'metricFindQuery',
         query,
       };
-      return super
-        .query({
+      return lastValueFrom(
+        super.query({
           ...options, // includes 'range'
           targets: [target],
         } as DataQueryRequest)
-        .toPromise()
-        .then((rsp) => {
-          if (rsp.data?.length) {
-            return frameToMetricFindValue(rsp.data[0]);
-          }
-          return [];
-        });
+      ).then((rsp) => {
+        if (rsp.data?.length) {
+          return frameToMetricFindValue(rsp.data[0]);
+        }
+        return [];
+      });
     }
 
     const interpolated = this.templateSrv.replace(query, undefined, 'regex');
 
-    return this._seriesQuery(interpolated, options)
-      .toPromise()
-      .then((resp) => {
-        return this.responseParser.parse(query, resp);
-      });
+    return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
+      return this.responseParser.parse(query, resp);
+    });
   }
 
   getTagKeys(options: any = {}) {
@@ -383,9 +448,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         },
       } as DataQueryRequest<InfluxQuery>;
 
-      return super
-        .query(request)
-        .toPromise()
+      return lastValueFrom(super.query(request))
         .then((res: DataQueryResponse) => {
           if (!res || !res.data || res.state !== LoadingState.Done) {
             console.error('InfluxDB Error', res);
@@ -407,8 +470,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
     const query = queryBuilder.buildExploreQuery('RETENTION POLICIES');
 
-    return this._seriesQuery(query)
-      .toPromise()
+    return lastValueFrom(this._seriesQuery(query))
       .then((res: any) => {
         const error = get(res, 'results[0].error');
         if (error) {

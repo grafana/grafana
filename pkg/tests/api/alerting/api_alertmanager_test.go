@@ -39,9 +39,21 @@ func TestAMConfigAccess(t *testing.T) {
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create a users to make authenticated requests
-	require.NoError(t, createUser(t, store, models.ROLE_VIEWER, "viewer", "viewer"))
-	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
-	require.NoError(t, createUser(t, store, models.ROLE_ADMIN, "admin", "admin"))
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_VIEWER),
+		Password:       "viewer",
+		Login:          "viewer",
+	})
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "editor",
+		Login:          "editor",
+	})
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_ADMIN),
+		Password:       "admin",
+		Login:          "admin",
+	})
 
 	type testCase struct {
 		desc      string
@@ -402,7 +414,11 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	}
 
 	// Create a user to make authenticated requests
-	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "password",
+		Login:          "grafana",
+	})
 
 	// invalid credentials request to get the alerts should fail
 	{
@@ -554,9 +570,21 @@ func TestRulerAccess(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a users to make authenticated requests
-	require.NoError(t, createUser(t, store, models.ROLE_VIEWER, "viewer", "viewer"))
-	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
-	require.NoError(t, createUser(t, store, models.ROLE_ADMIN, "admin", "admin"))
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_VIEWER),
+		Password:       "viewer",
+		Login:          "viewer",
+	})
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "editor",
+		Login:          "editor",
+	})
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_ADMIN),
+		Password:       "admin",
+		Login:          "admin",
+	})
 
 	// Now, let's test the access policies.
 	testCases := []struct {
@@ -668,8 +696,16 @@ func TestDeleteFolderWithRules(t *testing.T) {
 	namespaceUID, err := createFolder(t, store, 0, "default")
 	require.NoError(t, err)
 
-	require.NoError(t, createUser(t, store, models.ROLE_VIEWER, "viewer", "viewer"))
-	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_VIEWER),
+		Password:       "viewer",
+		Login:          "viewer",
+	})
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "editor",
+		Login:          "editor",
+	})
 
 	createRule(t, grafanaListedAddr, "default", "editor", "editor")
 
@@ -748,9 +784,27 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
 	}
 
-	// Next, the editor can delete the folder.
+	// Next, the editor can not delete the folder because it contains Grafana 8 alerts.
 	{
 		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s", grafanaListedAddr, namespaceUID)
+		req, err := http.NewRequest(http.MethodDelete, u, nil)
+		require.NoError(t, err)
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		require.JSONEq(t, `{"message":"folder cannot be deleted: folder contains alert rules"}`, string(b))
+	}
+
+	// Next, the editor can delete the folder if forceDeleteRules is true.
+	{
+		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s?forceDeleteRules=true", grafanaListedAddr, namespaceUID)
 		req, err := http.NewRequest(http.MethodDelete, u, nil)
 		require.NoError(t, err)
 		client := &http.Client{}
@@ -797,12 +851,14 @@ func TestAlertRuleCRUD(t *testing.T) {
 	store.Bus = bus.GetBus()
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
-	err := createUser(t, store, models.ROLE_EDITOR, "grafana", "password")
-
-	require.NoError(t, err)
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "password",
+		Login:          "grafana",
+	})
 
 	// Create the namespace we'll save our alerts to.
-	_, err = createFolder(t, store, 0, "default")
+	_, err := createFolder(t, store, 0, "default")
 	require.NoError(t, err)
 
 	interval, err := model.ParseDuration("1m")
@@ -1809,7 +1865,11 @@ func TestQuota(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a user to make authenticated requests
-	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "password",
+		Login:          "grafana",
+	})
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
@@ -1903,7 +1963,11 @@ func TestEval(t *testing.T) {
 	store.Bus = bus.GetBus()
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
-	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
+	createUser(t, store, models.CreateUserCommand{
+		DefaultOrgRole: string(models.ROLE_EDITOR),
+		Password:       "password",
+		Login:          "grafana",
+	})
 
 	// Create the namespace we'll save our alerts to.
 	_, err := createFolder(t, store, 0, "default")
@@ -2320,16 +2384,18 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 	return string(json), m
 }
 
-func createUser(t *testing.T, store *sqlstore.SQLStore, role models.RoleType, username, password string) error {
+func createUser(t *testing.T, store *sqlstore.SQLStore, cmd models.CreateUserCommand) int64 {
 	t.Helper()
 
-	cmd := models.CreateUserCommand{
-		Login:          username,
-		Password:       password,
-		DefaultOrgRole: string(role),
-	}
-	_, err := store.CreateUser(context.Background(), cmd)
-	return err
+	u, err := store.CreateUser(context.Background(), cmd)
+	require.NoError(t, err)
+	return u.Id
+}
+
+func createOrg(t *testing.T, store *sqlstore.SQLStore, name string, userID int64) int64 {
+	org, err := store.CreateOrgWithMember(name, userID)
+	require.NoError(t, err)
+	return org.Id
 }
 
 func getLongString(t *testing.T, n int) string {

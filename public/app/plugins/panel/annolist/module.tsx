@@ -3,72 +3,94 @@ import { PanelModel, PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 import { AnnoListPanel } from './AnnoListPanel';
 import { AnnoOptions } from './types';
+import { truncate } from '@sentry/utils';
 
 export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
   .setPanelOptions((builder) => {
     builder
-      .addBooleanSwitch({
-        path: 'showUser',
-        name: 'Show user',
-        description: '',
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        path: 'showTime',
-        name: 'Show time',
-        description: '',
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        path: 'showTags',
-        name: 'Show tags',
-        description: '',
-        defaultValue: true,
-      })
-      .addTextInput({
-        path: 'navigateBefore',
-        name: 'Before',
-        defaultValue: '10m',
-        description: '',
-      })
-      .addTextInput({
-        path: 'navigateAfter',
-        name: 'After',
-        defaultValue: '10m',
-        description: '',
-      })
-      .addBooleanSwitch({
-        path: 'navigateToPanel',
-        name: 'To panel',
-        description: '',
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
+      .addRadio({
+        category: ['Annotation query'],
         path: 'onlyFromThisDashboard',
-        name: 'Only this dashboard',
-        description: '',
+        name: 'Query filter',
         defaultValue: false,
+        settings: {
+          options: [
+            { value: false, label: 'All dashboards' },
+            { value: true, label: 'This dashboard' },
+          ] as any, // does not like boolean, but works fine!
+        },
       })
-      .addBooleanSwitch({
+      .addRadio({
+        category: ['Annotation query'],
         path: 'onlyInTimeRange',
-        name: 'Within Time Range',
-        description: '',
+        name: 'Time range',
         defaultValue: false,
+        settings: {
+          options: [
+            { value: false, label: 'None' },
+            { value: true, label: 'This dashboard' },
+          ] as any, // does not like boolean, but works fine!
+        },
       })
       .addCustomEditor({
+        category: ['Annotation query'],
         id: 'tags',
         path: 'tags',
         name: 'Tags',
-        description: '',
+        description: 'Match annotation tags',
         editor(props) {
           return <TagsInput tags={props.value} onChange={props.onChange} />;
         },
       })
       .addNumberInput({
+        category: ['Annotation query'],
         path: 'limit',
         name: 'Limit',
-        description: '',
         defaultValue: 10,
+      })
+      .addBooleanSwitch({
+        category: ['Display'],
+        path: 'showUser',
+        name: 'Show user',
+        defaultValue: true,
+      })
+      .addBooleanSwitch({
+        category: ['Display'],
+        path: 'showTime',
+        name: 'Show time',
+        defaultValue: true,
+      })
+      .addBooleanSwitch({
+        category: ['Display'],
+        path: 'showTags',
+        name: 'Show tags',
+        defaultValue: true,
+      })
+      .addRadio({
+        category: ['Link behavior'],
+        path: 'navigateToPanel',
+        name: 'Link target',
+        defaultValue: truncate,
+        settings: {
+          options: [
+            { value: true, label: 'Panel' },
+            { value: false, label: 'Dashboard' },
+          ] as any, // does not like boolean, but works fine!
+        },
+      })
+      .addTextInput({
+        category: ['Link behavior'],
+        path: 'navigateBefore',
+        name: 'Time before',
+        defaultValue: '10m',
+        description: '',
+      })
+      .addTextInput({
+        category: ['Link behavior'],
+        path: 'navigateAfter',
+        name: 'Time after',
+        defaultValue: '10m',
+        description: '',
       });
   })
   // TODO, we should support this directly in the plugin infrastructure

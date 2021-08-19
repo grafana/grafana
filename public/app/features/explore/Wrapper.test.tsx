@@ -377,6 +377,7 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
       type: 'logs',
       name,
       meta,
+      access: 'proxy',
       jsonData: {},
     },
     api: {

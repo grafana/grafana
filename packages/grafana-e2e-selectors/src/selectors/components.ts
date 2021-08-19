@@ -1,10 +1,22 @@
+// NOTE: by default Component string selectors are set up to be aria-labels,
+// however there are many cases where your component may not need an aria-label
+// (a <button> with clear text, for example, does not need an aria-label as it's already labeled)
+// but you still might need to select it for testing,
+// in that case please add the attribute data-test-id={selector} in the component and
+// prefix your selector string with 'data-test-id' so that when create the selectors we know to search for it on the right attribute
+/**
+ * Selectors grouped/defined in Components
+ *
+ * @alpha
+ */
 export const Components = {
   TimePicker: {
-    openButton: 'TimePicker Open Button',
+    openButton: 'data-testid TimePicker Open Button',
     fromField: 'TimePicker from field',
     toField: 'TimePicker to field',
-    applyTimeRange: 'TimePicker submit button',
+    applyTimeRange: 'data-testid TimePicker submit button',
     calendar: 'TimePicker calendar',
+    absoluteTimeRangeTitle: 'data-testid-absolute-time-range-narrow',
   },
   DataSource: {
     TestData: {
@@ -37,7 +49,7 @@ export const Components = {
   },
   Panels: {
     Panel: {
-      title: (title: string) => `Panel header ${title}`,
+      title: (title: string) => `data-testid Panel header ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
@@ -206,9 +218,9 @@ export const Components = {
     items: 'Search items',
   },
   DashboardLinks: {
-    container: 'Dashboard link container',
-    dropDown: 'Dashboard link dropdown',
-    link: 'Dashboard link',
+    container: 'data-testid Dashboard link container',
+    dropDown: 'data-testid Dashboard link dropdown',
+    link: 'data-testid Dashboard link',
   },
   LoadingIndicator: {
     icon: 'Loading indicator',
@@ -221,5 +233,13 @@ export const Components = {
   },
   CodeEditor: {
     container: 'Code editor container',
+  },
+  DashboardImportPage: {
+    textarea: 'data-testid-import-dashboard-textarea',
+    submit: 'data-testid-load-dashboard',
+  },
+  ImportDashboardForm: {
+    name: 'data-testid-import-dashboard-title',
+    submit: 'data-testid-import-dashboard-submit',
   },
 };
