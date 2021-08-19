@@ -46,12 +46,6 @@ class SubMenuUnConnected extends PureComponent<Props> {
       return null;
     }
 
-    const styles = css`
-      display: flex;
-      flex-wrap: wrap;
-      display: contents;
-    `;
-
     return (
       <div className="submenu-controls">
         <form aria-label="Template variables" className={styles}>
@@ -75,6 +69,12 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
     variables: getSubMenuVariables(state.templating.variables),
   };
 };
+
+const styles = css`
+  display: flex;
+  flex-wrap: wrap;
+  display: contents;
+`;
 
 export const SubMenu = connect(mapStateToProps)(SubMenuUnConnected);
 
