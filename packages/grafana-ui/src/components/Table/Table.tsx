@@ -21,7 +21,7 @@ import {
   TableFilterActionCallback,
   TableSortByActionCallback,
   TableSortByFieldState,
-  Total,
+  FooterInfo,
 } from './types';
 import { getTableStyles, TableStyles } from './styles';
 import { Icon } from '../Icon/Icon';
@@ -47,7 +47,7 @@ export interface Props {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
-  totals?: Total[];
+  footers?: FooterInfo[];
 }
 
 interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}>, UseFiltersState<{}> {}
@@ -127,7 +127,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     noHeader,
     resizable = true,
     initialSortBy,
-    totals,
+    footers,
   } = props;
   const tableStyles = useStyles2(getTableStyles);
 
@@ -143,23 +143,23 @@ export const Table: FC<Props> = memo((props: Props) => {
     return Array(data.length).fill(0);
   }, [data]);
 
-  const memoizedTotals = useMemo(() => {
-    if (totals === undefined) {
+  const memoizedFooters = useMemo(() => {
+    if (footers === undefined) {
       return undefined;
     }
-    const totalsMap = new Map<string, any>();
-    for (const total of totals) {
-      totalsMap.set(total.field, total.value());
+    const footerMap = new Map<string, any>();
+    for (const footer of footers) {
+      footerMap.set(footer.field, footer.value());
     }
-    return totalsMap;
-  }, [totals]);
+    return footerMap;
+  }, [footers]);
 
   // React-table column definitions
-  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth, memoizedTotals), [
+  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth, memoizedFooters), [
     data,
     width,
     columnMinWidth,
-    memoizedTotals,
+    memoizedFooters,
   ]);
 
   // Internal react table state reducer
@@ -253,7 +253,7 @@ export const Table: FC<Props> = memo((props: Props) => {
               No data
             </div>
           )}
-          {memoizedTotals !== undefined && (
+          {memoizedFooters !== undefined && (
             <div
               style={{
                 position: 'absolute',
