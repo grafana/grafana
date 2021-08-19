@@ -1,4 +1,14 @@
-import { from, merge, MonoTypeOperatorFunction, Observable, of, Subject, Subscription, throwError } from 'rxjs';
+import {
+  from,
+  lastValueFrom,
+  merge,
+  MonoTypeOperatorFunction,
+  Observable,
+  of,
+  Subject,
+  Subscription,
+  throwError,
+} from 'rxjs';
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { v4 as uuidv4 } from 'uuid';
@@ -62,9 +72,7 @@ export class BackendSrv implements BackendService {
   }
 
   async request<T = any>(options: BackendSrvRequest): Promise<T> {
-    return this.fetch<T>(options)
-      .pipe(map((response: FetchResponse<T>) => response.data))
-      .toPromise();
+    return await lastValueFrom(this.fetch<T>(options).pipe(map((response: FetchResponse<T>) => response.data)));
   }
 
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
@@ -134,7 +142,7 @@ export class BackendSrv implements BackendService {
   }
 
   async datasourceRequest(options: BackendSrvRequest): Promise<any> {
-    return this.fetch(options).toPromise();
+    return lastValueFrom(this.fetch(options));
   }
 
   private parseRequestOptions(options: BackendSrvRequest): BackendSrvRequest {
