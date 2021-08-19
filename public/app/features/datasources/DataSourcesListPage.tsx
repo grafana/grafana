@@ -11,8 +11,7 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import DataSourcesList from './DataSourcesList';
 // Types
 import { IconName } from '@grafana/ui';
-import { StoreState } from 'app/types';
-import { AccessControlAction } from 'app/types/';
+import { StoreState, AccessControlAction } from 'app/types';
 // Actions
 import { loadDataSources } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
