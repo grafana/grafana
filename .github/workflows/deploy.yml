@@ -37,7 +37,8 @@ jobs:
 
       - name: setup docker
         uses: docker-practice/actions-setup-docker@master
-        run: |
+        with: 
+          script: |
           docker version
 
       # - name: copy file via ssh password
