@@ -50,7 +50,7 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
     <label
       className="gf-form-label gf-form-label--variable"
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
-      htmlFor={name}
+      htmlFor={variable.id}
     >
       {labelOrName}
     </label>
