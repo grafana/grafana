@@ -17,7 +17,7 @@ export interface Props {
 
 const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest, exploreUrl }) => {
   const canEditDataSources = !isReadOnly && contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
-  const canDeleteDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesDelete);
+  const canDeleteDataSources = !isReadOnly && contextSrv.hasPermission(AccessControlAction.DataSourcesDelete);
 
   return (
     <div className="gf-form-button-row">
@@ -31,7 +31,7 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest, exploreU
         <Button
           type="button"
           variant="destructive"
-          disabled={isReadOnly}
+          disabled={!canDeleteDataSources}
           onClick={onDelete}
           aria-label={selectors.pages.DataSource.delete}
         >
@@ -42,7 +42,7 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest, exploreU
         <Button
           type="submit"
           variant="primary"
-          disabled={isReadOnly}
+          disabled={!canEditDataSources}
           onClick={(event) => onSubmit(event)}
           aria-label={selectors.pages.DataSource.saveAndTest}
         >
