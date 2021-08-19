@@ -1,10 +1,11 @@
-FROM node:14.16.0-alpine3.13 as js-builder
+FROM node:16.0-alpine3.13 as js-builder
 
 WORKDIR /usr/src/app/
 
 COPY package.json yarn.lock ./
 COPY packages packages
 
+RUN apk update
 RUN apk --no-cache add git
 RUN yarn install --pure-lockfile --no-progress
 
@@ -19,6 +20,7 @@ RUN yarn build
 
 FROM golang:1.16.1-alpine3.13 as go-builder
 
+RUN apk update
 RUN apk add --no-cache gcc g++
 
 WORKDIR $GOPATH/src/github.com/grafana/grafana
@@ -49,6 +51,8 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
     GF_PATHS_PROVISIONING="/etc/grafana/provisioning"
 
 WORKDIR $GF_PATHS_HOME
+
+RUN apk update
 
 RUN apk add --no-cache ca-certificates bash tzdata && \
     apk add --no-cache openssl musl-utils
