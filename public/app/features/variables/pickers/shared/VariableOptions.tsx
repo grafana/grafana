@@ -83,7 +83,10 @@ export class VariableOptions extends PureComponent<Props> {
               ? 'variable-options-column-header many-selected'
               : 'variable-options-column-header'
           }`}
+          role="checkbox"
+          aria-checked={selectedValues.length > 1 ? 'mixed' : 'false'}
           onClick={this.onToggleAll}
+          aria-label="Toggle all values"
           data-placement="top"
         >
           <span className="variable-option-icon"></span>
