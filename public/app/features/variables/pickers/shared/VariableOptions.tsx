@@ -3,8 +3,9 @@ import { Tooltip } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { VariableOption } from '../../types';
+import { css } from '@emotion/css';
 
-export interface Props extends React.HTMLProps<HTMLDivElement> {
+export interface Props extends React.HTMLProps<HTMLUListElement> {
   multi: boolean;
   values: VariableOption[];
   selectedValues: VariableOption[];
@@ -39,16 +40,16 @@ export class VariableOptions extends PureComponent<Props> {
     const { multi, values, highlightIndex, selectedValues, onToggle, onToggleAll, ...restProps } = this.props;
 
     return (
-      <div
-        className={`${multi ? 'variable-value-dropdown multi' : 'variable-value-dropdown single'}`}
-        aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
-        {...restProps}
-      >
+      <div className={`${multi ? 'variable-value-dropdown multi' : 'variable-value-dropdown single'}`}>
         <div className="variable-options-wrapper">
-          <div className="variable-options-column">
+          <ul
+            className={`variable-options-column ${listStyles}`}
+            aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
+            {...restProps}
+          >
             {this.renderMultiToggle()}
             {values.map((option, index) => this.renderOption(option, index))}
-          </div>
+          </ul>
         </div>
       </div>
     );
@@ -60,18 +61,20 @@ export class VariableOptions extends PureComponent<Props> {
     const highlightClass = index === highlightIndex ? `${selectClass} highlighted` : selectClass;
 
     return (
-      <a
-        key={`${option.value}`}
-        role="checkbox"
-        aria-checked={option.selected}
-        className={highlightClass}
-        onClick={this.onToggle(option)}
-      >
-        <span className="variable-option-icon"></span>
-        <span data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
-          {option.text}
-        </span>
-      </a>
+      <li>
+        <a
+          key={`${option.value}`}
+          role="checkbox"
+          aria-checked={option.selected}
+          className={highlightClass}
+          onClick={this.onToggle(option)}
+        >
+          <span className="variable-option-icon"></span>
+          <span data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
+            {option.text}
+          </span>
+        </a>
+      </li>
     );
   }
 
@@ -103,3 +106,7 @@ export class VariableOptions extends PureComponent<Props> {
     );
   }
 }
+
+const listStyles = css`
+  list-style-type: none;
+`;
