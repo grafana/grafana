@@ -8,6 +8,7 @@ import {
   FieldMatcherID,
 } from '@grafana/data';
 import { map } from 'rxjs/operators';
+import { DataFrameType } from '../../../../../../packages/grafana-data/src/types/dataFrameTypes';
 
 /**
  * There is currently an effort to figure out consistent names
@@ -54,7 +55,10 @@ export function toTimeSeriesMany(data: DataFrame[]): DataFrame[] {
       result.push({
         name: frame.name,
         refId: frame.refId,
-        meta: frame.meta,
+        meta: {
+          ...frame.meta,
+          type: DataFrameType.TimeSeriesMany,
+        },
         fields: [timeField, field],
         length: frame.length,
       });
