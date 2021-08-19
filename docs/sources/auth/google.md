@@ -43,7 +43,7 @@ allowed_domains = mycompany.com mycompany.org
 hosted_domain =
 ```
 
-For more information on these properties, refer to [Using OAuth 2.0 to Access Google APIs](https://developers.google.com/identity/protocols/oauth2/openid-connect).
+WWhile `allowed_domains` is a Grafana property, `hosted_domain` is a Google OAuth property sent with the OAuth request to Google. For more information,  refer to [Using OAuth 2.0 to Access Google APIs](https://developers.google.com/identity/protocols/oauth2/openid-connect).
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
 correct. For example in case you are serving Grafana behind a proxy. 
