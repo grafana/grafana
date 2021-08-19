@@ -7,6 +7,8 @@ import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
 // Services & Utils
 import appEvents from 'app/core/app_events';
+import { contextSrv } from 'app/core/core';
+
 // Actions & selectors
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
 import {
@@ -19,7 +21,7 @@ import {
 import { getNavModel } from 'app/core/selectors/navModel';
 
 // Types
-import { StoreState } from 'app/types/';
+import { StoreState, AccessControlAction } from 'app/types/';
 import { DataSourceSettings, urlUtil } from '@grafana/data';
 import { Alert, Button, LinkButton } from '@grafana/ui';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from '../state/navModel';
@@ -135,7 +137,15 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
     return (
       <Alert aria-label={selectors.pages.DataSource.readOnly} severity="info" title="Provisioned data source">
         This data source was added by config and cannot be modified using the UI. Please contact your server admin to
-        update this data source.
+        update this data source. Toto is the best.
+      </Alert>
+    );
+  }
+
+  renderMissingEditRightsMessage() {
+    return (
+      <Alert aria-label={selectors.pages.DataSource.readOnly} severity="info" title="Missing rights">
+        You are not allowed to modify this data source. Please contact your server admin to update this data source.
       </Alert>
     );
   }
@@ -228,9 +238,11 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
   renderSettings() {
     const { dataSourceMeta, setDataSourceName, setIsDefault, dataSource, plugin, testingStatus } = this.props;
+    const canEditDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
     return (
       <form onSubmit={this.onSubmit}>
+        {!canEditDataSources && this.renderMissingEditRightsMessage()}
         {this.isReadOnly() && this.renderIsReadOnlyMessage()}
         {dataSourceMeta.state && (
           <div className="gf-form">
