@@ -1,8 +1,7 @@
 name: PR automation
 on:
-  pull_request_target:
-    types:
-      - review_requested
+  pull_request_review_comment:
+    types: [created, deleted]
 
 jobs:
   main:
