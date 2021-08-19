@@ -20,20 +20,20 @@ To download your Grafana Enterprise license:
 
 ## Step 2. Add your license to a Grafana instance
 
-There are three different ways to add the license to a Grafana instance:
+There is more than one way to add the license to a Grafana instance:
 
-### Upload the license file through the Grafana Server Administrator page
+### Upload the license file via the Grafana server administrator page
 
 This is the preferred option for single instance installations of Grafana Enterprise.
 
-1. Sign in as a Grafana server admin.
+1. Sign in as a Grafana server administrator.
 1. Navigate to **Server Admin > Upgrade** within Grafana.
 1. Click **Upload license token file**.
 1. Select your license file, and upload it.
 
-### Place the license.jwt file in Grafana's data folder
+### Put the `license.jwt` file into the data directory of Grafana
 
-The data folder is usually `/var/lib/grafana` on Linux systems.
+On Linux systems, the data directory is usually at `/var/lib/grafana`.
 
 You can also configure a custom location for the license file using the grafana.ini setting:
 
