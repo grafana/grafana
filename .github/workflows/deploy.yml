@@ -36,8 +36,8 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
 
       - name: setup docker
-      - uses: docker-practice/actions-setup-docker@master
-      - run: |
+        uses: docker-practice/actions-setup-docker@master
+        run: |
           docker version
 
       # - name: copy file via ssh password
