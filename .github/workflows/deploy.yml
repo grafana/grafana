@@ -44,15 +44,9 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd /home/${{ secrets.SSH_USERNAME }}/grafana
-            pwd
             git fetch
-            git checkout CORE-58/login-customization
+            git checkout ${GITHUB_REF##*/}
             sudo docker-compose down
-      # - name: setup docker
-      #   uses: docker-practice/actions-setup-docker@master
-        
-      # - name: build docker image
-      #   run: |
-      #     docker version
-      #     docker image rm corewatts-grafana
-      #     sudo docker build -t corewatts-grafana -f Dockerfile .
+            sudo docker image rm corewatts-grafana
+            sudo docker build -t corewatts-grafana -f Dockerfile .
+            sudo docker-compose up -d
