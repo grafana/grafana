@@ -58,12 +58,12 @@ const CwSlogan: FC<BrandComponentProps> = ({ className }) => {
       background-repeat: no-repeat;
       opacity: 0;
       transition: opacity 3s ease-in-out;
-      visibility: hidden;
+      display: none;
 
       @media ${styleMixins.mediaUp(theme.v1.breakpoints.lg)} {
         top: 300px;
         left: 100px;
-        visibility: visible;
+        display: block;
       }
     }
   `;
@@ -75,6 +75,7 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
   const theme = useTheme2();
 
   const background = css`
+    border: 0;
     &:before {
       content: '';
       position: absolute;
@@ -86,7 +87,7 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
       background-position: bottom;
       background-size: contain;
       background-repeat: no-repeat;
-      border-bottom: 13px solid ${theme.colors.primary.main};
+      border-bottom: 13px solid transparent;
       opacity: 0;
       transition: opacity 3s ease-in-out;
 

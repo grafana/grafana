@@ -56,7 +56,8 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
 
   return {
     container: css({
-      minHeight: '100vh',
+      maxHeight: '100vh',
+      height: '100%',
       maxWidth: '800px',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
@@ -97,12 +98,8 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
     `,
     loginLogo: css`
       width: 100%;
-      max-width: 60px;
+      max-width: 120px;
       margin-bottom: 15px;
-
-      @media ${styleMixins.mediaUp(theme.v1.breakpoints.sm)} {
-        max-width: 120px;
-      }
     `,
     loginLogoWrapper: css`
       display: flex;
