@@ -42,13 +42,13 @@ export const Pages = {
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
-      submenuItem: 'Dashboard template variables submenu item',
-      submenuItemLabels: (item: string) => `Dashboard template variables submenu Label ${item}`,
+      submenuItem: 'data-testid template variable',
+      submenuItemLabels: (item: string) => `data-testid Dashboard template variables submenu Label ${item}`,
       submenuItemValueDropDownValueLinkTexts: (item: string) =>
-        `Dashboard template variables Variable Value DropDown value link text ${item}`,
-      submenuItemValueDropDownDropDown: 'Dashboard template variables Variable Value DropDown DropDown',
+        `data-testid Dashboard template variables Variable Value DropDown value link text ${item}`,
+      submenuItemValueDropDownDropDown: 'Variable options',
       submenuItemValueDropDownOptionTexts: (item: string) =>
-        `Dashboard template variables Variable Value DropDown option text ${item}`,
+        `data-testid Dashboard template variables Variable Value DropDown option text ${item}`,
     },
     Settings: {
       General: {
