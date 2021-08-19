@@ -15,11 +15,12 @@ import {
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import React from 'react';
 import { LokiQueryField } from '../loki/components/LokiQueryField';
+import { LokiQuery } from '../loki/types';
 import { TempoDatasource, TempoQuery, TempoQueryType } from './datasource';
 import LokiDatasource from '../loki/datasource';
-import { LokiQuery } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import useAsync from 'react-use/lib/useAsync';
+import NativeSearch from './NativeSearch';
 
 interface Props extends ExploreQueryFieldProps<TempoDatasource, TempoQuery>, Themeable2 {}
 
@@ -31,6 +32,7 @@ interface State {
   serviceMapDatasourceUid?: string;
   serviceMapDatasource?: PrometheusDatasource;
 }
+
 class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
   state = {
     linkedDatasourceUid: undefined,
@@ -82,13 +84,20 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     const graphDatasourceUid = datasource.serviceMap?.datasourceUid;
 
     const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
-      { value: 'search', label: 'Search' },
       { value: 'traceId', label: 'TraceID' },
       { value: 'upload', label: 'JSON file' },
     ];
 
     if (config.featureToggles.tempoServiceGraph) {
       queryTypeOptions.push({ value: 'serviceMap', label: 'Service Map' });
+    }
+
+    if (config.featureToggles.tempoSearch) {
+      queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search' });
+    }
+
+    if (logsDatasourceUid) {
+      queryTypeOptions.push({ value: 'search', label: 'Loki Search' });
     }
 
     return (
@@ -114,6 +123,15 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             query={query}
             onRunQuery={this.onRunLinkedQuery}
             onChange={this.onChangeLinkedQuery}
+          />
+        )}
+        {query.queryType === 'nativeSearch' && (
+          <NativeSearch
+            datasource={this.props.datasource}
+            query={query}
+            onChange={onChange}
+            onBlur={this.props.onBlur}
+            onRunQuery={this.props.onRunQuery}
           />
         )}
         {query.queryType === 'upload' && (

@@ -49,6 +49,7 @@ export interface FeatureToggles {
   trimDefaults: boolean;
   accesscontrol: boolean;
   tempoServiceGraph: boolean;
+  tempoSearch: boolean;
 }
 
 /**
