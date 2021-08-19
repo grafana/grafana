@@ -3,7 +3,7 @@ import { cx, css, keyframes } from '@emotion/css';
 import { useStyles2, styleMixins } from '@grafana/ui';
 import { Branding } from '../Branding/Branding';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Footer } from '../Footer/Footer';
+// import { Footer } from '../Footer/Footer';
 
 interface InnerBoxProps {
   enterAnimation?: boolean;
@@ -22,6 +22,8 @@ export const LoginLayout: FC = ({ children }) => {
 
   return (
     <Branding.LoginBackground className={cx(loginStyles.container, startAnim && loginStyles.loginAnim)}>
+      <Branding.CwLogo className={cx(startAnim && loginStyles.loginAnim)}></Branding.CwLogo>
+      <Branding.CwSlogan className={cx(startAnim && loginStyles.loginAnim)}></Branding.CwSlogan>
       <div className={cx(loginStyles.loginContent, Branding.LoginBoxBackground(), 'login-content-box')}>
         <div className={loginStyles.loginLogoWrapper}>
           <Branding.LoginLogo className={loginStyles.loginLogo} />
@@ -32,7 +34,7 @@ export const LoginLayout: FC = ({ children }) => {
         </div>
         <div className={loginStyles.loginOuterBox}>{children}</div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </Branding.LoginBackground>
   );
 };
@@ -65,6 +67,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
+      borderBottom: `13px solid ${theme.colors.primary.main}`,
     }),
     loginAnim: css`
       &:before {
@@ -81,10 +84,10 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
         margin-right: auto;
       }
 
-      @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
+      @media ${styleMixins.mediaUp(theme.v1.breakpoints.lg)} {
         .login-content-box {
           margin-left: auto;
-          margin-right: 20%;
+          margin-right: 10%;
         }
       }
     `,
