@@ -139,6 +139,7 @@ export const Components = {
     content: 'Query editor tab content',
     queryInspectorButton: 'Query inspector button',
     addQuery: 'Query editor add query button',
+    recordedQuery: 'Query editor add recorded query button',
   },
   QueryEditorRows: {
     rows: 'Query editor row',

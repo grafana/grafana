@@ -29,6 +29,7 @@ import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelModel } from 'app/features/dashboard/state';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
+import config from 'app/core/config';
 
 interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -261,6 +262,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.onToggleHelp();
   };
 
+  onRecordQuery = () => {
+    //I would like to have a modal pop up that is from grafana enterprise
+  };
+
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
     if (datasource?.getQueryDisplayText) {
@@ -279,6 +284,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const isDisabled = query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
+    const showRecordQuery = config.licenseInfo.hasLicense && config.featureToggles.recordedQueries;
 
     return (
       <HorizontalGroup width="auto">
@@ -299,15 +305,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             }}
           />
         )}
+        {showRecordQuery && <QueryOperationAction title="Record Query" icon="cog" onClick={this.onRecordQuery} />}
         <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
-        {!hideDisableQuery ? (
+        {!hideDisableQuery && (
           <QueryOperationAction
             title="Disable/enable query"
             icon={isDisabled ? 'eye-slash' : 'eye'}
             active={isDisabled}
             onClick={this.onDisableQuery}
           />
-        ) : null}
+        )}
         <QueryOperationAction title="Remove query" icon="trash-alt" onClick={this.onRemoveQuery} />
       </HorizontalGroup>
     );
