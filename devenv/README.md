@@ -55,6 +55,9 @@ Jaeger block runs both Jaeger and Loki container. Loki container sends traces to
 | 1.0     | graphite1   | 8280              | 2203           | 2203        |
 | 0.9     | graphite09  | 8380              | 2303           | 2303        |
 
+## Debugging setup in VS Code
+An example of launch.json is provided in `devenv/vscode/launch.json`. It basically does what Makefile and .bra.toml do. The 'program' field is set to the folder name so VS Code loads all *.go files in it instead of just main.go.
+
 ## Troubleshooting
 
 ### Containers that read from log files fail to start (Mac OS)
