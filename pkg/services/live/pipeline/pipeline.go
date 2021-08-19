@@ -25,7 +25,7 @@ type Pipeline struct {
 // Init ...
 func (p *Pipeline) Init() error {
 	logger.Info("Live pipeline initialization")
-	storage := &fakeStorage{gLive: p.GrafanaLive, frameStorage: NewFrameStorage()}
+	storage := &fileStorage{gLive: p.GrafanaLive, frameStorage: NewFrameStorage()}
 	ruleProcessor := NewRuleProcessor(p)
 	storage.ruleProcessor = ruleProcessor
 	p.cache = NewCache(storage)
