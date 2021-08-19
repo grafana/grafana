@@ -22,8 +22,10 @@ export class VariableInput extends PureComponent<Props> {
   };
 
   render() {
+    const { value, id, ...restProps } = this.props;
     return (
       <input
+        {...restProps}
         ref={(instance) => {
           if (instance) {
             instance.focus();
@@ -32,11 +34,10 @@ export class VariableInput extends PureComponent<Props> {
         }}
         type="text"
         className="gf-form-input"
-        value={this.props.value ?? ''}
+        value={value ?? ''}
         onChange={this.onChange}
         onKeyDown={this.onKeyDown}
         placeholder="Enter variable value"
-        id={this.props.id}
       />
     );
   }

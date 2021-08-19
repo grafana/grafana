@@ -11,6 +11,10 @@ export interface Props {
   highlightIndex: number;
   onToggle: (option: VariableOption, clearOthers: boolean) => void;
   onToggleAll: () => void;
+  /**
+   * Used for aria-controls
+   */
+  id: string;
 }
 
 export class VariableOptions extends PureComponent<Props> {
@@ -31,12 +35,13 @@ export class VariableOptions extends PureComponent<Props> {
   }
 
   render() {
-    const { multi, values } = this.props;
+    const { multi, values, ...restProps } = this.props;
 
     return (
       <div
         className={`${multi ? 'variable-value-dropdown multi' : 'variable-value-dropdown single'}`}
         aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
+        {...restProps}
       >
         <div className="variable-options-wrapper">
           <div className="variable-options-column">

@@ -82,6 +82,9 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
           onClick={this.onShowOptions}
           loading={loading}
           onCancel={this.onCancel}
+          aria-haspopup={true}
+          aria-expanded={false}
+          aria-controls={`options-${variable.id}`}
         />
       );
     }
@@ -91,13 +94,17 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     };
 
     renderOptions(picker: OptionsPickerState) {
+      const { id } = this.props.variable;
       return (
         <ClickOutsideWrapper onClick={this.onHideOptions}>
           <VariableInput
-            id={this.props.variable.id}
+            id={id}
             value={picker.queryValue}
             onChange={this.props.filterOrSearchOptions}
             onNavigate={this.props.navigateOptions}
+            aria-expaned
+            aria-haspopup="true"
+            aria-controls={`options-${id}`}
           />
           <VariableOptions
             values={picker.options}
@@ -106,6 +113,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
             highlightIndex={picker.highlightIndex}
             multi={picker.multi}
             selectedValues={picker.selectedValues}
+            id={`options-${id}`}
           />
         </ClickOutsideWrapper>
       );
