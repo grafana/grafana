@@ -50,7 +50,6 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 
 WORKDIR $GF_PATHS_HOME
 
-
 RUN apk add --no-cache ca-certificates bash tzdata && \
     apk add --no-cache openssl musl-utils
 
