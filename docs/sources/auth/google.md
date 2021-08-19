@@ -31,7 +31,7 @@ Specify the Client ID and Secret in the [Grafana configuration file]({{< relref 
 ```bash
 #################################### Google Auth #########################
 [auth.google]
-enabled = false
+enabled = true
 allow_sign_up = true
 client_id = some_client_id
 client_secret =
