@@ -3,39 +3,16 @@ name: Deploy
 on:
   push:
     tags:
-      - 'sit-**'
-      - 'prod-**'
       - 'dev-**'
-  # run deployment manually and pass req'd variables to the process
-  # only for main branch
-  workflow_dispatch:
-    inputs:
-      region:
-        description: AWS Region
-        required: true
-        default: us-east-1
-      stage:
-        description: AWS Stage
-        required: true
-        default: dev
-      profile:
-        description: AWS Profile
-        required: true
-        default: corewatts
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: configure environment
         uses: actions/checkout@v1
-      
-      # - name: setup node
-      #   uses: actions/setup-node@v1
-      #   with:
-      #     node-version: '14.x'
-      #     registry-url: 'https://npm.pkg.github.com'
           
-      - name: executing remote ssh commands using ssh key
+      - name: deploy 
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
