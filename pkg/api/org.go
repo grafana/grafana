@@ -151,21 +151,10 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgID int64) respons
 }
 
 // GET /api/orgs/:orgId
-func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
+func DeleteOrgByID(c *models.ReqContext) response.Response {
 	// before deleting an org, check if user does not belong to the current org
-	orgUsers, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
-		OrgId: c.OrgId,
-		Query: c.Query("query"),
-		Limit: c.QueryInt("limit"),
-	}, c.SignedInUser)
-	if err != nil {
-		return response.Error(500, "Failed to get the org users", err)
-	}
-
-	for _, orgUser := range orgUsers {
-		if orgUser.UserId == c.SignedInUser.UserId {
-			return response.Error(403, "Can not delete org for current user", err)
-		}
+	if c.OrgId == c.ParamsInt64(":orgId") {
+		return response.Error(403, "Can not delete org for current user", nil)
 	}
 
 	if err := bus.Dispatch(&models.DeleteOrgCommand{Id: c.ParamsInt64(":orgId")}); err != nil {
