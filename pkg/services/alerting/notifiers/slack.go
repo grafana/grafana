@@ -299,7 +299,6 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 	body := map[string]interface{}{
 		"channel": sn.recipient,
-		"text":    evalContext.GetNotificationTitle(),
 		"attachments": []map[string]interface{}{
 			attachment,
 		},
