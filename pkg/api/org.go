@@ -152,7 +152,7 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgID int64) respons
 
 // GET /api/orgs/:orgId
 func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
-	// before deleting an org, check if user does not to this current org
+	// before deleting an org, check if user does not belong to the current org
 	orgUsers, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
