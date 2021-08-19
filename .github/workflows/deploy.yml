@@ -39,5 +39,5 @@ jobs:
         uses: docker-practice/actions-setup-docker@master
         
       - name: docker version
-      - run: |
+        run: |
           docker version
