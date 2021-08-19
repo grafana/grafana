@@ -26,19 +26,6 @@ const (
 
 var GlobalMetrics = NewMetrics(prometheus.DefaultRegisterer)
 
-// multi-thread safety and stable ordering.
-type orgRegistries struct {
-	regsMu *sync.Mutex
-	regs   map[int64]prometheus.Registerer
-}
-
-func newOrgRegistries() orgRegistries {
-	return orgRegistries{
-		regsMu: &sync.Mutex{},
-		regs:   make(map[int64]prometheus.Registerer),
-	}
-}
-
 type Metrics struct {
 	*metrics.Alerts
 	AlertState           *prometheus.GaugeVec
@@ -48,7 +35,7 @@ type Metrics struct {
 	EvalFailures         *prometheus.CounterVec
 	EvalDuration         *prometheus.SummaryVec
 	GroupRules           *prometheus.GaugeVec
-	orgRegistry          orgRegistries
+	Registerer           prometheus.Registerer
 }
 
 func init() {
@@ -68,7 +55,8 @@ func (m *Metrics) SwapRegisterer(r prometheus.Registerer) {
 
 func NewMetrics(r prometheus.Registerer) *Metrics {
 	return &Metrics{
-		Alerts: metrics.NewAlerts("v2", r),
+		Registerer: r,
+		Alerts:     metrics.NewAlerts("v2", r),
 		AlertState: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "grafana",
 			Subsystem: "alerting",
@@ -134,21 +122,38 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			},
 			[]string{"user"},
 		),
-		orgRegistry: newOrgRegistries(),
 	}
 }
 
-func (m *Metrics) GetOrCreateOrgRegistry(orgID int64) prometheus.Registerer {
-	m.orgRegistry.regsMu.Lock()
-	defer m.orgRegistry.regsMu.Unlock()
+// multi-thread safety and stable ordering of prometheus registries.
+type OrgRegistries struct {
+	regsMu sync.Mutex
+	regs   map[int64]prometheus.Registerer
+}
 
-	orgRegistry, ok := m.orgRegistry.regs[orgID]
+func NewOrgRegistries() *OrgRegistries {
+	return &OrgRegistries{
+		regs: make(map[int64]prometheus.Registerer),
+	}
+}
+
+func (m *OrgRegistries) GetOrCreateOrgRegistry(orgID int64) prometheus.Registerer {
+	m.regsMu.Lock()
+	defer m.regsMu.Unlock()
+
+	orgRegistry, ok := m.regs[orgID]
 	if !ok {
 		reg := prometheus.NewRegistry()
-		m.orgRegistry.regs[orgID] = reg
+		m.regs[orgID] = reg
 		return reg
 	}
 	return orgRegistry
+}
+
+func (m *OrgRegistries) RemoveOrgRegistry(org int64) {
+	m.regsMu.Lock()
+	defer m.regsMu.Unlock()
+	delete(m.regs, org)
 }
 
 // Instrument wraps a middleware, instrumenting the request latencies.

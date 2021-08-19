@@ -55,7 +55,7 @@ type AlertNG struct {
 	stateManager    *state.Manager
 
 	// Alerting notification services
-	Alertmanager *notifier.Alertmanager
+	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 }
 
 func init() {
@@ -74,7 +74,7 @@ func (ng *AlertNG) Init() error {
 		Logger:                 ng.Log,
 	}
 
-	ng.Alertmanager = notifier.New(ng.Cfg, store, ng.Metrics)
+	ng.MultiOrgAlertmanager = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store)
 
 	schedCfg := schedule.SchedulerCfg{
 		C:                       clock.New(),
@@ -86,7 +86,7 @@ func (ng *AlertNG) Init() error {
 		RuleStore:               store,
 		AdminConfigStore:        store,
 		OrgStore:                store,
-		Notifier:                ng.Alertmanager,
+		MultiOrgNotifier:        ng.MultiOrgAlertmanager,
 		Metrics:                 ng.Metrics,
 		AdminConfigPollInterval: ng.Cfg.AdminConfigPollInterval,
 	}
@@ -95,19 +95,19 @@ func (ng *AlertNG) Init() error {
 	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, ng.stateManager)
 
 	api := api.API{
-		Cfg:              ng.Cfg,
-		DatasourceCache:  ng.DatasourceCache,
-		RouteRegister:    ng.RouteRegister,
-		DataService:      ng.DataService,
-		Schedule:         ng.schedule,
-		DataProxy:        ng.DataProxy,
-		QuotaService:     ng.QuotaService,
-		InstanceStore:    store,
-		RuleStore:        store,
-		AlertingStore:    store,
-		AdminConfigStore: store,
-		Alertmanager:     ng.Alertmanager,
-		StateManager:     ng.stateManager,
+		Cfg:                  ng.Cfg,
+		DatasourceCache:      ng.DatasourceCache,
+		RouteRegister:        ng.RouteRegister,
+		DataService:          ng.DataService,
+		Schedule:             ng.schedule,
+		DataProxy:            ng.DataProxy,
+		QuotaService:         ng.QuotaService,
+		InstanceStore:        store,
+		RuleStore:            store,
+		AlertingStore:        store,
+		AdminConfigStore:     store,
+		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
+		StateManager:         ng.stateManager,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics)
 
@@ -124,7 +124,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		return ng.schedule.Run(subCtx)
 	})
 	children.Go(func() error {
-		return ng.Alertmanager.Run(subCtx)
+		return ng.MultiOrgAlertmanager.Run(subCtx)
 	})
 	return children.Wait()
 }

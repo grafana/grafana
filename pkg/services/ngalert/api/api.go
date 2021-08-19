@@ -5,11 +5,12 @@ import (
 	"net/url"
 	"time"
 
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
@@ -30,19 +31,19 @@ type Scheduler interface {
 
 type Alertmanager interface {
 	// Configuration
-	SaveAndApplyConfig(orgID int64, config *apimodels.PostableUserConfig) error
-	SaveAndApplyDefaultConfig(orgID int64) error
-	GetStatus(orgID int64) apimodels.GettableStatus
+	SaveAndApplyConfig(config *apimodels.PostableUserConfig) error
+	SaveAndApplyDefaultConfig() error
+	GetStatus() apimodels.GettableStatus
 
 	// Silences
-	CreateSilence(orgID int64, ps *apimodels.PostableSilence) (string, error)
-	DeleteSilence(orgID int64, silenceID string) error
-	GetSilence(orgID int64, silenceID string) (apimodels.GettableSilence, error)
-	ListSilences(orgID int64, filter []string) (apimodels.GettableSilences, error)
+	CreateSilence(ps *apimodels.PostableSilence) (string, error)
+	DeleteSilence(silenceID string) error
+	GetSilence(silenceID string) (apimodels.GettableSilence, error)
+	ListSilences(filter []string) (apimodels.GettableSilences, error)
 
 	// Alerts
-	GetAlerts(orgID int64, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
-	GetAlertGroups(orgID int64, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
+	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
+	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 
 	// Testing
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigParams) (*notifier.TestReceiversResult, error)
@@ -50,19 +51,19 @@ type Alertmanager interface {
 
 // API handlers.
 type API struct {
-	Cfg              *setting.Cfg
-	DatasourceCache  datasources.CacheService
-	RouteRegister    routing.RouteRegister
-	DataService      *tsdb.Service
-	QuotaService     *quota.QuotaService
-	Schedule         schedule.ScheduleService
-	RuleStore        store.RuleStore
-	InstanceStore    store.InstanceStore
-	AlertingStore    store.AlertingStore
-	AdminConfigStore store.AdminConfigurationStore
-	DataProxy        *datasourceproxy.DatasourceProxyService
-	Alertmanager     Alertmanager
-	StateManager     *state.Manager
+	Cfg                  *setting.Cfg
+	DatasourceCache      datasources.CacheService
+	RouteRegister        routing.RouteRegister
+	DataService          *tsdb.Service
+	QuotaService         *quota.QuotaService
+	Schedule             schedule.ScheduleService
+	RuleStore            store.RuleStore
+	InstanceStore        store.InstanceStore
+	AlertingStore        store.AlertingStore
+	AdminConfigStore     store.AdminConfigurationStore
+	DataProxy            *datasourceproxy.DatasourceProxyService
+	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
+	StateManager         *state.Manager
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -76,7 +77,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.Metrics) {
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		AlertmanagerSrv{store: api.AlertingStore, am: api.Alertmanager, log: logger},
+		AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, log: logger},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
