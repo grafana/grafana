@@ -3,7 +3,7 @@ import { Tooltip } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { VariableOption } from '../../types';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 export interface Props extends React.HTMLProps<HTMLUListElement> {
   multi: boolean;
@@ -43,7 +43,7 @@ export class VariableOptions extends PureComponent<Props> {
       <div className={`${multi ? 'variable-value-dropdown multi' : 'variable-value-dropdown single'}`}>
         <div className="variable-options-wrapper">
           <ul
-            className={`variable-options-column ${listStyles}`}
+            className={listStyles}
             aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
             {...restProps}
           >
@@ -107,6 +107,9 @@ export class VariableOptions extends PureComponent<Props> {
   }
 }
 
-const listStyles = css`
-  list-style-type: none;
-`;
+const listStyles = cx(
+  'variable-options-column',
+  css`
+    list-style-type: none;
+  `
+);
