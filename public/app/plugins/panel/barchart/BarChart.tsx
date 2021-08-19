@@ -12,6 +12,7 @@ import {
 } from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
 
 /**
  * @alpha
@@ -20,7 +21,14 @@ export interface BarChartProps
   extends BarChartOptions,
     Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme'> {}
 
-const propsToDiff: string[] = ['orientation', 'barWidth', 'groupWidth', 'stacking', 'showValue', 'text'];
+const propsToDiff: Array<string | PropDiffFn> = [
+  'orientation',
+  'barWidth',
+  'groupWidth',
+  'stacking',
+  'showValue',
+  (prev: BarChartProps, next: BarChartProps) => next.text?.valueSize === prev.text?.valueSize,
+];
 
 export const BarChart: React.FC<BarChartProps> = (props) => {
   const theme = useTheme2();

@@ -115,7 +115,7 @@ For the SAML integration to work correctly, you need to make the IdP aware of th
 
 The integration provides two key endpoints as part of Grafana:
 
-- The `/saml/metadata` endpoint, which contains the SP metadata. You can either download and upload it manually, or youmake the IdP request it directly from the endpoint. Some providers name it Identifier or Entity ID.
+- The `/saml/metadata` endpoint, which contains the SP metadata. You can either download and upload it manually, or you make the IdP request it directly from the endpoint. Some providers name it Identifier or Entity ID.
 - The `/saml/acs` endpoint, which is intended to receive the ACS (Assertion Customer Service) callback. Some providers name it SSO URL or Reply URL.
 
 ### IdP-initiated Single Sign-On (SSO)
