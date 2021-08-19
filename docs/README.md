@@ -25,6 +25,7 @@ Edit content in the `sources` directory.
 Use the Hugo shortcode [relref](https://gohugo.io/content-management/cross-references/#use-ref-and-relref) any time you are linking to other internal docs pages.
 
 Syntax is:
+
 ```
 {{< relref "example.md" >}}
 ```
@@ -33,7 +34,7 @@ You might need to add more context for the link (containing folders and so on, `
 
 ### Managing redirects
 
-When moving content around or removing pages it's important that users following old links are properly redirected to the new location.  We do this using the [aliases](https://gohugo.io/content-management/urls/#aliases) feature in Hugo.
+When moving content around or removing pages it's important that users following old links are properly redirected to the new location. We do this using the [aliases](https://gohugo.io/content-management/urls/#aliases) feature in Hugo.
 
 If you are moving a page, add an `aliases` entry in the front matter referencing the old location of the page which will redirect the old url to the new location.
 
@@ -57,7 +58,7 @@ Images are currently hosted in the grafana/website repo.
 
 When a PR is merged with changes in the `docs/sources` directory, those changes are automatically synced by a GitHub action (`.github/workflows/publish.yml`) to the grafana/website repo.
 
-* A PR that targets the `main` branch syncs to the `content/docs/grafana/next` directory in the `website` repository, and publishes to `https://grafana.com/docs/grafana/next/`.
-* A PR targeting the `latest/current` release branch syncs to the `content/docs/grafana/latest` directory in the `website` repository, and publishes to `https://grafana.com/docs/grafana/latest/`.
+- A PR that targets the `main` branch syncs to the `content/docs/grafana/next` directory in the `website` repository, and publishes to `https://grafana.com/docs/grafana/next/`.
+- A PR targeting the `latest/current` release branch syncs to the `content/docs/grafana/latest` directory in the `website` repository, and publishes to `https://grafana.com/docs/grafana/latest/`.
 
 Once the sync is complete, the website will automatically publish to production - no further action is needed.
