@@ -1,4 +1,4 @@
-import { DataFrame, dateTime, Field, FieldType } from '@grafana/data';
+import { DataFrame, ensureTimeField, Field, FieldType } from '@grafana/data';
 import { StackingMode } from '@grafana/schema';
 import { createLogger } from '../../utils/logger';
 import { attachDebugger } from '../../utils';
@@ -49,11 +49,12 @@ export function preparePlotData(frame: DataFrame, onStackMeta?: (meta: StackMeta
 
     if (f.type === FieldType.time) {
       if (f.values.length > 0 && typeof f.values.get(0) === 'string') {
-        const timestamps = [];
-        for (let i = 0; i < f.values.length; i++) {
-          timestamps.push(dateTime(f.values.get(i)).valueOf());
-        }
-        result.push(timestamps);
+        // const timestamps = [];
+        // for (let i = 0; i < f.values.length; i++) {
+        //   timestamps.push(dateTime(f.values.get(i)).valueOf());
+        // }
+
+        result.push(ensureTimeField(f));
         seriesIndex++;
         continue;
       }
