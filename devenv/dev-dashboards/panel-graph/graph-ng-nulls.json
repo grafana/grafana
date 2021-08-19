@@ -8,6 +8,12 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
@@ -42,7 +48,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -89,7 +94,6 @@
       "id": 3,
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -149,7 +153,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -197,7 +200,6 @@
       "id": 2,
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -265,7 +267,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -313,7 +314,6 @@
       "id": 6,
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -400,7 +400,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -447,7 +446,6 @@
       "id": 4,
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -507,7 +505,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -555,7 +552,6 @@
       "id": 5,
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -623,7 +619,6 @@
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -671,7 +666,6 @@
       "id": 7,
       "links": [],
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -758,7 +752,6 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -835,9 +828,6 @@
       },
       "id": 11,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "calcs": [],
@@ -902,7 +892,6 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -979,9 +968,6 @@
       },
       "id": 9,
       "options": {
-        "graph": {
-          "realTimeUpdates": false
-        },
         "legend": {
           "asTable": false,
           "calcs": [],
@@ -1045,7 +1031,6 @@
             "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
-              "viz": false,
               "legend": false,
               "tooltip": false,
               "viz": false
@@ -1091,7 +1076,6 @@
       },
       "id": 13,
       "options": {
-        "graph": {},
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -1232,5 +1216,5 @@
   "timezone": "",
   "title": "Panel Tests - Graph NG - Gaps and Connected",
   "uid": "8mmCAF1Mz",
-  "version": 12
+  "version": 2
 }

@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
-
+import { lastValueFrom } from 'rxjs';
+import { css, cx } from '@emotion/css';
 import { AnnotationEventMappings, AnnotationQuery, DataQuery, DataSourceApi, LoadingState } from '@grafana/data';
 import { Button, Icon, IconName, Spinner } from '@grafana/ui';
 
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { css, cx } from '@emotion/css';
 import { standardAnnotationSupport } from '../standardAnnotationSupport';
 import { executeAnnotationQuery } from '../annotations_srv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -64,15 +64,17 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     this.setState({
       running: true,
     });
-    const response = await executeAnnotationQuery(
-      {
-        range: getTimeSrv().timeRange(),
-        panel: {} as PanelModel,
-        dashboard,
-      },
-      datasource,
-      annotation
-    ).toPromise();
+    const response = await lastValueFrom(
+      executeAnnotationQuery(
+        {
+          range: getTimeSrv().timeRange(),
+          panel: {} as PanelModel,
+          dashboard,
+        },
+        datasource,
+        annotation
+      )
+    );
     this.setState({
       running: false,
       response,

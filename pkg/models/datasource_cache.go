@@ -11,6 +11,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
@@ -139,7 +140,7 @@ func (ds *DataSource) HTTPClientOptions() (*sdkhttpclient.Options, error) {
 		}
 	}
 
-	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) {
+	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) && setting.SigV4AuthEnabled {
 		opts.SigV4 = &sdkhttpclient.SigV4Config{
 			Service:       awsServiceNamespace(ds.Type),
 			Region:        ds.JsonData.Get("sigV4Region").MustString(),
