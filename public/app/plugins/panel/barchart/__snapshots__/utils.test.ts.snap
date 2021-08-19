@@ -63,6 +63,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -191,6 +192,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -319,6 +321,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -447,6 +450,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -575,6 +579,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -703,6 +708,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -831,6 +837,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -959,6 +966,7 @@ Object {
     },
     "points": Object {
       "fill": [Function],
+      "show": false,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],

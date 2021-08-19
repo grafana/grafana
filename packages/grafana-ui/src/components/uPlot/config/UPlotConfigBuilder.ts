@@ -25,10 +25,6 @@ const cursorDefaults: Cursor = {
     size: (u, seriesIdx) => u.series[seriesIdx].points.size * 2,
     /*@ts-ignore*/
     width: (u, seriesIdx, size) => size / 4,
-    /*@ts-ignore*/
-    stroke: (u, seriesIdx) => u.series[seriesIdx].points.stroke(u, seriesIdx) + '80',
-    /*@ts-ignore*/
-    fill: (u, seriesIdx) => u.series[seriesIdx].points.stroke(u, seriesIdx),
   },
   focus: {
     prox: 30,
@@ -50,13 +46,11 @@ export class UPlotConfigBuilder {
   private hooks: Hooks.Arrays = {};
   private tz: string | undefined = undefined;
   private sync = false;
+  private frame: DataFrame | undefined = undefined;
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
-  /**
-   * Custom handler for closest datapoint and series lookup. Technicaly returns uPlots setCursor hook
-   * that sets tooltips state.
-   */
-  tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
+  // Custom handler for closest datapoint and series lookup
+  private tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
 
   prepData: PrepData | undefined = undefined;
 
@@ -157,8 +151,15 @@ export class UPlotConfigBuilder {
     this.tooltipInterpolator = interpolator;
   }
 
+  getTooltipInterpolator() {
+    return this.tooltipInterpolator;
+  }
+
   setPrepData(prepData: PrepData) {
-    this.prepData = prepData;
+    this.prepData = (frame) => {
+      this.frame = frame;
+      return prepData(frame);
+    };
   }
 
   setSync() {
@@ -187,7 +188,25 @@ export class UPlotConfigBuilder {
 
     config.select = this.select;
 
-    config.cursor = merge({}, cursorDefaults, this.cursor);
+    const pointColorFn = (alphaHex = '') => (u: uPlot, seriesIdx: number) => {
+      /*@ts-ignore*/
+      let s = u.series[seriesIdx].points._stroke;
+
+      // interpolate for gradients/thresholds
+      if (typeof s !== 'string') {
+        let field = this.frame!.fields[seriesIdx];
+        s = field.display!(field.values.get(u.cursor.idxs![seriesIdx]!)).color!;
+      }
+
+      return s + alphaHex;
+    };
+
+    config.cursor = merge({}, cursorDefaults, this.cursor, {
+      points: {
+        stroke: pointColorFn('80'),
+        fill: pointColorFn(),
+      },
+    });
 
     config.tzDate = this.tzDate;
 

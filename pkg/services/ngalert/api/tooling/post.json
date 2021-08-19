@@ -57,12 +57,6 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
-  "AlertGroup": {
-   "$ref": "#/definitions/alertGroup"
-  },
-  "AlertGroups": {
-   "$ref": "#/definitions/alertGroups"
-  },
   "AlertInstancesResponse": {
    "properties": {
     "instances": {
@@ -80,6 +74,38 @@
    },
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "AlertManager": {
+   "properties": {
+    "url": {
+     "type": "string",
+     "x-go-name": "URL"
+    }
+   },
+   "title": "AlertManager models a configured Alert Manager.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
+  },
+  "AlertManagersResult": {
+   "properties": {
+    "activeAlertManagers": {
+     "items": {
+      "$ref": "#/definitions/AlertManager"
+     },
+     "type": "array",
+     "x-go-name": "Active"
+    },
+    "droppedAlertManagers": {
+     "items": {
+      "$ref": "#/definitions/AlertManager"
+     },
+     "type": "array",
+     "x-go-name": "Dropped"
+    }
+   },
+   "title": "AlertManagersResult contains the result from querying the alertmanagers endpoint.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
   },
   "AlertQuery": {
    "properties": {
@@ -477,11 +503,18 @@
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
   },
-  "GettableAlert": {
-   "$ref": "#/definitions/gettableAlert"
-  },
-  "GettableAlerts": {
-   "$ref": "#/definitions/gettableAlerts"
+  "GettableAlertmanagers": {
+   "properties": {
+    "data": {
+     "$ref": "#/definitions/AlertManagersResult"
+    },
+    "status": {
+     "type": "string",
+     "x-go-name": "Status"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GettableApiAlertingConfig": {
    "properties": {
@@ -786,8 +819,6 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
-  "GettableSilence": {},
-  "GettableSilences": {},
   "GettableStatus": {
    "properties": {
     "cluster": {
@@ -1589,7 +1620,6 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
-  "PostableSilence": {},
   "PostableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -1724,7 +1754,8 @@
     }
    },
    "title": "Receiver configuration provides configuration on how to contact a receiver.",
-   "type": "object"
+   "type": "object",
+   "x-go-package": "github.com/prometheus/alertmanager/config"
   },
   "Regexp": {
    "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
@@ -2458,7 +2489,7 @@
      "$ref": "#/definitions/labelSet"
     },
     "receiver": {
-     "$ref": "#/definitions/Receiver"
+     "$ref": "#/definitions/receiver"
     }
    },
    "required": [
@@ -2466,18 +2497,14 @@
     "labels",
     "receiver"
    ],
-   "type": "object",
-   "x-go-name": "AlertGroup",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "alertGroups": {
    "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array",
-   "x-go-name": "AlertGroups",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -2597,7 +2624,6 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -2625,7 +2651,7 @@
     "receivers": {
      "description": "receivers",
      "items": {
-      "$ref": "#/definitions/Receiver"
+      "$ref": "#/definitions/receiver"
      },
      "type": "array",
      "x-go-name": "Receivers"
@@ -2661,7 +2687,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -2722,14 +2747,11 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
-    "$ref": "#/definitions/GettableSilence"
+    "$ref": "#/definitions/gettableSilence"
    },
    "type": "array",
    "x-go-name": "GettableSilences",
@@ -2862,7 +2884,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -2907,7 +2928,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3090,9 +3110,9 @@
     ],
     "responses": {
      "200": {
-      "description": "GettableAlerts",
+      "description": "gettableAlerts",
       "schema": {
-       "$ref": "#/definitions/GettableAlerts"
+       "$ref": "#/definitions/gettableAlerts"
       }
      },
      "400": {
@@ -3203,9 +3223,9 @@
     ],
     "responses": {
      "200": {
-      "description": "AlertGroups",
+      "description": "alertGroups",
       "schema": {
-       "$ref": "#/definitions/AlertGroups"
+       "$ref": "#/definitions/alertGroups"
       }
      },
      "400": {
@@ -3277,9 +3297,9 @@
     ],
     "responses": {
      "200": {
-      "description": "GettableSilence",
+      "description": "gettableSilence",
       "schema": {
-       "$ref": "#/definitions/GettableSilence"
+       "$ref": "#/definitions/gettableSilence"
       }
      },
      "400": {
@@ -3318,9 +3338,9 @@
     ],
     "responses": {
      "200": {
-      "description": "GettableSilences",
+      "description": "gettableSilences",
       "schema": {
-       "$ref": "#/definitions/GettableSilences"
+       "$ref": "#/definitions/gettableSilences"
       }
      },
      "400": {
@@ -3355,9 +3375,9 @@
     ],
     "responses": {
      "201": {
-      "description": "GettableSilence",
+      "description": "gettableSilence",
       "schema": {
-       "$ref": "#/definitions/GettableSilence"
+       "$ref": "#/definitions/gettableSilence"
       }
      },
      "400": {
@@ -3883,6 +3903,26 @@
      }
     },
     "summary": "Creates or updates the NGalert configuration of the user's organization.",
+    "tags": [
+     "configuration"
+    ]
+   }
+  },
+  "/api/v1/ngalert/alertmanagers": {
+   "get": {
+    "operationId": "RouteGetAlertmanagers",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "GettableAlertmanagers",
+      "schema": {
+       "$ref": "#/definitions/GettableAlertmanagers"
+      }
+     }
+    },
+    "summary": "Get the discovered and dropped Alertmanagers of the user's organization based on the specified configuration.",
     "tags": [
      "configuration"
     ]

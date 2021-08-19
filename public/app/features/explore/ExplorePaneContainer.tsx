@@ -86,7 +86,7 @@ export class ExplorePaneContainerUnconnected extends React.PureComponent<Props> 
   render() {
     const exploreClass = this.props.split ? 'explore explore-split' : 'explore';
     return (
-      <div className={exploreClass} ref={this.getRef} aria-label={selectors.pages.Explore.General.container}>
+      <div className={exploreClass} ref={this.getRef} data-testid={selectors.pages.Explore.General.container}>
         {this.props.initialized && <Explore exploreId={this.props.exploreId} />}
       </div>
     );
