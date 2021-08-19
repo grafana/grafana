@@ -177,7 +177,7 @@ export const mockAlertGroup = (partial: Partial<AlertmanagerGroup> = {}): Alertm
       mockAlertmanagerAlert(),
       mockAlertmanagerAlert({
         status: { state: AlertState.Suppressed, silencedBy: ['123456abcdef'], inhibitedBy: [] },
-        labels: { severity: 'warning', region: 'US-Central', foo: 'bar' },
+        labels: { severity: 'warning', region: 'US-Central', foo: 'bar', ...partial.labels },
       }),
     ],
     ...partial,

@@ -8,7 +8,7 @@ interface Props {
   group: AlertmanagerGroup;
 }
 
-export const AmNotificationsGroupHeader = ({ group }: Props) => {
+export const AlertGroupHeader = ({ group }: Props) => {
   const textStyles = useStyles2(getNotificationsTextColors);
   const total = group.alerts.length;
   const countByStatus = group.alerts.reduce((statusObj, alert) => {

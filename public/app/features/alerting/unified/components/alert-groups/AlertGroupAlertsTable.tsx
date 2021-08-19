@@ -7,21 +7,21 @@ import { DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable'
 import { AmAlertStateTag } from '../silences/AmAlertStateTag';
 import { AlertLabels } from '../AlertLabels';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
-import { AmNotificationsAlertDetails } from './AmNotificationsAlertDetails';
+import { AlertDetails } from './AlertDetails';
 
 interface Props {
   alerts: AlertmanagerAlert[];
   alertManagerSourceName: string;
 }
 
-type AmNotificationsAlertsTableColumnProps = DynamicTableColumnProps<AlertmanagerAlert>;
-type AmNotificationsAlertsTableItemProps = DynamicTableItemProps<AlertmanagerAlert>;
+type AlertGroupAlertsTableColumnProps = DynamicTableColumnProps<AlertmanagerAlert>;
+type AlertGroupAlertsTableItemProps = DynamicTableItemProps<AlertmanagerAlert>;
 
-export const AmNotificationsAlertsTable = ({ alerts, alertManagerSourceName }: Props) => {
+export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props) => {
   const styles = useStyles2(getStyles);
 
   const columns = useMemo(
-    (): AmNotificationsAlertsTableColumnProps[] => [
+    (): AlertGroupAlertsTableColumnProps[] => [
       {
         id: 'state',
         label: 'State',
@@ -52,7 +52,7 @@ export const AmNotificationsAlertsTable = ({ alerts, alertManagerSourceName }: P
   );
 
   const items = useMemo(
-    (): AmNotificationsAlertsTableItemProps[] =>
+    (): AlertGroupAlertsTableItemProps[] =>
       alerts.map((alert) => ({
         id: alert.fingerprint,
         data: alert,
@@ -61,13 +61,13 @@ export const AmNotificationsAlertsTable = ({ alerts, alertManagerSourceName }: P
   );
 
   return (
-    <div className={styles.tableWrapper} data-testid="notifications-table">
+    <div className={styles.tableWrapper} data-testid="alert-group-table">
       <DynamicTableWithGuidelines
         cols={columns}
         items={items}
         isExpandable={true}
         renderExpandedContent={({ data: alert }) => (
-          <AmNotificationsAlertDetails alert={alert} alertManagerSourceName={alertManagerSourceName} />
+          <AlertDetails alert={alert} alertManagerSourceName={alertManagerSourceName} />
         )}
       />
     </div>

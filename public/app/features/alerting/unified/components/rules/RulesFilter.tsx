@@ -61,7 +61,7 @@ const RulesFilter = () => {
       queryString: null,
       dataSource: null,
     });
-    setFilterKey(filterKey + 1);
+    setTimeout(() => setFilterKey(filterKey + 1), 100);
   };
 
   const searchIcon = <Icon name={'search'} />;
