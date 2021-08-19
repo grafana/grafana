@@ -161,7 +161,7 @@ It might be clear visually that the X closes the modal, but audibly it would not
 <button aria-label="close">Close<button>
 ```
 
-The example might read aloud to a user "Close, Close" or something similar.
+The example might read aloud to a user as "Close, Close" or something similar.
 
 However adding aria-labels to elements that are already clearly labeled or not interactive can be confusing and redundant for users with assistive technologies.
 
