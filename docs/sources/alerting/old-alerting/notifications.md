@@ -55,7 +55,7 @@ Name | Type | Supports images | Support alert rule tags
 [DingDing](#dingdingdingtalk) | `dingding` | yes, external only | no
 [Discord](#discord) | `discord` | yes | no
 [Email](#email) | `email` | yes | no
-[GitLab](#google-hangouts-chat) | `gitlab` | yes, external only | no
+[GitLab](#google-hangouts-chat) | `gitlab` | no | yes
 [Google Hangouts Chat](#google-hangouts-chat) | `googlechat` | yes, external only | no
 Hipchat | `hipchat` | yes, external only | no
 [Kafka](#kafka) | `kafka` | yes, external only | no
