@@ -661,12 +661,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   addGroupAction() {
-    switch (this.groupAdd.value) {
-      default: {
-        this.addGroup(this.groupAdd.type, this.groupAdd.value);
-      }
-    }
-
+    this.addGroup(this.groupAdd.type, this.groupAdd.value);
     this.resetPlusButton(this.groupAdd);
     this.updateRawSqlAndRefresh();
   }

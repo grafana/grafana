@@ -94,4 +94,64 @@ describe('DataFrame to annotations', () => {
       ],
     ]);
   });
+
+  it('all valid key names should be included in the output result', async () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', values: [100] },
+        { name: 'timeEnd', values: [200] },
+        { name: 'title', values: ['title'] },
+        { name: 'text', values: ['text'] },
+        { name: 'tags', values: ['t1,t2,t3'] },
+        { name: 'id', values: [1] },
+        { name: 'userId', values: ['Admin'] },
+        { name: 'login', values: ['admin'] },
+        { name: 'email', values: ['admin@unknown.us'] },
+        { name: 'prevState', values: ['normal'] },
+        { name: 'newState', values: ['alerting'] },
+        { name: 'data', values: [{ text: 'a', value: 'A' }] },
+        { name: 'panelId', values: [4] },
+      ],
+    });
+
+    const observable = getAnnotationsFromData([frame]);
+
+    await expect(observable).toEmitValues([
+      [
+        {
+          color: 'red',
+          data: { text: 'a', value: 'A' },
+          email: 'admin@unknown.us',
+          id: 1,
+          login: 'admin',
+          newState: 'alerting',
+          panelId: 4,
+          prevState: 'normal',
+          tags: ['t1', 't2', 't3'],
+          text: 'text',
+          time: 100,
+          timeEnd: 200,
+          title: 'title',
+          type: 'default',
+          userId: 'Admin',
+        },
+      ],
+    ]);
+  });
+
+  it('key names that are not valid should be excluded in the output result', async () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', values: [100] },
+        { name: 'text', values: ['text'] },
+        { name: 'someData', values: [{ value: 'bar' }] },
+        { name: 'panelSource', values: ['100'] },
+        { name: 'timeStart', values: [100] },
+      ],
+    });
+
+    const observable = getAnnotationsFromData([frame]);
+
+    await expect(observable).toEmitValues([[{ color: 'red', text: 'text', time: 100, type: 'default' }]]);
+  });
 });
