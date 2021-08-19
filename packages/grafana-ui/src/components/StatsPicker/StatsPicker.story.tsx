@@ -61,9 +61,6 @@ export default {
     controls: {
       exclude: ['onChange', 'stats', 'defaultStat', 'className'],
     },
-    knobs: {
-      disable: true,
-    },
   },
 } as Meta;
 

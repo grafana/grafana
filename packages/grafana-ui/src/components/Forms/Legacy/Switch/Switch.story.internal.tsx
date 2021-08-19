@@ -7,11 +7,8 @@ export default {
   title: 'Forms/Legacy/Switch',
   component: Switch,
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
-      exclude: ['className', 'labelClass', 'switchClass'],
+      exclude: ['className', 'labelClass', 'switchClass', 'onChange'],
     },
   },
 } as Meta;

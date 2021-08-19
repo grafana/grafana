@@ -19,9 +19,18 @@ export const timeOptions = Object.entries(TimeOptions).map(([key, value]) => ({
   value: value,
 }));
 
-export const timeValidationPattern = {
+// 1h, 10m and such
+export const positiveDurationValidationPattern = {
   value: new RegExp(`^\\d+(${Object.values(TimeOptions).join('|')})$`),
-  message: `Must be of format "(number)(unit)", for example "1m". Available units: ${Object.values(TimeOptions).join(
+  message: `Must be of format "(number)(unit)" , for example "1m". Available units: ${Object.values(TimeOptions).join(
     ', '
   )}`,
+};
+
+// 1h, 10m or 0 (without units)
+export const durationValidationPattern = {
+  value: new RegExp(`^\\d+(${Object.values(TimeOptions).join('|')})|0$`),
+  message: `Must be of format "(number)(unit)", for example "1m", or just "0". Available units: ${Object.values(
+    TimeOptions
+  ).join(', ')}`,
 };

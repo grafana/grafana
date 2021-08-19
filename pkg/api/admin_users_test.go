@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -54,7 +55,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	t.Run("When a server admin attempts to logout himself from all devices", func(t *testing.T) {
 		adminLogoutUserScenario(t, "Should not be allowed when calling POST on",
 			"/api/admin/users/1/logout", "/api/admin/users/:id/logout", func(sc *scenarioContext) {
-				bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 					cmd.Result = &models.User{Id: testUserID}
 					return nil
 				})
@@ -69,7 +70,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			"/api/admin/users/:id/logout", func(sc *scenarioContext) {
 				userID := int64(0)
 
-				bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 					userID = cmd.Id
 					return models.ErrUserNotFound
 				})
@@ -85,7 +86,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		adminRevokeUserAuthTokenScenario(t, "Should return not found when calling POST on",
 			"/api/admin/users/200/revoke-auth-token", "/api/admin/users/:id/revoke-auth-token", cmd, func(sc *scenarioContext) {
 				var userID int64
-				bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 					userID = cmd.Id
 					return models.ErrUserNotFound
 				})
@@ -100,7 +101,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		adminGetUserAuthTokensScenario(t, "Should return not found when calling GET on",
 			"/api/admin/users/200/auth-tokens", "/api/admin/users/:id/auth-tokens", func(sc *scenarioContext) {
 				var userID int64
-				bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 					userID = cmd.Id
 					return models.ErrUserNotFound
 				})

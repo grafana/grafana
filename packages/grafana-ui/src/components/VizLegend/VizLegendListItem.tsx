@@ -13,6 +13,7 @@ export interface Props<T> {
   onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLDivElement>) => void;
   onLabelMouseEnter?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  readonly?: boolean;
 }
 
 /**
@@ -24,6 +25,7 @@ export const VizLegendListItem = <T extends unknown = any>({
   onLabelMouseEnter,
   onLabelMouseOut,
   className,
+  readonly,
 }: Props<T>) => {
   const styles = useStyles(getStyles);
 
@@ -59,12 +61,12 @@ export const VizLegendListItem = <T extends unknown = any>({
       className={cx(styles.itemWrapper, className)}
       aria-label={selectors.components.VizLegend.seriesName(item.label)}
     >
-      <VizLegendSeriesIcon seriesName={item.label} color={item.color} gradient={item.gradient} />
+      <VizLegendSeriesIcon seriesName={item.label} color={item.color} gradient={item.gradient} readonly={readonly} />
       <div
         onMouseEnter={onMouseEnter}
         onMouseOut={onMouseOut}
-        onClick={onClick}
-        className={cx(styles.label, item.disabled && styles.labelDisabled, onLabelClick && styles.clickable)}
+        onClick={!readonly ? onClick : undefined}
+        className={cx(styles.label, item.disabled && styles.labelDisabled, !readonly && styles.clickable)}
       >
         {item.label}
       </div>

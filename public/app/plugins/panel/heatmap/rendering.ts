@@ -1,4 +1,4 @@
-import { find, isEmpty, isNil, isString, map, max, min, toNumber, isNaN } from 'lodash';
+import { find, isEmpty, isNaN, isNil, isString, map, max, min, toNumber } from 'lodash';
 import $ from 'jquery';
 import * as d3 from 'd3';
 import { contextSrv } from 'app/core/core';
@@ -7,14 +7,14 @@ import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
 import {
-  toUtc,
-  PanelEvents,
-  getValueFormat,
-  formattedValueToString,
   dateTimeFormat,
-  LegacyGraphHoverEvent,
-  LegacyGraphHoverClearEvent,
+  formattedValueToString,
   getColorForTheme,
+  getValueFormat,
+  LegacyGraphHoverClearEvent,
+  LegacyGraphHoverEvent,
+  PanelEvents,
+  toUtc,
 } from '@grafana/data';
 import { graphTimeFormat } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -129,6 +129,11 @@ export class HeatmapRenderer {
   }
 
   getYAxisWidth(elem: any) {
+    const panelYAxisWidth = this.getPanelYAxisWidth();
+    if (panelYAxisWidth !== null) {
+      return panelYAxisWidth + Y_AXIS_TICK_PADDING;
+    }
+
     const axisText = elem.selectAll('.axis-y text').nodes();
     const maxTextWidth = max(
       map(axisText, (text) => {
@@ -340,21 +345,29 @@ export class HeatmapRenderer {
     this.ctrl.decimals = decimals;
 
     const tickValueFormatter = this.tickValueFormatter.bind(this);
-    function tickFormatter(valIndex: d3.AxisDomain) {
-      let valueFormatted = tsBuckets[valIndex.valueOf()];
-      if (!isNaN(toNumber(valueFormatted)) && valueFormatted !== '') {
-        // Try to format numeric tick labels
-        valueFormatted = tickValueFormatter(decimals)(toNumber(valueFormatted));
-      }
-      return valueFormatted;
+    function tickFormatter(yAxisWidth: number | null) {
+      return function (valIndex: d3.AxisDomain) {
+        let valueFormatted = tsBuckets[valIndex.valueOf()];
+        if (!isNaN(toNumber(valueFormatted)) && valueFormatted !== '') {
+          // Try to format numeric tick labels
+          valueFormatted = tickValueFormatter(decimals)(toNumber(valueFormatted));
+        } else if (valueFormatted && typeof valueFormatted === 'string' && valueFormatted !== '') {
+          if (yAxisWidth) {
+            const scale = 0.15; // how to have a better calculation for this
+            const trimmed = valueFormatted.substring(0, Math.floor(yAxisWidth * scale));
+            const postfix = trimmed.length < valueFormatted.length ? '...' : '';
+            valueFormatted = `${trimmed}${postfix}`;
+          }
+        }
+        return valueFormatted;
+      };
     }
-
-    const tsBucketsFormatted = map(tsBuckets, (v, i) => tickFormatter(i));
+    const tsBucketsFormatted = map(tsBuckets, (v, i) => tickFormatter(null)(i));
     this.data.tsBucketsFormatted = tsBucketsFormatted;
 
     const yAxis = d3
       .axisLeft(this.yScale)
-      .tickFormat(tickFormatter)
+      .tickFormat(tickFormatter(this.getPanelYAxisWidth()))
       .tickSizeInner(0 - this.width)
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
@@ -839,5 +852,13 @@ export class HeatmapRenderer {
     this.scope.chartHeight = this.chartHeight;
     this.scope.chartWidth = this.chartWidth;
     this.scope.chartTop = this.chartTop;
+  }
+
+  private getPanelYAxisWidth(): number | null {
+    if (!this.panel.yAxis.width) {
+      return null;
+    }
+
+    return isNaN(this.panel.yAxis.width) ? null : parseInt(this.panel.yAxis.width, 10);
   }
 }

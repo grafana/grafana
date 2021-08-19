@@ -9,9 +9,6 @@ export default {
   decorators: [withCenteredStory],
   parameters: {
     docs: {},
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['legend'],
     },

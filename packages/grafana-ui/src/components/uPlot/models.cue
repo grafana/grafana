@@ -6,6 +6,11 @@ DrawStyle: "line" | "bars" | "points" @cuetsy(targetType="enum")
 LineInterpolation: "linear" | "smooth" | "stepBefore" | "stepAfter" @cuetsy(targetType="enum")
 ScaleDistribution: "linear" | "log" | "ordinal" @cuetsy(targetType="enum")
 GraphGradientMode: "none" | "opacity" | "hue" | "scheme" @cuetsy(targetType="enum")
+StackingMode: "none" | "normal" | "percent" @cuetsy(targetType="enum")
+BarValueVisibility: "auto" | "never" | "always" @cuetsy(targetType="enum")
+BarAlignment: -1 | 0 | 1 @cuetsy(targetType="enum",memberNames="Before|Center|After")
+ScaleOrientation: 0 | 1 @cuetsy(targetType="enum",memberNames="Horizontal|Vertical")
+ScaleDirection: 1 | 1 | -1 | -1 @cuetsy(targetType="enum",memberNames="Up|Right|Down|Left")
 
 LineStyle: {
   fill?: "solid" | "dash" | "dot" | "square"
@@ -17,7 +22,13 @@ LineConfig: {
   lineWidth?: number
   lineInterpolation?: LineInterpolation
   lineStyle?: LineStyle
-  spanNulls?: bool
+  spanNulls?: bool | number
+} @cuetsy(targetType="interface")
+
+BarConfig: {
+  barAlignment?: BarAlignment
+  barWidthFactor?: number
+  barMaxWidth?: number
 } @cuetsy(targetType="interface")
 
 FillConfig: {
@@ -50,11 +61,37 @@ AxisConfig: {
 HideSeriesConfig: {
   tooltip: bool
   legend: bool
-  graph: bool
+  viz: bool
 } @cuetsy(targetType="interface")
 
-GraphFieldConfig: LineConfig & FillConfig & PointsConfig & AxisConfig & {
+StackingConfig: {
+  mode?: StackingMode
+  group?: string
+} @cuetsy(targetType="interface")
+
+StackableFieldConfig: {
+  stacking?: StackingConfig
+} @cuetsy(targetType="interface")
+
+HideableFieldConfig: {
+  hideFrom?: HideSeriesConfig
+} @cuetsy(targetType="interface")
+
+GraphTresholdsStyleMode: "off" | "line" | "area" | "line+area" | "series" @cuetsy(targetType="enum",memberNames="Off|Line|Area|LineAndArea|Series")
+
+GraphThresholdsStyleConfig: {
+  mode: GraphTresholdsStyleMode
+} @cuetsy(targetType="interface")
+
+GraphFieldConfig: {
+  LineConfig
+  FillConfig
+  PointsConfig
+  AxisConfig
+  BarConfig
+  StackableFieldConfig
+  HideableFieldConfig
   drawStyle?: DrawStyle
   gradientMode?: GraphGradientMode
-  hideFrom?: HideSeriesConfig
+  thresholdsStyle?: GraphThresholdsStyleConfig
 } @cuetsy(targetType="interface")

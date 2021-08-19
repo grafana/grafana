@@ -1,14 +1,13 @@
 +++
 title = "Filter table columns"
 keywords = ["grafana", "table options", "documentation", "format tables", "table filter", "filter columns"]
+aliases = ["/docs/grafana/latest/reference/table/", "/docs/grafana/latest/features/panels/table_panel/", "/docs/grafana/next/panels/visualizations/table/table-field-options/"]
 weight = 600
 +++
 
 # Filter table columns
 
-> **Note:** This feature is available in Grafana 7.2+.
-
-If you turn on the **Column filter** in [Table options]({{< relref "table-field-options.md" >}}), then you can filter table options.
+If you turn on the **Column filter**, then you can filter table options.
 
 ## Turn on column filtering
 

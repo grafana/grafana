@@ -1,10 +1,5 @@
-import uPlot, { Cursor, Band, Hooks, Select } from 'uplot';
-import { defaultsDeep } from 'lodash';
-import { PlotConfig, TooltipInterpolator } from '../types';
-import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
-import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
-import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
-import { AxisPlacement } from '../config';
+import uPlot, { Cursor, Band, Hooks, Select, AlignedData } from 'uplot';
+import { merge } from 'lodash';
 import {
   DataFrame,
   DefaultTimeZone,
@@ -14,8 +9,29 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
+import { PlotConfig, PlotTooltipInterpolator } from '../types';
+import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
+import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
+import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
+import { AxisPlacement } from '../config';
 import { pluginLog } from '../utils';
 import { getThresholdsDrawHook, UPlotThresholdOptions } from './UPlotThresholds';
+
+const cursorDefaults: Cursor = {
+  // prevent client-side zoom from triggering at the end of a selection
+  drag: { setScale: false },
+  points: {
+    /*@ts-ignore*/
+    size: (u, seriesIdx) => u.series[seriesIdx].points.size * 2,
+    /*@ts-ignore*/
+    width: (u, seriesIdx, size) => size / 4,
+  },
+  focus: {
+    prox: 30,
+  },
+};
+
+type PrepData = (frame: DataFrame) => AlignedData;
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
@@ -30,13 +46,13 @@ export class UPlotConfigBuilder {
   private hooks: Hooks.Arrays = {};
   private tz: string | undefined = undefined;
   private sync = false;
+  private frame: DataFrame | undefined = undefined;
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
-  /**
-   * Custom handler for closest datapoint and series lookup. Technicaly returns uPlots setCursor hook
-   * that sets tooltips state.
-   */
-  tooltipInterpolator: TooltipInterpolator | undefined = undefined;
+  // Custom handler for closest datapoint and series lookup
+  private tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
+
+  prepData: PrepData | undefined = undefined;
 
   constructor(timeZone: TimeZone = DefaultTimeZone) {
     this.tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
@@ -98,7 +114,7 @@ export class UPlotConfigBuilder {
   }
 
   setCursor(cursor?: Cursor) {
-    this.cursor = { ...this.cursor, ...cursor };
+    this.cursor = merge({}, this.cursor, cursor);
   }
 
   setSelect(select: Select) {
@@ -131,8 +147,19 @@ export class UPlotConfigBuilder {
     this.bands.push(band);
   }
 
-  setTooltipInterpolator(interpolator: TooltipInterpolator) {
+  setTooltipInterpolator(interpolator: PlotTooltipInterpolator) {
     this.tooltipInterpolator = interpolator;
+  }
+
+  getTooltipInterpolator() {
+    return this.tooltipInterpolator;
+  }
+
+  setPrepData(prepData: PrepData) {
+    this.prepData = (frame) => {
+      this.frame = frame;
+      return prepData(frame);
+    };
   }
 
   setSync() {
@@ -144,7 +171,13 @@ export class UPlotConfigBuilder {
   }
 
   getConfig() {
-    const config: PlotConfig = { series: [{}] };
+    const config: PlotConfig = {
+      series: [
+        {
+          value: () => '',
+        },
+      ],
+    };
     config.axes = this.ensureNonOverlappingAxes(Object.values(this.axes)).map((a) => a.getConfig());
     config.series = [...config.series, ...this.series.map((s) => s.getConfig())];
     config.scales = this.scales.reduce((acc, s) => {
@@ -153,11 +186,27 @@ export class UPlotConfigBuilder {
 
     config.hooks = this.hooks;
 
-    /* @ts-ignore */
-    // uPlot types don't export the Select interface prior to 1.6.4
     config.select = this.select;
 
-    config.cursor = this.cursor || {};
+    const pointColorFn = (alphaHex = '') => (u: uPlot, seriesIdx: number) => {
+      /*@ts-ignore*/
+      let s = u.series[seriesIdx].points._stroke;
+
+      // interpolate for gradients/thresholds
+      if (typeof s !== 'string') {
+        let field = this.frame!.fields[seriesIdx];
+        s = field.display!(field.values.get(u.cursor.idxs![seriesIdx]!)).color!;
+      }
+
+      return s + alphaHex;
+    };
+
+    config.cursor = merge({}, cursorDefaults, this.cursor, {
+      points: {
+        stroke: pointColorFn('80'),
+        fill: pointColorFn(),
+      },
+    });
 
     config.tzDate = this.tzDate;
 
@@ -180,26 +229,6 @@ export class UPlotConfigBuilder {
         }
       }
     }
-
-    const cursorDefaults: Cursor = {
-      // prevent client-side zoom from triggering at the end of a selection
-      drag: { setScale: false },
-      points: {
-        /*@ts-ignore*/
-        size: (u, seriesIdx) => u.series[seriesIdx].points.size * 2,
-        /*@ts-ignore*/
-        width: (u, seriesIdx, size) => size / 4,
-        /*@ts-ignore*/
-        stroke: (u, seriesIdx) => u.series[seriesIdx].points.stroke(u, seriesIdx) + '80',
-        /*@ts-ignore*/
-        fill: (u, seriesIdx) => u.series[seriesIdx].points.stroke(u, seriesIdx),
-      },
-      focus: {
-        prox: 30,
-      },
-    };
-
-    defaultsDeep(config.cursor, cursorDefaults);
 
     return config;
   }
@@ -231,6 +260,7 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   timeZone: TimeZone;
   getTimeRange: () => TimeRange;
   eventBus: EventBus;
+  allFrames: DataFrame[];
 } & T;
 
 /** @alpha */

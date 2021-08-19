@@ -196,12 +196,20 @@ export class PostgresQueryCtrl extends QueryCtrl {
           icon: 'exclamation-triangle',
           yesText: 'Switch',
           onConfirm: () => {
-            this.target.rawQuery = !this.target.rawQuery;
+            // This could be called from React, so wrap in $evalAsync.
+            // Will then either run as part of the current digest cycle or trigger a new one.
+            this.$scope.$evalAsync(() => {
+              this.target.rawQuery = !this.target.rawQuery;
+            });
           },
         })
       );
     } else {
-      this.target.rawQuery = !this.target.rawQuery;
+      // This could be called from React, so wrap in $evalAsync.
+      // Will then either run as part of the current digest cycle or trigger a new one.
+      this.$scope.$evalAsync(() => {
+        this.target.rawQuery = !this.target.rawQuery;
+      });
     }
   }
 
@@ -653,12 +661,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   addGroupAction() {
-    switch (this.groupAdd.value) {
-      default: {
-        this.addGroup(this.groupAdd.type, this.groupAdd.value);
-      }
-    }
-
+    this.addGroup(this.groupAdd.type, this.groupAdd.value);
     this.resetPlusButton(this.groupAdd);
     this.updateRawSqlAndRefresh();
   }

@@ -20,6 +20,7 @@ export const VizLegendList = <T extends unknown>({
   onLabelClick,
   placement,
   className,
+  readonly,
 }: Props<T>) => {
   const styles = useStyles(getStyles);
 
@@ -31,6 +32,7 @@ export const VizLegendList = <T extends unknown>({
         onLabelClick={onLabelClick}
         onLabelMouseEnter={onLabelMouseEnter}
         onLabelMouseOut={onLabelMouseOut}
+        readonly={readonly}
       />
     );
   }

@@ -12,6 +12,7 @@ type Query struct {
 	Metrics    []*MetricAgg `json:"metrics"`
 	Alias      string       `json:"alias"`
 	Interval   string
+	IntervalMs int64
 	RefID      string
 }
 
@@ -43,6 +44,7 @@ var metricAggType = map[string]string{
 	"min":            "Min",
 	"extended_stats": "Extended Stats",
 	"percentiles":    "Percentiles",
+	"top_metrics":    "Top Metrics",
 	"cardinality":    "Unique Count",
 	"moving_avg":     "Moving Average",
 	"moving_fn":      "Moving Function",
@@ -51,6 +53,7 @@ var metricAggType = map[string]string{
 	"serial_diff":    "Serial Difference",
 	"bucket_script":  "Bucket Script",
 	"raw_document":   "Raw Document",
+	"rate":           "Rate",
 }
 
 var extendedStats = map[string]string{

@@ -1,15 +1,20 @@
 package azuremonitor
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +24,7 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 
 	tests := []struct {
 		name                      string
-		queryModel                []plugins.DataSubQuery
+		queryModel                []backend.DataQuery
 		timeRange                 plugins.DataTimeRange
 		azureResourceGraphQueries []*AzureResourceGraphQuery
 		Err                       require.ErrorAssertionFunc
@@ -30,18 +35,15 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 				From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 				To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 			},
-			queryModel: []plugins.DataSubQuery{
+			queryModel: []backend.DataQuery{
 				{
-					DataSource: &models.DataSource{
-						JsonData: simplejson.NewFromAny(map[string]interface{}{}),
-					},
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: []byte(`{
 						"queryType": "Azure Resource Graph",
-						"azureResourceGraph": map[string]interface{}{
+						"azureResourceGraph": {
 							"query":        "resources | where $__contains(name,'res1','res2')",
-							"resultFormat": "table",
-						},
-					}),
+							"resultFormat": "table"
+						}
+					}`),
 					RefID: "A",
 				},
 			},
@@ -50,12 +52,13 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 					RefID:        "A",
 					ResultFormat: "table",
 					URL:          "",
-					Model: simplejson.NewFromAny(map[string]interface{}{
-						"azureResourceGraph": map[string]interface{}{
+					JSON: []byte(`{
+						"queryType": "Azure Resource Graph",
+						"azureResourceGraph": {
 							"query":        "resources | where $__contains(name,'res1','res2')",
-							"resultFormat": "table",
-						},
-					}),
+							"resultFormat": "table"
+						}
+					}`),
 					InterpolatedQuery: "resources | where ['name'] in ('res1','res2')",
 				},
 			},
@@ -65,11 +68,87 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			queries, err := datasource.buildQueries(tt.queryModel, tt.timeRange)
+			queries, err := datasource.buildQueries(tt.queryModel, datasourceInfo{})
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.azureResourceGraphQueries, queries, cmpopts.IgnoreUnexported(simplejson.Json{})); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestAzureResourceGraphCreateRequest(t *testing.T) {
+	ctx := context.Background()
+	url := "http://ds"
+	dsInfo := datasourceInfo{}
+
+	tests := []struct {
+		name            string
+		expectedURL     string
+		expectedHeaders http.Header
+		Err             require.ErrorAssertionFunc
+	}{
+		{
+			name:        "creates a request",
+			expectedURL: "http://ds/",
+			expectedHeaders: http.Header{
+				"Content-Type": []string{"application/json"},
+				"User-Agent":   []string{"Grafana/"},
+			},
+			Err: require.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ds := AzureResourceGraphDatasource{}
+			req, err := ds.createRequest(ctx, dsInfo, []byte{}, url)
+			tt.Err(t, err)
+			if req.URL.String() != tt.expectedURL {
+				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())
+			}
+			if !cmp.Equal(req.Header, tt.expectedHeaders) {
+				t.Errorf("Unexpected HTTP headers: %v", cmp.Diff(req.Header, tt.expectedHeaders))
+			}
+		})
+	}
+}
+
+func TestAddConfigData(t *testing.T) {
+	field := data.Field{}
+	dataLink := data.DataLink{Title: "View in Azure Portal", TargetBlank: true, URL: "http://ds"}
+	frame := data.Frame{
+		Fields: []*data.Field{&field},
+	}
+	frameWithLink := addConfigData(frame, "http://ds")
+	expectedFrameWithLink := data.Frame{
+		Fields: []*data.Field{
+			{
+				Config: &data.FieldConfig{
+					Links: []data.DataLink{dataLink},
+				},
+			},
+		},
+	}
+	if !cmp.Equal(frameWithLink, expectedFrameWithLink, data.FrameTestCompareOptions()...) {
+		t.Errorf("unexpepcted frame: %v", cmp.Diff(frameWithLink, expectedFrameWithLink, data.FrameTestCompareOptions()...))
+	}
+}
+
+func TestGetAzurePortalUrl(t *testing.T) {
+	clouds := []string{setting.AzurePublic, setting.AzureChina, setting.AzureUSGovernment, setting.AzureGermany}
+	expectedAzurePortalUrl := map[string]interface{}{
+		setting.AzurePublic:       "https://portal.azure.com",
+		setting.AzureChina:        "https://portal.azure.cn",
+		setting.AzureUSGovernment: "https://portal.azure.us",
+		setting.AzureGermany:      "https://portal.microsoftazure.de",
+	}
+
+	for _, cloud := range clouds {
+		azurePortalUrl, err := getAzurePortalUrl(cloud)
+		if err != nil {
+			t.Errorf("The cloud not supported")
+		}
+		assert.Equal(t, expectedAzurePortalUrl[cloud], azurePortalUrl)
 	}
 }

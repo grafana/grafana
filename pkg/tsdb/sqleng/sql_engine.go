@@ -173,7 +173,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	return result, nil
 }
 
-//nolint: staticcheck // plugins.DataQueryResult deprecated
+//nolint: staticcheck,gocyclo // plugins.DataQueryResult deprecated
 func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup, queryContext plugins.DataQuery,
 	ch chan plugins.DataQueryResult) {
 	defer wg.Done()
@@ -206,38 +206,37 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		timeRange = *queryContext.TimeRange
 	}
 
+	errAppendDebug := func(frameErr string, err error, query string) {
+		var emptyFrame data.Frame
+		emptyFrame.SetMeta(&data.FrameMeta{
+			ExecutedQueryString: query,
+		})
+		queryResult.Error = fmt.Errorf("%s: %w", frameErr, err)
+		queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{&emptyFrame})
+		ch <- queryResult
+	}
+
 	// global substitutions
 	interpolatedQuery, err := Interpolate(query, timeRange, rawSQL)
 	if err != nil {
-		queryResult.Error = err
-		ch <- queryResult
+		errAppendDebug("interpolation failed", e.transformQueryError(err), interpolatedQuery)
 		return
 	}
 
 	// data source specific substitutions
 	interpolatedQuery, err = e.macroEngine.Interpolate(query, timeRange, interpolatedQuery)
 	if err != nil {
-		queryResult.Error = err
-		ch <- queryResult
+		errAppendDebug("interpolation failed", e.transformQueryError(err), interpolatedQuery)
 		return
 	}
 
-	errAppendDebug := func(frameErr string, err error) {
-		var emptyFrame data.Frame
-		emptyFrame.SetMeta(&data.FrameMeta{
-			ExecutedQueryString: interpolatedQuery,
-		})
-		queryResult.Error = fmt.Errorf("%s: %w", frameErr, err)
-		queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{&emptyFrame})
-		ch <- queryResult
-	}
 	session := e.engine.NewSession()
 	defer session.Close()
 	db := session.DB()
 
 	rows, err := db.Query(interpolatedQuery)
 	if err != nil {
-		errAppendDebug("db query error", e.transformQueryError(err))
+		errAppendDebug("db query error", e.transformQueryError(err), interpolatedQuery)
 		return
 	}
 	defer func() {
@@ -248,7 +247,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 
 	qm, err := e.newProcessCfg(query, queryContext, rows, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("failed to get configurations", err)
+		errAppendDebug("failed to get configurations", err, interpolatedQuery)
 		return
 	}
 
@@ -256,7 +255,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 	stringConverters := e.queryResultTransformer.GetConverterList()
 	frame, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, sqlutil.ToConverters(stringConverters...)...)
 	if err != nil {
-		errAppendDebug("convert frame from rows error", err)
+		errAppendDebug("convert frame from rows error", err, interpolatedQuery)
 		return
 	}
 
@@ -266,12 +265,14 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 
 	// If no rows were returned, no point checking anything else.
 	if frame.Rows() == 0 {
+		queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{frame})
+		ch <- queryResult
 		return
 	}
 
 	if qm.timeIndex != -1 {
 		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
-			errAppendDebug("db convert time column failed", err)
+			errAppendDebug("db convert time column failed", err, interpolatedQuery)
 			return
 		}
 	}
@@ -279,17 +280,25 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 	if qm.Format == dataQueryFormatSeries {
 		// time series has to have time column
 		if qm.timeIndex == -1 {
-			errAppendDebug("db has no time column", errors.New("no time column found"))
+			errAppendDebug("db has no time column", errors.New("no time column found"), interpolatedQuery)
 			return
 		}
+
+		// Make sure to name the time field 'Time' to be backward compatible with Grafana pre-v8.
+		frame.Fields[qm.timeIndex].Name = data.TimeSeriesTimeFieldName
+
 		for i := range qm.columnNames {
 			if i == qm.timeIndex || i == qm.metricIndex {
 				continue
 			}
 
+			if t := frame.Fields[i].Type(); t == data.FieldTypeString || t == data.FieldTypeNullableString {
+				continue
+			}
+
 			var err error
 			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
-				errAppendDebug("convert value to float failed", err)
+				errAppendDebug("convert value to float failed", err, interpolatedQuery)
 				return
 			}
 		}
@@ -297,10 +306,26 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			var err error
+			originalData := frame
 			frame, err = data.LongToWide(frame, qm.FillMissing)
 			if err != nil {
-				errAppendDebug("failed to convert long to wide series when converting from dataframe", err)
+				errAppendDebug("failed to convert long to wide series when converting from dataframe", err, interpolatedQuery)
 				return
+			}
+
+			// Before 8x, a special metric column was used to name time series. The LongToWide transforms that into a metric label on the value field.
+			// But that makes series name have both the value column name AND the metric name. So here we are removing the metric label here and moving it to the
+			// field name to get the same naming for the series as pre v8
+			if len(originalData.Fields) == 3 {
+				for _, field := range frame.Fields {
+					if len(field.Labels) == 1 { // 7x only supported one label
+						name, ok := field.Labels["metric"]
+						if ok {
+							field.Name = name
+							field.Labels = nil
+						}
+					}
+				}
 			}
 		}
 		if qm.FillMissing != nil {
@@ -309,10 +334,6 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			if err != nil {
 				e.log.Error("Failed to resample dataframe", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
-			}
-			if err := trim(frame, *qm); err != nil {
-				e.log.Error("Failed to trim dataframe", "err", err)
-				frame.AppendNotices(data.Notice{Text: "Failed to trim dataframe", Severity: data.NoticeSeverityWarning})
 			}
 		}
 	}
@@ -327,7 +348,10 @@ var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRan
 	if err != nil {
 		return "", err
 	}
-	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
+	interval, err := sqlIntervalCalculator.Calculate(timeRange, minInterval, "min")
+	if err != nil {
+		return "", err
+	}
 
 	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
 	sql = strings.ReplaceAll(sql, "$__interval", interval.Text)
@@ -871,7 +895,7 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 	default:
 		convertUnknownToZero(frame.Fields[Index], newField)
 		frame.Fields[Index] = newField
-		return frame, fmt.Errorf("metricIndex %d type can't be converted to float", Index)
+		return frame, fmt.Errorf("metricIndex %d type %s can't be converted to float", Index, valueType)
 	}
 	frame.Fields[Index] = newField
 

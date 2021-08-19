@@ -2,6 +2,7 @@ package ualert
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -30,7 +31,7 @@ SELECT id,
 	name,
 	message,
 	frequency,
-	for,
+	%s,
 	state,
 	settings
 FROM
@@ -43,7 +44,7 @@ FROM
 // ParsedSettings property of the dash alert.
 func (m *migration) slurpDashAlerts() ([]dashAlert, error) {
 	dashAlerts := []dashAlert{}
-	err := m.sess.SQL(slurpDashSQL).Find(&dashAlerts)
+	err := m.sess.SQL(fmt.Sprintf(slurpDashSQL, m.mg.Dialect.Quote("for"))).Find(&dashAlerts)
 
 	if err != nil {
 		return nil, err

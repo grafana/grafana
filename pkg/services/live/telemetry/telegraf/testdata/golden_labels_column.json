@@ -1,0 +1,285 @@
+{
+  "schema": {
+    "name": "cpu",
+    "fields": [
+      {
+        "name": "labels",
+        "type": "string",
+        "typeInfo": {
+          "frame": "string"
+        }
+      },
+      {
+        "name": "time",
+        "type": "time",
+        "typeInfo": {
+          "frame": "time.Time"
+        }
+      },
+      {
+        "name": "usage_guest",
+        "type": "number",
+        "typeInfo": {
+          "frame": "float64",
+          "nullable": true
+        }
+      },
+      {
+        "name": "usage_guest_nice",
+        "type": "number",
+        "typeInfo": {
+          "frame": "float64",
+          "nullable": true
+        }
+      },
+      {
+        "name": "usage_idle",
+        "type": "number",
+        "typeInfo": {
+          "frame": "float64",
+          "nullable": true
+        }
+      },
+      {
+        "name": "usage_iowait",
+        "type": "number",
+        "typeInfo": {
+          "frame": "float64",
+          "nullable": true
+        }
+      },
+      {
+        "name": "usage_irq",
+        "type": "number",
+        "typeInfo": {
+          "frame": "float64",
+          "nullable": true
+        }
+      },
+      {
+        "name": "usage_nice",
+        "type": "number",
+        "typeInfo": {
+          "frame": "float64",
+          "nullable": true
+        }
+      },
+      {
+        "name": "usage_softirq",
+        "type": "number",
+        "typeInfo": {
+          "frame": "float64",
+          "nullable": true
+        }
+      },
+      {
+        "name": "usage_steal",
+        "type": "number",
+        "typeInfo": {
+          "frame": "float64",
+          "nullable": true
+        }
+      },
+      {
+        "name": "usage_system",
+        "type": "number",
+        "typeInfo": {
+          "frame": "float64",
+          "nullable": true
+        }
+      },
+      {
+        "name": "usage_user",
+        "type": "number",
+        "typeInfo": {
+          "frame": "float64",
+          "nullable": true
+        }
+      }
+    ]
+  },
+  "data": {
+    "values": [
+      [
+        "cpu=cpu0, host=MacBook-Pro-Alexander.local",
+        "cpu=cpu1, host=MacBook-Pro-Alexander.local",
+        "cpu=cpu2, host=MacBook-Pro-Alexander.local",
+        "cpu=cpu3, host=MacBook-Pro-Alexander.local",
+        "cpu=cpu4, host=MacBook-Pro-Alexander.local",
+        "cpu=cpu5, host=MacBook-Pro-Alexander.local",
+        "cpu=cpu6, host=MacBook-Pro-Alexander.local",
+        "cpu=cpu7, host=MacBook-Pro-Alexander.local",
+        "cpu=cpu8, host=MacBook-Pro-Alexander.local",
+        "cpu=cpu9, host=MacBook-Pro-Alexander.local",
+        "cpu=cpu10, host=MacBook-Pro-Alexander.local",
+        "cpu=cpu11, host=MacBook-Pro-Alexander.local",
+        "cpu=cpu-total, host=MacBook-Pro-Alexander.local"
+      ],
+      [
+        1616403090000,
+        1616403090000,
+        1616403090000,
+        1616403090000,
+        1616403090000,
+        1616403090000,
+        1616403090000,
+        1616403090000,
+        1616403090000,
+        1616403090000,
+        1616403090000,
+        1616403090000,
+        1616403090000
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        82.00000000012005,
+        100,
+        88.23529411773097,
+        100,
+        91.91919191902859,
+        100,
+        93.0000000000291,
+        100,
+        95.04950495055924,
+        100,
+        100,
+        100,
+        95.8368026645606
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        6.000000000005457,
+        0,
+        4.901960784315911,
+        0,
+        3.0303030303011163,
+        0,
+        2.000000000001023,
+        0,
+        1.9801980198033176,
+        0,
+        0,
+        0,
+        1.4987510408004405
+      ],
+      [
+        12.000000000033651,
+        0,
+        6.862745098042275,
+        0,
+        5.0505050504922915,
+        0,
+        5.000000000006821,
+        0,
+        2.970297029704976,
+        0,
+        0,
+        0,
+        2.6644462947563388
+      ]
+    ]
+  }
+}

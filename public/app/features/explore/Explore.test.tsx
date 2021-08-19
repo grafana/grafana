@@ -1,13 +1,21 @@
 import React from 'react';
-import { DataSourceApi, LoadingState, toUtc, DataQueryError, DataQueryRequest, CoreApp } from '@grafana/data';
+import {
+  DataSourceApi,
+  LoadingState,
+  toUtc,
+  DataQueryError,
+  DataQueryRequest,
+  CoreApp,
+  createTheme,
+} from '@grafana/data';
 import { ExploreId } from 'app/types/explore';
 import { shallow } from 'enzyme';
-import { Explore, ExploreProps } from './Explore';
+import { Explore, Props } from './Explore';
 import { scanStopAction } from './state/query';
 import { SecondaryActions } from './SecondaryActions';
-import { getTheme } from '@grafana/ui';
 
-const dummyProps: ExploreProps = {
+const dummyProps: Props = {
+  logsResult: undefined,
   changeSize: jest.fn(),
   datasourceInstance: {
     meta: {
@@ -22,11 +30,6 @@ const dummyProps: ExploreProps = {
   exploreId: ExploreId.left,
   loading: false,
   modifyQueries: jest.fn(),
-  scanning: false,
-  scanRange: {
-    from: '0',
-    to: '0',
-  },
   scanStart: jest.fn(),
   scanStopAction: scanStopAction,
   setQueries: jest.fn(),
@@ -40,7 +43,6 @@ const dummyProps: ExploreProps = {
     to: 0,
   },
   timeZone: 'UTC',
-  onHiddenSeriesChanged: jest.fn(),
   queryResponse: {
     state: LoadingState.NotStarted,
     series: [],
@@ -73,9 +75,8 @@ const dummyProps: ExploreProps = {
       },
     },
   },
-  originPanelId: 1,
   addQueryRow: jest.fn(),
-  theme: getTheme(),
+  theme: createTheme(),
   showMetrics: true,
   showLogs: true,
   showTable: true,

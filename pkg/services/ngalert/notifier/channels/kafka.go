@@ -2,7 +2,6 @@ package channels
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/prometheus/alertmanager/notify"
@@ -14,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
@@ -32,11 +30,11 @@ type KafkaNotifier struct {
 func NewKafkaNotifier(model *NotificationChannelConfig, t *template.Template) (*KafkaNotifier, error) {
 	endpoint := model.Settings.Get("kafkaRestProxy").MustString()
 	if endpoint == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find kafka rest proxy endpoint property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find kafka rest proxy endpoint property in settings"}
 	}
 	topic := model.Settings.Get("kafkaTopic").MustString()
 	if topic == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find kafka topic property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find kafka topic property in settings"}
 	}
 
 	return &KafkaNotifier{
@@ -67,10 +65,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	kn.log.Debug("Notifying Kafka", "alert_state", state)
 
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, kn.tmpl, as, kn.log, &tmplErr)
-	if err != nil {
-		return false, err
-	}
+	tmpl, _ := TmplText(ctx, kn.tmpl, as, kn.log, &tmplErr)
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("alert_state", state)
@@ -78,10 +73,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	bodyJSON.Set("client", "Grafana")
 	bodyJSON.Set("details", tmpl(`{{ template "default.message" . }}`))
 
-	ruleURL, err := joinUrlPath(kn.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return false, err
-	}
+	ruleURL := joinUrlPath(kn.tmpl.ExternalURL.String(), "/alerting/list", kn.log)
 	bodyJSON.Set("client_url", ruleURL)
 
 	groupKey, err := notify.ExtractGroupKey(ctx)
@@ -96,16 +88,16 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	recordJSON := simplejson.New()
 	recordJSON.Set("records", []interface{}{valueJSON})
 
-	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template Kafka message: %w", tmplErr)
-	}
-
 	body, err := recordJSON.MarshalJSON()
 	if err != nil {
 		return false, err
 	}
 
-	topicURL := strings.TrimRight(kn.Endpoint, "/") + "/topics/" + kn.Topic
+	topicURL := strings.TrimRight(kn.Endpoint, "/") + "/topics/" + tmpl(kn.Topic)
+
+	if tmplErr != nil {
+		kn.log.Debug("failed to template Kafka message", "err", tmplErr.Error())
+	}
 
 	cmd := &models.SendWebhookSync{
 		Url:        topicURL,

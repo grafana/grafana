@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"runtime/debug"
 	"runtime/trace"
 	"strconv"
 	"syscall"
@@ -60,7 +61,9 @@ func main() {
 		packaging  = flag.String("packaging", "unknown", "describes the way Grafana was installed")
 
 		v           = flag.Bool("v", false, "prints current version and exits")
+		vv          = flag.Bool("vv", false, "prints current version, all dependencies and exits")
 		profile     = flag.Bool("profile", false, "Turn on pprof profiling")
+		profileAddr = flag.String("profile-addr", "localhost", "Define custom address for profiling")
 		profilePort = flag.Uint64("profile-port", 6060, "Define custom port for profiling")
 		tracing     = flag.Bool("tracing", false, "Turn on tracing")
 		tracingFile = flag.String("tracing-file", "trace.out", "Define tracing output file")
@@ -68,12 +71,20 @@ func main() {
 
 	flag.Parse()
 
-	if *v {
+	if *v || *vv {
 		fmt.Printf("Version %s (commit: %s, branch: %s)\n", version, commit, buildBranch)
+		if *vv {
+			fmt.Println("Dependencies:")
+			if info, ok := debug.ReadBuildInfo(); ok {
+				for _, dep := range info.Deps {
+					fmt.Println(dep.Path, dep.Version)
+				}
+			}
+		}
 		os.Exit(0)
 	}
 
-	profileDiagnostics := newProfilingDiagnostics(*profile, *profilePort)
+	profileDiagnostics := newProfilingDiagnostics(*profile, *profileAddr, *profilePort)
 	if err := profileDiagnostics.overrideWithEnv(); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
@@ -86,10 +97,10 @@ func main() {
 	}
 
 	if profileDiagnostics.enabled {
-		fmt.Println("diagnostics: pprof profiling enabled", "port", profileDiagnostics.port)
+		fmt.Println("diagnostics: pprof profiling enabled", "addr", profileDiagnostics.addr, "port", profileDiagnostics.port)
 		runtime.SetBlockProfileRate(1)
 		go func() {
-			err := http.ListenAndServe(fmt.Sprintf("localhost:%d", profileDiagnostics.port), nil)
+			err := http.ListenAndServe(fmt.Sprintf("%s:%d", profileDiagnostics.addr, profileDiagnostics.port), nil)
 			if err != nil {
 				panic(err)
 			}

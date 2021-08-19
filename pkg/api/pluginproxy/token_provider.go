@@ -3,7 +3,7 @@ package pluginproxy
 import "time"
 
 type accessTokenProvider interface {
-	getAccessToken() (string, error)
+	GetAccessToken() (string, error)
 }
 
 var (

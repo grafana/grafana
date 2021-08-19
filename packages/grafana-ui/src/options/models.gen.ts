@@ -1,7 +1,16 @@
 // TODO: this should be generated with cue
-
 import { VizLegendOptions, VizTooltipOptions } from '../components';
-import { VizTextDisplayOptions } from './builder/text';
+
+/**
+ * Explicit control for visualization text settings
+ * @public
+ **/
+export interface VizTextDisplayOptions {
+  /* Explicit title text size */
+  titleSize?: number;
+  /* Explicit value text size */
+  valueSize?: number;
+}
 
 /**
  * @public

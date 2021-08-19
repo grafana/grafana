@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -32,7 +31,7 @@ const (
 func NewVictoropsNotifier(model *NotificationChannelConfig, t *template.Template) (*VictoropsNotifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find victorops url property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find victorops url property in settings"}
 	}
 
 	return &VictoropsNotifier{
@@ -44,7 +43,7 @@ func NewVictoropsNotifier(model *NotificationChannelConfig, t *template.Template
 			Settings:              model.Settings,
 		}),
 		URL:         url,
-		MessageType: strings.ToUpper(model.Settings.Get("messageType").MustString()),
+		MessageType: model.Settings.Get("messageType").MustString(),
 		log:         log.New("alerting.notifier.victorops"),
 		tmpl:        t,
 	}, nil
@@ -65,19 +64,16 @@ type VictoropsNotifier struct {
 func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	vn.log.Debug("Executing victorops notification", "notification", vn.Name)
 
-	messageType := vn.MessageType
+	var tmplErr error
+	tmpl, _ := TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
+
+	messageType := strings.ToUpper(tmpl(vn.MessageType))
 	if messageType == "" {
 		messageType = victoropsAlertStateCritical
 	}
 	alerts := types.Alerts(as...)
 	if alerts.Status() == model.AlertResolved {
 		messageType = victoropsAlertStateRecovery
-	}
-
-	var tmplErr error
-	tmpl, _, err := TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
-	if err != nil {
-		return false, err
 	}
 
 	groupKey, err := notify.ExtractGroupKey(ctx)
@@ -93,18 +89,20 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	bodyJSON.Set("state_message", tmpl(`{{ template "default.message" . }}`))
 	bodyJSON.Set("monitoring_tool", "Grafana v"+setting.BuildVersion)
 
-	ruleURL, err := joinUrlPath(vn.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return false, err
-	}
+	ruleURL := joinUrlPath(vn.tmpl.ExternalURL.String(), "/alerting/list", vn.log)
 	bodyJSON.Set("alert_url", ruleURL)
+
+	u := tmpl(vn.URL)
+	if tmplErr != nil {
+		vn.log.Debug("failed to template VictorOps message", "err", tmplErr.Error())
+	}
 
 	b, err := bodyJSON.MarshalJSON()
 	if err != nil {
 		return false, err
 	}
 	cmd := &models.SendWebhookSync{
-		Url:  vn.URL,
+		Url:  u,
 		Body: string(b),
 	}
 

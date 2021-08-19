@@ -1,5 +1,11 @@
-import { DataFrameFieldIndex, FALLBACK_COLOR, FieldColorMode, GrafanaTheme2, ThresholdsConfig } from '@grafana/data';
-import tinycolor from 'tinycolor2';
+import {
+  colorManipulator,
+  DataFrameFieldIndex,
+  FALLBACK_COLOR,
+  FieldColorMode,
+  GrafanaTheme2,
+  ThresholdsConfig,
+} from '@grafana/data';
 import uPlot, { Series } from 'uplot';
 import {
   BarAlignment,
@@ -25,10 +31,12 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   colorMode?: FieldColorMode;
   drawStyle?: DrawStyle;
   pathBuilder?: Series.PathBuilder;
+  pointsFilter?: Series.Points.Filter;
   pointsBuilder?: Series.Points.Show;
   show?: boolean;
   dataFrameFieldIndex?: DataFrameFieldIndex;
   theme: GrafanaTheme2;
+  value?: uPlot.Series.Value;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
@@ -37,6 +45,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       drawStyle,
       pathBuilder,
       pointsBuilder,
+      pointsFilter,
       lineInterpolation,
       lineWidth,
       lineStyle,
@@ -44,7 +53,6 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       barWidthFactor,
       barMaxWidth,
       showPoints,
-      pointColor,
       pointSize,
       scaleKey,
       pxAlign,
@@ -54,14 +62,17 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     let lineConfig: Partial<Series> = {};
 
+    let lineColor = this.getLineColor();
+
+    // DrawStyle.Points mode also needs this for fill/stroke sharing & re-use in series.points. see getColor() below.
+    lineConfig.stroke = lineColor;
+
     if (pathBuilder != null) {
       lineConfig.paths = pathBuilder;
-      lineConfig.stroke = this.getLineColor();
       lineConfig.width = lineWidth;
     } else if (drawStyle === DrawStyle.Points) {
       lineConfig.paths = () => null;
     } else if (drawStyle != null) {
-      lineConfig.stroke = this.getLineColor();
       lineConfig.width = lineWidth;
       if (lineStyle && lineStyle.fill !== 'solid') {
         if (lineStyle.fill === 'dot') {
@@ -81,11 +92,16 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       };
     }
 
+    const useColor: uPlot.Series.Stroke =
+      // @ts-ignore
+      typeof lineColor === 'string' ? lineColor : (u, seriesIdx) => u.series[seriesIdx]._stroke;
+
     const pointsConfig: Partial<Series> = {
       points: {
-        stroke: pointColor,
-        fill: pointColor,
+        stroke: useColor,
+        fill: useColor,
         size: pointSize,
+        filter: pointsFilter,
       },
     };
 
@@ -111,6 +127,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     return {
       scale: scaleKey,
       spanGaps: typeof spanNulls === 'number' ? false : spanNulls,
+      value: () => '',
       pxAlign,
       show,
       fill: this.getFill(),
@@ -120,10 +137,10 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   }
 
   private getLineColor(): Series.Stroke {
-    const { lineColor, gradientMode, colorMode, thresholds } = this.props;
+    const { lineColor, gradientMode, colorMode, thresholds, theme } = this.props;
 
     if (gradientMode === GraphGradientMode.Scheme) {
-      return getScaleGradientFn(1, colorMode, thresholds);
+      return getScaleGradientFn(1, theme, colorMode, thresholds);
     }
 
     return lineColor ?? FALLBACK_COLOR;
@@ -145,10 +162,10 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       case GraphGradientMode.Hue:
         return getHueGradientFn((fillColor ?? lineColor)!, opacityPercent, theme);
       case GraphGradientMode.Scheme:
-        return getScaleGradientFn(opacityPercent, colorMode, thresholds);
+        return getScaleGradientFn(opacityPercent, theme, colorMode, thresholds);
       default:
         if (opacityPercent > 0) {
-          return tinycolor(lineColor).setAlpha(opacityPercent).toString();
+          return colorManipulator.alpha(lineColor ?? '', opacityPercent);
         }
     }
 

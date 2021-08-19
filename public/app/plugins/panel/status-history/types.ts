@@ -1,10 +1,9 @@
-import { VizLegendOptions, HideableFieldConfig, BarValueVisibility } from '@grafana/ui';
+import { HideableFieldConfig, BarValueVisibility, OptionsWithTooltip, OptionsWithLegend } from '@grafana/ui';
 
 /**
  * @alpha
  */
-export interface StatusPanelOptions {
-  legend: VizLegendOptions;
+export interface StatusPanelOptions extends OptionsWithTooltip, OptionsWithLegend {
   showValue: BarValueVisibility;
   rowHeight: number;
   colWidth?: number;

@@ -15,9 +15,6 @@ export default {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disable: true,
-    },
   },
   argTypes: {
     containerWidth: { control: { type: 'range', min: 100, max: 500, step: 10 } },

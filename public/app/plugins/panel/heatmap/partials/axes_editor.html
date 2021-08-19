@@ -22,6 +22,10 @@
       </div>
     </div>
     <div class="gf-form">
+      <label class="gf-form-label width-8">Width</label>
+      <input type="text" class="gf-form-input width-12" placeholder="auto" empty-to-null ng-model="ctrl.panel.yAxis.width" ng-change="ctrl.render()" ng-model-onblur>
+    </div>
+    <div class="gf-form">
       <label class="gf-form-label width-8">Decimals</label>
       <input type="number" class="gf-form-input width-12" placeholder="auto" data-placement="right"
       bs-tooltip="'Override automatic decimal precision for axis.'"

@@ -12,6 +12,7 @@ import {
 } from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
 
 /**
  * @alpha
@@ -20,7 +21,14 @@ export interface BarChartProps
   extends BarChartOptions,
     Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme'> {}
 
-const propsToDiff: string[] = ['orientation', 'barWidth', 'groupWidth', 'showValue', 'text'];
+const propsToDiff: Array<string | PropDiffFn> = [
+  'orientation',
+  'barWidth',
+  'groupWidth',
+  'stacking',
+  'showValue',
+  (prev: BarChartProps, next: BarChartProps) => next.text?.valueSize === prev.text?.valueSize,
+];
 
 export const BarChart: React.FC<BarChartProps> = (props) => {
   const theme = useTheme2();
@@ -34,7 +42,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
     return <PlotLegend data={props.frames} config={config} maxHeight="35%" maxWidth="60%" {...props.legend} />;
   };
 
-  const prepConfig = (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => {
+  const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const { timeZone, orientation, barWidth, showValue, groupWidth, stacking, legend, tooltip, text } = props;
 
     return preparePlotConfigBuilder({
@@ -51,6 +59,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       legend,
       tooltip,
       text,
+      allFrames: props.frames,
     });
   };
 

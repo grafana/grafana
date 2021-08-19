@@ -2,7 +2,6 @@ package channels
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"path"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -32,14 +30,14 @@ type EmailNotifier struct {
 // for the EmailNotifier.
 func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*EmailNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+		return nil, receiverInitError{Reason: "no settings supplied", Cfg: *model}
 	}
 
 	addressesString := model.Settings.Get("addresses").MustString()
 	singleEmail := model.Settings.Get("singleEmail").MustBool(false)
 
 	if addressesString == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find addresses in settings"}
+		return nil, receiverInitError{Reason: "could not find addresses in settings", Cfg: *model}
 	}
 
 	// split addresses with a few different ways
@@ -64,22 +62,22 @@ func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	var tmplErr error
-	tmpl, data, err := TmplText(ctx, en.tmpl, as, en.log, &tmplErr)
-	if err != nil {
-		return false, err
-	}
+	tmpl, data := TmplText(ctx, en.tmpl, as, en.log, &tmplErr)
 
 	title := tmpl(`{{ template "default.title" . }}`)
 
+	alertPageURL := en.tmpl.ExternalURL.String()
+	ruleURL := en.tmpl.ExternalURL.String()
 	u, err := url.Parse(en.tmpl.ExternalURL.String())
-	if err != nil {
-		return false, fmt.Errorf("failed to parse external URL: %w", err)
+	if err == nil {
+		basePath := u.Path
+		u.Path = path.Join(basePath, "/alerting/list")
+		ruleURL = u.String()
+		u.RawQuery = "alertState=firing&view=state"
+		alertPageURL = u.String()
+	} else {
+		en.log.Debug("failed to parse external URL", "url", en.tmpl.ExternalURL.String(), "err", err.Error())
 	}
-	basePath := u.Path
-	u.Path = path.Join(basePath, "/alerting/list")
-	ruleURL := u.String()
-	u.RawQuery = "alertState=firing&view=state"
-	alertPageURL := u.String()
 
 	cmd := &models.SendEmailCommandSync{
 		SendEmailCommand: models.SendEmailCommand{
@@ -98,12 +96,12 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 			},
 			To:          en.Addresses,
 			SingleEmail: en.SingleEmail,
-			Template:    "ng_alert_notification.html",
+			Template:    "ng_alert_notification",
 		},
 	}
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template email message: %w", tmplErr)
+		en.log.Debug("failed to template email message", "err", tmplErr.Error())
 	}
 
 	if err := bus.DispatchCtx(ctx, cmd); err != nil {

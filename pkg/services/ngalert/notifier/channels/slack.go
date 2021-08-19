@@ -20,7 +20,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -52,7 +51,7 @@ var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 // NewSlackNotifier is the constructor for the Slack notifier
 func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template) (*SlackNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	slackURL := model.DecryptedValue("url", model.Settings.Get("url").MustString())
@@ -61,24 +60,24 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template) (*
 	}
 	apiURL, err := url.Parse(slackURL)
 	if err != nil {
-		return nil, alerting.ValidationError{Reason: fmt.Sprintf("invalid URL %q: %s", slackURL, err)}
+		return nil, receiverInitError{Cfg: *model, Reason: fmt.Sprintf("invalid URL %q", slackURL), Err: err}
 	}
 
 	recipient := strings.TrimSpace(model.Settings.Get("recipient").MustString())
 	if recipient != "" {
 		if !reRecipient.MatchString(recipient) {
-			return nil, alerting.ValidationError{Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
+			return nil, receiverInitError{Cfg: *model, Reason: fmt.Sprintf("recipient on invalid format: %q", recipient)}
 		}
 	} else if apiURL.String() == SlackAPIEndpoint {
-		return nil, alerting.ValidationError{
+		return nil, receiverInitError{Cfg: *model,
 			Reason: "recipient must be specified when using the Slack chat API",
 		}
 	}
 
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
 	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
-		return nil, alerting.ValidationError{
-			Reason: fmt.Sprintf("Invalid value for mentionChannel: %q", mentionChannel),
+		return nil, receiverInitError{Cfg: *model,
+			Reason: fmt.Sprintf("invalid value for mentionChannel: %q", mentionChannel),
 		}
 	}
 
@@ -102,7 +101,7 @@ func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template) (*
 
 	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
 	if token == "" && apiURL.String() == SlackAPIEndpoint {
-		return nil, alerting.ValidationError{
+		return nil, receiverInitError{Cfg: *model,
 			Reason: "token must be specified when using the Slack chat API",
 		}
 	}
@@ -244,15 +243,9 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Alert) (*slackMessage, error) {
 	alerts := types.Alerts(as...)
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
-	if err != nil {
-		return nil, err
-	}
+	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
 
-	ruleURL, err := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return nil, err
-	}
+	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
@@ -274,7 +267,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 		},
 	}
 	if tmplErr != nil {
-		return nil, fmt.Errorf("failed to template Slack message: %w", tmplErr)
+		sn.log.Debug("failed to template Slack message", "err", tmplErr.Error())
 	}
 
 	mentionsBuilder := strings.Builder{}
@@ -290,13 +283,13 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 	if len(sn.MentionGroups) > 0 {
 		appendSpace()
 		for _, g := range sn.MentionGroups {
-			mentionsBuilder.WriteString(fmt.Sprintf("<!subteam^%s>", g))
+			mentionsBuilder.WriteString(fmt.Sprintf("<!subteam^%s>", tmpl(g)))
 		}
 	}
 	if len(sn.MentionUsers) > 0 {
 		appendSpace()
 		for _, u := range sn.MentionUsers {
-			mentionsBuilder.WriteString(fmt.Sprintf("<@%s>", u))
+			mentionsBuilder.WriteString(fmt.Sprintf("<@%s>", tmpl(u)))
 		}
 	}
 

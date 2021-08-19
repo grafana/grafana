@@ -10,7 +10,7 @@ mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
 rm /bin/cp
 mv /usr/local/bin/cp /bin/cp
 
-apk add --no-cache curl 'nodejs-current=14.5.0-r0' npm yarn build-base openssh git-lfs perl-utils coreutils python3
+apk add --no-cache curl 'nodejs=14.16.1-r1' npm yarn build-base openssh git-lfs perl-utils coreutils python3
 
 #
 # Only relevant for testing, but cypress does not work with musl/alpine.

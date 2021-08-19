@@ -8,6 +8,7 @@ import {
   GrafanaTheme,
   GrafanaTheme2,
   LicenseInfo,
+  MapLayerOptions,
   PanelPluginMeta,
   systemDateFormats,
   SystemDateFormatSettings,
@@ -59,14 +60,14 @@ export class GrafanaBootConfig implements GrafanaConfig {
   theme2: GrafanaTheme2;
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
-    meta: false,
     ngalert: false,
-    reportVariables: false,
     accesscontrol: false,
     trimDefaults: false,
+    tempoServiceGraph: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
+  rendererVersion = '';
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
   sentry = {
@@ -88,6 +89,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   caching = {
     enabled: false,
   };
+  geomapDefaultBaseLayerConfig?: MapLayerOptions;
+  geomapDisableCustomBaseLayer?: boolean;
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

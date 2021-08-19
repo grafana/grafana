@@ -1,7 +1,7 @@
 import React, { createRef, MutableRefObject } from 'react';
 import uPlot, { Options } from 'uplot';
 import { PlotContext, PlotContextType } from './context';
-import { DEFAULT_PLOT_CONFIG } from './utils';
+import { DEFAULT_PLOT_CONFIG, pluginLog } from './utils';
 import { PlotProps } from './types';
 
 function sameDims(prevProps: PlotProps, nextProps: PlotProps) {
@@ -73,6 +73,7 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
       ...this.props.config.getConfig(),
     };
 
+    pluginLog('UPlot', false, 'Reinitializing plot', config);
     const plot = new uPlot(config, this.props.data, this.plotContainer!.current!);
 
     if (plotRef) {
@@ -94,15 +95,6 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
 
   componentWillUnmount() {
     this.state.ctx.plot?.destroy();
-  }
-
-  shouldComponentUpdate(nextProps: PlotProps, nextState: UPlotChartState) {
-    return (
-      nextState.ctx !== this.state.ctx ||
-      !sameDims(this.props, nextProps) ||
-      !sameData(this.props, nextProps) ||
-      !sameConfig(this.props, nextProps)
-    );
   }
 
   componentDidUpdate(prevProps: PlotProps) {

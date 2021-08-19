@@ -1,7 +1,5 @@
 package models
 
-import "time"
-
 const AlertConfigurationVersion = 1
 
 // AlertConfiguration represents a single version of the Alerting Engine Configuration.
@@ -10,12 +8,14 @@ type AlertConfiguration struct {
 
 	AlertmanagerConfiguration string
 	ConfigurationVersion      string
-	CreatedAt                 time.Time `xorm:"created"`
+	CreatedAt                 int64 `xorm:"created"`
 	Default                   bool
+	OrgID                     int64 `xorm:"org_id"`
 }
 
 // GetLatestAlertmanagerConfigurationQuery is the query to get the latest alertmanager configuration.
 type GetLatestAlertmanagerConfigurationQuery struct {
+	OrgID  int64
 	Result *AlertConfiguration
 }
 
@@ -24,8 +24,5 @@ type SaveAlertmanagerConfigurationCmd struct {
 	AlertmanagerConfiguration string
 	ConfigurationVersion      string
 	Default                   bool
-}
-
-type DeleteAlertmanagerConfigurationCmd struct {
-	ID int64
+	OrgID                     int64
 }

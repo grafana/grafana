@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
@@ -24,7 +23,7 @@ var (
 func NewLineNotifier(model *NotificationChannelConfig, t *template.Template) (*LineNotifier, error) {
 	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
 	if token == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find token in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find token in settings"}
 	}
 
 	return &LineNotifier{
@@ -57,10 +56,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	ruleURL := path.Join(ln.tmpl.ExternalURL.String(), "/alerting/list")
 
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, ln.tmpl, as, ln.log, &tmplErr)
-	if err != nil {
-		return false, err
-	}
+	tmpl, _ := TmplText(ctx, ln.tmpl, as, ln.log, &tmplErr)
 
 	body := fmt.Sprintf(
 		"%s\n%s\n\n%s",
@@ -69,7 +65,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		tmpl(`{{ template "default.message" . }}`),
 	)
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template Line message: %w", tmplErr)
+		ln.log.Debug("failed to template Line message", "err", tmplErr.Error())
 	}
 
 	form := url.Values{}

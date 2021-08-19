@@ -9,7 +9,7 @@ weight = 300
 
 Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../alerting/old-alerting/notifications.md" >}}).
 
->**Note:** Image rendering of dashboards is not supported at this time.
+> **Note:** Image rendering of dashboards is not supported at this time.
 
 While an image is being rendered, the PNG image is temporarily written to the file system. When the image is rendered, the PNG image is temporarily written to the `png` folder in the Grafana `data` folder.
 
@@ -35,7 +35,7 @@ To install the plugin, refer to the [Grafana Image Renderer Installation instruc
 
 ## Run in custom Grafana Docker image
 
- We recommend setting up another Docker container for rendering and using remote rendering. Refer to [Remote rendering service]({{< relref "#remote-rendering-service" >}}) for instructions.
+We recommend setting up another Docker container for rendering and using remote rendering. Refer to [Remote rendering service]({{< relref "#remote-rendering-service" >}}) for instructions.
 
 If you still want to install the plugin in the Grafana Docker image, refer to [Build with Grafana Image Renderer plugin pre-installed]({{< relref "../installation/docker/#build-with-grafana-image-renderer-plugin-pre-installed" >}}).
 
@@ -60,7 +60,7 @@ services:
   grafana:
     image: grafana/grafana:main
     ports:
-     - "3000:3000"
+      - '3000:3000'
     environment:
       GF_RENDERING_SERVER_URL: http://renderer:8081/render
       GF_RENDERING_CALLBACK_URL: http://grafana:3000/
@@ -84,24 +84,24 @@ The following example describes how to build and run the remote HTTP rendering s
 1. Clone the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) Git repository.
 1. Install dependencies and build:
 
-    ```bash
-    yarn install --pure-lockfile
-    yarn run build
-    ```
+   ```bash
+   yarn install --pure-lockfile
+   yarn run build
+   ```
 
 1. Run the server:
 
-    ```bash
-    node build/app.js server --port=8081
-    ```
+   ```bash
+   node build/app.js server --port=8081
+   ```
 
 1. Update Grafana configuration:
 
-    ```
-    [rendering]
-    server_url = http://localhost:8081/render
-    callback_url = http://localhost:3000/
-    ```
+   ```
+   [rendering]
+   server_url = http://localhost:8081/render
+   callback_url = http://localhost:3000/
+   ```
 
 1. Restart Grafana.
 
@@ -128,7 +128,7 @@ Rendering failed: Error: Failed to launch chrome!/var/lib/grafana/plugins/grafan
 error while loading shared libraries: libX11.so.6: cannot open shared object file: No such file or directory\n\n\nTROUBLESHOOTING: https://github.com/GoogleChrome/puppeteer/blob/master/docs/troubleshooting.md
 ```
 
-In general you can use the [`ldd`](https://en.wikipedia.org/wiki/Ldd_(Unix)) utility to figure out what shared libraries
+In general you can use the [`ldd`](<https://en.wikipedia.org/wiki/Ldd_(Unix)>) utility to figure out what shared libraries
 are not installed in your system:
 
 ```bash
@@ -158,13 +158,13 @@ libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 
 On Debian 9 (Stretch) the following dependencies have been confirmed as needed for the image rendering to function.
 
 ```bash
-libx11 libcairo bcairo2 libcairo2 libxtst6 libxcomposite1 libx11-xcb1 libxcursor1 libxdamage1 libnss3 libcups libcups2 libXss libXss1 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0
+libx11 libcairo bcairo2 libcairo2 libxtst6 libxcomposite1 libx11-xcb1 libxcursor1 libxdamage1 libnss3 libcups libcups2 libXss libXss1 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0 libgbm1
 ```
 
 On Debian 10 (Buster) the following dependencies have been confirmed as needed for the image rendering to function.
 
 ```bash
-libxdamage1 libxext6 libxi6 libxtst6 libnss3 libnss3 libcups2 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libpango-1.0-0 libcairo2 libatspi2.0-0 libgtk3.0-cil libgdk3.0-cil libx11-xcb-dev
+libxdamage1 libxext6 libxi6 libxtst6 libnss3 libnss3 libcups2 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libpango-1.0-0 libcairo2 libatspi2.0-0 libgtk3.0-cil libgdk3.0-cil libx11-xcb-dev libgbm1
 ```
 
 **Centos:**
@@ -208,5 +208,5 @@ instead of the pre-packaged version of Chromium.
 To override the path to the Chrome/Chromium executable, set an environment variable and make sure that it's available for the Grafana process. For example:
 
 ```bash
-export GF_RENDERER_PLUGIN_CHROME_BIN="/usr/bin/chromium-browser"
+export GF_PLUGIN_RENDERING_CHROME_BIN="/usr/bin/chromium-browser"
 ```

@@ -40,7 +40,9 @@ describe('UPlotConfigBuilder', () => {
           "scales": Object {},
           "select": undefined,
           "series": Array [
-            Object {},
+            Object {
+              "value": [Function],
+            },
           ],
           "tzDate": [Function],
         }
@@ -104,7 +106,9 @@ describe('UPlotConfigBuilder', () => {
           },
           "select": undefined,
           "series": Array [
-            Object {},
+            Object {
+              "value": [Function],
+            },
           ],
           "tzDate": [Function],
         }
@@ -173,7 +177,9 @@ describe('UPlotConfigBuilder', () => {
             },
             "select": undefined,
             "series": Array [
-              Object {},
+              Object {
+                "value": [Function],
+              },
             ],
             "tzDate": [Function],
           }
@@ -222,7 +228,9 @@ describe('UPlotConfigBuilder', () => {
               },
               "select": undefined,
               "series": Array [
-                Object {},
+                Object {
+                  "value": [Function],
+                },
               ],
               "tzDate": [Function],
             }
@@ -272,7 +280,9 @@ describe('UPlotConfigBuilder', () => {
               },
               "select": undefined,
               "series": Array [
-                Object {},
+                Object {
+                  "value": [Function],
+                },
               ],
               "tzDate": [Function],
             }
@@ -338,16 +348,18 @@ describe('UPlotConfigBuilder', () => {
             },
             "label": "test label",
             "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
-            "labelSize": 18,
+            "labelGap": 8,
+            "labelSize": 20,
             "scale": "scale-x",
             "show": true,
             "side": 2,
             "size": [Function],
             "space": [Function],
             "splits": undefined,
-            "stroke": "rgb(201, 209, 217)",
+            "stroke": "rgb(204, 204, 220)",
             "ticks": Object {
               "show": true,
+              "size": 4,
               "stroke": "rgba(240, 250, 255, 0.09)",
               "width": 1,
             },
@@ -373,7 +385,9 @@ describe('UPlotConfigBuilder', () => {
         "scales": Object {},
         "select": undefined,
         "series": Array [
-          Object {},
+          Object {
+            "value": [Function],
+          },
         ],
         "tzDate": [Function],
       }
@@ -422,7 +436,7 @@ describe('UPlotConfigBuilder', () => {
       theme: darkTheme,
     });
 
-    expect(builder.getConfig().series[1].fill).toBe('rgba(255, 170, 187, 0.5)');
+    expect(builder.getConfig().series[1].fill).toBe('#FFAABB80');
   });
 
   it('when fillColor is set ignore fillOpacity', () => {
@@ -462,7 +476,6 @@ describe('UPlotConfigBuilder', () => {
       gradientMode: GraphGradientMode.Opacity,
       showPoints: PointVisibility.Auto,
       pointSize: 5,
-      pointColor: '#00ff00',
       lineColor: '#0000ff',
       lineWidth: 1,
       spanNulls: false,
@@ -490,20 +503,24 @@ describe('UPlotConfigBuilder', () => {
         "scales": Object {},
         "select": undefined,
         "series": Array [
-          Object {},
+          Object {
+            "value": [Function],
+          },
           Object {
             "fill": [Function],
             "paths": [Function],
             "points": Object {
-              "fill": "#00ff00",
+              "fill": "#0000ff",
+              "filter": undefined,
               "size": 5,
-              "stroke": "#00ff00",
+              "stroke": "#0000ff",
             },
             "pxAlign": undefined,
             "scale": "scale-x",
             "show": true,
             "spanGaps": false,
             "stroke": "#0000ff",
+            "value": [Function],
             "width": 1,
           },
         ],
@@ -599,50 +616,58 @@ describe('UPlotConfigBuilder', () => {
           "scales": Object {},
           "select": undefined,
           "series": Array [
-            Object {},
+            Object {
+              "value": [Function],
+            },
             Object {
               "fill": [Function],
               "paths": [Function],
               "points": Object {
-                "fill": undefined,
+                "fill": "#0000ff",
+                "filter": undefined,
                 "size": undefined,
-                "stroke": undefined,
+                "stroke": "#0000ff",
               },
               "pxAlign": undefined,
               "scale": "scale-x",
               "show": true,
               "spanGaps": false,
               "stroke": "#0000ff",
+              "value": [Function],
               "width": 1,
             },
             Object {
               "fill": [Function],
               "paths": [Function],
               "points": Object {
-                "fill": undefined,
+                "fill": "#00ff00",
+                "filter": undefined,
                 "size": 5,
-                "stroke": undefined,
+                "stroke": "#00ff00",
               },
               "pxAlign": undefined,
               "scale": "scale-x",
               "show": true,
               "spanGaps": false,
               "stroke": "#00ff00",
+              "value": [Function],
               "width": 1,
             },
             Object {
               "fill": [Function],
               "paths": [Function],
               "points": Object {
-                "fill": undefined,
+                "fill": "#ff0000",
+                "filter": undefined,
                 "size": 5,
-                "stroke": undefined,
+                "stroke": "#ff0000",
               },
               "pxAlign": undefined,
               "scale": "scale-x",
               "show": true,
               "spanGaps": false,
               "stroke": "#ff0000",
+              "value": [Function],
               "width": 1,
             },
           ],

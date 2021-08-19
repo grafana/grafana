@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -13,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
@@ -33,9 +31,12 @@ type WebhookNotifier struct {
 // NewWebHookNotifier is the constructor for
 // the WebHook notifier.
 func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template) (*WebhookNotifier, error) {
+	if model.Settings == nil {
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find settings property"}
+	}
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find url property in settings"}
 	}
 	return &WebhookNotifier{
 		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
@@ -80,10 +81,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 
 	as, numTruncated := truncateAlerts(wn.MaxAlerts, as)
 	var tmplErr error
-	tmpl, data, err := TmplText(ctx, wn.tmpl, as, wn.log, &tmplErr)
-	if err != nil {
-		return false, err
-	}
+	tmpl, data := TmplText(ctx, wn.tmpl, as, wn.log, &tmplErr)
 	msg := &webhookMessage{
 		Version:         "1",
 		ExtendedData:    data,
@@ -100,7 +98,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template webhook message: %w", tmplErr)
+		wn.log.Debug("failed to template webhook message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(msg)

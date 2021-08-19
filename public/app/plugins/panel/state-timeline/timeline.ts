@@ -1,6 +1,6 @@
-import uPlot, { Series, Cursor } from 'uplot';
+import uPlot, { Cursor, Series } from 'uplot';
 import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
-import { Quadtree, Rect, pointWithin } from 'app/plugins/panel/barchart/quadtree';
+import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { TimelineFieldConfig, TimelineMode, TimelineValueAlignment } from './types';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
@@ -47,8 +47,8 @@ export interface TimelineCoreOptions {
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: any) => string;
   getFieldConfig: (seriesIdx: number) => TimelineFieldConfig;
-  onHover?: (seriesIdx: number, valueIdx: number) => void;
-  onLeave?: (seriesIdx: number, valueIdx: number) => void;
+  onHover: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
+  onLeave: () => void;
 }
 
 /**
@@ -69,8 +69,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     getTimeRange,
     getValueColor,
     getFieldConfig,
-    // onHover,
-    // onLeave,
+    onHover,
+    onLeave,
   } = opts;
 
   let qt: Quadtree;
@@ -371,10 +371,10 @@ export function getConfig(opts: TimelineCoreOptions) {
 
     if (o) {
       h.style.display = '';
-      h.style.left = round(o!.x / pxRatio) + 'px';
-      h.style.top = round(o!.y / pxRatio) + 'px';
-      h.style.width = round(o!.w / pxRatio) + 'px';
-      h.style.height = round(o!.h / pxRatio) + 'px';
+      h.style.left = round(o.x / pxRatio) + 'px';
+      h.style.top = round(o.y / pxRatio) + 'px';
+      h.style.width = round(o.w / pxRatio) + 'px';
+      h.style.height = round(o.h / pxRatio) + 'px';
     } else {
       h.style.display = 'none';
     }
@@ -382,16 +382,24 @@ export function getConfig(opts: TimelineCoreOptions) {
     hovered[i] = o;
   }
 
+  let hoveredAtCursor: Rect | undefined;
+
   function hoverMulti(cx: number, cy: number) {
+    let foundAtCursor: Rect | undefined;
+
     for (let i = 0; i < numSeries; i++) {
-      let found: Rect | null = null;
+      let found: Rect | undefined;
 
       if (cx >= 0) {
-        cy = yMids[i];
+        let cy2 = yMids[i];
 
-        qt.get(cx, cy, 1, 1, (o) => {
-          if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+        qt.get(cx, cy2, 1, 1, (o) => {
+          if (pointWithin(cx, cy2, o.x, o.y, o.x + o.w, o.y + o.h)) {
             found = o;
+
+            if (Math.abs(cy - cy2) <= o.h / 2) {
+              foundAtCursor = o;
+            }
           }
         });
       }
@@ -404,29 +412,46 @@ export function getConfig(opts: TimelineCoreOptions) {
         setHoverMark(i, null);
       }
     }
+
+    if (foundAtCursor) {
+      if (foundAtCursor !== hoveredAtCursor) {
+        hoveredAtCursor = foundAtCursor;
+        onHover(foundAtCursor.sidx, foundAtCursor.didx, foundAtCursor);
+      }
+    } else if (hoveredAtCursor) {
+      hoveredAtCursor = undefined;
+      onLeave();
+    }
   }
 
   function hoverOne(cx: number, cy: number) {
-    let found: Rect | null = null;
+    let foundAtCursor: Rect | undefined;
 
     qt.get(cx, cy, 1, 1, (o) => {
       if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-        found = o;
+        foundAtCursor = o;
       }
     });
 
-    if (found) {
-      setHoverMark(0, found);
-    } else if (hovered[0] != null) {
+    if (foundAtCursor) {
+      setHoverMark(0, foundAtCursor);
+
+      if (foundAtCursor !== hoveredAtCursor) {
+        hoveredAtCursor = foundAtCursor;
+        onHover(foundAtCursor.sidx, foundAtCursor.didx, foundAtCursor);
+      }
+    } else if (hoveredAtCursor) {
       setHoverMark(0, null);
+      hoveredAtCursor = undefined;
+      onLeave();
     }
   }
 
   const doHover = mode === TimelineMode.Changes ? hoverMulti : hoverOne;
 
   const setCursor = (u: uPlot) => {
-    let cx = round(u.cursor!.left! * pxRatio);
-    let cy = round(u.cursor!.top! * pxRatio);
+    let cx = round(u.cursor.left! * pxRatio);
+    let cy = round(u.cursor.top! * pxRatio);
 
     // if quadtree is empty, fill it
     if (!qt.o.length && qt.q == null) {
@@ -522,6 +547,12 @@ export function getConfig(opts: TimelineCoreOptions) {
 }
 
 function getFillColor(fieldConfig: TimelineFieldConfig, color: string) {
+  // if #rgba with pre-existing alpha. ignore fieldConfig.fillOpacity
+  // e.g. thresholds with opacity
+  if (color[0] === '#' && color.length === 9) {
+    return color;
+  }
+
   const opacityPercent = (fieldConfig.fillOpacity ?? 100) / 100;
   return alpha(color, opacityPercent);
 }

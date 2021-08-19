@@ -15,6 +15,7 @@ import { VizWrapper } from './VizWrapper';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { TABLE, TIMESERIES } from '../../utils/constants';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
 
 interface Props {
   data: PanelData;
@@ -29,8 +30,6 @@ interface Props {
   onRunQueries: () => void;
   index: number;
 }
-
-export type SupportedPanelPlugins = 'timeseries' | 'table' | 'stat';
 
 export const QueryWrapper: FC<Props> = ({
   data,
@@ -64,7 +63,7 @@ export const QueryWrapper: FC<Props> = ({
 
   return (
     <div className={styles.wrapper}>
-      <QueryEditorRow
+      <QueryEditorRow<DataQuery>
         dataSource={dsSettings}
         onChangeDataSource={!isExpression ? (settings) => onChangeDataSource(settings, index) : undefined}
         id={query.refId}

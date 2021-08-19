@@ -1,8 +1,9 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { UnconnectedNodeGraphContainer } from './NodeGraphContainer';
 import { getDefaultTimeRange, MutableDataFrame } from '@grafana/data';
 import { ExploreId } from '../../types';
+jest.mock('../../plugins/panel/nodeGraph/layout.worker.js');
 
 describe('NodeGraphContainer', () => {
   it('is collapsed if shown with traces', () => {
@@ -20,7 +21,7 @@ describe('NodeGraphContainer', () => {
     expect(container.firstChild?.childNodes.length).toBe(1);
   });
 
-  it('shows the graph if not with trace view', () => {
+  it('shows the graph if not with trace view', async () => {
     const { container } = render(
       <UnconnectedNodeGraphContainer
         dataFrames={[nodes]}
@@ -32,6 +33,7 @@ describe('NodeGraphContainer', () => {
 
     expect(container.firstChild?.childNodes.length).toBe(2);
     expect(container.querySelector('svg')).toBeInTheDocument();
+    await screen.findByLabelText(/Node: tempo-querier/);
   });
 });
 

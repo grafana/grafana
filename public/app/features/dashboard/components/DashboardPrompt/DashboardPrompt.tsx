@@ -11,7 +11,7 @@ import * as H from 'history';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { useDispatch } from 'react-redux';
-import { discardPanelChanges } from '../PanelEditor/state/actions';
+import { discardPanelChanges, exitPanelEditor } from '../PanelEditor/state/actions';
 import { DashboardSavedEvent } from 'app/types/events';
 
 export interface Props {
@@ -50,6 +50,22 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
     };
   }, [dashboard]);
 
+  useEffect(() => {
+    const handleUnload = (event: BeforeUnloadEvent) => {
+      if (ignoreChanges(dashboard, original)) {
+        return;
+      }
+      if (hasChanges(dashboard, original)) {
+        event.preventDefault();
+        // No browser actually displays this message anymore.
+        // But Chrome requires it to be defined else the popup won't show.
+        event.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, [dashboard, original]);
+
   // Handle saved events
   useEffect(() => {
     const savedEventUnsub = appEvents.subscribe(DashboardSavedEvent, () => {
@@ -77,6 +93,11 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
 
     // Are we still on the same dashboard?
     if (originalPath === location.pathname || !original) {
+      // This is here due to timing reasons we want the exit panel editor state changes to happen before router update
+      if (panelInEdit && !search.has('editPanel')) {
+        dispatch(exitPanelEditor());
+      }
+
       return true;
     }
 
@@ -227,8 +248,6 @@ export function hasChanges(current: DashboardModel, original: any) {
 
   const currentJson = angular.toJson(currentClean);
   const originalJson = angular.toJson(originalClean);
-  console.log('current', currentJson);
-  console.log('originalJson', originalJson);
 
   return currentJson !== originalJson;
 }

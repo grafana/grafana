@@ -240,6 +240,36 @@ export const metricAggregationConfig: MetricsConfiguration = {
       },
     },
   },
+  top_metrics: {
+    label: 'Top Metrics',
+    xpack: true,
+    requiresField: false,
+    isPipelineAgg: false,
+    supportsMissing: false,
+    supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: false,
+    versionRange: '>=7.7.0',
+    hasMeta: false,
+    defaults: {
+      settings: {
+        order: 'desc',
+      },
+    },
+  },
+  rate: {
+    label: 'Rate',
+    xpack: true,
+    versionRange: '>=7.10.0',
+    requiresField: true,
+    isPipelineAgg: false,
+    supportsMissing: false,
+    supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: true,
+    hasMeta: false,
+    defaults: {},
+  },
 };
 
 interface PipelineOption {

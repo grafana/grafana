@@ -15,7 +15,7 @@ func (cr classicReducer) ValidReduceFunc() bool {
 	switch cr {
 	case "avg", "sum", "min", "max", "count", "last", "median":
 		return true
-	case "diff", "diff_abs", "percent_diff", "percent_diff_abs", "count_not_null":
+	case "diff", "diff_abs", "percent_diff", "percent_diff_abs", "count_non_null":
 		return true
 	}
 	return false
@@ -38,7 +38,7 @@ func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 	value := float64(0)
 	allNull := true
 
-	vF := series.Frame.Fields[series.ValueIdx]
+	vF := series.Frame.Fields[1]
 	ff := mathexp.Float64Field(*vF)
 
 	switch cr {

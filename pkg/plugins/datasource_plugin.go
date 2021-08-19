@@ -3,11 +3,8 @@ package plugins
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"path/filepath"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -32,9 +29,6 @@ type DataSourcePlugin struct {
 	Backend    bool   `json:"backend,omitempty"`
 	Executable string `json:"executable,omitempty"`
 	SDK        bool   `json:"sdk,omitempty"`
-
-	client *grpcplugin.Client
-	logger log.Logger
 }
 
 func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) (
@@ -46,37 +40,11 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backend
 	if p.Backend {
 		cmd := ComposePluginStartCommand(p.Executable)
 		fullpath := filepath.Join(base.PluginDir, cmd)
-		factory := grpcplugin.NewBackendPlugin(p.Id, fullpath, grpcplugin.PluginStartFuncs{
-			OnStart: p.onPluginStart,
-		})
+		factory := grpcplugin.NewBackendPlugin(p.Id, fullpath)
 		if err := backendPluginManager.RegisterAndStart(context.Background(), p.Id, factory); err != nil {
 			return nil, errutil.Wrapf(err, "failed to register backend plugin")
 		}
 	}
 
 	return p, nil
-}
-
-func (p *DataSourcePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource, query DataQuery) (DataResponse, error) {
-	if !p.CanHandleDataQueries() {
-		return DataResponse{}, fmt.Errorf("plugin %q can't handle data queries", p.Id)
-	}
-
-	endpoint := newDataSourcePluginWrapperV2(p.logger, p.Id, p.Type, p.client.DataPlugin)
-	return endpoint.Query(ctx, dsInfo, query)
-}
-
-func (p *DataSourcePlugin) CanHandleDataQueries() bool {
-	return p.client != nil
-}
-
-func (p *DataSourcePlugin) onPluginStart(pluginID string, client *grpcplugin.Client, logger log.Logger) error {
-	if client.DataPlugin == nil {
-		return nil
-	}
-
-	p.client = client
-	p.logger = logger
-
-	return nil
 }

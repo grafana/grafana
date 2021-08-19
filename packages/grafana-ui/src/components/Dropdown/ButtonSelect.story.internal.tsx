@@ -12,9 +12,6 @@ export default {
   component: ButtonSelect,
   decorators: [withCenteredStory],
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['className', 'options', 'value', 'tooltipContent'],
     },

@@ -5,13 +5,6 @@ export type AlertManagerCortexConfig = {
   alertmanager_config: AlertmanagerConfig;
 };
 
-// NOTE - This type is incomplete! But currently, we don't need more.
-export type AlertmanagerStatusPayload = {
-  config: {
-    original: string;
-  };
-};
-
 export type TLSConfig = {
   ca_file: string;
   cert_file: string;
@@ -215,5 +208,41 @@ export type AlertmanagerGroup = {
   labels: { [key: string]: string };
   receiver: { name: string };
   alerts: AlertmanagerAlert[];
-  id: string;
 };
+
+export interface AlertmanagerStatus {
+  cluster: {
+    peers: unknown;
+    status: string;
+  };
+  config: AlertmanagerConfig;
+  uptime: string;
+  versionInfo: {
+    branch: string;
+    buildDate: string;
+    buildUser: string;
+    goVersion: string;
+    revision: string;
+    version: string;
+  };
+}
+
+export interface TestReceiversPayload {
+  receivers?: Receiver[];
+}
+
+interface TestReceiversResultGrafanaReceiverConfig {
+  name: string;
+  uid?: string;
+  error?: string;
+  status: 'failed';
+}
+
+interface TestReceiversResultReceiver {
+  name: string;
+  grafana_managed_receiver_configs: TestReceiversResultGrafanaReceiverConfig[];
+}
+export interface TestReceiversResult {
+  notified_at: string;
+  receivers: TestReceiversResultReceiver[];
+}

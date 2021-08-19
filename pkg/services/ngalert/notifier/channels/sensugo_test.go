@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/url"
 	"testing"
 	"time"
@@ -16,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestSensuGoNotifier(t *testing.T) {
@@ -31,7 +29,7 @@ func TestSensuGoNotifier(t *testing.T) {
 		settings     string
 		alerts       []*types.Alert
 		expMsg       map[string]interface{}
-		expInitError error
+		expInitError string
 		expMsgError  error
 	}{
 		{
@@ -67,8 +65,7 @@ func TestSensuGoNotifier(t *testing.T) {
 				},
 				"ruleUrl": "http://localhost/alerting/list",
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name: "Custom config with multiple alerts",
 			settings: `{
@@ -115,28 +112,19 @@ func TestSensuGoNotifier(t *testing.T) {
 				},
 				"ruleUrl": "http://localhost/alerting/list",
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name: "Error in initing: missing URL",
 			settings: `{
 				"apikey": "<apikey>"
 			}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find URL property in settings"},
+			expInitError: `failed to validate receiver "Sensu Go" of type "sensugo": could not find URL property in settings`,
 		}, {
 			name: "Error in initing: missing API key",
 			settings: `{
 				"url": "http://sensu-api.local:8080"
 			}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find the API key property in settings"},
-		}, {
-			name: "Error in building message",
-			settings: `{
-				"url": "http://sensu-api.local:8080",
-				"apikey": "<apikey>",
-				"message": "{{ .Status }"
-			}`,
-			expMsgError: errors.New("failed to template sensugo message: template: :1: unexpected \"}\" in operand"),
+			expInitError: `failed to validate receiver "Sensu Go" of type "sensugo": could not find the API key property in settings`,
 		},
 	}
 
@@ -152,9 +140,9 @@ func TestSensuGoNotifier(t *testing.T) {
 			}
 
 			sn, err := NewSensuGoNotifier(m, tmpl)
-			if c.expInitError != nil {
+			if c.expInitError != "" {
 				require.Error(t, err)
-				require.Equal(t, c.expInitError.Error(), err.Error())
+				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)

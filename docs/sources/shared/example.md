@@ -36,6 +36,7 @@ You cannot use short codes in an ordered list with sublists. The shortcode break
 All unordered list steps included as part of a list will appear as second-level lists (with the hollow circle bullet) rather than first-level lists (solid circle bullet), even if the list is not indented in the shared file or the document file.
 
 {{< docs/list >}}
-  {{< docs/shared "test.md" >}}
-  - Bullet text
-{{< /docs/list >}}
+{{< docs/shared "test.md" >}}
+
+- Bullet text
+  {{< /docs/list >}}

@@ -9,11 +9,8 @@ export default {
   component: ButtonCascader,
   decorators: [withCenteredStory],
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
-      exclude: ['className', 'value', 'fieldNames'],
+      exclude: ['className', 'value', 'fieldNames', 'loadData', 'onChange', 'onPopupVisibleChange'],
     },
   },
   args: {

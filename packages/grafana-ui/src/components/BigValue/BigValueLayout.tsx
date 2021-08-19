@@ -90,6 +90,10 @@ export abstract class BigValueLayout {
         break;
       case BigValueColorMode.Background:
         styles.color = getTextColorForBackground(this.valueColor);
+        break;
+      case BigValueColorMode.None:
+        styles.color = this.props.theme.colors.text.primary;
+        break;
     }
 
     return styles;
@@ -159,13 +163,16 @@ export abstract class BigValueLayout {
     let lineColor: string;
 
     switch (colorMode) {
-      case BigValueColorMode.Value:
-        lineColor = this.valueColor;
-        fillColor = tinycolor(this.valueColor).setAlpha(0.2).toRgbString();
-        break;
       case BigValueColorMode.Background:
         fillColor = 'rgba(255,255,255,0.4)';
         lineColor = tinycolor(this.valueColor).brighten(40).toRgbString();
+        break;
+      case BigValueColorMode.None:
+      case BigValueColorMode.Value:
+      default:
+        lineColor = this.valueColor;
+        fillColor = tinycolor(this.valueColor).setAlpha(0.2).toRgbString();
+        break;
     }
 
     // The graph field configuration applied to Y values

@@ -13,10 +13,11 @@ Before you get started, make sure to [enable fine-grained access control]({{< re
 
 ## Check all built-in role assignments
 
-You can use the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md#get-all-built-in-role-assignments" >}}) to see all available built-in role assignments. 
+You can use the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md#get-all-built-in-role-assignments" >}}) to see all available built-in role assignments.
 The response contains a mapping between one of the organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin` to the custom or fixed roles.
 
 Example request:
+
 ```
 curl --location --request GET '<grafana_url>/api/access-control/builtin-roles' --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ='
 ```
@@ -24,6 +25,7 @@ curl --location --request GET '<grafana_url>/api/access-control/builtin-roles' -
 You must use the base64 username:password Basic Authorization here. Auth tokens are not applicable here.
 
 Example response:
+
 ```
 {
     "Admin": [
@@ -36,7 +38,7 @@ Example response:
             "global": true,
             "updated": "2021-05-17T20:49:18+02:00",
             "created": "2021-05-13T16:24:26+02:00"
-        },       
+        },
         {
             "version": 1,
             "uid": "Kz9m_YjGz",
@@ -58,7 +60,7 @@ Example response:
             "global": true,
             "updated": "2021-05-17T20:49:18+02:00",
             "created": "2021-05-13T16:24:26+02:00"
-        },               
+        },
         {
             "version": 2,
             "uid": "ajum_YjGk",
@@ -76,8 +78,8 @@ Example response:
             "global": true,
             "updated": "2021-05-17T20:49:17+02:00",
             "created": "2021-05-13T16:24:26+02:00"
-        },        
-        ... 
+        },
+        ...
     ]
 }
 ```
@@ -136,6 +138,7 @@ You can create your custom role by either using an [HTTP API]({{< relref "../../
 You can take a look at [actions and scopes]({{< relref "./provisioning.md#action-definitions" >}}) to decide what permissions would you like to map to your role.
 
 Example HTTP request:
+
 ```
 curl --location --request POST '<grafana_url>/api/access-control/roles/' \
 --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
@@ -165,7 +168,7 @@ Example response:
     "global": true,
     "permissions": [
         {
-            "action": "users:create"            
+            "action": "users:create"
             "updated": "2021-05-17T22:07:31.569936+02:00",
             "created": "2021-05-17T22:07:31.569935+02:00"
         }
@@ -175,7 +178,7 @@ Example response:
 }
 ```
 
-Once the custom role is created, you can create a built-in role assignment by using an [HTTP API]({{< relref "../../http_api/access_control.md#create-a-built-in-role-assignment" >}}). 
+Once the custom role is created, you can create a built-in role assignment by using an [HTTP API]({{< relref "../../http_api/access_control.md#create-a-built-in-role-assignment" >}}).
 If you created your role using [Grafana provisioning]({{< relref "./provisioning.md" >}}), you can also create the assignment with it.
 
 Example HTTP request:
@@ -214,8 +217,8 @@ In order to create users, you need to have `users:create` permission. By default
 
 If you want to prevent Grafana Admin from creating users, you can do the following:
 
-1. [Check all built-in role assignments]({{< ref "#check-all-built-in-role-assignments" >}}) to see what built-in role assignments are available.  
-1. From built-in role assignments, find the role which gives `users:create` permission. Refer to [fixed roles]({{< relref "./roles.md#fixed-roles" >}}) for full list of permission assignments. 
+1. [Check all built-in role assignments]({{< ref "#check-all-built-in-role-assignments" >}}) to see what built-in role assignments are available.
+1. From built-in role assignments, find the role which gives `users:create` permission. Refer to [fixed roles]({{< relref "./roles.md#fixed-roles" >}}) for full list of permission assignments.
 1. Remove the built-in role assignment by using an [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md" >}}) or by using [Grafana provisioning]({{< relref "./provisioning" >}}).
 
 ## Allow Editors to create new custom roles
@@ -225,4 +228,5 @@ By default, the Grafana Server Admin is the only user who can create and manage 
 1. Create a built-in role assignment and map `fixed:permissions:admin:edit` and `fixed:permissions:admin:read` fixed roles to the `Editor` built-in role.
 1. [Create a custom role]({{< ref "#create-your-custom-role" >}}) with `roles.builtin:add` and `roles:write` permissions, then create a built-in role assignment for `Editor` organization role.
 
-Note that any user with the ability to modify roles can only create, update or delete roles with permissions they themselves have been granted.
+
+Note that any user with the ability to modify roles can only create, update or delete roles with permissions they themselves have been granted. For example, a user with the `Editor` role would be able to create and manage roles only with the permissions they have, or with a subset of them.

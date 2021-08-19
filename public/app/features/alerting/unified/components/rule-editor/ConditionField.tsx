@@ -47,6 +47,7 @@ export const ConditionField: FC = () => {
         name="condition"
         render={({ field: { onChange, ref, ...field } }) => (
           <Select
+            menuShouldPortal
             {...field}
             width={42}
             options={options}

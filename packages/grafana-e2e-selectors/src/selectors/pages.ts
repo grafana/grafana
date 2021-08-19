@@ -1,5 +1,10 @@
 import { Components } from './components';
 
+/**
+ * Selectors grouped/defined in Pages
+ *
+ * @alpha
+ */
 export const Pages = {
   Login: {
     url: '/login',
@@ -32,6 +37,8 @@ export const Pages = {
   AddDashboard: {
     url: '/dashboard/new',
     addNewPanel: 'Add new panel',
+    addNewRow: 'Add new row',
+    addNewPanelLibrary: 'Add new panel from panel library',
   },
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
@@ -59,7 +66,10 @@ export const Pages = {
       },
       Annotations: {
         List: {
-          addAnnotationCTA: Components.CallToActionCard.button('Add Annotation Query'),
+          addAnnotationCTA: Components.CallToActionCard.button('Add annotation query'),
+        },
+        Settings: {
+          name: 'Annotations settings name input',
         },
       },
       Variables: {
@@ -128,7 +138,7 @@ export const Pages = {
   Explore: {
     url: '/explore',
     General: {
-      container: 'Explore',
+      container: 'data-testid Explore',
       graph: 'Explore Graph',
       table: 'Explore Table',
       scrollBar: () => '.scrollbar-view',

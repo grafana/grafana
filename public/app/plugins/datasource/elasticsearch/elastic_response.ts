@@ -14,11 +14,18 @@ import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
 import {
   ExtendedStatMetaType,
   isMetricAggregationWithField,
+  TopMetrics,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { describeMetric, getScriptValue } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
 const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
+type TopMetricMetric = Record<string, number>;
+interface TopMetricBucket {
+  top: Array<{
+    metrics: TopMetricMetric;
+  }>;
+}
 
 export class ElasticResponse {
   constructor(private targets: ElasticsearchQuery[], private response: any) {
@@ -101,6 +108,33 @@ export class ElasticResponse {
             seriesList.push(newSeries);
           }
 
+          break;
+        }
+        case 'top_metrics': {
+          if (metric.settings?.metrics?.length) {
+            for (const metricField of metric.settings?.metrics) {
+              newSeries = {
+                datapoints: [],
+                metric: metric.type,
+                props: props,
+                refId: target.refId,
+                field: metricField,
+              };
+              for (let i = 0; i < esAgg.buckets.length; i++) {
+                const bucket = esAgg.buckets[i];
+                const stats = bucket[metric.id] as TopMetricBucket;
+                const values = stats.top.map((hit) => {
+                  if (hit.metrics[metricField]) {
+                    return hit.metrics[metricField];
+                  }
+                  return null;
+                });
+                const point = [values[values.length - 1], bucket.key];
+                newSeries.datapoints.push(point);
+              }
+              seriesList.push(newSeries);
+            }
+          }
           break;
         }
         default: {
@@ -195,6 +229,23 @@ export class ElasticResponse {
             }
             break;
           }
+          case 'top_metrics': {
+            const baseName = this.getMetricName(metric.type);
+
+            if (metric.settings?.metrics) {
+              for (const metricField of metric.settings.metrics) {
+                // If we selected more than one metric we also add each metric name
+                const metricName = metric.settings.metrics.length > 1 ? `${baseName} ${metricField}` : baseName;
+
+                const stats = bucket[metric.id] as TopMetricBucket;
+
+                // Size of top_metrics is fixed to 1.
+                addMetricValue(values, metricName, stats.top[0].metrics[metricField]);
+              }
+            }
+
+            break;
+          }
           default: {
             let metricName = this.getMetricName(metric.type);
             const otherMetrics = filter(target.metrics, { type: metric.type });
@@ -276,7 +327,7 @@ export class ElasticResponse {
     return metric;
   }
 
-  private getSeriesName(series: any, target: ElasticsearchQuery, metricTypeCount: any) {
+  private getSeriesName(series: any, target: ElasticsearchQuery, dedup: boolean) {
     let metricName = this.getMetricName(series.metric);
 
     if (target.alias) {
@@ -339,19 +390,22 @@ export class ElasticResponse {
       name += series.props[propName] + ' ';
     }
 
-    if (metricTypeCount === 1) {
-      return name.trim();
+    if (dedup) {
+      return name.trim() + ' ' + metricName;
     }
 
-    return name.trim() + ' ' + metricName;
+    return name.trim();
   }
 
   nameSeries(seriesList: any, target: ElasticsearchQuery) {
     const metricTypeCount = uniq(map(seriesList, 'metric')).length;
+    const hasTopMetricWithMultipleMetrics = (target.metrics?.filter(
+      (m) => m.type === 'top_metrics'
+    ) as TopMetrics[]).some((m) => (m?.settings?.metrics?.length || 0) > 1);
 
     for (let i = 0; i < seriesList.length; i++) {
       const series = seriesList[i];
-      series.target = this.getSeriesName(series, target, metricTypeCount);
+      series.target = this.getSeriesName(series, target, metricTypeCount > 1 || hasTopMetricWithMultipleMetrics);
     }
   }
 

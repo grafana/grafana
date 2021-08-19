@@ -28,8 +28,25 @@ export abstract class PlotConfigBuilder<P, T> {
   abstract getConfig(): T;
 }
 
-export type TooltipInterpolator = (
+/**
+ * @alpha
+ */
+export type PlotTooltipInterpolator = (
   updateActiveSeriesIdx: (sIdx: number | null) => void,
   updateActiveDatapointIdx: (dIdx: number | null) => void,
-  updateTooltipPosition: (clear?: boolean) => void
-) => (u: uPlot) => void;
+  updateTooltipPosition: (clear?: boolean) => void,
+  u: uPlot
+) => void;
+
+export interface PlotSelection {
+  min: number;
+  max: number;
+
+  // selection bounding box, relative to canvas
+  bbox: {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  };
+}

@@ -6,9 +6,8 @@ describe('Variables - Load options from Url', () => {
   it('default options should be correct', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
-    e2e().server();
     e2e()
-      .route({
+      .intercept({
         method: 'POST',
         url: '/api/ds/query',
       })
@@ -59,9 +58,8 @@ describe('Variables - Load options from Url', () => {
   it('options set in url should load correct options', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=B&var-server=BB&var-pod=BBB` });
-    e2e().server();
     e2e()
-      .route({
+      .intercept({
         method: 'POST',
         url: '/api/ds/query',
       })
@@ -123,9 +121,8 @@ describe('Variables - Load options from Url', () => {
     });
 
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=X` });
-    e2e().server();
     e2e()
-      .route({
+      .intercept({
         method: 'POST',
         url: '/api/ds/query',
       })

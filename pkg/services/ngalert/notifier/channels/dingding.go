@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
@@ -21,12 +20,12 @@ const defaultDingdingMsgType = "link"
 // NewDingDingNotifier is the constructor for the Dingding notifier
 func NewDingDingNotifier(model *NotificationChannelConfig, t *template.Template) (*DingDingNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+		return nil, receiverInitError{Reason: "no settings supplied", Cfg: *model}
 	}
 
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
+		return nil, receiverInitError{Reason: "could not find url property in settings", Cfg: *model}
 	}
 
 	msgType := model.Settings.Get("msgType").MustString(defaultDingdingMsgType)
@@ -61,10 +60,7 @@ type DingDingNotifier struct {
 func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	dd.log.Info("Sending dingding")
 
-	ruleURL, err := joinUrlPath(dd.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return false, err
-	}
+	ruleURL := joinUrlPath(dd.tmpl.ExternalURL.String(), "/alerting/list", dd.log)
 
 	q := url.Values{
 		"pc_slide": {"false"},
@@ -76,16 +72,13 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	messageURL := "dingtalk://dingtalkclient/page/link?" + q.Encode()
 
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
-	if err != nil {
-		return false, err
-	}
+	tmpl, _ := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
 
 	message := tmpl(dd.Message)
 	title := tmpl(`{{ template "default.title" . }}`)
 
 	var bodyMsg map[string]interface{}
-	if dd.MsgType == "actionCard" {
+	if tmpl(dd.MsgType) == "actionCard" {
 		bodyMsg = map[string]interface{}{
 			"msgtype": "actionCard",
 			"actionCard": map[string]string{
@@ -108,8 +101,9 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		}
 	}
 
+	u := tmpl(dd.URL)
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template DingDing message: %w", tmplErr)
+		dd.log.Debug("failed to template DingDing message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsg)
@@ -118,7 +112,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	cmd := &models.SendWebhookSync{
-		Url:  dd.URL,
+		Url:  u,
 		Body: string(body),
 	}
 

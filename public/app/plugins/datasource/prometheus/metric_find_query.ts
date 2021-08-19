@@ -1,6 +1,8 @@
-import { map as _map, uniq, chain } from 'lodash';
+import { chain, map as _map, uniq } from 'lodash';
+import { lastValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MetricFindValue, TimeRange } from '@grafana/data';
+
 import { PrometheusDatasource } from './datasource';
 import { PromQueryRequest } from './types';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -40,7 +42,7 @@ export default class PrometheusMetricFindQuery {
 
     const queryResultQuery = this.query.match(queryResultRegex);
     if (queryResultQuery) {
-      return this.queryResultQuery(queryResultQuery[1]).toPromise();
+      return lastValueFrom(this.queryResultQuery(queryResultQuery[1]));
     }
 
     // if query contains full metric name, return metric name and label list

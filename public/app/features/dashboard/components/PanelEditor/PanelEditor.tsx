@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme } from '@grafana/data';
@@ -28,7 +28,7 @@ import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPane
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
-import { discardPanelChanges, initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
+import { discardPanelChanges, initPanelEditor, updatePanelEditorUIState } from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { toggleTableView } from './state/reducers';
@@ -78,7 +78,6 @@ const mapStateToProps = (state: StoreState) => {
 
 const mapDispatchToProps = {
   initPanelEditor,
-  panelEditorCleanUp,
   discardPanelChanges,
   updatePanelEditorUIState,
   updateTimeZoneForSession,
@@ -115,7 +114,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   componentWillUnmount() {
-    this.props.panelEditorCleanUp();
+    // redux action exitPanelEditor is called on location change from DashboardPrompt
     this.eventSubs?.unsubscribe();
   }
 
@@ -218,12 +217,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
   };
 
-  renderPanel = (styles: EditorStyles) => {
-    const { dashboard, panel, uiState, plugin, tab, tableViewEnabled } = this.props;
-    const tabs = getPanelEditorTabs(tab, plugin);
+  renderPanel(styles: EditorStyles, noTabsBelow: boolean) {
+    const { dashboard, panel, uiState, tableViewEnabled } = this.props;
 
     return (
-      <div className={cx(styles.mainPaneWrapper, tabs.length === 0 && styles.mainPaneWrapperNoTabs)} key="panel">
+      <div className={styles.mainPaneWrapper} key="panel">
         {this.renderPanelToolbar(styles)}
         <div className={styles.panelWrapper}>
           <AutoSizer>
@@ -232,19 +230,28 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                 return null;
               }
 
+              // If no tabs limit height so panel does not extend to edge
+              if (noTabsBelow) {
+                height -= config.theme2.spacing.gridSize * 2;
+              }
+
               if (tableViewEnabled) {
                 return <PanelEditorTableView width={width} height={height} panel={panel} dashboard={dashboard} />;
               }
 
+              const panelSize = calculatePanelSize(uiState.mode, width, height, panel);
+
               return (
                 <div className={styles.centeringContainer} style={{ width, height }}>
-                  <div style={calculatePanelSize(uiState.mode, width, height, panel)} data-panelid={panel.editSourceId}>
+                  <div style={panelSize} data-panelid={panel.editSourceId}>
                     <DashboardPanel
                       dashboard={dashboard}
                       panel={panel}
                       isEditing={true}
                       isViewing={false}
                       isInView={true}
+                      width={panelSize.width}
+                      height={panelSize.height}
                     />
                   </div>
                 </div>
@@ -254,7 +261,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         </div>
       </div>
     );
-  };
+  }
 
   renderPanelAndEditor(styles: EditorStyles) {
     const { panel, dashboard, plugin, tab } = this.props;
@@ -262,7 +269,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     if (tabs.length > 0) {
       return [
-        this.renderPanel(styles),
+        this.renderPanel(styles, false),
         <div
           className={styles.tabsWrapper}
           aria-label={selectors.components.PanelEditor.DataPane.content}
@@ -272,7 +279,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         </div>,
       ];
     }
-    return this.renderPanel(styles);
+
+    return this.renderPanel(styles, true);
   }
 
   renderTemplateVariables(styles: EditorStyles) {
@@ -492,9 +500,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       width: 100%;
       padding-right: ${uiState.isPanelOptionsVisible ? 0 : paneSpacing};
     `,
-    mainPaneWrapperNoTabs: css`
-      padding-bottom: ${paneSpacing};
-    `,
     variablesWrapper: css`
       label: variablesWrapper;
       display: flex;
@@ -525,6 +530,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       display: flex;
       justify-content: center;
       align-items: center;
+      position: relative;
     `,
   };
 });

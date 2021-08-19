@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -16,6 +17,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gobwas/glob"
 
 	"github.com/prometheus/common/model"
 	ini "gopkg.in/ini.v1"
@@ -76,16 +79,7 @@ var (
 	CustomInitPath = "conf/custom.ini"
 
 	// HTTP server options
-	DataProxyLogging               bool
-	DataProxyTimeout               int
-	DataProxyDialTimeout           int
-	DataProxyTLSHandshakeTimeout   int
-	DataProxyExpectContinueTimeout int
-	DataProxyMaxIdleConns          int
-	DataProxyMaxIdleConnsPerHost   int
-	DataProxyKeepAlive             int
-	DataProxyIdleConnTimeout       int
-	StaticRootPath                 string
+	StaticRootPath string
 
 	// Security settings.
 	SecretKey              string
@@ -145,8 +139,10 @@ var (
 	appliedEnvOverrides          []string
 
 	// analytics
-	GoogleAnalyticsId  string
-	GoogleTagManagerId string
+	GoogleAnalyticsId       string
+	GoogleTagManagerId      string
+	RudderstackDataPlaneUrl string
+	RudderstackWriteKey     string
 
 	// LDAP
 	LDAPEnabled           bool
@@ -317,7 +313,16 @@ type Cfg struct {
 	JWTAuthJWKSetFile    string
 
 	// Dataproxy
-	SendUserHeader bool
+	SendUserHeader                 bool
+	DataProxyLogging               bool
+	DataProxyTimeout               int
+	DataProxyDialTimeout           int
+	DataProxyTLSHandshakeTimeout   int
+	DataProxyExpectContinueTimeout int
+	DataProxyMaxConnsPerHost       int
+	DataProxyMaxIdleConns          int
+	DataProxyKeepAlive             int
+	DataProxyIdleConnTimeout       int
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
@@ -385,6 +390,24 @@ type Cfg struct {
 	// Grafana Live ws endpoint (per Grafana server instance). 0 disables
 	// Live, -1 means unlimited connections.
 	LiveMaxConnections int
+	// LiveHAEngine is a type of engine to use to achieve HA with Grafana Live.
+	// Zero value means in-memory single node setup.
+	LiveHAEngine string
+	// LiveHAEngineAddress is a connection address for Live HA engine.
+	LiveHAEngineAddress string
+	// LiveAllowedOrigins is a set of origins accepted by Live. If not provided
+	// then Live uses AppURL as the only allowed origin.
+	LiveAllowedOrigins []string
+
+	// Grafana.com URL
+	GrafanaComURL string
+
+	// Geomap base layer config
+	GeomapDefaultBaseLayerConfig map[string]interface{}
+	GeomapEnableCustomBaseLayers bool
+
+	// Unified Alerting
+	AdminConfigPollInterval time.Duration
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -451,6 +474,7 @@ func RedactedValue(key, value string) string {
 		"PRIVATE_KEY",
 		"SECRET_KEY",
 		"CERTIFICATE",
+		"ACCOUNT_KEY",
 	} {
 		if strings.Contains(uppercased, pattern) {
 			return RedactedPassword
@@ -827,18 +851,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 
-	// read data proxy settings
-	dataproxy := iniFile.Section("dataproxy")
-	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
-	DataProxyTimeout = dataproxy.Key("timeout").MustInt(10)
-	DataProxyDialTimeout = dataproxy.Key("dialTimeout").MustInt(30)
-	DataProxyKeepAlive = dataproxy.Key("keep_alive_seconds").MustInt(30)
-	DataProxyTLSHandshakeTimeout = dataproxy.Key("tls_handshake_timeout_seconds").MustInt(10)
-	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
-	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt(100)
-	DataProxyMaxIdleConnsPerHost = dataproxy.Key("max_idle_connections_per_host").MustInt(2)
-	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
-	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
+	if err := readDataProxySettings(iniFile, cfg); err != nil {
+		return err
+	}
 
 	if err := readSecuritySettings(iniFile, cfg); err != nil {
 		return err
@@ -875,6 +890,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
+	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
+	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
 	if len(cfg.ReportingDistributor) >= 100 {
@@ -882,6 +899,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	if err := readAlertingSettings(iniFile); err != nil {
+		return err
+	}
+
+	if err := cfg.readUnifiedAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -940,6 +961,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if GrafanaComUrl == "" {
 		GrafanaComUrl = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
 	}
+	cfg.GrafanaComURL = GrafanaComUrl
 
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
@@ -956,6 +978,19 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		Name:    dbName,
 		ConnStr: connStr,
 	}
+
+	geomapSection := iniFile.Section("geomap")
+	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
+	if basemapJSON != "" {
+		layer := make(map[string]interface{})
+		err = json.Unmarshal([]byte(basemapJSON), &layer)
+		if err != nil {
+			cfg.Logger.Error("Error reading json from default_baselayer_config", "error", err)
+		} else {
+			cfg.GeomapDefaultBaseLayerConfig = layer
+		}
+	}
+	cfg.GeomapEnableCustomBaseLayers = geomapSection.Key("enable_custom_baselayers").MustBool(true)
 
 	cfg.readDateFormats()
 	cfg.readSentryConfig()
@@ -1322,6 +1357,13 @@ func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
+func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
+	ua := iniFile.Section("unified_alerting")
+	s := ua.Key("admin_config_poll_interval_seconds").MustInt(60)
+	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
+	return nil
+}
+
 func readAlertingSettings(iniFile *ini.File) error {
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
@@ -1435,11 +1477,46 @@ func (cfg *Cfg) readDataSourcesSettings() {
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 }
 
+func GetAllowedOriginGlobs(originPatterns []string) ([]glob.Glob, error) {
+	var originGlobs []glob.Glob
+	allowedOrigins := originPatterns
+	for _, originPattern := range allowedOrigins {
+		g, err := glob.Compile(originPattern)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing origin pattern: %v", err)
+		}
+		originGlobs = append(originGlobs, g)
+	}
+	return originGlobs, nil
+}
+
 func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	section := iniFile.Section("live")
 	cfg.LiveMaxConnections = section.Key("max_connections").MustInt(100)
 	if cfg.LiveMaxConnections < -1 {
 		return fmt.Errorf("unexpected value %d for [live] max_connections", cfg.LiveMaxConnections)
 	}
+	cfg.LiveHAEngine = section.Key("ha_engine").MustString("")
+	switch cfg.LiveHAEngine {
+	case "", "redis":
+	default:
+		return fmt.Errorf("unsupported live HA engine type: %s", cfg.LiveHAEngine)
+	}
+	cfg.LiveHAEngineAddress = section.Key("ha_engine_address").MustString("127.0.0.1:6379")
+
+	var originPatterns []string
+	allowedOrigins := section.Key("allowed_origins").MustString("")
+	for _, originPattern := range strings.Split(allowedOrigins, ",") {
+		originPattern = strings.TrimSpace(originPattern)
+		if originPattern == "" {
+			continue
+		}
+		originPatterns = append(originPatterns, originPattern)
+	}
+	_, err := GetAllowedOriginGlobs(originPatterns)
+	if err != nil {
+		return err
+	}
+	cfg.LiveAllowedOrigins = originPatterns
 	return nil
 }

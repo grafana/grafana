@@ -11,9 +11,6 @@ export default {
   component: Select,
   decorators: [withCenteredStory],
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: [
         'className',
@@ -33,6 +30,19 @@ export default {
         'defaultValue',
         'loading',
         'aria-label',
+        'noOptionsMessage',
+        'onChange',
+        'onBlur',
+        'onKeyDown',
+        'filterOption',
+        'formatCreateLabel',
+        'getOptionLabel',
+        'getOptionValue',
+        'onCloseMenu',
+        'onCreateOption',
+        'onInputChange',
+        'onOpenMenu',
+        'isOptionDisabled',
       ],
     },
   },
@@ -59,6 +69,7 @@ export const Basic: Story = (args) => {
       {(value, updateValue) => {
         return (
           <Select
+            menuShouldPortal
             {...args}
             onChange={(value: SelectableValue<string>) => {
               action('onChanged fired')(value);

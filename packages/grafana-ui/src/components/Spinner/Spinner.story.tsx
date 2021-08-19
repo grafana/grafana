@@ -16,9 +16,6 @@ export default {
     controls: {
       exclude: ['className', 'iconClassName', 'style', 'inline'],
     },
-    knobs: {
-      disable: true,
-    },
   },
   argTypes: {
     backgroundColor: { control: { type: 'color' } },

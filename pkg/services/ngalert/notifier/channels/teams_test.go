@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/url"
 	"testing"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestTeamsNotifier(t *testing.T) {
@@ -30,7 +28,7 @@ func TestTeamsNotifier(t *testing.T) {
 		settings     string
 		alerts       []*types.Alert
 		expMsg       map[string]interface{}
-		expInitError error
+		expInitError string
 		expMsgError  error
 	}{
 		{
@@ -65,8 +63,7 @@ func TestTeamsNotifier(t *testing.T) {
 					},
 				},
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name: "Custom config with multiple alerts",
 			settings: `{
@@ -107,19 +104,11 @@ func TestTeamsNotifier(t *testing.T) {
 					},
 				},
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find url property in settings"},
-		}, {
-			name: "Error in building message",
-			settings: `{
-				"url": "http://localhost",
-				"message": "{{ .Status }"
-			}`,
-			expMsgError: errors.New("failed to template Teams message: template: :1: unexpected \"}\" in operand"),
+			expInitError: `failed to validate receiver "teams_testing" of type "teams": could not find url property in settings`,
 		},
 	}
 
@@ -135,9 +124,9 @@ func TestTeamsNotifier(t *testing.T) {
 			}
 
 			pn, err := NewTeamsNotifier(m, tmpl)
-			if c.expInitError != nil {
+			if c.expInitError != "" {
 				require.Error(t, err)
-				require.Equal(t, c.expInitError.Error(), err.Error())
+				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)

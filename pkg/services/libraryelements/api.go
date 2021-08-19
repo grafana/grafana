@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func (l *LibraryElementService) registerAPIEndpoints() {
@@ -31,7 +30,7 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext, cmd CreateLi
 		return toLibraryElementError(err, "Failed to create library element")
 	}
 
-	return response.JSON(200, util.DynMap{"result": element})
+	return response.JSON(200, LibraryElementResponse{Result: element})
 }
 
 // deleteHandler handles DELETE /api/library-elements/:uid.
@@ -51,7 +50,7 @@ func (l *LibraryElementService) getHandler(c *models.ReqContext) response.Respon
 		return toLibraryElementError(err, "Failed to get library element")
 	}
 
-	return response.JSON(200, util.DynMap{"result": element})
+	return response.JSON(200, LibraryElementResponse{Result: element})
 }
 
 // getAllHandler handles GET /api/library-elements/.
@@ -71,7 +70,7 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 		return toLibraryElementError(err, "Failed to get library elements")
 	}
 
-	return response.JSON(200, util.DynMap{"result": elementsResult})
+	return response.JSON(200, LibraryElementSearchResponse{Result: elementsResult})
 }
 
 // patchHandler handles PATCH /api/library-elements/:uid
@@ -81,7 +80,7 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext, cmd patchLibr
 		return toLibraryElementError(err, "Failed to update library element")
 	}
 
-	return response.JSON(200, util.DynMap{"result": element})
+	return response.JSON(200, LibraryElementResponse{Result: element})
 }
 
 // getConnectionsHandler handles GET /api/library-panels/:uid/connections/.
@@ -91,7 +90,7 @@ func (l *LibraryElementService) getConnectionsHandler(c *models.ReqContext) resp
 		return toLibraryElementError(err, "Failed to get connections")
 	}
 
-	return response.JSON(200, util.DynMap{"result": connections})
+	return response.JSON(200, LibraryElementConnectionsResponse{Result: connections})
 }
 
 // getByNameHandler handles GET /api/library-elements/name/:name/.
@@ -101,7 +100,7 @@ func (l *LibraryElementService) getByNameHandler(c *models.ReqContext) response.
 		return toLibraryElementError(err, "Failed to get library element")
 	}
 
-	return response.JSON(200, util.DynMap{"result": elements})
+	return response.JSON(200, LibraryElementArrayResponse{Result: elements})
 }
 
 func toLibraryElementError(err error, message string) response.Response {

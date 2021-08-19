@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import { shuffle } from 'lodash';
-import { QueryEditorHelpProps, DataQuery } from '@grafana/data';
+import { QueryEditorHelpProps } from '@grafana/data';
 import LokiLanguageProvider from '../language_provider';
+import { LokiQuery } from '../types';
 
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];
 const PREFERRED_LABELS = ['job', 'app', 'k8s_app'];
@@ -32,10 +33,10 @@ const LOGQL_EXAMPLES = [
   },
 ];
 
-export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps, { userExamples: string[] }> {
-  userLabelTimer: NodeJS.Timeout;
+export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<LokiQuery>, { userExamples: string[] }> {
+  declare userLabelTimer: NodeJS.Timeout;
   state = {
-    userExamples: DEFAULT_EXAMPLES,
+    userExamples: [],
   };
 
   componentDidMount() {
@@ -72,11 +73,7 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps, 
     const { onClickExample } = this.props;
 
     return (
-      <div
-        className="cheat-sheet-item__example"
-        key={expr}
-        onClick={(e) => onClickExample({ refId: 'A', expr } as DataQuery)}
-      >
+      <div className="cheat-sheet-item__example" key={expr} onClick={(e) => onClickExample({ refId: 'A', expr })}>
         <code>{expr}</code>
       </div>
     );
@@ -84,23 +81,28 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps, 
 
   render() {
     const { userExamples } = this.state;
+    const hasUserExamples = userExamples.length > 0;
 
     return (
       <div>
         <h2>Loki Cheat Sheet</h2>
         <div className="cheat-sheet-item">
           <div className="cheat-sheet-item__title">See your logs</div>
-          <div className="cheat-sheet-item__label">Start by selecting a log stream from the Log labels selector.</div>
           <div className="cheat-sheet-item__label">
-            Alternatively, you can write a stream selector into the query field:
+            Start by selecting a log stream from the Log browser, or alternatively you can write a stream selector into
+            the query field.
           </div>
-          {this.renderExpression('{job="default/prometheus"}')}
-          {userExamples !== DEFAULT_EXAMPLES && userExamples.length > 0 ? (
+          {hasUserExamples ? (
             <div>
               <div className="cheat-sheet-item__label">Here are some example streams from your logs:</div>
               {userExamples.map((example) => this.renderExpression(example))}
             </div>
-          ) : null}
+          ) : (
+            <div>
+              <div className="cheat-sheet-item__label">Here is an example of a log stream:</div>
+              {this.renderExpression(DEFAULT_EXAMPLES[0])}
+            </div>
+          )}
         </div>
         <div className="cheat-sheet-item">
           <div className="cheat-sheet-item__title">Combine stream selectors</div>

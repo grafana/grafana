@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/url"
 	"testing"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestDingdingNotifier(t *testing.T) {
@@ -30,7 +28,7 @@ func TestDingdingNotifier(t *testing.T) {
 		settings     string
 		alerts       []*types.Alert
 		expMsg       map[string]interface{}
-		expInitError error
+		expInitError string
 		expMsgError  error
 	}{
 		{
@@ -52,8 +50,7 @@ func TestDingdingNotifier(t *testing.T) {
 					"title":      "[FIRING:1]  (val1)",
 				},
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name: "Custom config with multiple alerts",
 			settings: `{
@@ -83,19 +80,11 @@ func TestDingdingNotifier(t *testing.T) {
 				},
 				"msgtype": "actionCard",
 			},
-			expInitError: nil,
-			expMsgError:  nil,
+			expMsgError: nil,
 		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find url property in settings"},
-		}, {
-			name: "Error in building message",
-			settings: `{
-				"url": "http://localhost",
-				"message": "{{ .Status }"
-			}`,
-			expMsgError: errors.New("failed to template DingDing message: template: :1: unexpected \"}\" in operand"),
+			expInitError: `failed to validate receiver "dingding_testing" of type "dingding": could not find url property in settings`,
 		},
 	}
 
@@ -111,9 +100,8 @@ func TestDingdingNotifier(t *testing.T) {
 			}
 
 			pn, err := NewDingDingNotifier(m, tmpl)
-			if c.expInitError != nil {
-				require.Error(t, err)
-				require.Equal(t, c.expInitError.Error(), err.Error())
+			if c.expInitError != "" {
+				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)

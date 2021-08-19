@@ -1,4 +1,4 @@
-import React, { memo, cloneElement, FC, ReactNode, useCallback } from 'react';
+import React, { memo, cloneElement, FC, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2, stylesFactory } from '../../themes';
@@ -33,16 +33,7 @@ export interface CardInterface extends FC<Props> {
  *
  * @public
  */
-export const Card: CardInterface = ({
-  heading,
-  description,
-  disabled,
-  href,
-  onClick,
-  className,
-  children,
-  ...htmlProps
-}) => {
+export const Card: CardInterface = ({ heading, description, disabled, href, onClick, children, ...htmlProps }) => {
   const theme = useTheme2();
   const styles = getCardStyles(theme);
   const [tags, figure, meta, actions, secondaryActions] = ['Tags', 'Figure', 'Meta', 'Actions', 'SecondaryActions'].map(
@@ -61,13 +52,14 @@ export const Card: CardInterface = ({
   const hasActions = Boolean(actions || secondaryActions);
   const disableHover = disabled || (!onClick && !href);
   const disableEvents = disabled && !actions;
-
-  const onCardClick = useCallback(() => (disableHover ? () => {} : onClick?.()), [disableHover, onClick]);
+  const onCardClick = onClick && !disabled ? onClick : undefined;
+  const onEnterKey = onClick && !disabled ? getEnterKeyHandler(onClick) : undefined;
 
   return (
     <CardContainer
       tabIndex={disableHover ? undefined : 0}
       onClick={onCardClick}
+      onKeyDown={onEnterKey}
       disableEvents={disableEvents}
       disableHover={disableHover}
       href={href}
@@ -95,6 +87,14 @@ export const Card: CardInterface = ({
     </CardContainer>
   );
 };
+
+function getEnterKeyHandler(onClick: () => void) {
+  return (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      onClick();
+    }
+  };
+}
 
 /**
  * @public
@@ -243,7 +243,7 @@ const Meta: FC<ChildProps & { separator?: string }> = memo(({ children, styles, 
 Meta.displayName = 'Meta';
 
 interface ActionsProps extends ChildProps {
-  children: JSX.Element | JSX.Element[];
+  children?: React.ReactNode;
   variant?: 'primary' | 'secondary';
 }
 
@@ -251,9 +251,9 @@ const BaseActions: FC<ActionsProps> = ({ children, styles, disabled, variant }) 
   const css = variant === 'primary' ? styles?.actions : styles?.secondaryActions;
   return (
     <div className={css}>
-      {Array.isArray(children)
-        ? React.Children.map(children, (child) => cloneElement(child, { disabled, ...child.props }))
-        : cloneElement(children, { disabled, ...children.props })}
+      {React.Children.map(children, (child) => {
+        return React.isValidElement(child) ? cloneElement(child, { disabled, ...child.props }) : null;
+      })}
     </div>
   );
 };

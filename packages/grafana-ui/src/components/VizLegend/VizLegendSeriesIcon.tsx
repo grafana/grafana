@@ -7,12 +7,13 @@ interface Props {
   seriesName: string;
   color?: string;
   gradient?: string;
+  readonly?: boolean;
 }
 
 /**
  * @internal
  */
-export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ seriesName, color, gradient }) => {
+export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ seriesName, color, gradient, readonly }) => {
   const { onSeriesColorChange } = usePanelContext();
   const onChange = useCallback(
     (color: string) => {
@@ -21,7 +22,7 @@ export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ seriesName
     [seriesName, onSeriesColorChange]
   );
 
-  if (seriesName && onSeriesColorChange && color) {
+  if (seriesName && onSeriesColorChange && color && !readonly) {
     return (
       <SeriesColorPicker color={color} onChange={onChange} enableNamedColors>
         {({ ref, showColorPicker, hideColorPicker }) => (

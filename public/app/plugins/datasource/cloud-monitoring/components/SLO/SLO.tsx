@@ -36,6 +36,7 @@ export const SLO: React.FC<Props> = ({ query, templateVariableOptions, onChange,
   return (
     <QueryEditorRow label="SLO">
       <Select
+        menuShouldPortal
         width={SELECT_WIDTH}
         allowCustomValue
         value={query?.sloId && { value: query?.sloId, label: query?.sloName || query?.sloId }}

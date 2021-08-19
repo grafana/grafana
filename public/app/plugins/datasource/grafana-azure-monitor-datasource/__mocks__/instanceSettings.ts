@@ -6,6 +6,7 @@ export const createMockInstanceSetttings = (): AzureDataSourceInstanceSettings =
   id: 1,
   uid: 'abc',
   type: 'azuremonitor',
+  access: 'proxy',
   meta: {} as DataSourcePluginMeta,
   name: 'azure',
 
@@ -17,8 +18,5 @@ export const createMockInstanceSetttings = (): AzureDataSourceInstanceSettings =
     tenantId: 'abc-123',
     clientId: 'def-456',
     subscriptionId: 'ghi-789',
-
-    // logs
-    azureLogAnalyticsSameAs: true,
   },
 });

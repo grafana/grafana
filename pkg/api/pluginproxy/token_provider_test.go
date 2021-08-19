@@ -70,7 +70,7 @@ func TestAccessToken_pluginWithJWTTokenAuthRoute(t *testing.T) {
 			return &oauth2.Token{AccessToken: "abc"}, nil
 		})
 		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, authParams)
-		token, err := provider.getAccessToken()
+		token, err := provider.GetAccessToken()
 		require.NoError(t, err)
 
 		assert.Equal(t, "abc", token)
@@ -89,7 +89,7 @@ func TestAccessToken_pluginWithJWTTokenAuthRoute(t *testing.T) {
 		})
 
 		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, authParams)
-		_, err := provider.getAccessToken()
+		_, err := provider.GetAccessToken()
 		require.NoError(t, err)
 	})
 
@@ -100,14 +100,14 @@ func TestAccessToken_pluginWithJWTTokenAuthRoute(t *testing.T) {
 				Expiry:      time.Now().Add(1 * time.Minute)}, nil
 		})
 		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, authParams)
-		token1, err := provider.getAccessToken()
+		token1, err := provider.GetAccessToken()
 		require.NoError(t, err)
 		assert.Equal(t, "abc", token1)
 
 		getTokenSource = func(conf *jwt.Config, ctx context.Context) (*oauth2.Token, error) {
 			return &oauth2.Token{AccessToken: "error: cache not used"}, nil
 		}
-		token2, err := provider.getAccessToken()
+		token2, err := provider.GetAccessToken()
 		require.NoError(t, err)
 		assert.Equal(t, "abc", token2)
 	})
@@ -224,12 +224,12 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 					token["expires_on"] = testCase.expiresOn
 				}
 
-				accessToken, err := provider.getAccessToken()
+				accessToken, err := provider.GetAccessToken()
 				require.NoError(t, err)
 				assert.Equal(t, token["access_token"], accessToken)
 
-				// getAccessToken should use internal cache
-				accessToken, err = provider.getAccessToken()
+				// GetAccessToken should use internal cache
+				accessToken, err = provider.GetAccessToken()
 				require.NoError(t, err)
 				assert.Equal(t, token["access_token"], accessToken)
 				assert.Equal(t, 1, authCalls)
@@ -259,13 +259,13 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 			"token_type":    "3600",
 			"refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
 		}
-		accessToken, err := provider.getAccessToken()
+		accessToken, err := provider.GetAccessToken()
 		require.NoError(t, err)
 		assert.Equal(t, token["access_token"], accessToken)
 
 		mockTimeNow(timeNow().Add(3601 * time.Second))
 
-		accessToken, err = provider.getAccessToken()
+		accessToken, err = provider.GetAccessToken()
 		require.NoError(t, err)
 		assert.Equal(t, token["access_token"], accessToken)
 		assert.Equal(t, 2, authCalls)

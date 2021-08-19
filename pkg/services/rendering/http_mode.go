@@ -2,6 +2,7 @@ package rendering
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -191,4 +192,36 @@ func (rs *RenderingService) readFileResponse(ctx context.Context, resp *http.Res
 	}
 
 	return nil
+}
+
+func (rs *RenderingService) getRemotePluginVersion() (string, error) {
+	rendererURL, err := url.Parse(rs.Cfg.RendererUrl + "/version")
+	if err != nil {
+		return "", err
+	}
+
+	headers := make(map[string][]string)
+	resp, err := rs.doRequest(context.Background(), rendererURL, headers)
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			rs.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("remote rendering request to get version failed, status code: %d, status: %s", resp.StatusCode,
+			resp.Status)
+	}
+
+	var info struct {
+		Version string
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
+		return "", err
+	}
+	return info.Version, nil
 }

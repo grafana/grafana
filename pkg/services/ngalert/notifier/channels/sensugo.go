@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -34,17 +33,17 @@ type SensuGoNotifier struct {
 // NewSensuGoNotifier is the constructor for the SensuGo notifier
 func NewSensuGoNotifier(model *NotificationChannelConfig, t *template.Template) (*SensuGoNotifier, error) {
 	if model.Settings == nil {
-		return nil, alerting.ValidationError{Reason: "No settings supplied"}
+		return nil, receiverInitError{Cfg: *model, Reason: "no settings supplied"}
 	}
 
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find URL property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find URL property in settings"}
 	}
 
 	apikey := model.DecryptedValue("apikey", model.Settings.Get("apikey").MustString())
 	if apikey == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find the API key property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find the API key property in settings"}
 	}
 
 	return &SensuGoNotifier{
@@ -73,19 +72,16 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	sn.log.Debug("Sending Sensu Go result")
 
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
-	if err != nil {
-		return false, err
-	}
+	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
 
 	// Sensu Go alerts require an entity and a check. We set it to the user-specified
 	// value (optional), else we fallback and use the grafana rule anme  and ruleID.
-	entity := sn.Entity
+	entity := tmpl(sn.Entity)
 	if entity == "" {
 		entity = "default"
 	}
 
-	check := sn.Check
+	check := tmpl(sn.Check)
 	if check == "" {
 		check = "default"
 	}
@@ -97,20 +93,17 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		status = 2
 	}
 
-	namespace := sn.Namespace
+	namespace := tmpl(sn.Namespace)
 	if namespace == "" {
 		namespace = "default"
 	}
 
 	var handlers []string
 	if sn.Handler != "" {
-		handlers = []string{sn.Handler}
+		handlers = []string{tmpl(sn.Handler)}
 	}
 
-	ruleURL, err := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return false, err
-	}
+	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 	bodyMsgType := map[string]interface{}{
 		"entity": map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -135,7 +128,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template sensugo message: %w", tmplErr)
+		sn.log.Debug("failed to template sensugo message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsgType)

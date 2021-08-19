@@ -3,7 +3,7 @@ title = "Google Cloud Monitoring"
 description = "Guide for using Google Cloud Monitoring in Grafana"
 keywords = ["grafana", "stackdriver", "google", "guide", "cloud", "monitoring"]
 aliases = ["/docs/grafana/latest/features/datasources/stackdriver", "/docs/grafana/next/datasources/cloudmonitoring/", "/docs/grafana/next/features/datasources/cloudmonitoring/"]
-weight = 200
+weight = 350
 +++
 
 # Using Google Cloud Monitoring in Grafana
@@ -111,7 +111,7 @@ When the operator is set to `=~` or `!=~` it is possible to add regular expressi
 
 Preprocessing options are displayed in the UI when the selected metric has a metric kind of `delta` or `cumulative`. If the selected metric has a metric kind of `gauge`, no pre-processing option will be displayed.
 
-If you select 'Rate', data points are aligned and converted to a rate per time series. If you select 'Delta', data points are aligned by their delta (difference) per time series.
+If you select `Rate`, data points are aligned and converted to a rate per time series. If you select `Delta`, data points are aligned by their delta (difference) per time series.
 
 #### Grouping
 

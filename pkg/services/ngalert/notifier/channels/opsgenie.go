@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
@@ -50,7 +49,7 @@ func NewOpsgenieNotifier(model *NotificationChannelConfig, t *template.Template)
 	apiKey := model.DecryptedValue("apiKey", model.Settings.Get("apiKey").MustString())
 	apiURL := model.Settings.Get("apiUrl").MustString()
 	if apiKey == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find api key property in settings"}
+		return nil, receiverInitError{Cfg: *model, Reason: "could not find api key property in settings"}
 	}
 	if apiURL == "" {
 		apiURL = OpsgenieAlertURL
@@ -58,8 +57,8 @@ func NewOpsgenieNotifier(model *NotificationChannelConfig, t *template.Template)
 
 	sendTagsAs := model.Settings.Get("sendTagsAs").MustString(OpsgenieSendTags)
 	if sendTagsAs != OpsgenieSendTags && sendTagsAs != OpsgenieSendDetails && sendTagsAs != OpsgenieSendBoth {
-		return nil, alerting.ValidationError{
-			Reason: fmt.Sprintf("Invalid value for sendTagsAs: %q", sendTagsAs),
+		return nil, receiverInitError{Cfg: *model,
+			Reason: fmt.Sprintf("invalid value for sendTagsAs: %q", sendTagsAs),
 		}
 	}
 
@@ -148,16 +147,10 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		return nil, "", nil
 	}
 
-	ruleURL, err := joinUrlPath(on.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return nil, "", err
-	}
+	ruleURL := joinUrlPath(on.tmpl.ExternalURL.String(), "/alerting/list", on.log)
 
 	var tmplErr error
-	tmpl, data, err := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
-	if err != nil {
-		return nil, "", err
-	}
+	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
 
 	title := tmpl(`{{ template "default.title" . }}`)
 	description := fmt.Sprintf(
@@ -207,13 +200,13 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 
 	bodyJSON.Set("tags", tags)
 	bodyJSON.Set("details", details)
-	apiURL = on.APIUrl
+	apiURL = tmpl(on.APIUrl)
 
 	if tmplErr != nil {
-		return nil, "", fmt.Errorf("failed to template Opsgenie message: %w", tmplErr)
+		on.log.Debug("failed to template Opsgenie message", "err", tmplErr.Error())
 	}
 
-	return bodyJSON, apiURL, err
+	return bodyJSON, apiURL, nil
 }
 
 func (on *OpsgenieNotifier) SendResolved() bool {

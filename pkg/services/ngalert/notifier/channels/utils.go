@@ -26,6 +26,28 @@ const (
 	ColorAlertResolved = "#36a64f"
 )
 
+type receiverInitError struct {
+	Reason string
+	Err    error
+	Cfg    NotificationChannelConfig
+}
+
+func (e receiverInitError) Error() string {
+	name := ""
+	if e.Cfg.Name != "" {
+		name = fmt.Sprintf("%q ", e.Cfg.Name)
+	}
+
+	s := fmt.Sprintf("failed to validate receiver %sof type %q: %s", name, e.Cfg.Type, e.Reason)
+	if e.Err != nil {
+		return fmt.Sprintf("%s: %s", s, e.Err.Error())
+	}
+
+	return s
+}
+
+func (e receiverInitError) Unwrap() error { return e.Err }
+
 func getAlertStatusColor(status model.AlertStatus) string {
 	if status == model.AlertFiring {
 		return ColorAlertFiring
@@ -112,15 +134,16 @@ var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logge
 	return respBody, nil
 }
 
-func joinUrlPath(base, additionalPath string) (string, error) {
+func joinUrlPath(base, additionalPath string, logger log.Logger) string {
 	u, err := url.Parse(base)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse URL: %w", err)
+		logger.Debug("failed to parse URL while joining URL", "url", base, "err", err.Error())
+		return base
 	}
 
 	u.Path = path.Join(u.Path, additionalPath)
 
-	return u.String(), nil
+	return u.String()
 }
 
 // GetBoundary is used for overriding the behaviour for tests

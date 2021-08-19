@@ -44,7 +44,7 @@ func TestSeriesReduce(t *testing.T) {
 			name:        "foo reduction will error",
 			red:         "foo",
 			varToReduce: "A",
-			vars:        aSeriesNullableTime,
+			vars:        aSeries,
 			errIs:       require.Error,
 			resultsIs:   require.Equal,
 		},
@@ -52,7 +52,7 @@ func TestSeriesReduce(t *testing.T) {
 			name:        "sum series",
 			red:         "sum",
 			varToReduce: "A",
-			vars:        aSeriesNullableTime,
+			vars:        aSeries,
 			errIs:       require.NoError,
 			resultsIs:   require.Equal,
 			results: Results{
@@ -169,20 +169,7 @@ func TestSeriesReduce(t *testing.T) {
 			name:        "mean series",
 			red:         "mean",
 			varToReduce: "A",
-			vars:        aSeriesNullableTime,
-			errIs:       require.NoError,
-			resultsIs:   require.Equal,
-			results: Results{
-				[]Value{
-					makeNumber("", nil, float64Pointer(1.5)),
-				},
-			},
-		},
-		{
-			name:        "mean series (non-null-value)",
-			red:         "mean",
-			varToReduce: "A",
-			vars:        aSeriesNoNull,
+			vars:        aSeries,
 			errIs:       require.NoError,
 			resultsIs:   require.Equal,
 			results: Results{
@@ -211,10 +198,10 @@ func TestSeriesReduce(t *testing.T) {
 			vars: Vars{
 				"A": Results{
 					[]Value{
-						makeSeriesNullableTime("temp", data.Labels{"host": "a"}, nullTimeTP{
-							unixTimePointer(5, 0), float64Pointer(2),
-						}, nullTimeTP{
-							unixTimePointer(10, 0), float64Pointer(1),
+						makeSeries("temp", data.Labels{"host": "a"}, tp{
+							time.Unix(5, 0), float64Pointer(2),
+						}, tp{
+							time.Unix(10, 0), float64Pointer(1),
 						}),
 					},
 				},

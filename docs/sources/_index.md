@@ -64,8 +64,8 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
         <h4>Provisioning</h4>
         <p>Learn how to automate your Grafana configuration.</p>
     </a>
-    <a href="{{< relref "whatsnew/whats-new-in-v7-5.md" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>What's new in v7.5</h4>
+    <a href="{{< relref "whatsnew/whats-new-in-v8-0.md" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>What's new in v8.0</h4>
         <p>Explore the features and enhancements in the latest release.</p>
     </a>
 
@@ -98,7 +98,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
       <img src="/static/img/docs/logos/icon_cloudwatch.svg">
       <h5>AWS CloudWatch</h5>
     </a>
-    <a href="{{< relref "datasources/azuremonitor.md" >}}" class="nav-cards__item nav-cards__item--ds">
+    <a href="{{< relref "datasources/azuremonitor/_index.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/static/img/docs/logos/icon_azure_monitor.jpg">
       <h5>Azure Monitor</h5>
     </a>
