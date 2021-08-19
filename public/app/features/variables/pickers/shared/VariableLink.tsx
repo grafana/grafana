@@ -45,8 +45,10 @@ export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, text, 
       onClick={onClick}
       className={styles.container}
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(`${text}`)}
-      title={text}
+      aria-expanded={false}
+      aria-controls={`options-${id}`}
       id={id}
+      title={text}
     >
       <VariableLinkText text={text} />
       <Icon aria-hidden name="angle-down" size="sm" />

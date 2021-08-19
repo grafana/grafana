@@ -82,9 +82,6 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
           onClick={this.onShowOptions}
           loading={loading}
           onCancel={this.onCancel}
-          aria-haspopup={true}
-          aria-expanded={false}
-          aria-controls={`options-${variable.id}`}
         />
       );
     }
@@ -102,8 +99,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
             value={picker.queryValue}
             onChange={this.props.filterOrSearchOptions}
             onNavigate={this.props.navigateOptions}
-            aria-expanded
-            aria-haspopup="true"
+            aria-expanded={true}
             aria-controls={`options-${id}`}
           />
           <VariableOptions
