@@ -137,7 +137,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
     return (
       <Alert aria-label={selectors.pages.DataSource.readOnly} severity="info" title="Provisioned data source">
         This data source was added by config and cannot be modified using the UI. Please contact your server admin to
-        update this data source. Toto is the best.
+        update this data source.
       </Alert>
     );
   }
