@@ -23,6 +23,7 @@ jobs:
             cd /home/${{ secrets.SSH_USERNAME }}/grafana
             git fetch
             git checkout ${GITHUB_REF##*/}
+            git pull
             sudo docker-compose down
             sudo docker image rm corewatts-grafana
             sudo docker build -t corewatts-grafana -f Dockerfile .
