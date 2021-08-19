@@ -38,12 +38,13 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
 
     const setSelect = (u: uPlot, left?: number) => {
       if (annotating) {
+        left = left ?? u.select.left;
         setIsAddingAnnotation(true);
         setSelection({
-          min: u.posToVal(left ?? u.select.left, 'x'),
-          max: u.posToVal(u.select.left + u.select.width, 'x'),
+          min: u.posToVal(left, 'x'),
+          max: u.posToVal(left + u.select.width, 'x'),
           bbox: {
-            left: left ?? u.select.left,
+            left,
             top: 0,
             height: u.bbox.height / window.devicePixelRatio,
             width: u.select.width,
