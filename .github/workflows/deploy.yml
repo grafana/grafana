@@ -34,10 +34,20 @@ jobs:
         with:
           node-version: '14.x'
           registry-url: 'https://npm.pkg.github.com'
-
-      - name: setup docker
-        uses: docker-practice/actions-setup-docker@master
+          
+      - name: executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: whoami
+      # - name: setup docker
+      #   uses: docker-practice/actions-setup-docker@master
         
-      - name: docker version
-        run: |
-          docker version
+      # - name: build docker image
+      #   run: |
+      #     docker version
+      #     docker image rm corewatts-grafana
+      #     sudo docker build -t corewatts-grafana -f Dockerfile .
