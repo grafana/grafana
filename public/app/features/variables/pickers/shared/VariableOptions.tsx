@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { VariableOption } from '../../types';
 
-export interface Props {
+export interface Props extends React.HTMLProps<HTMLDivElement> {
   multi: boolean;
   values: VariableOption[];
   selectedValues: VariableOption[];

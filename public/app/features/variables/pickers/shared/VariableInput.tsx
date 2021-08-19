@@ -1,11 +1,10 @@
 import React, { PureComponent } from 'react';
 import { NavigationKey } from '../types';
 
-export interface Props {
+export interface Props extends Omit<React.HTMLProps<HTMLInputElement>, 'onChange' | 'value'> {
   onChange: (value: string) => void;
   onNavigate: (key: NavigationKey, clearOthers: boolean) => void;
   value: string | null;
-  id: string;
 }
 
 export class VariableInput extends PureComponent<Props> {
