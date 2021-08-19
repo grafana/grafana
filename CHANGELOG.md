@@ -27,7 +27,7 @@
 * **PanelEdit:** Fix 'Actual' size by passing the correct panel size to Das…. [#37885](https://github.com/grafana/grafana/pull/37885), [@ashharrison90](https://github.com/ashharrison90)
 * **Plugins:** Fix TLS datasource settings. [#37797](https://github.com/grafana/grafana/pull/37797), [@wbrowne](https://github.com/wbrowne)
 * **Variables:** Fix issue with empty drop downs on navigation. [#37776](https://github.com/grafana/grafana/pull/37776), [@hugohaggmark](https://github.com/hugohaggmark)
-* **Variables:** Fix url util converting `false` into `true`. [#37402](https://github.com/grafana/grafana/pull/37402), [@simPod](https://github.com/simPod)
+* **Variables:** Fix URL util converting `false` into `true`. [#37402](https://github.com/grafana/grafana/pull/37402), [@simPod](https://github.com/simPod)
 
 ### Plugin development fixes & changes
 
