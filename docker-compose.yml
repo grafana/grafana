@@ -1,0 +1,20 @@
+version: '2'
+
+services:
+  grafana:
+    image: corewatts-grafana:latest
+    user: "0"
+    ports:
+      - 8080:3000
+    volumes:
+      - /grafana/data:/var/lib/grafana
+      - /grafana/provisioning/:/etc/grafana/provisioning/
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-timestream-datasource,https://github.com/gipong/grafana-groupedbarchart-panel/archive/refs/heads/master.zip;grafana-groupedbarchart-panel
+    networks:
+      - web
+    restart: always
+networks:
+  web:
+    driver: bridge

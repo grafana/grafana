@@ -1,0 +1,101 @@
+name: Deploy
+#on a push to tags to trigger GitHub action workflow
+on:
+  push:
+    tags:
+      - 'sit-**'
+      - 'prod-**'
+      - 'dev-**'
+  # run deployment manually and pass req'd variables to the process
+  # only for main branch
+  workflow_dispatch:
+    inputs:
+      region:
+        description: AWS Region
+        required: true
+        default: us-east-1
+      stage:
+        description: AWS Stage
+        required: true
+        default: dev
+      profile:
+        description: AWS Profile
+        required: true
+        default: corewatts
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: configure environment
+        uses: actions/checkout@v1
+      
+      - name: setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+          registry-url: 'https://npm.pkg.github.com'
+
+      - name: setup docker
+      - uses: docker-practice/actions-setup-docker@master
+      - run: |
+          docker version
+
+      # - name: copy file via ssh password
+      #   uses: appleboy/scp-action@master
+      #   with:
+      #     host: ${{ secrets.SSH_HOST }}
+      #     port: ${{ secrets.SSH_PORT }}
+      #     username: ${{ secrets.SSH_USERNAME }}
+      #     key: ${{ secrets.SSH_KEY }}
+      #     source: "."
+      #     target: "/home/${{ secret.SSH_USERNAME }}/dist"
+      #     script: |
+      #       whoami
+      #       ls -al
+
+      # - name: npm install
+      #   run: npm install
+
+      # - name: create env file
+      #   run: | 
+      #     cat > .env << EOF
+      #     ${{ secrets.ENV }}
+      #     EOF
+      
+      # - name: set dev deployment stage
+      #   if: contains(github.ref, 'refs/tags/dev')
+      #   run: |
+      #     echo "STAGE=dev" >> $GITHUB_ENV
+      #     echo "REGION=us-east-1" >> $GITHUB_ENV
+      # - name: set sit deployment stage
+      #   if: contains(github.ref, 'refs/tags/sit')
+      #   run: |
+      #     echo "STAGE=sit" >> $GITHUB_ENV
+      #     echo "REGION=ca-central-1" >> $GITHUB_ENV
+      # - name: set prod deployment stage
+      #   if: contains(github.ref, 'refs/tags/prod')
+      #   run: |
+      #     echo "STAGE=prod" >> $GITHUB_ENV
+      #     echo "REGION=ca-central-1" >> $GITHUB_ENV
+      
+      #deploy via workflow dispatch manually
+      # - name: aws set configuration profile
+      #   if: github.event_name == 'workflow_dispatch'
+      #   run: |
+      #     aws configure set aws_access_key_id ${{ secrets.COREWATTS_AWS_ACCESS_KEY_ID }} --profile ${{ github.event.inputs.profile }} 
+      #     aws configure set aws_secret_access_key ${{ secrets.COREWATTS_AWS_SECRET_ACCESS_KEY }} --profile ${{ github.event.inputs.profile }} 
+      #     aws configure set region us-east-1 --profile ${{ github.event.inputs.profile }}
+      # - name: deploy via workflow_dispatch
+      #   if: github.event_name == 'workflow_dispatch'
+      #   run: npx serverless deploy --region ${{ github.event.inputs.region }} --stage ${{ github.event.inputs.stage }} --profile ${{ github.event.inputs.profile }}
+
+      #deploy via tags (dev/prod/sit)
+      # - name: aws set configuration profile
+      #   if: github.event_name != 'workflow_dispatch'
+      #   run: |
+      #     aws configure set aws_access_key_id ${{ secrets.COREWATTS_AWS_ACCESS_KEY_ID }} --profile ${{ secrets.COREWATTS_AWS_PROFILE }} 
+      #     aws configure set aws_secret_access_key ${{ secrets.COREWATTS_AWS_SECRET_ACCESS_KEY }} --profile ${{ secrets.COREWATTS_AWS_PROFILE }} 
+      #     aws configure set region us-east-1 --profile ${{ secrets.COREWATTS_AWS_PROFILE }}
+      # - name: deploy to ${{env.STAGE}} environment
+      #   if: github.event_name != 'workflow_dispatch'
+      #   run: npx serverless deploy --region ${{env.REGION}} --stage ${{env.STAGE}} --profile ${{ secrets.COREWATTS_AWS_PROFILE }}
