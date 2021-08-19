@@ -27,8 +27,8 @@ const (
 
 	ScopeDatasourcesAll = `datasources:**`
 	ScopeDatasourceID   = `datasources:id:{{ index . ":id" }}`
-	ScopeDatasourceUID  = `datasources:uid:{{ index . ":id" }}`
-	ScopeDatasourceName = `datasources:name:{{ index . ":id" }}`
+	ScopeDatasourceUID  = `datasources:uid:{{ index . ":uid" }}`
+	ScopeDatasourceName = `datasources:name:{{ index . ":name" }}`
 )
 
 // declareFixedRoles declares to the AccessControl service fixed roles and their
