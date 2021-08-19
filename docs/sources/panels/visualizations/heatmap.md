@@ -8,9 +8,9 @@ weight = 600
 
 # Heatmap
 
-The Heatmap panel visualization allows you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../getting-started/intro-histograms.md" >}}).
+The Heatmap panel visualization allows you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../basics/intro-histograms.md" >}}).
 
-![](/img/docs/v43/heatmap_panel_cover.jpg)
+![](/static/img/docs/v43/heatmap_panel_cover.jpg)
 
 ## Axes options
 
@@ -50,6 +50,7 @@ The Bucket count and size options are used by Grafana to calculate how big each 
 #### Data format
 
 Choose an option in the **Format** list.
+
 - **Time series -** Grafana does the bucketing by going through all time series values. The bucket sizes and intervals are set in the Buckets options.
 - **Time series buckets -** Each time series already represents a Y-Axis bucket. The time series name (alias) needs to be a numeric value representing the upper or lower interval for the bucket. Grafana does no bucketing, so the bucket size options are hidden.
 

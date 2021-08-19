@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -18,11 +19,13 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -108,7 +111,7 @@ func TestMiddlewareContext(t *testing.T) {
 				Settings: map[string]interface{}{},
 				NavTree:  []*dtos.NavLink{},
 			}
-			t.Log("Calling HTML", "data", data, "render", c.Render)
+			t.Log("Calling HTML", "data", data)
 			c.HTML(200, "index-template", data)
 			t.Log("Returned HTML with code 200")
 		}
@@ -201,7 +204,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		sc.withTokenSessionCookie("token")
 
-		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{OrgId: 2, UserId: userID}
 			return nil
 		})
@@ -229,7 +232,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		sc.withTokenSessionCookie("token")
 
-		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{OrgId: 2, UserId: userID}
 			return nil
 		})
@@ -347,6 +350,8 @@ func TestMiddlewareContext(t *testing.T) {
 	t.Run("auth_proxy", func(t *testing.T) {
 		const userID int64 = 33
 		const orgID int64 = 4
+		const defaultOrgId int64 = 1
+		const orgRole = "Admin"
 
 		configure := func(cfg *setting.Cfg) {
 			cfg.AuthProxyEnabled = true
@@ -354,14 +359,14 @@ func TestMiddlewareContext(t *testing.T) {
 			cfg.LDAPEnabled = true
 			cfg.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			cfg.AuthProxyHeaderProperty = "username"
-			cfg.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS"}
+			cfg.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS", "Role": "X-WEBAUTH-ROLE"}
 		}
 
 		const hdrName = "markelog"
 		const group = "grafana-core-team"
 
 		middlewareScenario(t, "Should not sync the user if it's in the cache", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				query.Result = &models.SignedInUser{OrgId: orgID, UserId: query.UserId}
 				return nil
 			})
@@ -404,7 +409,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should create an user from a header", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				if query.UserId > 0 {
 					query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
 					return nil
@@ -430,11 +435,76 @@ func TestMiddlewareContext(t *testing.T) {
 			cfg.AuthProxyAutoSignUp = true
 		})
 
+		middlewareScenario(t, "Should assign role from header to default org", func(t *testing.T, sc *scenarioContext) {
+			var storedRoleInfo map[int64]models.RoleType = nil
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+				if query.UserId > 0 {
+					query.Result = &models.SignedInUser{OrgId: defaultOrgId, UserId: userID, OrgRole: storedRoleInfo[defaultOrgId]}
+					return nil
+				}
+				return models.ErrUserNotFound
+			})
+
+			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+				cmd.Result = &models.User{Id: userID}
+				storedRoleInfo = cmd.ExternalUser.OrgRoles
+				return nil
+			})
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
+			sc.req.Header.Set("X-WEBAUTH-ROLE", orgRole)
+			sc.exec()
+
+			assert.True(t, sc.context.IsSignedIn)
+			assert.Equal(t, userID, sc.context.UserId)
+			assert.Equal(t, defaultOrgId, sc.context.OrgId)
+			assert.Equal(t, orgRole, string(sc.context.OrgRole))
+		}, func(cfg *setting.Cfg) {
+			configure(cfg)
+			cfg.LDAPEnabled = false
+			cfg.AuthProxyAutoSignUp = true
+		})
+
+		middlewareScenario(t, "Should NOT assign role from header to non-default org", func(t *testing.T, sc *scenarioContext) {
+			var storedRoleInfo map[int64]models.RoleType = nil
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
+				if query.UserId > 0 {
+					query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID, OrgRole: storedRoleInfo[orgID]}
+					return nil
+				}
+				return models.ErrUserNotFound
+			})
+
+			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+				cmd.Result = &models.User{Id: userID}
+				storedRoleInfo = cmd.ExternalUser.OrgRoles
+				return nil
+			})
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
+			sc.req.Header.Set("X-WEBAUTH-ROLE", "Admin")
+			sc.req.Header.Set("X-Grafana-Org-Id", strconv.FormatInt(orgID, 10))
+			sc.exec()
+
+			assert.True(t, sc.context.IsSignedIn)
+			assert.Equal(t, userID, sc.context.UserId)
+			assert.Equal(t, orgID, sc.context.OrgId)
+
+			// For non-default org, the user role should be empty
+			assert.Equal(t, "", string(sc.context.OrgRole))
+		}, func(cfg *setting.Cfg) {
+			configure(cfg)
+			cfg.LDAPEnabled = false
+			cfg.AuthProxyAutoSignUp = true
+		})
+
 		middlewareScenario(t, "Should get an existing user from header", func(t *testing.T, sc *scenarioContext) {
 			const userID int64 = 12
 			const orgID int64 = 2
 
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
 				return nil
 			})
@@ -457,7 +527,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
 				return nil
 			})
@@ -482,7 +552,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should not allow the request from whitelisted IP", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
 				return nil
 			})
@@ -519,7 +589,7 @@ func TestMiddlewareContext(t *testing.T) {
 		}, configure)
 
 		middlewareScenario(t, "Should return 407 status code if there is cache mishap", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("Do not have the user", func(query *models.GetSignedInUserQuery) error {
+			bus.AddHandlerCtx("Do not have the user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				return errors.New("Do not add user")
 			})
 
@@ -538,6 +608,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 
 	t.Run(desc, func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
+
+		logger := log.New("test")
 
 		loginMaxLifetime, err := gtime.ParseDuration("30d")
 		require.NoError(t, err)
@@ -560,10 +632,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 
 		sc.m = macaron.New()
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
-		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
-			Directory: viewsPath,
-			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-		}))
+		sc.m.UseMiddleware(AddCSPHeader(cfg, logger))
+		sc.m.UseMiddleware(macaron.Renderer(viewsPath, "[[", "]]"))
 
 		ctxHdlr := getContextHandler(t, cfg)
 		sc.sqlStore = ctxHdlr.SQLStore
@@ -572,6 +642,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.m.Use(OrgRedirect(sc.cfg))
 
 		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*auth.FakeUserAuthTokenService)
+		sc.jwtAuthService = ctxHdlr.JWTAuthService.(*models.FakeJWTService)
 		sc.remoteCacheService = ctxHdlr.RemoteCache
 
 		sc.defaultHandler = func(c *models.ReqContext) {
@@ -607,6 +678,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	}
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
+	authJWTSvc := models.NewFakeJWTService()
 	ctxHdlr := &contexthandler.ContextHandler{}
 
 	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
@@ -625,6 +697,10 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 		{
 			Name:     rendering.ServiceName,
 			Instance: renderSvc,
+		},
+		{
+			Name:     jwt.ServiceName,
+			Instance: authJWTSvc,
 		},
 		{
 			Name:     contexthandler.ServiceName,

@@ -95,10 +95,7 @@ func perFloat(e *State, val Value, floatF func(x float64) float64) (Value, error
 		newVal = NewScalar(e.RefID, &nF)
 	case parse.TypeSeriesSet:
 		resSeries := val.(Series)
-		newSeries := NewSeries(
-			e.RefID, resSeries.GetLabels(), resSeries.TimeIdx, resSeries.TimeIsNullable, resSeries.ValueIdx,
-			resSeries.ValueIsNullable, resSeries.Len(),
-		)
+		newSeries := NewSeries(e.RefID, resSeries.GetLabels(), resSeries.Len())
 		for i := 0; i < resSeries.Len(); i++ {
 			t, f := resSeries.GetPoint(i)
 			nF := math.NaN()

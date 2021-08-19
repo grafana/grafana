@@ -1,3 +1,4 @@
-FROM prom/prometheus:v1.8.2
+FROM prom/prometheus:latest
 ADD prometheus.yml /etc/prometheus/
-ADD alert.rules /etc/prometheus/
+ADD recording.yml /etc/prometheus/
+ADD alert.yml /etc/prometheus/

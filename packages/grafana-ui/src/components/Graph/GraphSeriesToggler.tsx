@@ -1,7 +1,6 @@
 import React from 'react';
 import { GraphSeriesXY } from '@grafana/data';
-import difference from 'lodash/difference';
-import isEqual from 'lodash/isEqual';
+import { difference, isEqual } from 'lodash';
 
 export interface GraphSeriesTogglerAPI {
   onSeriesToggle: (label: string, event: React.MouseEvent<HTMLElement>) => void;
@@ -46,10 +45,10 @@ export class GraphSeriesToggler extends React.Component<GraphSeriesTogglerProps,
       // Toggling series with key makes the series itself to toggle
       const newHiddenSeries =
         hiddenSeries.indexOf(label) > -1
-          ? hiddenSeries.filter(series => series !== label)
+          ? hiddenSeries.filter((series) => series !== label)
           : hiddenSeries.concat([label]);
 
-      const toggledSeries = series.map(series => ({
+      const toggledSeries = series.map((series) => ({
         ...series,
         isVisible: newHiddenSeries.indexOf(series.label) === -1,
       }));
@@ -60,10 +59,10 @@ export class GraphSeriesToggler extends React.Component<GraphSeriesTogglerProps,
     }
 
     // Toggling series with out key toggles all the series but the clicked one
-    const allSeriesLabels = series.map(series => series.label);
+    const allSeriesLabels = series.map((series) => series.label);
     const newHiddenSeries =
       hiddenSeries.length + 1 === allSeriesLabels.length ? [] : difference(allSeriesLabels, [label]);
-    const toggledSeries = series.map(series => ({
+    const toggledSeries = series.map((series) => ({
       ...series,
       isVisible: newHiddenSeries.indexOf(series.label) === -1,
     }));

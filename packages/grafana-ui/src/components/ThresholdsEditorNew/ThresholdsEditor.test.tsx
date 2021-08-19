@@ -1,10 +1,9 @@
 import React, { ChangeEvent } from 'react';
 import { mount } from 'enzyme';
-import { ThresholdsMode } from '@grafana/data';
+import { createTheme, ThresholdsMode } from '@grafana/data';
 import { ThresholdsEditor, Props, thresholdsWithoutKey } from './ThresholdsEditor';
 import { colors } from '../../utils';
 import { mockThemeContext } from '../../themes/ThemeContext';
-import { getTheme } from '../../themes/getTheme';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
@@ -31,7 +30,7 @@ describe('ThresholdsEditor', () => {
   let restoreThemeContext: any;
 
   beforeAll(() => {
-    restoreThemeContext = mockThemeContext(getTheme('dark'));
+    restoreThemeContext = mockThemeContext(createTheme());
   });
 
   afterAll(() => {

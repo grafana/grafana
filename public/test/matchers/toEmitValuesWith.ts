@@ -21,6 +21,11 @@ function tryExpectations(received: any[], expectations: (received: any[]) => voi
   }
 }
 
+/**
+ * Collect all the values emitted by the observables (also errors) and pass them to the expectations functions after
+ * the observable ended (or emitted error). If Observable does not complete within OBSERVABLE_TEST_TIMEOUT_IN_MS the
+ * test fails.
+ */
 export function toEmitValuesWith(
   received: Observable<any>,
   expectations: (actual: any[]) => void
@@ -30,16 +35,16 @@ export function toEmitValuesWith(
     return Promise.resolve(failsChecks);
   }
 
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const receivedValues: any[] = [];
     const subscription = new Subscription();
 
     subscription.add(
       received.subscribe({
-        next: value => {
+        next: (value) => {
           receivedValues.push(value);
         },
-        error: err => {
+        error: (err) => {
           receivedValues.push(err);
           subscription.unsubscribe();
           resolve(tryExpectations(receivedValues, expectations));

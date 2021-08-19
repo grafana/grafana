@@ -1,34 +1,51 @@
 import React, { FC } from 'react';
-import classNames from 'classnames';
-import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
-import { Icon, Tooltip, LegacyForms } from '@grafana/ui';
-import { DataQuery } from '@grafana/data';
+import { connect, ConnectedProps } from 'react-redux';
+import { ButtonGroup, ButtonSelect, Icon, ToolbarButton, Tooltip } from '@grafana/ui';
+import { DataQuery, urlUtil } from '@grafana/data';
 
 import kbn from '../../core/utils/kbn';
+import config from 'app/core/config';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
-import { updateLocation } from 'app/core/actions';
 import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
+import { isSplit } from './state/selectors';
+import { locationService } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 
-const { ButtonSelect } = LegacyForms;
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+  const explore = state.explore;
+  const splitted = isSplit(state);
+  const { datasourceInstance, queries, originPanelId } = explore[exploreId]!;
 
-interface Props {
-  exploreId: ExploreId;
-  splitted: boolean;
-  queries: DataQuery[];
-  originPanelId?: number | null;
-  updateLocation: typeof updateLocation;
-  setDashboardQueriesToUpdateOnLoad: typeof setDashboardQueriesToUpdateOnLoad;
+  const roles = ['Editor', 'Admin'];
+  if (config.viewersCanEdit) {
+    roles.push('Viewer');
+  }
+
+  return {
+    exploreId,
+    datasourceInstance,
+    queries,
+    originPanelId,
+    splitted,
+    canEdit: roles.some((r) => contextSrv.hasRole(r)),
+  };
 }
+
+const mapDispatchToProps = {
+  setDashboardQueriesToUpdateOnLoad,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+type Props = ConnectedProps<typeof connector>;
 
 export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   originPanelId,
-  updateLocation,
   setDashboardQueriesToUpdateOnLoad,
   queries,
   splitted,
+  canEdit,
 }) => {
   const withOriginId = originPanelId && Number.isInteger(originPanelId);
 
@@ -36,11 +53,6 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   if (splitted || !withOriginId) {
     return null;
   }
-
-  const panelReturnClasses = classNames('btn', 'navbar-button', {
-    'btn--radius-right-0': withOriginId,
-    'navbar-button navbar-button--border-right-0': withOriginId,
-  });
 
   const cleanQueries = (queries: DataQuery[]) => {
     return queries.map((query: DataQuery & { context?: string }) => {
@@ -53,6 +65,10 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   const returnToPanel = async ({ withChanges = false } = {}) => {
     const dashboardSrv = getDashboardSrv();
     const dash = dashboardSrv.getCurrent();
+    if (!dash) {
+      return;
+    }
+
     const titleSlug = kbn.slugifyForUrl(dash.title);
 
     if (withChanges) {
@@ -70,49 +86,25 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
       query.viewPanel = originPanelId;
     }
 
-    updateLocation({ path: `/d/${dash.uid}/:${titleSlug}`, query });
+    locationService.push(urlUtil.renderUrl(`/d/${dash.uid}/:${titleSlug}`, query));
   };
 
   return (
-    <div className="explore-toolbar-content-item">
+    <ButtonGroup>
       <Tooltip content={'Return to panel'} placement="bottom">
-        <button
-          data-testid="returnButton"
-          title={'Return to panel'}
-          className={panelReturnClasses}
-          onClick={() => returnToPanel()}
-        >
+        <ToolbarButton data-testid="returnButton" title={'Return to panel'} onClick={() => returnToPanel()}>
           <Icon name="arrow-left" />
-        </button>
+        </ToolbarButton>
       </Tooltip>
-      <div data-testid="returnButtonWithChanges">
+      {canEdit && (
         <ButtonSelect
-          className="navbar-button--attached btn--radius-left-0$"
+          data-testid="returnButtonWithChanges"
           options={[{ label: 'Return to panel with changes', value: '' }]}
           onChange={() => returnToPanel({ withChanges: true })}
-          maxMenuHeight={380}
         />
-      </div>
-    </div>
+      )}
+    </ButtonGroup>
   );
 };
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
-  const explore = state.explore;
-  const splitted = state.explore.split;
-  const { datasourceInstance, queries, originPanelId } = explore[exploreId];
-
-  return {
-    exploreId,
-    datasourceInstance,
-    queries,
-    originPanelId,
-    splitted,
-  };
-}
-
-const mapDispatchToProps = {
-  updateLocation,
-  setDashboardQueriesToUpdateOnLoad,
-};
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnconnectedReturnToDashboardButton));
+export default connector(UnconnectedReturnToDashboardButton);

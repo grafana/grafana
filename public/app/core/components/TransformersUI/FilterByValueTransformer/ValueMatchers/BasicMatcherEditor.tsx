@@ -7,7 +7,7 @@ import { convertToType } from './utils';
 export function basicMatcherEditor<T = any>(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions<T>>> {
-  return function render({ options, onChange, field }) {
+  return function Render({ options, onChange, field }) {
     const { validator, converter = convertToType } = config;
     const { value } = options;
     const [isInvalid, setInvalid] = useState(!validator(value));
@@ -54,28 +54,28 @@ export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Basi
       name: 'Is greater',
       id: ValueMatcherID.greater,
       component: basicMatcherEditor<number>({
-        validator: value => !isNaN(value),
+        validator: (value) => !isNaN(value),
       }),
     },
     {
       name: 'Is greater or equal',
       id: ValueMatcherID.greaterOrEqual,
       component: basicMatcherEditor<number>({
-        validator: value => !isNaN(value),
+        validator: (value) => !isNaN(value),
       }),
     },
     {
       name: 'Is lower',
       id: ValueMatcherID.lower,
       component: basicMatcherEditor<number>({
-        validator: value => !isNaN(value),
+        validator: (value) => !isNaN(value),
       }),
     },
     {
       name: 'Is lower or equal',
       id: ValueMatcherID.lowerOrEqual,
       component: basicMatcherEditor<number>({
-        validator: value => !isNaN(value),
+        validator: (value) => !isNaN(value),
       }),
     },
     {

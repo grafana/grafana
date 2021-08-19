@@ -15,7 +15,7 @@
 import * as React from 'react';
 import cx from 'classnames';
 import IoAndroidLocate from 'react-icons/lib/io/android-locate';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import * as markers from './TracePageSearchBar.markers';
 import UiFindInput from '../common/UiFindInput';
@@ -24,6 +24,7 @@ import { TNil } from '../types';
 import { UIButton, UIInputGroup } from '../uiElementsContext';
 import { createStyle } from '../Theme';
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
+// eslint-disable-next-line no-duplicate-imports
 import { memo } from 'react';
 
 export const getStyles = createStyle(() => {

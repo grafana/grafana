@@ -58,6 +58,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 			"name":      ds.Name,
 			"url":       url,
 			"isDefault": ds.IsDefault,
+			"access":    ds.Access,
 		}
 
 		meta, exists := enabledPlugins.DataSources[ds.Type]
@@ -109,12 +110,12 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 	// add data sources that are built in (meaning they are not added via data sources page, nor have any entry in
 	// the datasource table)
-	for _, ds := range plugins.DataSources {
+	for _, ds := range hs.PluginManager.DataSources() {
 		if ds.BuiltIn {
 			dataSources[ds.Name] = map[string]interface{}{
 				"type": ds.Type,
 				"name": ds.Name,
-				"meta": plugins.DataSources[ds.Id],
+				"meta": hs.PluginManager.GetDataSource(ds.Id),
 			}
 		}
 	}
@@ -124,10 +125,11 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 // getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
 func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]interface{}, error) {
-	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
+	enabledPlugins, err := hs.PluginManager.GetEnabledPlugins(c.OrgId)
 	if err != nil {
 		return nil, err
 	}
+
 	pluginsToPreload := []string{}
 	for _, app := range enabledPlugins.Apps {
 		if app.Preload {
@@ -202,11 +204,14 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
 		"alertingMinInterval":        setting.AlertingMinInterval,
+		"liveEnabled":                hs.Cfg.LiveMaxConnections != 0,
 		"autoAssignOrg":              setting.AutoAssignOrg,
 		"verifyEmailEnabled":         setting.VerifyEmailEnabled,
 		"sigV4AuthEnabled":           setting.SigV4AuthEnabled,
 		"exploreEnabled":             setting.ExploreEnabled,
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
+		"rudderstackWriteKey":        setting.RudderstackWriteKey,
+		"rudderstackDataPlaneUrl":    setting.RudderstackDataPlaneUrl,
 		"disableLoginForm":           setting.DisableLoginForm,
 		"disableUserSignUp":          !setting.AllowUserSignUp,
 		"loginHint":                  setting.LoginHint,
@@ -224,8 +229,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"commit":        commit,
 			"buildstamp":    buildstamp,
 			"edition":       hs.License.Edition(),
-			"latestVersion": plugins.GrafanaLatestVersion,
-			"hasUpdate":     plugins.GrafanaHasUpdate,
+			"latestVersion": hs.PluginManager.GrafanaLatestVersion(),
+			"hasUpdate":     hs.PluginManager.GrafanaHasUpdate(),
 			"env":           setting.Env,
 			"isEnterprise":  hs.License.HasValidLicense(),
 		},
@@ -237,11 +242,31 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"licenseUrl":      hs.License.LicenseURL(c.SignedInUser),
 			"edition":         hs.License.Edition(),
 		},
-		"featureToggles":    hs.Cfg.FeatureToggles,
-		"rendererAvailable": hs.RenderService.IsAvailable(),
-		"http2Enabled":      hs.Cfg.Protocol == setting.HTTP2Scheme,
-		"sentry":            hs.Cfg.Sentry,
-		"marketplaceUrl":    hs.Cfg.MarketplaceURL,
+		"featureToggles":                   hs.Cfg.FeatureToggles,
+		"rendererAvailable":                hs.RenderService.IsAvailable(),
+		"rendererVersion":                  hs.RenderService.Version(),
+		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
+		"sentry":                           hs.Cfg.Sentry,
+		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
+		"pluginAdminEnabled":               hs.Cfg.PluginAdminEnabled,
+		"pluginAdminExternalManageEnabled": hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
+		"expressionsEnabled":               hs.Cfg.ExpressionsEnabled,
+		"awsAllowedAuthProviders":          hs.Cfg.AWSAllowedAuthProviders,
+		"awsAssumeRoleEnabled":             hs.Cfg.AWSAssumeRoleEnabled,
+		"azure": map[string]interface{}{
+			"cloud":                  hs.Cfg.Azure.Cloud,
+			"managedIdentityEnabled": hs.Cfg.Azure.ManagedIdentityEnabled,
+		},
+		"caching": map[string]bool{
+			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
+		},
+	}
+
+	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {
+		jsonObj["geomapDefaultBaseLayerConfig"] = hs.Cfg.GeomapDefaultBaseLayerConfig
+	}
+	if !hs.Cfg.GeomapEnableCustomBaseLayers {
+		jsonObj["geomapDisableCustomBaseLayer"] = true
 	}
 
 	return jsonObj, nil
@@ -250,9 +275,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 func getPanelSort(id string) int {
 	sort := 100
 	switch id {
-	case "graph":
-		sort = 1
 	case "timeseries":
+		sort = 1
+	case "barchart":
 		sort = 2
 	case "stat":
 		sort = 3
@@ -264,16 +289,26 @@ func getPanelSort(id string) int {
 		sort = 6
 	case "singlestat":
 		sort = 7
-	case "text":
+	case "piechart":
 		sort = 8
-	case "heatmap":
+	case "state-timeline":
 		sort = 9
-	case "alertlist":
+	case "heatmap":
 		sort = 10
-	case "dashlist":
+	case "status-history":
 		sort = 11
-	case "news":
+	case "histogram":
 		sort = 12
+	case "graph":
+		sort = 13
+	case "text":
+		sort = 14
+	case "alertlist":
+		sort = 15
+	case "dashlist":
+		sort = 16
+	case "news":
+		sort = 17
 	}
 	return sort
 }

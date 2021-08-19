@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, FC } from 'react';
-import _ from 'lodash';
+import { flatten } from 'lodash';
 
 import { LegacyForms } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
@@ -16,7 +16,7 @@ export interface Props {
   variables?: Variable[];
 }
 
-export const MetricSelect: FC<Props> = props => {
+export const MetricSelect: FC<Props> = (props) => {
   const { value, placeholder, className, isSearchable, onChange } = props;
   const options = useSelectOptions(props);
   const selected = useSelectedOption(options, value);
@@ -24,6 +24,7 @@ export const MetricSelect: FC<Props> = props => {
 
   return (
     <Select
+      menuShouldPortal
       className={className}
       isMulti={false}
       isClearable={false}
@@ -60,7 +61,7 @@ const useSelectOptions = ({ variables = [], options }: Props): Array<SelectableV
 
 const useSelectedOption = (options: Array<SelectableValue<string>>, value: string): SelectableValue<string> => {
   return useMemo(() => {
-    const allOptions = options.every(o => o.options) ? _.flatten(options.map(o => o.options)) : options;
-    return allOptions.find(option => option.value === value);
+    const allOptions = options.every((o) => o.options) ? flatten(options.map((o) => o.options)) : options;
+    return allOptions.find((option) => option.value === value);
   }, [options, value]);
 };

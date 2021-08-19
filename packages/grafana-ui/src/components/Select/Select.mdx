@@ -1,6 +1,6 @@
-import { Props, Preview } from "@storybook/addon-docs/blocks";
-import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from "./Select";
-import { generateOptions } from "./mockOptions";
+import { Props, Preview } from '@storybook/addon-docs/blocks';
+import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from './Select';
+import { generateOptions } from './mockOptions';
 
 # Select variants
 
@@ -27,13 +27,13 @@ There are four properties for each option:
 
 ```jsx
 const options = [
-  { label: "Basic option", value: 0 },
-  { label: "Option with description", value: 1, description: "this is a description" },
+  { label: 'Basic option', value: 0 },
+  { label: 'Option with description', value: 1, description: 'this is a description' },
   {
-    label: "Option with description and image",
+    label: 'Option with description and image',
     value: 2,
-    description: "This is a very elaborate description, describing all the wonders in the world.",
-    imgUrl: "https://placekitten.com/40/40",
+    description: 'This is a very elaborate description, describing all the wonders in the world.',
+    imgUrl: 'https://placekitten.com/40/40',
   },
 ];
 ```
@@ -90,7 +90,7 @@ Where the async function could look like this:
 
 ```tsx
 const loadAsyncOptions = () => {
-  return new Promise<Array<SelectableValue<string>>>(resolve => {
+  return new Promise<Array<SelectableValue<string>>>((resolve) => {
     setTimeout(() => {
       resolve(options);
     }, 2000);
@@ -103,7 +103,7 @@ const loadAsyncOptions = () => {
 Possible to Select multiple values at the same time.
 
 ```tsx
-import { MultiSelect } from "@grafana/ui";
+import { MultiSelect } from '@grafana/ui';
 
 const multiSelect = () => {
   const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
@@ -113,7 +113,7 @@ const multiSelect = () => {
       <MultiSelect
         options={options}
         value={value}
-        onChange={v => {
+        onChange={(v) => {
           setValue(v);
         }}
       />
@@ -126,6 +126,36 @@ const multiSelect = () => {
 
 Like MultiSelect but handles data asynchronously with the `loadOptions` prop.
 
-## Props
+# Testing
+
+Using React Testing Library, you can select the `<Select />` using its matching label, such as the label assigned with the `inputId` prop. Use the `react-select-event` package to select values from the options.
+
+```tsx
+import { render, screen } from '@testing-library/react';
+import selectEvent from 'react-select-event';
+import { Select } from '@grafana/ui';
+
+it('should call onChange', () => {
+  const onChange = jest.fn();
+
+  render(
+    <>
+      <label htmlFor="my-select">My select</label>
+      <Select onChange={onChange} options={options} inputId="my-select" />
+    </>
+  );
+
+  const selectEl = screen.getByLabelText('My select');
+  expect(selectEl).toBeInTheDocument();
+
+  await selectEvent.select(selectEl, 'Option 2');
+  expect(onChange).toHaveBeenCalledWith({
+    label: 'Option 2',
+    value: 2,
+  });
+});
+```
+
+# Props
 
 <Props of={Select} />

@@ -28,7 +28,7 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 		if len(keyValueTuple) != 2 {
 			if strings.HasPrefix(rawKeyValue, "password") {
 				// don't log the password
-				rawKeyValue = "password******"
+				rawKeyValue = "password" + setting.RedactedPassword
 			}
 			return nil, fmt.Errorf("incorrect redis connection string format detected for '%v', format is key=value,key=value", rawKeyValue)
 		}

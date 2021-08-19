@@ -342,9 +342,6 @@ func setBuildEnv() {
 	} else {
 		os.Setenv("GOARCH", goarch)
 	}
-	if goarch == "386" {
-		os.Setenv("GO386", "387")
-	}
 	if cgo {
 		os.Setenv("CGO_ENABLED", "1")
 	}
@@ -356,7 +353,7 @@ func setBuildEnv() {
 func getGitBranch() string {
 	v, err := runError("git", "rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
-		return "master"
+		return "main"
 	}
 	return string(v)
 }
@@ -396,7 +393,6 @@ func runError(cmd string, args ...string) ([]byte, error) {
 func runPrint(cmd string, args ...string) {
 	log.Println(cmd, strings.Join(args, " "))
 	ecmd := exec.Command(cmd, args...)
-	ecmd.Env = append(os.Environ(), "GO111MODULE=on")
 	ecmd.Stdout = os.Stdout
 	ecmd.Stderr = os.Stderr
 	err := ecmd.Run()

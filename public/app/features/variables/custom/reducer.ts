@@ -1,8 +1,14 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { CustomVariableModel, initialVariableModelState, VariableOption } from '../types';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, getInstanceState, VariablePayload } from '../state/types';
-import { initialVariablesState, VariablesState } from '../state/variablesReducer';
+import {
+  ALL_VARIABLE_TEXT,
+  ALL_VARIABLE_VALUE,
+  getInstanceState,
+  VariablePayload,
+  initialVariablesState,
+  VariablesState,
+} from '../state/types';
 
 export const initialCustomVariableModelState: CustomVariableModel = {
   ...initialVariableModelState,
@@ -24,7 +30,7 @@ export const customVariableSlice = createSlice({
       const { includeAll, query } = instanceState;
 
       const match = query.match(/(?:\\,|[^,])+/g) ?? [];
-      const options = match.map(text => {
+      const options = match.map((text) => {
         text = text.replace(/\\,/g, ',');
         const textMatch = /^(.+)\s:\s(.+)$/g.exec(text) ?? [];
         if (textMatch.length === 3) {

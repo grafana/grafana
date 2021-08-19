@@ -1,5 +1,5 @@
 import React, { FC, useCallback } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { useLocalStorage } from 'react-use';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, Spinner, stylesFactory, useTheme } from '@grafana/ui';
@@ -29,15 +29,17 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
     onSectionClick(section);
   };
 
-  const onSectionChecked = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
+  const handleCheckboxClick = useCallback(
+    (ev: React.MouseEvent) => {
+      console.log('section header handleCheckboxClick');
+      ev.stopPropagation();
+      ev.preventDefault();
+
       if (onToggleChecked) {
         onToggleChecked(section);
       }
     },
-    [section]
+    [onToggleChecked, section]
   );
 
   return (
@@ -46,7 +48,12 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
       onClick={onSectionExpand}
       aria-label={section.expanded ? `Collapse folder ${section.id}` : `Expand folder ${section.id}`}
     >
-      <SearchCheckbox editable={editable} checked={section.checked} onClick={onSectionChecked} />
+      <SearchCheckbox
+        className={styles.checkbox}
+        editable={editable}
+        checked={section.checked}
+        onClick={handleCheckboxClick}
+      />
 
       <div className={styles.icon}>
         <Icon name={getSectionIcon(section)} />
@@ -60,7 +67,6 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
           </a>
         )}
       </div>
-
       {section.itemsFetching ? <Spinner /> : <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />}
     </div>
   );
@@ -91,6 +97,9 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       'pointer',
       { selected }
     ),
+    checkbox: css`
+      padding: 0 ${sm} 0 0;
+    `,
     icon: css`
       padding: 0 ${sm} 0 ${editable ? 0 : sm};
     `,

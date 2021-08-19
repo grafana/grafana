@@ -23,7 +23,7 @@ func TestGetUrl(t *testing.T) {
 	t.Run("When renderer url not configured", func(t *testing.T) {
 		rs.Cfg.RendererUrl = ""
 		rs.domain = "localhost"
-		setting.HttpPort = "3000"
+		rs.Cfg.HTTPPort = "3000"
 
 		t.Run("And protocol HTTP configured should return expected path", func(t *testing.T) {
 			rs.Cfg.ServeFromSubPath = false

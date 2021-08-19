@@ -4,9 +4,10 @@ import { Icon } from '@grafana/ui';
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import appEvents from 'app/core/app_events';
-import { CoreEvents } from 'app/types';
 import { RowOptionsButton } from '../RowOptions/RowOptionsButton';
 import { getTemplateSrv } from '@grafana/runtime';
+import { RefreshEvent, ShowConfirmModalEvent } from '../../../../types/events';
+import { Unsubscribable } from 'rxjs';
 
 export interface DashboardRowProps {
   panel: PanelModel;
@@ -14,18 +15,23 @@ export interface DashboardRowProps {
 }
 
 export class DashboardRow extends React.Component<DashboardRowProps, any> {
+  sub?: Unsubscribable;
   constructor(props: DashboardRowProps) {
     super(props);
 
     this.state = {
       collapsed: this.props.panel.collapsed,
     };
+  }
 
-    this.props.dashboard.on(CoreEvents.templateVariableValueUpdated, this.onVariableUpdated);
+  componentDidMount() {
+    this.sub = this.props.dashboard.events.subscribe(RefreshEvent, this.onVariableUpdated);
   }
 
   componentWillUnmount() {
-    this.props.dashboard.off(CoreEvents.templateVariableValueUpdated, this.onVariableUpdated);
+    if (this.sub) {
+      this.sub.unsubscribe();
+    }
   }
 
   onVariableUpdated = () => {
@@ -40,27 +46,29 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
   };
 
-  onUpdate = (title: string, repeat: string | undefined) => {
+  onUpdate = (title: string, repeat?: string | null) => {
     this.props.panel['title'] = title;
-    this.props.panel['repeat'] = repeat;
+    this.props.panel['repeat'] = repeat ?? undefined;
     this.props.panel.render();
     this.props.dashboard.processRepeats();
     this.forceUpdate();
   };
 
   onDelete = () => {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete Row',
-      text: 'Are you sure you want to remove this row and all its panels?',
-      altActionText: 'Delete row only',
-      icon: 'trash-alt',
-      onConfirm: () => {
-        this.props.dashboard.removeRow(this.props.panel, true);
-      },
-      onAltAction: () => {
-        this.props.dashboard.removeRow(this.props.panel, false);
-      },
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete row',
+        text: 'Are you sure you want to remove this row and all its panels?',
+        altActionText: 'Delete row only',
+        icon: 'trash-alt',
+        onConfirm: () => {
+          this.props.dashboard.removeRow(this.props.panel, true);
+        },
+        onAltAction: () => {
+          this.props.dashboard.removeRow(this.props.panel, false);
+        },
+      })
+    );
   };
 
   render() {

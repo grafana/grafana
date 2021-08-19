@@ -12,21 +12,12 @@ export interface SyncInfo {
   enabled: boolean;
   schedule: string;
   nextSync: string;
-  prevSync?: SyncResult;
 }
 
 export interface LdapUserSyncInfo {
   nextSync?: string;
   prevSync?: string;
   status?: string;
-}
-
-export interface SyncResult {
-  started: string;
-  elapsed: string;
-  UpdatedUserIds: number[];
-  MissingUserIds: number[];
-  FailedUsers?: FailedUser[];
 }
 
 export interface FailedUser {
@@ -77,9 +68,9 @@ export type LdapConnectionInfo = LdapServerInfo[];
 
 export interface LdapState {
   connectionInfo: LdapConnectionInfo;
-  user?: LdapUser | null;
-  syncInfo?: SyncInfo | null;
-  connectionError?: LdapError | null;
-  userError?: LdapError | null;
-  ldapError?: LdapError | null;
+  user?: LdapUser;
+  syncInfo?: SyncInfo;
+  connectionError?: LdapError;
+  userError?: LdapError;
+  ldapError?: LdapError;
 }

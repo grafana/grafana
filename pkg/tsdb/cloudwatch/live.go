@@ -13,13 +13,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/servicequotas"
 	"github.com/aws/aws-sdk-go/service/servicequotas/servicequotasiface"
-	"github.com/centrifugal/centrifuge"
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/retryer"
 	"golang.org/x/sync/errgroup"
 )
@@ -56,30 +55,30 @@ func (s *LogQueryRunnerSupplier) GetHandlerForPath(path string) (models.ChannelH
 }
 
 // OnSubscribe publishes results from the corresponding CloudWatch Logs query to the provided channel
-func (r *logQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
+func (r *logQueryRunner) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	r.runningMu.Lock()
 	defer r.runningMu.Unlock()
 
 	if _, ok := r.running[e.Channel]; ok {
-		return centrifuge.SubscribeReply{}, nil
+		return models.SubscribeReply{}, backend.SubscribeStreamStatusOK, nil
 	}
 
 	r.running[e.Channel] = true
 	go func() {
-		if err := r.publishResults(e.Channel); err != nil {
+		if err := r.publishResults(user.OrgId, e.Channel); err != nil {
 			plog.Error(err.Error())
 		}
 	}()
 
-	return centrifuge.SubscribeReply{}, nil
+	return models.SubscribeReply{}, backend.SubscribeStreamStatusOK, nil
 }
 
 // OnPublish checks if a message from the websocket can be broadcast on this channel
-func (r *logQueryRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
-	return centrifuge.PublishReply{}, fmt.Errorf("can not publish")
+func (r *logQueryRunner) OnPublish(ctx context.Context, user *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+	return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 }
 
-func (r *logQueryRunner) publishResults(channelName string) error {
+func (r *logQueryRunner) publishResults(orgID int64, channelName string) error {
 	defer func() {
 		r.service.DeleteResponseChannel(channelName)
 		r.runningMu.Lock()
@@ -98,7 +97,7 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 			return err
 		}
 
-		if err := r.publish(channelName, responseBytes); err != nil {
+		if err := r.publish(orgID, channelName, responseBytes); err != nil {
 			return err
 		}
 	}
@@ -108,23 +107,25 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 
 // executeLiveLogQuery executes a CloudWatch Logs query with live updates over WebSocket.
 // A WebSocket channel is created, which goroutines send responses over.
-func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+//nolint: staticcheck // plugins.DataResponse deprecated
+func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	responseChannelName := uuid.New().String()
-	responseChannel := make(chan *tsdb.Response)
+	responseChannel := make(chan *backend.QueryDataResponse)
 	if err := e.logsService.AddResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel); err != nil {
 		close(responseChannel)
 		return nil, err
 	}
 
-	go e.sendLiveQueriesToChannel(queryContext, responseChannel)
+	go e.sendLiveQueriesToChannel(req, responseChannel)
 
-	response := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
+	response := &backend.QueryDataResponse{
+		Responses: backend.Responses{
 			"A": {
-				RefId: "A",
-				Meta: simplejson.NewFromAny(map[string]interface{}{
-					"channelName": responseChannelName,
-				}),
+				Frames: data.Frames{data.NewFrame("A").SetMeta(&data.FrameMeta{
+					Custom: map[string]interface{}{
+						"channelName": responseChannelName,
+					},
+				})},
 			},
 		},
 	}
@@ -132,17 +133,18 @@ func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryConte
 	return response, nil
 }
 
-func (e *cloudWatchExecutor) sendLiveQueriesToChannel(queryContext *tsdb.TsdbQuery, responseChannel chan *tsdb.Response) {
+//nolint: staticcheck // plugins.DataResponse deprecated
+func (e *cloudWatchExecutor) sendLiveQueriesToChannel(req *backend.QueryDataRequest, responseChannel chan *backend.QueryDataResponse) {
 	defer close(responseChannel)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	defer cancel()
 	eg, ectx := errgroup.WithContext(ctx)
 
-	for _, query := range queryContext.Queries {
+	for _, query := range req.Queries {
 		query := query
 		eg.Go(func() error {
-			return e.startLiveQuery(ectx, responseChannel, query, queryContext.TimeRange)
+			return e.startLiveQuery(ectx, responseChannel, query, query.TimeRange, req.PluginContext)
 		})
 	}
 
@@ -151,7 +153,7 @@ func (e *cloudWatchExecutor) sendLiveQueriesToChannel(queryContext *tsdb.TsdbQue
 	}
 }
 
-func (e *cloudWatchExecutor) getQueue(queueKey string) (chan bool, error) {
+func (e *cloudWatchExecutor) getQueue(queueKey string, pluginCtx backend.PluginContext) (chan bool, error) {
 	e.logsService.queueLock.Lock()
 	defer e.logsService.queueLock.Unlock()
 
@@ -159,7 +161,7 @@ func (e *cloudWatchExecutor) getQueue(queueKey string) (chan bool, error) {
 		return queue, nil
 	}
 
-	concurrentQueriesQuota := e.fetchConcurrentQueriesQuota(queueKey)
+	concurrentQueriesQuota := e.fetchConcurrentQueriesQuota(queueKey, pluginCtx)
 
 	queueChannel := make(chan bool, concurrentQueriesQuota)
 	e.logsService.queues[queueKey] = queueChannel
@@ -167,8 +169,8 @@ func (e *cloudWatchExecutor) getQueue(queueKey string) (chan bool, error) {
 	return queueChannel, nil
 }
 
-func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) int {
-	sess, err := e.newSession(region)
+func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string, pluginCtx backend.PluginContext) int {
+	sess, err := e.newSession(region, pluginCtx)
 	if err != nil {
 		plog.Warn("Could not get service quota client")
 		return defaultConcurrentQueries
@@ -200,7 +202,8 @@ func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) int {
 		return defaultConcurrentQueries
 	}
 
-	if defaultConcurrentQueriesQuota != nil && defaultConcurrentQueriesQuota.Quota != nil && defaultConcurrentQueriesQuota.Quota.Value != nil {
+	if defaultConcurrentQueriesQuota != nil && defaultConcurrentQueriesQuota.Quota != nil &&
+		defaultConcurrentQueriesQuota.Quota.Value != nil {
 		return int(*defaultConcurrentQueriesQuota.Quota.Value)
 	}
 
@@ -208,16 +211,26 @@ func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) int {
 	return defaultConcurrentQueries
 }
 
-func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan *tsdb.Response, query *tsdb.Query, timeRange *tsdb.TimeRange) error {
-	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
-	parameters := query.Model
-	region := parameters.Get("region").MustString(defaultRegion)
-	logsClient, err := e.getCWLogsClient(region)
+//nolint: staticcheck // plugins.DataResponse deprecated
+func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan *backend.QueryDataResponse, query backend.DataQuery, timeRange backend.TimeRange, pluginCtx backend.PluginContext) error {
+	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
 		return err
 	}
 
-	queue, err := e.getQueue(fmt.Sprintf("%s-%d", region, e.DataSource.Id))
+	dsInfo, err := e.getDSInfo(pluginCtx)
+	if err != nil {
+		return err
+	}
+
+	defaultRegion := dsInfo.region
+	region := model.Get("region").MustString(defaultRegion)
+	logsClient, err := e.getCWLogsClient(region, pluginCtx)
+	if err != nil {
+		return err
+	}
+
+	queue, err := e.getQueue(fmt.Sprintf("%s-%d", region, dsInfo.datasourceID), pluginCtx)
 	if err != nil {
 		return err
 	}
@@ -226,8 +239,13 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 	queue <- true
 	defer func() { <-queue }()
 
-	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, parameters, timeRange)
+	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
 	if err != nil {
+		responseChannel <- &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				query.RefID: {Error: err},
+			},
+		}
 		return err
 	}
 
@@ -250,42 +268,17 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 			return retryer.FuncError, err
 		}
 
-		dataFrame.Name = query.RefId
-		dataFrame.RefID = query.RefId
-		var dataFrames data.Frames
-
-		// When a query of the form "stats ... by ..." is made, we want to return
-		// one series per group defined in the query, but due to the format
-		// the query response is in, there does not seem to be a way to tell
-		// by the response alone if/how the results should be grouped.
-		// Because of this, if the frontend sees that a "stats ... by ..." query is being made
-		// the "statsGroups" parameter is sent along with the query to the backend so that we
-		// can correctly group the CloudWatch logs response.
-		statsGroups := parameters.Get("statsGroups").MustStringArray()
-		if len(statsGroups) > 0 && len(dataFrame.Fields) > 0 {
-			groupedFrames, err := groupResults(dataFrame, statsGroups)
-			if err != nil {
-				return retryer.FuncError, err
-			}
-
-			dataFrames = groupedFrames
-		} else {
-			if dataFrame.Meta != nil {
-				dataFrame.Meta.PreferredVisualization = "logs"
-			} else {
-				dataFrame.Meta = &data.FrameMeta{
-					PreferredVisualization: "logs",
-				}
-			}
-
-			dataFrames = data.Frames{dataFrame}
+		dataFrame.Name = query.RefID
+		dataFrame.RefID = query.RefID
+		dataFrames, err := groupResponseFrame(dataFrame, model.Get("statsGroups").MustStringArray())
+		if err != nil {
+			return retryer.FuncError, fmt.Errorf("failed to group dataframe response: %v", err)
 		}
 
-		responseChannel <- &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				query.RefId: {
-					RefId:      query.RefId,
-					Dataframes: tsdb.NewDecodedDataFrames(dataFrames),
+		responseChannel <- &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				query.RefID: {
+					Frames: dataFrames,
 				},
 			},
 		}
@@ -298,6 +291,54 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 
 		return retryer.FuncSuccess, nil
 	}, maxAttempts, minRetryDelay, maxRetryDelay)
+}
+
+func groupResponseFrame(frame *data.Frame, statsGroups []string) (data.Frames, error) {
+	var dataFrames data.Frames
+
+	// When a query of the form "stats ... by ..." is made, we want to return
+	// one series per group defined in the query, but due to the format
+	// the query response is in, there does not seem to be a way to tell
+	// by the response alone if/how the results should be grouped.
+	// Because of this, if the frontend sees that a "stats ... by ..." query is being made
+	// the "statsGroups" parameter is sent along with the query to the backend so that we
+	// can correctly group the CloudWatch logs response.
+	// Check if we have time field though as it makes sense to split only for time series.
+	if hasTimeField(frame) {
+		if len(statsGroups) > 0 && len(frame.Fields) > 0 {
+			groupedFrames, err := groupResults(frame, statsGroups)
+			if err != nil {
+				return nil, err
+			}
+
+			dataFrames = groupedFrames
+		} else {
+			setPreferredVisType(frame, "logs")
+			dataFrames = data.Frames{frame}
+		}
+	} else {
+		dataFrames = data.Frames{frame}
+	}
+	return dataFrames, nil
+}
+
+func hasTimeField(frame *data.Frame) bool {
+	for _, field := range frame.Fields {
+		if field.Type() == data.FieldTypeNullableTime {
+			return true
+		}
+	}
+	return false
+}
+
+func setPreferredVisType(frame *data.Frame, visType data.VisType) {
+	if frame.Meta != nil {
+		frame.Meta.PreferredVisualization = visType
+	} else {
+		frame.Meta = &data.FrameMeta{
+			PreferredVisualization: visType,
+		}
+	}
 }
 
 // Service quotas client factory.

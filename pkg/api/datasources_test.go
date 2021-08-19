@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -33,7 +35,11 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		})
 
 		// handler func being tested
-		hs := &HTTPServer{Bus: bus.GetBus(), Cfg: setting.NewCfg()}
+		hs := &HTTPServer{
+			Bus:           bus.GetBus(),
+			Cfg:           setting.NewCfg(),
+			PluginManager: &fakePluginManager{},
+		}
 		sc.handlerFunc = hs.GetDataSources
 		sc.fakeReq("GET", "/api/datasources").exec()
 
@@ -49,7 +55,13 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 
 	loggedInUserScenario(t, "Should be able to save a data source when calling DELETE on non-existing",
 		"/api/datasources/name/12345", func(sc *scenarioContext) {
-			sc.handlerFunc = DeleteDataSourceByName
+			// handler func being tested
+			hs := &HTTPServer{
+				Bus:           bus.GetBus(),
+				Cfg:           setting.NewCfg(),
+				PluginManager: &fakePluginManager{},
+			}
+			sc.handlerFunc = hs.DeleteDataSourceByName
 			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 404, sc.resp.Code)
 		})
@@ -61,7 +73,7 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/api/datasources")
 
-	sc.m.Post(sc.url, Wrap(func(c *models.ReqContext) Response {
+	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
 		return AddDataSource(c, models.AddDataSourceCommand{
 			Name: "Test",
 			Url:  "invalid:url",
@@ -91,7 +103,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/api/datasources")
 
-	sc.m.Post(sc.url, Wrap(func(c *models.ReqContext) Response {
+	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
 		return AddDataSource(c, models.AddDataSourceCommand{
 			Name: name,
 			Url:  url,
@@ -109,7 +121,7 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
-	sc.m.Put(sc.url, Wrap(func(c *models.ReqContext) Response {
+	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
 		return AddDataSource(c, models.AddDataSourceCommand{
 			Name: "Test",
 			Url:  "invalid:url",
@@ -139,7 +151,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
-	sc.m.Put(sc.url, Wrap(func(c *models.ReqContext) Response {
+	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
 		return AddDataSource(c, models.AddDataSourceCommand{
 			Name: name,
 			Url:  url,

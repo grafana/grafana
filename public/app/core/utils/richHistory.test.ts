@@ -8,9 +8,9 @@ import {
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
   filterAndSortQueries,
+  SortOrder,
 } from './richHistory';
 import store from 'app/core/store';
-import { SortOrder } from './richHistory';
 import { dateTime, DataQuery } from '@grafana/data';
 
 const mock: any = {

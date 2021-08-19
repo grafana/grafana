@@ -5,22 +5,23 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUploadToAzureBlob(t *testing.T) {
-	SkipConvey("[Integration test] for external_image_store.azure_blob", t, func() {
+	t.Run("[Integration test] for external_image_store.azure_blob", func(t *testing.T) {
+		t.Skip("Skipping testing for external_image_store.azure_blob")
 		cfg := setting.NewCfg()
 		err := cfg.Load(&setting.CommandLineArgs{
 			HomePath: "../../../",
 		})
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
 		uploader, _ := NewImageUploader()
 
 		path, err := uploader.Upload(context.Background(), "../../../public/img/logo_transparent_400x.png")
 
-		So(err, ShouldBeNil)
-		So(path, ShouldNotEqual, "")
+		require.NoError(t, err)
+		require.NotEqual(t, "", path)
 	})
 }

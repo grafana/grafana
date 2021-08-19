@@ -5,7 +5,7 @@
     "addLabel": "type/question",
     "removeLabel": "bot/question",
     "action": "close",
-    "comment": "Please ask your question on [community.grafana.com/](https://community.grafana.com/). To avoid having your issue closed in the future, please read our [CONTRIBUTING](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guidelines.\n\nHappy graphing!"
+    "comment": "Please ask your question on [community.grafana.com/](https://community.grafana.com/). To avoid having your issue closed in the future, please read our [CONTRIBUTING](https://github.com/grafana/grafana/blob/main/CONTRIBUTING.md) guidelines.\n\nHappy graphing!"
   },
   {
     "type": "comment",
@@ -20,7 +20,7 @@
     "addLabel": "type/duplicate",
     "removeLabel": "bot/duplicate",
     "action": "close",
-    "comment": "Thanks for creating this issue! It looks like this has already been reported by another user. We’ve closed this in favor of the existing one. Please consider adding any details you think is missing to that issue.\n\nTo avoid having your issue closed in the future, please read our [CONTRIBUTING](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guidelines.\n\nHappy graphing!"
+    "comment": "Thanks for creating this issue! It looks like this has already been reported by another user. We’ve closed this in favor of the existing one. Please consider adding any details you think is missing to that issue.\n\nTo avoid having your issue closed in the future, please read our [CONTRIBUTING](https://github.com/grafana/grafana/blob/main/CONTRIBUTING.md) guidelines.\n\nHappy graphing!"
   },
   {
     "type": "comment",
@@ -35,13 +35,13 @@
     "action": "updateLabels",
     "addLabel": "needs more info",
     "removeLabel": "bot/needs more info",
-    "comment": "Thanks for creating this issue! We think it's missing some basic information. \r\n\r\nFollow the issue template and add additional information that will help us replicate the problem. \r\nFor data visualization issues: \r\n- Query results from the inspect drawer (data tab & query inspector)\r\n- Panel settings can be extracted in the panel inspect drawer JSON tab\r\n\r\nFor dashboard related issues: \r\n- Dashboard JSON can be found in the dashboard settings JSON model view\r\n\r\nFor authentication and alerting issues, Grafana server logs are useful. \r\n\r\nHappy graphing!"
+    "comment": "Thanks for creating this issue! We think it's missing some basic information. \r\n\r\nFollow the issue template and add additional information that will help us replicate the problem. \r\nFor data visualization issues: \r\n- Query results from the inspect drawer (data tab & query inspector)\r\n- Panel settings can be extracted in the panel inspect drawer JSON tab\r\n\r\nFor dashboard related issues: \r\n- Dashboard JSON can be found in the dashboard settings JSON model view\r\n\r\nFor authentication, provisioning and alerting issues, Grafana server logs are useful. \r\n\r\nHappy graphing!"
   },
   {
     "type": "label",
     "name": "bot/no new info",
     "action": "close",
-    "comment": "We've closed this issue since it needs more information and hasn't had any activity recently. We can re-open it after you you add more information. To avoid having your issue closed in the future, please read our [CONTRIBUTING](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guidelines.\n\nHappy graphing!"
+    "comment": "We've closed this issue since it needs more information and hasn't had any activity recently. We can re-open it after you you add more information. To avoid having your issue closed in the future, please read our [CONTRIBUTING](https://github.com/grafana/grafana/blob/main/CONTRIBUTING.md) guidelines.\n\nHappy graphing!"
   },
   {
     "type": "label",

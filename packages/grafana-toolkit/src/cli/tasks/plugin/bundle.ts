@@ -42,32 +42,34 @@ export const bundlePlugin = async ({ watch, production, preserveConsole }: Plugi
 
         if (output.errors.length) {
           console.log('Compilation failed!');
-          output.errors.forEach(e => console.log(e));
+          output.errors.forEach((e) => console.log(e));
 
           if (output.warnings.length) {
             console.log('Warnings:');
-            output.warnings.forEach(w => console.log(w));
+            output.warnings.forEach((w) => console.log(w));
           }
         }
         if (output.errors.length === 0 && output.warnings.length) {
           console.log('Compiled with warnings!');
-          output.warnings.forEach(w => console.log(w));
+          output.warnings.forEach((w) => console.log(w));
         }
       });
     } else {
       compiler.run((err: Error, stats: webpack.Stats) => {
         if (err) {
-          reject(err.message);
-
+          reject(err);
           return;
         }
+
         if (stats.hasErrors()) {
-          stats.compilation.errors.forEach(e => {
+          stats.compilation.errors.forEach((e) => {
             console.log(e.message);
           });
 
           reject('Build failed');
+          return;
         }
+
         console.log('\n', stats.toString({ colors: true }), '\n');
         resolve();
       });

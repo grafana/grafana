@@ -1,92 +1,163 @@
-import { TempoDatasource, TempoQuery } from './datasource';
-import { DataQueryRequest, DataSourceInstanceSettings, FieldType, PluginType, dateTime } from '@grafana/data';
-import { BackendSrv, BackendSrvRequest, getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import { lastValueFrom, Observable, of } from 'rxjs';
+import {
+  DataFrame,
+  dataFrameToJSON,
+  DataSourceInstanceSettings,
+  FieldType,
+  getDefaultTimeRange,
+  LoadingState,
+  MutableDataFrame,
+  PluginType,
+} from '@grafana/data';
 
-describe('JaegerDatasource', () => {
-  it('returns trace when queried', async () => {
-    await withMockedBackendSrv(makeBackendSrvMock('12345'), async () => {
-      const ds = new TempoDatasource(defaultSettings);
-      const response = await ds.query(defaultQuery).toPromise();
-      const field = response.data[0].fields[0];
-      expect(field.name).toBe('trace');
-      expect(field.type).toBe(FieldType.trace);
-      expect(field.values.get(0)).toEqual({
-        traceId: '12345',
-      });
-    });
-  });
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { TempoDatasource } from './datasource';
+import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import mockJson from './mockJsonResponse.json';
 
-  it('returns trace when traceId with special characters is queried', async () => {
-    await withMockedBackendSrv(makeBackendSrvMock('a/b'), async () => {
-      const ds = new TempoDatasource(defaultSettings);
-      const query = {
-        ...defaultQuery,
-        targets: [
-          {
-            query: 'a/b',
-            refId: '1',
-          },
+describe('Tempo data source', () => {
+  it('parses json fields from backend', async () => {
+    setupBackendSrv(
+      new MutableDataFrame({
+        fields: [
+          { name: 'traceID', values: ['04450900759028499335'] },
+          { name: 'spanID', values: ['4322526419282105830'] },
+          { name: 'parentSpanID', values: [''] },
+          { name: 'operationName', values: ['store.validateQueryTimeRange'] },
+          { name: 'startTime', values: [1619712655875.4539] },
+          { name: 'duration', values: [14.984] },
+          { name: 'serviceTags', values: ['{"key":"servicetag1","value":"service"}'] },
+          { name: 'logs', values: ['{"timestamp":12345,"fields":[{"key":"count","value":1}]}'] },
+          { name: 'tags', values: ['{"key":"tag1","value":"val1"}'] },
+          { name: 'serviceName', values: ['service'] },
         ],
-      };
-      const response = await ds.query(query).toPromise();
-      const field = response.data[0].fields[0];
-      expect(field.name).toBe('trace');
-      expect(field.type).toBe(FieldType.trace);
-      expect(field.values.get(0)).toEqual({
-        traceId: 'a/b',
-      });
-    });
+      })
+    );
+    const ds = new TempoDatasource(defaultSettings);
+    const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1' }] } as any));
+
+    expect(
+      (response.data[0] as DataFrame).fields.map((f) => ({
+        name: f.name,
+        values: f.values.toArray(),
+      }))
+    ).toMatchObject([
+      { name: 'traceID', values: ['04450900759028499335'] },
+      { name: 'spanID', values: ['4322526419282105830'] },
+      { name: 'parentSpanID', values: [''] },
+      { name: 'operationName', values: ['store.validateQueryTimeRange'] },
+      { name: 'startTime', values: [1619712655875.4539] },
+      { name: 'duration', values: [14.984] },
+      { name: 'serviceTags', values: [{ key: 'servicetag1', value: 'service' }] },
+      { name: 'logs', values: [{ timestamp: 12345, fields: [{ key: 'count', value: 1 }] }] },
+      { name: 'tags', values: [{ key: 'tag1', value: 'val1' }] },
+      { name: 'serviceName', values: ['service'] },
+    ]);
+
+    expect(
+      (response.data[1] as DataFrame).fields.map((f) => ({
+        name: f.name,
+        values: f.values.toArray(),
+      }))
+    ).toMatchObject([
+      { name: 'id', values: ['4322526419282105830'] },
+      { name: 'title', values: ['service'] },
+      { name: 'subTitle', values: ['store.validateQueryTimeRange'] },
+      { name: 'mainStat', values: ['14.98ms (100%)'] },
+      { name: 'secondaryStat', values: ['14.98ms (100%)'] },
+      { name: 'color', values: [1.000007560204647] },
+    ]);
+
+    expect(
+      (response.data[2] as DataFrame).fields.map((f) => ({
+        name: f.name,
+        values: f.values.toArray(),
+      }))
+    ).toMatchObject([
+      { name: 'id', values: [] },
+      { name: 'target', values: [] },
+      { name: 'source', values: [] },
+    ]);
   });
 
-  it('returns empty response if trace id is not specified', async () => {
+  it('runs service map queries', async () => {
+    const ds = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: {
+        serviceMap: {
+          datasourceUid: 'prom',
+        },
+      },
+    });
+    setDataSourceSrv(backendSrvWithPrometheus as any);
+    const response = await lastValueFrom(
+      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)
+    );
+
+    expect(response.data).toHaveLength(2);
+    expect(response.data[0].name).toBe('Nodes');
+    expect(response.data[0].fields[0].values.length).toBe(3);
+
+    expect(response.data[1].name).toBe('Edges');
+    expect(response.data[1].fields[0].values.length).toBe(2);
+
+    expect(response.state).toBe(LoadingState.Done);
+  });
+
+  it('should handle json file upload', async () => {
     const ds = new TempoDatasource(defaultSettings);
-    const response = await ds
-      .query({
-        ...defaultQuery,
-        targets: [],
-      })
-      .toPromise();
+    ds.uploadedJson = JSON.stringify(mockJson);
+    const response = await lastValueFrom(
+      ds.query({
+        targets: [{ queryType: 'upload', refId: 'A' }],
+      } as any)
+    );
     const field = response.data[0].fields[0];
-    expect(field.name).toBe('trace');
-    expect(field.type).toBe(FieldType.trace);
-    expect(field.values.length).toBe(0);
+    expect(field.name).toBe('traceID');
+    expect(field.type).toBe(FieldType.string);
+    expect(field.values.get(0)).toBe('60ba2abb44f13eae');
+    expect(field.values.length).toBe(6);
   });
 });
 
-function makeBackendSrvMock(traceId: string) {
-  return {
-    datasourceRequest(options: BackendSrvRequest): Promise<any> {
-      expect(options.url.substr(options.url.length - 17, options.url.length)).toBe(
-        `/api/traces/${encodeURIComponent(traceId)}`
-      );
-      return Promise.resolve({
-        data: {
-          data: [
-            {
-              traceId,
-            },
-          ],
+const backendSrvWithPrometheus = {
+  async get(uid: string) {
+    if (uid === 'prom') {
+      return {
+        query() {
+          return of({ data: [totalsPromMetric] }, { data: [secondsPromMetric] });
         },
-      });
-    },
-  } as any;
-}
+      };
+    }
+    throw new Error('unexpected uid');
+  },
+};
 
-async function withMockedBackendSrv(srv: BackendSrv, fn: () => Promise<void>) {
-  const oldSrv = getBackendSrv();
-  setBackendSrv(srv);
-  await fn();
-  setBackendSrv(oldSrv);
+function setupBackendSrv(frame: DataFrame) {
+  setBackendSrv({
+    fetch(): Observable<FetchResponse<BackendDataSourceResponse>> {
+      return of(
+        createFetchResponse({
+          results: {
+            refid1: {
+              frames: [dataFrameToJSON(frame)],
+            },
+          },
+        })
+      );
+    },
+  } as any);
 }
 
 const defaultSettings: DataSourceInstanceSettings = {
   id: 0,
   uid: '0',
   type: 'tracing',
-  name: 'jaeger',
+  name: 'tempo',
+  access: 'proxy',
   meta: {
-    id: 'jaeger',
-    name: 'jaeger',
+    id: 'tempo',
+    name: 'tempo',
     type: PluginType.datasource,
     info: {} as any,
     module: '',
@@ -95,25 +166,28 @@ const defaultSettings: DataSourceInstanceSettings = {
   jsonData: {},
 };
 
-const defaultQuery: DataQueryRequest<TempoQuery> = {
-  requestId: '1',
-  dashboardId: 0,
-  interval: '0',
-  intervalMs: 10,
-  panelId: 0,
-  scopedVars: {},
-  range: {
-    from: dateTime().subtract(1, 'h'),
-    to: dateTime(),
-    raw: { from: '1h', to: 'now' },
-  },
-  timezone: 'browser',
-  app: 'explore',
-  startTime: 0,
-  targets: [
-    {
-      query: '12345',
-      refId: '1',
-    },
+const totalsPromMetric = new MutableDataFrame({
+  refId: 'tempo_service_graph_request_total',
+  fields: [
+    { name: 'Time', values: [1628169788000, 1628169788000] },
+    { name: 'client', values: ['app', 'lb'] },
+    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+    { name: 'job', values: ['local_scrape', 'local_scrape'] },
+    { name: 'server', values: ['db', 'app'] },
+    { name: 'tempo_config', values: ['default', 'default'] },
+    { name: 'Value #tempo_service_graph_request_total', values: [10, 20] },
   ],
-};
+});
+
+const secondsPromMetric = new MutableDataFrame({
+  refId: 'tempo_service_graph_request_server_seconds_sum',
+  fields: [
+    { name: 'Time', values: [1628169788000, 1628169788000] },
+    { name: 'client', values: ['app', 'lb'] },
+    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+    { name: 'job', values: ['local_scrape', 'local_scrape'] },
+    { name: 'server', values: ['db', 'app'] },
+    { name: 'tempo_config', values: ['default', 'default'] },
+    { name: 'Value #tempo_service_graph_request_server_seconds_sum', values: [10, 40] },
+  ],
+});

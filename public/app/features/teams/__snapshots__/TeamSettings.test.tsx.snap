@@ -3,7 +3,7 @@
 exports[`Render should render component 1`] = `
 <VerticalGroup>
   <FieldSet
-    label="Team Settings"
+    label="Team settings"
   >
     <Form
       defaultValues={

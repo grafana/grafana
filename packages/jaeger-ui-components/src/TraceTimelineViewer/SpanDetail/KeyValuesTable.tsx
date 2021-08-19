@@ -14,21 +14,20 @@
 
 import * as React from 'react';
 import jsonMarkup from 'json-markup';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import cx from 'classnames';
 
 import CopyIcon from '../../common/CopyIcon';
 
 import { TNil } from '../../types';
-import { TraceKeyValuePair, TraceLink } from '@grafana/data';
+import { TraceKeyValuePair, TraceLink } from '../../types/trace';
 import { UIDropdown, UIIcon, UIMenu, UIMenuItem } from '../../uiElementsContext';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';
 
+const copyIconClassName = 'copyIcon';
+
 export const getStyles = createStyle((theme: Theme) => {
-  const copyIcon = css`
-    label: copyIcon;
-  `;
   return {
     KeyValueTable: css`
       label: KeyValueTable;
@@ -52,8 +51,8 @@ export const getStyles = createStyle((theme: Theme) => {
       &:nth-child(2n) > td {
         background: ${autoColor(theme, '#f5f5f5')};
       }
-      &:not(:hover) .${copyIcon} {
-        display: none;
+      &:not(:hover) .${copyIconClassName} {
+        visibility: hidden;
       }
     `,
     keyColumn: css`
@@ -71,7 +70,6 @@ export const getStyles = createStyle((theme: Theme) => {
       vertical-align: middle;
       font-weight: bold;
     `,
-    copyIcon,
   };
 });
 
@@ -162,7 +160,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
                 <td>{valueMarkup}</td>
                 <td className={styles.copyColumn}>
                   <CopyIcon
-                    className={styles.copyIcon}
+                    className={copyIconClassName}
                     copyText={JSON.stringify(row, null, 2)}
                     tooltipTitle="Copy JSON"
                   />

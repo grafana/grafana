@@ -19,9 +19,9 @@ import (
 )
 
 var mailTemplates *template.Template
-var tmplResetPassword = "reset_password.html"
-var tmplSignUpStarted = "signup_started.html"
-var tmplWelcomeOnSignUp = "welcome_on_signup.html"
+var tmplResetPassword = "reset_password"
+var tmplSignUpStarted = "signup_started"
+var tmplWelcomeOnSignUp = "welcome_on_signup"
 
 func init() {
 	registry.RegisterService(&NotificationService{})
@@ -56,10 +56,12 @@ func (ns *NotificationService) Init() error {
 		"Subject": subjectTemplateFunc,
 	})
 
-	templatePattern := filepath.Join(setting.StaticRootPath, ns.Cfg.Smtp.TemplatesPattern)
-	_, err := mailTemplates.ParseGlob(templatePattern)
-	if err != nil {
-		return err
+	for _, pattern := range ns.Cfg.Smtp.TemplatesPatterns {
+		templatePattern := filepath.Join(ns.Cfg.StaticRootPath, pattern)
+		_, err := mailTemplates.ParseGlob(templatePattern)
+		if err != nil {
+			return err
+		}
 	}
 
 	if !util.IsEmail(ns.Cfg.Smtp.FromAddress) {
@@ -83,7 +85,7 @@ func (ns *NotificationService) Run(ctx context.Context) error {
 				ns.log.Error("Failed to send webrequest ", "error", err)
 			}
 		case msg := <-ns.mailQueue:
-			num, err := ns.send(msg)
+			num, err := ns.Send(msg)
 			tos := strings.Join(msg.To, "; ")
 			info := ""
 			if err != nil {
@@ -133,7 +135,7 @@ func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, 
 		return err
 	}
 
-	_, err = ns.send(message)
+	_, err = ns.Send(message)
 	return err
 }
 

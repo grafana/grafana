@@ -1,6 +1,6 @@
 import { Labels } from './data';
-import { GraphSeriesXY } from './graph';
 import { DataFrame } from './dataFrame';
+import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
 
 /**
@@ -20,6 +20,7 @@ export enum LogLevel {
   error = 'error',
   info = 'info',
   information = 'info',
+  informational = 'info',
   notice = 'info',
   dbug = 'debug',
   debug = 'debug',
@@ -62,6 +63,7 @@ export interface LogRowModel {
   // Actual log line
   entry: string;
   hasAnsi: boolean;
+  hasUnescapedContent: boolean;
   labels: Labels;
   logLevel: LogLevel;
   raw: string;
@@ -81,8 +83,9 @@ export interface LogsModel {
   hasUniqueLabels: boolean;
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
-  series?: GraphSeriesXY[];
+  series?: DataFrame[];
   visibleRange?: AbsoluteTimeRange;
+  queries?: DataQuery[];
 }
 
 export interface LogSearchMatch {

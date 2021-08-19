@@ -6,13 +6,28 @@ import {
   DataQuery,
   DataSourceJsonData,
   ScopedVars,
+  makeClassES5Compatible,
+  DataFrame,
+  parseLiveChannelAddress,
+  StreamingFrameOptions,
+  StreamingFrameAction,
 } from '@grafana/data';
-import { Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
-import { getBackendSrv, getDataSourceSrv } from '../services';
-import { toDataQueryResponse } from './queryResponse';
+import { merge, Observable, of } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
+import { getBackendSrv, getDataSourceSrv, getGrafanaLiveSrv } from '../services';
+import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
 const ExpressionDatasourceID = '__expr__';
+
+class HealthCheckError extends Error {
+  details: HealthCheckResultDetails;
+
+  constructor(message: string, details: HealthCheckResultDetails) {
+    super(message);
+    this.details = details;
+    this.name = 'HealthCheckError';
+  }
+}
 
 /**
  * Describes the current health status of a data source plugin.
@@ -26,6 +41,17 @@ export enum HealthStatus {
 }
 
 /**
+ * Describes the details in the payload returned when checking the health of a data source
+ * plugin.
+ *
+ * If the 'message' key exists, this will be displayed in the error message in DataSourceSettingsPage
+ * If the 'verboseMessage' key exists, this will be displayed in the expandable details in the error message in DataSourceSettingsPage
+ *
+ * @public
+ */
+export type HealthCheckResultDetails = Record<string, any> | undefined;
+
+/**
  * Describes the payload returned when checking the health of a data source
  * plugin.
  *
@@ -34,7 +60,7 @@ export enum HealthStatus {
 export interface HealthCheckResult {
   status: HealthStatus;
   message: string;
-  details?: Record<string, any>;
+  details: HealthCheckResultDetails;
 }
 
 /**
@@ -43,7 +69,7 @@ export interface HealthCheckResult {
  *
  * @public
  */
-export class DataSourceWithBackend<
+class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
@@ -59,10 +85,10 @@ export class DataSourceWithBackend<
     let targets = request.targets;
 
     if (this.filterQuery) {
-      targets = targets.filter(q => this.filterQuery!(q));
+      targets = targets.filter((q) => this.filterQuery!(q));
     }
 
-    const queries = targets.map(q => {
+    const queries = targets.map((q) => {
       let datasourceId = this.id;
 
       if (q.datasource === ExpressionDatasourceID) {
@@ -104,17 +130,22 @@ export class DataSourceWithBackend<
     }
 
     return getBackendSrv()
-      .fetch({
+      .fetch<BackendDataSourceResponse>({
         url: '/api/ds/query',
         method: 'POST',
         data: body,
         requestId,
       })
       .pipe(
-        map((rsp: any) => {
-          return toDataQueryResponse(rsp);
+        switchMap((raw) => {
+          const rsp = toDataQueryResponse(raw, queries as DataQuery[]);
+          // Check if any response should subscribe to a live stream
+          if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
+            return toStreamingDataResponse(rsp, request, this.streamOptionsProvider);
+          }
+          return of(rsp);
         }),
-        catchError(err => {
+        catchError((err) => {
           return of(toDataQueryResponse(err));
         })
       );
@@ -143,6 +174,11 @@ export class DataSourceWithBackend<
   }
 
   /**
+   * Optionally override the streaming behavior
+   */
+  streamOptionsProvider: StreamOptionsProvider<TQuery> = standardStreamOptionsProvider;
+
+  /**
    * Make a GET request to the datasource resource path
    */
   async getResource(path: string, params?: any): Promise<any> {
@@ -162,10 +198,10 @@ export class DataSourceWithBackend<
   async callHealthCheck(): Promise<HealthCheckResult> {
     return getBackendSrv()
       .request({ method: 'GET', url: `/api/datasources/${this.id}/health`, showErrorAlert: false })
-      .then(v => {
+      .then((v) => {
         return v as HealthCheckResult;
       })
-      .catch(err => {
+      .catch((err) => {
         return err.data as HealthCheckResult;
       });
   }
@@ -175,14 +211,85 @@ export class DataSourceWithBackend<
    * see public/app/features/datasources/state/actions.ts for what needs to be returned here
    */
   async testDatasource(): Promise<any> {
-    return this.callHealthCheck().then(res => {
+    return this.callHealthCheck().then((res) => {
       if (res.status === HealthStatus.OK) {
         return {
           status: 'success',
           message: res.message,
         };
       }
-      throw new Error(res.message);
+
+      throw new HealthCheckError(res.message, res.details);
     });
   }
 }
+
+/**
+ * @internal exported for tests
+ */
+export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
+  rsp: DataQueryResponse,
+  req: DataQueryRequest<TQuery>,
+  getter: (req: DataQueryRequest<TQuery>, frame: DataFrame) => StreamingFrameOptions
+): Observable<DataQueryResponse> {
+  const live = getGrafanaLiveSrv();
+  if (!live) {
+    return of(rsp); // add warning?
+  }
+
+  const staticdata: DataFrame[] = [];
+  const streams: Array<Observable<DataQueryResponse>> = [];
+  for (const f of rsp.data) {
+    const addr = parseLiveChannelAddress(f.meta?.channel);
+    if (addr) {
+      const frame = f as DataFrame;
+      streams.push(
+        live.getDataStream({
+          addr,
+          buffer: getter(req, frame),
+          frame,
+        })
+      );
+    } else {
+      staticdata.push(f);
+    }
+  }
+  if (staticdata.length) {
+    streams.push(of({ ...rsp, data: staticdata }));
+  }
+  if (streams.length === 1) {
+    return streams[0]; // avoid merge wrapper
+  }
+  return merge(...streams);
+}
+
+/**
+ * This allows data sources to customize the streaming connection query
+ *
+ * @public
+ */
+export type StreamOptionsProvider<TQuery extends DataQuery = DataQuery> = (
+  request: DataQueryRequest<TQuery>,
+  frame: DataFrame
+) => StreamingFrameOptions;
+
+/**
+ * @public
+ */
+export const standardStreamOptionsProvider: StreamOptionsProvider = (request: DataQueryRequest, frame: DataFrame) => {
+  const buffer: StreamingFrameOptions = {
+    maxLength: request.maxDataPoints ?? 500,
+    action: StreamingFrameAction.Append,
+  };
+
+  // For recent queries, clamp to the current time range
+  if (request.rangeRaw?.to === 'now') {
+    buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
+  }
+  return buffer;
+};
+
+//@ts-ignore
+DataSourceWithBackend = makeClassES5Compatible(DataSourceWithBackend);
+
+export { DataSourceWithBackend };

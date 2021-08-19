@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
-import { Button, TooltipPlugin, GraphNG, GraphNGLegendEvent } from '@grafana/ui';
+import { Button, GraphNGLegendEvent, TimeSeries, TooltipPlugin } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { Options } from './types';
-import { hideSeriesConfigFactory } from '../timeseries/hideSeriesConfigFactory';
+import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
 import { getXYDimensions } from './dims';
 
 interface XYChartPanelProps extends PanelProps<Options> {}
@@ -18,6 +18,16 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   onFieldConfigChange,
 }) => {
   const dims = useMemo(() => getXYDimensions(options.dims, data.series), [options.dims, data.series]);
+
+  const frames = useMemo(() => [dims.frame], [dims]);
+
+  const onLegendClick = useCallback(
+    (event: GraphNGLegendEvent) => {
+      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, frames));
+    },
+    [fieldConfig, onFieldConfigChange, frames]
+  );
+
   if (dims.error) {
     return (
       <div>
@@ -32,18 +42,10 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
     );
   }
 
-  const frames = useMemo(() => [dims.frame], [dims]);
-
-  const onLegendClick = useCallback(
-    (event: GraphNGLegendEvent) => {
-      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, frames));
-    },
-    [fieldConfig, onFieldConfigChange, frames]
-  );
-
   return (
-    <GraphNG
-      data={frames}
+    <TimeSeries
+      frames={frames}
+      structureRev={data.structureRev}
       fields={dims.fields}
       timeRange={timeRange}
       timeZone={timeZone}
@@ -52,8 +54,16 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       legend={options.legend}
       onLegendClick={onLegendClick}
     >
-      <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
-      <>{/* needs to be an array */}</>
-    </GraphNG>
+      {(config, alignedDataFrame) => {
+        return (
+          <TooltipPlugin
+            config={config}
+            data={alignedDataFrame}
+            mode={options.tooltip.mode as any}
+            timeZone={timeZone}
+          />
+        );
+      }}
+    </TimeSeries>
   );
 };

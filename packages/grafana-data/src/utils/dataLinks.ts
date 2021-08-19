@@ -44,7 +44,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
   const title = link.title ? link.title : internalLink.datasourceName;
 
   return {
-    title: replaceVariables(title),
+    title: replaceVariables(title, scopedVars),
     // In this case this is meant to be internal link (opens split view by default) the href will also points
     // to explore but this way you can open it in new tab.
     href: generateInternalHref(internalLink.datasourceName, interpolatedQuery, range),
@@ -67,11 +67,13 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
  */
 function generateInternalHref<T extends DataQuery = any>(datasourceName: string, query: T, range: TimeRange): string {
   return locationUtil.assureBaseUrl(
-    `/explore?left=${serializeStateToUrlParam({
-      range: range.raw,
-      datasource: datasourceName,
-      queries: [query],
-    })}`
+    `/explore?left=${encodeURIComponent(
+      serializeStateToUrlParam({
+        range: range.raw,
+        datasource: datasourceName,
+        queries: [query],
+      })
+    )}`
   );
 }
 

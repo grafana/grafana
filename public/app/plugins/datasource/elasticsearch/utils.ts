@@ -1,8 +1,10 @@
 import {
   isMetricAggregationWithField,
   MetricAggregation,
+  MetricAggregationWithInlineScript,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
+import { valid } from 'semver';
 
 export const describeMetric = (metric: MetricAggregation) => {
   if (!isMetricAggregationWithField(metric)) {
@@ -52,3 +54,66 @@ export const removeEmpty = <T>(obj: T): Partial<T> =>
       [key]: value,
     };
   }, {});
+
+/**
+ *  This function converts an order by string to the correct metric id For example,
+ *  if the user uses the standard deviation extended stat for the order by,
+ *  the value would be "1[std_deviation]" and this would return "1"
+ */
+export const convertOrderByToMetricId = (orderBy: string): string | undefined => {
+  const metricIdMatches = orderBy.match(/^(\d+)/);
+  return metricIdMatches ? metricIdMatches[1] : void 0;
+};
+
+/** Gets the actual script value for metrics that support inline scripts.
+ *
+ *  This is needed because the `script` is a bit polymorphic.
+ *  when creating a query with Grafana < 7.4 it was stored as:
+ * ```json
+ * {
+ *    "settings": {
+ *      "script": {
+ *        "inline": "value"
+ *      }
+ *    }
+ * }
+ * ```
+ *
+ * while from 7.4 it's stored as
+ * ```json
+ * {
+ *    "settings": {
+ *      "script": "value"
+ *    }
+ * }
+ * ```
+ *
+ * This allows us to access both formats and support both queries created before 7.4 and after.
+ */
+export const getScriptValue = (metric: MetricAggregationWithInlineScript) =>
+  (typeof metric.settings?.script === 'object' ? metric.settings?.script?.inline : metric.settings?.script) || '';
+
+/**
+ * Coerces the a version string/number to a valid semver string.
+ * It takes care of also converting from the legacy format (numeric) to the new one.
+ * @param version
+ */
+export const coerceESVersion = (version: string | number): string => {
+  if (typeof version === 'string') {
+    return valid(version) || '5.0.0';
+  }
+
+  switch (version) {
+    case 2:
+      return '2.0.0';
+    case 56:
+      return '5.6.0';
+    case 60:
+      return '6.0.0';
+    case 70:
+      return '7.0.0';
+    case 5:
+    default:
+      return '5.0.0';
+  }
+};

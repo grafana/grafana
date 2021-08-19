@@ -2,11 +2,11 @@ import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { InfoTooltip } from './InfoTooltip';
-import { Tooltip } from '../Chart/Tooltip';
+import { VizTooltip } from '../VizTooltip';
 
 export default {
   title: 'Overlays/TooltipInternal',
-  component: Tooltip,
+  component: VizTooltip,
   decorators: [withCenteredStory],
 };
 

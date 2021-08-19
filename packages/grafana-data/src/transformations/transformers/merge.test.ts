@@ -16,6 +16,20 @@ describe('Merge multiple to single', () => {
     mockTransformationsRegistry([mergeTransformer]);
   });
 
+  it('skip combine one serie', async () => {
+    const seriesA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000] },
+        { name: 'Temp', type: FieldType.number, values: [1] },
+      ],
+    });
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const result = received[0];
+      expect(seriesA).toBe(result[0]);
+    });
+  });
+
   it('combine two series into one', async () => {
     const seriesA = toDataFrame({
       name: 'A',
@@ -33,7 +47,7 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Time', FieldType.time, [1000, 2000]),
@@ -61,7 +75,7 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126]),
@@ -97,7 +111,7 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesB, seriesC])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesA, seriesB, seriesC])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Time', FieldType.time, [1000, 2000, 500]),
@@ -135,12 +149,12 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [tableA, seriesB, tableB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [tableA, seriesB, tableB])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Time', FieldType.time, [1000, 1000, 500]),
         createField('Temp', FieldType.number, [1, -1, 2]),
-        createField('Humidity', FieldType.number, [10, null, 5]),
+        createField('Humidity', FieldType.number, [10, undefined, 5]),
       ];
 
       expect(unwrap(result[0].fields)).toEqual(expected);
@@ -174,12 +188,12 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [tableA, seriesB, tableC])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [tableA, seriesB, tableC])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Time', FieldType.time, ['2019-10-01T11:10:23Z', '2019-09-01T11:10:23Z', '2019-11-01T11:10:23Z']),
         createField('Temp', FieldType.number, [1, -1, 2]),
-        createField('Humidity', FieldType.number, [10, null, 5]),
+        createField('Humidity', FieldType.number, [10, undefined, 5]),
       ];
 
       expect(unwrap(result[0].fields)).toEqual(expected);
@@ -212,7 +226,7 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [tableA, tableB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [tableA, tableB])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Country', FieldType.string, [
@@ -222,7 +236,7 @@ describe('Merge multiple to single', () => {
           'Germany',
           'Canada',
           'Canada',
-          null,
+          undefined,
         ]),
         createField('AgeGroup', FieldType.string, [
           '50 or over',
@@ -233,7 +247,7 @@ describe('Merge multiple to single', () => {
           '25 - 34',
           '18 - 24',
         ]),
-        createField('Sum', FieldType.number, [998, 1193, 1675, 146, 166, 219, null]),
+        createField('Sum', FieldType.number, [998, 1193, 1675, 146, 166, 219, undefined]),
         createField('Count', FieldType.number, [2, 4, 1, 4, 4, 2, 3]),
       ];
 
@@ -272,7 +286,7 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [tableA, tableB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [tableA, tableB])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('AgeGroup', FieldType.string, [
@@ -284,17 +298,17 @@ describe('Merge multiple to single', () => {
           '35 - 49',
           '35 - 49',
         ]),
-        createField('Count', FieldType.number, [1, 3, 2, 4, 2, null, null]),
+        createField('Count', FieldType.number, [1, 3, 2, 4, 2, undefined, undefined]),
         createField('Country', FieldType.string, [
           'Mexico',
-          null,
+          undefined,
           'Canada',
           'United States',
           'United States',
           'Germany',
           'Canada',
         ]),
-        createField('Sum', FieldType.number, [1675, null, 219, 1193, 998, 146, 166]),
+        createField('Sum', FieldType.number, [1675, undefined, 219, 1193, 998, 146, 166]),
       ];
 
       expect(unwrap(result[0].fields)).toEqual(expected);
@@ -329,13 +343,23 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [tableA, tableB, tableC])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [tableA, tableB, tableC])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126, 100, 124, 149]),
         createField('Temp', FieldType.number, [1, 4, 5, -1, 2, 3, 1, 4, 5]),
-        createField('Humidity', FieldType.number, [10, 14, 55, null, null, null, 22, 25, 30]),
-        createField('Enabled', FieldType.boolean, [null, null, null, true, false, true, null, null, null]),
+        createField('Humidity', FieldType.number, [10, 14, 55, undefined, undefined, undefined, 22, 25, 30]),
+        createField('Enabled', FieldType.boolean, [
+          undefined,
+          undefined,
+          undefined,
+          true,
+          false,
+          true,
+          undefined,
+          undefined,
+          undefined,
+        ]),
       ];
 
       expect(unwrap(result[0].fields)).toEqual(expected);
@@ -359,7 +383,7 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126]),
@@ -392,7 +416,7 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126], {}, displayProcessor),
@@ -423,7 +447,7 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126]),
@@ -454,7 +478,7 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126]),
@@ -482,7 +506,7 @@ describe('Merge multiple to single', () => {
       fields: [],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Time', FieldType.time, [100, 150, 200]),
@@ -518,7 +542,7 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB, serieC])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB, serieC])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Time', FieldType.time, [100, 150, 200]),
@@ -549,7 +573,7 @@ describe('Merge multiple to single', () => {
       fields: [],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB, serieC])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB, serieC])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [];
       const fields = unwrap(result[0].fields);
@@ -565,7 +589,7 @@ const createField = (name: string, type: FieldType, values: any[], config = {}, 
 };
 
 const unwrap = (fields: Field[]): Field[] => {
-  return fields.map(field =>
+  return fields.map((field) =>
     createField(
       field.name,
       field.type,

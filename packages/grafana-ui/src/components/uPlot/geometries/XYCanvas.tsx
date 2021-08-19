@@ -1,6 +1,6 @@
 import { usePlotContext } from '../context';
-import React from 'react';
-import { css } from 'emotion';
+import React, { useMemo } from 'react';
+import { css } from '@emotion/css';
 
 interface XYCanvasProps {}
 
@@ -9,23 +9,21 @@ interface XYCanvasProps {}
  * Useful when you want to render some overlay with canvas-independent elements on top of the plot.
  */
 export const XYCanvas: React.FC<XYCanvasProps> = ({ children }) => {
-  const plotContext = usePlotContext();
-  const plotInstance = plotContext.getPlotInstance();
+  const plotCtx = usePlotContext();
+  const plotInstance = plotCtx.plot;
 
   if (!plotInstance) {
     return null;
   }
 
-  return (
-    <div
-      className={css`
-        position: absolute;
-        overflow: visible;
-        left: ${plotInstance.bbox.left / window.devicePixelRatio}px;
-        top: ${plotInstance.bbox.top / window.devicePixelRatio}px;
-      `}
-    >
-      {children}
-    </div>
-  );
+  const className = useMemo(() => {
+    return css`
+      position: absolute;
+      overflow: visible;
+      left: ${plotInstance.bbox.left / window.devicePixelRatio}px;
+      top: ${plotInstance.bbox.top / window.devicePixelRatio}px;
+    `;
+  }, [plotInstance.bbox.left, plotInstance.bbox.top]);
+
+  return <div className={className}>{children}</div>;
 };

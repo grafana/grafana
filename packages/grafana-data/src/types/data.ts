@@ -1,6 +1,8 @@
 import { FieldConfig } from './dataFrame';
 import { DataTransformerConfig } from './transformations';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
+import { PanelPluginDataSupport } from '.';
+import { DataTopic } from './query';
 
 export type KeyValue<T = any> = Record<string, T>;
 
@@ -16,11 +18,8 @@ export enum LoadingState {
   Error = 'Error',
 }
 
-export enum DataTopic {
-  Annotations = 'annotations',
-}
-
-export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
+// Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
+export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace' | 'nodeGraph';
 
 /**
  * @public
@@ -40,6 +39,9 @@ export interface QueryResultMeta {
 
   /** Currently used to show results in Explore only in preferred visualisation option */
   preferredVisualisationType?: PreferredVisualisationType;
+
+  /** The path for live stream updates for this frame */
+  channel?: string;
 
   /**
    * Optionally identify which topic the frame should be assigned to.
@@ -66,7 +68,6 @@ export interface QueryResultMeta {
   /**
    * Legacy data source specific, should be moved to custom
    * */
-  gmdMeta?: any[]; // used by cloudwatch
   alignmentPeriod?: number; // used by cloud monitoring
   searchWords?: string[]; // used by log models and loki
   limit?: number; // used by log models and loki
@@ -124,7 +125,6 @@ export interface QueryResultBase {
 export interface Labels {
   [key: string]: string;
 }
-
 export interface Column {
   text: string; // For a Column, the 'text' is the field name
   filterable?: boolean;
@@ -164,6 +164,8 @@ export enum NullValueMode {
  * Describes and API for exposing panel specific data configurations.
  */
 export interface DataConfigSource {
+  configRev?: number;
+  getDataSupport: () => PanelPluginDataSupport;
   getTransformations: () => DataTransformerConfig[] | undefined;
   getFieldOverrideOptions: () => ApplyFieldOverrideOptions | undefined;
 }

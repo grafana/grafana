@@ -1,5 +1,5 @@
-import { map, mergeMap, throttleTime } from 'rxjs/operators';
-import { identity, Unsubscribable } from 'rxjs';
+import { mergeMap, throttleTime } from 'rxjs/operators';
+import { identity, Unsubscribable, of } from 'rxjs';
 import {
   DataQuery,
   DataQueryErrorType,
@@ -27,20 +27,14 @@ import { ExploreId, QueryOptions } from 'app/types/explore';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { notifyApp } from '../../../core/actions';
-import { preProcessPanelData, runRequest } from '../../query/state/runRequest';
-import {
-  decorateWithGraphLogsTraceAndTable,
-  decorateWithGraphResult,
-  decorateWithLogsResult,
-  decorateWithTableResult,
-} from '../utils/decorators';
+import { runRequest } from '../../query/state/runRequest';
+import { decorateData } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
-import { richHistoryUpdatedAction } from './main';
-import { stateSave } from './explorePane';
+import { richHistoryUpdatedAction, stateSave } from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
-import { createEmptyQueryResponse, makeInitialUpdateState } from './utils';
+import { createEmptyQueryResponse, createCacheKey, getResultsFromCache } from './utils';
 
 //
 // Actions and Payloads
@@ -165,6 +159,24 @@ export interface ScanStopPayload {
 }
 export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
 
+/**
+ * Adds query results to cache.
+ * This is currently used to cache last 5 query results for log queries run from logs navigation (pagination).
+ */
+export interface AddResultsToCachePayload {
+  exploreId: ExploreId;
+  cacheKey: string;
+  queryResponse: PanelData;
+}
+export const addResultsToCacheAction = createAction<AddResultsToCachePayload>('explore/addResultsToCache');
+
+/**
+ *  Clears cache.
+ */
+export interface ClearCachePayload {
+  exploreId: ExploreId;
+}
+export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
 //
 // Action creators
 //
@@ -174,7 +186,7 @@ export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
  */
 export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
   return (dispatch, getState) => {
-    const queries = getState().explore[exploreId].queries;
+    const queries = getState().explore[exploreId]!.queries;
     const query = generateEmptyQuery(queries, index);
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
@@ -194,7 +206,7 @@ export function changeQuery(
   return (dispatch, getState) => {
     // Null query means reset
     if (query === null) {
-      const queries = getState().explore[exploreId].queries;
+      const queries = getState().explore[exploreId]!.queries;
       const { refId, key } = queries[index];
       query = generateNewKeyAndAddRefIdIfMissing({ refId, key }, queries, index);
     }
@@ -210,7 +222,7 @@ export function changeQuery(
  * Clear all queries and results.
  */
 export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(scanStopAction({ exploreId }));
     dispatch(clearQueriesAction({ exploreId }));
     dispatch(stateSave());
@@ -221,7 +233,7 @@ export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
  * Cancel running queries
  */
 export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(scanStopAction({ exploreId }));
     dispatch(cancelQueriesAction({ exploreId }));
     dispatch(stateSave());
@@ -242,7 +254,7 @@ export const importQueries = (
   sourceDataSource: DataSourceApi | undefined | null,
   targetDataSource: DataSourceApi
 ): ThunkResult<void> => {
-  return async dispatch => {
+  return async (dispatch) => {
     if (!sourceDataSource) {
       // explore not initialized
       dispatch(queriesImportedAction({ exploreId, queries }));
@@ -252,11 +264,11 @@ export const importQueries = (
     let importedQueries = queries;
     // Check if queries can be imported from previously selected datasource
     if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
-      // Keep same queries if same type of datasource
-      importedQueries = [...queries];
+      // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
+      importedQueries = queries.map(({ datasource, ...query }) => query);
     } else if (targetDataSource.importQueries) {
       // Datasource-specific importers
-      importedQueries = await targetDataSource.importQueries(queries, sourceDataSource.meta);
+      importedQueries = await targetDataSource.importQueries(queries, sourceDataSource);
     } else {
       // Default is blank queries
       importedQueries = ensureQueries();
@@ -281,7 +293,7 @@ export function modifyQueries(
   modifier: any,
   index?: number
 ): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(modifyQueriesAction({ exploreId, modification, index, modifier }));
     if (!modification.preventSubmit) {
       dispatch(runQueries(exploreId));
@@ -292,12 +304,21 @@ export function modifyQueries(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
+export const runQueries = (
+  exploreId: ExploreId,
+  options?: { replaceUrl?: boolean; preserveCache?: boolean }
+): ThunkResult<void> => {
   return (dispatch, getState) => {
     dispatch(updateTime({ exploreId }));
 
+    // We always want to clear cache unless we explicitly pass preserveCache parameter
+    const preserveCache = options?.preserveCache === true;
+    if (!preserveCache) {
+      dispatch(clearCache(exploreId));
+    }
+
     const richHistory = getState().explore.richHistory;
-    const exploreItemState = getState().explore[exploreId];
+    const exploreItemState = getState().explore[exploreId]!;
     const {
       datasourceInstance,
       queries,
@@ -310,100 +331,115 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       history,
       refreshInterval,
       absoluteRange,
+      cache,
     } = exploreItemState;
+    let newQuerySub;
 
-    if (!hasNonEmptyQuery(queries)) {
-      dispatch(clearQueriesAction({ exploreId }));
-      dispatch(stateSave()); // Remember to save to state and update location
-      return;
-    }
+    const cachedValue = getResultsFromCache(cache, absoluteRange);
 
-    if (!datasourceInstance) {
-      return;
-    }
-
-    // Some datasource's query builders allow per-query interval limits,
-    // but we're using the datasource interval limit for now
-    const minInterval = datasourceInstance?.interval;
-
-    stopQueryState(querySubscription);
-
-    const datasourceId = datasourceInstance?.meta.id;
-
-    const queryOptions: QueryOptions = {
-      minInterval,
-      // maxDataPoints is used in:
-      // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
-      // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
-      // Influx - used to correctly display logs in graph
-      // TODO:unification
-      // maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
-      maxDataPoints: containerWidth,
-      liveStreaming: live,
-    };
-
-    const datasourceName = datasourceInstance.name;
-    const timeZone = getTimeZone(getState().user);
-    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning, timeZone);
-
-    let firstResponse = true;
-    dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
-
-    const newQuerySub = runRequest(datasourceInstance, transaction.request)
-      .pipe(
-        // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
-        // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
-        // actually can see what is happening.
-        live ? throttleTime(500) : identity,
-        map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-        map(decorateWithGraphLogsTraceAndTable),
-        map(decorateWithGraphResult),
-        map(decorateWithLogsResult({ absoluteRange, refreshInterval })),
-        mergeMap(decorateWithTableResult)
-      )
-      .subscribe(
-        data => {
-          if (!data.error && firstResponse) {
-            // Side-effect: Saving history in localstorage
-            const nextHistory = updateHistory(history, datasourceId, queries);
-            const nextRichHistory = addToRichHistory(
-              richHistory || [],
-              datasourceId,
-              datasourceName,
-              queries,
-              false,
-              '',
-              ''
-            );
-            dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-            dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
-
-            // We save queries to the URL here so that only successfully run queries change the URL.
+    // If we have results saved in cache, we are going to use those results instead of running queries
+    if (cachedValue) {
+      newQuerySub = of(cachedValue)
+        .pipe(mergeMap((data: PanelData) => decorateData(data, queryResponse, absoluteRange, refreshInterval, queries)))
+        .subscribe((data) => {
+          if (!data.error) {
             dispatch(stateSave());
           }
 
-          firstResponse = false;
-
           dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+        });
 
-          // Keep scanning for results if this was the last scanning transaction
-          if (getState().explore[exploreId].scanning) {
-            if (data.state === LoadingState.Done && data.series.length === 0) {
-              const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
-              dispatch(updateTime({ exploreId, absoluteRange: range }));
-              dispatch(runQueries(exploreId));
-            } else {
-              // We can stop scanning if we have a result
-              dispatch(scanStopAction({ exploreId }));
+      // If we don't have results saved in cache, run new queries
+    } else {
+      if (!hasNonEmptyQuery(queries)) {
+        dispatch(clearQueriesAction({ exploreId }));
+        dispatch(stateSave({ replace: options?.replaceUrl })); // Remember to save to state and update location
+        return;
+      }
+
+      if (!datasourceInstance) {
+        return;
+      }
+
+      // Some datasource's query builders allow per-query interval limits,
+      // but we're using the datasource interval limit for now
+      const minInterval = datasourceInstance?.interval;
+
+      stopQueryState(querySubscription);
+
+      const datasourceId = datasourceInstance?.meta.id;
+
+      const queryOptions: QueryOptions = {
+        minInterval,
+        // maxDataPoints is used in:
+        // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
+        // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
+        // Influx - used to correctly display logs in graph
+        // TODO:unification
+        // maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
+        maxDataPoints: containerWidth,
+        liveStreaming: live,
+      };
+
+      const datasourceName = datasourceInstance.name;
+      const timeZone = getTimeZone(getState().user);
+      const transaction = buildQueryTransaction(exploreId, queries, queryOptions, range, scanning, timeZone);
+
+      let firstResponse = true;
+      dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
+
+      newQuerySub = runRequest(datasourceInstance, transaction.request)
+        .pipe(
+          // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
+          // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
+          // actually can see what is happening.
+          live ? throttleTime(500) : identity,
+          mergeMap((data: PanelData) => decorateData(data, queryResponse, absoluteRange, refreshInterval, queries))
+        )
+        .subscribe(
+          (data) => {
+            if (!data.error && firstResponse) {
+              // Side-effect: Saving history in localstorage
+              const nextHistory = updateHistory(history, datasourceId, queries);
+              const nextRichHistory = addToRichHistory(
+                richHistory || [],
+                datasourceId,
+                datasourceName,
+                queries,
+                false,
+                '',
+                ''
+              );
+              dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+              dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
+
+              // We save queries to the URL here so that only successfully run queries change the URL.
+              dispatch(stateSave({ replace: options?.replaceUrl }));
             }
+
+            firstResponse = false;
+
+            dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+
+            // Keep scanning for results if this was the last scanning transaction
+            if (getState().explore[exploreId]!.scanning) {
+              if (data.state === LoadingState.Done && data.series.length === 0) {
+                const range = getShiftedTimeRange(-1, getState().explore[exploreId]!.range);
+                dispatch(updateTime({ exploreId, absoluteRange: range }));
+                dispatch(runQueries(exploreId));
+              } else {
+                // We can stop scanning if we have a result
+                dispatch(scanStopAction({ exploreId }));
+              }
+            }
+          },
+          (error) => {
+            dispatch(notifyApp(createErrorNotification('Query processing error', error)));
+            dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
+            console.error(error);
           }
-        },
-        error => {
-          dispatch(notifyApp(createErrorNotification('Query processing error', error)));
-          dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
-          console.error(error);
-        }
-      );
+        );
+    }
 
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
   };
@@ -416,7 +452,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
 export function setQueries(exploreId: ExploreId, rawQueries: DataQuery[]): ThunkResult<void> {
   return (dispatch, getState) => {
     // Inject react keys into query objects
-    const queries = getState().explore[exploreId].queries;
+    const queries = getState().explore[exploreId]!.queries;
     const nextQueries = rawQueries.map((query, index) => generateNewKeyAndAddRefIdIfMissing(query, queries, index));
     dispatch(setQueriesAction({ exploreId, queries: nextQueries }));
     dispatch(runQueries(exploreId));
@@ -433,10 +469,29 @@ export function scanStart(exploreId: ExploreId): ThunkResult<void> {
     // Register the scanner
     dispatch(scanStartAction({ exploreId }));
     // Scanning must trigger query run, and return the new range
-    const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
+    const range = getShiftedTimeRange(-1, getState().explore[exploreId]!.range);
     // Set the new range to be displayed
     dispatch(updateTime({ exploreId, absoluteRange: range }));
     dispatch(runQueries(exploreId));
+  };
+}
+
+export function addResultsToCache(exploreId: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const queryResponse = getState().explore[exploreId]!.queryResponse;
+    const absoluteRange = getState().explore[exploreId]!.absoluteRange;
+    const cacheKey = createCacheKey(absoluteRange);
+
+    // Save results to cache only when all results recived and loading is done
+    if (queryResponse.state === LoadingState.Done) {
+      dispatch(addResultsToCacheAction({ exploreId, cacheKey, queryResponse }));
+    }
+  };
+}
+
+export function clearCache(exploreId: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
+    dispatch(clearCacheAction({ exploreId }));
   };
 }
 
@@ -541,7 +596,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     }
 
     // removes a query under a given index and reassigns query keys and refIds to keep everything in order
-    const queriesAfterRemoval: DataQuery[] = [...queries.slice(0, index), ...queries.slice(index + 1)].map(query => {
+    const queriesAfterRemoval: DataQuery[] = [...queries.slice(0, index), ...queries.slice(index + 1)].map((query) => {
       return { ...query, refId: '' };
     });
 
@@ -627,7 +682,32 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
       ...state,
       scanning: false,
       scanRange: undefined,
-      update: makeInitialUpdateState(),
+    };
+  }
+
+  if (addResultsToCacheAction.match(action)) {
+    const CACHE_LIMIT = 5;
+    const { cache } = state;
+    const { queryResponse, cacheKey } = action.payload;
+
+    let newCache = [...cache];
+    const isDuplicateKey = newCache.some((c) => c.key === cacheKey);
+
+    if (!isDuplicateKey) {
+      const newCacheItem = { key: cacheKey, value: queryResponse };
+      newCache = [newCacheItem, ...newCache].slice(0, CACHE_LIMIT);
+    }
+
+    return {
+      ...state,
+      cache: newCache,
+    };
+  }
+
+  if (clearCacheAction.match(action)) {
+    return {
+      ...state,
+      cache: [],
     };
   }
 
@@ -639,7 +719,17 @@ export const processQueryResponse = (
   action: PayloadAction<QueryEndedPayload>
 ): ExploreItemState => {
   const { response } = action.payload;
-  const { request, state: loadingState, series, error, graphResult, logsResult, tableResult, traceFrames } = response;
+  const {
+    request,
+    state: loadingState,
+    series,
+    error,
+    graphResult,
+    logsResult,
+    tableResult,
+    traceFrames,
+    nodeGraphFrames,
+  } = response;
 
   if (error) {
     if (error.type === DataQueryErrorType.Timeout) {
@@ -652,18 +742,10 @@ export const processQueryResponse = (
       return state;
     }
 
-    // For Angular editors
-    state.eventBridge.emit(PanelEvents.dataError, error);
-
-    return {
-      ...state,
-      loading: false,
-      queryResponse: response,
-      graphResult: null,
-      tableResult: null,
-      logsResult: null,
-      update: makeInitialUpdateState(),
-    };
+    // Send error to Angular editors
+    if (state.datasourceInstance?.components?.QueryCtrl) {
+      state.eventBridge.emit(PanelEvents.dataError, error);
+    }
   }
 
   if (!request) {
@@ -674,8 +756,7 @@ export const processQueryResponse = (
 
   // Send legacy data to Angular editors
   if (state.datasourceInstance?.components?.QueryCtrl) {
-    const legacy = series.map(v => toLegacyResponseData(v));
-
+    const legacy = series.map((v) => toLegacyResponseData(v));
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
 
@@ -687,10 +768,10 @@ export const processQueryResponse = (
     tableResult,
     logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
-    update: makeInitialUpdateState(),
     showLogs: !!logsResult,
     showMetrics: !!graphResult,
     showTable: !!tableResult,
     showTrace: !!traceFrames.length,
+    showNodeGraph: !!nodeGraphFrames.length,
   };
 };

@@ -10,6 +10,8 @@ const setup = (renderMethod: any, propOverrides?: object) => {
   const datasourceMock: unknown = {
     languageProvider: {
       syntax: () => {},
+      getLabelKeys: () => [],
+      metrics: [],
     },
   };
   const datasource: PrometheusDatasource = datasourceMock as PrometheusDatasource;

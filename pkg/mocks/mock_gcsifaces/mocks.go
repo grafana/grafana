@@ -5,13 +5,14 @@
 package mock_gcsifaces
 
 import (
-	storage "cloud.google.com/go/storage"
 	context "context"
+	reflect "reflect"
+
+	storage "cloud.google.com/go/storage"
 	gomock "github.com/golang/mock/gomock"
 	gcsifaces "github.com/grafana/grafana/pkg/ifaces/gcsifaces"
 	google "golang.org/x/oauth2/google"
 	jwt "golang.org/x/oauth2/jwt"
-	reflect "reflect"
 )
 
 // MockStorageClient is a mock of StorageClient interface

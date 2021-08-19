@@ -12,7 +12,7 @@ However, one limitation with these plugins are that they execute on the client-s
 
 We use the term _backend plugin_ to denote that a plugin has a backend component. Still, normally a backend plugin requires frontend components as well. This is for example true for backend data source plugins which normally need configuration and query editor components implemented for the frontend.
 
-Data source plugins can be extended with a backend component. In the future we plan to support additional types and possibly new kinds of plugins, such as [notifiers for Grafana Alerting]({{< relref "../../../alerting/notifications.md" >}}) and custom authentication to name a few.
+Data source plugins can be extended with a backend component. In the future we plan to support additional types and possibly new kinds of plugins, such as [notifiers for Grafana Alerting]({{< relref "../../../alerting/old-alerting/notifications.md" >}}) and custom authentication to name a few.
 
 ## Use cases for implementing a backend plugin
 
@@ -41,7 +41,7 @@ Grafana's backend plugin system exposes a couple of different capabilities, or b
 
 ### Query data
 
-The query data capability allows a backend plugin to handle data source queries that are submitted from a [dashboard]({{< relref "../../../dashboards/_index.md" >}}), [Explore]({{< relref "../../../explore/index.md" >}}) or [Grafana Alerting]({{< relref "../../../alerting" >}}). The response contains [data frames]({{< relref "../data-frames.md" >}}), which are used to visualize metrics, logs, and traces. The query data capability is required to implement for a backend data source plugin.
+The query data capability allows a backend plugin to handle data source queries that are submitted from a [dashboard]({{< relref "../../../dashboards/_index.md" >}}), [Explore]({{< relref "../../../explore/_index.md" >}}) or [Grafana Alerting]({{< relref "../../../alerting" >}}). The response contains [data frames]({{< relref "../data-frames.md" >}}), which are used to visualize metrics, logs, and traces. The query data capability is required to implement for a backend data source plugin.
 
 ### Resources
 
@@ -49,7 +49,7 @@ The resources capability allows a backend plugin to handle custom HTTP requests 
 
 Examples of use cases for implementing resources:
 
-- Implement a custom data source proxy in case certain authentication/authorization or other requirements are required/needed that are not supported in Grafana's [built-in data proxy](https://grafana.com/docs/grafana/latest/http_api/data_source/#data-source-proxy-calls).
+- Implement a custom data source proxy in case certain authentication/authorization or other requirements are required/needed that are not supported in Grafana's [built-in data proxy]({{< relref "../../../http_api/data_source.md#data-source-proxy-calls" >}}).
 - Return data or information in a format suitable to use within a data source query editor to provide auto-complete functionality.
 - Return static resources, such as images or files.
 - Send a command to a device, such as a micro controller or IOT device.

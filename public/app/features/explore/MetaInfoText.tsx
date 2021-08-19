@@ -1,43 +1,45 @@
-import React, { memo, useContext } from 'react';
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, ThemeContext } from '@grafana/ui';
+import React, { memo } from 'react';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   metaContainer: css`
     flex: 1;
-    color: ${theme.colors.textWeak};
-    margin-bottom: ${theme.spacing.d};
+    color: ${theme.colors.text.secondary};
+    margin-bottom: ${theme.spacing(2)};
     min-width: 30%;
     display: flex;
+    flex-wrap: wrap;
   `,
   metaItem: css`
-    margin-right: ${theme.spacing.d};
+    margin-right: ${theme.spacing(2)};
+    margin-top: ${theme.spacing(0.5)};
     display: flex;
     align-items: baseline;
 
     .logs-meta-item__error {
-      color: ${theme.palette.red};
+      color: ${theme.colors.error.text};
     }
   `,
   metaLabel: css`
-    margin-right: calc(${theme.spacing.d} / 2);
-    font-size: ${theme.typography.size.sm};
-    font-weight: ${theme.typography.weight.semibold};
+    margin-right: calc(${theme.spacing(2)} / 2);
+    font-size: ${theme.typography.bodySmall.fontSize};
+    font-weight: ${theme.typography.fontWeightMedium};
   `,
   metaValue: css`
-    font-family: ${theme.typography.fontFamily.monospace};
+    font-family: ${theme.typography.fontFamilyMonospace};
+    font-size: ${theme.typography.bodySmall.fontSize};
   `,
-}));
+});
 
 export interface MetaItemProps {
   label?: string;
-  value: string;
+  value: string | JSX.Element;
 }
 
 export const MetaInfoItem = memo(function MetaInfoItem(props: MetaItemProps) {
-  const theme = useContext(ThemeContext);
-  const style = getStyles(theme);
+  const style = useStyles2(getStyles);
   const { label, value } = props;
 
   return (
@@ -53,8 +55,7 @@ export interface MetaInfoTextProps {
 }
 
 export const MetaInfoText = memo(function MetaInfoText(props: MetaInfoTextProps) {
-  const theme = useContext(ThemeContext);
-  const style = getStyles(theme);
+  const style = useStyles2(getStyles);
   const { metaItems } = props;
 
   return (

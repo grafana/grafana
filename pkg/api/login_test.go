@@ -11,10 +11,13 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/hooks"
@@ -84,6 +87,16 @@ type redirectCase struct {
 	redirectURL string
 }
 
+var oAuthInfos = map[string]*social.OAuthInfo{
+	"github": {
+		ClientId:     "fake",
+		ClientSecret: "fakefake",
+		Enabled:      true,
+		AllowSignup:  true,
+		Name:         "github",
+	},
+}
+
 func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	fakeSetIndexViewData(t)
 
@@ -92,36 +105,30 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
 	hs := &HTTPServer{
-		Cfg:     cfg,
-		License: &licensing.OSSLicensingService{},
+		Cfg:              cfg,
+		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
+		License:          &licensing.OSSLicensingService{},
+		SocialService:    &mockSocialService{},
 	}
 
-	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
+	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
 		hs.LoginView(c)
 	})
 
 	cfg.LoginCookieName = "grafana_session"
 	setting.SecretKey = "login_testing"
 
-	setting.OAuthService = &setting.OAuther{}
-	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
-	setting.OAuthService.OAuthInfos["github"] = &setting.OAuthInfo{
-		ClientId:     "fake",
-		ClientSecret: "fakefake",
-		Enabled:      true,
-		AllowSignup:  true,
-		Name:         "github",
-	}
 	setting.OAuthAutoLogin = true
 
 	oauthError := errors.New("User not a member of one of the required organizations")
-	encryptedError, _ := util.Encrypt([]byte(oauthError.Error()), setting.SecretKey)
+	encryptedError, err := util.Encrypt([]byte(oauthError.Error()), setting.SecretKey)
+	require.NoError(t, err)
 	expCookiePath := "/"
 	if len(setting.AppSubUrl) > 0 {
 		expCookiePath = setting.AppSubUrl
 	}
 	cookie := http.Cookie{
-		Name:     LoginErrorCookieName,
+		Name:     loginErrorCookieName,
 		MaxAge:   60,
 		Value:    hex.EncodeToString(encryptedError),
 		HttpOnly: true,
@@ -131,10 +138,10 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	}
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertionsWithCookie("GET", sc.url, cookie).exec()
-	assert.Equal(t, sc.resp.Code, 200)
+	require.Equal(t, 200, sc.resp.Code)
 
 	responseString, err := getBody(sc.resp)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, strings.Contains(responseString, oauthError.Error()))
 }
 
@@ -143,22 +150,22 @@ func TestLoginViewRedirect(t *testing.T) {
 
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
+	cfg := setting.NewCfg()
 	hs := &HTTPServer{
-		Cfg:     setting.NewCfg(),
-		License: &licensing.OSSLicensingService{},
+		Cfg:              cfg,
+		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
+		License:          &licensing.OSSLicensingService{},
+		SocialService:    &mockSocialService{},
 	}
 	hs.Cfg.CookieSecure = true
 
-	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
+	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
 		c.IsSignedIn = true
 		c.SignedInUser = &models.SignedInUser{
 			UserId: 10,
 		}
 		hs.LoginView(c)
 	})
-
-	setting.OAuthService = &setting.OAuther{}
-	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
 	redirectCases := []redirectCase{
 		{
@@ -276,7 +283,7 @@ func TestLoginViewRedirect(t *testing.T) {
 			}
 			sc.m.Get(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertionsWithCookie("GET", sc.url, cookie).exec()
-			assert.Equal(t, c.status, sc.resp.Code)
+			require.Equal(t, c.status, sc.resp.Code)
 			if c.status == 302 {
 				location, ok := sc.resp.Header()["Location"]
 				assert.True(t, ok)
@@ -304,7 +311,7 @@ func TestLoginViewRedirect(t *testing.T) {
 			}
 
 			responseString, err := getBody(sc.resp)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			if c.err != nil {
 				assert.True(t, strings.Contains(responseString, c.err.Error()))
 			}
@@ -326,7 +333,7 @@ func TestLoginPostRedirect(t *testing.T) {
 	}
 	hs.Cfg.CookieSecure = true
 
-	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) Response {
+	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) response.Response {
 		cmd := dtos.LoginCommand{
 			User:     "admin",
 			Password: "admin",
@@ -443,10 +450,10 @@ func TestLoginPostRedirect(t *testing.T) {
 			}
 			sc.m.Post(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertionsWithCookie("POST", sc.url, cookie).exec()
-			assert.Equal(t, sc.resp.Code, 200)
+			require.Equal(t, 200, sc.resp.Code)
 
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			redirectURL := respJSON.Get("redirectUrl").MustString()
 			if c.err != nil {
 				assert.Equal(t, "", redirectURL)
@@ -474,32 +481,36 @@ func TestLoginOAuthRedirect(t *testing.T) {
 	fakeSetIndexViewData(t)
 
 	sc := setupScenarioContext(t, "/login")
+	cfg := setting.NewCfg()
+	mock := &mockSocialService{
+		oAuthInfo: &social.OAuthInfo{
+			ClientId:     "fake",
+			ClientSecret: "fakefake",
+			Enabled:      true,
+			AllowSignup:  true,
+			Name:         "github",
+		},
+		oAuthInfos: oAuthInfos,
+	}
 	hs := &HTTPServer{
-		Cfg:     setting.NewCfg(),
-		License: &licensing.OSSLicensingService{},
+		Cfg:              cfg,
+		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
+		License:          &licensing.OSSLicensingService{},
+		SocialService:    mock,
 	}
 
-	sc.defaultHandler = Wrap(func(c *models.ReqContext) {
+	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) {
 		hs.LoginView(c)
 	})
 
-	setting.OAuthService = &setting.OAuther{}
-	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
-	setting.OAuthService.OAuthInfos["github"] = &setting.OAuthInfo{
-		ClientId:     "fake",
-		ClientSecret: "fakefake",
-		Enabled:      true,
-		AllowSignup:  true,
-		Name:         "github",
-	}
 	setting.OAuthAutoLogin = true
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
 
-	assert.Equal(t, sc.resp.Code, 307)
+	require.Equal(t, 307, sc.resp.Code)
 	location, ok := sc.resp.Header()["Location"]
 	assert.True(t, ok)
-	assert.Equal(t, location[0], "/login/github")
+	assert.Equal(t, "/login/github", location[0])
 }
 
 func TestLoginInternal(t *testing.T) {
@@ -513,35 +524,26 @@ func TestLoginInternal(t *testing.T) {
 		log:     log.New("test"),
 	}
 
-	sc.defaultHandler = Wrap(func(c *models.ReqContext) {
+	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) {
 		c.Req.URL.RawQuery = "disableAutoLogin=true"
 		hs.LoginView(c)
 	})
 
-	setting.OAuthService = &setting.OAuther{}
-	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
-	setting.OAuthService.OAuthInfos["github"] = &setting.OAuthInfo{
-		ClientId:     "fake",
-		ClientSecret: "fakefake",
-		Enabled:      true,
-		AllowSignup:  true,
-		Name:         "github",
-	}
 	setting.OAuthAutoLogin = true
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
 
 	// Shouldn't redirect to the OAuth login URL
-	assert.Equal(t, sc.resp.Code, 200)
+	assert.Equal(t, 200, sc.resp.Code)
 }
 
 func TestAuthProxyLoginEnableLoginTokenDisabled(t *testing.T) {
 	sc := setupAuthProxyLoginTest(t, false)
 
-	assert.Equal(t, sc.resp.Code, 302)
+	require.Equal(t, 302, sc.resp.Code)
 	location, ok := sc.resp.Header()["Location"]
 	assert.True(t, ok)
-	assert.Equal(t, location[0], "/")
+	assert.Equal(t, "/", location[0])
 
 	_, ok = sc.resp.Header()["Set-Cookie"]
 	assert.False(t, ok, "Set-Cookie does not exist")
@@ -549,11 +551,11 @@ func TestAuthProxyLoginEnableLoginTokenDisabled(t *testing.T) {
 
 func TestAuthProxyLoginWithEnableLoginToken(t *testing.T) {
 	sc := setupAuthProxyLoginTest(t, true)
-	require.Equal(t, sc.resp.Code, 302)
+	require.Equal(t, 302, sc.resp.Code)
 
 	location, ok := sc.resp.Header()["Location"]
 	assert.True(t, ok)
-	assert.Equal(t, location[0], "/")
+	assert.Equal(t, "/", location[0])
 	setCookie := sc.resp.Header()["Set-Cookie"]
 	require.NotNil(t, setCookie, "Set-Cookie should exist")
 	assert.Equal(t, "grafana_session=; Path=/; Max-Age=0; HttpOnly", setCookie[0])
@@ -566,12 +568,14 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 	sc.cfg.LoginCookieName = "grafana_session"
 	hs := &HTTPServer{
 		Cfg:              sc.cfg,
+		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
 		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
 		log:              log.New("hello"),
+		SocialService:    &mockSocialService{},
 	}
 
-	sc.defaultHandler = Wrap(func(c *models.ReqContext) {
+	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) {
 		c.IsSignedIn = true
 		c.SignedInUser = &models.SignedInUser{
 			UserId: 10,
@@ -579,8 +583,6 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 		hs.LoginView(c)
 	})
 
-	setting.OAuthService = &setting.OAuther{}
-	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 	sc.cfg.AuthProxyEnabled = true
 	sc.cfg.AuthProxyEnableLoginToken = enableLoginToken
 
@@ -609,7 +611,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		HooksService:     hookService,
 	}
 
-	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) Response {
+	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) response.Response {
 		cmd := dtos.LoginCommand{
 			User:     "admin",
 			Password: "admin",
@@ -695,4 +697,33 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 			}
 		})
 	}
+}
+
+type mockSocialService struct {
+	oAuthInfo       *social.OAuthInfo
+	oAuthInfos      map[string]*social.OAuthInfo
+	oAuthProviders  map[string]bool
+	httpClient      *http.Client
+	socialConnector social.SocialConnector
+	err             error
+}
+
+func (m *mockSocialService) GetOAuthInfoProvider(name string) *social.OAuthInfo {
+	return m.oAuthInfo
+}
+
+func (m *mockSocialService) GetOAuthInfoProviders() map[string]*social.OAuthInfo {
+	return m.oAuthInfos
+}
+
+func (m *mockSocialService) GetOAuthProviders() map[string]bool {
+	return m.oAuthProviders
+}
+
+func (m *mockSocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
+	return m.httpClient, m.err
+}
+
+func (m *mockSocialService) GetConnector(string) (social.SocialConnector, error) {
+	return m.socialConnector, m.err
 }

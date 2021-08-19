@@ -46,6 +46,10 @@ type LoginInfo struct {
 	Error         error
 }
 
+// RequestURIKey is used as key to save request URI in contexts
+// (used for the Enterprise auditing feature)
+type RequestURIKey struct{}
+
 // ---------------------
 // COMMANDS
 
@@ -94,8 +98,6 @@ type GetUserByAuthInfoQuery struct {
 	UserId     int64
 	Email      string
 	Login      string
-
-	Result *User
 }
 
 type GetExternalUserInfoByLoginQuery struct {

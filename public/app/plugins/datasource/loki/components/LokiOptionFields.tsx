@@ -1,13 +1,16 @@
 // Libraries
 import React, { memo } from 'react';
-import { css, cx } from 'emotion';
-import { LokiQuery } from '../types';
+import { css, cx } from '@emotion/css';
+import { map } from 'lodash';
 
 // Types
-import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
+import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { LokiQuery } from '../types';
 
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;
+  resolution: number;
   queryType: LokiQueryType;
   query: LokiQuery;
   onChange: (value: LokiQuery) => void;
@@ -17,13 +20,29 @@ export interface LokiOptionFieldsProps {
 
 type LokiQueryType = 'instant' | 'range';
 
-const queryTypeOptions = [
-  { value: 'range', label: 'Range' },
-  { value: 'instant', label: 'Instant' },
+const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
+  { value: 'range', label: 'Range', description: 'Run query over a range of time.' },
+  {
+    value: 'instant',
+    label: 'Instant',
+    description: 'Run query against a single point in time. For this query, the "To" time is used.',
+  },
 ];
 
+export const DEFAULT_RESOLUTION: SelectableValue<number> = {
+  value: 1,
+  label: '1/1',
+};
+
+const RESOLUTION_OPTIONS: Array<SelectableValue<number>> = [DEFAULT_RESOLUTION].concat(
+  map([2, 3, 4, 5, 10], (value: number) => ({
+    value,
+    label: '1/' + value,
+  }))
+);
+
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
-  const { lineLimitValue, queryType, query, onRunQuery, runOnBlur, onChange } = props;
+  const { lineLimitValue, resolution, queryType, query, onRunQuery, runOnBlur, onChange } = props;
 
   function onChangeQueryLimit(value: string) {
     const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
@@ -66,6 +85,11 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
     }
   }
 
+  function onResolutionChange(option: SelectableValue<number>) {
+    const nextQuery = { ...query, resolution: option.value };
+    onChange(nextQuery);
+  }
+
   return (
     <div aria-label="Loki extra field" className="gf-form-inline">
       {/*Query type field*/}
@@ -79,12 +103,7 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
         )}
         aria-label="Query type field"
       >
-        <InlineFormLabel
-          tooltip="Choose the type of query you would like to run. An instant query queries against a single point in time. A range query queries over a range of time."
-          width="auto"
-        >
-          Query type
-        </InlineFormLabel>
+        <InlineFormLabel width="auto">Query type</InlineFormLabel>
 
         <RadioButtonGroup
           options={queryTypeOptions}
@@ -108,21 +127,30 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
         )}
         aria-label="Line limit field"
       >
-        <InlineFormLabel width={5}>Line limit</InlineFormLabel>
-        <input
-          type="number"
-          className="gf-form-input width-4"
-          placeholder={'auto'}
-          min={0}
-          onChange={onMaxLinesChange}
-          onKeyDown={onReturnKeyDown}
-          value={lineLimitValue}
-          onBlur={() => {
-            if (runOnBlur) {
-              onRunQuery();
-            }
-          }}
-        />
+        <InlineField label="Line limit" tooltip={'Upper limit for number of log lines returned by query.'}>
+          <Input
+            className="width-4"
+            placeholder="auto"
+            type="number"
+            min={0}
+            onChange={onMaxLinesChange}
+            onKeyDown={onReturnKeyDown}
+            value={lineLimitValue}
+            onBlur={() => {
+              if (runOnBlur) {
+                onRunQuery();
+              }
+            }}
+          />
+        </InlineField>
+        <InlineField
+          label="Resolution"
+          tooltip={
+            'Resolution 1/1 sets step parameter of Loki metrics range queries such that each pixel corresponds to one data point. For better performance, lower resolutions can be picked. 1/2 only retrieves a data point for every other pixel, and 1/10 retrieves one data point per 10 pixels.'
+          }
+        >
+          <Select isSearchable={false} onChange={onResolutionChange} options={RESOLUTION_OPTIONS} value={resolution} />
+        </InlineField>
       </div>
     </div>
   );

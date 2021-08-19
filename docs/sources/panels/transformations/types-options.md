@@ -1,83 +1,84 @@
 +++
-title = "Transformation types and options"
-weight = 300
+title = "Types and options"
+weight = 2
 +++
 
 # Transformation types and options
 
 Grafana comes with the following transformations:
 
-- [Reduce](#reduce)
-- [Filter data by name](#filter-data-by-name)
-- [Filter data by query](#filter-data-by-query)
-- [Filter data by value](#filter-data-by-value)
-- [Organize fields](#organize-fields)
-- [Outer join](#join-by-field-outer-join)
-- [Series to rows](#series-to-rows)
-- [Add field from calculation](#add-field-from-calculation)
-- [Labels to fields](#labels-to-fields)
-- [Concatenate fields](#concatenate-fields)
-- [Group by](#group-by)
-- [Merge](#merge)
-- [Rename by regex](#rename-by-regex)
+- [Add field from calculation]({{< relref "./types-options.md#add-field-from-calculation" >}})
+- [Concatenate fields]({{< relref "./types-options.md#concatenate-fields" >}})
+- [Config from query results]({{< relref "./config-from-query.md" >}})
+- [Filter data by name]({{< relref "./types-options.md#filter-data-by-name" >}})
+- [Filter data by query]({{< relref "./types-options.md#filter-data-by-query" >}})
+- [Filter data by value]({{< relref "./types-options.md#filter-data-by-value" >}})
+- [Group by]({{< relref "./types-options.md#group-by" >}})
+- [Labels to fields]({{< relref "./types-options.md#labels-to-fields" >}})
+- [Merge]({{< relref "./types-options.md#merge" >}})
+- [Organize fields]({{< relref "./types-options.md#organize-fields" >}})
+- [Outer join]({{< relref "./types-options.md#join-by-field-outer-join" >}})
+- [Reduce]({{< relref "./types-options.md#reduce" >}})
+- [Rename by regex]({{< relref "./types-options.md#rename-by-regex" >}})
+- [Rows to fields]({{< relref "./rows-to-fields" >}})
+- [Series to rows]({{< relref "./types-options.md#series-to-rows" >}})
+- [Sort by]({{< relref "./types-options.md#sort-by" >}})
+- [Prepare-time-series]({{< relref "./types-options.md#prepare-time-series" >}})
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
 
 ## Reduce
 
-The _Reduce_ transformation will apply a calculation to each field in the frame and return a single value.  Time fields are removed when applying
+The _Reduce_ transformation applies a calculation to each field in the frame and return a single value. Time fields are removed when applying
 this transformation.
 
 Consider the input:
 
 Query A:
 
-| Time                | Temp    | Uptime  |
-| ------------------- | ------- | ------- |
-| 2020-07-07 11:34:20 | 12.3    | 256122  |
-| 2020-07-07 11:24:20 | 15.4    | 1230233 |
+| Time                | Temp | Uptime  |
+| ------------------- | ---- | ------- |
+| 2020-07-07 11:34:20 | 12.3 | 256122  |
+| 2020-07-07 11:24:20 | 15.4 | 1230233 |
 
 Query B:
 
-| Time                | AQI     | Errors |
-| ------------------- | ------- | ------ |
-| 2020-07-07 11:34:20 | 6.5     | 15     |
-| 2020-07-07 11:24:20 | 3.2     | 5      |
+| Time                | AQI | Errors |
+| ------------------- | --- | ------ |
+| 2020-07-07 11:34:20 | 6.5 | 15     |
+| 2020-07-07 11:24:20 | 3.2 | 5      |
 
 The reduce transformer has two modes:
+
 - **Series to rows -** Creates a row for each field and a column for each calculation.
 - **Reduce fields -** Keeps the existing frame structure, but collapses each field into a single value.
 
 For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then
 the result would be:
 
-| Field   | First   | Last    |
-| ------- | ------- | ------- |
-| Temp    | 12.3    | 15.4    |
-| Uptime  | 256122  | 1230233 |
-| AQI     | 6.5     | 3.2     |
-| Errors  | 15      | 5       |
+| Field  | First  | Last    |
+| ------ | ------ | ------- |
+| Temp   | 12.3   | 15.4    |
+| Uptime | 256122 | 1230233 |
+| AQI    | 6.5    | 3.2     |
+| Errors | 15     | 5       |
 
 The **Reduce fields** with the **Last** calculation,
 results in two frames, each with one row:
 
 Query A:
 
-| Temp    | Uptime  |
-| ------- | ------- |
-| 15.4    | 1230233 |
+| Temp | Uptime  |
+| ---- | ------- |
+| 15.4 | 1230233 |
 
 Query B:
 
-| AQI     | Errors |
-| ------- | ------ |
-| 3.2     | 5      |
-
-
+| AQI | Errors |
+| --- | ------ |
+| 3.2 | 5      |
 
 ## Merge
-
-> **Note:** This transformation is available in Grafana 7.1+.
 
 Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../visualizations/table/_index.md" >}}).
 
@@ -119,15 +120,15 @@ In the example below, I removed the Min field from the results.
 
 Here is the original query table. (This is streaming data, so numbers change over time and between screenshots.)
 
-{{< docs-imagebox img="/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 Here is the table after I applied the transformation to remove the Min field.
 
-{{< docs-imagebox img="/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 Here is the same query using a Stat visualization.
 
-{{< docs-imagebox img="/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Filter data by query
 
@@ -137,7 +138,9 @@ Grafana displays the query identification letters in dark gray text. Click a que
 
 In the example below, the panel has three queries (A, B, C). I removed the B query from the visualization.
 
-{{< docs-imagebox img="/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+> **Note:** This transformation is not available for Graphite because this data source does not support correlating returned data with queries.
 
 ## Organize fields
 
@@ -153,7 +156,7 @@ Grafana displays a list of fields returned by the query. You can:
 
 In the example below, I hid the value field and renamed Max and Min.
 
-{{< docs-imagebox img="/img/docs/transformations/organize-fields-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/organize-fields-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Join by field (outer join)
 
@@ -163,11 +166,11 @@ This transformation is especially useful if you want to combine queries so that 
 
 In the example below, I have a template query displaying time series data from multiple servers in a table visualization. I can only view the results of one query at a time.
 
-{{< docs-imagebox img="/img/docs/transformations/join-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/join-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
 
-{{< docs-imagebox img="/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Add field from calculation
 
@@ -178,13 +181,13 @@ Use this transformation to add a new field calculated from two other fields. Eac
   - **Binary option -** Apply basic math operation(sum, multiply, etc) on values in a single row from two selected fields.
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
 - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to the [Calculation list]({{< relref "../calculations-list.md" >}}).
-- **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you  to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
+- **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
 - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
 In the example below, I added two fields together and named them Sum.
 
-{{< docs-imagebox img="/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Labels to fields
 
@@ -192,8 +195,8 @@ This transformation changes time series results that include labels or tags into
 
 Given a query result of two time series:
 
-* Series 1: labels Server=Server A, Datacenter=EU
-* Series 2: labels Server=Server B, Datacenter=EU
+- Series 1: labels Server=Server A, Datacenter=EU
+- Series 2: labels Server=Server B, Datacenter=EU
 
 This would result in a table like this:
 
@@ -216,18 +219,18 @@ The labels to fields transformer is internally two separate transformations. The
 
 To illustrate this, here is an example where you have two queries that return time series with no overlapping labels.
 
-* Series 1: labels Server=ServerA
-* Series 2: labels Datacenter=EU
+- Series 1: labels Server=ServerA
+- Series 2: labels Datacenter=EU
 
 This will first result in these two tables:
 
 | Time                | Server  | Value |
 | ------------------- | ------- | ----- |
-| 2020-07-07 11:34:20 | ServerA | 10
+| 2020-07-07 11:34:20 | ServerA | 10    |
 
 | Time                | Datacenter | Value |
 | ------------------- | ---------- | ----- |
-| 2020-07-07 11:34:20 | EU         | 20
+| 2020-07-07 11:34:20 | EU         | 20    |
 
 After merge:
 
@@ -236,9 +239,12 @@ After merge:
 | 2020-07-07 11:34:20 | ServerA | 10    |            |
 | 2020-07-07 11:34:20 |         | 20    | EU         |
 
-## Group by
+## Sort by
 
-> **Note:** This transformation is available in Grafana 7.2+.
+This transformation will sort each frame by the configured field, When `reverse` is checked, the values will return in
+the opposite order.
+
+## Group by
 
 This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to the [List of calculations]({{< relref "../calculations-list.md" >}}).
 
@@ -298,28 +304,25 @@ This transformation allows you to extract some key information out of your time 
 
 ## Concatenate fields
 
-> **Note:** This transformation is available in Grafana 7.3+.
-
-This transformation combines all fields from all frames into one result.  Consider:
+This transformation combines all fields from all frames into one result. Consider:
 
 Query A:
 
-| Temp    | Uptime  |
-| ------- | ------- |
-| 15.4    | 1230233 |
+| Temp | Uptime  |
+| ---- | ------- |
+| 15.4 | 1230233 |
 
 Query B:
 
-| AQI     | Errors |
-| ------- | ------ |
-| 3.2     | 5      |
-
+| AQI | Errors |
+| --- | ------ |
+| 3.2 | 5      |
 
 After you concatenate the fields, the data frame would be:
 
-| Temp    | Uptime  | AQI     | Errors |
-| ------- | ------- | ------- | ------ |
-| 15.4    | 1230233 | 3.2     | 5      |
+| Temp | Uptime  | AQI | Errors |
+| ---- | ------- | --- | ------ |
+| 15.4 | 1230233 | 3.2 | 5      |
 
 ## Series to rows
 
@@ -360,24 +363,25 @@ Here is the result after applying the Series to rows transformation.
 
 ## Filter data by value
 
-> **Note:** This transformation is available in Grafana 7.4+.
-
 This transformation allows you to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
 
-The available conditions are:
+This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
-- **Regex**: match a regex expression
-- **Is Null**: match if the value is null
-- **Is Not Null**: match if the value is not null
-- **Equal**: match if the value is equal to the specified value
-- **Different**: match if the value is different than the specified value
-- **Greater**\*: match if the value is greater than the specified value
-- **Lower**\*: match if the value is lower than the specified value
-- **Greater or equal**\*: match if the value is greater or equal
-- **Lower or equal**\*: match if the value is lower or equal
-- **Range**\*: match a range between a specified minimum and maximum, min and max included
+The available conditions for all fields are:
 
-\* Those conditions are only available for number fields.
+- **Regex:** Match a regex expression
+- **Is Null:** Match if the value is null
+- **Is Not Null:** Match if the value is not null
+- **Equal:** Match if the value is equal to the specified value
+- **Different:** match if the value is different than the specified value
+
+The available conditions for number fields are:
+
+- **Greater:** Match if the value is greater than the specified value
+- **Lower:** Match if the value is lower than the specified value
+- **Greater or equal:** Match if the value is greater or equal
+- **Lower or equal:** Match if the value is lower or equal
+- **Range:** Match a range between a specified minimum and maximum, min and max included
 
 Consider the following data set:
 
@@ -420,16 +424,26 @@ Conditions that are invalid or incompletely configured are ignored.
 
 ## Rename by regex
 
-> **Note:** This transformation is available in Grafana 7.4+.
-
 Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 
 You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to `([^\.]+)\..+` and the replacement pattern to `$1`, `web-01.example.com` would become `web-01`.
 
 In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with `system.`
 
-{{< docs-imagebox img="/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 With the transformation applied, you can see we are left with just the remainder of the string.
 
-{{< docs-imagebox img="/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+## Prepare time series
+
+> **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
+
+Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. [Read more about the different data frame formats here]({{< relref "../../developers/plugins/data-frames.md" >}}).
+
+This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
+
+Select the `Multi-frame time series` option to transform the time series data frame from the wide to the long format.
+
+Select the `Wide time series` option to transform the time series data frame from the long to the wide format.

@@ -14,9 +14,10 @@ import (
 
 type SocialOkta struct {
 	*SocialBase
-	apiUrl            string
-	allowedGroups     []string
-	roleAttributePath string
+	apiUrl              string
+	allowedGroups       []string
+	roleAttributePath   string
+	roleAttributeStrict bool
 }
 
 type OktaUserInfoJson struct {
@@ -81,6 +82,9 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 	if err != nil {
 		s.log.Error("Failed to extract role", "error", err)
 	}
+	if s.roleAttributeStrict && !models.RoleType(role).IsValid() {
+		return nil, errors.New("invalid role")
+	}
 
 	groups := s.GetGroups(&data)
 	if !s.IsGroupMember(groups) {
@@ -121,7 +125,7 @@ func (s *SocialOkta) extractRole(data *OktaUserInfoJson) (string, error) {
 		return "", nil
 	}
 
-	role, err := s.searchJSONForAttr(s.roleAttributePath, data.rawJSON)
+	role, err := s.searchJSONForStringAttr(s.roleAttributePath, data.rawJSON)
 	if err != nil {
 		return "", err
 	}

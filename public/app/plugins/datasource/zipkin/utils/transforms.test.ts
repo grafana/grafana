@@ -1,8 +1,10 @@
 import { transformResponse } from './transforms';
-import { jaegerTrace, zipkinResponse } from './testData';
+import { traceFrameFields, zipkinResponse } from './testData';
 
 describe('transformResponse', () => {
   it('transforms response', () => {
-    expect(transformResponse(zipkinResponse)).toEqual(jaegerTrace);
+    const dataFrame = transformResponse(zipkinResponse);
+
+    expect(dataFrame.fields).toMatchObject(traceFrameFields);
   });
 });

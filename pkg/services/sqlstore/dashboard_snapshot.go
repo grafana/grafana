@@ -106,7 +106,10 @@ func GetDashboardSnapshot(query *models.GetDashboardSnapshotQuery) error {
 func SearchDashboardSnapshots(query *models.GetDashboardSnapshotsQuery) error {
 	var snapshots = make(models.DashboardSnapshotsList, 0)
 
-	sess := x.Limit(query.Limit)
+	sess := x.NewSession()
+	if query.Limit > 0 {
+		sess.Limit(query.Limit)
+	}
 	sess.Table("dashboard_snapshot")
 
 	if query.Name != "" {

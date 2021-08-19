@@ -5,7 +5,7 @@ import { createDatasourceSettings } from '../../../../features/datasources/mocks
 export function createDefaultConfigOptions(): DataSourceSettings<ElasticsearchOptions> {
   return createDatasourceSettings<ElasticsearchOptions>({
     timeField: '@time',
-    esVersion: 70,
+    esVersion: '7.0.0',
     interval: 'Hourly',
     timeInterval: '10s',
     maxConcurrentShardRequests: 300,

@@ -20,7 +20,7 @@ We use the standard following linters:
 
 In addition to the standard linters, we also use:
 
-- [revive](https://revive.run/) with a [custom config](https://github.com/grafana/grafana/blob/master/conf/revive.toml)
+- [revive](https://revive.run/) with a [custom config](https://github.com/grafana/grafana/blob/main/conf/revive.toml)
 - [GolangCI-Lint](https://github.com/golangci/golangci-lint)
 - [gosec](https://github.com/securego/gosec)
 
@@ -75,3 +75,26 @@ Valid reasons to use a pointer include (but not necessarily limited to):
   allocating heap memory)
 * You might *need* `nil` to tell if a variable isn't set, although usually it's better to use the type's zero
   value to tell instead
+
+## Database
+
+In database related code, we follow certain patterns.
+
+### Foreign keys
+
+While they can be useful, we don't generally use foreign key constraints in Grafana, for historical and
+technical reasons. See this [comment](https://github.com/grafana/grafana/issues/3269#issuecomment-383328548) by Torkel 
+for context.
+
+### Unique columns
+
+If a column, or column combination, should be unique, add a corresponding uniqueness constraint through a migration.
+
+## JSON
+
+The simplejson package is used a lot throughout the backend codebase, but it's legacy, so if at all possible
+avoid using it in new code. Use [json-iterator](https://github.com/json-iterator/go) instead, which is a more performant 
+drop-in alternative to the standard [encoding/json](https://golang.org/pkg/encoding/json/) package. While encoding/json
+is a fine choice, profiling shows that json-iterator may be 3-4 times more efficient for encoding. We haven't profiled
+its parsing performance yet, but according to json-iterator's own benchmarks, it appears even more superior in this
+department.

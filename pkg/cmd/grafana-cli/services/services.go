@@ -18,8 +18,9 @@ var (
 	IoHelper            models.IoUtil = IoUtilImp{}
 	HttpClient          http.Client
 	HttpClientNoTimeout http.Client
-	grafanaVersion      string
+	GrafanaVersion      string
 	ErrNotFoundError    = errors.New("404 not found error")
+	Logger              *logger.CLILogger
 )
 
 type BadRequestError struct {
@@ -34,11 +35,12 @@ func (e *BadRequestError) Error() string {
 	return e.Status
 }
 
-func Init(version string, skipTLSVerify bool) {
-	grafanaVersion = version
+func Init(version string, skipTLSVerify bool, debugMode bool) {
+	GrafanaVersion = version
 
 	HttpClient = makeHttpClient(skipTLSVerify, 10*time.Second)
 	HttpClientNoTimeout = makeHttpClient(skipTLSVerify, 0)
+	Logger = logger.New(debugMode)
 }
 
 func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
@@ -113,5 +115,6 @@ func RemoveInstalledPlugin(pluginPath, pluginName string) error {
 		return err
 	}
 
+	logger.Debugf("Removing directory %v\n", pluginDir)
 	return IoHelper.RemoveAll(pluginDir)
 }

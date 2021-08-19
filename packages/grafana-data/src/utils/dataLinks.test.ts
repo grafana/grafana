@@ -25,13 +25,13 @@ describe('mapInternalLinkToExplore', () => {
         config: {},
         values: new ArrayVector([2]),
       },
-      replaceVariables: val => val,
+      replaceVariables: (val) => val,
     });
 
     expect(link).toEqual(
       expect.objectContaining({
         title: 'dsName',
-        href: '/explore?left={"datasource":"dsName","queries":[{"query":"12344"}]}',
+        href: `/explore?left=${encodeURIComponent('{"datasource":"dsName","queries":[{"query":"12344"}]}')}`,
         onClick: undefined,
       })
     );

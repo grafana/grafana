@@ -1,5 +1,18 @@
-import { DataFrame } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 import { transform } from './result_transformer';
+
+jest.mock('@grafana/runtime', () => ({
+  getTemplateSrv: () => ({
+    replace: (str: string) => str,
+  }),
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: () => {
+        return { name: 'Tempo' };
+      },
+    };
+  },
+}));
 
 const matrixResponse = {
   status: 'success',
@@ -88,15 +101,20 @@ describe('Prometheus Result Transformer', () => {
         1443454531000,
       ]);
       expect(result[0].fields[0].name).toBe('Time');
+      expect(result[0].fields[0].type).toBe(FieldType.time);
       expect(result[0].fields[1].values.toArray()).toEqual(['test', 'test', 'test2', 'test2']);
       expect(result[0].fields[1].name).toBe('__name__');
       expect(result[0].fields[1].config.filterable).toBe(true);
+      expect(result[0].fields[1].type).toBe(FieldType.string);
       expect(result[0].fields[2].values.toArray()).toEqual(['', '', 'localhost:8080', 'localhost:8080']);
       expect(result[0].fields[2].name).toBe('instance');
+      expect(result[0].fields[2].type).toBe(FieldType.string);
       expect(result[0].fields[3].values.toArray()).toEqual(['testjob', 'testjob', 'otherjob', 'otherjob']);
       expect(result[0].fields[3].name).toBe('job');
+      expect(result[0].fields[3].type).toBe(FieldType.string);
       expect(result[0].fields[4].values.toArray()).toEqual([3846, 3848, 3847, 3849]);
       expect(result[0].fields[4].name).toEqual('Value');
+      expect(result[0].fields[4].type).toBe(FieldType.number);
       expect(result[0].refId).toBe('A');
     });
 
@@ -155,6 +173,7 @@ describe('Prometheus Result Transformer', () => {
       };
       const result = transform({ data: response } as any, { ...options, target: { format: 'table' } });
       expect(result[0].fields[1].values.toArray()).toEqual([102]);
+      expect(result[0].fields[1].type).toEqual(FieldType.number);
     });
   });
 
@@ -340,6 +359,32 @@ describe('Prometheus Result Transformer', () => {
       expect(result[0].name).toEqual('test{job="testjob"}');
     });
 
+    it('should use query as series name when __name__ is not available and metric is empty', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: 'matrix',
+          result: [
+            {
+              metric: {},
+              values: [[0, '10']],
+            },
+          ],
+        },
+      };
+      const expr = 'histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[5m])) by (le))';
+      const result = transform({ data: response } as any, {
+        ...options,
+        query: {
+          step: 1,
+          start: 0,
+          end: 2,
+          expr,
+        },
+      });
+      expect(result[0].name).toEqual(expr);
+    });
+
     it('should set frame name to undefined if no __name__ label but there are other labels', () => {
       const response = {
         status: 'success',
@@ -436,6 +481,106 @@ describe('Prometheus Result Transformer', () => {
           const result: DataFrame[] = transform({ data: response } as any, { ...options, target: { format: 'table' } });
           expect(result[0].fields[3].values.toArray()).toEqual([Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]);
         });
+      });
+    });
+  });
+
+  const exemplarsResponse = {
+    status: 'success',
+    data: [
+      {
+        seriesLabels: { __name__: 'test' },
+        exemplars: [
+          {
+            timestamp: 1610449069.957,
+            labels: { traceID: '5020b5bc45117f07' },
+            value: 0.002074123,
+          },
+        ],
+      },
+    ],
+  };
+
+  describe('When the response is exemplar data', () => {
+    it('should return as an data frame with a dataTopic annotations', () => {
+      const result = transform({ data: exemplarsResponse } as any, options);
+
+      expect(result[0].meta?.dataTopic).toBe('annotations');
+      expect(result[0].fields.length).toBe(4); // __name__, traceID, Time, Value
+      expect(result[0].length).toBe(1);
+    });
+
+    it('should return with an empty array when data is empty', () => {
+      const result = transform(
+        {
+          data: {
+            status: 'success',
+            data: [],
+          },
+        } as any,
+        options
+      );
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should remove exemplars that are too close to each other', () => {
+      const response = {
+        status: 'success',
+        data: [
+          {
+            exemplars: [
+              {
+                timestamp: 1610449070.0,
+                value: 5,
+              },
+              {
+                timestamp: 1610449070.0,
+                value: 1,
+              },
+              {
+                timestamp: 1610449070.5,
+                value: 13,
+              },
+              {
+                timestamp: 1610449070.3,
+                value: 20,
+              },
+            ],
+          },
+        ],
+      };
+      /**
+       * the standard deviation for the above values is 8.4 this means that we show the highest
+       * value (20) and then the next value should be 2 times the standard deviation which is 1
+       **/
+      const result = transform({ data: response } as any, options);
+      expect(result[0].length).toBe(2);
+    });
+
+    describe('data link', () => {
+      it('should be added to the field if found with url', () => {
+        const result = transform({ data: exemplarsResponse } as any, {
+          ...options,
+          exemplarTraceIdDestinations: [{ name: 'traceID', url: 'http://localhost' }],
+        });
+
+        expect(result[0].fields.some((f) => f.config.links?.length)).toBe(true);
+      });
+
+      it('should be added to the field if found with internal link', () => {
+        const result = transform({ data: exemplarsResponse } as any, {
+          ...options,
+          exemplarTraceIdDestinations: [{ name: 'traceID', datasourceUid: 'jaeger' }],
+        });
+
+        expect(result[0].fields.some((f) => f.config.links?.length)).toBe(true);
+      });
+
+      it('should not add link if exemplarTraceIdDestinations is not configured', () => {
+        const result = transform({ data: exemplarsResponse } as any, options);
+
+        expect(result[0].fields.some((f) => f.config.links?.length)).toBe(false);
       });
     });
   });

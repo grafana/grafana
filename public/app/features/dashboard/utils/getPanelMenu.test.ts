@@ -70,6 +70,10 @@ describe('getPanelMenu', () => {
               "onClick": [Function],
               "text": "Copy",
             },
+            Object {
+              "onClick": [Function],
+              "text": "Create library panel",
+            },
           ],
           "text": "More...",
           "type": "submenu",
@@ -151,16 +155,6 @@ describe('getPanelMenu', () => {
             "text": "More...",
             "type": "submenu",
           },
-          Object {
-            "text": "",
-            "type": "divider",
-          },
-          Object {
-            "iconClassName": "trash-alt",
-            "onClick": [Function],
-            "shortcut": "p r",
-            "text": "Remove",
-          },
         ]
       `);
     });
@@ -178,7 +172,7 @@ describe('getPanelMenu', () => {
       const panel = new PanelModel({});
       const dashboard = new DashboardModel({});
       const menuItems = getPanelMenu(dashboard, panel);
-      explore = menuItems.find(item => item.text === 'Explore') as PanelMenuItem;
+      explore = menuItems.find((item) => item.text === 'Explore') as PanelMenuItem;
       navigateSpy = jest.spyOn(actions, 'navigateToExplore');
       window.open = windowOpen;
 

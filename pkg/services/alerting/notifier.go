@@ -53,7 +53,7 @@ type InputType string
 const (
 	// InputTypeText will render a text field in the frontend
 	InputTypeText = "text"
-	// InputTypePassword will render a text field in the frontend
+	// InputTypePassword will render a password field in the frontend
 	InputTypePassword = "password"
 )
 
@@ -131,9 +131,11 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 	n.log.Debug("Sending notification", "type", notifier.GetType(), "uid", notifier.GetNotifierUID(), "isDefault", notifier.GetIsDefault())
 	metrics.MAlertingNotificationSent.WithLabelValues(notifier.GetType()).Inc()
 
-	err := notifier.Notify(evalContext)
+	if err := evalContext.evaluateNotificationTemplateFields(); err != nil {
+		n.log.Error("failed trying to evaluate notification template fields", "uid", notifier.GetNotifierUID(), "error", err)
+	}
 
-	if err != nil {
+	if err := notifier.Notify(evalContext); err != nil {
 		n.log.Error("failed to send notification", "uid", notifier.GetNotifierUID(), "error", err)
 		metrics.MAlertingNotificationFailed.WithLabelValues(notifier.GetType()).Inc()
 		return err
@@ -199,7 +201,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 		Width:           1000,
 		Height:          500,
 		Timeout:         timeout,
-		OrgId:           evalCtx.Rule.OrgID,
+		OrgID:           evalCtx.Rule.OrgID,
 		OrgRole:         models.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
 	}
@@ -292,7 +294,7 @@ type NotifierFactory func(notification *models.AlertNotification) (Notifier, err
 
 var notifierFactories = make(map[string]*NotifierPlugin)
 
-// RegisterNotifier register an notifier
+// RegisterNotifier registers a notifier.
 func RegisterNotifier(plugin *NotifierPlugin) {
 	notifierFactories[plugin.Type] = plugin
 }

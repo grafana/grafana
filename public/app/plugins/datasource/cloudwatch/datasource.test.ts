@@ -17,7 +17,7 @@ describe('datasource', () => {
         ],
       } as any);
 
-      await expect(observable).toEmitValuesWith(received => {
+      await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
         expect(response.error?.message).toBe('Log group is required');
       });
@@ -34,7 +34,7 @@ describe('datasource', () => {
         ],
       } as any);
 
-      await expect(observable).toEmitValuesWith(received => {
+      await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
         expect(response.data).toEqual([]);
       });
@@ -46,13 +46,11 @@ describe('datasource', () => {
       const { datasource } = setup({
         data: {
           results: {
-            a: { refId: 'a', series: [{ name: 'cpu', points: [1, 1] }], meta: { gmdMeta: '' } },
-            b: { refId: 'b', series: [{ name: 'memory', points: [2, 2] }], meta: { gmdMeta: '' } },
+            a: { refId: 'a', series: [{ name: 'cpu', points: [1, 1] }], meta: {} },
+            b: { refId: 'b', series: [{ name: 'memory', points: [2, 2] }], meta: {} },
           },
         },
       });
-      const buildCloudwatchConsoleUrlMock = jest.spyOn(datasource, 'buildCloudwatchConsoleUrl');
-      buildCloudwatchConsoleUrlMock.mockImplementation(() => '');
 
       const observable = datasource.performTimeSeriesQuery(
         {
@@ -64,7 +62,7 @@ describe('datasource', () => {
         { from: dateTime(), to: dateTime() } as any
       );
 
-      await expect(observable).toEmitValuesWith(received => {
+      await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
         expect(response.data.length).toEqual(2);
       });

@@ -53,7 +53,7 @@ export class QueryRunners {
   }
 
   getRunnerForDatasource(datasource: DataSourceApi): QueryRunner {
-    const runner = this.runners.find(runner => runner.canRun(datasource));
+    const runner = this.runners.find((runner) => runner.canRun(datasource));
     if (runner) {
       return runner;
     }
@@ -85,7 +85,7 @@ class LegacyQueryRunner implements QueryRunner {
     const queryOptions: any = getLegacyQueryOptions(variable, searchFilter, timeSrv);
 
     return from(datasource.metricFindQuery(variable.query, queryOptions)).pipe(
-      mergeMap(values => {
+      mergeMap((values) => {
         if (!values || !values.length) {
           return getEmptyMetricFindValueObservable();
         }
@@ -149,6 +149,8 @@ class CustomQueryRunner implements QueryRunner {
   }
 }
 
+export const variableDummyRefId = 'variable-query';
+
 class DatasourceQueryRunner implements QueryRunner {
   type = VariableSupportType.Datasource;
 
@@ -158,7 +160,7 @@ class DatasourceQueryRunner implements QueryRunner {
 
   getTarget({ datasource, variable }: GetTargetArgs) {
     if (hasDatasourceVariableSupport(datasource)) {
-      return variable.query;
+      return { ...variable.query, refId: variable.query.refId ?? variableDummyRefId };
     }
 
     throw new Error("Couldn't create a target with supplied arguments.");

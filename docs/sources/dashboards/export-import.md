@@ -15,7 +15,7 @@ Dashboards are exported in Grafana JSON format, and contain everything you need 
 
 The export feature is accessed in the share window which you open by clicking the share button in the dashboard menu.
 
-{{< docs-imagebox img="/img/docs/export/export-modal.png" max-width="800px" >}}
+{{< figure src="/static/img/docs/export/export-modal.png" max-width="800px" >}}
 
 ### Making a dashboard portable
 
@@ -25,16 +25,16 @@ add template variables for things like a metric prefix (use constant variable) a
 A template variable of the type `Constant` will automatically be hidden in
 the dashboard, and will also be added as a required input when the dashboard is imported.
 
-## Importing a dashboard
+## Import dashboard
 
 To import a dashboard click the + icon in the side menu, and then click **Import**.
 
-{{< docs-imagebox img="/img/docs/v70/import_step1.png" max-width="700px" >}}
+{{< figure src="/static/img/docs/v70/import_step1.png" max-width="700px" >}}
 
 From here you can upload a dashboard JSON file, paste a [Grafana.com](https://grafana.com) dashboard
 URL or paste dashboard JSON text directly into the text area.
 
-{{< docs-imagebox img="/img/docs/v70/import_step2_grafana.com.png"  max-width="700px" >}}
+{{< figure src="/static/img/docs/v70/import_step2_grafana.com.png"  max-width="700px" >}}
 
 In step 2 of the import process Grafana will let you change the name of the dashboard, pick what
 data source you want the dashboard to use and specify any metric prefixes (if the dashboard use any).
@@ -43,7 +43,7 @@ data source you want the dashboard to use and specify any metric prefixes (if th
 
 Find dashboards for common server applications at [Grafana.com/dashboards](https://grafana.com/dashboards).
 
-{{< docs-imagebox img="/img/docs/v50/gcom_dashboard_list.png" max-width="700px" >}}
+{{< figure src="/static/img/docs/v50/gcom_dashboard_list.png" max-width="700px" >}}
 
 ## Import and sharing with Grafana 2.x or 3.0
 
@@ -56,6 +56,7 @@ Dashboards exported from Grafana 3.1+ have a new json section `__inputs`
 that define what data sources and metric prefixes the dashboard uses.
 
 Example:
+
 ```json
 {
   "__inputs": [
@@ -76,7 +77,6 @@ Example:
     }
   ]
 }
-
 ```
 
 These are then referenced in the dashboard panels like this:
@@ -84,14 +84,14 @@ These are then referenced in the dashboard panels like this:
 ```json
 {
   "rows": [
-      {
-        "panels": [
-          {
-            "type": "graph",
-            "datasource": "${DS_GRAPHITE}"
-          }
-        ]
-      }
+    {
+      "panels": [
+        {
+          "type": "graph",
+          "datasource": "${DS_GRAPHITE}"
+        }
+      ]
+    }
   ]
 }
 ```
@@ -106,4 +106,5 @@ data source. Another alternative is to open the json file in a text editor and u
 to value that matches a name of your data source.
 
 ## Note
+
 In Grafana v5.3.4+ the export modal has new checkbox for sharing for external use (other instances). If the checkbox is not checked then the `__inputs` section will not be included in the exported JSON file.

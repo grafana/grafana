@@ -1,9 +1,9 @@
-import { ScopedVars } from '@grafana/data';
+import { ScopedVars, UrlQueryMap } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { variableAdapters } from './adapters';
 
-export function getAllVariableValuesForUrl(scopedVars?: ScopedVars) {
-  const params: Record<string, string | string[]> = {};
+export function getVariablesUrlParams(scopedVars?: ScopedVars): UrlQueryMap {
+  const params: UrlQueryMap = {};
   const variables = getTemplateSrv().getVariables();
 
   // console.log(variables)

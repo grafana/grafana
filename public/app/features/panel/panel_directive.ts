@@ -1,19 +1,17 @@
-import angular from 'angular';
 // @ts-ignore
 import baron from 'baron';
 import { PanelEvents } from '@grafana/data';
 import { PanelModel } from '../dashboard/state';
 import { PanelCtrl } from './panel_ctrl';
 import { Subscription } from 'rxjs';
-import { RefreshEvent, RenderEvent } from 'app/types/events';
-
-const module = angular.module('grafana.directives');
+import { PanelDirectiveReadyEvent, RefreshEvent, RenderEvent } from 'app/types/events';
+import { coreModule } from 'app/core/core_module';
 
 const panelTemplate = `
   <ng-transclude class="panel-height-helper"></ng-transclude>
 `;
 
-module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
+coreModule.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
   return {
     restrict: 'E',
     template: panelTemplate,
@@ -77,13 +75,28 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       );
 
       subs.add(
-        panel.events.subscribe(RenderEvent, () => {
+        panel.events.subscribe(RenderEvent, (event) => {
+          // this event originated from angular so no need to bubble it back
+          if (event.payload?.fromAngular) {
+            return;
+          }
+
           updateDimensionsFromParentScope();
 
           $timeout(() => {
             resizeScrollableContent();
             ctrl.events.emit('render');
           });
+        })
+      );
+
+      subs.add(
+        ctrl.events.subscribe(RenderEvent, (event) => {
+          // this event originated from angular so bubble it to react so the PanelChromeAngular can update the panel header alert state
+          if (event.payload) {
+            event.payload.fromAngular = true;
+            panel.events.publish(event);
+          }
         })
       );
 
@@ -100,6 +113,8 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
           panelScrollbar.dispose();
         }
       });
+
+      panel.events.publish(PanelDirectiveReadyEvent);
     },
   };
 });

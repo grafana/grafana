@@ -3,6 +3,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -122,17 +123,27 @@ func TestApiKeyErrors(t *testing.T) {
 	mockTimeNow()
 	defer resetTimeNow()
 
-	t.Run("Testing API Duplicate Key Errors", func(t *testing.T) {
+	t.Run("Testing API Key errors", func(t *testing.T) {
 		InitTestDB(t)
-		t.Run("Given saved api key", func(t *testing.T) {
-			cmd := models.AddApiKeyCommand{OrgId: 0, Name: "duplicate", Key: "asd"}
-			err := AddApiKey(&cmd)
-			assert.Nil(t, err)
 
-			t.Run("Add API Key with existing Org ID and Name", func(t *testing.T) {
+		t.Run("Delete non-existing key should return error", func(t *testing.T) {
+			cmd := models.DeleteApiKeyCommand{Id: 1}
+			err := DeleteApiKeyCtx(context.Background(), &cmd)
+
+			assert.EqualError(t, err, models.ErrApiKeyNotFound.Error())
+		})
+
+		t.Run("Testing API Duplicate Key Errors", func(t *testing.T) {
+			t.Run("Given saved api key", func(t *testing.T) {
 				cmd := models.AddApiKeyCommand{OrgId: 0, Name: "duplicate", Key: "asd"}
-				err = AddApiKey(&cmd)
-				assert.EqualError(t, err, models.ErrDuplicateApiKey.Error())
+				err := AddApiKey(&cmd)
+				assert.Nil(t, err)
+
+				t.Run("Add API Key with existing Org ID and Name", func(t *testing.T) {
+					cmd := models.AddApiKeyCommand{OrgId: 0, Name: "duplicate", Key: "asd"}
+					err = AddApiKey(&cmd)
+					assert.EqualError(t, err, models.ErrDuplicateApiKey.Error())
+				})
 			})
 		})
 	})

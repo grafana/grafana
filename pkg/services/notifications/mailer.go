@@ -20,9 +20,30 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-func (ns *NotificationService) send(msg *Message) (int, error) {
+var (
+	emailsSentTotal  prometheus.Counter
+	emailsSentFailed prometheus.Counter
+)
+
+func init() {
+	emailsSentTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name:      "emails_sent_total",
+		Help:      "Number of emails sent by Grafana",
+		Namespace: "grafana",
+	})
+
+	emailsSentFailed = promauto.NewCounter(prometheus.CounterOpts{
+		Name:      "emails_sent_failed",
+		Help:      "Number of emails Grafana failed to send",
+		Namespace: "grafana",
+	})
+}
+
+func (ns *NotificationService) Send(msg *Message) (int, error) {
 	messages := []*Message{}
 
 	if msg.SingleEmail {
@@ -38,35 +59,56 @@ func (ns *NotificationService) send(msg *Message) (int, error) {
 	return ns.dialAndSend(messages...)
 }
 
-func (ns *NotificationService) dialAndSend(messages ...*Message) (num int, err error) {
+func (ns *NotificationService) dialAndSend(messages ...*Message) (int, error) {
+	sentEmailsCount := 0
 	dialer, err := ns.createDialer()
 	if err != nil {
-		return
+		return sentEmailsCount, err
 	}
 
 	for _, msg := range messages {
-		m := gomail.NewMessage()
-		m.SetHeader("From", msg.From)
-		m.SetHeader("To", msg.To...)
-		m.SetHeader("Subject", msg.Subject)
+		m := ns.buildEmail(msg)
 
-		ns.setFiles(m, msg)
+		innerError := dialer.DialAndSend(m)
+		emailsSentTotal.Inc()
+		if innerError != nil {
+			// As gomail does not returned typed errors we have to parse the error
+			// to catch invalid error when the address is invalid.
+			// https://github.com/go-gomail/gomail/blob/81ebce5c23dfd25c6c67194b37d3dd3f338c98b1/send.go#L113
+			if !strings.HasPrefix(innerError.Error(), "gomail: invalid address") {
+				emailsSentFailed.Inc()
+			}
 
-		for _, replyTo := range msg.ReplyTo {
-			m.SetAddressHeader("Reply-To", replyTo, "")
-		}
-
-		m.SetBody("text/html", msg.Body)
-
-		if e := dialer.DialAndSend(m); e != nil {
-			err = errutil.Wrapf(e, "Failed to send notification to email addresses: %s", strings.Join(msg.To, ";"))
+			err = errutil.Wrapf(innerError, "Failed to send notification to email addresses: %s", strings.Join(msg.To, ";"))
 			continue
 		}
 
-		num++
+		sentEmailsCount++
 	}
 
-	return
+	return sentEmailsCount, err
+}
+
+func (ns *NotificationService) buildEmail(msg *Message) *gomail.Message {
+	m := gomail.NewMessage()
+	m.SetHeader("From", msg.From)
+	m.SetHeader("To", msg.To...)
+	m.SetHeader("Subject", msg.Subject)
+	ns.setFiles(m, msg)
+	for _, replyTo := range msg.ReplyTo {
+		m.SetAddressHeader("Reply-To", replyTo, "")
+	}
+	// loop over content types from settings in reverse order as they are ordered in according to descending
+	// preference while the alternatives should be ordered according to ascending preference
+	for i := len(ns.Cfg.Smtp.ContentTypes) - 1; i >= 0; i-- {
+		if i == len(ns.Cfg.Smtp.ContentTypes)-1 {
+			m.SetBody(ns.Cfg.Smtp.ContentTypes[i], msg.Body[ns.Cfg.Smtp.ContentTypes[i]])
+		} else {
+			m.AddAlternative(ns.Cfg.Smtp.ContentTypes[i], msg.Body[ns.Cfg.Smtp.ContentTypes[i]])
+		}
+	}
+
+	return m
 }
 
 // setFiles attaches files in various forms
@@ -138,18 +180,26 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 		return nil, models.ErrSmtpNotEnabled
 	}
 
-	var buffer bytes.Buffer
-	var err error
-
 	data := cmd.Data
 	if data == nil {
 		data = make(map[string]interface{}, 10)
 	}
 
 	setDefaultTemplateData(data, nil)
-	err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template, data)
-	if err != nil {
-		return nil, err
+
+	body := make(map[string]string)
+	for _, contentType := range ns.Cfg.Smtp.ContentTypes {
+		fileExtension, err := getFileExtensionByContentType(contentType)
+		if err != nil {
+			return nil, err
+		}
+		var buffer bytes.Buffer
+		err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template+fileExtension, data)
+		if err != nil {
+			return nil, err
+		}
+
+		body[contentType] = buffer.String()
 	}
 
 	subject := cmd.Subject
@@ -182,7 +232,7 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 		SingleEmail:   cmd.SingleEmail,
 		From:          addr.String(),
 		Subject:       subject,
-		Body:          buffer.String(),
+		Body:          body,
 		EmbeddedFiles: cmd.EmbeddedFiles,
 		AttachedFiles: buildAttachedFiles(cmd.AttachedFiles),
 		ReplyTo:       cmd.ReplyTo,
@@ -203,4 +253,15 @@ func buildAttachedFiles(
 	}
 
 	return result
+}
+
+func getFileExtensionByContentType(contentType string) (string, error) {
+	switch contentType {
+	case "text/html":
+		return ".html", nil
+	case "text/plain":
+		return ".txt", nil
+	default:
+		return "", fmt.Errorf("unrecognized content type %q", contentType)
+	}
 }

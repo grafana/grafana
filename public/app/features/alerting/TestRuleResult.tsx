@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
-import { LoadingPlaceholder, JSONFormatter, Icon } from '@grafana/ui';
-
+import { LoadingPlaceholder, JSONFormatter, Icon, HorizontalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { DashboardModel, PanelModel } from '../dashboard/state';
@@ -39,7 +38,7 @@ export class TestRuleResult extends PureComponent<Props, State> {
     const model = dashboard.getSaveModelClone();
 
     // now replace panel to get current edits
-    model.panels = model.panels.map(dashPanel => {
+    model.panels = model.panels.map((dashPanel) => {
       return dashPanel.id === panel.editSourceId ? panel.getSaveModel() : dashPanel;
     });
 
@@ -63,7 +62,7 @@ export class TestRuleResult extends PureComponent<Props, State> {
   };
 
   onToggleExpand = () => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       ...prevState,
       allNodesExpanded: !this.state.allNodesExpanded,
     }));
@@ -106,16 +105,12 @@ export class TestRuleResult extends PureComponent<Props, State> {
     return (
       <>
         <div className="pull-right">
-          <button className="btn btn-transparent btn-p-x-0 m-r-1" onClick={this.onToggleExpand}>
-            {this.renderExpandCollapse()}
-          </button>
-          <CopyToClipboard
-            className="btn btn-transparent btn-p-x-0"
-            text={this.getTextForClipboard}
-            onSuccess={this.onClipboardSuccess}
-          >
-            <Icon name="copy" /> Copy to Clipboard
-          </CopyToClipboard>
+          <HorizontalGroup spacing="md">
+            <div onClick={this.onToggleExpand}>{this.renderExpandCollapse()}</div>
+            <CopyToClipboard elType="div" text={this.getTextForClipboard} onSuccess={this.onClipboardSuccess}>
+              <Icon name="copy" /> Copy to Clipboard
+            </CopyToClipboard>
+          </HorizontalGroup>
         </div>
 
         <JSONFormatter json={testRuleResponse} open={openNodes} onDidRender={this.setFormattedJson} />

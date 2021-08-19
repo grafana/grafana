@@ -3,7 +3,7 @@ import {
   DataTransformerID,
   SelectableValue,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
 import { Select } from '@grafana/ui';
@@ -42,6 +42,7 @@ export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<Labels
       <div className="gf-form">
         <div className="gf-form-label width-8">Value field name</div>
         <Select
+          menuShouldPortal
           isClearable={true}
           allowCustomValue={false}
           placeholder="(Optional) Select label"
@@ -55,7 +56,7 @@ export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<Labels
   );
 };
 
-export const labelsToFieldsTransformerRegistryItem: TransformerRegistyItem<LabelsToFieldsOptions> = {
+export const labelsToFieldsTransformerRegistryItem: TransformerRegistryItem<LabelsToFieldsOptions> = {
   id: DataTransformerID.labelsToFields,
   editor: LabelsAsFieldsTransformerEditor,
   transformation: standardTransformers.labelsToFieldsTransformer,

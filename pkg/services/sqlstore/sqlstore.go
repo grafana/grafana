@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
-	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
@@ -75,8 +74,6 @@ func (ss *SQLStore) Register() {
 
 func (ss *SQLStore) Init() error {
 	ss.log = log.New("sqlstore")
-	ss.readConfig()
-
 	if err := ss.initEngine(); err != nil {
 		return errutil.Wrap("failed to connect to database", err)
 	}
@@ -87,36 +84,41 @@ func (ss *SQLStore) Init() error {
 	x = ss.engine
 	dialect = ss.Dialect
 
-	migrator := migrator.NewMigrator(ss.engine)
-	migrations.AddMigrations(migrator)
+	if !ss.dbCfg.SkipMigrations {
+		migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
+		migrations.AddMigrations(migrator)
 
-	for _, descriptor := range registry.GetServices() {
-		sc, ok := descriptor.Instance.(registry.DatabaseMigrator)
-		if ok {
-			sc.AddMigration(migrator)
+		for _, descriptor := range registry.GetServices() {
+			sc, ok := descriptor.Instance.(registry.DatabaseMigrator)
+			if ok {
+				sc.AddMigration(migrator)
+			}
 		}
-	}
 
-	if err := migrator.Start(); err != nil {
-		return err
+		if err := migrator.Start(); err != nil {
+			return err
+		}
 	}
 
 	// Init repo instances
 	annotations.SetRepository(&SQLAnnotationRepo{})
-	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: 100, log: log.New("annotationcleaner")})
+	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: ss.Cfg.AnnotationCleanupJobBatchSize, log: log.New("annotationcleaner")})
 	ss.Bus.SetTransactionManager(ss)
 
 	// Register handlers
 	ss.addUserQueryAndCommandHandlers()
 	ss.addAlertNotificationUidByIdHandler()
 	ss.addPreferencesQueryAndCommandHandlers()
+	ss.addDashboardQueryAndCommandHandlers()
 
 	if err := ss.Reset(); err != nil {
 		return err
 	}
 	// Make sure the changes are synced, so they get shared with eventual other DB connections
-	if err := ss.Sync(); err != nil {
-		return err
+	if !ss.dbCfg.SkipMigrations {
+		if err := ss.Sync(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -138,21 +140,15 @@ func (ss *SQLStore) Reset() error {
 }
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
-	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
+	ctx := context.Background()
+	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		ss.log.Debug("Ensuring main org and admin user exist")
 		var stats models.SystemUserCountStats
-		err := ss.WithDbSession(ctx, func(sess *DBSession) error {
-			// TODO: Should be able to rename "Count" to "count", for more standard SQL style
-			// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
-			rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
-			if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
-				return fmt.Errorf("could not determine if admin user exists: %w", err)
-			}
-
-			return nil
-		})
-		if err != nil {
-			return err
+		// TODO: Should be able to rename "Count" to "count", for more standard SQL style
+		// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
+		rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
+		if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
+			return fmt.Errorf("could not determine if admin user exists: %w", err)
 		}
 
 		if stats.Count > 0 {
@@ -162,8 +158,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 		// ensure admin user
 		if !ss.Cfg.DisableInitAdminCreation {
 			ss.log.Debug("Creating default admin user")
-			ss.log.Debug("Creating default admin user")
-			if _, err := ss.createUser(ctx, userCreationArgs{
+			if _, err := ss.createUser(ctx, sess, userCreationArgs{
 				Login:    ss.Cfg.AdminUser,
 				Email:    ss.Cfg.AdminUser + "@localhost",
 				Password: ss.Cfg.AdminPassword,
@@ -178,11 +173,8 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 			// return nil
 		}
 
-		if err := inTransactionWithRetryCtx(ctx, ss.engine, func(sess *DBSession) error {
-			ss.log.Debug("Creating default org", "name", MainOrgName)
-			_, err := ss.getOrCreateOrg(sess, MainOrgName)
-			return err
-		}, 0); err != nil {
+		ss.log.Debug("Creating default org", "name", MainOrgName)
+		if _, err := ss.getOrCreateOrg(sess, MainOrgName); err != nil {
 			return fmt.Errorf("failed to create default organization: %w", err)
 		}
 
@@ -211,6 +203,10 @@ func (ss *SQLStore) buildExtraConnectionString(sep rune) string {
 }
 
 func (ss *SQLStore) buildConnectionString() (string, error) {
+	if err := ss.readConfig(); err != nil {
+		return "", err
+	}
+
 	cnnstr := ss.dbCfg.ConnectionString
 
 	// special case used by integration tests
@@ -238,6 +234,11 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			}
 
 			cnnstr += "&tls=custom"
+		}
+
+		if isolation := ss.dbCfg.IsolationLevel; isolation != "" {
+			val := url.QueryEscape(fmt.Sprintf("'%s'", isolation))
+			cnnstr += fmt.Sprintf("&tx_isolation=%s", val)
 		}
 
 		cnnstr += ss.buildExtraConnectionString('&')
@@ -346,12 +347,15 @@ func (ss *SQLStore) initEngine() error {
 }
 
 // readConfig initializes the SQLStore from its configuration.
-func (ss *SQLStore) readConfig() {
+func (ss *SQLStore) readConfig() error {
 	sec := ss.Cfg.Raw.Section("database")
 
 	cfgURL := sec.Key("url").String()
 	if len(cfgURL) != 0 {
-		dbURL, _ := url.Parse(cfgURL)
+		dbURL, err := url.Parse(cfgURL)
+		if err != nil {
+			return err
+		}
 		ss.dbCfg.Type = dbURL.Scheme
 		ss.dbCfg.Host = dbURL.Host
 
@@ -386,8 +390,11 @@ func (ss *SQLStore) readConfig() {
 	ss.dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
 	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
 	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
+	ss.dbCfg.IsolationLevel = sec.Key("isolation_level").String()
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
+	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
+	return nil
 }
 
 // ITestDB is an interface of arguments for testing db
@@ -452,6 +459,15 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 			}
 		}
 
+		// useful if you already have a database that you want to use for tests.
+		// cannot just set it on testSQLStore as it overrides the config in Init
+		if _, present := os.LookupEnv("SKIP_MIGRATIONS"); present {
+			t.Log("Skipping database migrations")
+			if _, err := sec.NewKey("skip_migrations", "true"); err != nil {
+				t.Fatalf("Failed to create key: %s", err)
+			}
+		}
+
 		// need to get engine to clean db before we init
 		t.Logf("Creating database connection: %q", sec.Key("connection_string"))
 		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
@@ -507,6 +523,14 @@ func IsTestDbPostgres() bool {
 	return false
 }
 
+func IsTestDBMSSQL() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == migrator.MSSQL
+	}
+
+	return false
+}
+
 type DatabaseConfig struct {
 	Type             string
 	Host             string
@@ -520,9 +544,11 @@ type DatabaseConfig struct {
 	ClientCertPath   string
 	ServerCertName   string
 	ConnectionString string
+	IsolationLevel   string
 	MaxOpenConn      int
 	MaxIdleConn      int
 	ConnMaxLifetime  int
 	CacheMode        string
 	UrlQueryParams   map[string][]string
+	SkipMigrations   bool
 }

@@ -7,6 +7,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
   const self = this;
   const ctrl = scope.ctrl;
   const panel = ctrl.panel;
+  const hoverEvent = new LegacyGraphHoverEvent({ pos: {}, point: {}, panel: this.panel });
 
   const $tooltip = $('<div class="graph-tooltip">');
 
@@ -55,10 +56,10 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     if (xMode === 'time') {
       innerHtml = '<div class="graph-tooltip-time">' + absoluteTime + '</div>' + innerHtml;
     }
-    $tooltip.html(innerHtml).place_tt(pos.pageX + 20, pos.pageY);
+    $tooltip.html(innerHtml).place_tt(pos.pageX, pos.pageY, { offset: 10 });
   };
 
-  this.getMultiSeriesPlotHoverInfo = function(seriesList: any[], pos: { x: number }) {
+  this.getMultiSeriesPlotHoverInfo = function (seriesList: any[], pos: { x: number }) {
     let value, i, series, hoverIndex, hoverDistance, pointTime, yaxis;
     // 3 sub-arrays, 1st for hidden series, 2nd for left yaxis, 3rd for right yaxis.
     let results: any = [[], [], []];
@@ -159,7 +160,10 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
 
     // broadcast to other graph panels that we are hovering!
     pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
-    dashboard.events.publish(new LegacyGraphHoverEvent({ pos: pos, panel: panel }));
+    hoverEvent.payload.pos = pos;
+    hoverEvent.payload.panel = panel;
+    hoverEvent.payload.point['time'] = (pos as any).x;
+    dashboard.events.publish(hoverEvent);
   });
 
   elem.bind('plotclick', (event: any, pos: any, item: any) => {

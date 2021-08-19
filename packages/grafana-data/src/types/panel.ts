@@ -10,6 +10,8 @@ import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { OptionEditorConfig } from './options';
+import { AlertStateInfo } from './alerts';
+import { PanelModel } from './dashboard';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -29,8 +31,20 @@ export interface PanelData {
   /** Contains data frames with field overrides applied */
   series: DataFrame[];
 
+  /**
+   * This is a key that will change when the DataFrame[] structure changes.
+   * The revision is a useful way to know if only data has changed or data+structure
+   */
+  structureRev?: number;
+
   /** A list of annotation items */
   annotations?: DataFrame[];
+
+  /**
+   * @internal
+   * @deprecated alertState is deprecated and will be removed when the next generation Alerting is in place
+   */
+  alertState?: AlertStateInfo;
 
   /** Request contains the queries and properties sent to the datasource */
   request?: DataQueryRequest;
@@ -108,18 +122,6 @@ export interface PanelEditorProps<T = any> {
   data?: PanelData;
 }
 
-export interface PanelModel<TOptions = any> {
-  /** ID of the panel within the current dashboard */
-  id: number;
-  /** Panel options */
-  options: TOptions;
-  /** Field options configuration */
-  fieldConfig: FieldConfigSource;
-  /** Version of the panel plugin */
-  pluginVersion?: string;
-  scopedVars?: ScopedVars;
-}
-
 /**
  * Called when a panel is first loaded with current panel model
  */
@@ -131,7 +133,8 @@ export type PanelMigrationHandler<TOptions = any> = (panel: PanelModel<TOptions>
 export type PanelTypeChangedHandler<TOptions = any> = (
   panel: PanelModel<TOptions>,
   prevPluginId: string,
-  prevOptions: any
+  prevOptions: Record<string, any>,
+  prevFieldConfig: FieldConfigSource
 ) => Partial<TOptions>;
 
 export type PanelOptionEditorsRegistry = Registry<PanelOptionsEditorItem>;
@@ -174,4 +177,9 @@ export enum VizOrientation {
   Auto = 'auto',
   Vertical = 'vertical',
   Horizontal = 'horizontal',
+}
+
+export interface PanelPluginDataSupport {
+  annotations: boolean;
+  alertStates: boolean;
 }

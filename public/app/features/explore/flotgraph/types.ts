@@ -1,4 +1,4 @@
-import { LegendOptions, GraphTooltipOptions, LegendDisplayMode } from '@grafana/ui';
+import { VizTooltipOptions, TooltipDisplayMode, LegendDisplayMode, LegendPlacement } from '@grafana/ui';
 import { YAxis } from '@grafana/data';
 
 export interface SeriesOptions {
@@ -14,11 +14,14 @@ export interface GraphOptions {
 
 export interface Options {
   graph: GraphOptions;
-  legend: LegendOptions & GraphLegendEditorLegendOptions;
+  legend: {
+    displayMode: LegendDisplayMode;
+    placement: LegendPlacement;
+  };
   series: {
     [alias: string]: SeriesOptions;
   };
-  tooltipOptions: GraphTooltipOptions;
+  tooltipOptions: VizTooltipOptions;
 }
 
 export const defaults: Options = {
@@ -32,10 +35,12 @@ export const defaults: Options = {
     placement: 'bottom',
   },
   series: {},
-  tooltipOptions: { mode: 'single' },
+  tooltipOptions: { mode: TooltipDisplayMode.Single },
 };
 
-export interface GraphLegendEditorLegendOptions extends LegendOptions {
+export interface GraphLegendEditorLegendOptions {
+  displayMode: LegendDisplayMode;
+  placement: LegendPlacement;
   stats?: string[];
   decimals?: number;
   sortBy?: string;

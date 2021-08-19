@@ -111,6 +111,7 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 		eventType = "resolve"
 	}
 	customData := simplejson.New()
+	customData.Set("state", evalContext.Rule.State)
 	if pn.MessageInDetails {
 		queries := make(map[string]interface{})
 		for _, evt := range evalContext.EvalMatches {
@@ -167,7 +168,7 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	}
 
 	var summary string
-	if pn.MessageInDetails {
+	if pn.MessageInDetails || evalContext.Rule.Message == "" {
 		summary = evalContext.Rule.Name
 	} else {
 		summary = evalContext.Rule.Name + " - " + evalContext.Rule.Message

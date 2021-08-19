@@ -12,31 +12,23 @@ import {
   FieldConfig,
   FieldColorModeId,
   getFieldColorMode,
-  getColorForTheme,
   FALLBACK_COLOR,
   TextDisplayOptions,
+  VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-
-// Components
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
-
-// Utils
 import { measureText, calculateFontSize } from '../../utils/measureText';
-
-// Types
-import { VizOrientation } from '@grafana/data';
-import { Themeable } from '../../types';
+import { Themeable2 } from '../../types';
 
 const MIN_VALUE_HEIGHT = 18;
 const MAX_VALUE_HEIGHT = 50;
-const MIN_VALUE_WIDTH = 50;
 const MAX_VALUE_WIDTH = 150;
 const TITLE_LINE_HEIGHT = 1.5;
 const VALUE_LINE_HEIGHT = 1;
 const VALUE_LEFT_PADDING = 10;
 
-export interface Props extends Themeable {
+export interface Props extends Themeable2 {
   height: number;
   width: number;
   field: FieldConfig;
@@ -145,23 +137,15 @@ export class BarGauge extends PureComponent<Props> {
       // if we are past real value the cell is not "on"
       if (value === null || (positionValue !== null && positionValue > value.numeric)) {
         return {
-          background: tinycolor(color)
-            .setAlpha(0.18)
-            .toRgbString(),
+          background: tinycolor(color).setAlpha(0.18).toRgbString(),
           border: 'transparent',
           isLit: false,
         };
       } else {
         return {
-          background: tinycolor(color)
-            .setAlpha(0.95)
-            .toRgbString(),
-          backgroundShade: tinycolor(color)
-            .setAlpha(0.55)
-            .toRgbString(),
-          border: tinycolor(color)
-            .setAlpha(0.9)
-            .toRgbString(),
+          background: tinycolor(color).setAlpha(0.95).toRgbString(),
+          backgroundShade: tinycolor(color).setAlpha(0.55).toRgbString(),
+          border: tinycolor(color).setAlpha(0.9).toRgbString(),
           isLit: true,
         };
       }
@@ -381,9 +365,15 @@ interface BarAndValueDimensions {
   wrapperWidth: number;
 }
 
-function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
-  const { height, width, orientation, text } = props;
+/**
+ * @internal
+ * Only exported for unit tests
+ **/
+export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
+  const { height, width, orientation, text, alignmentFactors } = props;
   const titleDim = calculateTitleDimensions(props);
+  const value = alignmentFactors ?? props.value;
+  const valueString = formattedValueToString(value);
 
   let maxBarHeight = 0;
   let maxBarWidth = 0;
@@ -392,25 +382,27 @@ function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
   let wrapperWidth = 0;
   let wrapperHeight = 0;
 
+  // measure text with title font size or min 14px
+  const fontSizeToMeasureWith = text?.valueSize ?? Math.max(titleDim.fontSize, 12);
+  const realTextSize = measureText(valueString, fontSizeToMeasureWith);
+  const realValueWidth = realTextSize.width + VALUE_LEFT_PADDING * 2;
+
   if (isVertical(orientation)) {
     if (text?.valueSize) {
       valueHeight = text.valueSize * VALUE_LINE_HEIGHT;
     } else {
       valueHeight = Math.min(Math.max(height * 0.1, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
     }
+
     valueWidth = width;
     maxBarHeight = height - (titleDim.height + valueHeight);
     maxBarWidth = width;
     wrapperWidth = width;
     wrapperHeight = height - titleDim.height;
   } else {
-    if (text?.valueSize) {
-      valueHeight = text.valueSize * VALUE_LINE_HEIGHT;
-    } else {
-      valueHeight = height - titleDim.height;
-    }
+    valueHeight = height - titleDim.height;
+    valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), realValueWidth);
 
-    valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), MIN_VALUE_WIDTH);
     maxBarHeight = height - titleDim.height;
     maxBarWidth = width - valueWidth - titleDim.width;
 
@@ -486,10 +478,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     if (isBasic) {
       // Basic styles
-      barStyles.background = `${tinycolor(valueColor)
-        .setAlpha(0.35)
-        .toRgbString()}`;
-
+      barStyles.background = `${tinycolor(valueColor).setAlpha(0.35).toRgbString()}`;
       barStyles.borderTop = `2px solid ${valueColor}`;
     } else {
       // Gradient styles
@@ -512,9 +501,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     if (isBasic) {
       // Basic styles
-      barStyles.background = `${tinycolor(valueColor)
-        .setAlpha(0.35)
-        .toRgbString()}`;
+      barStyles.background = `${tinycolor(valueColor).setAlpha(0.35).toRgbString()}`;
       barStyles.borderRight = `2px solid ${valueColor}`;
     } else {
       // Gradient styles
@@ -548,14 +535,20 @@ export function getBarGradient(props: Props, maxSize: number): string {
 
     for (let i = 0; i < thresholds.steps.length; i++) {
       const threshold = thresholds.steps[i];
-      const color = getColorForTheme(threshold.color, props.theme);
-      const valuePercent = getValuePercent(threshold.value, minValue, maxValue);
+      const color = props.theme.visualization.getColorByName(threshold.color);
+      const valuePercent =
+        thresholds.mode === ThresholdsMode.Percentage
+          ? threshold.value / 100
+          : getValuePercent(threshold.value, minValue, maxValue);
       const pos = valuePercent * maxSize;
       const offset = Math.round(pos - (pos - lastpos) / 2);
-
+      const thresholdValue =
+        thresholds.mode === ThresholdsMode.Percentage
+          ? minValue + (maxValue - minValue) * valuePercent
+          : threshold.value;
       if (gradient === '') {
         gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
-      } else if (value.numeric < threshold.value) {
+      } else if (value.numeric < thresholdValue) {
         break;
       } else {
         lastpos = pos;
@@ -566,8 +559,9 @@ export function getBarGradient(props: Props, maxSize: number): string {
     return gradient + ')';
   }
 
-  if (mode.isContinuous && mode.colors) {
-    const scheme = mode.colors.map(item => getColorForTheme(item, theme));
+  if (mode.isContinuous && mode.getColors) {
+    const scheme = mode.getColors(theme);
+
     for (let i = 0; i < scheme.length; i++) {
       const color = scheme[i];
 

@@ -1,16 +1,18 @@
+import { gte, lt } from 'semver';
 import { ElasticQueryBuilder } from '../query_builder';
 import { ElasticsearchQuery } from '../types';
 
 describe('ElasticQueryBuilder', () => {
-  const builder = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 2 });
-  const builder5x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 5 });
-  const builder56 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 56 });
-  const builder6x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 60 });
-  const builder7x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 70 });
+  const builder = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '2.0.0' });
+  const builder5x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '5.0.0' });
+  const builder56 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '5.6.0' });
+  const builder6x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '6.0.0' });
+  const builder7x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '7.0.0' });
+  const builder77 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '7.7.0' });
 
-  const allBuilders = [builder, builder5x, builder56, builder6x, builder7x];
+  const allBuilders = [builder, builder5x, builder56, builder6x, builder7x, builder77];
 
-  allBuilders.forEach(builder => {
+  allBuilders.forEach((builder) => {
     describe(`version ${builder.esVersion}`, () => {
       it('should return query with defaults', () => {
         const query = builder.build({
@@ -22,6 +24,22 @@ describe('ElasticQueryBuilder', () => {
 
         expect(query.query.bool.filter[0].range['@timestamp'].gte).toBe('$timeFrom');
         expect(query.aggs['1'].date_histogram.extended_bounds.min).toBe('$timeFrom');
+      });
+
+      it('should clean settings from null values', () => {
+        const query = builder.build({
+          refId: 'A',
+          // The following `missing: null as any` is because previous versions of the DS where
+          // storing null in the query model when inputting an empty string,
+          // which were then removed in the query builder.
+          // The new version doesn't store empty strings at all. This tests ensures backward compatinility.
+          metrics: [{ type: 'avg', id: '0', settings: { missing: null as any, script: '1' } }],
+          timeField: '@timestamp',
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
+        });
+
+        expect(query.aggs['1'].aggs['0'].avg.missing).not.toBeDefined();
+        expect(query.aggs['1'].aggs['0'].avg.script).toBeDefined();
       });
 
       it('with multiple bucket aggs', () => {
@@ -75,7 +93,7 @@ describe('ElasticQueryBuilder', () => {
         const query = builder.build(target, 100, '1000');
         const firstLevel = query.aggs['2'];
 
-        if (builder.esVersion >= 60) {
+        if (gte(builder.esVersion, '6.0.0')) {
           expect(firstLevel.terms.order._key).toBe('asc');
         } else {
           expect(firstLevel.terms.order._term).toBe('asc');
@@ -109,6 +127,84 @@ describe('ElasticQueryBuilder', () => {
 
         expect(firstLevel.aggs['5'].avg.field).toBe('@value');
         expect(secondLevel.aggs['5'].avg.field).toBe('@value');
+      });
+
+      it('with term agg and order by count agg', () => {
+        const query = builder.build(
+          {
+            refId: 'A',
+            metrics: [
+              { type: 'count', id: '1' },
+              { type: 'avg', field: '@value', id: '5' },
+            ],
+            bucketAggs: [
+              {
+                type: 'terms',
+                field: '@host',
+                settings: { size: '5', order: 'asc', orderBy: '1' },
+                id: '2',
+              },
+              { type: 'date_histogram', field: '@timestamp', id: '3' },
+            ],
+          },
+          100,
+          '1000'
+        );
+
+        expect(query.aggs['2'].terms.order._count).toEqual('asc');
+        expect(query.aggs['2'].aggs).not.toHaveProperty('1');
+      });
+
+      it('with term agg and order by extended_stats agg', () => {
+        const query = builder.build(
+          {
+            refId: 'A',
+            metrics: [{ type: 'extended_stats', id: '1', field: '@value', meta: { std_deviation: true } }],
+            bucketAggs: [
+              {
+                type: 'terms',
+                field: '@host',
+                settings: { size: '5', order: 'asc', orderBy: '1[std_deviation]' },
+                id: '2',
+              },
+              { type: 'date_histogram', field: '@timestamp', id: '3' },
+            ],
+          },
+          100,
+          '1000'
+        );
+
+        const firstLevel = query.aggs['2'];
+        const secondLevel = firstLevel.aggs['3'];
+
+        expect(firstLevel.aggs['1'].extended_stats.field).toBe('@value');
+        expect(secondLevel.aggs['1'].extended_stats.field).toBe('@value');
+      });
+
+      it('with term agg and order by percentiles agg', () => {
+        const query = builder.build(
+          {
+            refId: 'A',
+            metrics: [{ type: 'percentiles', id: '1', field: '@value', settings: { percents: ['95', '99'] } }],
+            bucketAggs: [
+              {
+                type: 'terms',
+                field: '@host',
+                settings: { size: '5', order: 'asc', orderBy: '1[95.0]' },
+                id: '2',
+              },
+              { type: 'date_histogram', field: '@timestamp', id: '3' },
+            ],
+          },
+          100,
+          '1000'
+        );
+
+        const firstLevel = query.aggs['2'];
+        const secondLevel = firstLevel.aggs['3'];
+
+        expect(firstLevel.aggs['1'].percentiles.field).toBe('@value');
+        expect(secondLevel.aggs['1'].percentiles.field).toBe('@value');
       });
 
       it('with term agg and valid min_doc_count', () => {
@@ -338,6 +434,36 @@ describe('ElasticQueryBuilder', () => {
         expect(firstLevel.aggs['4']).toBe(undefined);
       });
 
+      it('with top_metrics', () => {
+        const query = builder.build({
+          refId: 'A',
+          metrics: [
+            {
+              id: '2',
+              type: 'top_metrics',
+              settings: {
+                order: 'desc',
+                orderBy: '@timestamp',
+                metrics: ['@value'],
+              },
+            },
+          ],
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
+        });
+
+        const firstLevel = query.aggs['3'];
+
+        expect(firstLevel.aggs['2']).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.metrics).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.size).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.sort).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.metrics.length).toBe(1);
+        expect(firstLevel.aggs['2'].top_metrics.metrics).toEqual([{ field: '@value' }]);
+        expect(firstLevel.aggs['2'].top_metrics.sort).toEqual([{ '@timestamp': 'desc' }]);
+        expect(firstLevel.aggs['2'].top_metrics.size).toBe(1);
+      });
+
       it('with derivative', () => {
         const query = builder.build({
           refId: 'A',
@@ -401,7 +527,7 @@ describe('ElasticQueryBuilder', () => {
               type: 'serial_diff',
               field: '3',
               settings: {
-                lag: 5,
+                lag: '5',
               },
             },
           ],
@@ -548,7 +674,7 @@ describe('ElasticQueryBuilder', () => {
         }
 
         function checkSort(order: any, expected: string) {
-          if (builder.esVersion < 60) {
+          if (lt(builder.esVersion, '6.0.0')) {
             expect(order._term).toBe(expected);
             expect(order._key).toBeUndefined();
           } else {
@@ -586,7 +712,7 @@ describe('ElasticQueryBuilder', () => {
 
       describe('getLogsQuery', () => {
         it('should return query with defaults', () => {
-          const query = builder.getLogsQuery({ refId: 'A' }, null, '*');
+          const query = builder.getLogsQuery({ refId: 'A' }, 500, null, '*');
 
           expect(query.size).toEqual(500);
 
@@ -620,7 +746,7 @@ describe('ElasticQueryBuilder', () => {
         });
 
         it('with querystring', () => {
-          const query = builder.getLogsQuery({ refId: 'A', query: 'foo' }, null, 'foo');
+          const query = builder.getLogsQuery({ refId: 'A', query: 'foo' }, 500, null, 'foo');
 
           const expectedQuery = {
             bool: {
@@ -643,7 +769,7 @@ describe('ElasticQueryBuilder', () => {
             { key: 'key5', operator: '=~', value: 'value5' },
             { key: 'key6', operator: '!~', value: 'value6' },
           ];
-          const query = builder.getLogsQuery({ refId: 'A' }, adhocFilters, '*');
+          const query = builder.getLogsQuery({ refId: 'A' }, 500, adhocFilters, '*');
 
           expect(query.query.bool.must[0].match_phrase['key1'].query).toBe('value1');
           expect(query.query.bool.must_not[0].match_phrase['key2'].query).toBe('value2');
@@ -653,6 +779,67 @@ describe('ElasticQueryBuilder', () => {
           expect(query.query.bool.filter[4].bool.must_not.regexp['key6']).toBe('value6');
         });
       });
+    });
+  });
+
+  describe('Value casting for settings', () => {
+    it('correctly casts values in moving_avg ', () => {
+      const query = builder7x.build({
+        refId: 'A',
+        metrics: [
+          { type: 'avg', id: '2' },
+          {
+            type: 'moving_avg',
+            id: '3',
+            field: '2',
+            settings: {
+              window: '5',
+              model: 'holt_winters',
+              predict: '10',
+              settings: {
+                alpha: '1',
+                beta: '2',
+                gamma: '3',
+                period: '4',
+              },
+            },
+          },
+        ],
+        timeField: '@timestamp',
+        bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
+      });
+
+      const movingAvg = query.aggs['1'].aggs['3'].moving_avg;
+
+      expect(movingAvg.window).toBe(5);
+      expect(movingAvg.predict).toBe(10);
+      expect(movingAvg.settings.alpha).toBe(1);
+      expect(movingAvg.settings.beta).toBe(2);
+      expect(movingAvg.settings.gamma).toBe(3);
+      expect(movingAvg.settings.period).toBe(4);
+    });
+
+    it('correctly casts values in serial_diff ', () => {
+      const query = builder7x.build({
+        refId: 'A',
+        metrics: [
+          { type: 'avg', id: '2' },
+          {
+            type: 'serial_diff',
+            id: '3',
+            field: '2',
+            settings: {
+              lag: '1',
+            },
+          },
+        ],
+        timeField: '@timestamp',
+        bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
+      });
+
+      const serialDiff = query.aggs['1'].aggs['3'].serial_diff;
+
+      expect(serialDiff.lag).toBe(1);
     });
   });
 });

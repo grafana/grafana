@@ -209,18 +209,3 @@ type AlertStateInfoDTO struct {
 	State        AlertStateType `json:"state"`
 	NewStateDate time.Time      `json:"newStateDate"`
 }
-
-// "Internal" commands
-
-type UpdateDashboardAlertsCommand struct {
-	OrgId     int64
-	Dashboard *Dashboard
-	User      *SignedInUser
-}
-
-type ValidateDashboardAlertsCommand struct {
-	UserId    int64
-	OrgId     int64
-	Dashboard *Dashboard
-	User      *SignedInUser
-}

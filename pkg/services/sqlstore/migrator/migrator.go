@@ -1,10 +1,12 @@
 package migrator
 
 import (
+	"fmt"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -16,6 +18,7 @@ type Migrator struct {
 	Dialect    Dialect
 	migrations []Migration
 	Logger     log.Logger
+	Cfg        *setting.Cfg
 }
 
 type MigrationLog struct {
@@ -27,12 +30,13 @@ type MigrationLog struct {
 	Timestamp   time.Time
 }
 
-func NewMigrator(engine *xorm.Engine) *Migrator {
+func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
 	mg := &Migrator{}
 	mg.x = engine
 	mg.Logger = log.New("migrator")
 	mg.migrations = make([]Migration, 0)
 	mg.Dialect = NewDialect(mg.x)
+	mg.Cfg = cfg
 	return mg
 }
 
@@ -79,11 +83,15 @@ func (mg *Migrator) Start() error {
 		return err
 	}
 
+	migrationsPerformed := 0
+	migrationsSkipped := 0
+	start := time.Now()
 	for _, m := range mg.migrations {
 		m := m
 		_, exists := logMap[m.Id()]
 		if exists {
 			mg.Logger.Debug("Skipping migration: Already executed", "id", m.Id())
+			migrationsSkipped++
 			continue
 		}
 
@@ -95,24 +103,33 @@ func (mg *Migrator) Start() error {
 			Timestamp:   time.Now(),
 		}
 
-		err := mg.inTransaction(func(sess *xorm.Session) error {
+		err := mg.InTransaction(func(sess *xorm.Session) error {
 			err := mg.exec(m, sess)
 			if err != nil {
 				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
 				record.Error = err.Error()
-				if _, err := sess.Insert(&record); err != nil {
-					return err
+				if !m.SkipMigrationLog() {
+					if _, err := sess.Insert(&record); err != nil {
+						return err
+					}
 				}
 				return err
 			}
 			record.Success = true
-			_, err = sess.Insert(&record)
+			if !m.SkipMigrationLog() {
+				_, err = sess.Insert(&record)
+			}
+			if err == nil {
+				migrationsPerformed++
+			}
 			return err
 		})
 		if err != nil {
-			return errutil.Wrap("migration failed", err)
+			return errutil.Wrap(fmt.Sprintf("migration failed (id = %s)", m.Id()), err)
 		}
 	}
+
+	mg.Logger.Info("migrations completed", "performed", migrationsPerformed, "skipped", migrationsSkipped, "duration", time.Since(start))
 
 	// Make sure migrations are synced
 	return mg.x.Sync2()
@@ -160,7 +177,7 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 
 type dbTransactionFunc func(sess *xorm.Session) error
 
-func (mg *Migrator) inTransaction(callback dbTransactionFunc) error {
+func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
 	sess := mg.x.NewSession()
 	defer sess.Close()
 

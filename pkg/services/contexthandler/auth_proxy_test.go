@@ -1,6 +1,7 @@
 package contexthandler
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -33,20 +35,20 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 		cmd.Result = &models.User{Id: userID}
 		return nil
 	}
-	getUserHandler := func(cmd *models.GetSignedInUserQuery) error {
+	getUserHandler := func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 		// Simulate that the cached user ID is stale
-		if cmd.UserId != userID {
+		if query.UserId != userID {
 			return models.ErrUserNotFound
 		}
 
-		cmd.Result = &models.SignedInUser{
+		query.Result = &models.SignedInUser{
 			UserId: userID,
 			OrgId:  orgID,
 		}
 		return nil
 	}
 	bus.AddHandler("", upsertHandler)
-	bus.AddHandler("", getUserHandler)
+	bus.AddHandlerCtx("", getUserHandler)
 	t.Cleanup(func() {
 		bus.ClearBusHandlers()
 	})
@@ -107,6 +109,7 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	cfg.AuthProxyHeaderProperty = "username"
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
+	authJWTSvc := models.NewFakeJWTService()
 	svc := &ContextHandler{}
 
 	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
@@ -125,6 +128,10 @@ func getContextHandler(t *testing.T) *ContextHandler {
 		{
 			Name:     rendering.ServiceName,
 			Instance: renderSvc,
+		},
+		{
+			Name:     jwt.ServiceName,
+			Instance: authJWTSvc,
 		},
 		{
 			Name:     ServiceName,

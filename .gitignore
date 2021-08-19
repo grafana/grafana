@@ -15,10 +15,15 @@ awsconfig
 .yarnrc
 .yarn/
 vendor/
+/docs/menu.yaml
+/requests
 
 # Enterprise emails
 /emails/templates/enterprise_*
 /public/emails/enterprise_*
+
+# Enterprise reporting fonts
+/public/fonts/dejavu
 
 # Enterprise devenv
 /devenv/docker/blocks/grafana-enterprise
@@ -45,6 +50,7 @@ public/css/*.min.css
 *.tmp
 .DS_Store
 .vscode/
+!.vscode/launch.json
 .vs/
 .eslintcache
 

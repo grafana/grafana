@@ -1,4 +1,4 @@
-import { QueryRunners } from './queryRunners';
+import { QueryRunners, variableDummyRefId } from './queryRunners';
 import { getDefaultTimeRange, VariableSupportType } from '@grafana/data';
 import { VariableRefresh } from '../types';
 import { of } from 'rxjs';
@@ -43,7 +43,7 @@ describe('QueryRunners', () => {
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual({
             series: [{ text: 'A', value: 'A' }],
@@ -70,6 +70,41 @@ describe('QueryRunners', () => {
       });
     });
 
+    describe('and calling runRequest with a variable that refreshes on dashboard load', () => {
+      const { datasource, runner, runnerArgs, request, timeSrv, defaultTimeRange } = getLegacyTestContext({
+        query: 'A query',
+        refresh: VariableRefresh.onDashboardLoad,
+      });
+      const observable = runner.runRequest(runnerArgs, request);
+
+      it('then it should return correct observable', async () => {
+        await expect(observable).toEmitValuesWith((received) => {
+          const value = received[0];
+          expect(value).toEqual({
+            series: [{ text: 'A', value: 'A' }],
+            state: 'Done',
+            timeRange: defaultTimeRange,
+          });
+        });
+      });
+
+      it('and it should call timeSrv.timeRange()', () => {
+        expect(timeSrv.timeRange).toHaveBeenCalledTimes(1);
+      });
+
+      it('and it should call metricFindQuery with correct options', () => {
+        expect(datasource.metricFindQuery).toHaveBeenCalledTimes(1);
+        expect(datasource.metricFindQuery).toHaveBeenCalledWith('A query', {
+          range: defaultTimeRange,
+          searchFilter: 'A searchFilter',
+          variable: {
+            query: 'A query',
+            refresh: VariableRefresh.onDashboardLoad,
+          },
+        });
+      });
+    });
+
     describe('and calling runRequest with a variable that does not refresh when time range changes', () => {
       const { datasource, runner, runnerArgs, request, timeSrv } = getLegacyTestContext({
         query: 'A query',
@@ -78,7 +113,7 @@ describe('QueryRunners', () => {
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const values = received[0];
           expect(values).toEqual({
             series: [{ text: 'A', value: 'A' }],
@@ -150,7 +185,7 @@ describe('QueryRunners', () => {
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual({});
         });
@@ -169,7 +204,7 @@ describe('QueryRunners', () => {
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual({});
         });
@@ -217,7 +252,7 @@ describe('QueryRunners', () => {
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual({});
         });
@@ -258,6 +293,15 @@ describe('QueryRunners', () => {
         const target = runner.getTarget({ datasource, variable });
         expect(target).toEqual({ refId: 'A', query: 'A query' });
       });
+
+      describe('and ref id is missing', () => {
+        it('then it should return correct target with dummy ref id', () => {
+          const { runner, datasource, variable } = getDatasourceTestContext();
+          delete variable.query.refId;
+          const target = runner.getTarget({ datasource, variable });
+          expect(target).toEqual({ refId: variableDummyRefId, query: 'A query' });
+        });
+      });
     });
 
     describe('and calling runRequest', () => {
@@ -265,7 +309,7 @@ describe('QueryRunners', () => {
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', async () => {
-        await expect(observable).toEmitValuesWith(received => {
+        await expect(observable).toEmitValuesWith((received) => {
           const value = received[0];
           expect(value).toEqual({});
         });

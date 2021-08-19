@@ -1,23 +1,30 @@
 package models
 
 type SystemStats struct {
-	Dashboards            int64
-	Datasources           int64
-	Users                 int64
-	ActiveUsers           int64
-	Orgs                  int64
-	Playlists             int64
-	Alerts                int64
-	Stars                 int64
-	Snapshots             int64
-	Teams                 int64
-	DashboardPermissions  int64
-	FolderPermissions     int64
-	Folders               int64
-	ProvisionedDashboards int64
-	AuthTokens            int64
-	DashboardVersions     int64
-	Annotations           int64
+	Dashboards                int64
+	Datasources               int64
+	Users                     int64
+	ActiveUsers               int64
+	Orgs                      int64
+	Playlists                 int64
+	Alerts                    int64
+	Stars                     int64
+	Snapshots                 int64
+	Teams                     int64
+	DashboardPermissions      int64
+	FolderPermissions         int64
+	Folders                   int64
+	ProvisionedDashboards     int64
+	AuthTokens                int64
+	DashboardVersions         int64
+	Annotations               int64
+	AlertRules                int64
+	LibraryPanels             int64
+	LibraryVariables          int64
+	DashboardsViewersCanEdit  int64
+	DashboardsViewersCanAdmin int64
+	FoldersViewersCanEdit     int64
+	FoldersViewersCanAdmin    int64
 
 	Admins         int
 	Editors        int
@@ -97,10 +104,4 @@ type UserStats struct {
 	Admins  int64
 	Editors int64
 	Viewers int64
-}
-
-type GetUserStatsQuery struct {
-	MustUpdate bool
-	Active     bool
-	Result     UserStats
 }

@@ -1,0 +1,1033 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`BarChart utils preparePlotConfigBuilder orientation 1`] = `
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "x",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": false,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "m/s",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": true,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
+  "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
+    "points": Object {
+      "fill": [Function],
+      "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
+    },
+    "x": false,
+    "y": false,
+  },
+  "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+  },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": undefined,
+    },
+    "x": Object {
+      "auto": true,
+      "dir": -1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": false,
+    },
+  },
+  "select": undefined,
+  "series": Array [
+    Object {
+      "value": [Function],
+    },
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
+        "filter": undefined,
+        "size": undefined,
+        "stroke": "#808080",
+      },
+      "pxAlign": true,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "value": [Function],
+      "width": 2,
+    },
+  ],
+  "tzDate": [Function],
+}
+`;
+
+exports[`BarChart utils preparePlotConfigBuilder orientation 2`] = `
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "x",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": false,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "m/s",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": true,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
+  "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
+    "points": Object {
+      "fill": [Function],
+      "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
+    },
+    "x": false,
+    "y": false,
+  },
+  "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+  },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": undefined,
+    },
+    "x": Object {
+      "auto": true,
+      "dir": -1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": false,
+    },
+  },
+  "select": undefined,
+  "series": Array [
+    Object {
+      "value": [Function],
+    },
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
+        "filter": undefined,
+        "size": undefined,
+        "stroke": "#808080",
+      },
+      "pxAlign": true,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "value": [Function],
+      "width": 2,
+    },
+  ],
+  "tzDate": [Function],
+}
+`;
+
+exports[`BarChart utils preparePlotConfigBuilder orientation 3`] = `
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "x",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": false,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "m/s",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": true,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
+  "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
+    "points": Object {
+      "fill": [Function],
+      "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
+    },
+    "x": false,
+    "y": false,
+  },
+  "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+  },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": undefined,
+    },
+    "x": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": false,
+    },
+  },
+  "select": undefined,
+  "series": Array [
+    Object {
+      "value": [Function],
+    },
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
+        "filter": undefined,
+        "size": undefined,
+        "stroke": "#808080",
+      },
+      "pxAlign": true,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "value": [Function],
+      "width": 2,
+    },
+  ],
+  "tzDate": [Function],
+}
+`;
+
+exports[`BarChart utils preparePlotConfigBuilder stacking 1`] = `
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "x",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": false,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "m/s",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": true,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
+  "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
+    "points": Object {
+      "fill": [Function],
+      "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
+    },
+    "x": false,
+    "y": false,
+  },
+  "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+  },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": undefined,
+    },
+    "x": Object {
+      "auto": true,
+      "dir": -1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": false,
+    },
+  },
+  "select": undefined,
+  "series": Array [
+    Object {
+      "value": [Function],
+    },
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
+        "filter": undefined,
+        "size": undefined,
+        "stroke": "#808080",
+      },
+      "pxAlign": true,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "value": [Function],
+      "width": 2,
+    },
+  ],
+  "tzDate": [Function],
+}
+`;
+
+exports[`BarChart utils preparePlotConfigBuilder stacking 2`] = `
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "x",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": false,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "m/s",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": true,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
+  "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
+    "points": Object {
+      "fill": [Function],
+      "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
+    },
+    "x": false,
+    "y": false,
+  },
+  "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+  },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": undefined,
+    },
+    "x": Object {
+      "auto": true,
+      "dir": -1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": false,
+    },
+  },
+  "select": undefined,
+  "series": Array [
+    Object {
+      "value": [Function],
+    },
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
+        "filter": undefined,
+        "size": undefined,
+        "stroke": "#808080",
+      },
+      "pxAlign": true,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "value": [Function],
+      "width": 2,
+    },
+  ],
+  "tzDate": [Function],
+}
+`;
+
+exports[`BarChart utils preparePlotConfigBuilder stacking 3`] = `
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "x",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": false,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "m/s",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": true,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
+  "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
+    "points": Object {
+      "fill": [Function],
+      "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
+    },
+    "x": false,
+    "y": false,
+  },
+  "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+  },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": undefined,
+    },
+    "x": Object {
+      "auto": true,
+      "dir": -1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": false,
+    },
+  },
+  "select": undefined,
+  "series": Array [
+    Object {
+      "value": [Function],
+    },
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
+        "filter": undefined,
+        "size": undefined,
+        "stroke": "#808080",
+      },
+      "pxAlign": true,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "value": [Function],
+      "width": 2,
+    },
+  ],
+  "tzDate": [Function],
+}
+`;
+
+exports[`BarChart utils preparePlotConfigBuilder value visibility 1`] = `
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "x",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": false,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "m/s",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": true,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
+  "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
+    "points": Object {
+      "fill": [Function],
+      "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
+    },
+    "x": false,
+    "y": false,
+  },
+  "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+  },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": undefined,
+    },
+    "x": Object {
+      "auto": true,
+      "dir": -1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": false,
+    },
+  },
+  "select": undefined,
+  "series": Array [
+    Object {
+      "value": [Function],
+    },
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
+        "filter": undefined,
+        "size": undefined,
+        "stroke": "#808080",
+      },
+      "pxAlign": true,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "value": [Function],
+      "width": 2,
+    },
+  ],
+  "tzDate": [Function],
+}
+`;
+
+exports[`BarChart utils preparePlotConfigBuilder value visibility 2`] = `
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 15,
+      "grid": Object {
+        "show": false,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "x",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": [Function],
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": false,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelGap": 0,
+      "scale": "m/s",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": true,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
+  "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
+    "points": Object {
+      "fill": [Function],
+      "show": false,
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
+    },
+    "x": false,
+    "y": false,
+  },
+  "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
+    "drawClear": Array [
+      [Function],
+    ],
+    "init": Array [
+      [Function],
+    ],
+  },
+  "scales": Object {
+    "m/s": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 0,
+      "range": [Function],
+      "time": undefined,
+    },
+    "x": Object {
+      "auto": true,
+      "dir": -1,
+      "distr": 2,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": false,
+    },
+  },
+  "select": undefined,
+  "series": Array [
+    Object {
+      "value": [Function],
+    },
+    Object {
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
+        "filter": undefined,
+        "size": undefined,
+        "stroke": "#808080",
+      },
+      "pxAlign": true,
+      "scale": "m/s",
+      "show": true,
+      "spanGaps": undefined,
+      "stroke": "#808080",
+      "value": [Function],
+      "width": 2,
+    },
+  ],
+  "tzDate": [Function],
+}
+`;

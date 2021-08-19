@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isArray, reduce } from 'lodash';
 import { QueryPartDef, QueryPart } from 'app/core/components/query_part/query_part';
 
 const alertQueryDef = new QueryPartDef({
@@ -19,18 +19,28 @@ const conditionTypes = [{ text: 'Query', value: 'query' }];
 
 const alertStateSortScore = {
   alerting: 1,
+  firing: 1,
   no_data: 2,
   pending: 3,
   ok: 4,
   paused: 5,
+  inactive: 5,
 };
 
+export enum EvalFunction {
+  'IsAbove' = 'gt',
+  'IsBelow' = 'lt',
+  'IsOutsideRange' = 'outside_range',
+  'IsWithinRange' = 'within_range',
+  'HasNoValue' = 'no_value',
+}
+
 const evalFunctions = [
-  { text: 'IS ABOVE', value: 'gt' },
-  { text: 'IS BELOW', value: 'lt' },
-  { text: 'IS OUTSIDE RANGE', value: 'outside_range' },
-  { text: 'IS WITHIN RANGE', value: 'within_range' },
-  { text: 'HAS NO VALUE', value: 'no_value' },
+  { value: EvalFunction.IsAbove, text: 'IS ABOVE' },
+  { value: EvalFunction.IsBelow, text: 'IS BELOW' },
+  { value: EvalFunction.IsOutsideRange, text: 'IS OUTSIDE RANGE' },
+  { value: EvalFunction.IsWithinRange, text: 'IS WITHIN RANGE' },
+  { value: EvalFunction.HasNoValue, text: 'HAS NO VALUE' },
 ];
 
 const evalOperators = [
@@ -103,7 +113,7 @@ function getStateDisplayModel(state: string) {
     case 'pending': {
       return {
         text: 'PENDING',
-        iconClass: 'exclamation-triangle',
+        iconClass: 'hourglass',
         stateClass: 'alert-state-warning',
       };
     }
@@ -114,13 +124,29 @@ function getStateDisplayModel(state: string) {
         stateClass: 'alert-state-paused',
       };
     }
+
+    case 'firing': {
+      return {
+        text: 'FIRING',
+        iconClass: 'fire',
+        stateClass: '',
+      };
+    }
+
+    case 'inactive': {
+      return {
+        text: 'INACTIVE',
+        iconClass: 'check',
+        stateClass: '',
+      };
+    }
   }
 
   throw { message: 'Unknown alert state' };
 }
 
 function joinEvalMatches(matches: any, separator: string) {
-  return _.reduce(
+  return reduce(
     matches,
     (res, ev) => {
       if (ev.metric !== undefined && ev.value !== undefined) {
@@ -143,9 +169,9 @@ function getAlertAnnotationInfo(ah: any) {
   // old way stored evalMatches in data property directly,
   // new way stores it in evalMatches property on new data object
 
-  if (_.isArray(ah.data)) {
+  if (isArray(ah.data)) {
     return joinEvalMatches(ah.data, ', ');
-  } else if (_.isArray(ah.data.evalMatches)) {
+  } else if (isArray(ah.data.evalMatches)) {
     return joinEvalMatches(ah.data.evalMatches, ', ');
   }
 

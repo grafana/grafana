@@ -1,12 +1,12 @@
 import React, { FC } from 'react';
-import { css } from 'emotion';
-import { Icon, IconName, useTheme } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { Icon, IconName, Link, useTheme } from '@grafana/ui';
 
 export interface Props {
   child: any;
 }
 
-const DropDownChild: FC<Props> = props => {
+const DropDownChild: FC<Props> = (props) => {
   const { child } = props;
   const listItemClassName = child.divider ? 'divider' : '';
   const theme = useTheme();
@@ -14,14 +14,16 @@ const DropDownChild: FC<Props> = props => {
     margin-right: ${theme.spacing.sm};
   `;
 
-  return (
-    <li className={listItemClassName}>
-      <a href={child.url}>
-        {child.icon && <Icon name={child.icon as IconName} className={iconClassName} />}
-        {child.text}
-      </a>
-    </li>
+  const linkContent = (
+    <>
+      {child.icon && <Icon name={child.icon as IconName} className={iconClassName} />}
+      {child.text}
+    </>
   );
+
+  const anchor = child.url ? <Link href={child.url}>{linkContent}</Link> : <a>{linkContent}</a>;
+
+  return <li className={listItemClassName}>{anchor}</li>;
 };
 
 export default DropDownChild;

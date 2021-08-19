@@ -7,6 +7,7 @@ export * from './components';
 export * from './types';
 export * from './utils';
 export * from './themes';
+export * from './options';
 export * from './slate-plugins';
 
 // Exposes standard editors for registries of optionsUi config and panel options UI

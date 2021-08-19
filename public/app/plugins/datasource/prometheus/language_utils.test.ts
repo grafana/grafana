@@ -72,15 +72,24 @@ describe('parseSelector()', () => {
 });
 
 describe('fixSummariesMetadata', () => {
-  it('returns empty metadata', () => {
-    expect(fixSummariesMetadata({})).toEqual({});
+  const synthetics = {
+    ALERTS: [
+      {
+        type: 'counter',
+        help:
+          'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
+      },
+    ],
+  };
+  it('returns only synthetics on empty metadata', () => {
+    expect(fixSummariesMetadata({})).toEqual({ ...synthetics });
   });
 
   it('returns unchanged metadata if no summary is present', () => {
     const metadata = {
       foo: [{ type: 'not_a_summary', help: 'foo help' }],
     };
-    expect(fixSummariesMetadata(metadata)).toEqual(metadata);
+    expect(fixSummariesMetadata(metadata)).toEqual({ ...metadata, ...synthetics });
   });
 
   it('returns metadata with added count and sum for a summary', () => {
@@ -94,7 +103,24 @@ describe('fixSummariesMetadata', () => {
       bar_count: [{ type: 'counter', help: 'Count of events that have been observed for the base metric (bar help)' }],
       bar_sum: [{ type: 'counter', help: 'Total sum of all observed values for the base metric (bar help)' }],
     };
-    expect(fixSummariesMetadata(metadata)).toEqual(expected);
+    expect(fixSummariesMetadata(metadata)).toEqual({ ...expected, ...synthetics });
+  });
+
+  it('returns metadata with added bucket/count/sum for a histogram', () => {
+    const metadata = {
+      foo: [{ type: 'not_a_histogram', help: 'foo help' }],
+      bar: [{ type: 'histogram', help: 'bar help' }],
+    };
+    const expected = {
+      foo: [{ type: 'not_a_histogram', help: 'foo help' }],
+      bar: [{ type: 'histogram', help: 'bar help' }],
+      bar_bucket: [{ type: 'counter', help: 'Cumulative counters for the observation buckets (bar help)' }],
+      bar_count: [
+        { type: 'counter', help: 'Count of events that have been observed for the histogram metric (bar help)' },
+      ],
+      bar_sum: [{ type: 'counter', help: 'Total sum of all observed values for the histogram metric (bar help)' }],
+    };
+    expect(fixSummariesMetadata(metadata)).toEqual({ ...expected, ...synthetics });
   });
 });
 

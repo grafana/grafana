@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -19,7 +21,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 		revokeUserAuthTokenScenario(t, "Should return not found when calling POST on", "/api/user/revoke-auth-token",
 			"/api/user/revoke-auth-token", cmd, 200, func(sc *scenarioContext) {
 				var userID int64
-				bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 					userID = cmd.Id
 					return models.ErrUserNotFound
 				})
@@ -33,7 +35,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	t.Run("When current user gets auth tokens for a non-existing user", func(t *testing.T) {
 		getUserAuthTokensScenario(t, "Should return not found when calling GET on", "/api/user/auth-tokens", "/api/user/auth-tokens", 200, func(sc *scenarioContext) {
 			var userID int64
-			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 				userID = cmd.Id
 				return models.ErrUserNotFound
 			})
@@ -47,7 +49,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	t.Run("When logging out an existing user from all devices", func(t *testing.T) {
 		logoutUserFromAllDevicesInternalScenario(t, "Should be successful", 1, func(sc *scenarioContext) {
 			const userID int64 = 200
-			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 				cmd.Result = &models.User{Id: userID}
 				return nil
 			})
@@ -59,7 +61,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 
 	t.Run("When logout a non-existing user from all devices", func(t *testing.T) {
 		logoutUserFromAllDevicesInternalScenario(t, "Should return not found", testUserID, func(sc *scenarioContext) {
-			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 				return models.ErrUserNotFound
 			})
 
@@ -73,7 +75,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 		token := &models.UserToken{Id: 1}
 
 		revokeUserAuthTokenInternalScenario(t, "Should be successful", cmd, 200, token, func(sc *scenarioContext) {
-			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 				cmd.Result = &models.User{Id: 200}
 				return nil
 			})
@@ -91,7 +93,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 		token := &models.UserToken{Id: 2}
 
 		revokeUserAuthTokenInternalScenario(t, "Should not be successful", cmd, testUserID, token, func(sc *scenarioContext) {
-			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 				cmd.Result = &models.User{Id: testUserID}
 				return nil
 			})
@@ -108,7 +110,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 		currentToken := &models.UserToken{Id: 1}
 
 		getUserAuthTokensInternalScenario(t, "Should be successful", currentToken, func(sc *scenarioContext) {
-			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 				cmd.Result = &models.User{Id: testUserID}
 				return nil
 			})
@@ -181,7 +183,7 @@ func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePat
 
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = userId
 			sc.context.OrgId = testOrgID
@@ -209,7 +211,7 @@ func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePatte
 
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = userId
 			sc.context.OrgId = testOrgID
@@ -234,7 +236,7 @@ func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId 
 		}
 
 		sc := setupScenarioContext(t, "/")
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
@@ -263,7 +265,7 @@ func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.R
 
 		sc := setupScenarioContext(t, "/")
 		sc.userAuthTokenService = fakeAuthTokenService
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
@@ -292,7 +294,7 @@ func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *models.
 
 		sc := setupScenarioContext(t, "/")
 		sc.userAuthTokenService = fakeAuthTokenService
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID

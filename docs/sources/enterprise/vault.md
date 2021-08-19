@@ -2,7 +2,7 @@
 title = "Vault"
 description = ""
 keywords = ["grafana", "vault", "configuration"]
-weight = 700
+weight = 1200
 +++
 
 # Vault integration
@@ -58,6 +58,7 @@ use Vault. Vault configuration is an extension of configuration's [variable expa
 `$__vault{<argument>}` syntax.
 
 The argument to Vault consists of three parts separated by a colon:
+
 - The first part specifies which secrets engine should be used.
 - The second part specifies which secret should be accessed.
 - The third part specifies which field of that secret should be used.

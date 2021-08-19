@@ -8,9 +8,12 @@ import (
 	"testing"
 	"time"
 
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,6 +22,13 @@ import (
 //nolint:goconst
 func TestDataSource_GetHttpTransport(t *testing.T) {
 	t.Run("Should use cached proxy", func(t *testing.T) {
+		var configuredTransport *http.Transport
+		provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
+			ConfigureTransport: func(opts sdkhttpclient.Options, transport *http.Transport) {
+				configuredTransport = transport
+			},
+		})
+
 		clearDSProxyCache(t)
 		ds := DataSource{
 			Id:   1,
@@ -26,20 +36,30 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			Type: "Kubernetes",
 		}
 
-		tr1, err := ds.GetHttpTransport()
+		rt1, err := ds.GetHTTPTransport(provider)
 		require.NoError(t, err)
+		require.NotNil(t, rt1)
+		tr1 := configuredTransport
 
-		tr2, err := ds.GetHttpTransport()
+		rt2, err := ds.GetHTTPTransport(provider)
 		require.NoError(t, err)
+		require.NotNil(t, rt2)
+		tr2 := configuredTransport
 
 		require.Same(t, tr1, tr2)
 
-		assert.False(t, tr1.transport.TLSClientConfig.InsecureSkipVerify)
-		assert.Empty(t, tr1.transport.TLSClientConfig.Certificates)
-		assert.Nil(t, tr1.transport.TLSClientConfig.RootCAs)
+		require.False(t, tr1.TLSClientConfig.InsecureSkipVerify)
+		require.Empty(t, tr1.TLSClientConfig.Certificates)
+		require.Nil(t, tr1.TLSClientConfig.RootCAs)
 	})
 
 	t.Run("Should not use cached proxy when datasource updated", func(t *testing.T) {
+		var configuredTransport *http.Transport
+		provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
+			ConfigureTransport: func(opts sdkhttpclient.Options, transport *http.Transport) {
+				configuredTransport = transport
+			},
+		})
 		clearDSProxyCache(t)
 		setting.SecretKey = "password"
 
@@ -56,26 +76,36 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			Updated:        time.Now().Add(-2 * time.Minute),
 		}
 
-		tr1, err := ds.GetHttpTransport()
+		rt1, err := ds.GetHTTPTransport(provider)
+		require.NotNil(t, rt1)
 		require.NoError(t, err)
 
-		assert.False(t, tr1.transport.TLSClientConfig.InsecureSkipVerify)
-		assert.Empty(t, tr1.transport.TLSClientConfig.Certificates)
-		assert.Nil(t, tr1.transport.TLSClientConfig.RootCAs)
+		tr1 := configuredTransport
+
+		require.False(t, tr1.TLSClientConfig.InsecureSkipVerify)
+		require.Empty(t, tr1.TLSClientConfig.Certificates)
+		require.Nil(t, tr1.TLSClientConfig.RootCAs)
 
 		ds.JsonData = nil
 		ds.SecureJsonData = map[string][]byte{}
 		ds.Updated = time.Now()
 
-		tr2, err := ds.GetHttpTransport()
+		rt2, err := ds.GetHTTPTransport(provider)
 		require.NoError(t, err)
+		require.NotNil(t, rt2)
+		tr2 := configuredTransport
 
 		require.NotSame(t, tr1, tr2)
-
-		assert.Nil(t, tr2.transport.TLSClientConfig.RootCAs)
+		require.Nil(t, tr2.TLSClientConfig.RootCAs)
 	})
 
 	t.Run("Should set TLS client authentication enabled if configured in JsonData", func(t *testing.T) {
+		var configuredTransport *http.Transport
+		provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
+			ConfigureTransport: func(opts sdkhttpclient.Options, transport *http.Transport) {
+				configuredTransport = transport
+			},
+		})
 		clearDSProxyCache(t)
 		setting.SecretKey = "password"
 
@@ -98,15 +128,24 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			},
 		}
 
-		tr, err := ds.GetHttpTransport()
+		rt, err := ds.GetHTTPTransport(provider)
 		require.NoError(t, err)
+		require.NotNil(t, rt)
+		tr := configuredTransport
 
-		assert.False(t, tr.transport.TLSClientConfig.InsecureSkipVerify)
-		require.Len(t, tr.transport.TLSClientConfig.Certificates, 1)
+		require.False(t, tr.TLSClientConfig.InsecureSkipVerify)
+		require.Len(t, tr.TLSClientConfig.Certificates, 1)
 	})
 
 	t.Run("Should set user-supplied TLS CA if configured in JsonData", func(t *testing.T) {
+		var configuredTransport *http.Transport
+		provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
+			ConfigureTransport: func(opts sdkhttpclient.Options, transport *http.Transport) {
+				configuredTransport = transport
+			},
+		})
 		clearDSProxyCache(t)
+		ClearDSDecryptionCache()
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
@@ -126,15 +165,23 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			},
 		}
 
-		tr, err := ds.GetHttpTransport()
+		rt, err := ds.GetHTTPTransport(provider)
 		require.NoError(t, err)
+		require.NotNil(t, rt)
+		tr := configuredTransport
 
-		assert.False(t, tr.transport.TLSClientConfig.InsecureSkipVerify)
-		require.Len(t, tr.transport.TLSClientConfig.RootCAs.Subjects(), 1)
-		assert.Equal(t, "server-name", tr.transport.TLSClientConfig.ServerName)
+		require.False(t, tr.TLSClientConfig.InsecureSkipVerify)
+		require.Len(t, tr.TLSClientConfig.RootCAs.Subjects(), 1)
+		require.Equal(t, "server-name", tr.TLSClientConfig.ServerName)
 	})
 
 	t.Run("Should set skip TLS verification if configured in JsonData", func(t *testing.T) {
+		var configuredTransport *http.Transport
+		provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
+			ConfigureTransport: func(opts sdkhttpclient.Options, transport *http.Transport) {
+				configuredTransport = transport
+			},
+		})
 		clearDSProxyCache(t)
 
 		json := simplejson.New()
@@ -147,19 +194,24 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			JsonData: json,
 		}
 
-		tr1, err := ds.GetHttpTransport()
+		rt1, err := ds.GetHTTPTransport(provider)
 		require.NoError(t, err)
+		require.NotNil(t, rt1)
+		tr1 := configuredTransport
 
-		tr2, err := ds.GetHttpTransport()
+		rt2, err := ds.GetHTTPTransport(provider)
 		require.NoError(t, err)
+		require.NotNil(t, rt2)
+		tr2 := configuredTransport
 
 		require.Same(t, tr1, tr2)
-
-		assert.True(t, tr1.transport.TLSClientConfig.InsecureSkipVerify)
+		require.True(t, tr1.TLSClientConfig.InsecureSkipVerify)
 	})
 
 	t.Run("Should set custom headers if configured in JsonData", func(t *testing.T) {
+		provider := httpclient.NewProvider()
 		clearDSProxyCache(t)
+		ClearDSDecryptionCache()
 
 		json := simplejson.NewFromAny(map[string]interface{}{
 			"httpHeaderName1": "Authorization",
@@ -177,8 +229,8 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			SecureJsonData: map[string][]byte{"httpHeaderValue1": encryptedData},
 		}
 
-		headers := ds.getCustomHeaders()
-		assert.Equal(t, "Bearer xf5yhfkpsnmgo", headers["Authorization"])
+		headers := getCustomHeaders(json, map[string]string{"httpHeaderValue1": "Bearer xf5yhfkpsnmgo"})
+		require.Equal(t, "Bearer xf5yhfkpsnmgo", headers["Authorization"])
 
 		// 1. Start HTTP test server which checks the request headers
 		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -197,12 +249,13 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 
 		// 2. Get HTTP transport from datasource which uses the test server as backend
 		ds.Url = backend.URL
-		tr, err := ds.GetHttpTransport()
+		rt, err := ds.GetHTTPTransport(provider)
 		require.NoError(t, err)
+		require.NotNil(t, rt)
 
 		// 3. Send test request which should have the Authorization header set
 		req := httptest.NewRequest("GET", backend.URL+"/test-headers", nil)
-		res, err := tr.RoundTrip(req)
+		res, err := rt.RoundTrip(req)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			err := res.Body.Close()
@@ -211,69 +264,84 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		body, err := ioutil.ReadAll(res.Body)
 		require.NoError(t, err)
 		bodyStr := string(body)
-		assert.Equal(t, "Ok", bodyStr)
+		require.Equal(t, "Ok", bodyStr)
 	})
 
-	t.Run("Should use SigV4 in middleware chain if configured in JsonData", func(t *testing.T) {
+	t.Run("Should use request timeout if configured in JsonData", func(t *testing.T) {
+		provider := httpclient.NewProvider()
 		clearDSProxyCache(t)
 
-		origEnabled := setting.SigV4AuthEnabled
+		json := simplejson.NewFromAny(map[string]interface{}{
+			"timeout": 19,
+		})
+		ds := DataSource{
+			Id:       1,
+			Url:      "http://k8s:8001",
+			Type:     "Kubernetes",
+			JsonData: json,
+		}
+
+		client, err := ds.GetHTTPClient(provider)
+		require.NoError(t, err)
+		require.NotNil(t, client)
+		require.Equal(t, 19*time.Second, client.Timeout)
+	})
+
+	t.Run("Should populate SigV4 options if configured in JsonData", func(t *testing.T) {
+		var configuredOpts sdkhttpclient.Options
+		provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
+			ConfigureTransport: func(opts sdkhttpclient.Options, transport *http.Transport) {
+				configuredOpts = opts
+			},
+		})
+		clearDSProxyCache(t)
+
+		origSigV4Enabled := setting.SigV4AuthEnabled
 		setting.SigV4AuthEnabled = true
-		t.Cleanup(func() { setting.SigV4AuthEnabled = origEnabled })
+		t.Cleanup(func() {
+			setting.SigV4AuthEnabled = origSigV4Enabled
+		})
 
 		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
 		require.NoError(t, err)
 
 		ds := DataSource{
+			Type:     DS_ES,
 			JsonData: json,
 		}
 
-		tr, err := ds.GetHttpTransport()
+		_, err = ds.GetHTTPTransport(provider)
 		require.NoError(t, err)
+		require.NotNil(t, configuredOpts)
+		require.NotNil(t, configuredOpts.SigV4)
+		require.Equal(t, "es", configuredOpts.SigV4.Service)
+	})
+}
 
-		m1, ok := tr.next.(*SigV4Middleware)
-		require.True(t, ok)
-
-		_, ok = m1.Next.(*http.Transport)
-		require.True(t, ok)
+func TestDataSource_getTimeout(t *testing.T) {
+	originalTimeout := sdkhttpclient.DefaultTimeoutOptions.Timeout
+	sdkhttpclient.DefaultTimeoutOptions.Timeout = 60 * time.Second
+	t.Cleanup(func() {
+		sdkhttpclient.DefaultTimeoutOptions.Timeout = originalTimeout
 	})
 
-	t.Run("Should not include SigV4 middleware if not configured in JsonData", func(t *testing.T) {
-		clearDSProxyCache(t)
+	testCases := []struct {
+		jsonData        *simplejson.Json
+		expectedTimeout time.Duration
+	}{
+		{jsonData: simplejson.New(), expectedTimeout: 60 * time.Second},
+		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": nil}), expectedTimeout: 60 * time.Second},
+		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": 0}), expectedTimeout: 60 * time.Second},
+		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": 1}), expectedTimeout: time.Second},
+		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": "2"}), expectedTimeout: 2 * time.Second},
+	}
 
-		origEnabled := setting.SigV4AuthEnabled
-		setting.SigV4AuthEnabled = true
-		t.Cleanup(func() { setting.SigV4AuthEnabled = origEnabled })
-
-		ds := DataSource{}
-
-		tr, err := ds.GetHttpTransport()
-		require.NoError(t, err)
-
-		_, ok := tr.next.(*http.Transport)
-		require.True(t, ok)
-	})
-
-	t.Run("Should not include SigV4 middleware if not configured in app config", func(t *testing.T) {
-		clearDSProxyCache(t)
-
-		origEnabled := setting.SigV4AuthEnabled
-		setting.SigV4AuthEnabled = false
-		t.Cleanup(func() { setting.SigV4AuthEnabled = origEnabled })
-
-		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
-		require.NoError(t, err)
-
-		ds := DataSource{
-			JsonData: json,
+	for _, tc := range testCases {
+		ds := &DataSource{
+			JsonData: tc.jsonData,
 		}
-
-		tr, err := ds.GetHttpTransport()
-		require.NoError(t, err)
-
-		_, ok := tr.next.(*http.Transport)
-		require.True(t, ok)
-	})
+		assert.Equal(t, tc.expectedTimeout, ds.getTimeout())
+	}
 }
 
 func TestDataSource_DecryptedValue(t *testing.T) {
@@ -293,7 +361,7 @@ func TestDataSource_DecryptedValue(t *testing.T) {
 		// Populate cache
 		password, ok := ds.DecryptedValue("password")
 		require.True(t, ok)
-		assert.Equal(t, "password", password)
+		require.Equal(t, "password", password)
 
 		ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
 			"password": "",
@@ -301,7 +369,7 @@ func TestDataSource_DecryptedValue(t *testing.T) {
 
 		password, ok = ds.DecryptedValue("password")
 		require.True(t, ok)
-		assert.Equal(t, "password", password)
+		require.Equal(t, "password", password)
 	})
 
 	t.Run("When datasource is updated, encrypted JSON should not be fetched from cache", func(t *testing.T) {
@@ -320,7 +388,7 @@ func TestDataSource_DecryptedValue(t *testing.T) {
 		// Populate cache
 		password, ok := ds.DecryptedValue("password")
 		require.True(t, ok)
-		assert.Equal(t, "password", password)
+		require.Equal(t, "password", password)
 
 		ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
 			"password": "",
@@ -329,7 +397,110 @@ func TestDataSource_DecryptedValue(t *testing.T) {
 
 		password, ok = ds.DecryptedValue("password")
 		require.True(t, ok)
-		assert.Empty(t, password)
+		require.Empty(t, password)
+	})
+}
+
+func TestDataSource_HTTPClientOptions(t *testing.T) {
+	emptyJsonData := simplejson.New()
+	emptySecureJsonData := map[string][]byte{}
+
+	ds := DataSource{
+		Id:   1,
+		Url:  "https://api.example.com",
+		Type: "prometheus",
+	}
+
+	t.Run("Azure authentication", func(t *testing.T) {
+		t.Run("should be disabled if not enabled in JsonData", func(t *testing.T) {
+			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
+
+			opts, err := ds.HTTPClientOptions()
+			require.NoError(t, err)
+
+			assert.NotEqual(t, true, opts.CustomOptions["_azureAuth"])
+			assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
+		})
+
+		t.Run("should be enabled if enabled in JsonData without credentials configured", func(t *testing.T) {
+			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
+
+			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
+				"azureAuth": true,
+			})
+
+			opts, err := ds.HTTPClientOptions()
+			require.NoError(t, err)
+
+			assert.Equal(t, true, opts.CustomOptions["_azureAuth"])
+			assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
+		})
+
+		t.Run("should be enabled if enabled in JsonData with credentials configured", func(t *testing.T) {
+			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
+
+			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
+				"azureAuth": true,
+				"azureCredentials": map[string]interface{}{
+					"authType": "msi",
+				},
+			})
+
+			opts, err := ds.HTTPClientOptions()
+			require.NoError(t, err)
+
+			assert.Equal(t, true, opts.CustomOptions["_azureAuth"])
+
+			require.Contains(t, opts.CustomOptions, "_azureCredentials")
+			credentials := opts.CustomOptions["_azureCredentials"]
+
+			assert.IsType(t, &azcredentials.AzureManagedIdentityCredentials{}, credentials)
+		})
+
+		t.Run("should be disabled if disabled in JsonData even with credentials configured", func(t *testing.T) {
+			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
+
+			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
+				"azureAuth": false,
+				"azureCredentials": map[string]interface{}{
+					"authType": "msi",
+				},
+			})
+
+			opts, err := ds.HTTPClientOptions()
+			require.NoError(t, err)
+
+			assert.NotEqual(t, true, opts.CustomOptions["_azureAuth"])
+			assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
+		})
+
+		t.Run("should fail if credentials are invalid", func(t *testing.T) {
+			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
+
+			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
+				"azureAuth":        true,
+				"azureCredentials": "invalid",
+			})
+
+			_, err := ds.HTTPClientOptions()
+			assert.Error(t, err)
+		})
+
+		t.Run("should pass resourceId from JsonData", func(t *testing.T) {
+			t.Cleanup(func() { ds.JsonData = emptyJsonData; ds.SecureJsonData = emptySecureJsonData })
+
+			ds.JsonData = simplejson.NewFromAny(map[string]interface{}{
+				"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5",
+			})
+
+			opts, err := ds.HTTPClientOptions()
+			require.NoError(t, err)
+
+			require.Contains(t, opts.CustomOptions, "azureEndpointResourceId")
+			azureEndpointResourceId := opts.CustomOptions["azureEndpointResourceId"]
+
+			assert.Equal(t, "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5", azureEndpointResourceId)
+		})
 	})
 }
 
@@ -339,7 +510,7 @@ func clearDSProxyCache(t *testing.T) {
 	ptc.Lock()
 	defer ptc.Unlock()
 
-	ptc.cache = make(map[int64]cachedTransport)
+	ptc.cache = make(map[int64]cachedRoundTripper)
 }
 
 const caCert string = `-----BEGIN CERTIFICATE-----

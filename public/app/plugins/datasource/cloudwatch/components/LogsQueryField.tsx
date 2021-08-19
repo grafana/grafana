@@ -1,8 +1,6 @@
 // Libraries
 import React, { ReactNode } from 'react';
-import intersectionBy from 'lodash/intersectionBy';
-import debounce from 'lodash/debounce';
-import unionBy from 'lodash/unionBy';
+import { intersectionBy, debounce, unionBy } from 'lodash';
 
 import {
   BracesPlugin,
@@ -21,18 +19,21 @@ import { Editor, Node, Plugin } from 'slate';
 import syntax from '../syntax';
 
 // Types
-import { AbsoluteTimeRange, AppEvents, ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
-import { CloudWatchLogsQuery, CloudWatchQuery } from '../types';
+import { AbsoluteTimeRange, ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
+import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import { CloudWatchLanguageProvider } from '../language_provider';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { ExploreId } from 'app/types';
-import { appEvents } from 'app/core/core';
+import { dispatch } from 'app/store/store';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 import { InputActionMeta } from '@grafana/ui/src/components/Select/types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
-export interface CloudWatchLogsQueryFieldProps extends ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery> {
+export interface CloudWatchLogsQueryFieldProps
+  extends ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   absoluteRange: AbsoluteTimeRange;
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
@@ -70,7 +71,7 @@ interface State {
 export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogsQueryFieldProps, State> {
   state: State = {
     selectedLogGroups:
-      (this.props.query as CloudWatchLogsQuery).logGroupNames?.map(logGroup => ({
+      (this.props.query as CloudWatchLogsQuery).logGroupNames?.map((logGroup) => ({
         value: logGroup,
         label: logGroup,
       })) ?? [],
@@ -113,12 +114,20 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         logGroupNamePrefix,
       });
 
-      return logGroups.map(logGroup => ({
+      return logGroups.map((logGroup) => ({
         value: logGroup,
         label: logGroup,
       }));
     } catch (err) {
-      appEvents.emit(AppEvents.alertError, [err]);
+      let errMessage = 'unknown error';
+      if (typeof err !== 'string') {
+        try {
+          errMessage = JSON.stringify(err);
+        } catch (e) {}
+      } else {
+        errMessage = err;
+      }
+      dispatch(notifyApp(createErrorNotification(errMessage)));
       return [];
     }
   };
@@ -141,8 +150,8 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     });
 
     return this.fetchLogGroupOptions(region, searchTerm)
-      .then(matchingLogGroups => {
-        this.setState(state => ({
+      .then((matchingLogGroups) => {
+        this.setState((state) => ({
           availableLogGroups: unionBy(state.availableLogGroups, matchingLogGroups, 'value'),
         }));
       })
@@ -162,13 +171,13 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       loadingLogGroups: true,
     });
 
-    this.fetchLogGroupOptions(query.region).then(logGroups => {
-      this.setState(state => {
+    this.fetchLogGroupOptions(query.region).then((logGroups) => {
+      this.setState((state) => {
         const selectedLogGroups = state.selectedLogGroups;
         if (onChange) {
           const nextQuery = {
             ...query,
-            logGroupNames: selectedLogGroups.map(group => group.value!),
+            logGroupNames: selectedLogGroups.map((group) => group.value!),
           };
 
           onChange(nextQuery);
@@ -182,7 +191,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       });
     });
 
-    datasource.getRegions().then(regions => {
+    datasource.getRegions().then((regions) => {
       this.setState({
         regions,
       });
@@ -198,7 +207,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
       const nextQuery = {
         ...query,
         expression: value,
-        logGroupNames: selectedLogGroups?.map(logGroupName => logGroupName.value!) ?? [],
+        logGroupNames: selectedLogGroups?.map((logGroupName) => logGroupName.value!) ?? [],
         region: selectedRegion.value ?? 'default',
         statsGroups: getStatsGroups(value),
       };
@@ -214,7 +223,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     const { onChange, query } = this.props;
     onChange?.({
       ...(query as CloudWatchLogsQuery),
-      logGroupNames: selectedLogGroups.map(logGroupName => logGroupName.value!) ?? [],
+      logGroupNames: selectedLogGroups.map((logGroupName) => logGroupName.value!) ?? [],
     });
   };
 
@@ -232,7 +241,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
     const logGroups = await this.fetchLogGroupOptions(v.value!);
 
-    this.setState(state => {
+    this.setState((state) => {
       const selectedLogGroups = intersectionBy(state.selectedLogGroups, logGroups, 'value');
 
       const { onChange, query } = this.props;
@@ -240,7 +249,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         const nextQuery = {
           ...query,
           region: v.value ?? 'default',
-          logGroupNames: selectedLogGroups.map(group => group.value!),
+          logGroupNames: selectedLogGroups.map((group) => group.value!),
         };
 
         onChange(nextQuery);
@@ -267,7 +276,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
 
     return await cloudwatchLanguageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey, editor },
-      { history, absoluteRange, logGroupNames: selectedLogGroups.map(logGroup => logGroup.value!) }
+      { history, absoluteRange, logGroupNames: selectedLogGroups.map((logGroup) => logGroup.value!) }
     );
   };
 
@@ -316,9 +325,10 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
             labelWidth={4}
             inputEl={
               <Select
+                menuShouldPortal
                 options={regions}
                 value={selectedRegion}
-                onChange={v => this.setSelectedRegion(v)}
+                onChange={(v) => this.setSelectedRegion(v)}
                 width={18}
                 placeholder="Choose Region"
                 maxMenuHeight={500}
@@ -332,13 +342,14 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
             className="flex-grow-1"
             inputEl={
               <MultiSelect
+                menuShouldPortal
                 allowCustomValue={allowCustomValue}
                 options={unionBy(availableLogGroups, selectedLogGroups, 'value')}
                 value={selectedLogGroups}
-                onChange={v => {
+                onChange={(v) => {
                   this.setSelectedLogGroups(v);
                 }}
-                onCreateOption={v => {
+                onCreateOption={(v) => {
                   this.setCustomLogGroups(v);
                 }}
                 className={containerClass}

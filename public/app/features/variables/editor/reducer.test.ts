@@ -4,6 +4,7 @@ import {
   changeVariableEditorExtended,
   changeVariableNameFailed,
   changeVariableNameSucceeded,
+  cleanEditorState,
   clearIdInEditor,
   initialVariableEditorState,
   removeVariableEditorError,
@@ -17,7 +18,7 @@ import { toVariablePayload } from '../state/types';
 
 describe('variableEditorReducer', () => {
   describe('when setIdInEditor is dispatched', () => {
-    it('then state should be correct ', () => {
+    it('then state should be correct', () => {
       const payload = { id: '0' };
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, { ...initialVariableEditorState })
@@ -30,7 +31,7 @@ describe('variableEditorReducer', () => {
   });
 
   describe('when clearIdInEditor is dispatched', () => {
-    it('then state should be correct ', () => {
+    it('then state should be correct', () => {
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, { ...initialVariableEditorState, id: '0' })
         .whenActionIsDispatched(clearIdInEditor())
@@ -41,7 +42,7 @@ describe('variableEditorReducer', () => {
   });
 
   describe('when variableEditorMounted is dispatched', () => {
-    it('then state should be correct ', () => {
+    it('then state should be correct', () => {
       const payload = { name: 'A name' };
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, { ...initialVariableEditorState })
@@ -54,7 +55,7 @@ describe('variableEditorReducer', () => {
   });
 
   describe('when variableEditorUnMounted is dispatched', () => {
-    it('then state should be correct ', () => {
+    it('then state should be correct', () => {
       const initialState = {
         ...initialVariableEditorState,
         id: '0',
@@ -72,7 +73,7 @@ describe('variableEditorReducer', () => {
   });
 
   describe('when changeVariableNameSucceeded is dispatched there are other errors', () => {
-    it('then state should be correct ', () => {
+    it('then state should be correct', () => {
       const initialState = {
         ...initialVariableEditorState,
         name: 'A duplicate name',
@@ -93,7 +94,7 @@ describe('variableEditorReducer', () => {
   });
 
   describe('when changeVariableNameSucceeded is dispatched there are no other errors', () => {
-    it('then state should be correct ', () => {
+    it('then state should be correct', () => {
       const initialState = {
         ...initialVariableEditorState,
         name: 'A duplicate name',
@@ -114,7 +115,7 @@ describe('variableEditorReducer', () => {
   });
 
   describe('when changeVariableNameFailed is dispatched', () => {
-    it('then state should be correct ', () => {
+    it('then state should be correct', () => {
       const payload = { newName: 'Duplicate name', errorText: 'Name is an duplicate' };
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, { ...initialVariableEditorState })
@@ -129,7 +130,7 @@ describe('variableEditorReducer', () => {
   });
 
   describe('when addVariableEditorError is dispatched', () => {
-    it('then state should be correct ', () => {
+    it('then state should be correct', () => {
       const payload = { errorProp: 'someProp', errorText: 'someProp failed' };
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, { ...initialVariableEditorState })
@@ -143,7 +144,7 @@ describe('variableEditorReducer', () => {
   });
 
   describe('when removeVariableEditorError is dispatched and there are other errors', () => {
-    it('then state should be correct ', () => {
+    it('then state should be correct', () => {
       const payload = { errorProp: 'someProp' };
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, {
@@ -161,7 +162,7 @@ describe('variableEditorReducer', () => {
   });
 
   describe('when removeVariableEditorError is dispatched and there are no other errors', () => {
-    it('then state should be correct ', () => {
+    it('then state should be correct', () => {
       const payload = { errorProp: 'someProp' };
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, {
@@ -179,7 +180,7 @@ describe('variableEditorReducer', () => {
   });
 
   describe('when changeVariableEditorExtended is dispatched', () => {
-    it('then state should be correct ', () => {
+    it('then state should be correct', () => {
       const payload = { propName: 'someProp', propValue: [{}] };
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, { ...initialVariableEditorState })
@@ -190,6 +191,20 @@ describe('variableEditorReducer', () => {
             someProp: [{}],
           },
         });
+    });
+  });
+
+  describe('when cleanEditorState is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<VariableEditorState>()
+        .givenReducer(variableEditorReducer, {
+          ...initialVariableEditorState,
+          isValid: false,
+          errors: { name: 'Name is an duplicate' },
+          name: 'Duplicate name',
+        })
+        .whenActionIsDispatched(cleanEditorState())
+        .thenStateShouldEqual({ ...initialVariableEditorState });
     });
   });
 });

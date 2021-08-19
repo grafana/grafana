@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/rendering"
 
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -38,26 +39,26 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 		})
 	}
 
-	bus.ClearBusHandlers()
-	bus.AddHandler("sql", sqlstore.GetPluginSettings)
-	t.Cleanup(bus.ClearBusHandlers)
+	sqlStore := sqlstore.InitTestDB(t)
+	pm := &manager.PluginManager{Cfg: cfg, SQLStore: sqlStore}
 
-	r := &rendering.RenderingService{Cfg: cfg}
+	r := &rendering.RenderingService{
+		Cfg:           cfg,
+		PluginManager: pm,
+	}
 
 	hs := &HTTPServer{
 		Cfg:           cfg,
 		Bus:           bus.GetBus(),
-		License:       &licensing.OSSLicensingService{},
+		License:       &licensing.OSSLicensingService{Cfg: cfg},
 		RenderService: r,
+		SQLStore:      sqlStore,
+		PluginManager: pm,
 	}
 
 	m := macaron.New()
 	m.Use(getContextHandler(t, cfg).Middleware)
-	m.Use(macaron.Renderer(macaron.RenderOptions{
-		Directory:  filepath.Join(setting.StaticRootPath, "views"),
-		IndentJSON: true,
-		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
-	}))
+	m.UseMiddleware(macaron.Renderer(filepath.Join(setting.StaticRootPath, "views"), "[[", "]]"))
 	m.Get("/api/frontend/settings/", hs.GetFrontendSettings)
 
 	return m, hs
@@ -74,13 +75,17 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonyomus(t *testing.T) {
 	}
 
 	cfg := setting.NewCfg()
+	cfg.Env = "testing"
+	cfg.BuildVersion = "7.8.9"
+	cfg.BuildCommit = "01234567"
 	m, hs := setupTestEnvironment(t, cfg)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
-	setting.BuildVersion = "7.8.9"
-	setting.BuildCommit = "01234567"
-	setting.Env = "testing"
+	// TODO: Remove
+	setting.BuildVersion = cfg.BuildVersion
+	setting.BuildCommit = cfg.BuildCommit
+	setting.Env = cfg.Env
 
 	tests := []struct {
 		desc        string

@@ -24,7 +24,7 @@ that you cannot use this API for retrieving information about the General folder
 
 `GET /api/folders`
 
-Returns all folders that the authenticated user has permission to view. You can control the maximum number of folders returned through the `limit` query parameter, the default is 1000.
+Returns all folders that the authenticated user has permission to view. You can control the maximum number of folders returned through the `limit` query parameter, the default is 1000. You can also pass the `page` query parameter for fetching folders from a page other than the first one.
 
 **Example Request**:
 
@@ -45,17 +45,12 @@ Content-Type: application/json
   {
     "id":1,
     "uid": "nErXDvCkzz",
-    "title": "Department ABC",
-    "url": "/dashboards/f/nErXDvCkzz/department-abc",
-    "hasAcl": false,
-    "canSave": true,
-    "canEdit": true,
-    "canAdmin": true,
-    "createdBy": "admin",
-    "created": "2018-01-31T17:43:12+01:00",
-    "updatedBy": "admin",
-    "updated": "2018-01-31T17:43:12+01:00",
-    "version": 1
+    "title": "Department ABC"
+  },
+  {
+    "id":2,
+    "uid": "k3S1cklGk",
+    "title": "Department RND"
   }
 ]
 ```
@@ -159,6 +154,7 @@ Status Codes:
 - **400** – Errors (invalid json, missing or invalid fields, etc)
 - **401** – Unauthorized
 - **403** – Access Denied
+- **409** - Folder already exists
 
 ## Update folder
 
@@ -224,7 +220,7 @@ There can be different reasons for this:
 
 - The folder has been changed by someone else, `status=version-mismatch`
 
- The response body will have the following properties:
+The response body will have the following properties:
 
 ```http
 HTTP/1.1 412 Precondition Failed
@@ -241,7 +237,9 @@ Content-Length: 97
 
 `DELETE /api/folders/:uid`
 
-Deletes an existing folder identified by uid together with all dashboards stored in the folder, if any. This operation cannot be reverted.
+Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.
+
+If [Grafana 8 Alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}) are enabled, you can set an optional query parameter `forceDeleteRules=false` so that requests will fail with 400 (Bad Request) error if the folder contains any Grafana 8 Alerts. However, if this parameter is set to `true` then it will delete any Grafana 8 Alerts under this folder.
 
 **Example Request**:
 
@@ -269,6 +267,7 @@ Status Codes:
 
 - **200** – Deleted
 - **401** – Unauthorized
+- **400** – Bad Request
 - **403** – Access Denied
 - **404** – Folder not found
 

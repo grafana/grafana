@@ -23,6 +23,8 @@ Follow the instructions on the Install tab. You can either install the plugin wi
 
 For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../administration/cli.md#plugins-commands" >}}).
 
+As of Grafana v8.0, a plugin catalog app was introduced in order to make managing plugins easier. For more information, refer to [Plugin catalog]({{< relref "./catalog.md" >}}).
+
 ### Install a packaged plugin
 
 After the user has downloaded the archive containing the plugin assets, they can install it by extracting the archive into their plugin directory.
@@ -30,3 +32,5 @@ After the user has downloaded the archive containing the plugin assets, they can
 ```
 unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
 ```
+
+The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration]({{< relref "../administration/configuration.md#plugins" >}}).

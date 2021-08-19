@@ -16,9 +16,10 @@ import (
 )
 
 func TestHealthAPI_Version(t *testing.T) {
-	m, _ := setupHealthAPITestEnvironment(t)
-	setting.BuildVersion = "7.4.0"
-	setting.BuildCommit = "59906ab1bf"
+	m, _ := setupHealthAPITestEnvironment(t, func(cfg *setting.Cfg) {
+		cfg.BuildVersion = "7.4.0"
+		cfg.BuildCommit = "59906ab1bf"
+	})
 
 	bus.AddHandler("test", func(query *models.GetDBHealthQuery) error {
 		return nil
@@ -166,23 +167,20 @@ func TestHealthAPI_DatabaseHealthCached(t *testing.T) {
 	require.True(t, healthy.(bool))
 }
 
-func setupHealthAPITestEnvironment(t *testing.T) (*macaron.Macaron, *HTTPServer) {
+func setupHealthAPITestEnvironment(t *testing.T, cbs ...func(*setting.Cfg)) (*macaron.Macaron, *HTTPServer) {
 	t.Helper()
-
-	oldVersion := setting.BuildVersion
-	oldCommit := setting.BuildCommit
-	t.Cleanup(func() {
-		setting.BuildVersion = oldVersion
-		setting.BuildCommit = oldCommit
-	})
 
 	bus.ClearBusHandlers()
 	t.Cleanup(bus.ClearBusHandlers)
 
 	m := macaron.New()
+	cfg := setting.NewCfg()
+	for _, cb := range cbs {
+		cb(cfg)
+	}
 	hs := &HTTPServer{
 		CacheService: localcache.New(5*time.Minute, 10*time.Minute),
-		Cfg:          setting.NewCfg(),
+		Cfg:          cfg,
 	}
 
 	m.Get("/api/health", hs.apiHealthHandler)

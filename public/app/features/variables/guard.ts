@@ -11,6 +11,7 @@ import {
   QueryEditorProps,
   StandardVariableQuery,
   StandardVariableSupport,
+  VariableModel,
   VariableSupportType,
 } from '@grafana/data';
 
@@ -18,7 +19,6 @@ import {
   AdHocVariableModel,
   ConstantVariableModel,
   QueryVariableModel,
-  VariableModel,
   VariableQueryEditorType,
   VariableWithMultiSupport,
   VariableWithOptions,
@@ -44,13 +44,21 @@ export const isMulti = (model: VariableModel): model is VariableWithMultiSupport
 };
 
 export const hasOptions = (model: VariableModel): model is VariableWithOptions => {
+  return hasObjectProperty(model, 'options');
+};
+
+export const hasCurrent = (model: VariableModel): model is VariableWithOptions => {
+  return hasObjectProperty(model, 'current');
+};
+
+function hasObjectProperty(model: VariableModel, property: string): model is VariableWithOptions {
   if (!model) {
     return false;
   }
 
-  const withOptions = model as VariableWithOptions;
-  return withOptions.hasOwnProperty('options') && typeof withOptions.options === 'object';
-};
+  const withProperty = model as Record<string, any>;
+  return withProperty.hasOwnProperty(property) && typeof withProperty[property] === 'object';
+}
 
 interface DataSourceWithLegacyVariableSupport<
   TQuery extends DataQuery = DataQuery,
@@ -176,7 +184,7 @@ export function isQueryEditor<
 >(
   component: VariableQueryEditorType,
   datasource: DataSourceApi<TQuery, TOptions>
-): component is ComponentType<QueryEditorProps<any>> {
+): component is ComponentType<QueryEditorProps<DataSourceApi<TQuery, TOptions>, TQuery, TOptions, any>> {
   if (!component) {
     return false;
   }

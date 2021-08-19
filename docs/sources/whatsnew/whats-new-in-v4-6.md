@@ -14,7 +14,7 @@ Grafana v4.6 brings many enhancements to Annotations, Cloudwatch and Prometheus.
 
 ### Annotations
 
-{{< docs-imagebox img="/img/docs/v46/add_annotation_region.png"  max-width= "800px" >}}
+{{< figure src="/static/img/docs/v46/add_annotation_region.png"  max-width= "800px" >}}
 
 You can now add annotation events and regions right from the graph panel! Just hold Ctrl/Cmd+Click or drag region to open the **Add Annotation** view. The
 [Annotations]({{< relref "../dashboards/annotations.md" >}}) documentation is updated to include details on this new exciting feature.
@@ -23,14 +23,14 @@ You can now add annotation events and regions right from the graph panel! Just h
 
 Cloudwatch now supports alerting. Set up alert rules for any Cloudwatch metric!
 
-{{< docs-imagebox img="/img/docs/v46/cloudwatch_alerting.png"  max-width= "800px" >}}
+{{< figure src="/static/img/docs/v46/cloudwatch_alerting.png"  max-width= "800px" >}}
 
 ### Postgres
 
 Grafana v4.6 now ships with a built-in data source plugin for Postgres. Have logs or metric data in Postgres? You can now visualize that data and
 define alert rules on it like any of our other data sources.
 
-{{< docs-imagebox img="/img/docs/v46/postgres_table_query.png"  max-width= "800px" >}}
+{{< figure src="/static/img/docs/v46/postgres_table_query.png"  max-width= "800px" >}}
 
 ### Prometheus
 
@@ -51,7 +51,7 @@ This makes exploring and filtering Prometheus data much easier.
 - **Cloudwatch**: Add support for alerting using the cloudwatch data source [#8050](https://github.com/grafana/grafana/pull/8050), thx [@mtanda](https://github.com/mtanda)
 - **Pagerduty**: Include triggering series in pagerduty notification [#8479](https://github.com/grafana/grafana/issues/8479), thx [@rickymoorhouse](https://github.com/rickymoorhouse)
 - **Timezone**: Time ranges like Today and Yesterday now work correctly when timezone setting is set to UTC [#8916](https://github.com/grafana/grafana/issues/8916), thx [@ctide](https://github.com/ctide)
-- **Prometheus**: Align $__interval with the step parameters. [#9226](https://github.com/grafana/grafana/pull/9226), thx [@alin-amana](https://github.com/alin-amana)
+- **Prometheus**: Align $\_\_interval with the step parameters. [#9226](https://github.com/grafana/grafana/pull/9226), thx [@alin-amana](https://github.com/alin-amana)
 - **Prometheus**: Autocomplete for label name and label value [#9208](https://github.com/grafana/grafana/pull/9208), thx [@mtanda](https://github.com/mtanda)
 - **Postgres**: New Postgres data source [#9209](https://github.com/grafana/grafana/pull/9209), thx [@svenklemm](https://github.com/svenklemm)
 - **Data sources**: closes [#9371](https://github.com/grafana/grafana/issues/9371), [#5334](https://github.com/grafana/grafana/issues/5334), [#8812](https://github.com/grafana/grafana/issues/8812), thx [@mattbostock](https://github.com/mattbostock)
@@ -69,4 +69,5 @@ This makes exploring and filtering Prometheus data much easier.
 - **Postgres**: modify group by time macro so it can be used in select clause [#9527](https://github.com/grafana/grafana/pull/9527), thanks [@svenklemm](https://github.com/svenklemm)
 
 ### Tech
+
 - **Go**: Grafana is now built using golang 1.9

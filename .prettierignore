@@ -7,3 +7,6 @@ public/vendor/
 vendor/
 data/
 e2e/tmp
+public/build/
+public/sass/*.generated.scss
+devenv/

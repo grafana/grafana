@@ -37,7 +37,7 @@ For more information, refer to [@grafana/toolkit](https://www.npmjs.com/package/
 
 ### Field options
 
-Grafana 7.0 introduced the concept of [_field options_]({{< relref "../../panels/field-options/_index.md#field-options" >}}), a new way of configuring your data before it gets visualized. Since this was not available in previous versions, any plugin that enables field-based configuration will not work in previous versions of Grafana.
+Grafana 7.0 introduced the concept of _field options_, a new way of configuring your data before it gets visualized. Since this was not available in previous versions, any plugin that enables field-based configuration will not work in previous versions of Grafana.
 
 For plugins prior to Grafana 7.0, all options are considered _Display options_. The tab for field configuration isn't available.
 
@@ -160,8 +160,8 @@ async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
 }
 ```
 
-For more information, refer to [Data frames](https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/).
+For more information, refer to [Data frames]({{< relref "data-frames.md">}}).
 
 ## Troubleshoot plugin migration
 
-With Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana will ignore unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../plugins/plugin-signatures.md#allow-unsigned-plugins" >}}).
+As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../plugins/plugin-signatures.md#allow-unsigned-plugins" >}}).

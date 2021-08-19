@@ -40,7 +40,7 @@ Content-Type: application/json
 
 {
   "uid": AT76wBvGk,
-  "url": http://localhost:3000/goto/AT76wBvGk
+  "url": http://localhost:3000/goto/AT76wBvGk?orgId=1
 }
 
 ```

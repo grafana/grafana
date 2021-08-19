@@ -19,20 +19,20 @@ func Test_union(t *testing.T) {
 			name: "equal tags single union",
 			aResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("a", data.Labels{"id": "1"}),
+					makeSeries("a", data.Labels{"id": "1"}),
 				},
 			},
 			bResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("b", data.Labels{"id": "1"}),
+					makeSeries("b", data.Labels{"id": "1"}),
 				},
 			},
 			unionsAre: assert.EqualValues,
 			unions: []*Union{
 				{
 					Labels: data.Labels{"id": "1"},
-					A:      makeSeriesNullableTime("a", data.Labels{"id": "1"}),
-					B:      makeSeriesNullableTime("b", data.Labels{"id": "1"}),
+					A:      makeSeries("a", data.Labels{"id": "1"}),
+					B:      makeSeries("b", data.Labels{"id": "1"}),
 				},
 			},
 		},
@@ -40,19 +40,19 @@ func Test_union(t *testing.T) {
 			name: "equal tags keys with no matching values will result in a union when len(A) == 1 && len(B) == 1",
 			aResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("a", data.Labels{"id": "1"}),
+					makeSeries("a", data.Labels{"id": "1"}),
 				},
 			},
 			bResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("b", data.Labels{"id": "2"}),
+					makeSeries("b", data.Labels{"id": "2"}),
 				},
 			},
 			unionsAre: assert.EqualValues,
 			unions: []*Union{
 				{
-					A: makeSeriesNullableTime("a", data.Labels{"id": "1"}),
-					B: makeSeriesNullableTime("b", data.Labels{"id": "2"}),
+					A: makeSeries("a", data.Labels{"id": "1"}),
+					B: makeSeries("b", data.Labels{"id": "2"}),
 				},
 			},
 		},
@@ -60,13 +60,13 @@ func Test_union(t *testing.T) {
 			name: "equal tags keys with no matching values will result in no unions when len(A) != 1 && len(B) != 1",
 			aResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("a", data.Labels{"id": "1"}),
-					makeSeriesNullableTime("q", data.Labels{"id": "3"}),
+					makeSeries("a", data.Labels{"id": "1"}),
+					makeSeries("q", data.Labels{"id": "3"}),
 				},
 			},
 			bResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("b", data.Labels{"id": "2"}),
+					makeSeries("b", data.Labels{"id": "2"}),
 				},
 			},
 			unionsAre: assert.EqualValues,
@@ -83,13 +83,13 @@ func Test_union(t *testing.T) {
 			name: "incompatible tags of different length with will result in no unions when len(A) != 1 && len(B) != 1",
 			aResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("a", data.Labels{"ID": "1"}),
-					makeSeriesNullableTime("q", data.Labels{"ID": "3"}),
+					makeSeries("a", data.Labels{"ID": "1"}),
+					makeSeries("q", data.Labels{"ID": "3"}),
 				},
 			},
 			bResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("b", data.Labels{"id": "1", "fish": "red snapper"}),
+					makeSeries("b", data.Labels{"id": "1", "fish": "red snapper"}),
 				},
 			},
 			unionsAre: assert.EqualValues,
@@ -99,20 +99,20 @@ func Test_union(t *testing.T) {
 			name: "A is subset of B results in single union with Labels of B",
 			aResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("a", data.Labels{"id": "1"}),
+					makeSeries("a", data.Labels{"id": "1"}),
 				},
 			},
 			bResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("b", data.Labels{"id": "1", "fish": "herring"}),
+					makeSeries("b", data.Labels{"id": "1", "fish": "herring"}),
 				},
 			},
 			unionsAre: assert.EqualValues,
 			unions: []*Union{
 				{
 					Labels: data.Labels{"id": "1", "fish": "herring"}, // Union gets the labels that is not the subset
-					A:      makeSeriesNullableTime("a", data.Labels{"id": "1"}),
-					B:      makeSeriesNullableTime("b", data.Labels{"id": "1", "fish": "herring"}),
+					A:      makeSeries("a", data.Labels{"id": "1"}),
+					B:      makeSeries("b", data.Labels{"id": "1", "fish": "herring"}),
 				},
 			},
 		},
@@ -120,20 +120,20 @@ func Test_union(t *testing.T) {
 			name: "B is subset of A results in single union with Labels of A",
 			aResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("a", data.Labels{"id": "1", "fish": "herring"}),
+					makeSeries("a", data.Labels{"id": "1", "fish": "herring"}),
 				},
 			},
 			bResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("b", data.Labels{"id": "1"}),
+					makeSeries("b", data.Labels{"id": "1"}),
 				},
 			},
 			unionsAre: assert.EqualValues,
 			unions: []*Union{
 				{
 					Labels: data.Labels{"id": "1", "fish": "herring"}, // Union gets the labels that is not the subset
-					A:      makeSeriesNullableTime("a", data.Labels{"id": "1", "fish": "herring"}),
-					B:      makeSeriesNullableTime("b", data.Labels{"id": "1"}),
+					A:      makeSeries("a", data.Labels{"id": "1", "fish": "herring"}),
+					B:      makeSeries("b", data.Labels{"id": "1"}),
 				},
 			},
 		},
@@ -141,26 +141,26 @@ func Test_union(t *testing.T) {
 			name: "single valued A is subset of many valued B, results in many union with Labels of B",
 			aResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("a", data.Labels{"id": "1"}),
+					makeSeries("a", data.Labels{"id": "1"}),
 				},
 			},
 			bResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("b", data.Labels{"id": "1", "fish": "herring"}),
-					makeSeriesNullableTime("b", data.Labels{"id": "1", "fish": "red snapper"}),
+					makeSeries("b", data.Labels{"id": "1", "fish": "herring"}),
+					makeSeries("b", data.Labels{"id": "1", "fish": "red snapper"}),
 				},
 			},
 			unionsAre: assert.EqualValues,
 			unions: []*Union{
 				{
 					Labels: data.Labels{"id": "1", "fish": "herring"},
-					A:      makeSeriesNullableTime("a", data.Labels{"id": "1"}),
-					B:      makeSeriesNullableTime("b", data.Labels{"id": "1", "fish": "herring"}),
+					A:      makeSeries("a", data.Labels{"id": "1"}),
+					B:      makeSeries("b", data.Labels{"id": "1", "fish": "herring"}),
 				},
 				{
 					Labels: data.Labels{"id": "1", "fish": "red snapper"},
-					A:      makeSeriesNullableTime("a", data.Labels{"id": "1"}),
-					B:      makeSeriesNullableTime("b", data.Labels{"id": "1", "fish": "red snapper"}),
+					A:      makeSeries("a", data.Labels{"id": "1"}),
+					B:      makeSeries("b", data.Labels{"id": "1", "fish": "red snapper"}),
 				},
 			},
 		},
@@ -170,32 +170,32 @@ func Test_union(t *testing.T) {
 			// be uniquely identifiable.
 			aResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("a", data.Labels{"id": "1"}),
-					makeSeriesNullableTime("aa", data.Labels{"id": "1", "fish": "herring"}),
+					makeSeries("a", data.Labels{"id": "1"}),
+					makeSeries("aa", data.Labels{"id": "1", "fish": "herring"}),
 				},
 			},
 			bResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("b", data.Labels{"id": "1", "fish": "herring"}),
-					makeSeriesNullableTime("bb", data.Labels{"id": "1", "fish": "red snapper"}),
+					makeSeries("b", data.Labels{"id": "1", "fish": "herring"}),
+					makeSeries("bb", data.Labels{"id": "1", "fish": "red snapper"}),
 				},
 			},
 			unionsAre: assert.EqualValues,
 			unions: []*Union{
 				{
 					Labels: data.Labels{"id": "1", "fish": "herring"},
-					A:      makeSeriesNullableTime("a", data.Labels{"id": "1"}),
-					B:      makeSeriesNullableTime("b", data.Labels{"id": "1", "fish": "herring"}),
+					A:      makeSeries("a", data.Labels{"id": "1"}),
+					B:      makeSeries("b", data.Labels{"id": "1", "fish": "herring"}),
 				},
 				{
 					Labels: data.Labels{"id": "1", "fish": "red snapper"},
-					A:      makeSeriesNullableTime("a", data.Labels{"id": "1"}),
-					B:      makeSeriesNullableTime("bb", data.Labels{"id": "1", "fish": "red snapper"}),
+					A:      makeSeries("a", data.Labels{"id": "1"}),
+					B:      makeSeries("bb", data.Labels{"id": "1", "fish": "red snapper"}),
 				},
 				{
 					Labels: data.Labels{"id": "1", "fish": "herring"},
-					A:      makeSeriesNullableTime("aa", data.Labels{"id": "1", "fish": "herring"}),
-					B:      makeSeriesNullableTime("b", data.Labels{"id": "1", "fish": "herring"}),
+					A:      makeSeries("aa", data.Labels{"id": "1", "fish": "herring"}),
+					B:      makeSeries("b", data.Labels{"id": "1", "fish": "herring"}),
 				},
 			},
 		},
@@ -205,32 +205,32 @@ func Test_union(t *testing.T) {
 			// be uniquely identifiable.
 			aResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("b", data.Labels{"id": "1", "fish": "herring"}),
-					makeSeriesNullableTime("bb", data.Labels{"id": "1", "fish": "red snapper"}),
+					makeSeries("b", data.Labels{"id": "1", "fish": "herring"}),
+					makeSeries("bb", data.Labels{"id": "1", "fish": "red snapper"}),
 				},
 			},
 			bResults: Results{
 				Values: Values{
-					makeSeriesNullableTime("a", data.Labels{"id": "1"}),
-					makeSeriesNullableTime("aa", data.Labels{"id": "1", "fish": "herring"}),
+					makeSeries("a", data.Labels{"id": "1"}),
+					makeSeries("aa", data.Labels{"id": "1", "fish": "herring"}),
 				},
 			},
 			unionsAre: assert.EqualValues,
 			unions: []*Union{
 				{
 					Labels: data.Labels{"id": "1", "fish": "herring"},
-					A:      makeSeriesNullableTime("b", data.Labels{"id": "1", "fish": "herring"}),
-					B:      makeSeriesNullableTime("a", data.Labels{"id": "1"}),
+					A:      makeSeries("b", data.Labels{"id": "1", "fish": "herring"}),
+					B:      makeSeries("a", data.Labels{"id": "1"}),
 				},
 				{
 					Labels: data.Labels{"id": "1", "fish": "herring"},
-					A:      makeSeriesNullableTime("b", data.Labels{"id": "1", "fish": "herring"}),
-					B:      makeSeriesNullableTime("aa", data.Labels{"id": "1", "fish": "herring"}),
+					A:      makeSeries("b", data.Labels{"id": "1", "fish": "herring"}),
+					B:      makeSeries("aa", data.Labels{"id": "1", "fish": "herring"}),
 				},
 				{
 					Labels: data.Labels{"id": "1", "fish": "red snapper"},
-					A:      makeSeriesNullableTime("bb", data.Labels{"id": "1", "fish": "red snapper"}),
-					B:      makeSeriesNullableTime("a", data.Labels{"id": "1"}),
+					A:      makeSeries("bb", data.Labels{"id": "1", "fish": "red snapper"}),
+					B:      makeSeries("a", data.Labels{"id": "1"}),
 				},
 			},
 		},

@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+import { ScaleDistribution } from './models.gen';
 
 /**
  * @alpha
@@ -43,16 +44,45 @@ export enum LineInterpolation {
 /**
  * @alpha
  */
-export enum ScaleDistribution {
-  Linear = 'linear',
-  Logarithmic = 'log',
+export enum BarAlignment {
+  Before = -1,
+  Center = 0,
+  After = 1,
+}
+
+/**
+ * @alpha
+ */
+export enum BarValueVisibility {
+  Auto = 'auto',
+  Never = 'never',
+  Always = 'always',
+}
+
+/**
+ * @alpha
+ */
+export enum ScaleOrientation {
+  Horizontal = 0,
+  Vertical = 1,
+}
+
+/**
+ * @alpha
+ */
+
+export enum ScaleDirection {
+  Up = 1,
+  Right = 1,
+  Down = -1,
+  Left = -1,
 }
 
 /**
  * @alpha
  */
 export interface LineStyle {
-  fill?: 'solid' | 'dash' | 'dot' | 'square'; // cap = 'butt' | 'round' | 'square'
+  fill?: 'solid' | 'dash' | 'dot' | 'square';
   dash?: number[];
 }
 
@@ -64,7 +94,22 @@ export interface LineConfig {
   lineWidth?: number;
   lineInterpolation?: LineInterpolation;
   lineStyle?: LineStyle;
-  spanNulls?: boolean;
+
+  /**
+   * Indicate if null values should be treated as gaps or connected.
+   * When the value is a number, it represents the maximum delta in the
+   * X axis that should be considered connected.  For timeseries, this is milliseconds
+   */
+  spanNulls?: boolean | number;
+}
+
+/**
+ * @alpha
+ */
+export interface BarConfig {
+  barAlignment?: BarAlignment;
+  barWidthFactor?: number;
+  barMaxWidth?: number;
 }
 
 /**
@@ -73,16 +118,17 @@ export interface LineConfig {
 export interface FillConfig {
   fillColor?: string;
   fillOpacity?: number;
-  fillGradient?: FillGradientMode;
+  fillBelowTo?: string; // name of the field
 }
 
 /**
  * @alpha
  */
-export enum FillGradientMode {
+export enum GraphGradientMode {
   None = 'none',
   Opacity = 'opacity',
   Hue = 'hue',
+  Scheme = 'scheme',
 }
 
 /**
@@ -91,7 +137,6 @@ export enum FillGradientMode {
 export interface PointsConfig {
   showPoints?: PointVisibility;
   pointSize?: number;
-  pointColor?: string;
   pointSymbol?: string; // eventually dot,star, etc
 }
 
@@ -111,6 +156,8 @@ export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisLabel?: string;
   axisWidth?: number; // pixels ideally auto?
+  axisSoftMin?: number;
+  axisSoftMax?: number;
   scaleDistribution?: ScaleDistributionConfig;
 }
 
@@ -120,15 +167,72 @@ export interface AxisConfig {
 export interface HideSeriesConfig {
   tooltip: boolean;
   legend: boolean;
-  graph: boolean;
+  viz: boolean;
 }
 
 /**
  * @alpha
  */
-export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, AxisConfig {
-  drawStyle?: DrawStyle;
+export interface HideableFieldConfig {
   hideFrom?: HideSeriesConfig;
+}
+
+/**
+ * @alpha
+ */
+export enum StackingMode {
+  None = 'none',
+  Normal = 'normal',
+  Percent = 'percent',
+}
+
+/**
+ * @alpha
+ */
+export interface StackingConfig {
+  mode?: StackingMode;
+  group?: string;
+}
+
+/**
+ * @alpha
+ */
+export interface StackableFieldConfig {
+  stacking?: StackingConfig;
+}
+
+/**
+ * @alpha
+ */
+export enum GraphTresholdsStyleMode {
+  Off = 'off',
+  Line = 'line',
+  Area = 'area',
+  LineAndArea = 'line+area',
+  Series = 'series',
+}
+
+/**
+ * @alpha
+ */
+export interface GraphThresholdsStyleConfig {
+  mode: GraphTresholdsStyleMode;
+}
+
+/**
+ * @alpha
+ */
+export interface GraphFieldConfig
+  extends LineConfig,
+    FillConfig,
+    PointsConfig,
+    AxisConfig,
+    BarConfig,
+    StackableFieldConfig,
+    HideableFieldConfig {
+  drawStyle?: DrawStyle;
+  gradientMode?: GraphGradientMode;
+  thresholdsStyle?: GraphThresholdsStyleConfig;
 }
 
 /**
@@ -142,11 +246,17 @@ export const graphFieldOptions = {
   ] as Array<SelectableValue<DrawStyle>>,
 
   lineInterpolation: [
-    { label: 'Linear', value: LineInterpolation.Linear },
-    { label: 'Smooth', value: LineInterpolation.Smooth },
-    { label: 'Step Before', value: LineInterpolation.StepBefore },
-    { label: 'Step After', value: LineInterpolation.StepAfter },
+    { description: 'Linear', value: LineInterpolation.Linear, icon: 'gf-interpolation-linear' },
+    { description: 'Smooth', value: LineInterpolation.Smooth, icon: 'gf-interpolation-smooth' },
+    { description: 'Step before', value: LineInterpolation.StepBefore, icon: 'gf-interpolation-step-before' },
+    { description: 'Step after', value: LineInterpolation.StepAfter, icon: 'gf-interpolation-step-after' },
   ] as Array<SelectableValue<LineInterpolation>>,
+
+  barAlignment: [
+    { description: 'Before', value: BarAlignment.Before, icon: 'gf-bar-alignment-before' },
+    { description: 'Center', value: BarAlignment.Center, icon: 'gf-bar-alignment-center' },
+    { description: 'After', value: BarAlignment.After, icon: 'gf-bar-alignment-after' },
+  ] as Array<SelectableValue<BarAlignment>>,
 
   showPoints: [
     { label: 'Auto', value: PointVisibility.Auto, description: 'Show points when the density is low' },
@@ -162,8 +272,26 @@ export const graphFieldOptions = {
   ] as Array<SelectableValue<AxisPlacement>>,
 
   fillGradient: [
-    { label: 'None', value: FillGradientMode.None },
-    { label: 'Opacity', value: FillGradientMode.Opacity },
-    { label: 'Hue', value: FillGradientMode.Hue },
-  ] as Array<SelectableValue<FillGradientMode>>,
+    { label: 'None', value: GraphGradientMode.None },
+    { label: 'Opacity', value: GraphGradientMode.Opacity, description: 'Enable fill opacity gradient' },
+    { label: 'Hue', value: GraphGradientMode.Hue, description: 'Small color hue gradient' },
+    {
+      label: 'Scheme',
+      value: GraphGradientMode.Scheme,
+      description: 'Use color scheme to define gradient',
+    },
+  ] as Array<SelectableValue<GraphGradientMode>>,
+
+  stacking: [
+    { label: 'Off', value: StackingMode.None },
+    { label: 'Normal', value: StackingMode.Normal },
+    { label: '100%', value: StackingMode.Percent },
+  ] as Array<SelectableValue<StackingMode>>,
+
+  thresholdsDisplayModes: [
+    { label: 'Off', value: GraphTresholdsStyleMode.Off },
+    { label: 'As lines', value: GraphTresholdsStyleMode.Line },
+    { label: 'As filled regions', value: GraphTresholdsStyleMode.Area },
+    { label: 'As filled regions and lines', value: GraphTresholdsStyleMode.LineAndArea },
+  ] as Array<SelectableValue<GraphTresholdsStyleMode>>,
 };

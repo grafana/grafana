@@ -21,13 +21,13 @@ export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: (options: FilterOptions) => source => {
+  operator: (options: FilterOptions) => (source) => {
     if (!options.include && !options.exclude) {
       return source.pipe(noopTransformer.operator({}));
     }
 
     return source.pipe(
-      map(data => {
+      map((data) => {
         const include = options.include ? getFieldMatcher(options.include) : null;
         const exclude = options.exclude ? getFieldMatcher(options.exclude) : null;
 
@@ -76,13 +76,13 @@ export const filterFramesTransformer: DataTransformerInfo<FilterOptions> = {
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: options => source => {
+  operator: (options) => (source) => {
     if (!options.include && !options.exclude) {
       return source.pipe(noopTransformer.operator({}));
     }
 
     return source.pipe(
-      map(data => {
+      map((data) => {
         const include = options.include ? getFrameMatchers(options.include) : null;
         const exclude = options.exclude ? getFrameMatchers(options.exclude) : null;
 

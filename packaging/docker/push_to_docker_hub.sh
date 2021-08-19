@@ -63,7 +63,7 @@ elif echo "$_grafana_tag" | grep -q "^v" && echo "$_grafana_tag" | grep -q "beta
 	# Push to the grafana-dev repository with the expected tag
 	# for running the end to end tests successfully
   docker push "grafana/grafana-dev:${_grafana_tag}${TAG_SUFFIX}"
-elif echo "$_grafana_tag" | grep -q "master"; then
-	docker_push_all "${_docker_repo}" "master"
+elif echo "$_grafana_tag" | grep -q "main"; then
+	docker_push_all "${_docker_repo}" "main"
   docker push "grafana/grafana-dev:${_grafana_version}${TAG_SUFFIX}"
 fi

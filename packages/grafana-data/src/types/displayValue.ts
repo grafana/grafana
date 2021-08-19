@@ -16,18 +16,23 @@ export interface DisplayValue extends FormattedValue {
    */
   color?: string;
   title?: string;
+
+  /**
+   * Used in limited scenarios like legend reducer calculations
+   */
+  description?: string;
 }
 
 /**
  * Explicit control for text settings
+ * @deprecated Use VizTextDisplayOptions from @grafana/ui instead
  */
-export interface TextDisplayOptions {
+export type TextDisplayOptions = {
   /* Explicit text size */
   titleSize?: number;
-
   /* Explicit text size */
   valueSize?: number;
-}
+};
 
 /**
  * These represents the display value with the longest title and text.

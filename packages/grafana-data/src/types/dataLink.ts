@@ -1,4 +1,4 @@
-import { DataQuery } from './datasource';
+import { DataQuery } from './query';
 import { InterpolateFunction } from './panel';
 
 /**
@@ -33,7 +33,7 @@ export interface DataLink<T extends DataQuery = any> {
   onClick?: (event: DataLinkClickEvent) => void;
 
   // If dataLink represents internal link this has to be filled. Internal link is defined as a query in a particular
-  // datas ource that we want to show to the user. Usually this results in a link to explore but can also lead to
+  // data source that we want to show to the user. Usually this results in a link to explore but can also lead to
   // more custom onClick behaviour if needed.
   // @internal and subject to change in future releases
   internal?: InternalDataLink<T>;
@@ -58,7 +58,7 @@ export interface LinkModel<T = any> {
   origin: T;
 
   // When a click callback exists, this is passed the raw mouse|react event
-  onClick?: (e: any) => void;
+  onClick?: (e: any, origin?: any) => void;
 }
 
 /**

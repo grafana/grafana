@@ -1,11 +1,12 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import { Icon, Tooltip } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getServerStats, ServerStat } from './state/apis';
 import Page from 'app/core/components/Page/Page';
-import { NavModel } from '@grafana/data';
+import { getServerStats, ServerStat } from './state/apis';
 
 interface Props {
   navModel: NavModel;
@@ -57,7 +58,14 @@ export class ServerStats extends PureComponent<Props, State> {
 function StatItem(stat: ServerStat) {
   return (
     <tr key={stat.name}>
-      <td>{stat.name}</td>
+      <td>
+        {stat.name}{' '}
+        {stat.tooltip && (
+          <Tooltip content={stat.tooltip} placement={'top'}>
+            <Icon name={'info-circle'} />
+          </Tooltip>
+        )}
+      </td>
       <td>{stat.value}</td>
     </tr>
   );

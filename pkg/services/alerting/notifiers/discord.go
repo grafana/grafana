@@ -26,6 +26,13 @@ func init() {
 		Heading:     "Discord settings",
 		Options: []alerting.NotifierOption{
 			{
+				Label:        "Avatar URL",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Description:  "Provide a URL to an image to use as the avatar for the bot's message",
+				PropertyName: "avatar_url",
+			},
+			{
 				Label:        "Message Content",
 				Description:  "Mention a group using @ or a user using <@ID> when notifying in a channel",
 				Element:      alerting.ElementTypeInput,
@@ -45,6 +52,7 @@ func init() {
 }
 
 func newDiscordNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+	avatar := model.Settings.Get("avatar_url").MustString()
 	content := model.Settings.Get("content").MustString()
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
@@ -54,6 +62,7 @@ func newDiscordNotifier(model *models.AlertNotification) (alerting.Notifier, err
 	return &DiscordNotifier{
 		NotifierBase: NewNotifierBase(model),
 		Content:      content,
+		AvatarURL:    avatar,
 		WebhookURL:   url,
 		log:          log.New("alerting.notifier.discord"),
 	}, nil
@@ -64,6 +73,7 @@ func newDiscordNotifier(model *models.AlertNotification) (alerting.Notifier, err
 type DiscordNotifier struct {
 	NotifierBase
 	Content    string
+	AvatarURL  string
 	WebhookURL string
 	log        log.Logger
 }
@@ -85,11 +95,17 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyJSON.Set("content", dn.Content)
 	}
 
+	if dn.AvatarURL != "" {
+		bodyJSON.Set("avatar_url", dn.AvatarURL)
+	}
+
 	fields := make([]map[string]interface{}, 0)
 
 	for _, evt := range evalContext.EvalMatches {
 		fields = append(fields, map[string]interface{}{
-			"name":   evt.Metric,
+			// Discord uniquely does not send the alert if the metric field is empty,
+			// which it can be in some cases
+			"name":   notEmpty(evt.Metric),
 			"value":  evt.Value.FullString(),
 			"inline": true,
 		})
@@ -212,4 +228,12 @@ func (dn *DiscordNotifier) embedImage(cmd *models.SendWebhookSync, imagePath str
 	cmd.ContentType = w.FormDataContentType()
 
 	return nil
+}
+
+func notEmpty(metric string) string {
+	if metric == "" {
+		return "<NO_METRIC_NAME>"
+	}
+
+	return metric
 }

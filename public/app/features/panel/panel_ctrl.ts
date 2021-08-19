@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isString } from 'lodash';
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
 import { auto } from 'angular';
@@ -11,32 +11,35 @@ import {
   EventBusSrv,
 } from '@grafana/data';
 import { DashboardModel } from '../dashboard/state';
+import { AngularLocationWrapper } from 'app/angular/AngularLocationWrapper';
 
 export class PanelCtrl {
   panel: any;
   error: any;
-  dashboard: DashboardModel;
-  pluginName: string;
-  pluginId: string;
+  declare dashboard: DashboardModel;
+  pluginName = '';
+  pluginId = '';
   editorTabs: any;
   $scope: any;
   $injector: auto.IInjectorService;
-  $location: any;
   $timeout: any;
-  editModeInitiated: boolean;
-  height: number;
-  width: number;
+  editModeInitiated = false;
+  declare height: number;
+  declare width: number;
   containerHeight: any;
   events: EventBusExtended;
-  loading: boolean;
+  loading = false;
   timing: any;
+  $location: AngularLocationWrapper;
 
   constructor($scope: any, $injector: auto.IInjectorService) {
+    this.panel = this.panel ?? $scope.$parent.panel;
+    this.dashboard = this.dashboard ?? $scope.$parent.dashboard;
     this.$injector = $injector;
-    this.$location = $injector.get('$location');
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
     this.editorTabs = [];
+    this.$location = new AngularLocationWrapper();
     this.events = new EventBusSrv();
     this.timing = {}; // not used but here to not break plugins
 
@@ -77,7 +80,7 @@ export class PanelCtrl {
   addEditorTab(title: string, directiveFn: any, index?: number, icon?: any) {
     const editorTab = { title, directiveFn, icon };
 
-    if (_.isString(directiveFn)) {
+    if (isString(directiveFn)) {
       editorTab.directiveFn = () => {
         return { templateUrl: directiveFn };
       };

@@ -5,19 +5,16 @@ import { VariableQueryProps } from 'app/types/plugins';
 import { VariableTextAreaField } from './VariableTextAreaField';
 import { useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 export const LEGACY_VARIABLE_QUERY_EDITOR_NAME = 'Grafana-LegacyVariableQueryEditor';
 
 export const LegacyVariableQueryEditor: FC<VariableQueryProps> = ({ onChange, query }) => {
   const styles = useStyles(getStyles);
   const [value, setValue] = useState(query);
-  const onValueChange = useCallback(
-    (event: React.FormEvent<HTMLTextAreaElement>) => {
-      setValue(event.currentTarget.value);
-    },
-    [onChange]
-  );
+  const onValueChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
+    setValue(event.currentTarget.value);
+  };
 
   const onBlur = useCallback(
     (event: React.FormEvent<HTMLTextAreaElement>) => {

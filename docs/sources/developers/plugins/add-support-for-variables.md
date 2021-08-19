@@ -30,10 +30,10 @@ Add `replaceVariables` to the argument list, and pass it a user-defined template
 
 ```ts
 export const SimplePanel: React.FC<Props> = ({ options, data, width, height, replaceVariables }) => {
-  const query = replaceVariables('Now displaying $service')
+  const query = replaceVariables('Now displaying $service');
 
-  return <div>{ query }</div>
-}
+  return <div>{query}</div>;
+};
 ```
 
 ## Interpolate variables in data source plugins
@@ -60,14 +60,14 @@ For data sources, you need to use the [getTemplateSrv]({{< relref "../../package
 
 ## Format multi-value variables
 
-When a user selects multiple values for variable, the value of the interpolated variable depends on the [variable format](https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/).
+When a user selects multiple values for variable, the value of the interpolated variable depends on the [variable format](https://grafana.com/docs/grafana/next/variables/advanced-variable-format-options/).
 
 A data source can define the default format option when no format is specified by adding a third argument to the interpolation function.
 
 Let's change the SQL query to use CSV format by default:
 
 ```ts
-getTemplateSrv().replace('SELECT * FROM services WHERE id IN ($service)', options.scopedVars, "csv");
+getTemplateSrv().replace('SELECT * FROM services WHERE id IN ($service)', options.scopedVars, 'csv');
 ```
 
 Now, when users write `$service`, the query looks like this:
@@ -76,7 +76,7 @@ Now, when users write `$service`, the query looks like this:
 SELECT * FROM services WHERE id IN (admin,auth,billing)
 ```
 
-For more information on the available variable formats, refer to [Advanced variable format options](https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/).
+For more information on the available variable formats, refer to [Advanced variable format options]({{< relref "../../variables/advanced-variable-format-options.md" >}}).
 
 ## Set a variable from your plugin
 
@@ -177,7 +177,13 @@ Let's create a custom query editor to allow the user to edit the query model.
          </div>
          <div className="gf-form">
            <span className="gf-form-label width-10">Query</span>
-           <input name="rawQuery" className="gf-form-input" onBlur={saveQuery} onChange={handleChange} value={state.rawQuery} />
+           <input
+             name="rawQuery"
+             className="gf-form-input"
+             onBlur={saveQuery}
+             onChange={handleChange}
+             value={state.rawQuery}
+           />
          </div>
        </>
      );

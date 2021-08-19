@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { Icon } from '../Icon/Icon';
 
@@ -8,7 +8,7 @@ interface MultiValueContainerProps {
 }
 
 export const MultiValueContainer: React.FC<MultiValueContainerProps> = ({ innerProps, children }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
   return (
@@ -23,7 +23,7 @@ export type MultiValueRemoveProps = {
 };
 
 export const MultiValueRemove: React.FC<MultiValueRemoveProps> = ({ children, innerProps }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getSelectStyles(theme);
   return (
     <div {...innerProps} className={styles.multiValueRemove}>

@@ -2,7 +2,6 @@ import {
   buildQueryTransaction,
   clearHistory,
   DEFAULT_RANGE,
-  getFirstQueryErrorWithoutRefId,
   getRefIds,
   getValueWithRefId,
   hasNonEmptyQuery,
@@ -14,9 +13,10 @@ import {
   getTimeRangeFromUrl,
 } from './explore';
 import store from 'app/core/store';
-import { DataQueryError, dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
+import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { ExploreId } from '../../types';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: '',
@@ -204,7 +204,7 @@ describe('getExploreUrl', () => {
   } as unknown) as GetExploreUrlArguments;
 
   it('should omit legendFormat in explore url', () => {
-    expect(getExploreUrl(args).then(data => expect(data).not.toMatch(/legendFormat1/g)));
+    expect(getExploreUrl(args).then((data) => expect(data).not.toMatch(/legendFormat1/g)));
   });
 });
 
@@ -300,12 +300,8 @@ describe('getTimeRangeFromUrl', () => {
 
   it('should parse epoch strings', () => {
     const range = {
-      from: dateTime('2020-10-22T10:00:00Z')
-        .valueOf()
-        .toString(),
-      to: dateTime('2020-10-22T11:00:00Z')
-        .valueOf()
-        .toString(),
+      from: dateTime('2020-10-22T10:00:00Z').valueOf().toString(),
+      to: dateTime('2020-10-22T11:00:00Z').valueOf().toString(),
     };
     const result = getTimeRangeFromUrl(range, 'browser');
     expect(result.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
@@ -324,40 +320,6 @@ describe('getTimeRangeFromUrl', () => {
     expect(result.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
     expect(result.raw.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
     expect(result.raw.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
-  });
-});
-
-describe('getFirstQueryErrorWithoutRefId', () => {
-  describe('when called with a null value', () => {
-    it('then it should return undefined', () => {
-      const errors: DataQueryError[] | undefined = undefined;
-      const result = getFirstQueryErrorWithoutRefId(errors);
-
-      expect(result).toBeUndefined();
-    });
-  });
-
-  describe('when called with an array with only refIds', () => {
-    it('then it should return undefined', () => {
-      const errors: DataQueryError[] = [{ refId: 'A' }, { refId: 'B' }];
-      const result = getFirstQueryErrorWithoutRefId(errors);
-
-      expect(result).toBeUndefined();
-    });
-  });
-
-  describe('when called with an array with and without refIds', () => {
-    it('then it should return undefined', () => {
-      const errors: DataQueryError[] = [
-        { refId: 'A' },
-        { message: 'A message' },
-        { refId: 'B' },
-        { message: 'B message' },
-      ];
-      const result = getFirstQueryErrorWithoutRefId(errors);
-
-      expect(result).toBe(errors[1]);
-    });
   });
 });
 
@@ -456,21 +418,21 @@ describe('when buildQueryTransaction', () => {
     const queries = [{ refId: 'A' }];
     const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
     const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
-    const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+    const transaction = buildQueryTransaction(ExploreId.left, queries, queryOptions, range, false);
     expect(transaction.request.intervalMs).toEqual(60000);
   });
   it('it should calculate interval taking minInterval into account', () => {
     const queries = [{ refId: 'A' }];
     const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
     const range = { from: dateTime().subtract(1, 'm'), to: dateTime(), raw: { from: '1h', to: '1h' } };
-    const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+    const transaction = buildQueryTransaction(ExploreId.left, queries, queryOptions, range, false);
     expect(transaction.request.intervalMs).toEqual(15000);
   });
   it('it should calculate interval taking maxDataPoints into account', () => {
     const queries = [{ refId: 'A' }];
     const queryOptions = { maxDataPoints: 10, minInterval: '15s' };
     const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
-    const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+    const transaction = buildQueryTransaction(ExploreId.left, queries, queryOptions, range, false);
     expect(transaction.request.interval).toEqual('2h');
   });
 });

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -59,7 +60,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("get-sign-user", func(query *models.GetSignedInUserQuery) error {
+		bus.AddHandlerCtx("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			t.Log("Handling GetSignedInUserQuery")
 			query.Result = &models.SignedInUser{OrgId: orgID, UserId: id}
 			return nil
@@ -92,7 +93,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("get-sign-user", func(query *models.GetSignedInUserQuery) error {
+		bus.AddHandlerCtx("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{UserId: query.UserId}
 			return nil
 		})

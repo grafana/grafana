@@ -42,16 +42,11 @@ exports[`Render should render teams table 1`] = `
         className="gf-form gf-form--grow"
       >
         <FilterInput
-          inputClassName="gf-form-input"
-          labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
           placeholder="Search teams"
           value=""
         />
       </div>
-      <div
-        className="page-action-bar__spacer"
-      />
       <LinkButton
         className=""
         href="org/teams/new"
@@ -377,16 +372,11 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
         className="gf-form gf-form--grow"
       >
         <FilterInput
-          inputClassName="gf-form-input"
-          labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
           placeholder="Search teams"
           value=""
         />
       </div>
-      <div
-        className="page-action-bar__spacer"
-      />
       <LinkButton
         className=" disabled"
         href="#"
@@ -504,16 +494,11 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
         className="gf-form gf-form--grow"
       >
         <FilterInput
-          inputClassName="gf-form-input"
-          labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
           placeholder="Search teams"
           value=""
         />
       </div>
-      <div
-        className="page-action-bar__spacer"
-      />
       <LinkButton
         className=""
         href="org/teams/new"

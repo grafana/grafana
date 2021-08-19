@@ -1,6 +1,5 @@
 import { FieldConfigEditorProps, FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
 import { OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
-import { FieldType } from '../types/dataFrame';
 import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 import {
   numberOverrideProcessor,
@@ -16,6 +15,7 @@ import {
   identityOverrideProcessor,
   UnitFieldConfigSettings,
   unitOverrideProcessor,
+  FieldNamePickerConfigSettings,
 } from '../field';
 
 /**
@@ -33,7 +33,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       override: standardEditorsRegistry.get('number').editor as any,
       editor: standardEditorsRegistry.get('number').editor as any,
       process: numberOverrideProcessor,
-      shouldApply: config.shouldApply ? config.shouldApply : field => field.type === FieldType.number,
+      shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
     });
   }
@@ -45,7 +45,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       override: standardEditorsRegistry.get('slider').editor as any,
       editor: standardEditorsRegistry.get('slider').editor as any,
       process: numberOverrideProcessor,
-      shouldApply: config.shouldApply ? config.shouldApply : field => field.type === FieldType.number,
+      shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
     });
   }
@@ -57,7 +57,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       override: standardEditorsRegistry.get('text').editor as any,
       editor: standardEditorsRegistry.get('text').editor as any,
       process: stringOverrideProcessor,
-      shouldApply: config.shouldApply ? config.shouldApply : field => field.type === FieldType.string,
+      shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
     });
   }
@@ -181,6 +181,16 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
+  addMultiSelect<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
+    config: PanelOptionsEditorConfig<TOptions, TSettings, TOption>
+  ) {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('multi-select').editor as any,
+    });
+  }
+
   addRadio<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
     config: PanelOptionsEditorConfig<TOptions, TSettings, TOption>
   ) {
@@ -224,6 +234,16 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
       ...config,
       id: config.path,
       editor: standardEditorsRegistry.get('unit').editor as any,
+    });
+  }
+
+  addFieldNamePicker<TSettings = any>(
+    config: PanelOptionsEditorConfig<TOptions, TSettings & FieldNamePickerConfigSettings, string>
+  ): this {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('field-name').editor as any,
     });
   }
 }
