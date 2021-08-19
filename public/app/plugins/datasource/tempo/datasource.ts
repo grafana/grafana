@@ -168,8 +168,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     if (response.ok) {
       return { status: 'success', message: 'Data source is working' };
     }
-
-    return { status: 'error', message: 'Data source is not working' };
   }
 
   getQueryDisplayText(query: TempoQuery) {
