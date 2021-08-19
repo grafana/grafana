@@ -1,3 +1,4 @@
+import { lastValueFrom, Observable, of } from 'rxjs';
 import {
   DataFrame,
   dataFrameToJSON,
@@ -8,10 +9,10 @@ import {
   MutableDataFrame,
   PluginType,
 } from '@grafana/data';
-import { Observable, of } from 'rxjs';
+
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { TempoDatasource } from './datasource';
-import { FetchResponse, setBackendSrv, BackendDataSourceResponse, setDataSourceSrv } from '@grafana/runtime';
+import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
@@ -33,7 +34,7 @@ describe('Tempo data source', () => {
       })
     );
     const ds = new TempoDatasource(defaultSettings);
-    const response = await ds.query({ targets: [{ refId: 'refid1' }] } as any).toPromise();
+    const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1' }] } as any));
 
     expect(
       (response.data[0] as DataFrame).fields.map((f) => ({
@@ -89,9 +90,9 @@ describe('Tempo data source', () => {
       },
     });
     setDataSourceSrv(backendSrvWithPrometheus as any);
-    const response = await ds
-      .query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)
-      .toPromise();
+    const response = await lastValueFrom(
+      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)
+    );
 
     expect(response.data).toHaveLength(2);
     expect(response.data[0].name).toBe('Nodes');
@@ -106,11 +107,11 @@ describe('Tempo data source', () => {
   it('should handle json file upload', async () => {
     const ds = new TempoDatasource(defaultSettings);
     ds.uploadedJson = JSON.stringify(mockJson);
-    const response = await ds
-      .query({
+    const response = await lastValueFrom(
+      ds.query({
         targets: [{ queryType: 'upload', refId: 'A' }],
       } as any)
-      .toPromise();
+    );
     const field = response.data[0].fields[0];
     expect(field.name).toBe('traceID');
     expect(field.type).toBe(FieldType.string);

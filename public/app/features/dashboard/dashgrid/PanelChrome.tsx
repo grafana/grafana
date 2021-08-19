@@ -1,18 +1,7 @@
-// Libraries
 import React, { Component } from 'react';
 import classNames from 'classnames';
 import { Subscription } from 'rxjs';
-// Components
-import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary, PanelContextProvider, PanelContext, SeriesVisibilityChangeMode } from '@grafana/ui';
-// Utils & Services
-import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
-import { profiler } from 'app/core/profiler';
-import config from 'app/core/config';
-// Types
-import { DashboardModel, PanelModel } from '../state';
-import { PANEL_BORDER } from 'app/core/constants';
+import { locationService } from '@grafana/runtime';
 import {
   AbsoluteTimeRange,
   AnnotationChangeEvent,
@@ -28,13 +17,23 @@ import {
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
+import { ErrorBoundary, PanelContext, PanelContextProvider, SeriesVisibilityChangeMode } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+
+import { PanelHeader } from './PanelHeader/PanelHeader';
+import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
+import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
+import { profiler } from 'app/core/profiler';
+import config from 'app/core/config';
+import { DashboardModel, PanelModel } from '../state';
+import { PANEL_BORDER } from 'app/core/constants';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 import { RefreshEvent, RenderEvent } from 'app/types/events';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { isSoloRoute } from '../../../routes/utils';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -428,6 +427,7 @@ export class PanelChrome extends Component<Props, State> {
 
     const containerClassNames = classNames({
       'panel-container': true,
+      'panel-container--absolute': isSoloRoute(locationService.getLocation().pathname),
       'panel-container--transparent': transparent,
       'panel-container--no-title': this.hasOverlayHeader(),
       [`panel-alert-state--${alertState}`]: alertState !== undefined,
