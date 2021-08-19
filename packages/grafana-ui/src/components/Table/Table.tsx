@@ -3,6 +3,7 @@ import { DataFrame, Field, getFieldDisplayName } from '@grafana/data';
 import {
   Cell,
   Column,
+  ColumnInstance,
   HeaderGroup,
   useAbsoluteLayout,
   useFilters,
@@ -20,6 +21,7 @@ import {
   TableFilterActionCallback,
   TableSortByActionCallback,
   TableSortByFieldState,
+  Total,
 } from './types';
 import { getTableStyles, TableStyles } from './styles';
 import { Icon } from '../Icon/Icon';
@@ -45,6 +47,7 @@ export interface Props {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
+  totals?: Total[];
 }
 
 interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}>, UseFiltersState<{}> {}
@@ -124,6 +127,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     noHeader,
     resizable = true,
     initialSortBy,
+    totals,
   } = props;
   const tableStyles = useStyles2(getTableStyles);
 
@@ -139,8 +143,24 @@ export const Table: FC<Props> = memo((props: Props) => {
     return Array(data.length).fill(0);
   }, [data]);
 
+  const memoizedTotals = useMemo(() => {
+    if (totals === undefined) {
+      return undefined;
+    }
+    const totalsMap = new Map<string, any>();
+    for (const total of totals) {
+      totalsMap.set(total.field, total.value());
+    }
+    return totalsMap;
+  }, [totals]);
+
   // React-table column definitions
-  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
+  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth, memoizedTotals), [
+    data,
+    width,
+    columnMinWidth,
+    memoizedTotals,
+  ]);
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
@@ -160,7 +180,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
   );
 
-  const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
+  const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth, footerGroups } = useTable(
     options,
     useFilters,
     useSortBy,
@@ -196,7 +216,7 @@ export const Table: FC<Props> = memo((props: Props) => {
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
 
   return (
-    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel}>
+    <div {...getTableProps()} className={tableStyles.table && ' foo'} aria-label={ariaLabel}>
       <CustomScrollbar hideVerticalTrack={true}>
         <div style={{ width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%' }}>
           {!noHeader && (
@@ -231,6 +251,31 @@ export const Table: FC<Props> = memo((props: Props) => {
           ) : (
             <div style={{ height: height - headerHeight }} className={tableStyles.noData}>
               No data
+            </div>
+          )}
+          {memoizedTotals !== undefined && (
+            <div
+              style={{
+                position: 'absolute',
+                width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%',
+                bottom: '0px',
+              }}
+            >
+              {footerGroups.map((footerGroup: HeaderGroup) => {
+                const { key, ...footerGroupProps } = footerGroup.getFooterGroupProps();
+                return (
+                  <div
+                    className={tableStyles.tfoot}
+                    {...footerGroupProps}
+                    key={key}
+                    aria-label={e2eSelectorsTable.header}
+                  >
+                    {footerGroup.headers.map((column: ColumnInstance, index: number) =>
+                      renderFooterCell(column, tableStyles)
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -271,6 +316,24 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) 
       {!column.canSort && column.render('Header')}
       {!column.canSort && column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
       {column.canResize && <div {...column.getResizerProps()} className={tableStyles.resizeHandle} />}
+    </div>
+  );
+}
+
+function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
+  const footerProps = column.getHeaderProps();
+
+  if (!footerProps) {
+    return null;
+  }
+
+  footerProps.style = footerProps.style ?? {};
+  footerProps.style.position = 'absolute';
+  footerProps.style.justifyContent = (column as any).justifyContent;
+
+  return (
+    <div className={tableStyles.headerCell} {...footerProps}>
+      {column.render('Footer')}
     </div>
   );
 }

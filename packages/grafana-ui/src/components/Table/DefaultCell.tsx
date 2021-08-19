@@ -65,3 +65,7 @@ function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: Disp
 
   return tableStyles.cellContainer;
 }
+
+export const EmptyCell = (props: any) => {
+  return <span>&nbsp;</span>;
+};

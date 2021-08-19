@@ -10,7 +10,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 
-import { DefaultCell } from './DefaultCell';
+import { DefaultCell, EmptyCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { TableCellDisplayMode, TableFieldOptions } from './types';
 import { JSONViewCell } from './JSONViewCell';
@@ -41,7 +41,12 @@ export function getTextAlign(field?: Field): ContentPosition {
   return 'flex-start';
 }
 
-export function getColumns(data: DataFrame, availableWidth: number, columnMinWidth: number): Column[] {
+export function getColumns(
+  data: DataFrame,
+  availableWidth: number,
+  columnMinWidth: number,
+  totals?: Map<string, Function>
+): Column[] {
   const columns: any[] = [];
   let fieldCountWithoutWidth = data.fields.length;
 
@@ -81,6 +86,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       minWidth: fieldTableOptions.minWidth || columnMinWidth,
       filter: memoizeOne(filterByValue(field)),
       justifyContent: getTextAlign(field),
+      Footer: getFooterValue(field, totals),
     });
   }
 
@@ -106,6 +112,17 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
   }
 
   return columns;
+}
+
+function getFooterValue(field: Field, totals?: Map<string, any>) {
+  if (totals === undefined) {
+    return EmptyCell;
+  }
+  const val = totals.get(field.name);
+  if (val === undefined) {
+    return EmptyCell;
+  }
+  return val;
 }
 
 function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {

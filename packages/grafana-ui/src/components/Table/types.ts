@@ -51,3 +51,8 @@ export interface TableCellProps extends CellProps<any> {
 }
 
 export type CellComponent = FC<TableCellProps>;
+
+export interface Total {
+  field: string;
+  value: Function;
+}
