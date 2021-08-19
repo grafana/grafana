@@ -1,5 +1,6 @@
 import { map as _map } from 'lodash';
-import { map } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { BackendDataSourceResponse, DataSourceWithBackend, FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { AnnotationEvent, DataSourceInstanceSettings, MetricFindValue, ScopedVars } from '@grafana/data';
 
@@ -141,7 +142,6 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
     };
 
     const range = this.timeSrv.timeRange();
-
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
         url: '/api/ds/query',
@@ -156,6 +156,10 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
       .pipe(
         map((rsp) => {
           return this.responseParser.transformMetricFindResponse(rsp);
+        }),
+        catchError((err) => {
+          console.error('Error performing templating query', err);
+          return of([]);
         })
       )
       .toPromise();
