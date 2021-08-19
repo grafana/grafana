@@ -216,7 +216,7 @@ export const Table: FC<Props> = memo((props: Props) => {
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
 
   return (
-    <div {...getTableProps()} className={tableStyles.table && ' foo'} aria-label={ariaLabel}>
+    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel}>
       <CustomScrollbar hideVerticalTrack={true}>
         <div style={{ width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%' }}>
           {!noHeader && (
