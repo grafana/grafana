@@ -37,6 +37,7 @@ jobs:
 
       - name: setup docker
         uses: docker-practice/actions-setup-docker@master
-        with: 
-          script: |
-            docker version
+        
+      - name: docker version
+      - run: |
+          docker version
