@@ -86,19 +86,16 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLo
   }
 
   async testDatasource(): Promise<any> {
-    // to test Tempo we send a dummy traceID and verify Tempo answers with 'trace not found'
-    const response = await super.query({ targets: [{ query: '0' }] } as any).toPromise();
+    const options: BackendSrvRequest = {
+      headers: {},
+      method: 'GET',
+      url: `${this.instanceSettings.url}/api/echo`,
+    };
+    const response = await getBackendSrv().fetch<any>(options).toPromise();
 
-    const errorMessage = response.error?.message;
-    if (
-      errorMessage &&
-      errorMessage.startsWith('failed to get trace') &&
-      errorMessage.endsWith('trace not found in Tempo')
-    ) {
+    if (response?.ok) {
       return { status: 'success', message: 'Data source is working' };
     }
-
-    return { status: 'error', message: 'Data source is not working' + (errorMessage ? `: ${errorMessage}` : '') };
   }
 
   getQueryDisplayText(query: TempoQuery) {
