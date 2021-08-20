@@ -55,6 +55,8 @@ You can also specify the SSL/TLS configuration used by the client.
 
 Set `empty_scopes` to true to use an empty scope during authentication. By default, Grafana uses `user:email` as scope.
 
+### E-mail address
+
 Grafana will attempt to determine the user's e-mail address by querying the OAuth provider as described below in the following order until an e-mail address is found:
 
 1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth `id_token` parameter.
@@ -64,6 +66,8 @@ Grafana will attempt to determine the user's e-mail address by querying the OAut
 1. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`) and check for the presence of an e-mail address marked as a primary address.
 1. If no e-mail address is found in steps (1-4), then the e-mail address of the user is set to the empty string.
 
+### Roles & Groups
+
 Grafana will also attempt to do role mapping through OAuth as described below.
 
 Check for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
@@ -72,7 +76,11 @@ Grafana also attempts to map teams through OAuth as described below.
 
 Check for the presence of groups using the [JMESPath](http://jmespath.org/examples.html) specified via the `groups_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. After evaluating the `groups_attribute_path` JMESPath expression, the result should be a string array of groups.
 
+In both cases, the JMESPath is attempted on the ID token as a fallback if it doesn't produce a value from the UserInfo.
+
 See [JMESPath examples](#jmespath-examples) for more information.
+
+### Login
 
 Customize user login using `login_attribute_path` configuration option. Order of operations is as follows:
 
