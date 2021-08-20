@@ -20,6 +20,7 @@ class LiveTimer {
 
   isLive = false; // the dashboard time range ends in "now"
   timeRange?: TimeRange;
+  liveTimeOffset = 0;
 
   /** Called when the dashboard time range changes */
   setLiveTimeRange(v?: TimeRange) {
@@ -27,8 +28,12 @@ class LiveTimer {
     this.isLive = v?.raw?.to === 'now';
 
     if (this.isLive) {
+      const from = dateMath.parse(v!.raw.from, false)?.valueOf()!;
+      const to = dateMath.parse(v!.raw.to, true)?.valueOf()!;
+      this.liveTimeOffset = to - from;
+
       for (const listener of this.listeners) {
-        listener.intervalMs = getLiveTimerInterval(v!, listener.panel.props.width);
+        listener.intervalMs = getLiveTimerInterval(this.liveTimeOffset, listener.panel.props.width);
       }
     }
   }
@@ -38,7 +43,7 @@ class LiveTimer {
       last: this.lastUpdate,
       panel: panel,
       intervalMs: getLiveTimerInterval(
-        this.timeRange ?? ({ from: dateTime(0), to: dateTime(1000), raw: { from: '', to: '' } } as TimeRange),
+        60000, // 1min
         panel.props.width
       ),
     });
@@ -54,7 +59,7 @@ class LiveTimer {
     }
     for (const listener of this.listeners) {
       if (listener.panel === panel) {
-        listener.intervalMs = getLiveTimerInterval(this.timeRange!, listener.panel.props.width);
+        listener.intervalMs = getLiveTimerInterval(this.liveTimeOffset, listener.panel.props.width);
         return;
       }
     }
@@ -82,8 +87,8 @@ class LiveTimer {
             const { raw } = this.timeRange;
             tr = {
               raw,
-              from: dateMath.parse(raw.from, false)!,
-              to: dateMath.parse(raw.to, true)!,
+              from: dateTime(now - this.liveTimeOffset),
+              to: dateTime(now),
             };
           }
           listener.panel.liveTimeChanged(tr);
@@ -96,8 +101,7 @@ class LiveTimer {
 
 const FIVE_MINS = 5 * 60 * 1000;
 
-export function getLiveTimerInterval(tr: TimeRange, width: number): number {
-  const delta = tr.to.valueOf() - tr.from.valueOf();
+export function getLiveTimerInterval(delta: number, width: number): number {
   const millisPerPixel = Math.ceil(delta / width / 100) * 100;
   if (millisPerPixel > FIVE_MINS) {
     return FIVE_MINS;
