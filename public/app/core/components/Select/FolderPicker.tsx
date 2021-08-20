@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import appEvents from '../../app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
+import { PermissionLevelString } from '../../../types';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
@@ -16,7 +17,7 @@ export interface Props {
   dashboardId?: any;
   initialTitle?: string;
   initialFolderId?: number;
-  permissionLevel?: 'View' | 'Edit';
+  permissionLevel?: Exclude<PermissionLevelString, PermissionLevelString.Admin>;
   allowEmpty?: boolean;
   showRoot?: boolean;
   /**
@@ -53,7 +54,7 @@ export class FolderPicker extends PureComponent<Props, State> {
     enableReset: false,
     initialTitle: '',
     enableCreateNew: false,
-    permissionLevel: 'Edit',
+    permissionLevel: PermissionLevelString.Edit,
     allowEmpty: false,
     showRoot: true,
   };

@@ -8,7 +8,7 @@ import {
   setInputs,
   setJsonDashboard,
 } from './reducers';
-import { DashboardDataDTO, DashboardDTO, FolderInfo, ThunkResult } from 'app/types';
+import { DashboardDataDTO, DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
 import { appEvents } from '../../../core/core';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
@@ -223,7 +223,7 @@ export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
 }
 
-export function searchFolders(query: any, permission?: 'View' | 'Edit'): Promise<DashboardSearchHit[]> {
+export function searchFolders(query: any, permission?: PermissionLevelString): Promise<DashboardSearchHit[]> {
   return getBackendSrv().search({ query, type: 'dash-folder', permission });
 }
 
