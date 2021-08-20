@@ -11,9 +11,13 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
 replace k8s.io/client-go => k8s.io/client-go v0.18.8
 
+replace github.com/go-sql-driver/mysql => github.com/grafana/mysql v1.6.2
+
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.3.2
+	github.com/openshift/gssapi v0.0.0-20161010215902-5fb4217df13b // indirect
+	github.com/jcmturner/gokrb5/v8 v8.4.2 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.16.1
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.9.1
 	github.com/BurntSushi/toml v0.3.1
