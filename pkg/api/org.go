@@ -76,6 +76,14 @@ func getOrgHelper(orgID int64) response.Response {
 	return response.JSON(200, &result)
 }
 
+func existsCurrentOrg(orgID int64) bool {
+	query := models.GetOrgByIdQuery{Id: orgID}
+	if err := bus.Dispatch(&query); err != nil {
+		return false
+	}
+	return true
+}
+
 // POST /api/orgs
 func CreateOrg(c *models.ReqContext, cmd models.CreateOrgCommand) response.Response {
 	if !c.IsSignedIn || (!setting.AllowUserOrgCreate && !c.IsGrafanaAdmin) {
@@ -152,12 +160,13 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgID int64) respons
 
 // GET /api/orgs/:orgId
 func DeleteOrgByID(c *models.ReqContext) response.Response {
+	orgID := c.ParamsInt64(":orgId")
 	// before deleting an org, check if user does not belong to the current org
-	if c.OrgId == c.ParamsInt64(":orgId") {
-		return response.Error(403, "Can not delete org for current user", nil)
+	if c.OrgId == orgID {
+		return response.Error(400, "Can not delete org for current user", nil)
 	}
 
-	if err := bus.Dispatch(&models.DeleteOrgCommand{Id: c.ParamsInt64(":orgId")}); err != nil {
+	if err := bus.Dispatch(&models.DeleteOrgCommand{Id: orgID}); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(404, "Failed to delete organization. ID not found", nil)
 		}

@@ -257,6 +257,10 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 	if user == nil {
 		return errors.New("could not login user")
 	}
+	// in case the org of the user doesn't exist
+	if ok := existsCurrentOrg(user.OrgId); !ok {
+		return errors.New("for current user org does not exists")
+	}
 
 	addr := c.RemoteAddr()
 	ip, err := network.GetIPFromAddress(addr)
