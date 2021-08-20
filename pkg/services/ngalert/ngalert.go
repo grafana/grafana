@@ -76,6 +76,11 @@ func (ng *AlertNG) Init() error {
 
 	ng.MultiOrgAlertmanager = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store)
 
+	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
+	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(); err != nil {
+		return err
+	}
+
 	schedCfg := schedule.SchedulerCfg{
 		C:                       clock.New(),
 		BaseInterval:            baseInterval,
