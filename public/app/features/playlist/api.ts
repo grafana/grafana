@@ -13,6 +13,10 @@ export async function updatePlaylist(id: number, playlist: Playlist) {
   await withErrorHandling(async () => await getBackendSrv().put(`/api/playlists/${id}`, playlist));
 }
 
+export async function deletePlaylist(id: number) {
+  await withErrorHandling(async () => await getBackendSrv().delete(`/api/playlists/${id}`));
+}
+
 export async function getPlaylist(id: number): Promise<Playlist> {
   const result: Playlist = await getBackendSrv().get(`/api/playlists/${id}`);
   return result;

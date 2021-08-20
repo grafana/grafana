@@ -8,10 +8,21 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { useAsync } from 'react-use';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { PlaylistDTO } from './types';
-import { Button, Card, Checkbox, Field, LinkButton, Modal, RadioButtonGroup, VerticalGroup } from '@grafana/ui';
+import {
+  Button,
+  Card,
+  Checkbox,
+  ConfirmModal,
+  Field,
+  LinkButton,
+  Modal,
+  RadioButtonGroup,
+  VerticalGroup,
+} from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
+import { deletePlaylist } from './api';
 
 interface ConnectedProps {
   navModel: NavModel;
@@ -22,6 +33,7 @@ interface Props extends ConnectedProps, GrafanaRouteComponentProps {}
 export const PlaylistPage: FC<Props> = ({ navModel }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [startPlaylist, setStartPlaylist] = useState<PlaylistDTO | undefined>();
+  const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistDTO | undefined>();
 
   const { value: playlists, loading } = useAsync(async () => {
     return getBackendSrv().get('/api/playlists', { query: searchQuery }) as Promise<PlaylistDTO[]>;
@@ -55,6 +67,14 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
                   Edit playlist
                 </LinkButton>
               )}
+              <Button
+                disabled={false}
+                onClick={() => setPlaylistToDelete(playlist)}
+                icon="trash-alt"
+                variant="destructive"
+              >
+                Delete
+              </Button>
             </Card.Actions>
           </Card>
         ))}
@@ -73,6 +93,20 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
           />
         )}
         {content}
+        {playlistToDelete && (
+          <ConfirmModal
+            title="dog"
+            confirmText="delete"
+            body={`Are you sure you want to delete '${playlistToDelete.name}'?`}
+            onConfirm={() => {
+              deletePlaylist(playlistToDelete.id).finally(() => setPlaylistToDelete(undefined));
+            }}
+            isOpen={Boolean(playlistToDelete)}
+            onDismiss={() => {
+              setPlaylistToDelete(undefined);
+            }}
+          />
+        )}
         {startPlaylist && <StartModal playlist={startPlaylist} onDismiss={() => setStartPlaylist(undefined)} />}
       </Page.Contents>
     </Page>
