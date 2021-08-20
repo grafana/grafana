@@ -18,7 +18,6 @@ import {
   GraphFieldConfig,
   GraphGradientMode,
   GraphTresholdsStyleMode,
-  LegendDisplayMode,
   LineInterpolation,
   LineStyle,
   PointVisibility,
@@ -26,6 +25,7 @@ import {
   StackingMode,
   TooltipDisplayMode,
 } from '@grafana/ui';
+import { LegendDisplayMode } from '@grafana/schema';
 import { TimeSeriesOptions } from './types';
 import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
 import { defaultGraphConfig } from './config';

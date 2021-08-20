@@ -1,4 +1,5 @@
-import { OptionsWithTooltip, SingleStatBaseOptions, VizLegendOptions } from '@grafana/ui';
+import { VizLegendOptions } from '@grafana/schema';
+import { OptionsWithTooltip, SingleStatBaseOptions } from '@grafana/ui';
 
 /**
  * @beta

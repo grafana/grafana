@@ -14,3 +14,6 @@ export interface VizLegendOptions {
   displayMode: LegendDisplayMode;
   placement: LegendPlacement;
 }
+export interface OptionsWithLegend {
+  legend: VizLegendOptions;
+}

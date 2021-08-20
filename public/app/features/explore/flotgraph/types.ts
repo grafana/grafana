@@ -1,4 +1,5 @@
-import { VizTooltipOptions, TooltipDisplayMode, LegendDisplayMode, LegendPlacement } from '@grafana/ui';
+import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
+import { VizTooltipOptions, TooltipDisplayMode } from '@grafana/ui';
 import { YAxis } from '@grafana/data';
 
 export interface SeriesOptions {
