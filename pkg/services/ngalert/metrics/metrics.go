@@ -28,6 +28,8 @@ var GlobalMetrics = NewMetrics(prometheus.DefaultRegisterer)
 
 type Metrics struct {
 	*metrics.Alerts
+	// Registerer is for use by subcomponents which register their own metrics.
+	Registerer           prometheus.Registerer
 	AlertState           *prometheus.GaugeVec
 	RequestDuration      *prometheus.HistogramVec
 	ActiveConfigurations prometheus.Gauge
@@ -35,7 +37,6 @@ type Metrics struct {
 	EvalFailures         *prometheus.CounterVec
 	EvalDuration         *prometheus.SummaryVec
 	GroupRules           *prometheus.GaugeVec
-	Registerer           prometheus.Registerer
 }
 
 func init() {

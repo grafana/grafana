@@ -7,13 +7,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -22,9 +21,6 @@ import (
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
 )
-
-// OrgPollingInterval of how often we sync admin configuration.
-var OrgPollingInterval = 5 * time.Minute
 
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
@@ -42,15 +38,6 @@ type ScheduleService interface {
 	stopApplied(models.AlertRuleKey)
 	overrideCfg(cfg SchedulerCfg)
 }
-
-//type MultiOrgNotifier interface {
-//	AlertmanagerFor(orgID int64) (Notifier, error)
-//}
-
-// Notifier handles the delivery of alert notifications to the end user
-//type Notifier interface {
-//	PutAlerts(alerts apimodels.PostableAlerts) error
-//}
 
 type schedule struct {
 	// base tick rate (fastest possible configured check)
@@ -181,13 +168,6 @@ func (sch *schedule) Run(ctx context.Context) error {
 			sch.log.Error("failure while running the admin configuration sync", "err", err)
 		}
 	}()
-
-	//go func() {
-	//	defer wg.Done()
-	//	if err := sch.orgSync(ctx); err != nil {
-	//		sch.log.Error("failure while running the admin configuration sync", "err", err)
-	//	}
-	//}()
 
 	wg.Wait()
 	return nil
@@ -418,28 +398,6 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 		}
 	}
 }
-
-//func (sch *schedule) orgSync(ctx context.Context) error {
-//	doStuff := func() {
-//		if sch.orgStore == nil {
-//			return
-//		}
-//		orgs, err := sch.orgStore.GetOrgs()
-//		if err != nil {
-//			sch.log.Error("unable to sync organisations", "err", err)
-//		}
-//		sch.notifier.UpdateInstances(orgs...)
-//	}
-//	doStuff()
-//	for {
-//		select {
-//		case <-time.After(OrgPollingInterval):
-//			doStuff()
-//		case <-ctx.Done():
-//			return nil
-//		}
-//	}
-//}
 
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
 	sch.log.Debug("alert rule routine started", "key", key)

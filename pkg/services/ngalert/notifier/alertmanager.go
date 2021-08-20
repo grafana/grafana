@@ -130,7 +130,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, m
 		nflog.WithMaintenance(maintenanceNotificationAndSilences, am.stopc, am.wg.Done),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Alertmanager for org %d: unable to initialize the notification log component of alerting: %w", orgID, err)
+		return nil, fmt.Errorf("unable to initialize the notification log component of alerting: %w", err)
 	}
 	// Initialize silences
 	am.silences, err = silence.New(silence.Options{
@@ -139,7 +139,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, m
 		Retention:    retentionNotificationsAndSilences,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Alertmanager for org %d: unable to initialize the silencing component of alerting: %w", orgID, err)
+		return nil, fmt.Errorf("unable to initialize the silencing component of alerting: %w", err)
 	}
 
 	am.wg.Add(1)
@@ -151,7 +151,7 @@ func newAlertmanager(orgID int64, cfg *setting.Cfg, store store.AlertingStore, m
 	// Initialize in-memory alerts
 	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, am.gokitLogger)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Alertmanager for org %d: unable to initialize the alert provider component of alerting: %w", am.orgID, err)
+		return nil, fmt.Errorf("unable to initialize the alert provider component of alerting: %w", err)
 	}
 
 	return am, nil
@@ -170,25 +170,6 @@ func (am *Alertmanager) Ready() bool {
 func (am *Alertmanager) ready() bool {
 	return am.config != nil
 }
-
-//func (am *Alertmanager) Run(ctx context.Context) error {
-//	am.logger.Info("starting Alertmanager", "org", am.orgID)
-//	// Make sure dispatcher starts. We can tolerate future reload failures.
-//	if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
-//		am.logger.Error("unable to sync configuration", "err", err, "org", am.orgID)
-//	}
-//
-//	for {
-//		select {
-//		case <-ctx.Done():
-//			return am.StopAndWait()
-//		case <-time.After(pollInterval):
-//			if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
-//				am.logger.Error("unable to sync configuration", "err", err, "org", am.orgID)
-//			}
-//		}
-//	}
-//}
 
 func (am *Alertmanager) StopAndWait() {
 	if am.dispatcher != nil {
@@ -238,7 +219,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
 	return nil
 }
 
-// SaveAndApplyConfig saves the configuration the database and applies the configuration to the alertmanager.
+// SaveAndApplyConfig saves the configuration the database and applies the configuration to the Alertmanager.
 // It rollbacks the save if we fail to apply the configuration.
 func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
 	rawConfig, err := json.Marshal(&cfg)
@@ -281,7 +262,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 		// If there's no configuration in the database, let's use the default configuration.
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			// First, let's save it to the database. We don't need to use a transaction here as we'll always succeed.
-			am.logger.Info("no Alertmanager configuration found, saving and applying a default", "org", am.orgID)
+			am.logger.Info("no Alertmanager configuration found, saving and applying a default")
 			savecmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
 				AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
 				Default:                   true,
@@ -294,7 +275,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 
 			q.Result = &ngmodels.AlertConfiguration{AlertmanagerConfiguration: alertmanagerDefaultConfiguration, Default: true}
 		} else {
-			return fmt.Errorf("unable to get Alertmanager configuration for org %d from the database: %w", am.orgID, err)
+			return fmt.Errorf("unable to get Alertmanager configuration from the database: %w", err)
 		}
 	}
 
@@ -304,7 +285,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 	}
 
 	if err := am.applyConfig(cfg, nil); err != nil {
-		return fmt.Errorf("unable to reload configuration for org %d: %w", am.orgID, err)
+		return fmt.Errorf("unable to reload configuration: %w", err)
 	}
 
 	if q.Result.Default {
@@ -373,7 +354,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 
 	// If neither the configuration nor templates have changed, we've got nothing to do.
 	if !configChanged && !templatesChanged {
-		am.logger.Debug("neither config nor template have changed, skipping configuration sync.", "org", am.orgID)
+		am.logger.Debug("neither config nor template have changed, skipping configuration sync.")
 		return nil
 	}
 
@@ -386,7 +367,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	// Finally, build the integrations map using the receiver configuration and templates.
 	integrationsMap, err := am.buildIntegrationsMap(cfg.AlertmanagerConfig.Receivers, tmpl)
 	if err != nil {
-		return fmt.Errorf("failed to build integration map for org %d: %w", am.orgID, err)
+		return fmt.Errorf("failed to build integration map: %w", err)
 	}
 	// Now, let's put together our notification pipeline
 	routingStage := make(notify.RoutingStage, len(integrationsMap))

@@ -26,8 +26,7 @@ type MultiOrgAlertmanager struct {
 	alertmanagers    map[int64]*Alertmanager
 
 	settings *setting.Cfg
-
-	logger log.Logger
+	logger   log.Logger
 
 	configStore store.AlertingStore
 	orgStore    store.OrgStore
@@ -48,11 +47,6 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, 
 
 func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
 	moa.logger.Info("starting MultiOrg Alertmanager")
-
-	// Make sure to do one initial sync before we run to make sure we load all tenants.
-	if err := moa.LoadAndSyncAlertmanagersForOrgs(); err != nil {
-		return err
-	}
 
 	for {
 		select {
@@ -91,7 +85,6 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(orgIDs []int64) {
 
 		existing, found := moa.alertmanagers[orgID]
 		if !found {
-			// we need to create a new one
 			reg := moa.orgRegistry.GetOrCreateOrgRegistry(orgID)
 			am, err := newAlertmanager(orgID, moa.settings, moa.configStore, metrics.NewMetrics(reg))
 			if err != nil {
@@ -134,19 +127,21 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 	}
 }
 
-//TODO: Document me
+// AlertmanagerFor returns the Alertmanager instance for the organization provided.
+// When the organization does not have an active Alertmanager, it returns a ErrNoAlertmanagerForOrg.
+// When the Alertmanager of the organization is not ready, it returns a ErrAlertmanagerNotReady.
 func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (*Alertmanager, error) {
 	moa.alertmanagersMtx.RLock()
 	defer moa.alertmanagersMtx.RUnlock()
 
-	userAM, existing := moa.alertmanagers[orgID]
+	orgAM, existing := moa.alertmanagers[orgID]
 	if !existing {
 		return nil, ErrNoAlertmanagerForOrg
 	}
 
-	if !userAM.Ready() {
+	if !orgAM.Ready() {
 		return nil, ErrAlertmanagerNotReady
 	}
 
-	return userAM, nil
+	return orgAM, nil
 }

@@ -489,6 +489,14 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response
 		return am, nil
 	}
 
-	// handle all the different errors
-	return nil, response.Error(500, "", err)
+	if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
+		return nil, response.Error(http.StatusNotFound, err.Error(), nil)
+	}
+
+	if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
+		return nil, response.Error(http.StatusConflict, err.Error(), nil)
+	}
+
+	srv.log.Error("unable to obtain the org's Alertmanager", "err", err)
+	return nil, response.Error(http.StatusInternalServerError, "unable to obtain org's Alertmanager", err)
 }
