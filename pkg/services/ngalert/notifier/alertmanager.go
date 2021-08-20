@@ -224,7 +224,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
 func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
 	rawConfig, err := json.Marshal(&cfg)
 	if err != nil {
-		return fmt.Errorf("failed to serialize to the Alertmanager configuration for org %d: %w", am.orgID, err)
+		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
 	}
 
 	am.reloadConfigMtx.Lock()

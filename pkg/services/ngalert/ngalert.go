@@ -119,11 +119,6 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
 	ng.stateManager.Warm()
 
-	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the ngalerting components.
-	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(); err != nil {
-		return err
-	}
-
 	children, subCtx := errgroup.WithContext(ctx)
 	children.Go(func() error {
 		return ng.schedule.Run(subCtx)

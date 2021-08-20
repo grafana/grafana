@@ -461,7 +461,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 						sch.log.Error("failed to put alerts in the notifier", "count", len(alerts.PostableAlerts), "err", err)
 					}
 				} else {
-					sch.log.Error("unable to lookup local notifier for this org - alerts not delivered", "org", alertRule.OrgID, "err", err)
+					sch.log.Error("unable to lookup local notifier for this org - alerts not delivered", "org", alertRule.OrgID, "count", len(alerts.PostableAlerts), "err", err)
 				}
 
 				// Send alerts to external Alertmanager(s) if we have a sender for this organization.
