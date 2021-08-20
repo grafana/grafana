@@ -3,35 +3,32 @@ package pipeline
 import (
 	"context"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/centrifugal/centrifuge"
 
-	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/live"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/live/managedstream"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-func init() {
-	registry.RegisterServiceWithPriority(&Pipeline{}, registry.Low)
-}
-
 type Pipeline struct {
-	Cfg         *setting.Cfg      `inject:""`
-	GrafanaLive *live.GrafanaLive `inject:""`
-
+	managedStream *managedstream.Runner
 	ruleProcessor *RuleProcessor
 	cache         *Cache
 }
 
-// Init ...
-func (p *Pipeline) Init() error {
+// New ...
+func New(managedStream *managedstream.Runner, node *centrifuge.Node) (*Pipeline, error) {
+	p := &Pipeline{
+		managedStream: managedStream,
+	}
 	logger.Info("Live pipeline initialization")
-	storage := &fileStorage{gLive: p.GrafanaLive, frameStorage: NewFrameStorage()}
+	storage := &fileStorage{node: node, managedStream: p.managedStream, frameStorage: NewFrameStorage()}
 	ruleProcessor := NewRuleProcessor(p)
 	storage.ruleProcessor = ruleProcessor
 	p.cache = NewCache(storage)
 	p.ruleProcessor = NewRuleProcessor(p)
 	go postTestData() // TODO: temporary for development, remove.
-	return nil
+	return p, nil
 }
 
 // Run ...

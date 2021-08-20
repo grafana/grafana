@@ -7,12 +7,16 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/centrifugal/centrifuge"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/live"
+
+	"github.com/grafana/grafana/pkg/services/live/managedstream"
 )
 
 type fileStorage struct {
-	gLive         *live.GrafanaLive
+	node          *centrifuge.Node
+	managedStream *managedstream.Runner
 	frameStorage  *FrameStorage
 	ruleProcessor *RuleProcessor
 }
@@ -24,6 +28,7 @@ type ConverterConfig struct {
 	AutoJsonConverterConfig   *AutoJsonConverterConfig   `json:"jsonAuto,omitempty"`
 	ExactJsonConverterConfig  *ExactJsonConverterConfig  `json:"jsonExact,omitempty"`
 	AutoInfluxConverterConfig *AutoInfluxConverterConfig `json:"influxAuto,omitempty"`
+	JsonFrameConverterConfig  *JsonFrameConverterConfig  `json:"jsonFrame,omitempty"`
 }
 
 type ProcessorConfig struct {
@@ -90,6 +95,11 @@ func (f *fileStorage) extractConverter(config *ConverterConfig) (Converter, erro
 			return nil, missingConfiguration
 		}
 		return NewExactJsonConverter(*config.ExactJsonConverterConfig), nil
+	case "jsonFrame":
+		if config.JsonFrameConverterConfig == nil {
+			return nil, missingConfiguration
+		}
+		return NewJsonFrameConverter(*config.JsonFrameConverterConfig), nil
 	case "influxAuto":
 		if config.AutoInfluxConverterConfig == nil {
 			return nil, missingConfiguration
@@ -200,7 +210,9 @@ func (f *fileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 		}
 		return NewMultipleOutputter(outputters...), nil
 	case "managedStream":
-		return NewManagedStreamOutput(f.gLive), nil
+		return NewManagedStreamOutput(f.managedStream), nil
+	case "localSubscribers":
+		return NewLocalSubscribersOutput(f.node), nil
 	case "conditional":
 		condition, err := f.extractConditionChecker(config.ConditionalOutputConfig.Condition)
 		if err != nil {
@@ -259,13 +271,31 @@ func (f *fileStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 }
 
 type fakeStorage struct {
-	gLive         *live.GrafanaLive
+	node          *centrifuge.Node
+	managedStream *managedstream.Runner
 	frameStorage  *FrameStorage
 	ruleProcessor *RuleProcessor
 }
 
 func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
+		{
+			Pattern:   "plugin/testdata/random-20Hz-stream",
+			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
+			Outputter: NewMultipleOutputter(
+				NewLocalSubscribersOutput(f.node),
+				NewChannelOutput(f.ruleProcessor, ChannelOutputConfig{
+					Channel: "stream/testdata/random-20Hz-stream",
+				}),
+			),
+		},
+		{
+			Pattern: "stream/testdata/random-20Hz-stream",
+			Processor: NewKeepFieldsProcessor(KeepFieldsProcessorConfig{
+				FieldNames: []string{"Time", "Min", "Max"},
+			}),
+			Outputter: NewManagedStreamOutput(f.managedStream),
+		},
 		{
 			OrgId:   1,
 			Pattern: "stream/influx/input",
@@ -276,7 +306,7 @@ func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 		{
 			OrgId:     1,
 			Pattern:   "stream/influx/input/*",
-			Outputter: NewManagedStreamOutput(f.gLive),
+			Outputter: NewManagedStreamOutput(f.managedStream),
 		},
 		{
 			OrgId:   1,
@@ -289,7 +319,7 @@ func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 				FieldNames: []string{"labels", "time", "usage_user"},
 			}),
 			Outputter: NewMultipleOutputter(
-				NewManagedStreamOutput(f.gLive),
+				NewManagedStreamOutput(f.managedStream),
 				NewConditionalOutput(
 					NewNumberCompareCondition("usage_user", "gte", 50),
 					NewChannelOutput(f.ruleProcessor, ChannelOutputConfig{
@@ -301,13 +331,13 @@ func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 		{
 			OrgId:     1,
 			Pattern:   "stream/influx/input/cpu/spikes",
-			Outputter: NewManagedStreamOutput(f.gLive),
+			Outputter: NewManagedStreamOutput(f.managedStream),
 		},
 		{
 			OrgId:     1,
 			Pattern:   "stream/json/auto",
 			Converter: NewAutoJsonConverter(AutoJsonConverterConfig{}),
-			Outputter: NewManagedStreamOutput(f.gLive),
+			Outputter: NewManagedStreamOutput(f.managedStream),
 		},
 		{
 			OrgId:   1,
@@ -327,7 +357,7 @@ func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 			Processor: NewDropFieldsProcessor(DropFieldsProcessorConfig{
 				FieldNames: []string{"value2"},
 			}),
-			Outputter: NewManagedStreamOutput(f.gLive),
+			Outputter: NewManagedStreamOutput(f.managedStream),
 		},
 		{
 			OrgId:   1,
@@ -417,7 +447,7 @@ func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 				},
 			}),
 			Outputter: NewMultipleOutputter(
-				NewManagedStreamOutput(f.gLive),
+				NewManagedStreamOutput(f.managedStream),
 				NewRemoteWriteOutput(RemoteWriteOutputConfig{
 					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
 					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
@@ -451,7 +481,7 @@ func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 			OrgId:   1,
 			Pattern: "stream/json/exact/value3/changes",
 			Outputter: NewMultipleOutputter(
-				NewManagedStreamOutput(f.gLive),
+				NewManagedStreamOutput(f.managedStream),
 				NewRemoteWriteOutput(RemoteWriteOutputConfig{
 					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
 					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
@@ -462,17 +492,17 @@ func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 		{
 			OrgId:     1,
 			Pattern:   "stream/json/exact/annotation/changes",
-			Outputter: NewManagedStreamOutput(f.gLive),
+			Outputter: NewManagedStreamOutput(f.managedStream),
 		},
 		{
 			OrgId:     1,
 			Pattern:   "stream/json/exact/condition",
-			Outputter: NewManagedStreamOutput(f.gLive),
+			Outputter: NewManagedStreamOutput(f.managedStream),
 		},
 		{
 			OrgId:     1,
 			Pattern:   "stream/json/exact/value4/state",
-			Outputter: NewManagedStreamOutput(f.gLive),
+			Outputter: NewManagedStreamOutput(f.managedStream),
 		},
 	}, nil
 }

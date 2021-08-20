@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/convert"
-	"github.com/grafana/grafana/pkg/services/live/pipeline"
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -26,9 +25,8 @@ func init() {
 
 // Gateway receives data and translates it to Grafana Live publications.
 type Gateway struct {
-	Cfg         *setting.Cfg       `inject:""`
-	GrafanaLive *live.GrafanaLive  `inject:""`
-	Pipeline    *pipeline.Pipeline `inject:""`
+	Cfg         *setting.Cfg      `inject:""`
+	GrafanaLive *live.GrafanaLive `inject:""`
 
 	converter *convert.Converter
 }
@@ -116,7 +114,7 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 
 	channelID := "stream/" + streamID + "/" + path
 
-	channelFrames, ok, err := g.Pipeline.DataToChannelFrames(context.Background(), ctx.OrgId, channelID, body)
+	channelFrames, ok, err := g.GrafanaLive.Pipeline.DataToChannelFrames(context.Background(), ctx.OrgId, channelID, body)
 	if err != nil {
 		logger.Error("Error data to frame", "error", err, "body", string(body))
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
@@ -128,7 +126,7 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 		return
 	}
 
-	err = g.Pipeline.ProcessChannelFrames(context.Background(), ctx.OrgId, channelID, channelFrames)
+	err = g.GrafanaLive.Pipeline.ProcessChannelFrames(context.Background(), ctx.OrgId, channelID, channelFrames)
 	if err != nil {
 		logger.Error("Error processing frame", "error", err, "data", string(body))
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
