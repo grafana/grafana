@@ -1,6 +1,8 @@
 package notifier
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
@@ -49,6 +51,6 @@ type FakeOrgStore struct {
 	orgs []int64
 }
 
-func (f *FakeOrgStore) GetOrgs() ([]int64, error) {
+func (f *FakeOrgStore) GetOrgs(_ context.Context) ([]int64, error) {
 	return f.orgs, nil
 }

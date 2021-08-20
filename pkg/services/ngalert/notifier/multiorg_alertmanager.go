@@ -54,17 +54,17 @@ func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
 			moa.StopAndWait()
 			return nil
 		case <-time.After(SyncOrgsPollInterval):
-			if err := moa.LoadAndSyncAlertmanagersForOrgs(); err != nil {
+			if err := moa.LoadAndSyncAlertmanagersForOrgs(ctx); err != nil {
 				moa.logger.Error("error while synchronizing Alertmanager orgs", "err", err)
 			}
 		}
 	}
 }
 
-func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs() error {
+func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Context) error {
 	moa.logger.Debug("synchronizing Alertmanagers for orgs")
 	// First, load all the organizations from the database.
-	orgIDs, err := moa.orgStore.GetOrgs()
+	orgIDs, err := moa.orgStore.GetOrgs(ctx)
 	if err != nil {
 		return err
 	}

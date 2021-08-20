@@ -1,6 +1,7 @@
 package notifier
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -19,22 +20,23 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	}
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
 	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore)
+	ctx := context.Background()
 
 	// Ensure that one Alertmanager is created per org.
 	{
-		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs())
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
 	}
 	// When an org is removed, it should detect it.
 	{
 		orgStore.orgs = []int64{1, 3}
-		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs())
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 2)
 	}
 	// if the org comes back, it should detect it.
 	{
 		orgStore.orgs = []int64{1, 2, 3, 4}
-		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs())
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 4)
 	}
 }
@@ -49,10 +51,11 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 
 	SyncOrgsPollInterval = 10 * time.Minute // Don't poll in unit tests.
 	mam := NewMultiOrgAlertmanager(&setting.Cfg{}, configStore, orgStore)
+	ctx := context.Background()
 
 	// Ensure that one Alertmanagers is created per org.
 	{
-		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs())
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
 	}
 
@@ -81,7 +84,7 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 
 	// Let's now remove the previous queried organization.
 	orgStore.orgs = []int64{1, 3}
-	require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs())
+	require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 	{
 		_, err := mam.AlertmanagerFor(2)
 		require.EqualError(t, err, ErrNoAlertmanagerForOrg.Error())

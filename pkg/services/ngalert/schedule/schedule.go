@@ -456,8 +456,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts, "org", alertRule.OrgID)
 				n, err := sch.multiOrgNotifier.AlertmanagerFor(alertRule.OrgID)
 				if err == nil {
-					err = n.PutAlerts(alerts)
-					if err != nil {
+					if err := n.PutAlerts(alerts); err != nil {
 						sch.log.Error("failed to put alerts in the notifier", "count", len(alerts.PostableAlerts), "err", err)
 					}
 				} else {
