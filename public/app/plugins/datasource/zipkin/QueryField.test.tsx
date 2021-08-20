@@ -52,7 +52,6 @@ describe('useLoadOptions', () => {
           return Promise.resolve(['span1', 'span2']);
         }
 
-        console.log({ url });
         if (url === '/api/v2/traces' && params?.serviceName === 'service1' && params?.spanName === 'span1') {
           return Promise.resolve([[{ name: 'trace1', duration: 10_000, traceId: 'traceId1' }]]);
         }
