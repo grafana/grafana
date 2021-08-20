@@ -106,7 +106,7 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 
 	// Before we start operating, make sure we've synced this org.
 	require.Eventually(t, func() bool {
-		resp, err := http.Get(alertConfigURL)
+		resp, err := http.Get(alertConfigURL) // nolint
 		require.NoError(t, err)
 		return resp.StatusCode == http.StatusOK
 	}, 10*time.Second, 2*time.Second)
