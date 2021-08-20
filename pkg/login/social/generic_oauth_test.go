@@ -326,18 +326,18 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedRole:      "",
 			},
 			{
-				Name: "Given a valid id_token, a valid role path, a valid API response, prefer id_token",
+				Name: "Given a valid id_token, a valid role path, a valid API response, prefer API response",
 				OAuth2Extra: map[string]interface{}{
-					// { "role": "Admin", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+					// { "role": "FromIDToken", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiRnJvbUlEVG9rZW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.yE6HUzUTIisCinGxL9x_jbsG5i9mzyDBHXrg11JTRus",
 				},
 				ResponseBody: map[string]interface{}{
-					"role":  "FromResponse",
+					"role":  "Editor",
 					"email": "from_response@example.com",
 				},
 				RoleAttributePath: "role",
 				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "Admin",
+				ExpectedRole:      "Editor",
 			},
 			{
 				Name: "Given a valid id_token, an invalid role path, a valid API response, prefer id_token",
@@ -378,6 +378,35 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				RoleAttributePath: "role",
 				ExpectedEmail:     "john.doe@example.com",
 				ExpectedRole:      "FromResponse",
+			},
+			{
+				Name: "Given a valid id_token with only email, a valid advanced JMESPath role path, a valid API response, derive the correct role using API response",
+				OAuth2Extra: map[string]interface{}{
+					// { "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
+				},
+				ResponseBody: map[string]interface{}{
+					"info": map[string]interface{}{
+						"roles": []string{"engineering", "SRE"},
+					},
+				},
+				RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Editor'",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "Editor",
+			},
+			{
+				Name: "Given a valid id_token, a valid advanced JMESPath role path, a valid API response without the JMESpath key, derive the correct from id_token (with warning for API response)",
+				OAuth2Extra: map[string]interface{}{
+					// { "email": "john.doe@example.com",
+					//   "info": { "roles": [ "dev", "engineering" ] }}
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+				},
+				ResponseBody: map[string]interface{}{
+					"role": "FromResponse",
+				},
+				RoleAttributePath: "contains(info.roles[*], 'dev') && 'Editor'",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "Editor",
 			},
 		}
 
