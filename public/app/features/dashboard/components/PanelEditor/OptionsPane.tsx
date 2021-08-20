@@ -72,6 +72,7 @@ const getStyles = (theme: GrafanaTheme) => {
     optionsWrapper: css`
       flex-grow: 1;
       min-height: 0;
+      overflow-y: auto;
     `,
     vizButtonWrapper: css`
       padding: 0 ${theme.spacing.md} ${theme.spacing.md} 0;
