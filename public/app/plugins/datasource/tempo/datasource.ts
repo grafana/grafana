@@ -1,4 +1,5 @@
-import { groupBy } from 'lodash';
+import { from, merge, Observable, of, throwError } from 'rxjs';
+import { map, mergeMap, toArray } from 'rxjs/operators';
 import {
   DataQuery,
   DataQueryRequest,
@@ -8,18 +9,26 @@ import {
   DataSourceJsonData,
   LoadingState,
 } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { from, merge, Observable, of, throwError } from 'rxjs';
-import { map, mergeMap, toArray } from 'rxjs/operators';
+import { identity, pick, pickBy, groupBy } from 'lodash';
+import Prism from 'prismjs';
 import { LokiOptions, LokiQuery } from '../loki/types';
-import { transformTrace, transformTraceList, transformFromOTLP as transformFromOTEL } from './resultTransformer';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 import { mapPromMetricsToServiceMap, serviceMapMetrics } from './graphTransform';
+import {
+  transformTrace,
+  transformTraceList,
+  transformFromOTLP as transformFromOTEL,
+  createTableFrameFromSearch,
+} from './resultTransformer';
+import { tokenizer } from './syntax';
 
-export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload';
+// search = Loki search, nativeSearch = Tempo search for backwards compatibility
+export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch';
 
 export interface TempoJsonData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
@@ -32,7 +41,13 @@ export type TempoQuery = {
   query: string;
   // Query to find list of traces, e.g., via Loki
   linkedQuery?: LokiQuery;
+  search: string;
   queryType: TempoQueryType;
+  serviceName?: string;
+  spanName?: string;
+  minDuration?: string;
+  maxDuration?: string;
+  limit?: number;
 } & DataQuery;
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
@@ -42,7 +57,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   };
   uploadedJson?: string | ArrayBuffer | null = null;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
+  constructor(private instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
     super(instanceSettings);
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
@@ -83,6 +98,19 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       );
     }
 
+    if (targets.nativeSearch?.length) {
+      const searchQuery = this.buildSearchQuery(targets.nativeSearch[0]);
+      subQueries.push(
+        this._request('/api/search', searchQuery).pipe(
+          map((response) => {
+            return {
+              data: [createTableFrameFromSearch(response.data.traces, this.instanceSettings)],
+            };
+          })
+        )
+      );
+    }
+
     if (targets.upload?.length) {
       if (this.uploadedJson) {
         const otelTraceData = JSON.parse(this.uploadedJson as string);
@@ -117,24 +145,68 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return merge(...subQueries);
   }
 
-  async testDatasource(): Promise<any> {
-    // to test Tempo we send a dummy traceID and verify Tempo answers with 'trace not found'
-    const response = await super.query({ targets: [{ query: '0' }] } as any).toPromise();
+  async metadataRequest(url: string, params = {}) {
+    return await this._request(url, params, { method: 'GET', hideFromInspector: true }).toPromise();
+  }
 
-    const errorMessage = response.error?.message;
-    if (
-      errorMessage &&
-      errorMessage.startsWith('failed to get trace') &&
-      errorMessage.endsWith('trace not found in Tempo')
-    ) {
+  private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
+    const params = data ? serializeParams(data) : '';
+    const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
+    const req = { ...options, url };
+
+    return getBackendSrv().fetch(req);
+  }
+
+  async testDatasource(): Promise<any> {
+    const options: BackendSrvRequest = {
+      headers: {},
+      method: 'GET',
+      url: `${this.instanceSettings.url}/api/echo`,
+    };
+    const response = await getBackendSrv().fetch<any>(options).toPromise();
+
+    if (response?.ok) {
       return { status: 'success', message: 'Data source is working' };
     }
-
-    return { status: 'error', message: 'Data source is not working' + (errorMessage ? `: ${errorMessage}` : '') };
   }
 
   getQueryDisplayText(query: TempoQuery) {
     return query.query;
+  }
+
+  buildSearchQuery(query: TempoQuery) {
+    const tokens = query.search ? Prism.tokenize(query.search, tokenizer) : [];
+
+    // Build key value pairs
+    let tagsQuery: Array<{ [key: string]: string }> = [];
+    for (let i = 0; i < tokens.length - 1; i++) {
+      const token = tokens[i];
+      const lookupToken = tokens[i + 2];
+
+      // Ensure there is a valid key value pair with accurate types
+      if (
+        typeof token !== 'string' &&
+        token.type === 'key' &&
+        typeof token.content === 'string' &&
+        typeof lookupToken !== 'string' &&
+        lookupToken.type === 'value' &&
+        typeof lookupToken.content === 'string'
+      ) {
+        tagsQuery.push({ [token.content]: lookupToken.content });
+      }
+    }
+
+    let tempoQuery = pick(query, ['minDuration', 'maxDuration', 'limit']);
+    // Remove empty properties
+    tempoQuery = pickBy(tempoQuery, identity);
+    if (query.serviceName) {
+      tagsQuery.push({ ['service.name']: query.serviceName });
+    }
+    if (query.spanName) {
+      tagsQuery.push({ ['name']: query.spanName });
+    }
+    const tagsQueryObject = tagsQuery.reduce((tagQuery, item) => ({ ...tagQuery, ...item }), {});
+    return { ...tagsQueryObject, ...tempoQuery };
   }
 }
 
