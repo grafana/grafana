@@ -76,14 +76,6 @@ func getOrgHelper(orgID int64) response.Response {
 	return response.JSON(200, &result)
 }
 
-func existsCurrentOrg(orgID int64) bool {
-	query := models.GetOrgByIdQuery{Id: orgID}
-	if err := bus.Dispatch(&query); err != nil {
-		return false
-	}
-	return true
-}
-
 // POST /api/orgs
 func CreateOrg(c *models.ReqContext, cmd models.CreateOrgCommand) response.Response {
 	if !c.IsSignedIn || (!setting.AllowUserOrgCreate && !c.IsGrafanaAdmin) {
