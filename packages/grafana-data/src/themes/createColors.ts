@@ -164,9 +164,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   blackBase = '36, 41, 46';
 
   primary = {
-    main: palette.blueLightMain,
-    border: palette.blueLightText,
-    text: palette.blueLightText,
+    main: palette.purpleLightMain,
+    border: palette.purpleLightText,
+    text: palette.purpleLightText,
   };
 
   text = {
@@ -213,9 +213,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   background = {
-    canvas: palette.gray90,
+    canvas: palette.white,
     primary: palette.white,
-    secondary: palette.gray100,
+    secondary: palette.white,
   };
 
   action = {

@@ -127,3 +127,9 @@ compilation-stats.json
 
 # auto generated frontend docs
 /docs/sources/packages_api
+
+# auto generated go/mod files
+/pkg/mod/cache
+/pkg/mod/golang.org
+/pkg/mod/gopkg.in
+/pkg/mod/github.com

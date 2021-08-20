@@ -468,7 +468,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
 		FavIcon:                 "public/img/fav32.png",
 		AppleTouchIcon:          "public/img/apple-touch-icon.png",
-		AppTitle:                "Grafana",
+		AppTitle:                "CoreWatts",
 		NavTree:                 navTree,
 		Sentry:                  &hs.Cfg.Sentry,
 		Nonce:                   c.RequestNonce,
