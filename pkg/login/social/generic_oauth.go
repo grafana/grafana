@@ -98,10 +98,11 @@ func (info *UserInfoJson) String() string {
 
 func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	s.log.Debug("Getting user info")
+	userInfo := &BasicUserInfo{}
 	tokenData := s.extractFromToken(token)
 	apiData := s.extractFromAPI(client)
 
-	userInfo := &BasicUserInfo{}
+	// ID token preferred data
 	for _, data := range []*UserInfoJson{tokenData, apiData} {
 		if data == nil {
 			continue
@@ -142,24 +143,6 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 				s.log.Debug("Set user info email from extracted email", "email", userInfo.Email)
 			}
 		}
-
-		if userInfo.Role == "" {
-			role, err := s.extractRole(data)
-			if err != nil {
-				s.log.Error("Failed to extract role", "error", err)
-			} else if role != "" {
-				s.log.Debug("Setting user info role from extracted role")
-				userInfo.Role = role
-			}
-		}
-
-		groups, err := s.extractGroups(data)
-		if err != nil {
-			s.log.Error("Failed to extract groups", "error", err)
-		} else if len(groups) > 0 {
-			s.log.Debug("Setting user info groups from extracted groups")
-			userInfo.Groups = groups
-		}
 	}
 
 	if userInfo.Email == "" {
@@ -174,6 +157,33 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	if userInfo.Login == "" {
 		s.log.Debug("Defaulting to using email for user info login", "email", userInfo.Email)
 		userInfo.Login = userInfo.Email
+	}
+
+	// API UserInfo preferred data
+	for _, data := range []*UserInfoJson{apiData, tokenData} {
+		if data == nil {
+			continue
+		}
+
+		if userInfo.Role == "" {
+			role, err := s.extractRole(data)
+			if err != nil {
+				s.log.Warn("Failed to extract role", "err", err)
+			} else if role != "" {
+				s.log.Debug("Setting user info role from extracted role")
+				userInfo.Role = role
+			}
+		}
+
+		if len(userInfo.Groups) == 0 {
+			groups, err := s.extractGroups(data)
+			if err != nil {
+				s.log.Warn("Failed to extract groups", "err", err)
+			} else if len(groups) > 0 {
+				s.log.Debug("Setting user info groups from extracted groups")
+				userInfo.Groups = groups
+			}
+		}
 	}
 
 	if s.roleAttributeStrict && !models.RoleType(userInfo.Role).IsValid() {
