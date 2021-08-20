@@ -88,6 +88,27 @@ func TestExpandTemplate(t *testing.T) {
 			EvaluationString: "[ var='A' labels={instance=foo} value=10 ]",
 		},
 		expected: "[ var='A' labels={instance=foo} value=10 ]",
+	}, {
+		name: "float64 is humanized correctly",
+		text: "{{ humanize $value }}",
+		alertInstance: eval.Result{
+			EvaluationString: "1234567.0",
+		},
+		expected: "1.235M",
+	}, {
+		name: "int is humanized correctly",
+		text: "{{ humanize $value }}",
+		alertInstance: eval.Result{
+			EvaluationString: "1234567",
+		},
+		expected: "1.235M",
+	}, {
+		name: "humanize string with error",
+		text: `{{ humanize $value }}`,
+		alertInstance: eval.Result{
+			EvaluationString: "invalid",
+		},
+		expectedError: errors.New(`error executing template __alert_test: template: __alert_test:1:79: executing "__alert_test" at <humanize $value>: error calling humanize: strconv.ParseFloat: parsing "invalid": invalid syntax`),
 	}}
 
 	for _, c := range cases {

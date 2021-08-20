@@ -137,7 +137,7 @@ func expandTemplate(name, text string, labels map[string]string, alertInstance e
 		}
 	}()
 
-	tmpl, err := text_template.New(name).Option("missingkey=error").Parse(text)
+	tmpl, err := text_template.New(name).Funcs(funcMap).Option("missingkey=error").Parse(text)
 	if err != nil {
 		return "", fmt.Errorf("error parsing template %v: %s", name, err.Error())
 	}
