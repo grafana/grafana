@@ -41,7 +41,7 @@ func (l *OSSLicensingService) LicenseURL(user *models.SignedInUser) string {
 		return l.Cfg.AppSubURL + "/admin/upgrading"
 	}
 
-	return "https://www.gnu.org/licenses/agpl-3.0.en.html"
+	return "https://grafana.com/oss/grafana"
 }
 
 func (l *OSSLicensingService) Init() error {
