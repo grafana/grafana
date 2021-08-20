@@ -23,20 +23,13 @@ Inspired by https://martinfowler.com/bliki/PageObject.html
 Let's start with a simple [JSX](https://reactjs.org/docs/introducing-jsx.html) example containing a single input field that we want to populate during our E2E test:
 
 ```jsx
-<input
-  className="gf-form-input login-form-input"
-  type="text"
-/>
+<input className="gf-form-input login-form-input" type="text" />
 ```
 
 We _could_ target the field with a CSS selector like `.gf-form-input.login-form-input` but that would be brittle as style changes occur frequently. Furthermore there is nothing that signals to future developers that this input is part of an E2E test. At Grafana, we use `aria-label` attributes as our preferred way of defining selectors instead of [`data-*`](https://mdn.io/docs/Web/HTML/Global_attributes/data-*) as they also aid in [accessibility](https://mdn.io/docs/Learn/Accessibility/What_is_accessibility):
 
 ```jsx
-<input
-  aria-label="Username input field"
-  className="gf-form-input login-form-input"
-  type="text"
-/>
+<input aria-label="Username input field" className="gf-form-input login-form-input" type="text" />
 ```
 
 The next step is to create a `Page` representation in our E2E framework to glue the test with the real implementation using the `pageFactory` function. For that function we can supply a `url` and `selectors` like in the example below:
@@ -45,7 +38,6 @@ The next step is to create a `Page` representation in our E2E framework to glue 
 export const Login = {
   // Called via `Login.visit()`
   url: '/login',
-  
   // Called via `Login.username()`
   username: 'Username input field',
 };
@@ -67,11 +59,7 @@ Now that we have a `Page` called `Login` in our `Pages` const we can use that to
 ```jsx
 import { selectors } from '@grafana/e2e-selectors';
 
-<input
-  aria-label={selectors.pages.Login.username}
-  className="gf-form-input login-form-input"
-  type="text"
-/>
+<input aria-label={selectors.pages.Login.username} className="gf-form-input login-form-input" type="text" />;
 ```
 
 The last step in our example is to use our `Login` page as part of a test.
@@ -86,9 +74,7 @@ describe('Login test', () => {
     e2e.pages.Login.visit();
     // To prevent flaky tests, always do a `.should` on any selector that you expect to be in the DOM.
     // Read more here: https://docs.cypress.io/guides/core-concepts/retry-ability.html#Commands-vs-assertions
-    e2e.pages.Login.username()
-      .should('be.visible')
-      .type('admin');
+    e2e.pages.Login.username().should('be.visible').type('admin');
   });
 });
 ```
@@ -154,25 +140,28 @@ describe('List test', () => {
     e2e.pages.DataSources.visit();
     // To prevent flaky tests, always do a .should on any selector that you expect to be in the DOM.
     // Read more here: https://docs.cypress.io/guides/core-concepts/retry-ability.html#Commands-vs-assertions
-    e2e.pages.DataSources.dataSources('B')
-      .should('be.visible')
-      .click();
+    e2e.pages.DataSources.dataSources('B').should('be.visible').click();
   });
 });
 ```
 
 ## Aria-Labels vs data-testid
-Our selectors are set up to work with both aria-labels and data-testid attributes. Aria-labels help assistive technologies such as screenreaders identify interactive elements of a page for our users. 
+
+Our selectors are set up to work with both aria-labels and data-testid attributes. Aria-labels help assistive technologies such as screenreaders identify interactive elements of a page for our users.
 
 A good example of a time to use an aria-label might be if you have a button with an X to close:
+
 ```
 <button aria-label="close">X<button>
 ```
+
 It might be clear visually that the X closes the modal, but audibly it would not be clear for example.
+
 ```
 <button aria-label="close">Close<button>
 ```
-The above example for example might read aloud to a user "Close, Close" or something similar. 
+
+The example might read aloud to a user as "Close, Close" or something similar.
 
 However adding aria-labels to elements that are already clearly labeled or not interactive can be confusing and redundant for users with assistive technologies.
 
@@ -185,16 +174,18 @@ In such cases rather than adding unnecessary aria-labels to components so as to 
 We have added support for this in our selectors, to use:
 
 Prefix your selector string with "data-testid":
+
 ```typescript
 export const Components = {
   Login: {
-    openButton: "data-testid-open", // this would look for a data-testid
-    closeButton: "close-button" // this would look for an aria-label
+    openButton: 'data-testid-open', // this would look for a data-testid
+    closeButton: 'close-button', // this would look for an aria-label
   },
 };
 ```
 
 and in your component, import the selectors and add the data test id:
+
 ```
 <button data-testid={Selectors.Components.Login.openButton}>
 ```
