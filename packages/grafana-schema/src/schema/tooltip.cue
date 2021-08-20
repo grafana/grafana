@@ -1,5 +1,3 @@
-package grafanaschema
-
 TooltipDisplayMode:          "single" | "multi" | "none"          @cuetsy(targetType="enum")
 
 VizTooltipOptions: {
