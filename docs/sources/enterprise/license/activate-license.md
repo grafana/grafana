@@ -67,13 +67,13 @@ In your configuration file:
 
 ```
 [server]
-root_url = https://grafana.blah.com/
+root_url = https://grafana.example.com/
 ```
 
 Or with an environment variable:
 
 ```
-GF_SERVER_ROOT_URL=https://grafana.blah.com/
+GF_SERVER_ROOT_URL=https://grafana.example.com/
 ```
 
 ## Step 4. Restart Grafana
