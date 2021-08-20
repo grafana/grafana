@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -145,6 +146,15 @@ func DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		result, err := sess.Exec(params...)
 		cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
+
+		sess.publishAfterCommit(&events.DataSourceDeleted{
+			Timestamp: time.Now(),
+			Name:      cmd.Name,
+			ID:        cmd.ID,
+			UID:       cmd.UID,
+			OrgID:     cmd.OrgID,
+		})
+
 		return err
 	})
 }

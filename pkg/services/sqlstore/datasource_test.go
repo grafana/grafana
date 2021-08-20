@@ -6,7 +6,10 @@ import (
 	"errors"
 	"strconv"
 	"testing"
+	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -202,6 +205,29 @@ func TestDataAccess(t *testing.T) {
 
 			require.Equal(t, 1, len(query.Result))
 		})
+	})
+
+	t.Run("fires an event when the datasource is deleted", func(t *testing.T) {
+		InitTestDB(t)
+		ds := initDatasource()
+
+		var deleted *events.DataSourceDeleted
+		bus.AddEventListener(func(e *events.DataSourceDeleted) error {
+			deleted = e
+			return nil
+		})
+
+		err := DeleteDataSource(&models.DeleteDataSourceCommand{ID: ds.Id, UID: "nisse-uid", Name: "nisse", OrgID: 123123})
+		require.NoError(t, err)
+
+		require.Eventually(t, func() bool {
+			return assert.NotNil(t, deleted)
+		}, time.Second, time.Millisecond)
+
+		require.Equal(t, ds.Id, deleted.ID)
+		require.Equal(t, int64(123123), deleted.OrgID)
+		require.Equal(t, "nisse", deleted.Name)
+		require.Equal(t, "nisse-uid", deleted.UID)
 	})
 
 	t.Run("DeleteDataSourceByName", func(t *testing.T) {
