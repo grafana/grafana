@@ -2892,7 +2892,7 @@ node:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
 
 ---
 kind: pipeline
@@ -2933,7 +2933,7 @@ steps:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
 
 depends_on:
 - oss-build-release-branch
@@ -3360,7 +3360,7 @@ node:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
 
 ---
 kind: pipeline
@@ -3425,7 +3425,7 @@ image_pull_secrets:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
 
 depends_on:
 - enterprise-build-release-branch
@@ -3450,7 +3450,7 @@ steps:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
   status:
   - failure
 
@@ -3529,6 +3529,6 @@ get:
 
 ---
 kind: signature
-hmac: 0ab7831c1f9acfcc20fbd011bd0e04f88f85f77d9997ab7a5092592bbcd8ae34
+hmac: 57545e503a446cf31e661b472e3145ccf1c59c811708047bca0d6ba241ba3fdb
 
 ...
