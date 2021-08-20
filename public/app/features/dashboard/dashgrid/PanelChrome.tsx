@@ -14,6 +14,7 @@ import {
   PanelData,
   PanelPlugin,
   PanelPluginMeta,
+  TimeRange,
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
@@ -33,6 +34,7 @@ import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/ove
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { liveTimer } from './liveTimer';
 import { isSoloRoute } from '../../../routes/utils';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -55,6 +57,7 @@ export interface State {
   refreshWhenInView: boolean;
   context: PanelContext;
   data: PanelData;
+  liveTime?: TimeRange;
 }
 
 export class PanelChrome extends Component<Props, State> {
@@ -134,14 +137,31 @@ export class PanelChrome extends Component<Props, State> {
           next: (data) => this.onDataUpdate(data),
         })
     );
+
+    // Listen for live timer events
+    liveTimer.listen(this);
   }
 
   componentWillUnmount() {
     this.subs.unsubscribe();
+    liveTimer.remove(this);
+  }
+
+  liveTimeChanged(liveTime: TimeRange) {
+    const { data } = this.state;
+    if (data.timeRange) {
+      const delta = liveTime.to.valueOf() - data.timeRange.to.valueOf();
+      if (delta < 100) {
+        // 10hz
+        console.log('Skip tick render', this.props.panel.title, delta);
+        return;
+      }
+    }
+    this.setState({ liveTime });
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { isInView, isEditing } = this.props;
+    const { isInView, isEditing, width } = this.props;
 
     if (prevProps.dashboard.graphTooltip !== this.props.dashboard.graphTooltip) {
       this.setState((s) => {
@@ -167,6 +187,11 @@ export class PanelChrome extends Component<Props, State> {
           this.onRefresh();
         }
       }
+    }
+
+    // The timer depends on panel width
+    if (width !== prevProps.width) {
+      liveTimer.updateInterval(this);
     }
   }
 
@@ -225,7 +250,7 @@ export class PanelChrome extends Component<Props, State> {
         break;
     }
 
-    this.setState({ isFirstLoad, errorMessage, data });
+    this.setState({ isFirstLoad, errorMessage, data, liveTime: undefined });
   }
 
   onRefresh = () => {
@@ -253,6 +278,7 @@ export class PanelChrome extends Component<Props, State> {
       this.setState({
         data: { ...this.state.data, timeRange: this.timeSrv.timeRange() },
         renderCounter: this.state.renderCounter + 1,
+        liveTime: undefined,
       });
     }
   };
@@ -363,7 +389,7 @@ export class PanelChrome extends Component<Props, State> {
     }
 
     const PanelComponent = plugin.panel!;
-    const timeRange = data.timeRange || this.timeSrv.timeRange();
+    const timeRange = this.state.liveTime ?? data.timeRange ?? this.timeSrv.timeRange();
     const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
     const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
     const panelWidth = width - chromePadding * 2 - PANEL_BORDER;
