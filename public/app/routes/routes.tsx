@@ -431,10 +431,9 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/alertmanager/',
+      path: '/alerting/groups/',
       component: SafeDynamicImport(
-        () =>
-          import(/* webpackChunkName: "AlertManagerNotifications" */ 'app/features/alerting/unified/AmNotifications')
+        () => import(/* webpackChunkName: "AlertGroups" */ 'app/features/alerting/unified/AlertGroups')
       ),
     },
     {

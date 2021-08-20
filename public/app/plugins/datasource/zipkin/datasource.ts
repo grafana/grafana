@@ -1,3 +1,6 @@
+import { lastValueFrom, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
 import {
   DataQueryRequest,
   DataQueryResponse,
@@ -6,9 +9,7 @@ import {
   FieldType,
   MutableDataFrame,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+
 import { serializeParams } from '../../../core/utils/fetch';
 import { apiPrefix } from './constants';
 import { ZipkinQuery, ZipkinSpan } from './types';
@@ -40,7 +41,7 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
   }
 
   async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
-    const res = await this.request(url, params, { hideFromInspector: true }).toPromise();
+    const res = await lastValueFrom(this.request(url, params, { hideFromInspector: true }));
     return res.data;
   }
 
