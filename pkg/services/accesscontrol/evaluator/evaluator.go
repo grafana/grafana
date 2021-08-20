@@ -60,7 +60,7 @@ func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, 
 
 				msg := "Access control"
 				reason := fmt.Sprintf("matched request scope %v against resource scope %v", dbScope, s)
-				if lastChar == "*"[0] { //Prefix match
+				if lastChar == '*' { //Prefix match
 					match := strings.HasPrefix(s, prefix)
 					if match {
 						logger.Debug(msg, "reason", reason, "request scope", dbScope, "resource scope", s)
