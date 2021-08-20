@@ -1,4 +1,4 @@
-import { interval, of, throwError } from 'rxjs';
+import { interval, lastValueFrom, of, throwError } from 'rxjs';
 import {
   DataFrame,
   DataQueryErrorType,
@@ -28,12 +28,6 @@ import { CustomVariableModel, initialVariableModelState, VariableHide } from '..
 
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
-
-jest.mock('rxjs/operators', () => {
-  const operators = jest.requireActual('rxjs/operators');
-  operators.delay = jest.fn(() => (s: any) => s);
-  return operators;
-});
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -272,7 +266,9 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
-      const myResponse = await ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }]).toPromise();
+      const myResponse = await lastValueFrom(
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }])
+      );
 
       const expectedData = [
         {
@@ -313,7 +309,9 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
-      const myResponse = await ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }]).toPromise();
+      const myResponse = await lastValueFrom(
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }])
+      );
       expect(myResponse).toEqual({
         data: [fakeFrames[fakeFrames.length - 1]],
         key: 'test-key',
@@ -336,7 +334,9 @@ describe('CloudWatchDatasource', () => {
         }
       });
 
-      const myResponse = await ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }]).toPromise();
+      const myResponse = await lastValueFrom(
+        ds.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }])
+      );
 
       expect(myResponse).toEqual({
         data: [fakeFrames[2]],

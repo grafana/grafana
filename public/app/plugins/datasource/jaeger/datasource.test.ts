@@ -1,6 +1,7 @@
+import { lastValueFrom, of, throwError } from 'rxjs';
 import { DataQueryRequest, DataSourceInstanceSettings, dateTime, FieldType, PluginType } from '@grafana/data';
+
 import { backendSrv } from 'app/core/services/backend_srv';
-import { of, throwError } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { JaegerDatasource } from './datasource';
@@ -36,7 +37,7 @@ describe('JaegerDatasource', () => {
     setupFetchMock({ data: [testResponse] });
 
     const ds = new JaegerDatasource(defaultSettings);
-    const response = await ds.query(defaultQuery).toPromise();
+    const response = await lastValueFrom(ds.query(defaultQuery));
     expect(response.data.length).toBe(3);
     expect(response.data[0].fields).toMatchObject(testResponseDataFrameFields);
     expect(response.data[1].fields).toMatchObject(testResponseNodesFields);
@@ -55,18 +56,18 @@ describe('JaegerDatasource', () => {
         },
       ],
     };
-    await ds.query(query).toPromise();
+    await lastValueFrom(ds.query(query));
     expect(mock).toBeCalledWith({ url: `${defaultSettings.url}/api/traces/a%2Fb` });
   });
 
   it('returns empty response if trace id is not specified', async () => {
     const ds = new JaegerDatasource(defaultSettings);
-    const response = await ds
-      .query({
+    const response = await lastValueFrom(
+      ds.query({
         ...defaultQuery,
         targets: [],
       })
-      .toPromise();
+    );
     const field = response.data[0].fields[0];
     expect(field.name).toBe('trace');
     expect(field.type).toBe(FieldType.trace);
@@ -76,12 +77,12 @@ describe('JaegerDatasource', () => {
   it('should handle json file upload', async () => {
     const ds = new JaegerDatasource(defaultSettings);
     ds.uploadedJson = JSON.stringify(mockJson);
-    const response = await ds
-      .query({
+    const response = await lastValueFrom(
+      ds.query({
         ...defaultQuery,
         targets: [{ queryType: 'upload', refId: 'A' }],
       })
-      .toPromise();
+    );
     const field = response.data[0].fields[0];
     expect(field.name).toBe('traceID');
     expect(field.type).toBe(FieldType.string);
@@ -91,12 +92,12 @@ describe('JaegerDatasource', () => {
   it('should return search results when the query type is search', async () => {
     const mock = setupFetchMock({ data: [testResponse] });
     const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
-    const response = await ds
-      .query({
+    const response = await lastValueFrom(
+      ds.query({
         ...defaultQuery,
         targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', operation: '/api/services' }],
       })
-      .toPromise();
+    );
     expect(mock).toBeCalledWith({
       url: `${defaultSettings.url}/api/traces?operation=%2Fapi%2Fservices&service=jaeger-query&start=1531468681000&end=1531489712000&lookback=custom`,
     });
@@ -109,12 +110,12 @@ describe('JaegerDatasource', () => {
   it('should remove operation from the query when all is selected', async () => {
     const mock = setupFetchMock({ data: [testResponse] });
     const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
-    await ds
-      .query({
+    await lastValueFrom(
+      ds.query({
         ...defaultQuery,
         targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', operation: ALL_OPERATIONS_KEY }],
       })
-      .toPromise();
+    );
     expect(mock).toBeCalledWith({
       url: `${defaultSettings.url}/api/traces?service=jaeger-query&start=1531468681000&end=1531489712000&lookback=custom`,
     });
@@ -123,12 +124,12 @@ describe('JaegerDatasource', () => {
   it('should convert tags from logfmt format to an object', async () => {
     const mock = setupFetchMock({ data: [testResponse] });
     const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
-    await ds
-      .query({
+    await lastValueFrom(
+      ds.query({
         ...defaultQuery,
         targets: [{ queryType: 'search', refId: 'a', service: 'jaeger-query', tags: 'error=true' }],
       })
-      .toPromise();
+    );
     expect(mock).toBeCalledWith({
       url: `${defaultSettings.url}/api/traces?service=jaeger-query&tags=%7B%22error%22%3A%22true%22%7D&start=1531468681000&end=1531489712000&lookback=custom`,
     });

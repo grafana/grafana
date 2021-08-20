@@ -1,3 +1,4 @@
+import { lastValueFrom } from 'rxjs';
 import { DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
@@ -140,13 +141,13 @@ export function loadDataSource(uid: string): ThunkResult<void> {
 async function getDataSourceUsingUidOrId(uid: string): Promise<DataSourceSettings> {
   // Try first with uid api
   try {
-    const byUid = await getBackendSrv()
-      .fetch<DataSourceSettings>({
+    const byUid = await lastValueFrom(
+      getBackendSrv().fetch<DataSourceSettings>({
         method: 'GET',
         url: `/api/datasources/uid/${uid}`,
         showErrorAlert: false,
       })
-      .toPromise();
+    );
 
     if (byUid.ok) {
       return byUid.data;
@@ -158,13 +159,13 @@ async function getDataSourceUsingUidOrId(uid: string): Promise<DataSourceSetting
   // try lookup by old db id
   const id = parseInt(uid, 10);
   if (!Number.isNaN(id)) {
-    const response = await getBackendSrv()
-      .fetch<DataSourceSettings>({
+    const response = await lastValueFrom(
+      getBackendSrv().fetch<DataSourceSettings>({
         method: 'GET',
         url: `/api/datasources/${id}`,
         showErrorAlert: false,
       })
-      .toPromise();
+    );
 
     // Not ideal to do a full page reload here but so tricky to handle this
     // otherwise We can update the location using react router, but need to

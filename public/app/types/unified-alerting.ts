@@ -127,8 +127,9 @@ export interface PrometheusRuleIdentifier {
 }
 
 export type RuleIdentifier = CloudRuleIdentifier | GrafanaRuleIdentifier | PrometheusRuleIdentifier;
-export interface RuleFilterState {
+export interface FilterState {
   queryString?: string;
   dataSource?: string;
   alertState?: string;
+  groupBy?: string[];
 }

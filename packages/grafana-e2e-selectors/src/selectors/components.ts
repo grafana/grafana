@@ -4,6 +4,11 @@
 // but you still might need to select it for testing,
 // in that case please add the attribute data-test-id={selector} in the component and
 // prefix your selector string with 'data-test-id' so that when create the selectors we know to search for it on the right attribute
+/**
+ * Selectors grouped/defined in Components
+ *
+ * @alpha
+ */
 export const Components = {
   TimePicker: {
     openButton: 'data-testid TimePicker Open Button',
