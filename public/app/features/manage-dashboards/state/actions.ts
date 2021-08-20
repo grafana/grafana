@@ -2,16 +2,17 @@ import { AppEvents, DataSourceInstanceSettings, locationUtil } from '@grafana/da
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import {
   clearDashboard,
-  setInputs,
-  setGcomDashboard,
-  setJsonDashboard,
-  InputType,
   ImportDashboardDTO,
+  InputType,
+  setGcomDashboard,
+  setInputs,
+  setJsonDashboard,
 } from './reducers';
-import { ThunkResult, FolderInfo, DashboardDTO, DashboardDataDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
 import { appEvents } from '../../../core/core';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { DashboardSearchHit } from '../../search/types';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async (dispatch) => {
@@ -220,6 +221,14 @@ function deleteFolder(uid: string, showSuccessAlert: boolean) {
 
 export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
+}
+
+export function searchFolders(query: any, permission?: PermissionLevelString): Promise<DashboardSearchHit[]> {
+  return getBackendSrv().search({ query, type: 'dash-folder', permission });
+}
+
+export function getFolderById(id: number): Promise<{ id: number; title: string }> {
+  return getBackendSrv().get(`/api/folders/id/${id}`);
 }
 
 export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
