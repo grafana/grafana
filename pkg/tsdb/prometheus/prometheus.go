@@ -148,21 +148,17 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 		var results model.Value
 
-		// Run instant query
-		if query.InstantQuery == true {
-			instantResults, _, err := client.Query(ctx, query.Expr, query.End)
+		switch query.QueryType {
+		case Instant:
+			results, _, err = client.Query(ctx, query.Expr, query.End)
 			if err != nil {
 				return &result, err
 			}
-			results = instantResults
-		}
-		// Run range query
-		if query.RangeQuery == true {
-			rangeResults, _, err := client.QueryRange(ctx, query.Expr, timeRange)
+		case Range:
+			results, _, err = client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
 				return &result, err
 			}
-			results = rangeResults
 		}
 
 		// Parse responseto dataFrames

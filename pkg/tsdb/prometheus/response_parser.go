@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -29,19 +30,20 @@ func parseResponse(value model.Value, query *PrometheusQuery) (data.Frames, erro
 		frames = append(frames, newFrames...)
 	}
 
+	if len(frames) == 0 {
+		return frames, fmt.Errorf("unsupported result format: %q", value.Type().String())
+	}
+
 	return frames, nil
 }
 
 func scalarToDataFrames(scalar model.Scalar) data.Frames {
-	frames := data.Frames{}
-	timeVector := make([]time.Time, 0, 1)
-	values := make([]float64, 0, 1)
-	timeVector = append(timeVector, time.Unix(scalar.Timestamp.Unix(), 0).UTC())
-	values = append(values, float64(scalar.Value))
-	frames = append(frames, data.NewFrame("",
+	name := ""
+	timeVector := []time.Time{time.Unix(scalar.Timestamp.Unix(), 0).UTC()}
+	values := []float64{float64(scalar.Value)}
+	frames := data.Frames{data.NewFrame(name,
 		data.NewField("time", nil, timeVector),
-		data.NewField("value", nil, values),
-	))
+		data.NewField("value", nil, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))}
 
 	return frames
 }
@@ -52,13 +54,11 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery) data.Frames
 	for _, v := range vector {
 		name := formatLegend(v.Metric, query)
 		tags := make(map[string]string, len(v.Metric))
-		timeVector := make([]time.Time, 0, 1)
-		values := make([]float64, 0, 1)
+		timeVector := []time.Time{time.Unix(v.Timestamp.Unix(), 0).UTC()}
+		values := []float64{float64(v.Value)}
 		for k, v := range v.Metric {
 			tags[string(k)] = string(v)
 		}
-		timeVector = append(timeVector, time.Unix(v.Timestamp.Unix(), 0).UTC())
-		values = append(values, float64(v.Value))
 		frames = append(frames, data.NewFrame(name,
 			data.NewField("time", nil, timeVector),
 			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))

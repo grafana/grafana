@@ -9,6 +9,12 @@ type PrometheusQuery struct {
 	Start        time.Time
 	End          time.Time
 	RefId        string
-	RangeQuery   bool
-	InstantQuery bool
+	QueryType    PrometheusQueryType
 }
+
+type PrometheusQueryType string
+
+const (
+	Range   PrometheusQueryType = "range"
+	Instant PrometheusQueryType = "instant"
+)

@@ -34,26 +34,18 @@ func (s *Service) parseQuery(dsInfo *DatasourceInfo, queryContext *backend.Query
 			return nil, err
 		}
 
-		if model.InstantQuery == model.RangeQuery {
-			qs = append(qs, createInstantQuery(model, step, query), createRangeQuery(model, step, query))
+		qs = append(qs, createQuery(model, step, query))
 
-		} else {
-			qs = append(qs, &PrometheusQuery{
-				Expr:         model.Expr,
-				Step:         step,
-				LegendFormat: model.LegendFormat,
-				Start:        query.TimeRange.From,
-				End:          query.TimeRange.To,
-				RefId:        query.RefID,
-				InstantQuery: model.InstantQuery,
-				RangeQuery:   model.RangeQuery,
-			})
-		}
 	}
 	return qs, nil
 }
 
-func createRangeQuery(model *QueryModel, step time.Duration, query backend.DataQuery) *PrometheusQuery {
+func createQuery(model *QueryModel, step time.Duration, query backend.DataQuery) *PrometheusQuery {
+	queryType := Range
+	if model.InstantQuery == true {
+		queryType = Instant
+	}
+
 	queryModel := PrometheusQuery{
 		Expr:         model.Expr,
 		Step:         step,
@@ -61,22 +53,7 @@ func createRangeQuery(model *QueryModel, step time.Duration, query backend.DataQ
 		Start:        query.TimeRange.From,
 		End:          query.TimeRange.To,
 		RefId:        query.RefID,
-		InstantQuery: false,
-		RangeQuery:   true,
-	}
-	return &queryModel
-}
-
-func createInstantQuery(model *QueryModel, step time.Duration, query backend.DataQuery) *PrometheusQuery {
-	queryModel := PrometheusQuery{
-		Expr:         model.Expr,
-		Step:         step,
-		LegendFormat: model.LegendFormat,
-		Start:        query.TimeRange.From,
-		End:          query.TimeRange.To,
-		RefId:        query.RefID + "_instant",
-		InstantQuery: true,
-		RangeQuery:   false,
+		QueryType:    queryType,
 	}
 	return &queryModel
 }

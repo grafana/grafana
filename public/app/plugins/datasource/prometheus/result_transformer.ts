@@ -13,6 +13,8 @@ import {
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
+  DataQueryResponse,
+  DataQueryRequest,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { descending, deviation } from 'd3';
@@ -455,4 +457,33 @@ function parseSampleValue(value: string): number {
     default:
       return parseFloat(value);
   }
+}
+
+export function transformV2(response: DataQueryResponse, options: DataQueryRequest<PromQuery>) {
+  const promResults: DataFrame[] = response.data;
+
+  if (options.app === 'explore') {
+    const instantResults = promResults.filter((dataFrame) => dataFrame?.refId?.match(/_instant/));
+    const rangeResults = promResults.filter((dataFrame) => !dataFrame?.refId?.match(/_instant/));
+
+    instantResults.forEach((dataFrame) => {
+      const df = dataFrame;
+      df.meta = {
+        preferredVisualisationType: 'table',
+      };
+      return df;
+    });
+
+    rangeResults.forEach((dataFrame) => {
+      const df = dataFrame;
+      df.meta = {
+        preferredVisualisationType: 'graph',
+      };
+      return df;
+    });
+
+    return { ...response, data: [...instantResults, ...promResults] };
+  }
+
+  return response;
 }

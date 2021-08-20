@@ -24,7 +24,7 @@ import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { getQueryHints, getInitHints } from './query_hints';
-import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
+import { getOriginalMetricName, renderTemplate, transform, transformV2 } from './result_transformer';
 import {
   ExemplarTraceIdDestination,
   isFetchErrorResponse,
@@ -304,7 +304,29 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     // WIP - currently we want to run trough backend only non-exemplar queries
     if (this.access === 'proxy' && !options.targets.some((query) => query.exemplar)) {
-      return super.query(options);
+      const targets = options.targets.map((target) => {
+        if (target.instant === target.range) {
+          if (target.instant) {
+            const tInstant = { ...target, range: false, refId: target.refId + '_instant' };
+            const tRange = { ...target, instant: false };
+            return [tInstant, tRange];
+          } else {
+            return { ...target, range: true };
+          }
+        } else if (target.instant) {
+          return { ...target, refId: target.refId + '_instant' };
+        } else {
+          return target;
+        }
+      });
+
+      const newOptions = { ...options, targets: targets.flat() };
+
+      return super.query(newOptions).pipe(
+        map((response) => {
+          return transformV2(response, options);
+        })
+      );
     } else {
       const start = this.getPrometheusTime(options.range.from, false);
       const end = this.getPrometheusTime(options.range.to, true);
