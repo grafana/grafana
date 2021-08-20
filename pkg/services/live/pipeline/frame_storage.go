@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+// FrameStorage keeps last channel frame in memory. Not usable in HA setup.
 type FrameStorage struct {
 	mu     sync.RWMutex
 	frames map[string]*data.Frame

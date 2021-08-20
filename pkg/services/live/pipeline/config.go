@@ -81,7 +81,6 @@ func (f *fileStorage) extractConverter(config *ConverterConfig) (Converter, erro
 	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
 	switch config.Type {
 	case "jsonAuto":
-		// TODO: nil checks for all types.
 		if config.AutoJsonConverterConfig == nil {
 			return nil, missingConfiguration
 		}
@@ -140,6 +139,12 @@ type MultipleConditionCheckerConfig struct {
 	Conditions []ConditionCheckerConfig `json:"conditions"`
 }
 
+type NumberCompareConditionConfig struct {
+	FieldName string          `json:"fieldName"`
+	Op        NumberCompareOp `json:"op"`
+	Value     float64         `json:"value"`
+}
+
 type ConditionCheckerConfig struct {
 	Type                           string                          `json:"type"`
 	MultipleConditionCheckerConfig *MultipleConditionCheckerConfig `json:"multiple,omitempty"`
@@ -156,7 +161,8 @@ func (f *fileStorage) extractConditionChecker(config *ConditionCheckerConfig) (C
 		if config.NumberCompareConditionConfig == nil {
 			return nil, missingConfiguration
 		}
-		return NewNumberCompareCondition(*config.NumberCompareConditionConfig), nil
+		c := *config.NumberCompareConditionConfig
+		return NewNumberCompareCondition(c.FieldName, c.Op, c.Value), nil
 	case "multiple":
 		var conditions []ConditionChecker
 		if config.MultipleConditionCheckerConfig == nil {
@@ -169,7 +175,7 @@ func (f *fileStorage) extractConditionChecker(config *ConditionCheckerConfig) (C
 			}
 			conditions = append(conditions, cond)
 		}
-		return NewMultipleConditionChecker(config.MultipleConditionCheckerConfig.Type, conditions), nil
+		return NewMultipleConditionChecker(config.MultipleConditionCheckerConfig.Type, conditions...), nil
 	default:
 		return nil, fmt.Errorf("unknown condition type: %s", config.Type)
 	}
@@ -216,7 +222,7 @@ func (f *fileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 	}
 }
 
-func (f *fileStorage) ListChannelRules(ctx context.Context, cmd ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
+func (f *fileStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
 	ruleBytes, _ := ioutil.ReadFile(os.Getenv("GF_LIVE_CHANNEL_RULES_FILE"))
 	var channelRules ChannelRules
 	err := json.Unmarshal(ruleBytes, &channelRules)
@@ -285,7 +291,7 @@ func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 			Outputter: NewMultipleOutputter(
 				NewManagedStreamOutput(f.gLive),
 				NewConditionalOutput(
-					NewNumberCompareCondition(NumberCompareConditionConfig{"usage_user", "gte", 50}),
+					NewNumberCompareCondition("usage_user", "gte", 50),
 					NewChannelOutput(f.ruleProcessor, ChannelOutputConfig{
 						Channel: "stream/influx/input/cpu/spikes",
 					}),
@@ -401,12 +407,12 @@ func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 					{
 						Name:  "running",
 						Type:  data.FieldTypeNullableBool,
-						Value: "{JSON.parse(x).status === 'running'}",
+						Value: "{x.status === 'running'}",
 					},
 					{
 						Name:  "num_map_colors",
 						Type:  data.FieldTypeNullableFloat64,
-						Value: "{Object.keys(JSON.parse(x).map).length}",
+						Value: "{Object.keys(x.map).length}",
 					},
 				},
 			}),
@@ -428,10 +434,8 @@ func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 				NewConditionalOutput(
 					NewMultipleConditionChecker(
 						ConditionAll,
-						[]ConditionChecker{
-							NewNumberCompareCondition(NumberCompareConditionConfig{"value1", "gte", 3.0}),
-							NewNumberCompareCondition(NumberCompareConditionConfig{"value2", "gte", 3.0}),
-						},
+						NewNumberCompareCondition("value1", "gte", 3.0),
+						NewNumberCompareCondition("value2", "gte", 3.0),
 					),
 					NewChannelOutput(f.ruleProcessor, ChannelOutputConfig{
 						Channel: "stream/json/exact/condition",

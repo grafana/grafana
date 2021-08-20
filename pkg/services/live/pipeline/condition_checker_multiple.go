@@ -37,6 +37,6 @@ func (m MultipleConditionChecker) CheckCondition(ctx context.Context, frame *dat
 	return true, nil
 }
 
-func NewMultipleConditionChecker(conditionType ConditionType, conditions []ConditionChecker) *MultipleConditionChecker {
+func NewMultipleConditionChecker(conditionType ConditionType, conditions ...ConditionChecker) *MultipleConditionChecker {
 	return &MultipleConditionChecker{Type: conditionType, Conditions: conditions}
 }
