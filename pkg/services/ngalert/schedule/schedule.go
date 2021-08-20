@@ -25,14 +25,13 @@ import (
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
-// AdminConfigPollingInterval of how often we sync admin configuration.
-var AdminConfigPollingInterval = 1 * time.Minute
-
 // ScheduleService handles scheduling
 type ScheduleService interface {
 	Run(context.Context) error
 	Pause() error
 	Unpause() error
+	AlertmanagersFor(orgID int64) []*url.URL
+	DroppedAlertmanagersFor(orgID int64) []*url.URL
 
 	// the following are used by tests only used for tests
 	evalApplied(models.AlertRuleKey, time.Time)
@@ -85,50 +84,53 @@ type schedule struct {
 	metrics  *metrics.Metrics
 
 	// Senders help us send alerts to external Alertmanagers.
-	sendersMtx     sync.RWMutex
-	sendersCfgHash map[int64]string
-	senders        map[int64]*sender.Sender
+	sendersMtx              sync.RWMutex
+	sendersCfgHash          map[int64]string
+	senders                 map[int64]*sender.Sender
+	adminConfigPollInterval time.Duration
 }
 
 // SchedulerCfg is the scheduler configuration.
 type SchedulerCfg struct {
-	C                clock.Clock
-	BaseInterval     time.Duration
-	Logger           log.Logger
-	EvalAppliedFunc  func(models.AlertRuleKey, time.Time)
-	MaxAttempts      int64
-	StopAppliedFunc  func(models.AlertRuleKey)
-	Evaluator        eval.Evaluator
-	RuleStore        store.RuleStore
-	InstanceStore    store.InstanceStore
-	AdminConfigStore store.AdminConfigurationStore
-	Notifier         Notifier
-	Metrics          *metrics.Metrics
+	C                       clock.Clock
+	BaseInterval            time.Duration
+	Logger                  log.Logger
+	EvalAppliedFunc         func(models.AlertRuleKey, time.Time)
+	MaxAttempts             int64
+	StopAppliedFunc         func(models.AlertRuleKey)
+	Evaluator               eval.Evaluator
+	RuleStore               store.RuleStore
+	InstanceStore           store.InstanceStore
+	AdminConfigStore        store.AdminConfigurationStore
+	Notifier                Notifier
+	Metrics                 *metrics.Metrics
+	AdminConfigPollInterval time.Duration
 }
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, stateManager *state.Manager) *schedule {
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 	sch := schedule{
-		registry:         alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]alertRuleInfo)},
-		maxAttempts:      cfg.MaxAttempts,
-		clock:            cfg.C,
-		baseInterval:     cfg.BaseInterval,
-		log:              cfg.Logger,
-		heartbeat:        ticker,
-		evalAppliedFunc:  cfg.EvalAppliedFunc,
-		stopAppliedFunc:  cfg.StopAppliedFunc,
-		evaluator:        cfg.Evaluator,
-		ruleStore:        cfg.RuleStore,
-		instanceStore:    cfg.InstanceStore,
-		dataService:      dataService,
-		adminConfigStore: cfg.AdminConfigStore,
-		notifier:         cfg.Notifier,
-		metrics:          cfg.Metrics,
-		appURL:           appURL,
-		stateManager:     stateManager,
-		senders:          map[int64]*sender.Sender{},
-		sendersCfgHash:   map[int64]string{},
+		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]alertRuleInfo)},
+		maxAttempts:             cfg.MaxAttempts,
+		clock:                   cfg.C,
+		baseInterval:            cfg.BaseInterval,
+		log:                     cfg.Logger,
+		heartbeat:               ticker,
+		evalAppliedFunc:         cfg.EvalAppliedFunc,
+		stopAppliedFunc:         cfg.StopAppliedFunc,
+		evaluator:               cfg.Evaluator,
+		ruleStore:               cfg.RuleStore,
+		instanceStore:           cfg.InstanceStore,
+		dataService:             dataService,
+		adminConfigStore:        cfg.AdminConfigStore,
+		notifier:                cfg.Notifier,
+		metrics:                 cfg.Metrics,
+		appURL:                  appURL,
+		stateManager:            stateManager,
+		senders:                 map[int64]*sender.Sender{},
+		sendersCfgHash:          map[int64]string{},
+		adminConfigPollInterval: cfg.AdminConfigPollInterval,
 	}
 	return &sch
 }
@@ -290,7 +292,7 @@ func (sch *schedule) DroppedAlertmanagersFor(orgID int64) []*url.URL {
 func (sch *schedule) adminConfigSync(ctx context.Context) error {
 	for {
 		select {
-		case <-time.After(AdminConfigPollingInterval):
+		case <-time.After(sch.adminConfigPollInterval):
 			if err := sch.SyncAndApplyConfigFromDatabase(); err != nil {
 				sch.log.Error("unable to sync admin configuration", "err", err)
 			}

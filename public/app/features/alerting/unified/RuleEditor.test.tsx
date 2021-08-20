@@ -1,9 +1,9 @@
 import { Matcher, render, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { locationService, setDataSourceSrv, setBackendSrv, BackendSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 import RuleEditor from './RuleEditor';
-import { Router, Route } from 'react-router-dom';
+import { Route, Router } from 'react-router-dom';
 import React from 'react';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 import { selectOptionInTest } from '@grafana/ui';
@@ -18,6 +18,7 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { getDefaultQueries } from './utils/rule-form';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
+import * as api from 'app/features/manage-dashboards/state/actions';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -163,7 +164,7 @@ describe('RuleEditor', () => {
   });
 
   it('can create new grafana managed alert', async () => {
-    const searchFolderMock = jest.fn().mockResolvedValue([
+    const searchFolderMock = jest.spyOn(api, 'searchFolders').mockResolvedValue([
       {
         title: 'Folder A',
         id: 1,
@@ -182,10 +183,6 @@ describe('RuleEditor', () => {
       }),
     };
 
-    const backendSrv = ({
-      search: searchFolderMock,
-    } as any) as BackendSrv;
-    setBackendSrv(backendSrv);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);

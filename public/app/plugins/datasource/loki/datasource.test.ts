@@ -1,4 +1,4 @@
-import { of, throwError } from 'rxjs';
+import { lastValueFrom, of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeSeries, toUtc } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
@@ -112,7 +112,7 @@ describe('LokiDatasource', () => {
       const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
-      expect(adjustIntervalSpy).toHaveBeenCalledWith(1000, expect.anything());
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(1000, 1, expect.anything());
     });
 
     it('should use provided intervalMs', () => {
@@ -127,7 +127,7 @@ describe('LokiDatasource', () => {
       const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
-      expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, 1, expect.anything());
     });
 
     it('should set the minimal step to 1ms', () => {
@@ -142,7 +142,7 @@ describe('LokiDatasource', () => {
       const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
-      expect(adjustIntervalSpy).toHaveBeenCalledWith(0.0005, expect.anything());
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(0.0005, expect.anything(), 1000);
       // Step is in seconds (1 ms === 0.001 s)
       expect(req.step).toEqual(0.001);
     });
@@ -219,56 +219,56 @@ describe('LokiDatasource', () => {
 
     it('should run logs instant if only instant is selected', async () => {
       const { ds, options } = setup(logsQuery, CoreApp.Explore, true, false);
-      await ds.query(options).toPromise();
+      await lastValueFrom(ds.query(options));
       expect(ds.runInstantQuery).toBeCalled();
       expect(ds.runRangeQuery).not.toBeCalled();
     });
 
     it('should run metrics instant if only instant is selected', async () => {
       const { ds, options } = setup(metricsQuery, CoreApp.Explore, true, false);
-      await ds.query(options).toPromise();
+      lastValueFrom(await ds.query(options));
       expect(ds.runInstantQuery).toBeCalled();
       expect(ds.runRangeQuery).not.toBeCalled();
     });
 
     it('should run only logs range query if only range is selected', async () => {
       const { ds, options } = setup(logsQuery, CoreApp.Explore, false, true);
-      await ds.query(options).toPromise();
+      lastValueFrom(await ds.query(options));
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
     it('should run only metrics range query if only range is selected', async () => {
       const { ds, options } = setup(metricsQuery, CoreApp.Explore, false, true);
-      await ds.query(options).toPromise();
+      lastValueFrom(await ds.query(options));
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
     it('should run only logs range query if no query type is selected in Explore', async () => {
       const { ds, options } = setup(logsQuery, CoreApp.Explore);
-      await ds.query(options).toPromise();
+      lastValueFrom(await ds.query(options));
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
     it('should run only metrics range query if no query type is selected in Explore', async () => {
       const { ds, options } = setup(metricsQuery, CoreApp.Explore);
-      await ds.query(options).toPromise();
+      lastValueFrom(await ds.query(options));
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
     it('should run only logs range query in Dashboard', async () => {
       const { ds, options } = setup(logsQuery, CoreApp.Dashboard);
-      await ds.query(options).toPromise();
+      lastValueFrom(await ds.query(options));
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
     it('should run only metrics range query in Dashboard', async () => {
       const { ds, options } = setup(metricsQuery, CoreApp.Dashboard);
-      await ds.query(options).toPromise();
+      lastValueFrom(await ds.query(options));
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
@@ -349,7 +349,7 @@ describe('LokiDatasource', () => {
       });
 
       it('should not modify expression with no filters', async () => {
-        await ds.query(options as any).toPromise();
+        await lastValueFrom(ds.query(options as any));
         expect(ds.runRangeQuery).toBeCalledWith({ expr: DEFAULT_EXPR }, expect.anything(), expect.anything());
       });
 
@@ -367,7 +367,7 @@ describe('LokiDatasource', () => {
           },
         ]);
 
-        await ds.query(options as any).toPromise();
+        await lastValueFrom(ds.query(options as any));
         expect(ds.runRangeQuery).toBeCalledWith(
           { expr: 'rate({bar="baz",job="foo",k1="v1",k2!="v2"} |= "bar" [5m])' },
           expect.anything(),
@@ -388,7 +388,7 @@ describe('LokiDatasource', () => {
             value: `v'.*`,
           },
         ]);
-        await ds.query(options as any).toPromise();
+        await lastValueFrom(ds.query(options as any));
         expect(ds.runRangeQuery).toBeCalledWith(
           { expr: 'rate({bar="baz",job="foo",k1=~"v.*",k2=~"v\\\\\'.*"} |= "bar" [5m])' },
           expect.anything(),
@@ -399,7 +399,7 @@ describe('LokiDatasource', () => {
 
     describe('__range, __range_s and __range_ms variables', () => {
       const options = {
-        targets: [{ expr: 'rate(process_cpu_seconds_total[$__range])', refId: 'A' }],
+        targets: [{ expr: 'rate(process_cpu_seconds_total[$__range])', refId: 'A', stepInterval: '2s' }],
         range: {
           from: rawRange.from,
           to: rawRange.to,
@@ -581,7 +581,7 @@ describe('LokiDatasource', () => {
           status: 'success',
         },
       } as unknown) as FetchResponse;
-      const { promise } = getTestContext(response);
+      const { promise } = getTestContext(response, { stepInterval: '15s' });
 
       const res = await promise;
 
@@ -613,7 +613,7 @@ describe('LokiDatasource', () => {
       } as unknown) as FetchResponse;
       describe('When tagKeys is set', () => {
         it('should only include selected labels', async () => {
-          const { promise } = getTestContext(response, { tagKeys: 'label2,label3' });
+          const { promise } = getTestContext(response, { tagKeys: 'label2,label3', stepInterval: '15s' });
 
           const res = await promise;
 
@@ -624,7 +624,7 @@ describe('LokiDatasource', () => {
       });
       describe('When textFormat is set', () => {
         it('should fromat the text accordingly', async () => {
-          const { promise } = getTestContext(response, { textFormat: 'hello {{label2}}' });
+          const { promise } = getTestContext(response, { textFormat: 'hello {{label2}}', stepInterval: '15s' });
 
           const res = await promise;
 
@@ -634,7 +634,7 @@ describe('LokiDatasource', () => {
       });
       describe('When titleFormat is set', () => {
         it('should fromat the title accordingly', async () => {
-          const { promise } = getTestContext(response, { titleFormat: 'Title {{label2}}' });
+          const { promise } = getTestContext(response, { titleFormat: 'Title {{label2}}', stepInterval: '15s' });
 
           const res = await promise;
 
@@ -779,6 +779,26 @@ describe('LokiDatasource', () => {
           });
         });
       });
+    });
+  });
+
+  describe('adjustInterval', () => {
+    const dynamicInterval = 15;
+    const range = 1642;
+    const resolution = 1;
+    const ds = createLokiDSForTests();
+    it('should return the interval as a factor of dynamicInterval and resolution', () => {
+      let interval = ds.adjustInterval(dynamicInterval, resolution, range);
+      expect(interval).toBe(resolution * dynamicInterval);
+    });
+    it('should not return a value less than the safe interval', () => {
+      let safeInterval = range / 11000;
+      if (safeInterval > 1) {
+        safeInterval = Math.ceil(safeInterval);
+      }
+      const unsafeInterval = safeInterval - 0.01;
+      let interval = ds.adjustInterval(unsafeInterval, resolution, range);
+      expect(interval).toBeGreaterThanOrEqual(safeInterval);
     });
   });
 });

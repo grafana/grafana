@@ -1,5 +1,5 @@
 import { isArray, isEqual } from 'lodash';
-import { ScopedVars, UrlQueryMap, VariableType } from '@grafana/data';
+import { ScopedVars, UrlQueryMap, UrlQueryValue, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './state/types';
@@ -185,9 +185,16 @@ function getUrlValueForComparison(value: any): any {
   return value;
 }
 
-export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): UrlQueryMap | undefined {
+export interface UrlQueryType {
+  value: UrlQueryValue;
+  removed?: boolean;
+}
+
+export interface ExtendedUrlQueryMap extends Record<string, UrlQueryType> {}
+
+export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): ExtendedUrlQueryMap | undefined {
   let count = 0;
-  const changes: UrlQueryMap = {};
+  const changes: ExtendedUrlQueryMap = {};
 
   for (const key in query) {
     if (!key.startsWith('var-')) {
@@ -198,7 +205,7 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ur
     let newValue = getUrlValueForComparison(query[key]);
 
     if (!isEqual(newValue, oldValue)) {
-      changes[key] = query[key];
+      changes[key] = { value: query[key] };
       count++;
     }
   }
@@ -216,7 +223,7 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ur
     }
 
     if (!query.hasOwnProperty(key)) {
-      changes[key] = ''; // removed
+      changes[key] = { value: '', removed: true }; // removed
       count++;
     }
   }

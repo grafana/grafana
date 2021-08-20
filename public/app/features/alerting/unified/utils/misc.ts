@@ -1,5 +1,5 @@
 import { urlUtil, UrlQueryMap } from '@grafana/data';
-import { CombinedRule, RuleFilterState, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRule, FilterState, RulesSource } from 'app/types/unified-alerting';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
 import * as ruleId from './rule-id';
@@ -32,12 +32,12 @@ export function arrayToRecord(items: Array<{ key: string; value: string }>): Rec
   }, {});
 }
 
-export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): RuleFilterState => {
+export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): FilterState => {
   const queryString = queryParams['queryString'] === undefined ? undefined : String(queryParams['queryString']);
   const alertState = queryParams['alertState'] === undefined ? undefined : String(queryParams['alertState']);
   const dataSource = queryParams['dataSource'] === undefined ? undefined : String(queryParams['dataSource']);
-
-  return { queryString, alertState, dataSource };
+  const groupBy = queryParams['groupBy'] === undefined ? undefined : String(queryParams['groupBy']).split(',');
+  return { queryString, alertState, dataSource, groupBy };
 };
 
 export function recordToArray(record: Record<string, string>): Array<{ key: string; value: string }> {
