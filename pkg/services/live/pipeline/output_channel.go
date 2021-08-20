@@ -11,14 +11,14 @@ type ChannelOutputConfig struct {
 }
 
 type ChannelOutput struct {
-	ruleProcessor *RuleProcessor
-	config        ChannelOutputConfig
+	pipeline *Pipeline
+	config   ChannelOutputConfig
 }
 
-func NewChannelOutput(ruleProcessor *RuleProcessor, config ChannelOutputConfig) *ChannelOutput {
-	return &ChannelOutput{ruleProcessor: ruleProcessor, config: config}
+func NewChannelOutput(pipeline *Pipeline, config ChannelOutputConfig) *ChannelOutput {
+	return &ChannelOutput{pipeline: pipeline, config: config}
 }
 
 func (l ChannelOutput) Output(ctx context.Context, vars OutputVars, frame *data.Frame) error {
-	return l.ruleProcessor.ProcessFrame(ctx, vars.OrgID, l.config.Channel, frame)
+	return l.pipeline.ProcessFrame(ctx, vars.OrgID, l.config.Channel, frame)
 }

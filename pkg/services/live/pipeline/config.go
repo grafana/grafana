@@ -18,7 +18,7 @@ type fileStorage struct {
 	node          *centrifuge.Node
 	managedStream *managedstream.Runner
 	frameStorage  *FrameStorage
-	ruleProcessor *RuleProcessor
+	pipeline      *Pipeline
 }
 
 type JsonAutoSettings struct{}
@@ -195,11 +195,17 @@ func (f *fileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 	if config == nil {
 		return nil, nil
 	}
+	missingConfiguration := fmt.Errorf("missing configuration for %s", config.Type)
 	switch config.Type {
 	case "channel":
-		// TODO: nil checks for all types.
-		return NewChannelOutput(f.ruleProcessor, *config.ChannelOutputConfig), nil
+		if config.ChannelOutputConfig == nil {
+			return nil, missingConfiguration
+		}
+		return NewChannelOutput(f.pipeline, *config.ChannelOutputConfig), nil
 	case "multiple":
+		if config.MultipleOutputterConfig == nil {
+			return nil, missingConfiguration
+		}
 		var outputters []Outputter
 		for _, outConf := range config.MultipleOutputterConfig.Outputters {
 			out, err := f.extractOutputter(&outConf)
@@ -214,6 +220,9 @@ func (f *fileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 	case "localSubscribers":
 		return NewLocalSubscribersOutput(f.node), nil
 	case "conditional":
+		if config.ConditionalOutputConfig == nil {
+			return nil, missingConfiguration
+		}
 		condition, err := f.extractConditionChecker(config.ConditionalOutputConfig.Condition)
 		if err != nil {
 			return nil, err
@@ -224,11 +233,20 @@ func (f *fileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 		}
 		return NewConditionalOutput(condition, outputter), nil
 	case "threshold":
-		return NewThresholdOutput(f.frameStorage, f.ruleProcessor, *config.ThresholdOutputConfig), nil
+		if config.ThresholdOutputConfig == nil {
+			return nil, missingConfiguration
+		}
+		return NewThresholdOutput(f.frameStorage, f.pipeline, *config.ThresholdOutputConfig), nil
 	case "remoteWrite":
+		if config.RemoteWriteOutputConfig == nil {
+			return nil, missingConfiguration
+		}
 		return NewRemoteWriteOutput(*config.RemoteWriteOutputConfig), nil
 	case "changeLog":
-		return NewChangeLogOutput(f.frameStorage, f.ruleProcessor, *config.ChangeLogOutputConfig), nil
+		if config.ChangeLogOutputConfig == nil {
+			return nil, missingConfiguration
+		}
+		return NewChangeLogOutput(f.frameStorage, f.pipeline, *config.ChangeLogOutputConfig), nil
 	default:
 		return nil, fmt.Errorf("unknown output type: %s", config.Type)
 	}
@@ -274,7 +292,7 @@ type fakeStorage struct {
 	node          *centrifuge.Node
 	managedStream *managedstream.Runner
 	frameStorage  *FrameStorage
-	ruleProcessor *RuleProcessor
+	pipeline      *Pipeline
 }
 
 func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
@@ -284,7 +302,7 @@ func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
 			Outputter: NewMultipleOutputter(
 				NewLocalSubscribersOutput(f.node),
-				NewChannelOutput(f.ruleProcessor, ChannelOutputConfig{
+				NewChannelOutput(f.pipeline, ChannelOutputConfig{
 					Channel: "stream/testdata/random-20Hz-stream",
 				}),
 			),
@@ -322,7 +340,7 @@ func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 				NewManagedStreamOutput(f.managedStream),
 				NewConditionalOutput(
 					NewNumberCompareCondition("usage_user", "gte", 50),
-					NewChannelOutput(f.ruleProcessor, ChannelOutputConfig{
+					NewChannelOutput(f.pipeline, ChannelOutputConfig{
 						Channel: "stream/influx/input/cpu/spikes",
 					}),
 				),
@@ -453,11 +471,11 @@ func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
 					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
 				}),
-				NewChangeLogOutput(f.frameStorage, f.ruleProcessor, ChangeLogOutputConfig{
+				NewChangeLogOutput(f.frameStorage, f.pipeline, ChangeLogOutputConfig{
 					FieldName: "value3",
 					Channel:   "stream/json/exact/value3/changes",
 				}),
-				NewChangeLogOutput(f.frameStorage, f.ruleProcessor, ChangeLogOutputConfig{
+				NewChangeLogOutput(f.frameStorage, f.pipeline, ChangeLogOutputConfig{
 					FieldName: "annotation",
 					Channel:   "stream/json/exact/annotation/changes",
 				}),
@@ -467,11 +485,11 @@ func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 						NewNumberCompareCondition("value1", "gte", 3.0),
 						NewNumberCompareCondition("value2", "gte", 3.0),
 					),
-					NewChannelOutput(f.ruleProcessor, ChannelOutputConfig{
+					NewChannelOutput(f.pipeline, ChannelOutputConfig{
 						Channel: "stream/json/exact/condition",
 					}),
 				),
-				NewThresholdOutput(f.frameStorage, f.ruleProcessor, ThresholdOutputConfig{
+				NewThresholdOutput(f.frameStorage, f.pipeline, ThresholdOutputConfig{
 					FieldName: "value4",
 					Channel:   "stream/json/exact/value4/state",
 				}),

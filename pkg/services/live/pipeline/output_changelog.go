@@ -14,13 +14,13 @@ type ChangeLogOutputConfig struct {
 }
 
 type ChangeLogOutput struct {
-	frameStorage  *FrameStorage
-	ruleProcessor *RuleProcessor
-	config        ChangeLogOutputConfig
+	frameStorage *FrameStorage
+	pipeline     *Pipeline
+	config       ChangeLogOutputConfig
 }
 
-func NewChangeLogOutput(frameStorage *FrameStorage, ruleProcessor *RuleProcessor, config ChangeLogOutputConfig) *ChangeLogOutput {
-	return &ChangeLogOutput{frameStorage: frameStorage, ruleProcessor: ruleProcessor, config: config}
+func NewChangeLogOutput(frameStorage *FrameStorage, pipeline *Pipeline, config ChangeLogOutputConfig) *ChangeLogOutput {
+	return &ChangeLogOutput{frameStorage: frameStorage, pipeline: pipeline, config: config}
 }
 
 func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) error {
@@ -66,7 +66,7 @@ func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.
 			f2.Set(0, frame.Fields[currentFrameFieldIndex].At(0))
 			f2.Name = "new"
 			changeFrame := data.NewFrame("change", fTime, f1, f2)
-			return l.ruleProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, changeFrame)
+			return l.pipeline.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, changeFrame)
 		}
 	}
 	return nil
