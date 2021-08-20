@@ -100,6 +100,20 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
   componentDidUpdate(prevProps: PlotProps) {
     let { ctx } = this.state;
 
+    let sameTimeRange = true;
+    let nextFrom: number;
+    let nextTo: number;
+
+    if (this.props.timeRange.to !== prevProps.timeRange.to) {
+      let prevTo = prevProps.timeRange.to.valueOf();
+      nextTo = this.props.timeRange.to.valueOf();
+
+      if (prevTo !== nextTo) {
+        sameTimeRange = false;
+        nextFrom = this.props.timeRange.from.valueOf();
+      }
+    }
+
     if (!sameDims(prevProps, this.props)) {
       ctx.plot?.setSize({
         width: this.props.width,
@@ -109,6 +123,8 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
       this.reinitPlot();
     } else if (!sameData(prevProps, this.props)) {
       ctx.plot?.setData(this.props.data);
+    } else if (!sameTimeRange) {
+      ctx.plot?.setScale('x', { min: nextFrom!, max: nextTo! });
     }
   }
 

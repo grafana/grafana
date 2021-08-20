@@ -8,7 +8,7 @@ import { preparePlotConfigBuilder } from './utils';
 import { withTheme2 } from '../../themes/ThemeContext';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
 
-const propsToDiff: string[] = ['timeRange'];
+const propsToDiff: string[] = [];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 

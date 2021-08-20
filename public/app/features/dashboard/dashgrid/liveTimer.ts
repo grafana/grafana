@@ -68,10 +68,10 @@ class LiveTimer {
 
     // For live dashboards, listen to changes
     if (this.ok && this.isLive && this.timeRange) {
-      console.log(
-        'Live CHECK',
-        this.listeners.map((v) => v.intervalMs)
-      );
+      // console.log(
+      //   'Live CHECK',
+      //   this.listeners.map((v) => v.intervalMs)
+      // );
 
       // when the time-range is relative fire events
       let tr: TimeRange | undefined = undefined;
