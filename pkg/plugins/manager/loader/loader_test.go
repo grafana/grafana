@@ -1,9 +1,8 @@
-package manager
+package loader
 
 import (
 	"errors"
 	"path/filepath"
-	"reflect"
 	"sort"
 	"testing"
 
@@ -16,70 +15,31 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestLoader_Load(t *testing.T) {
-	type fields struct {
-		Cfg                           *setting.Cfg
-		allowUnsignedPluginsCondition unsignedPluginV2ConditionFunc
-		log                           log.Logger
-	}
-	type args struct {
-		pluginJSONPath string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *plugins.PluginV2
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-		{},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			l := &Loader{
-				Cfg:                           tt.fields.Cfg,
-				allowUnsignedPluginsCondition: tt.fields.allowUnsignedPluginsCondition,
-				log:                           tt.fields.log,
-			}
-			got, err := l.Load(tt.args.pluginJSONPath)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Load() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestLoader_LoadAll(t *testing.T) {
-	corePluginDir, err := filepath.Abs("./../../../public")
+	corePluginDir, err := filepath.Abs("./../../../../public")
 	if err != nil {
 		t.Errorf("could not construct absolute path of core plugins dir")
 		return
 	}
-	currentPath, err := filepath.Abs(".")
+	parentDir, err := filepath.Abs("../")
 	if err != nil {
 		t.Errorf("could not construct absolute path of current dir")
 		return
 	}
 	tests := []struct {
-		name            string
-		cfg             *setting.Cfg
-		log             log.Logger
-		pluginJSONPaths []string
-		want            []*plugins.PluginV2
-		wantErr         bool
+		name       string
+		cfg        *setting.Cfg
+		log        log.Logger
+		pluginPath string
+		want       []*plugins.PluginV2
+		wantErr    bool
 	}{
 		{
 			name: "Load a Core plugin",
 			cfg: &setting.Cfg{
 				StaticRootPath: corePluginDir,
 			},
-			log:             &FakeLogger{},
-			pluginJSONPaths: []string{filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch/plugin.json")},
+			pluginPath: filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch"),
 			want: []*plugins.PluginV2{
 				{
 					JSONData: plugins.JSONData{
@@ -120,10 +80,9 @@ func TestLoader_LoadAll(t *testing.T) {
 		}, {
 			name: "Load a Bundled plugin",
 			cfg: &setting.Cfg{
-				BundledPluginsPath: filepath.Join(currentPath, "testdata/unsigned-datasource"),
+				BundledPluginsPath: filepath.Join(parentDir, "testdata/unsigned-datasource"),
 			},
-			log:             &FakeLogger{},
-			pluginJSONPaths: []string{"./testdata/unsigned-datasource/plugin/plugin.json"},
+			pluginPath: "../testdata/unsigned-datasource",
 			want: []*plugins.PluginV2{
 				{
 					JSONData: plugins.JSONData{
@@ -140,7 +99,7 @@ func TestLoader_LoadAll(t *testing.T) {
 						Backend: true,
 						State:   "alpha",
 					},
-					PluginDir: filepath.Join(currentPath, "testdata/unsigned-datasource/plugin/"),
+					PluginDir: filepath.Join(parentDir, "testdata/unsigned-datasource/plugin/"),
 					Signature: "unsigned",
 					Class:     "bundled",
 				},
@@ -150,11 +109,8 @@ func TestLoader_LoadAll(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := &Loader{
-				Cfg: tt.cfg,
-				log: tt.log,
-			}
-			got, err := l.LoadAll(tt.pluginJSONPaths)
+			l := New(nil, tt.cfg)
+			got, err := l.LoadAll(tt.pluginPath)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LoadAll() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -167,9 +123,9 @@ func TestLoader_LoadAll(t *testing.T) {
 }
 
 func TestLoader_loadNestedPlugins(t *testing.T) {
-	currentPath, err := filepath.Abs(".")
+	parentDir, err := filepath.Abs("../")
 	if err != nil {
-		t.Errorf("could not construct absolute path of current dir")
+		t.Errorf("could not construct absolute path of root dir")
 		return
 	}
 	parent := &plugins.PluginV2{
@@ -188,7 +144,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			},
 			Backend: true,
 		},
-		PluginDir:     filepath.Join(currentPath, "testdata/nested-plugins/parent"),
+		PluginDir:     filepath.Join(parentDir, "testdata/nested-plugins/parent"),
 		Signature:     "valid",
 		SignatureType: plugins.GrafanaType,
 		SignatureOrg:  "Grafana Labs",
@@ -210,7 +166,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 				Updated:     "2020-10-30",
 			},
 		},
-		PluginDir:     filepath.Join(currentPath, "testdata/nested-plugins/parent/nested"),
+		PluginDir:     filepath.Join(parentDir, "testdata/nested-plugins/parent/nested"),
 		Signature:     "valid",
 		SignatureType: plugins.GrafanaType,
 		SignatureOrg:  "Grafana Labs",
@@ -223,17 +179,13 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 	expected := []*plugins.PluginV2{parent, child}
 
 	t.Run("Load nested External plugins", func(t *testing.T) {
-		l := &Loader{
-			Cfg: &setting.Cfg{
-				PluginsPath: filepath.Join(currentPath, "testdata/nested-plugins"),
-			},
-			log: &FakeLogger{},
+		cfg := &setting.Cfg{
+			PluginsPath: parentDir,
 		}
-		pluginJSONPaths := []string{
-			"./testdata/nested-plugins/parent/plugin.json",
-			"./testdata/nested-plugins/parent/nested/plugin.json",
-		}
-		got, err := l.LoadAll(pluginJSONPaths)
+
+		l := New(nil, cfg)
+
+		got, err := l.LoadAll("../testdata/nested-plugins")
 		assert.NoError(t, err)
 		assert.Len(t, got, 2)
 
@@ -242,19 +194,20 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			return got[i].ID < got[j].ID
 		})
 
+		assert.Empty(t, cmp.Diff(got, expected))
 		assert.True(t, cmp.Equal(got, expected))
 	})
 }
 func TestLoader_readPluginJSON(t *testing.T) {
 	tests := []struct {
-		name           string
-		pluginJSONPath string
-		expected       plugins.JSONData
-		failed         bool
+		name       string
+		pluginPath string
+		expected   plugins.JSONData
+		failed     bool
 	}{
 		{
-			name:           "Valid plugin",
-			pluginJSONPath: "./testdata/test-app/plugin.json",
+			name:       "Valid plugin",
+			pluginPath: "../testdata/test-app/plugin.json",
 			expected: plugins.JSONData{
 				ID:   "test-app",
 				Type: "app",
@@ -297,22 +250,20 @@ func TestLoader_readPluginJSON(t *testing.T) {
 			},
 		},
 		{
-			name:           "Invalid plugin JSON",
-			pluginJSONPath: "./testdata/invalid-plugin-json/plugin.json",
-			failed:         true,
+			name:       "Invalid plugin JSON",
+			pluginPath: "../testdata/invalid-plugin-json/plugin.json",
+			failed:     true,
 		},
 		{
-			name:           "Non-existing JSON file",
-			pluginJSONPath: "./nonExistingFile.json",
-			failed:         true,
+			name:       "Non-existing JSON file",
+			pluginPath: "nonExistingFile.json",
+			failed:     true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := &Loader{
-				log: &FakeLogger{},
-			}
-			got, err := l.readPluginJSON(tt.pluginJSONPath)
+			l := New(nil, nil)
+			got, err := l.readPluginJSON(tt.pluginPath)
 			if (err != nil) && !tt.failed {
 				t.Errorf("readPluginJSON() error = %v, failed %v", err, tt.failed)
 				return

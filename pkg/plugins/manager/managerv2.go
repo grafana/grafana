@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -31,27 +32,26 @@ import (
 
 var _ plugins.ManagerV2 = (*PluginManagerV2)(nil)
 
-var corePluginJSONPaths = map[string]string{
-	"cloudwatch":                       "datasource/cloudwatch/plugin.json",
-	"testdata":                         "datasource/testdata/plugin.json",
-	"graphite":                         "datasource/graphite/plugin.json",
-	"opentsdb":                         "datasource/opentsdb/plugin.json",
-	"grafana-azure-monitor-datasource": "datasource/grafana-azure-monitor-datasource/plugin.json",
-	"influxdb":                         "datasource/influxdb/plugin.json",
-	"prometheus":                       "datasource/prometheus/plugin.json",
-	"elasticsearch":                    "datasource/elasticsearch/plugin.json",
-	"loki":                             "datasource/loki/plugin.json",
-	"tempo":                            "datasource/tempo/plugin.json",
+var corePluginPaths = map[string]string{
+	"cloudwatch":                       "datasource/cloudwatch",
+	"testdata":                         "datasource/testdata",
+	"graphite":                         "datasource/graphite",
+	"opentsdb":                         "datasource/opentsdb",
+	"grafana-azure-monitor-datasource": "datasource/grafana-azure-monitor-datasource",
+	"influxdb":                         "datasource/influxdb",
+	"prometheus":                       "datasource/prometheus",
+	"elasticsearch":                    "datasource/elasticsearch",
+	"loki":                             "datasource/loki",
+	"tempo":                            "datasource/tempo",
 }
 
 type PluginManagerV2 struct {
 	Cfg                    *setting.Cfg                  `inject:""`
 	License                models.Licensing              `inject:""`
-	PluginFinder           plugins.PluginFinderV2        `inject:""`
-	PluginLoader           plugins.PluginLoaderV2        `inject:""`
 	PluginInitializer      plugins.PluginInitializerV2   `inject:""`
 	PluginRequestValidator models.PluginRequestValidator `inject:""`
 	pluginInstaller        plugins.PluginInstaller
+	pluginLoader           loader.Loader
 
 	log       log.Logger
 	plugins   map[string]*plugins.PluginV2
@@ -74,6 +74,7 @@ func (m *PluginManagerV2) Init() error {
 	m.plugins = map[string]*plugins.PluginV2{}
 	m.log = log.New("plugin.managerv2")
 	m.pluginInstaller = installer.New(false, m.Cfg.BuildVersion, NewInstallerLogger("plugin.installer", true))
+	m.pluginLoader = loader.New(nil, m.Cfg)
 
 	// install Core plugins
 	err := m.installPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins"))
@@ -120,24 +121,8 @@ func (m *PluginManagerV2) IsDisabled() bool {
 	return !exists
 }
 
-func (m *PluginManagerV2) InitializeCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
-	fullPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", corePluginJSONPaths[pluginID])
-
-	plugin, err := m.PluginLoader.Load(fullPath)
-	if err != nil {
-		return err
-	}
-
-	err = m.PluginInitializer.InitializeWithFactory(plugin, factory)
-	if err != nil {
-		return err
-	}
-
-	if err := m.register(plugin); err != nil {
-		return err
-	}
-
-	return nil
+func (m *PluginManagerV2) IsEnabled() bool {
+	return !m.IsDisabled()
 }
 
 func (m *PluginManagerV2) installPlugins(path string) error {
@@ -150,12 +135,7 @@ func (m *PluginManagerV2) installPlugins(path string) error {
 		return fmt.Errorf("aborting install as plugins directory %s does not exist", path)
 	}
 
-	pluginJSONPaths, err := m.PluginFinder.Find(path)
-	if err != nil {
-		return err
-	}
-
-	loadedPlugins, err := m.PluginLoader.LoadAll(pluginJSONPaths)
+	loadedPlugins, err := m.pluginLoader.LoadAll(path)
 	if err != nil {
 		return err
 	}
@@ -193,7 +173,7 @@ func (m *PluginManagerV2) filterOutDuplicates(loadedPlugins []*plugins.PluginV2)
 		}
 
 		// temporary check to ignore Core plugins that are programmatically managed
-		if _, canIgnore := corePluginJSONPaths[scannedPlugin.ID]; canIgnore {
+		if _, canIgnore := corePluginPaths[scannedPlugin.ID]; canIgnore {
 			continue
 		}
 
@@ -203,31 +183,24 @@ func (m *PluginManagerV2) filterOutDuplicates(loadedPlugins []*plugins.PluginV2)
 	return result
 }
 
-func (m *PluginManagerV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	plugin := m.Plugin(req.PluginContext.PluginID)
-	if plugin == nil {
-		return &backend.QueryDataResponse{}, nil
-	}
+func (m *PluginManagerV2) InitializeCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	corePluginJSONPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", corePluginPaths[pluginID])
 
-	var resp *backend.QueryDataResponse
-	err := instrumentation.InstrumentQueryDataRequest(req.PluginContext.PluginID, func() (innerErr error) {
-		resp, innerErr = plugin.QueryData(ctx, req)
-		return
-	})
-
+	plugin, err := m.pluginLoader.Load(corePluginJSONPath)
 	if err != nil {
-		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-			return nil, err
-		}
-
-		if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-			return nil, err
-		}
-
-		return nil, errutil.Wrap("failed to query data", err)
+		return err
 	}
 
-	return resp, err
+	err = m.PluginInitializer.InitializeWithFactory(plugin, factory)
+	if err != nil {
+		return err
+	}
+
+	if err := m.register(plugin); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (m *PluginManagerV2) Plugin(pluginID string) *plugins.PluginV2 {
@@ -282,6 +255,33 @@ func (m *PluginManagerV2) Renderer() *plugins.PluginV2 {
 	}
 
 	return nil
+}
+
+func (m *PluginManagerV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	plugin := m.Plugin(req.PluginContext.PluginID)
+	if plugin == nil {
+		return &backend.QueryDataResponse{}, nil
+	}
+
+	var resp *backend.QueryDataResponse
+	err := instrumentation.InstrumentQueryDataRequest(req.PluginContext.PluginID, func() (innerErr error) {
+		resp, innerErr = plugin.QueryData(ctx, req)
+		return
+	})
+
+	if err != nil {
+		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+			return nil, err
+		}
+
+		if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+			return nil, err
+		}
+
+		return nil, errutil.Wrap("failed to query data", err)
+	}
+
+	return resp, err
 }
 
 func (m *PluginManagerV2) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
@@ -570,10 +570,6 @@ func (m *PluginManagerV2) unregisterAndStop(ctx context.Context, pluginID string
 
 	m.log.Debug("Plugin unregistered", "pluginId", pluginID)
 	return nil
-}
-
-func (m *PluginManagerV2) IsEnabled() bool {
-	return !m.IsDisabled()
 }
 
 func (m *PluginManagerV2) Install(ctx context.Context, pluginID, version string) error {

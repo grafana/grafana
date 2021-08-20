@@ -469,7 +469,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		jsonFPath := filepath.Join(plugin.PluginDir, "plugin.json")
 
 		// External plugins need a module.js file for SystemJS to load
-		if !strings.HasPrefix(jsonFPath, pm.Cfg.StaticRootPath) && !scanner.IsBackendOnlyPlugin(plugin.Type) {
+		if !strings.HasPrefix(jsonFPath, pm.Cfg.StaticRootPath) && !scanner.isBackendOnlyPlugin(plugin.Type) {
 			module := filepath.Join(plugin.PluginDir, "module.js")
 			exists, err := fs.Exists(module)
 			if err != nil {
@@ -644,7 +644,7 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	return nil
 }
 
-func (*PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
+func (*PluginScanner) isBackendOnlyPlugin(pluginType string) bool {
 	return pluginType == "renderer"
 }
 
@@ -734,6 +734,12 @@ func (pm *PluginManager) ScanningErrors() []plugins.PluginError {
 			PluginID:  id,
 		})
 	}
+	//for id, e := range pm.PluginManagerV2.HealthCheck(p) {
+	//	scanningErrs = append(scanningErrs, plugins.PluginError{
+	//		ErrorCode: e.ErrorCode,
+	//		PluginID:  id,
+	//	})
+	//}
 	return scanningErrs
 }
 
@@ -787,6 +793,9 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 }
 
 func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) error {
+	if pm.PluginManagerV2.IsEnabled() {
+		return pm.PluginManagerV2.Install(ctx, pluginID, version)
+	}
 	plugin := pm.GetPlugin(pluginID)
 
 	var pluginZipURL string
@@ -831,6 +840,9 @@ func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) 
 }
 
 func (pm *PluginManager) Uninstall(ctx context.Context, pluginID string) error {
+	if pm.PluginManagerV2.IsEnabled() {
+		return pm.PluginManagerV2.Uninstall(ctx, pluginID)
+	}
 	plugin := pm.GetPlugin(pluginID)
 	if plugin == nil {
 		return plugins.ErrPluginNotInstalled

@@ -1,4 +1,4 @@
-package manager
+package loader
 
 import (
 	"encoding/json"
@@ -11,48 +11,63 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
+	logger                    = log.New("plugin.loader")
 	InvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
 	InvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
 )
 
 type Loader struct {
-	Cfg *setting.Cfg `inject:""`
+	cfg          *setting.Cfg
+	pluginFinder finder.Finder
 
+	errs map[string]error
 	// allowUnsignedPluginsCondition changes the policy for allowing unsigned plugins. Signature validation only
 	// runs when plugins are starting, therefore running plugins will not be terminated if they violate the new policy.
-	allowUnsignedPluginsCondition unsignedPluginV2ConditionFunc
-	log                           log.Logger
+	allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc
 }
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name: "PluginLoader",
-		Instance: &Loader{
-			log: log.New("plugin.loader"),
-		},
-		InitPriority: registry.MediumHigh,
-	})
+func New(allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc, cfg *setting.Cfg) Loader {
+	return Loader{
+		cfg:                           cfg,
+		pluginFinder:                  finder.New(cfg),
+		allowUnsignedPluginsCondition: allowUnsignedPluginsCondition,
+		errs:                          make(map[string]error),
+	}
 }
 
 func (l *Loader) Init() error {
 	return nil
 }
 
-func (l *Loader) Load(pluginJSONPath string) (*plugins.PluginV2, error) {
-	p, err := l.LoadAll([]string{pluginJSONPath})
+func (l *Loader) Load(path string) (*plugins.PluginV2, error) {
+	pluginJSONPaths, err := l.pluginFinder.Find(path)
+	if err != nil {
+		logger.Error("plugin finder encountered an error", "err", err)
+	}
+
+	loadedPlugins, err := l.loadPlugins(pluginJSONPaths)
 	if err != nil {
 		return nil, err
 	}
-
-	return p[0], nil
+	return loadedPlugins[0], nil
 }
 
-func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) {
+func (l *Loader) LoadAll(path string) ([]*plugins.PluginV2, error) {
+	pluginJSONPaths, err := l.pluginFinder.Find(path)
+	if err != nil {
+		logger.Error("plugin finder encountered an error", "err", err)
+	}
+
+	return l.loadPlugins(pluginJSONPaths)
+}
+
+func (l *Loader) loadPlugins(pluginJSONPaths []string) ([]*plugins.PluginV2, error) {
 	var foundPlugins = make(map[string]plugins.JSONData)
 
 	// load plugin.json files and map directory to JSON data map
@@ -79,9 +94,9 @@ func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) 
 			Class:     l.pluginClass(pluginDir),
 		}
 
-		signatureState, err := pluginSignatureState(l.log, plugin)
+		signatureState, err := signature.CalculateState(logger, plugin)
 		if err != nil {
-			l.log.Warn("Could not get plugin signature state", "pluginID", plugin.ID, "err", err)
+			logger.Warn("Could not get plugin signature state", "pluginID", plugin.ID, "err", err)
 			return nil, err
 		}
 		plugin.Signature = signatureState.Status
@@ -109,17 +124,16 @@ func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) 
 			}
 		}
 
-		l.log.Debug("Found plugin", "id", plugin.ID, "signature", plugin.Signature, "hasParent", plugin.Parent != nil)
+		logger.Debug("Found plugin", "id", plugin.ID, "signature", plugin.Signature, "hasParent", plugin.Parent != nil)
 	}
 
 	// validate signatures
-	var errs = make(map[string]error)
 	for _, plugin := range loadedPlugins {
-		signingError := newSignatureValidator(l.Cfg, plugin.Class, l.allowUnsignedPluginsCondition).validate(plugin)
+		signingError := signature.NewValidator(l.cfg, plugin.Class, l.allowUnsignedPluginsCondition).Validate(plugin)
 		if signingError != nil {
-			l.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.ID,
+			logger.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.ID,
 				"signature", plugin.Signature, "status", signingError)
-			errs[plugin.ID] = signingError
+			l.errs[plugin.ID] = signingError
 			continue
 		}
 
@@ -129,7 +143,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) 
 			if exists, err := fs.Exists(module); err != nil {
 				return nil, err
 			} else if !exists {
-				l.log.Warn("Plugin missing module.js",
+				logger.Warn("Plugin missing module.js",
 					"pluginID", plugin.ID,
 					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.",
 					"path", module)
@@ -137,9 +151,9 @@ func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) 
 		}
 	}
 
-	if len(errs) > 0 {
+	if len(l.errs) > 0 {
 		var errStr []string
-		for _, err := range errs {
+		for _, err := range l.errs {
 			errStr = append(errStr, err.Error())
 		}
 		logger.Warn("Some plugin loading errors occurred", "errors", strings.Join(errStr, ", "))
@@ -156,7 +170,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) 
 }
 
 func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
-	l.log.Debug("Loading plugin", "path", pluginJSONPath)
+	logger.Debug("Loading plugin", "path", pluginJSONPath)
 
 	if !strings.EqualFold(filepath.Ext(pluginJSONPath), ".json") {
 		return plugins.JSONData{}, InvalidPluginJSONFilePath
@@ -176,7 +190,7 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	}
 
 	if err := reader.Close(); err != nil {
-		l.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
+		logger.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
 	}
 
 	if err := validatePluginJSON(plugin); err != nil {
@@ -184,6 +198,10 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	}
 
 	return plugin, nil
+}
+
+func (l *Loader) Errors() map[string]error {
+	return l.errs
 }
 
 func validatePluginJSON(data plugins.JSONData) error {
@@ -207,16 +225,16 @@ func (l *Loader) pluginClass(pluginDir string) plugins.PluginClass {
 		return false
 	}
 
-	corePluginsDir := filepath.Join(l.Cfg.StaticRootPath, "app/plugins")
+	corePluginsDir := filepath.Join(l.cfg.StaticRootPath, "app/plugins")
 	if isSubDir(corePluginsDir, pluginDir) {
 		return plugins.Core
 	}
 
-	if isSubDir(l.Cfg.BundledPluginsPath, pluginDir) {
+	if isSubDir(l.cfg.BundledPluginsPath, pluginDir) {
 		return plugins.Bundled
 	}
 
-	if isSubDir(l.Cfg.PluginsPath, pluginDir) {
+	if isSubDir(l.cfg.PluginsPath, pluginDir) {
 		return plugins.External
 	}
 

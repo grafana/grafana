@@ -1,4 +1,4 @@
-package manager
+package finder
 
 import (
 	"errors"
@@ -8,29 +8,20 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var (
+	logger = log.New("plugin.finder")
+)
+
 type Finder struct {
-	Cfg *setting.Cfg `inject:""`
-
-	log log.Logger
+	cfg *setting.Cfg
 }
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name: "PluginFinder",
-		Instance: &Finder{
-			log: log.New("plugin.finder"),
-		},
-		InitPriority: registry.MediumHigh,
-	})
-}
-
-func (f *Finder) Init() error {
-	return nil
+func New(cfg *setting.Cfg) Finder {
+	return Finder{cfg: cfg}
 }
 
 func (f *Finder) Find(pluginsDir string) ([]string, error) {
@@ -40,11 +31,11 @@ func (f *Finder) Find(pluginsDir string) ([]string, error) {
 	}
 
 	var pluginJSONPaths []string
-	if !exists {
+	if !exists && pluginsDir == f.cfg.PluginsPath { // if is external only create
 		if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
-			f.log.Error("Failed to create external plugins directory", "dir", pluginsDir, "error", err)
+			logger.Error("Failed to create external plugins directory", "dir", pluginsDir, "error", err)
 		} else {
-			f.log.Info("External plugins directory created", "directory", pluginsDir)
+			logger.Info("External plugins directory created", "directory", pluginsDir)
 		}
 	} else {
 		pluginJSONPaths, err = f.getPluginJSONPaths(pluginsDir)
@@ -54,7 +45,7 @@ func (f *Finder) Find(pluginsDir string) ([]string, error) {
 	}
 
 	var pluginSettingJSONPaths []string
-	for _, settings := range f.Cfg.PluginSettings {
+	for _, settings := range f.cfg.PluginSettings {
 		path, exists := settings["path"]
 		if !exists || path == "" {
 			continue
@@ -103,15 +94,15 @@ func (f *Finder) getPluginJSONPaths(rootDirPath string) ([]string, error) {
 			return nil
 		}); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			f.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", rootDirPath, "err", err)
+			logger.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", rootDirPath, "err", err)
 			return []string{}, err
 		}
 		if errors.Is(err, os.ErrPermission) {
-			f.log.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", rootDirPath, "err", err)
+			logger.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", rootDirPath, "err", err)
 			return []string{}, err
 		}
 		if rootDirPath != "data/plugins" {
-			f.log.Warn("Could not scan dir", "pluginDir", rootDirPath, "err", err)
+			logger.Warn("Could not scan dir", "pluginDir", rootDirPath, "err", err)
 		}
 
 		return []string{}, err

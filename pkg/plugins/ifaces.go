@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -99,18 +98,6 @@ type PluginInstallerLogger interface {
 	Warnf(format string, args ...interface{})
 	Error(args ...interface{})
 	Errorf(format string, args ...interface{})
-}
-
-type PluginFinderV2 interface {
-	// Find tries to discover all plugin.json in the provided directory and then returns their abs file-system paths.
-	Find(pluginsDir string) ([]string, error)
-}
-
-type PluginLoaderV2 interface {
-	// LoadAll loads a list plugins and returns them.
-	LoadAll(pluginJSONPaths []string) ([]*PluginV2, error)
-	// Load loads a plugin and returns it.
-	Load(pluginJSONPath string) (*PluginV2, error)
 }
 
 type PluginInitializerV2 interface {

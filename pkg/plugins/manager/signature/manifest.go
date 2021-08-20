@@ -1,4 +1,4 @@
-package manager
+package signature
 
 import (
 	"bytes"
@@ -11,17 +11,16 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/crypto/openpgp"
+	"golang.org/x/crypto/openpgp/clearsign"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
-
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/clearsign"
 )
 
 // Soon we can fetch keys from:
@@ -99,154 +98,9 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 	return manifest, nil
 }
 
-// getPluginSignatureState returns the signature state for a plugin.
-func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugins.PluginSignatureState, error) {
-	log.Debug("Getting signature state of plugin", "plugin", plugin.Id, "isBackend", plugin.Backend)
-	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
-
-	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
-	// on plugin the folder structure on disk and not user input.
-	byteValue, err := ioutil.ReadFile(manifestPath)
-	if err != nil || len(byteValue) < 10 {
-		log.Debug("Plugin is unsigned", "id", plugin.Id)
-		return plugins.PluginSignatureState{
-			Status: plugins.PluginSignatureUnsigned,
-		}, nil
-	}
-
-	manifest, err := readPluginManifest(byteValue)
-	if err != nil {
-		log.Debug("Plugin signature invalid", "id", plugin.Id)
-		return plugins.PluginSignatureState{
-			Status: plugins.PluginSignatureInvalid,
-		}, nil
-	}
-
-	// Make sure the versions all match
-	if manifest.Plugin != plugin.Id || manifest.Version != plugin.Info.Version {
-		return plugins.PluginSignatureState{
-			Status: plugins.PluginSignatureModified,
-		}, nil
-	}
-
-	// Validate that private is running within defined root URLs
-	if manifest.SignatureType == plugins.PrivateType {
-		appURL, err := url.Parse(setting.AppUrl)
-		if err != nil {
-			return plugins.PluginSignatureState{}, err
-		}
-		appSubURL, err := url.Parse(setting.AppSubUrl)
-		if err != nil {
-			return plugins.PluginSignatureState{}, err
-		}
-		appURLPath := path.Join(appSubURL.RequestURI(), appURL.RequestURI())
-
-		foundMatch := false
-		for _, u := range manifest.RootURLs {
-			rootURL, err := url.Parse(u)
-			if err != nil {
-				log.Warn("Could not parse plugin root URL", "plugin", plugin.Id, "rootUrl", rootURL)
-				return plugins.PluginSignatureState{}, err
-			}
-
-			if rootURL.Scheme == appURL.Scheme &&
-				rootURL.Host == appURL.Host {
-				foundMatch = path.Clean(rootURL.RequestURI()) == appURLPath
-
-				if foundMatch {
-					break
-				}
-			}
-		}
-
-		if !foundMatch {
-			log.Warn("Could not find root URL that matches running application URL", "plugin", plugin.Id,
-				"appUrl", appURL, "rootUrls", manifest.RootURLs)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureInvalid,
-			}, nil
-		}
-	}
-
-	manifestFiles := make(map[string]bool, len(manifest.Files))
-
-	// Verify the manifest contents
-	log.Debug("Verifying contents of plugin manifest", "plugin", plugin.Id)
-	for p, hash := range manifest.Files {
-		// Open the file
-		fp := filepath.Join(plugin.PluginDir, p)
-
-		// nolint:gosec
-		// We can ignore the gosec G304 warning on this one because `fp` is based
-		// on the manifest file for a plugin and not user input.
-		f, err := os.Open(fp)
-		if err != nil {
-			log.Warn("Plugin file listed in the manifest was not found", "plugin", plugin.Id, "filename", p, "dir", plugin.PluginDir)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureModified,
-			}, nil
-		}
-		defer func() {
-			if err := f.Close(); err != nil {
-				log.Warn("Failed to close plugin file", "path", fp, "err", err)
-			}
-		}()
-
-		h := sha256.New()
-		if _, err := io.Copy(h, f); err != nil {
-			log.Warn("Couldn't read plugin file", "plugin", plugin.Id, "filename", fp)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureModified,
-			}, nil
-		}
-		sum := hex.EncodeToString(h.Sum(nil))
-		if sum != hash {
-			log.Warn("Plugin file has been modified", "plugin", plugin.Id, "filename", fp)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureModified,
-			}, nil
-		}
-		manifestFiles[p] = true
-	}
-
-	if manifest.isV2() {
-		pluginFiles, err := pluginFilesRequiringVerification(plugin)
-		if err != nil {
-			log.Warn("Could not collect plugin file information in directory", "pluginID", plugin.Id, "dir", plugin.PluginDir)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureInvalid,
-			}, err
-		}
-
-		// Track files missing from the manifest
-		var unsignedFiles []string
-		for _, f := range pluginFiles {
-			if _, exists := manifestFiles[f]; !exists {
-				unsignedFiles = append(unsignedFiles, f)
-			}
-		}
-
-		if len(unsignedFiles) > 0 {
-			log.Warn("The following files were not included in the signature", "plugin", plugin.Id, "files", unsignedFiles)
-			return plugins.PluginSignatureState{
-				Status: plugins.PluginSignatureModified,
-			}, nil
-		}
-	}
-
-	// Everything OK
-	log.Debug("Plugin signature valid", "id", plugin.Id)
-	return plugins.PluginSignatureState{
-		Status:     plugins.PluginSignatureValid,
-		Type:       manifest.SignatureType,
-		SigningOrg: manifest.SignedByOrgName,
-	}, nil
-}
-
 // gets plugin filenames that require verification for plugin signing
 // returns filenames as a slice of posix style paths relative to plugin directory
-func pluginFilesRequiringVerification(plugin *plugins.PluginBase) ([]string, error) {
+func pluginFilesRequiringVerificationV2(plugin *plugins.PluginV2) ([]string, error) {
 	var files []string
 	err := filepath.Walk(plugin.PluginDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -299,4 +153,146 @@ func pluginFilesRequiringVerification(plugin *plugins.PluginBase) ([]string, err
 	})
 
 	return files, err
+}
+
+func CalculateState(log log.Logger, plugin *plugins.PluginV2) (plugins.PluginSignatureState, error) {
+	log.Debug("Getting signature state of plugin", "plugin", plugin.ID, "isBackend", plugin.Backend)
+
+	if plugin.IsCorePlugin() {
+		return plugins.PluginSignatureState{
+			Status: plugins.PluginSignatureInternal,
+		}, nil
+	}
+
+	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
+
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
+	// on plugin the folder structure on disk and not user input.
+	byteValue, err := ioutil.ReadFile(manifestPath)
+	if err != nil || len(byteValue) < 10 {
+		log.Debug("Plugin is unsigned", "id", plugin.ID)
+		return plugins.PluginSignatureState{
+			Status: plugins.PluginSignatureUnsigned,
+		}, nil
+	}
+
+	manifest, err := readPluginManifest(byteValue)
+	if err != nil {
+		log.Debug("Plugin signature invalid", "id", plugin.ID)
+		return plugins.PluginSignatureState{
+			Status: plugins.PluginSignatureInvalid,
+		}, nil
+	}
+
+	// Make sure the versions all match
+	if manifest.Plugin != plugin.ID || manifest.Version != plugin.Info.Version {
+		return plugins.PluginSignatureState{
+			Status: plugins.PluginSignatureModified,
+		}, nil
+	}
+
+	// Validate that private is running within defined root URLs
+	if manifest.SignatureType == plugins.PrivateType {
+		appURL, err := url.Parse(setting.AppUrl)
+		if err != nil {
+			return plugins.PluginSignatureState{}, err
+		}
+
+		foundMatch := false
+		for _, u := range manifest.RootURLs {
+			rootURL, err := url.Parse(u)
+			if err != nil {
+				log.Warn("Could not parse plugin root URL", "plugin", plugin.ID, "rootUrl", rootURL)
+				return plugins.PluginSignatureState{}, err
+			}
+			if rootURL.Scheme == appURL.Scheme &&
+				rootURL.Host == appURL.Host &&
+				rootURL.RequestURI() == appURL.RequestURI() {
+				foundMatch = true
+				break
+			}
+		}
+
+		if !foundMatch {
+			log.Warn("Could not find root URL that matches running application URL", "plugin", plugin.ID,
+				"appUrl", appURL, "rootUrls", manifest.RootURLs)
+			return plugins.PluginSignatureState{
+				Status: plugins.PluginSignatureInvalid,
+			}, nil
+		}
+	}
+
+	manifestFiles := make(map[string]bool, len(manifest.Files))
+
+	// Verify the manifest contents
+	log.Debug("Verifying contents of plugin manifest", "plugin", plugin.ID)
+	for p, hash := range manifest.Files {
+		// Open the file
+		fp := filepath.Join(plugin.PluginDir, p)
+
+		// nolint:gosec
+		// We can ignore the gosec G304 warning on this one because `fp` is based
+		// on the manifest file for a plugin and not user input.
+		f, err := os.Open(fp)
+		if err != nil {
+			log.Warn("Plugin file listed in the manifest was not found", "plugin", plugin.ID, "filename", p, "dir", plugin.PluginDir)
+			return plugins.PluginSignatureState{
+				Status: plugins.PluginSignatureModified,
+			}, nil
+		}
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Warn("Failed to close plugin file", "path", fp, "err", err)
+			}
+		}()
+
+		h := sha256.New()
+		if _, err := io.Copy(h, f); err != nil {
+			log.Warn("Couldn't read plugin file", "plugin", plugin.ID, "filename", fp)
+			return plugins.PluginSignatureState{
+				Status: plugins.PluginSignatureModified,
+			}, nil
+		}
+		sum := hex.EncodeToString(h.Sum(nil))
+		if sum != hash {
+			log.Warn("Plugin file has been modified", "plugin", plugin.ID, "filename", fp)
+			return plugins.PluginSignatureState{
+				Status: plugins.PluginSignatureModified,
+			}, nil
+		}
+		manifestFiles[p] = true
+	}
+
+	if manifest.isV2() {
+		pluginFiles, err := pluginFilesRequiringVerificationV2(plugin)
+		if err != nil {
+			log.Warn("Could not collect plugin file information in directory", "pluginID", plugin.ID, "dir", plugin.PluginDir)
+			return plugins.PluginSignatureState{
+				Status: plugins.PluginSignatureInvalid,
+			}, err
+		}
+
+		// Track files missing from the manifest
+		var unsignedFiles []string
+		for _, f := range pluginFiles {
+			if _, exists := manifestFiles[f]; !exists {
+				unsignedFiles = append(unsignedFiles, f)
+			}
+		}
+
+		if len(unsignedFiles) > 0 {
+			log.Warn("The following files were not included in the signature", "plugin", plugin.ID, "files", unsignedFiles)
+			return plugins.PluginSignatureState{
+				Status: plugins.PluginSignatureModified,
+			}, nil
+		}
+	}
+
+	log.Debug("Plugin signature valid", "id", plugin.ID)
+	return plugins.PluginSignatureState{
+		Status:     plugins.PluginSignatureValid,
+		Type:       manifest.SignatureType,
+		SigningOrg: manifest.SignedByOrgName,
+	}, nil
 }

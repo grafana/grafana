@@ -1,4 +1,4 @@
-package manager
+package finder
 
 import (
 	"errors"
@@ -10,7 +10,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -25,13 +24,13 @@ func TestFinder_Find(t *testing.T) {
 		{
 			name:               "Dir with single plugin",
 			cfg:                setting.NewCfg(),
-			pluginsDir:         "./testdata/valid-v2-signature",
+			pluginsDir:         "../../testdata/valid-v2-signature",
 			expectedPathSuffix: []string{"/pkg/plugins/manager/testdata/valid-v2-signature/plugin/plugin.json"},
 		},
 		{
 			name:       "Dir with nested plugins",
 			cfg:        setting.NewCfg(),
-			pluginsDir: "./testdata/duplicate-plugins",
+			pluginsDir: "../../testdata/duplicate-plugins",
 			expectedPathSuffix: []string{
 				"/pkg/plugins/manager/testdata/duplicate-plugins/nested/nested/plugin.json",
 				"/pkg/plugins/manager/testdata/duplicate-plugins/nested/plugin.json",
@@ -40,7 +39,7 @@ func TestFinder_Find(t *testing.T) {
 		{
 			name:               "Dir with single plugin which has symbolic link root directory",
 			cfg:                setting.NewCfg(),
-			pluginsDir:         "./testdata/symbolic-plugin-dirs",
+			pluginsDir:         "../../testdata/symbolic-plugin-dirs",
 			expectedPathSuffix: []string{"/pkg/plugins/manager/testdata/includes-symlinks/plugin.json"},
 		},
 		{
@@ -48,11 +47,11 @@ func TestFinder_Find(t *testing.T) {
 			cfg: &setting.Cfg{
 				PluginSettings: map[string]map[string]string{
 					"plugin.datasource-id": {
-						"path": "./testdata/duplicate-plugins",
+						"path": "../../testdata/duplicate-plugins",
 					},
 				},
 			},
-			pluginsDir: "./testdata/valid-v2-signature",
+			pluginsDir: "../../testdata/valid-v2-signature",
 			expectedPathSuffix: []string{
 				"/pkg/plugins/manager/testdata/valid-v2-signature/plugin/plugin.json",
 				"/pkg/plugins/manager/testdata/duplicate-plugins/nested/nested/plugin.json",
@@ -63,8 +62,7 @@ func TestFinder_Find(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			f := &Finder{
-				Cfg: tc.cfg,
-				log: &FakeLogger{},
+				cfg: tc.cfg,
 			}
 			pluginPaths, err := f.Find(tc.pluginsDir)
 			if (err != nil) && !errors.Is(err, tc.err) {
@@ -79,43 +77,28 @@ func TestFinder_Find(t *testing.T) {
 		})
 	}
 
-	t.Run("Supplied plugin directory will be created if doesn't already exist", func(t *testing.T) {
-		f := &Finder{
-			Cfg: setting.NewCfg(),
-			log: &FakeLogger{},
-		}
+	t.Run("Supplied plugin directory will be created if not yet exists and is configured as the PluginsPath config",
+		func(t *testing.T) {
+			nonExistingDir := "./nonExistingPluginsDir"
 
-		nonExistingDir := "./nonExistingPluginsDir"
-		exists, err := fs.Exists(nonExistingDir)
-		assert.NoError(t, err)
-		assert.False(t, exists)
+			f := &Finder{
+				cfg: &setting.Cfg{PluginsPath: nonExistingDir},
+			}
 
-		defer func() {
-			assert.NoError(t, os.RemoveAll(nonExistingDir))
-		}()
-		pluginPaths, err := f.Find(nonExistingDir)
-		assert.NoError(t, err)
+			exists, err := fs.Exists(nonExistingDir)
+			assert.NoError(t, err)
+			assert.False(t, exists)
 
-		exists, err = fs.Exists(nonExistingDir)
-		assert.NoError(t, err)
-		assert.True(t, exists)
+			defer func() {
+				assert.NoError(t, os.RemoveAll(nonExistingDir))
+			}()
+			pluginPaths, err := f.Find(nonExistingDir)
+			assert.NoError(t, err)
 
-		assert.Empty(t, pluginPaths)
-	})
-}
+			exists, err = fs.Exists(nonExistingDir)
+			assert.NoError(t, err)
+			assert.True(t, exists)
 
-type FakeLogger struct {
-	log.Logger
-}
-
-func (fl *FakeLogger) Debug(string, ...interface{}) {
-}
-
-func (fl *FakeLogger) Info(string, ...interface{}) {
-}
-
-func (fl *FakeLogger) Warn(string, ...interface{}) {
-}
-
-func (fl *FakeLogger) Error(string, ...interface{}) {
+			assert.Empty(t, pluginPaths)
+		})
 }

@@ -161,19 +161,6 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.scanningErrors)
 	})
 
-	t.Run("Transform plugins should be ignored when expressions feature is off", func(t *testing.T) {
-		fm := fakeBackendPluginManager{}
-		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/behind-feature-flag"
-			pm.BackendPluginManager = &fm
-		})
-		err := pm.Init()
-		require.NoError(t, err)
-
-		assert.Empty(t, pm.scanningErrors)
-		assert.Empty(t, fm.registeredPlugins)
-	})
-
 	t.Run("With nested plugin duplicating parent", func(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/duplicate-plugins"
@@ -432,7 +419,7 @@ func TestPluginManager_IsBackendOnlyPlugin(t *testing.T) {
 		{name: "app", isBackendOnly: false},
 	} {
 		t.Run(fmt.Sprintf("Plugin %s", c.name), func(t *testing.T) {
-			result := pluginScanner.IsBackendOnlyPlugin(c.name)
+			result := pluginScanner.isBackendOnlyPlugin(c.name)
 
 			assert.Equal(t, c.isBackendOnly, result)
 		})

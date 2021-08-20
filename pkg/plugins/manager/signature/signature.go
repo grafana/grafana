@@ -1,4 +1,4 @@
-package manager
+package signature
 
 import (
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -8,23 +8,23 @@ import (
 
 var logger = log.New("plugin.signature.validator")
 
-type PluginSignatureValidator struct {
+type validator struct {
 	cfg                           *setting.Cfg
 	pluginClass                   plugins.PluginClass
-	allowUnsignedPluginsCondition unsignedPluginV2ConditionFunc
+	allowUnsignedPluginsCondition UnsignedPluginConditionFunc
 }
 
-type unsignedPluginV2ConditionFunc = func(plugin *plugins.PluginV2) bool
+type UnsignedPluginConditionFunc = func(plugin *plugins.PluginV2) bool
 
-func newSignatureValidator(cfg *setting.Cfg, pluginClass plugins.PluginClass, unsignedCond unsignedPluginV2ConditionFunc) *PluginSignatureValidator {
-	return &PluginSignatureValidator{
+func NewValidator(cfg *setting.Cfg, pluginClass plugins.PluginClass, unsignedCond UnsignedPluginConditionFunc) *validator {
+	return &validator{
 		cfg:                           cfg,
 		pluginClass:                   pluginClass,
 		allowUnsignedPluginsCondition: unsignedCond,
 	}
 }
 
-func (s *PluginSignatureValidator) validate(plugin *plugins.PluginV2) error {
+func (s *validator) Validate(plugin *plugins.PluginV2) error {
 	if plugin.Signature == plugins.PluginSignatureValid {
 		logger.Debug("Plugin has valid signature", "id", plugin.ID)
 		return nil
@@ -87,7 +87,7 @@ func (s *PluginSignatureValidator) validate(plugin *plugins.PluginV2) error {
 	}
 }
 
-func (s *PluginSignatureValidator) allowUnsigned(plugin *plugins.PluginV2) bool {
+func (s *validator) allowUnsigned(plugin *plugins.PluginV2) bool {
 	if s.allowUnsignedPluginsCondition != nil {
 		return s.allowUnsignedPluginsCondition(plugin)
 	}
