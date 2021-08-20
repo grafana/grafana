@@ -81,8 +81,6 @@ export {
   VizTooltip,
   VizTooltipContainer,
   SeriesTable,
-  VizTooltipOptions,
-  TooltipDisplayMode,
   SeriesTableProps,
   SeriesTableRow,
   SeriesTableRowProps,
