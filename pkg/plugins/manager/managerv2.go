@@ -184,7 +184,7 @@ func (m *PluginManagerV2) filterOutDuplicates(loadedPlugins []*plugins.PluginV2)
 }
 
 func (m *PluginManagerV2) InitializeCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
-	corePluginJSONPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", corePluginPaths[pluginID])
+	corePluginJSONPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource", pluginID)
 
 	plugin, err := m.pluginLoader.Load(corePluginJSONPath)
 	if err != nil {
