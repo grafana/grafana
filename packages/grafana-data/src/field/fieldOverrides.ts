@@ -133,6 +133,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         dataFrameIndex: index,
         replaceVariables: options.replaceVariables,
         fieldConfigRegistry: fieldConfigRegistry,
+        reloadOptions: () => {},
       };
 
       // Anything in the field config that's not set by the datasource

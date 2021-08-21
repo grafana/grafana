@@ -59,6 +59,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
     data,
     getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
     isOverride: true,
+    reloadOptions: () => {},
   };
 
   /**

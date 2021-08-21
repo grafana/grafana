@@ -6,10 +6,11 @@ import { OptionPaneRenderProps } from './types';
 import { updateDefaultFieldConfigValue, setOptionImmutably } from './utils';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
+import { Observable, of } from 'rxjs';
 
 type categoryGetter = (categoryNames?: string[]) => OptionsPaneCategoryDescriptor;
 
-export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor[] {
+export function getVizualizationOptions(props: OptionPaneRenderProps): Observable<OptionsPaneCategoryDescriptor[]> {
   const { plugin, panel, onPanelOptionsChanged, onFieldConfigsChange, data, dashboard } = props;
   const currentOptions = panel.getOptions();
   const currentFieldConfig = panel.fieldConfig;
@@ -22,6 +23,9 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
     eventBus: dashboard.events,
     getSuggestions: (scope?: VariableSuggestionsScope) => {
       return data ? getDataLinksVariableSuggestions(data.series, scope) : [];
+    },
+    reloadOptions: () => {
+      console.log('TODO!!!! reload');
     },
   };
 
@@ -41,7 +45,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
 
   // Load the options into categories
   fillOptionsPaneItems(
-    plugin.optionEditors.list(),
+    plugin.getOptionsEditors(currentOptions),
     getOptionsPaneCategory,
     (path: string, value: any) => {
       const newOptions = setOptionImmutably(context.options, path, value);
@@ -97,7 +101,8 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
     );
   }
 
-  return Object.values(categoryIndex);
+  // TODO (actual observalbe)
+  return of(Object.values(categoryIndex));
 }
 
 /**

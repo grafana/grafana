@@ -9,6 +9,7 @@ import {
   PanelTypeChangedHandler,
   FieldConfigProperty,
   PanelPluginDataSupport,
+  PanelOptionsEditorItem,
 } from '../types';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { ComponentClass, ComponentType } from 'react';
@@ -100,7 +101,7 @@ export class PanelPlugin<
   };
 
   private _optionEditors?: PanelOptionEditorsRegistry;
-  private registerOptionEditors?: (builder: PanelOptionsEditorBuilder<TOptions>) => void;
+  private registerOptionEditors?: (builder: PanelOptionsEditorBuilder<TOptions>, current?: TOptions) => void;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -126,13 +127,13 @@ export class PanelPlugin<
     let result = this._defaults || {};
 
     if (!this._defaults) {
-      const editors = this.optionEditors;
+      const editors = this.getOptionsEditors();
 
-      if (!editors || editors.list().length === 0) {
+      if (!editors || editors.length === 0) {
         return null;
       }
 
-      for (const editor of editors.list()) {
+      for (const editor of editors) {
         set(result, editor.id, editor.defaultValue);
       }
     }
@@ -177,17 +178,17 @@ export class PanelPlugin<
     return this._fieldConfigRegistry;
   }
 
-  get optionEditors(): PanelOptionEditorsRegistry {
+  getOptionsEditors(current?: TOptions): PanelOptionsEditorItem[] {
     if (!this._optionEditors) {
       const builder = new PanelOptionsEditorBuilder<TOptions>();
       this._optionEditors = builder.getRegistry();
 
       if (this.registerOptionEditors) {
-        this.registerOptionEditors(builder);
+        this.registerOptionEditors(builder, current);
       }
     }
 
-    return this._optionEditors;
+    return this._optionEditors.list();
   }
 
   /**
@@ -258,7 +259,7 @@ export class PanelPlugin<
    *
    * @public
    **/
-  setPanelOptions(builder: (builder: PanelOptionsEditorBuilder<TOptions>) => void) {
+  setPanelOptions(builder: (builder: PanelOptionsEditorBuilder<TOptions>, current?: TOptions) => void) {
     // builder is applied lazily when options UI is created
     this.registerOptionEditors = builder;
     return this;
