@@ -1,6 +1,4 @@
-import React, { FC, useMemo } from 'react';
-import { Select } from '@grafana/ui';
-import { DataFrame, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
+import { PanelOptionsEditorBuilder } from '@grafana/data';
 import { BackgroundImageSize } from '../base';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 
