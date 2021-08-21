@@ -25,12 +25,13 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getTimeSrv } from '../services/TimeSrv';
 import { getKioskMode } from 'app/core/navigation/kiosk';
-import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
+import { GrafanaTheme2, TimeRange, UrlQueryValue } from '@grafana/data';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import classnames from 'classnames';
 import { PanelEditFinishedEvent } from 'app/types/events';
+import { liveTimer } from '../dashgrid/liveTimer';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -133,6 +134,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       routeName: this.props.route.routeName,
       fixUrl: true,
     });
+
+    // small delay to start live updates
+    setTimeout(this.updateLiveTimer, 250);
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
@@ -163,6 +167,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
       if (urlParams?.from !== prevUrlParams?.from || urlParams?.to !== prevUrlParams?.to) {
         getTimeSrv().updateTimeRangeFromUrl();
+        this.updateLiveTimer();
       }
 
       if (!prevUrlParams?.refresh && urlParams?.refresh) {
@@ -199,6 +204,14 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       locationService.partial({ editPanel: null, viewPanel: null });
     }
   }
+
+  updateLiveTimer = () => {
+    let tr: TimeRange | undefined = undefined;
+    if (this.props.dashboard?.liveNow) {
+      tr = getTimeSrv().timeRange();
+    }
+    liveTimer.setLiveTimeRange(tr);
+  };
 
   static getDerivedStateFromProps(props: Props, state: State) {
     const { dashboard, queryParams } = props;
