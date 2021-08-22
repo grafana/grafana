@@ -23,7 +23,7 @@ export const AnnotationListItem: FC<Props> = ({
 }) => {
   const styles = useStyles2(getStyles);
   const { showUser, showTags, showTime } = options;
-  const { text, login, email, avatarUrl, tags, time } = annotation;
+  const { text, login, email, avatarUrl, tags, time, timeEnd } = annotation;
   const onItemClick = (e: MouseEvent) => {
     e.stopPropagation();
     onClick(annotation);
@@ -33,6 +33,7 @@ export const AnnotationListItem: FC<Props> = ({
   };
   const showAvatar = login && showUser;
   const showTimeStamp = time && showTime;
+  const showTimeStampEnd = timeEnd && timeEnd !== time && showTime;
 
   return (
     <div>
@@ -40,6 +41,7 @@ export const AnnotationListItem: FC<Props> = ({
         <div className={styles.title}>
           <span>{text}</span>
           {showTimeStamp ? <TimeStamp formatDate={formatDate} time={time!} /> : null}
+          {showTimeStampEnd ? <TimeStamp formatDate={formatDate} time={timeEnd!} /> : null}
         </div>
         <div className={styles.login}>
           {showAvatar ? <Avatar email={email} login={login!} avatarUrl={avatarUrl} onClick={onLoginClick} /> : null}
