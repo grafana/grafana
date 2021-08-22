@@ -6,7 +6,6 @@ import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
 import { EventBus } from '../events';
 import { FieldConfigSource } from './fieldOverrides';
-import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { OptionEditorConfig } from './options';
@@ -136,8 +135,6 @@ export type PanelTypeChangedHandler<TOptions = any> = (
   prevOptions: Record<string, any>,
   prevFieldConfig: FieldConfigSource
 ) => Partial<TOptions>;
-
-export type PanelOptionEditorsRegistry = Registry<PanelOptionsEditorItem>;
 
 export interface PanelOptionsEditorProps<TValue> extends StandardEditorProps<TValue> {}
 

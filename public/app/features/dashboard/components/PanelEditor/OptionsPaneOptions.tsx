@@ -12,8 +12,6 @@ import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionSearchEngine } from './state/OptionSearchEngine';
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { getRecentOptions } from './state/getRecentOptions';
-import { useObservable } from 'react-use';
-
 interface Props {
   plugin: PanelPlugin;
   panel: PanelModel;
@@ -30,16 +28,8 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   const [listMode, setListMode] = useState(OptionFilter.All);
   const styles = useStyles2(getStyles);
 
-  const visObserver = useMemo(
-    () => getVizualizationOptions(props),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev, props.data]
-  );
-  const vizOptions = useObservable(visObserver);
-  console.log('vizOptions', typeof vizOptions, vizOptions);
-
-  const [panelFrameOptions, justOverrides] = useMemo(
-    () => [getPanelFrameCategory(props), getFieldOverrideCategories(props)],
+  const [panelFrameOptions, vizOptions, justOverrides] = useMemo(
+    () => [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [panel.configRev, props.data]
@@ -48,7 +38,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   const mainBoxElements: React.ReactNode[] = [];
   const isSearching = searchQuery.length > 0;
   const optionRadioFilters = useMemo(getOptionRadioFilters, []);
-  const allOptions = vizOptions ? [panelFrameOptions, ...vizOptions] : [panelFrameOptions];
+  const allOptions = [panelFrameOptions, ...vizOptions];
 
   if (isSearching) {
     mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
@@ -73,10 +63,8 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
           );
         }
         // Then add all panel and field defaults
-        if (vizOptions) {
-          for (const item of vizOptions) {
-            mainBoxElements.push(item.render());
-          }
+        for (const item of vizOptions) {
+          mainBoxElements.push(item.render());
         }
 
         for (const item of justOverrides) {

@@ -128,9 +128,6 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
     const context: StandardEditorContext<any> = {
       data,
       options: options,
-      reloadOptions: () => {
-        console.log('RELOAD?');
-      },
     };
 
     const currentOptions = { ...options, type: layer.id, config: { ...layer.defaultOptions, ...options?.config } };

@@ -87,6 +87,10 @@ export abstract class OptionsUIRegistryBuilder<
     return this;
   }
 
+  getItems() {
+    return this.properties;
+  }
+
   getRegistry() {
     return new Registry(() => {
       return this.properties;

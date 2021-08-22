@@ -3,7 +3,6 @@ import {
   GrafanaPlugin,
   PanelEditorProps,
   PanelMigrationHandler,
-  PanelOptionEditorsRegistry,
   PanelPluginMeta,
   PanelProps,
   PanelTypeChangedHandler,
@@ -100,7 +99,6 @@ export class PanelPlugin<
     return new FieldConfigOptionsRegistry();
   };
 
-  private _optionEditors?: PanelOptionEditorsRegistry;
   private registerOptionEditors?: (builder: PanelOptionsEditorBuilder<TOptions>, current?: TOptions) => void;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
@@ -179,16 +177,11 @@ export class PanelPlugin<
   }
 
   getOptionsEditors(current?: TOptions): PanelOptionsEditorItem[] {
-    if (!this._optionEditors) {
-      const builder = new PanelOptionsEditorBuilder<TOptions>();
-      this._optionEditors = builder.getRegistry();
-
-      if (this.registerOptionEditors) {
-        this.registerOptionEditors(builder, current);
-      }
+    const builder = new PanelOptionsEditorBuilder<TOptions>();
+    if (this.registerOptionEditors) {
+      this.registerOptionEditors(builder, current);
     }
-
-    return this._optionEditors.list();
+    return builder.getItems();
   }
 
   /**

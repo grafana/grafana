@@ -11,7 +11,6 @@ export interface StandardEditorContext<TOptions> {
   getSuggestions?: (scope?: VariableSuggestionsScope) => VariableSuggestion[];
   options?: TOptions;
   isOverride?: boolean;
-  reloadOptions: () => void;
 }
 
 export interface StandardEditorProps<TValue = any, TSettings = any, TOptions = any> {
