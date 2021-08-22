@@ -99,7 +99,7 @@ export class PanelPlugin<
     return new FieldConfigOptionsRegistry();
   };
 
-  private registerOptionEditors?: (builder: PanelOptionsEditorBuilder<TOptions>, current?: TOptions) => void;
+  private registerOptionEditors?: (builder: PanelOptionsEditorBuilder<TOptions>, current: TOptions) => void;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -125,7 +125,7 @@ export class PanelPlugin<
     let result = this._defaults || {};
 
     if (!this._defaults) {
-      const editors = this.getOptionsEditors();
+      const editors = this.getOptionsEditors({} as TOptions);
 
       if (!editors || editors.length === 0) {
         return null;
@@ -176,7 +176,7 @@ export class PanelPlugin<
     return this._fieldConfigRegistry;
   }
 
-  getOptionsEditors(current?: TOptions): PanelOptionsEditorItem[] {
+  getOptionsEditors(current: TOptions): PanelOptionsEditorItem[] {
     const builder = new PanelOptionsEditorBuilder<TOptions>();
     if (this.registerOptionEditors) {
       this.registerOptionEditors(builder, current);
@@ -252,7 +252,7 @@ export class PanelPlugin<
    *
    * @public
    **/
-  setPanelOptions(builder: (builder: PanelOptionsEditorBuilder<TOptions>, current?: TOptions) => void) {
+  setPanelOptions(builder: (builder: PanelOptionsEditorBuilder<TOptions>, current: TOptions) => void) {
     // builder is applied lazily when options UI is created
     this.registerOptionEditors = builder;
     return this;

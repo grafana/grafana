@@ -6,13 +6,13 @@ import { MapViewEditor } from './editor/MapViewEditor';
 import { defaultView, GeomapPanelOptions } from './types';
 import { mapPanelChangedHandler } from './migrations';
 import { defaultMarkersConfig } from './layers/data/markersLayer';
-import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
+import { defaultBaseLayer, DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
   .setPanelChangeHandler(mapPanelChangedHandler)
   .useFieldConfig()
-  .setPanelOptions((builder) => {
+  .setPanelOptions((builder, current) => {
     let category = ['Map View'];
     builder.addCustomEditor({
       category,
@@ -31,6 +31,12 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       name: 'Share view',
       defaultValue: defaultView.shared,
     });
+
+    const baseLayer = geomapLayerRegistry.getIfExists(current.basemap?.type) ?? defaultBaseLayer;
+    if (baseLayer.registerOptionsUI) {
+      console.log('BASE OPTIONS!');
+      baseLayer.registerOptionsUI(builder as any);
+    }
 
     builder.addCustomEditor({
       category: ['Base Layer'],

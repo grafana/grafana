@@ -81,8 +81,17 @@ export abstract class OptionsUIRegistryBuilder<
   T extends OptionsEditorItem<TOptions, any, TEditorProps, any>
 > implements OptionsUIRegistryBuilderAPI<TOptions, TEditorProps, T> {
   private properties: T[] = [];
+  private defaultConfig?: Partial<T>;
+
+  setDefaultConfig(cfg: Partial<T>): this {
+    this.defaultConfig = cfg;
+    return this;
+  }
 
   addCustomEditor<TSettings, TValue>(config: T & OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue>): this {
+    if (this.defaultConfig) {
+      config = { ...this.defaultConfig, ...config };
+    }
     this.properties.push(config);
     return this;
   }

@@ -41,11 +41,13 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
 
   // Load the options into categories
   fillOptionsPaneItems(
-    plugin.getOptionsEditors(),
+    plugin.getOptionsEditors(currentOptions),
     getOptionsPaneCategory,
     (path: string, value: any) => {
-      const newOptions = setOptionImmutably(context.options, path, value);
-      onPanelOptionsChanged(newOptions);
+      if (path) {
+        const newOptions = setOptionImmutably(context.options, path, value);
+        onPanelOptionsChanged(newOptions);
+      }
     },
     context
   );
@@ -118,8 +120,8 @@ export function fillOptionsPaneItems(
 
     const category = getOptionsPaneCategory(pluginOption.category);
     const Editor = pluginOption.editor;
-
-    // TODO? can some options recursivly call: fillOptionsPaneItems?
+    const path = pluginOption.path;
+    const valueGetter = pluginOption.valueGetter ?? lodashGet;
 
     category.addItem(
       new OptionsPaneItemDescriptor({
@@ -128,9 +130,13 @@ export function fillOptionsPaneItems(
         render: function renderEditor() {
           return (
             <Editor
-              value={lodashGet(context.options, pluginOption.path)}
+              value={valueGetter(context.options, pluginOption.path)}
               onChange={(value: any) => {
-                onValueChanged(pluginOption.path, value);
+                let kv = { path, value };
+                if (pluginOption.beforeChange) {
+                  kv = pluginOption.beforeChange(kv);
+                }
+                onValueChanged(kv.path, kv.value);
               }}
               item={pluginOption}
               context={context}

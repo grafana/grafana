@@ -1,5 +1,10 @@
 import { DataFrame } from './dataFrame';
 
+export interface OptionsEditorPathValue {
+  path: string;
+  value: any;
+}
+
 /**
  * Base class for editor builders
  *
@@ -52,4 +57,17 @@ export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any> {
    * Function that enables configuration of when option editor should be shown based on current panel option properties.
    */
   showIf?: (currentOptions: TOptions, data?: DataFrame[]) => boolean | undefined;
+
+  /**
+   * When this exists it will be called before the value.
+   *
+   * This function will allow modifying the path and value before they are
+   * actually applied.  Returning an empty path will be a noop
+   */
+  beforeChange?: (change: OptionsEditorPathValue) => OptionsEditorPathValue;
+
+  /**
+   * Get any value...
+   */
+  valueGetter?: (root: any, path: string) => any;
 }
