@@ -481,6 +481,24 @@ def test_frontend_step():
         ],
     }
 
+def test_a11y_frontend_step(edition, port=3001):
+    return {
+        'name': 'test-a11y-frontend' + enterprise2_sfx(edition),
+        'image': 'buildkite/puppeteer',
+        'depends_on': [
+          'end-to-end-tests-server' + enterprise2_sfx(edition),
+        ],
+         'environment': {
+            'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
+            'HOST': 'end-to-end-tests-server' + enterprise2_sfx(edition),
+            'PORT': port,
+        },
+        'failure': 'ignore',
+        'commands': [
+            'yarn -s test:accessibility --json > pa11y-ci-results.json',
+        ],
+    }
+
 def frontend_metrics_step(edition):
     if edition in ('enterprise', 'enterprise2'):
         return None
@@ -489,7 +507,7 @@ def frontend_metrics_step(edition):
         'name': 'publish-frontend-metrics',
         'image': build_image,
         'depends_on': [
-            'build-frontend',
+            'test-a11y-frontend' + enterprise2_sfx(edition),
         ],
         'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
@@ -499,7 +517,6 @@ def frontend_metrics_step(edition):
             './scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
         ],
     }
-
 
 def codespell_step():
     return {
@@ -692,6 +709,7 @@ def copy_packages_for_docker_step():
         'image': build_image,
         'depends_on': [
             'package',
+            'end-to-end-tests-server',
         ],
         'commands': [
             'ls dist/*.tar.gz*',
@@ -721,7 +739,7 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     return {
         'name': 'build-docker-images' + ubuntu_sfx,
         'image': grafana_docker_image,
-        'depends_on': ['copy-packages-for-docker'],
+        'depends_on': ['copy-packages-for-docker', 'end-to-end-tests-server'],
         'settings': settings,
     }
 
@@ -816,6 +834,7 @@ def release_canary_npm_packages_step(edition):
         'image': build_image,
         'depends_on': [
             'end-to-end-tests',
+            'end-to-end-tests-server',
         ],
         'environment': {
             'GITHUB_PACKAGE_TOKEN': from_secret('github_package_token'),
@@ -865,6 +884,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     dependencies = [
         'package' + enterprise2_sfx(edition),
         'end-to-end-tests' + enterprise2_sfx(edition),
+        'end-to-end-tests-server',
         'mysql-integration-tests',
         'postgres-integration-tests',
     ]
