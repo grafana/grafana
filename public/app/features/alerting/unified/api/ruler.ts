@@ -1,6 +1,8 @@
+import { lastValueFrom } from 'rxjs';
+import { getBackendSrv } from '@grafana/runtime';
+
 import { PostableRulerRuleGroupDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { getDatasourceAPIId } from '../utils/datasource';
-import { getBackendSrv } from '@grafana/runtime';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 
 // upsert a rule group. use this to update rules
@@ -9,15 +11,15 @@ export async function setRulerRuleGroup(
   namespace: string,
   group: PostableRulerRuleGroupDTO
 ): Promise<void> {
-  await await getBackendSrv()
-    .fetch<unknown>({
+  await lastValueFrom(
+    getBackendSrv().fetch<unknown>({
       method: 'POST',
       url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
       data: group,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
-    .toPromise();
+  );
 }
 
 // fetch all ruler rule namespaces and included groups
@@ -51,8 +53,8 @@ export async function fetchRulerRulesGroup(
 }
 
 export async function deleteRulerRulesGroup(dataSourceName: string, namespace: string, groupName: string) {
-  return getBackendSrv()
-    .fetch({
+  return await lastValueFrom(
+    getBackendSrv().fetch({
       url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
         namespace
       )}/${encodeURIComponent(groupName)}`,
@@ -60,19 +62,19 @@ export async function deleteRulerRulesGroup(dataSourceName: string, namespace: s
       showSuccessAlert: false,
       showErrorAlert: false,
     })
-    .toPromise();
+  );
 }
 
 // false in case ruler is not supported. this is weird, but we'll work on it
 async function rulerGetRequest<T>(url: string, empty: T): Promise<T> {
   try {
-    const response = await getBackendSrv()
-      .fetch<T>({
+    const response = await lastValueFrom(
+      getBackendSrv().fetch<T>({
         url,
         showErrorAlert: false,
         showSuccessAlert: false,
       })
-      .toPromise();
+    );
     return response.data;
   } catch (e) {
     if (e?.status === 404) {

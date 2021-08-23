@@ -4,9 +4,9 @@ import { css, cx, keyframes } from '@emotion/css';
 import { chain, cloneDeep, defaults, find, sortBy } from 'lodash';
 import tinycolor from 'tinycolor2';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Icon, IconButton, styleMixins, useStyles } from '@grafana/ui';
+import { Icon, IconButton, styleMixins, useStyles2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import config from 'app/core/config';
 import store from 'app/core/store';
@@ -132,7 +132,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
     dashboard.removePanel(panel);
   };
 
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const copiedPanelPlugins = useMemo(() => getCopiedPanelPlugins(), []);
 
   return (
@@ -230,20 +230,22 @@ const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ children, o
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const pulsate = keyframes`
-    0% {box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${theme.colors.formFocusOutline};}
-    50% {box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${tinycolor(theme.colors.formFocusOutline)
+    0% {box-shadow: 0 0 0 2px ${theme.colors.background.canvas}, 0 0 0px 4px ${theme.colors.primary.main};}
+    50% {box-shadow: 0 0 0 2px ${theme.components.dashboard.background}, 0 0 0px 4px ${tinycolor(
+    theme.colors.primary.main
+  )
     .darken(20)
     .toHexString()};}
-    100% {box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px  ${theme.colors.formFocusOutline};}
+    100% {box-shadow: 0 0 0 2px ${theme.components.dashboard.background}, 0 0 0px 4px  ${theme.colors.primary.main};}
   `;
 
   return {
     // wrapper is used to make sure box-shadow animation isn't cut off in dashboard page
     wrapper: css`
       height: 100%;
-      padding-top: ${theme.spacing.xs};
+      padding-top: ${theme.spacing(0.5)};
     `,
     callToAction: css`
       overflow: hidden;
@@ -253,10 +255,10 @@ const getStyles = (theme: GrafanaTheme) => {
       animation: ${pulsate} 2s ease infinite;
     `,
     rowGap: css`
-      margin-left: ${theme.spacing.sm};
+      margin-left: ${theme.spacing(1)};
     `,
     columnGap: css`
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
     `,
     actionsRow: css`
       display: flex;
@@ -266,9 +268,9 @@ const getStyles = (theme: GrafanaTheme) => {
       > div {
         justify-self: center;
         cursor: pointer;
-        background: ${theme.colors.bg2};
-        border-radius: ${theme.border.radius.sm};
-        color: ${theme.colors.text};
+        background: ${theme.colors.background.secondary};
+        border-radius: ${theme.shape.borderRadius(1)};
+        color: ${theme.colors.text.primary};
         width: 100%;
         display: flex;
         flex-direction: column;
@@ -277,7 +279,7 @@ const getStyles = (theme: GrafanaTheme) => {
         text-align: center;
 
         &:hover {
-          background: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+          background: ${styleMixins.hoverColor(theme.colors.background.secondary, theme)};
         }
 
         &:hover > #book-icon {
@@ -288,7 +290,7 @@ const getStyles = (theme: GrafanaTheme) => {
     actionsWrapper: css`
       display: flex;
       flex-direction: column;
-      padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm};
+      padding: ${theme.spacing(0, 1, 1, 1)};
       height: 100%;
     `,
     headerRow: css`
@@ -297,22 +299,22 @@ const getStyles = (theme: GrafanaTheme) => {
       height: 38px;
       flex-shrink: 0;
       width: 100%;
-      font-size: ${theme.typography.size.md};
-      font-weight: ${theme.typography.weight.semibold};
-      padding-left: ${theme.spacing.sm};
+      font-size: ${theme.typography.fontSize};
+      font-weight: ${theme.typography.fontWeightMedium};
+      padding-left: ${theme.spacing(1)};
       transition: background-color 0.1s ease-in-out;
       cursor: move;
 
       &:hover {
-        background: ${theme.colors.bg2};
+        background: ${theme.colors.background.secondary};
       }
     `,
     backButton: css`
       display: flex;
       align-items: center;
       cursor: pointer;
-      padding-left: ${theme.spacing.xs};
-      width: ${theme.spacing.xl};
+      padding-left: ${theme.spacing(0.5)};
+      width: ${theme.spacing(4)};
     `,
     noMargin: css`
       margin: 0;
