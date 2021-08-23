@@ -103,8 +103,8 @@ steps:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - build-plugins
-  - test-backend
-  - test-frontend
+  - build-backend
+  - build-frontend
   - codespell
   - shellcheck
 
@@ -354,8 +354,8 @@ steps:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - build-plugins
-  - test-backend
-  - test-frontend
+  - build-backend
+  - build-frontend
   - codespell
   - shellcheck
 
@@ -825,8 +825,8 @@ steps:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
   - build-plugins
-  - test-backend
-  - test-frontend
+  - build-backend
+  - build-frontend
   - codespell
   - shellcheck
 
@@ -1225,8 +1225,8 @@ steps:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
   - build-plugins
-  - test-backend
-  - test-frontend
+  - build-backend
+  - build-frontend
   - codespell
   - shellcheck
   - build-backend-enterprise2
@@ -1774,8 +1774,8 @@ steps:
   - ./bin/grabpl gen-version v7.3.0-test
   depends_on:
   - build-plugins
-  - test-backend
-  - test-frontend
+  - build-backend
+  - build-frontend
   - codespell
   - shellcheck
 
@@ -2163,8 +2163,8 @@ steps:
   - ./bin/grabpl gen-version v7.3.0-test
   depends_on:
   - build-plugins
-  - test-backend
-  - test-frontend
+  - build-backend
+  - build-frontend
   - codespell
   - shellcheck
   - build-backend-enterprise2
@@ -2702,8 +2702,8 @@ steps:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - build-plugins
-  - test-backend
-  - test-frontend
+  - build-backend
+  - build-frontend
   - codespell
   - shellcheck
 
@@ -3059,8 +3059,8 @@ steps:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - build-plugins
-  - test-backend
-  - test-frontend
+  - build-backend
+  - build-frontend
   - codespell
   - shellcheck
   - build-backend-enterprise2
@@ -3487,6 +3487,6 @@ get:
 
 ---
 kind: signature
-hmac: 99bd0f841fc2fce8af61bbe8815874c8b1804ce488cb94ba6b42e9816f1a4daa
+hmac: b6afb9229d5977ea941b223732e89d5f7bd73d241dad607ab0d522c958d1138a
 
 ...

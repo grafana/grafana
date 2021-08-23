@@ -542,8 +542,8 @@ def shellcheck_step():
 def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
     deps = [
         'build-plugins',
-        'test-backend',
-        'test-frontend',
+        'build-backend',
+        'build-frontend',
         'codespell',
         'shellcheck',
     ]
