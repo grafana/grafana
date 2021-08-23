@@ -52,10 +52,12 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		Log:             log.New("ngalert"),
 	}
 
-	if !ng.IsDisabled() {
-		if err := ng.init(); err != nil {
-			return nil, err
-		}
+	if ng.IsDisabled() {
+		return ng, nil
+	}
+
+	if err := ng.init(); err != nil {
+		return nil, err
 	}
 
 	return ng, nil

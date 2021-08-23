@@ -32,7 +32,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (*Service, er
 
     if s.IsDisabled() {
         // skip certain initialization logic
-        return s
+        return s, nil
     }
 
     if err := s.init(); err != nil {
