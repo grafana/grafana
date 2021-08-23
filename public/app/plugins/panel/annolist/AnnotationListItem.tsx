@@ -41,6 +41,7 @@ export const AnnotationListItem: FC<Props> = ({
         <div className={styles.title}>
           <span>{text}</span>
           {showTimeStamp ? <TimeStamp formatDate={formatDate} time={time!} /> : null}
+          {showTimeStampEnd ? <span className={styles.time}>-</span> : null}
           {showTimeStampEnd ? <TimeStamp formatDate={formatDate} time={timeEnd!} /> : null}
         </div>
         <div className={styles.login}>
@@ -131,6 +132,7 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     time: css`
       margin-left: ${theme.spacing(1)};
+      margin-right: ${theme.spacing(1)}
       font-size: ${theme.typography.bodySmall.fontSize};
       color: ${theme.colors.text.secondary};
     `,
