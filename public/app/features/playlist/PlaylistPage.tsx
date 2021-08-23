@@ -34,10 +34,11 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [startPlaylist, setStartPlaylist] = useState<PlaylistDTO | undefined>();
   const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistDTO | undefined>();
+  const [forcePlaylistsFetch, setforcePlaylistsFetch] = useState(0);
 
   const { value: playlists, loading } = useAsync(async () => {
     return getBackendSrv().get('/api/playlists', { query: searchQuery }) as Promise<PlaylistDTO[]>;
-  });
+  }, [forcePlaylistsFetch]);
   const hasPlaylists = playlists && playlists.length > 0;
 
   let content = (
@@ -99,7 +100,10 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
             confirmText="delete"
             body={`Are you sure you want to delete '${playlistToDelete.name}'?`}
             onConfirm={() => {
-              deletePlaylist(playlistToDelete.id).finally(() => setPlaylistToDelete(undefined));
+              deletePlaylist(playlistToDelete.id).finally(() => {
+                setforcePlaylistsFetch(forcePlaylistsFetch + 1);
+                setPlaylistToDelete(undefined);
+              });
             }}
             isOpen={Boolean(playlistToDelete)}
             onDismiss={() => {
