@@ -9,21 +9,21 @@ import (
 )
 
 type ThresholdOutputConfig struct {
-	FieldName string
-	Channel   string
+	FieldName string `json:"fieldName"`
+	Channel   string `json:"channel"`
 }
 
 type ThresholdOutput struct {
-	frameStorage  *FrameStorage
-	ruleProcessor *RuleProcessor
-	config        ThresholdOutputConfig
+	frameStorage *FrameStorage
+	pipeline     *Pipeline
+	config       ThresholdOutputConfig
 }
 
-func NewThresholdOutput(frameStorage *FrameStorage, ruleProcessor *RuleProcessor, config ThresholdOutputConfig) *ThresholdOutput {
-	return &ThresholdOutput{frameStorage: frameStorage, ruleProcessor: ruleProcessor, config: config}
+func NewThresholdOutput(frameStorage *FrameStorage, pipeline *Pipeline, config ThresholdOutputConfig) *ThresholdOutput {
+	return &ThresholdOutput{frameStorage: frameStorage, pipeline: pipeline, config: config}
 }
 
-func (l ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) error {
+func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) error {
 	previousFrame, previousFrameOk, err := l.frameStorage.Get(vars.OrgID, l.config.Channel)
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func (l ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data.
 		f2.Name = "state"
 		stateFrame := data.NewFrame("state", fTime, f1, f2)
 		_ = l.frameStorage.Put(vars.OrgID, l.config.Channel, stateFrame)
-		return l.ruleProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, stateFrame)
+		return l.pipeline.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, stateFrame)
 	}
 
 	// TODO: support other numeric types.
@@ -110,7 +110,7 @@ func (l ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data.
 		f2.Name = "state"
 		stateFrame := data.NewFrame("state", fTime, f1, f2)
 		_ = l.frameStorage.Put(vars.OrgID, l.config.Channel, stateFrame)
-		return l.ruleProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, stateFrame)
+		return l.pipeline.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, stateFrame)
 	}
 
 	return nil

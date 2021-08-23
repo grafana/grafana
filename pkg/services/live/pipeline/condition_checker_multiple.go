@@ -14,8 +14,8 @@ const (
 )
 
 type MultipleConditionChecker struct {
-	Conditions []ConditionChecker
 	Type       ConditionType
+	Conditions []ConditionChecker
 }
 
 func (m MultipleConditionChecker) CheckCondition(ctx context.Context, frame *data.Frame) (bool, error) {
@@ -37,6 +37,6 @@ func (m MultipleConditionChecker) CheckCondition(ctx context.Context, frame *dat
 	return true, nil
 }
 
-func NewMultipleConditionChecker(conditions []ConditionChecker, conditionType ConditionType) *MultipleConditionChecker {
-	return &MultipleConditionChecker{Conditions: conditions, Type: conditionType}
+func NewMultipleConditionChecker(conditionType ConditionType, conditions ...ConditionChecker) *MultipleConditionChecker {
+	return &MultipleConditionChecker{Type: conditionType, Conditions: conditions}
 }

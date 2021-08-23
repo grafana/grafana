@@ -9,14 +9,33 @@ import (
 	"github.com/dop251/goja/parser"
 )
 
-func getRuntime() *goja.Runtime {
+type gojaRuntime struct {
+	vm *goja.Runtime
+}
+
+func getRuntime(payload []byte) (*gojaRuntime, error) {
 	vm := goja.New()
 	vm.SetMaxCallStackSize(1024)
 	vm.SetParserOptions(parser.WithDisableSourceMaps)
-	return vm
+	r := &gojaRuntime{vm}
+	err := r.init(payload)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
-func runString(vm *goja.Runtime, script string) (goja.Value, error) {
+// Parse JSON once.
+func (r *gojaRuntime) init(payload []byte) error {
+	err := r.vm.Set("__body", string(payload))
+	if err != nil {
+		return err
+	}
+	_, err = r.runString(`var x = JSON.parse(__body)`)
+	return err
+}
+
+func (r *gojaRuntime) runString(script string) (goja.Value, error) {
 	doneCh := make(chan struct{})
 	go func() {
 		select {
@@ -29,20 +48,15 @@ func runString(vm *goja.Runtime, script string) (goja.Value, error) {
 			// * block scripts on malformed returned error
 			// * limit total quota of time for scripts
 			// * maybe allow only one statement, reject scripts with cycles and functions.
-			vm.Interrupt(errors.New("timeout"))
+			r.vm.Interrupt(errors.New("timeout"))
 		}
 	}()
 	defer close(doneCh)
-	return vm.RunString(script)
+	return r.vm.RunString(script)
 }
 
-func GetBool(payload []byte, script string) (bool, error) {
-	vm := getRuntime()
-	err := vm.Set("x", string(payload))
-	if err != nil {
-		return false, err
-	}
-	v, err := runString(vm, script)
+func (r *gojaRuntime) getBool(script string) (bool, error) {
+	v, err := r.runString(script)
 	if err != nil {
 		return false, err
 	}
@@ -53,13 +67,8 @@ func GetBool(payload []byte, script string) (bool, error) {
 	return num, nil
 }
 
-func GetString(payload []byte, script string) (string, error) {
-	vm := getRuntime()
-	err := vm.Set("x", string(payload))
-	if err != nil {
-		return "", err
-	}
-	v, err := runString(vm, script)
+func (r *gojaRuntime) getString(script string) (string, error) {
+	v, err := r.runString(script)
 	if err != nil {
 		return "", err
 	}
@@ -70,13 +79,8 @@ func GetString(payload []byte, script string) (string, error) {
 	return stringVal, nil
 }
 
-func GetFloat64(payload []byte, script string) (float64, error) {
-	vm := getRuntime()
-	err := vm.Set("x", string(payload))
-	if err != nil {
-		return 0, err
-	}
-	v, err := runString(vm, script)
+func (r *gojaRuntime) getFloat64(script string) (float64, error) {
+	v, err := r.runString(script)
 	if err != nil {
 		return 0, err
 	}

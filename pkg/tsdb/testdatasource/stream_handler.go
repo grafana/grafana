@@ -119,7 +119,7 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 
 			if flight != nil {
 				flight.set(0, conf.Flight.getNextPoint(t))
-				if err := sender.SendFrame(flight.frame, data.IncludeDataOnly); err != nil {
+				if err := sender.SendFrame(flight.frame, data.IncludeAll); err != nil {
 					return err
 				}
 			} else {
@@ -130,7 +130,7 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 				p.frame.Fields[1].Set(0, walker)                                // Value
 				p.frame.Fields[2].Set(0, walker-((rand.Float64()*spread)+0.01)) // Min
 				p.frame.Fields[3].Set(0, walker+((rand.Float64()*spread)+0.01)) // Max
-				if err := sender.SendFrame(p.frame, data.IncludeDataOnly); err != nil {
+				if err := sender.SendFrame(p.frame, data.IncludeAll); err != nil {
 					return err
 				}
 			}

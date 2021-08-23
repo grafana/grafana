@@ -7,19 +7,18 @@ import (
 )
 
 type ChannelOutputConfig struct {
-	Channel string
+	Channel string `json:"channel"`
 }
 
 type ChannelOutput struct {
-	ruleProcessor *RuleProcessor
-	config        ChannelOutputConfig
+	pipeline *Pipeline
+	config   ChannelOutputConfig
 }
 
-func NewChannelOutput(ruleProcessor *RuleProcessor, config ChannelOutputConfig) *ChannelOutput {
-	return &ChannelOutput{ruleProcessor: ruleProcessor, config: config}
+func NewChannelOutput(pipeline *Pipeline, config ChannelOutputConfig) *ChannelOutput {
+	return &ChannelOutput{pipeline: pipeline, config: config}
 }
 
 func (l ChannelOutput) Output(ctx context.Context, vars OutputVars, frame *data.Frame) error {
-	channel := l.config.Channel
-	return l.ruleProcessor.ProcessFrame(ctx, vars.OrgID, channel, frame)
+	return l.pipeline.ProcessFrame(ctx, vars.OrgID, l.config.Channel, frame)
 }

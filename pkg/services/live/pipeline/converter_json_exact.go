@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -12,7 +13,7 @@ import (
 )
 
 type ExactJsonConverterConfig struct {
-	Fields []Field
+	Fields []Field `json:"fields"`
 }
 
 type ExactJsonConverter struct {
@@ -31,10 +32,14 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 
 	var fields []*data.Field
 
+	var initGojaOnce sync.Once
+	var gojaRuntime *gojaRuntime
+
 	for _, f := range c.config.Fields {
 		field := data.NewFieldFromFieldType(f.Type, 1)
 		field.Name = f.Name
 		field.Config = f.Config
+
 		if strings.HasPrefix(f.Value, "$") {
 			// JSON path.
 			x, err := jp.ParseString(f.Value[1:])
@@ -74,15 +79,22 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 			// Goja script.
 			// TODO: reuse vm for JSON parsing.
 			script := strings.Trim(f.Value, "{}")
+			var err error
+			initGojaOnce.Do(func() {
+				gojaRuntime, err = getRuntime(body)
+			})
+			if err != nil {
+				return nil, err
+			}
 			switch f.Type {
 			case data.FieldTypeNullableBool:
-				v, err := GetBool(body, script)
+				v, err := gojaRuntime.getBool(script)
 				if err != nil {
 					return nil, err
 				}
 				field.SetConcrete(0, v)
 			case data.FieldTypeNullableFloat64:
-				v, err := GetFloat64(body, script)
+				v, err := gojaRuntime.getFloat64(script)
 				if err != nil {
 					return nil, err
 				}
@@ -114,7 +126,14 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 				}
 			} else if strings.HasPrefix(label.Value, "{") {
 				script := strings.Trim(f.Value, "{}")
-				v, err := GetString(body, script)
+				var err error
+				initGojaOnce.Do(func() {
+					gojaRuntime, err = getRuntime(body)
+				})
+				if err != nil {
+					return nil, err
+				}
+				v, err := gojaRuntime.getString(script)
 				if err != nil {
 					return nil, err
 				}

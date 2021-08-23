@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/live/pipeline"
+
 	"github.com/gobwas/glob"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -101,6 +103,7 @@ type GrafanaLive struct {
 	GrafanaScope CoreGrafanaScope
 
 	ManagedStreamRunner *managedstream.Runner
+	Pipeline            *pipeline.Pipeline
 
 	contextGetter    *liveplugin.ContextGetter
 	runStreamManager *runstream.Manager
@@ -213,21 +216,6 @@ func (g *GrafanaLive) Init() error {
 		node.SetPresenceManager(presenceManager)
 	}
 
-	g.contextGetter = liveplugin.NewContextGetter(g.PluginContextProvider)
-	channelLocalPublisher := liveplugin.NewChannelLocalPublisher(node)
-	numLocalSubscribersGetter := liveplugin.NewNumLocalSubscribersGetter(node)
-	g.runStreamManager = runstream.NewManager(channelLocalPublisher, numLocalSubscribersGetter, g.contextGetter)
-
-	// Initialize the main features
-	dash := &features.DashboardHandler{
-		Publisher:   g.Publish,
-		ClientCount: g.ClientCount,
-	}
-	g.storage = database.NewStorage(g.SQLStore, g.CacheService)
-	g.GrafanaScope.Dashboards = dash
-	g.GrafanaScope.Features["dashboard"] = dash
-	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
-
 	var managedStreamRunner *managedstream.Runner
 	if g.IsHA() {
 		redisClient := redis.NewClient(&redis.Options{
@@ -249,6 +237,26 @@ func (g *GrafanaLive) Init() error {
 	}
 
 	g.ManagedStreamRunner = managedStreamRunner
+	g.Pipeline, err = pipeline.New(g.ManagedStreamRunner, g.node)
+	if err != nil {
+		return err
+	}
+
+	g.contextGetter = liveplugin.NewContextGetter(g.PluginContextProvider)
+	channelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, g.Pipeline)
+	numLocalSubscribersGetter := liveplugin.NewNumLocalSubscribersGetter(node)
+	g.runStreamManager = runstream.NewManager(channelLocalPublisher, numLocalSubscribersGetter, g.contextGetter)
+
+	// Initialize the main features
+	dash := &features.DashboardHandler{
+		Publisher:   g.Publish,
+		ClientCount: g.ClientCount,
+	}
+	g.storage = database.NewStorage(g.SQLStore, g.CacheService)
+	g.GrafanaScope.Dashboards = dash
+	g.GrafanaScope.Features["dashboard"] = dash
+	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
+
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
 	if err != nil {

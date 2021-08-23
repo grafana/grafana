@@ -9,9 +9,20 @@ import (
 
 type NumberCompareCondition struct {
 	FieldName string
-	Op        string
+	Op        NumberCompareOp
 	Value     float64
 }
+
+type NumberCompareOp string
+
+const (
+	NumberCompareOpLt  NumberCompareOp = "lt"
+	NumberCompareOpGt  NumberCompareOp = "gt"
+	NumberCompareOpLte NumberCompareOp = "lte"
+	NumberCompareOpGte NumberCompareOp = "gte"
+	NumberCompareOpEq  NumberCompareOp = "eq"
+	NumberCompareOpNe  NumberCompareOp = "ne"
+)
 
 func (f NumberCompareCondition) CheckCondition(_ context.Context, frame *data.Frame) (bool, error) {
 	for _, field := range frame.Fields {
@@ -25,22 +36,26 @@ func (f NumberCompareCondition) CheckCondition(_ context.Context, frame *data.Fr
 				return false, nil
 			}
 			switch f.Op {
-			case "gt":
+			case NumberCompareOpGt:
 				return *value > f.Value, nil
-			case "gte":
+			case NumberCompareOpGte:
 				return *value >= f.Value, nil
-			case "lte":
+			case NumberCompareOpLte:
 				return *value <= f.Value, nil
-			case "lt":
+			case NumberCompareOpLt:
 				return *value < f.Value, nil
+			case NumberCompareOpEq:
+				return *value == f.Value, nil
+			case NumberCompareOpNe:
+				return *value != f.Value, nil
 			default:
-				return false, fmt.Errorf("unknown operator: %s", f.Op)
+				return false, fmt.Errorf("unknown comparison operator: %s", f.Op)
 			}
 		}
 	}
 	return false, nil
 }
 
-func NewNumberCompareCondition(fieldName string, op string, value float64) *NumberCompareCondition {
+func NewNumberCompareCondition(fieldName string, op NumberCompareOp, value float64) *NumberCompareCondition {
 	return &NumberCompareCondition{FieldName: fieldName, Op: op, Value: value}
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type AutoInfluxConverterConfig struct {
-	FrameFormat string
+	FrameFormat string `json:"frameFormat"`
 }
 
 type AutoInfluxConverter struct {
