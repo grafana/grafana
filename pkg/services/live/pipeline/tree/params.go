@@ -29,7 +29,7 @@ func (ps Params) ByName(name string) string {
 
 type paramsKey struct{}
 
-// ParamsKey is the request context key under which URL params are stored.
+// ParamsKey is the request context key under which URL Params are stored.
 var ParamsKey = paramsKey{}
 
 // ParamsFromContext pulls the URL parameters from a request context,

@@ -75,9 +75,9 @@ func (s *CacheAlt) Get(orgID int64, channel string) (*LiveChannelRule, *tree.Par
 	if !ok {
 		return nil, nil, false, nil
 	}
-	v, params, _ := t.GetValue("/" + channel)
-	if v == nil {
+	nodeValue := t.GetValue("/"+channel, nil, true)
+	if nodeValue.Handler == nil {
 		return nil, nil, false, nil
 	}
-	return v.(*LiveChannelRule), params, true, nil
+	return nodeValue.Handler.(*LiveChannelRule), nodeValue.Params, true, nil
 }
