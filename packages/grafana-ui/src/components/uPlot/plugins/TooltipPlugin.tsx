@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { Portal } from '../../Portal/Portal';
 import { usePlotContext } from '../context';
+import { TooltipDisplayMode } from '@grafana/schema';
 import {
   CartesianCoords2D,
   DashboardCursorSync,
@@ -12,7 +13,7 @@ import {
   getFieldDisplayName,
   TimeZone,
 } from '@grafana/data';
-import { SeriesTable, SeriesTableRowProps, TooltipDisplayMode, VizTooltipContainer } from '../../VizTooltip';
+import { SeriesTable, SeriesTableRowProps, VizTooltipContainer } from '../../VizTooltip';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { findMidPointYPosition, pluginLog } from '../utils';
 import { useTheme2 } from '../../../themes/ThemeContext';

@@ -1,5 +1,7 @@
-// TODO: this should be generated with cue
-import { VizLegendOptions, VizTooltipOptions } from '../components';
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// NOTE: This file will be auto generated from models.cue
+// It is currenty hand written but will serve as the target for cuetsy
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Explicit control for visualization text settings
@@ -10,20 +12,6 @@ export interface VizTextDisplayOptions {
   titleSize?: number;
   /* Explicit value text size */
   valueSize?: number;
-}
-
-/**
- * @public
- */
-export interface OptionsWithLegend {
-  legend: VizLegendOptions;
-}
-
-/**
- * @public
- */
-export interface OptionsWithTooltip {
-  tooltip: VizTooltipOptions;
 }
 
 /**

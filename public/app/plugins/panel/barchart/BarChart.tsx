@@ -1,15 +1,8 @@
 import React from 'react';
 import { cloneDeep } from 'lodash';
 import { DataFrame, TimeRange } from '@grafana/data';
-import {
-  GraphNG,
-  GraphNGProps,
-  LegendDisplayMode,
-  PlotLegend,
-  UPlotConfigBuilder,
-  usePanelContext,
-  useTheme2,
-} from '@grafana/ui';
+import { GraphNG, GraphNGProps, PlotLegend, UPlotConfigBuilder, usePanelContext, useTheme2 } from '@grafana/ui';
+import { LegendDisplayMode } from '@grafana/schema';
 import { BarChartOptions } from './types';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';

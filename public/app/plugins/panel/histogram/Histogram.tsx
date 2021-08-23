@@ -1,5 +1,6 @@
 import React from 'react';
 import uPlot, { AlignedData } from 'uplot';
+import { VizLegendOptions, LegendDisplayMode } from '@grafana/schema';
 import {
   DataFrame,
   formattedValueToString,
@@ -10,13 +11,11 @@ import {
 import {
   Themeable2,
   UPlotConfigBuilder,
-  VizLegendOptions,
   UPlotChart,
   VizLayout,
   AxisPlacement,
   ScaleDirection,
   ScaleOrientation,
-  LegendDisplayMode,
   PlotLegend,
 } from '@grafana/ui';
 

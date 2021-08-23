@@ -81,8 +81,6 @@ export {
   VizTooltip,
   VizTooltipContainer,
   SeriesTable,
-  VizTooltipOptions,
-  TooltipDisplayMode,
   SeriesTableProps,
   SeriesTableRow,
   SeriesTableRowProps,
@@ -105,7 +103,6 @@ export {
 } from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
 export { VizLegendItem, SeriesVisibilityChangeBehavior } from './VizLegend/types';
-export { LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/models.gen';
 export { VizLegend } from './VizLegend/VizLegend';
 export { VizLegendListItem } from './VizLegend/VizLegendListItem';
 

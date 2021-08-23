@@ -1,60 +1,39 @@
 {
   "author": "Grafana Labs",
   "license": "Apache-2.0",
-  "name": "@grafana/data",
+  "name": "@grafana/schema",
   "version": "8.1.0-pre",
-  "description": "Grafana Data Library",
+  "description": "Grafana Schema Library",
   "keywords": [
     "typescript"
   ],
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git",
-    "directory": "packages/grafana-data"
+    "directory": "packages/grafana-schema"
   },
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
-    "build": "grafana-toolkit package:build --scope=data",
+    "build": "grafana-toolkit package:build --scope=schema",
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@braintree/sanitize-url": "5.0.2",
-    "@grafana/schema": "8.1.0-pre",
-    "@types/d3-interpolate": "^1.3.1",
-    "date-fns": "2.21.3",
-    "eventemitter3": "4.0.7",
-    "lodash": "4.17.21",
-    "marked": "2.0.1",
-    "rxjs": "7.3.0",
-    "xss": "1.0.6"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@rollup/plugin-commonjs": "16.0.0",
     "@rollup/plugin-json": "4.1.0",
     "@rollup/plugin-node-resolve": "10.0.0",
-    "@types/braintree__sanitize-url": "4.1.0",
-    "@types/jest": "26.0.15",
-    "@types/jquery": "3.3.38",
-    "@types/lodash": "4.14.123",
-    "@types/marked": "1.1.0",
-    "@types/node": "10.14.1",
-    "@types/papaparse": "5.2.0",
-    "@types/react": "16.9.9",
     "@types/rollup-plugin-visualizer": "2.6.0",
-    "@types/sinon": "^7.5.2",
     "pretty-format": "25.1.0",
     "rollup": "2.33.3",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
     "rollup-plugin-typescript2": "0.29.0",
     "rollup-plugin-visualizer": "4.2.0",
-    "sinon": "8.1.1",
-    "tinycolor2": "1.4.1",
     "typescript": "4.3.4"
   },
   "volta": {

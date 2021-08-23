@@ -1,4 +1,5 @@
 import React from 'react';
+import { VizLegendOptions } from '@grafana/schema';
 import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import {
   ArrayVector,
@@ -21,7 +22,6 @@ import {
   UPlotConfigBuilder,
   UPlotConfigPrepFn,
   VizLegendItem,
-  VizLegendOptions,
 } from '@grafana/ui';
 import { getConfig, TimelineCoreOptions } from './timeline';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';

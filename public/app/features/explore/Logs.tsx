@@ -2,7 +2,7 @@ import React, { PureComponent, createRef } from 'react';
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
-
+import { TooltipDisplayMode } from '@grafana/schema';
 import {
   rangeUtil,
   RawTimeRange,
@@ -28,7 +28,6 @@ import {
   InlineFieldRow,
   InlineSwitch,
   withTheme2,
-  TooltipDisplayMode,
   Themeable2,
 } from '@grafana/ui';
 import store from 'app/core/store';

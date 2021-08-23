@@ -18,3 +18,10 @@ export enum TooltipDisplayMode {
 export type VizTooltipOptions = {
   mode: TooltipDisplayMode;
 };
+
+/**
+ * @public
+ */
+export interface OptionsWithTooltip {
+  tooltip: VizTooltipOptions;
+}
