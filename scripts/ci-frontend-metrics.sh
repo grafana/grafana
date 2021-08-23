@@ -35,6 +35,7 @@ echo -e "High vulnerabilities: $HIGH_VULNERABILITIES"
 
 echo "Metrics: {
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
+  \"grafana.ci-code.accessibilityErrors\": \"${ACCESSIBILITY_ERRORS}\",
   \"grafana.ci-code.directives\": \"${DIRECTIVES}\",
   \"grafana.ci-code.controllers\": \"${CONTROLLERS}\",
   \"grafana.ci-code.grafana-ui.stories\": \"${STORIES_COUNT}\",
