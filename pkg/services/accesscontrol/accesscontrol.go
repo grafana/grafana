@@ -56,9 +56,9 @@ func BuildPermissionsMap(permissions []*Permission) map[string]bool {
 }
 
 func ValidateScope(scope string) bool {
-	prefix := scope[:len(scope)-1]
-	// verify that last char is either ':' or '/'
-	if len(prefix) > 0 {
+	prefix, last := scope[:len(scope)-1], scope[len(scope)-1]
+	// verify that last char is either ':' or '/' if last character of scope is '*'
+	if len(prefix) > 0 && last == '*' {
 		lastChar := prefix[len(prefix)-1]
 		if lastChar != ':' && lastChar != '/' {
 			return false
