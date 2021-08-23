@@ -9,7 +9,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -255,7 +255,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -643,7 +643,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -731,7 +731,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -1094,7 +1094,7 @@ clone:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -1595,7 +1595,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -1703,7 +1703,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -2055,7 +2055,7 @@ clone:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -2550,7 +2550,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -2658,7 +2658,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -2921,7 +2921,7 @@ node:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
 
 ---
 kind: pipeline
@@ -2962,7 +2962,7 @@ steps:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
 
 depends_on:
 - oss-build-release-branch
@@ -2981,7 +2981,7 @@ clone:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -3394,7 +3394,7 @@ node:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
 
 ---
 kind: pipeline
@@ -3459,7 +3459,7 @@ image_pull_secrets:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
 
 depends_on:
 - enterprise-build-release-branch
@@ -3484,7 +3484,7 @@ steps:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
   status:
   - failure
 
@@ -3563,6 +3563,6 @@ get:
 
 ---
 kind: signature
-hmac: 715bb56dc0e21d30b0c4e56b902fdd892b52fbb7c4f26da4d7a5dcd8971d598e
+hmac: 3d2f1fc8e3fb780ba279abe9d679268189e2d3d35c684a577e5b81e65e2e32ac
 
 ...

@@ -1,7 +1,7 @@
 import React, { FC, MouseEvent } from 'react';
 import { css, cx } from '@emotion/css';
-import { AnnotationEvent, DateTimeInput, GrafanaTheme, PanelProps } from '@grafana/data';
-import { styleMixins, Tooltip, useStyles } from '@grafana/ui';
+import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
+import { styleMixins, Tooltip, useStyles2 } from '@grafana/ui';
 import { AnnoOptions } from './types';
 import { AnnotationListItemTags } from './AnnotationListItemTags';
 
@@ -21,7 +21,7 @@ export const AnnotationListItem: FC<Props> = ({
   onAvatarClick,
   onTagClick,
 }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const { showUser, showTags, showTime } = options;
   const { text, login, email, avatarUrl, tags, time } = annotation;
   const onItemClick = (e: MouseEvent) => {
@@ -58,7 +58,7 @@ interface AvatarProps {
 }
 
 const Avatar: FC<AvatarProps> = ({ onClick, avatarUrl, login, email }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const onAvatarClick = (e: MouseEvent) => {
     e.stopPropagation();
     onClick();
@@ -87,7 +87,7 @@ interface TimeStampProps {
 }
 
 const TimeStamp: FC<TimeStampProps> = ({ time, formatDate }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <span className={styles.time}>
@@ -96,14 +96,14 @@ const TimeStamp: FC<TimeStampProps> = ({ time, formatDate }) => {
   );
 };
 
-function getStyles(theme: GrafanaTheme) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     pointer: css`
       cursor: pointer;
     `,
     item: css`
-      margin: ${theme.spacing.xs};
-      padding: ${theme.spacing.sm};
+      margin: ${theme.spacing(0.5)};
+      padding: ${theme.spacing(1)};
       ${styleMixins.listItem(theme)}// display: flex;
     `,
     title: css`
@@ -113,11 +113,11 @@ function getStyles(theme: GrafanaTheme) {
       display: flex;
 
       .fa {
-        padding-top: ${theme.spacing.xs};
+        padding-top: ${theme.spacing(0.5)};
       }
 
       .fa-star {
-        color: ${theme.palette.orange};
+        color: ${theme.v1.palette.orange};
       }
     `,
     login: css`
@@ -125,19 +125,19 @@ function getStyles(theme: GrafanaTheme) {
       flex: auto;
       display: flex;
       justify-content: flex-end;
-      font-size: ${theme.typography.size.sm};
+      font-size: ${theme.typography.bodySmall.fontSize};
     `,
     time: css`
-      margin-left: ${theme.spacing.sm};
-      font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.textWeak};
+      margin-left: ${theme.spacing(1)};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      color: ${theme.colors.text.secondary};
     `,
     avatar: css`
-      padding: ${theme.spacing.xs};
+      padding: ${theme.spacing(0.5)};
       img {
         border-radius: 50%;
-        width: ${theme.spacing.md};
-        height: ${theme.spacing.md};
+        width: ${theme.spacing(2)};
+        height: ${theme.spacing(2)};
       }
     `,
   };
