@@ -143,8 +143,8 @@ func (a allEvaluator) Inject(params map[string]string) (Evaluator, error) {
 
 func (a allEvaluator) String() string {
 	permissions := make([]string, 0, len(a.allOf))
-	for _, a := range a.allOf {
-		permissions = append(permissions, a.String())
+	for _, e := range a.allOf {
+		permissions = append(permissions, e.String())
 	}
 	return fmt.Sprintf("all(%s)", strings.Join(permissions, " "))
 }
