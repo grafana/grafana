@@ -9,8 +9,8 @@ import (
 
 const (
 	defaultTheme string = ""
-	darkTheme           = "dark"
-	lightTheme          = "light"
+	darkTheme    string = "dark"
+	lightTheme   string = "light"
 )
 
 // POST /api/preferences/set-home-dash
