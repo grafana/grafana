@@ -51,8 +51,3 @@ export interface TableCellProps extends CellProps<any> {
 }
 
 export type CellComponent = FC<TableCellProps>;
-
-export interface FooterInfo {
-  field: string;
-  value: Function;
-}
