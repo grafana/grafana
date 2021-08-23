@@ -423,7 +423,6 @@ steps:
 - name: test-a11y-frontend
   image: buildkite/puppeteer
   commands:
-  - ./e2e/wait-for-grafana
   - yarn -s test:accessibility --json > pa11y-ci-results.json 1>&2
   environment:
     GRAFANA_MISC_STATS_API_KEY:
@@ -3488,6 +3487,6 @@ get:
 
 ---
 kind: signature
-hmac: b8066feed0041c9dd8a58dcb0b43a931f2a1da5a50e985f69bc915296bdc1dc5
+hmac: dc613492d7c86c2fed120789bab11fbacf66dd23f70dcbc1d3737a1012cfbf71
 
 ...
