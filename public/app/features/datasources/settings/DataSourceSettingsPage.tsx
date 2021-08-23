@@ -20,7 +20,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 
 // Types
 import { StoreState } from 'app/types/';
-import { DataSourceSettings } from '@grafana/data';
+import { DataSourceSettings, urlUtil } from '@grafana/data';
 import { Alert, Button, LinkButton } from '@grafana/ui';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from '../state/navModel';
 import { PluginStateInfo } from 'app/features/plugins/PluginStateInfo';
@@ -149,6 +149,13 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
     return this.props.dataSource.id > 0;
   }
 
+  onNavigateToExplore() {
+    const { dataSource } = this.props;
+    const exploreState = JSON.stringify({ datasource: dataSource.name, context: 'explore' });
+    const url = urlUtil.renderUrl('/explore', { left: exploreState });
+    return url;
+  }
+
   renderLoadError(loadError: any) {
     let showDelete = false;
     let msg = loadError.toString();
@@ -269,6 +276,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           isReadOnly={this.isReadOnly()}
           onDelete={this.onDelete}
           onTest={(event) => this.onTest(event)}
+          exploreUrl={this.onNavigateToExplore()}
         />
       </form>
     );
