@@ -45,7 +45,7 @@ export function getColumns(
   data: DataFrame,
   availableWidth: number,
   columnMinWidth: number,
-  totals?: Map<string, Function>
+  footers?: DataFrame
 ): Column[] {
   const columns: any[] = [];
   let fieldCountWithoutWidth = data.fields.length;
@@ -86,7 +86,7 @@ export function getColumns(
       minWidth: fieldTableOptions.minWidth || columnMinWidth,
       filter: memoizeOne(filterByValue(field)),
       justifyContent: getTextAlign(field),
-      Footer: getFooterValue(field, totals),
+      Footer: getFooterValue(fieldIndex, footers),
     });
   }
 
@@ -114,11 +114,17 @@ export function getColumns(
   return columns;
 }
 
-function getFooterValue(field: Field, totals?: Map<string, any>) {
-  if (totals === undefined) {
+function getFooterValue(index: number, footers?: DataFrame) {
+  if (footers === undefined) {
     return EmptyCell;
   }
-  const val = totals.get(field.name);
+  const field = footers.fields[index];
+  const fieldValue = field.values.get(0);
+  if (fieldValue === undefined) {
+    return EmptyCell;
+  }
+  const displayValue = field.display ? field.display(fieldValue) : fieldValue;
+  const val = field.display ? formattedValueToString(displayValue) : displayValue;
   if (val === undefined) {
     return EmptyCell;
   }

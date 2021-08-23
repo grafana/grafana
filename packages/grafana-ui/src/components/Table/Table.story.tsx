@@ -93,6 +93,61 @@ function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): D
   return prepDataForStorybook([data], theme)[0];
 }
 
+function buildFooterData(data: DataFrame, theme: GrafanaTheme2, config: Record<string, FieldConfig>): DataFrame {
+  const values = data.fields[3].values.toArray();
+  const valueSum = values.reduce((prev, curr) => {
+    return prev + curr;
+  }, 0);
+
+  const footerData = new MutableDataFrame({
+    fields: [
+      { name: 'Time', type: FieldType.string, values: [] }, // The time field
+      {
+        name: 'Quantity',
+        type: FieldType.number,
+        values: [],
+        config: {
+          decimals: 0,
+          custom: {
+            align: 'center',
+            width: 80,
+          },
+        },
+      },
+      { name: 'Status', type: FieldType.string, values: [] }, // The time field
+      {
+        name: 'Value',
+        type: FieldType.number,
+        values: [],
+        config: {
+          decimals: 2,
+        },
+      },
+      {
+        name: 'Progress',
+        type: FieldType.number,
+        values: [],
+        config: {
+          unit: 'percent',
+          min: 0,
+          max: 100,
+          custom: {
+            width: 150,
+          },
+        },
+      },
+    ],
+  });
+
+  for (const field of data.fields) {
+    field.config = merge(field.config, config[field.name]);
+  }
+
+  footerData.appendRow(['Total', undefined, undefined, valueSum, 100]);
+
+  return prepDataForStorybook([footerData], theme)[0];
+}
+
 const defaultThresholds: ThresholdsConfig = {
   steps: [
     {
@@ -152,6 +207,18 @@ export const ColoredCells: Story = (args) => {
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
       <Table data={data} height={args.height} width={args.width} {...args} />
+    </div>
+  );
+};
+
+export const Footer: Story = (args) => {
+  const theme = useTheme2();
+  const data = buildData(theme, {});
+  const footer = buildFooterData(data, theme, {});
+
+  return (
+    <div className="panel-container" style={{ width: 'auto', height: 'unset' }}>
+      <Table data={data} height={args.height} width={args.width} footers={footer} {...args} />
     </div>
   );
 };

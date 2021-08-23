@@ -21,7 +21,6 @@ import {
   TableFilterActionCallback,
   TableSortByActionCallback,
   TableSortByFieldState,
-  FooterInfo,
 } from './types';
 import { getTableStyles, TableStyles } from './styles';
 import { Icon } from '../Icon/Icon';
@@ -47,7 +46,7 @@ export interface Props {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
-  footers?: FooterInfo[];
+  footers?: DataFrame;
 }
 
 interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}>, UseFiltersState<{}> {}
@@ -143,23 +142,12 @@ export const Table: FC<Props> = memo((props: Props) => {
     return Array(data.length).fill(0);
   }, [data]);
 
-  const memoizedFooters = useMemo(() => {
-    if (footers === undefined) {
-      return undefined;
-    }
-    const footerMap = new Map<string, any>();
-    for (const footer of footers) {
-      footerMap.set(footer.field, footer.value());
-    }
-    return footerMap;
-  }, [footers]);
-
   // React-table column definitions
-  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth, memoizedFooters), [
+  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth, footers), [
     data,
     width,
     columnMinWidth,
-    memoizedFooters,
+    footers,
   ]);
 
   // Internal react table state reducer
@@ -253,7 +241,7 @@ export const Table: FC<Props> = memo((props: Props) => {
               No data
             </div>
           )}
-          {memoizedFooters !== undefined && (
+          {footers !== undefined && (
             <div
               style={{
                 position: 'absolute',
@@ -268,7 +256,7 @@ export const Table: FC<Props> = memo((props: Props) => {
                     className={tableStyles.tfoot}
                     {...footerGroupProps}
                     key={key}
-                    aria-label={e2eSelectorsTable.header}
+                    aria-label={e2eSelectorsTable.footer}
                   >
                     {footerGroup.headers.map((column: ColumnInstance, index: number) =>
                       renderFooterCell(column, tableStyles)

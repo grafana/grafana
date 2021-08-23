@@ -94,6 +94,10 @@ function getTable(): HTMLElement {
   return screen.getByRole('table');
 }
 
+function getFooter(): HTMLElement {
+  return screen.getByLabelText('table footer');
+}
+
 function getColumnHeader(name: string | RegExp): HTMLElement {
   return within(getTable()).getByRole('columnheader', { name });
 }
@@ -139,6 +143,14 @@ describe('Table', () => {
       expect(rowTwoLink()).toHaveAttribute('href', '11');
       expect(rowThreeLink()).toHaveTextContent('12');
       expect(rowThreeLink()).toHaveAttribute('href', '12');
+    });
+  });
+
+  describe('when mounted with footer', () => {
+    it('then footer should be displayed', () => {
+      getTestContext({ footers: getDefaultDataFrame() });
+      expect(getTable()).toBeInTheDocument();
+      expect(getFooter()).toBeInTheDocument();
     });
   });
 
