@@ -6,8 +6,10 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/gobwas/glob"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
+
+var logger = log.New("accesscontrol.evaluator")
 
 type Evaluator interface {
 	// Evaluate permissions that are grouped by action
@@ -62,15 +64,29 @@ func (p permissionEvaluator) Evaluate(permissions map[string]map[string]struct{}
 }
 
 func match(scope, target string) (bool, error) {
-	// TODO: replace glob parser with a simpler parser that handles only prefixes and asterisk matching.
-	rule, err := glob.Compile(scope, ':', '/')
-	if err != nil {
-		return false, err
+	if scope == "" {
+		return false, nil
 	}
-	if rule.Match(target) {
-		return true, nil
+
+	if !ValidateScope(scope) {
+		logger.Error(
+			"invalid scope",
+			"scope", scope,
+			"reason", "scopes should not contain meta-characters like * or ?, except in the last position",
+		)
+		return false, nil
 	}
-	return false, nil
+
+	prefix, last := scope[:len(scope)-1], scope[len(scope)-1]
+	//Prefix match
+	if last == '*' {
+		if strings.HasPrefix(target, prefix) {
+			logger.Debug("matched scope", "user scope", scope, "target scope", target)
+			return true, nil
+		}
+	}
+
+	return scope == target, nil
 }
 
 func (p permissionEvaluator) Inject(params map[string]string) (Evaluator, error) {

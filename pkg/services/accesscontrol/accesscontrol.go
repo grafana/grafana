@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"context"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -65,4 +66,16 @@ func GroupScopesByAction(permissions []*Permission) map[string]map[string]struct
 		}
 	}
 	return m
+}
+
+func ValidateScope(scope string) bool {
+	prefix, last := scope[:len(scope)-1], scope[len(scope)-1]
+	// verify that last char is either ':' or '/' if last character of scope is '*'
+	if len(prefix) > 0 && last == '*' {
+		lastChar := prefix[len(prefix)-1]
+		if lastChar != ':' && lastChar != '/' {
+			return false
+		}
+	}
+	return !strings.ContainsAny(prefix, "*?")
 }

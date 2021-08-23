@@ -97,7 +97,7 @@ const (
 	ScopeUsersAll = "users:*"
 
 	// Settings scope
-	ScopeSettingsAll = "settings:**"
+	ScopeSettingsAll = "settings:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

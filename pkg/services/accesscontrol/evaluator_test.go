@@ -137,7 +137,7 @@ func TestAll_Evaluate(t *testing.T) {
 				EvalPermission("settings:write", Scope("settings", "*")),
 			),
 			permissions: map[string]map[string]struct{}{
-				"settings:write": {"settings:**": struct{}{}},
+				"settings:write": {"settings:*": struct{}{}},
 			},
 			expected: true,
 		},
@@ -148,8 +148,8 @@ func TestAll_Evaluate(t *testing.T) {
 				EvalPermission("settings:read", Scope("settings", "auth.saml", "*")),
 			),
 			permissions: map[string]map[string]struct{}{
-				"settings:write": {"settings:**": struct{}{}},
-				"settings:read":  {"settings:**": struct{}{}},
+				"settings:write": {"settings:*": struct{}{}},
+				"settings:read":  {"settings:*": struct{}{}},
 			},
 			expected: true,
 		},
@@ -161,8 +161,8 @@ func TestAll_Evaluate(t *testing.T) {
 				EvalPermission("report:read", Scope("reports", "*")),
 			),
 			permissions: map[string]map[string]struct{}{
-				"settings:write": {"settings:**": struct{}{}},
-				"settings:read":  {"settings:**": struct{}{}},
+				"settings:write": {"settings:*": struct{}{}},
+				"settings:read":  {"settings:*": struct{}{}},
 				"report:read":    {"report:1": struct{}{}},
 			},
 			expected: false,
@@ -239,7 +239,7 @@ func TestAny_Evaluate(t *testing.T) {
 				EvalPermission("settings:write", Scope("settings", "*")),
 			),
 			permissions: map[string]map[string]struct{}{
-				"settings:write": {"settings:**": struct{}{}},
+				"settings:write": {"settings:*": struct{}{}},
 			},
 			expected: true,
 		},
@@ -251,7 +251,7 @@ func TestAny_Evaluate(t *testing.T) {
 				EvalPermission("report:write", Scope("reports", "10")),
 			),
 			permissions: map[string]map[string]struct{}{
-				"settings:write": {"settings:**": struct{}{}},
+				"settings:write": {"settings:*": struct{}{}},
 			},
 			expected: true,
 		},
@@ -351,7 +351,7 @@ func TestEval(t *testing.T) {
 			),
 			expected: true,
 			permissions: map[string]map[string]struct{}{
-				"settings:write": {"settings:**": struct{}{}},
+				"settings:write": {"settings:*": struct{}{}},
 			},
 		},
 		{
