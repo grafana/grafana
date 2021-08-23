@@ -23,50 +23,50 @@ scope
 
 The following list contains fine-grained access control actions.
 
-| Actions                    | Applicable scopes                                                                        | Descriptions                                                                    |
-| -------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `roles:list`               | `roles:*`                                                                                | List available roles without permissions.                                       |
-| `roles:read`               | `roles:*`                                                                                | Read a specific role with it's permissions.                                     |
-| `roles:write`              | `permissions:delegate`                                                                   | Create or update a custom role.                                                 |
-| `roles:delete`             | `permissions:delegate`                                                                   | Delete a custom role.                                                           |
-| `roles.builtin:list`       | `roles:*`                                                                                | List built-in role assignments.                                                 |
-| `roles.builtin:add`        | `permissions:delegate`                                                                   | Create a built-in role assignment.                                              |
-| `roles.builtin:remove`     | `permissions:delegate`                                                                   | Delete a built-in role assignment.                                              |
-| `reports.admin:create`     | `reports:*`                                                                              | Create reports.                                                                 |
-| `reports.admin:write`      | `reports:*`                                                                              | Update reports.                                                                 |
-| `reports:delete`           | `reports:*`                                                                              | Delete reports.                                                                 |
-| `reports:read`             | `reports:*`                                                                              | List all available reports or get a specific report.                            |
-| `reports:send`             | `reports:*`                                                                              | Send a report email.                                                            |
-| `reports.settings:write`   | n/a                                                                                      | Update report settings.                                                         |
-| `reports.settings:read`    | n/a                                                                                      | Read report settings.                                                           |
-| `provisioning:reload`      | `services:accesscontrol`                                                                 | Reload provisioning files.                                                      |
-| `users:read`               | `global:users:*`                                                                         | Read or search user profiles.                                                   |
-| `users:write`              | `global:users:*`                                                                         | Update a user’s profile.                                                        |
-| `users.teams:read`         | `global:users:*`                                                                         | Read a user’s teams.                                                            |
-| `users.authtoken:list`     | `global:users:*`                                                                         | List authentication tokens that are assigned to a user.                         |
-| `users.authtoken:update`   | `global:users:*`                                                                         | Update authentication tokens that are assigned to a user.                       |
-| `users.password:update`    | `global:users:*`                                                                         | Update a user’s password.                                                       |
-| `users:delete`             | `global:users:*`                                                                         | Delete a user.                                                                  |
-| `users:create`             | n/a                                                                                      | Create a user.                                                                  |
-| `users:enable`             | `global:users:*`                                                                         | Enable a user.                                                                  |
-| `users:disable`            | `global:users:*`                                                                         | Disable a user.                                                                 |
-| `users.permissions:update` | `global:users:*`                                                                         | Update a user’s organization-level permissions.                                 |
-| `users:logout`             | `global:users:*`                                                                         | Log out a user.                                                                 |
-| `users.quotas:list`        | `global:users:*`                                                                         | List a user’s quotas.                                                           |
-| `users.quotas:update`      | `global:users:*`                                                                         | Update a user’s quotas.                                                         |
-| `org.users.read`           | `users:*`                                                                                | Get user profiles within an organization.                                       |
-| `org.users.add`            | `users:*`                                                                                | Add a user to an organization.                                                  |
-| `org.users.remove`         | `users:*`                                                                                | Remove a user from an organization.                                             |
-| `org.users.role:update`    | `users:*`                                                                                | Update the organization role (`Viewer`, `Editor`, `Admin`) for an organization. |
-| `ldap.user:read`           | n/a                                                                                      | Get a user via LDAP.                                                            |
-| `ldap.user:sync`           | n/a                                                                                      | Sync a user via LDAP.                                                           |
-| `ldap.status:read`         | n/a                                                                                      | Verify the LDAP servers’ availability.                                          |
-| `ldap.config:reload`       | n/a                                                                                      | Reload the LDAP configuration.                                                  |
-| `status:accesscontrol`     | `services:accesscontrol`                                                                 | Get access-control enabled status.                                              |
-| `settings:read`            | `settings:**`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Read settings                                                                   |
-| `settings:write`           | `settings:**`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Update settings                                                                 |
-| `server.stats:read`        | n/a                                                                                      | Read server stats                                                               |
-| `datasources:explore`      | n/a                                                                                      | Enable explore                                                                  |
+| Actions                    | Applicable scopes                                                                       | Descriptions                                                                    |
+| -------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `roles:list`               | `roles:*`                                                                               | List available roles without permissions.                                       |
+| `roles:read`               | `roles:*`                                                                               | Read a specific role with it's permissions.                                     |
+| `roles:write`              | `permissions:delegate`                                                                  | Create or update a custom role.                                                 |
+| `roles:delete`             | `permissions:delegate`                                                                  | Delete a custom role.                                                           |
+| `roles.builtin:list`       | `roles:*`                                                                               | List built-in role assignments.                                                 |
+| `roles.builtin:add`        | `permissions:delegate`                                                                  | Create a built-in role assignment.                                              |
+| `roles.builtin:remove`     | `permissions:delegate`                                                                  | Delete a built-in role assignment.                                              |
+| `reports.admin:create`     | `reports:*`                                                                             | Create reports.                                                                 |
+| `reports.admin:write`      | `reports:*`                                                                             | Update reports.                                                                 |
+| `reports:delete`           | `reports:*`                                                                             | Delete reports.                                                                 |
+| `reports:read`             | `reports:*`                                                                             | List all available reports or get a specific report.                            |
+| `reports:send`             | `reports:*`                                                                             | Send a report email.                                                            |
+| `reports.settings:write`   | n/a                                                                                     | Update report settings.                                                         |
+| `reports.settings:read`    | n/a                                                                                     | Read report settings.                                                           |
+| `provisioning:reload`      | `services:accesscontrol`                                                                | Reload provisioning files.                                                      |
+| `users:read`               | `global:users:*`                                                                        | Read or search user profiles.                                                   |
+| `users:write`              | `global:users:*`                                                                        | Update a user’s profile.                                                        |
+| `users.teams:read`         | `global:users:*`                                                                        | Read a user’s teams.                                                            |
+| `users.authtoken:list`     | `global:users:*`                                                                        | List authentication tokens that are assigned to a user.                         |
+| `users.authtoken:update`   | `global:users:*`                                                                        | Update authentication tokens that are assigned to a user.                       |
+| `users.password:update`    | `global:users:*`                                                                        | Update a user’s password.                                                       |
+| `users:delete`             | `global:users:*`                                                                        | Delete a user.                                                                  |
+| `users:create`             | n/a                                                                                     | Create a user.                                                                  |
+| `users:enable`             | `global:users:*`                                                                        | Enable a user.                                                                  |
+| `users:disable`            | `global:users:*`                                                                        | Disable a user.                                                                 |
+| `users.permissions:update` | `global:users:*`                                                                        | Update a user’s organization-level permissions.                                 |
+| `users:logout`             | `global:users:*`                                                                        | Log out a user.                                                                 |
+| `users.quotas:list`        | `global:users:*`                                                                        | List a user’s quotas.                                                           |
+| `users.quotas:update`      | `global:users:*`                                                                        | Update a user’s quotas.                                                         |
+| `org.users.read`           | `users:*`                                                                               | Get user profiles within an organization.                                       |
+| `org.users.add`            | `users:*`                                                                               | Add a user to an organization.                                                  |
+| `org.users.remove`         | `users:*`                                                                               | Remove a user from an organization.                                             |
+| `org.users.role:update`    | `users:*`                                                                               | Update the organization role (`Viewer`, `Editor`, `Admin`) for an organization. |
+| `ldap.user:read`           | n/a                                                                                     | Get a user via LDAP.                                                            |
+| `ldap.user:sync`           | n/a                                                                                     | Sync a user via LDAP.                                                           |
+| `ldap.status:read`         | n/a                                                                                     | Verify the LDAP servers’ availability.                                          |
+| `ldap.config:reload`       | n/a                                                                                     | Reload the LDAP configuration.                                                  |
+| `status:accesscontrol`     | `services:accesscontrol`                                                                | Get access-control enabled status.                                              |
+| `settings:read`            | `settings:*`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Read settings                                                                   |
+| `settings:write`           | `settings:*`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Update settings                                                                 |
+| `server.stats:read`        | n/a                                                                                     | Read server stats                                                               |
+| `datasources:explore`      | n/a                                                                                     | Enable explore                                                                  |
 
 ## Scope definitions
 
@@ -80,4 +80,4 @@ The following list contains fine-grained access control scopes.
 | `services:accesscontrol` | Restrict an action to target only the fine-grained access control service. For example, you can use this in conjunction with the `provisioning:reload` or the `status:accesscontrol` actions.                                                                  |
 | `global:users:*`         | Restrict an action to a set of global users.                                                                                                                                                                                                                   |
 | `users:*`                | Restrict an action to a set of users from an organization.                                                                                                                                                                                                     |
-| `settings:**`            | Restrict an action to a subset of settings. For example, `settings:**` matches all settings, `settings:auth.saml:*` matches all SAML settings, and `settings:auth.saml:enabled` matches the enable property on the SAML settings.                              |
+| `settings:*`             | Restrict an action to a subset of settings. For example, `settings:*` matches all settings, `settings:auth.saml:*` matches all SAML settings, and `settings:auth.saml:enabled` matches the enable property on the SAML settings.                              |
