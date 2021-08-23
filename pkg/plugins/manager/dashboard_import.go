@@ -22,8 +22,8 @@ func (e DashboardInputMissingError) Error() string {
 }
 
 func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
-	overwrite bool, inputs []plugins.ImportDashboardInput, user *models.SignedInUser,
-	requestHandler plugins.DataRequestHandler) (plugins.PluginDashboardInfoDTO, *models.Dashboard, error) {
+	overwrite bool, inputs []plugins.ImportDashboardInput, user *models.SignedInUser) (plugins.PluginDashboardInfoDTO,
+	*models.Dashboard, error) {
 	var dashboard *models.Dashboard
 	if pluginID != "" {
 		var err error

@@ -33,6 +33,7 @@ type PluginV2 struct {
 
 	Client   backendplugin.Plugin
 	Renderer pluginextensionv2.RendererPlugin
+	log      log.Logger
 }
 
 // JSONData represents the plugin's plugin.json
@@ -82,7 +83,11 @@ func (p *PluginV2) PluginID() string {
 }
 
 func (p *PluginV2) Logger() log.Logger {
-	return p.Client.Logger()
+	return p.log
+}
+
+func (p *PluginV2) SetLogger(l log.Logger) {
+	p.log = l
 }
 
 func (p *PluginV2) Start(ctx context.Context) error {
@@ -95,6 +100,9 @@ func (p *PluginV2) Start(ctx context.Context) error {
 }
 
 func (p *PluginV2) Stop(ctx context.Context) error {
+	if p.Client == nil {
+		return nil
+	}
 	err := p.Client.Stop(ctx)
 	if err != nil {
 		return err
@@ -185,6 +193,10 @@ func (p *PluginV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 		return backendplugin.ErrPluginUnavailable
 	}
 	return pluginClient.RunStream(ctx, req, sender)
+}
+
+func (p *PluginV2) RegisterClient(c backendplugin.Plugin) {
+	p.Client = c
 }
 
 func (p *PluginV2) getPluginClient() (PluginClient, bool) {

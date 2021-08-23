@@ -92,6 +92,9 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 		i.log.Info(fmt.Sprintf("Successfully added %s plugin", p.Class), "pluginID", p.ID)
 	}
 
+	logger := i.log.New("pluginID", p.ID)
+	p.SetLogger(logger)
+
 	if p.Backend {
 		var backendFactory backendplugin.PluginFactoryFunc
 		if p.IsRenderer() {
@@ -108,10 +111,11 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 		}
 
 		env := i.getPluginEnvVars(p)
-		if backendClient, err := backendFactory(p.ID, i.log.New("pluginID", p.ID), env); err != nil {
+
+		if backendClient, err := backendFactory(p.ID, logger, env); err != nil {
 			return err
 		} else {
-			p.Client = backendClient
+			p.RegisterClient(backendClient)
 		}
 	}
 

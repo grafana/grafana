@@ -24,7 +24,7 @@ func TestDashboardImport(t *testing.T) {
 		info, dash, err := pm.ImportDashboard("test-app", "dashboards/connections.json", 1, 0, nil, false,
 			[]plugins.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "graphite"},
-			}, &models.SignedInUser{UserId: 1, OrgRole: models.ROLE_ADMIN}, nil)
+			}, &models.SignedInUser{UserId: 1, OrgRole: models.ROLE_ADMIN})
 		require.NoError(t, err)
 		require.NotNil(t, info)
 		require.NotNil(t, dash)
