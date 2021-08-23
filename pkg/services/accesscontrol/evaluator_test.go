@@ -355,7 +355,7 @@ func TestEval(t *testing.T) {
 			},
 		},
 		{
-			desc: "should return true when first is false and allEvaluator is true",
+			desc: "should return true when first is false and all is true",
 			evaluator: EvalAny(
 				EvalPermission("settings:write", Scope("settings", "*")),
 				EvalAll(
