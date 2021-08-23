@@ -62,6 +62,14 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       serviceMapDatasourceUid: serviceMapDsUid,
       serviceMapDatasource: serviceMapDs as PrometheusDatasource,
     });
+
+    // Set initial query type to ensure traceID field appears
+    if (!this.props.query.queryType) {
+      this.props.onChange({
+        ...this.props.query,
+        queryType: DEFAULT_QUERY_TYPE,
+      });
+    }
   }
 
   onChangeLinkedQuery = (value: LokiQuery) => {
@@ -97,7 +105,13 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     }
 
     if (logsDatasourceUid) {
-      queryTypeOptions.push({ value: 'search', label: 'Loki Search' });
+      if (!config.featureToggles.tempoSearch) {
+        // Place at beginning as Search if no native search
+        queryTypeOptions.unshift({ value: 'search', label: 'Search' });
+      } else {
+        // Place at end as Loki Search if native search is enabled
+        queryTypeOptions.push({ value: 'search', label: 'Loki Search' });
+      }
     }
 
     return (
@@ -106,7 +120,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
           <InlineField label="Query type">
             <RadioButtonGroup<TempoQueryType>
               options={queryTypeOptions}
-              value={query.queryType || DEFAULT_QUERY_TYPE}
+              value={query.queryType}
               onChange={(v) =>
                 onChange({
                   ...query,
