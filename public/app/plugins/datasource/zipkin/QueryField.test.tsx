@@ -1,6 +1,6 @@
-import { ButtonCascader, CascaderOption, QueryField } from '@grafana/ui';
+import { CascaderOption } from '@grafana/ui';
 import { act, renderHook } from '@testing-library/react-hooks';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { ZipkinDatasource } from './datasource';
 import { ZipkinQueryField, useLoadOptions, useServices } from './QueryField';
@@ -9,7 +9,7 @@ import { ZipkinQuery } from './types';
 describe('QueryField', () => {
   it('renders properly', () => {
     const ds = {} as ZipkinDatasource;
-    const wrapper = shallow(
+    render(
       <ZipkinQueryField
         history={[]}
         datasource={ds}
@@ -19,9 +19,10 @@ describe('QueryField', () => {
       />
     );
 
-    expect(wrapper.find(ButtonCascader).length).toBe(1);
+    /*expect(wrapper.find(ButtonCascader).length).toBe(1);
     expect(wrapper.find(QueryField).length).toBe(1);
-    expect(wrapper.find(QueryField).prop('query')).toBe('1234');
+    expect(wrapper.find(QueryField).prop('query')).toBe('1234');*/
+    expect(screen.getByText(/1234/i)).toBeInTheDocument();
   });
 });
 
