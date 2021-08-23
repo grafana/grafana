@@ -46,10 +46,6 @@ func New(allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc, li
 	}
 }
 
-func (l *Loader) Init() error {
-	return nil
-}
-
 func (l *Loader) Load(path string) (*plugins.PluginV2, error) {
 	pluginJSONPaths, err := l.pluginFinder.Find(path)
 	if err != nil {

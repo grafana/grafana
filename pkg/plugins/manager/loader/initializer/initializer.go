@@ -23,22 +23,18 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var logger = log.New("plugin.initializer")
+
 type Initializer struct {
 	cfg     *setting.Cfg
 	license models.Licensing
-	log     log.Logger
 }
 
 func New(cfg *setting.Cfg, license models.Licensing) Initializer {
 	return Initializer{
 		cfg:     cfg,
 		license: license,
-		log:     log.New("plugin.initializer"),
 	}
-}
-
-func (i *Initializer) Init() error {
-	return nil
 }
 
 func (i *Initializer) Initialize(p *plugins.PluginV2) error {
@@ -85,11 +81,11 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 	}
 
 	if !p.IsCorePlugin() {
-		i.log.Info(fmt.Sprintf("Successfully added %s plugin", p.Class), "pluginID", p.ID)
+		logger.Info(fmt.Sprintf("Successfully added %s plugin", p.Class), "pluginID", p.ID)
 	}
 
-	logger := i.log.New("pluginID", p.ID)
-	p.SetLogger(logger)
+	pluginLog := logger.New("pluginID", p.ID)
+	p.SetLogger(pluginLog)
 
 	if p.Backend {
 		var backendFactory backendplugin.PluginFactoryFunc
@@ -108,7 +104,7 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 
 		env := i.getPluginEnvVars(p)
 
-		if backendClient, err := backendFactory(p.ID, logger, env); err != nil {
+		if backendClient, err := backendFactory(p.ID, pluginLog, env); err != nil {
 			return err
 		} else {
 			p.RegisterClient(backendClient)
@@ -133,7 +129,7 @@ func (i *Initializer) InitializeWithFactory(p *plugins.PluginV2, factory backend
 				return err
 			}
 		} else {
-			i.log.Warn("Could not initialize core plugin process", "pluginID", p.ID)
+			logger.Warn("Could not initialize core plugin process", "pluginID", p.ID)
 		}
 	}
 

@@ -12,9 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var (
-	logger = log.New("plugin.finder")
-)
+var logger = log.New("plugin.finder")
 
 type Finder struct {
 	cfg *setting.Cfg
