@@ -6,6 +6,7 @@ import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dime
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
 import { isString } from 'lodash';
+import IconModal from './IconModal';
 
 interface IconConfig {
   path?: ResourceDimensionConfig;
@@ -27,8 +28,9 @@ const svgStrokePathClass = css`
   }
 `;
 
-export function IconDisplay(props: CanvasElementProps) {
-  const { width, height, data } = props;
+export function IconDisplay(props: CanvasElementProps<IconConfig, IconData>) {
+  const { width, height, data, config } = props;
+  const iconRoot = (window as any).__grafana_public_path__ + 'img/icons/unicons/';
   if (!data?.path) {
     return null;
   }
@@ -41,7 +43,7 @@ export function IconDisplay(props: CanvasElementProps) {
 
   return (
     <SVG
-      src={data.path}
+      src={iconRoot + config.path?.fixed}
       width={width}
       height={height}
       style={svgStyle}
@@ -106,10 +108,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         id: 'iconSelector',
         path: 'config.path',
         name: 'SVG Path',
-        editor: ResourceDimensionEditor,
-        settings: {
-          resourceType: 'icon',
-        },
+        editor: IconModal,
       })
       .addCustomEditor({
         id: 'config.fill',
