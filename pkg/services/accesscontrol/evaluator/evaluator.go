@@ -2,7 +2,6 @@ package evaluator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -35,50 +34,52 @@ func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.
 	return res, err
 }
 
-func ValidateScope(scope string) bool {
-	prefix := scope[:len(scope)-1]
-	return !strings.ContainsAny(prefix, "*?")
-}
-
 func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, error) {
 	if len(targetScopes) == 0 {
 		return true, nil
 	}
 
 	for _, s := range targetScopes {
-
 		for dbScope := range dbScopes {
 			if dbScope == "" {
-				//Log an error?
-			} else {
-				prefix := dbScope[:len(dbScope)-1]
-				lastChar := dbScope[len(dbScope)-1]
-				if !ValidateScope(dbScope) {
-					msg := "Invalid scope"
-					reason := fmt.Sprintf("%v should not contain meta-characters like * or ?, except in the last position", dbScope)
-					logger.Error(msg, "reason", reason, "scope", dbScope)
-					return false, errors.New(msg)
-				}
+				continue
+			}
 
-				msg := "Access control"
-				reason := fmt.Sprintf("matched request scope %v against resource scope %v", dbScope, s)
-				if lastChar == '*' { //Prefix match
-					match := strings.HasPrefix(s, prefix)
-					if match {
-						logger.Debug(msg, "reason", reason, "request scope", dbScope, "resource scope", s)
-						return true, nil
-					}
-				} else {
-					if s == dbScope { //Exact match
-						logger.Debug(msg, "reason", reason, "request scope", dbScope, "resource scope", s)
-						return true, nil
-					}
+			if !accesscontrol.ValidateScope(dbScope) {
+				logger.Error(
+					"invalid scope",
+					"reason", fmt.Sprintf("%v should not contain meta-characters like * or ?, except in the last position", dbScope),
+					"scope", dbScope,
+				)
+				continue
+			}
+
+			prefix, last := dbScope[:len(dbScope)-1], dbScope[len(dbScope)-1]
+			//Prefix match
+			if last == '*' {
+				if strings.HasPrefix(s, prefix) {
+					logger.Debug(
+						"matched scope",
+						"reason", fmt.Sprintf("matched request scope %v against resource scope %v", dbScope, s),
+						"request scope", dbScope,
+						"resource scope", s,
+					)
+					return true, nil
 				}
+			}
+
+			if s == dbScope {
+				return true, nil
 			}
 		}
 	}
 
-	logger.Debug("Access control: failed!", "reason", fmt.Sprintf("Could not match resource scopes  %v with request scopes %v", dbScopes, targetScopes), "request scope", dbScopes, "resource scope", targetScopes)
+	logger.Debug(
+		"access control failed",
+		"request scope", dbScopes,
+		"resource scope", targetScopes,
+		"reason", fmt.Sprintf("Could not match resource scopes  %v with request scopes %v", dbScopes, targetScopes),
+	)
 	return false, nil
 }
 

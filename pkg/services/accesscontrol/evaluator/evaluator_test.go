@@ -93,7 +93,6 @@ func TestEvaluatePermissions(t *testing.T) {
 			Name: "No match found",
 			HasScopes: map[string]struct{}{
 				"teams:*":              {},
-				"permissions:*":        {},
 				"users:*":              {},
 				"permissions:delegate": {},
 			},
