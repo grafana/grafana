@@ -33,6 +33,14 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
         linkedDatasource,
       });
     }
+
+    // Set initial query type to ensure traceID field appears
+    if (!this.props.query.queryType) {
+      this.props.onChange({
+        ...this.props.query,
+        queryType: DEFAULT_QUERY_TYPE,
+      });
+    }
   }
 
   onChangeLinkedQuery = (value: DataQuery) => {
@@ -60,7 +68,7 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
                 { value: 'search', label: 'Search' },
                 { value: 'traceId', label: 'TraceID' },
               ]}
-              value={query.queryType || DEFAULT_QUERY_TYPE}
+              value={query.queryType}
               onChange={(v) =>
                 onChange({
                   ...query,
