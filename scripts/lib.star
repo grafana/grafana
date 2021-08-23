@@ -449,7 +449,7 @@ def test_backend_step(edition, tries=None):
         'name': 'test-backend' + enterprise2_sfx(edition),
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'lint-backend',
         ],
         'commands': [
             # First make sure that there are no tests with FocusConvey
@@ -466,7 +466,7 @@ def test_frontend_step():
         'name': 'test-frontend',
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'lint-backend',
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',

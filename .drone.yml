@@ -58,7 +58,7 @@ steps:
   - ./bin/grabpl test-backend --edition oss
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -67,7 +67,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -306,7 +306,7 @@ steps:
   - ./bin/grabpl test-backend --edition oss
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -315,7 +315,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -774,7 +774,7 @@ steps:
   - ./bin/grabpl test-backend --edition oss --tries 5
   - ./bin/grabpl integration-tests --edition oss --tries 5
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -783,7 +783,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -1146,7 +1146,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise --tries 5
   - ./bin/grabpl integration-tests --edition enterprise --tries 5
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -1155,7 +1155,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -1207,7 +1207,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise2 --tries 5
   - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -1723,7 +1723,7 @@ steps:
   - ./bin/grabpl test-backend --edition oss --tries 5
   - ./bin/grabpl integration-tests --edition oss --tries 5
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -1732,7 +1732,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -2084,7 +2084,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise --tries 5
   - ./bin/grabpl integration-tests --edition enterprise --tries 5
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -2093,7 +2093,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -2145,7 +2145,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise2 --tries 5
   - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -2654,7 +2654,7 @@ steps:
   - ./bin/grabpl test-backend --edition oss
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -2663,7 +2663,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -2986,7 +2986,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -2995,7 +2995,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -3044,7 +3044,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise2
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -3487,6 +3487,6 @@ get:
 
 ---
 kind: signature
-hmac: dc613492d7c86c2fed120789bab11fbacf66dd23f70dcbc1d3737a1012cfbf71
+hmac: 99bd0f841fc2fce8af61bbe8815874c8b1804ce488cb94ba6b42e9816f1a4daa
 
 ...
