@@ -79,11 +79,16 @@ export class DataSourcesListPage extends PureComponent<Props> {
       disabled: !canCreateDataSource,
     };
 
+    const emptyList = {
+      ...emptyListModel,
+      buttonDisabled: !canCreateDataSource,
+    };
+
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
           <>
-            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyListModel} />}
+            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyList} />}
             {hasFetched &&
               dataSourcesCount > 0 && [
                 <PageActionBar
