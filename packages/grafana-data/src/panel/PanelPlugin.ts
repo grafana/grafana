@@ -12,7 +12,7 @@ import {
 } from '../types';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { ComponentClass, ComponentType } from 'react';
-import { set } from 'lodash';
+import { set, isEqual } from 'lodash';
 import { deprecationWarning } from '../utils';
 import { FieldConfigOptionsRegistry } from '../field';
 import { createFieldConfigRegistry } from './registryFactories';
@@ -89,6 +89,7 @@ export class PanelPlugin<
   TFieldConfigOptions extends object = any
 > extends GrafanaPlugin<PanelPluginMeta> {
   private _defaults?: TOptions;
+  private _defaultsFromOptions?: TOptions;
   private _fieldConfigDefaults: FieldConfigSource<TFieldConfigOptions> = {
     defaults: {},
     overrides: [],
@@ -122,21 +123,22 @@ export class PanelPlugin<
   }
 
   get defaults() {
-    let result = this._defaults || {};
+    if (!this._defaultsFromOptions) {
+      const result = this._defaults || {};
+      if (!this._defaults) {
+        const editors = this.getOptionsEditors(undefined as any);
 
-    if (!this._defaults) {
-      const editors = this.getOptionsEditors({} as TOptions);
+        if (!editors || editors.length === 0) {
+          return null;
+        }
 
-      if (!editors || editors.length === 0) {
-        return null;
+        for (const editor of editors) {
+          set(result, editor.id, editor.defaultValue);
+        }
       }
-
-      for (const editor of editors) {
-        set(result, editor.id, editor.defaultValue);
-      }
+      this._defaultsFromOptions = result as TOptions;
     }
-
-    return result;
+    return this._defaultsFromOptions;
   }
 
   get fieldConfigDefaults(): FieldConfigSource<TFieldConfigOptions> {
@@ -176,10 +178,39 @@ export class PanelPlugin<
     return this._fieldConfigRegistry;
   }
 
+  private _optionDependencies?: Array<keyof TOptions>;
+  private _lastOptionsItems?: PanelOptionsEditorItem[];
+  private _lastOptions?: TOptions;
+
+  /**
+   * Returns the editor elements required for the current coptions.
+   */
   getOptionsEditors(current: TOptions): PanelOptionsEditorItem[] {
+    if (current && this._lastOptionsItems && this._lastOptions) {
+      let same = true;
+      if (this._optionDependencies && current !== this._lastOptions) {
+        for (const k of this._optionDependencies) {
+          const a = current[k];
+          const b = this._lastOptions[k];
+          if (!isEqual(a, b)) {
+            same = false;
+            break;
+          }
+        }
+      }
+      if (same) {
+        return this._lastOptionsItems;
+      }
+    }
+
     const builder = new PanelOptionsEditorBuilder<TOptions>();
     if (this.registerOptionEditors) {
       this.registerOptionEditors(builder, current);
+      this._optionDependencies = builder.getDependencies();
+    }
+    if (current) {
+      this._lastOptions = current;
+      return (this._lastOptionsItems = builder.getItems());
     }
     return builder.getItems();
   }

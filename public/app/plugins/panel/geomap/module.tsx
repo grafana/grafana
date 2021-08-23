@@ -1,5 +1,5 @@
+import React from 'react';
 import { PanelPlugin } from '@grafana/data';
-import { BaseLayerEditor } from './editor/BaseLayerEditor';
 import { DataLayersEditor } from './editor/DataLayersEditor';
 import { GeomapPanel } from './GeomapPanel';
 import { MapViewEditor } from './editor/MapViewEditor';
@@ -7,12 +7,18 @@ import { defaultView, GeomapPanelOptions } from './types';
 import { mapPanelChangedHandler } from './migrations';
 import { defaultMarkersConfig } from './layers/data/markersLayer';
 import { defaultBaseLayer, DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
+import { get as lodashGet } from 'lodash';
+import { config } from 'app/core/config';
+import { LayerPickerEditor } from './editor/LayerPickerEditor';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
   .setPanelChangeHandler(mapPanelChangedHandler)
   .useFieldConfig()
   .setPanelOptions((builder, current) => {
+    // When either basemap or layers change re-run this funciton
+    builder.setDependencies(['basemap', 'layers']);
+
     let category = ['Map View'];
     builder.addCustomEditor({
       category,
@@ -32,20 +38,62 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       defaultValue: defaultView.shared,
     });
 
-    const baseLayer = geomapLayerRegistry.getIfExists(current.basemap?.type) ?? defaultBaseLayer;
-    if (baseLayer.registerOptionsUI) {
-      console.log('BASE OPTIONS!');
-      baseLayer.registerOptionsUI(builder as any);
-    }
+    if (config.geomapDisableCustomBaseLayer) {
+      builder.addCustomEditor({
+        category: ['Base Layer'],
+        id: 'basemap',
+        path: 'basemap',
+        name: 'Base Layer',
+        // eslint-disable-next-line react/display-name
+        editor: () => {
+          return <div>The base layer is configured by the server admin.</div>;
+        },
+        defaultValue: DEFAULT_BASEMAP_CONFIG,
+      });
+    } else {
+      // Append the basemap prefix
+      builder.setDefaultConfig({
+        category: ['Base Layer'],
+        beforeChange: ({ path, value }) => {
+          return { path: `basemap.${path}`, value };
+        },
+        valueGetter: (root: any, path: string) => {
+          return lodashGet(root, `basemap.${path}`);
+        },
+      });
 
-    builder.addCustomEditor({
-      category: ['Base Layer'],
-      id: 'basemap',
-      path: 'basemap',
-      name: 'Base Layer',
-      editor: BaseLayerEditor,
-      defaultValue: DEFAULT_BASEMAP_CONFIG,
-    });
+      // Layer type channged
+      builder.addCustomEditor({
+        id: 'basemap-type',
+        path: 'basemap.type',
+        name: 'Layer type',
+        editor: LayerPickerEditor,
+        beforeChange: ({ path, value }) => {
+          const layer = geomapLayerRegistry.getIfExists(value);
+          if (!layer) {
+            console.warn('layer does not exist', value);
+            return {} as any; // noop
+          }
+          return {
+            path: `basemap`,
+            value: {
+              type: layer?.id,
+              config: { ...layer.defaultOptions }, // clone?
+            },
+          };
+        },
+        settings: {
+          onlyBasemaps: true,
+        },
+        defaultValue: DEFAULT_BASEMAP_CONFIG.type,
+      });
+
+      const baseLayer = geomapLayerRegistry.getIfExists(current?.basemap?.type) ?? defaultBaseLayer;
+      if (baseLayer.registerOptionsUI) {
+        baseLayer.registerOptionsUI(builder as any);
+      }
+      builder.setDefaultConfig(undefined);
+    }
 
     builder.addCustomEditor({
       category: ['Data Layer'],

@@ -83,7 +83,7 @@ export abstract class OptionsUIRegistryBuilder<
   private properties: T[] = [];
   private defaultConfig?: Partial<T>;
 
-  setDefaultConfig(cfg: Partial<T>): this {
+  setDefaultConfig(cfg?: Partial<T>): this {
     this.defaultConfig = cfg;
     return this;
   }

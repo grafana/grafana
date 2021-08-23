@@ -137,6 +137,14 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
   StandardEditorProps,
   PanelOptionsEditorItem<TOptions>
 > {
+  private _dependencies?: Array<keyof TOptions>;
+  setDependencies(dependencies?: Array<keyof TOptions>) {
+    this._dependencies = dependencies;
+  }
+  getDependencies() {
+    return this._dependencies;
+  }
+
   addNumberInput<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {
     return this.addCustomEditor({
       ...config,
