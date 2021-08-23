@@ -183,7 +183,7 @@ export class PanelPlugin<
   private _lastOptions?: TOptions;
 
   /**
-   * Returns the editor elements required for the current coptions.
+   * Returns the editor elements required for the current options.
    */
   getOptionsEditors(current?: TOptions): PanelOptionsEditorItem[] {
     if (current && this._lastOptionsItems && this._lastOptions) {
