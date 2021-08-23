@@ -8,6 +8,7 @@ import {
   Percentiles,
 } from '../MetricAggregationsEditor/aggregations';
 import { SelectableValue } from '@grafana/data';
+import { isPipelineAgg } from '../../../query_def';
 
 export const bucketAggregationConfig: BucketsConfiguration = {
   terms: {
@@ -123,6 +124,8 @@ const INCOMPATIBLE_ORDER_BY_AGGS = ['top_metrics'];
 export const createOrderByOptionsFromMetrics = (metrics: MetricAggregation[] = []): OrderByOption[] => {
   const metricOptions = metrics
     .filter((metric) => !INCOMPATIBLE_ORDER_BY_AGGS.includes(metric.type))
+    // pipeline aggregations can't be used for sorting: https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-order
+    .filter((metric) => !isPipelineAgg(metric.type))
     .flatMap((metric) => {
       if (metric.type === 'extended_stats') {
         return createOrderByOptionsForExtendedStats(metric);
