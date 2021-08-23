@@ -34,6 +34,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/auth"
 	_ "github.com/grafana/grafana/pkg/services/auth/jwt"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
+	_ "github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	_ "github.com/grafana/grafana/pkg/services/librarypanels"
 	_ "github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	_ "github.com/grafana/grafana/pkg/services/login/loginservice"
