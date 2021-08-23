@@ -64,10 +64,12 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     });
 
     // Set initial query type to ensure traceID field appears
-    this.props.onChange({
-      ...this.props.query,
-      queryType: DEFAULT_QUERY_TYPE,
-    });
+    if (!this.props.query.queryType) {
+      this.props.onChange({
+        ...this.props.query,
+        queryType: DEFAULT_QUERY_TYPE,
+      });
+    }
   }
 
   onChangeLinkedQuery = (value: LokiQuery) => {
@@ -118,7 +120,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
           <InlineField label="Query type">
             <RadioButtonGroup<TempoQueryType>
               options={queryTypeOptions}
-              value={query.queryType || DEFAULT_QUERY_TYPE}
+              value={query.queryType}
               onChange={(v) =>
                 onChange({
                   ...query,
