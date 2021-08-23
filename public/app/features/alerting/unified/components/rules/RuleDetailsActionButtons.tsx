@@ -51,7 +51,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const buildShareUrl = () => {
     if (isCloudRulesSource(rulesSource)) {
       const ruleUrl = `${encodeURIComponent(rulesSource.name)}/${encodeURIComponent(rule.name)}`;
-      return `${config.appUrl}${config.appSubUrl ? '/' + config.appSubUrl : ''}alerting/${ruleUrl}/find`;
+      return `${config.appUrl}${config.appSubUrl}/alerting/${ruleUrl}/find`;
     }
 
     return window.location.href.split('?')[0];
@@ -142,9 +142,12 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     const sourceName = getRulesSourceName(rulesSource);
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
-    const editURL = urlUtil.renderUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
-      returnTo,
-    });
+    const editURL = urlUtil.renderUrl(
+      `${config.appSubUrl}/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`,
+      {
+        returnTo,
+      }
+    );
 
     if (isViewMode) {
       rightButtons.push(

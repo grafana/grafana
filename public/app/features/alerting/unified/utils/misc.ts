@@ -1,4 +1,5 @@
 import { urlUtil, UrlQueryMap } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { CombinedRule, FilterState, RulesSource } from 'app/types/unified-alerting';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
@@ -10,11 +11,11 @@ export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, retu
   const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
   const paramSource = encodeURIComponent(sourceName);
 
-  return urlUtil.renderUrl(`/alerting/${paramSource}/${paramId}/view`, { returnTo });
+  return urlUtil.renderUrl(`${config.appSubUrl}/alerting/${paramSource}/${paramId}/view`, { returnTo });
 }
 
 export function createExploreLink(dataSourceName: string, query: string) {
-  return urlUtil.renderUrl('explore', {
+  return urlUtil.renderUrl(`${config.appSubUrl}/explore`, {
     left: JSON.stringify([
       'now-1h',
       'now',
