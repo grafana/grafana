@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -70,6 +71,7 @@ func (s *Service) Init() error {
 
 func newInstanceSettings() datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		defaultHttpMethod := http.MethodPost
 		jsonData := map[string]interface{}{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
@@ -82,7 +84,7 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 
 		httpMethod, ok := jsonData["httpMethod"].(string)
 		if !ok {
-			return nil, errors.New("no http method provided")
+			httpMethod = defaultHttpMethod
 		}
 
 		// timeInterval can be a string or can be missing.
