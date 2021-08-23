@@ -140,7 +140,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
     const params: any = {
       from: this._timeOffset(anno.time, options.navigateBefore, true),
-      to: this._timeOffset(anno.time, options.navigateAfter, false),
+      to: this._timeOffset(anno.timeEnd ?? anno.time, options.navigateAfter, false),
     };
 
     if (options.navigateToPanel) {
