@@ -103,7 +103,7 @@ func TestPermission_Inject(t *testing.T) {
 			},
 		},
 		{
-			desc:      "should inject several parameters to one permissionEvaluator",
+			desc:      "should inject several parameters to one permission",
 			expected:  true,
 			evaluator: EvalPermission("reports:read", Scope("reports", Parameter(":reportId"), Parameter(":reportId2"))),
 			params: map[string]string{
