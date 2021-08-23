@@ -495,7 +495,8 @@ def test_a11y_frontend_step(edition, port=3001):
         },
         'failure': 'ignore',
         'commands': [
-            'yarn -s test:accessibility --json > pa11y-ci-results.json',
+            './e2e/wait-for-grafana',
+            'yarn -s test:accessibility --json > pa11y-ci-results.json 1>&2',
         ],
     }
 
