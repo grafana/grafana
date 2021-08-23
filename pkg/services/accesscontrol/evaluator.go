@@ -187,8 +187,8 @@ func (a anyEvaluator) Inject(params map[string]string) (Evaluator, error) {
 
 func (a anyEvaluator) String() string {
 	permissions := make([]string, 0, len(a.anyOf))
-	for _, a := range a.anyOf {
-		permissions = append(permissions, a.String())
+	for _, e := range a.anyOf {
+		permissions = append(permissions, e.String())
 	}
 	return fmt.Sprintf("any(%s)", strings.Join(permissions, " "))
 }
