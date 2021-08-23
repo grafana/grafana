@@ -113,7 +113,7 @@ func TestDataAccess(t *testing.T) {
 			require.Equal(t, 1, len(query.Result))
 
 			require.Equal(t, query.Result[0].Id, created.ID)
-			require.Equal(t, query.Result[0].UID, created.UID)
+			require.Equal(t, query.Result[0].Uid, created.UID)
 			require.Equal(t, int64(10), created.OrgID)
 			require.Equal(t, "nisse", created.Name)
 		})
