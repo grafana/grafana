@@ -15,6 +15,16 @@ function baseMapFilter(layer: MapLayerRegistryItem): boolean {
   return true;
 }
 
+function dataLayerFilter(layer: MapLayerRegistryItem): boolean {
+  if (layer.isBaseMap) {
+    return false;
+  }
+  if (layer.state === PluginState.alpha) {
+    return hasAlphaPanels;
+  }
+  return true;
+}
+
 export interface LayerPickerSettings {
   onlyBasemaps: boolean;
 }
@@ -27,7 +37,7 @@ export const LayerPickerEditor: FC<StandardEditorProps<string, LayerPickerSettin
   // all basemaps
   const layerTypes = useMemo(() => {
     const onlyBasemaps = item.settings?.onlyBasemaps;
-    const filter = onlyBasemaps ? baseMapFilter : undefined;
+    const filter = onlyBasemaps ? baseMapFilter : dataLayerFilter;
 
     return geomapLayerRegistry.selectOptions(
       value // the selected value
@@ -44,18 +54,7 @@ export const LayerPickerEditor: FC<StandardEditorProps<string, LayerPickerSettin
         options={layerTypes.options}
         value={layerTypes.current}
         onChange={(v) => {
-          const layer = geomapLayerRegistry.getIfExists(v.value);
-          if (!layer) {
-            console.warn('layer does not exist', v);
-            return;
-          }
-
           onChange(v.value);
-          // onChange({
-          //   ...options, // keep current options
-          //   type: layer.id,
-          //   config: { ...layer.defaultOptions }, // clone?
-          // });
         }}
       />
     </div>
