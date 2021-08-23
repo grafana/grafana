@@ -38,11 +38,11 @@ def pr_pipelines(edition):
         codespell_step(),
         shellcheck_step(),
         lint_backend_step(edition=edition),
+        test_backend_step(edition=edition),
+        test_frontend_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
-        test_backend_step(edition=edition),
-        test_frontend_step(),
         validate_scuemata(),
     ]
 
@@ -52,8 +52,8 @@ def pr_pipelines(edition):
         steps.append(benchmark_ldap_step())
         services.append(ldap_service())
         steps.extend([
-            test_backend_step(edition=edition2),
             lint_backend_step(edition=edition2),
+            test_backend_step(edition=edition2),
             build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
         ])
 

@@ -48,11 +48,11 @@ def get_steps(edition, is_downstream=False):
         codespell_step(),
         shellcheck_step(),
         lint_backend_step(edition=edition),
+        test_backend_step(edition=edition),
+        test_frontend_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
-        test_backend_step(edition=edition),
-        test_frontend_step(),
         validate_scuemata(),
     ]
 
@@ -61,8 +61,8 @@ def get_steps(edition, is_downstream=False):
         edition2 = 'enterprise2'
         steps.extend([
             lint_backend_step(edition=edition2),
-            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream),
             test_backend_step(edition=edition2),
+            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream),
         ])
 
     # Insert remaining steps
