@@ -185,7 +185,7 @@ export class PanelPlugin<
   /**
    * Returns the editor elements required for the current coptions.
    */
-  getOptionsEditors(current: TOptions): PanelOptionsEditorItem[] {
+  getOptionsEditors(current?: TOptions): PanelOptionsEditorItem[] {
     if (current && this._lastOptionsItems && this._lastOptions) {
       let same = true;
       if (this._optionDependencies && current !== this._lastOptions) {
@@ -205,7 +205,7 @@ export class PanelPlugin<
 
     const builder = new PanelOptionsEditorBuilder<TOptions>();
     if (this.registerOptionEditors) {
-      this.registerOptionEditors(builder, current);
+      this.registerOptionEditors(builder, current ?? ({} as TOptions));
       this._optionDependencies = builder.getDependencies();
     }
     if (current) {

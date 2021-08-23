@@ -70,8 +70,7 @@ describe('PanelPlugin', () => {
         });
       });
 
-      expect(panel.optionEditors).toBeDefined();
-      expect(panel.optionEditors!.list()).toHaveLength(1);
+      expect(panel.getOptionsEditors()).toHaveLength(1);
     });
   });
 
