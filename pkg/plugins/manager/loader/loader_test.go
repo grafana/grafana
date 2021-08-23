@@ -109,7 +109,7 @@ func TestLoader_LoadAll(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := New(nil, tt.cfg)
+			l := New(nil, nil, tt.cfg)
 			got, err := l.LoadAll(tt.pluginPath)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LoadAll() error = %v, wantErr %v", err, tt.wantErr)
@@ -183,7 +183,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			PluginsPath: parentDir,
 		}
 
-		l := New(nil, cfg)
+		l := New(nil, nil, cfg)
 
 		got, err := l.LoadAll("../testdata/nested-plugins")
 		assert.NoError(t, err)
@@ -262,7 +262,7 @@ func TestLoader_readPluginJSON(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := New(nil, nil)
+			l := New(nil, nil, nil)
 			got, err := l.readPluginJSON(tt.pluginPath)
 			if (err != nil) && !tt.failed {
 				t.Errorf("readPluginJSON() error = %v, failed %v", err, tt.failed)

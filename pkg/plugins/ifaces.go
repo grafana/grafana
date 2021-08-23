@@ -100,13 +100,6 @@ type PluginInstallerLogger interface {
 	Errorf(format string, args ...interface{})
 }
 
-type PluginInitializerV2 interface {
-	// Initialize initializes a plugin.
-	Initialize(plugin *PluginV2) error
-	// InitializeWithFactory initializes a plugin and configures its backend process.
-	InitializeWithFactory(p *PluginV2, factory backendplugin.PluginFactoryFunc) error
-}
-
 type CorePluginInitializer interface {
 	// InitializeCorePlugin loads and initializes a core plugin.
 	InitializeCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error

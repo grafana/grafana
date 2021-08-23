@@ -10,8 +10,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -23,8 +26,9 @@ var (
 )
 
 type Loader struct {
-	cfg          *setting.Cfg
-	pluginFinder finder.Finder
+	cfg               *setting.Cfg
+	pluginFinder      finder.Finder
+	pluginInitializer initializer.Initializer
 
 	errs map[string]error
 	// allowUnsignedPluginsCondition changes the policy for allowing unsigned plugins. Signature validation only
@@ -32,11 +36,12 @@ type Loader struct {
 	allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc
 }
 
-func New(allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc, cfg *setting.Cfg) Loader {
+func New(allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc, license models.Licensing, cfg *setting.Cfg) Loader {
 	return Loader{
 		cfg:                           cfg,
-		pluginFinder:                  finder.New(cfg),
 		allowUnsignedPluginsCondition: allowUnsignedPluginsCondition,
+		pluginFinder:                  finder.New(cfg),
+		pluginInitializer:             initializer.New(cfg, license),
 		errs:                          make(map[string]error),
 	}
 }
@@ -48,7 +53,7 @@ func (l *Loader) Init() error {
 func (l *Loader) Load(path string) (*plugins.PluginV2, error) {
 	pluginJSONPaths, err := l.pluginFinder.Find(path)
 	if err != nil {
-		logger.Error("plugin finder encountered an error", "err", err)
+		logger.Error("failed to find plugin", "err", err)
 	}
 
 	loadedPlugins, err := l.loadPlugins(pluginJSONPaths)
@@ -65,6 +70,17 @@ func (l *Loader) LoadAll(path string) ([]*plugins.PluginV2, error) {
 	}
 
 	return l.loadPlugins(pluginJSONPaths)
+}
+
+func (l *Loader) LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*plugins.PluginV2, error) {
+	p, err := l.Load(path)
+	if err != nil {
+		logger.Error("plugin failed to load core plugin", "err", err)
+	}
+
+	err = l.pluginInitializer.InitializeWithFactory(p, factory)
+
+	return p, err
 }
 
 func (l *Loader) loadPlugins(pluginJSONPaths []string) ([]*plugins.PluginV2, error) {
@@ -161,7 +177,10 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string) ([]*plugins.PluginV2, err
 
 	res := make([]*plugins.PluginV2, 0, len(loadedPlugins))
 	for _, p := range loadedPlugins {
-		logger.Debug("Loaded plugin", "pluginID", p.ID)
+		err := l.pluginInitializer.Initialize(p)
+		if err != nil {
+			return nil, err
+		}
 
 		res = append(res, p)
 	}

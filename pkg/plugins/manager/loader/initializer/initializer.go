@@ -1,4 +1,4 @@
-package manager
+package initializer
 
 import (
 	"fmt"
@@ -19,26 +19,22 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type Initializer struct {
-	Cfg     *setting.Cfg     `inject:""`
-	License models.Licensing `inject:""`
-
-	log log.Logger
+	cfg     *setting.Cfg
+	license models.Licensing
+	log     log.Logger
 }
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name: "PluginInitializer",
-		Instance: &Initializer{
-			log: log.New("plugin.initializer"),
-		},
-		InitPriority: registry.MediumHigh,
-	})
+func New(cfg *setting.Cfg, license models.Licensing) Initializer {
+	return Initializer{
+		cfg:     cfg,
+		license: license,
+		log:     log.New("plugin.initializer"),
+	}
 }
 
 func (i *Initializer) Init() error {
@@ -80,10 +76,10 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 				include.Slug = slug.Make(include.Name)
 			}
 			if include.Type == "page" && include.DefaultNav {
-				p.DefaultNavURL = i.Cfg.AppSubURL + "/plugins/" + p.ID + "/page/" + include.Slug
+				p.DefaultNavURL = i.cfg.AppSubURL + "/plugins/" + p.ID + "/page/" + include.Slug
 			}
 			if include.Type == "dashboard" && include.DefaultNav {
-				p.DefaultNavURL = i.Cfg.AppSubURL + "/dashboard/db/" + include.Slug
+				p.DefaultNavURL = i.cfg.AppSubURL + "/dashboard/db/" + include.Slug
 			}
 		}
 	}
@@ -207,17 +203,17 @@ func evalRelativePluginUrlPath(pathStr, baseUrl string, pluginType plugins.Plugi
 
 func (i *Initializer) getPluginEnvVars(plugin *plugins.PluginV2) []string {
 	hostEnv := []string{
-		fmt.Sprintf("GF_VERSION=%s", i.Cfg.BuildVersion),
-		fmt.Sprintf("GF_EDITION=%s", i.License.Edition()),
+		fmt.Sprintf("GF_VERSION=%s", i.cfg.BuildVersion),
 	}
 
-	if i.License.HasLicense() {
+	if i.license != nil && i.license.HasLicense() {
 		hostEnv = append(
 			hostEnv,
-			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", i.Cfg.EnterpriseLicensePath),
+			fmt.Sprintf("GF_EDITION=%s", i.license.Edition()),
+			fmt.Sprintf("GF_ENTERPRISE_license_PATH=%s", i.cfg.EnterpriseLicensePath),
 		)
 
-		if envProvider, ok := i.License.(models.LicenseEnvironment); ok {
+		if envProvider, ok := i.license.(models.LicenseEnvironment); ok {
 			for k, v := range envProvider.Environment() {
 				hostEnv = append(hostEnv, fmt.Sprintf("%s=%s", k, v))
 			}
@@ -226,17 +222,17 @@ func (i *Initializer) getPluginEnvVars(plugin *plugins.PluginV2) []string {
 
 	hostEnv = append(hostEnv, i.getAWSEnvironmentVariables()...)
 	hostEnv = append(hostEnv, i.getAzureEnvironmentVariables()...)
-	env := getPluginSettings(plugin.ID, i.Cfg).ToEnv("GF_PLUGIN", hostEnv)
+	env := getPluginSettings(plugin.ID, i.cfg).ToEnv("GF_PLUGIN", hostEnv)
 	return env
 }
 
 func (i *Initializer) getAWSEnvironmentVariables() []string {
 	var variables []string
-	if i.Cfg.AWSAssumeRoleEnabled {
+	if i.cfg.AWSAssumeRoleEnabled {
 		variables = append(variables, awsds.AssumeRoleEnabledEnvVarKeyName+"=true")
 	}
-	if len(i.Cfg.AWSAllowedAuthProviders) > 0 {
-		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(i.Cfg.AWSAllowedAuthProviders, ","))
+	if len(i.cfg.AWSAllowedAuthProviders) > 0 {
+		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(i.cfg.AWSAllowedAuthProviders, ","))
 	}
 
 	return variables
@@ -244,13 +240,13 @@ func (i *Initializer) getAWSEnvironmentVariables() []string {
 
 func (i *Initializer) getAzureEnvironmentVariables() []string {
 	var variables []string
-	if i.Cfg.Azure.Cloud != "" {
-		variables = append(variables, "AZURE_CLOUD="+i.Cfg.Azure.Cloud)
+	if i.cfg.Azure.Cloud != "" {
+		variables = append(variables, "AZURE_CLOUD="+i.cfg.Azure.Cloud)
 	}
-	if i.Cfg.Azure.ManagedIdentityClientId != "" {
-		variables = append(variables, "AZURE_MANAGED_IDENTITY_CLIENT_ID="+i.Cfg.Azure.ManagedIdentityClientId)
+	if i.cfg.Azure.ManagedIdentityClientId != "" {
+		variables = append(variables, "AZURE_MANAGED_IDENTITY_CLIENT_ID="+i.cfg.Azure.ManagedIdentityClientId)
 	}
-	if i.Cfg.Azure.ManagedIdentityEnabled {
+	if i.cfg.Azure.ManagedIdentityEnabled {
 		variables = append(variables, "AZURE_MANAGED_IDENTITY_ENABLED=true")
 	}
 

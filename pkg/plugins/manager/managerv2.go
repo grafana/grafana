@@ -48,7 +48,6 @@ var corePluginPaths = map[string]string{
 type PluginManagerV2 struct {
 	Cfg                    *setting.Cfg                  `inject:""`
 	License                models.Licensing              `inject:""`
-	PluginInitializer      plugins.PluginInitializerV2   `inject:""`
 	PluginRequestValidator models.PluginRequestValidator `inject:""`
 	pluginInstaller        plugins.PluginInstaller
 	pluginLoader           loader.Loader
@@ -74,7 +73,7 @@ func (m *PluginManagerV2) Init() error {
 	m.plugins = map[string]*plugins.PluginV2{}
 	m.log = log.New("plugin.managerv2")
 	m.pluginInstaller = installer.New(false, m.Cfg.BuildVersion, NewInstallerLogger("plugin.installer", true))
-	m.pluginLoader = loader.New(nil, m.Cfg)
+	m.pluginLoader = loader.New(nil, nil, m.Cfg)
 
 	// install Core plugins
 	err := m.installPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins"))
@@ -142,10 +141,6 @@ func (m *PluginManagerV2) installPlugins(path string) error {
 	loadedPlugins = m.filterOutDuplicates(loadedPlugins)
 
 	for _, p := range loadedPlugins {
-		err = m.PluginInitializer.Initialize(p)
-		if err != nil {
-			return err
-		}
 		if err := m.registerAndStart(context.Background(), p); err != nil {
 			return err
 		}
@@ -186,12 +181,7 @@ func (m *PluginManagerV2) filterOutDuplicates(loadedPlugins []*plugins.PluginV2)
 func (m *PluginManagerV2) InitializeCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	corePluginJSONPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource", pluginID)
 
-	plugin, err := m.pluginLoader.Load(corePluginJSONPath)
-	if err != nil {
-		return err
-	}
-
-	err = m.PluginInitializer.InitializeWithFactory(plugin, factory)
+	plugin, err := m.pluginLoader.LoadWithFactory(corePluginJSONPath, factory)
 	if err != nil {
 		return err
 	}
