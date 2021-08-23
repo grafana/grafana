@@ -2,14 +2,17 @@ package evaluator
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
-	"github.com/gobwas/glob"
-
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+var logger = log.New("accesscontrol.evaluator")
 
 // Evaluate evaluates access to the given resource, using provided AccessControl instance.
 // Scopes are evaluated with an `OR` relationship.
@@ -37,20 +40,46 @@ func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, 
 	}
 
 	for _, s := range targetScopes {
-		var match bool
 		for dbScope := range dbScopes {
-			rule, err := glob.Compile(dbScope, ':', '/')
-			if err != nil {
-				return false, err
+			if dbScope == "" {
+				continue
 			}
 
-			match = rule.Match(s)
-			if match {
+			if !accesscontrol.ValidateScope(dbScope) {
+				logger.Error(
+					"invalid scope",
+					"reason", fmt.Sprintf("%v should not contain meta-characters like * or ?, except in the last position", dbScope),
+					"scope", dbScope,
+				)
+				continue
+			}
+
+			prefix, last := dbScope[:len(dbScope)-1], dbScope[len(dbScope)-1]
+			//Prefix match
+			if last == '*' {
+				if strings.HasPrefix(s, prefix) {
+					logger.Debug(
+						"matched scope",
+						"reason", fmt.Sprintf("matched request scope %v against resource scope %v", dbScope, s),
+						"request scope", dbScope,
+						"resource scope", s,
+					)
+					return true, nil
+				}
+			}
+
+			if s == dbScope {
 				return true, nil
 			}
 		}
 	}
 
+	logger.Debug(
+		"access control failed",
+		"request scope", dbScopes,
+		"resource scope", targetScopes,
+		"reason", fmt.Sprintf("Could not match resource scopes  %v with request scopes %v", dbScopes, targetScopes),
+	)
 	return false, nil
 }
 

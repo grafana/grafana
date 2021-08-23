@@ -14,7 +14,11 @@ func TestExtractPermission(t *testing.T) {
 	userPermissions := []*accesscontrol.Permission{
 		{
 			Action: "permissions:create",
-			Scope:  "teams:*/permissions:*",
+			Scope:  "teams:*",
+		},
+		{
+			Action: "permissions:create",
+			Scope:  "permissions:*",
 		},
 		{
 			Action: "permissions:remove",
@@ -22,7 +26,8 @@ func TestExtractPermission(t *testing.T) {
 		},
 	}
 	expectedScopes := map[string]struct{}{
-		"teams:*/permissions:*": {},
+		"permissions:*": {},
+		"teams:*":       {},
 	}
 	ok, scopes := extractScopes(userPermissions, targetPermission)
 	assert.True(t, ok)
@@ -45,9 +50,10 @@ func TestEvaluatePermissions(t *testing.T) {
 		{
 			Name: "No expected scope always returns true",
 			HasScopes: map[string]struct{}{
-				"teams:*/permissions:*": {},
-				"users:*":               {},
-				"permissions:delegate":  {},
+				"teams:*":              {},
+				"permissions:*":        {},
+				"users:*":              {},
+				"permissions:delegate": {},
 			},
 			NeedAnyScope: []string{},
 			Valid:        true,
@@ -55,27 +61,30 @@ func TestEvaluatePermissions(t *testing.T) {
 		{
 			Name: "Single scope from  list",
 			HasScopes: map[string]struct{}{
-				"teams:1/permissions:delegate": {},
+				"teams:1":              {},
+				"permissions:delegate": {},
 			},
-			NeedAnyScope: []string{"teams:1/permissions:delegate"},
+			NeedAnyScope: []string{"teams:1", "permissions:delegate"},
 			Valid:        true,
 		},
 		{
 			Name: "Single scope from glob list",
 			HasScopes: map[string]struct{}{
-				"teams:*/permissions:*": {},
-				"users:*":               {},
-				"permissions:delegate":  {},
+				"teams:*":              {},
+				"permissions:*":        {},
+				"users:*":              {},
+				"permissions:delegate": {},
 			},
-			NeedAnyScope: []string{"teams:1/permissions:delegate"},
+			NeedAnyScope: []string{"teams:1", "permissions:delegate"},
 			Valid:        true,
 		},
 		{
 			Name: "Either of two scopes from glob list",
 			HasScopes: map[string]struct{}{
-				"teams:*/permissions:*": {},
-				"users:*":               {},
-				"permissions:delegate":  {},
+				"teams:*":              {},
+				"permissions:*":        {},
+				"users:*":              {},
+				"permissions:delegate": {},
 			},
 			NeedAnyScope: []string{"global:admin", "permissions:delegate"},
 			Valid:        true,
@@ -83,11 +92,11 @@ func TestEvaluatePermissions(t *testing.T) {
 		{
 			Name: "No match found",
 			HasScopes: map[string]struct{}{
-				"teams:*/permissions:*": {},
-				"users:*":               {},
-				"permissions:delegate":  {},
+				"teams:*":              {},
+				"users:*":              {},
+				"permissions:delegate": {},
 			},
-			NeedAnyScope: []string{"teams1/permissions:delegate"},
+			NeedAnyScope: []string{"teams1", "permissions:nodelegate"},
 			Valid:        false,
 		},
 	}

@@ -57,7 +57,7 @@ var (
 	}
 
 	settingsAdminReadRole = RoleDTO{
-		Version: 1,
+		Version: 2,
 		Name:    settingsAdminRead,
 		Permissions: []Permission{
 			{
