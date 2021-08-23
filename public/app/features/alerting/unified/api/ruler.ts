@@ -97,3 +97,27 @@ async function rulerGetRequest<T>(url: string, empty: T): Promise<T> {
     throw e;
   }
 }
+
+export async function deleteNamespace(dataSourceName: string, namespace: string): Promise<void> {
+  await lastValueFrom(
+    getBackendSrv().fetch<unknown>({
+      method: 'DELETE',
+      url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+  );
+}
+
+export async function deleteGroup(dataSourceName: string, namespace: string, group: string): Promise<void> {
+  await lastValueFrom(
+    getBackendSrv().fetch<unknown>({
+      method: 'DELETE',
+      url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
+        namespace
+      )}/${encodeURIComponent(group)}`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+  );
+}
