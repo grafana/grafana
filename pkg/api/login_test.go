@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -105,10 +107,11 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
 	hs := &HTTPServer{
-		Cfg:              cfg,
-		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
-		License:          &licensing.OSSLicensingService{},
-		SocialService:    &mockSocialService{},
+		Cfg:               cfg,
+		SettingsProvider:  &setting.OSSImpl{Cfg: cfg},
+		License:           &licensing.OSSLicensingService{},
+		SocialService:     &mockSocialService{},
+		EncryptionService: &ossencryption.Service{},
 	}
 
 	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) {

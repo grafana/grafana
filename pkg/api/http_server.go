@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/encryption"
+
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -109,6 +111,7 @@ type HTTPServer struct {
 	LibraryElementService  libraryelements.Service                 `inject:""`
 	SocialService          social.Service                          `inject:""`
 	OAuthTokenService      *oauthtoken.Service                     `inject:""`
+	EncryptionService      encryption.Service                      `inject:""`
 	Listener               net.Listener
 }
 
