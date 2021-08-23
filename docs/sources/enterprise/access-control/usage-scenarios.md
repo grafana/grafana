@@ -22,6 +22,8 @@ Example request:
 curl --location --request GET '<grafana_url>/api/access-control/builtin-roles' --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ='
 ```
 
+You must use the base64 username:password Basic Authorization here. Auth tokens are not applicable here.
+
 Example response:
 
 ```
@@ -202,16 +204,16 @@ Example response:
 
 ## Allow Viewers to create reports
 
-In order to create reports, you would need to have `reports.admin:write` permission. By default, Grafana Admin's or organization Admin can create reports as there is a [built-in role assignment]({{< relref "./roles#built-in-role-assignments" >}}) which comes with `reports.admin:write` permission.
+In order to create reports, you need to have `reports.admin:write` permission. By default, a Grafana Admin or organization Admin can create reports as there is a [built-in role assignment]({{< relref "./roles#built-in-role-assignments" >}}) which comes with `reports.admin:write` permission.
 
-If you want your users who have `Viewer` organization role to create reports, you have two options:
+If you want your users who have the `Viewer` organization role to create reports, you have two options:
 
-1. First option is to create a built-in role assignment and map `fixed:reporting:admin:edit` fixed role to the `Viewer` built-in role. Note that `fixed:reporting:admin:edit` fixed role allows doing more than creating reports. Refer to [fixed roles]({{< relref "./roles.md#fixed-roles" >}}) for full list of permission assignments.
-1. Second option is to [create a custom role]({{< ref "#create-your-custom-role" >}}) with `reports.admin:write` permission, and create a built-in role assignment for `Viewer` organization role.
+1. Create a built-in role assignment and map the `fixed:reporting:admin:edit` fixed role to the `Viewer` built-in role. Note that the `fixed:reporting:admin:edit` fixed role allows doing more than creating reports. Refer to [fixed roles]({{< relref "./roles.md#fixed-roles" >}}) for full list of permission assignments.
+1. [Create a custom role]({{< ref "#create-your-custom-role" >}}) with `reports.admin:write` permission, and create a built-in role assignment for `Viewer` organization role.
 
 ## Prevent Grafana Admin from creating and inviting users
 
-In order to create users, you would need to have `users:create` permission. By default, user with Grafana Admin role can create users as there is a [built-in role assignment]({{< relref "./roles#built-in-role-assignments" >}}) which comes with `users:create` permission.
+In order to create users, you need to have `users:create` permission. By default, a user with the Grafana Admin role can create users as there is a [built-in role assignment]({{< relref "./roles#built-in-role-assignments" >}}) which comes with `users:create` permission.
 
 If you want to prevent Grafana Admin from creating users, you can do the following:
 
@@ -221,9 +223,10 @@ If you want to prevent Grafana Admin from creating users, you can do the followi
 
 ## Allow Editors to create new custom roles
 
-By default, Grafana Server Admin is the only user who can create and manage custom roles. If you want your users to do the same, you have two options:
+By default, the Grafana Server Admin is the only user who can create and manage custom roles. If you want your users to do the same, you have two options:
 
-1. First option is to create a built-in role assignment and map `fixed:permissions:admin:edit` and `fixed:permissions:admin:read` fixed roles to the `Editor` built-in role.
-1. Second option is to [create a custom role]({{< ref "#create-your-custom-role" >}}) with `roles.builtin:add` and `roles:write` permissions, and create a built-in role assignment for `Editor` organization role.
+1. Create a built-in role assignment and map `fixed:permissions:admin:edit` and `fixed:permissions:admin:read` fixed roles to the `Editor` built-in role.
+1. [Create a custom role]({{< ref "#create-your-custom-role" >}}) with `roles.builtin:add` and `roles:write` permissions, then create a built-in role assignment for `Editor` organization role.
 
-Note that in any scenario, your `Editor` would be able to create and manage roles only with the permissions they have, or with a subset of them.
+
+Note that any user with the ability to modify roles can only create, update or delete roles with permissions they themselves have been granted. For example, a user with the `Editor` role would be able to create and manage roles only with the permissions they have, or with a subset of them.
