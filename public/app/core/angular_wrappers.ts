@@ -12,12 +12,11 @@ import {
   DataSourceHttpSettings,
   GraphContextMenu,
   Icon,
-  Spinner,
   LegacyForms,
   SeriesColorPickerPopoverWithTheme,
+  Spinner,
   UnitPicker,
 } from '@grafana/ui';
-import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
@@ -25,10 +24,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SearchField, SearchResults, SearchResultsFilter } from '../features/search';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import QueryEditor from 'app/plugins/datasource/grafana-azure-monitor-datasource/components/QueryEditor/QueryEditor';
-import { GraphiteTextEditor } from '../plugins/datasource/graphite/components/GraphiteTextEditor';
-import { PlayButton } from '../plugins/datasource/graphite/components/PlayButton';
-import { AddGraphiteFunction } from '../plugins/datasource/graphite/components/AddGraphiteFunction';
-import { GraphiteFunctionEditor } from '../plugins/datasource/graphite/components/GraphiteFunctionEditor';
+import { GraphiteQueryEditor } from '../plugins/datasource/graphite/components/GraphiteQueryEditor';
 
 const { SecretFormField } = LegacyForms;
 
@@ -170,6 +166,7 @@ export function registerAngularDirectives() {
     'defaultUrl',
     'showAccessOptions',
     'dataSourceConfig',
+    'showForwardOAuthIdentityOption',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
   react2AngularDirective('folderPicker', FolderPicker, [
@@ -206,9 +203,5 @@ export function registerAngularDirectives() {
   ]);
 
   // Temporal wrappers for Graphite migration
-  react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
-  react2AngularDirective('graphiteTextEditor', GraphiteTextEditor, ['rawQuery', 'dispatch']);
-  react2AngularDirective('playButton', PlayButton, ['dispatch']);
-  react2AngularDirective('addGraphiteFunction', AddGraphiteFunction, ['funcDefs', 'dispatch']);
-  react2AngularDirective('graphiteFunctionEditor', GraphiteFunctionEditor, ['func', 'dispatch']);
+  react2AngularDirective('graphiteQueryEditor', GraphiteQueryEditor, ['state', 'dispatch']);
 }

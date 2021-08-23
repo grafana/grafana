@@ -29,7 +29,7 @@ Returns an indicator to check if fine-grained access control is enabled or not.
 #### Example request
 
 ```http
-GET /api/access-control/check
+GET /api/access-control/status
 Accept: application/json
 Content-Type: application/json
 ```
@@ -61,6 +61,7 @@ Content-Type: application/json; charset=UTF-8
 `GET /api/access-control/roles`
 
 Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.
+
 Refer to the [Role scopes]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) for more information.
 
 #### Required permissions
@@ -284,16 +285,17 @@ Accept: application/json
 Content-Type: application/json
 
 {
-    "version": 2,
-    "name": "custom:delete:create:roles",
-    "description": "My custom role which gives users permissions to delete and create roles",
+    "version": 3,
+    "name": "custom:delete:write:roles",
+    "description": "My custom role which gives users permissions to delete and write roles",
+    "global": true,
     "permissions": [
         {
             "action": "roles:delete",
             "scope": "permissions:delegate"
         },
-         {
-            "action": "roles:create",
+        {
+            "action": "roles:write",
             "scope": "permissions:delegate"
         }
     ]
@@ -323,25 +325,27 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 
 {
-    "version": 3,
-    "name": "custom:delete:create:roles",
-    "description": "My custom role which gives users permissions to delete and create roles",
-    "permissions": [
+    "version":3,
+    "uid":"jZrmlLCGka",
+    "name":"custom:delete:write:roles",
+    "description":"My custom role which gives users permissions to delete and write roles",
+    "permissions":[
         {
-            "action": "roles:delete",
-            "scope": "permissions:delegate",
-            "updated": "2021-05-13T23:19:46.546146+02:00",
-            "created": "2021-05-13T23:19:46.546146+02:00"
+            "action":"roles:delete",
+            "scope":"permissions:delegate",
+            "updated":"2021-08-06T18:27:40+02:00",
+            "created":"2021-08-06T18:27:40+02:00"
         },
-         {
-            "action": "roles:create",
-            "scope": "permissions:delegate",
-            "updated": "2021-05-13T23:19:46.546146+02:00",
-            "created": "2021-05-13T23:19:46.546146+02:00"
+        {
+            "action":"roles:write",
+            "scope":"permissions:delegate",
+            "updated":"2021-08-06T18:27:41+02:00",
+            "created":"2021-08-06T18:27:41+02:00"
         }
     ],
-    "updated": "2021-05-13T23:19:46.540987+02:00",
-    "created": "2021-05-13T23:19:46.540986+02:00"
+    "updated":"2021-08-06T18:27:41+02:00",
+    "created":"2021-08-06T18:27:40+02:00",
+    "global":true
 }
 ```
 
@@ -373,7 +377,7 @@ For example, if a user does not have required permissions for creating users, th
 #### Example request
 
 ```http
-DELETE /api/access-control/roles/jZrmlLCGka?force=true
+DELETE /api/access-control/roles/jZrmlLCGka?force=true&global=true
 Accept: application/json
 ```
 

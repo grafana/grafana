@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/pkg/errors"
@@ -54,7 +55,7 @@ import (
 // get alertmanager alerts
 //
 //     Responses:
-//       200: GettableAlerts
+//       200: gettableAlerts
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{Recipient}/api/v2/alerts alertmanager RoutePostAMAlerts
@@ -70,15 +71,26 @@ import (
 // get alertmanager alerts
 //
 //     Responses:
-//       200: AlertGroups
+//       200: alertGroups
 //       400: ValidationError
+
+// swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/receivers/test alertmanager RoutePostTestReceivers
+//
+// Test Grafana managed receivers without saving them.
+//
+//     Responses:
+//
+//       200: Ack
+//       207: MultiStatus
+//       400: ValidationError
+//       408: Failure
 
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteGetSilences
 //
 // get silences
 //
 //     Responses:
-//       200: GettableSilences
+//       200: gettableSilences
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteCreateSilence
@@ -86,7 +98,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: GettableSilence
+//       201: gettableSilence
 //       400: ValidationError
 
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteGetSilence
@@ -94,7 +106,7 @@ import (
 // get silence
 //
 //     Responses:
-//       200: GettableSilence
+//       200: gettableSilence
 //       400: ValidationError
 
 // swagger:route DELETE /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteDeleteSilence
@@ -104,6 +116,40 @@ import (
 //     Responses:
 //       200: Ack
 //       400: ValidationError
+
+// swagger:model
+type TestReceiversConfig struct {
+	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+}
+
+// swagger:parameters RoutePostTestReceivers
+type TestReceiversConfigParams struct {
+	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+}
+
+func (c *TestReceiversConfigParams) ProcessConfig() error {
+	return processReceiverConfigs(c.Receivers)
+}
+
+// swagger:model
+type TestReceiversResult struct {
+	Receivers []TestReceiverResult `json:"receivers"`
+	NotifedAt time.Time            `json:"notified_at"`
+}
+
+// swagger:model
+type TestReceiverResult struct {
+	Name    string                     `json:"name"`
+	Configs []TestReceiverConfigResult `json:"grafana_managed_receiver_configs"`
+}
+
+// swagger:model
+type TestReceiverConfigResult struct {
+	Name   string `json:"name"`
+	UID    string `json:"uid"`
+	Status string `json:"status"`
+	Error  string `json:"error,omitempty"`
+}
 
 // swagger:parameters RouteCreateSilence
 type CreateSilenceParams struct {
@@ -196,28 +242,28 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 	}
 }
 
-// swagger:model
+// swagger:model postableSilence
 type PostableSilence = amv2.PostableSilence
 
-// swagger:model
+// swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
 
-// swagger:model
+// swagger:model gettableSilence
 type GettableSilence = amv2.GettableSilence
 
-// swagger:model
+// swagger:model gettableAlerts
 type GettableAlerts = amv2.GettableAlerts
 
-// swagger:model
+// swagger:model gettableAlert
 type GettableAlert = amv2.GettableAlert
 
-// swagger:model
+// swagger:model alertGroups
 type AlertGroups = amv2.AlertGroups
 
-// swagger:model
+// swagger:model alertGroup
 type AlertGroup = amv2.AlertGroup
 
-// swagger:model
+// swagger:model receiver
 type Receiver = amv2.Receiver
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups
@@ -345,39 +391,7 @@ func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafana
 
 // ProcessConfig parses grafana receivers, encrypts secrets and assigns UUIDs (if they are missing)
 func (c *PostableUserConfig) ProcessConfig() error {
-	seenUIDs := make(map[string]struct{})
-	// encrypt secure settings for storing them in DB
-	for _, r := range c.AlertmanagerConfig.Receivers {
-		switch r.Type() {
-		case GrafanaReceiverType:
-			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-				for k, v := range gr.SecureSettings {
-					encryptedData, err := util.Encrypt([]byte(v), setting.SecretKey)
-					if err != nil {
-						return fmt.Errorf("failed to encrypt secure settings: %w", err)
-					}
-					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
-				}
-				if gr.UID == "" {
-					retries := 5
-					for i := 0; i < retries; i++ {
-						gen := util.GenerateShortUID()
-						_, ok := seenUIDs[gen]
-						if !ok {
-							gr.UID = gen
-							break
-						}
-					}
-					if gr.UID == "" {
-						return fmt.Errorf("all %d attempts to generate UID for receiver have failed; please retry", retries)
-					}
-				}
-				seenUIDs[gr.UID] = struct{}{}
-			}
-		default:
-		}
-	}
-	return nil
+	return processReceiverConfigs(c.AlertmanagerConfig.Receivers)
 }
 
 // MarshalYAML implements yaml.Marshaller.
@@ -910,4 +924,40 @@ type GettableGrafanaReceivers struct {
 
 type PostableGrafanaReceivers struct {
 	GrafanaManagedReceivers []*PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
+}
+
+func processReceiverConfigs(c []*PostableApiReceiver) error {
+	seenUIDs := make(map[string]struct{})
+	// encrypt secure settings for storing them in DB
+	for _, r := range c {
+		switch r.Type() {
+		case GrafanaReceiverType:
+			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+				for k, v := range gr.SecureSettings {
+					encryptedData, err := util.Encrypt([]byte(v), setting.SecretKey)
+					if err != nil {
+						return fmt.Errorf("failed to encrypt secure settings: %w", err)
+					}
+					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+				}
+				if gr.UID == "" {
+					retries := 5
+					for i := 0; i < retries; i++ {
+						gen := util.GenerateShortUID()
+						_, ok := seenUIDs[gen]
+						if !ok {
+							gr.UID = gen
+							break
+						}
+					}
+					if gr.UID == "" {
+						return fmt.Errorf("all %d attempts to generate UID for receiver have failed; please retry", retries)
+					}
+				}
+				seenUIDs[gr.UID] = struct{}{}
+			}
+		default:
+		}
+	}
+	return nil
 }

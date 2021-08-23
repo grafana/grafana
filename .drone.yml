@@ -9,7 +9,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -235,6 +235,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   event:
   - pull_request
@@ -250,7 +253,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -563,6 +566,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   branch:
   - main
@@ -630,7 +636,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -662,6 +668,9 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
+
+node:
+  type: no-parallel
 
 trigger:
   branch:
@@ -715,7 +724,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -1005,6 +1014,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
   - refs/tags/v*
@@ -1071,7 +1083,7 @@ clone:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -1477,6 +1489,9 @@ services:
 image_pull_secrets:
 - dockerconfigjson
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
   - refs/tags/v*
@@ -1564,7 +1579,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -1616,6 +1631,9 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
+
+node:
+  type: no-parallel
 
 trigger:
   ref:
@@ -1669,7 +1687,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -1948,6 +1966,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   event:
   - custom
@@ -2014,7 +2035,7 @@ clone:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -2414,6 +2435,9 @@ services:
 image_pull_secrets:
 - dockerconfigjson
 
+node:
+  type: no-parallel
+
 trigger:
   event:
   - custom
@@ -2501,7 +2525,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -2553,6 +2577,9 @@ steps:
       from_secret: grafana_api_key
   depends_on:
   - initialize
+
+node:
+  type: no-parallel
 
 trigger:
   event:
@@ -2606,7 +2633,7 @@ platform:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -2860,9 +2887,12 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
 
 ---
 kind: pipeline
@@ -2903,7 +2933,7 @@ steps:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
 
 depends_on:
 - oss-build-release-branch
@@ -2922,7 +2952,7 @@ clone:
 
 steps:
 - name: identify-runner
-  image: alpine:3.13
+  image: alpine:3.14.1
   commands:
   - echo $DRONE_RUNNER_NAME
 
@@ -3325,9 +3355,12 @@ services:
 image_pull_secrets:
 - dockerconfigjson
 
+node:
+  type: no-parallel
+
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
 
 ---
 kind: pipeline
@@ -3392,7 +3425,7 @@ image_pull_secrets:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
 
 depends_on:
 - enterprise-build-release-branch
@@ -3417,7 +3450,7 @@ steps:
 
 trigger:
   ref:
-  - refs/heads/v*
+  - refs/heads/v[0-9]*
   status:
   - failure
 
@@ -3456,7 +3489,7 @@ steps:
 - name: slack-notify-failure
   image: plugins/slack
   settings:
-    channel: grafana-backend
+    channel: grafana-backend-ops
     template: "Nightly docker image scan job for {{repo.name}} failed: {{build.link}}"
     webhook:
       from_secret: slack_webhook_backend
@@ -3496,6 +3529,6 @@ get:
 
 ---
 kind: signature
-hmac: 68edb93a18f2e16f8a9b2bf3d21073e181e56d2420feec37ae80b121fc2faeeb
+hmac: 80b19bbc75555ea1f675017ec9b98241b331a624a5f4ee7f3b169b75258d51be
 
 ...

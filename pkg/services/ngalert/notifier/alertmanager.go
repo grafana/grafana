@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
@@ -72,6 +73,8 @@ const (
 	}
 }
 `
+	//TODO: temporary until fix org isolation
+	mainOrgID = 1
 )
 
 type Alertmanager struct {
@@ -103,7 +106,8 @@ type Alertmanager struct {
 	dispatcherMetrics *dispatch.DispatcherMetrics
 
 	reloadConfigMtx sync.RWMutex
-	config          []byte
+	config          *apimodels.PostableUserConfig
+	configHash      [16]byte
 }
 
 func New(cfg *setting.Cfg, store store.AlertingStore, m *metrics.Metrics) (*Alertmanager, error) {
@@ -163,12 +167,16 @@ func (am *Alertmanager) Ready() bool {
 	am.reloadConfigMtx.RLock()
 	defer am.reloadConfigMtx.RUnlock()
 
-	return len(am.config) > 0
+	return am.ready()
+}
+
+func (am *Alertmanager) ready() bool {
+	return am.config != nil
 }
 
 func (am *Alertmanager) Run(ctx context.Context) error {
 	// Make sure dispatcher starts. We can tolerate future reload failures.
-	if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
+	if err := am.SyncAndApplyConfigFromDatabase(mainOrgID); err != nil {
 		am.logger.Error("unable to sync configuration", "err", err)
 	}
 
@@ -177,7 +185,7 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return am.StopAndWait()
 		case <-time.After(pollInterval):
-			if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
+			if err := am.SyncAndApplyConfigFromDatabase(mainOrgID); err != nil {
 				am.logger.Error("unable to sync configuration", "err", err)
 			}
 		}
@@ -203,7 +211,7 @@ func (am *Alertmanager) StopAndWait() error {
 
 // SaveAndApplyDefaultConfig saves the default configuration the database and applies the configuration to the Alertmanager.
 // It rollbacks the save if we fail to apply the configuration.
-func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
+func (am *Alertmanager) SaveAndApplyDefaultConfig(orgID int64) error {
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
@@ -211,6 +219,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
 		AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
 		Default:                   true,
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+		OrgID:                     orgID,
 	}
 
 	cfg, err := Load([]byte(alertmanagerDefaultConfiguration))
@@ -234,7 +243,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig() error {
 
 // SaveAndApplyConfig saves the configuration the database and applies the configuration to the Alertmanager.
 // It rollbacks the save if we fail to apply the configuration.
-func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
+func (am *Alertmanager) SaveAndApplyConfig(orgID int64, cfg *apimodels.PostableUserConfig) error {
 	rawConfig, err := json.Marshal(&cfg)
 	if err != nil {
 		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
@@ -246,6 +255,7 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(rawConfig),
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+		OrgID:                     orgID,
 	}
 
 	err = am.Store.SaveAlertmanagerConfigurationWithCallback(cmd, func() error {
@@ -264,12 +274,12 @@ func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) er
 
 // SyncAndApplyConfigFromDatabase picks the latest config from database and restarts
 // the components with the new config.
-func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
+func (am *Alertmanager) SyncAndApplyConfigFromDatabase(orgID int64) error {
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
 	// First, let's get the configuration we need from the database.
-	q := &ngmodels.GetLatestAlertmanagerConfigurationQuery{}
+	q := &ngmodels.GetLatestAlertmanagerConfigurationQuery{OrgID: mainOrgID}
 	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
 		// If there's no configuration in the database, let's use the default configuration.
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
@@ -279,6 +289,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 				AlertmanagerConfiguration: alertmanagerDefaultConfiguration,
 				Default:                   true,
 				ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+				OrgID:                     orgID,
 			}
 			if err := am.Store.SaveAlertmanagerConfiguration(savecmd); err != nil {
 				return err
@@ -308,6 +319,32 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 	return nil
 }
 
+func (am *Alertmanager) getTemplate() (*template.Template, error) {
+	am.reloadConfigMtx.RLock()
+	defer am.reloadConfigMtx.RUnlock()
+	if !am.ready() {
+		return nil, errors.New("alertmanager is not initialized")
+	}
+	paths := make([]string, 0, len(am.config.TemplateFiles))
+	for name := range am.config.TemplateFiles {
+		paths = append(paths, filepath.Join(am.WorkingDirPath(), name))
+	}
+	return am.templateFromPaths(paths...)
+}
+
+func (am *Alertmanager) templateFromPaths(paths ...string) (*template.Template, error) {
+	tmpl, err := template.FromGlobs(paths...)
+	if err != nil {
+		return nil, err
+	}
+	externalURL, err := url.Parse(am.Settings.AppURL)
+	if err != nil {
+		return nil, err
+	}
+	tmpl.ExternalURL = externalURL
+	return tmpl, nil
+}
+
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It is not safe to call concurrently.
 func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) (err error) {
@@ -322,7 +359,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		rawConfig = enc
 	}
 
-	if md5.Sum(am.config) != md5.Sum(rawConfig) {
+	if am.configHash != md5.Sum(rawConfig) {
 		configChanged = true
 	}
 
@@ -344,15 +381,10 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	}
 
 	// With the templates persisted, create the template list using the paths.
-	tmpl, err := template.FromGlobs(paths...)
+	tmpl, err := am.templateFromPaths(paths...)
 	if err != nil {
 		return err
 	}
-	externalURL, err := url.Parse(am.Settings.AppURL)
-	if err != nil {
-		return err
-	}
-	tmpl.ExternalURL = externalURL
 
 	// Finally, build the integrations map using the receiver configuration and templates.
 	integrationsMap, err := am.buildIntegrationsMap(cfg.AlertmanagerConfig.Receivers, tmpl)
@@ -394,12 +426,14 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		am.inhibitor.Run()
 	}()
 
-	am.config = rawConfig
+	am.config = cfg
+	am.configHash = md5.Sum(rawConfig)
+
 	return nil
 }
 
 func (am *Alertmanager) WorkingDirPath() string {
-	return filepath.Join(am.Settings.DataPath, workingDir)
+	return filepath.Join(am.Settings.DataPath, workingDir, strconv.Itoa(mainOrgID))
 }
 
 // buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
@@ -424,75 +458,93 @@ type NotificationChannel interface {
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
 func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *template.Template) ([]notify.Integration, error) {
 	var integrations []notify.Integration
-
 	for i, r := range receiver.GrafanaManagedReceivers {
-		// secure settings are already encrypted at this point
-		secureSettings := securejsondata.SecureJsonData(make(map[string][]byte, len(r.SecureSettings)))
-
-		for k, v := range r.SecureSettings {
-			d, err := base64.StdEncoding.DecodeString(v)
-			if err != nil {
-				return nil, fmt.Errorf("failed to decode secure setting")
-			}
-			secureSettings[k] = d
-		}
-		var (
-			cfg = &channels.NotificationChannelConfig{
-				UID:                   r.UID,
-				Name:                  r.Name,
-				Type:                  r.Type,
-				DisableResolveMessage: r.DisableResolveMessage,
-				Settings:              r.Settings,
-				SecureSettings:        secureSettings,
-			}
-			n   NotificationChannel
-			err error
-		)
-		switch r.Type {
-		case "email":
-			n, err = channels.NewEmailNotifier(cfg, tmpl) // Email notifier already has a default template.
-		case "pagerduty":
-			n, err = channels.NewPagerdutyNotifier(cfg, tmpl)
-		case "pushover":
-			n, err = channels.NewPushoverNotifier(cfg, tmpl)
-		case "slack":
-			n, err = channels.NewSlackNotifier(cfg, tmpl)
-		case "telegram":
-			n, err = channels.NewTelegramNotifier(cfg, tmpl)
-		case "victorops":
-			n, err = channels.NewVictoropsNotifier(cfg, tmpl)
-		case "teams":
-			n, err = channels.NewTeamsNotifier(cfg, tmpl)
-		case "dingding":
-			n, err = channels.NewDingDingNotifier(cfg, tmpl)
-		case "kafka":
-			n, err = channels.NewKafkaNotifier(cfg, tmpl)
-		case "webhook":
-			n, err = channels.NewWebHookNotifier(cfg, tmpl)
-		case "sensugo":
-			n, err = channels.NewSensuGoNotifier(cfg, tmpl)
-		case "discord":
-			n, err = channels.NewDiscordNotifier(cfg, tmpl)
-		case "googlechat":
-			n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
-		case "line":
-			n, err = channels.NewLineNotifier(cfg, tmpl)
-		case "threema":
-			n, err = channels.NewThreemaNotifier(cfg, tmpl)
-		case "opsgenie":
-			n, err = channels.NewOpsgenieNotifier(cfg, tmpl)
-		case "prometheus-alertmanager":
-			n, err = channels.NewAlertmanagerNotifier(cfg, tmpl)
-		default:
-			return nil, fmt.Errorf("notifier %s is not supported", r.Type)
-		}
+		n, err := am.buildReceiverIntegration(r, tmpl)
 		if err != nil {
 			return nil, err
 		}
 		integrations = append(integrations, notify.NewIntegration(n, n, r.Type, i))
 	}
-
 	return integrations, nil
+}
+
+func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaReceiver, tmpl *template.Template) (NotificationChannel, error) {
+	// secure settings are already encrypted at this point
+	secureSettings := securejsondata.SecureJsonData(make(map[string][]byte, len(r.SecureSettings)))
+
+	for k, v := range r.SecureSettings {
+		d, err := base64.StdEncoding.DecodeString(v)
+		if err != nil {
+			return nil, InvalidReceiverError{
+				Receiver: r,
+				Err:      errors.New("failed to decode secure setting"),
+			}
+		}
+		secureSettings[k] = d
+	}
+
+	var (
+		cfg = &channels.NotificationChannelConfig{
+			UID:                   r.UID,
+			Name:                  r.Name,
+			Type:                  r.Type,
+			DisableResolveMessage: r.DisableResolveMessage,
+			Settings:              r.Settings,
+			SecureSettings:        secureSettings,
+		}
+		n   NotificationChannel
+		err error
+	)
+	switch r.Type {
+	case "email":
+		n, err = channels.NewEmailNotifier(cfg, tmpl) // Email notifier already has a default template.
+	case "pagerduty":
+		n, err = channels.NewPagerdutyNotifier(cfg, tmpl)
+	case "pushover":
+		n, err = channels.NewPushoverNotifier(cfg, tmpl)
+	case "slack":
+		n, err = channels.NewSlackNotifier(cfg, tmpl)
+	case "telegram":
+		n, err = channels.NewTelegramNotifier(cfg, tmpl)
+	case "victorops":
+		n, err = channels.NewVictoropsNotifier(cfg, tmpl)
+	case "teams":
+		n, err = channels.NewTeamsNotifier(cfg, tmpl)
+	case "dingding":
+		n, err = channels.NewDingDingNotifier(cfg, tmpl)
+	case "kafka":
+		n, err = channels.NewKafkaNotifier(cfg, tmpl)
+	case "webhook":
+		n, err = channels.NewWebHookNotifier(cfg, tmpl)
+	case "sensugo":
+		n, err = channels.NewSensuGoNotifier(cfg, tmpl)
+	case "discord":
+		n, err = channels.NewDiscordNotifier(cfg, tmpl)
+	case "googlechat":
+		n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
+	case "LINE":
+		n, err = channels.NewLineNotifier(cfg, tmpl)
+	case "threema":
+		n, err = channels.NewThreemaNotifier(cfg, tmpl)
+	case "opsgenie":
+		n, err = channels.NewOpsgenieNotifier(cfg, tmpl)
+	case "prometheus-alertmanager":
+		n, err = channels.NewAlertmanagerNotifier(cfg, tmpl)
+	default:
+		return nil, InvalidReceiverError{
+			Receiver: r,
+			Err:      fmt.Errorf("notifier %s is not supported", r.Type),
+		}
+	}
+
+	if err != nil {
+		return nil, InvalidReceiverError{
+			Receiver: r,
+			Err:      err,
+		}
+	}
+
+	return n, nil
 }
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not

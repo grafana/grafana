@@ -78,6 +78,7 @@ export class DashboardModel {
   editable: any;
   graphTooltip: DashboardCursorSync;
   time: any;
+  liveNow: boolean;
   private originalTime: any;
   timepicker: any;
   templating: { list: any[] };
@@ -138,6 +139,7 @@ export class DashboardModel {
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};
+    this.liveNow = Boolean(data.liveNow);
     this.templating = this.ensureListExist(data.templating);
     this.annotations = this.ensureListExist(data.annotations);
     this.refresh = data.refresh;
