@@ -142,6 +142,8 @@ func TestTreeWildcard(t *testing.T) {
 		"/",
 		"/cmd/:tool/:sub",
 		"/cmd/:tool/",
+		"/cmd/whoami",
+		"/cmd/whoami/root/",
 		"/src/*filepath",
 		"/search/",
 		"/search/:query",
@@ -162,7 +164,12 @@ func TestTreeWildcard(t *testing.T) {
 
 	checkRequests(t, tree, testRequests{
 		{"/", false, "/", nil},
+		{"/cmd/test", true, "/cmd/:tool/", Params{Param{"tool", "test"}}},
 		{"/cmd/test/", false, "/cmd/:tool/", Params{Param{"tool", "test"}}},
+		{"/cmd/whoami", false, "/cmd/whoami", nil},
+		{"/cmd/whoami/", true, "/cmd/whoami", nil},
+		{"/cmd/whoami/root/", false, "/cmd/whoami/root/", nil},
+		{"/cmd/whoami/root", true, "/cmd/whoami/root/", nil},
 		{"/cmd/test", true, "", Params{Param{"tool", "test"}}},
 		{"/cmd/test/3", false, "/cmd/:tool/:sub", Params{Param{"tool", "test"}, Param{"sub", "3"}}},
 		{"/src/", false, "/src/*filepath", Params{Param{"filepath", "/"}}},
@@ -218,20 +225,38 @@ func testRoutes(t *testing.T, routes []testRoute) {
 func TestTreeWildcardConflict(t *testing.T) {
 	routes := []testRoute{
 		{"/cmd/:tool/:sub", false},
-		{"/cmd/vet", true},
+		{"/cmd/vet", false},
+		{"/foo/bar", false},
+		{"/foo/:name", false},
+		{"/foo/:names", true},
+		{"/cmd/*path", true},
+		{"/cmd/:badvar", true},
+		{"/cmd/:tool/names", false},
+		{"/cmd/:tool/:badsub/details", true},
 		{"/src/*filepath", false},
+		{"/src/:file", true},
+		{"/src/static.json", true},
 		{"/src/*filepathx", true},
 		{"/src/", true},
+		{"/src/foo/bar", true},
 		{"/src1/", false},
 		{"/src1/*filepath", true},
 		{"/src2*filepath", true},
+		{"/src2/*filepath", false},
 		{"/search/:query", false},
-		{"/search/invalid", true},
+		{"/search/valid", false},
 		{"/user_:name", false},
-		{"/user_x", true},
+		{"/user_x", false},
 		{"/user_:name", false},
 		{"/id:id", false},
-		{"/id/:id", true},
+		{"/id/:id", false},
+	}
+	testRoutes(t, routes)
+}
+
+func TestCatchAllAfterSlash(t *testing.T) {
+	routes := []testRoute{
+		{"/non-leading-*catchall", true},
 	}
 	testRoutes(t, routes)
 }
@@ -239,14 +264,17 @@ func TestTreeWildcardConflict(t *testing.T) {
 func TestTreeChildConflict(t *testing.T) {
 	routes := []testRoute{
 		{"/cmd/vet", false},
-		{"/cmd/:tool/:sub", true},
+		{"/cmd/:tool", false},
+		{"/cmd/:tool/:sub", false},
+		{"/cmd/:tool/misc", false},
+		{"/cmd/:tool/:othersub", true},
 		{"/src/AUTHORS", false},
 		{"/src/*filepath", true},
 		{"/user_x", false},
-		{"/user_:name", true},
+		{"/user_:name", false},
 		{"/id/:id", false},
-		{"/id:id", true},
-		{"/:id", true},
+		{"/id:id", false},
+		{"/:id", false},
 		{"/*filepath", true},
 	}
 	testRoutes(t, routes)
@@ -626,7 +654,7 @@ func TestTreeFindCaseInsensitivePath(t *testing.T) {
 }
 
 func TestTreeInvalidNodeType(t *testing.T) {
-	const panicMsg = "invalid Node type"
+	const panicMsg = "invalid node type"
 
 	tree := &Node{}
 	tree.AddRoute("/", fakeHandler("/"))
@@ -662,8 +690,7 @@ func TestTreeWildcardConflictEx(t *testing.T) {
 		{"/who/are/foo", "/foo", `/who/are/\*you`, `/\*you`},
 		{"/who/are/foo/", "/foo/", `/who/are/\*you`, `/\*you`},
 		{"/who/are/foo/bar", "/foo/bar", `/who/are/\*you`, `/\*you`},
-		{"/conxxx", "xxx", `/con:tact`, `:tact`},
-		{"/conooo/xxx", "ooo", `/con:tact`, `:tact`},
+		{"/con:nection", ":nection", `/con:tact`, `:tact`},
 	}
 
 	for i := range conflicts {
@@ -671,7 +698,7 @@ func TestTreeWildcardConflictEx(t *testing.T) {
 
 		// I have to re-create a 'tree', because the 'tree' will be
 		// in an inconsistent state when the loop recovers from the
-		// panic which threw by 'AddRoute' function.
+		// panic which threw by 'addRoute' function.
 		tree := &Node{}
 		routes := [...]string{
 			"/con:tact",

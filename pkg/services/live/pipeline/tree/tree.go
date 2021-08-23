@@ -51,6 +51,16 @@ func findWildcard(path string) (wildcard string, i int, valid bool) {
 	return "", -1, false
 }
 
+// addChild will add a child node, keeping wildcards at the end
+func (n *Node) addChild(child *Node) {
+	if n.wildChild && len(n.children) > 0 {
+		wildcardChild := n.children[len(n.children)-1]
+		n.children = append(n.children[:len(n.children)-1], child, wildcardChild)
+	} else {
+		n.children = append(n.children, child)
+	}
+}
+
 func countParams(path string) uint16 {
 	var n uint
 	for i := range []byte(path) {
@@ -143,19 +153,45 @@ walk:
 			}
 
 			n.children = []*Node{&child}
+			n.wildChild = false
 			// []byte for proper unicode char conversion, see #65
 			n.indices = string([]byte{n.path[i]})
 			n.path = path[:i]
 			n.handle = nil
-			n.wildChild = false
 		}
 
-		// Make new Node a child of this Node
+		// Make new node a child of this node
 		if i < len(path) {
 			path = path[i:]
+			idxc := path[0]
 
-			if n.wildChild {
+			// '/' after param
+			if n.nType == param && idxc == '/' && len(n.children) == 1 {
 				n = n.children[0]
+				n.priority++
+				continue walk
+			}
+
+			// Check if a child with the next path byte exists
+			for i, c := range []byte(n.indices) {
+				if c == idxc {
+					i = n.incrementChildPrio(i)
+					n = n.children[i]
+					continue walk
+				}
+			}
+
+			// Otherwise insert it
+			if idxc != ':' && idxc != '*' && n.nType != catchAll {
+				// []byte for proper unicode char conversion, see #65
+				n.indices += string([]byte{idxc})
+				child := &Node{}
+				n.addChild(child)
+				n.incrementChildPrio(len(n.indices) - 1)
+				n = child
+			} else if n.wildChild {
+				// inserting a wildcard node, need to check if it conflicts with the existing wildcard
+				n = n.children[len(n.children)-1]
 				n.priority++
 
 				// Check if the wildcard matches
@@ -180,38 +216,11 @@ walk:
 				}
 			}
 
-			idxc := path[0]
-
-			// '/' after param
-			if n.nType == param && idxc == '/' && len(n.children) == 1 {
-				n = n.children[0]
-				n.priority++
-				continue walk
-			}
-
-			// Check if a child with the next path byte exists
-			for i, c := range []byte(n.indices) {
-				if c == idxc {
-					i = n.incrementChildPrio(i)
-					n = n.children[i]
-					continue walk
-				}
-			}
-
-			// Otherwise insert it
-			if idxc != ':' && idxc != '*' {
-				// []byte for proper unicode char conversion, see #65
-				n.indices += string([]byte{idxc})
-				child := &Node{}
-				n.children = append(n.children, child)
-				n.incrementChildPrio(len(n.indices) - 1)
-				n = child
-			}
 			n.insertChild(path, fullPath, handle)
 			return
 		}
 
-		// Otherwise add handle to current Node
+		// Otherwise add handle to current node
 		if n.handle != nil {
 			panic("a handle is already registered for path '" + fullPath + "'")
 		}
@@ -239,13 +248,6 @@ func (n *Node) insertChild(path, fullPath string, handle Handle) {
 			panic("wildcards must be named with a non-empty name in path '" + fullPath + "'")
 		}
 
-		// Check if this Node has existing children which would be
-		// unreachable if we insert the wildcard here
-		if len(n.children) > 0 {
-			panic("wildcard segment '" + wildcard +
-				"' conflicts with existing children in path '" + fullPath + "'")
-		}
-
 		// param
 		if wildcard[0] == ':' {
 			if i > 0 {
@@ -254,12 +256,12 @@ func (n *Node) insertChild(path, fullPath string, handle Handle) {
 				path = path[i:]
 			}
 
-			n.wildChild = true
 			child := &Node{
 				nType: param,
 				path:  wildcard,
 			}
-			n.children = []*Node{child}
+			n.addChild(child)
+			n.wildChild = true
 			n = child
 			n.priority++
 
@@ -270,7 +272,7 @@ func (n *Node) insertChild(path, fullPath string, handle Handle) {
 				child := &Node{
 					priority: 1,
 				}
-				n.children = []*Node{child}
+				n.addChild(child)
 				n = child
 				continue
 			}
@@ -302,7 +304,7 @@ func (n *Node) insertChild(path, fullPath string, handle Handle) {
 			wildChild: true,
 			nType:     catchAll,
 		}
-		n.children = []*Node{child}
+		n.addChild(child)
 		n.indices = string('/')
 		n = child
 		n.priority++
@@ -341,18 +343,17 @@ walk: // Outer loop for walking the tree
 			if path[:len(prefix)] == prefix {
 				path = path[len(prefix):]
 
-				// If this Node does not have a wildcard (param or catchAll)
-				// child, we can just look up the next child Node and continue
-				// to walk down the tree
-				if !n.wildChild {
-					idxc := path[0]
-					for i, c := range []byte(n.indices) {
-						if c == idxc {
-							n = n.children[i]
-							continue walk
-						}
+				// Try all the non-wildcard children first by matching the indices
+				idxc := path[0]
+				for i, c := range []byte(n.indices) {
+					if c == idxc {
+						n = n.children[i]
+						continue walk
 					}
+				}
 
+				// If there is no wildcard pattern, recommend a redirection
+				if !n.wildChild {
 					// Nothing found.
 					// We can recommend to redirect to the same URL without a
 					// trailing slash if a leaf exists for that path.
@@ -360,8 +361,9 @@ walk: // Outer loop for walking the tree
 					return
 				}
 
-				// Handle wildcard child
-				n = n.children[0]
+				// Handle wildcard child, which is always after the other children
+				n = n.children[len(n.children)-1]
+
 				switch n.nType {
 				case param:
 					// Find param end (either '/' or path end)
@@ -427,12 +429,12 @@ walk: // Outer loop for walking the tree
 					return
 
 				default:
-					panic("invalid Node type")
+					panic("invalid node type")
 				}
 			}
 		} else if path == prefix {
-			// We should have reached the Node containing the handle.
-			// Check if this Node has a handle registered.
+			// We should have reached the node containing the handle.
+			// Check if this node has a handle registered.
 			if handle = n.handle; handle != nil {
 				return
 			}
@@ -648,7 +650,7 @@ walk: // Outer loop for walking the tree
 				return append(ciPath, path...)
 
 			default:
-				panic("invalid Node type")
+				panic("invalid node type")
 			}
 		} else {
 			// We should have reached the Node containing the handle.
