@@ -4,23 +4,22 @@ import (
 	"context"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/api"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-
-	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/ngalert/api"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -41,41 +40,6 @@ const (
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, dataService *tsdb.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService *quota.QuotaService, m *metrics.Metrics) (*AlertNG, error) {
-	baseInterval := cfg.AlertingBaseInterval
-	if baseInterval <= 0 {
-		baseInterval = defaultBaseIntervalSeconds
-	}
-	baseInterval *= time.Second
-	logger := log.New("ngalert")
-
-	store := &store.DBstore{
-		BaseInterval:           baseInterval,
-		DefaultIntervalSeconds: defaultIntervalSeconds,
-		SQLStore:               sqlStore,
-		Logger:                 logger,
-	}
-
-	alertmanager, err := notifier.New(cfg, store, m)
-	if err != nil {
-		return nil, err
-	}
-
-	schedCfg := schedule.SchedulerCfg{
-		C:                       clock.New(),
-		BaseInterval:            baseInterval,
-		Logger:                  log.New("ngalert.scheduler"),
-		MaxAttempts:             maxAttempts,
-		Evaluator:               eval.Evaluator{Cfg: cfg, Log: logger},
-		InstanceStore:           store,
-		RuleStore:               store,
-		AdminConfigStore:        store,
-		Notifier:                alertmanager,
-		Metrics:                 m,
-		AdminConfigPollInterval: cfg.AdminConfigPollInterval,
-	}
-	stateManager := state.NewManager(logger, m, store, store)
-	schedule := schedule.NewScheduler(schedCfg, dataService, cfg.AppURL, stateManager)
-
 	ng := &AlertNG{
 		Cfg:             cfg,
 		DataSourceCache: dataSourceCache,
@@ -85,28 +49,14 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		DataProxy:       dataProxy,
 		QuotaService:    quotaService,
 		Metrics:         m,
-		Log:             logger,
-		Alertmanager:    alertmanager,
-		stateManager:    stateManager,
-		schedule:        schedule,
+		Log:             log.New("ngalert"),
 	}
 
-	api := api.API{
-		Cfg:              ng.Cfg,
-		DatasourceCache:  ng.DataSourceCache,
-		RouteRegister:    ng.RouteRegister,
-		DataService:      ng.DataService,
-		Schedule:         ng.schedule,
-		DataProxy:        ng.DataProxy,
-		QuotaService:     ng.QuotaService,
-		InstanceStore:    store,
-		RuleStore:        store,
-		AlertingStore:    store,
-		AdminConfigStore: store,
-		Alertmanager:     ng.Alertmanager,
-		StateManager:     ng.stateManager,
+	if !ng.IsDisabled() {
+		if err := ng.init(); err != nil {
+			return nil, err
+		}
 	}
-	api.RegisterAPIEndpoints(ng.Metrics)
 
 	return ng, nil
 }
@@ -125,6 +75,65 @@ type AlertNG struct {
 	Log             log.Logger
 	schedule        schedule.ScheduleService
 	stateManager    *state.Manager
+}
+
+func (ng *AlertNG) init() error {
+	baseInterval := ng.Cfg.AlertingBaseInterval
+	if baseInterval <= 0 {
+		baseInterval = defaultBaseIntervalSeconds
+	}
+	baseInterval *= time.Second
+
+	store := &store.DBstore{
+		BaseInterval:           baseInterval,
+		DefaultIntervalSeconds: defaultIntervalSeconds,
+		SQLStore:               ng.SQLStore,
+		Logger:                 ng.Log,
+	}
+
+	alertmanager, err := notifier.New(ng.Cfg, store, ng.Metrics)
+	if err != nil {
+		return err
+	}
+
+	schedCfg := schedule.SchedulerCfg{
+		C:                       clock.New(),
+		BaseInterval:            baseInterval,
+		Logger:                  log.New("ngalert.scheduler"),
+		MaxAttempts:             maxAttempts,
+		Evaluator:               eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log},
+		InstanceStore:           store,
+		RuleStore:               store,
+		AdminConfigStore:        store,
+		Notifier:                alertmanager,
+		Metrics:                 ng.Metrics,
+		AdminConfigPollInterval: ng.Cfg.AdminConfigPollInterval,
+	}
+	stateManager := state.NewManager(ng.Log, ng.Metrics, store, store)
+	schedule := schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, stateManager)
+
+	ng.Alertmanager = alertmanager
+	ng.stateManager = stateManager
+	ng.schedule = schedule
+
+	api := api.API{
+		Cfg:              ng.Cfg,
+		DatasourceCache:  ng.DataSourceCache,
+		RouteRegister:    ng.RouteRegister,
+		DataService:      ng.DataService,
+		Schedule:         ng.schedule,
+		DataProxy:        ng.DataProxy,
+		QuotaService:     ng.QuotaService,
+		InstanceStore:    store,
+		RuleStore:        store,
+		AlertingStore:    store,
+		AdminConfigStore: store,
+		Alertmanager:     ng.Alertmanager,
+		StateManager:     ng.stateManager,
+	}
+	api.RegisterAPIEndpoints(ng.Metrics)
+
+	return nil
 }
 
 // Run starts the scheduler and Alertmanager.
