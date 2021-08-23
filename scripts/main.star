@@ -34,7 +34,8 @@ load(
     'notify_pipeline',
     'integration_test_services',
     'upload_cdn',
-    'validate_scuemata'
+    'validate_scuemata',
+    'test_a11y_frontend_step'
 )
 
 ver_mode = 'main'
@@ -72,6 +73,7 @@ def get_steps(edition, is_downstream=False):
         e2e_tests_step(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         publish_storybook_step(edition=edition, ver_mode=ver_mode),
+        test_a11y_frontend_step(edition=edition),
         frontend_metrics_step(edition=edition),
         build_frontend_docs_step(edition=edition),
         copy_packages_for_docker_step(),

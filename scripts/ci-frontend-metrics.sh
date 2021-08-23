@@ -2,6 +2,7 @@
 set -e
 
 ERROR_COUNT="$(./node_modules/.bin/tsc --project tsconfig.json --noEmit --strict true | grep -oP 'Found \K(\d+)')"
+ACCESSIBILITY_ERRORS="$(grep -oP '\"errors\":(\d+),' pa11y-ci-results.json | grep -oP '\d+')"
 DIRECTIVES="$(grep -r -o  directive public/app/ | wc -l)"
 CONTROLLERS="$(grep -r -oP 'class .*Ctrl' public/app/ | wc -l)"
 STORIES_COUNT="$(find ./packages/grafana-ui/src/components -name "*.story.tsx" | wc -l)"
@@ -19,6 +20,7 @@ MED_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '2p')"
 HIGH_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '3p')"
 
 echo -e "Typescript errors: $ERROR_COUNT"
+echo -e "Accessibility errors: $ACCESSIBILITY_ERRORS"
 echo -e "Directives: $DIRECTIVES"
 echo -e "Controllers: $CONTROLLERS"
 echo -e "Stories: $STORIES_COUNT"

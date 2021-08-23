@@ -435,6 +435,19 @@ steps:
   - build-storybook
   - end-to-end-tests
 
+- name: test-a11y-frontend
+  image: buildkite/puppeteer
+  commands:
+  - yarn -s test:accessibility --json > pa11y-ci-results.json
+  environment:
+    GRAFANA_MISC_STATS_API_KEY:
+      from_secret: grafana_misc_stats_api_key
+    HOST: end-to-end-tests-server
+    PORT: 3001
+  failure: ignore
+  depends_on:
+  - end-to-end-tests-server
+
 - name: publish-frontend-metrics
   image: grafana/build-container:1.4.1
   commands:
@@ -444,7 +457,7 @@ steps:
       from_secret: grafana_misc_stats_api_key
   failure: ignore
   depends_on:
-  - build-frontend
+  - test-a11y-frontend
 
 - name: build-frontend-docs
   image: grafana/build-container:1.4.1
@@ -3529,6 +3542,6 @@ get:
 
 ---
 kind: signature
-hmac: 80b19bbc75555ea1f675017ec9b98241b331a624a5f4ee7f3b169b75258d51be
+hmac: 4a159392af19a0f4dd9b507c2a1d5da0397ed2448d43cb93116110c7823a7aec
 
 ...

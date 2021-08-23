@@ -481,6 +481,24 @@ def test_frontend_step():
         ],
     }
 
+def test_a11y_frontend_step(edition, port=3001):
+    return {
+        'name': 'test-a11y-frontend' + enterprise2_sfx(edition),
+        'image': 'buildkite/puppeteer',
+        'depends_on': [
+          'end-to-end-tests-server' + enterprise2_sfx(edition),
+        ],
+         'environment': {
+            'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
+            'HOST': 'end-to-end-tests-server' + enterprise2_sfx(edition),
+            'PORT': port,
+        },
+        'failure': 'ignore',
+        'commands': [
+            'yarn -s test:accessibility --json > pa11y-ci-results.json',
+        ],
+    }
+
 def frontend_metrics_step(edition):
     if edition in ('enterprise', 'enterprise2'):
         return None
@@ -489,7 +507,7 @@ def frontend_metrics_step(edition):
         'name': 'publish-frontend-metrics',
         'image': build_image,
         'depends_on': [
-            'build-frontend',
+            'test-a11y-frontend' + enterprise2_sfx(edition),
         ],
         'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
@@ -499,7 +517,6 @@ def frontend_metrics_step(edition):
             './scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
         ],
     }
-
 
 def codespell_step():
     return {
