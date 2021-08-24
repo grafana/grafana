@@ -17,14 +17,14 @@ const DropDownChild = ({ isDivider = false, icon, text, url }: Props) => {
 
   const linkContent = (
     <>
-      {icon && <Icon name={icon} className={iconClassName} />}
+      {icon && <Icon data-testid="dropdown-child-icon" name={icon} className={iconClassName} />}
       {text}
     </>
   );
 
   const anchor = url ? <Link href={url}>{linkContent}</Link> : <a>{linkContent}</a>;
 
-  return isDivider ? <li className="divider" /> : <li>{anchor}</li>;
+  return isDivider ? <li data-testid="dropdown-child-divider" className="divider" /> : <li>{anchor}</li>;
 };
 
 export default DropDownChild;
