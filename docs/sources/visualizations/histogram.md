@@ -41,7 +41,7 @@ Controls the fill opacity bars.
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../standard-options.md#color-scheme" >}}) field option.
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../panels/standard-options.md#color-scheme" >}}) field option.
 
 Gradient display is influenced by the **Fill opacity** setting.
 
@@ -63,4 +63,4 @@ Gradient color is generated based on the hue of the line color.
 
 ### Legend calculations
 
-Choose a [standard calculations]({{< relref "../calculations-list.md">}}) to show in the legend. You can select more than one.
+Choose a [standard calculations]({{< relref "../panels/calculations-list.md">}}) to show in the legend. You can select more than one.

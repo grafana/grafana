@@ -52,7 +52,7 @@ The Bar chart panel is a new visualization that supports categorical data. It on
 
 To use it with time series you first have to add a **Reduce** transform.
 
-For more information, refer to [Bar chart visualization]({{< relref "../panels/visualizations/bar-chart.md" >}}).
+For more information, refer to [Bar chart visualization]({{< relref "../visualizations/bar-chart.md" >}}).
 
 ### State timeline visualization (beta)
 
