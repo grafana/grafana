@@ -143,8 +143,8 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
   if (axis.side === 2) {
     axisSize += axis!.gap! + fontSize;
   } else if (values?.length) {
-    let longestValue = values.reduce((acc, value) => (value.length > acc.length ? value : acc), '');
-    axisSize += axis!.gap! + axis!.labelGap! + measureText('0'.repeat(longestValue.length), fontSize).width;
+    let maxTextWidth = values.reduce((acc, value) => Math.max(acc, measureText(value, fontSize).width), 0);
+    axisSize += axis!.gap! + axis!.labelGap! + maxTextWidth;
   }
 
   return Math.ceil(axisSize);
