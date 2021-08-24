@@ -14,8 +14,6 @@ var panelSubpath = cue.MakePath(cue.Def("#Panel"))
 
 var dashboardDir = filepath.Join(prefix, "packages", "grafana-schema", "src", "dashboard")
 
-// var dashboardDir = filepath.Join(prefix, "packages", "grafana-schema", "src", "dashboard", "dashboard.cue")
-
 func defaultOverlay(p BaseLoadPaths) (map[string]load.Source, error) {
 	overlay := make(map[string]load.Source)
 
