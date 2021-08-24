@@ -19,9 +19,6 @@ describe('QueryField', () => {
       />
     );
 
-    /*expect(wrapper.find(ButtonCascader).length).toBe(1);
-    expect(wrapper.find(QueryField).length).toBe(1);
-    expect(wrapper.find(QueryField).prop('query')).toBe('1234');*/
     expect(screen.getByText(/1234/i)).toBeInTheDocument();
     expect(screen.getByText(/Traces/i)).toBeInTheDocument();
   });
