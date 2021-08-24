@@ -75,7 +75,7 @@ GraphFieldConfig: {
   BarConfig
   StackableFieldConfig
   HideableFieldConfig
-  drawStyle?: DrawStyle
+  drawStyle?: GraphDrawStyle
   gradientMode?: GraphGradientMode
   thresholdsStyle?: GraphThresholdsStyleConfig
 } @cuetsy(targetType="interface")
