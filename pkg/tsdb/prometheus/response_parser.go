@@ -71,7 +71,6 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames
 	frames := data.Frames{}
 
 	for _, v := range matrix {
-		name := formatLegend(v.Metric, query)
 		tags := make(map[string]string, len(v.Metric))
 		timeVector := make([]time.Time, 0, len(v.Values))
 		values := make([]float64, 0, len(v.Values))
@@ -82,6 +81,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames
 			timeVector = append(timeVector, time.Unix(k.Timestamp.Unix(), 0).UTC())
 			values = append(values, float64(k.Value))
 		}
+		name := formatLegend(v.Metric, query)
 		frames = append(frames, data.NewFrame(name,
 			data.NewField("Time", nil, timeVector),
 			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
@@ -91,19 +91,28 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {
+	var legend string
+
 	if query.LegendFormat == "" {
-		return metric.String()
+		legend = metric.String()
+	} else {
+		result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
+			labelName := strings.Replace(string(in), "{{", "", 1)
+			labelName = strings.Replace(labelName, "}}", "", 1)
+			labelName = strings.TrimSpace(labelName)
+			if val, exists := metric[model.LabelName(labelName)]; exists {
+				return []byte(val)
+			}
+
+			return []byte{}
+		})
+		legend = string(result)
 	}
 
-	result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
-		labelName := strings.Replace(string(in), "{{", "", 1)
-		labelName = strings.Replace(labelName, "}}", "", 1)
-		labelName = strings.TrimSpace(labelName)
-		if val, exists := metric[model.LabelName(labelName)]; exists {
-			return []byte(val)
-		}
-		return []byte{}
-	})
+	// If legend is empty brackets, use query expression
+	if legend == "{}" {
+		legend = query.Expr
+	}
 
-	return string(result)
+	return legend
 }

@@ -115,7 +115,6 @@ func newService(im instancemgmt.InstanceManager, httpClientProvider httpclient.P
 	}
 }
 
-//nolint: staticcheck
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if len(req.Queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
@@ -170,12 +169,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			}
 		}
 
-		// Parse responseto dataFrames
+		// Parse response to dataFrames
 		frame, err := parseResponse(results, query)
 		if err != nil {
 			return &result, err
 		}
-
 		result.Responses[query.RefId] = backend.DataResponse{
 			Frames: frame,
 		}

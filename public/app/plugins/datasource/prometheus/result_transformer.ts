@@ -523,6 +523,7 @@ function transformDFoTable(df: DataFrame, responseLength: number): DataFrame {
 
   const tableDataFrame = {
     ...df,
+    name: undefined,
     meta: { ...df.meta, preferredVisualisationType: 'table' as PreferredVisualisationType },
     fields: [
       timeField,
@@ -531,7 +532,8 @@ function transformDFoTable(df: DataFrame, responseLength: number): DataFrame {
         ...valueField,
         name: getValueText(responseLength, df.refId),
         labels: undefined,
-        config: { ...valueField.config, displayNameFromDS: undefined, displayName: undefined },
+        config: { ...valueField.config, displayNameFromDS: undefined },
+        state: { ...valueField.state, displayName: undefined },
       },
     ],
   };
