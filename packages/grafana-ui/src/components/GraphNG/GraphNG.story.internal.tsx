@@ -2,7 +2,7 @@ import { FieldColorModeId, toDataFrame, dateTime } from '@grafana/data';
 import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphNGProps } from './GraphNG';
-import { LegendDisplayMode, LegendPlacement } from '../VizLegend/models.gen';
+import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 import { prepDataForStorybook } from '../../utils/storybook/data';
 import { useTheme2 } from '../../themes';
 import { Story } from '@storybook/react';

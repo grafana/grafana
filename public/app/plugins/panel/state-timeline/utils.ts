@@ -1,4 +1,5 @@
 import React from 'react';
+import { VizLegendOptions } from '@grafana/schema';
 import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import {
   ArrayVector,
@@ -21,7 +22,6 @@ import {
   UPlotConfigBuilder,
   UPlotConfigPrepFn,
   VizLegendItem,
-  VizLegendOptions,
 } from '@grafana/ui';
 import { getConfig, TimelineCoreOptions } from './timeline';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
@@ -126,7 +126,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     updateActiveSeriesIdx,
     updateActiveDatapointIdx,
     updateTooltipPosition
-  ) => (u: uPlot) => {
+  ) => {
     if (shouldChangeHover) {
       if (hoveredSeriesIdx != null) {
         updateActiveSeriesIdx(hoveredSeriesIdx);
@@ -271,7 +271,7 @@ export function prepareTimelineFields(
     let isTimeseries = false;
     let changed = false;
     const fields: Field[] = [];
-    for (const field of frame.fields) {
+    for (let field of frame.fields) {
       switch (field.type) {
         case FieldType.time:
           isTimeseries = true;
@@ -281,8 +281,17 @@ export function prepareTimelineFields(
         case FieldType.number:
         case FieldType.boolean:
         case FieldType.string:
-          // magic value for join() to leave nulls alone
-          (field.config.custom = field.config.custom ?? {}).spanNulls = -1;
+          field = {
+            ...field,
+            config: {
+              ...field.config,
+              custom: {
+                ...field.config.custom,
+                // magic value for join() to leave nulls alone
+                spanNulls: -1,
+              },
+            },
+          };
 
           if (mergeValues) {
             let merged = unsetSameFutureValues(field.values.toArray());
