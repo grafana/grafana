@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/accesscontrolmock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 )
 
 type middlewareTestCase struct {
@@ -27,13 +27,13 @@ func TestMiddleware(t *testing.T) {
 	tests := []middlewareTestCase{
 		{
 			desc:           "should use fallback if access control is disabled",
-			ac:             accesscontrolmock.New().WithDisabled(),
+			ac:             mock.New().WithDisabled(),
 			expectFallback: true,
 			expectEndpoint: true,
 		},
 		{
 			desc: "should pass middleware for correct permissions",
-			ac: accesscontrolmock.New().WithPermissions(
+			ac: mock.New().WithPermissions(
 				[]*accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
 			),
 			evaluator:      accesscontrol.EvalPermission("users:read", "users:*"),
@@ -42,7 +42,7 @@ func TestMiddleware(t *testing.T) {
 		},
 		{
 			desc: "should not reach endpoint when missing permissions",
-			ac: accesscontrolmock.New().WithPermissions(
+			ac: mock.New().WithPermissions(
 				[]*accesscontrol.Permission{{Action: "users:read", Scope: "users:1"}},
 			),
 			evaluator:      accesscontrol.EvalPermission("users:read", "users:*"),

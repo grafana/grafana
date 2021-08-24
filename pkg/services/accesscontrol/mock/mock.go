@@ -1,4 +1,4 @@
-package accesscontrolmock
+package mock
 
 import (
 	"context"
