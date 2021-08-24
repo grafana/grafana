@@ -8,9 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/evaluator"
-	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -18,13 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
 )
 
 func loggedInUserScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
@@ -209,8 +208,12 @@ type fakeAccessControl struct {
 	permissions []*accesscontrol.Permission
 }
 
-func (f *fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
-	return evaluator.Evaluate(ctx, f, user, permission, scope...)
+func (f *fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+	permissions, err := f.GetUserPermissions(ctx, user)
+	if err != nil {
+		return false, err
+	}
+	return evaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions))
 }
 
 func (f *fakeAccessControl) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {

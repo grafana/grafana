@@ -85,8 +85,7 @@ type userTestCase struct {
 }
 
 type endpointTestCase struct {
-	permission string
-	scope      []string
+	evaluator accesscontrol.Evaluator
 }
 
 func TestEvaluatingPermissions(t *testing.T) {
@@ -99,8 +98,8 @@ func TestEvaluatingPermissions(t *testing.T) {
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
-				{permission: accesscontrol.ActionUsersDisable, scope: []string{accesscontrol.ScopeGlobalUsersAll}},
-				{permission: accesscontrol.ActionUsersEnable, scope: []string{accesscontrol.ScopeGlobalUsersAll}},
+				{evaluator: accesscontrol.EvalPermission(accesscontrol.ActionUsersDisable, accesscontrol.ScopeGlobalUsersAll)},
+				{evaluator: accesscontrol.EvalPermission(accesscontrol.ActionUsersEnable, accesscontrol.ScopeGlobalUsersAll)},
 			},
 			evalResult: true,
 		},
@@ -112,7 +111,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
-				{permission: accesscontrol.ActionUsersCreate, scope: []string{accesscontrol.ScopeGlobalUsersAll}},
+				{evaluator: accesscontrol.EvalPermission(accesscontrol.ActionUsersCreate, accesscontrol.ScopeGlobalUsersAll)},
 			},
 			evalResult: false,
 		},
@@ -130,7 +129,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			}
 
 			for _, endpoint := range tc.endpoints {
-				result, err := ac.Evaluate(context.Background(), user, endpoint.permission, endpoint.scope...)
+				result, err := ac.Evaluate(context.Background(), user, endpoint.evaluator)
 				require.NoError(t, err)
 				assert.Equal(t, tc.evalResult, result)
 			}
