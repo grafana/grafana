@@ -9,7 +9,7 @@ import (
 //
 // TODO good rule about where to search
 //
-//go:embed cue/*/*.cue
+//go:embed cue.mod cue packages/grafana-schema/src/*/*.cue
 var CoreSchema embed.FS
 
 // TODO good rule about where to search

@@ -12,6 +12,10 @@ import (
 
 var panelSubpath = cue.MakePath(cue.Def("#Panel"))
 
+var dashboardDir = filepath.Join(prefix, "packages", "grafana-schema", "src", "dashboard")
+
+// var dashboardDir = filepath.Join(prefix, "packages", "grafana-schema", "src", "dashboard", "dashboard.cue")
+
 func defaultOverlay(p BaseLoadPaths) (map[string]load.Source, error) {
 	overlay := make(map[string]load.Source)
 
@@ -38,8 +42,14 @@ func BaseDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 	if err != nil {
 		return nil, err
 	}
-	cfg := &load.Config{Overlay: overlay}
-	inst, err := rt.Build(load.Instances([]string{filepath.Join(prefix, "cue", "data", "gen.cue")}, cfg)[0])
+
+	cfg := &load.Config{
+		Overlay:    overlay,
+		ModuleRoot: prefix,
+		Module:     "github.com/grafana/grafana",
+		Dir:        dashboardDir,
+	}
+	inst, err := rt.Build(load.Instances(nil, cfg)[0])
 	if err != nil {
 		cueError := schema.WrapCUEError(err)
 		if err != nil {
