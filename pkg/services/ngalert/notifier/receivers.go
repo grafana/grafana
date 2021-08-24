@@ -130,7 +130,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 
 		// Make sure the return order is deterministic.
 		sort.Slice(v.Receivers, func(i, j int) bool {
-			return v.Receivers[i].Name < v.Receivers[i].Name
+			return v.Receivers[i].Name < v.Receivers[j].Name
 		})
 
 		return v
