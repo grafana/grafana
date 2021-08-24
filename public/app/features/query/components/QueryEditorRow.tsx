@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent, ReactNode } from 'react';
+import React, { PropsWithChildren, PureComponent, ReactNode } from 'react';
 import classNames from 'classnames';
 import { has, cloneDeep } from 'lodash';
 // Utils & Services
@@ -30,6 +30,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { PanelModel } from 'app/features/dashboard/state';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import config from 'app/core/config';
+import RecordedQuery from './QueryModal';
+import { RecordedQueryProps } from './QueryModal';
 
 interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -55,6 +57,13 @@ interface State<TQuery extends DataQuery> {
   data?: PanelData;
   isOpen?: boolean;
   showingHelp: boolean;
+}
+
+let modals: Map<string, React.ReactElement>;
+
+export function addModalRecordedQuery(key: string, modal: React.ReactElement) {
+  console.log(modal);
+  modals.set(key, modal);
 }
 
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
@@ -264,6 +273,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onRecordQuery = () => {
     //I would like to have a modal pop up that is from grafana enterprise
+    //this.router
   };
 
   renderCollapsedText(): string | null {
@@ -284,7 +294,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const isDisabled = query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
-    const showRecordQuery = config.licenseInfo.hasLicense && config.featureToggles.recordedQueries;
+    const showRecordQuery = true; //config.licenseInfo.hasLicense && config.featureToggles.recordedQueries;
 
     return (
       <HorizontalGroup width="auto">
@@ -306,6 +316,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {showRecordQuery && <QueryOperationAction title="Record Query" icon="cog" onClick={this.onRecordQuery} />}
+        {showRecordQuery && modals['saveRecordedQuery']}
         <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
         {!hideDisableQuery && (
           <QueryOperationAction
