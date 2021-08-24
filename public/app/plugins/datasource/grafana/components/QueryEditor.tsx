@@ -1,4 +1,3 @@
-import { defaults } from 'lodash';
 import React, { PureComponent } from 'react';
 import { InlineField, Select, Alert, Input } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, dataFrameFromJSON, rangeUtil } from '@grafana/data';
@@ -30,13 +29,6 @@ export class QueryEditor extends PureComponent<Props, State> {
       description: 'Stream real-time measurements from Grafana',
     },
   ];
-
-  constructor(props: Props) {
-    super(props);
-    // TODO this mutates the query. We should not do this.
-    // Remove once we have a mechanism for specifying a default query.
-    defaults(props.query, defaultQuery);
-  }
 
   loadChannelInfo() {
     getBackendSrv()
@@ -251,7 +243,10 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   render() {
-    const { query } = this.props;
+    const query = {
+      ...defaultQuery,
+      ...this.props.query,
+    };
 
     return (
       <>
