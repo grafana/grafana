@@ -23,11 +23,11 @@ type Calls struct {
 }
 
 type Mock struct {
-	// Unless an override is provided permissions will be returned by GetUserPermissions
+	// Unless an override is provided, permissions will be returned by GetUserPermissions
 	permissions []*accesscontrol.Permission
-	// Unless an override is provided Disabled will be returned by IsDisabled
+	// Unless an override is provided, disabled will be returned by IsDisabled
 	disabled bool
-	// Unless an override is provided BuiltInRoles will be returned by GetUserBuiltInRoles
+	// Unless an override is provided, builtInRoles will be returned by GetUserBuiltInRoles
 	builtInRoles []string
 
 	// Track the list of calls
