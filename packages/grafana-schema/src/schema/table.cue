@@ -1,5 +1,4 @@
-package grafanaschema
-
+// TODO -- should not be table specific!
 FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(targetType="type")
 
 TableCellDisplayMode: {
@@ -19,10 +18,4 @@ TableFieldOptions: {
   align: FieldTextAlignment | *"auto"
   displayMode: TableCellDisplayMode | *"auto"
   hidden?: bool  // ?? default is missing or false ??
-} @cuetsy(targetType="interface")
-
-
-TableSortByFieldState: {
-  displayName: string
-  desc?: bool
 } @cuetsy(targetType="interface")

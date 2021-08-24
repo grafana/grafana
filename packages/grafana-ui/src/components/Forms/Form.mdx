@@ -276,7 +276,7 @@ In a nutshell, the two most important changes are:
 
 ```jsx
 - <input ref={register({ required: true })} name="test" />
-+ <input {...register('test', { required: true })} />
++ <input {...register('test', { required: true })} />;
 ```
 
 - `InputControl`'s `as` prop has been replaced with `render`, which has `field` and `fieldState` objects as arguments. `onChange`, `onBlur`, `value`, `name`, and `ref` are parts of `field`.
