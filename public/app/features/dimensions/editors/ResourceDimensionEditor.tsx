@@ -9,6 +9,7 @@ import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOption
 import { InlineField, InlineFieldRow, RadioButtonGroup, StringValueEditor } from '@grafana/ui';
 import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
 import IconSelector from './IconSelector';
+import IconModal from 'app/plugins/panel/canvas/elements/IconModal';
 
 const resourceOptions = [
   { label: 'Fixed', value: ResourceDimensionMode.Fixed, description: 'Fixed value' },
@@ -86,11 +87,7 @@ export const ResourceDimensionEditor: FC<
       )}
       {mode === ResourceDimensionMode.Fixed && (
         <InlineFieldRow>
-          {resourceType === 'icon' && (
-            <InlineField label="Icon" labelWidth={labelWidth} grow={true}>
-              <IconSelector value={value?.fixed} onChange={onFixedChange} />
-            </InlineField>
-          )}
+          {resourceType === 'icon' && <IconModal {...props} />}
           {resourceType === 'image' && (
             <InlineField label="Image" labelWidth={labelWidth} grow={true}>
               <StringValueEditor
