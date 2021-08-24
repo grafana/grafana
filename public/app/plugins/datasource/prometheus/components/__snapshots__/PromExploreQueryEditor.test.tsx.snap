@@ -25,7 +25,7 @@ exports[`PromExploreQueryEditor should render component 1`] = `
           "refId": "A",
         }
       }
-      queryType="both"
+      queryType="range"
       stepMode="min"
       stepValue="1s"
     />

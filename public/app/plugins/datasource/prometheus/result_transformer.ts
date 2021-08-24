@@ -461,6 +461,7 @@ function parseSampleValue(value: string): number {
   }
 }
 
+// V2 result trasnformer used to transform query results from queries that were run trough prometheus backend
 export function transformV2(response: DataQueryResponse, options: DataQueryRequest<PromQuery>) {
   const promResults: DataFrame[] = response.data;
   const tableRefIds = options.targets.map((target) => {
@@ -470,17 +471,17 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
     return;
   });
 
+  // Processing for Explore - showing instant queries in table and range queries as graph
   if (options.app === CoreApp.Explore) {
     // For table results, we need to transform data frames to table data frames
-    const tableResults = promResults.filter((dataFrame) => tableRefIds.includes(dataFrame?.refId));
+    const tableResults = promResults.filter((dataFrame) => tableRefIds.includes(dataFrame.refId));
     const tableFrames = tableResults.map((dataFrame) => {
-      const df = transformDFoTable(dataFrame);
-      df.name = getValueText(response, df.refId);
+      const df = transformDFoTable(dataFrame, response.data.length);
       return df;
     });
 
     // Everything else is processed as graph
-    const otherResults = promResults.filter((dataFrame) => !tableRefIds.includes(dataFrame?.refId));
+    const otherResults = promResults.filter((dataFrame) => !tableRefIds.includes(dataFrame.refId));
     const otherFrames = otherResults.map((dataFrame) => {
       const df = dataFrame;
       df.meta = {
@@ -495,7 +496,7 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
   return response;
 }
 
-function transformDFoTable(df: DataFrame): DataFrame {
+function transformDFoTable(df: DataFrame, responseLength: number): DataFrame {
   if (!df || df.length === 0) {
     return df;
   }
@@ -503,7 +504,9 @@ function transformDFoTable(df: DataFrame): DataFrame {
   const timeField = df.fields[0];
   const valueField = df.fields[1];
 
-  const metricFields = Object.keys(valueField.labels as {})
+  // Create label fields
+  const promLabels: PromMetric = valueField.labels ?? {};
+  const labelFields = Object.keys(promLabels)
     .sort()
     .map((label) => {
       const numberField = label === 'le';
@@ -515,19 +518,20 @@ function transformDFoTable(df: DataFrame): DataFrame {
       };
     });
 
-  metricFields.forEach((field) => field.values.add(getLabelValue(valueField.labels as PromMetric, field.name)));
+  // Fill labelFields with label values
+  labelFields.forEach((field) => field.values.add(getLabelValue(promLabels, field.name)));
 
   const tableDataFrame = {
     ...df,
     meta: { ...df.meta, preferredVisualisationType: 'table' as PreferredVisualisationType },
     fields: [
       timeField,
-      ...metricFields,
+      ...labelFields,
       {
         ...valueField,
+        name: getValueText(responseLength, df.refId),
         labels: undefined,
-        config: { ...valueField.config, displayNameFromDS: undefined },
-        state: { ...valueField.state, displayName: 'Value' },
+        config: { ...valueField.config, displayNameFromDS: undefined, displayName: undefined },
       },
     ],
   };
@@ -535,6 +539,6 @@ function transformDFoTable(df: DataFrame): DataFrame {
   return tableDataFrame;
 }
 
-function getValueText(res: DataQueryResponse, refId = '') {
-  return res.data.length > 1 ? `Value #${refId}` : 'Value';
+function getValueText(responseLength: number, refId = '') {
+  return responseLength > 1 ? `Value #${refId}` : 'Value';
 }

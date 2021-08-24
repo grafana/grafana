@@ -22,6 +22,10 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
     if (!query.range && !query.instant) {
       onChange({ ...query, instant: true, range: true });
     }
+
+    if (!query.stepMode) {
+      onChange({ ...query, stepMode: 'min' });
+    }
   }, [onChange, query]);
 
   function onChangeQueryStep(value: string) {
