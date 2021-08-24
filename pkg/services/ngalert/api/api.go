@@ -30,10 +30,8 @@ type Scheduler interface {
 
 type Alertmanager interface {
 	// Configuration
-	// temporary add orgID parameter; this will move to the Alertmanager wrapper when it will be available
-	SaveAndApplyConfig(orgID int64, config *apimodels.PostableUserConfig) error
-	// temporary add orgID parameter; this will move to the Alertmanager wrapper when it will be available
-	SaveAndApplyDefaultConfig(orgID int64) error
+	SaveAndApplyConfig(config *apimodels.PostableUserConfig) error
+	SaveAndApplyDefaultConfig() error
 	GetStatus() apimodels.GettableStatus
 
 	// Silences
@@ -52,19 +50,19 @@ type Alertmanager interface {
 
 // API handlers.
 type API struct {
-	Cfg              *setting.Cfg
-	DatasourceCache  datasources.CacheService
-	RouteRegister    routing.RouteRegister
-	DataService      *tsdb.Service
-	QuotaService     *quota.QuotaService
-	Schedule         schedule.ScheduleService
-	RuleStore        store.RuleStore
-	InstanceStore    store.InstanceStore
-	AlertingStore    store.AlertingStore
-	AdminConfigStore store.AdminConfigurationStore
-	DataProxy        *datasourceproxy.DatasourceProxyService
-	Alertmanager     Alertmanager
-	StateManager     *state.Manager
+	Cfg                  *setting.Cfg
+	DatasourceCache      datasources.CacheService
+	RouteRegister        routing.RouteRegister
+	DataService          *tsdb.Service
+	QuotaService         *quota.QuotaService
+	Schedule             schedule.ScheduleService
+	RuleStore            store.RuleStore
+	InstanceStore        store.InstanceStore
+	AlertingStore        store.AlertingStore
+	AdminConfigStore     store.AdminConfigurationStore
+	DataProxy            *datasourceproxy.DatasourceProxyService
+	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
+	StateManager         *state.Manager
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -78,7 +76,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.Metrics) {
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		AlertmanagerSrv{store: api.AlertingStore, am: api.Alertmanager, log: logger},
+		AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, log: logger},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	models2 "github.com/grafana/grafana/pkg/models"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
@@ -227,13 +226,6 @@ func (f *fakeAdminConfigStore) UpdateAdminConfiguration(cmd store.UpdateAdminCon
 	defer f.mtx.Unlock()
 	f.configs[cmd.AdminConfiguration.OrgID] = cmd.AdminConfiguration
 
-	return nil
-}
-
-// fakeNotifier represents a fake internal Alertmanager.
-type fakeNotifier struct{}
-
-func (n *fakeNotifier) PutAlerts(alerts apimodels.PostableAlerts) error {
 	return nil
 }
 

@@ -55,7 +55,7 @@ type AlertNG struct {
 	stateManager    *state.Manager
 
 	// Alerting notification services
-	Alertmanager *notifier.Alertmanager
+	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 }
 
 func init() {
@@ -74,9 +74,10 @@ func (ng *AlertNG) Init() error {
 		Logger:                 ng.Log,
 	}
 
-	var err error
-	ng.Alertmanager, err = notifier.New(ng.Cfg, store, ng.Metrics)
-	if err != nil {
+	ng.MultiOrgAlertmanager = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store)
+
+	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
+	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
 		return err
 	}
 
@@ -89,7 +90,8 @@ func (ng *AlertNG) Init() error {
 		InstanceStore:           store,
 		RuleStore:               store,
 		AdminConfigStore:        store,
-		Notifier:                ng.Alertmanager,
+		OrgStore:                store,
+		MultiOrgNotifier:        ng.MultiOrgAlertmanager,
 		Metrics:                 ng.Metrics,
 		AdminConfigPollInterval: ng.Cfg.AdminConfigPollInterval,
 	}
@@ -98,19 +100,19 @@ func (ng *AlertNG) Init() error {
 	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, ng.stateManager)
 
 	api := api.API{
-		Cfg:              ng.Cfg,
-		DatasourceCache:  ng.DatasourceCache,
-		RouteRegister:    ng.RouteRegister,
-		DataService:      ng.DataService,
-		Schedule:         ng.schedule,
-		DataProxy:        ng.DataProxy,
-		QuotaService:     ng.QuotaService,
-		InstanceStore:    store,
-		RuleStore:        store,
-		AlertingStore:    store,
-		AdminConfigStore: store,
-		Alertmanager:     ng.Alertmanager,
-		StateManager:     ng.stateManager,
+		Cfg:                  ng.Cfg,
+		DatasourceCache:      ng.DatasourceCache,
+		RouteRegister:        ng.RouteRegister,
+		DataService:          ng.DataService,
+		Schedule:             ng.schedule,
+		DataProxy:            ng.DataProxy,
+		QuotaService:         ng.QuotaService,
+		InstanceStore:        store,
+		RuleStore:            store,
+		AlertingStore:        store,
+		AdminConfigStore:     store,
+		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
+		StateManager:         ng.stateManager,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics)
 
@@ -127,7 +129,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		return ng.schedule.Run(subCtx)
 	})
 	children.Go(func() error {
-		return ng.Alertmanager.Run(subCtx)
+		return ng.MultiOrgAlertmanager.Run(subCtx)
 	})
 	return children.Wait()
 }
