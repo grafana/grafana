@@ -223,7 +223,6 @@ def lint_backend_step(edition):
         },
         'depends_on': [
             'initialize',
-            'test-backend' + enterprise2_sfx(edition),
         ],
         'commands': [
             # Don't use Make since it will re-download the linters
@@ -368,8 +367,6 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
         'name': 'build-backend' + enterprise2_sfx(edition),
         'image': build_image,
         'depends_on': [
-            'initialize',
-            'lint-backend' + enterprise2_sfx(edition),
             'test-backend' + enterprise2_sfx(edition),
         ],
         'environment': env,
@@ -403,7 +400,6 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         'name': 'build-frontend',
         'image': build_image,
         'depends_on': [
-            'initialize',
             'test-frontend',
         ],
         'commands': cmds,
@@ -434,7 +430,6 @@ def build_plugins_step(edition, sign=False):
         'name': 'build-plugins',
         'image': build_image,
         'depends_on': [
-            'initialize',
             'lint-backend',
         ],
         'environment': env,
@@ -454,7 +449,7 @@ def test_backend_step(edition, tries=None):
         'name': 'test-backend' + enterprise2_sfx(edition),
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'lint-backend',
         ],
         'commands': [
             # First make sure that there are no tests with FocusConvey
@@ -471,7 +466,7 @@ def test_frontend_step():
         'name': 'test-frontend',
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'lint-backend',
         ],
         'environment': {
             'TEST_MAX_WORKERS': '50%',
@@ -547,11 +542,9 @@ def shellcheck_step():
 
 def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
     deps = [
+        'build-plugins',
         'build-backend',
         'build-frontend',
-        'build-plugins',
-        'test-backend',
-        'test-frontend',
         'codespell',
         'shellcheck',
     ]
@@ -694,7 +687,6 @@ def build_docs_website_step():
         # Use latest revision here, since we want to catch if it breaks
         'image': 'grafana/docs-base:latest',
         'depends_on': [
-            'initialize',
             'build-frontend-docs',
         ],
         'commands': [
@@ -709,7 +701,6 @@ def copy_packages_for_docker_step():
         'name': 'copy-packages-for-docker',
         'image': build_image,
         'depends_on': [
-            'package',
             'end-to-end-tests-server',
         ],
         'commands': [
@@ -740,7 +731,7 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
     return {
         'name': 'build-docker-images' + ubuntu_sfx,
         'image': grafana_docker_image,
-        'depends_on': ['copy-packages-for-docker', 'end-to-end-tests-server'],
+        'depends_on': ['copy-packages-for-docker'],
         'settings': settings,
     }
 
