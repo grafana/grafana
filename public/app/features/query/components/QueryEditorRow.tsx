@@ -1,5 +1,5 @@
 // Libraries
-import React, { PropsWithChildren, PureComponent, ReactNode } from 'react';
+import React, { PureComponent, ReactNode } from 'react';
 import classNames from 'classnames';
 import { has, cloneDeep } from 'lodash';
 // Utils & Services
@@ -29,9 +29,7 @@ import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelModel } from 'app/features/dashboard/state';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
-import config from 'app/core/config';
-import RecordedQuery from './QueryModal';
-import { RecordedQueryProps } from './QueryModal';
+import { QueryModal } from './QueryModal';
 
 interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -57,6 +55,7 @@ interface State<TQuery extends DataQuery> {
   data?: PanelData;
   isOpen?: boolean;
   showingHelp: boolean;
+  addRecordedQuery: boolean;
 }
 
 let modals: Map<string, React.ReactElement>;
@@ -76,6 +75,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     hasTextEditMode: false,
     data: undefined,
     isOpen: true,
+    addRecordedQuery: false,
     showingHelp: false,
   };
 
@@ -271,9 +271,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.onToggleHelp();
   };
 
-  onRecordQuery = () => {
-    //I would like to have a modal pop up that is from grafana enterprise
-    //this.router
+  onRecordQuery = (state: boolean) => () => {
+    this.setState({ ...this.state, addRecordedQuery: state });
   };
 
   renderCollapsedText(): string | null {
@@ -290,7 +289,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderActions = (props: QueryOperationRowRenderProps) => {
     const { query, hideDisableQuery = false } = this.props;
-    const { hasTextEditMode, datasource, showingHelp } = this.state;
+    const { hasTextEditMode, datasource, showingHelp, addRecordedQuery } = this.state;
     const isDisabled = query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
@@ -315,8 +314,15 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             }}
           />
         )}
-        {showRecordQuery && <QueryOperationAction title="Record Query" icon="cog" onClick={this.onRecordQuery} />}
-        {showRecordQuery && modals['saveRecordedQuery']}
+        {showRecordQuery && <QueryOperationAction title="Record Query" icon="cog" onClick={this.onRecordQuery(true)} />}
+        {showRecordQuery && (
+          <QueryModal
+            isOpen={addRecordedQuery}
+            modalKey={'addRecordedQuery'}
+            query={query}
+            onDismiss={this.onRecordQuery(false)}
+          />
+        )}
         <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
         {!hideDisableQuery && (
           <QueryOperationAction

@@ -105,13 +105,7 @@ export class QueryEditor extends PureComponent<Props, State> {
     );
   };
 
-  onNewRecordedQuery = () => {
-    //I would like to have the functionality of adding a recorded query in grafana enterprise
-  };
-
   renderAddQueryRow(styles: ReturnType<typeof getStyles>) {
-    const showRecordQuery = config.licenseInfo.hasLicense && config.featureToggles.recordedQueries;
-
     return (
       <HorizontalGroup spacing="md" align="flex-start">
         <Button
@@ -136,17 +130,6 @@ export class QueryEditor extends PureComponent<Props, State> {
               <Icon name="exclamation-triangle" className="muted" size="sm" />
             </Button>
           </Tooltip>
-        )}
-        {showRecordQuery && (
-          <Button
-            type="button"
-            icon="plus"
-            onClick={this.onNewExpressionQuery}
-            variant="secondary"
-            aria-label={selectors.components.QueryTab.recordedQuery}
-          >
-            Recorded Query
-          </Button>
         )}
       </HorizontalGroup>
     );
