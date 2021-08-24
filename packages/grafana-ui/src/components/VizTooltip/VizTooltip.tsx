@@ -5,7 +5,7 @@ import { Dimensions, TimeZone } from '@grafana/data';
 import { FlotPosition } from '../Graph/types';
 import { VizTooltipContainer } from './VizTooltipContainer';
 import { useStyles } from '../../themes';
-import { TooltipDisplayMode } from './models.gen';
+import { TooltipDisplayMode } from '@grafana/schema';
 
 // Describes active dimensions user interacts with
 // It's a key-value pair where:

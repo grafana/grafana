@@ -14,19 +14,17 @@ import {
   TimeZone,
 } from '@grafana/data';
 import {
-  DrawStyle,
   Icon,
-  LegendDisplayMode,
   PanelContext,
   PanelContextProvider,
   SeriesVisibilityChangeMode,
   TimeSeries,
-  TooltipDisplayMode,
   TooltipPlugin,
   useStyles2,
   useTheme2,
   ZoomPlugin,
 } from '@grafana/ui';
+import { LegendDisplayMode, TooltipDisplayMode, DrawStyle } from '@grafana/schema';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { ContextMenuPlugin } from 'app/plugins/panel/timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from 'app/plugins/panel/timeseries/plugins/ExemplarsPlugin';
