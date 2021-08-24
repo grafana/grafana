@@ -59,22 +59,25 @@ func postTestData() {
 		log.Println(string(data))
 		req, _ := http.NewRequest("POST", "http://localhost:3000/api/live/push/json/auto", bytes.NewReader(data))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
-		_, err := http.DefaultClient.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
+		_ = resp.Body.Close()
 		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/json/tip", bytes.NewReader(data))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
-		_, err = http.DefaultClient.Do(req)
+		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
+		_ = resp.Body.Close()
 		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/json/exact", bytes.NewReader(data))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
-		_, err = http.DefaultClient.Do(req)
+		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
+		_ = resp.Body.Close()
 		i++
 	}
 }

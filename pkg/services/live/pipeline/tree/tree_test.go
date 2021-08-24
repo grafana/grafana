@@ -65,7 +65,6 @@ func checkRequests(t *testing.T, tree *Node, requests testRequests, unescapes ..
 				t.Errorf("Params mismatch for route '%s'", request.path)
 			}
 		}
-
 	}
 }
 

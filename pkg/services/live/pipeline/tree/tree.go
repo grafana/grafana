@@ -365,6 +365,7 @@ func (n *Node) GetValue(path string, params *Params, unescape bool) (value NodeV
 // If no handle can be found, a TSR (trailing slash redirect) recommendation is
 // made if a handle exists with an extra (without the) trailing slash for the
 // given path.
+// nolint:gocyclo
 func (n *Node) getValue(path string, params *Params, unescape bool) (value NodeValue) {
 	var (
 		skippedPath string
@@ -612,6 +613,7 @@ func shiftNRuneBytes(rb [4]byte, n int) [4]byte {
 }
 
 // Recursive case-insensitive lookup function used by n.findCaseInsensitivePath
+// nolint:gocyclo
 func (n *Node) findCaseInsensitivePathRec(path string, ciPath []byte, rb [4]byte, fixTrailingSlash bool) []byte {
 	npLen := len(n.path)
 

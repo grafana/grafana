@@ -8,8 +8,6 @@ import (
 	"os"
 
 	"github.com/centrifugal/centrifuge"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 )
 
@@ -131,7 +129,8 @@ func (f *fileStorage) extractProcessor(config *ProcessorConfig) (Processor, erro
 		}
 		var processors []Processor
 		for _, outConf := range config.MultipleProcessorConfig.Processors {
-			proc, err := f.extractProcessor(&outConf)
+			out := outConf
+			proc, err := f.extractProcessor(&out)
 			if err != nil {
 				return nil, err
 			}
@@ -178,7 +177,8 @@ func (f *fileStorage) extractConditionChecker(config *ConditionCheckerConfig) (C
 			return nil, missingConfiguration
 		}
 		for _, outConf := range config.MultipleConditionCheckerConfig.Conditions {
-			cond, err := f.extractConditionChecker(&outConf)
+			out := outConf
+			cond, err := f.extractConditionChecker(&out)
 			if err != nil {
 				return nil, err
 			}
@@ -207,11 +207,12 @@ func (f *fileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 		}
 		var outputters []Outputter
 		for _, outConf := range config.MultipleOutputterConfig.Outputters {
-			out, err := f.extractOutputter(&outConf)
+			out := outConf
+			outputter, err := f.extractOutputter(&out)
 			if err != nil {
 				return nil, err
 			}
-			outputters = append(outputters, out)
+			outputters = append(outputters, outputter)
 		}
 		return NewMultipleOutputter(outputters...), nil
 	case "managedStream":
@@ -284,239 +285,239 @@ func (f *fileStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 	return rules, nil
 }
 
-type hardcodedStorage struct {
-	node          *centrifuge.Node
-	managedStream *managedstream.Runner
-	frameStorage  *FrameStorage
-	pipeline      *Pipeline
-}
-
-func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
-	return []*LiveChannelRule{
-		{
-			Pattern:   "plugin/testdata/random-20Hz-stream",
-			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
-			Outputter: NewMultipleOutputter(
-				NewLocalSubscribersOutput(f.node),
-				NewChannelOutput(f.pipeline, ChannelOutputConfig{
-					Channel: "stream/testdata/random-20Hz-stream",
-				}),
-			),
-		},
-		{
-			Pattern: "stream/testdata/random-20Hz-stream",
-			Processor: NewKeepFieldsProcessor(KeepFieldsProcessorConfig{
-				FieldNames: []string{"Time", "Min", "Max"},
-			}),
-			Outputter: NewManagedStreamOutput(f.managedStream),
-		},
-		{
-			OrgId:   1,
-			Pattern: "stream/influx/input",
-			Converter: NewAutoInfluxConverter(AutoInfluxConverterConfig{
-				FrameFormat: "labels_column",
-			}),
-		},
-		{
-			OrgId:     1,
-			Pattern:   "stream/influx/input/:rest",
-			Outputter: NewManagedStreamOutput(f.managedStream),
-		},
-		{
-			OrgId:   1,
-			Pattern: "stream/influx/input/cpu",
-			// TODO: Would be fine to have KeepLabelsProcessor, but we need to know frame type
-			// since there are cases when labels attached to a field, and cases where labels
-			// set in a first frame column (in Influx converter). For example, this will allow
-			// to leave only "total-cpu" data while dropping individual CPUs.
-			Processor: NewKeepFieldsProcessor(KeepFieldsProcessorConfig{
-				FieldNames: []string{"labels", "time", "usage_user"},
-			}),
-			Outputter: NewMultipleOutputter(
-				NewManagedStreamOutput(f.managedStream),
-				NewConditionalOutput(
-					NewNumberCompareCondition("usage_user", "gte", 50),
-					NewChannelOutput(f.pipeline, ChannelOutputConfig{
-						Channel: "stream/influx/input/cpu/spikes",
-					}),
-				),
-			),
-		},
-		{
-			OrgId:     1,
-			Pattern:   "stream/influx/input/cpu/spikes",
-			Outputter: NewManagedStreamOutput(f.managedStream),
-		},
-		{
-			OrgId:     1,
-			Pattern:   "stream/json/auto",
-			Converter: NewAutoJsonConverter(AutoJsonConverterConfig{}),
-			Outputter: NewManagedStreamOutput(f.managedStream),
-		},
-		{
-			OrgId:   1,
-			Pattern: "stream/json/tip",
-			Converter: NewAutoJsonConverter(AutoJsonConverterConfig{
-				FieldTips: map[string]Field{
-					"value3": {
-						Name: "value3",
-						Type: data.FieldTypeNullableFloat64,
-					},
-					"value100": {
-						Name: "value100",
-						Type: data.FieldTypeNullableFloat64,
-					},
-				},
-			}),
-			Processor: NewDropFieldsProcessor(DropFieldsProcessorConfig{
-				FieldNames: []string{"value2"},
-			}),
-			Outputter: NewManagedStreamOutput(f.managedStream),
-		},
-		{
-			OrgId:   1,
-			Pattern: "stream/json/exact",
-			Converter: NewExactJsonConverter(ExactJsonConverterConfig{
-				Fields: []Field{
-					{
-						Name:  "time",
-						Type:  data.FieldTypeTime,
-						Value: "#{now}",
-					},
-					{
-						Name:  "value1",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.value1",
-					},
-					{
-						Name:  "value2",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.value2",
-					},
-					{
-						Name:  "value3",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.value3",
-						Labels: []Label{
-							{
-								Name:  "host",
-								Value: "$.host",
-							},
-						},
-					},
-					{
-						Name:  "value4",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.value4",
-						Config: &data.FieldConfig{
-							Thresholds: &data.ThresholdsConfig{
-								Mode: data.ThresholdsModeAbsolute,
-								Steps: []data.Threshold{
-									{
-										Value: 2,
-										State: "normal",
-									},
-									{
-										Value: 6,
-										State: "warning",
-									},
-									{
-										Value: 8,
-										State: "critical",
-									},
-								},
-							},
-						},
-					},
-					{
-						Name:  "map.red",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.map.red",
-						Labels: []Label{
-							{
-								Name:  "host",
-								Value: "$.host",
-							},
-							{
-								Name:  "host2",
-								Value: "$.host",
-							},
-						},
-					},
-					{
-						Name:  "annotation",
-						Type:  data.FieldTypeNullableString,
-						Value: "$.annotation",
-					},
-					{
-						Name:  "running",
-						Type:  data.FieldTypeNullableBool,
-						Value: "{x.status === 'running'}",
-					},
-					{
-						Name:  "num_map_colors",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "{Object.keys(x.map).length}",
-					},
-				},
-			}),
-			Outputter: NewMultipleOutputter(
-				NewManagedStreamOutput(f.managedStream),
-				NewRemoteWriteOutput(RemoteWriteOutputConfig{
-					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
-				}),
-				NewChangeLogOutput(f.frameStorage, f.pipeline, ChangeLogOutputConfig{
-					FieldName: "value3",
-					Channel:   "stream/json/exact/value3/changes",
-				}),
-				NewChangeLogOutput(f.frameStorage, f.pipeline, ChangeLogOutputConfig{
-					FieldName: "annotation",
-					Channel:   "stream/json/exact/annotation/changes",
-				}),
-				NewConditionalOutput(
-					NewMultipleConditionChecker(
-						ConditionAll,
-						NewNumberCompareCondition("value1", "gte", 3.0),
-						NewNumberCompareCondition("value2", "gte", 3.0),
-					),
-					NewChannelOutput(f.pipeline, ChannelOutputConfig{
-						Channel: "stream/json/exact/condition",
-					}),
-				),
-				NewThresholdOutput(f.frameStorage, f.pipeline, ThresholdOutputConfig{
-					FieldName: "value4",
-					Channel:   "stream/json/exact/value4/state",
-				}),
-			),
-		},
-		{
-			OrgId:   1,
-			Pattern: "stream/json/exact/value3/changes",
-			Outputter: NewMultipleOutputter(
-				NewManagedStreamOutput(f.managedStream),
-				NewRemoteWriteOutput(RemoteWriteOutputConfig{
-					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
-				}),
-			),
-		},
-		{
-			OrgId:     1,
-			Pattern:   "stream/json/exact/annotation/changes",
-			Outputter: NewManagedStreamOutput(f.managedStream),
-		},
-		{
-			OrgId:     1,
-			Pattern:   "stream/json/exact/condition",
-			Outputter: NewManagedStreamOutput(f.managedStream),
-		},
-		{
-			OrgId:     1,
-			Pattern:   "stream/json/exact/value4/state",
-			Outputter: NewManagedStreamOutput(f.managedStream),
-		},
-	}, nil
-}
+//type hardcodedStorage struct {
+//	node          *centrifuge.Node
+//	managedStream *managedstream.Runner
+//	frameStorage  *FrameStorage
+//	pipeline      *Pipeline
+//}
+//
+//func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
+//	return []*LiveChannelRule{
+//		{
+//			Pattern:   "plugin/testdata/random-20Hz-stream",
+//			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
+//			Outputter: NewMultipleOutputter(
+//				NewLocalSubscribersOutput(f.node),
+//				NewChannelOutput(f.pipeline, ChannelOutputConfig{
+//					Channel: "stream/testdata/random-20Hz-stream",
+//				}),
+//			),
+//		},
+//		{
+//			Pattern: "stream/testdata/random-20Hz-stream",
+//			Processor: NewKeepFieldsProcessor(KeepFieldsProcessorConfig{
+//				FieldNames: []string{"Time", "Min", "Max"},
+//			}),
+//			Outputter: NewManagedStreamOutput(f.managedStream),
+//		},
+//		{
+//			OrgId:   1,
+//			Pattern: "stream/influx/input",
+//			Converter: NewAutoInfluxConverter(AutoInfluxConverterConfig{
+//				FrameFormat: "labels_column",
+//			}),
+//		},
+//		{
+//			OrgId:     1,
+//			Pattern:   "stream/influx/input/:rest",
+//			Outputter: NewManagedStreamOutput(f.managedStream),
+//		},
+//		{
+//			OrgId:   1,
+//			Pattern: "stream/influx/input/cpu",
+//			// TODO: Would be fine to have KeepLabelsProcessor, but we need to know frame type
+//			// since there are cases when labels attached to a field, and cases where labels
+//			// set in a first frame column (in Influx converter). For example, this will allow
+//			// to leave only "total-cpu" data while dropping individual CPUs.
+//			Processor: NewKeepFieldsProcessor(KeepFieldsProcessorConfig{
+//				FieldNames: []string{"labels", "time", "usage_user"},
+//			}),
+//			Outputter: NewMultipleOutputter(
+//				NewManagedStreamOutput(f.managedStream),
+//				NewConditionalOutput(
+//					NewNumberCompareCondition("usage_user", "gte", 50),
+//					NewChannelOutput(f.pipeline, ChannelOutputConfig{
+//						Channel: "stream/influx/input/cpu/spikes",
+//					}),
+//				),
+//			),
+//		},
+//		{
+//			OrgId:     1,
+//			Pattern:   "stream/influx/input/cpu/spikes",
+//			Outputter: NewManagedStreamOutput(f.managedStream),
+//		},
+//		{
+//			OrgId:     1,
+//			Pattern:   "stream/json/auto",
+//			Converter: NewAutoJsonConverter(AutoJsonConverterConfig{}),
+//			Outputter: NewManagedStreamOutput(f.managedStream),
+//		},
+//		{
+//			OrgId:   1,
+//			Pattern: "stream/json/tip",
+//			Converter: NewAutoJsonConverter(AutoJsonConverterConfig{
+//				FieldTips: map[string]Field{
+//					"value3": {
+//						Name: "value3",
+//						Type: data.FieldTypeNullableFloat64,
+//					},
+//					"value100": {
+//						Name: "value100",
+//						Type: data.FieldTypeNullableFloat64,
+//					},
+//				},
+//			}),
+//			Processor: NewDropFieldsProcessor(DropFieldsProcessorConfig{
+//				FieldNames: []string{"value2"},
+//			}),
+//			Outputter: NewManagedStreamOutput(f.managedStream),
+//		},
+//		{
+//			OrgId:   1,
+//			Pattern: "stream/json/exact",
+//			Converter: NewExactJsonConverter(ExactJsonConverterConfig{
+//				Fields: []Field{
+//					{
+//						Name:  "time",
+//						Type:  data.FieldTypeTime,
+//						Value: "#{now}",
+//					},
+//					{
+//						Name:  "value1",
+//						Type:  data.FieldTypeNullableFloat64,
+//						Value: "$.value1",
+//					},
+//					{
+//						Name:  "value2",
+//						Type:  data.FieldTypeNullableFloat64,
+//						Value: "$.value2",
+//					},
+//					{
+//						Name:  "value3",
+//						Type:  data.FieldTypeNullableFloat64,
+//						Value: "$.value3",
+//						Labels: []Label{
+//							{
+//								Name:  "host",
+//								Value: "$.host",
+//							},
+//						},
+//					},
+//					{
+//						Name:  "value4",
+//						Type:  data.FieldTypeNullableFloat64,
+//						Value: "$.value4",
+//						Config: &data.FieldConfig{
+//							Thresholds: &data.ThresholdsConfig{
+//								Mode: data.ThresholdsModeAbsolute,
+//								Steps: []data.Threshold{
+//									{
+//										Value: 2,
+//										State: "normal",
+//									},
+//									{
+//										Value: 6,
+//										State: "warning",
+//									},
+//									{
+//										Value: 8,
+//										State: "critical",
+//									},
+//								},
+//							},
+//						},
+//					},
+//					{
+//						Name:  "map.red",
+//						Type:  data.FieldTypeNullableFloat64,
+//						Value: "$.map.red",
+//						Labels: []Label{
+//							{
+//								Name:  "host",
+//								Value: "$.host",
+//							},
+//							{
+//								Name:  "host2",
+//								Value: "$.host",
+//							},
+//						},
+//					},
+//					{
+//						Name:  "annotation",
+//						Type:  data.FieldTypeNullableString,
+//						Value: "$.annotation",
+//					},
+//					{
+//						Name:  "running",
+//						Type:  data.FieldTypeNullableBool,
+//						Value: "{x.status === 'running'}",
+//					},
+//					{
+//						Name:  "num_map_colors",
+//						Type:  data.FieldTypeNullableFloat64,
+//						Value: "{Object.keys(x.map).length}",
+//					},
+//				},
+//			}),
+//			Outputter: NewMultipleOutputter(
+//				NewManagedStreamOutput(f.managedStream),
+//				NewRemoteWriteOutput(RemoteWriteOutputConfig{
+//					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+//					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+//					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+//				}),
+//				NewChangeLogOutput(f.frameStorage, f.pipeline, ChangeLogOutputConfig{
+//					FieldName: "value3",
+//					Channel:   "stream/json/exact/value3/changes",
+//				}),
+//				NewChangeLogOutput(f.frameStorage, f.pipeline, ChangeLogOutputConfig{
+//					FieldName: "annotation",
+//					Channel:   "stream/json/exact/annotation/changes",
+//				}),
+//				NewConditionalOutput(
+//					NewMultipleConditionChecker(
+//						ConditionAll,
+//						NewNumberCompareCondition("value1", "gte", 3.0),
+//						NewNumberCompareCondition("value2", "gte", 3.0),
+//					),
+//					NewChannelOutput(f.pipeline, ChannelOutputConfig{
+//						Channel: "stream/json/exact/condition",
+//					}),
+//				),
+//				NewThresholdOutput(f.frameStorage, f.pipeline, ThresholdOutputConfig{
+//					FieldName: "value4",
+//					Channel:   "stream/json/exact/value4/state",
+//				}),
+//			),
+//		},
+//		{
+//			OrgId:   1,
+//			Pattern: "stream/json/exact/value3/changes",
+//			Outputter: NewMultipleOutputter(
+//				NewManagedStreamOutput(f.managedStream),
+//				NewRemoteWriteOutput(RemoteWriteOutputConfig{
+//					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+//					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+//					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
+//				}),
+//			),
+//		},
+//		{
+//			OrgId:     1,
+//			Pattern:   "stream/json/exact/annotation/changes",
+//			Outputter: NewManagedStreamOutput(f.managedStream),
+//		},
+//		{
+//			OrgId:     1,
+//			Pattern:   "stream/json/exact/condition",
+//			Outputter: NewManagedStreamOutput(f.managedStream),
+//		},
+//		{
+//			OrgId:     1,
+//			Pattern:   "stream/json/exact/value4/state",
+//			Outputter: NewManagedStreamOutput(f.managedStream),
+//		},
+//	}, nil
+//}

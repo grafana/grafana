@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -71,6 +72,8 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 						return nil, errors.New("malformed string type")
 					}
 					field.SetConcrete(0, v)
+				default:
+					return nil, fmt.Errorf("unsupported field type: %s (%s)", f.Type, f.Name)
 				}
 			} else {
 				return nil, errors.New("too many values")
@@ -99,6 +102,8 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 					return nil, err
 				}
 				field.SetConcrete(0, v)
+			default:
+				return nil, fmt.Errorf("unsupported field type: %s (%s)", f.Type, f.Name)
 			}
 		} else if f.Value == "#{now}" {
 			// Variable.

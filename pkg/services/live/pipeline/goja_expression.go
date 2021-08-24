@@ -85,11 +85,11 @@ func (r *gojaRuntime) getFloat64(script string) (float64, error) {
 		return 0, err
 	}
 	exported := v.Export()
-	switch exported.(type) {
+	switch v := exported.(type) {
 	case float64:
-		return exported.(float64), nil
+		return v, nil
 	case int64:
-		return float64(exported.(int64)), nil
+		return float64(v), nil
 	default:
 		return 0, fmt.Errorf("unexpected return value: %T", exported)
 	}
