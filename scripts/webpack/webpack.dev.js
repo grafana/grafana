@@ -14,7 +14,7 @@ const getBabelConfig = require('./babel.config');
 module.exports = (env = {}) =>
   merge(common, {
     // https://webpack.js.org/guides/build-performance/#devtool
-    devtool: 'eval-source-map',
+    devtool: 'inline-source-map',
     mode: 'development',
 
     entry: {
