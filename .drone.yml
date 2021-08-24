@@ -169,7 +169,7 @@ steps:
 - name: publish-frontend-metrics
   image: grafana/build-container:1.4.1
   commands:
-  - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
+  - ./scripts/ci-frontend-metrics.sh
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
@@ -479,7 +479,7 @@ steps:
 - name: publish-frontend-metrics
   image: grafana/build-container:1.4.1
   commands:
-  - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
+  - ./scripts/ci-frontend-metrics.sh
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
@@ -3602,6 +3602,6 @@ get:
 
 ---
 kind: signature
-hmac: a8ce8a6e825858f4f8a6c2f36b9a4579d54d3dfdb7c92589c1233cceb1ef2ae0
+hmac: d760257b2661559ca8dc1f1c580a83a1f162c3e8a2e32c3b42dba9e5def6bcb9
 
 ...

@@ -515,7 +515,7 @@ def frontend_metrics_step(edition):
         },
         'failure': 'ignore',
         'commands': [
-            './scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
+            './scripts/ci-frontend-metrics.sh',
         ],
     }
 
