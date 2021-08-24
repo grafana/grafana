@@ -142,6 +142,25 @@ import u1133 from '!!raw-loader!../../../../../public/img/icons/mono/heart-break
 import u1134 from '!!raw-loader!../../../../../public/img/icons/mono/panel-add.svg';
 import u1135 from '!!raw-loader!../../../../../public/img/icons/mono/library-panel.svg';
 
+import u1136 from '!!raw-loader!../../../../../public/img/icons/unicons/cloud-upload.svg';
+import u1137 from '!!raw-loader!../../../../../public/img/icons/unicons/credit-card.svg';
+import u1138 from '!!raw-loader!../../../../../public/img/icons/unicons/file-copy-alt.svg';
+import u1139 from '!!raw-loader!../../../../../public/img/icons/unicons/fire.svg';
+import u1140 from '!!raw-loader!../../../../../public/img/icons/unicons/hourglass.svg';
+import u1141 from '!!raw-loader!../../../../../public/img/icons/unicons/layer-group.svg';
+import u1142 from '!!raw-loader!../../../../../public/img/icons/unicons/line-alt.svg';
+import u1143 from '!!raw-loader!../../../../../public/img/icons/unicons/list-ui-alt.svg';
+import u1144 from '!!raw-loader!../../../../../public/img/icons/unicons/message.svg';
+import u1145 from '!!raw-loader!../../../../../public/img/icons/unicons/palette.svg';
+import u1146 from '!!raw-loader!../../../../../public/img/icons/unicons/percentage.svg';
+import u1147 from '!!raw-loader!../../../../../public/img/icons/unicons/plus-square.svg';
+import u1148 from '!!raw-loader!../../../../../public/img/icons/unicons/shield-exclamation.svg';
+import u1149 from '!!raw-loader!../../../../../public/img/icons/unicons/x.svg';
+import u1150 from '!!raw-loader!../../../../../public/img/icons/custom/gf-grid.svg';
+import u1151 from '!!raw-loader!../../../../../public/img/icons/custom/gf-landscape.svg';
+import u1152 from '!!raw-loader!../../../../../public/img/icons/custom/gf-layout-simple.svg';
+import u1153 from '!!raw-loader!../../../../../public/img/icons/custom/gf-portrait.svg';
+
 function cacheItem(content: string, path: string) {
   cacheStore[iconRoot + path] = { content, status: 'loaded', queue: [] };
 }
@@ -291,4 +310,22 @@ export function initIconCache() {
   cacheItem(u1133, 'mono/heart-break.svg');
   cacheItem(u1134, 'mono/panel-add.svg');
   cacheItem(u1135, 'mono/library-panel.svg');
+  cacheItem(u1136, 'unicons/cloud-upload.svg');
+  cacheItem(u1137, 'unicons/credit-card.svg');
+  cacheItem(u1138, 'unicons/file-copy-alt.svg');
+  cacheItem(u1139, 'unicons/fire.svg');
+  cacheItem(u1140, 'unicons/hourglass.svg');
+  cacheItem(u1141, 'unicons/layer-group.svg');
+  cacheItem(u1142, 'unicons/line-alt.svg');
+  cacheItem(u1143, 'unicons/list-ui-alt.svg');
+  cacheItem(u1144, 'unicons/message.svg');
+  cacheItem(u1145, 'unicons/palette.svg');
+  cacheItem(u1146, 'unicons/percentage.svg');
+  cacheItem(u1147, 'unicons/plus-square.svg');
+  cacheItem(u1148, 'unicons/shield-exclamation.svg');
+  cacheItem(u1149, 'unicons/x.svg');
+  cacheItem(u1150, 'custom/gf-grid.svg');
+  cacheItem(u1151, 'custom/gf-landscape.svg');
+  cacheItem(u1152, 'custom/gf-layout-simple.svg');
+  cacheItem(u1153, 'custom/gf-portrait.svg');
 }
