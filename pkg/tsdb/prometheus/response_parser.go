@@ -38,9 +38,9 @@ func parseResponse(value model.Value, query *PrometheusQuery) (data.Frames, erro
 }
 
 func scalarToDataFrames(scalar model.Scalar) data.Frames {
-	name := ""
 	timeVector := []time.Time{time.Unix(scalar.Timestamp.Unix(), 0).UTC()}
 	values := []float64{float64(scalar.Value)}
+	name := fmt.Sprintf("%g", values[0])
 	frames := data.Frames{data.NewFrame(name,
 		data.NewField("Time", nil, timeVector),
 		data.NewField("Value", nil, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))}
