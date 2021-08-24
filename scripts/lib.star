@@ -317,7 +317,7 @@ def upload_cdn(edition):
         'name': 'upload-cdn-assets' + enterprise2_sfx(edition),
         'image': publish_image,
         'depends_on': [
-            'package' + enterprise2_sfx(edition),
+            'end-to-end-tests-server' + enterprise2_sfx(edition),
         ],
         'environment': {
             'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
@@ -825,7 +825,6 @@ def release_canary_npm_packages_step(edition):
         'image': build_image,
         'depends_on': [
             'end-to-end-tests',
-            'end-to-end-tests-server',
         ],
         'environment': {
             'GITHUB_PACKAGE_TOKEN': from_secret('github_package_token'),
@@ -873,9 +872,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         cmd = './bin/grabpl upload-packages --edition {}{}'.format(edition, packages_bucket)
 
     dependencies = [
-        'package' + enterprise2_sfx(edition),
         'end-to-end-tests' + enterprise2_sfx(edition),
-        'end-to-end-tests-server',
         'mysql-integration-tests',
         'postgres-integration-tests',
     ]
