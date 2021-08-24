@@ -8,6 +8,7 @@ import { AccessControlAction, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getServerStats, ServerStat } from './state/apis';
 import { contextSrv } from '../../core/services/context_srv';
+import { Loader } from '../plugins/admin/components/Loader';
 
 export interface Props {
   getServerStats: () => Promise<ServerStat | null>;
@@ -19,64 +20,74 @@ export const ServerStats = ({ getServerStats }: Props) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    getServerStats().then(setStats);
-    setIsLoading(false);
+    getServerStats().then((stats) => {
+      setStats(stats);
+      setIsLoading(false);
+    });
   }, [getServerStats]);
 
-  if (!stats || isLoading || !contextSrv.hasPermission(AccessControlAction.ActionServerStatsRead)) {
+  if (!contextSrv.hasPermission(AccessControlAction.ActionServerStatsRead)) {
     return null;
   }
 
   return (
     <>
       <h2 className={styles.title}>Instance statistics</h2>
-      <div className={styles.row}>
-        <StatCard
-          content={[
-            { name: 'Dashboards (starred)', value: `${stats.dashboards} (${stats.stars})` },
-            { name: 'Tags', value: stats.tags },
-            { name: 'Playlists', value: stats.playlists },
-            { name: 'Snapshots', value: stats.snapshots },
-          ]}
-          footer={
-            <LinkButton href={'/dashboards'} variant={'secondary'}>
-              Manage dashboards
-            </LinkButton>
-          }
-        />
-
-        <div className={styles.doubleRow}>
+      {isLoading ? (
+        <div className={styles.loader}>
+          <Loader text={'Loading instance stats...'} />
+        </div>
+      ) : stats ? (
+        <div className={styles.row}>
           <StatCard
-            content={[{ name: 'Data sources', value: stats.datasources }]}
+            content={[
+              { name: 'Dashboards (starred)', value: `${stats.dashboards} (${stats.stars})` },
+              { name: 'Tags', value: stats.tags },
+              { name: 'Playlists', value: stats.playlists },
+              { name: 'Snapshots', value: stats.snapshots },
+            ]}
             footer={
-              <LinkButton href={'/datasources'} variant={'secondary'}>
-                Manage data sources
+              <LinkButton href={'/dashboards'} variant={'secondary'}>
+                Manage dashboards
               </LinkButton>
             }
           />
+
+          <div className={styles.doubleRow}>
+            <StatCard
+              content={[{ name: 'Data sources', value: stats.datasources }]}
+              footer={
+                <LinkButton href={'/datasources'} variant={'secondary'}>
+                  Manage data sources
+                </LinkButton>
+              }
+            />
+            <StatCard
+              content={[{ name: 'Alerts', value: stats.alerts }]}
+              footer={
+                <LinkButton href={'/alerting/list'} variant={'secondary'}>
+                  Alerts
+                </LinkButton>
+              }
+            />
+          </div>
           <StatCard
-            content={[{ name: 'Alerts', value: stats.alerts }]}
+            content={[
+              { name: 'Organisations', value: stats.orgs },
+              { name: 'Users total', value: stats.users },
+              { name: 'Active users in last 30 days', value: stats.activeUsers },
+              { name: 'Active sessions', value: stats.activeSessions },
+            ]}
             footer={
-              <LinkButton href={'/alerting/list'} variant={'secondary'}>
-                Alerts
+              <LinkButton href={'/admin/users'} variant={'secondary'}>
+                Manage users
               </LinkButton>
             }
           />
         </div>
-        <StatCard
-          content={[
-            { name: 'Organisations', value: stats.orgs },
-            { name: 'Users total', value: stats.users },
-            { name: 'Active users in last 30 days', value: stats.activeUsers },
-            { name: 'Active sessions', value: stats.activeSessions },
-          ]}
-          footer={
-            <LinkButton href={'/admin/users'} variant={'secondary'}>
-              Manage users
-            </LinkButton>
-          }
-        />
-      </div>
+      ) : (
+        <p className={styles.notFound}>No stats found.</p>
+      )}
     </>
   );
 };
@@ -106,6 +117,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       & > div:first-of-type {
         margin-bottom: ${theme.spacing(2)};
       }
+    `,
+
+    loader: css`
+      height: 290px;
+    `,
+
+    notFound: css`
+      font-size: ${theme.typography.h6.fontSize};
+      text-align: center;
+      height: 290px;
     `,
   };
 };
