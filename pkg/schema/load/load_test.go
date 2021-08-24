@@ -158,7 +158,7 @@ func TestPanelValidity(t *testing.T) {
 func TestCueErrorWrapper(t *testing.T) {
 	t.Run("Testing cue error wrapper", func(t *testing.T) {
 		a := fstest.MapFS{
-			"cue/data/gen.cue": &fstest.MapFile{Data: []byte("{;;;;;;;;}")},
+			filepath.Join(dashboardDir, "dashboard.cue"): &fstest.MapFile{Data: []byte("{;;;;;;;;}")},
 		}
 
 		filesystem := mergefs.Merge(a, GetDefaultLoadPaths().BaseCueFS)
