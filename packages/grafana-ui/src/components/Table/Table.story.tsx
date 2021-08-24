@@ -122,6 +122,10 @@ function buildFooterData(data: DataFrame, theme: GrafanaTheme2, config: Record<s
         config: {
           decimals: 2,
         },
+        labels: {
+          function1: 'sum',
+          function2: 'avg',
+        },
       },
       {
         name: 'Progress',
@@ -144,6 +148,7 @@ function buildFooterData(data: DataFrame, theme: GrafanaTheme2, config: Record<s
   }
 
   footerData.appendRow(['Total', undefined, undefined, valueSum, 100]);
+  footerData.appendRow([undefined, undefined, undefined, 80.55555, 100]);
 
   return prepDataForStorybook([footerData], theme)[0];
 }

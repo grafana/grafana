@@ -241,31 +241,39 @@ export const Table: FC<Props> = memo((props: Props) => {
               No data
             </div>
           )}
-          {footers !== undefined && (
-            <div
-              style={{
-                position: 'absolute',
-                width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%',
-                bottom: '0px',
-              }}
-            >
-              {footerGroups.map((footerGroup: HeaderGroup) => {
-                const { key, ...footerGroupProps } = footerGroup.getFooterGroupProps();
+          return (
+          <div
+            style={{
+              position: 'absolute',
+              width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%',
+              bottom: '0px',
+            }}
+          >
+            {footerGroups.map((footerGroup: HeaderGroup) => {
+              const { key, ...footerGroupProps } = footerGroup.getFooterGroupProps();
+              let style = {};
+              if (footers && footers.length > 1) {
+                const height = 27 * footers.length;
+                style = { height: `${height}px` };
+              }
+              {
                 return (
                   <div
                     className={tableStyles.tfoot}
                     {...footerGroupProps}
                     key={key}
                     aria-label={e2eSelectorsTable.footer}
+                    style={style}
                   >
                     {footerGroup.headers.map((column: ColumnInstance, index: number) =>
-                      renderFooterCell(column, tableStyles)
+                      renderFooterCell(column, tableStyles, style)
                     )}
                   </div>
                 );
-              })}
-            </div>
-          )}
+              }
+            })}
+          </div>
+          );
         </div>
       </CustomScrollbar>
     </div>
@@ -308,7 +316,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) 
   );
 }
 
-function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
+function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, style: any) {
   const footerProps = column.getHeaderProps();
 
   if (!footerProps) {
@@ -318,6 +326,9 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
   footerProps.style = footerProps.style ?? {};
   footerProps.style.position = 'absolute';
   footerProps.style.justifyContent = (column as any).justifyContent;
+  if (style.height) {
+    footerProps.style.height = style.height;
+  }
 
   return (
     <div className={tableStyles.headerCell} {...footerProps}>
