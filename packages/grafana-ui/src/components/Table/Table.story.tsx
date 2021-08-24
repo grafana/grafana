@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { merge } from 'lodash';
 import { Table } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -94,64 +94,23 @@ function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): D
   return prepDataForStorybook([data], theme)[0];
 }
 
-function buildFooterData(data: DataFrame, theme: GrafanaTheme2, config: Record<string, FieldConfig>): DataFrame {
+function buildFooterData(data: DataFrame): ReactNode[] {
   const values = data.fields[3].values.toArray();
   const valueSum = values.reduce((prev, curr) => {
     return prev + curr;
   }, 0);
 
-  const footerData = new MutableDataFrame({
-    fields: [
-      { name: 'Time', type: FieldType.string, values: [] }, // The time field
-      {
-        name: 'Quantity',
-        type: FieldType.number,
-        values: [],
-        config: {
-          decimals: 0,
-          custom: {
-            align: 'center',
-            width: 80,
-          },
-        },
-      },
-      { name: 'Status', type: FieldType.string, values: [] }, // The time field
-      {
-        name: 'Value',
-        type: FieldType.number,
-        values: [],
-        config: {
-          decimals: 2,
-        },
-      },
-      {
-        name: 'Progress',
-        type: FieldType.string,
-        values: [],
-        config: {
-          unit: 'percent',
-          min: 0,
-          max: 100,
-          custom: {
-            width: 150,
-          },
-        },
-      },
-    ],
-  });
-
-  for (const field of data.fields) {
-    field.config = merge(field.config, config[field.name]);
-  }
-
   const valueField = data.fields[3];
   const displayValue = valueField.display ? valueField.display(valueSum) : valueSum;
   const val = valueField.display ? formattedValueToString(displayValue) : displayValue;
 
-  footerData.appendRow(['Total', undefined, undefined, val, '100%']);
-  footerData.appendRow([undefined, undefined, undefined, 80.55, undefined]);
-
-  return prepDataForStorybook([footerData], theme)[0];
+  const valCell = (
+    <ul style={{ listStyle: 'none' }}>
+      <li>sum: {val}</li>
+      <li>min: {5.2}</li>
+    </ul>
+  );
+  return ['Totals', <div key={1}>10</div>, null, valCell, '100%'];
 }
 
 const defaultThresholds: ThresholdsConfig = {
@@ -220,11 +179,11 @@ export const ColoredCells: Story = (args) => {
 export const Footer: Story = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {});
-  const footer = buildFooterData(data, theme, {});
+  const footer = buildFooterData(data);
 
   return (
     <div className="panel-container" style={{ width: 'auto', height: 'unset' }}>
-      <Table data={data} height={args.height} width={args.width} footers={footer} {...args} />
+      <Table data={data} height={args.height} width={args.width} footer={footer} {...args} footerHeight={56} />
     </div>
   );
 };

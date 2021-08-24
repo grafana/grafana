@@ -12,10 +12,11 @@ import {
 
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
-import { TableCellDisplayMode, TableFieldOptions } from './types';
+import { CellComponent, TableCellDisplayMode, TableFieldOptions } from './types';
 import { JSONViewCell } from './JSONViewCell';
 import { ImageCell } from './ImageCell';
-import { getFooterValue } from './FooterRow';
+import { ReactNode } from 'react';
+import { EmptyCell } from './FooterRow';
 
 export function getTextAlign(field?: Field): ContentPosition {
   if (!field) {
@@ -46,7 +47,7 @@ export function getColumns(
   data: DataFrame,
   availableWidth: number,
   columnMinWidth: number,
-  footers?: DataFrame
+  footers?: ReactNode[]
 ): Column[] {
   const columns: any[] = [];
   let fieldCountWithoutWidth = data.fields.length;
@@ -87,7 +88,7 @@ export function getColumns(
       minWidth: fieldTableOptions.minWidth || columnMinWidth,
       filter: memoizeOne(filterByValue(field)),
       justifyContent: getTextAlign(field),
-      Footer: getFooterValue(fieldIndex, footers),
+      Footer: footers?.[fieldIndex] ?? EmptyCell,
     });
   }
 
@@ -115,7 +116,7 @@ export function getColumns(
   return columns;
 }
 
-function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
+function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
   switch (displayMode) {
     case TableCellDisplayMode.ColorText:
     case TableCellDisplayMode.ColorBackground:

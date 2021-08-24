@@ -1,22 +1,24 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { ColumnInstance, HeaderGroup } from 'react-table';
-import { DataFrame } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTableStyles, TableStyles } from './styles';
 import { useStyles2 } from '../../themes';
-import { EmptyCell, FooterCell } from './FooterCell';
 
 export interface FooterRowProps {
   totalColumnsWidth: number;
   footerGroups: HeaderGroup[];
-  footers?: DataFrame;
+  footer?: ReactNode[];
+  height?: number;
 }
 
 export const FooterRow = (props: FooterRowProps) => {
-  const EXTENDED_ROW_HEIGHT = 27;
-  const { totalColumnsWidth, footerGroups, footers } = props;
+  const { totalColumnsWidth, footerGroups, footer, height } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
   const tableStyles = useStyles2(getTableStyles);
+
+  if (!footer) {
+    return null;
+  }
 
   return (
     <div
@@ -28,32 +30,25 @@ export const FooterRow = (props: FooterRowProps) => {
     >
       {footerGroups.map((footerGroup: HeaderGroup) => {
         const { key, ...footerGroupProps } = footerGroup.getFooterGroupProps();
-        let style = {};
-        if (footers && footers.length > 1) {
-          const height = EXTENDED_ROW_HEIGHT * footers.length;
-          style = { height: `${height}px` };
-        }
-        {
-          return (
-            <div
-              className={tableStyles.tfoot}
-              {...footerGroupProps}
-              key={key}
-              aria-label={e2eSelectorsTable.footer}
-              style={style}
-            >
-              {footerGroup.headers.map((column: ColumnInstance, index: number) =>
-                renderFooterCell(column, tableStyles, style)
-              )}
-            </div>
-          );
-        }
+        return (
+          <div
+            className={tableStyles.tfoot}
+            {...footerGroupProps}
+            key={key}
+            aria-label={e2eSelectorsTable.footer}
+            style={height ? { height: `${height}px` } : undefined}
+          >
+            {footerGroup.headers.map((column: ColumnInstance, index: number) =>
+              renderFooterCell(column, tableStyles, height)
+            )}
+          </div>
+        );
       })}
     </div>
   );
 };
 
-function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, style: any) {
+function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, height?: number) {
   const footerProps = column.getHeaderProps();
 
   if (!footerProps) {
@@ -63,8 +58,8 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, styl
   footerProps.style = footerProps.style ?? {};
   footerProps.style.position = 'absolute';
   footerProps.style.justifyContent = (column as any).justifyContent;
-  if (style.height) {
-    footerProps.style.height = style.height;
+  if (height) {
+    footerProps.style.height = height;
   }
 
   return (
@@ -74,18 +69,6 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, styl
   );
 }
 
-export function getFooterValue(index: number, footers?: DataFrame) {
-  if (footers === undefined) {
-    return EmptyCell;
-  }
-  const field = footers.fields[index];
-  let values = [];
-  for (let i = 0; i < footers.length; i++) {
-    const fieldValue = field.values.get(i);
-    if (fieldValue !== undefined) {
-      values.push(fieldValue);
-    }
-  }
-
-  return FooterCell({ values });
-}
+export const EmptyCell = (props: any) => {
+  return <span>&nbsp;</span>;
+};
