@@ -17,7 +17,7 @@ import {
   LineInterpolation,
   PointsConfig,
   PointVisibility,
-} from '../config';
+} from '@grafana/schema';
 import { PlotConfigBuilder } from '../types';
 import { getHueGradientFn, getOpacityGradientFn, getScaleGradientFn } from './gradientFills';
 
