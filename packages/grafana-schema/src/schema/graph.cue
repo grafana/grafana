@@ -1,6 +1,6 @@
 AxisPlacement:        "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(targetType="enum")
 PointVisibility:      "auto" | "never" | "always"                             @cuetsy(targetType="enum")
-DrawStyle:            "line" | "bars" | "points"                              @cuetsy(targetType="enum")
+GraphDrawStyle:       "line" | "bars" | "points"                              @cuetsy(targetType="enum")
 LineInterpolation:    "linear" | "smooth" | "stepBefore" | "stepAfter"        @cuetsy(targetType="enum")
 ScaleDistribution:    "linear" | "log"                                        @cuetsy(targetType="enum")
 GraphGradientMode:    "none" | "opacity" | "hue" | "scheme"                   @cuetsy(targetType="enum")

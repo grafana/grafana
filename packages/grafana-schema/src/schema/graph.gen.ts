@@ -16,7 +16,7 @@ export enum PointVisibility {
   Auto = 'auto',
   Never = 'never',
 }
-export enum DrawStyle {
+export enum GraphDrawStyle {
   Bars = 'bars',
   Line = 'line',
   Points = 'points',
