@@ -9,7 +9,7 @@
   "properties": {
     "$schema": {
       "type": "string",
-      "description": "Schema definition for the plugin.json file"
+      "description": "Schema definition for the plugin.json file."
     },
     "id": {
       "type": "string",
@@ -32,11 +32,11 @@
     },
     "annotations": {
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports annotation queries."
+      "description": "For data source plugins, if the plugin supports annotation queries."
     },
     "alerting": {
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports alerting."
+      "description": "For data source plugins, if the plugin supports alerting."
     },
     "backend": {
       "type": "boolean",
@@ -102,7 +102,7 @@
     },
     "logs": {
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports logs."
+      "description": "For data source plugins, if the plugin supports logs."
     },
     "skipDataQuery": {
       "type": "boolean",
@@ -110,21 +110,23 @@
     },
     "metrics": {
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports metric queries. Used in the Explore feature."
+      "description": "For data source plugins, if the plugin supports metric queries. Used in Explore."
     },
     "streaming": {
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports streaming."
+      "description": "For data source plugins, if the plugin supports streaming."
     },
     "tables": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "This is an undocumented feature."
     },
     "tracing": {
       "type": "boolean",
-      "description": "For data source plugins. If the plugin supports tracing."
+      "description": "For data source plugins, if the plugin supports tracing."
     },
     "hiddenQueries": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "For data source plugins, include hidden queries in the data request."
     },
     "autoEnabled": {
       "type": "boolean",
@@ -443,12 +445,12 @@
     },
     "enterpriseFeatures": {
       "type": "object",
-      "description": "Grafana Enerprise specific features",
+      "description": "Grafana Enerprise specific features.",
       "additionalProperties": true,
       "properties": {
         "healthDiagnosticsErrors": {
           "type": "boolean",
-          "description": "Enable/Disable health diagnostics errors. Requires Grafana >=7.5.5",
+          "description": "Enable/Disable health diagnostics errors. Requires Grafana >=7.5.5.",
           "default": false
         }
       }
