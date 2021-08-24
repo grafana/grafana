@@ -202,25 +202,20 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     // Currenly we useV2 only for explore and non-exemplars queries
     if (options.app === CoreApp.Explore) {
       const targets = options.targets.map((target) => {
-        if (target.instant === target.range) {
-          if (target.instant) {
-            const targetInstant: PromQuery = {
-              ...target,
-              valueWithRefId: true,
-              range: false,
-              refId: target.refId + '_instant',
-              requestId: target.requestId + '_instant',
-              format: 'table',
-            };
-            const targetRange: PromQuery = { ...target, instant: false, format: 'time_series' };
-            return [targetInstant, targetRange];
-          } else {
-            return { ...target, range: true, format: 'time_series' };
-          }
+        if (target.instant && target.range) {
+          const targetInstant: PromQuery = {
+            ...target,
+            range: false,
+            refId: target.refId + '_instant',
+            format: 'table',
+          };
+
+          const targetRange: PromQuery = { ...target, instant: false, format: 'time_series' };
+          return [targetInstant, targetRange];
         } else if (target.instant) {
           return { ...target, refId: target.refId + '_instant', format: 'table' };
         } else {
-          return target;
+          return { ...target, instant: false, range: true, format: 'time_series' };
         }
       });
 
@@ -343,7 +338,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
       return super.query(newOptions).pipe(
         map((response) => {
-          return transformV2(response, options);
+          return transformV2(response, newOptions);
         })
       );
     } else {

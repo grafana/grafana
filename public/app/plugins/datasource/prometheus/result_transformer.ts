@@ -463,18 +463,25 @@ function parseSampleValue(value: string): number {
 
 export function transformV2(response: DataQueryResponse, options: DataQueryRequest<PromQuery>) {
   const promResults: DataFrame[] = response.data;
+  const tableRefIds = options.targets.map((target) => {
+    if (target.format === 'table') {
+      return target.refId;
+    }
+    return;
+  });
 
   if (options.app === CoreApp.Explore) {
-    const instantResults = promResults.filter((dataFrame) => dataFrame?.refId?.match(/_instant/));
-    const rangeResults = promResults.filter((dataFrame) => !dataFrame?.refId?.match(/_instant/));
-    const both = !!(instantResults.length && rangeResults.length);
-    const instantFrames = instantResults.map((dataFrame) => {
+    // For table results, we need to transform data frames to table data frames
+    const tableResults = promResults.filter((dataFrame) => tableRefIds.includes(dataFrame?.refId));
+    const tableFrames = tableResults.map((dataFrame) => {
       const df = transformDFoTable(dataFrame);
-      df.name = getValueText(response, both, df.refId);
+      df.name = getValueText(response, df.refId);
       return df;
     });
 
-    const rangeFrames = rangeResults.map((dataFrame) => {
+    // Everything else is processed as graph
+    const otherResults = promResults.filter((dataFrame) => !tableRefIds.includes(dataFrame?.refId));
+    const otherFrames = otherResults.map((dataFrame) => {
       const df = dataFrame;
       df.meta = {
         preferredVisualisationType: 'graph',
@@ -482,7 +489,7 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
       return df;
     });
 
-    return { ...response, data: [...instantFrames, ...rangeFrames] };
+    return { ...response, data: [...tableFrames, ...otherFrames] };
   }
 
   return response;
@@ -528,5 +535,6 @@ function transformDFoTable(df: DataFrame): DataFrame {
   return tableDataFrame;
 }
 
-const getValueText = (res: DataQueryResponse, instantAndRange: boolean, refId = '') =>
-  res.data.length > 1 || instantAndRange ? `Value #${refId}` : 'Value';
+function getValueText(res: DataQueryResponse, refId = '') {
+  return res.data.length > 1 ? `Value #${refId}` : 'Value';
+}
