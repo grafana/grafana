@@ -1,9 +1,10 @@
-import { locationService } from '@grafana/runtime';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
+  Receiver,
   Silence,
   SilenceCreatePayload,
 } from 'app/plugins/datasource/alertmanager/types';
@@ -26,6 +27,7 @@ import {
   updateAlertManagerConfig,
   fetchStatus,
   deleteAlertManagerConfig,
+  testReceivers,
 } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
@@ -37,9 +39,9 @@ import {
 } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
-import { makeAMLink } from '../utils/misc';
+import { makeAMLink, retryWhile } from '../utils/misc';
 import { isFetchError, withAppEvents, withSerializedError } from '../utils/redux';
-import { formValuesToRulerAlertingRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
+import { formValuesToRulerRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
 import {
   isCloudRuleIdentifier,
   isGrafanaRuleIdentifier,
@@ -48,9 +50,11 @@ import {
   isRulerNotSupportedResponse,
 } from '../utils/rules';
 import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
-import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruleId from '../utils/rule-id';
 import { isEmpty } from 'lodash';
+import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
+
+const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
@@ -61,7 +65,13 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
   'unifiedalerting/fetchAmConfig',
   (alertManagerSourceName: string): Promise<AlertManagerCortexConfig> =>
     withSerializedError(
-      fetchAlertManagerConfig(alertManagerSourceName).then((result) => {
+      retryWhile(
+        () => fetchAlertManagerConfig(alertManagerSourceName),
+        // if config has been recently deleted, it takes a while for cortex start returning the default one.
+        // retry for a short while instead of failing
+        (e) => !!messageFromError(e)?.includes('alertmanager storage object not found'),
+        FETCH_CONFIG_RETRY_TIMEOUT
+      ).then((result) => {
         // if user config is empty for cortex alertmanager, try to get config from status endpoint
         if (
           isEmpty(result.alertmanager_config) &&
@@ -240,7 +250,7 @@ export function deleteRuleAction(
 
 async function saveLotexRule(values: RuleFormValues, existing?: RuleWithLocation): Promise<RuleIdentifier> {
   const { dataSourceName, group, namespace } = values;
-  const formRule = formValuesToRulerAlertingRuleDTO(values);
+  const formRule = formValuesToRulerRuleDTO(values);
   if (dataSourceName && group && namespace) {
     // if we're updating a rule...
     if (existing) {
@@ -362,7 +372,7 @@ export const saveRuleFormAction = createAsyncThunk(
           const { type } = values;
           // in case of system (cortex/loki)
           let identifier: RuleIdentifier;
-          if (type === RuleFormType.cloud) {
+          if (type === RuleFormType.cloudAlerting || type === RuleFormType.cloudRecording) {
             identifier = await saveLotexRule(values, existing);
             // in case of grafana managed
           } else if (type === RuleFormType.grafana) {
@@ -534,7 +544,7 @@ export const deleteTemplateAction = (templateName: string, alertManagerSourceNam
 
 export const fetchFolderAction = createAsyncThunk(
   'unifiedalerting/fetchFolder',
-  (uid: string): Promise<FolderDTO> => withSerializedError(backendSrv.getFolderByUid(uid))
+  (uid: string): Promise<FolderDTO> => withSerializedError((getBackendSrv() as any).getFolderByUid(uid))
 );
 
 export const fetchFolderIfNotFetchedAction = (uid: string): ThunkResult<void> => {
@@ -580,10 +590,33 @@ export const checkIfLotexSupportsEditingRulesAction = createAsyncThunk(
 
 export const deleteAlertManagerConfigAction = createAsyncThunk(
   'unifiedalerting/deleteAlertManagerConfig',
-  async (alertManagerSourceName: string): Promise<void> => {
-    return withAppEvents(withSerializedError(deleteAlertManagerConfig(alertManagerSourceName)), {
-      errorMessage: 'Failed to reset Alertmanager configuration',
-      successMessage: 'Alertmanager configuration reset.',
+  async (alertManagerSourceName: string, thunkAPI): Promise<void> => {
+    return withAppEvents(
+      withSerializedError(
+        (async () => {
+          await deleteAlertManagerConfig(alertManagerSourceName);
+          await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+        })()
+      ),
+      {
+        errorMessage: 'Failed to reset Alertmanager configuration',
+        successMessage: 'Alertmanager configuration reset.',
+      }
+    );
+  }
+);
+
+interface TestReceiversOptions {
+  alertManagerSourceName: string;
+  receivers: Receiver[];
+}
+
+export const testReceiversAction = createAsyncThunk(
+  'unifiedalerting/testReceivers',
+  ({ alertManagerSourceName, receivers }: TestReceiversOptions): Promise<void> => {
+    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers)), {
+      errorMessage: 'Failed to send test alert.',
+      successMessage: 'Test alert sent.',
     });
   }
 );

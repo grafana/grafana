@@ -1,5 +1,5 @@
-import { Meta, Props } from "@storybook/addon-docs/blocks";
-import { Form } from "./Form";
+import { Meta, Props } from '@storybook/addon-docs/blocks';
+import { Form } from './Form';
 
 <Meta title="MDX|Form" component={Form} />
 
@@ -9,7 +9,7 @@ Form component provides a way to build simple forms at Grafana. It is built on t
 
 ## Usage
 
-```jsx
+```tsx
 import { Forms } from '@grafana/ui';
 
 interface UserDTO {
@@ -46,7 +46,7 @@ const defaultUser: Partial<UserDTO> = {
 `register` allows registering form elements (inputs, selects, radios, etc) in the form. In order to do that you need to invoke the function itself and spread the props into the input. For example:
 
 ```jsx
-<Input {...register("inputName")} />
+<Input {...register('inputName')} />
 ```
 
 The first argument for `register` is the field name. It also accepts an object, which describes validation rules for a given input:
@@ -264,24 +264,29 @@ validateAsync = (newValue: string) => {
 ```
 
 ### Upgrading to v8
+
 Version 8 of Grafana-UI is using version 7 of `react-hook-form` (previously version 5 was used), which introduced a few breaking changes to the `Form` API. The detailed list of changes can be found in the library's migration guides:
+
 - [Migration guide v5 to v6](https://react-hook-form.com/migrate-v5-to-v6/)
 - [Migration guide v6 to v7](https://react-hook-form.com/migrate-v6-to-v7/)
 
 In a nutshell, the two most important changes are:
+
 - register method is no longer passed as a `ref`, but instead its result is spread onto the input component:
+
 ```jsx
 - <input ref={register({ required: true })} name="test" />
 + <input {...register('test', { required: true })} />
 ```
-- `InputControl`'s `as` prop has been replaced with `render`, which has `field` and `fieldState` objects as arguments. `onChange`, `onBlur`, `value`, `name`,  and `ref` are parts of `field`.
+
+- `InputControl`'s `as` prop has been replaced with `render`, which has `field` and `fieldState` objects as arguments. `onChange`, `onBlur`, `value`, `name`, and `ref` are parts of `field`.
+
 ```jsx
 - <Controller as={<input />} />
 + <Controller render={({ field }) => <input {...field} />}
 // or
 + <Controller render={({ field, fieldState }) => <input {...field} />} />
 ```
-
 
 ### Props
 

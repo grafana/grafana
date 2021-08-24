@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
 import { Themeable2 } from '../../types';
-import { findMidPointYPosition, pluginLog, preparePlotData } from '../uPlot/utils';
+import { findMidPointYPosition, pluginLog } from '../uPlot/utils';
 import {
   DataFrame,
   FieldMatcherID,
@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 
-import { VizLegendOptions } from '../VizLegend/models.gen';
+import { VizLegendOptions } from '@grafana/schema';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
 import { Subscription } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
@@ -27,6 +27,11 @@ import { UPlotChart } from '../uPlot/Plot';
  */
 export const FIXED_UNIT = '__fixed';
 
+/**
+ * @internal -- not a public API
+ */
+export type PropDiffFn<T extends any = any> = (prev: T, next: T) => boolean;
+
 export interface GraphNGProps extends Themeable2 {
   frames: DataFrame[];
   structureRev?: number; // a number that will change when the frames[] structure changes
@@ -39,14 +44,18 @@ export interface GraphNGProps extends Themeable2 {
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
   prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;
-  propsToDiff?: string[];
+  propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame;
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
 }
 
-function sameProps(prevProps: any, nextProps: any, propsToDiff: string[] = []) {
+function sameProps(prevProps: any, nextProps: any, propsToDiff: Array<string | PropDiffFn> = []) {
   for (const propName of propsToDiff) {
-    if (nextProps[propName] !== prevProps[propName]) {
+    if (typeof propName === 'function') {
+      if (!propName(prevProps, nextProps)) {
+        return false;
+      }
+    } else if (nextProps[propName] !== prevProps[propName]) {
       return false;
     }
   }
@@ -98,16 +107,20 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
     pluginLog('GraphNG', false, 'data aligned', alignedFrame);
 
     if (alignedFrame) {
-      state = {
-        alignedFrame,
-        alignedData: preparePlotData(alignedFrame),
-      };
-      pluginLog('GraphNG', false, 'data prepared', state.alignedData);
+      let config = this.state?.config;
 
       if (withConfig) {
-        state.config = props.prepConfig(alignedFrame, this.props.frames, this.getTimeRange);
-        pluginLog('GraphNG', false, 'config prepared', state.config);
+        config = props.prepConfig(alignedFrame, this.props.frames, this.getTimeRange);
+        pluginLog('GraphNG', false, 'config prepared', config);
       }
+
+      state = {
+        alignedFrame,
+        alignedData: config!.prepData!(alignedFrame),
+        config,
+      };
+
+      pluginLog('GraphNG', false, 'data prepared', state.alignedData);
     }
 
     return state;
@@ -123,7 +136,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
         .pipe(throttleTime(50))
         .subscribe({
           next: (evt) => {
-            const u = this.plotInstance?.current;
+            const u = this.plotInstance.current;
             if (u) {
               // Try finding left position on time axis
               const left = u.valToPos(evt.payload.point.time, 'time');
@@ -183,6 +196,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
         if (shouldReconfig) {
           newState.config = this.props.prepConfig(newState.alignedFrame, this.props.frames, this.getTimeRange);
+          newState.alignedData = newState.config.prepData!(newState.alignedFrame);
           pluginLog('GraphNG', false, 'config recreated', newState.config);
         }
       }

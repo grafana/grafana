@@ -16,6 +16,12 @@ function sameConfig(prevProps: PlotProps, nextProps: PlotProps) {
   return nextProps.config === prevProps.config;
 }
 
+function sameTimeRange(prevProps: PlotProps, nextProps: PlotProps) {
+  let prevTime = prevProps.timeRange;
+  let nextTime = nextProps.timeRange;
+  return nextTime.from.valueOf() === prevTime.from.valueOf() && nextTime.to.valueOf() === prevTime.to.valueOf();
+}
+
 type UPlotChartState = {
   ctx: PlotContextType;
 };
@@ -97,15 +103,6 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     this.state.ctx.plot?.destroy();
   }
 
-  shouldComponentUpdate(nextProps: PlotProps, nextState: UPlotChartState) {
-    return (
-      nextState.ctx !== this.state.ctx ||
-      !sameDims(this.props, nextProps) ||
-      !sameData(this.props, nextProps) ||
-      !sameConfig(this.props, nextProps)
-    );
-  }
-
   componentDidUpdate(prevProps: PlotProps) {
     let { ctx } = this.state;
 
@@ -118,6 +115,11 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
       this.reinitPlot();
     } else if (!sameData(prevProps, this.props)) {
       ctx.plot?.setData(this.props.data);
+    } else if (!sameTimeRange(prevProps, this.props)) {
+      ctx.plot?.setScale('x', {
+        min: this.props.timeRange.from.valueOf(),
+        max: this.props.timeRange.to.valueOf(),
+      });
     }
   }
 

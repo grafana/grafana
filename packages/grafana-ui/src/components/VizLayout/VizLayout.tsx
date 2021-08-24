@@ -1,7 +1,7 @@
 import React, { FC, CSSProperties, ComponentType } from 'react';
 import { useMeasure } from 'react-use';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { LegendPlacement } from '..';
+import { LegendPlacement } from '@grafana/schema';
 
 /**
  * @beta
@@ -29,7 +29,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     width: `${width}px`,
     height: `${height}px`,
   };
-  const [legendRef, legendMeasure] = useMeasure();
+  const [legendRef, legendMeasure] = useMeasure<HTMLDivElement>();
 
   if (!legend) {
     return <div style={containerStyle}>{children(width, height)}</div>;

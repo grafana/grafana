@@ -35,24 +35,27 @@ const (
 	// with intervals that are not exactly divided by this number
 	// not to be evaluated
 	baseIntervalSeconds = 10
-	// default alert definiiton interval
+	// default alert definition interval
 	defaultIntervalSeconds int64 = 6 * baseIntervalSeconds
 )
 
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
-	Cfg             *setting.Cfg                            `inject:""`
+	Cfg     *setting.Cfg `inject:""`
+	Log     log.Logger
+	Metrics *metrics.Metrics `inject:""`
+
 	DatasourceCache datasources.CacheService                `inject:""`
 	RouteRegister   routing.RouteRegister                   `inject:""`
 	SQLStore        *sqlstore.SQLStore                      `inject:""`
 	DataService     *tsdb.Service                           `inject:""`
 	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
 	QuotaService    *quota.QuotaService                     `inject:""`
-	Metrics         *metrics.Metrics                        `inject:""`
-	Log             log.Logger
 	schedule        schedule.ScheduleService
 	stateManager    *state.Manager
-	Alertmanager    *notifier.Alertmanager
+
+	// Alerting notification services
+	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 }
 
 func init() {
@@ -71,56 +74,62 @@ func (ng *AlertNG) Init() error {
 		Logger:                 ng.Log,
 	}
 
-	var err error
-	ng.Alertmanager, err = notifier.New(ng.Cfg, store, ng.Metrics)
-	if err != nil {
+	ng.MultiOrgAlertmanager = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store)
+
+	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
+	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
 		return err
 	}
 
 	schedCfg := schedule.SchedulerCfg{
-		C:             clock.New(),
-		BaseInterval:  baseInterval,
-		Logger:        ng.Log,
-		MaxAttempts:   maxAttempts,
-		Evaluator:     eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log},
-		InstanceStore: store,
-		RuleStore:     store,
-		Notifier:      ng.Alertmanager,
-		Metrics:       ng.Metrics,
+		C:                       clock.New(),
+		BaseInterval:            baseInterval,
+		Logger:                  log.New("ngalert.scheduler"),
+		MaxAttempts:             maxAttempts,
+		Evaluator:               eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log},
+		InstanceStore:           store,
+		RuleStore:               store,
+		AdminConfigStore:        store,
+		OrgStore:                store,
+		MultiOrgNotifier:        ng.MultiOrgAlertmanager,
+		Metrics:                 ng.Metrics,
+		AdminConfigPollInterval: ng.Cfg.AdminConfigPollInterval,
 	}
+
 	ng.stateManager = state.NewManager(ng.Log, ng.Metrics, store, store)
 	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, ng.stateManager)
 
 	api := api.API{
-		Cfg:             ng.Cfg,
-		DatasourceCache: ng.DatasourceCache,
-		RouteRegister:   ng.RouteRegister,
-		DataService:     ng.DataService,
-		Schedule:        ng.schedule,
-		DataProxy:       ng.DataProxy,
-		QuotaService:    ng.QuotaService,
-		InstanceStore:   store,
-		RuleStore:       store,
-		AlertingStore:   store,
-		Alertmanager:    ng.Alertmanager,
-		StateManager:    ng.stateManager,
+		Cfg:                  ng.Cfg,
+		DatasourceCache:      ng.DatasourceCache,
+		RouteRegister:        ng.RouteRegister,
+		DataService:          ng.DataService,
+		Schedule:             ng.schedule,
+		DataProxy:            ng.DataProxy,
+		QuotaService:         ng.QuotaService,
+		InstanceStore:        store,
+		RuleStore:            store,
+		AlertingStore:        store,
+		AdminConfigStore:     store,
+		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
+		StateManager:         ng.stateManager,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics)
 
 	return nil
 }
 
-// Run starts the scheduler.
+// Run starts the scheduler and Alertmanager.
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
 	ng.stateManager.Warm()
 
 	children, subCtx := errgroup.WithContext(ctx)
 	children.Go(func() error {
-		return ng.schedule.Ticker(subCtx)
+		return ng.schedule.Run(subCtx)
 	})
 	children.Go(func() error {
-		return ng.Alertmanager.Run(subCtx)
+		return ng.MultiOrgAlertmanager.Run(subCtx)
 	})
 	return children.Wait()
 }

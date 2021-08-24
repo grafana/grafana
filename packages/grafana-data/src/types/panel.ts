@@ -11,6 +11,7 @@ import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { OptionEditorConfig } from './options';
 import { AlertStateInfo } from './alerts';
+import { PanelModel } from './dashboard';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -119,19 +120,6 @@ export interface PanelEditorProps<T = any> {
   ) => void;
   /** Result set of panel queries */
   data?: PanelData;
-}
-
-export interface PanelModel<TOptions = any> {
-  /** ID of the panel within the current dashboard */
-  id: number;
-  alert?: any;
-  /** Panel options */
-  options: TOptions;
-  /** Field options configuration */
-  fieldConfig: FieldConfigSource;
-  /** Version of the panel plugin */
-  pluginVersion?: string;
-  scopedVars?: ScopedVars;
 }
 
 /**

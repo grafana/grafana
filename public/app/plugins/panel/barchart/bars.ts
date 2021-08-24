@@ -1,16 +1,16 @@
-import uPlot, { Axis } from 'uplot';
+import uPlot, { Axis, AlignedData } from 'uplot';
 import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { calculateFontSize, PlotTooltipInterpolator } from '@grafana/ui';
 import {
-  calculateFontSize,
-  PlotTooltipInterpolator,
-  VizTextDisplayOptions,
   StackingMode,
   BarValueVisibility,
   ScaleDirection,
   ScaleOrientation,
-} from '@grafana/ui';
+  VizTextDisplayOptions,
+} from '@grafana/schema';
+import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -52,10 +52,17 @@ export interface BarsOptions {
  * @internal
  */
 export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
-  const { xOri, xDir: dir, groupWidth, barWidth, rawValue, formatValue, showValue } = opts;
+  const { xOri, xDir: dir, rawValue, formatValue, showValue } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
   const isStacked = opts.stacking !== StackingMode.None;
+  const pctStacked = opts.stacking === StackingMode.Percent;
+
+  let { groupWidth, barWidth } = opts;
+
+  if (isStacked) {
+    [groupWidth, barWidth] = [barWidth, groupWidth];
+  }
 
   let qt: Quadtree;
   let hovered: Rect | undefined = undefined;
@@ -200,7 +207,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let labelOffset = LABEL_OFFSET_MAX;
 
     barRects.forEach((r, i) => {
-      texts[i] = formatValue(r.sidx, rawValue(r.sidx, r.didx));
+      texts[i] = formatValue(r.sidx, rawValue(r.sidx, r.didx)! / (pctStacked ? alignedTotals![r.sidx][r.didx]! : 1));
       labelOffset = Math.min(labelOffset, Math.round(LABEL_OFFSET_FACTOR * (isXHorizontal ? r.w : r.h)));
     });
 
@@ -264,22 +271,22 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const interpolateTooltip: PlotTooltipInterpolator = (
     updateActiveSeriesIdx,
     updateActiveDatapointIdx,
-    updateTooltipPosition
+    updateTooltipPosition,
+    u
   ) => {
-    return (u: uPlot) => {
-      let found: Rect | undefined;
-      let cx = u.cursor.left! * devicePixelRatio;
-      let cy = u.cursor.top! * devicePixelRatio;
+    let found: Rect | undefined;
+    let cx = u.cursor.left! * devicePixelRatio;
+    let cy = u.cursor.top! * devicePixelRatio;
 
-      qt.get(cx, cy, 1, 1, (o) => {
-        if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-          found = o;
-        }
-      });
+    qt.get(cx, cy, 1, 1, (o) => {
+      if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+        found = o;
+      }
+    });
 
-      if (found) {
-        // prettier-ignore
-        if (found !== hovered) {
+    if (found) {
+      // prettier-ignore
+      if (found !== hovered) {
           barMark.style.display = '';
           barMark.style.left   = found.x / devicePixelRatio + 'px';
           barMark.style.top    = found.y / devicePixelRatio + 'px';
@@ -290,22 +297,32 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           updateActiveDatapointIdx(hovered.didx);
           updateTooltipPosition();
         }
-      } else if (hovered !== undefined) {
-        updateActiveSeriesIdx(hovered!.sidx);
-        updateActiveDatapointIdx(hovered!.didx);
-        updateTooltipPosition();
-        hovered = undefined;
-        barMark.style.display = 'none';
-      } else {
-        updateTooltipPosition(true);
-      }
-    };
+    } else if (hovered !== undefined) {
+      updateActiveSeriesIdx(hovered!.sidx);
+      updateActiveDatapointIdx(hovered!.didx);
+      updateTooltipPosition();
+      hovered = undefined;
+      barMark.style.display = 'none';
+    } else {
+      updateTooltipPosition(true);
+    }
   };
+
+  let alignedTotals: AlignedData | null = null;
+
+  function prepData(alignedFrame: DataFrame) {
+    alignedTotals = null;
+
+    return preparePlotData(alignedFrame, ({ totals }) => {
+      alignedTotals = totals;
+    });
+  }
 
   return {
     cursor: {
       x: false,
       y: false,
+      points: { show: false },
     },
     // scale & axis opts
     xValues,
@@ -318,5 +335,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     drawClear,
     draw,
     interpolateTooltip,
+    prepData,
   };
 }

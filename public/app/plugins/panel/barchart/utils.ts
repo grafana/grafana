@@ -4,23 +4,17 @@ import {
   Field,
   FieldType,
   formattedValueToString,
+  getDisplayProcessor,
   getFieldColorModeForField,
   getFieldSeriesColor,
+  GrafanaTheme2,
   MutableDataFrame,
   VizOrientation,
 } from '@grafana/data';
 import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
 import { BarsOptions, getConfig } from './bars';
-import {
-  AxisPlacement,
-  FIXED_UNIT,
-  ScaleDirection,
-  ScaleDistribution,
-  ScaleOrientation,
-  StackingMode,
-  UPlotConfigBuilder,
-  UPlotConfigPrepFn,
-} from '@grafana/ui';
+import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, StackingMode } from '@grafana/schema';
+import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
 import { collectStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
 /** @alpha */
@@ -88,6 +82,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   builder.addHook('draw', config.draw);
 
   builder.setTooltipInterpolator(config.interpolateTooltip);
+
+  builder.setPrepData(config.prepData);
 
   builder.addScale({
     scaleKey: 'x',
@@ -222,6 +218,7 @@ export function preparePlotFrame(data: DataFrame[]) {
 /** @internal */
 export function prepareGraphableFrames(
   series: DataFrame[],
+  theme: GrafanaTheme2,
   stacking: StackingMode
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
@@ -268,6 +265,12 @@ export function prepareGraphableFrames(
             })
           ),
         };
+
+        if (stacking === StackingMode.Percent) {
+          copy.config.unit = 'percentunit';
+          copy.display = getDisplayProcessor({ field: copy, theme });
+        }
+
         fields.push(copy);
       } else {
         fields.push({ ...field });

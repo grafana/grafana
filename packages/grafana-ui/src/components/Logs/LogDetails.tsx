@@ -9,13 +9,12 @@ import {
   getParser,
   LinkModel,
   LogRowModel,
-  GrafanaTheme,
+  GrafanaTheme2,
 } from '@grafana/data';
 
-import { Themeable } from '../../types/theme';
-import { withTheme } from '../../themes/index';
+import { Themeable2 } from '../../types/theme';
+import { withTheme2 } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
-import { stylesFactory } from '../../themes/stylesFactory';
 import { getAllFields } from './logParser';
 
 //Components
@@ -23,7 +22,7 @@ import { LogDetailsRow } from './LogDetailsRow';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
 
-export interface Props extends Themeable {
+export interface Props extends Themeable2 {
   row: LogRowModel;
   showDuplicates: boolean;
   getRows: () => LogRowModel[];
@@ -39,7 +38,7 @@ export interface Props extends Themeable {
   onClickHideDetectedField?: (key: string) => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     logsRowLevelDetails: css`
       label: logs-row__level_details;
@@ -52,11 +51,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       cursor: default;
 
       &:hover {
-        background-color: ${theme.colors.panelBg};
+        background-color: ${theme.colors.background.primary};
       }
     `,
   };
-});
+};
 
 class UnThemedLogDetails extends PureComponent<Props> {
   getParser = memoizeOne(getParser);
@@ -175,5 +174,5 @@ class UnThemedLogDetails extends PureComponent<Props> {
   }
 }
 
-export const LogDetails = withTheme(UnThemedLogDetails);
+export const LogDetails = withTheme2(UnThemedLogDetails);
 LogDetails.displayName = 'LogDetails';

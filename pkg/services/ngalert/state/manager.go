@@ -175,9 +175,13 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 	case eval.Pending: // we do not emit results with this state
 	}
 
+	// Set Resolved property so the scheduler knows to send a postable alert
+	// to Alertmanager.
+	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
+
 	st.set(currentState)
 	if oldState != currentState.State {
-		go st.createAlertAnnotation(currentState.State, alertRule, result)
+		go st.createAlertAnnotation(currentState.State, alertRule, result, oldState)
 	}
 	return currentState
 }
@@ -225,7 +229,7 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.AlertRule, result eval.Result) {
+func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.AlertRule, result eval.Result, oldState eval.State) {
 	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", new.String())
 	dashUid, ok := alertRule.Annotations["__dashboardUid__"]
 	if !ok {
@@ -251,12 +255,14 @@ func (st *Manager) createAlertAnnotation(new eval.State, alertRule *ngModels.Ale
 		return
 	}
 
-	annotationText := fmt.Sprintf("%s %s", result.Instance.String(), new.String())
+	annotationText := fmt.Sprintf("%s {%s} - %s", alertRule.Title, result.Instance.String(), new.String())
 
 	item := &annotations.Item{
 		OrgId:       alertRule.OrgID,
 		DashboardId: query.Result.Id,
 		PanelId:     panelId,
+		PrevState:   oldState.String(),
+		NewState:    new.String(),
 		Text:        annotationText,
 		Epoch:       result.EvaluatedAt.UnixNano() / int64(time.Millisecond),
 	}

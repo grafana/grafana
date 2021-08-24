@@ -405,6 +405,9 @@ type Cfg struct {
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]interface{}
 	GeomapEnableCustomBaseLayers bool
+
+	// Unified Alerting
+	AdminConfigPollInterval time.Duration
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -471,6 +474,7 @@ func RedactedValue(key, value string) string {
 		"PRIVATE_KEY",
 		"SECRET_KEY",
 		"CERTIFICATE",
+		"ACCOUNT_KEY",
 	} {
 		if strings.Contains(uppercased, pattern) {
 			return RedactedPassword
@@ -895,6 +899,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	if err := readAlertingSettings(iniFile); err != nil {
+		return err
+	}
+
+	if err := cfg.readUnifiedAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1346,6 +1354,13 @@ func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
+	return nil
+}
+
+func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
+	ua := iniFile.Section("unified_alerting")
+	s := ua.Key("admin_config_poll_interval_seconds").MustInt(60)
+	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
 	return nil
 }
 

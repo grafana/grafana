@@ -12,7 +12,7 @@ import { FuncInstance } from '../gfunc';
 const init = createAction<GraphiteQueryEditorAngularDependencies>('init');
 
 // Metrics & Tags
-const segmentValueChanged = createAction<{ segment: GraphiteSegment; index: number }>('segment-value-changed');
+const segmentValueChanged = createAction<{ segment: GraphiteSegment | string; index: number }>('segment-value-changed');
 
 // Tags
 const addNewTag = createAction<{ segment: GraphiteSegment }>('add-new-tag');
@@ -23,8 +23,7 @@ const unpause = createAction('unpause');
 const addFunction = createAction<{ name: string }>('add-function');
 const removeFunction = createAction<{ func: FuncInstance }>('remove-function');
 const moveFunction = createAction<{ func: FuncInstance; offset: number }>('move-function');
-// TODO: at the moment parameters are modified directly, new value of the param will be passed in the action
-const updateFunctionParam = createAction<{ func: FuncInstance }>('update-function-param');
+const updateFunctionParam = createAction<{ func: FuncInstance; index: number; value: string }>('change-function-param');
 
 // Text editor
 const updateQuery = createAction<{ query: string }>('update-query');
