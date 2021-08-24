@@ -141,7 +141,6 @@ import u1132 from '!!raw-loader!../../../../../public/img/icons/mono/heart.svg';
 import u1133 from '!!raw-loader!../../../../../public/img/icons/mono/heart-break.svg';
 import u1134 from '!!raw-loader!../../../../../public/img/icons/mono/panel-add.svg';
 import u1135 from '!!raw-loader!../../../../../public/img/icons/mono/library-panel.svg';
-
 import u1136 from '!!raw-loader!../../../../../public/img/icons/unicons/cloud-upload.svg';
 import u1137 from '!!raw-loader!../../../../../public/img/icons/unicons/credit-card.svg';
 import u1138 from '!!raw-loader!../../../../../public/img/icons/unicons/file-copy-alt.svg';
