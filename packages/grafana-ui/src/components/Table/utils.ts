@@ -15,7 +15,7 @@ import { BarGaugeCell } from './BarGaugeCell';
 import { TableCellDisplayMode, TableFieldOptions } from './types';
 import { JSONViewCell } from './JSONViewCell';
 import { ImageCell } from './ImageCell';
-import { EmptyCell, FooterCell } from './FooterCell';
+import { getFooterValue } from './FooterRow';
 
 export function getTextAlign(field?: Field): ContentPosition {
   if (!field) {
@@ -113,36 +113,6 @@ export function getColumns(
   }
 
   return columns;
-}
-
-function getFooterValue(index: number, footers?: DataFrame) {
-  if (footers === undefined) {
-    return EmptyCell;
-  }
-  const field = footers.fields[index];
-
-  let values = [];
-  for (let i = 0; i < footers.length; i++) {
-    const fieldValue = field.values.get(i);
-    if (fieldValue === undefined) {
-      continue;
-    }
-    const displayValue = field.display ? field.display(fieldValue) : fieldValue;
-    const val = field.display ? formattedValueToString(displayValue) : displayValue;
-    if (val === undefined) {
-      continue;
-    }
-
-    const key = `function${i + 1}`;
-    if (field.labels && field.labels[key]) {
-      const func = field.labels[key];
-      values.push(func + ': ' + val);
-      continue;
-    }
-    values.push(val);
-  }
-
-  return FooterCell({ values });
 }
 
 function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {

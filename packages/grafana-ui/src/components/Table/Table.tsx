@@ -1,10 +1,8 @@
 import React, { FC, memo, useCallback, useMemo } from 'react';
-import { DataFrame, Field, getFieldDisplayName } from '@grafana/data';
+import { DataFrame, getFieldDisplayName } from '@grafana/data';
 import {
   Cell,
   Column,
-  ColumnInstance,
-  HeaderGroup,
   useAbsoluteLayout,
   useFilters,
   UseFiltersState,
@@ -22,16 +20,14 @@ import {
   TableSortByActionCallback,
   TableSortByFieldState,
 } from './types';
-import { getTableStyles, TableStyles } from './styles';
-import { Icon } from '../Icon/Icon';
+import { getTableStyles } from './styles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { Filter } from './Filter';
 import { TableCell } from './TableCell';
 import { useStyles2 } from '../../themes';
-import { selectors } from '@grafana/e2e-selectors';
+import { FooterRow } from './FooterRow';
+import { HeaderRow } from './HeaderRow';
 
 const COLUMN_MIN_WIDTH = 150;
-const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
 
 export interface Props {
   ariaLabel?: string;
@@ -207,25 +203,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel}>
       <CustomScrollbar hideVerticalTrack={true}>
         <div style={{ width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%' }}>
-          {!noHeader && (
-            <div>
-              {headerGroups.map((headerGroup: HeaderGroup) => {
-                const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
-                return (
-                  <div
-                    className={tableStyles.thead}
-                    {...headerGroupProps}
-                    key={key}
-                    aria-label={e2eSelectorsTable.header}
-                  >
-                    {headerGroup.headers.map((column: Column, index: number) =>
-                      renderHeaderCell(column, tableStyles, data.fields[index])
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {!noHeader && <HeaderRow data={data} headerGroups={headerGroups} />}
           {rows.length > 0 ? (
             <FixedSizeList
               height={height - headerHeight}
@@ -242,37 +220,7 @@ export const Table: FC<Props> = memo((props: Props) => {
             </div>
           )}
           return (
-          <div
-            style={{
-              position: 'absolute',
-              width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%',
-              bottom: '0px',
-            }}
-          >
-            {footerGroups.map((footerGroup: HeaderGroup) => {
-              const { key, ...footerGroupProps } = footerGroup.getFooterGroupProps();
-              let style = {};
-              if (footers && footers.length > 1) {
-                const height = 27 * footers.length;
-                style = { height: `${height}px` };
-              }
-              {
-                return (
-                  <div
-                    className={tableStyles.tfoot}
-                    {...footerGroupProps}
-                    key={key}
-                    aria-label={e2eSelectorsTable.footer}
-                    style={style}
-                  >
-                    {footerGroup.headers.map((column: ColumnInstance, index: number) =>
-                      renderFooterCell(column, tableStyles, style)
-                    )}
-                  </div>
-                );
-              }
-            })}
-          </div>
+          <FooterRow footers={footers} footerGroups={footerGroups} totalColumnsWidth={totalColumnsWidth} />
           );
         </div>
       </CustomScrollbar>
@@ -281,58 +229,3 @@ export const Table: FC<Props> = memo((props: Props) => {
 });
 
 Table.displayName = 'Table';
-
-function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) {
-  const headerProps = column.getHeaderProps();
-
-  if (column.canResize) {
-    headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
-  }
-
-  headerProps.style.position = 'absolute';
-  headerProps.style.justifyContent = (column as any).justifyContent;
-
-  return (
-    <div className={tableStyles.headerCell} {...headerProps}>
-      {column.canSort && (
-        <>
-          <div
-            {...column.getSortByToggleProps()}
-            className={tableStyles.headerCellLabel}
-            title={column.render('Header')}
-          >
-            <div>{column.render('Header')}</div>
-            <div>
-              {column.isSorted && (column.isSortedDesc ? <Icon name="arrow-down" /> : <Icon name="arrow-up" />)}
-            </div>
-          </div>
-          {column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
-        </>
-      )}
-      {!column.canSort && column.render('Header')}
-      {!column.canSort && column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
-      {column.canResize && <div {...column.getResizerProps()} className={tableStyles.resizeHandle} />}
-    </div>
-  );
-}
-
-function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, style: any) {
-  const footerProps = column.getHeaderProps();
-
-  if (!footerProps) {
-    return null;
-  }
-
-  footerProps.style = footerProps.style ?? {};
-  footerProps.style.position = 'absolute';
-  footerProps.style.justifyContent = (column as any).justifyContent;
-  if (style.height) {
-    footerProps.style.height = style.height;
-  }
-
-  return (
-    <div className={tableStyles.headerCell} {...footerProps}>
-      {column.render('Footer')}
-    </div>
-  );
-}

@@ -13,6 +13,7 @@ import {
   ThresholdsConfig,
   ThresholdsMode,
   FieldConfig,
+  formattedValueToString,
 } from '@grafana/data';
 import { prepDataForStorybook } from '../../utils/storybook/data';
 
@@ -122,14 +123,10 @@ function buildFooterData(data: DataFrame, theme: GrafanaTheme2, config: Record<s
         config: {
           decimals: 2,
         },
-        labels: {
-          function1: 'sum',
-          function2: 'avg',
-        },
       },
       {
         name: 'Progress',
-        type: FieldType.number,
+        type: FieldType.string,
         values: [],
         config: {
           unit: 'percent',
@@ -147,8 +144,12 @@ function buildFooterData(data: DataFrame, theme: GrafanaTheme2, config: Record<s
     field.config = merge(field.config, config[field.name]);
   }
 
-  footerData.appendRow(['Total', undefined, undefined, valueSum, 100]);
-  footerData.appendRow([undefined, undefined, undefined, 80.55555, undefined]);
+  const valueField = data.fields[3];
+  const displayValue = valueField.display ? valueField.display(valueSum) : valueSum;
+  const val = valueField.display ? formattedValueToString(displayValue) : displayValue;
+
+  footerData.appendRow(['Total', undefined, undefined, val, '100%']);
+  footerData.appendRow([undefined, undefined, undefined, 80.55, undefined]);
 
   return prepDataForStorybook([footerData], theme)[0];
 }
