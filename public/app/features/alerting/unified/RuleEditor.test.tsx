@@ -1,6 +1,6 @@
 import { Matcher, render, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { BackendSrv, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 import RuleEditor from './RuleEditor';
 import { Route, Router } from 'react-router-dom';
@@ -19,6 +19,7 @@ import { DashboardSearchHit } from 'app/features/search/types';
 import { getDefaultQueries } from './utils/rule-form';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import * as api from 'app/features/manage-dashboards/state/actions';
+import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -64,7 +65,7 @@ function renderRuleEditor(identifier?: string) {
 
 const ui = {
   inputs: {
-    name: byLabelText('Alert name'),
+    name: byLabelText('Rule name'),
     alertType: byTestId('alert-type-picker'),
     dataSource: byTestId('datasource-picker'),
     folder: byTestId('folder-picker'),
@@ -217,6 +218,169 @@ describe('RuleEditor', () => {
           labels: { severity: 'warn', team: 'the a-team' },
           for: '5m',
           grafana_alert: {
+            condition: 'B',
+            data: getDefaultQueries(),
+            exec_err_state: 'Alerting',
+            no_data_state: 'NoData',
+            title: 'my great new rule',
+          },
+        },
+      ],
+    });
+  });
+
+  it('can create a new cloud recording rule', async () => {
+    const dataSources = {
+      default: mockDataSource(
+        {
+          type: 'prometheus',
+          name: 'Prom',
+          isDefault: true,
+        },
+        { alerting: true }
+      ),
+    };
+
+    setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
+    mocks.api.setRulerRuleGroup.mockResolvedValue();
+    mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
+    mocks.api.fetchRulerRulesGroup.mockResolvedValue({
+      name: 'group2',
+      rules: [],
+    });
+    mocks.api.fetchRulerRules.mockResolvedValue({
+      namespace1: [
+        {
+          name: 'group1',
+          rules: [],
+        },
+      ],
+      namespace2: [
+        {
+          name: 'group2',
+          rules: [],
+        },
+      ],
+    });
+
+    await renderRuleEditor();
+    await userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
+    await clickSelectOption(ui.inputs.alertType.get(), /Cortex\/Loki managed recording rule/);
+    const dataSourceSelect = ui.inputs.dataSource.get();
+    userEvent.click(byRole('textbox').get(dataSourceSelect));
+    await clickSelectOption(dataSourceSelect, 'Prom (default)');
+    await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
+    await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
+    await clickSelectOption(ui.inputs.group.get(), 'group2');
+
+    await userEvent.type(ui.inputs.expr.get(), 'up == 1');
+
+    userEvent.click(ui.buttons.addLabel.get());
+
+    await userEvent.type(ui.inputs.labelKey(1).get(), 'team');
+    await userEvent.type(ui.inputs.labelValue(1).get(), 'the a-team');
+
+    // save and check what was sent to backend
+    userEvent.click(ui.buttons.save.get());
+    await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
+    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith('Prom', 'namespace2', {
+      name: 'group2',
+      rules: [
+        {
+          record: 'my great new recording rule',
+          labels: { team: 'the a-team' },
+          expr: 'up == 1',
+        },
+      ],
+    });
+  });
+
+  it('can edit grafana managed rule', async () => {
+    const uid = 'FOOBAR123';
+    const folder = {
+      title: 'Folder A',
+      uid: 'abcd',
+      id: 1,
+    };
+    jest.spyOn(api, 'searchFolders').mockResolvedValue([folder] as DashboardSearchHit[]);
+    const getFolderByUid = jest.fn().mockResolvedValue({
+      ...folder,
+      canSave: true,
+    });
+    const dataSources = {
+      default: mockDataSource({
+        type: 'prometheus',
+        name: 'Prom',
+        isDefault: true,
+      }),
+    };
+
+    const backendSrv = ({
+      getFolderByUid,
+    } as any) as BackendSrv;
+    setBackendSrv(backendSrv);
+    setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    mocks.api.setRulerRuleGroup.mockResolvedValue();
+    mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
+    mocks.api.fetchRulerRules.mockResolvedValue({
+      [folder.title]: [
+        {
+          interval: '1m',
+          name: 'my great new rule',
+          rules: [
+            {
+              annotations: { description: 'some description', summary: 'some summary' },
+              labels: { severity: 'warn', team: 'the a-team' },
+              for: '5m',
+              grafana_alert: {
+                uid,
+                namespace_uid: 'abcd',
+                namespace_id: 1,
+                condition: 'B',
+                data: getDefaultQueries(),
+                exec_err_state: GrafanaAlertStateDecision.Alerting,
+                no_data_state: GrafanaAlertStateDecision.NoData,
+                title: 'my great new rule',
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    await renderRuleEditor(uid);
+
+    // check that it's filled in
+    const nameInput = await ui.inputs.name.find();
+    expect(nameInput).toHaveValue('my great new rule');
+    expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
+    expect(ui.inputs.annotationValue(0).get()).toHaveValue('some description');
+    expect(ui.inputs.annotationValue(1).get()).toHaveValue('some summary');
+
+    // add an annotation
+    await clickSelectOption(ui.inputs.annotationKey(2).get(), /Add new/);
+    await userEvent.type(byRole('textbox').get(ui.inputs.annotationKey(2).get()), 'custom');
+    await userEvent.type(ui.inputs.annotationValue(2).get(), 'value');
+
+    //add a label
+    await userEvent.type(ui.inputs.labelKey(2).get(), 'custom');
+    await userEvent.type(ui.inputs.labelValue(2).get(), 'value');
+
+    // save and check what was sent to backend
+    userEvent.click(ui.buttons.save.get());
+    await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
+
+    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, 'Folder A', {
+      interval: '1m',
+      name: 'my great new rule',
+      rules: [
+        {
+          annotations: { description: 'some description', summary: 'some summary', custom: 'value' },
+          labels: { severity: 'warn', team: 'the a-team', custom: 'value' },
+          for: '5m',
+          grafana_alert: {
+            uid,
             condition: 'B',
             data: getDefaultQueries(),
             exec_err_state: 'Alerting',

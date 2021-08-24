@@ -63,7 +63,7 @@ export function RuleListErrors(): ReactElement {
 
   return (
     <>
-      {errors.length && !closed && (
+      {!!errors.length && !closed && (
         <Alert
           data-testid="cloud-rulessource-errors"
           title="Errors loading rules"
