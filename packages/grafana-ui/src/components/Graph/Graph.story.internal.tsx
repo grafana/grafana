@@ -1,6 +1,7 @@
 import React from 'react';
-import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorModeId } from '@grafana/data';
+import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorModeId, getDisplayProcessor } from '@grafana/data';
 import { Story } from '@storybook/react';
+import { useTheme2 } from '../../themes';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { VizTooltip, TooltipDisplayMode, VizTooltipContentProps } from '../VizTooltip';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
@@ -108,9 +109,19 @@ export default {
   },
 };
 
-export const WithTooltip: Story<GraphProps & { tooltipMode: TooltipDisplayMode }> = ({ tooltipMode, ...args }) => {
+export const WithTooltip: Story<GraphProps & { tooltipMode: TooltipDisplayMode }> = ({
+  tooltipMode,
+  series,
+  ...args
+}) => {
+  const theme = useTheme2();
+  const seriesWithDisplay = series.map((data) => ({
+    ...data,
+    valueField: { ...data.valueField, display: getDisplayProcessor({ field: data.valueField, theme }) },
+  }));
+
   return (
-    <Graph {...args}>
+    <Graph series={seriesWithDisplay} {...args}>
       <VizTooltip mode={tooltipMode} />
     </Graph>
   );

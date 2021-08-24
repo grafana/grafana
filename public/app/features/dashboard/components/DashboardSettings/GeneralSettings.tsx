@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { TimeZone } from '@grafana/data';
-import { TagsInput, Input, Field, CollapsableSection, RadioButtonGroup } from '@grafana/ui';
+import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -96,6 +96,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
             onChange={onFolderChange}
             enableCreateNew={true}
             dashboardId={dashboard.id}
+            skipInitialLoad={true}
           />
         </Field>
 
