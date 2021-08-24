@@ -4,7 +4,7 @@ import { Icon, IconName } from '@grafana/ui';
 
 export interface FooterLink {
   text: string;
-  icon?: string;
+  icon?: IconName;
   url?: string;
   target?: string;
 }
@@ -75,7 +75,7 @@ export const Footer: FC = React.memo(() => {
           {links.map((link) => (
             <li key={link.text}>
               <a href={link.url} target={link.target} rel="noopener">
-                {link.icon && <Icon name={link.icon as IconName} />} {link.text}
+                {link.icon && <Icon name={link.icon} />} {link.text}
               </a>
             </li>
           ))}
