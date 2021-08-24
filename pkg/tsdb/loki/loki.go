@@ -74,7 +74,7 @@ func (s *Service) Init() error {
 		QueryDataHandler: s,
 	})
 
-	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "loki", factory); err != nil {
+	if err := s.BackendPluginManager.Register("loki", factory); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
 	}
 
