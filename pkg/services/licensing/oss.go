@@ -49,7 +49,7 @@ func (l *OSSLicensingService) Init() error {
 		for _, node := range indexData.NavTree {
 			if node.Id == "admin" {
 				node.Children = append(node.Children, &dtos.NavLink{
-					Text: "Upgrade",
+					Text: "Stats and license",
 					Id:   "upgrading",
 					Url:  l.LicenseURL(req.SignedInUser),
 					Icon: "unlock",
