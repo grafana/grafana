@@ -4,27 +4,27 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { AlertLabels } from '../AlertLabels';
-import { AmNotificationsAlertsTable } from './AmNotificationsAlertsTable';
+import { AlertGroupAlertsTable } from './AlertGroupAlertsTable';
 import { CollapseToggle } from '../CollapseToggle';
-import { AmNotificationsGroupHeader } from './AmNotificationsGroupHeader';
+import { AlertGroupHeader } from './AlertGroupHeader';
 
 interface Props {
   group: AlertmanagerGroup;
   alertManagerSourceName: string;
 }
 
-export const AmNotificationsGroup = ({ alertManagerSourceName, group }: Props) => {
+export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <div className={styles.group} data-testid="notifications-group">
+        <div className={styles.group} data-testid="alert-group">
           <CollapseToggle
             isCollapsed={isCollapsed}
             onToggle={() => setIsCollapsed(!isCollapsed)}
-            data-testid="notifications-group-collapse-toggle"
+            data-testid="alert-group-collapse-toggle"
           />
           {Object.keys(group.labels).length ? (
             <AlertLabels className={styles.headerLabels} labels={group.labels} />
@@ -32,11 +32,9 @@ export const AmNotificationsGroup = ({ alertManagerSourceName, group }: Props) =
             <span>No grouping</span>
           )}
         </div>
-        <AmNotificationsGroupHeader group={group} />
+        <AlertGroupHeader group={group} />
       </div>
-      {!isCollapsed && (
-        <AmNotificationsAlertsTable alertManagerSourceName={alertManagerSourceName} alerts={group.alerts} />
-      )}
+      {!isCollapsed && <AlertGroupAlertsTable alertManagerSourceName={alertManagerSourceName} alerts={group.alerts} />}
     </div>
   );
 };

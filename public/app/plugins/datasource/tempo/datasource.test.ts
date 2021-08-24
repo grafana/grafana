@@ -11,8 +11,8 @@ import {
 } from '@grafana/data';
 
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
-import { TempoDatasource } from './datasource';
 import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { TempoDatasource, TempoQuery } from './datasource';
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
@@ -117,6 +117,44 @@ describe('Tempo data source', () => {
     expect(field.type).toBe(FieldType.string);
     expect(field.values.get(0)).toBe('60ba2abb44f13eae');
     expect(field.values.length).toBe(6);
+  });
+
+  it('should build search query correctly', () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const tempoQuery: TempoQuery = {
+      queryType: 'search',
+      refId: 'A',
+      query: '',
+      serviceName: 'frontend',
+      spanName: '/config',
+      search: 'root.http.status_code=500',
+      minDuration: '1ms',
+      maxDuration: '100s',
+      limit: 10,
+    };
+    const builtQuery = ds.buildSearchQuery(tempoQuery);
+    expect(builtQuery).toStrictEqual({
+      'service.name': 'frontend',
+      name: '/config',
+      'root.http.status_code': '500',
+      minDuration: '1ms',
+      maxDuration: '100s',
+      limit: 10,
+    });
+  });
+
+  it('should ignore incomplete tag queries', () => {
+    const ds = new TempoDatasource(defaultSettings);
+    const tempoQuery: TempoQuery = {
+      queryType: 'search',
+      refId: 'A',
+      query: '',
+      search: 'root.ip root.http.status_code=500',
+    };
+    const builtQuery = ds.buildSearchQuery(tempoQuery);
+    expect(builtQuery).toStrictEqual({
+      'root.http.status_code': '500',
+    });
   });
 });
 

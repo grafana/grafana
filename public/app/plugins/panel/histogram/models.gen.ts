@@ -3,14 +3,8 @@
 // It is currenty hand written but will serve as the target for cuetsy
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-import {
-  GraphGradientMode,
-  HideableFieldConfig,
-  LegendDisplayMode,
-  OptionsWithLegend,
-  OptionsWithTooltip,
-  TooltipDisplayMode,
-} from '@grafana/ui';
+import { LegendDisplayMode, OptionsWithLegend, OptionsWithTooltip, TooltipDisplayMode } from '@grafana/schema';
+import { GraphGradientMode, HideableFieldConfig } from '@grafana/ui';
 
 export const modelVersion = Object.freeze([1, 0]);
 

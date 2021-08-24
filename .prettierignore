@@ -10,3 +10,4 @@ e2e/tmp
 public/build/
 public/sass/*.generated.scss
 devenv/
+public/lib/monaco
