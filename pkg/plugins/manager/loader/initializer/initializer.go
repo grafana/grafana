@@ -120,17 +120,16 @@ func (i *Initializer) InitializeWithFactory(p *plugins.PluginV2, factory backend
 		return err
 	}
 
-	if p.IsCorePlugin() {
-		if factory != nil {
-			var err error
+	if factory != nil {
+		var err error
 
-			p.Client, err = factory(p.ID, log.New("pluginID", p.ID), []string{})
-			if err != nil {
-				return err
-			}
-		} else {
-			logger.Warn("Could not initialize core plugin process", "pluginID", p.ID)
+		f, err := factory(p.ID, log.New("pluginID", p.ID), []string{})
+		if err != nil {
+			return err
 		}
+		p.RegisterClient(f)
+	} else {
+		logger.Warn("Could not initialize core plugin process", "pluginID", p.ID)
 	}
 
 	return nil

@@ -82,7 +82,7 @@ func (l *Loader) LoadWithFactory(path string, factory backendplugin.PluginFactor
 func (l *Loader) loadPlugins(pluginJSONPaths []string) ([]*plugins.PluginV2, error) {
 	var foundPlugins = make(map[string]plugins.JSONData)
 
-	// load plugin.json files and map directory to JSON data map
+	// load plugin.json files and map directory to JSON data
 	for _, pluginJSONPath := range pluginJSONPaths {
 		plugin, err := l.readPluginJSON(pluginJSONPath)
 		if err != nil {

@@ -15,24 +15,28 @@ type PluginV2 struct {
 	PluginDir string
 	Class     PluginClass
 
-	// app fields
+	// App fields
 	IncludedInAppID string
 	DefaultNavURL   string
 	Pinned          bool
 
-	// signature fields
+	// Signature fields
 	Signature     PluginSignatureStatus
 	SignatureType PluginSignatureType
 	SignatureOrg  string
 	Parent        *PluginV2
 	Children      []*PluginV2
 
-	// gcom update checker fields
+	// GCOM update checker fields
 	GrafanaComVersion   string
 	GrafanaComHasUpdate bool
 
-	Client   backendplugin.Plugin
+	// SystemJS fields
+	Module  string
+	BaseURL string
+
 	Renderer pluginextensionv2.RendererPlugin
+	client   backendplugin.Plugin
 	log      log.Logger
 }
 
@@ -46,8 +50,6 @@ type JSONData struct {
 	Dependencies PluginDependencies `json:"dependencies"`
 	Includes     []*PluginInclude   `json:"includes"`
 	State        PluginState        `json:"state,omitempty"`
-	Module       string             `json:"module"`
-	BaseURL      string             `json:"baseUrl"`
 	Category     string             `json:"category"`
 	HideFromList bool               `json:"hideFromList,omitempty"`
 	Preload      bool               `json:"preload"`
@@ -91,7 +93,7 @@ func (p *PluginV2) SetLogger(l log.Logger) {
 }
 
 func (p *PluginV2) Start(ctx context.Context) error {
-	err := p.Client.Start(ctx)
+	err := p.client.Start(ctx)
 	if err != nil {
 		return err
 	}
@@ -100,10 +102,10 @@ func (p *PluginV2) Start(ctx context.Context) error {
 }
 
 func (p *PluginV2) Stop(ctx context.Context) error {
-	if p.Client == nil {
+	if p.client == nil {
 		return nil
 	}
-	err := p.Client.Stop(ctx)
+	err := p.client.Stop(ctx)
 	if err != nil {
 		return err
 	}
@@ -112,35 +114,35 @@ func (p *PluginV2) Stop(ctx context.Context) error {
 }
 
 func (p *PluginV2) IsManaged() bool {
-	if p.Client != nil {
-		return p.Client.IsManaged()
+	if p.client != nil {
+		return p.client.IsManaged()
 	}
 	return false
 }
 
 func (p *PluginV2) Decommission() error {
-	if p.Client != nil {
-		return p.Client.Decommission()
+	if p.client != nil {
+		return p.client.Decommission()
 	}
 	return nil
 }
 
 func (p *PluginV2) IsDecommissioned() bool {
-	if p.Client != nil {
-		return p.Client.IsDecommissioned()
+	if p.client != nil {
+		return p.client.IsDecommissioned()
 	}
 	return false
 }
 
 func (p *PluginV2) Exited() bool {
-	if p.Client != nil {
-		return p.Client.Exited()
+	if p.client != nil {
+		return p.client.Exited()
 	}
 	return false
 }
 
 func (p *PluginV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	pluginClient, ok := p.getPluginClient()
+	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
@@ -148,7 +150,7 @@ func (p *PluginV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 }
 
 func (p *PluginV2) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	pluginClient, ok := p.getPluginClient()
+	pluginClient, ok := p.Client()
 	if !ok {
 		return backendplugin.ErrPluginUnavailable
 	}
@@ -156,7 +158,7 @@ func (p *PluginV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 }
 
 func (p *PluginV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	pluginClient, ok := p.getPluginClient()
+	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
@@ -164,7 +166,7 @@ func (p *PluginV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 }
 
 func (p *PluginV2) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
-	pluginClient, ok := p.getPluginClient()
+	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
@@ -172,7 +174,7 @@ func (p *PluginV2) CollectMetrics(ctx context.Context) (*backend.CollectMetricsR
 }
 
 func (p *PluginV2) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	pluginClient, ok := p.getPluginClient()
+	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
@@ -180,7 +182,7 @@ func (p *PluginV2) SubscribeStream(ctx context.Context, req *backend.SubscribeSt
 }
 
 func (p *PluginV2) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	pluginClient, ok := p.getPluginClient()
+	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
@@ -188,7 +190,7 @@ func (p *PluginV2) PublishStream(ctx context.Context, req *backend.PublishStream
 }
 
 func (p *PluginV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	pluginClient, ok := p.getPluginClient()
+	pluginClient, ok := p.Client()
 	if !ok {
 		return backendplugin.ErrPluginUnavailable
 	}
@@ -196,12 +198,12 @@ func (p *PluginV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 }
 
 func (p *PluginV2) RegisterClient(c backendplugin.Plugin) {
-	p.Client = c
+	p.client = c
 }
 
-func (p *PluginV2) getPluginClient() (PluginClient, bool) {
-	if p.Client != nil {
-		return p.Client, true
+func (p *PluginV2) Client() (PluginClient, bool) {
+	if p.client != nil {
+		return p.client, true
 	}
 	return nil, false
 }
