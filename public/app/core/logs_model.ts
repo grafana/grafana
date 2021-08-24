@@ -1,5 +1,6 @@
 import { size } from 'lodash';
-import { ansicolor, BarAlignment, colors, DrawStyle, StackingMode } from '@grafana/ui';
+import { BarAlignment, DrawStyle, StackingMode } from '@grafana/schema';
+import { ansicolor, colors } from '@grafana/ui';
 
 import {
   AbsoluteTimeRange,
