@@ -1,4 +1,4 @@
-
+package schema
 
 LegendPlacement:   "bottom" | "right"          @cuetsy(targetType="type")
 

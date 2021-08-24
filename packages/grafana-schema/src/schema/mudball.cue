@@ -1,4 +1,7 @@
-package grafanaschema
+package schema
+
+// Use this file as a big TODO list - if it's still in here, it's a TODO to
+// separate it out into a discrete file.
 
 // FIXME can't write enums as structs, must use disjunctions
 TableCellDisplayMode: {
@@ -24,7 +27,6 @@ TableSortByFieldState: {
   desc?: bool
 } @cuetsy(targetType="interface")
 
-TooltipDisplayMode:          "single" | "multi" | "none"          @cuetsy(targetType="enum")
 FieldTextAlignment:   "auto" | "left" | "right" | "center" @cuetsy(targetType="type")
 AxisPlacement:        "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(targetType="enum")
 PointVisibility:      "auto" | "never" | "always"                             @cuetsy(targetType="enum")
@@ -95,8 +97,6 @@ GraphTresholdsStyleMode: "off" | "line" | "area" | "line+area" | "series" @cuets
 GraphThresholdsStyleConfig: {
   mode: GraphTresholdsStyleMode
 } @cuetsy(targetType="interface")
-LegendPlacement:   "bottom" | "right"          @cuetsy(targetType="type")
-LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(targetType="enum")
 TableFieldOptions: {
 	width?:      number
 	align:       FieldTextAlignment | *"auto"
@@ -114,16 +114,6 @@ GraphFieldConfig: {
   drawStyle?: DrawStyle
   gradientMode?: GraphGradientMode
   thresholdsStyle?: GraphThresholdsStyleConfig
-} @cuetsy(targetType="interface")
-VizLegendOptions: {
-	displayMode: LegendDisplayMode
-	placement:   LegendPlacement
-	asTable: bool | *false
-	isVisible: bool | *false
-	calcs: [...string]
-} @cuetsy(targetType="interface")
-VizTooltipOptions: {
-	mode: TooltipDisplayMode
 } @cuetsy(targetType="interface")
 // TODO copy back to appropriate place
 SingleStatBaseOptions: {
@@ -157,13 +147,6 @@ OptionsWithLegend: {
 // TODO copy back to appropriate place
 OptionsWithTextFormatting: {
 	text?: VizTextDisplayOptions
-} @cuetsy(targetType="interface")
-// TODO copy back to appropriate place
-VizTextDisplayOptions: {
-	// Explicit title text size
-	titleSize?: number
-	// Explicit value text size
-	valueSize?: number
 } @cuetsy(targetType="interface")
 // TODO copy back to appropriate place
 BigValueColorMode: "value" | "background" | "none" @cuetsy(targetType="enum")
