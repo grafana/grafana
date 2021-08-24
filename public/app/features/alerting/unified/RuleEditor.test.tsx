@@ -303,7 +303,7 @@ describe('RuleEditor', () => {
       uid: 'abcd',
       id: 1,
     };
-    const searchFolderMock = jest.fn().mockResolvedValue([folder] as DashboardSearchHit[]);
+    jest.spyOn(api, 'searchFolders').mockResolvedValue([folder] as DashboardSearchHit[]);
     const getFolderByUid = jest.fn().mockResolvedValue({
       ...folder,
       canSave: true,
@@ -317,7 +317,6 @@ describe('RuleEditor', () => {
     };
 
     const backendSrv = ({
-      search: searchFolderMock,
       getFolderByUid,
     } as any) as BackendSrv;
     setBackendSrv(backendSrv);
