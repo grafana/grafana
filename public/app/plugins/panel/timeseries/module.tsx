@@ -11,5 +11,6 @@ export const plugin = new PanelPlugin<TimeSeriesOptions, GraphFieldConfig>(TimeS
   .setPanelOptions((builder) => {
     commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
+    commonOptionsBuilder.addGridLinesOptions(builder);
   })
   .setDataSupport({ annotations: true, alertStates: true });

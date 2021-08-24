@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 
-import { VizLegendOptions } from '@grafana/schema';
+import { VizGridLines, VizLegendOptions } from '@grafana/schema';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
 import { Subscription } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
@@ -40,6 +40,7 @@ export interface GraphNGProps extends Themeable2 {
   timeRange: TimeRange;
   timeZone: TimeZone;
   legend: VizLegendOptions;
+  grid?: VizGridLines;
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;

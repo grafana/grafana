@@ -4,3 +4,4 @@ export * from './legend';
 export * from './tooltip';
 export * from './text';
 export * from './stacking';
+export * from './grid';

@@ -1,3 +1,3 @@
-import { OptionsWithLegend, OptionsWithTooltip } from '@grafana/schema';
+import { OptionsWithGridLines, OptionsWithLegend, OptionsWithTooltip } from '@grafana/schema';
 
-export interface TimeSeriesOptions extends OptionsWithLegend, OptionsWithTooltip {}
+export interface TimeSeriesOptions extends OptionsWithLegend, OptionsWithTooltip, OptionsWithGridLines {}

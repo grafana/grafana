@@ -9,6 +9,7 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
+import { VizGridLines } from '@grafana/schema';
 import { PlotConfig, PlotTooltipInterpolator } from '../types';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
@@ -261,6 +262,7 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   getTimeRange: () => TimeRange;
   eventBus: EventBus;
   allFrames: DataFrame[];
+  grid?: VizGridLines;
 } & T;
 
 /** @alpha */

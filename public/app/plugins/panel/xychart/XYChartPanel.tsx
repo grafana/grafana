@@ -52,6 +52,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       width={width}
       height={height}
       legend={options.legend}
+      grid={options.grid}
       onLegendClick={onLegendClick}
     >
       {(config, alignedDataFrame) => {

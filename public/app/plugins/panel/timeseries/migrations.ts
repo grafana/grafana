@@ -24,7 +24,7 @@ import {
   ScaleDistribution,
   StackingMode,
 } from '@grafana/ui';
-import { LegendDisplayMode, TooltipDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, TooltipDisplayMode, VizGridLines } from '@grafana/schema';
 import { TimeSeriesOptions } from './types';
 import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
 import { defaultGraphConfig } from './config';
@@ -313,6 +313,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     tooltip: {
       mode: TooltipDisplayMode.Single,
     },
+    grid: VizGridLines.Both,
   };
 
   // Legend config migration
