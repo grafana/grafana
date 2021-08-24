@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -329,6 +330,12 @@ func TestTestReceivers(t *testing.T) {
 		require.Len(t, result.Receivers, 2)
 		require.Len(t, result.Receivers[0].Configs, 1)
 		require.Len(t, result.Receivers[1].Configs, 1)
+
+		// Sort the results to guarantee the order below matches in terms of UIDs.
+		sort.Slice(result.Receivers, func(i, j int) bool {
+			return result.Receivers[i].Name < result.Receivers[j].Name
+		})
+
 		require.Equal(t, apimodels.TestReceiversResult{
 			Receivers: []apimodels.TestReceiverResult{{
 				Name: "receiver-1",
