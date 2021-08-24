@@ -206,7 +206,7 @@
       "get": {
         "security": [
           {
-            "api_key": []
+            "Authorization": []
           }
         ],
         "description": "Will return the dashboard given the dashboard unique identifier (uid).",
@@ -1368,7 +1368,7 @@
     }
   },
   "securityDefinitions": {
-    "api_key": {
+    "Authorization": {
       "type": "apiKey",
       "name": "Authorization",
       "in": "header"
