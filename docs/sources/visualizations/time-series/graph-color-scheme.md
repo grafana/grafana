@@ -8,7 +8,7 @@ weight = 400
 
 # Graph and color schemes
 
-Under [Standard options]({{< relref "../../standard-options.md" >}}) you find the [Color scheme]({{< relref "../../standard-options.md#color-scheme" >}}) option. This option controls series are assigned their color.
+Under [Standard options]({{< relref "../../panels/standard-options.md" >}}) you find the [Color scheme]({{< relref "../../panels/standard-options.md#color-scheme" >}}) option. This option controls series are assigned their color.
 
 ## Classic palette
 

@@ -44,7 +44,7 @@ All the information and stats shown in the Node graph beta are driven by the dat
 
 For more details about how to use the X-Ray service map feature, see the [X-Ray plugin documentation](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
 
-For more information, refer to [Node graph panel]({{< relref "../panels/visualizations/node-graph.md" >}}).
+For more information, refer to [Node graph panel]({{< relref "../visualizations/node-graph.md" >}}).
 
 ### New transformations
 
