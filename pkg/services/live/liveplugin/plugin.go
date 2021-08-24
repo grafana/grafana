@@ -23,32 +23,34 @@ func NewChannelLocalPublisher(node *centrifuge.Node, pipeline *pipeline.Pipeline
 }
 
 func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte) error {
-	orgID, channelID, err := orgchannel.StripOrgID(channel)
-	if err != nil {
-		return err
-	}
-	_, ok, err := p.pipeline.Get(orgID, channelID)
-	if err != nil {
-		return err
-	}
-	if ok {
-		channelFrames, ok, err := p.pipeline.DataToChannelFrames(context.Background(), orgID, channelID, data)
+	if p.pipeline != nil {
+		orgID, channelID, err := orgchannel.StripOrgID(channel)
 		if err != nil {
 			return err
 		}
-		if !ok {
-			return fmt.Errorf("no conversion rule for a channel %s", channelID)
-		}
-		err = p.pipeline.ProcessChannelFrames(context.Background(), orgID, channelID, channelFrames)
+		_, ok, err := p.pipeline.Get(orgID, channelID)
 		if err != nil {
-			return fmt.Errorf("error processing frame: %v", err)
+			return err
 		}
-		return nil
+		if ok {
+			channelFrames, ok, err := p.pipeline.DataToChannelFrames(context.Background(), orgID, channelID, data)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return fmt.Errorf("no conversion rule for a channel %s", channelID)
+			}
+			err = p.pipeline.ProcessChannelFrames(context.Background(), orgID, channelID, channelFrames)
+			if err != nil {
+				return fmt.Errorf("error processing frame: %v", err)
+			}
+			return nil
+		}
 	}
 	pub := &centrifuge.Publication{
 		Data: data,
 	}
-	err = p.node.Hub().BroadcastPublication(channel, pub, centrifuge.StreamPosition{})
+	err := p.node.Hub().BroadcastPublication(channel, pub, centrifuge.StreamPosition{})
 	if err != nil {
 		return fmt.Errorf("error publishing %s: %w", string(data), err)
 	}

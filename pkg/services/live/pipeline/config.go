@@ -259,9 +259,6 @@ func (f *fileStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 		return nil, err
 	}
 
-	s, _ := json.Marshal(channelRules)
-	println(string(s))
-
 	var rules []*LiveChannelRule
 
 	for _, ruleConfig := range channelRules.Rules {
@@ -287,14 +284,14 @@ func (f *fileStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 	return rules, nil
 }
 
-type fakeStorage struct {
+type hardcodedStorage struct {
 	node          *centrifuge.Node
 	managedStream *managedstream.Runner
 	frameStorage  *FrameStorage
 	pipeline      *Pipeline
 }
 
-func (f *fakeStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
+func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
 			Pattern:   "plugin/testdata/random-20Hz-stream",

@@ -428,8 +428,10 @@ func (hs *HTTPServer) registerRoutes() {
 			// POST influx line protocol.
 			liveRoute.Post("/push/:streamId", hs.LivePushGateway.Handle)
 
-			// POST Live data to be processed according to channel rules.
-			liveRoute.Post("/push/:streamId/:path", hs.LivePushGateway.HandlePath)
+			if enabled := hs.Cfg.FeatureToggles["live-pipeline"]; enabled {
+				// POST Live data to be processed according to channel rules.
+				liveRoute.Post("/push/:streamId/:path", hs.LivePushGateway.HandlePath)
+			}
 
 			// List available streams and fields
 			liveRoute.Get("/list", routing.Wrap(hs.Live.HandleListHTTP))

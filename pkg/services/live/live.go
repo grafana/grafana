@@ -10,10 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/live/pipeline"
-
-	"github.com/gobwas/glob"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -31,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/liveplugin"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
+	"github.com/grafana/grafana/pkg/services/live/pipeline"
 	"github.com/grafana/grafana/pkg/services/live/pushws"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/services/live/survey"
@@ -41,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/centrifugal/centrifuge"
+	"github.com/gobwas/glob"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"gopkg.in/redis.v5"
@@ -237,9 +235,11 @@ func (g *GrafanaLive) Init() error {
 	}
 
 	g.ManagedStreamRunner = managedStreamRunner
-	g.Pipeline, err = pipeline.New(g.ManagedStreamRunner, g.node)
-	if err != nil {
-		return err
+	if enabled := g.Cfg.FeatureToggles["live-pipeline"]; enabled {
+		g.Pipeline, err = pipeline.New(g.ManagedStreamRunner, g.node)
+		if err != nil {
+			return err
+		}
 	}
 
 	g.contextGetter = liveplugin.NewContextGetter(g.PluginContextProvider)

@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"os"
 
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 
@@ -21,14 +22,16 @@ func New(managedStream *managedstream.Runner, node *centrifuge.Node) (*Pipeline,
 		managedStream: managedStream,
 	}
 	logger.Info("Live pipeline initialization")
-	storage := &fakeStorage{
+	storage := &fileStorage{
 		node:          node,
 		managedStream: p.managedStream,
 		frameStorage:  NewFrameStorage(),
 		pipeline:      p,
 	}
 	p.cache = NewCacheSegmentedTree(storage)
-	go postTestData() // TODO: temporary for development, remove.
+	if os.Getenv("GF_LIVE_PIPELINE_DEV") != "" {
+		go postTestData() // TODO: temporary for development, remove before merge.
+	}
 	return &Pipeline{cache: NewCacheSegmentedTree(storage)}, nil
 }
 
