@@ -32,7 +32,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 		require.NoError(t, err)
 
 		filesystem := fstest.MapFS{
-			"packages/grafana-schema/src/dashboard/dashboard.cue": &fstest.MapFile{Data: genCue},
+			"packages/grafana-schema/src/scuemata/dashboard/dashboard.cue": &fstest.MapFile{Data: genCue},
 		}
 		mergedFS := mergefs.Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
 
@@ -50,7 +50,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 		require.NoError(t, err)
 
 		filesystem := fstest.MapFS{
-			"packages/grafana-schema/src/dashboard/dashboard.cue": &fstest.MapFile{Data: genCue},
+			"packages/grafana-schema/src/scuemata/dashboard/dashboard.cue": &fstest.MapFile{Data: genCue},
 		}
 		mergedFS := mergefs.Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
 

@@ -27,9 +27,9 @@ func TestScuemataBasics(t *testing.T) {
 	require.NoError(t, err, "error while loading base dashboard scuemata")
 	all["basedash"] = dash
 
-	// ddash, err := DistDashboardFamily(p)
-	// require.NoError(t, err, "error while loading dist dashboard scuemata")
-	// all["distdash"] = ddash
+	ddash, err := DistDashboardFamily(p)
+	require.NoError(t, err, "error while loading dist dashboard scuemata")
+	all["distdash"] = ddash
 
 	for set, sch := range all {
 		t.Run(set, func(t *testing.T) {
@@ -157,7 +157,6 @@ func TestPanelValidity(t *testing.T) {
 
 func TestCueErrorWrapper(t *testing.T) {
 	a := fstest.MapFS{
-		// filepath.Join(dashboardDir, "dashboard.cue"): &fstest.MapFile{Data: []byte("{;;;;;;;;}")},
 		filepath.Join(dashboardDir, "dashboard.cue"): &fstest.MapFile{Data: []byte("package dashboard\n{;;;;;;;;}")},
 	}
 

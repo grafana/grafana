@@ -7,7 +7,7 @@ import (
 
 // CoreSchema embeds all core CUE files, which live in packages/grafana-schema/src
 //
-//go:embed cue.mod cue packages/grafana-schema/src/*/*.cue
+//go:embed cue.mod cue packages/grafana-schema/src/schema/*.cue packages/grafana-schema/src/scuemata/*/*.cue
 var CoreSchema embed.FS
 
 //go:embed public/app/plugins/*/*/*.cue public/app/plugins/*/*/plugin.json
