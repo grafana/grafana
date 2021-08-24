@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"sort"
 	"time"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -126,6 +127,12 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		for _, next := range m {
 			v.Receivers = append(v.Receivers, next)
 		}
+
+		// Make sure the return order is deterministic.
+		sort.Slice(v.Receivers, func(i, j int) bool {
+			return v.Receivers[i].Name < v.Receivers[j].Name
+		})
+
 		return v
 	}
 
