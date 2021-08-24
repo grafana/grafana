@@ -1,5 +1,4 @@
 import React from 'react';
-import { VizLegendOptions } from '@grafana/schema';
 import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import {
   ArrayVector,
@@ -24,7 +23,7 @@ import {
   VizLegendItem,
 } from '@grafana/ui';
 import { getConfig, TimelineCoreOptions } from './timeline';
-import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
+import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import { TimelineFieldConfig, TimelineOptions } from './types';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';

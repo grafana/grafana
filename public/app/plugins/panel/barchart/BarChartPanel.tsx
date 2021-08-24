@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { TooltipDisplayMode } from '@grafana/schema';
+import { TooltipDisplayMode, StackingMode } from '@grafana/schema';
 import { PanelProps, TimeRange, VizOrientation } from '@grafana/data';
-import { StackingMode, TooltipPlugin, useTheme2 } from '@grafana/ui';
+import { TooltipPlugin, useTheme2 } from '@grafana/ui';
 import { BarChartOptions } from './types';
 import { BarChart } from './BarChart';
 import { prepareGraphableFrames } from './utils';

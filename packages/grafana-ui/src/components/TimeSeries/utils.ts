@@ -23,7 +23,7 @@ import {
   PointVisibility,
   ScaleDirection,
   ScaleOrientation,
-} from '../uPlot/config';
+} from '@grafana/schema';
 import { collectStackingGroups, preparePlotData } from '../uPlot/utils';
 import uPlot from 'uplot';
 

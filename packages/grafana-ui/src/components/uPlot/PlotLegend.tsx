@@ -9,8 +9,7 @@ import {
 } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { VizLegendItem } from '../VizLegend/types';
-import { VizLegendOptions } from '@grafana/schema';
-import { AxisPlacement } from './config';
+import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { VizLegend } from '../VizLegend/VizLegend';
 import { useTheme2 } from '../../themes';

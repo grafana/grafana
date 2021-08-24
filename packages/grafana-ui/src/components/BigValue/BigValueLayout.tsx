@@ -9,7 +9,7 @@ import { calculateFontSize } from '../../utils/measureText';
 // Types
 import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
 import { getTextColorForBackground } from '../../utils';
-import { DrawStyle, GraphFieldConfig } from '../uPlot/config';
+import { DrawStyle, GraphFieldConfig } from '@grafana/schema';
 import { Sparkline } from '../Sparkline/Sparkline';
 
 const LINE_HEIGHT = 1.2;

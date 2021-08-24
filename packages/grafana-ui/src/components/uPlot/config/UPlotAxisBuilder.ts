@@ -2,7 +2,7 @@ import { dateTimeFormat, GrafanaTheme2, isBooleanUnit, systemDateFormats, TimeZo
 import uPlot, { Axis } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { measureText } from '../../../utils/measureText';
-import { AxisPlacement } from '../config';
+import { AxisPlacement } from '@grafana/schema';
 import { optMinMax } from './UPlotScaleBuilder';
 
 export interface AxisProps {

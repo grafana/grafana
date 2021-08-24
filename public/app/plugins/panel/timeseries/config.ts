@@ -10,15 +10,16 @@ import {
   BarAlignment,
   DrawStyle,
   GraphFieldConfig,
-  graphFieldOptions,
   GraphGradientMode,
   LineInterpolation,
   LineStyle,
   PointVisibility,
   StackingMode,
-  commonOptionsBuilder,
   GraphTresholdsStyleMode,
-} from '@grafana/ui';
+} from '@grafana/schema';
+
+import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+
 import { LineStyleEditor } from './LineStyleEditor';
 import { FillBellowToEditor } from './FillBelowToEditor';
 import { SpanNullsEditor } from './SpanNullsEditor';

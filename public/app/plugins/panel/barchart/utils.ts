@@ -13,16 +13,8 @@ import {
 } from '@grafana/data';
 import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from './types';
 import { BarsOptions, getConfig } from './bars';
-import {
-  AxisPlacement,
-  FIXED_UNIT,
-  ScaleDirection,
-  ScaleDistribution,
-  ScaleOrientation,
-  StackingMode,
-  UPlotConfigBuilder,
-  UPlotConfigPrepFn,
-} from '@grafana/ui';
+import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, StackingMode } from '@grafana/schema';
+import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
 import { collectStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
 /** @alpha */

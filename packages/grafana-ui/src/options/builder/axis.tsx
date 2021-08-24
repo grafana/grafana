@@ -6,16 +6,8 @@ import {
   identityOverrideProcessor,
   SelectableValue,
 } from '@grafana/data';
-import {
-  AxisConfig,
-  AxisPlacement,
-  graphFieldOptions,
-  ScaleDistributionConfig,
-  Select,
-  HorizontalGroup,
-  RadioButtonGroup,
-} from '../../index';
-import { ScaleDistribution } from '../../components/uPlot/models.gen';
+import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup } from '../../index';
+import { AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 
 /**
  * @alpha

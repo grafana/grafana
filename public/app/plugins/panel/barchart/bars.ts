@@ -2,15 +2,14 @@ import uPlot, { Axis, AlignedData } from 'uplot';
 import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { VizTextDisplayOptions } from '@grafana/schema';
+import { calculateFontSize, PlotTooltipInterpolator } from '@grafana/ui';
 import {
-  calculateFontSize,
-  PlotTooltipInterpolator,
   StackingMode,
   BarValueVisibility,
   ScaleDirection,
   ScaleOrientation,
-} from '@grafana/ui';
+  VizTextDisplayOptions,
+} from '@grafana/schema';
 import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
 const groupDistr = SPACE_BETWEEN;

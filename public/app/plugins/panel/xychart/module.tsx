@@ -1,5 +1,6 @@
+import { GraphFieldConfig, DrawStyle } from '@grafana/schema';
 import { PanelPlugin } from '@grafana/data';
-import { DrawStyle, GraphFieldConfig, commonOptionsBuilder } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui';
 import { XYChartPanel } from './XYChartPanel';
 import { Options } from './types';
 import { XYDimsEditor } from './XYDimsEditor';
