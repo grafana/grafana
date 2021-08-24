@@ -152,31 +152,6 @@ steps:
   depends_on:
   - package
 
-- name: test-a11y-frontend
-  image: buildkite/puppeteer
-  commands:
-  - yarn wait-on http://$HOST:$PORT
-  - yarn -s test:accessibility --json > pa11y-ci-results.json
-  environment:
-    GRAFANA_MISC_STATS_API_KEY:
-      from_secret: grafana_misc_stats_api_key
-    HOST: end-to-end-tests-server
-    PORT: 3001
-  failure: ignore
-  depends_on:
-  - end-to-end-tests-server
-
-- name: publish-frontend-metrics
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./scripts/ci-frontend-metrics.sh
-  environment:
-    GRAFANA_MISC_STATS_API_KEY:
-      from_secret: grafana_misc_stats_api_key
-  failure: ignore
-  depends_on:
-  - test-a11y-frontend
-
 - name: build-frontend-docs
   image: grafana/build-container:1.4.1
   commands:
@@ -479,7 +454,7 @@ steps:
 - name: publish-frontend-metrics
   image: grafana/build-container:1.4.1
   commands:
-  - ./scripts/ci-frontend-metrics.sh
+  - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
@@ -3602,6 +3577,6 @@ get:
 
 ---
 kind: signature
-hmac: d760257b2661559ca8dc1f1c580a83a1f162c3e8a2e32c3b42dba9e5def6bcb9
+hmac: 9059b8ad45f49ce540c8af4261abac6026995fe6437fb8d85395e4994ed72d1b
 
 ...
