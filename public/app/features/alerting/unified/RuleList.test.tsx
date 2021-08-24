@@ -7,6 +7,7 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { getAllDataSources } from './utils/config';
 import { fetchRules } from './api/prometheus';
+import { fetchRulerRules, deleteGroup, deleteNamespace, setRulerRuleGroup } from './api/ruler';
 import {
   mockDataSource,
   mockPromAlert,
@@ -15,6 +16,8 @@ import {
   mockPromRuleGroup,
   mockPromRuleNamespace,
   MockDataSourceSrv,
+  somePromRules,
+  someRulerRules,
 } from './mocks';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { SerializedError } from '@reduxjs/toolkit';
@@ -31,6 +34,10 @@ const mocks = {
 
   api: {
     fetchRules: typeAsJestMock(fetchRules),
+    fetchRulerRules: typeAsJestMock(fetchRulerRules),
+    deleteGroup: typeAsJestMock(deleteGroup),
+    deleteNamespace: typeAsJestMock(deleteNamespace),
+    setRulerRuleGroup: typeAsJestMock(setRulerRuleGroup),
   },
 };
 
@@ -440,5 +447,19 @@ describe('RuleList', () => {
     waitFor(() => expect(filterInput).toHaveTextContent('{region="US"}'));
     waitFor(() => expect(groups[0]).not.toBeVisible());
     expect(groups[1]).toBeVisible();
+  });
+
+  it('rename lotex namespace', async () => {
+    mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
+    setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    mocks.api.fetchRules.mockResolvedValue(somePromRules());
+    mocks.api.fetchRulerRules.mockResolvedValue(someRulerRules);
+    mocks.api.setRulerRuleGroup.mockResolvedValue();
+    mocks.api.deleteNamespace.mockResolvedValue();
+
+    await renderRuleList();
+
+    const groups = await ui.ruleGroup.findAll();
+    expect(groups).toHaveLength(3);
   });
 });

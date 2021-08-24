@@ -74,6 +74,7 @@ export function EditCloudGroupModal(props: Props): React.ReactElement {
           <>
             <Field label="Namespace" invalid={!!errors.namespaceName} error={errors.namespaceName?.message}>
               <Input
+                id="namespaceName"
                 {...register('namespaceName', {
                   required: 'Namespace name is required.',
                 })}
@@ -81,6 +82,7 @@ export function EditCloudGroupModal(props: Props): React.ReactElement {
             </Field>
             <Field label="Rule group" invalid={!!errors.groupName} error={errors.groupName?.message}>
               <Input
+                id="groupName"
                 {...register('groupName', {
                   required: 'Rule group name is required.',
                 })}
@@ -92,6 +94,7 @@ export function EditCloudGroupModal(props: Props): React.ReactElement {
               error={errors.groupInterval?.message}
             >
               <Input
+                id="groupInterval"
                 placeholder="1m"
                 {...register('groupInterval', {
                   pattern: durationValidationPattern,
