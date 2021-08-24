@@ -15,6 +15,8 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   DataQueryResponse,
   DataQueryRequest,
+  CoreApp,
+  PreferredVisualisationType,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { descending, deviation } from 'd3';
@@ -462,19 +464,17 @@ function parseSampleValue(value: string): number {
 export function transformV2(response: DataQueryResponse, options: DataQueryRequest<PromQuery>) {
   const promResults: DataFrame[] = response.data;
 
-  if (options.app === 'explore') {
+  if (options.app === CoreApp.Explore) {
     const instantResults = promResults.filter((dataFrame) => dataFrame?.refId?.match(/_instant/));
     const rangeResults = promResults.filter((dataFrame) => !dataFrame?.refId?.match(/_instant/));
-
-    instantResults.forEach((dataFrame) => {
-      const df = dataFrame;
-      df.meta = {
-        preferredVisualisationType: 'table',
-      };
+    const both = !!(instantResults.length && rangeResults.length);
+    const instantFrames = instantResults.map((dataFrame) => {
+      const df = transformDFoTable(dataFrame);
+      df.name = getValueText(response, both, df.refId);
       return df;
     });
 
-    rangeResults.forEach((dataFrame) => {
+    const rangeFrames = rangeResults.map((dataFrame) => {
       const df = dataFrame;
       df.meta = {
         preferredVisualisationType: 'graph',
@@ -482,8 +482,51 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
       return df;
     });
 
-    return { ...response, data: [...instantResults, ...promResults] };
+    return { ...response, data: [...instantFrames, ...rangeFrames] };
   }
 
   return response;
 }
+
+function transformDFoTable(df: DataFrame): DataFrame {
+  if (!df || df.length === 0) {
+    return df;
+  }
+
+  const timeField = df.fields[0];
+  const valueField = df.fields[1];
+
+  const metricFields = Object.keys(valueField.labels as {})
+    .sort()
+    .map((label) => {
+      const numberField = label === 'le';
+      return {
+        name: label,
+        config: { filterable: true },
+        type: numberField ? FieldType.number : FieldType.string,
+        values: new ArrayVector(),
+      };
+    });
+
+  metricFields.forEach((field) => field.values.add(getLabelValue(valueField.labels as PromMetric, field.name)));
+
+  const tableDataFrame = {
+    ...df,
+    meta: { ...df.meta, preferredVisualisationType: 'table' as PreferredVisualisationType },
+    fields: [
+      timeField,
+      ...metricFields,
+      {
+        ...valueField,
+        labels: undefined,
+        config: { ...valueField.config, displayNameFromDS: undefined },
+        state: { ...valueField.state, displayName: 'Value' },
+      },
+    ],
+  };
+
+  return tableDataFrame;
+}
+
+const getValueText = (res: DataQueryResponse, instantAndRange: boolean, refId = '') =>
+  res.data.length > 1 || instantAndRange ? `Value #${refId}` : 'Value';

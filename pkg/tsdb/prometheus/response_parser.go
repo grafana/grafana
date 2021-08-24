@@ -42,8 +42,8 @@ func scalarToDataFrames(scalar model.Scalar) data.Frames {
 	timeVector := []time.Time{time.Unix(scalar.Timestamp.Unix(), 0).UTC()}
 	values := []float64{float64(scalar.Value)}
 	frames := data.Frames{data.NewFrame(name,
-		data.NewField("time", nil, timeVector),
-		data.NewField("value", nil, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))}
+		data.NewField("Time", nil, timeVector),
+		data.NewField("Value", nil, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name}))}
 
 	return frames
 }
@@ -60,8 +60,8 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery) data.Frames
 			tags[string(k)] = string(v)
 		}
 		frames = append(frames, data.NewFrame(name,
-			data.NewField("time", nil, timeVector),
-			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
+			data.NewField("Time", nil, timeVector),
+			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
 	}
 
 	return frames
@@ -83,8 +83,8 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames
 			values = append(values, float64(k.Value))
 		}
 		frames = append(frames, data.NewFrame(name,
-			data.NewField("time", nil, timeVector),
-			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
+			data.NewField("Time", nil, timeVector),
+			data.NewField("Value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
 	}
 
 	return frames

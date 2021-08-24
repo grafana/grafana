@@ -198,6 +198,38 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     return this.templateSrv.variableExists(target.expr);
   }
 
+  prepareTargetsV2 = (options: DataQueryRequest<PromQuery>) => {
+    // Currenly we useV2 only for explore and non-exemplars queries
+    if (options.app === CoreApp.Explore) {
+      const targets = options.targets.map((target) => {
+        if (target.instant === target.range) {
+          if (target.instant) {
+            const targetInstant: PromQuery = {
+              ...target,
+              valueWithRefId: true,
+              range: false,
+              refId: target.refId + '_instant',
+              requestId: target.requestId + '_instant',
+              format: 'table',
+            };
+            const targetRange: PromQuery = { ...target, instant: false, format: 'time_series' };
+            return [targetInstant, targetRange];
+          } else {
+            return { ...target, range: true, format: 'time_series' };
+          }
+        } else if (target.instant) {
+          return { ...target, refId: target.refId + '_instant', format: 'table' };
+        } else {
+          return target;
+        }
+      });
+
+      return targets.flat();
+    }
+
+    return options.targets;
+  };
+
   prepareTargets = (options: DataQueryRequest<PromQuery>, start: number, end: number) => {
     const queries: PromQueryRequest[] = [];
     const activeTargets: PromQuery[] = [];
@@ -302,25 +334,12 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   }
 
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
-    // WIP - currently we want to run trough backend only non-exemplar queries
-    if (this.access === 'proxy' && !options.targets.some((query) => query.exemplar)) {
-      const targets = options.targets.map((target) => {
-        if (target.instant === target.range) {
-          if (target.instant) {
-            const tInstant = { ...target, range: false, refId: target.refId + '_instant' };
-            const tRange = { ...target, instant: false };
-            return [tInstant, tRange];
-          } else {
-            return { ...target, range: true };
-          }
-        } else if (target.instant) {
-          return { ...target, refId: target.refId + '_instant' };
-        } else {
-          return target;
-        }
-      });
+    // WIP - currently we want to run trough backend only for explore and non-exemplar queries
+    const shouldRunBackendQuery =
+      this.access === 'proxy' && options.app === CoreApp.Explore && !options.targets.some((query) => query.exemplar);
 
-      const newOptions = { ...options, targets: targets.flat() };
+    if (shouldRunBackendQuery) {
+      const newOptions = { ...options, targets: this.prepareTargetsV2(options) };
 
       return super.query(newOptions).pipe(
         map((response) => {
