@@ -155,15 +155,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 
   getHints(datasource: PrometheusDatasource, data: PanelData, query: PromQuery) {
-    let queryHints;
     const result = isDataFrame(data.series[0]) ? data.series.map(toLegacyResponseData) : data.series;
-    if (this.props.range) {
-      const range = this.props.range;
-      queryHints = datasource.getQueryHints(query, result, range);
-    } else {
-      queryHints = datasource.getQueryHints(query, result);
-    }
-    return queryHints;
+    return datasource.getQueryHints(query, result);
   }
 
   refreshHint = () => {

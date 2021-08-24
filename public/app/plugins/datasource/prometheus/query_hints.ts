@@ -1,5 +1,5 @@
 import { size } from 'lodash';
-import { QueryHint, QueryFix, TimeRange, rangeUtil } from '@grafana/data';
+import { QueryHint, QueryFix } from '@grafana/data';
 import { PrometheusDatasource } from './datasource';
 import { PromQuery } from './types';
 
@@ -8,12 +8,7 @@ import { PromQuery } from './types';
  */
 export const SUM_HINT_THRESHOLD_COUNT = 20;
 
-export function getQueryHints(
-  promQuery: PromQuery,
-  series?: any[],
-  datasource?: PrometheusDatasource,
-  timeRange?: TimeRange
-): QueryHint[] {
+export function getQueryHints(promQuery: PromQuery, series?: any[], datasource?: PrometheusDatasource): QueryHint[] {
   const hints = [];
 
   // ..._bucket metric needs a histogram_quantile()
@@ -128,27 +123,6 @@ export function getQueryHints(
             preventSubmit: true,
           },
         } as QueryFix,
-      });
-    }
-  }
-
-  //Check if interval is below safeInterval
-  if (timeRange) {
-    const range = datasource?.getRange(timeRange);
-    const safeInterval = datasource?.getSafeInterval(range ?? 0);
-    const interval = rangeUtil.intervalToSeconds(promQuery.interval ?? '15s');
-    let label =
-      'The specified step interval is lower than the safe interval. Consider increasing the step interval or changing the time range';
-    if (promQuery.stepMode === 'exact') {
-      label =
-        'The specified step interval is lower than the safe interval and has been changed to ' +
-        safeInterval +
-        's. Consider increasing the step interval or changing the time range';
-    }
-    if (safeInterval && interval < safeInterval) {
-      hints.push({
-        type: 'SAFE_INTERVAL',
-        label,
       });
     }
   }

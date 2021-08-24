@@ -351,6 +351,14 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   ) {
     const observables = queries.map((query, index) => {
       const target = activeTargets[index];
+      let belowSafeInterval = false;
+      if (query.step && target.interval && target.stepMode) {
+        const currentStepInterval = query.step;
+        const targetStepInterval = parseInt(target.interval.slice(0, -1), 10);
+        if (target.stepMode !== 'min' && currentStepInterval > targetStepInterval) {
+          belowSafeInterval = true;
+        }
+      }
 
       const filterAndMapResponse = pipe(
         filter((response: any) => (response.cancelled ? false : true)),
@@ -366,10 +374,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         })
       );
 
-      return this.runQuery(query, end, filterAndMapResponse);
+      return { source: this.runQuery(query, end, filterAndMapResponse), belowSafeInterval };
     });
-
-    return forkJoin(observables).pipe(
+    const sources = observables.map((observable) => observable.source);
+    return forkJoin(sources).pipe(
       map((results) => {
         const data = results.reduce((result, current) => {
           return [...result, ...current];
@@ -496,13 +504,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       safeInterval = Math.ceil(safeInterval);
     }
     return safeInterval;
-  }
-
-  getRange(timeRange: TimeRange) {
-    const start = this.getPrometheusTime(timeRange.from, false);
-    const end = this.getPrometheusTime(timeRange.to, true);
-    const range = Math.ceil(end - start);
-    return range;
   }
 
   adjustInterval(interval: number, stepInterval: number, range: number, intervalFactor: number, stepMode: StepMode) {
@@ -777,8 +778,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return expandedQueries;
   }
 
-  getQueryHints(query: PromQuery, result: any[], range?: TimeRange) {
-    return getQueryHints(query, result, this, range);
+  getQueryHints(query: PromQuery, result: any[]) {
+    return getQueryHints(query, result, this);
   }
 
   getInitHints() {

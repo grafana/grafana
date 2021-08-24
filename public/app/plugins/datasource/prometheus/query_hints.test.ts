@@ -1,7 +1,6 @@
 import { getQueryHints, SUM_HINT_THRESHOLD_COUNT } from './query_hints';
 import { PrometheusDatasource } from './datasource';
-import { PromOptions, PromQuery } from './types';
-import { DataSourceInstanceSettings, dateTime, TimeRange } from '../../../../../packages/grafana-data/src';
+import { PromQuery } from './types';
 
 describe('getQueryHints()', () => {
   it('returns no hints for no series', () => {
@@ -151,55 +150,6 @@ describe('getQueryHints()', () => {
           preventSubmit: true,
         },
       },
-    });
-  });
-
-  it('returns an interval hint when the interval is below the safe interval', () => {
-    const instanceSettings = ({
-      url: 'proxied',
-      directUrl: 'direct',
-      user: 'test',
-      password: 'mupp',
-      jsonData: {
-        customQueryParameters: '',
-      } as any,
-    } as unknown) as DataSourceInstanceSettings<PromOptions>;
-    const templateSrvStub = {
-      getAdhocFilters: jest.fn(() => [] as any[]),
-      replace: jest.fn((a: string, ...rest: any) => a),
-    };
-    const timeSrvStub = {
-      timeRange(): any {
-        return {
-          from: dateTime(1531468681),
-          to: dateTime(1531489712),
-        };
-      },
-    };
-    const datasource = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
-    const from = dateTime('2019-12-17T07:48:27.433Z');
-    const to = dateTime('2019-12-17T13:48:27.433Z');
-    const timeRange: TimeRange = {
-      to,
-      from,
-      raw: { to, from },
-    };
-    datasource.getRange(timeRange);
-    const promQuery = { refId: 'bar', expr: 'go_goroutines{}', interval: '1s' };
-    const series = [
-      {
-        datapoints: [
-          [23, 1000],
-          [24, 1001],
-        ],
-      },
-    ];
-    const hints = getQueryHints(promQuery, series, datasource, timeRange);
-    expect(hints!.length).toBe(1);
-    expect(hints![0]).toMatchObject({
-      type: 'SAFE_INTERVAL',
-      label:
-        'The specified step interval is lower than the safe interval. Consider increasing the step interval or changing the time range',
     });
   });
 });
