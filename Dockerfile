@@ -19,7 +19,7 @@ RUN yarn build
 
 FROM golang:1.16.1-alpine3.13 as go-builder
 
-RUN apk add --no-cache gcc g++
+RUN apk add --no-cache gcc g++ krb5-libs krb5-dev
 
 WORKDIR $GOPATH/src/github.com/grafana/grafana
 
