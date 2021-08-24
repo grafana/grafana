@@ -1,4 +1,4 @@
-FROM node:14.16.0-alpine3.13 as js-builder
+FROM node:16-alpine3.14 as js-builder
 
 WORKDIR /usr/src/app/
 
@@ -33,7 +33,7 @@ RUN go mod verify
 RUN go run build.go build
 
 # Final stage
-FROM alpine:3.13
+FROM alpine:3.14.1
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 
