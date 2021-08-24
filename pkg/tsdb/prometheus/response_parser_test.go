@@ -104,4 +104,31 @@ func TestParseResponse(t *testing.T) {
 		testValue := res[0].Fields[0].At(0)
 		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
 	})
+
+	t.Run("converting metric name", func(t *testing.T) {
+		metric := map[p.LabelName]p.LabelValue{
+			p.LabelName("app"):    p.LabelValue("backend"),
+			p.LabelName("device"): p.LabelValue("mobile"),
+		}
+
+		query := &PrometheusQuery{
+			LegendFormat: "legend {{app}} {{ device }} {{broken}}",
+		}
+
+		require.Equal(t, "legend backend mobile ", formatLegend(metric, query))
+	})
+
+	t.Run("build full series name", func(t *testing.T) {
+		metric := map[p.LabelName]p.LabelValue{
+			p.LabelName(p.MetricNameLabel): p.LabelValue("http_request_total"),
+			p.LabelName("app"):             p.LabelValue("backend"),
+			p.LabelName("device"):          p.LabelValue("mobile"),
+		}
+
+		query := &PrometheusQuery{
+			LegendFormat: "",
+		}
+
+		require.Equal(t, `http_request_total{app="backend", device="mobile"}`, formatLegend(metric, query))
+	})
 }
