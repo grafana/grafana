@@ -1,6 +1,6 @@
 +++
 title = "Visualization panels"
-weight = 420
+weight = 75
 +++
 
 # Visualization panels
