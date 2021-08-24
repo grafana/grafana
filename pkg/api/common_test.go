@@ -233,13 +233,10 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 	cfg.FeatureToggles = make(map[string]bool)
 	cfg.FeatureToggles["accesscontrol"] = true
 
-	acmock := accesscontrolmock.NewMock()
-	acmock.Permissions = permissions
-
 	hs := &HTTPServer{
 		Cfg:           cfg,
 		RouteRegister: routing.NewRouteRegister(),
-		AccessControl: acmock,
+		AccessControl: accesscontrolmock.New().WithPermissions(permissions),
 	}
 
 	sc := setupScenarioContext(t, url)
