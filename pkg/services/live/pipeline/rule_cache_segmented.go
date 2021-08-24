@@ -5,25 +5,25 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fanyang01/radix"
+	"github.com/grafana/grafana/pkg/services/live/pipeline/tree"
 )
 
-type Cache struct {
+type CacheSegmentedTree struct {
 	radixMu sync.RWMutex
-	radix   map[int64]*radix.PatternTrie
+	radix   map[int64]*tree.Node
 	storage Storage
 }
 
-func NewCache(storage Storage) *Cache {
-	s := &Cache{
-		radix:   map[int64]*radix.PatternTrie{},
+func NewCacheSegmentedTree(storage Storage) *CacheSegmentedTree {
+	s := &CacheSegmentedTree{
+		radix:   map[int64]*tree.Node{},
 		storage: storage,
 	}
 	go s.updatePeriodically()
 	return s
 }
 
-func (s *Cache) updatePeriodically() {
+func (s *CacheSegmentedTree) updatePeriodically() {
 	for {
 		var orgIDs []int64
 		s.radixMu.Lock()
@@ -41,7 +41,7 @@ func (s *Cache) updatePeriodically() {
 	}
 }
 
-func (s *Cache) fillOrg(orgID int64) error {
+func (s *CacheSegmentedTree) fillOrg(orgID int64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	channels, err := s.storage.ListChannelRules(ctx, ListLiveChannelRuleCommand{
@@ -52,46 +52,32 @@ func (s *Cache) fillOrg(orgID int64) error {
 	}
 	s.radixMu.Lock()
 	defer s.radixMu.Unlock()
-	s.radix[orgID] = radix.NewPatternTrie()
+	s.radix[orgID] = tree.New()
 	for _, ch := range channels {
-		s.radix[orgID].Add(ch.Pattern, ch)
+		s.radix[orgID].AddRoute("/"+ch.Pattern, ch)
 	}
 	return nil
 }
 
-func (s *Cache) Get(orgID int64, channel string) (*LiveChannelRule, bool, error) {
+func (s *CacheSegmentedTree) Get(orgID int64, channel string) (*LiveChannelRule, *tree.Params, bool, error) {
 	s.radixMu.RLock()
 	_, ok := s.radix[orgID]
 	s.radixMu.RUnlock()
 	if !ok {
 		err := s.fillOrg(orgID)
 		if err != nil {
-			return nil, false, err
+			return nil, nil, false, err
 		}
 	}
 	s.radixMu.RLock()
 	defer s.radixMu.RUnlock()
 	t, ok := s.radix[orgID]
 	if !ok {
-		return nil, false, nil
+		return nil, nil, false, nil
 	}
-	v, ok := t.Lookup(channel)
-	if !ok {
-		return nil, false, nil
+	nodeValue := t.GetValue("/"+channel, nil, true)
+	if nodeValue.Handler == nil {
+		return nil, nil, false, nil
 	}
-	return v.(*LiveChannelRule), true, nil
-}
-
-func (s *Cache) save(c LiveChannelRule) error {
-	if _, ok := s.radix[c.OrgId]; !ok {
-		s.radix[c.OrgId] = radix.NewPatternTrie()
-	}
-	s.radix[c.OrgId].Add(c.Pattern, c)
-	return nil
-}
-
-func (s *Cache) Save(c LiveChannelRule) error {
-	s.radixMu.Lock()
-	defer s.radixMu.Unlock()
-	return s.save(c)
+	return nodeValue.Handler.(*LiveChannelRule), nodeValue.Params, true, nil
 }

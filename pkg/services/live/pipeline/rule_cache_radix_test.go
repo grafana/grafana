@@ -22,7 +22,7 @@ func (t testStorage) ListChannelRules(_ context.Context, cmd ListLiveChannelRule
 }
 
 func BenchmarkGet(b *testing.B) {
-	s := NewCache(&testStorage{})
+	s := NewCacheWildcardRadix(&testStorage{})
 	for i := 0; i < b.N; i++ {
 		_, ok, err := s.Get(1, "stream/telegraf/cpu")
 		if err != nil || !ok {

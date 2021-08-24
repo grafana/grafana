@@ -12,7 +12,7 @@ import (
 
 type Pipeline struct {
 	managedStream *managedstream.Runner
-	cache         *CacheAlt
+	cache         *CacheSegmentedTree
 }
 
 // New ...
@@ -27,9 +27,9 @@ func New(managedStream *managedstream.Runner, node *centrifuge.Node) (*Pipeline,
 		frameStorage:  NewFrameStorage(),
 		pipeline:      p,
 	}
-	p.cache = NewCacheAlt(storage)
+	p.cache = NewCacheSegmentedTree(storage)
 	go postTestData() // TODO: temporary for development, remove.
-	return &Pipeline{cache: NewCacheAlt(storage)}, nil
+	return &Pipeline{cache: NewCacheSegmentedTree(storage)}, nil
 }
 
 // Run ...
