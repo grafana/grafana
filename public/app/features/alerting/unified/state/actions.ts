@@ -1,4 +1,4 @@
-import { locationService } from '@grafana/runtime';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
   AlertmanagerAlert,
@@ -41,7 +41,7 @@ import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
 import { makeAMLink, retryWhile } from '../utils/misc';
 import { isFetchError, withAppEvents, withSerializedError } from '../utils/redux';
-import { formValuesToRulerAlertingRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
+import { formValuesToRulerRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
 import {
   isCloudRuleIdentifier,
   isGrafanaRuleIdentifier,
@@ -50,7 +50,6 @@ import {
   isRulerNotSupportedResponse,
 } from '../utils/rules';
 import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
-import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruleId from '../utils/rule-id';
 import { isEmpty } from 'lodash';
 import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
@@ -251,7 +250,7 @@ export function deleteRuleAction(
 
 async function saveLotexRule(values: RuleFormValues, existing?: RuleWithLocation): Promise<RuleIdentifier> {
   const { dataSourceName, group, namespace } = values;
-  const formRule = formValuesToRulerAlertingRuleDTO(values);
+  const formRule = formValuesToRulerRuleDTO(values);
   if (dataSourceName && group && namespace) {
     // if we're updating a rule...
     if (existing) {
@@ -373,7 +372,7 @@ export const saveRuleFormAction = createAsyncThunk(
           const { type } = values;
           // in case of system (cortex/loki)
           let identifier: RuleIdentifier;
-          if (type === RuleFormType.cloud) {
+          if (type === RuleFormType.cloudAlerting || type === RuleFormType.cloudRecording) {
             identifier = await saveLotexRule(values, existing);
             // in case of grafana managed
           } else if (type === RuleFormType.grafana) {
@@ -545,7 +544,7 @@ export const deleteTemplateAction = (templateName: string, alertManagerSourceNam
 
 export const fetchFolderAction = createAsyncThunk(
   'unifiedalerting/fetchFolder',
-  (uid: string): Promise<FolderDTO> => withSerializedError(backendSrv.getFolderByUid(uid))
+  (uid: string): Promise<FolderDTO> => withSerializedError((getBackendSrv() as any).getFolderByUid(uid))
 );
 
 export const fetchFolderIfNotFetchedAction = (uid: string): ThunkResult<void> => {
