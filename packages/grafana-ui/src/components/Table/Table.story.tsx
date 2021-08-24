@@ -148,7 +148,7 @@ function buildFooterData(data: DataFrame, theme: GrafanaTheme2, config: Record<s
   }
 
   footerData.appendRow(['Total', undefined, undefined, valueSum, 100]);
-  footerData.appendRow([undefined, undefined, undefined, 80.55555, 100]);
+  footerData.appendRow([undefined, undefined, undefined, 80.55555, undefined]);
 
   return prepDataForStorybook([footerData], theme)[0];
 }

@@ -10,12 +10,12 @@ import {
   SelectableValue,
 } from '@grafana/data';
 
-import { DefaultCell, EmptyCell } from './DefaultCell';
+import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { TableCellDisplayMode, TableFieldOptions } from './types';
 import { JSONViewCell } from './JSONViewCell';
 import { ImageCell } from './ImageCell';
-import { FooterCell } from './FooterCell';
+import { EmptyCell, FooterCell } from './FooterCell';
 
 export function getTextAlign(field?: Field): ContentPosition {
   if (!field) {

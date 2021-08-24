@@ -1,5 +1,4 @@
 import React from 'react';
-import { EmptyCell } from './DefaultCell';
 
 export interface FooterProps {
   values: any[];
@@ -22,4 +21,8 @@ export const FooterCell = (props: FooterProps) => {
     );
   }
   return EmptyCell;
+};
+
+export const EmptyCell = (props: any) => {
+  return <span>&nbsp;</span>;
 };
