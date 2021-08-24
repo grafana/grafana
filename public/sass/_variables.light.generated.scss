@@ -15,13 +15,13 @@ $theme-name: light;
 
 // New Colors
 // -------------------------
-$blue-light: #0465d7;
+$blue-light: #1F62E0;
 $blue-base: #3871DC;
 $blue-shade: rgb(44, 90, 176);
 $red-base: #E0226E;
 $red-shade: rgb(179, 27, 88);
-$green-base: #1A7F4B;
-$green-shade: rgb(20, 101, 60);
+$green-base: #1B855E;
+$green-shade: rgb(21, 106, 75);
 $orange-dark: #ff780a;
 
 $gray98: #f7f8fa;
@@ -63,27 +63,27 @@ $border1: rgba(36, 41, 46, 0.30);
 
 // Accent colors
 // -------------------------
-$blue: #0465d7;
+$blue: #1F62E0;
 $red: $red-base;
 $yellow: #ecbb13;
 $orange: #eb7b18;
 $purple: #9933cc;
-$variable: #0465d7;
+$variable: #1F62E0;
 
 $brand-primary: #eb7b18;
-$brand-success: #1A7F4B;
-$brand-warning: #E56F00;
+$brand-success: #1B855E;
+$brand-warning: #FAD34A;
 $brand-danger: #E0226E;
 
 $query-red: #CF0E5B;
-$query-green: #1A7F4B;
+$query-green: #0A764E;
 $query-purple: #fe85fc;
 $query-orange: #eb7b18;
 
 // Status colors
 // -------------------------
-$online: #1A7F4B;
-$warn: #BD4B00;
+$online: #0A764E;
+$warn: #8A6C00;
 $critical: #CF0E5B;
 
 
@@ -99,7 +99,7 @@ $text-color-semi-weak: rgba(36, 41, 46, 0.75);
 $text-color-weak: rgba(36, 41, 46, 0.75);
 $text-color-faint: rgba(36, 41, 46, 0.50);
 $text-color-emphasis: #000;
-$text-blue: #0465d7;
+$text-blue: #1F62E0;
 
 $text-shadow-faint: none;
 
@@ -112,7 +112,7 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 $link-color: rgba(36, 41, 46, 1);
 $link-color-disabled: rgba(36, 41, 46, 0.50);
 $link-hover-color: #000;
-$external-link-color: #0465d7;
+$external-link-color: #1F62E0;
 
 // Typography
 // -------------------------
@@ -269,14 +269,14 @@ $tab-border-color: $gray-5;
 
 // Form states and alerts
 // -------------------------
-$warning-text-color: #BD4B00;
+$warning-text-color: #8A6C00;
 $error-text-color: #CF0E5B;
-$success-text-color: #1A7F4B;
+$success-text-color: #0A764E;
 
 $alert-error-bg: #E0226E;
-$alert-success-bg: #1A7F4B;
-$alert-warning-bg: #E56F00;
-$alert-info-bg: #E56F00;
+$alert-success-bg: #1B855E;
+$alert-warning-bg: #FAD34A;
+$alert-info-bg: #FAD34A;
 
 // Tooltips and popovers
 $tooltipBackground: #555;
