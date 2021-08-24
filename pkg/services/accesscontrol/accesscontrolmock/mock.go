@@ -31,7 +31,7 @@ type Mock struct {
 	builtInRoles []string
 
 	// Track the list of calls
-	Calls *Calls
+	Calls Calls
 
 	// Override functions
 	EvaluateFunc            func(context.Context, *models.SignedInUser, accesscontrol.Evaluator) (bool, error)
@@ -48,9 +48,8 @@ type MockOptions func(*Mock)
 var _ fullAccessControl = New()
 
 func New() *Mock {
-	calls := Calls{}
 	mock := &Mock{
-		Calls:        &calls,
+		Calls:        Calls{},
 		disabled:     false,
 		permissions:  []*accesscontrol.Permission{},
 		builtInRoles: []string{},
@@ -59,19 +58,19 @@ func New() *Mock {
 	return mock
 }
 
-func (m *Mock) WithPermissions(permissions []*accesscontrol.Permission) *Mock {
+func (m Mock) WithPermissions(permissions []*accesscontrol.Permission) *Mock {
 	m.permissions = permissions
-	return m
+	return &m
 }
 
-func (m *Mock) WithDisabled() *Mock {
+func (m Mock) WithDisabled() *Mock {
 	m.disabled = true
-	return m
+	return &m
 }
 
-func (m *Mock) WithBuiltInRoles(builtInRoles []string) *Mock {
+func (m Mock) WithBuiltInRoles(builtInRoles []string) *Mock {
 	m.builtInRoles = builtInRoles
-	return m
+	return &m
 }
 
 // Evaluate evaluates access to the given resource.
