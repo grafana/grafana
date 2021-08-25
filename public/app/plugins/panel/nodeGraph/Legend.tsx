@@ -4,7 +4,8 @@ import { Field, FieldColorModeId, getColorForTheme, GrafanaTheme } from '@grafan
 import { identity } from 'lodash';
 import { Config } from './layout';
 import { css } from '@emotion/css';
-import { Icon, LegendDisplayMode, useStyles, useTheme, VizLegend, VizLegendItem, VizLegendListItem } from '@grafana/ui';
+import { LegendDisplayMode } from '@grafana/schema';
+import { Icon, useStyles, useTheme, VizLegend, VizLegendItem, VizLegendListItem } from '@grafana/ui';
 
 function getStyles() {
   return {

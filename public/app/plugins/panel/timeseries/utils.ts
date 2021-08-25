@@ -7,7 +7,7 @@ import {
   GrafanaTheme2,
   isBooleanUnit,
 } from '@grafana/data';
-import { GraphFieldConfig, LineInterpolation, StackingMode } from '@grafana/ui';
+import { GraphFieldConfig, LineInterpolation, StackingMode } from '@grafana/schema';
 
 // This will return a set of frames with only graphable values included
 export function prepareGraphableFields(

@@ -1,31 +1,27 @@
 import React from 'react';
 import uPlot, { AlignedData } from 'uplot';
 import {
+  VizLegendOptions,
+  LegendDisplayMode,
+  ScaleDistribution,
+  AxisPlacement,
+  ScaleDirection,
+  ScaleOrientation,
+} from '@grafana/schema';
+import {
   DataFrame,
   formattedValueToString,
   getFieldColorModeForField,
   getFieldSeriesColor,
   GrafanaTheme2,
 } from '@grafana/data';
-import {
-  Themeable2,
-  UPlotConfigBuilder,
-  VizLegendOptions,
-  UPlotChart,
-  VizLayout,
-  AxisPlacement,
-  ScaleDirection,
-  ScaleOrientation,
-  LegendDisplayMode,
-  PlotLegend,
-} from '@grafana/ui';
+import { Themeable2, UPlotConfigBuilder, UPlotChart, VizLayout, PlotLegend } from '@grafana/ui';
 
 import {
   histogramBucketSizes,
   histogramFrameBucketMaxFieldName,
 } from '@grafana/data/src/transformations/transformers/histogram';
 import { PanelOptions } from './models.gen';
-import { ScaleDistribution } from '@grafana/ui/src/components/uPlot/models.gen';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;

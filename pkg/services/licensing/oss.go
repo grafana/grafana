@@ -41,7 +41,7 @@ func (l *OSSLicensingService) LicenseURL(user *models.SignedInUser) string {
 		return l.Cfg.AppSubURL + "/admin/upgrading"
 	}
 
-	return "https://grafana.com/products/enterprise/?utm_source=grafana_footer"
+	return "https://grafana.com/oss/grafana?utm_source=grafana_footer"
 }
 
 func (l *OSSLicensingService) Init() error {
@@ -49,7 +49,7 @@ func (l *OSSLicensingService) Init() error {
 		for _, node := range indexData.NavTree {
 			if node.Id == "admin" {
 				node.Children = append(node.Children, &dtos.NavLink{
-					Text: "Upgrade",
+					Text: "Stats and license",
 					Id:   "upgrading",
 					Url:  l.LicenseURL(req.SignedInUser),
 					Icon: "unlock",

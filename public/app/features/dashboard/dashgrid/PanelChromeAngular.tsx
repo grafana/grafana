@@ -1,21 +1,19 @@
-// Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { Subscription } from 'rxjs';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-// Components
+import { AngularComponent, getAngularLoader, locationService } from '@grafana/runtime';
+import { getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { PanelHeader } from './PanelHeader/PanelHeader';
-// Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { setPanelAngularComponent } from '../state/reducers';
 import config from 'app/core/config';
-// Types
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
-import { getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
 import { PANEL_BORDER } from 'app/core/constants';
-import { selectors } from '@grafana/e2e-selectors';
+import { isSoloRoute } from '../../../routes/utils';
 
 interface OwnProps {
   panel: PanelModel;
@@ -192,6 +190,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
     const containerClassNames = classNames({
       'panel-container': true,
+      'panel-container--absolute': isSoloRoute(locationService.getLocation().pathname),
       'panel-container--transparent': transparent,
       'panel-container--no-title': this.hasOverlayHeader(),
       'panel-has-alert': panel.alert !== undefined,

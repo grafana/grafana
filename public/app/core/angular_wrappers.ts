@@ -165,6 +165,7 @@ export function registerAngularDirectives() {
     'defaultUrl',
     'showAccessOptions',
     'dataSourceConfig',
+    'showForwardOAuthIdentityOption',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
   react2AngularDirective('folderPicker', FolderPicker, [
