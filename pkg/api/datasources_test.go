@@ -171,6 +171,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 
 func TestAPI_Datasources_AccessControl(t *testing.T) {
 	testDatasource := models.DataSource{
+		Id:     3,
 		OrgId:  testOrgID,
 		Name:   "test",
 		Url:    "http://localhost:5432",
@@ -194,6 +195,10 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 	}
 	updateDatasourceStub := func(cmd *models.UpdateDataSourceCommand) error {
 		cmd.Result = &testDatasource
+		return nil
+	}
+	deleteDatasourceStub := func(cmd *models.DeleteDataSourceCommand) error {
+		cmd.DeletedDatasourcesCount = 1
 		return nil
 	}
 	addDatasourceBody := func() io.Reader {
@@ -266,12 +271,12 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusOK,
 				desc:         "DatasourcesPut should return 200 for user with correct permissions",
-				url:          "/api/datasources/3",
+				url:          "/api/datasources/" + fmt.Sprint(testDatasource.Id),
 				method:       http.MethodPut,
 				permissions: []*accesscontrol.Permission{
 					{
 						Action: ActionDatasourcesWrite,
-						Scope:  `datasources:id:3`,
+						Scope:  fmt.Sprintf("datasources:id:%v", testDatasource.Id),
 					},
 				},
 			},
@@ -280,8 +285,32 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusForbidden,
 				desc:         "DatasourcesPut should return 403 for user without required permissions",
-				url:          "/api/datasources/3",
+				url:          "/api/datasources/" + fmt.Sprint(testDatasource.Id),
 				method:       http.MethodPut,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
+		{
+			busStubs: []bus.HandlerFunc{getDatasourceStub, deleteDatasourceStub},
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesDelete should return 200 for user with correct permissions",
+				url:          "/api/datasources/" + fmt.Sprint(testDatasource.Id),
+				method:       http.MethodDelete,
+				permissions: []*accesscontrol.Permission{
+					{
+						Action: ActionDatasourcesDelete,
+						Scope:  fmt.Sprintf("datasources:id:%v", testDatasource.Id),
+					},
+				},
+			},
+		},
+		{
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesDelete should return 403 for user without required permissions",
+				url:          "/api/datasources/" + fmt.Sprint(testDatasource.Id),
+				method:       http.MethodDelete,
 				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
 			},
 		},
