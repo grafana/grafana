@@ -1101,7 +1101,7 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 ## [unified_alerting]
 
-For more information about the Unified Alerting feature in Grafana, refer to [Unified Alerting]({{< relref "../unified-alerting/_index.md" >}}}).
+For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{< relref "../alerting/unified-alerting/_index.md" >}}).
 
 ### admin_config_poll_interval_seconds
 
