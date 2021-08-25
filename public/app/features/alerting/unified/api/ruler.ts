@@ -53,7 +53,7 @@ export async function fetchRulerRulesGroup(
 }
 
 export async function deleteRulerRulesGroup(dataSourceName: string, namespace: string, groupName: string) {
-  return await lastValueFrom(
+  await lastValueFrom(
     getBackendSrv().fetch({
       url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
         namespace
@@ -103,19 +103,6 @@ export async function deleteNamespace(dataSourceName: string, namespace: string)
     getBackendSrv().fetch<unknown>({
       method: 'DELETE',
       url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  );
-}
-
-export async function deleteGroup(dataSourceName: string, namespace: string, group: string): Promise<void> {
-  await lastValueFrom(
-    getBackendSrv().fetch<unknown>({
-      method: 'DELETE',
-      url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
-        namespace
-      )}/${encodeURIComponent(group)}`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })

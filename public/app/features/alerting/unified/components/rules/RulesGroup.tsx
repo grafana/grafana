@@ -65,7 +65,15 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
       }
     }
   } else if (hasRuler(rulesSource)) {
-    actionIcons.push(<ActionIcon key="edit" icon="pen" tooltip="edit" onClick={() => setIsEditingGroup(true)} />);
+    actionIcons.push(
+      <ActionIcon
+        data-testid="edit-group"
+        key="edit"
+        icon="pen"
+        tooltip="edit"
+        onClick={() => setIsEditingGroup(true)}
+      />
+    );
   }
 
   const groupName = isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name;

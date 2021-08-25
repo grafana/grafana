@@ -655,7 +655,7 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
             throw new Error(`Group "${newGroupName}" already exists.`);
           }
           if (newNamespaceName !== namespaceName && !!rulesResult[newNamespaceName]) {
-            throw new Error(`Namespace "${newNamespaceName} already exists.`);
+            throw new Error(`Namespace "${newNamespaceName}" already exists.`);
           }
           if (
             newNamespaceName === namespaceName &&
