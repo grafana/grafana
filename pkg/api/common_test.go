@@ -235,6 +235,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 
 	hs := &HTTPServer{
 		Cfg:           cfg,
+		Bus:           bus.GetBus(),
 		RouteRegister: routing.NewRouteRegister(),
 		AccessControl: accesscontrolmock.New().WithPermissions(permissions),
 	}

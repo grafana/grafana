@@ -167,29 +167,42 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 }
 
 func TestAPI_Datasources_AccessControl(t *testing.T) {
-	tests := []accessControlTestCase{
+	type acTestCaseWithHandler struct {
+		busStub bus.HandlerFunc
+		accessControlTestCase
+	}
+	tests := []acTestCaseWithHandler{
 		{
-			expectedCode: http.StatusOK,
-			desc:         "DatasourcesGet should return 200 for user with correct permissions",
-			url:          "/api/datasources/",
-			method:       http.MethodGet,
-			permissions:  []*accesscontrol.Permission{{Action: ActionDatasourcesRead}},
+			busStub: func(_ *models.GetDataSourcesQuery) error { return nil },
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesGet should return 200 for user with correct permissions",
+				url:          "/api/datasources/",
+				method:       http.MethodGet,
+				permissions:  []*accesscontrol.Permission{{Action: ActionDatasourcesRead}},
+			},
 		},
 		{
-			expectedCode: http.StatusForbidden,
-			desc:         "DatasourcesGet should return 403 for user without required permissions",
-			url:          "/api/datasources/",
-			method:       http.MethodGet,
-			permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			busStub: func(_ *models.GetDataSourcesQuery) error { return nil },
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesGet should return 403 for user without required permissions",
+				url:          "/api/datasources/",
+				method:       http.MethodGet,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Cleanup(bus.ClearBusHandlers)
+			bus.AddHandler("testDatasources", test.busStub)
+
 			cfg := setting.NewCfg()
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
 
-			// Create a default handler to pretend user is logged in
+			// Create a middleware to pretend user is logged in
 			pretendSignInMiddleware := func(c *models.ReqContext) {
 				sc.context = c
 				sc.context.UserId = testUserID
