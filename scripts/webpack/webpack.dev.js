@@ -3,7 +3,7 @@
 const { merge } = require('webpack-merge');
 const common = require('./webpack.common.js');
 const path = require('path');
-const { HotModuleReplacementPlugin, DefinePlugin } = require('webpack');
+const { DefinePlugin } = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
@@ -13,7 +13,6 @@ const getBabelConfig = require('./babel.config');
 
 module.exports = (env = {}) =>
   merge(common, {
-    // https://webpack.js.org/guides/build-performance/#devtool
     devtool: 'inline-source-map',
     mode: 'development',
 
@@ -65,8 +64,7 @@ module.exports = (env = {}) =>
       parseInt(env.noTsCheck, 10)
         ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({
-            // don't block webpack emit
-            async: true,
+            async: true, // don't block webpack emit
             typescript: {
               mode: 'write-references',
               memoryLimit: 4096,
@@ -99,7 +97,6 @@ module.exports = (env = {}) =>
         chunksSortMode: 'none',
         excludeChunks: ['dark', 'light'],
       }),
-      new HotModuleReplacementPlugin(),
       new DefinePlugin({
         'process.env': {
           NODE_ENV: JSON.stringify('development'),

@@ -1,5 +1,5 @@
 module.exports = function getBabelConfig(options = {}) {
-  return {
+  const babelOptions = {
     cacheDirectory: true,
     cacheCompression: false,
     babelrc: false,
@@ -44,4 +44,10 @@ module.exports = function getBabelConfig(options = {}) {
       'angularjs-annotate',
     ],
   };
+
+  if (options.REACT_REFRESH) {
+    babelOptions.plugins.push('react-refresh/babel');
+  }
+
+  return babelOptions;
 };
