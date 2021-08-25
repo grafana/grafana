@@ -35,14 +35,13 @@ func (s *Service) parseQuery(dsInfo *DatasourceInfo, queryContext *backend.Query
 		}
 
 		qs = append(qs, createQuery(model, step, query))
-
 	}
 	return qs, nil
 }
 
 func createQuery(model *QueryModel, step time.Duration, query backend.DataQuery) *PrometheusQuery {
 	queryType := Range
-	if model.InstantQuery == true {
+	if model.InstantQuery {
 		queryType = Instant
 	}
 
