@@ -17,7 +17,7 @@ import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConf
 import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import {
   AxisPlacement,
-  DrawStyle,
+  GraphDrawStyle,
   GraphFieldConfig,
   GraphTresholdsStyleMode,
   PointVisibility,
@@ -30,7 +30,7 @@ import uPlot from 'uplot';
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 const defaultConfig: GraphFieldConfig = {
-  drawStyle: DrawStyle.Line,
+  drawStyle: GraphDrawStyle.Line,
   showPoints: PointVisibility.Auto,
   axisPlacement: AxisPlacement.Auto,
 };
@@ -150,7 +150,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       });
     }
 
-    const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
+    const showPoints =
+      customConfig.drawStyle === GraphDrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 
     let pointsFilter: uPlot.Series.Points.Filter = () => null;
 
