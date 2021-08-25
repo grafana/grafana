@@ -27,17 +27,15 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest, exploreU
       <LinkButton variant="secondary" fill="solid" href={exploreUrl}>
         Explore
       </LinkButton>
-      {canDeleteDataSources && (
-        <Button
-          type="button"
-          variant="destructive"
-          disabled={!canDeleteDataSources}
-          onClick={onDelete}
-          aria-label={selectors.pages.DataSource.delete}
-        >
-          Delete
-        </Button>
-      )}
+      <Button
+        type="button"
+        variant="destructive"
+        disabled={!canDeleteDataSources}
+        onClick={onDelete}
+        aria-label={selectors.pages.DataSource.delete}
+      >
+        Delete
+      </Button>
       {canEditDataSources && (
         <Button
           type="submit"
