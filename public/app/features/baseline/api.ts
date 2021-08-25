@@ -5,7 +5,7 @@ import { BaselineDTO } from '../../types';
 
 function loadBaselineEntries(): Promise<BaselineDTO[]> {
   // TODO: replace fabircated promise with commented line below
-  // return getBackendSrv().get('/api/user');
+  // return getBackendSrv().get('/api/baseline');
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       resolve([]);

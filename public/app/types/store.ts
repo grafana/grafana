@@ -44,7 +44,7 @@ export interface StoreState {
   importDashboard: ImportDashboardState;
   notificationChannel: NotificationChannelState;
   unifiedAlerting: UnifiedAlertingState;
-  baselineEntry: BaselineEntryState;
+  baseline: BaselineEntryState;
 }
 
 /*

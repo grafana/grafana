@@ -2,12 +2,12 @@ import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import {
   initialBaselineEntryState,
   setUpdating,
-  userReducer,
+  baselineReducer,
   BaselineEntryState,
   baselineEntriesLoaded,
 } from './reducers';
 
-describe('userReducer', () => {
+describe('baselineReducer', () => {
   let dateNow: any;
 
   beforeAll(() => {
@@ -21,7 +21,7 @@ describe('userReducer', () => {
   describe('when setUpdating is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<BaselineEntryState>()
-        .givenReducer(userReducer, { ...initialBaselineEntryState, isUpdating: false })
+        .givenReducer(baselineReducer, { ...initialBaselineEntryState, isUpdating: false })
         .whenActionIsDispatched(setUpdating({ updating: true }))
         .thenStateShouldEqual({ ...initialBaselineEntryState, isUpdating: true });
     });
@@ -30,7 +30,7 @@ describe('userReducer', () => {
   describe('when baselineEntriesLoaded is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<BaselineEntryState>()
-        .givenReducer(userReducer, { ...initialBaselineEntryState, baselineEntries: [] })
+        .givenReducer(baselineReducer, { ...initialBaselineEntryState, baselineEntries: [] })
         .whenActionIsDispatched(
           baselineEntriesLoaded({
             baselineEntries: [],

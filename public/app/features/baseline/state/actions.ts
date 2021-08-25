@@ -13,14 +13,14 @@ function loadBaselineEntries(): ThunkResult<void> {
   return async function (dispatch) {
     dispatch(initLoadingBaselineEntries());
     const baselineEntries = await api.loadBaselineEntries();
-    console.log(`[ baseine entries loaded ] ${baselineEntries}`);
+    console.log(`[ baseine entries loaded ] ${baselineEntries.length}`);
     dispatch(baselineEntriesLoaded({ baselineEntries }));
   };
 }
 
 export function submitBaselineEntry(payload: BaselineEntryFields): ThunkResult<void> {
   return async function (dispatch) {
-    console.log(`[ submit baseline entry ] ${JSON.stringify(payload)}`, payload);
+    console.log(`[ submit baseline entry ]`, payload);
     dispatch(setUpdating({ updating: true }));
     await api.submitBaselineEntry(payload);
     dispatch(loadBaselineEntries());

@@ -10,11 +10,11 @@ export interface BaselineEntryState {
 export const initialBaselineEntryState: BaselineEntryState = {
   baselineEntries: [],
   baselineEntriesAreLoading: false,
-  isUpdating: true,
+  isUpdating: false,
 };
 
 export const slice = createSlice({
-  name: 'baseline/entries',
+  name: 'baseline',
   initialState: initialBaselineEntryState,
   reducers: {
     setUpdating: (state, action: PayloadAction<{ updating: boolean }>) => {
@@ -33,5 +33,5 @@ export const slice = createSlice({
 
 export const { setUpdating, initLoadingBaselineEntries, baselineEntriesLoaded } = slice.actions;
 
-export const userReducer = slice.reducer;
-export default { user: slice.reducer };
+export const baselineReducer = slice.reducer;
+export default { baseline: slice.reducer };

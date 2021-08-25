@@ -10,8 +10,7 @@ import BaselineEntryForm from './BaselineEntryForm';
 export interface OwnProps {}
 
 function mapStateToProps(state: StoreState) {
-  const baselineEntryState = state.baselineEntry;
-  console.log(state);
+  const baselineEntryState = state.baseline;
   const { isUpdating } = baselineEntryState;
   return {
     isUpdating,
@@ -35,6 +34,7 @@ export function BaselineEntryPage({ isUpdating, initBaselineEntryPage, submitBas
       <PageToolbar title={`Baseline Entry`} />
       <div className="sub-title">Possible microcopy providing high level explanation of the chart.</div>
       <BaselineEntryForm updateProfile={submitBaselineEntry} isSavingBaselineEntry={isUpdating} />
+      <hr></hr>
     </div>
   );
 }
