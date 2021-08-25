@@ -2,7 +2,7 @@ import React from 'react';
 import { UPlotChart } from './Plot';
 import { render } from '@testing-library/react';
 import { ArrayVector, dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
-import { GraphFieldConfig, DrawStyle } from '../uPlot/config';
+import { GraphFieldConfig, DrawStyle } from '@grafana/schema';
 import uPlot from 'uplot';
 import createMockRaf from 'mock-raf';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';

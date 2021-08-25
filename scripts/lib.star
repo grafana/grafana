@@ -1,6 +1,6 @@
 load('scripts/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.3.2'
+grabpl_version = '2.3.3'
 build_image = 'grafana/build-container:1.4.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -490,7 +490,8 @@ def test_a11y_frontend_step(edition, port=3001):
         },
         'failure': 'ignore',
         'commands': [
-            'yarn -s test:accessibility --json > pa11y-ci-results.json 1>&2',
+            'yarn wait-on http://$HOST:$PORT',
+            'yarn -s test:accessibility --json > pa11y-ci-results.json',
         ],
     }
 

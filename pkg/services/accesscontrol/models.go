@@ -34,11 +34,6 @@ type Permission struct {
 	Scope  string `json:"scope"`
 }
 
-type EvaluationResult struct {
-	HasAccess bool
-	Meta      interface{}
-}
-
 func (p RoleDTO) Role() Role {
 	return Role{
 		Name:        p.Name,
@@ -53,13 +48,13 @@ const (
 	ActionUsersRead     = "users:read"
 	ActionUsersWrite    = "users:write"
 	ActionUsersTeamRead = "users.teams:read"
-	// We can ignore gosec G101 since this does not contain any credentials
+	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
 	ActionUsersAuthTokenList = "users.authtoken:list"
-	// We can ignore gosec G101 since this does not contain any credentials
+	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
 	ActionUsersAuthTokenUpdate = "users.authtoken:update"
-	// We can ignore gosec G101 since this does not contain any credentials
+	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
 	ActionUsersPasswordUpdate    = "users.password:update"
 	ActionUsersDelete            = "users:delete"
