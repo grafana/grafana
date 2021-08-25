@@ -10,7 +10,14 @@ import (
 // 2. Always add new migrations (to change or undo previous migrations)
 // 3. Some migrations are not yet written (rename column, table, drop table, index etc)
 
-func AddMigrations(mg *Migrator) {
+type OSSMigrations struct {
+}
+
+func ProvideOSSMigrations() *OSSMigrations {
+	return &OSSMigrations{}
+}
+
+func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addMigrationLogMigrations(mg)
 	addUserMigrations(mg)
 	addTempUserMigrations(mg)
@@ -41,6 +48,9 @@ func AddMigrations(mg *Migrator) {
 	ualert.AddTablesMigrations(mg)
 	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
+	if mg.Cfg != nil || mg.Cfg.IsLiveConfigEnabled() {
+		addLiveChannelMigrations(mg)
+	}
 	ualert.RerunDashAlertMigration(mg)
 }
 

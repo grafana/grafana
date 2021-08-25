@@ -1,10 +1,10 @@
-package database
+package migrations
 
 import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 // For now disable migration. For now we are using local cache as storage to evaluate ideas.
 // This will be turned on soon though.
-func AddLiveChannelMigrations(mg *migrator.Migrator) {
+func addLiveChannelMigrations(mg *migrator.Migrator) {
 	//liveMessage := migrator.Table{
 	//	Name: "live_message",
 	//	Columns: []*migrator.Column{

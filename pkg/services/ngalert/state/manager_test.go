@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 
 	"github.com/stretchr/testify/require"
@@ -874,7 +873,7 @@ func TestStaleResultsHandler(t *testing.T) {
 		t.Fatalf("error parsing date format: %s", err.Error())
 	}
 
-	dbstore := tests.SetupTestEnv(t, 1)
+	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	rule := tests.CreateTestAlertRule(t, dbstore, 600)
 
@@ -900,8 +899,6 @@ func TestStaleResultsHandler(t *testing.T) {
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 	}
 	_ = dbstore.SaveAlertInstance(saveCmd2)
-
-	t.Cleanup(registry.ClearOverrides)
 
 	testCases := []struct {
 		desc               string

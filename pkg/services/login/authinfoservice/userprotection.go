@@ -2,20 +2,15 @@ package authinfoservice
 
 import (
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 )
-
-func init() {
-	registry.RegisterService(&OSSUserProtectionImpl{})
-}
 
 type OSSUserProtectionImpl struct {
 }
 
-func (OSSUserProtectionImpl) Init() error {
-	return nil
+func ProvideOSSUserProtectionService() *OSSUserProtectionImpl {
+	return &OSSUserProtectionImpl{}
 }
 
-func (OSSUserProtectionImpl) AllowUserMapping(_ *models.User, _ string) error {
+func (*OSSUserProtectionImpl) AllowUserMapping(_ *models.User, _ string) error {
 	return nil
 }

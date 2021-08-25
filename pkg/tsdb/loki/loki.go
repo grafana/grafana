@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/loki/pkg/logcli/client"
 	"github.com/grafana/loki/pkg/loghttp"
@@ -32,13 +31,30 @@ import (
 type Service struct {
 	intervalCalculator tsdb.Calculator
 	im                 instancemgmt.InstanceManager
+	plog               log.Logger
+}
 
-	HTTPClientProvider   httpclient.Provider   `inject:""`
-	BackendPluginManager backendplugin.Manager `inject:""`
+func ProvideService(httpClientProvider httpclient.Provider, manager backendplugin.Manager) (*Service, error) {
+	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
+	s := &Service{
+		im:                 im,
+		intervalCalculator: tsdb.NewCalculator(),
+		plog:               log.New("tsdb.loki"),
+	}
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
+
+	if err := manager.Register("loki", factory); err != nil {
+		s.plog.Error("Failed to register plugin", "error", err)
+		return nil, err
+	}
+
+	return s, nil
 }
 
 var (
-	plog         = log.New("tsdb.loki")
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
@@ -57,28 +73,6 @@ type ResponseModel struct {
 	Interval     string `json:"interval"`
 	IntervalMS   int    `json:"intervalMS"`
 	Resolution   int64  `json:"resolution"`
-}
-
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "LokiService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
-	})
-}
-
-func (s *Service) Init() error {
-	s.im = datasource.NewInstanceManager(newInstanceSettings(s.HTTPClientProvider))
-	s.intervalCalculator = tsdb.NewCalculator()
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	if err := s.BackendPluginManager.Register("loki", factory); err != nil {
-		plog.Error("Failed to register plugin", "error", err)
-	}
-
-	return nil
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -143,7 +137,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	for _, query := range queries {
-		plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
+		s.plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 		span, _ := opentracing.StartSpanFromContext(ctx, "alerting.loki")
 		span.SetTag("expr", query.Expr)
 		span.SetTag("start_unixnano", query.Start.UnixNano())

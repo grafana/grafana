@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -23,19 +24,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
-	_ "github.com/grafana/grafana/pkg/tsdb/azuremonitor"
-	_ "github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
-	_ "github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	_ "github.com/grafana/grafana/pkg/tsdb/elasticsearch"
-	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
-	_ "github.com/grafana/grafana/pkg/tsdb/influxdb"
-	_ "github.com/grafana/grafana/pkg/tsdb/loki"
-	_ "github.com/grafana/grafana/pkg/tsdb/mysql"
-	_ "github.com/grafana/grafana/pkg/tsdb/opentsdb"
-	_ "github.com/grafana/grafana/pkg/tsdb/postgres"
-	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
-	_ "github.com/grafana/grafana/pkg/tsdb/tempo"
-	_ "github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag
@@ -160,11 +148,13 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 
 	metrics.SetBuildInformation(version, commit, buildBranch)
 
-	s, err := server.New(server.Config{
-		ConfigFile: configFile, HomePath: homePath, PidFile: pidFile,
-		Version: version, Commit: commit, BuildBranch: buildBranch,
-	})
+	s, err := server.Initialize(setting.CommandLineArgs{
+		Config: configFile, HomePath: homePath, Args: flag.Args(),
+	}, server.Options{
+		PidFile: pidFile, Version: version, Commit: commit, BuildBranch: buildBranch,
+	}, api.ServerOptions{})
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to start grafana. error: %s\n", err.Error())
 		return err
 	}
 

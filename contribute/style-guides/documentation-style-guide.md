@@ -4,13 +4,13 @@ This style guide applies to all documentation created for Grafana products.
 
 For information about how to write technical documentation, refer to the following resources:
 
-* [Google Technical Writing courses](https://developers.google.com/tech-writing)
-* [Divio documentation system](https://documentation.divio.com/)
-* [Vue writing principles](https://v3.vuejs.org/guide/contributing/writing-guide.html#principles)
+- [Google Technical Writing courses](https://developers.google.com/tech-writing)
+- [Divio documentation system](https://documentation.divio.com/)
+- [Vue writing principles](https://v3.vuejs.org/guide/contributing/writing-guide.html#principles)
 
 ## Contributing
 
-The *Documentation style guide* is a living document. Add to it whenever a style decision is made or a question is answered regarding style, grammar, or word choice.
+The _Documentation style guide_ is a living document. Add to it whenever a style decision is made or a question is answered regarding style, grammar, or word choice.
 
 ## Published guides
 
@@ -46,7 +46,7 @@ Avoid _master_ or _slave_.
 
 ## Grafana-specific style
 
-The following guidelines are specific to Grafana documentation. For the most part, these are *guidelines* are not rigid rules. If you have questions, then please ask in the #docs channel of Grafana Slack.
+The following guidelines are specific to Grafana documentation. For the most part, these are _guidelines_ are not rigid rules. If you have questions, then please ask in the #docs channel of Grafana Slack.
 
 ### General
 
@@ -108,6 +108,7 @@ However, sometimes we need to use headings as numbered steps. This is mostly in 
 If that is the case, then use the following format for headings:
 
 ##### Step 1. Install the software
+
 ##### Step 2. Run the software
 
 ### Images
@@ -153,6 +154,7 @@ In general, "integration" is not capitalized. Only capitalize it if it is capita
 The first letter of the name of an integration is always capitalized, even if the original named source is lowercase.
 
 **Examples:**
+
 - MySQL Integration
 - CockroachDB Integration
 - Etcd Integration
@@ -216,16 +218,20 @@ Warnings tell the user not to do something. For example:
 - Do not assume everyone is using Linux. Make sure instructions include enough information for Windows and Mac users to successfully complete procedures.
 
 - Do not add `$` before commands. Make it easy for users to copy and paste commands.
+
   - **Right:** `sudo yum install grafana`
   - **Wrong:** `$ sudo yum install grafana`
 
 - Include `sudo` before commands that require `sudo` to work.
 
 For terminal examples and Grafana configuration, use a `bash` code block:
+
 ```bash
 sudo yum install grafana
 ```
+
 For HTTP request/response, use an `http` code block:
+
 ```http
 GET /api/dashboards/id/1/permissions HTTP/1.1
 Accept: application/json
@@ -263,6 +269,7 @@ Two words if used as a verb, one word if used as a noun.
 Two words, not one.
 
 **Exceptions:**
+
 - "datasource" used as an identifier
 - "datasource" in a URL
 - Use "data source" instead of "datasource" unless used as an identifier, in code, or as part of a URL.
@@ -271,7 +278,8 @@ Two words, not one.
 
 #### display (verb)
 
-*Display* is a transitive verb, which means it always needs a direct object.
+_Display_ is a transitive verb, which means it always needs a direct object.
+
 - Correct, active voice: Grafana displays your list of active alarms.
 - Correct, but passive voice: Your list of active alarms is displayed.
 - Incorrect: The list of active alarms displays.
@@ -331,6 +339,7 @@ Two words, not one.
 **Incorrect:** webserver
 
 ### MS SQL Server
+
 Always use "MS SQL" when referring to MS SQL Server application.
 
 Incorrect UI spellings will be corrected in a later version of Grafana.

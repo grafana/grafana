@@ -11,13 +11,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -25,47 +24,28 @@ import (
 
 // StartGrafana starts a Grafana server.
 // The server address is returned.
-func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLStore) string {
+func StartGrafana(t *testing.T, grafDir, cfgPath string) (string, *sqlstore.SQLStore) {
 	t.Helper()
 	ctx := context.Background()
-	// Prevent duplicate registration errors between tests by replacing
-	// the registry used.
-	metrics.GlobalMetrics.SwapRegisterer(prometheus.NewRegistry())
-
-	origSQLStore := registry.GetService(sqlstore.ServiceName)
-	t.Cleanup(func() {
-		registry.Register(origSQLStore)
-	})
-	registry.Register(&registry.Descriptor{
-		Name:         sqlstore.ServiceName,
-		Instance:     sqlStore,
-		InitPriority: sqlstore.InitPriority,
-	})
-
-	t.Logf("Registered SQL store %p", sqlStore)
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
-	server, err := server.New(server.Config{
-		ConfigFile: cfgPath,
-		HomePath:   grafDir,
-		Listener:   listener,
-	})
-	require.NoError(t, err)
+	cmdLineArgs := setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir}
+	serverOpts := server.Options{Listener: listener, HomePath: grafDir}
+	apiServerOpts := api.ServerOptions{Listener: listener}
 
-	t.Cleanup(func() {
-		// Have to reset the route register between tests, since it doesn't get re-created
-		server.HTTPServer.RouteRegister.Reset()
-	})
+	env, err := server.InitializeForTest(cmdLineArgs, serverOpts, apiServerOpts)
+	require.NoError(t, err)
+	require.NoError(t, env.SQLStore.Sync())
 
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
-		if err := server.Run(); err != nil {
+		if err := env.Server.Run(); err != nil {
 			t.Log("Server exited uncleanly", "error", err)
 		}
 	}()
 	t.Cleanup(func() {
-		if err := server.Shutdown(ctx, "test cleanup"); err != nil {
+		if err := env.Server.Shutdown(ctx, "test cleanup"); err != nil {
 			t.Error("Timed out waiting on server to shut down")
 		}
 	})
@@ -83,7 +63,7 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLS
 
 	t.Logf("Grafana is listening on %s", addr)
 
-	return addr
+	return addr, env.SQLStore
 }
 
 // SetUpDatabase sets up the Grafana database.

@@ -9,18 +9,14 @@ import (
 	"testing"
 	"time"
 
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
-
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
@@ -30,10 +26,9 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		NGAlertAdminConfigIntervalSeconds: 2,
 	})
 
-	s := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	s.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, s)
 
 	// Create a user to make authenticated requests
 	createUser(t, s, models.CreateUserCommand{

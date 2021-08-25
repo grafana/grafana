@@ -25,10 +25,10 @@ func TestAlertRulePermissions(t *testing.T) {
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
 	})
-	store := testinfra.SetUpDatabase(t, dir)
+
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create a user to make authenticated requests
 	createUser(t, store, models.CreateUserCommand{
@@ -312,10 +312,9 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 		ViewersCanEdit:       true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create the namespace we'll save our alerts to.
 	_, err := createFolder(t, store, 0, "folder1")

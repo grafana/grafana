@@ -7,33 +7,27 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 const genericOAuthModule = "oauth_generic_oauth"
 
-func init() {
-	srv := &Implementation{}
-
-	registry.Register(&registry.Descriptor{
-		Name:         "UserAuthInfo",
-		Instance:     srv,
-		InitPriority: registry.MediumHigh,
-	})
-}
-
 type Implementation struct {
-	Bus                   bus.Bus                     `inject:""`
-	SQLStore              *sqlstore.SQLStore          `inject:""`
-	UserProtectionService login.UserProtectionService `inject:""`
+	Bus                   bus.Bus
+	SQLStore              *sqlstore.SQLStore
+	UserProtectionService login.UserProtectionService
 
 	logger log.Logger
 }
 
-func (s *Implementation) Init() error {
-	s.logger = log.New("login.authinfo")
+func ProvideAuthInfoService(bus bus.Bus, store *sqlstore.SQLStore, service login.UserProtectionService) *Implementation {
+	s := &Implementation{
+		Bus:                   bus,
+		SQLStore:              store,
+		UserProtectionService: service,
+		logger:                log.New("login.authinfo"),
+	}
 
 	s.Bus.AddHandler(s.GetExternalUserInfoByLogin)
 	s.Bus.AddHandler(s.GetAuthInfo)
@@ -41,7 +35,7 @@ func (s *Implementation) Init() error {
 	s.Bus.AddHandler(s.UpdateAuthInfo)
 	s.Bus.AddHandler(s.DeleteAuthInfo)
 
-	return nil
+	return s
 }
 
 func (s *Implementation) getUserById(id int64) (bool, *models.User, error) {

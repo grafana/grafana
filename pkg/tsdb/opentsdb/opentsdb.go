@@ -22,17 +22,31 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/net/context/ctxhttp"
 )
 
 type Service struct {
-	HTTPClientProvider   httpclient.Provider   `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
-	BackendPluginManager backendplugin.Manager `inject:""`
+	logger log.Logger
+	im     instancemgmt.InstanceManager
+}
 
-	im instancemgmt.InstanceManager
+func ProvideService(httpClientProvider httpclient.Provider, manager backendplugin.Manager) (*Service, error) {
+	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
+	s := &Service{
+		logger: log.New("tsdb.opentsdb"),
+		im:     im,
+	}
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
+	err := manager.RegisterAndStart(context.Background(), "opentsdb", factory)
+	if err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }
 
 type datasourceInfo struct {
@@ -41,28 +55,6 @@ type datasourceInfo struct {
 }
 
 type DsAccess string
-
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "OpenTSDBService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
-	})
-}
-
-func (s *Service) Init() error {
-	s.im = datasource.NewInstanceManager(newInstanceSettings(s.HTTPClientProvider))
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	if err := s.BackendPluginManager.Register("opentsdb", factory); err != nil {
-		plog.Error("Failed to register plugin", "error", err)
-	}
-
-	return nil
-}
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -85,10 +77,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
-var (
-	plog = log.New("tsdb.opentsdb")
-)
-
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var tsdbQuery OpenTsdbQuery
 
@@ -104,7 +92,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	// TODO: Don't use global variable
 	if setting.Env == setting.Dev {
-		plog.Debug("OpenTsdb request", "params", tsdbQuery)
+		s.logger.Debug("OpenTsdb request", "params", tsdbQuery)
 	}
 
 	dsInfo, err := s.getDSInfo(req.PluginContext)
@@ -139,13 +127,13 @@ func (s *Service) createRequest(dsInfo *datasourceInfo, data OpenTsdbQuery) (*ht
 
 	postData, err := json.Marshal(data)
 	if err != nil {
-		plog.Info("Failed marshaling data", "error", err)
+		s.logger.Info("Failed marshaling data", "error", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(string(postData)))
 	if err != nil {
-		plog.Info("Failed to create request", "error", err)
+		s.logger.Info("Failed to create request", "error", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
@@ -162,19 +150,19 @@ func (s *Service) parseResponse(res *http.Response) (*backend.QueryDataResponse,
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			plog.Warn("Failed to close response body", "err", err)
+			s.logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
 	if res.StatusCode/100 != 2 {
-		plog.Info("Request failed", "status", res.Status, "body", string(body))
+		s.logger.Info("Request failed", "status", res.Status, "body", string(body))
 		return nil, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	var responseData []OpenTsdbResponse
 	err = json.Unmarshal(body, &responseData)
 	if err != nil {
-		plog.Info("Failed to unmarshal opentsdb response", "error", err, "status", res.Status, "body", string(body))
+		s.logger.Info("Failed to unmarshal opentsdb response", "error", err, "status", res.Status, "body", string(body))
 		return nil, err
 	}
 
@@ -187,7 +175,7 @@ func (s *Service) parseResponse(res *http.Response) (*backend.QueryDataResponse,
 		for timeString, value := range val.DataPoints {
 			timestamp, err := strconv.ParseInt(timeString, 10, 64)
 			if err != nil {
-				plog.Info("Failed to unmarshal opentsdb timestamp", "timestamp", timeString)
+				s.logger.Info("Failed to unmarshal opentsdb timestamp", "timestamp", timeString)
 				return nil, err
 			}
 			timeVector = append(timeVector, time.Unix(timestamp, 0).UTC())

@@ -4,24 +4,22 @@ import (
 	"context"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/api"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-
-	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/ngalert/api"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -34,23 +32,48 @@ const (
 	// because this could cause existing alert definition
 	// with intervals that are not exactly divided by this number
 	// not to be evaluated
-	baseIntervalSeconds = 10
+	defaultBaseIntervalSeconds = 10
 	// default alert definition interval
-	defaultIntervalSeconds int64 = 6 * baseIntervalSeconds
+	defaultIntervalSeconds int64 = 6 * defaultBaseIntervalSeconds
 )
+
+func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
+	sqlStore *sqlstore.SQLStore, dataService *tsdb.Service, dataProxy *datasourceproxy.DataSourceProxyService,
+	quotaService *quota.QuotaService, m *metrics.Metrics) (*AlertNG, error) {
+	ng := &AlertNG{
+		Cfg:             cfg,
+		DataSourceCache: dataSourceCache,
+		RouteRegister:   routeRegister,
+		SQLStore:        sqlStore,
+		DataService:     dataService,
+		DataProxy:       dataProxy,
+		QuotaService:    quotaService,
+		Metrics:         m,
+		Log:             log.New("ngalert"),
+	}
+
+	if ng.IsDisabled() {
+		return ng, nil
+	}
+
+	if err := ng.init(); err != nil {
+		return nil, err
+	}
+
+	return ng, nil
+}
 
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
-	Cfg     *setting.Cfg `inject:""`
-	Log     log.Logger
-	Metrics *metrics.Metrics `inject:""`
-
-	DatasourceCache datasources.CacheService                `inject:""`
-	RouteRegister   routing.RouteRegister                   `inject:""`
-	SQLStore        *sqlstore.SQLStore                      `inject:""`
-	DataService     *tsdb.Service                           `inject:""`
-	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
-	QuotaService    *quota.QuotaService                     `inject:""`
+	Cfg             *setting.Cfg
+	DataSourceCache datasources.CacheService
+	RouteRegister   routing.RouteRegister
+	SQLStore        *sqlstore.SQLStore
+	DataService     *tsdb.Service
+	DataProxy       *datasourceproxy.DataSourceProxyService
+	QuotaService    *quota.QuotaService
+	Metrics         *metrics.Metrics
+	Log             log.Logger
 	schedule        schedule.ScheduleService
 	stateManager    *state.Manager
 
@@ -58,14 +81,12 @@ type AlertNG struct {
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 }
 
-func init() {
-	registry.RegisterService(&AlertNG{})
-}
-
-// Init initializes the AlertingService.
-func (ng *AlertNG) Init() error {
-	ng.Log = log.New("ngalert")
-	baseInterval := baseIntervalSeconds * time.Second
+func (ng *AlertNG) init() error {
+	baseInterval := ng.Cfg.AlertingBaseInterval
+	if baseInterval <= 0 {
+		baseInterval = defaultBaseIntervalSeconds
+	}
+	baseInterval *= time.Second
 
 	store := &store.DBstore{
 		BaseInterval:           baseInterval,
@@ -95,13 +116,15 @@ func (ng *AlertNG) Init() error {
 		Metrics:                 ng.Metrics,
 		AdminConfigPollInterval: ng.Cfg.AdminConfigPollInterval,
 	}
+	stateManager := state.NewManager(ng.Log, ng.Metrics, store, store)
+	schedule := schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, stateManager)
 
-	ng.stateManager = state.NewManager(ng.Log, ng.Metrics, store, store)
-	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, ng.stateManager)
+	ng.stateManager = stateManager
+	ng.schedule = schedule
 
 	api := api.API{
 		Cfg:                  ng.Cfg,
-		DatasourceCache:      ng.DatasourceCache,
+		DatasourceCache:      ng.DataSourceCache,
 		RouteRegister:        ng.RouteRegister,
 		DataService:          ng.DataService,
 		Schedule:             ng.schedule,

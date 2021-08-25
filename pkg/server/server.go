@@ -3,53 +3,32 @@ package server
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"sync"
-	"time"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 
 	"github.com/grafana/grafana/pkg/api"
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	_ "github.com/grafana/grafana/pkg/extensions"
-	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	_ "github.com/grafana/grafana/pkg/infra/remotecache"
-	_ "github.com/grafana/grafana/pkg/infra/serverlock"
-	_ "github.com/grafana/grafana/pkg/infra/tracing"
-	_ "github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login"
-	_ "github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/middleware"
-	_ "github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/registry"
-	_ "github.com/grafana/grafana/pkg/services/alerting"
-	_ "github.com/grafana/grafana/pkg/services/auth"
-	_ "github.com/grafana/grafana/pkg/services/auth/jwt"
-	_ "github.com/grafana/grafana/pkg/services/cleanup"
-	_ "github.com/grafana/grafana/pkg/services/librarypanels"
-	_ "github.com/grafana/grafana/pkg/services/login/authinfoservice"
-	_ "github.com/grafana/grafana/pkg/services/login/loginservice"
-	_ "github.com/grafana/grafana/pkg/services/ngalert"
-	_ "github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	_ "github.com/grafana/grafana/pkg/services/rendering"
-	_ "github.com/grafana/grafana/pkg/services/search"
-	_ "github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
 )
 
-// Config contains parameters for the New function.
-type Config struct {
-	ConfigFile  string
+// Options contains parameters for the New function.
+type Options struct {
 	HomePath    string
 	PidFile     string
 	Version     string
@@ -58,59 +37,46 @@ type Config struct {
 	Listener    net.Listener
 }
 
-type serviceRegistry interface {
-	IsDisabled(srv registry.Service) bool
-	GetServices() []*registry.Descriptor
-}
-
-type globalServiceRegistry struct{}
-
-func (r *globalServiceRegistry) IsDisabled(srv registry.Service) bool {
-	return registry.IsDisabled(srv)
-}
-
-func (r *globalServiceRegistry) GetServices() []*registry.Descriptor {
-	return registry.GetServices()
-}
-
-type roleRegistry interface {
-	// RegisterFixedRoles registers all roles declared to AccessControl
-	RegisterFixedRoles() error
-}
-
 // New returns a new instance of Server.
-func New(cfg Config) (*Server, error) {
-	s := newServer(cfg)
+func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
+	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
+) (*Server, error) {
+	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := s.init(); err != nil {
 		return nil, err
 	}
+
 	return s, nil
 }
 
-func newServer(cfg Config) *Server {
+func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
+	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
+) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
-	return &Server{
-		context:          childCtx,
-		shutdownFn:       shutdownFn,
-		shutdownFinished: make(chan struct{}),
-		childRoutines:    childRoutines,
-		log:              log.New("server"),
-		// Need to use the singleton setting.Cfg instance, to make sure we use the same as is injected in the DI
-		// graph
-		cfg: setting.GetCfg(),
-
-		configFile:  cfg.ConfigFile,
-		homePath:    cfg.HomePath,
-		pidFile:     cfg.PidFile,
-		version:     cfg.Version,
-		commit:      cfg.Commit,
-		buildBranch: cfg.BuildBranch,
-
-		serviceRegistry: &globalServiceRegistry{},
-		listener:        cfg.Listener,
+	s := &Server{
+		context:             childCtx,
+		childRoutines:       childRoutines,
+		HTTPServer:          httpServer,
+		provisioningService: provisioningService,
+		roleRegistry:        roleRegistry,
+		shutdownFn:          shutdownFn,
+		shutdownFinished:    make(chan struct{}),
+		log:                 log.New("server"),
+		cfg:                 cfg,
+		pidFile:             opts.PidFile,
+		version:             opts.Version,
+		commit:              opts.Commit,
+		buildBranch:         opts.BuildBranch,
+		backgroundServices:  backgroundServiceProvider.GetServices(),
 	}
+
+	return s, nil
 }
 
 // Server is responsible for managing the lifecycle of services.
@@ -124,20 +90,16 @@ type Server struct {
 	shutdownFinished chan struct{}
 	isInitialized    bool
 	mtx              sync.Mutex
-	listener         net.Listener
 
-	configFile  string
-	homePath    string
-	pidFile     string
-	version     string
-	commit      string
-	buildBranch string
+	pidFile            string
+	version            string
+	commit             string
+	buildBranch        string
+	backgroundServices []registry.BackgroundService
 
-	serviceRegistry serviceRegistry
-
-	HTTPServer          *api.HTTPServer                  `inject:""`
-	AccessControl       roleRegistry                     `inject:""`
-	ProvisioningService provisioning.ProvisioningService `inject:""`
+	HTTPServer          *api.HTTPServer
+	roleRegistry        accesscontrol.RoleRegistry
+	provisioningService provisioning.ProvisioningService
 }
 
 // init initializes the server and its services.
@@ -150,36 +112,19 @@ func (s *Server) init() error {
 	}
 	s.isInitialized = true
 
-	s.loadConfiguration()
 	s.writePIDFile()
 	if err := metrics.SetEnvironmentInformation(s.cfg.MetricsGrafanaEnvironmentInfo); err != nil {
 		return err
 	}
 
 	login.Init()
+	social.ProvideService(s.cfg)
 
-	services := s.serviceRegistry.GetServices()
-	if err := s.buildServiceGraph(services); err != nil {
+	if err := s.roleRegistry.RegisterFixedRoles(); err != nil {
 		return err
 	}
 
-	if s.listener != nil {
-		for _, service := range services {
-			if httpS, ok := service.Instance.(*api.HTTPServer); ok {
-				// Configure the api.HTTPServer if necessary
-				// Hopefully we can find a better solution, maybe with a more advanced DI framework, f.ex. Dig?
-				s.log.Debug("Using provided listener for HTTP server")
-				httpS.Listener = s.listener
-			}
-		}
-	}
-
-	// Register all fixed roles
-	if err := s.AccessControl.RegisterFixedRoles(); err != nil {
-		return err
-	}
-
-	return s.ProvisioningService.RunInitProvisioners()
+	return s.provisioningService.RunInitProvisioners()
 }
 
 // Run initializes and starts services. This will block until all services have
@@ -191,36 +136,32 @@ func (s *Server) Run() error {
 		return err
 	}
 
-	services := s.serviceRegistry.GetServices()
+	services := s.backgroundServices
 
 	// Start background services.
 	for _, svc := range services {
-		service, ok := svc.Instance.(registry.BackgroundService)
-		if !ok {
+		if registry.IsDisabled(svc) {
 			continue
 		}
 
-		if s.serviceRegistry.IsDisabled(svc.Instance) {
-			continue
-		}
-
-		// Variable is needed for accessing loop variable in callback
-		descriptor := svc
+		service := svc
+		serviceName := reflect.TypeOf(service).String()
 		s.childRoutines.Go(func() error {
 			select {
 			case <-s.context.Done():
 				return s.context.Err()
 			default:
 			}
+			s.log.Debug("Starting background service " + serviceName)
 			err := service.Run(s.context)
 			// Do not return context.Canceled error since errgroup.Group only
 			// returns the first error to the caller - thus we can miss a more
 			// interesting error.
 			if err != nil && !errors.Is(err, context.Canceled) {
-				s.log.Error("Stopped "+descriptor.Name, "reason", err)
-				return fmt.Errorf("%s run error: %w", descriptor.Name, err)
+				s.log.Error("Stopped background service "+serviceName, "reason", err)
+				return fmt.Errorf("%s run error: %w", serviceName, err)
 			}
-			s.log.Debug("Stopped "+descriptor.Name, "reason", err)
+			s.log.Debug("Stopped background service "+serviceName, "reason", err)
 			return nil
 		})
 	}
@@ -283,43 +224,6 @@ func (s *Server) writePIDFile() {
 	}
 
 	s.log.Info("Writing PID file", "path", s.pidFile, "pid", pid)
-}
-
-// buildServiceGraph builds a graph of services and their dependencies.
-func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
-	// Specify service dependencies.
-	objs := []interface{}{
-		bus.GetBus(),
-		s.cfg,
-		routing.NewRouteRegister(middleware.ProvideRouteOperationName, middleware.RequestMetrics(s.cfg)),
-		localcache.New(5*time.Minute, 10*time.Minute),
-		httpclientprovider.New(s.cfg),
-		s,
-	}
-	return registry.BuildServiceGraph(objs, services)
-}
-
-// loadConfiguration loads settings and configuration from config files.
-func (s *Server) loadConfiguration() {
-	args := &setting.CommandLineArgs{
-		Config:   s.configFile,
-		HomePath: s.homePath,
-		Args:     flag.Args(),
-	}
-
-	if err := s.cfg.Load(args); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Failed to start grafana. error: %s\n", err.Error())
-		os.Exit(1)
-	}
-
-	s.log.Info("Starting "+setting.ApplicationName,
-		"version", s.version,
-		"commit", s.commit,
-		"branch", s.buildBranch,
-		"compiled", time.Unix(setting.BuildStamp, 0),
-	)
-
-	s.cfg.LogConfigSources()
 }
 
 // notifySystemd sends state notifications to systemd.

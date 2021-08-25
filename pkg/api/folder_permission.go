@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -17,13 +18,13 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 	folder, err := s.GetFolderByUID(c.Params(":uid"))
 
 	if err != nil {
-		return ToFolderErrorResponse(err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
-		return ToFolderErrorResponse(models.ErrFolderAccessDenied)
+		return apierrors.ToFolderErrorResponse(models.ErrFolderAccessDenied)
 	}
 
 	acl, err := g.GetAcl()
@@ -64,17 +65,17 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	folder, err := s.GetFolderByUID(c.Params(":uid"))
 	if err != nil {
-		return ToFolderErrorResponse(err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
 	canAdmin, err := g.CanAdmin()
 	if err != nil {
-		return ToFolderErrorResponse(err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
 	if !canAdmin {
-		return ToFolderErrorResponse(models.ErrFolderAccessDenied)
+		return apierrors.ToFolderErrorResponse(models.ErrFolderAccessDenied)
 	}
 
 	var items []*models.DashboardAcl

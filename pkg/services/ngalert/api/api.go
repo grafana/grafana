@@ -60,7 +60,7 @@ type API struct {
 	InstanceStore        store.InstanceStore
 	AlertingStore        store.AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
-	DataProxy            *datasourceproxy.DatasourceProxyService
+	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
 }

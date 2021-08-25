@@ -30,8 +30,8 @@ import (
 
 func TestQueryCloudWatchMetrics(t *testing.T) {
 	grafDir, cfgPath := testinfra.CreateGrafDir(t)
-	sqlStore := setUpDatabase(t, grafDir)
-	addr := testinfra.StartGrafana(t, grafDir, cfgPath, sqlStore)
+	addr, sqlStore := testinfra.StartGrafana(t, grafDir, cfgPath)
+	setUpDatabase(t, sqlStore)
 
 	origNewCWClient := cloudwatch.NewCWClient
 	t.Cleanup(func() {
@@ -94,8 +94,8 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 
 func TestQueryCloudWatchLogs(t *testing.T) {
 	grafDir, cfgPath := testinfra.CreateGrafDir(t)
-	sqlStore := setUpDatabase(t, grafDir)
-	addr := testinfra.StartGrafana(t, grafDir, cfgPath, sqlStore)
+	addr, store := testinfra.StartGrafana(t, grafDir, cfgPath)
+	setUpDatabase(t, store)
 
 	origNewCWLogsClient := cloudwatch.NewCWLogsClient
 	t.Cleanup(func() {
@@ -173,11 +173,10 @@ func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) backend.Qu
 	return tr
 }
 
-func setUpDatabase(t *testing.T, grafDir string) *sqlstore.SQLStore {
+func setUpDatabase(t *testing.T, store *sqlstore.SQLStore) {
 	t.Helper()
 
-	sqlStore := testinfra.SetUpDatabase(t, grafDir)
-	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		_, err := sess.Insert(&models.DataSource{
 			Id: 1,
 			// This will be the ID of the main org
@@ -192,8 +191,6 @@ func setUpDatabase(t *testing.T, grafDir string) *sqlstore.SQLStore {
 	require.NoError(t, err)
 
 	// Make sure changes are synced with other goroutines
-	err = sqlStore.Sync()
+	err = store.Sync()
 	require.NoError(t, err)
-
-	return sqlStore
 }

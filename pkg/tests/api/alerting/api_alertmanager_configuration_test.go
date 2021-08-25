@@ -31,10 +31,13 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+
+	// editor from main organisation requests configuration
+	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
+
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// create user under main organisation
 	userID := createUser(t, store, models.CreateUserCommand{
@@ -53,9 +56,6 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 		Login:          "editor-42",
 		OrgId:          orgID,
 	})
-
-	// editor from main organisation requests configuration
-	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 
 	// On a blank start with no configuration, it saves and delivers the default configuration.
 	{
@@ -139,16 +139,17 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
+
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "editor",
 		Login:          "editor",
 	})
-	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 	generatedUID := ""
 
 	// create a new configuration that has a secret

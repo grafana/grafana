@@ -7,11 +7,19 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 )
 
-func init() {
-	registry.RegisterService(&SearchService{})
+func ProvideService(cfg *setting.Cfg, bus bus.Bus) *SearchService {
+	s := &SearchService{
+		Cfg: cfg,
+		Bus: bus,
+		sortOptions: map[string]SortOption{
+			SortAlphaAsc.Name:  SortAlphaAsc,
+			SortAlphaDesc.Name: SortAlphaDesc,
+		},
+	}
+	s.Bus.AddHandler(s.searchHandler)
+	return s
 }
 
 type Query struct {
@@ -51,20 +59,10 @@ type FindPersistedDashboardsQuery struct {
 }
 
 type SearchService struct {
-	Bus bus.Bus      `inject:""`
-	Cfg *setting.Cfg `inject:""`
+	Bus bus.Bus
+	Cfg *setting.Cfg
 
 	sortOptions map[string]SortOption
-}
-
-func (s *SearchService) Init() error {
-	s.Bus.AddHandler(s.searchHandler)
-	s.sortOptions = map[string]SortOption{
-		SortAlphaAsc.Name:  SortAlphaAsc,
-		SortAlphaDesc.Name: SortAlphaDesc,
-	}
-
-	return nil
 }
 
 func (s *SearchService) searchHandler(query *Query) error {
