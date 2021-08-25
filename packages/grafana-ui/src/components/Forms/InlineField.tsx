@@ -10,7 +10,7 @@ import { getChildId } from '../../utils/children';
 export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'description' | 'error'> {
   /** Content for the label's tooltip */
   tooltip?: PopoverContent;
-  /** Custom width for the label */
+  /** Custom width for the label as a multiple of 8px */
   labelWidth?: number | 'auto';
   /** Make the field's child to fill the width of the row. Equivalent to setting `flex-grow:1` on the field */
   grow?: boolean;

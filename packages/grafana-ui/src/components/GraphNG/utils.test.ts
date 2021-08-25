@@ -20,7 +20,7 @@ import {
   LineInterpolation,
   PointVisibility,
   StackingMode,
-} from '..';
+} from '@grafana/schema';
 
 function mockDataFrame() {
   const df1 = new MutableDataFrame({

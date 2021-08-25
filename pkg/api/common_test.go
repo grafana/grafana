@@ -1,15 +1,11 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
-
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/evaluator"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -18,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -231,29 +229,6 @@ func (s *fakeRenderService) Init() error {
 	return nil
 }
 
-var _ accesscontrol.AccessControl = new(fakeAccessControl)
-
-type fakeAccessControl struct {
-	isDisabled  bool
-	permissions []*accesscontrol.Permission
-}
-
-func (f *fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
-	return evaluator.Evaluate(ctx, f, user, permission, scope...)
-}
-
-func (f *fakeAccessControl) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {
-	return f.permissions, nil
-}
-
-func (f *fakeAccessControl) IsDisabled() bool {
-	return f.isDisabled
-}
-
-func (f *fakeAccessControl) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
-	return nil
-}
-
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
 	cfg.FeatureToggles = make(map[string]bool)
 	cfg.FeatureToggles["accesscontrol"] = true
@@ -261,7 +236,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 	hs := &HTTPServer{
 		Cfg:           cfg,
 		RouteRegister: routing.NewRouteRegister(),
-		AccessControl: &fakeAccessControl{permissions: permissions},
+		AccessControl: accesscontrolmock.New().WithPermissions(permissions),
 	}
 
 	sc := setupScenarioContext(t, url)

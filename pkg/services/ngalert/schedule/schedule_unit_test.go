@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
@@ -243,7 +244,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		RuleStore:               rs,
 		InstanceStore:           is,
 		AdminConfigStore:        acs,
-		Notifier:                &fakeNotifier{},
+		MultiOrgNotifier:        notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}),
 		Logger:                  logger,
 		Metrics:                 metrics.NewMetrics(prometheus.NewRegistry()),
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.

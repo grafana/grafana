@@ -2,15 +2,14 @@ import uPlot, { Axis, AlignedData } from 'uplot';
 import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { calculateFontSize, PlotTooltipInterpolator } from '@grafana/ui';
 import {
-  calculateFontSize,
-  PlotTooltipInterpolator,
-  VizTextDisplayOptions,
   StackingMode,
   BarValueVisibility,
   ScaleDirection,
   ScaleOrientation,
-} from '@grafana/ui';
+  VizTextDisplayOptions,
+} from '@grafana/schema';
 import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 
 const groupDistr = SPACE_BETWEEN;
@@ -272,22 +271,22 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const interpolateTooltip: PlotTooltipInterpolator = (
     updateActiveSeriesIdx,
     updateActiveDatapointIdx,
-    updateTooltipPosition
+    updateTooltipPosition,
+    u
   ) => {
-    return (u: uPlot) => {
-      let found: Rect | undefined;
-      let cx = u.cursor.left! * devicePixelRatio;
-      let cy = u.cursor.top! * devicePixelRatio;
+    let found: Rect | undefined;
+    let cx = u.cursor.left! * devicePixelRatio;
+    let cy = u.cursor.top! * devicePixelRatio;
 
-      qt.get(cx, cy, 1, 1, (o) => {
-        if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-          found = o;
-        }
-      });
+    qt.get(cx, cy, 1, 1, (o) => {
+      if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+        found = o;
+      }
+    });
 
-      if (found) {
-        // prettier-ignore
-        if (found !== hovered) {
+    if (found) {
+      // prettier-ignore
+      if (found !== hovered) {
           barMark.style.display = '';
           barMark.style.left   = found.x / devicePixelRatio + 'px';
           barMark.style.top    = found.y / devicePixelRatio + 'px';
@@ -298,16 +297,15 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
           updateActiveDatapointIdx(hovered.didx);
           updateTooltipPosition();
         }
-      } else if (hovered !== undefined) {
-        updateActiveSeriesIdx(hovered!.sidx);
-        updateActiveDatapointIdx(hovered!.didx);
-        updateTooltipPosition();
-        hovered = undefined;
-        barMark.style.display = 'none';
-      } else {
-        updateTooltipPosition(true);
-      }
-    };
+    } else if (hovered !== undefined) {
+      updateActiveSeriesIdx(hovered!.sidx);
+      updateActiveDatapointIdx(hovered!.didx);
+      updateTooltipPosition();
+      hovered = undefined;
+      barMark.style.display = 'none';
+    } else {
+      updateTooltipPosition(true);
+    }
   };
 
   let alignedTotals: AlignedData | null = null;

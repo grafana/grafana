@@ -15,11 +15,12 @@ import {
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import React from 'react';
 import { LokiQueryField } from '../loki/components/LokiQueryField';
+import { LokiQuery } from '../loki/types';
 import { TempoDatasource, TempoQuery, TempoQueryType } from './datasource';
 import LokiDatasource from '../loki/datasource';
-import { LokiQuery } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import useAsync from 'react-use/lib/useAsync';
+import NativeSearch from './NativeSearch';
 
 interface Props extends ExploreQueryFieldProps<TempoDatasource, TempoQuery>, Themeable2 {}
 
@@ -31,6 +32,7 @@ interface State {
   serviceMapDatasourceUid?: string;
   serviceMapDatasource?: PrometheusDatasource;
 }
+
 class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
   state = {
     linkedDatasourceUid: undefined,
@@ -60,6 +62,14 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       serviceMapDatasourceUid: serviceMapDsUid,
       serviceMapDatasource: serviceMapDs as PrometheusDatasource,
     });
+
+    // Set initial query type to ensure traceID field appears
+    if (!this.props.query.queryType) {
+      this.props.onChange({
+        ...this.props.query,
+        queryType: DEFAULT_QUERY_TYPE,
+      });
+    }
   }
 
   onChangeLinkedQuery = (value: LokiQuery) => {
@@ -82,7 +92,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     const graphDatasourceUid = datasource.serviceMap?.datasourceUid;
 
     const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
-      { value: 'search', label: 'Search' },
       { value: 'traceId', label: 'TraceID' },
       { value: 'upload', label: 'JSON file' },
     ];
@@ -91,13 +100,27 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       queryTypeOptions.push({ value: 'serviceMap', label: 'Service Map' });
     }
 
+    if (config.featureToggles.tempoSearch) {
+      queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search' });
+    }
+
+    if (logsDatasourceUid) {
+      if (!config.featureToggles.tempoSearch) {
+        // Place at beginning as Search if no native search
+        queryTypeOptions.unshift({ value: 'search', label: 'Search' });
+      } else {
+        // Place at end as Loki Search if native search is enabled
+        queryTypeOptions.push({ value: 'search', label: 'Loki Search' });
+      }
+    }
+
     return (
       <>
         <InlineFieldRow>
           <InlineField label="Query type">
             <RadioButtonGroup<TempoQueryType>
               options={queryTypeOptions}
-              value={query.queryType || DEFAULT_QUERY_TYPE}
+              value={query.queryType}
               onChange={(v) =>
                 onChange({
                   ...query,
@@ -114,6 +137,15 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             query={query}
             onRunQuery={this.onRunLinkedQuery}
             onChange={this.onChangeLinkedQuery}
+          />
+        )}
+        {query.queryType === 'nativeSearch' && (
+          <NativeSearch
+            datasource={this.props.datasource}
+            query={query}
+            onChange={onChange}
+            onBlur={this.props.onBlur}
+            onRunQuery={this.props.onRunQuery}
           />
         )}
         {query.queryType === 'upload' && (

@@ -20,7 +20,7 @@ const addDataSource = () => {
   });
 };
 
-describe.skip('Exemplars', () => {
+describe('Exemplars', () => {
   beforeEach(() => {
     e2e.flows.login('admin', 'admin');
 
