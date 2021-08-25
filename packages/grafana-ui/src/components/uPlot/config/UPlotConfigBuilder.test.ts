@@ -9,9 +9,9 @@ import {
   ScaleOrientation,
   ScaleDirection,
   GraphTresholdsStyleMode,
-} from '../config';
+  ScaleDistribution,
+} from '@grafana/schema';
 import { createTheme, ThresholdsMode } from '@grafana/data';
-import { ScaleDistribution } from '../models.gen';
 
 describe('UPlotConfigBuilder', () => {
   const darkTheme = createTheme();
