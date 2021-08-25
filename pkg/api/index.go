@@ -350,6 +350,15 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		SortWeight:   dtos.WeightHelp,
 		Children:     []*dtos.NavLink{},
 	})
+	
+	navTree = append(navTree, &dtos.NavLink{
+		Text:       "Baseline",
+		Id:         "baseline",
+		SubTitle:   "Baseline Data Entry",
+		Icon:       "graph-bar",
+		SortWeight: dtos.WeightDashboard,
+		Url:        hs.Cfg.AppSubURL + "/baseline",
+	})
 
 	return navTree, nil
 }

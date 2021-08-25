@@ -1,0 +1,48 @@
+.baseline-entry {
+  max-height: 100vh;
+  overflow: auto;
+
+  .sub-title {
+    padding: 0 $space-md;
+    margin-bottom: $space-lg;
+  }
+}
+
+.baseline-entry-form {
+  padding: $space-md;
+}
+
+.baseline-field-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: $space-md;
+
+  legend {
+    flex: none;
+  }
+
+  .baseline-field {
+    width: 18%;
+    @media only screen and (max-width: 769px) {
+      width: 100%;
+    }
+  }
+
+  .gf-form-button-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 39%;
+    @media only screen and (max-width: 769px) {
+      justify-content: center;
+      width: 100%;
+    }
+
+    button {
+      padding: 20px 50px;
+      text-transform: uppercase;
+      font-size: $font-size-md;
+    }
+  }
+}

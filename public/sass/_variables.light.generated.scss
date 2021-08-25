@@ -67,10 +67,10 @@ $blue: #3B097A;
 $red: $red-base;
 $yellow: #ecbb13;
 $orange: #eb7b18;
-$purple: #9933cc;
+$purple: #3b097a;
 $variable: #3B097A;
 
-$brand-primary: #eb7b18;
+$brand-primary: #3b097a;
 $brand-success: #1A7F4B;
 $brand-warning: #E56F00;
 $brand-danger: #E0226E;
@@ -248,13 +248,13 @@ $navbarBorder: 1px solid $gray-5;
 
 // Sidemenu
 // -------------------------
-$side-menu-bg: #202226;
+$side-menu-bg: #3B097A;
 $side-menu-border: 1px solid #2c3235;
 $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
-$side-menu-item-hover-bg: #2c3235;
+$side-menu-item-hover-bg: #2c3235; //
 $side-menu-shadow: 5px 0px 10px -5px $gray-1;
 $side-menu-link-color: $gray-4;
-$side-menu-icon-color: #9fa7b3;
+$side-menu-icon-color: #9fa7b3; //
 $side-menu-header-color: #e9edf2;
 
 // Menu dropdowns

@@ -46,6 +46,13 @@ export const focusCss = (theme: GrafanaTheme) => `
   transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
 `;
 
+export const inputFocusCss = (theme: GrafanaTheme) => `
+  outline: 2px dotted transparent;
+  outline-offset: 2px;
+  transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+  border: 2px solid ${theme.colors.formFocusOutline};
+`;
+
 export function getMouseFocusStyles(theme: GrafanaTheme2): CSSObject {
   return {
     outline: 'none',
