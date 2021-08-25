@@ -460,6 +460,10 @@ Analytics ID here. By default this feature is disabled.
 
 Google Tag Manager ID, only enabled if you enter an ID here.
 
+### application_insights_instrumentation_key
+
+If you want to track Grafana usage via Azure Application Insights, specify _your_ Application Insights instrumentation key here. By default this feature is disabled.
+
 <hr />
 
 ## [security]
