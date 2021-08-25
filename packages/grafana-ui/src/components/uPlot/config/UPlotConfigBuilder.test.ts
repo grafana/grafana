@@ -411,7 +411,7 @@ describe('UPlotConfigBuilder', () => {
 
     expect(builder.getAxisPlacement('y1')).toBe(AxisPlacement.Left);
     expect(builder.getAxisPlacement('y2')).toBe(AxisPlacement.Right);
-    expect(builder.getConfig().axes![1].grid!.show).toBe(false);
+    expect(builder.getConfig().axes![1].grid!.show).toBe(true);
   });
 
   it('when fillColor is not set fill', () => {

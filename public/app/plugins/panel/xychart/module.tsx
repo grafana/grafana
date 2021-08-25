@@ -21,5 +21,4 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
     });
     commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
-    commonOptionsBuilder.addGridLinesOptions(builder);
   });

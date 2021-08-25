@@ -9,7 +9,6 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { VizGridLines } from '@grafana/schema';
 import { PlotConfig, PlotTooltipInterpolator } from '../types';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
@@ -43,7 +42,6 @@ export class UPlotConfigBuilder {
   private isStacking = false;
   private select: uPlot.Select | undefined;
   private hasLeftAxis = false;
-  private hasBottomAxis = false;
   private hooks: Hooks.Arrays = {};
   private tz: string | undefined = undefined;
   private sync = false;
@@ -92,13 +90,8 @@ export class UPlotConfigBuilder {
       props.placement = this.hasLeftAxis ? AxisPlacement.Right : AxisPlacement.Left;
     }
 
-    switch (props.placement) {
-      case AxisPlacement.Left:
-        this.hasLeftAxis = true;
-        break;
-      case AxisPlacement.Bottom:
-        this.hasBottomAxis = true;
-        break;
+    if (props.placement === AxisPlacement.Left) {
+      this.hasLeftAxis = true;
     }
 
     if (props.placement === AxisPlacement.Hidden) {
@@ -179,7 +172,7 @@ export class UPlotConfigBuilder {
         },
       ],
     };
-    config.axes = this.ensureNonOverlappingAxes(Object.values(this.axes)).map((a) => a.getConfig());
+    config.axes = Object.values(this.axes).map((a) => a.getConfig());
     config.series = [...config.series, ...this.series.map((s) => s.getConfig())];
     config.scales = this.scales.reduce((acc, s) => {
       return { ...acc, ...s.getConfig() };
@@ -234,19 +227,6 @@ export class UPlotConfigBuilder {
     return config;
   }
 
-  private ensureNonOverlappingAxes(axes: UPlotAxisBuilder[]): UPlotAxisBuilder[] {
-    for (const axis of axes) {
-      if (axis.props.placement === AxisPlacement.Right && this.hasLeftAxis) {
-        axis.props.grid = false;
-      }
-      if (axis.props.placement === AxisPlacement.Top && this.hasBottomAxis) {
-        axis.props.grid = false;
-      }
-    }
-
-    return axes;
-  }
-
   private tzDate = (ts: number) => {
     let date = new Date(ts);
 
@@ -262,7 +242,6 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   getTimeRange: () => TimeRange;
   eventBus: EventBus;
   allFrames: DataFrame[];
-  grid?: VizGridLines;
 } & T;
 
 /** @alpha */

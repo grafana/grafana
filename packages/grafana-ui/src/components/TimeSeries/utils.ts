@@ -12,7 +12,6 @@ import {
   getFieldSeriesColor,
   getFieldDisplayName,
 } from '@grafana/data';
-import { VizGridLines } from '@grafana/schema';
 
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
 import { FIXED_UNIT } from '../GraphNG/GraphNG';
@@ -44,11 +43,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   eventBus,
   sync,
   allFrames,
-  grid = VizGridLines.Both,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
-  const hasHorizontalGrid = grid === VizGridLines.Horizontal || grid === VizGridLines.Both;
-  const hasVerticalGrid = grid === VizGridLines.Vertical || grid === VizGridLines.Both;
 
   builder.setPrepData(preparePlotData);
 
@@ -83,7 +79,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       placement: AxisPlacement.Bottom,
       timeZone,
       theme,
-      grid: hasVerticalGrid,
+      grid: xField.config.custom?.showGrid === undefined ? true : xField.config.custom.showGrid,
     });
   } else {
     // Not time!
@@ -101,7 +97,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       scaleKey: xScaleKey,
       placement: AxisPlacement.Bottom,
       theme,
-      grid: hasVerticalGrid,
+      grid: xField.config.custom?.showGrid === undefined ? true : xField.config.custom.showGrid,
     });
   }
 
@@ -153,7 +149,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
         placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
         formatValue: (v) => formattedValueToString(fmt(v)),
         theme,
-        grid: hasHorizontalGrid,
+        grid: customConfig.showGrid,
       });
     }
 

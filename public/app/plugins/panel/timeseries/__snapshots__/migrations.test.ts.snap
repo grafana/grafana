@@ -36,7 +36,6 @@ Object {
     ],
   },
   "options": Object {
-    "grid": "both",
     "legend": Object {
       "calcs": Array [
         "mean",
@@ -66,7 +65,6 @@ Object {
     "overrides": Array [],
   },
   "options": Object {
-    "grid": "both",
     "legend": Object {
       "calcs": Array [
         "sum",
@@ -94,7 +92,6 @@ Object {
     "overrides": Array [],
   },
   "options": Object {
-    "grid": "both",
     "legend": Object {
       "calcs": Array [],
       "displayMode": "list",
@@ -144,7 +141,6 @@ Object {
     ],
   },
   "options": Object {
-    "grid": "both",
     "legend": Object {
       "calcs": Array [
         "mean",
@@ -200,7 +196,6 @@ Object {
     ],
   },
   "options": Object {
-    "grid": "both",
     "legend": Object {
       "calcs": Array [
         "mean",
@@ -234,7 +229,6 @@ Object {
     "overrides": Array [],
   },
   "options": Object {
-    "grid": "both",
     "legend": Object {
       "calcs": Array [],
       "displayMode": "list",
@@ -317,7 +311,6 @@ Object {
     ],
   },
   "options": Object {
-    "grid": "both",
     "legend": Object {
       "calcs": Array [
         "mean",
@@ -374,7 +367,6 @@ Object {
     ],
   },
   "options": Object {
-    "grid": "both",
     "legend": Object {
       "calcs": Array [
         "mean",
@@ -413,7 +405,6 @@ Object {
     "overrides": Array [],
   },
   "options": Object {
-    "grid": "both",
     "legend": Object {
       "calcs": Array [
         "mean",
@@ -468,7 +459,6 @@ Object {
     ],
   },
   "options": Object {
-    "grid": "both",
     "legend": Object {
       "calcs": Array [],
       "displayMode": "list",
@@ -554,7 +544,6 @@ Object {
     ],
   },
   "options": Object {
-    "grid": "both",
     "legend": Object {
       "calcs": Array [],
       "displayMode": "list",
