@@ -19,21 +19,9 @@ exports[`Render should not render hideFromMenu children 1`] = `
     </a>
   </li>
   <DropDownChild
-    child={
-      Object {
-        "hideFromMenu": false,
-        "id": 1,
-      }
-    }
     key="undefined-0"
   />
   <DropDownChild
-    child={
-      Object {
-        "hideFromMenu": false,
-        "id": 3,
-      }
-    }
     key="undefined-1"
   />
 </ul>
@@ -58,27 +46,12 @@ exports[`Render should render children 1`] = `
     </a>
   </li>
   <DropDownChild
-    child={
-      Object {
-        "id": 1,
-      }
-    }
     key="undefined-0"
   />
   <DropDownChild
-    child={
-      Object {
-        "id": 2,
-      }
-    }
     key="undefined-1"
   />
   <DropDownChild
-    child={
-      Object {
-        "id": 3,
-      }
-    }
     key="undefined-2"
   />
 </ul>
