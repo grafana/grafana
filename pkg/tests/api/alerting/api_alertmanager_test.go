@@ -33,10 +33,9 @@ func TestAMConfigAccess(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create a users to make authenticated requests
 	createUser(t, store, models.CreateUserCommand{
@@ -392,10 +391,9 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// unauthenticated request to get the alerts should fail
 	{
@@ -560,10 +558,9 @@ func TestRulerAccess(t *testing.T) {
 		ViewersCanEdit:       true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create the namespace we'll save our alerts to.
 	_, err := createFolder(t, store, 0, "default")
@@ -687,10 +684,9 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		ViewersCanEdit:       true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create the namespace we'll save our alerts to.
 	namespaceUID, err := createFolder(t, store, 0, "default")
@@ -846,10 +842,9 @@ func TestAlertRuleCRUD(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
@@ -1792,8 +1787,8 @@ func TestAlertmanagerStatus(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 	})
-	store := testinfra.SetUpDatabase(t, dir)
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	grafanaListedAddr, _ := testinfra.StartGrafana(t, dir, path)
 
 	// Get the Alertmanager current status.
 	{
@@ -1855,10 +1850,9 @@ func TestQuota(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create the namespace we'll save our alerts to.
 	_, err := createFolder(t, store, 0, "default")
@@ -1958,10 +1952,9 @@ func TestEval(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// override bus to get the GetSignedInUserQuery handler
 	store.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
