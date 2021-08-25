@@ -1,8 +1,8 @@
-import React, { memo, useState, ChangeEvent, CSSProperties } from 'react';
+import React, { memo, useState, ChangeEvent, CSSProperties, useEffect } from 'react';
 import { areEqual, FixedSizeGrid as Grid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2, SelectableValue } from '../../../../../../packages/grafana-data/src';
-import { Input, useTheme2, stylesFactory, InlineFieldRow, InlineField } from '@grafana/ui';
+import { Input, useTheme2, stylesFactory, InlineFieldRow, InlineField, Select } from '@grafana/ui';
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
 import { BaseDimensionConfig } from 'app/features/dimensions';
@@ -15,14 +15,11 @@ interface CellProps {
 }
 function Cell(props: CellProps) {
   const { columnIndex, rowIndex, style, data } = props;
-  const { filteredCards: cards, columnCount, onSelectIcon, context } = data;
+  const { filteredCards: cards, columnCount, onSelectIcon, folder } = data;
   const singleColumnIndex = columnIndex + rowIndex * columnCount;
   const card = cards[singleColumnIndex];
   const theme = useTheme2();
-  const iconColor = context.options?.config?.fill?.fixed
-    ? theme.visualization.getColorByName(context.options.config.fill.fixed)
-    : theme.colors.text.primary;
-  const styles = getStyles(theme, iconColor);
+  const styles = getStyles(theme, theme.colors.text.primary);
 
   return (
     <div style={style}>
@@ -44,7 +41,12 @@ function Cell(props: CellProps) {
             backgroundColor: 'transparent',
           }}
         >
-          <SVG src={card.imgUrl} onClick={() => onSelectIcon(card.value)} className={styles.card} />
+          {folder.label === 'icons' && (
+            <SVG src={card.imgUrl} onClick={() => onSelectIcon(card.value)} className={styles.card} />
+          )}
+          {folder.label === 'background' && (
+            <img src={card.imgUrl} onClick={() => onSelectIcon(card.value)} className={styles.card} />
+          )}
           <h6 className={styles.text}>{card.label.substr(0, card.label.length - 4)}</h6>
         </div>
       )}
@@ -75,12 +77,27 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, color) => {
 function Search({
   onChangeSearch,
   value,
+  onSelectFolder,
 }: {
   onChangeSearch: (e: ChangeEvent<HTMLInputElement>) => void;
   value: BaseDimensionConfig;
+  onSelectFolder: (v: SelectableValue<string>) => void;
 }) {
+  const [valueSelect, setValueSelect] = useState<SelectableValue<string>>();
+  const options: Array<SelectableValue<string>> = [
+    { label: 'icons', value: 'img/icons/unicons/' },
+    { label: 'background', value: 'img/bg/' },
+  ];
   return (
     <>
+      <Select
+        options={options}
+        value={valueSelect}
+        onChange={(value: SelectableValue<string>) => {
+          setValueSelect(value);
+          onSelectFolder(value);
+        }}
+      ></Select>
       <InlineFieldRow>
         <InlineField label="Fixed">
           <Input defaultValue={value?.fixed} />
@@ -94,15 +111,19 @@ function Search({
 interface CardProps {
   cards: SelectableValue[];
   onSelectIcon: (value: string) => void;
-  context: any;
   value: BaseDimensionConfig;
+  onSelectFolder: (value: SelectableValue<string>) => void;
 }
 const Cards = (props: CardProps) => {
-  const { cards, onSelectIcon, context, value } = props;
+  const { cards, onSelectIcon, value, onSelectFolder } = props;
   const [filteredCards, setFilteredCards] = useState<SelectableValue[]>(cards);
+  const [folder, setFolder] = useState<SelectableValue<string>>({ label: 'icons', value: 'img/icons/unicons/' });
+
+  useEffect(() => setFilteredCards(cards), [cards]);
+
   const onChangeSearch = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.value) {
-      // exclude .svg ending in the search
+      // exclude file type (.svg) in the search
       const filtered = cards.filter((card) => card.value.substr(0, card.value.length - 4).includes(e.target.value));
       setFilteredCards(filtered);
     } else {
@@ -112,7 +133,14 @@ const Cards = (props: CardProps) => {
 
   return (
     <>
-      <Search onChangeSearch={onChangeSearch} value={value} />
+      <Search
+        onChangeSearch={onChangeSearch}
+        value={value}
+        onSelectFolder={(value) => {
+          onSelectFolder(value);
+          setFolder(value);
+        }}
+      />
       <div
         style={{
           minHeight: '100vh',
@@ -135,7 +163,7 @@ const Cards = (props: CardProps) => {
                 columnWidth={cardWidth}
                 rowCount={rowCount}
                 rowHeight={cardHeight}
-                itemData={{ filteredCards, columnCount, onSelectIcon, context }}
+                itemData={{ filteredCards, columnCount, onSelectIcon, folder }}
               >
                 {memo(Cell, areEqual)}
               </Grid>

@@ -6,24 +6,22 @@ import Cards from './Cards';
 import ImageUploader from './ImageUploader';
 
 const IconModal = (props: StandardEditorProps) => {
-  const paths = {
-    icon: 'img/icons/unicons/',
-    mono: 'img/icons/mono',
-    custom: 'img/icons/custom',
-  };
-  const { onChange, context } = props;
+  const { onChange } = props;
   const [isOpen, setOpen] = useState(false);
   const [icons, setIcons] = useState<SelectableValue[]>([]);
   const [activeTab, setActiveTab] = useState('select');
   const [isOpenUpload, setIsOpenUpload] = useState(false);
-  const getKeyValue = <T extends object, U extends keyof T>(obj: T) => (key: U) => obj[key];
-  const resourceType = getKeyValue(paths)(context.options.type);
+  const [folder, setFolder] = useState<SelectableValue<string>>({ label: 'icons', value: 'img/icons/unicons/' });
 
-  const iconRoot = (window as any).__grafana_public_path__ + resourceType;
-  const handleSelectIcon = (value: string) => {
+  const iconRoot = (window as any).__grafana_public_path__ + folder.value;
+  const onSelectIcon = (value: string) => {
     onChange({ fixed: value, mode: 'fixed' });
     setOpen(false);
   };
+  const onSelectFolder = (value: SelectableValue<string>) => {
+    setFolder(value);
+  };
+
   useEffect(() => {
     getBackendSrv()
       .get(`${iconRoot}/index.json`)
@@ -37,8 +35,9 @@ const IconModal = (props: StandardEditorProps) => {
         );
       });
   }, [iconRoot]);
+
   const tabs = [
-    { label: 'Icon Select', value: 'select', active: true },
+    { label: 'Select Image', value: 'select', active: true },
     { label: 'Upload Image', value: 'upload', active: false },
   ];
   const modalHeader = (
@@ -59,7 +58,9 @@ const IconModal = (props: StandardEditorProps) => {
       {isOpen && (
         <Modal isOpen={isOpen} title={modalHeader} onDismiss={() => setOpen(false)} closeOnEscape>
           <TabContent>
-            {activeTab === 'select' && <Cards cards={icons} onSelectIcon={handleSelectIcon} {...props}></Cards>}
+            {activeTab === 'select' && (
+              <Cards cards={icons} onSelectIcon={onSelectIcon} onSelectFolder={onSelectFolder} {...props}></Cards>
+            )}
             {activeTab === 'upload' && <Button onClick={() => setIsOpenUpload(true)}>Upload</Button>}
             {isOpenUpload && (
               <Modal isOpen={isOpenUpload} title="Upload" onDismiss={() => setIsOpenUpload(false)}>
