@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -18,16 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/benbjohnson/clock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSendingToExternalAlertmanager(t *testing.T) {
-	t.Cleanup(registry.ClearOverrides)
-
 	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := newFakeRuleStore(t)
@@ -93,8 +89,6 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 }
 
 func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
-	t.Cleanup(registry.ClearOverrides)
-
 	fakeAM := NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 	fakeRuleStore := newFakeRuleStore(t)

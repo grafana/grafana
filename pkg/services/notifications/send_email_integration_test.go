@@ -24,9 +24,6 @@ func TestEmailIntegrationTest(t *testing.T) {
 		ns.Cfg.Smtp.FromName = "Grafana Admin"
 		ns.Cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
 
-		err := ns.Init()
-		So(err, ShouldBeNil)
-
 		Convey("When sending reset email password", func() {
 			cmd := &models.SendEmailCommand{
 
