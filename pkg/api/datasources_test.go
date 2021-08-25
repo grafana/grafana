@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -169,14 +170,59 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 }
 
 func TestAPI_Datasources_AccessControl(t *testing.T) {
+	testDatasource := models.DataSource{
+		OrgId:  testOrgID,
+		Name:   "test",
+		Url:    "http://localhost:5432",
+		Type:   "postgresql",
+		Access: "Proxy",
+	}
+	getDatasourceStub := func(query *models.GetDataSourceQuery) error {
+		result := testDatasource
+		result.Id = query.Id
+		result.OrgId = query.OrgId
+		query.Result = &result
+		return nil
+	}
+	getDatasourcesStub := func(cmd *models.GetDataSourcesQuery) error {
+		cmd.Result = []*models.DataSource{}
+		return nil
+	}
+	addDatasourceStub := func(cmd *models.AddDataSourceCommand) error {
+		cmd.Result = &testDatasource
+		return nil
+	}
+	updateDatasourceStub := func(cmd *models.UpdateDataSourceCommand) error {
+		cmd.Result = &testDatasource
+		return nil
+	}
+	addDatasourceBody := func() io.Reader {
+		s, _ := json.Marshal(models.AddDataSourceCommand{
+			Name:   "test",
+			Url:    "http://localhost:5432",
+			Type:   "postgresql",
+			Access: "Proxy",
+		})
+		return bytes.NewReader(s)
+	}
+	updateDatasourceBody := func() io.Reader {
+		s, _ := json.Marshal(models.UpdateDataSourceCommand{
+			Name:   "test",
+			Url:    "http://localhost:5432",
+			Type:   "postgresql",
+			Access: "Proxy",
+		})
+		return bytes.NewReader(s)
+	}
+
 	type acTestCaseWithHandler struct {
-		busStub bus.HandlerFunc
-		body    func() io.Reader
+		busStubs []bus.HandlerFunc
+		body     func() io.Reader
 		accessControlTestCase
 	}
 	tests := []acTestCaseWithHandler{
 		{
-			busStub: func(_ *models.GetDataSourcesQuery) error { return nil },
+			busStubs: []bus.HandlerFunc{getDatasourcesStub},
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusOK,
 				desc:         "DatasourcesGet should return 200 for user with correct permissions",
@@ -186,7 +232,6 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			busStub: func(_ *models.GetDataSourcesQuery) error { return nil },
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusForbidden,
 				desc:         "DatasourcesGet should return 403 for user without required permissions",
@@ -196,19 +241,8 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			busStub: func(cmd *models.AddDataSourceCommand) error {
-				cmd.Result = &models.DataSource{}
-				return nil
-			},
-			body: func() io.Reader {
-				s, _ := json.Marshal(models.AddDataSourceCommand{
-					Name:   "test",
-					Url:    "http://localhost:5432",
-					Type:   "postgresql",
-					Access: "Proxy",
-				})
-				return bytes.NewReader(s)
-			},
+			busStubs: []bus.HandlerFunc{addDatasourceStub},
+			body:     addDatasourceBody,
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusOK,
 				desc:         "DatasourcesPost should return 200 for user with correct permissions",
@@ -218,7 +252,6 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			},
 		},
 		{
-			busStub: func(_ *models.AddDataSourceCommand) error { return nil },
 			accessControlTestCase: accessControlTestCase{
 				expectedCode: http.StatusForbidden,
 				desc:         "DatasourcesPost should return 403 for user without required permissions",
@@ -227,12 +260,39 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
 			},
 		},
+		{
+			busStubs: []bus.HandlerFunc{getDatasourceStub, updateDatasourceStub},
+			body:     updateDatasourceBody,
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesPut should return 200 for user with correct permissions",
+				url:          "/api/datasources/3",
+				method:       http.MethodPut,
+				permissions: []*accesscontrol.Permission{
+					{
+						Action: ActionDatasourcesWrite,
+						Scope:  `datasources:id:3`,
+					},
+				},
+			},
+		},
+		{
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesPut should return 403 for user without required permissions",
+				url:          "/api/datasources/3",
+				method:       http.MethodPut,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Cleanup(bus.ClearBusHandlers)
-			bus.AddHandler("test", test.busStub)
+			for i, handler := range test.busStubs {
+				bus.AddHandler(fmt.Sprintf("test_handler_%v", i), handler)
+			}
 
 			cfg := setting.NewCfg()
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
