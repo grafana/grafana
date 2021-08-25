@@ -58,7 +58,7 @@ func (s *Service) Init() error {
 		QueryDataHandler: s,
 	})
 
-	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "influxdb", factory); err != nil {
+	if err := s.BackendPluginManager.Register("influxdb", factory); err != nil {
 		glog.Error("Failed to register plugin", "error", err)
 	}
 

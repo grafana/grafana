@@ -55,7 +55,7 @@ func (s *Service) Init() error {
 		QueryDataHandler: s,
 	})
 
-	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "tempo", factory); err != nil {
+	if err := s.BackendPluginManager.Register("tempo", factory); err != nil {
 		tlog.Error("Failed to register plugin", "error", err)
 	}
 
