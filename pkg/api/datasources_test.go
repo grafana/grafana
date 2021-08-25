@@ -2,11 +2,14 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -161,4 +164,51 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 
 	assert.Equal(t, 200, sc.resp.Code)
+}
+
+func TestAPI_Datasources_AccessControl(t *testing.T) {
+	tests := []accessControlTestCase{
+		{
+			expectedCode: http.StatusOK,
+			desc:         "DatasourcesGet should return 200 for user with correct permissions",
+			url:          "/api/datasources/",
+			method:       http.MethodGet,
+			permissions:  []*accesscontrol.Permission{{Action: ActionDatasourcesRead}},
+		},
+		{
+			expectedCode: http.StatusForbidden,
+			desc:         "DatasourcesGet should return 403 for user without required permissions",
+			url:          "/api/datasources/",
+			method:       http.MethodGet,
+			permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
+
+			// Create a default handler to pretend user is logged in
+			pretendSignInMiddleware := func(c *models.ReqContext) {
+				sc.context = c
+				sc.context.UserId = testUserID
+				sc.context.OrgId = testOrgID
+				sc.context.Login = testUserLogin
+				sc.context.OrgRole = models.ROLE_VIEWER
+				sc.context.IsSignedIn = true
+			}
+			sc.m.Use(pretendSignInMiddleware)
+
+			sc.resp = httptest.NewRecorder()
+			hs.SettingsProvider = &setting.OSSImpl{Cfg: cfg}
+
+			var err error
+			sc.req, err = http.NewRequest(test.method, test.url, nil)
+			assert.NoError(t, err)
+
+			sc.exec()
+			assert.Equal(t, test.expectedCode, sc.resp.Code)
+		})
+	}
 }
