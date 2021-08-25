@@ -12,21 +12,22 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// OSSAccessControlService is the service implementing role based access control.
-type OSSAccessControlService struct {
-	Cfg           *setting.Cfg          `inject:""`
-	UsageStats    usagestats.UsageStats `inject:""`
-	Log           log.Logger
-	registrations accesscontrol.RegistrationList
+func ProvideService(cfg *setting.Cfg, usageStats usagestats.UsageStats) *OSSAccessControlService {
+	s := &OSSAccessControlService{
+		Cfg:        cfg,
+		UsageStats: usageStats,
+		Log:        log.New("accesscontrol"),
+	}
+	s.registerUsageMetrics()
+	return s
 }
 
-// Init initializes the OSSAccessControlService.
-func (ac *OSSAccessControlService) Init() error {
-	ac.Log = log.New("accesscontrol")
-
-	ac.registerUsageMetrics()
-
-	return nil
+// OSSAccessControlService is the service implementing role based access control.
+type OSSAccessControlService struct {
+	Cfg           *setting.Cfg
+	UsageStats    usagestats.UsageStats
+	Log           log.Logger
+	registrations accesscontrol.RegistrationList
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {

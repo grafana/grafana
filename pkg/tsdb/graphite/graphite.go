@@ -26,25 +26,31 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/opentracing/opentracing-go"
 )
 
 type Service struct {
-	logger               log.Logger
-	im                   instancemgmt.InstanceManager
-	BackendPluginManager backendplugin.Manager `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
-	HTTPClientProvider   httpclient.Provider   `inject:""`
+	logger log.Logger
+	im     instancemgmt.InstanceManager
 }
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "GraphiteService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
+func ProvideService(httpClientProvider httpclient.Provider, manager backendplugin.Manager) (*Service, error) {
+	s := &Service{
+		logger: log.New("tsdb.graphite"),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+	}
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
 	})
+
+	if err := manager.Register("graphite", factory); err != nil {
+		s.logger.Error("Failed to register plugin", "error", err)
+		return nil, err
+	}
+
+	return s, nil
 }
 
 type datasourceInfo struct {
@@ -73,20 +79,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 		return model, nil
 	}
-}
-
-func (s *Service) Init() error {
-	s.logger = log.New("tsdb.graphite")
-	s.im = datasource.NewInstanceManager(newInstanceSettings(s.HTTPClientProvider))
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	if err := s.BackendPluginManager.Register("graphite", factory); err != nil {
-		s.logger.Error("Failed to register plugin", "error", err)
-	}
-	return nil
 }
 
 func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
