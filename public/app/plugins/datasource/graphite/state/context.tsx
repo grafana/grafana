@@ -6,6 +6,7 @@ import { GraphiteOptions, GraphiteQuery } from '../types';
 import { createStore, GraphiteQueryEditorState } from './store';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { actions } from './actions';
+import { usePrevious } from 'react-use';
 
 const DispatchContext = createContext<Dispatch<AnyAction>>({} as Dispatch<AnyAction>);
 const GraphiteStateContext = createContext<GraphiteQueryEditorState>({} as GraphiteQueryEditorState);
@@ -38,9 +39,12 @@ export const GraphiteQueryEditorContext = ({
   }, []);
 
   // synchronise changes provided in props with editor's state
+  const previousRange = usePrevious(range);
   useEffect(() => {
-    dispatch(actions.timeRangeChanged(range));
-  }, [dispatch, range?.raw]);
+    if (previousRange?.raw !== range?.raw) {
+      dispatch(actions.timeRangeChanged(range));
+    }
+  }, [dispatch, range, previousRange]);
 
   useEffect(() => {
     dispatch(actions.queriesChanged(queries));
