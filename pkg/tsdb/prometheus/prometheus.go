@@ -131,7 +131,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if err != nil {
 		return nil, err
 	}
-
 	client, err := getClient(dsInfo, s)
 	if err != nil {
 		return nil, err
@@ -181,8 +180,9 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 func getClient(dsInfo *DatasourceInfo, s *Service) (apiv1.API, error) {
 	opts := &sdkhttpclient.Options{
-		Timeouts: dsInfo.HTTPClientOpts.Timeouts,
-		TLS:      dsInfo.HTTPClientOpts.TLS,
+		Timeouts:  dsInfo.HTTPClientOpts.Timeouts,
+		TLS:       dsInfo.HTTPClientOpts.TLS,
+		BasicAuth: dsInfo.HTTPClientOpts.BasicAuth,
 	}
 
 	customMiddlewares := customQueryParametersMiddleware(plog)
