@@ -24,7 +24,7 @@ const (
 	ScopeProvisionersDatasources   = "provisioners:datasources"
 	ScopeProvisionersNotifications = "provisioners:notifications"
 
-	ScopeDatasourcesAll = `datasources:**`
+	ScopeDatasourcesAll = `datasources:*`
 	ScopeDatasourceID   = `datasources:id:{{ index . ":id" }}`
 	ScopeDatasourceUID  = `datasources:uid:{{ index . ":uid" }}`
 	ScopeDatasourceName = `datasources:name:{{ index . ":name" }}`
