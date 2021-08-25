@@ -1,13 +1,13 @@
 +++
 title = "Alert list"
 keywords = ["grafana", "alert list", "documentation", "panel", "alertlist"]
-aliases = ["/docs/grafana/latest/reference/alertlist/", "/docs/grafana/latest/features/panels/alertlist/"]
+aliases = ["/docs/grafana/latest/reference/alertlist/", "/docs/grafana/latest/features/panels/alertlist/", "/docs/grafana/latest/panels/visualizations/alert-list-panel/"]
 weight = 100
 +++
 
 # Alert list
 
-The Alert list allows you to display your dashboards alerts. You can configure the list to show current state or recent state changes. You can read more about alerts in [Alerts overview]({{< relref "../../alerting/_index.md" >}}).
+The Alert list allows you to display your dashboards alerts. You can configure the list to show current state or recent state changes. You can read more about alerts in [Alerts overview]({{< relref "../alerting/_index.md" >}}).
 
 {{< figure src="/static/img/docs/v45/alert-list-panel.png" max-width="850px" >}}
 

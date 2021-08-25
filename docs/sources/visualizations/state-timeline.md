@@ -2,6 +2,7 @@
 title = "State timeline"
 description = "State timeline visualization"
 keywords = ["grafana", "docs", "state timeline", "panel"]
+aliases = ["/docs/grafana/latest/panels/visualizations/state-timeline/"]
 weight = 900
 +++
 
@@ -41,7 +42,7 @@ Controls the opacity of state regions.
 
 ## Value mappings
 
-To assign colors to boolean or string values, use [Value mappings]({{< relref "../value-mappings.md" >}}).
+To assign colors to boolean or string values, use [Value mappings]({{< relref "../panels/value-mappings.md" >}}).
 
 {{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
 
@@ -53,6 +54,6 @@ The panel can be used with time series data as well. In this case, the threshold
 
 ## Legend options
 
-When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the `Color scheme` option under [Standard options]({{< relref "../standard-options.md" >}}) is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
+When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the `Color scheme` option under [Standard options]({{< relref "../panels/standard-options.md" >}}) is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
 
 {{< docs/shared "visualizations/legend-mode.md" >}}

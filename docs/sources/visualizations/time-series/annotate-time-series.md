@@ -1,12 +1,13 @@
 +++
 title = "Annotate time series"
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph", "annotations"]
-weight = 200
+aliases = ["/docs/grafana/latest/panels/visualizations/time-series/annotate-time-series/"]
+weight = 100
 +++
 
 # Annotate time series
 
-This section explains how to create annotations in the Time series panel. To read more about annotations support in Grafana please refer to [Annotations]({{< relref "../../../dashboards/annotations.md" >}}).
+This section explains how to create annotations in the Time series panel. To read more about annotations support in Grafana please refer to [Annotations]({{< relref "../../dashboards/annotations.md" >}}).
 
 ## Add annotation
 

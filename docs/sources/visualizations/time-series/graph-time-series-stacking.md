@@ -1,6 +1,7 @@
 +++
 title = "Graph stacked time series"
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
+aliases =["/docs/grafana/latest/features/panels/histogram/", "/docs/grafana/latest/panels/visualizations/time-series/graph-time-series-stacking/"]
 weight = 400
 +++
 
@@ -36,7 +37,7 @@ Enable stacking series on top of each other.
 
 The stacking group option is only available as an override.
 
-For more information about creating field overrides, refer to [Field overrides]({{< relref "../../field-overrides.md" >}}).
+For more information about creating field overrides, refer to [Field overrides]({{< relref "../../panels/field-overrides.md" >}}).
 
 Stack series in the same group. In the Overrides section:
 
