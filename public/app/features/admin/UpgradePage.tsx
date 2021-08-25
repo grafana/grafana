@@ -1,6 +1,5 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
 import { css } from '@emotion/css';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModel } from '@grafana/data';
@@ -231,4 +230,4 @@ const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'upgrading'),
 });
 
-export default hot(module)(connect(mapStateToProps)(UpgradePage));
+export default connect(mapStateToProps)(UpgradePage);
