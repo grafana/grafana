@@ -1,6 +1,7 @@
 +++
 title = "Change axis display"
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
+aliases = ["/docs/grafana/latest/panels/visualizations/time-series/change-axis-display/"]
 weight = 400
 +++
 
