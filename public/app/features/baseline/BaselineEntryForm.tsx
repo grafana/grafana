@@ -5,18 +5,24 @@ import { BaselineEntryFields } from './types';
 
 export interface Props {
   isSavingBaselineEntry: boolean;
-  updateProfile: (payload: BaselineEntryFields) => void;
+  addBaselineEntry: (payload: BaselineEntryFields) => void;
 }
 
 const { disableLoginForm } = config;
 
-export const BaselineEntryForm: FC<Props> = ({ isSavingBaselineEntry, updateProfile }) => {
-  const onSubmitProfileUpdate = (data: BaselineEntryFields) => {
-    updateProfile(data);
+export const BaselineEntryForm: FC<Props> = ({ isSavingBaselineEntry, addBaselineEntry }) => {
+  const onSubmitBaselineEntry = (data: BaselineEntryFields) => {
+    addBaselineEntry(data);
+    clearForm();
+  };
+  const clearForm = () => {
+    (document.getElementById('baseline-entry-form') as HTMLInputElement & {
+      reset: () => boolean;
+    }).reset();
   };
 
   return (
-    <Form className="baseline-entry-form" onSubmit={onSubmitProfileUpdate} validateOn="onBlur">
+    <Form id="baseline-entry-form" className="baseline-entry-form" onSubmit={onSubmitBaselineEntry} validateOn="onBlur">
       {({ register, errors }) => {
         return (
           <FieldSet className="baseline-field-set">

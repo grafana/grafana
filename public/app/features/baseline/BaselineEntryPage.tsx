@@ -41,7 +41,7 @@ export function BaselineEntryPage({
     <div className="baseline-entry">
       <PageToolbar title={`Baseline Entry`} />
       <div className="sub-title">Possible microcopy providing high level explanation of the chart.</div>
-      <BaselineEntryForm updateProfile={submitBaselineEntry} isSavingBaselineEntry={isUpdating} />
+      <BaselineEntryForm addBaselineEntry={submitBaselineEntry} isSavingBaselineEntry={isUpdating} />
       <hr></hr>
       <div className="baseline-entry-table-container">
         <table className="baseline-entry-table filter-table form-inline filter-table--hover">
