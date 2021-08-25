@@ -2,7 +2,6 @@ import { css } from '@emotion/react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import 'ol/ol.css';
-import tinycolor from 'tinycolor2';
 
 /**
  * Will be loaded *after* the css above

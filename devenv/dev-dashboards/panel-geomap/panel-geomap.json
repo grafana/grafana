@@ -115,6 +115,178 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              },
+              {
+                "color": "#EAB839",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 9,
+        "x": 9,
+        "y": 0
+      },
+      "id": 66,
+      "options": {
+        "basemap": {
+          "config": {},
+          "type": "default"
+        },
+        "controls": {
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showDebug": false,
+          "showScale": false,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "color": {
+                "field": "Price",
+                "fixed": "dark-green"
+              },
+              "fillOpacity": 0.4,
+              "shape": "circle",
+              "showLegend": true,
+              "size": {
+                "field": "Count",
+                "fixed": 5,
+                "max": 15,
+                "min": 2
+              }
+            },
+            "location": {
+              "gazetteer": "public/gazetteer/usa-states.json",
+              "lookup": "State",
+              "mode": "auto"
+            },
+            "type": "markers"
+          }
+        ],
+        "view": {
+          "id": "coords",
+          "lat": 38.297683,
+          "lon": -99.228359,
+          "shared": true,
+          "zoom": 3.98
+        }
+      },
+      "targets": [
+        {
+          "csvFileName": "flight_info_by_state.csv",
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "Thresholds legend",
+      "type": "geomap"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlYlRd"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 9,
+        "x": 0,
+        "y": 11
+      },
+      "id": 63,
+      "options": {
+        "basemap": {
+          "config": {},
+          "type": "default"
+        },
+        "controls": {
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showDebug": false,
+          "showScale": false,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "blur": 27,
+              "radius": 25,
+              "weight": {
+                "field": "Count",
+                "fixed": 1,
+                "max": 1,
+                "min": 0
+              }
+            },
+            "location": {
+              "gazetteer": "public/gazetteer/usa-states.json",
+              "lookup": "State",
+              "mode": "auto"
+            },
+            "type": "heatmap"
+          }
+        ],
+        "view": {
+          "id": "coords",
+          "lat": 38.251497,
+          "lon": -100.932144,
+          "shared": false,
+          "zoom": 4.15
+        }
+      },
+      "targets": [
+        {
+          "csvFileName": "flight_info_by_state.csv",
+          "refId": "A",
+          "scenarioId": "csv_file"
+        }
+      ],
+      "title": "Heatmap data layer",
+      "transformations": [],
+      "type": "geomap"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "continuous-GrYlRd"
           },
           "mappings": [],
@@ -136,9 +308,9 @@
       },
       "gridPos": {
         "h": 11,
-        "w": 8,
+        "w": 9,
         "x": 9,
-        "y": 0
+        "y": 11
       },
       "id": 65,
       "options": {
@@ -196,88 +368,6 @@
       ],
       "title": "Base layer ArcGIS wold imagery + star shape + share view",
       "type": "geomap"
-    },
-    {
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "continuous-BlYlRd"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 9,
-        "x": 0,
-        "y": 11
-      },
-      "id": 63,
-      "options": {
-        "basemap": {
-          "config": {},
-          "type": "default"
-        },
-        "controls": {
-          "mouseWheelZoom": true,
-          "showAttribution": true,
-          "showDebug": false,
-          "showScale": false,
-          "showZoom": true
-        },
-        "layers": [
-          {
-            "config": {
-              "blur": 27,
-              "radius": 25,
-              "weight": {
-                "field": "Count",
-                "fixed": 1,
-                "max": 1,
-                "min": 0
-              }
-            },
-            "location": {
-              "gazetteer": "public/gazetteer/usa-states.json",
-              "lookup": "State",
-              "mode": "auto"
-            },
-            "type": "heatmap"
-          }
-        ],
-        "view": {
-          "id": "coords",
-          "lat": 38.251497,
-          "lon": -100.932144,
-          "shared": false,
-          "zoom": 4.15
-        }
-      },
-      "targets": [
-        {
-          "csvFileName": "flight_info_by_state.csv",
-          "refId": "A",
-          "scenarioId": "csv_file"
-        }
-      ],
-      "title": "Heatmap data layer",
-      "transformations": [],
-      "type": "geomap"
     }
   ],
   "refresh": "",
@@ -310,5 +400,5 @@
   "timezone": "",
   "title": "Panel Tests - Geomap",
   "uid": "2xuwrgV7z",
-  "version": 4
+  "version": 5
 }
