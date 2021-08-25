@@ -8,7 +8,7 @@ describe('SideMenuDropDown', () => {
   const mockHeaderText = 'MyHeaderText';
   const mockHeaderUrl = '/route';
   const mockOnHeaderClick = jest.fn();
-  const mockChildLinks = [
+  const mockItems = [
     {
       text: 'First link',
     },
@@ -42,8 +42,8 @@ describe('SideMenuDropDown', () => {
   });
 
   it('displays the items', () => {
-    render(<SideMenuDropDown headerText={mockHeaderText} items={mockChildLinks} />);
-    mockChildLinks.forEach(({ text }) => {
+    render(<SideMenuDropDown headerText={mockHeaderText} items={mockItems} />);
+    mockItems.forEach(({ text }) => {
       const childItem = screen.getByText(text);
       expect(childItem).toBeInTheDocument();
     });
