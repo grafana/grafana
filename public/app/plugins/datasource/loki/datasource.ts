@@ -674,6 +674,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   addLabelToQuery(queryExpr: string, key: string, value: string | number, operator: string) {
     if (queryHasPipeParser(queryExpr) && !isMetricsQuery(queryExpr)) {
       // If query has parser, we treat all labels as parsed and use | key="value" syntax
+      return addParsedLabelToQuery(queryExpr, key, value, operator);
     } else {
       return addLabelToQuery(queryExpr, key, value, operator, true);
     }
