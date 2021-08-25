@@ -156,26 +156,24 @@ func TestPanelValidity(t *testing.T) {
 }
 
 func TestCueErrorWrapper(t *testing.T) {
-	t.Run("Testing cue error wrapper", func(t *testing.T) {
-		a := fstest.MapFS{
-			"cue/data/gen.cue": &fstest.MapFile{Data: []byte("{;;;;;;;;}")},
-		}
+	a := fstest.MapFS{
+		filepath.Join(dashboardDir, "dashboard.cue"): &fstest.MapFile{Data: []byte("package dashboard\n{;;;;;;;;}")},
+	}
 
-		filesystem := mergefs.Merge(a, GetDefaultLoadPaths().BaseCueFS)
+	filesystem := mergefs.Merge(a, GetDefaultLoadPaths().BaseCueFS)
 
-		var baseLoadPaths = BaseLoadPaths{
-			BaseCueFS:       filesystem,
-			DistPluginCueFS: GetDefaultLoadPaths().DistPluginCueFS,
-		}
+	var baseLoadPaths = BaseLoadPaths{
+		BaseCueFS:       filesystem,
+		DistPluginCueFS: GetDefaultLoadPaths().DistPluginCueFS,
+	}
 
-		_, err := BaseDashboardFamily(baseLoadPaths)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "in file")
-		require.Contains(t, err.Error(), "line: ")
+	_, err := BaseDashboardFamily(baseLoadPaths)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "in file")
+	require.Contains(t, err.Error(), "line: ")
 
-		_, err = DistDashboardFamily(baseLoadPaths)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "in file")
-		require.Contains(t, err.Error(), "line: ")
-	})
+	_, err = DistDashboardFamily(baseLoadPaths)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "in file")
+	require.Contains(t, err.Error(), "line: ")
 }
