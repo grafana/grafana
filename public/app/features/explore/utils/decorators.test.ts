@@ -1,4 +1,4 @@
-import { DrawStyle, StackingMode } from '@grafana/ui';
+import { DrawStyle, StackingMode } from '@grafana/schema';
 import { lastValueFrom } from 'rxjs';
 import {
   ArrayVector,
