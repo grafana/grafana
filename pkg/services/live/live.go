@@ -381,7 +381,15 @@ func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []
 			// fast path for *.
 			return true
 		}
-		ok, err := checkAllowedOrigin(strings.ToLower(origin), appURL, originGlobs)
+		originURL, err := url.Parse(strings.ToLower(origin))
+		if err != nil {
+			logger.Warn("Failed to parse request origin", "error", err, "origin", origin)
+			return false
+		}
+		if strings.EqualFold(originURL.Host, r.Host) {
+			return true
+		}
+		ok, err := checkAllowedOrigin(origin, originURL, appURL, originGlobs)
 		if err != nil {
 			logger.Warn("Error parsing request origin", "error", err, "origin", origin)
 			return false
@@ -394,12 +402,7 @@ func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []
 	}
 }
 
-func checkAllowedOrigin(origin string, appURL *url.URL, originGlobs []glob.Glob) (bool, error) {
-	originURL, err := url.Parse(origin)
-	if err != nil {
-		logger.Warn("Failed to parse request origin", "error", err, "origin", origin)
-		return false, err
-	}
+func checkAllowedOrigin(origin string, originURL *url.URL, appURL *url.URL, originGlobs []glob.Glob) (bool, error) {
 	// Try to match over configured [server] root_url first.
 	if originURL.Port() == "" {
 		if strings.EqualFold(originURL.Scheme, appURL.Scheme) && strings.EqualFold(originURL.Host, appURL.Hostname()) {
