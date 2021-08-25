@@ -11,4 +11,4 @@ This is directory which stores Go modules with pinned buildable package that is 
 
 ## Requirements
 
-- Go 1.14+
+* Go 1.14+
