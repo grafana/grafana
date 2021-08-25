@@ -202,10 +202,22 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     return this.templateSrv.variableExists(target.expr);
   }
 
-  prepareTargetsV2 = (options: DataQueryRequest<PromQuery>) => {
-    // Currenly we useV2 only for explore and non-exemplars queries
+  prepareOptionsV2 = (options: DataQueryRequest<PromQuery>) => {
+    let targets = cloneDeep(options.targets);
+    let scopedVars = cloneDeep(options.scopedVars);
+
     if (options.app === CoreApp.Explore) {
-      const targets = options.targets.map((target) => {
+      const processedTargets = targets.map((target) => {
+        const { scopedVars: intervalScopedVars, interval } = this.processIntervalV2(target, options);
+        let targetScopedVars = {
+          ...scopedVars,
+          ...intervalScopedVars,
+          ...this.getRangeScopedVars(options.range),
+        };
+
+        target.expr = this.templateSrv.replace(target.expr, targetScopedVars, this.interpolateQueryExpr);
+        target.interval = `${interval}s`;
+
         if (target.instant && target.range) {
           const targetInstant: PromQuery = {
             ...target,
@@ -222,11 +234,10 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
           return { ...target, instant: false, range: true, format: 'time_series' };
         }
       });
-
-      return targets.flat();
+      targets = processedTargets.flat();
     }
 
-    return options.targets;
+    return { ...options, targets, scopedVars };
   };
 
   prepareTargets = (options: DataQueryRequest<PromQuery>, start: number, end: number) => {
@@ -338,7 +349,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
       this.access === 'proxy' && options.app === CoreApp.Explore && !options.targets.some((query) => query.exemplar);
 
     if (shouldRunBackendQuery) {
-      const newOptions = { ...options, targets: this.prepareTargetsV2(options) };
+      const newOptions = this.prepareOptionsV2(options);
 
       return super.query(newOptions).pipe(
         map((response) => {
@@ -542,12 +553,48 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
   }
 
+  processIntervalV2(target: PromQuery, options: DataQueryRequest<PromQuery>) {
+    const stepInterval = rangeUtil.intervalToSeconds(
+      this.templateSrv.replace(target.interval || options.interval, options.scopedVars)
+    );
+
+    let scrapeInterval = target.interval
+      ? rangeUtil.intervalToSeconds(this.templateSrv.replace(target.interval, options.scopedVars))
+      : rangeUtil.intervalToSeconds(this.interval);
+
+    let interval = rangeUtil.intervalToSeconds(options.interval);
+    const range = this.getPrometheusTime(options.range.to, true) - this.getPrometheusTime(options.range.from, false);
+
+    const adjustedInterval = this.adjustInterval(interval, stepInterval, range, target.intervalFactor, target.stepMode);
+
+    // Fall back to the default scrape interval of 15s if scrapeInterval is 0 for some reason.
+    if (scrapeInterval === 0) {
+      scrapeInterval = 15;
+    }
+
+    let scopedVars = {
+      ...options.scopedVars,
+      ...this.getRateIntervalScopedVariable(interval, scrapeInterval),
+    };
+
+    if (interval !== adjustedInterval) {
+      interval = adjustedInterval;
+      scopedVars = Object.assign({}, scopedVars, {
+        __interval: { text: interval + 's', value: interval + 's' },
+        __interval_ms: { text: interval * 1000, value: interval * 1000 },
+        ...this.getRateIntervalScopedVariable(interval, scrapeInterval),
+      });
+    }
+
+    return { scopedVars, interval };
+  }
+
   adjustInterval(
     dynamicInterval: number,
     stepInterval: number,
     range: number,
-    intervalFactor: number,
-    stepMode: StepMode
+    intervalFactor = 1,
+    stepMode = DEFAULT_STEP_MODE.value as StepMode
   ) {
     // Prometheus will drop queries that might return more than 11000 data points.
     // Calculate a safe interval as an additional minimum to take into account.

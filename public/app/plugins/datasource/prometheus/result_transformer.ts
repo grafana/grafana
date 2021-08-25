@@ -476,7 +476,7 @@ export function transformV2(response: DataQueryResponse, options: DataQueryReque
     // For table results, we need to transform data frames to table data frames
     const tableResults = promResults.filter((dataFrame) => tableRefIds.includes(dataFrame.refId));
     const tableFrames = tableResults.map((dataFrame) => {
-      const df = transformDFoTable(dataFrame, response.data.length);
+      const df = transformDFoTable(dataFrame, options.targets.length);
       return df;
     });
 
