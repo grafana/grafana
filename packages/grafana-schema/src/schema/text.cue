@@ -1,3 +1,4 @@
+package schema
 
 VizTextDisplayOptions: {
 	// Explicit title text size

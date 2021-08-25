@@ -1,5 +1,3 @@
-import { defaults } from 'lodash';
-
 import React, { PureComponent } from 'react';
 import { InlineField, Select, Alert, Input } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, dataFrameFromJSON, rangeUtil } from '@grafana/data';
@@ -245,7 +243,11 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   render() {
-    const query = defaults(this.props.query, defaultQuery);
+    const query = {
+      ...defaultQuery,
+      ...this.props.query,
+    };
+
     return (
       <>
         <div className="gf-form">

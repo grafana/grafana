@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package alerting
@@ -17,9 +18,7 @@ import (
 
 func TestEngineTimeouts(t *testing.T) {
 	Convey("Alerting engine timeout tests", t, func() {
-		engine := &AlertEngine{}
-		err := engine.Init()
-		So(err, ShouldBeNil)
+		engine := ProvideAlertEngine(nil, nil, nil, nil, setting.NewCfg())
 		setting.AlertingNotificationTimeout = 30 * time.Second
 		setting.AlertingMaxAttempts = 3
 		engine.resultHandler = &FakeResultHandler{}
