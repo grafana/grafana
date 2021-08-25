@@ -96,7 +96,7 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
         {content}
         {playlistToDelete && (
           <ConfirmModal
-            title="dog"
+            title={playlistToDelete.name}
             confirmText="delete"
             body={`Are you sure you want to delete '${playlistToDelete.name}'?`}
             onConfirm={() => {
