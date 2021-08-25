@@ -416,21 +416,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        // Temporary fix for log queries that use parser. We don't know which labels are parsed and which are actual labels.
-        // If query has parser, we treat all labels as parsed and use | key="value" syntax (same in ADD_FILTER_OUT)
-        if (queryHasPipeParser(expression) && !isMetricsQuery(expression)) {
-          expression = addParsedLabelToQuery(expression, action.key, action.value, '=');
-        } else {
-          expression = addLabelToQuery(expression, action.key, action.value, undefined, true);
-        }
+        expression = this.addLabelToQuery(expression, action.key, action.value, '=');
         break;
       }
       case 'ADD_FILTER_OUT': {
-        if (queryHasPipeParser(expression) && !isMetricsQuery(expression)) {
-          expression = addParsedLabelToQuery(expression, action.key, action.value, '!=');
-        } else {
-          expression = addLabelToQuery(expression, action.key, action.value, '!=', true);
-        }
+        expression = this.addLabelToQuery(expression, action.key, action.value, '!=');
         break;
       }
       default:
@@ -674,10 +664,20 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       if (operator === '=~' || operator === '!~') {
         value = lokiRegularEscape(value);
       }
-      return addLabelToQuery(acc, key, value, operator);
+
+      return this.addLabelToQuery(acc, key, value, operator);
     }, expr);
 
     return expr;
+  }
+
+  addLabelToQuery(queryExpr: string, key: string, value: string | number, operator: string) {
+    if (queryHasPipeParser(queryExpr) && !isMetricsQuery(queryExpr)) {
+      // If query has parser, we treat all labels as parsed and use | key="value" syntax
+      return addParsedLabelToQuery(queryExpr, key, value, operator);
+    } else {
+      return addLabelToQuery(queryExpr, key, value, operator, true);
+    }
   }
 }
 
