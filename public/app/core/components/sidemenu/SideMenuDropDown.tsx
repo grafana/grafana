@@ -4,13 +4,13 @@ import { NavModelItem } from '@grafana/data';
 import { IconName, Link } from '@grafana/ui';
 
 interface Props {
-  childLinks?: NavModelItem[];
+  items?: NavModelItem[];
   headerText: string;
   headerUrl?: string;
   onHeaderClick?: () => void;
 }
 
-const SideMenuDropDown = ({ childLinks = [], headerText, headerUrl, onHeaderClick }: Props) => {
+const SideMenuDropDown = ({ items = [], headerText, headerUrl, onHeaderClick }: Props) => {
   const headerContent = <span className="sidemenu-item-text">{headerText}</span>;
   const header = headerUrl ? (
     <Link href={headerUrl} onClick={onHeaderClick} className="side-menu-header-link">
@@ -25,7 +25,7 @@ const SideMenuDropDown = ({ childLinks = [], headerText, headerUrl, onHeaderClic
   return (
     <ul className="dropdown-menu dropdown-menu--sidemenu" role="menu">
       <li className="side-menu-header">{header}</li>
-      {childLinks
+      {items
         .filter((item) => !item.hideFromMenu)
         .map((child, index) => (
           <DropDownChild

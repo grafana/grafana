@@ -41,8 +41,8 @@ describe('SideMenuDropDown', () => {
     expect(mockOnHeaderClick).toHaveBeenCalled();
   });
 
-  it('displays the childLinks', () => {
-    render(<SideMenuDropDown headerText={mockHeaderText} childLinks={mockChildLinks} />);
+  it('displays the items', () => {
+    render(<SideMenuDropDown headerText={mockHeaderText} items={mockChildLinks} />);
     mockChildLinks.forEach(({ text }) => {
       const childItem = screen.getByText(text);
       expect(childItem).toBeInTheDocument();
