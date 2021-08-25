@@ -83,7 +83,7 @@ func (s *Service) Init() error {
 		QueryDataHandler: s,
 	})
 
-	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "graphite", factory); err != nil {
+	if err := s.BackendPluginManager.Register("graphite", factory); err != nil {
 		s.logger.Error("Failed to register plugin", "error", err)
 	}
 	return nil
