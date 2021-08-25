@@ -512,7 +512,7 @@ def test_a11y_frontend_step_pr(edition, port=3001):
         },
         'commands': [
             'yarn wait-on http://$HOST:$PORT',
-            'yarn -s test:accessibility-pr --json > pa11y-ci-results.json',
+            'yarn -s test:accessibility-pr',
         ],
     }
 
