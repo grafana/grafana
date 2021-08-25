@@ -79,7 +79,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	if !hs.PluginManagerV2.(registry.CanBeDisabled).IsDisabled() {
 		req, err := createRequest(ds, request)
 		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Request formation error", err)
+			return response.Error(http.StatusBadRequest, "Request formation error", err)
 		}
 
 		resp, err := hs.PluginManagerV2.QueryData(c.Req.Context(), req)

@@ -29,7 +29,7 @@ func (f *Finder) Find(pluginsDir string) ([]string, error) {
 	}
 
 	var pluginJSONPaths []string
-	if !exists && pluginsDir == f.cfg.PluginsPath { // if is external only create
+	if !exists && fs.Equal(pluginsDir, f.cfg.PluginsPath) {
 		if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
 			logger.Error("Failed to create external plugins directory", "dir", pluginsDir, "error", err)
 		} else {
@@ -69,9 +69,6 @@ func (f *Finder) getPluginJSONPaths(rootDirPath string) ([]string, error) {
 
 	if err := util.Walk(rootDirPath, true, true,
 		func(currentPath string, fi os.FileInfo, err error) error {
-			// We scan all the sub-folders for plugin.json (with some exceptions) so that we also load embedded plugins, for
-			// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
-			// is embedded in worldping app.
 			if err != nil {
 				return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
 			}

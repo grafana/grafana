@@ -54,11 +54,11 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 
 	i.handleModuleDefaults(p)
 
-	p.Info.Logos.Small = getPluginLogoUrl(p.Type, p.Info.Logos.Small, p.BaseURL)
-	p.Info.Logos.Large = getPluginLogoUrl(p.Type, p.Info.Logos.Large, p.BaseURL)
+	p.Info.Logos.Small = pluginLogoURL(p.Type, p.Info.Logos.Small, p.BaseURL)
+	p.Info.Logos.Large = pluginLogoURL(p.Type, p.Info.Logos.Large, p.BaseURL)
 
 	for i := 0; i < len(p.Info.Screenshots); i++ {
-		p.Info.Screenshots[i].Path = evalRelativePluginUrlPath(p.Info.Screenshots[i].Path, p.BaseURL, p.Type)
+		p.Info.Screenshots[i].Path = evalRelativePluginURLPath(p.Info.Screenshots[i].Path, p.BaseURL, p.Type)
 	}
 
 	if p.IsApp() {
@@ -102,9 +102,7 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 			backendFactory = grpcplugin.NewBackendPlugin(p.ID, filepath.Join(p.PluginDir, cmd))
 		}
 
-		env := i.getPluginEnvVars(p)
-
-		if backendClient, err := backendFactory(p.ID, pluginLog, env); err != nil {
+		if backendClient, err := backendFactory(p.ID, pluginLog, i.envVars(p)); err != nil {
 			return err
 		} else {
 			p.RegisterClient(backendClient)
@@ -144,14 +142,14 @@ func (i *Initializer) handleModuleDefaults(p *plugins.PluginV2) {
 		return
 	}
 
-	// Previously there was an assumption that the plugin directory
+	// Previously there was an assumption that the Core plugins directory
 	// should be public/app/plugins/<plugin type>/<plugin id>
-	// However this can be an issue if the plugin directory should be renamed to something else
-	currentDir := filepath.Base(p.PluginDir)
-	// use path package for the following statements
-	// because these are not file paths
-	p.Module = path.Join("app/plugins", string(p.Type), currentDir, "module")
-	p.BaseURL = path.Join("public/app/plugins", string(p.Type), currentDir)
+	// However this can be an issue if the Core plugins directory is renamed
+	baseDir := filepath.Base(p.PluginDir)
+
+	// use path package for the following statements because these are not file paths
+	p.Module = path.Join("app/plugins", string(p.Type), baseDir, "module")
+	p.BaseURL = path.Join("public/app/plugins", string(p.Type), baseDir)
 }
 
 func (i *Initializer) setPathsBasedOnApp(parent *plugins.PluginV2, child *plugins.PluginV2) {
@@ -166,19 +164,19 @@ func (i *Initializer) setPathsBasedOnApp(parent *plugins.PluginV2, child *plugin
 	}
 }
 
-func getPluginLogoUrl(pluginType plugins.PluginType, path, baseUrl string) string {
+func pluginLogoURL(pluginType plugins.PluginType, path, baseUrl string) string {
 	if path == "" {
 		return defaultLogoPath(pluginType)
 	}
 
-	return evalRelativePluginUrlPath(path, baseUrl, pluginType)
+	return evalRelativePluginURLPath(path, baseUrl, pluginType)
 }
 
 func defaultLogoPath(pluginType plugins.PluginType) string {
 	return "public/img/icn-" + string(pluginType) + ".svg"
 }
 
-func evalRelativePluginUrlPath(pathStr, baseUrl string, pluginType plugins.PluginType) string {
+func evalRelativePluginURLPath(pathStr, baseUrl string, pluginType plugins.PluginType) string {
 	if pathStr == "" {
 		return ""
 	}
@@ -196,7 +194,7 @@ func evalRelativePluginUrlPath(pathStr, baseUrl string, pluginType plugins.Plugi
 	return path.Join(baseUrl, pathStr)
 }
 
-func (i *Initializer) getPluginEnvVars(plugin *plugins.PluginV2) []string {
+func (i *Initializer) envVars(plugin *plugins.PluginV2) []string {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", i.cfg.BuildVersion),
 	}
@@ -215,13 +213,12 @@ func (i *Initializer) getPluginEnvVars(plugin *plugins.PluginV2) []string {
 		}
 	}
 
-	hostEnv = append(hostEnv, i.getAWSEnvironmentVariables()...)
-	hostEnv = append(hostEnv, i.getAzureEnvironmentVariables()...)
-	env := getPluginSettings(plugin.ID, i.cfg).ToEnv("GF_PLUGIN", hostEnv)
-	return env
+	hostEnv = append(hostEnv, i.awsEnvVars()...)
+	hostEnv = append(hostEnv, i.azureEnvVars()...)
+	return getPluginSettings(plugin.ID, i.cfg).asEnvVar("GF_PLUGIN", hostEnv)
 }
 
-func (i *Initializer) getAWSEnvironmentVariables() []string {
+func (i *Initializer) awsEnvVars() []string {
 	var variables []string
 	if i.cfg.AWSAssumeRoleEnabled {
 		variables = append(variables, awsds.AssumeRoleEnabledEnvVarKeyName+"=true")
@@ -233,7 +230,7 @@ func (i *Initializer) getAWSEnvironmentVariables() []string {
 	return variables
 }
 
-func (i *Initializer) getAzureEnvironmentVariables() []string {
+func (i *Initializer) azureEnvVars() []string {
 	var variables []string
 	if i.cfg.Azure.Cloud != "" {
 		variables = append(variables, "AZURE_CLOUD="+i.cfg.Azure.Cloud)
@@ -250,7 +247,7 @@ func (i *Initializer) getAzureEnvironmentVariables() []string {
 
 type pluginSettings map[string]string
 
-func (ps pluginSettings) ToEnv(prefix string, hostEnv []string) []string {
+func (ps pluginSettings) asEnvVar(prefix string, hostEnv []string) []string {
 	var env []string
 	for k, v := range ps {
 		key := fmt.Sprintf("%s_%s", prefix, strings.ToUpper(k))

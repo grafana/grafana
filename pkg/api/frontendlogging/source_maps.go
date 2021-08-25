@@ -50,10 +50,6 @@ type SourceMapStore struct {
 	pluginManager plugins.Manager
 }
 
-type pluginRouteFetcher interface {
-	staticRoutes() []*plugins.PluginStaticRoute
-}
-
 func NewSourceMapStore(cfg *setting.Cfg, pluginManager plugins.Manager, readSourceMap ReadSourceMapFn) *SourceMapStore {
 	return &SourceMapStore{
 		cache:         make(map[string]*sourceMap),
@@ -87,7 +83,7 @@ func (store *SourceMapStore) guessSourceMapLocation(sourceURL string) (*sourceMa
 		}
 		// if source comes from a plugin, look in plugin dir
 	} else if strings.HasPrefix(u.Path, "/public/plugins/") {
-		for _, route := range store.staticRoutes() {
+		for _, route := range store.staticPluginRoutes() {
 			pluginPrefix := filepath.Join("/public/plugins/", route.PluginId)
 			if strings.HasPrefix(u.Path, pluginPrefix) {
 				return &sourceMapLocation{
@@ -170,6 +166,6 @@ func (store *SourceMapStore) resolveSourceLocation(frame sentry.Frame) (*sentry.
 	}, nil
 }
 
-func (store *SourceMapStore) staticRoutes() []*plugins.PluginStaticRoute {
+func (store *SourceMapStore) staticPluginRoutes() []*plugins.PluginStaticRoute {
 	return store.pluginManager.StaticRoutes()
 }

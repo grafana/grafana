@@ -6,10 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/fs"
-
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/setting"
 )
 

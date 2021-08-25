@@ -130,7 +130,7 @@ func TestInitializer_getPluginEnvVars(t *testing.T) {
 			license: licensing,
 		}
 
-		envVars := i.getPluginEnvVars(p)
+		envVars := i.envVars(p)
 		assert.Len(t, envVars, 4)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
 		assert.Equal(t, "GF_EDITION=test", envVars[1])

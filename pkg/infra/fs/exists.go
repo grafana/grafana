@@ -16,3 +16,17 @@ func Exists(fpath string) (bool, error) {
 
 	return true, nil
 }
+
+// Equal determines whether two paths are the same.
+func Equal(p1, p2 string) bool {
+	fi1, err := os.Stat(p1)
+	if err != nil {
+		return false
+	}
+	fi2, err := os.Stat(p2)
+	if err != nil {
+		return false
+	}
+
+	return os.SameFile(fi1, fi2)
+}

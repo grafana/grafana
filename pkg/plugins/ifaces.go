@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -109,9 +110,9 @@ type ManagerV2 interface {
 	// IsEnabled confirms if the manager service feature toggle is enabled or not.
 	IsEnabled() bool
 
-	// Plugin returns a plugin.
+	// Plugin finds a plugin by its ID.
 	Plugin(pluginID string) *PluginV2
-	// Plugins returns plugins by their type.
+	// Plugins returns plugins by their requested type.
 	Plugins(pluginType ...PluginType) []*PluginV2
 	// Renderer returns a renderer plugin.
 	Renderer() *PluginV2
