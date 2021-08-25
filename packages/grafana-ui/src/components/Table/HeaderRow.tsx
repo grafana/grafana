@@ -18,7 +18,7 @@ export const HeaderRow = (props: HeaderRowProps) => {
   const tableStyles = useStyles2(getTableStyles);
 
   return (
-    <div>
+    <div role="row">
       {headerGroups.map((headerGroup: HeaderGroup) => {
         const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
         return (
@@ -44,7 +44,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) 
   headerProps.style.justifyContent = (column as any).justifyContent;
 
   return (
-    <div className={tableStyles.headerCell} {...headerProps}>
+    <div className={tableStyles.headerCell} {...headerProps} role="columnheader">
       {column.canSort && (
         <>
           <div
