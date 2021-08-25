@@ -566,9 +566,10 @@ func (rp *responseParser) nameFields(queryResult backend.DataResponse, target *Q
 	}
 	metricTypeCount := len(set)
 	for i := range frames {
-		frames[i].Name = rp.getFieldName(*frames[i].Fields[1], target, metricTypeCount)
+		fieldName := rp.getFieldName(*frames[i].Fields[1], target, metricTypeCount)
+		frames[i].Name = fieldName
 		for _, field := range frames[i].Fields {
-			field.SetConfig(&data.FieldConfig{DisplayNameFromDS: rp.getFieldName(*frames[i].Fields[1], target, metricTypeCount)})
+			field.SetConfig(&data.FieldConfig{DisplayNameFromDS: fieldName})
 		}
 	}
 }
