@@ -9,23 +9,14 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/crypto/pbkdf2"
 )
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:     "EncryptionService",
-		Instance: &Service{},
-	})
-}
-
 type Service struct{}
 
-// Init initializes the ossencryption.Service
-func (s *Service) Init() error {
-	return nil
+func ProvideService() *Service {
+	return &Service{}
 }
 
 const saltLength = 8
