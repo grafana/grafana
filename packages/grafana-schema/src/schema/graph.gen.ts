@@ -145,6 +145,7 @@ export interface AxisConfig {
   axisSoftMin?: number;
   axisSoftMax?: number;
   scaleDistribution?: ScaleDistributionConfig;
+  showGrid?: boolean;
 }
 
 /**
