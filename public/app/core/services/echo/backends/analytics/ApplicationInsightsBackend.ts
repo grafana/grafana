@@ -14,12 +14,12 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
       dataType: 'script',
       cache: true,
     }).done(function () {
-      var snippet = {
+      var applicationInsightsOpts = {
         config: {
           instrumentationKey: options.instrumentationKey,
         },
       };
-      var init = new (window as any).Microsoft.ApplicationInsights.ApplicationInsights(snippet);
+      var init = new (window as any).Microsoft.ApplicationInsights.ApplicationInsights(applicationInsightsOpts);
       (window as any).applicationInsights = init.loadAppInsights();
     });
   }
