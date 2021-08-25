@@ -29,7 +29,7 @@ import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelModel } from 'app/features/dashboard/state';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
-import { QueryModal } from './QueryModal';
+import { QueryModal } from './QueryModal/QueryModal';
 
 interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -56,13 +56,6 @@ interface State<TQuery extends DataQuery> {
   isOpen?: boolean;
   showingHelp: boolean;
   addRecordedQuery: boolean;
-}
-
-let modals: Map<string, React.ReactElement>;
-
-export function addModalRecordedQuery(key: string, modal: React.ReactElement) {
-  console.log(modal);
-  modals.set(key, modal);
 }
 
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
