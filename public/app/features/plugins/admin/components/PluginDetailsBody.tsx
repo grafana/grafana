@@ -4,6 +4,7 @@ import { css, cx } from '@emotion/css';
 import { AppPlugin, GrafanaTheme2, GrafanaPlugin, PluginMeta } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
+import { PLUGIN_TAB_LABELS } from '../constants';
 import { VersionList } from '../components/VersionList';
 import { AppConfigCtrlWrapper } from '../../wrappers/AppConfigWrapper';
 import { PluginDashboards } from '../../PluginDashboards';
@@ -18,7 +19,7 @@ type PluginDetailsBodyProps = {
 export function PluginDetailsBody({ tab, plugin, remoteVersions, readme }: PluginDetailsBodyProps): JSX.Element | null {
   const styles = useStyles2(getStyles);
 
-  if (tab?.label === 'Overview') {
+  if (tab?.label === PLUGIN_TAB_LABELS.OVERVIEW) {
     return (
       <div
         className={cx(styles.readme, styles.container)}
@@ -27,7 +28,7 @@ export function PluginDetailsBody({ tab, plugin, remoteVersions, readme }: Plugi
     );
   }
 
-  if (tab?.label === 'Version history') {
+  if (tab?.label === PLUGIN_TAB_LABELS.VERSIONS) {
     return (
       <div className={styles.container}>
         <VersionList versions={remoteVersions ?? []} />
@@ -35,7 +36,7 @@ export function PluginDetailsBody({ tab, plugin, remoteVersions, readme }: Plugi
     );
   }
 
-  if (tab?.label === 'Config' && plugin?.angularConfigCtrl) {
+  if (tab?.label === PLUGIN_TAB_LABELS.CONFIG && plugin?.angularConfigCtrl) {
     return (
       <div className={styles.container}>
         <AppConfigCtrlWrapper app={plugin as AppPlugin} />
@@ -55,7 +56,7 @@ export function PluginDetailsBody({ tab, plugin, remoteVersions, readme }: Plugi
     }
   }
 
-  if (tab?.label === 'Dashboards' && plugin) {
+  if (tab?.label === PLUGIN_TAB_LABELS.DASHBOARDS && plugin) {
     return (
       <div className={styles.container}>
         <PluginDashboards plugin={plugin.meta} />

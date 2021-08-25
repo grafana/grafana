@@ -4,8 +4,9 @@ import { api } from '../api';
 import { loadPlugin } from '../../PluginPage';
 import { getCatalogPluginDetails, isOrgAdmin } from '../helpers';
 import { ActionTypes, PluginDetailsActions, PluginDetailsState } from '../types';
+import { PLUGIN_TAB_LABELS } from '../constants';
 
-const defaultTabs = [{ label: 'Overview' }, { label: 'Version history' }];
+const defaultTabs = [{ label: PLUGIN_TAB_LABELS.OVERVIEW }, { label: PLUGIN_TAB_LABELS.VERSIONS }];
 
 const initialState = {
   hasInstalledPanel: false,
@@ -129,7 +130,7 @@ export const usePluginDetails = (id: string) => {
       if (pluginConfig.meta.type === PluginType.app) {
         if (pluginConfig.angularConfigCtrl) {
           tabs.push({
-            label: 'Config',
+            label: PLUGIN_TAB_LABELS.CONFIG,
           });
         }
 
@@ -143,7 +144,7 @@ export const usePluginDetails = (id: string) => {
 
         if (pluginConfig.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
           tabs.push({
-            label: 'Dashboards',
+            label: PLUGIN_TAB_LABELS.DASHBOARDS,
           });
         }
       }
