@@ -1,4 +1,4 @@
-package grafanaschema
+package dashboard
 
 import "github.com/grafana/grafana/cue/scuemata"
 
