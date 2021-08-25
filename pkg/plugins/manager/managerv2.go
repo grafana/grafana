@@ -228,12 +228,14 @@ func (m *PluginManagerV2) Plugins(pluginTypes ...plugins.PluginType) []*plugins.
 		requestedTypes[pt] = struct{}{}
 	}
 
+	m.pluginsMu.RLock()
 	var pluginsList []*plugins.PluginV2
 	for _, p := range m.plugins {
 		if _, exists := requestedTypes[p.Type]; exists {
 			pluginsList = append(pluginsList, p)
 		}
 	}
+	m.pluginsMu.RUnlock()
 	return pluginsList
 }
 
