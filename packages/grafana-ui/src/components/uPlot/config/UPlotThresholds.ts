@@ -1,6 +1,6 @@
 import { GrafanaTheme2, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
 import { GraphThresholdsStyleConfig, GraphTresholdsStyleMode } from '@grafana/schema';
-import { getDataRange, GradientDirection, scaleGradient } from './gradientFills';
+import { GradientDirection, scaleGradient } from './gradientFills';
 import tinycolor from 'tinycolor2';
 
 export interface UPlotThresholdOptions {
@@ -24,12 +24,11 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     let { steps, mode } = thresholds;
 
     if (mode === ThresholdsMode.Percentage) {
-      let [min, max] = getDataRange(u, scaleKey);
-      let range = max - min;
+      let range = yMax - yMin;
 
       steps = steps.map((step) => ({
         ...step,
-        value: min + range * (step.value / 100),
+        value: yMin + range * (step.value / 100),
       }));
     }
 
