@@ -1,7 +1,9 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -169,6 +171,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 func TestAPI_Datasources_AccessControl(t *testing.T) {
 	type acTestCaseWithHandler struct {
 		busStub bus.HandlerFunc
+		body    func() io.Reader
 		accessControlTestCase
 	}
 	tests := []acTestCaseWithHandler{
@@ -192,12 +195,44 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
 			},
 		},
+		{
+			busStub: func(cmd *models.AddDataSourceCommand) error {
+				cmd.Result = &models.DataSource{}
+				return nil
+			},
+			body: func() io.Reader {
+				s, _ := json.Marshal(models.AddDataSourceCommand{
+					Name:   "test",
+					Url:    "http://localhost:5432",
+					Type:   "postgresql",
+					Access: "Proxy",
+				})
+				return bytes.NewReader(s)
+			},
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesPost should return 200 for user with correct permissions",
+				url:          "/api/datasources/",
+				method:       http.MethodPost,
+				permissions:  []*accesscontrol.Permission{{Action: ActionDatasourcesCreate}},
+			},
+		},
+		{
+			busStub: func(_ *models.AddDataSourceCommand) error { return nil },
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesPost should return 403 for user without required permissions",
+				url:          "/api/datasources/",
+				method:       http.MethodPost,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Cleanup(bus.ClearBusHandlers)
-			bus.AddHandler("testDatasources", test.busStub)
+			bus.AddHandler("test", test.busStub)
 
 			cfg := setting.NewCfg()
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
@@ -217,7 +252,12 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			hs.SettingsProvider = &setting.OSSImpl{Cfg: cfg}
 
 			var err error
-			sc.req, err = http.NewRequest(test.method, test.url, nil)
+			if test.body != nil {
+				sc.req, err = http.NewRequest(test.method, test.url, test.body())
+				sc.req.Header.Add("Content-Type", "application/json")
+			} else {
+				sc.req, err = http.NewRequest(test.method, test.url, nil)
+			}
 			assert.NoError(t, err)
 
 			sc.exec()

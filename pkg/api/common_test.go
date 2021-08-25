@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -232,10 +233,12 @@ func (s *fakeRenderService) Init() error {
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
 	cfg.FeatureToggles = make(map[string]bool)
 	cfg.FeatureToggles["accesscontrol"] = true
+	cfg.Quota.Enabled = false
 
 	hs := &HTTPServer{
 		Cfg:           cfg,
 		Bus:           bus.GetBus(),
+		QuotaService:  &quota.QuotaService{Cfg: cfg},
 		RouteRegister: routing.NewRouteRegister(),
 		AccessControl: accesscontrolmock.New().WithPermissions(permissions),
 	}
