@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { css } from '@emotion/css';
 import { CardContainer, LinkButton, useStyles2 } from '@grafana/ui';
@@ -184,4 +183,4 @@ const getCardStyles = (theme: GrafanaTheme2) => {
     `,
   };
 };
-export default hot(module)(connect(mapStateToProps)(ServerStats));
+export default connect(mapStateToProps)(ServerStats);
