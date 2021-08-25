@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/prometheus/client_golang/prometheus"
@@ -37,7 +38,11 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	ng, err := ngalert.ProvideService(cfg, nil, routing.NewRouteRegister(), sqlstore.InitTestDB(t), nil, nil, nil,
 		m)
 	require.NoError(t, err)
-	return ng, ng.Alertmanager.Store.(*store.DBstore)
+	return ng, &store.DBstore{
+		SQLStore:     ng.SQLStore,
+		BaseInterval: baseInterval * time.Second,
+		Logger:       log.New("ngalert-test"),
+	}
 }
 
 // CreateTestAlertRule creates a dummy alert definition to be used by the tests.

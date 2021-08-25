@@ -55,7 +55,7 @@ const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func ProvideService(cfg *setting.Cfg, logsService *LogsService, backendPM backendplugin.Manager) *CloudWatchService {
+func ProvideService(cfg *setting.Cfg, logsService *LogsService, backendPM backendplugin.Manager) (*CloudWatchService, error) {
 	plog.Debug("initing")
 
 	im := datasource.NewInstanceManager(NewInstanceSettings())
@@ -64,15 +64,16 @@ func ProvideService(cfg *setting.Cfg, logsService *LogsService, backendPM backen
 		QueryDataHandler: newExecutor(logsService, im, cfg, awsds.NewSessionCache()),
 	})
 
-	if err := backendPM.RegisterAndStart(context.Background(), "cloudwatch", factory); err != nil {
+	if err := backendPM.Register("cloudwatch", factory); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
+		return nil, err
 	}
 
 	return &CloudWatchService{
 		LogsService:          logsService,
 		Cfg:                  cfg,
 		BackendPluginManager: backendPM,
-	}
+	}, nil
 }
 
 type CloudWatchService struct {

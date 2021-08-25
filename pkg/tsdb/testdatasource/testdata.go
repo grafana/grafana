@@ -1,7 +1,6 @@
 package testdatasource
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -21,7 +20,7 @@ func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager) (*TestDataP
 		CallResourceHandler: httpadapter.New(resourceMux),
 		StreamHandler:       newTestStreamHandler(p.logger),
 	})
-	err := manager.RegisterAndStart(context.Background(), "testdata", factory)
+	err := manager.Register("testdata", factory)
 	if err != nil {
 		return nil, err
 	}

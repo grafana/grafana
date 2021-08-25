@@ -60,7 +60,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	macaron "gopkg.in/macaron.v1"
+	"gopkg.in/macaron.v1"
 )
 
 type HTTPServer struct {

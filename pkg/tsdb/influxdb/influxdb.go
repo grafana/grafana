@@ -46,7 +46,7 @@ func ProvideService(httpClient httpclient.Provider, backendPluginManager backend
 		QueryDataHandler: s,
 	})
 
-	if err := backendPluginManager.RegisterAndStart(context.Background(), "influxdb", factory); err != nil {
+	if err := backendPluginManager.Register("influxdb", factory); err != nil {
 		s.glog.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}

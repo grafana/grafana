@@ -45,8 +45,8 @@ func ProvideService(httpClientProvider httpclient.Provider, manager backendplugi
 		QueryDataHandler: s,
 	})
 
-	err := manager.RegisterAndStart(context.Background(), "graphite", factory)
-	if err != nil {
+	if err := manager.Register("graphite", factory); err != nil {
+		s.logger.Error("Failed to register plugin", "error", err)
 		return nil, err
 	}
 
