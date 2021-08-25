@@ -2,6 +2,7 @@
 title = "Pie chart"
 keywords = ["grafana", "pie chart"]
 weight = 850
+aliases = ["/docs/grafana/latest/panels/visualizations/pie-chart-pane/"]
 +++
 
 # Pie chart

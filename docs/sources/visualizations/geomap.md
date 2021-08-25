@@ -2,7 +2,6 @@
 title = "Geomap"
 description = "Geomap visualization documentation"
 keywords = ["grafana", "Geomap", "panel", "documentation"]
-aliases =["/docs/grafana/latest/features/panels/geomap/"]
 aliases = ["/docs/grafana/latest/features/panels/geomap/", "/docs/grafana/latest/panels/visualizations/geomap/"]
 weight = 600
 +++
