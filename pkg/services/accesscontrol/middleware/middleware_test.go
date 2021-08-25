@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 )
 
 type middlewareTestCase struct {
@@ -27,26 +27,24 @@ func TestMiddleware(t *testing.T) {
 	tests := []middlewareTestCase{
 		{
 			desc:           "should use fallback if access control is disabled",
-			ac:             fakeAccessControl{isDisabled: true},
+			ac:             mock.New().WithDisabled(),
 			expectFallback: true,
 			expectEndpoint: true,
 		},
 		{
 			desc: "should pass middleware for correct permissions",
-			ac: fakeAccessControl{
-				isDisabled:  false,
-				permissions: []*accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
-			},
+			ac: mock.New().WithPermissions(
+				[]*accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			),
 			evaluator:      accesscontrol.EvalPermission("users:read", "users:*"),
 			expectFallback: false,
 			expectEndpoint: true,
 		},
 		{
 			desc: "should not reach endpoint when missing permissions",
-			ac: fakeAccessControl{
-				isDisabled:  false,
-				permissions: []*accesscontrol.Permission{{Action: "users:read", Scope: "users:1"}},
-			},
+			ac: mock.New().WithPermissions(
+				[]*accesscontrol.Permission{{Action: "users:read", Scope: "users:1"}},
+			),
 			evaluator:      accesscontrol.EvalPermission("users:read", "users:*"),
 			expectFallback: false,
 			expectEndpoint: false,
@@ -94,28 +92,4 @@ func contextProvider() macaron.Handler {
 		}
 		c.Map(reqCtx)
 	}
-}
-
-var _ accesscontrol.AccessControl = new(fakeAccessControl)
-
-type fakeAccessControl struct {
-	isDisabled  bool
-	permissions []*accesscontrol.Permission
-}
-
-func (f fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
-	permissions, _ := f.GetUserPermissions(ctx, user)
-	return evaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions))
-}
-
-func (f fakeAccessControl) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {
-	return f.permissions, nil
-}
-
-func (f fakeAccessControl) IsDisabled() bool {
-	return f.isDisabled
-}
-
-func (f fakeAccessControl) DeclareFixedRoles(registration ...accesscontrol.RoleRegistration) error {
-	return nil
 }
