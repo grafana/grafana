@@ -18,11 +18,17 @@ export const HeaderRow = (props: HeaderRowProps) => {
   const tableStyles = useStyles2(getTableStyles);
 
   return (
-    <div role="row">
+    <div role="rowgroup">
       {headerGroups.map((headerGroup: HeaderGroup) => {
         const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
         return (
-          <div className={tableStyles.thead} {...headerGroupProps} key={key} aria-label={e2eSelectorsTable.header}>
+          <div
+            className={tableStyles.thead}
+            {...headerGroupProps}
+            key={key}
+            aria-label={e2eSelectorsTable.header}
+            role="row"
+          >
             {headerGroup.headers.map((column: Column, index: number) =>
               renderHeaderCell(column, tableStyles, data.fields[index])
             )}
