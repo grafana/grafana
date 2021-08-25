@@ -395,7 +395,7 @@ func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []
 			return false
 		}
 		if !ok {
-			logger.Warn("Request Origin is not authorized", "origin", origin, "appUrl", appURL.String(), "allowedOrigins", strings.Join(originPatterns, ","))
+			logger.Warn("Request Origin is not authorized", "origin", origin, "host", r.Host, "appUrl", appURL.String(), "allowedOrigins", strings.Join(originPatterns, ","))
 			return false
 		}
 		return true
