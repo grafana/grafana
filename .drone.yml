@@ -42,15 +42,6 @@ steps:
   depends_on:
   - initialize
 
-- name: test-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
-  depends_on:
-  - initialize
-
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -59,7 +50,15 @@ steps:
     CGO_ENABLED: 1
   depends_on:
   - initialize
-  - test-backend
+
+- name: test-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
+  - ./bin/grabpl test-backend --edition oss
+  - ./bin/grabpl integration-tests --edition oss
+  depends_on:
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -68,15 +67,13 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -84,7 +81,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -92,7 +88,6 @@ steps:
   commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -107,11 +102,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
 
@@ -166,7 +159,6 @@ steps:
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
   depends_on:
-  - initialize
   - build-frontend-docs
 
 - name: copy-packages-for-docker
@@ -175,7 +167,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -186,7 +177,6 @@ steps:
     edition: oss
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -297,15 +287,6 @@ steps:
   depends_on:
   - initialize
 
-- name: test-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
-  depends_on:
-  - initialize
-
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -314,7 +295,15 @@ steps:
     CGO_ENABLED: 1
   depends_on:
   - initialize
-  - test-backend
+
+- name: test-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
+  - ./bin/grabpl test-backend --edition oss
+  - ./bin/grabpl integration-tests --edition oss
+  depends_on:
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -323,15 +312,13 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -339,7 +326,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -350,7 +336,6 @@ steps:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -365,11 +350,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
 
@@ -458,7 +441,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -471,7 +453,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -484,7 +465,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -756,15 +736,6 @@ steps:
   depends_on:
   - initialize
 
-- name: test-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss --tries 5
-  - ./bin/grabpl integration-tests --edition oss --tries 5
-  depends_on:
-  - initialize
-
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -773,7 +744,15 @@ steps:
     CGO_ENABLED: 1
   depends_on:
   - initialize
-  - test-backend
+
+- name: test-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
+  - ./bin/grabpl test-backend --edition oss --tries 5
+  - ./bin/grabpl integration-tests --edition oss --tries 5
+  depends_on:
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -782,7 +761,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -792,8 +771,6 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -801,7 +778,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition oss --no-pull-enterprise ${DRONE_TAG}
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -812,7 +788,6 @@ steps:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -827,11 +802,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
 
@@ -889,7 +862,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -902,7 +874,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -915,7 +886,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -1135,15 +1105,6 @@ steps:
   depends_on:
   - initialize
 
-- name: test-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise --tries 5
-  - ./bin/grabpl integration-tests --edition enterprise --tries 5
-  depends_on:
-  - initialize
-
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -1152,7 +1113,15 @@ steps:
     CGO_ENABLED: 1
   depends_on:
   - initialize
-  - test-backend
+
+- name: test-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
+  - ./bin/grabpl test-backend --edition enterprise --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise --tries 5
+  depends_on:
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -1161,7 +1130,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -1171,8 +1140,6 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -1180,7 +1147,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition enterprise --no-pull-enterprise ${DRONE_TAG}
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -1191,7 +1157,6 @@ steps:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -1201,15 +1166,6 @@ steps:
   depends_on:
   - build-backend
 
-- name: test-backend-enterprise2
-  image: grafana/build-container:1.4.1
-  commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
-  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
-  depends_on:
-  - initialize
-
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
@@ -1218,7 +1174,15 @@ steps:
     CGO_ENABLED: 1
   depends_on:
   - initialize
-  - test-backend-enterprise2
+
+- name: test-backend-enterprise2
+  image: grafana/build-container:1.4.1
+  commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
+  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
+  depends_on:
+  - lint-backend
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -1228,8 +1192,6 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   depends_on:
-  - initialize
-  - lint-backend-enterprise2
   - test-backend-enterprise2
 
 - name: gen-version
@@ -1237,11 +1199,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
   - build-backend-enterprise2
@@ -1293,7 +1253,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -1306,7 +1265,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -1319,7 +1277,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -1719,15 +1676,6 @@ steps:
   depends_on:
   - initialize
 
-- name: test-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss --tries 5
-  - ./bin/grabpl integration-tests --edition oss --tries 5
-  depends_on:
-  - initialize
-
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -1736,7 +1684,15 @@ steps:
     CGO_ENABLED: 1
   depends_on:
   - initialize
-  - test-backend
+
+- name: test-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
+  - ./bin/grabpl test-backend --edition oss --tries 5
+  - ./bin/grabpl integration-tests --edition oss --tries 5
+  depends_on:
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -1745,7 +1701,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -1755,8 +1711,6 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -1764,7 +1718,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition oss --no-pull-enterprise v7.3.0-test
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -1775,7 +1728,6 @@ steps:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -1790,11 +1742,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version v7.3.0-test
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
 
@@ -1852,7 +1802,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -1862,7 +1811,6 @@ steps:
     edition: oss
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -1872,7 +1820,6 @@ steps:
     ubuntu: true
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -2087,15 +2034,6 @@ steps:
   depends_on:
   - initialize
 
-- name: test-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise --tries 5
-  - ./bin/grabpl integration-tests --edition enterprise --tries 5
-  depends_on:
-  - initialize
-
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -2104,7 +2042,15 @@ steps:
     CGO_ENABLED: 1
   depends_on:
   - initialize
-  - test-backend
+
+- name: test-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
+  - ./bin/grabpl test-backend --edition enterprise --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise --tries 5
+  depends_on:
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -2113,7 +2059,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -2123,8 +2069,6 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -2132,7 +2076,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition enterprise --no-pull-enterprise v7.3.0-test
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -2143,7 +2086,6 @@ steps:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -2153,15 +2095,6 @@ steps:
   depends_on:
   - build-backend
 
-- name: test-backend-enterprise2
-  image: grafana/build-container:1.4.1
-  commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
-  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
-  depends_on:
-  - initialize
-
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
@@ -2170,7 +2103,15 @@ steps:
     CGO_ENABLED: 1
   depends_on:
   - initialize
-  - test-backend-enterprise2
+
+- name: test-backend-enterprise2
+  image: grafana/build-container:1.4.1
+  commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
+  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
+  depends_on:
+  - lint-backend
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -2180,8 +2121,6 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   depends_on:
-  - initialize
-  - lint-backend-enterprise2
   - test-backend-enterprise2
 
 - name: gen-version
@@ -2189,11 +2128,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version v7.3.0-test
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
   - build-backend-enterprise2
@@ -2245,7 +2182,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -2255,7 +2191,6 @@ steps:
     edition: enterprise
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -2265,7 +2200,6 @@ steps:
     ubuntu: true
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -2664,15 +2598,6 @@ steps:
   depends_on:
   - initialize
 
-- name: test-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
-  depends_on:
-  - initialize
-
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -2681,7 +2606,15 @@ steps:
     CGO_ENABLED: 1
   depends_on:
   - initialize
-  - test-backend
+
+- name: test-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
+  - ./bin/grabpl test-backend --edition oss
+  - ./bin/grabpl integration-tests --edition oss
+  depends_on:
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -2690,15 +2623,13 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -2706,7 +2637,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -2717,7 +2647,6 @@ steps:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -2732,11 +2661,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
 
@@ -2794,7 +2721,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -2804,7 +2730,6 @@ steps:
     edition: oss
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -2814,7 +2739,6 @@ steps:
     ubuntu: true
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -3003,15 +2927,6 @@ steps:
   depends_on:
   - initialize
 
-- name: test-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise
-  - ./bin/grabpl integration-tests --edition enterprise
-  depends_on:
-  - initialize
-
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -3020,7 +2935,15 @@ steps:
     CGO_ENABLED: 1
   depends_on:
   - initialize
-  - test-backend
+
+- name: test-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
+  - ./bin/grabpl test-backend --edition enterprise
+  - ./bin/grabpl integration-tests --edition enterprise
+  depends_on:
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -3029,15 +2952,13 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -3045,7 +2966,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition enterprise --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -3056,7 +2976,6 @@ steps:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -3066,15 +2985,6 @@ steps:
   depends_on:
   - build-backend
 
-- name: test-backend-enterprise2
-  image: grafana/build-container:1.4.1
-  commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2
-  - ./bin/grabpl integration-tests --edition enterprise2
-  depends_on:
-  - initialize
-
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
@@ -3083,15 +2993,21 @@ steps:
     CGO_ENABLED: 1
   depends_on:
   - initialize
-  - test-backend-enterprise2
+
+- name: test-backend-enterprise2
+  image: grafana/build-container:1.4.1
+  commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
+  - ./bin/grabpl test-backend --edition enterprise2
+  - ./bin/grabpl integration-tests --edition enterprise2
+  depends_on:
+  - lint-backend
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64 --no-pull-enterprise
   depends_on:
-  - initialize
-  - lint-backend-enterprise2
   - test-backend-enterprise2
 
 - name: gen-version
@@ -3099,11 +3015,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
   - build-backend-enterprise2
@@ -3165,7 +3079,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -3175,7 +3088,6 @@ steps:
     edition: enterprise
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -3185,7 +3097,6 @@ steps:
     ubuntu: true
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -3530,6 +3441,6 @@ get:
 
 ---
 kind: signature
-hmac: 9dd42fb9f400af4fe9ef9a41788e1b1bf4f03ec7f291a4ed475f3cc2c7608fb4
+hmac: 93f1285893421aa9a26bd101f8b5eb30d22563ea2aa0c9f284d5278b801d66cd
 
 ...
