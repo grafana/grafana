@@ -146,6 +146,19 @@ steps:
   depends_on:
   - package
 
+- name: test-a11y-frontend
+  image: buildkite/puppeteer
+  commands:
+  - yarn wait-on http://$HOST:$PORT
+  - yarn -s test:accessibility-pr --json > pa11y-ci-results.json
+  environment:
+    GRAFANA_MISC_STATS_API_KEY:
+      from_secret: grafana_misc_stats_api_key
+    HOST: end-to-end-tests-server
+    PORT: 3001
+  depends_on:
+  - end-to-end-tests-server
+
 - name: build-frontend-docs
   image: grafana/build-container:1.4.1
   commands:
@@ -3499,6 +3512,6 @@ get:
 
 ---
 kind: signature
-hmac: 56e9f30fa716aff37a2d3db8534dc0ad489270905f740f3772499a837beaa85c
+hmac: 741892c9df50cd7b2d01ca349b4922b4f31699e0f9c339548b1de120e7132804
 
 ...
