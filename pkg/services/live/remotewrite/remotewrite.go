@@ -29,8 +29,6 @@ func TimeSeriesFromFrames(frames ...*data.Frame) []prompb.TimeSeries {
 	var entries = make(map[metricKey]prompb.TimeSeries)
 	var keys []metricKey // sorted keys.
 
-	fmt.Println(len(frames))
-
 	for _, frame := range frames {
 		timeFieldIndex, ok := timeFieldIndex(frame)
 		if !ok {
@@ -105,7 +103,8 @@ func TimeSeriesFromFramesLabelsColumn(frames ...*data.Frame) []prompb.TimeSeries
 			continue
 		}
 
-		isLabelsColumnFrame := frame.Fields[0].Type() == data.FieldTypeString
+		// Labels column frames have first column called "labels".
+		isLabelsColumnFrame := frame.Fields[0].Type() == data.FieldTypeString && frame.Fields[0].Name == "labels"
 
 		var labels [][]prompb.Label
 

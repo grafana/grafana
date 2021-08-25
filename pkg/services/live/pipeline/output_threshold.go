@@ -87,12 +87,14 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 		f2 := data.NewFieldFromFieldType(data.FieldTypeString, 1)
 		f2.Set(0, currentThreshold.State)
 		f2.Name = "state"
-		stateFrame := data.NewFrame("state", fTime, f1, f2)
+		f3 := data.NewFieldFromFieldType(data.FieldTypeString, 1)
+		f3.Set(0, currentThreshold.Color)
+		f3.Name = "color"
+		stateFrame := data.NewFrame("state", fTime, f1, f2, f3)
 		_ = l.frameStorage.Put(vars.OrgID, l.config.Channel, stateFrame)
 		return l.pipeline.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, stateFrame)
 	}
 
-	// TODO: support other numeric types.
 	previousState, ok := previousFrame.Fields[2].At(0).(string)
 	if !ok {
 		return nil
@@ -108,7 +110,10 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 		f2 := data.NewFieldFromFieldType(data.FieldTypeString, 1)
 		f2.Set(0, currentThreshold.State)
 		f2.Name = "state"
-		stateFrame := data.NewFrame("state", fTime, f1, f2)
+		f3 := data.NewFieldFromFieldType(data.FieldTypeString, 1)
+		f3.Set(0, currentThreshold.Color)
+		f3.Name = "color"
+		stateFrame := data.NewFrame("state", fTime, f1, f2, f3)
 		_ = l.frameStorage.Put(vars.OrgID, l.config.Channel, stateFrame)
 		return l.pipeline.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, stateFrame)
 	}

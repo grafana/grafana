@@ -16,7 +16,7 @@ type RemoteWriteOutputConfig struct {
 	Endpoint string `json:"endpoint"`
 	// User is a user for remote write request.
 	User string `json:"user"`
-	// Password ...
+	// Password for remote write endpoint.
 	Password string `json:"password"`
 	// SampleMilliseconds allow setting minimal time before
 	// different remote writes for a channel. 0 means no sampling interval.
@@ -73,3 +73,7 @@ func (r RemoteWriteOutput) Output(_ context.Context, _ OutputVars, frame *data.F
 	logger.Debug("Successfully sent to remote write endpoint", "url", r.config.Endpoint, "elapsed", time.Since(started))
 	return nil
 }
+
+// remoteWrite: {
+//   "grafana_cloud": "instance1"
+// }

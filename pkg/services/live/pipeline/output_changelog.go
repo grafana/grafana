@@ -71,3 +71,12 @@ func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.
 	}
 	return nil
 }
+
+// frame1 value 0, 1, 2
+// frame2 value 3, 4
+
+// frame1 value 0
+// frame2 value 1
+// frame1 value 2
+// frame2 value 3
+// frame1 value 4

@@ -7,8 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type JsonFrameConverterConfig struct {
-}
+type JsonFrameConverterConfig struct{}
 
 type JsonFrameConverter struct {
 	config JsonFrameConverterConfig

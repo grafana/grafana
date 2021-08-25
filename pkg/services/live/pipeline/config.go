@@ -7,8 +7,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
+
+	"github.com/centrifugal/centrifuge"
 )
 
 type fileStorage struct {
@@ -54,7 +55,7 @@ type OutputterConfig struct {
 	Type                    string                     `json:"type"`
 	ManagedStreamConfig     *ManagedStreamOutputConfig `json:"managedStream,omitempty"`
 	MultipleOutputterConfig *MultipleOutputterConfig   `json:"multiple,omitempty"`
-	ChannelOutputConfig     *ChannelOutputConfig       `json:"channel,omitempty"`
+	ChannelOutputConfig     *RedirectOutputConfig      `json:"redirect,omitempty"`
 	ConditionalOutputConfig *ConditionalOutputConfig   `json:"conditional,omitempty"`
 	ThresholdOutputConfig   *ThresholdOutputConfig     `json:"threshold,omitempty"`
 	RemoteWriteOutputConfig *RemoteWriteOutputConfig   `json:"remoteWrite,omitempty"`
@@ -200,7 +201,7 @@ func (f *fileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 		if config.ChannelOutputConfig == nil {
 			return nil, missingConfiguration
 		}
-		return NewChannelOutput(f.pipeline, *config.ChannelOutputConfig), nil
+		return NewRedirectOutput(f.pipeline, *config.ChannelOutputConfig), nil
 	case "multiple":
 		if config.MultipleOutputterConfig == nil {
 			return nil, missingConfiguration
@@ -299,7 +300,7 @@ func (f *fileStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 //			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
 //			Outputter: NewMultipleOutputter(
 //				NewLocalSubscribersOutput(f.node),
-//				NewChannelOutput(f.pipeline, ChannelOutputConfig{
+//				NewRedirectOutput(f.pipeline, RedirectOutputConfig{
 //					Channel: "stream/testdata/random-20Hz-stream",
 //				}),
 //			),
@@ -337,7 +338,7 @@ func (f *fileStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 //				NewManagedStreamOutput(f.managedStream),
 //				NewConditionalOutput(
 //					NewNumberCompareCondition("usage_user", "gte", 50),
-//					NewChannelOutput(f.pipeline, ChannelOutputConfig{
+//					NewRedirectOutput(f.pipeline, RedirectOutputConfig{
 //						Channel: "stream/influx/input/cpu/spikes",
 //					}),
 //				),
@@ -482,7 +483,7 @@ func (f *fileStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 //						NewNumberCompareCondition("value1", "gte", 3.0),
 //						NewNumberCompareCondition("value2", "gte", 3.0),
 //					),
-//					NewChannelOutput(f.pipeline, ChannelOutputConfig{
+//					NewRedirectOutput(f.pipeline, RedirectOutputConfig{
 //						Channel: "stream/json/exact/condition",
 //					}),
 //				),
