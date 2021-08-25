@@ -56,7 +56,6 @@ module.exports = {
   stats: {
     children: false,
     source: false,
-    errorDetails: true,
   },
   plugins: [
     new CopyUniconsPlugin(),
