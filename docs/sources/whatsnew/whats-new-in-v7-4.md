@@ -30,11 +30,11 @@ Apart from major performance improvements, the new Time series panel implements 
 
 The following documentation topics were added for this feature:
 
-- [Time series panel]({{< relref "../panels/visualizations/time-series/_index.md" >}})
-- [Graph time series as lines]({{< relref "../panels/visualizations/time-series/graph-time-series-as-lines.md" >}})
-- [Graph time series as bars]({{< relref "../panels/visualizations/time-series/graph-time-series-as-bars.md" >}})
-- [Graph time series as points]({{< relref "../panels/visualizations/time-series/graph-time-series-as-points" >}})
-- [Change axis display]({{< relref "../panels/visualizations/time-series/change-axis-display.md" >}})
+- [Time series panel]({{< relref "../visualizations/time-series/_index.md" >}})
+- [Graph time series as lines]({{< relref "../visualizations/time-series/graph-time-series-as-lines.md" >}})
+- [Graph time series as bars]({{< relref "../visualizations/time-series/graph-time-series-as-bars.md" >}})
+- [Graph time series as points]({{< relref "../visualizations/time-series/graph-time-series-as-points" >}})
+- [Change axis display]({{< relref "../visualizations/time-series/change-axis-display.md" >}})
 
 ### Node graph panel visualization (Beta)
 
@@ -44,7 +44,7 @@ All the information and stats shown in the Node graph beta are driven by the dat
 
 For more details about how to use the X-Ray service map feature, see the [X-Ray plugin documentation](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
 
-For more information, refer to [Node graph panel]({{< relref "../panels/visualizations/node-graph.md" >}}).
+For more information, refer to [Node graph panel]({{< relref "../visualizations/node-graph.md" >}}).
 
 ### New transformations
 

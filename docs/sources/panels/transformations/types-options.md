@@ -80,7 +80,7 @@ Query B:
 
 ## Merge
 
-Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../visualizations/table/_index.md" >}}).
+Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../../visualizations/table/_index.md" >}}).
 
 In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the transformation.
 

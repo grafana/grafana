@@ -1,7 +1,8 @@
 +++
 title = "Graph time series as lines"
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-weight = 100
+aliases = ["/docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-lines/"]
+weight = 200
 +++
 
 # Graph time series as lines
@@ -10,8 +11,8 @@ This section explains how to use Time series field options to visualize time ser
 
 ## Create the panel
 
-1. [Add a panel]({{< relref "../../add-a-panel.md" >}}). Select the [Time series]({{< relref "_index.md" >}}) visualization.
-1. In the [Panel editor]({{< relref "../../panel-editor.md" >}}) side pane, click **Graph styles** to expand it.
+1. [Add a panel]({{< relref "../../panels/add-a-panel.md" >}}). Select the [Time series]({{< relref "_index.md" >}}) visualization.
+1. In the [Panel editor]({{< relref "../../panels/panel-editor.md" >}}) side pane, click **Graph styles** to expand it.
 1. In Style, click **Lines**.
 
 ## Style the lines
@@ -82,7 +83,7 @@ Fill opacity set to 95:
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../../standard-options.md#color-scheme" >}}) field option.
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../../panels/standard-options.md#color-scheme" >}}) field option.
 
 Gradient appearance is influenced by the **Fill opacity** setting. In the screenshots below, **Fill opacity** is set to 50.
 
@@ -106,13 +107,13 @@ Gradient color is generated based on the hue of the line color.
 
 #### Scheme
 
-In this mode the whole line will use a color gradient defined by your [Color scheme]({{< relref "../../standard-options.md#color-scheme" >}}) option. There is more information on this option in [Graph and color scheme]({{< relref "./graph-color-scheme.md" >}}).
+In this mode the whole line will use a color gradient defined by your [Color scheme]({{< relref "../../panels/standard-options.md#color-scheme" >}}) option. There is more information on this option in [Graph and color scheme]({{< relref "./graph-color-scheme.md" >}}).
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_line.png" max-width="1200px" caption="Gradient mode scheme" >}}
 
 ### Line style
 
-Set the style of the line. To change the color, use the standard [color scheme]({{< relref "../../standard-options.md#color-scheme" >}}) field option.
+Set the style of the line. To change the color, use the standard [color scheme]({{< relref "../../panels/standard-options.md#color-scheme" >}}) field option.
 
 Line style appearance is influenced by the **Line width** and **Fill opacity** settings. In the screenshots below, **Line width** is set to 3 and **Fill opacity** is set to 20.
 

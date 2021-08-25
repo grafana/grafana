@@ -1,6 +1,7 @@
 +++
 title = "Graph time series as bars"
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
+aliases = ["/docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-bars/"]
 weight = 200
 +++
 
@@ -10,8 +11,8 @@ This section explains how to use Time series field options to visualize time ser
 
 ## Create the panel
 
-1. [Add a panel]({{< relref "../../add-a-panel.md" >}}). Select the [Time series]({{< relref "_index.md" >}}) visualization.
-2. In the [Panel editor]({{< relref "../../panel-editor.md" >}}) side pane, click **Graph styles** to expand it.
+1. [Add a panel]({{< relref "../../panels/add-a-panel.md" >}}). Select the [Time series]({{< relref "_index.md" >}}) visualization.
+2. In the [Panel editor]({{< relref "../../panels/panel-editor.md" >}}) side pane, click **Graph styles** to expand it.
 3. In Style, click **Bars**.
 
 ## Style the bars
@@ -74,7 +75,7 @@ Fill opacity set to 95:
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../../standard-options.md#color-scheme" >}}) field option.
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../../panels/standard-options.md#color-scheme" >}}) field option.
 
 Gradient appearance is influenced by the **Fill opacity** setting. In the screenshots below, **Fill opacity** is set to 50.
 
@@ -98,7 +99,7 @@ Gradient color is generated based on the hue of the line color.
 
 #### Scheme
 
-In this mode the whole bar will use a color gradient defined by your [Color scheme]({{< relref "../../standard-options.md#color-scheme" >}}) option. There is more information on this option in [Graph and color scheme]({{< relref "./graph-color-scheme.md" >}}).
+In this mode the whole bar will use a color gradient defined by your [Color scheme]({{< relref "../../panels/standard-options.md#color-scheme" >}}) option. There is more information on this option in [Graph and color scheme]({{< relref "./graph-color-scheme.md" >}}).
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Gradient color scheme mode" >}}
 

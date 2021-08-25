@@ -1,7 +1,7 @@
 +++
 title = "Filter table columns"
 keywords = ["grafana", "table options", "documentation", "format tables", "table filter", "filter columns"]
-aliases = ["/docs/grafana/latest/reference/table/", "/docs/grafana/latest/features/panels/table_panel/", "/docs/grafana/next/panels/visualizations/table/table-field-options/"]
+aliases = ["/docs/grafana/latest/reference/table/", "/docs/grafana/latest/features/panels/table_panel/", "/docs/grafana/next/panels/visualizations/table/table-field-options/", "/docs/grafana/latest/panels/visualizations/table/filter-table-columns/"]
 weight = 600
 +++
 
@@ -12,7 +12,7 @@ If you turn on the **Column filter**, then you can filter table options.
 ## Turn on column filtering
 
 1. In Grafana, navigate to the dashboard with the table with the columns that you want to filter.
-1. On the table panel you want to filter, [open the panel editor]({{< relref "../../panel-editor.md#open-the-panel-editor" >}}).
+1. On the table panel you want to filter, [open the panel editor]({{< relref "../../panels/panel-editor.md#open-the-panel-editor" >}}).
 1. Click the **Field** tab.
 1. In Table options, turn on the **Column filter** option.
 
