@@ -6,6 +6,8 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/google/go-cmp/cmp/cmpopts"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/google/go-cmp/cmp"
@@ -14,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var compareOpts = cmpopts.IgnoreFields(plugins.PluginV2{}, "client", "log")
 
 func TestLoader_LoadAll(t *testing.T) {
 	corePluginDir, err := filepath.Abs("./../../../../public")
@@ -53,16 +57,20 @@ func TestLoader_LoadAll(t *testing.T) {
 							},
 							Description: "Data source for Amazon AWS monitoring service",
 							Logos: plugins.PluginLogos{
-								Small: "img/amazon-web-services.png",
-								Large: "img/amazon-web-services.png",
+								Small: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+								Large: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 							},
 						},
 						Includes: []*plugins.PluginInclude{
-							{Name: "EC2", Path: "dashboards/ec2.json", Type: "dashboard"},
-							{Name: "EBS", Path: "dashboards/EBS.json", Type: "dashboard"},
-							{Name: "Lambda", Path: "dashboards/Lambda.json", Type: "dashboard"},
-							{Name: "Logs", Path: "dashboards/Logs.json", Type: "dashboard"},
-							{Name: "RDS", Path: "dashboards/RDS.json", Type: "dashboard"},
+							{Name: "EC2", Path: "dashboards/ec2.json", Type: "dashboard", Role: "Viewer"},
+							{Name: "EBS", Path: "dashboards/EBS.json", Type: "dashboard", Role: "Viewer"},
+							{Name: "Lambda", Path: "dashboards/Lambda.json", Type: "dashboard", Role: "Viewer"},
+							{Name: "Logs", Path: "dashboards/Logs.json", Type: "dashboard", Role: "Viewer"},
+							{Name: "RDS", Path: "dashboards/RDS.json", Type: "dashboard", Role: "Viewer"},
+						},
+						Dependencies: plugins.PluginDependencies{
+							GrafanaVersion: "*",
+							Plugins:        []plugins.PluginDependencyItem{},
 						},
 						Category:     "cloud",
 						Annotations:  true,
@@ -71,6 +79,8 @@ func TestLoader_LoadAll(t *testing.T) {
 						Logs:         true,
 						QueryOptions: map[string]bool{"minInterval": true},
 					},
+					Module:    "app/plugins/datasource/cloudwatch/module",
+					BaseURL:   "public/app/plugins/datasource/cloudwatch",
 					PluginDir: filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch"),
 					Signature: "internal",
 					Class:     "core",
@@ -94,11 +104,21 @@ func TestLoader_LoadAll(t *testing.T) {
 								Name: "Grafana Labs",
 								Url:  "https://grafana.com",
 							},
+							Logos: plugins.PluginLogos{
+								Small: "public/img/icn-datasource.svg",
+								Large: "public/img/icn-datasource.svg",
+							},
 							Description: "Test",
+						},
+						Dependencies: plugins.PluginDependencies{
+							GrafanaVersion: "*",
+							Plugins:        []plugins.PluginDependencyItem{},
 						},
 						Backend: true,
 						State:   "alpha",
 					},
+					Module:    "app/plugins/datasource/plugin/module",
+					BaseURL:   "public/app/plugins/datasource/plugin",
 					PluginDir: filepath.Join(parentDir, "testdata/unsigned-datasource/plugin/"),
 					Signature: "unsigned",
 					Class:     "bundled",
@@ -115,8 +135,8 @@ func TestLoader_LoadAll(t *testing.T) {
 				t.Errorf("LoadAll() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want) {
-				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want))
+			if !cmp.Equal(got, tt.want, compareOpts) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
 			}
 		})
 	}
@@ -138,12 +158,22 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 					Name: "Grafana Labs",
 					Url:  "http://grafana.com",
 				},
+				Logos: plugins.PluginLogos{
+					Small: "public/img/icn-datasource.svg",
+					Large: "public/img/icn-datasource.svg",
+				},
 				Description: "Parent plugin",
 				Version:     "1.0.0",
 				Updated:     "2020-10-20",
 			},
+			Dependencies: plugins.PluginDependencies{
+				GrafanaVersion: "*",
+				Plugins:        []plugins.PluginDependencyItem{},
+			},
 			Backend: true,
 		},
+		Module:        "plugins/test-ds/module",
+		BaseURL:       "public/plugins/test-ds",
 		PluginDir:     filepath.Join(parentDir, "testdata/nested-plugins/parent"),
 		Signature:     "valid",
 		SignatureType: plugins.GrafanaType,
@@ -161,11 +191,21 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 					Name: "Grafana Labs",
 					Url:  "http://grafana.com",
 				},
+				Logos: plugins.PluginLogos{
+					Small: "public/img/icn-panel.svg",
+					Large: "public/img/icn-panel.svg",
+				},
 				Description: "Child plugin",
 				Version:     "1.0.1",
 				Updated:     "2020-10-30",
 			},
+			Dependencies: plugins.PluginDependencies{
+				GrafanaVersion: "*",
+				Plugins:        []plugins.PluginDependencyItem{},
+			},
 		},
+		Module:        "plugins/test-panel/module",
+		BaseURL:       "public/plugins/test-panel",
 		PluginDir:     filepath.Join(parentDir, "testdata/nested-plugins/parent/nested"),
 		Signature:     "valid",
 		SignatureType: plugins.GrafanaType,
@@ -194,7 +234,9 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			return got[i].ID < got[j].ID
 		})
 
-		assert.True(t, cmp.Equal(got, expected))
+		if !cmp.Equal(got, expected, compareOpts) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+		}
 	})
 }
 func TestLoader_readPluginJSON(t *testing.T) {
@@ -267,8 +309,8 @@ func TestLoader_readPluginJSON(t *testing.T) {
 				t.Errorf("readPluginJSON() error = %v, failed %v", err, tt.failed)
 				return
 			}
-			if !cmp.Equal(got, tt.expected) {
-				t.Errorf("Unexpected pluginJSONData: %v", cmp.Diff(got, tt.expected))
+			if !cmp.Equal(got, tt.expected, compareOpts) {
+				t.Errorf("Unexpected pluginJSONData: %v", cmp.Diff(got, tt.expected, compareOpts))
 			}
 		})
 	}
