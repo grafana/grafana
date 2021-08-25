@@ -351,6 +351,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   ) {
     const observables = queries.map((query, index) => {
       const target = activeTargets[index];
+      // Check if the current interval is below safe interval
       let belowSafeInterval = false;
       if (query.step && target.interval && target.stepMode) {
         const currentStepInterval = query.step;
@@ -376,12 +377,28 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       return { source: this.runQuery(query, end, filterAndMapResponse), belowSafeInterval };
     });
+
     const sources = observables.map((observable) => observable.source);
+    const safeIntervalFlags = observables.map((observable) => observable.belowSafeInterval);
     return forkJoin(sources).pipe(
-      map((results) => {
+      map((results, index) => {
         const data = results.reduce((result, current) => {
           return [...result, ...current];
         }, []);
+
+        // Add an error message if the current interval is below the safe interval
+        if (safeIntervalFlags[index]) {
+          return {
+            data,
+            key: requestId,
+            state: LoadingState.Done,
+            error: {
+              message:
+                'The specified step interval is lower than the safe interval and has automatically been set to the safe interval. Consider adjusting the interval or the time range',
+            },
+          };
+        }
+
         return {
           data,
           key: requestId,
