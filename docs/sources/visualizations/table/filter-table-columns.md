@@ -3,6 +3,7 @@ title = "Filter table columns"
 keywords = ["grafana", "table options", "documentation", "format tables", "table filter", "filter columns"]
 aliases = ["/docs/grafana/latest/reference/table/", "/docs/grafana/latest/features/panels/table_panel/", "/docs/grafana/next/panels/visualizations/table/table-field-options/"]
 weight = 600
+aliases = ["/docs/grafana/latest/panels/visualizations/table/filter-table-columns/"]
 +++
 
 # Filter table columns
