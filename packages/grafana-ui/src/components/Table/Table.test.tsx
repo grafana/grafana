@@ -91,7 +91,7 @@ function getTestContext(propOverrides: Partial<Props> = {}) {
 }
 
 function getTable(): HTMLElement {
-  return screen.getByRole('table');
+  return screen.getAllByRole('table')[0];
 }
 
 function getFooter(): HTMLElement {
