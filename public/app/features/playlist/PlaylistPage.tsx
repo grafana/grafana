@@ -98,7 +98,7 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
           <ConfirmModal
             title={playlistToDelete.name}
             confirmText="delete"
-            body={`Are you sure you want to delete '${playlistToDelete.name}'?`}
+            body={`Are you sure you want to delete '${playlistToDelete.name}' from your playlist?`}
             onConfirm={() => {
               deletePlaylist(playlistToDelete.id).finally(() => {
                 setforcePlaylistsFetch(forcePlaylistsFetch + 1);
