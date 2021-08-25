@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
-func (p *testDataPlugin) registerRoutes(mux *http.ServeMux) {
+func (p *TestDataPlugin) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/", p.testGetHandler)
 	mux.HandleFunc("/scenarios", p.getScenariosHandler)
 	mux.HandleFunc("/stream", p.testStreamHandler)
@@ -24,7 +24,7 @@ func (p *testDataPlugin) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/boom", p.testPanicHandler)
 }
 
-func (p *testDataPlugin) testGetHandler(rw http.ResponseWriter, req *http.Request) {
+func (p *TestDataPlugin) testGetHandler(rw http.ResponseWriter, req *http.Request) {
 	p.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 	if req.Method != http.MethodGet {
@@ -38,7 +38,7 @@ func (p *testDataPlugin) testGetHandler(rw http.ResponseWriter, req *http.Reques
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (p *testDataPlugin) getScenariosHandler(rw http.ResponseWriter, req *http.Request) {
+func (p *TestDataPlugin) getScenariosHandler(rw http.ResponseWriter, req *http.Request) {
 	result := make([]interface{}, 0)
 
 	scenarioIds := make([]string, 0)
@@ -69,7 +69,7 @@ func (p *testDataPlugin) getScenariosHandler(rw http.ResponseWriter, req *http.R
 	}
 }
 
-func (p *testDataPlugin) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
+func (p *TestDataPlugin) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
 	p.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 	if req.Method != http.MethodGet {
@@ -152,6 +152,6 @@ func createJSONHandler(logger log.Logger) http.Handler {
 	})
 }
 
-func (p *testDataPlugin) testPanicHandler(rw http.ResponseWriter, req *http.Request) {
+func (p *TestDataPlugin) testPanicHandler(rw http.ResponseWriter, req *http.Request) {
 	panic("BOOM")
 }
