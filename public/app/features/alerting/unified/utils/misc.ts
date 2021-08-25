@@ -37,6 +37,7 @@ export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): FilterState =
   const queryString = queryParams['queryString'] === undefined ? undefined : String(queryParams['queryString']);
   const alertState = queryParams['alertState'] === undefined ? undefined : String(queryParams['alertState']);
   const dataSource = queryParams['dataSource'] === undefined ? undefined : String(queryParams['dataSource']);
+  const showRecordingRules = queryParams['showRecordingRules'] === undefined ? false : true;
   const groupBy = queryParams['groupBy'] === undefined ? undefined : String(queryParams['groupBy']).split(',');
   const silenceState = queryParams['silenceState'] === undefined ? undefined : String(queryParams['silenceState']);
   return { queryString, alertState, dataSource, groupBy, silenceState };

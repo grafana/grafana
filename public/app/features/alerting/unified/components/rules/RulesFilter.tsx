@@ -1,5 +1,5 @@
 import React, { FormEvent, useState } from 'react';
-import { Button, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles } from '@grafana/ui';
+import { Button, Icon, Input, Label, RadioButtonGroup, Switch, Tooltip, useStyles } from '@grafana/ui';
 import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { debounce } from 'lodash';
@@ -30,7 +30,7 @@ const RulesFilter = () => {
   const dataSourceKey = `dataSource-${filterKey}`;
   const queryStringKey = `queryString-${filterKey}`;
 
-  const { dataSource, alertState, queryString } = getFiltersFromUrlParams(queryParams);
+  const { dataSource, alertState, queryString, showRecordingRules } = getFiltersFromUrlParams(queryParams);
 
   const styles = useStyles(getStyles);
   const stateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
@@ -55,11 +55,17 @@ const RulesFilter = () => {
     setQueryParams({ view });
   };
 
+  const handleRecordingRulesChange = (_: FormEvent<HTMLInputElement>) => {
+    const value = showRecordingRules ? null : true;
+    setQueryParams({ showRecordingRules: value });
+  };
+
   const handleClearFiltersClick = () => {
     setQueryParams({
       alertState: null,
       queryString: null,
       dataSource: null,
+      showRecordingRules: null,
     });
     setTimeout(() => setFilterKey(filterKey + 1), 100);
   };
@@ -113,6 +119,14 @@ const RulesFilter = () => {
               options={ViewOptions}
               value={String(queryParams['view'] || 'group')}
               onChange={handleViewChange}
+            />
+          </div>
+          <div className={styles.rowChild}>
+            <Label description="Include recording rules in results">Show recording rules</Label>
+            <Switch
+              value={showRecordingRules}
+              disabled={queryParams['view'] === 'state'}
+              onChange={handleRecordingRulesChange}
             />
           </div>
         </div>
