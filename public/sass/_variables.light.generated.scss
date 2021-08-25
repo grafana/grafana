@@ -126,7 +126,7 @@ $hr-border-color: $gray-4 !default;
 // -------------------------
 $panel-bg: #fff;
 $panel-border: 1px solid rgba(36, 41, 46, 0.12);
-$panel-header-hover-bg: rgba(36, 41, 46, 0.04);
+$panel-header-hover-bg: rgba(36, 41, 46, 0.12);
 $panel-box-shadow: none;
 $panel-corner: $panel-bg;
 
@@ -260,7 +260,7 @@ $side-menu-header-color: #e9edf2;
 // Menu dropdowns
 // -------------------------
 $menu-dropdown-bg: #fff;
-$menu-dropdown-hover-bg: rgba(36, 41, 46, 0.04);
+$menu-dropdown-hover-bg: rgba(36, 41, 46, 0.12);
 $menu-dropdown-shadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
 
 // Tabs
@@ -329,7 +329,7 @@ $json-explorer-url-color: $blue-base;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: rgba(36, 41, 46, 0.04);
+$diff-label-bg: rgba(36, 41, 46, 0.12);
 $diff-label-fg: $gray-2;
 
 $diff-arrow-color: $dark-2;
