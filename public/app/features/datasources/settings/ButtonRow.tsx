@@ -18,13 +18,14 @@ export interface Props {
 const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest, exploreUrl }) => {
   const canEditDataSources = !isReadOnly && contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
   const canDeleteDataSources = !isReadOnly && contextSrv.hasPermission(AccessControlAction.DataSourcesDelete);
+  const canExploreDataSources = !isReadOnly && contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
 
   return (
     <div className="gf-form-button-row">
       <LinkButton variant="secondary" fill="solid" href={`${config.appSubUrl}/datasources`}>
         Back
       </LinkButton>
-      <LinkButton variant="secondary" fill="solid" href={exploreUrl}>
+      <LinkButton variant="secondary" fill="solid" href={exploreUrl} disabled={!canExploreDataSources}>
         Explore
       </LinkButton>
       <Button
