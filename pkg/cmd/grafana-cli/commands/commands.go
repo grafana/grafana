@@ -4,13 +4,13 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/urfave/cli/v2"
@@ -21,14 +21,13 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		cmd := &utils.ContextCommandLine{Context: context}
 		debug := cmd.Bool("debug")
 
-		cfg := setting.NewCfg()
-
 		configOptions := strings.Split(cmd.String("configOverrides"), " ")
-		if err := cfg.Load(&setting.CommandLineArgs{
+		cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 			Config:   cmd.ConfigFile(),
 			HomePath: cmd.HomePath(),
 			Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
-		}); err != nil {
+		})
+		if err != nil {
 			return errutil.Wrap("failed to load configuration", err)
 		}
 
@@ -36,14 +35,12 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 			cfg.LogConfigSources()
 		}
 
-		engine := &sqlstore.SQLStore{}
-		engine.Cfg = cfg
-		engine.Bus = bus.GetBus()
-		if err := engine.Init(); err != nil {
-			return errutil.Wrap("failed to initialize SQL engine", err)
+		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{})
+		if err != nil {
+			return errutil.Wrap("failed to initialize SQL store", err)
 		}
 
-		if err := command(cmd, engine); err != nil {
+		if err := command(cmd, sqlStore); err != nil {
 			return err
 		}
 
