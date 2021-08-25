@@ -39,7 +39,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
   // for grafana, link to folder views
   if (isDeleting) {
     actionIcons.push(
-      <HorizontalGroup key="is-deleting" align="flex-start">
+      <HorizontalGroup key="is-deleting">
         <Spinner />
         deleting
       </HorizontalGroup>
