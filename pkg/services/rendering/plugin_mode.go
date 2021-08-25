@@ -9,10 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 )
 
-func (rs *RenderingService) startPlugin(ctx context.Context) error {
-	return rs.PluginManager.StartRenderer(ctx)
-}
-
 func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
 	// gives plugin some additional time to timeout and return possible errors.
 	ctx, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
@@ -44,7 +40,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderKey strin
 		Headers:           headers,
 	}
 	rs.log.Debug("Calling renderer plugin", "req", req)
-	rsp, err := rs.getRenderer().Render(ctx, req)
+	rsp, err := rs.renderer().Render(ctx, req)
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		rs.log.Info("Rendering timed out")
 		return nil, ErrTimeout
@@ -86,7 +82,7 @@ func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey st
 		Headers:   headers,
 	}
 	rs.log.Debug("Calling renderer plugin", "req", req)
-	rsp, err := rs.getRenderer().RenderCSV(ctx, req)
+	rsp, err := rs.renderer().RenderCSV(ctx, req)
 	if err != nil {
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			rs.log.Info("Rendering timed out")
@@ -103,6 +99,6 @@ func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey st
 	return &RenderCSVResult{FilePath: filePath, FileName: rsp.FileName}, nil
 }
 
-func (rs *RenderingService) getRenderer() pluginextensionv2.RendererPlugin {
+func (rs *RenderingService) renderer() pluginextensionv2.RendererPlugin {
 	return rs.PluginManager.Renderer().GrpcPluginV2
 }

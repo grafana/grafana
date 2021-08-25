@@ -59,6 +59,11 @@ type RenderingService struct {
 	PluginManagerV2    plugins.ManagerV2        `inject:""`
 }
 
+type RendererPluginManager interface {
+	// StartRenderer starts the renderer plugin.
+	StartRenderer(ctx context.Context) error
+}
+
 func (rs *RenderingService) Init() error {
 	rs.log = log.New("rendering")
 
@@ -200,7 +205,7 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	if rs.pluginAvailable() {
 		rs.log = pluginRendererLog
 
-		if err := rs.startPlugin(ctx); err != nil {
+		if err := rs.StartRenderer(ctx); err != nil {
 			return nil, err
 		}
 
@@ -336,6 +341,14 @@ func (rs *RenderingService) deleteRenderKey(key string) {
 	if err != nil {
 		rs.log.Error("Failed to delete render key", "error", err)
 	}
+}
+
+func (rs *RenderingService) StartRenderer(ctx context.Context) error {
+	if rs.PluginManagerV2.IsEnabled() {
+		return rs.PluginManagerV2.Renderer().Start(ctx)
+	}
+
+	return rs.PluginManager.Renderer().Start(ctx)
 }
 
 func isoTimeOffsetToPosixTz(isoOffset string) string {

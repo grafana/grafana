@@ -194,7 +194,6 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			return got[i].ID < got[j].ID
 		})
 
-		assert.Empty(t, cmp.Diff(got, expected))
 		assert.True(t, cmp.Equal(got, expected))
 	})
 }
