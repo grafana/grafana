@@ -1,11 +1,12 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { fieldConversion, fieldConversionTransformer } from './fieldConversion';
+import { ArrayVector } from '../../vector';
+import { ensureTimeField, convertFieldType, convertFieldTypeTransformer } from './convertFieldType';
 
 describe('field conversion transformer', () => {
   beforeAll(() => {
-    mockTransformationsRegistry([fieldConversionTransformer]);
+    mockTransformationsRegistry([convertFieldTypeTransformer]);
   });
 
   it('will parse properly formatted strings to time', () => {
@@ -30,7 +31,7 @@ describe('field conversion transformer', () => {
       ],
     });
 
-    const timeified = fieldConversion(options, [stringTime]);
+    const timeified = convertFieldType(options, [stringTime]);
     expect(
       timeified[0].fields.map((f) => ({
         name: f.name,
@@ -71,7 +72,7 @@ describe('field conversion transformer', () => {
       ],
     });
 
-    const timeified = fieldConversion(options, [yearFormat]);
+    const timeified = convertFieldType(options, [yearFormat]);
     expect(
       timeified[0].fields.map((f) => ({
         name: f.name,
@@ -107,7 +108,7 @@ describe('field conversion transformer', () => {
       ],
     });
 
-    const timeified = fieldConversion(options, [misformattedStrings]);
+    const timeified = convertFieldType(options, [misformattedStrings]);
     expect(
       timeified[0].fields.map((f) => ({
         name: f.name,
@@ -119,7 +120,7 @@ describe('field conversion transformer', () => {
       {
         name: 'misformatted dates',
         type: FieldType.time,
-        values: [undefined, undefined, undefined, undefined, undefined],
+        values: [null, null, null, null, null],
         config: { unit: 'time' },
       },
       { config: {}, name: 'A', type: FieldType.number, values: [1, 2, 3, 4, 5] },
@@ -149,7 +150,7 @@ describe('field conversion transformer', () => {
       ],
     });
 
-    const numbers = fieldConversion(options, [stringyNumbers]);
+    const numbers = convertFieldType(options, [stringyNumbers]);
 
     expect(
       numbers[0].fields.map((f) => ({
@@ -207,7 +208,7 @@ describe('field conversion transformer', () => {
       ],
     });
 
-    const numbers = fieldConversion(options, [stringyNumbers]);
+    const numbers = convertFieldType(options, [stringyNumbers]);
     expect(
       numbers[0].fields.map((f) => ({
         name: f.name,
@@ -232,7 +233,7 @@ describe('field conversion transformer', () => {
     ]);
   });
 
-  it('will convert to boolean', () => {
+  it('will convert field to booleans', () => {
     const options = {
       conversions: [
         { targetField: 'numbers', destinationType: FieldType.boolean },
@@ -251,7 +252,7 @@ describe('field conversion transformer', () => {
       ],
     });
 
-    const booleans = fieldConversion(options, [comboTypes]);
+    const booleans = convertFieldType(options, [comboTypes]);
     expect(
       booleans[0].fields.map((f) => ({
         name: f.name,
@@ -270,7 +271,7 @@ describe('field conversion transformer', () => {
     ]);
   });
 
-  it('will convert to strings', () => {
+  it('will convert field to strings', () => {
     const options = {
       conversions: [{ targetField: 'numbers', destinationType: FieldType.string }],
     };
@@ -286,7 +287,7 @@ describe('field conversion transformer', () => {
       ],
     });
 
-    const stringified = fieldConversion(options, [comboTypes]);
+    const stringified = convertFieldType(options, [comboTypes]);
     expect(
       stringified[0].fields.map((f) => ({
         name: f.name,
@@ -309,6 +310,26 @@ describe('field conversion transformer', () => {
       },
     ]);
   });
+});
 
-  //test ensureTime
+describe('ensureTimeField', () => {
+  it('will make the field have a type of time if already a number', () => {
+    const stringTime = toDataFrame({
+      fields: [
+        {
+          name: 'proper dates',
+          type: FieldType.number,
+          values: [1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000],
+        },
+        { name: 'A', type: FieldType.number, values: [1, 2, 3, 4, 5] },
+      ],
+    });
+
+    expect(ensureTimeField(stringTime.fields[0])).toEqual({
+      config: {},
+      name: 'proper dates',
+      type: FieldType.time,
+      values: new ArrayVector([1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000]),
+    });
+  });
 });
