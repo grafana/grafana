@@ -73,7 +73,3 @@ func (r RemoteWriteOutput) Output(_ context.Context, _ OutputVars, frame *data.F
 	logger.Debug("Successfully sent to remote write endpoint", "url", r.config.Endpoint, "elapsed", time.Since(started))
 	return nil
 }
-
-// remoteWrite: {
-//   "grafana_cloud": "instance1"
-// }

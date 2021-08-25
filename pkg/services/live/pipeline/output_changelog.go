@@ -51,32 +51,37 @@ func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.
 		}
 	}
 
-	if previousFrameFieldIndex >= 0 && currentFrameFieldIndex >= 0 {
-		if !reflect.DeepEqual(
-			previousFrame.Fields[previousFrameFieldIndex].At(0),
-			frame.Fields[currentFrameFieldIndex].At(0),
-		) {
-			fTime := data.NewFieldFromFieldType(data.FieldTypeTime, 1)
-			fTime.Name = "time"
-			fTime.Set(0, time.Now())
-			f1 := data.NewFieldFromFieldType(previousFrame.Fields[previousFrameFieldIndex].Type(), 1)
-			f1.Set(0, previousFrame.Fields[previousFrameFieldIndex].At(0))
-			f1.Name = "old"
-			f2 := data.NewFieldFromFieldType(frame.Fields[currentFrameFieldIndex].Type(), 1)
-			f2.Set(0, frame.Fields[currentFrameFieldIndex].At(0))
-			f2.Name = "new"
-			changeFrame := data.NewFrame("change", fTime, f1, f2)
-			return l.pipeline.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, changeFrame)
+	var previousValue interface{}
+	if previousFrameFieldIndex >= 0 {
+		// Take last value for the field.
+		previousValue = previousFrame.Fields[previousFrameFieldIndex].At(previousFrame.Fields[previousFrameFieldIndex].Len() - 1)
+	}
+
+	if currentFrameFieldIndex >= 0 {
+		for i := 0; i < frame.Fields[currentFrameFieldIndex].Len(); i++ {
+			currentValue := frame.Fields[currentFrameFieldIndex].At(i)
+			if !reflect.DeepEqual(
+				previousValue,
+				currentValue,
+			) {
+				fTime := data.NewFieldFromFieldType(data.FieldTypeTime, 1)
+				fTime.Name = "time"
+				fTime.Set(0, time.Now())
+				f1 := data.NewFieldFromFieldType(frame.Fields[currentFrameFieldIndex].Type(), 1)
+				f1.Set(0, previousValue)
+				f1.Name = "old"
+				f2 := data.NewFieldFromFieldType(frame.Fields[currentFrameFieldIndex].Type(), 1)
+				f2.Set(0, currentValue)
+				f2.Name = "new"
+				changeFrame := data.NewFrame("change", fTime, f1, f2)
+				// TODO: construct single frame.
+				err = l.pipeline.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, changeFrame)
+				if err != nil {
+					return err
+				}
+				previousValue = currentValue
+			}
 		}
 	}
 	return nil
 }
-
-// frame1 value 0, 1, 2
-// frame2 value 3, 4
-
-// frame1 value 0
-// frame2 value 1
-// frame1 value 2
-// frame2 value 3
-// frame1 value 4
