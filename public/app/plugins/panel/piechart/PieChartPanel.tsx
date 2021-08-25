@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { LegendDisplayMode } from '@grafana/schema';
 import {
   DataHoverClearEvent,
   DataHoverEvent,
@@ -14,7 +15,6 @@ import { PieChart } from './PieChart';
 import { PieChartLegendOptions, PieChartLegendValues, PieChartOptions } from './types';
 import { Subscription } from 'rxjs';
 import {
-  LegendDisplayMode,
   SeriesVisibilityChangeBehavior,
   usePanelContext,
   useTheme2,

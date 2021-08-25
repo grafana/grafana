@@ -2,10 +2,10 @@ import uPlot, { Axis, AlignedData } from 'uplot';
 import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { VizTextDisplayOptions } from '@grafana/schema';
 import {
   calculateFontSize,
   PlotTooltipInterpolator,
-  VizTextDisplayOptions,
   StackingMode,
   BarValueVisibility,
   ScaleDirection,

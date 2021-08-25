@@ -9,10 +9,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -37,11 +37,6 @@ type ScheduleService interface {
 	evalApplied(models.AlertRuleKey, time.Time)
 	stopApplied(models.AlertRuleKey)
 	overrideCfg(cfg SchedulerCfg)
-}
-
-// Notifier handles the delivery of alert notifications to the end user
-type Notifier interface {
-	PutAlerts(alerts apimodels.PostableAlerts) error
 }
 
 type schedule struct {
@@ -74,14 +69,15 @@ type schedule struct {
 	ruleStore        store.RuleStore
 	instanceStore    store.InstanceStore
 	adminConfigStore store.AdminConfigurationStore
+	orgStore         store.OrgStore
 	dataService      *tsdb.Service
 
 	stateManager *state.Manager
 
 	appURL string
 
-	notifier Notifier
-	metrics  *metrics.Metrics
+	multiOrgNotifier *notifier.MultiOrgAlertmanager
+	metrics          *metrics.Metrics
 
 	// Senders help us send alerts to external Alertmanagers.
 	sendersMtx              sync.RWMutex
@@ -100,9 +96,10 @@ type SchedulerCfg struct {
 	StopAppliedFunc         func(models.AlertRuleKey)
 	Evaluator               eval.Evaluator
 	RuleStore               store.RuleStore
+	OrgStore                store.OrgStore
 	InstanceStore           store.InstanceStore
 	AdminConfigStore        store.AdminConfigurationStore
-	Notifier                Notifier
+	MultiOrgNotifier        *notifier.MultiOrgAlertmanager
 	Metrics                 *metrics.Metrics
 	AdminConfigPollInterval time.Duration
 }
@@ -122,9 +119,10 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, st
 		evaluator:               cfg.Evaluator,
 		ruleStore:               cfg.RuleStore,
 		instanceStore:           cfg.InstanceStore,
+		orgStore:                cfg.OrgStore,
 		dataService:             dataService,
 		adminConfigStore:        cfg.AdminConfigStore,
-		notifier:                cfg.Notifier,
+		multiOrgNotifier:        cfg.MultiOrgNotifier,
 		metrics:                 cfg.Metrics,
 		appURL:                  appURL,
 		stateManager:            stateManager,
@@ -454,10 +452,15 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				processedStates := sch.stateManager.ProcessEvalResults(alertRule, results)
 				sch.saveAlertStates(processedStates)
 				alerts := FromAlertStateToPostableAlerts(sch.log, processedStates, sch.stateManager, sch.appURL)
-				sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
-				err = sch.notifier.PutAlerts(alerts)
-				if err != nil {
-					sch.log.Error("failed to put alerts in the notifier", "count", len(alerts.PostableAlerts), "err", err)
+
+				sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts, "org", alertRule.OrgID)
+				n, err := sch.multiOrgNotifier.AlertmanagerFor(alertRule.OrgID)
+				if err == nil {
+					if err := n.PutAlerts(alerts); err != nil {
+						sch.log.Error("failed to put alerts in the notifier", "count", len(alerts.PostableAlerts), "err", err)
+					}
+				} else {
+					sch.log.Error("unable to lookup local notifier for this org - alerts not delivered", "org", alertRule.OrgID, "count", len(alerts.PostableAlerts), "err", err)
 				}
 
 				// Send alerts to external Alertmanager(s) if we have a sender for this organization.
