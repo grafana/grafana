@@ -10,7 +10,7 @@ import uPlot, { Series } from 'uplot';
 import {
   BarAlignment,
   BarConfig,
-  DrawStyle,
+  GraphDrawStyle,
   FillConfig,
   GraphGradientMode,
   LineConfig,
@@ -29,7 +29,7 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   thresholds?: ThresholdsConfig;
   /** Used when gradientMode is set to Scheme  */
   colorMode?: FieldColorMode;
-  drawStyle?: DrawStyle;
+  drawStyle?: GraphDrawStyle;
   pathBuilder?: Series.PathBuilder;
   pointsFilter?: Series.Points.Filter;
   pointsBuilder?: Series.Points.Show;
@@ -64,13 +64,13 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     let lineColor = this.getLineColor();
 
-    // DrawStyle.Points mode also needs this for fill/stroke sharing & re-use in series.points. see getColor() below.
+    // GraphDrawStyle.Points mode also needs this for fill/stroke sharing & re-use in series.points. see getColor() below.
     lineConfig.stroke = lineColor;
 
     if (pathBuilder != null) {
       lineConfig.paths = pathBuilder;
       lineConfig.width = lineWidth;
-    } else if (drawStyle === DrawStyle.Points) {
+    } else if (drawStyle === GraphDrawStyle.Points) {
       lineConfig.paths = () => null;
     } else if (drawStyle != null) {
       lineConfig.width = lineWidth;
@@ -109,11 +109,11 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       pointsConfig.points!.show = pointsBuilder;
     } else {
       // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
-      if (drawStyle === DrawStyle.Points) {
+      if (drawStyle === GraphDrawStyle.Points) {
         pointsConfig.points!.show = true;
       } else {
         if (showPoints === PointVisibility.Auto) {
-          if (drawStyle === DrawStyle.Bars) {
+          if (drawStyle === GraphDrawStyle.Bars) {
             pointsConfig.points!.show = false;
           }
         } else if (showPoints === PointVisibility.Never) {
@@ -184,7 +184,7 @@ interface PathBuilders {
 let builders: PathBuilders | undefined = undefined;
 
 function mapDrawStyleToPathBuilder(
-  style: DrawStyle,
+  style: GraphDrawStyle,
   lineInterpolation?: LineInterpolation,
   barAlignment = 0,
   barWidthFactor = 0.6,
@@ -202,7 +202,7 @@ function mapDrawStyleToPathBuilder(
     };
   }
 
-  if (style === DrawStyle.Bars) {
+  if (style === GraphDrawStyle.Bars) {
     // each bars pathBuilder is lazy-initialized and globally cached by a key composed of its options
     let barsCfgKey = `bars|${barAlignment}|${barWidthFactor}|${barMaxWidth}`;
 
@@ -214,7 +214,7 @@ function mapDrawStyleToPathBuilder(
     }
 
     return builders[barsCfgKey];
-  } else if (style === DrawStyle.Line) {
+  } else if (style === GraphDrawStyle.Line) {
     if (lineInterpolation === LineInterpolation.StepBefore) {
       return builders.stepBefore;
     }
