@@ -45,6 +45,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
@@ -54,7 +55,6 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
-  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition oss
   - ./bin/grabpl integration-tests --edition oss
@@ -294,6 +294,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
@@ -303,7 +304,6 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
-  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition oss
   - ./bin/grabpl integration-tests --edition oss
@@ -764,6 +764,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
@@ -773,7 +774,6 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
-  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition oss --tries 5
   - ./bin/grabpl integration-tests --edition oss --tries 5
@@ -1137,6 +1137,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise
   environment:
     CGO_ENABLED: 1
@@ -1146,7 +1147,6 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
-  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition enterprise --tries 5
   - ./bin/grabpl integration-tests --edition enterprise --tries 5
@@ -1199,6 +1199,7 @@ steps:
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise2
   environment:
     CGO_ENABLED: 1
@@ -1208,7 +1209,6 @@ steps:
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
-  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition enterprise2 --tries 5
   - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
@@ -1716,6 +1716,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
@@ -1725,7 +1726,6 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
-  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition oss --tries 5
   - ./bin/grabpl integration-tests --edition oss --tries 5
@@ -2078,6 +2078,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise
   environment:
     CGO_ENABLED: 1
@@ -2087,7 +2088,6 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
-  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition enterprise --tries 5
   - ./bin/grabpl integration-tests --edition enterprise --tries 5
@@ -2140,6 +2140,7 @@ steps:
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise2
   environment:
     CGO_ENABLED: 1
@@ -2149,7 +2150,6 @@ steps:
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
-  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition enterprise2 --tries 5
   - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
@@ -2650,6 +2650,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - ./bin/grabpl lint-backend --edition oss
   environment:
     CGO_ENABLED: 1
@@ -2659,7 +2660,6 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
-  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition oss
   - ./bin/grabpl integration-tests --edition oss
@@ -2983,6 +2983,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise
   environment:
     CGO_ENABLED: 1
@@ -2992,7 +2993,6 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
-  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition enterprise
   - ./bin/grabpl integration-tests --edition enterprise
@@ -3042,6 +3042,7 @@ steps:
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - ./bin/grabpl lint-backend --edition enterprise2
   environment:
     CGO_ENABLED: 1
@@ -3051,7 +3052,6 @@ steps:
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
-  - make gen-go
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --edition enterprise2
   - ./bin/grabpl integration-tests --edition enterprise2
@@ -3499,6 +3499,6 @@ get:
 
 ---
 kind: signature
-hmac: 9de2c50f084b3cbb84d604e5f1ccb26115f4e9e2fde8850a02271a0028fdfd5c
+hmac: 788159fb18cd63069b8dde25c261fc2c5eba8d78a48a958f2f5ebab8dfbb2a33
 
 ...

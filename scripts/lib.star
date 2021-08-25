@@ -225,6 +225,9 @@ def lint_backend_step(edition):
             'initialize',
         ],
         'commands': [
+            # Generate Go code, will install Wire
+            # TODO: Install Wire in Docker image instead
+            'make gen-go',
             # Don't use Make since it will re-download the linters
             './bin/grabpl lint-backend --edition {}'.format(edition),
         ],
@@ -452,9 +455,6 @@ def test_backend_step(edition, tries=None):
             'lint-backend',
         ],
         'commands': [
-            # Generate Go code, will install Wire
-            # TODO: Install Wire in Docker image instead
-            'make gen-go',
             # First make sure that there are no tests with FocusConvey
             '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
             # Then execute non-integration tests in parallel, since it should be safe
