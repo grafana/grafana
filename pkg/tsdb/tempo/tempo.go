@@ -15,16 +15,33 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
 
-	otlp "go.opentelemetry.io/collector/model/otlp"
+	"go.opentelemetry.io/collector/model/otlp"
 )
 
 type Service struct {
-	HTTPClientProvider   httpclient.Provider   `inject:""`
-	BackendPluginManager backendplugin.Manager `inject:""`
+	im   instancemgmt.InstanceManager
+	tlog log.Logger
+}
 
-	im instancemgmt.InstanceManager
+func ProvideService(httpClientProvider httpclient.Provider, manager backendplugin.Manager) (*Service, error) {
+	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
+
+	s := &Service{
+		tlog: log.New("tsdb.tempo"),
+		im:   im,
+	}
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
+
+	if err := manager.Register("tempo", factory); err != nil {
+		s.tlog.Error("Failed to register plugin", "error", err)
+		return nil, err
+	}
+
+	return s, nil
 }
 
 type datasourceInfo struct {
@@ -34,32 +51,6 @@ type datasourceInfo struct {
 
 type QueryModel struct {
 	TraceID string `json:"query"`
-}
-
-var (
-	tlog = log.New("tsdb.tempo")
-)
-
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "TempoService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
-	})
-}
-
-func (s *Service) Init() error {
-	s.im = datasource.NewInstanceManager(newInstanceSettings(s.HTTPClientProvider))
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	if err := s.BackendPluginManager.Register("tempo", factory); err != nil {
-		tlog.Error("Failed to register plugin", "error", err)
-	}
-
-	return nil
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -110,7 +101,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			tlog.Warn("failed to close response body", "err", err)
+			s.tlog.Warn("failed to close response body", "err", err)
 		}
 	}()
 
@@ -150,7 +141,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, tra
 
 	req.Header.Set("Accept", "application/protobuf")
 
-	tlog.Debug("Tempo request", "url", req.URL.String(), "headers", req.Header)
+	s.tlog.Debug("Tempo request", "url", req.URL.String(), "headers", req.Header)
 	return req, nil
 }
 
