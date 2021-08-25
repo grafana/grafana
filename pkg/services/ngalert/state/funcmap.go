@@ -2,8 +2,11 @@ package state
 
 import (
 	"fmt"
+	html_template "html/template"
 	"math"
+	"regexp"
 	"strconv"
+	"strings"
 	text_template "text/template"
 	"time"
 )
@@ -14,6 +17,13 @@ var funcMap = text_template.FuncMap{
 	"humanizeDuration":   humanizeDuration,
 	"humanizePercentage": humanizePercentage,
 	"humanizeTimestamp":  humanizeTimestamp,
+	"title":              strings.Title,
+	"toUpper":            strings.ToUpper,
+	"toLower":            strings.ToLower,
+	"match":              regexp.MatchString,
+	"reReplaceAll":       reReplaceAll,
+	"args":               args,
+	"safeHtml":           safeHtml,
 }
 
 func humanize(i interface{}) (string, error) {
@@ -143,4 +153,21 @@ func convertToFloat(i interface{}) (float64, error) {
 	default:
 		return 0, fmt.Errorf("can't convert %T to float", v)
 	}
+}
+
+func reReplaceAll(pattern, repl, text string) string {
+	re := regexp.MustCompile(pattern)
+	return re.ReplaceAllString(text, repl)
+}
+
+func args(args ...interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	for i, a := range args {
+		result[fmt.Sprintf("arg%d", i)] = a
+	}
+	return result
+}
+
+func safeHtml(text string) html_template.HTML {
+	return html_template.HTML(text)
 }

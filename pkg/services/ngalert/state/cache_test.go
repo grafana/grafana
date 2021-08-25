@@ -283,6 +283,26 @@ func TestExpandTemplate(t *testing.T) {
 		name:     "humanizeTimestamp - string",
 		text:     `{{ "1435065584.128" | humanizeTimestamp }}`,
 		expected: "2015-06-23 13:19:44.128 +0000 UTC",
+	}, {
+		name:     "title",
+		text:     "{{ \"aa bb CC\" | title }}",
+		expected: "Aa Bb CC",
+	}, {
+		name:     "toUpper",
+		text:     "{{ \"aa bb CC\" | toUpper }}",
+		expected: "AA BB CC",
+	}, {
+		name:     "toLower",
+		text:     "{{ \"aA bB CC\" | toLower }}",
+		expected: "aa bb cc",
+	}, {
+		name:     "match",
+		text:     "{{ match \"a+\" \"aa\" }} {{ match \"a+\" \"b\" }}",
+		expected: "true false",
+	}, {
+		name:     "match",
+		text:     "{{ match \"a+\" \"aa\" }} {{ match \"a+\" \"b\" }}",
+		expected: "true false",
 	},
 	}
 
