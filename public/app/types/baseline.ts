@@ -1,6 +1,8 @@
 export interface BaselineDTO {
+  id: string;
   startDate: string;
   endDate: string;
+  noOfDays?: string;
   kwh: string;
   minKw: string;
   maxKw: string;
