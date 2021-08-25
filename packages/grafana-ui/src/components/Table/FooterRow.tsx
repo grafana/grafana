@@ -21,7 +21,7 @@ export const FooterRow = (props: FooterRowProps) => {
   }
 
   return (
-    <div
+    <table
       style={{
         position: 'absolute',
         width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%',
@@ -31,20 +31,22 @@ export const FooterRow = (props: FooterRowProps) => {
       {footerGroups.map((footerGroup: HeaderGroup) => {
         const { key, ...footerGroupProps } = footerGroup.getFooterGroupProps();
         return (
-          <div
+          <tfoot
             className={tableStyles.tfoot}
             {...footerGroupProps}
             key={key}
             aria-label={e2eSelectorsTable.footer}
             style={height ? { height: `${height}px` } : undefined}
           >
-            {footerGroup.headers.map((column: ColumnInstance, index: number) =>
-              renderFooterCell(column, tableStyles, height)
-            )}
-          </div>
+            <tr>
+              {footerGroup.headers.map((column: ColumnInstance, index: number) =>
+                renderFooterCell(column, tableStyles, height)
+              )}
+            </tr>
+          </tfoot>
         );
       })}
-    </div>
+    </table>
   );
 };
 
@@ -63,9 +65,9 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, heig
   }
 
   return (
-    <div className={tableStyles.headerCell} {...footerProps}>
+    <th className={tableStyles.headerCell} {...footerProps}>
       {column.render('Footer')}
-    </div>
+    </th>
   );
 }
 
