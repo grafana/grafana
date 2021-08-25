@@ -250,25 +250,28 @@ export function transformFromOTLP(
       preferredVisualisationType: 'trace',
     },
   });
-
-  for (const data of traceData) {
-    const { serviceName, serviceTags } = resourceToProcess(data.resource);
-    for (const librarySpan of data.instrumentationLibrarySpans) {
-      for (const span of librarySpan.spans) {
-        frame.add({
-          traceID: transformBase64IDToHexString(span.traceId),
-          spanID: transformBase64IDToHexString(span.spanId),
-          parentSpanID: transformBase64IDToHexString(span.parentSpanId || ''),
-          operationName: span.name || '',
-          serviceName,
-          serviceTags,
-          startTime: span.startTimeUnixNano! / 1000000,
-          duration: (span.endTimeUnixNano! - span.startTimeUnixNano!) / 1000000,
-          tags: getSpanTags(span, librarySpan.instrumentationLibrary),
-          logs: getLogs(span),
-        } as TraceSpanRow);
+  try {
+    for (const data of traceData) {
+      const { serviceName, serviceTags } = resourceToProcess(data.resource);
+      for (const librarySpan of data.instrumentationLibrarySpans) {
+        for (const span of librarySpan.spans) {
+          frame.add({
+            traceID: transformBase64IDToHexString(span.traceId),
+            spanID: transformBase64IDToHexString(span.spanId),
+            parentSpanID: transformBase64IDToHexString(span.parentSpanId || ''),
+            operationName: span.name || '',
+            serviceName,
+            serviceTags,
+            startTime: span.startTimeUnixNano! / 1000000,
+            duration: (span.endTimeUnixNano! - span.startTimeUnixNano!) / 1000000,
+            tags: getSpanTags(span, librarySpan.instrumentationLibrary),
+            logs: getLogs(span),
+          } as TraceSpanRow);
+        }
       }
     }
+  } catch (error) {
+    return { error: { message: 'JSON is not valid OpenTelemetry format' }, data: [] };
   }
 
   return { data: [frame, ...createGraphFrames(frame)] };
