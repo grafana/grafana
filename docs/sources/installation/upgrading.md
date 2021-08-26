@@ -351,6 +351,8 @@ Refer to this [issue comment](https://github.com/grafana/grafana/issues/35534#is
 
 ### Use of unencrypted passwords for data sources no longer supported
 
-Since Grafana v6.2 new/updated data sources stores passwords and basic auth passwords encrypted, see [upgrade note]({{< relref "#ensure-encryption-of-data-source-secrets" >}}), while still allowing unencrypted passwords and basic auth passwords to be used. With Grafana v8.1 support for using unencrypted passwords and basic auth passwords has been removed.
+As of Grafana v8.1, we no longer support unencrypted storage of passwords and basic auth passwords.
 
-To migrate to encrypted storage, you can follow the instructions from the [v6.2 upgrade notes]({{< relref "#ensure-encryption-of-data-source-secrets" >}}). There's also a `grafana-cli` command available that allows you to migrate all of your data sources to use encrypted storage of secrets, see [migrate data and and encrypt passwords]({{< relref "../administration/cli.md#migrate-data-and-encrypt-passwords" >}}) for further instructions.
+>**Note":** Since Grafana v6.2, new/updated data sources stores passwords and basic auth passwords encrypted, see [upgrade note]({{< relref "#ensure-encryption-of-data-source-secrets" >}}). However, unencrypted passwords and basic auth passwords were allowed. 
+		
+To migrate to encrypted storage, follow the instructions from the [v6.2 upgrade notes]({{< relref "#ensure-encryption-of-data-source-secrets" >}}). You can also use a `grafana-cli` command to migrate all of your data sources to use encrypted storage of secrets. See [migrate data and encrypt passwords]({{< relref "../administration/cli.md#migrate-data-and-encrypt-passwords" >}}) for further instructions.
