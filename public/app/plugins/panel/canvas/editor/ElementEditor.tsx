@@ -1,12 +1,11 @@
 import React, { FC, useMemo } from 'react';
 import { Select } from '@grafana/ui';
 import { DataFrame, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
-import { BackgroundImageSize, CanvasElementItem, CanvasElementOptions } from '../base';
+import { CanvasElementItem, CanvasElementOptions } from '../base';
 import { canvasElementRegistry, DEFAULT_ELEMENT_CONFIG } from '../elements/registry';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVizualizationOptions';
-import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import { cloneDeep } from 'lodash';
 import { addBackgroundOptions, addBorderOptions } from './options';
 
