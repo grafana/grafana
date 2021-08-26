@@ -1,29 +1,30 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
-import { Icon, IconName, Link, useTheme } from '@grafana/ui';
+import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 
 export interface Props {
-  child: any;
+  isDivider?: boolean;
+  icon?: IconName;
+  text: string;
+  url?: string;
 }
 
-const DropDownChild: FC<Props> = (props) => {
-  const { child } = props;
-  const listItemClassName = child.divider ? 'divider' : '';
-  const theme = useTheme();
+const DropDownChild = ({ isDivider = false, icon, text, url }: Props) => {
+  const theme = useTheme2();
   const iconClassName = css`
-    margin-right: ${theme.spacing.sm};
+    margin-right: ${theme.spacing(1)};
   `;
 
   const linkContent = (
     <>
-      {child.icon && <Icon name={child.icon as IconName} className={iconClassName} />}
-      {child.text}
+      {icon && <Icon data-testid="dropdown-child-icon" name={icon} className={iconClassName} />}
+      {text}
     </>
   );
 
-  const anchor = child.url ? <Link href={child.url}>{linkContent}</Link> : <a>{linkContent}</a>;
+  const anchor = url ? <Link href={url}>{linkContent}</Link> : <a>{linkContent}</a>;
 
-  return <li className={listItemClassName}>{anchor}</li>;
+  return isDivider ? <li data-testid="dropdown-child-divider" className="divider" /> : <li>{anchor}</li>;
 };
 
 export default DropDownChild;
