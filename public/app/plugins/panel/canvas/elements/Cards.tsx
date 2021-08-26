@@ -16,7 +16,7 @@ interface CellProps {
 }
 function Cell(props: CellProps) {
   const { columnIndex, rowIndex, style, data } = props;
-  const { cards, columnCount, onSelectIcon, folder } = data;
+  const { cards, columnCount, onChange, folder } = data;
   const singleColumnIndex = columnIndex + rowIndex * columnCount;
   const card = cards[singleColumnIndex];
   const theme = useTheme2();
@@ -42,12 +42,8 @@ function Cell(props: CellProps) {
             backgroundColor: 'transparent',
           }}
         >
-          {folder === 'icon' && (
-            <SVG src={card.imgUrl} onClick={() => onSelectIcon(card.value)} className={styles.card} />
-          )}
-          {folder === 'background' && (
-            <img src={card.imgUrl} onClick={() => onSelectIcon(card.value)} className={styles.card} />
-          )}
+          {folder === 'icon' && <SVG src={card.imgUrl} onClick={() => onChange(card.value)} className={styles.card} />}
+          {folder === 'image' && <img src={card.imgUrl} onClick={() => onChange(card.value)} className={styles.card} />}
           <h6 className={styles.text}>{card.label.substr(0, card.label.length - 4)}</h6>
         </div>
       )}
@@ -102,14 +98,14 @@ function Search({
 }
 
 interface CardProps {
-  onSelectIcon: (value: string) => void;
+  onChange: (value: string) => void;
   value: BaseDimensionConfig;
   folder: string;
 }
 
 const Cards = (props: CardProps) => {
-  const { onSelectIcon, value, folder } = props;
-  const folders: { [key: string]: string } = { icon: 'img/icons/unicons/', image: 'img/bg' };
+  const { onChange, value, folder } = props;
+  const folders: { [key: string]: string } = { icon: 'img/icons/unicons/', image: 'img/bg/' };
   const [cards, setCards] = useState<SelectableValue[]>([]);
 
   const iconRoot = (window as any).__grafana_public_path__ + folders[folder];
@@ -163,7 +159,7 @@ const Cards = (props: CardProps) => {
                 columnWidth={cardWidth}
                 rowCount={rowCount}
                 rowHeight={cardHeight}
-                itemData={{ cards, columnCount, onSelectIcon, folder }}
+                itemData={{ cards, columnCount, onChange, folder }}
               >
                 {memo(Cell, areEqual)}
               </Grid>

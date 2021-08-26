@@ -6,14 +6,28 @@ import Cards from './Cards';
 import ImageUploader from './ImageUploader';
 
 const IconModal = (props: StandardEditorProps) => {
-  const { onChange, value, item } = props;
+  const { onChange, value, item, context } = props;
+  console.log(context);
   const [isOpen, setOpen] = useState(false);
-
   const [activeTab, setActiveTab] = useState('select');
   const [isOpenUpload, setIsOpenUpload] = useState(false);
 
-  const onSelectIcon = (value: string) => {
-    onChange({ fixed: value, mode: 'fixed' });
+  const imageRoot = (window as any).__grafana_public_path__ + 'img/bg/';
+
+  const onChangeItem = (value: string) => {
+    if (item.settings.resourceType === 'icon') {
+      onChange({
+        ...context.options.path,
+        fixed: value,
+        mode: 'fixed',
+      });
+    } else if (item.settings.resourceType === 'image') {
+      onChange({
+        ...context.options.background,
+        fixed: imageRoot + value,
+        mode: 'fixed',
+      });
+    }
     setOpen(false);
   };
 
@@ -40,7 +54,7 @@ const IconModal = (props: StandardEditorProps) => {
         <Modal isOpen={isOpen} title={modalHeader} onDismiss={() => setOpen(false)} closeOnEscape>
           <TabContent>
             {activeTab === 'select' && (
-              <Cards onSelectIcon={onSelectIcon} value={value} folder={item.settings.resourceType}></Cards>
+              <Cards onChange={onChangeItem} value={value} folder={item.settings.resourceType}></Cards>
             )}
             {activeTab === 'upload' && <Button onClick={() => setIsOpenUpload(true)}>Upload</Button>}
             {isOpenUpload && (
