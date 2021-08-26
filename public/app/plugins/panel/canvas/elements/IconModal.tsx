@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 import { Modal, Button, TabContent, ModalTabsHeader } from '@grafana/ui';
 import { StandardEditorProps } from '@grafana/data';
 
@@ -13,18 +13,28 @@ const IconModal = (props: StandardEditorProps) => {
   const [isOpenUpload, setIsOpenUpload] = useState(false);
 
   const imageRoot = (window as any).__grafana_public_path__ + 'img/bg/';
-
-  const onChangeItem = (value: string) => {
+  const iconRoot = (window as any).__grafana_public_path__ + 'img/icons/unicons';
+  const onChangeItem = (e: ChangeEvent<HTMLInputElement>) => {
     if (item.settings.resourceType === 'icon') {
-      onChange({
-        ...context.options.path,
-        fixed: value,
-        mode: 'fixed',
-      });
+      // enter url for icon
+      if (e.target) {
+        onChange({
+          ...context.options.path,
+          fixed: e.target.value.indexOf(':/') < 0 ? iconRoot + e.target.value : e.target.value,
+          mode: 'fixed',
+        });
+        // choose existing icon
+      } else {
+        onChange({
+          ...context.options.path,
+          fixed: e,
+          mode: 'fixed',
+        });
+      }
     } else if (item.settings.resourceType === 'image') {
       onChange({
         ...context.options.background,
-        fixed: imageRoot + value,
+        fixed: e.target.value.indexOf(':/') < 0 ? imageRoot + e.target.value : e.target.value,
         mode: 'fixed',
       });
     }

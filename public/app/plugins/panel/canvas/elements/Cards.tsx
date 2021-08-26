@@ -1,4 +1,4 @@
-import React, { memo, useState, ChangeEvent, CSSProperties, useEffect } from 'react';
+import React, { memo, useState, ChangeEvent, CSSProperties, useEffect, KeyboardEventHandler } from 'react';
 import { areEqual, FixedSizeGrid as Grid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2, SelectableValue } from '../../../../../../packages/grafana-data/src';
@@ -43,7 +43,7 @@ function Cell(props: CellProps) {
           }}
         >
           {folder === 'icon' && <SVG src={card.imgUrl} onClick={() => onChange(card.value)} className={styles.card} />}
-          {folder === 'image' && <img src={card.imgUrl} onClick={() => onChange(card.value)} className={styles.card} />}
+          {folder === 'image' && <img src={card.imgUrl} onClick={onChange} className={styles.card} />}
           <h6 className={styles.text}>{card.label.substr(0, card.label.length - 4)}</h6>
         </div>
       )}
@@ -75,16 +75,18 @@ function Search({
   onChangeSearch,
   value,
   folder,
+  onChange,
 }: {
   onChangeSearch: (e: ChangeEvent<HTMLInputElement>) => void;
   value: BaseDimensionConfig;
   folder: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <>
       <InlineFieldRow>
         <InlineField label="Current">
-          <Input defaultValue={value?.fixed} />
+          <Input defaultValue={value?.fixed} onChange={onChange} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -98,7 +100,7 @@ function Search({
 }
 
 interface CardProps {
-  onChange: (value: string) => void;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   value: BaseDimensionConfig;
   folder: string;
 }
@@ -136,7 +138,7 @@ const Cards = (props: CardProps) => {
 
   return (
     <>
-      <Search onChangeSearch={onChangeSearch} value={value} folder={folder} />
+      <Search onChangeSearch={onChangeSearch} value={value} folder={folder} onChange={onChange} />
       <div
         style={{
           minHeight: '100vh',
