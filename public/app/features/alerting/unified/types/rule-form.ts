@@ -2,7 +2,8 @@ import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alertin
 
 export enum RuleFormType {
   grafana = 'grafana',
-  cloud = 'cloud',
+  cloudAlerting = 'cloud-alerting',
+  cloudRecording = 'cloud-recording',
 }
 
 export interface RuleFormValues {

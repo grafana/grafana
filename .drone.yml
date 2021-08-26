@@ -17,7 +17,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -42,6 +42,16 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition oss
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -49,17 +59,7 @@ steps:
   - ./bin/grabpl test-backend --edition oss
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - initialize
-
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition oss
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-  - test-backend
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -68,15 +68,13 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -84,7 +82,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -92,7 +89,6 @@ steps:
   commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -107,11 +103,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
 
@@ -166,7 +160,6 @@ steps:
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
   depends_on:
-  - initialize
   - build-frontend-docs
 
 - name: copy-packages-for-docker
@@ -175,7 +168,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -186,7 +178,6 @@ steps:
     edition: oss
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -263,7 +254,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -300,6 +291,16 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition oss
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -307,17 +308,7 @@ steps:
   - ./bin/grabpl test-backend --edition oss
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - initialize
-
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition oss
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-  - test-backend
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -326,15 +317,13 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -342,7 +331,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -353,7 +341,6 @@ steps:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -368,11 +355,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
 
@@ -440,6 +425,7 @@ steps:
 - name: test-a11y-frontend
   image: buildkite/puppeteer
   commands:
+  - yarn wait-on http://$HOST:$PORT
   - yarn -s test:accessibility --json > pa11y-ci-results.json
   environment:
     GRAFANA_MISC_STATS_API_KEY:
@@ -474,7 +460,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -487,7 +472,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -500,7 +484,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -544,7 +527,6 @@ steps:
       from_secret: github_package_token
   depends_on:
   - end-to-end-tests
-  - end-to-end-tests-server
 
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
@@ -554,9 +536,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package
   - end-to-end-tests
-  - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
 
@@ -568,7 +548,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package
+  - end-to-end-tests-server
 
 services:
 - name: postgres
@@ -615,7 +595,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -664,7 +644,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   environment:
@@ -752,7 +732,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
@@ -778,6 +758,16 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition oss
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -785,17 +775,7 @@ steps:
   - ./bin/grabpl test-backend --edition oss --tries 5
   - ./bin/grabpl integration-tests --edition oss --tries 5
   depends_on:
-  - initialize
-
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition oss
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-  - test-backend
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -804,7 +784,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -814,8 +794,6 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -823,7 +801,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition oss --no-pull-enterprise ${DRONE_TAG}
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -834,7 +811,6 @@ steps:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -849,11 +825,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
 
@@ -911,7 +885,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -924,7 +897,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -937,7 +909,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -980,7 +951,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package
+  - end-to-end-tests-server
 
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
@@ -990,9 +961,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package
   - end-to-end-tests
-  - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
 
@@ -1065,7 +1034,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -1115,7 +1084,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -1160,6 +1129,16 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition enterprise
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -1167,17 +1146,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise --tries 5
   - ./bin/grabpl integration-tests --edition enterprise --tries 5
   depends_on:
-  - initialize
-
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition enterprise
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-  - test-backend
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -1186,7 +1155,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -1196,8 +1165,6 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -1205,7 +1172,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition enterprise --no-pull-enterprise ${DRONE_TAG}
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -1216,7 +1182,6 @@ steps:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -1226,6 +1191,16 @@ steps:
   depends_on:
   - build-backend
 
+- name: lint-backend-enterprise2
+  image: grafana/build-container:1.4.1
+  commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition enterprise2
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
@@ -1233,17 +1208,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise2 --tries 5
   - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
   depends_on:
-  - initialize
-
-- name: lint-backend-enterprise2
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition enterprise2
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-  - test-backend-enterprise2
+  - lint-backend
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -1253,8 +1218,6 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   depends_on:
-  - initialize
-  - lint-backend-enterprise2
   - test-backend-enterprise2
 
 - name: gen-version
@@ -1262,11 +1225,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
   - build-backend-enterprise2
@@ -1318,7 +1279,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -1331,7 +1291,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -1344,7 +1303,6 @@ steps:
       from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -1409,7 +1367,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package
+  - end-to-end-tests-server
 
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
@@ -1419,9 +1377,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package
   - end-to-end-tests
-  - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
   - redis-integration-tests
@@ -1445,16 +1401,6 @@ steps:
   depends_on:
   - gen-version
 
-- name: upload-cdn-assets-enterprise2
-  image: grafana/grafana-ci-deploy:1.3.1
-  commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
-  environment:
-    GCP_GRAFANA_UPLOAD_KEY:
-      from_secret: gcp_key
-  depends_on:
-  - package-enterprise2
-
 - name: end-to-end-tests-server-enterprise2
   image: grafana/build-container:1.4.1
   detach: true
@@ -1477,6 +1423,16 @@ steps:
   depends_on:
   - end-to-end-tests-server-enterprise2
 
+- name: upload-cdn-assets-enterprise2
+  image: grafana/grafana-ci-deploy:1.3.1
+  commands:
+  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  depends_on:
+  - end-to-end-tests-server-enterprise2
+
 - name: upload-packages-enterprise2
   image: grafana/grafana-ci-deploy:1.3.1
   commands:
@@ -1485,9 +1441,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package-enterprise2
   - end-to-end-tests-enterprise2
-  - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
   - redis-integration-tests
@@ -1548,7 +1502,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout ${DRONE_TAG}
@@ -1616,7 +1570,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
@@ -1724,7 +1678,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
@@ -1750,6 +1704,16 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition oss
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -1757,17 +1721,7 @@ steps:
   - ./bin/grabpl test-backend --edition oss --tries 5
   - ./bin/grabpl integration-tests --edition oss --tries 5
   depends_on:
-  - initialize
-
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition oss
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-  - test-backend
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -1776,7 +1730,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -1786,8 +1740,6 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -1795,7 +1747,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition oss --no-pull-enterprise v7.3.0-test
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -1806,7 +1757,6 @@ steps:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -1821,11 +1771,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version v7.3.0-test
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
 
@@ -1883,7 +1831,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -1893,7 +1840,6 @@ steps:
     edition: oss
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -1903,7 +1849,6 @@ steps:
     ubuntu: true
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -1946,7 +1891,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package
+  - end-to-end-tests-server
 
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
@@ -1956,9 +1901,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package
   - end-to-end-tests
-  - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
 
@@ -2026,7 +1969,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -2076,7 +2019,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2121,6 +2064,16 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition enterprise
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -2128,17 +2081,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise --tries 5
   - ./bin/grabpl integration-tests --edition enterprise --tries 5
   depends_on:
-  - initialize
-
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition enterprise
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-  - test-backend
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -2147,7 +2090,7 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -2157,8 +2100,6 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -2166,7 +2107,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition enterprise --no-pull-enterprise v7.3.0-test
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -2177,7 +2117,6 @@ steps:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -2187,6 +2126,16 @@ steps:
   depends_on:
   - build-backend
 
+- name: lint-backend-enterprise2
+  image: grafana/build-container:1.4.1
+  commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition enterprise2
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
@@ -2194,17 +2143,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise2 --tries 5
   - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
   depends_on:
-  - initialize
-
-- name: lint-backend-enterprise2
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition enterprise2
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-  - test-backend-enterprise2
+  - lint-backend
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -2214,8 +2153,6 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   depends_on:
-  - initialize
-  - lint-backend-enterprise2
   - test-backend-enterprise2
 
 - name: gen-version
@@ -2223,11 +2160,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version v7.3.0-test
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
   - build-backend-enterprise2
@@ -2279,7 +2214,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -2289,7 +2223,6 @@ steps:
     edition: enterprise
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -2299,7 +2232,6 @@ steps:
     ubuntu: true
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -2364,7 +2296,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package
+  - end-to-end-tests-server
 
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
@@ -2374,9 +2306,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package
   - end-to-end-tests
-  - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
   - redis-integration-tests
@@ -2400,16 +2330,6 @@ steps:
   depends_on:
   - gen-version
 
-- name: upload-cdn-assets-enterprise2
-  image: grafana/grafana-ci-deploy:1.3.1
-  commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
-  environment:
-    GCP_GRAFANA_UPLOAD_KEY:
-      from_secret: gcp_key
-  depends_on:
-  - package-enterprise2
-
 - name: end-to-end-tests-server-enterprise2
   image: grafana/build-container:1.4.1
   detach: true
@@ -2432,6 +2352,16 @@ steps:
   depends_on:
   - end-to-end-tests-server-enterprise2
 
+- name: upload-cdn-assets-enterprise2
+  image: grafana/grafana-ci-deploy:1.3.1
+  commands:
+  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  depends_on:
+  - end-to-end-tests-server-enterprise2
+
 - name: upload-packages-enterprise2
   image: grafana/grafana-ci-deploy:1.3.1
   commands:
@@ -2440,9 +2370,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package-enterprise2
   - end-to-end-tests-enterprise2
-  - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
   - redis-integration-tests
@@ -2503,7 +2431,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout main
@@ -2571,7 +2499,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
@@ -2679,7 +2607,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -2704,6 +2632,16 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition oss
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -2711,17 +2649,7 @@ steps:
   - ./bin/grabpl test-backend --edition oss
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - initialize
-
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition oss
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-  - test-backend
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -2730,15 +2658,13 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -2746,7 +2672,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -2757,7 +2682,6 @@ steps:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -2772,11 +2696,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
 
@@ -2834,7 +2756,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -2844,7 +2765,6 @@ steps:
     edition: oss
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -2854,7 +2774,6 @@ steps:
     ubuntu: true
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -2897,7 +2816,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package
+  - end-to-end-tests-server
 
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
@@ -2907,9 +2826,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package
   - end-to-end-tests
-  - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
 
@@ -2956,7 +2873,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -3002,7 +2919,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -3046,6 +2963,16 @@ steps:
   depends_on:
   - initialize
 
+- name: lint-backend
+  image: grafana/build-container:1.4.1
+  commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition enterprise
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -3053,17 +2980,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
-  - initialize
-
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition enterprise
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-  - test-backend
+  - lint-backend
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -3072,15 +2989,13 @@ steps:
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
-  - initialize
+  - lint-backend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
-  - lint-backend
   - test-backend
 
 - name: build-frontend
@@ -3088,7 +3003,6 @@ steps:
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition enterprise --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
-  - initialize
   - test-frontend
 
 - name: build-plugins
@@ -3099,7 +3013,6 @@ steps:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   depends_on:
-  - initialize
   - lint-backend
 
 - name: validate-scuemata
@@ -3109,6 +3022,16 @@ steps:
   depends_on:
   - build-backend
 
+- name: lint-backend-enterprise2
+  image: grafana/build-container:1.4.1
+  commands:
+  - make gen-go
+  - ./bin/grabpl lint-backend --edition enterprise2
+  environment:
+    CGO_ENABLED: 1
+  depends_on:
+  - initialize
+
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
@@ -3116,25 +3039,13 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise2
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
-  - initialize
-
-- name: lint-backend-enterprise2
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition enterprise2
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-  - test-backend-enterprise2
+  - lint-backend
 
 - name: build-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64 --no-pull-enterprise
   depends_on:
-  - initialize
-  - lint-backend-enterprise2
   - test-backend-enterprise2
 
 - name: gen-version
@@ -3142,11 +3053,9 @@ steps:
   commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - build-plugins
   - build-backend
   - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
   - codespell
   - shellcheck
   - build-backend-enterprise2
@@ -3208,7 +3117,6 @@ steps:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
-  - package
   - end-to-end-tests-server
 
 - name: build-docker-images
@@ -3218,7 +3126,6 @@ steps:
     edition: enterprise
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: build-docker-images-ubuntu
   image: grafana/drone-grafana-docker:0.3.2
@@ -3228,7 +3135,6 @@ steps:
     ubuntu: true
   depends_on:
   - copy-packages-for-docker
-  - end-to-end-tests-server
 
 - name: postgres-integration-tests
   image: grafana/build-container:1.4.1
@@ -3293,7 +3199,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package
+  - end-to-end-tests-server
 
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.3.1
@@ -3303,9 +3209,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package
   - end-to-end-tests
-  - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
   - redis-integration-tests
@@ -3329,16 +3233,6 @@ steps:
   depends_on:
   - gen-version
 
-- name: upload-cdn-assets-enterprise2
-  image: grafana/grafana-ci-deploy:1.3.1
-  commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
-  environment:
-    GCP_GRAFANA_UPLOAD_KEY:
-      from_secret: gcp_key
-  depends_on:
-  - package-enterprise2
-
 - name: end-to-end-tests-server-enterprise2
   image: grafana/build-container:1.4.1
   detach: true
@@ -3361,6 +3255,16 @@ steps:
   depends_on:
   - end-to-end-tests-server-enterprise2
 
+- name: upload-cdn-assets-enterprise2
+  image: grafana/grafana-ci-deploy:1.3.1
+  commands:
+  - ./bin/grabpl upload-cdn --edition enterprise2 --bucket "grafana-static-assets"
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  depends_on:
+  - end-to-end-tests-server-enterprise2
+
 - name: upload-packages-enterprise2
   image: grafana/grafana-ci-deploy:1.3.1
   commands:
@@ -3369,9 +3273,7 @@ steps:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
   depends_on:
-  - package-enterprise2
   - end-to-end-tests-enterprise2
-  - end-to-end-tests-server
   - mysql-integration-tests
   - postgres-integration-tests
   - redis-integration-tests
@@ -3432,7 +3334,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.3.2/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.4.0/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout $$env:DRONE_BRANCH
@@ -3576,6 +3478,6 @@ get:
 
 ---
 kind: signature
-hmac: 6749d86d569d62f93921aa7151a29af34fd26764657754cc5dcbf220ff57cc16
+hmac: da2adb3b1a629dad5050630a1ea2923c994647223dbe6efde88dcfea8faebcc1
 
 ...
