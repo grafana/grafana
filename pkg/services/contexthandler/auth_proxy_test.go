@@ -10,9 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -30,6 +28,10 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	const userID = int64(1)
 	const orgID = int64(4)
 
+	svc := getContextHandler(t)
+
+	// XXX: These handlers have to be injected AFTER calling getContextHandler, since the latter
+	// creates a SQLStore which installs its own handlers.
 	upsertHandler := func(cmd *models.UpsertUserCommand) error {
 		require.Equal(t, name, cmd.ExternalUser.Login)
 		cmd.Result = &models.User{Id: userID}
@@ -52,8 +54,6 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	t.Cleanup(func() {
 		bus.ClearBusHandlers()
 	})
-
-	svc := getContextHandler(t)
 
 	req, err := http.NewRequest("POST", "http://example.com", nil)
 	require.NoError(t, err)
@@ -90,15 +90,10 @@ type fakeRenderService struct {
 	rendering.Service
 }
 
-func (s *fakeRenderService) Init() error {
-	return nil
-}
-
 func getContextHandler(t *testing.T) *ContextHandler {
 	t.Helper()
 
 	sqlStore := sqlstore.InitTestDB(t)
-	remoteCacheSvc := &remotecache.RemoteCache{}
 
 	cfg := setting.NewCfg()
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
@@ -107,38 +102,11 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	cfg.AuthProxyHeaderName = "X-Killa"
 	cfg.AuthProxyEnabled = true
 	cfg.AuthProxyHeaderProperty = "username"
+	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore)
+	require.NoError(t, err)
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
-	svc := &ContextHandler{}
 
-	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
-		{
-			Name:     sqlstore.ServiceName,
-			Instance: sqlStore,
-		},
-		{
-			Name:     remotecache.ServiceName,
-			Instance: remoteCacheSvc,
-		},
-		{
-			Name:     auth.ServiceName,
-			Instance: userAuthTokenSvc,
-		},
-		{
-			Name:     rendering.ServiceName,
-			Instance: renderSvc,
-		},
-		{
-			Name:     jwt.ServiceName,
-			Instance: authJWTSvc,
-		},
-		{
-			Name:     ServiceName,
-			Instance: svc,
-		},
-	})
-	require.NoError(t, err)
-
-	return svc
+	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore)
 }

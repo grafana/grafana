@@ -8,10 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
@@ -19,43 +17,44 @@ import (
 )
 
 // NewService returns a new Service.
-func NewService() Service {
-	return Service{
-		//nolint: staticcheck // plugins.DataPlugin deprecated
-		registry: map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
-	}
+func NewService(
+	cfg *setting.Cfg, pluginManager plugins.Manager, backendPluginManager backendplugin.Manager,
+	oauthTokenService *oauthtoken.Service, httpClientProvider httpclient.Provider, cloudMonitoringService *cloudmonitoring.Service,
+	postgresService *postgres.PostgresService,
+) *Service {
+	s := newService(cfg, pluginManager, backendPluginManager, oauthTokenService)
+
+	// register backend data sources using legacy plugin
+	// contracts/non-SDK contracts
+	s.registry["mssql"] = mssql.NewExecutor
+	s.registry["postgres"] = postgresService.NewExecutor
+	s.registry["mysql"] = mysql.New(httpClientProvider)
+	s.registry["stackdriver"] = cloudMonitoringService.NewExecutor
+
+	return s
 }
 
-func init() {
-	svc := NewService()
-	registry.Register(&registry.Descriptor{
-		Name:     "DataService",
-		Instance: &svc,
-	})
+func newService(cfg *setting.Cfg, manager plugins.Manager, backendPluginManager backendplugin.Manager,
+	oauthTokenService oauthtoken.OAuthTokenService) *Service {
+	return &Service{
+		Cfg:                  cfg,
+		PluginManager:        manager,
+		BackendPluginManager: backendPluginManager,
+		// nolint:staticcheck // plugins.DataPlugin deprecated
+		registry:          map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
+		OAuthTokenService: oauthTokenService,
+	}
 }
 
 // Service handles data requests to data sources.
 type Service struct {
-	Cfg                    *setting.Cfg              `inject:""`
-	PostgresService        *postgres.PostgresService `inject:""`
-	CloudMonitoringService *cloudmonitoring.Service  `inject:""`
-	AzureMonitorService    *azuremonitor.Service     `inject:""`
-	PluginManager          plugins.Manager           `inject:""`
-	BackendPluginManager   backendplugin.Manager     `inject:""`
-	HTTPClientProvider     httpclient.Provider       `inject:""`
-	OAuthTokenService      *oauthtoken.Service       `inject:""`
+	Cfg                  *setting.Cfg
+	PluginManager        plugins.Manager
+	BackendPluginManager backendplugin.Manager
+	OAuthTokenService    oauthtoken.OAuthTokenService
 
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
-}
-
-// Init initialises the service.
-func (s *Service) Init() error {
-	s.registry["mssql"] = mssql.NewExecutor
-	s.registry["postgres"] = s.PostgresService.NewExecutor
-	s.registry["mysql"] = mysql.New(s.HTTPClientProvider)
-	s.registry["stackdriver"] = s.CloudMonitoringService.NewExecutor
-	return nil
 }
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
@@ -64,6 +63,7 @@ func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 		var err error
 		plugin, err := factory(ds)
 		if err != nil {
+			//nolint: staticcheck // plugins.DataPlugin deprecated
 			return plugins.DataResponse{}, fmt.Errorf("could not instantiate endpoint for data plugin %q: %w",
 				ds.Type, err)
 		}
