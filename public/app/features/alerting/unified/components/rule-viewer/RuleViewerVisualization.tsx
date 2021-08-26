@@ -25,6 +25,7 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
   const defaultPanel = isExpressionQuery(query.model) ? TABLE : TIMESERIES;
   const [panel, setPanel] = useState<SupportedPanelPlugins>(defaultPanel);
   const dsSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+  const relativeTimeRange = query.relativeTimeRange;
   const [options, setOptions] = useState<PanelOptions>({
     frameIndex: 0,
     showHeader: true,
@@ -51,7 +52,6 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
     );
   }
 
-  const relativeTimeRange = query.relativeTimeRange;
   const onTimeChange = (newDateTime: DateTime) => {
     const now = dateTime().unix() - newDateTime.unix();
 
@@ -64,10 +64,9 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
     }
   };
 
-  let datetime = dateTime();
-  if (relativeTimeRange) {
-    datetime = relativeTimeRange.to === 0 ? dateTime() : dateTime().subtract(relativeTimeRange.to, 'seconds');
-  }
+  const setDateTime = (relativeTimeRangeTo: number) => {
+    return relativeTimeRangeTo === 0 ? dateTime() : dateTime().subtract(relativeTimeRangeTo, 'seconds');
+  };
 
   return (
     <div className={styles.content}>
@@ -81,7 +80,9 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
                   <span className={styles.dataSource}>({dsSettings.name})</span>
                 </div>
                 <div className={styles.actions}>
-                  {!isExpressionQuery(query.model) ? <DateTimePicker date={datetime} onChange={onTimeChange} /> : null}
+                  {!isExpressionQuery(query.model) && relativeTimeRange ? (
+                    <DateTimePicker date={setDateTime(relativeTimeRange.to)} onChange={onTimeChange} />
+                  ) : null}
                   <PanelPluginsButtonGroup onChange={setPanel} value={panel} size="md" />
                   {!isExpressionQuery(query.model) && (
                     <>
