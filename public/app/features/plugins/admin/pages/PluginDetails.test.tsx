@@ -136,11 +136,11 @@ describe('Plugin details page', () => {
     expect(queryByRole('button', { name: /uninstall/i })).toBeInTheDocument();
   });
 
-  it('should display install button for enterprise plugins if ', async () => {
+  it('should display install button for enterprise plugins if there is a valid license', async () => {
     config.licenseInfo.hasValidLicense = true;
     const { queryByRole } = setup('enterprise');
 
-    await waitFor(() => expect(queryByRole('button', { name: /install/i })).not.toBeInTheDocument());
+    await waitFor(() => expect(queryByRole('button', { name: /install/i })).toBeInTheDocument());
   });
 
   it('should not display install button for enterprise plugins if license is invalid', async () => {
@@ -168,7 +168,7 @@ describe('Plugin details page', () => {
     await waitFor(() => expect(queryByRole('link', { name: /uninstall via grafana.com/i })).toBeInTheDocument());
   });
 
-  it('should display update and uninstall links for a plugin with update', async () => {
+  it('should display update and uninstall links for a plugin with update and pluginAdminExternalManageEnabled true', async () => {
     config.pluginAdminExternalManageEnabled = true;
     const { queryByRole } = setup('has-update');
 
