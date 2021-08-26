@@ -1,9 +1,16 @@
-import { createTraceFrame } from './responseTransform';
+import { createTraceFrame, transformToJaeger } from './responseTransform';
 import { testResponse, testResponseDataFrameFields } from './testResponse';
+import { MutableDataFrame } from '@grafana/data';
 
 describe('createTraceFrame', () => {
   it('creates data frame from jaeger response', () => {
     const dataFrame = createTraceFrame(testResponse);
     expect(dataFrame.fields).toMatchObject(testResponseDataFrameFields);
+  });
+
+  fit('transforms to jaeger format from data frame', () => {
+    const dataFrame = createTraceFrame(testResponse);
+    const response = transformToJaeger(new MutableDataFrame(dataFrame));
+    expect(response).toMatchObject(testResponse);
   });
 });

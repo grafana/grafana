@@ -22,6 +22,9 @@ export function createTraceFrame(data: TraceResponse): DataFrame {
     ],
     meta: {
       preferredVisualisationType: 'trace',
+      custom: {
+        traceFormat: 'jaeger',
+      },
     },
   });
 
@@ -106,4 +109,58 @@ function transformToTraceData(data: TraceResponse) {
     duration: traceData.duration,
     traceName: traceData.traceName,
   };
+}
+
+export function transformToJaeger(data: MutableDataFrame): TraceResponse {
+  let response: TraceResponse = {
+    traceID: '',
+    spans: [],
+    processes: {},
+    warnings: null,
+  };
+  let processes: string[] = [];
+
+  for (let i = 0; i < data.length; i++) {
+    const span = data.get(i);
+
+    // Set traceID
+    if (!response.traceID) {
+      response.traceID = span.traceID;
+    }
+
+    // Create process if doesn't exist
+    if (!processes.find((p) => p === span.serviceName)) {
+      processes.push(span.serviceName);
+      response.processes[`p${processes.length}`] = {
+        serviceName: span.serviceName,
+        tags: span.serviceTags,
+      };
+    }
+
+    // Create span
+    response.spans.push({
+      traceID: span.traceID,
+      spanID: span.spanID,
+      duration: span.duration * 1000,
+      references: span.parentSpanID
+        ? [
+            {
+              refType: 'CHILD_OF',
+              spanID: span.parentSpanID,
+              traceID: span.traceID,
+            },
+          ]
+        : [],
+      flags: 0,
+      logs: span.logs,
+      operationName: span.operationName,
+      processID:
+        Object.keys(response.processes).find((key) => response.processes[key].serviceName === span.serviceName) || '',
+      startTime: span.startTime * 1000,
+      tags: span.tags,
+      warnings: span.warnings ? span.warnings : null,
+    });
+  }
+
+  return response;
 }
