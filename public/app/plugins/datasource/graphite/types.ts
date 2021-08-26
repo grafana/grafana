@@ -79,8 +79,3 @@ export type GraphiteQueryEditorDependencies = {
   queries: DataQuery[];
   refresh: (target: string) => void;
 };
-
-export type AngularDropdownOptions = {
-  text: string;
-  value: string;
-};
