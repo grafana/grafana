@@ -6,7 +6,11 @@ import { getCatalogPluginDetails, isOrgAdmin } from '../helpers';
 import { ActionTypes, PluginDetailsActions, PluginDetailsState } from '../types';
 import { PLUGIN_TAB_LABELS } from '../constants';
 
-const defaultTabs = [{ label: PLUGIN_TAB_LABELS.OVERVIEW }, { label: PLUGIN_TAB_LABELS.VERSIONS }];
+type Tab = {
+  label: PLUGIN_TAB_LABELS;
+};
+
+const defaultTabs: Tab[] = [{ label: PLUGIN_TAB_LABELS.OVERVIEW }, { label: PLUGIN_TAB_LABELS.VERSIONS }];
 
 const initialState = {
   hasInstalledPanel: false,
@@ -124,7 +128,7 @@ export const usePluginDetails = (id: string) => {
 
   useEffect(() => {
     const pluginConfig = state.pluginConfig;
-    const tabs: Array<{ label: string }> = [...defaultTabs];
+    const tabs: Tab[] = [...defaultTabs];
 
     if (pluginConfig && userCanConfigurePlugins) {
       if (pluginConfig.meta.type === PluginType.app) {
@@ -134,10 +138,11 @@ export const usePluginDetails = (id: string) => {
           });
         }
 
+        // Configuration pages with custom labels
         if (pluginConfig.configPages) {
           for (const page of pluginConfig.configPages) {
             tabs.push({
-              label: page.title,
+              label: page.title as PLUGIN_TAB_LABELS,
             });
           }
         }
