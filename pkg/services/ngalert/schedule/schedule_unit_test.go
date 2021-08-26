@@ -151,7 +151,7 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	// Eventually, our Alertmanager should have received at least two alerts.
 	require.Eventually(t, func() bool {
 		return fakeAM.AlertsCount() == 2 && fakeAM.AlertNamesCompare([]string{alertRuleOrgOne.Title, alertRuleOrgTwo.Title})
-	}, 20*time.Second, 200*time.Millisecond)
+	}, 30*time.Second, 200*time.Millisecond)
 
 	// 2. Next, let's modify the configuration of an organization by adding an extra alertmanager.
 	fakeAM2 := NewFakeExternalAlertmanager(t)
