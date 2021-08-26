@@ -246,14 +246,14 @@ $navbarBorder: 1px solid $gray-5;
 
 // Sidemenu
 // -------------------------
-$side-menu-bg: ${theme.v1.palette.gray15};
+$side-menu-bg: ${theme.colors.primary.main};
 $side-menu-border: 1px solid ${theme.v1.palette.gray25};
 $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
-$side-menu-item-hover-bg: ${theme.v1.palette.gray25};
+$side-menu-item-hover-bg: ${theme.v1.palette.gray25}; //
 $side-menu-shadow: 5px 0px 10px -5px $gray-1;
 $side-menu-link-color: $gray-4;
-$side-menu-icon-color: ${theme.v1.palette.gray70};
-$side-menu-header-color: ${theme.v1.palette.gray95};
+$side-menu-icon-color: ${theme.v1.palette.white}; //
+$side-menu-header-color: ${theme.colors.primary.main};
 
 // Menu dropdowns
 // -------------------------

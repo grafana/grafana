@@ -10,7 +10,7 @@ export interface Props {
 
 const TopSectionItem: FC<Props> = ({ link, onClick }) => {
   const linkContent = (
-    <span className="icon-circle sidemenu-icon">
+    <span className="sidemenu-icon">
       {link.icon && <Icon name={link.icon as any} size="xl" />}
       {link.img && <img src={link.img} />}
     </span>

@@ -1,4 +1,5 @@
 $mobile-menu-breakpoint: md;
+$side-menu-icon-height: 50px;
 
 .sidemenu {
   position: fixed;
@@ -7,7 +8,7 @@ $mobile-menu-breakpoint: md;
   flex-direction: column;
   width: $side-menu-width;
   z-index: $zindex-sidemenu;
-  border-right: $panel-border;
+  // border-right: $panel-border;
 
   a:focus {
     text-decoration: none;
@@ -56,23 +57,33 @@ $mobile-menu-breakpoint: md;
 
 .sidemenu-item {
   position: relative;
-  @include left-brand-border();
+  height: $side-menu-icon-height;
+  margin: 5px 0;
+  border-right: 5px solid $side-menu-bg;
+  // @include left-brand-border();
 
   @include media-breakpoint-up($mobile-menu-breakpoint) {
     &.active,
     &:hover {
-      background-color: $side-menu-item-hover-bg;
-      @include left-brand-border-gradient();
+      // background-color: $side-menu-item-hover-bg;
+      background-color: transparent;
+      // @include left-brand-border-gradient();
+      border-right-color: $side-menu-icon-color;
+      
+      .sidemenu-link {
+        background: $side-menu-icon-color;
+        color: $side-menu-bg !important;
+      }
 
       .dropdown-menu {
         border: none;
         margin: 0;
         display: block;
         opacity: 0;
-        top: 0px;
+        top: 0;
         // important to overlap it otherwise it can be hidden
         // again by the mouse getting outside the hover space
-        left: $side-menu-width - 3px;
+        left: $side-menu-width - 1px;
         @include animation('dropdown-anim 150ms ease-in-out 100ms forwards');
         z-index: $zindex-sidemenu;
       }
@@ -80,13 +91,27 @@ $mobile-menu-breakpoint: md;
   }
 }
 
+.sidemenu-item.dropdown {
+  display: flex;
+  align-items: center;
+}
+
 .dropup.sidemenu-item:hover .dropdown-menu {
   top: auto !important;
+  bottom: 0;
 }
 
 .sidemenu-link {
+  border-top-left-radius: 50%;
+  border-bottom-left-radius: 50%;
+  height: $side-menu-icon-height;
+  width: $side-menu-icon-height;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: $side-menu-icon-color !important;
-  line-height: 42px;
+  line-height: $side-menu-icon-height;
   padding: 0px 10px 0px 10px;
   display: block;
   position: relative;
@@ -126,8 +151,9 @@ $mobile-menu-breakpoint: md;
 .side-menu-header {
   padding: 10px 10px 10px 20px;
   white-space: nowrap;
-  background-color: $side-menu-item-hover-bg;
+  background-color: #fff;
   font-size: 17px;
+  height: $side-menu-icon-height;
   color: $side-menu-header-color;
 }
 
@@ -138,8 +164,8 @@ $mobile-menu-breakpoint: md;
 }
 
 .dropdown-menu--sidemenu > li > .side-menu-header-link:hover {
-  color: #fff !important;
-  background-color: $side-menu-item-hover-bg !important;
+  color: #9fa7b3 !important;
+  background-color: transparent !important;
 }
 
 .sidemenu-subtitle {
@@ -185,7 +211,7 @@ li.sidemenu-org-switcher {
   height: $navbarHeight - 1px;
 
   &:hover {
-    background: lightOrDark($gray33, $gray25);
+    background: lightOrDark($side-menu-bg, $gray25);
   }
 
   img {
