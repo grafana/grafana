@@ -1,15 +1,14 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/evaluator"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -17,15 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/macaron.v1"
 )
 
 func loggedInUserScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
@@ -170,35 +168,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
-	ctxHdlr := &contexthandler.ContextHandler{}
-
-	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
-		{
-			Name:     sqlstore.ServiceName,
-			Instance: sqlStore,
-		},
-		{
-			Name:     remotecache.ServiceName,
-			Instance: remoteCacheSvc,
-		},
-		{
-			Name:     auth.ServiceName,
-			Instance: userAuthTokenSvc,
-		},
-		{
-			Name:     rendering.ServiceName,
-			Instance: renderSvc,
-		},
-		{
-			Name:     jwt.ServiceName,
-			Instance: authJWTSvc,
-		},
-		{
-			Name:     contexthandler.ServiceName,
-			Instance: ctxHdlr,
-		},
-	})
-	require.NoError(t, err)
+	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore)
 
 	return ctxHdlr
 }
@@ -231,29 +201,6 @@ func (s *fakeRenderService) Init() error {
 	return nil
 }
 
-var _ accesscontrol.AccessControl = new(fakeAccessControl)
-
-type fakeAccessControl struct {
-	isDisabled  bool
-	permissions []*accesscontrol.Permission
-}
-
-func (f *fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
-	return evaluator.Evaluate(ctx, f, user, permission, scope...)
-}
-
-func (f *fakeAccessControl) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {
-	return f.permissions, nil
-}
-
-func (f *fakeAccessControl) IsDisabled() bool {
-	return f.isDisabled
-}
-
-func (f *fakeAccessControl) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
-	return nil
-}
-
 func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
 	cfg.FeatureToggles = make(map[string]bool)
 	cfg.FeatureToggles["accesscontrol"] = true
@@ -261,7 +208,10 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 	hs := &HTTPServer{
 		Cfg:           cfg,
 		RouteRegister: routing.NewRouteRegister(),
-		AccessControl: &fakeAccessControl{permissions: permissions},
+		QuotaService: &quota.QuotaService{
+			Cfg: cfg,
+		},
+		AccessControl: accesscontrolmock.New().WithPermissions(permissions),
 	}
 
 	sc := setupScenarioContext(t, url)

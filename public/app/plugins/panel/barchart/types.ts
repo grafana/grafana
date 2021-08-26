@@ -1,6 +1,14 @@
-import { OptionsWithLegend, OptionsWithTextFormatting, OptionsWithTooltip } from '@grafana/schema';
+import {
+  OptionsWithLegend,
+  OptionsWithTextFormatting,
+  OptionsWithTooltip,
+  AxisConfig,
+  BarValueVisibility,
+  GraphGradientMode,
+  HideableFieldConfig,
+  StackingMode,
+} from '@grafana/schema';
 import { VizOrientation } from '@grafana/data';
-import { AxisConfig, BarValueVisibility, GraphGradientMode, HideableFieldConfig, StackingMode } from '@grafana/ui';
 
 /**
  * @alpha

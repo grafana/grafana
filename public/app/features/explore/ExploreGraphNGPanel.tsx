@@ -14,7 +14,6 @@ import {
   TimeZone,
 } from '@grafana/data';
 import {
-  DrawStyle,
   Icon,
   PanelContext,
   PanelContextProvider,
@@ -25,7 +24,7 @@ import {
   useTheme2,
   ZoomPlugin,
 } from '@grafana/ui';
-import { LegendDisplayMode, TooltipDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, TooltipDisplayMode, GraphDrawStyle } from '@grafana/schema';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { ContextMenuPlugin } from 'app/plugins/panel/timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from 'app/plugins/panel/timeseries/plugins/ExemplarsPlugin';
@@ -84,7 +83,7 @@ export function ExploreGraphNGPanel({
         mode: FieldColorModeId.PaletteClassic,
       },
       custom: {
-        drawStyle: DrawStyle.Line,
+        drawStyle: GraphDrawStyle.Line,
         fillOpacity: 0,
         pointSize: 5,
       },
