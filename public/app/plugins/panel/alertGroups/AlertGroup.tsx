@@ -5,7 +5,7 @@ import { useStyles2, LinkButton } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 import { AlertLabels } from 'app/features/alerting/unified/components/AlertLabels';
-import { AmNotificationsGroupHeader } from 'app/features/alerting/unified/components/amnotifications/AmNotificationsGroupHeader';
+import { AlertGroupHeader } from 'app/features/alerting/unified/components/alert-groups/AlertGroupHeader';
 import { CollapseToggle } from 'app/features/alerting/unified/components/CollapseToggle';
 import { getNotificationsTextColors } from 'app/features/alerting/unified/styles/notifications';
 import { makeAMLink } from 'app/features/alerting/unified/utils/misc';
@@ -33,7 +33,7 @@ export const AlertGroup = ({ alertManagerSourceName, group, expandAll }: Props) 
       )}
       <div className={styles.row}>
         <CollapseToggle isCollapsed={!showAlerts} onToggle={() => setShowAlerts(!showAlerts)} />{' '}
-        <AmNotificationsGroupHeader group={group} />
+        <AlertGroupHeader group={group} />
       </div>
       {showAlerts && (
         <div className={styles.alerts}>

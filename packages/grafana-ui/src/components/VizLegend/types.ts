@@ -1,6 +1,7 @@
-import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
 import React from 'react';
-import { LegendDisplayMode, LegendPlacement } from './models.gen';
+
+import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
+import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 
 export enum SeriesVisibilityChangeBehavior {
   Isolate,

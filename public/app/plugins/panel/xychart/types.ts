@@ -1,4 +1,4 @@
-import { OptionsWithTooltip, OptionsWithLegend } from '@grafana/ui';
+import { OptionsWithTooltip, OptionsWithLegend } from '@grafana/schema';
 export interface XYDimensionConfig {
   frame: number;
   x?: string; // name | first
