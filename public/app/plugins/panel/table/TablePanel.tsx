@@ -1,7 +1,19 @@
-import React, { Component } from 'react';
+import React, { Component, ReactNode } from 'react';
 
 import { Select, Table } from '@grafana/ui';
-import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
+import {
+  DataFrame,
+  FieldMatcherID,
+  FieldType,
+  getFrameDisplayName,
+  PanelProps,
+  SelectableValue,
+  Vector,
+  vectorator,
+  KeyValue,
+  formattedValueToString,
+  Field,
+} from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
@@ -91,8 +103,63 @@ export class TablePanel extends Component<Props> {
         onSortByChange={this.onSortByChange}
         onColumnResize={this.onColumnResize}
         onCellFilterAdded={this.onCellFilterAdded}
+        footer={this.getFooter(frame)}
       />
     );
+  }
+
+  getFooter(frame: DataFrame): ReactNode[] | undefined {
+    const { options } = this.props;
+    if (!options.showFooter) {
+      return undefined;
+    }
+
+    return frame.fields.map((f) => {
+      if (f.type !== FieldType.number) {
+        return;
+      }
+
+      if (options.footerFunctions && options.footerFunctions !== 'avg') {
+        const kv = this as KeyValue;
+        const func: Function = kv[options.footerFunctions];
+        const val = this.calculate(f.values, func);
+        return this.format(val, f);
+      }
+
+      const val = this.mean(f.values);
+      return this.format(val, f);
+    });
+  }
+
+  format(val: number, f: Field) {
+    const displayValue = f.display ? f.display(val) : { text: String(val) };
+    return f.display ? formattedValueToString(displayValue) : displayValue;
+  }
+
+  calculate(values: Vector<any>, func: Function) {
+    let calc = 0;
+    const itr = vectorator(values);
+    for (const v of itr) {
+      calc = func(calc, v);
+    }
+    return calc;
+  }
+
+  sum(acc: number, v: number) {
+    return (acc += v);
+  }
+
+  min(v: number, n: number) {
+    return v < n ? v : n;
+  }
+
+  max(v: number, n: number) {
+    return v > n ? v : n;
+  }
+
+  mean(values: Vector<any>) {
+    const sum = this.calculate(values, this.sum);
+    return sum / values.length;
   }
 
   getCurrentFrameIndex() {
@@ -121,6 +188,9 @@ export class TablePanel extends Component<Props> {
           value: index,
         };
       });
+
+      // TODO: something like this to allow passing in pre-calculated footer values?
+      // const footer = data.series.find((f) => f.meta?.custom?.['footer'] !== undefined);
 
       return (
         <div className={tableStyles.wrapper}>

@@ -75,10 +75,33 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
     },
   })
   .setPanelOptions((builder) => {
-    builder.addBooleanSwitch({
-      path: 'showHeader',
-      name: 'Show header',
-      description: "To display table's header or not to display",
-      defaultValue: defaultPanelOptions.showHeader,
-    });
+    builder
+      .addBooleanSwitch({
+        path: 'showHeader',
+        name: 'Show header',
+        description: "To display table's header or not to display",
+        defaultValue: defaultPanelOptions.showHeader,
+      })
+      .addBooleanSwitch({
+        path: 'showFooter',
+        name: 'Show footer',
+        description: 'Show/hide footers in table',
+        defaultValue: defaultPanelOptions.showFooter,
+      })
+      .addSelect({
+        path: 'footerFunctions',
+        name: 'Footer functions',
+        description: 'Functions to calculate footer values',
+        settings: {
+          multi: true,
+          options: [
+            { value: 'min', label: 'Min' },
+            { value: 'max', label: 'Max' },
+            { value: 'sum', label: 'Sum' },
+            { value: 'avg', label: 'Avg' },
+          ],
+        },
+        defaultValue: defaultPanelOptions.footerFunctions,
+        showIf: (currentConfig) => currentConfig.showFooter === true,
+      });
   });

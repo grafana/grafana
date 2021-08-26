@@ -25,7 +25,9 @@ Family: {
                 PanelOptions: {
                     frameIndex: number | *0
                     showHeader: bool | *true
+                    showFooter: bool | *false
                     sortBy?: [...ui.TableSortByFieldState]
+                    footerFunctions?: string | *"sum"
                 }
                 PanelFieldConfig: {
                     width?: int
