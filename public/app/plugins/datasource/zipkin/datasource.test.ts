@@ -42,6 +42,18 @@ describe('ZipkinDatasource', () => {
       expect(field.type).toBe(FieldType.string);
       expect(field.values.length).toBe(3);
     });
+
+    it('should fail on invalid json file upload', async () => {
+      const ds = new ZipkinDatasource(defaultSettings);
+      ds.uploadedJson = JSON.stringify({ key: 'value', arr: [] });
+      const response = await lastValueFrom(
+        ds.query({
+          targets: [{ queryType: 'upload', refId: 'A' }],
+        } as any)
+      );
+      expect(response.error?.message).toBeDefined();
+      expect(response.data.length).toBe(0);
+    });
   });
 
   describe('metadataRequest', () => {

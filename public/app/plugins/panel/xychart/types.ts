@@ -1,4 +1,4 @@
-import { OptionsWithTooltip, OptionsWithLegend } from '@grafana/ui';
+import { OptionsWithTooltip, OptionsWithLegend } from '@grafana/schema';
 import { DataFrame, Field } from '@grafana/data';
 import {
   ColorDimensionConfig,
