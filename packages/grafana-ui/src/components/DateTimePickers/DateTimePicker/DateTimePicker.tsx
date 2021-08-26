@@ -190,6 +190,7 @@ const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onClose, onChange, 
         locale="en"
         className={calendarStyles.body}
         tileClassName={calendarStyles.title}
+        maxDate={new Date()}
       />
       <div className={styles.time}>
         <TimeOfDayPicker showSeconds={true} onChange={onChangeTime} value={dateTime(internalDate)} />
