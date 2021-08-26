@@ -314,7 +314,7 @@ func TestManager(t *testing.T) {
 type managerScenarioCtx struct {
 	cfg     *setting.Cfg
 	license *testLicensingService
-	manager *manager
+	manager *Manager
 	factory backendplugin.PluginFactoryFunc
 	plugin  *testPlugin
 	env     []string
@@ -335,7 +335,7 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 	ctx := &managerScenarioCtx{
 		cfg:     cfg,
 		license: license,
-		manager: &manager{
+		manager: &Manager{
 			Cfg:                    cfg,
 			License:                license,
 			PluginRequestValidator: validator,
@@ -344,9 +344,6 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 			PluginManagerV2:        &fakePluginManagerV2{},
 		},
 	}
-
-	err := ctx.manager.Init()
-	require.NoError(t, err)
 
 	ctx.factory = func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
 		ctx.plugin = &testPlugin{

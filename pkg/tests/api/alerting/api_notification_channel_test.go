@@ -36,9 +36,10 @@ func TestTestReceivers(t *testing.T) {
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			EnableFeatureToggles: []string{"ngalert"},
 		})
-		store := testinfra.SetUpDatabase(t, dir)
+
+		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 		store.Bus = bus.GetBus()
-		grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
 		createUser(t, store, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
@@ -65,9 +66,10 @@ func TestTestReceivers(t *testing.T) {
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			EnableFeatureToggles: []string{"ngalert"},
 		})
-		store := testinfra.SetUpDatabase(t, dir)
+
+		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 		store.Bus = bus.GetBus()
-		grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
 		createUser(t, store, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
@@ -131,9 +133,10 @@ func TestTestReceivers(t *testing.T) {
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			EnableFeatureToggles: []string{"ngalert"},
 		})
-		store := testinfra.SetUpDatabase(t, dir)
+
+		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 		store.Bus = bus.GetBus()
-		grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
 		createUser(t, store, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
@@ -193,9 +196,10 @@ func TestTestReceivers(t *testing.T) {
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			EnableFeatureToggles: []string{"ngalert"},
 		})
-		store := testinfra.SetUpDatabase(t, dir)
+
+		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 		store.Bus = bus.GetBus()
-		grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
 		createUser(t, store, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
@@ -264,9 +268,10 @@ func TestTestReceivers(t *testing.T) {
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			EnableFeatureToggles: []string{"ngalert"},
 		})
-		store := testinfra.SetUpDatabase(t, dir)
+
+		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 		store.Bus = bus.GetBus()
-		grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
 		createUser(t, store, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
 			Login:          "grafana",
@@ -358,9 +363,8 @@ func TestNotificationChannels(t *testing.T) {
 		DisableAnonymous:     true,
 	})
 
-	s := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
 	s.Bus = bus.GetBus()
-	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, s)
 
 	mockChannel := newMockNotificationChannel(t, grafanaListedAddr)
 	amConfig := getAlertmanagerConfig(mockChannel.server.Addr)

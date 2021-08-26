@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -46,9 +45,9 @@ var corePluginPaths = map[string]string{
 }
 
 type PluginManagerV2 struct {
-	Cfg                    *setting.Cfg                  `inject:""`
-	License                models.Licensing              `inject:""`
-	PluginRequestValidator models.PluginRequestValidator `inject:""`
+	Cfg                    *setting.Cfg
+	License                models.Licensing
+	PluginRequestValidator models.PluginRequestValidator
 	pluginInstaller        plugins.PluginInstaller
 	pluginLoader           loader.Loader
 
@@ -57,21 +56,29 @@ type PluginManagerV2 struct {
 	pluginsMu sync.RWMutex
 }
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "PluginManagerV2",
-		Instance:     &PluginManagerV2{},
-		InitPriority: registry.MediumHigh,
-	})
+func ProvideServiceV2(cfg *setting.Cfg, license models.Licensing,
+	requestValidator models.PluginRequestValidator) (*PluginManagerV2, error) {
+	pm := newManagerV2(cfg, license, requestValidator)
+	if err := pm.init(); err != nil {
+		return nil, err
+	}
+	return pm, nil
 }
 
-func (m *PluginManagerV2) Init() error {
+func newManagerV2(cfg *setting.Cfg, license models.Licensing,
+	pluginRequestValidator models.PluginRequestValidator) *PluginManagerV2 {
+	return &PluginManagerV2{
+		Cfg:     cfg,
+		plugins: map[string]*plugins.PluginV2{},
+		log:     log.New("plugin.managerv2"),
+	}
+}
+
+func (m *PluginManagerV2) init() error {
 	if !m.IsEnabled() {
 		return nil
 	}
 
-	m.plugins = map[string]*plugins.PluginV2{}
-	m.log = log.New("plugin.managerv2")
 	m.pluginInstaller = installer.New(false, m.Cfg.BuildVersion, NewInstallerLogger("plugin.installer", true))
 	m.pluginLoader = loader.New(nil, nil, m.Cfg)
 

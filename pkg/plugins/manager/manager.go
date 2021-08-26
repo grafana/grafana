@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -52,10 +51,10 @@ type PluginScanner struct {
 }
 
 type PluginManager struct {
-	BackendPluginManager backendplugin.Manager `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
-	SQLStore             *sqlstore.SQLStore    `inject:""`
-	PluginManagerV2      plugins.ManagerV2     `inject:""`
+	BackendPluginManager backendplugin.Manager
+	Cfg                  *setting.Cfg
+	SQLStore             *sqlstore.SQLStore
+	PluginManagerV2      plugins.ManagerV2
 	pluginInstaller      plugins.PluginInstaller
 	log                  log.Logger
 	scanningErrors       []error
@@ -76,28 +75,33 @@ type PluginManager struct {
 	pluginsMu    sync.RWMutex
 }
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "PluginManager",
-		Instance:     newManager(nil),
-		InitPriority: registry.MediumHigh,
-	})
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager,
+	pluginManagerV2 plugins.ManagerV2) (*PluginManager, error) {
+	pm := newManager(cfg, sqlStore, backendPM, pluginManagerV2)
+	if err := pm.init(); err != nil {
+		return nil, err
+	}
+	return pm, nil
 }
 
-func newManager(cfg *setting.Cfg) *PluginManager {
+func newManager(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager,
+	pluginManagerV2 plugins.ManagerV2) *PluginManager {
 	return &PluginManager{
-		Cfg:         cfg,
-		dataSources: map[string]*plugins.DataSourcePlugin{},
-		plugins:     map[string]*plugins.PluginBase{},
-		panels:      map[string]*plugins.PanelPlugin{},
-		apps:        map[string]*plugins.AppPlugin{},
+		Cfg:                  cfg,
+		SQLStore:             sqlStore,
+		BackendPluginManager: backendPM,
+		PluginManagerV2:      pluginManagerV2,
+		dataSources:          map[string]*plugins.DataSourcePlugin{},
+		plugins:              map[string]*plugins.PluginBase{},
+		panels:               map[string]*plugins.PanelPlugin{},
+		apps:                 map[string]*plugins.AppPlugin{},
+		pluginScanningErrors: map[string]plugins.PluginError{},
+		log:                  log.New("plugins"),
 	}
 }
 
-func (pm *PluginManager) Init() error {
-	pm.log = log.New("plugins")
+func (pm *PluginManager) init() error {
 	plog = log.New("plugins")
-	pm.pluginScanningErrors = map[string]plugins.PluginError{}
 	pm.pluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
 
 	if pm.v2Enabled() {
@@ -124,12 +128,7 @@ func (pm *PluginManager) Init() error {
 		}
 	}
 
-	err = pm.initExternalPlugins()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return pm.initExternalPlugins()
 }
 
 func (pm *PluginManager) initExternalPlugins() error {

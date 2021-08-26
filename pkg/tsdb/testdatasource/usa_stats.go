@@ -36,7 +36,7 @@ type usaQuery struct {
 	period        time.Duration
 }
 
-func (p *testDataPlugin) handleUSAScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *TestDataPlugin) handleUSAScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
