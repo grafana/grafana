@@ -34,11 +34,19 @@ const MonacoQueryField = (props: Props) => {
         language="promql"
         value={initialValue}
         onBeforeEditorMount={(monaco) => {
-          setupPromQL(
-            monaco,
-            () => lpRef.current,
-            () => historyRef.current
-          );
+          // we construct a DataProvider object
+          const getSeries = (selector: string) => lpRef.current.getSeries(selector);
+
+          const getHistory = () =>
+            Promise.resolve(historyRef.current.map((h) => h.query.expr).filter((expr) => expr !== undefined));
+
+          const getAllMetricNames = () => {
+            const { metricsMetadata } = lpRef.current;
+            const result = metricsMetadata == null ? [] : Object.keys(metricsMetadata);
+            return Promise.resolve(result);
+          };
+
+          setupPromQL(monaco, { getSeries, getHistory, getAllMetricNames });
         }}
         onEditorDidMount={(editor, monaco) => {
           // this code makes the editor resize itself so that the content fits

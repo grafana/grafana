@@ -1,11 +1,6 @@
 import type { Intent, Label } from './intent';
-import { HistoryItem } from '@grafana/data';
-import { PromQuery } from '../../types';
-import type LangProvider from '../../language_provider';
 import { NeverCaseError } from './util';
 import { FUNCTIONS } from '../../promql';
-
-type PromHistoryItem = HistoryItem<PromQuery>;
 
 type Completion = {
   label: string;
@@ -13,12 +8,17 @@ type Completion = {
   triggerOnInsert?: boolean;
 };
 
+export type DataProvider = {
+  getHistory: () => Promise<string[]>;
+  getAllMetricNames: () => Promise<string[]>;
+  getSeries: (selector: string) => Promise<Record<string, string[]>>;
+};
+
 // we order items like: history, functions, metrics
 
-async function getAllMetricNamesCompletions(langProvider: LangProvider): Promise<Completion[]> {
-  const { metricsMetadata } = langProvider;
-  const texts = metricsMetadata == null ? [] : Object.keys(metricsMetadata);
-  return texts.map((text) => ({
+async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
+  const names = await dataProvider.getAllMetricNames();
+  return names.map((text) => ({
     label: text,
     insertText: text,
   }));
@@ -39,14 +39,12 @@ function getAllDurationsCompletions(): Completion[] {
   }));
 }
 
-function getAllHistoryCompletions(queryHistory: PromHistoryItem[]): Completion[] {
+async function getAllHistoryCompletions(dataProvider: DataProvider): Promise<Completion[]> {
+  // function getAllHistoryCompletions(queryHistory: PromHistoryItem[]): Completion[] {
   // NOTE: the typescript types are wrong. historyItem.query.expr can be undefined
-  const exprs = queryHistory
-    .map((h) => h.query.expr)
-    .filter((expr) => expr !== undefined)
-    .slice(0, 10); // FIXME: better limit
-
-  return exprs.map((expr) => ({
+  const allHistory = await dataProvider.getHistory();
+  // FIXME: find a better history-limit
+  return allHistory.slice(0, 10).map((expr) => ({
     label: expr,
     insertText: expr,
   }));
@@ -63,10 +61,10 @@ async function getLabelNamesForCompletions(
   suffix: string,
   triggerOnInsert: boolean,
   otherLabels: Label[],
-  langProvider: LangProvider
+  dataProvider: DataProvider
 ): Promise<Completion[]> {
   const selector = makeSelector(metric, otherLabels);
-  const data = await langProvider.getSeries(selector);
+  const data = await dataProvider.getSeries(selector);
   const possibleLabelNames = Object.keys(data); // all names from prometheus
   const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
   const labelNames = possibleLabelNames.filter((l) => !usedLabelNames.has(l));
@@ -80,26 +78,26 @@ async function getLabelNamesForCompletions(
 async function getLabelNamesForSelectorCompletions(
   metric: string,
   otherLabels: Label[],
-  langProvider: LangProvider
+  dataProvider: DataProvider
 ): Promise<Completion[]> {
-  return getLabelNamesForCompletions(metric, '=', true, otherLabels, langProvider);
+  return getLabelNamesForCompletions(metric, '=', true, otherLabels, dataProvider);
 }
 async function getLabelNamesForByCompletions(
   metric: string,
   otherLabels: Label[],
-  langProvider: LangProvider
+  dataProvider: DataProvider
 ): Promise<Completion[]> {
-  return getLabelNamesForCompletions(metric, '', false, otherLabels, langProvider);
+  return getLabelNamesForCompletions(metric, '', false, otherLabels, dataProvider);
 }
 
 async function getLabelValuesForMetricCompletions(
   metric: string,
   labelName: string,
   otherLabels: Label[],
-  langProvider: LangProvider
+  dataProvider: DataProvider
 ): Promise<Completion[]> {
   const selector = makeSelector(metric, otherLabels);
-  const data = await langProvider.getSeries(selector);
+  const data = await dataProvider.getSeries(selector);
   const values = data[labelName] ?? [];
   return values.map((text) => ({
     label: text,
@@ -107,30 +105,27 @@ async function getLabelValuesForMetricCompletions(
   }));
 }
 
-export async function getCompletions(
-  intent: Intent,
-  langProvider: LangProvider,
-  queryHistory: PromHistoryItem[]
-): Promise<Completion[]> {
+export async function getCompletions(intent: Intent, dataProvider: DataProvider): Promise<Completion[]> {
   switch (intent.type) {
     case 'ALL_DURATIONS':
       return getAllDurationsCompletions();
     case 'ALL_METRIC_NAMES':
-      return getAllMetricNamesCompletions(langProvider);
+      return getAllMetricNamesCompletions(dataProvider);
     case 'FUNCTIONS_AND_ALL_METRIC_NAMES': {
-      const metricNames = await getAllMetricNamesCompletions(langProvider);
+      const metricNames = await getAllMetricNamesCompletions(dataProvider);
       return [...getAllFunctionsCompletions(), ...metricNames];
     }
     case 'HISTORY_AND_FUNCTIONS_AND_ALL_METRIC_NAMES': {
-      const metricNames = await getAllMetricNamesCompletions(langProvider);
-      return [...getAllHistoryCompletions(queryHistory), ...getAllFunctionsCompletions(), ...metricNames];
+      const metricNames = await getAllMetricNamesCompletions(dataProvider);
+      const historyCompletions = await getAllHistoryCompletions(dataProvider);
+      return [...historyCompletions, ...getAllFunctionsCompletions(), ...metricNames];
     }
     case 'LABEL_NAMES_FOR_SELECTOR':
-      return getLabelNamesForSelectorCompletions(intent.metricName, intent.otherLabels, langProvider);
+      return getLabelNamesForSelectorCompletions(intent.metricName, intent.otherLabels, dataProvider);
     case 'LABEL_NAMES_FOR_BY':
-      return getLabelNamesForByCompletions(intent.metricName, intent.otherLabels, langProvider);
+      return getLabelNamesForByCompletions(intent.metricName, intent.otherLabels, dataProvider);
     case 'LABEL_VALUES':
-      return getLabelValuesForMetricCompletions(intent.metricName, intent.labelName, intent.otherLabels, langProvider);
+      return getLabelValuesForMetricCompletions(intent.metricName, intent.labelName, intent.otherLabels, dataProvider);
     default:
       throw new NeverCaseError(intent);
   }

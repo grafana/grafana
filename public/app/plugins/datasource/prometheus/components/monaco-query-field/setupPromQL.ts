@@ -1,17 +1,11 @@
-import { HistoryItem } from '@grafana/data';
 import { promLanguageDefinition } from 'monaco-promql';
-import { PromQuery } from '../../types';
 import type { monaco as monacoNS, Monaco } from './monacoTypes';
 import { getIntent } from './intent';
-import { getCompletions } from './completions';
-import type PromQlLanguageProvider from '../../language_provider';
-
-type PromHistoryItem = HistoryItem<PromQuery>;
+import { getCompletions, DataProvider } from './completions';
 
 function getMonacoCompletionItemProvider(
   monaco: Monaco,
-  getLP: () => PromQlLanguageProvider,
-  getHistory: () => PromHistoryItem[]
+  dataProvider: DataProvider
 ): monacoNS.languages.CompletionItemProvider {
   const provideCompletionItems = (
     model: monacoNS.editor.ITextModel,
@@ -35,7 +29,7 @@ function getMonacoCompletionItemProvider(
     };
     const offset = model.getOffsetAt(positionClone);
     const intent = getIntent(model.getValue(), offset);
-    const completionsPromise = intent != null ? getCompletions(intent, getLP(), getHistory()) : Promise.resolve([]);
+    const completionsPromise = intent != null ? getCompletions(intent, dataProvider) : Promise.resolve([]);
     return completionsPromise.then((items) => {
       // monaco by-default alphabetically orders the items.
       // to stop it, we use a number-as-string sortkey,
@@ -64,17 +58,13 @@ function getMonacoCompletionItemProvider(
   };
 }
 
-export const setupPromQL = (
-  monaco: Monaco,
-  getLP: () => PromQlLanguageProvider,
-  getHistory: () => PromHistoryItem[]
-) => {
+export const setupPromQL = (monaco: Monaco, dataProvider: DataProvider) => {
   const langId = promLanguageDefinition.id;
   monaco.languages.register(promLanguageDefinition);
   promLanguageDefinition.loader().then((mod) => {
     monaco.languages.setMonarchTokensProvider(langId, mod.language);
     monaco.languages.setLanguageConfiguration(langId, mod.languageConfiguration);
-    const completionProvider = getMonacoCompletionItemProvider(monaco, getLP, getHistory);
+    const completionProvider = getMonacoCompletionItemProvider(monaco, dataProvider);
     monaco.languages.registerCompletionItemProvider(langId, completionProvider);
   });
 
