@@ -462,159 +462,113 @@ describe('RuleList', () => {
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
   });
 
-  it('rename cortex namespace and group', async () => {
+  describe('edit lotex groups, namespaces', () => {
     const testDatasources = {
       prom: dataSources.prom,
     };
-    mocks.getAllDataSourcesMock.mockReturnValue(Object.values(testDatasources));
-    setDataSourceSrv(new MockDataSourceSrv(testDatasources));
-    mocks.api.fetchRules.mockImplementation((sourceName) =>
-      Promise.resolve(sourceName === testDatasources.prom.name ? somePromRules() : [])
-    );
-    mocks.api.fetchRulerRules.mockImplementation((sourceName) =>
-      Promise.resolve(sourceName === testDatasources.prom.name ? someRulerRules : {})
-    );
-    mocks.api.setRulerRuleGroup.mockResolvedValue();
-    mocks.api.deleteNamespace.mockResolvedValue();
 
-    await renderRuleList();
+    function testCase(name: string, fn: () => Promise<void>) {
+      it(name, async () => {
+        mocks.getAllDataSourcesMock.mockReturnValue(Object.values(testDatasources));
+        setDataSourceSrv(new MockDataSourceSrv(testDatasources));
+        mocks.api.fetchRules.mockImplementation((sourceName) =>
+          Promise.resolve(sourceName === testDatasources.prom.name ? somePromRules() : [])
+        );
+        mocks.api.fetchRulerRules.mockImplementation((sourceName) =>
+          Promise.resolve(sourceName === testDatasources.prom.name ? someRulerRules : {})
+        );
+        mocks.api.setRulerRuleGroup.mockResolvedValue();
+        mocks.api.deleteNamespace.mockResolvedValue();
 
-    expect(await ui.rulesFilterInput.find()).toHaveValue('');
+        await renderRuleList();
 
-    const groups = await ui.ruleGroup.findAll();
-    expect(groups).toHaveLength(3);
+        expect(await ui.rulesFilterInput.find()).toHaveValue('');
 
-    // open edit dialog
-    userEvent.click(ui.editCloudGroupIcon.get(groups[0]));
+        const groups = await ui.ruleGroup.findAll();
+        expect(groups).toHaveLength(3);
 
-    expect(ui.editGroupModal.namespaceInput.get()).toHaveValue('namespace1');
-    expect(ui.editGroupModal.ruleGroupInput.get()).toHaveValue('group1');
+        // open edit dialog
+        userEvent.click(ui.editCloudGroupIcon.get(groups[0]));
 
-    // make changes
-    userEvent.clear(ui.editGroupModal.namespaceInput.get());
-    await userEvent.type(ui.editGroupModal.namespaceInput.get(), 'super namespace');
+        expect(ui.editGroupModal.namespaceInput.get()).toHaveValue('namespace1');
+        expect(ui.editGroupModal.ruleGroupInput.get()).toHaveValue('group1');
+        await fn();
+      });
+    }
 
-    userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
-    await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
+    testCase('rename both lotex namespace and group', async () => {
+      // make changes to form
+      userEvent.clear(ui.editGroupModal.namespaceInput.get());
+      await userEvent.type(ui.editGroupModal.namespaceInput.get(), 'super namespace');
 
-    await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
+      userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
+      await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
 
-    // submit, check that appropriate calls were made
-    userEvent.click(ui.editGroupModal.saveButton.get());
+      await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
-    await waitFor(() => expect(ui.editGroupModal.namespaceInput.query()).not.toBeInTheDocument());
+      // submit, check that appropriate calls were made
+      userEvent.click(ui.editGroupModal.saveButton.get());
 
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledTimes(2);
-    expect(mocks.api.deleteNamespace).toHaveBeenCalledTimes(1);
-    expect(mocks.api.deleteGroup).not.toHaveBeenCalled();
-    expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(1, testDatasources.prom.name, 'super namespace', {
-      ...someRulerRules['namespace1'][0],
-      name: 'super group',
-      interval: '5m',
+      await waitFor(() => expect(ui.editGroupModal.namespaceInput.query()).not.toBeInTheDocument());
+
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledTimes(2);
+      expect(mocks.api.deleteNamespace).toHaveBeenCalledTimes(1);
+      expect(mocks.api.deleteGroup).not.toHaveBeenCalled();
+      expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(1, testDatasources.prom.name, 'super namespace', {
+        ...someRulerRules['namespace1'][0],
+        name: 'super group',
+        interval: '5m',
+      });
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(
+        2,
+        testDatasources.prom.name,
+        'super namespace',
+        someRulerRules['namespace1'][1]
+      );
+      expect(mocks.api.deleteNamespace).toHaveBeenLastCalledWith('Prometheus', 'namespace1');
     });
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(
-      2,
-      testDatasources.prom.name,
-      'super namespace',
-      someRulerRules['namespace1'][1]
-    );
-    expect(mocks.api.deleteNamespace).toHaveBeenLastCalledWith('Prometheus', 'namespace1');
-  });
 
-  it('rename cortex group', async () => {
-    const testDatasources = {
-      prom: dataSources.prom,
-    };
-    mocks.getAllDataSourcesMock.mockReturnValue(Object.values(testDatasources));
-    setDataSourceSrv(new MockDataSourceSrv(testDatasources));
-    mocks.api.fetchRules.mockImplementation((sourceName) =>
-      Promise.resolve(sourceName === testDatasources.prom.name ? somePromRules() : [])
-    );
-    mocks.api.fetchRulerRules.mockImplementation((sourceName) =>
-      Promise.resolve(sourceName === testDatasources.prom.name ? someRulerRules : {})
-    );
-    mocks.api.setRulerRuleGroup.mockResolvedValue();
-    mocks.api.deleteGroup.mockResolvedValue();
+    testCase('rename just the lotex group', async () => {
+      // make changes to form
+      userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
+      await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
+      await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
-    await renderRuleList();
+      // submit, check that appropriate calls were made
+      userEvent.click(ui.editGroupModal.saveButton.get());
 
-    expect(await ui.rulesFilterInput.find()).toHaveValue('');
+      await waitFor(() => expect(ui.editGroupModal.namespaceInput.query()).not.toBeInTheDocument());
 
-    const groups = await ui.ruleGroup.findAll();
-    expect(groups).toHaveLength(3);
-
-    // open edit dialog
-    userEvent.click(ui.editCloudGroupIcon.get(groups[0]));
-
-    expect(ui.editGroupModal.namespaceInput.get()).toHaveValue('namespace1');
-    expect(ui.editGroupModal.ruleGroupInput.get()).toHaveValue('group1');
-
-    // make changes
-    userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
-    await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
-    await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
-
-    // submit, check that appropriate calls were made
-    userEvent.click(ui.editGroupModal.saveButton.get());
-
-    await waitFor(() => expect(ui.editGroupModal.namespaceInput.query()).not.toBeInTheDocument());
-
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledTimes(1);
-    expect(mocks.api.deleteGroup).toHaveBeenCalledTimes(1);
-    expect(mocks.api.deleteNamespace).not.toHaveBeenCalled();
-    expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(1, testDatasources.prom.name, 'namespace1', {
-      ...someRulerRules['namespace1'][0],
-      name: 'super group',
-      interval: '5m',
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledTimes(1);
+      expect(mocks.api.deleteGroup).toHaveBeenCalledTimes(1);
+      expect(mocks.api.deleteNamespace).not.toHaveBeenCalled();
+      expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(1, testDatasources.prom.name, 'namespace1', {
+        ...someRulerRules['namespace1'][0],
+        name: 'super group',
+        interval: '5m',
+      });
+      expect(mocks.api.deleteGroup).toHaveBeenLastCalledWith('Prometheus', 'namespace1', 'group1');
     });
-    expect(mocks.api.deleteGroup).toHaveBeenLastCalledWith('Prometheus', 'namespace1', 'group1');
-  });
 
-  it('edit cortex group eval interval', async () => {
-    const testDatasources = {
-      prom: dataSources.prom,
-    };
-    mocks.getAllDataSourcesMock.mockReturnValue(Object.values(testDatasources));
-    setDataSourceSrv(new MockDataSourceSrv(testDatasources));
-    mocks.api.fetchRules.mockImplementation((sourceName) =>
-      Promise.resolve(sourceName === testDatasources.prom.name ? somePromRules() : [])
-    );
-    mocks.api.fetchRulerRules.mockImplementation((sourceName) =>
-      Promise.resolve(sourceName === testDatasources.prom.name ? someRulerRules : {})
-    );
-    mocks.api.setRulerRuleGroup.mockResolvedValue();
-    mocks.api.deleteGroup.mockResolvedValue();
+    testCase('edit lotex group eval interval, no renaming', async () => {
+      // make changes to form
+      await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
-    await renderRuleList();
+      // submit, check that appropriate calls were made
+      userEvent.click(ui.editGroupModal.saveButton.get());
 
-    expect(await ui.rulesFilterInput.find()).toHaveValue('');
+      await waitFor(() => expect(ui.editGroupModal.namespaceInput.query()).not.toBeInTheDocument());
 
-    const groups = await ui.ruleGroup.findAll();
-    expect(groups).toHaveLength(3);
-
-    // open edit dialog
-    userEvent.click(ui.editCloudGroupIcon.get(groups[0]));
-
-    expect(ui.editGroupModal.namespaceInput.get()).toHaveValue('namespace1');
-    expect(ui.editGroupModal.ruleGroupInput.get()).toHaveValue('group1');
-
-    // make changes
-    await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
-
-    // submit, check that appropriate calls were made
-    userEvent.click(ui.editGroupModal.saveButton.get());
-
-    await waitFor(() => expect(ui.editGroupModal.namespaceInput.query()).not.toBeInTheDocument());
-
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledTimes(1);
-    expect(mocks.api.deleteGroup).not.toHaveBeenCalled();
-    expect(mocks.api.deleteNamespace).not.toHaveBeenCalled();
-    expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(1, testDatasources.prom.name, 'namespace1', {
-      ...someRulerRules['namespace1'][0],
-      interval: '5m',
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledTimes(1);
+      expect(mocks.api.deleteGroup).not.toHaveBeenCalled();
+      expect(mocks.api.deleteNamespace).not.toHaveBeenCalled();
+      expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(1, testDatasources.prom.name, 'namespace1', {
+        ...someRulerRules['namespace1'][0],
+        interval: '5m',
+      });
     });
   });
 });
