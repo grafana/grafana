@@ -242,7 +242,9 @@ func (rh fakeReqHandler) HandleRequest(context.Context, *models.DataSource, plug
 func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 	Convey(desc, func() {
 		bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
-			query.Result = &models.DataSource{Id: 1, Type: "graphite"}
+			jsonData, err := simplejson.NewJson([]byte(`{}`))
+			So(err, ShouldBeNil)
+			query.Result = &models.DataSource{Id: 1, Type: "graphite", JsonData: jsonData}
 			return nil
 		})
 
