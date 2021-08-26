@@ -22,7 +22,7 @@ import { map } from 'rxjs/operators';
 export enum timeSeriesFormat {
   TimeSeriesWide = 'wide', // [time,...values]
   TimeSeriesMany = 'many', // All frames have [time,number]
-  //  TimeSeriesLong = 'long',
+  TimeSeriesLong = 'long',
 }
 
 export type PrepareTimeSeriesOptions = {
@@ -70,7 +70,7 @@ export function toTimeSeriesMany(data: DataFrame[]): DataFrame[] {
 export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<PrepareTimeSeriesOptions> = {
   id: DataTransformerID.prepareTimeSeries,
   name: 'Prepare time series',
-  description: `Will stretch data frames from the wide format into the long format. This is really helpful to be able to keep backwards compatability for panels not supporting the new wide format.`,
+  description: `Will stretch data frames from the wide format into the long format. This is really helpful to be able to keep backwards compatibility for panels not supporting the new wide format.`,
   defaultOptions: {},
 
   operator: (options) => (source) =>
