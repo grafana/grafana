@@ -221,14 +221,12 @@ export const Table: FC<Props> = memo((props: Props) => {
               No data
             </div>
           )}
-          return (
           <FooterRow
             footer={footer}
             footerGroups={footerGroups}
             totalColumnsWidth={totalColumnsWidth}
             height={footerHeight}
           />
-          );
         </div>
       </CustomScrollbar>
     </div>
