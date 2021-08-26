@@ -174,6 +174,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
         placement,
         formatValue: (v) => formattedValueToString(field.display!(v)),
         theme,
+        grid: customConfig.showGrid,
       });
     }
 

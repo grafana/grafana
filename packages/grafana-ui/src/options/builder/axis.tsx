@@ -67,11 +67,18 @@ export function addAxisConfig(
         placeholder: 'See: Standard options > Max',
       },
     })
-    .addBooleanSwitch({
+    .addRadio({
       path: 'showGrid',
       name: 'Show grid lines',
       category,
-      defaultValue: true,
+      defaultValue: undefined,
+      settings: {
+        options: [
+          { value: undefined, label: 'Auto' },
+          { value: true, label: 'On' },
+          { value: false, label: 'Off' },
+        ],
+      },
     });
 
   if (!hideScale) {

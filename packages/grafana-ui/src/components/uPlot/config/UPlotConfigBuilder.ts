@@ -172,7 +172,7 @@ export class UPlotConfigBuilder {
         },
       ],
     };
-    config.axes = Object.values(this.axes).map((a) => a.getConfig());
+    config.axes = this.ensureNonOverlappingAxes(Object.values(this.axes)).map((a) => a.getConfig());
     config.series = [...config.series, ...this.series.map((s) => s.getConfig())];
     config.scales = this.scales.reduce((acc, s) => {
       return { ...acc, ...s.getConfig() };
@@ -232,6 +232,25 @@ export class UPlotConfigBuilder {
 
     return this.tz ? uPlot.tzDate(date, this.tz) : date;
   };
+
+  private ensureNonOverlappingAxes(axes: UPlotAxisBuilder[]): UPlotAxisBuilder[] {
+    const xAxis = axes.find((a) => a.props.scaleKey === 'x');
+    const axesWithoutGridSet = axes.filter((a) => a.props.grid === undefined);
+    const firstValueAxisIdx = axesWithoutGridSet.findIndex(
+      (a) => a.props.placement === AxisPlacement.Left || (a.props.placement === AxisPlacement.Bottom && a !== xAxis)
+    );
+
+    // For all axes with no grid set, set the grid automatically (grid only for first left axis )
+    for (let i = 0; i < axesWithoutGridSet.length; i++) {
+      if (axesWithoutGridSet[i] === xAxis || i === firstValueAxisIdx) {
+        axesWithoutGridSet[i].props.grid = true;
+      } else {
+        axesWithoutGridSet[i].props.grid = false;
+      }
+    }
+
+    return axes;
+  }
 }
 
 /** @alpha */

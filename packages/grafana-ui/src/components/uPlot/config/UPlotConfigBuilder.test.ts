@@ -11,7 +11,7 @@ import {
   GraphTresholdsStyleMode,
   ScaleDistribution,
 } from '@grafana/schema';
-import { createTheme, ThresholdsMode } from '@grafana/data';
+import { createTheme, GrafanaTheme2, ThresholdsMode } from '@grafana/data';
 
 describe('UPlotConfigBuilder', () => {
   const darkTheme = createTheme();
@@ -411,7 +411,6 @@ describe('UPlotConfigBuilder', () => {
 
     expect(builder.getAxisPlacement('y1')).toBe(AxisPlacement.Left);
     expect(builder.getAxisPlacement('y2')).toBe(AxisPlacement.Right);
-    expect(builder.getConfig().axes![1].grid!.show).toBe(true);
   });
 
   it('when fillColor is not set fill', () => {
@@ -707,6 +706,98 @@ describe('UPlotConfigBuilder', () => {
       });
 
       expect(addHookFn).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Grid lines visibility', () => {
+    it('handles auto behaviour', () => {
+      const builder = new UPlotConfigBuilder();
+      builder.addAxis({
+        scaleKey: 'x',
+        placement: AxisPlacement.Bottom,
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y1',
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y2',
+        theme: darkTheme,
+      });
+      builder.addAxis({
+        scaleKey: 'y3',
+        theme: darkTheme,
+      });
+
+      const axesConfig = builder.getConfig().axes!;
+
+      // console.log(axesConfig);
+      expect(axesConfig[0].grid!.show).toBe(true);
+      expect(axesConfig[1].grid!.show).toBe(true);
+      expect(axesConfig[2].grid!.show).toBe(false);
+      expect(axesConfig[3].grid!.show).toBe(false);
+    });
+
+    it('handles auto behaviour with explicite grid settings', () => {
+      const builder = new UPlotConfigBuilder();
+      builder.addAxis({
+        scaleKey: 'x',
+        placement: AxisPlacement.Bottom,
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y1',
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y2',
+        grid: true,
+        theme: darkTheme,
+      });
+      builder.addAxis({
+        scaleKey: 'y3',
+        theme: darkTheme,
+      });
+
+      const axesConfig = builder.getConfig().axes!;
+
+      expect(axesConfig[0].grid!.show).toBe(true);
+      expect(axesConfig[1].grid!.show).toBe(true);
+      expect(axesConfig[2].grid!.show).toBe(true);
+      expect(axesConfig[3].grid!.show).toBe(false);
+    });
+
+    it('handles  explicite grid settings', () => {
+      const builder = new UPlotConfigBuilder();
+      builder.addAxis({
+        scaleKey: 'x',
+        grid: false,
+        placement: AxisPlacement.Bottom,
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y1',
+        grid: false,
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y2',
+        grid: true,
+        theme: darkTheme,
+      });
+
+      const axesConfig = builder.getConfig().axes!;
+
+      expect(axesConfig[0].grid!.show).toBe(false);
+      expect(axesConfig[1].grid!.show).toBe(false);
+      expect(axesConfig[2].grid!.show).toBe(true);
     });
   });
 });
