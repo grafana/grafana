@@ -439,11 +439,11 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `discord`
 
-| Name           | Secure setting |
-| -------------- | -------------- |
-| url            | yes            |
-| avatar_url     |                |
-| message        |                |
+| Name       | Secure setting |
+| ---------- | -------------- |
+| url        | yes            |
+| avatar_url |                |
+| content    |                |
 
 #### Alert notification `slack`
 
