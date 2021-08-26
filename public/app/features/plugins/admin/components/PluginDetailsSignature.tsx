@@ -9,7 +9,7 @@ type PluginDetailsSignatureProps = {
 };
 
 // Designed to show signature information inside the active tab on the plugin's details page
-export const PluginDetailsSignature = ({ plugin, className }: PluginDetailsSignatureProps) => {
+export function PluginDetailsSignature({ plugin, className }: PluginDetailsSignatureProps): React.ReactElement | null {
   const isSignatureValid = plugin.meta.signature === PluginSignatureStatus.valid;
   const isCore = plugin.meta.signature === PluginSignatureStatus.internal;
 
@@ -41,4 +41,4 @@ export const PluginDetailsSignature = ({ plugin, className }: PluginDetailsSigna
       </a>
     </Alert>
   );
-};
+}

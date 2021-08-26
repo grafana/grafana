@@ -9,7 +9,7 @@ type Props = {
 };
 
 // Designed to show plugin signature information in the header on the plugin's details page
-export const PluginDetailsHeaderSignature = ({ plugin, className }: Props) => {
+export function PluginDetailsHeaderSignature({ plugin, className }: Props): React.ReactElement | null {
   const isSignatureValid = plugin.meta.signature === PluginSignatureStatus.valid;
 
   return (
@@ -26,4 +26,4 @@ export const PluginDetailsHeaderSignature = ({ plugin, className }: Props) => {
       )}
     </div>
   );
-};
+}

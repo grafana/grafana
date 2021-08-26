@@ -11,16 +11,13 @@ const SIGNATURE_ICONS: Record<string, IconName> = {
   DEFAULT: 'shield-exclamation',
 };
 
-type PluginSignatureDetailsBadgeProps = {
+type Props = {
   signatureType?: PluginSignatureType;
   signatureOrg?: string;
 };
 
 // Shows more information about a valid signature
-export const PluginSignatureDetailsBadge: React.FC<PluginSignatureDetailsBadgeProps> = ({
-  signatureType = '',
-  signatureOrg = '',
-}) => {
+export function PluginSignatureDetailsBadge({ signatureType, signatureOrg = '' }: Props): React.ReactElement | null {
   const styles = useStyles2(getStyles);
 
   if (!signatureType && !signatureOrg) {
@@ -28,12 +25,13 @@ export const PluginSignatureDetailsBadge: React.FC<PluginSignatureDetailsBadgePr
   }
 
   const signatureTypeText = signatureType === PluginSignatureType.grafana ? 'Grafana Labs' : capitalize(signatureType);
+  const signatureIcon = SIGNATURE_ICONS[signatureType || ''] || SIGNATURE_ICONS.DEFAULT;
 
   return (
     <>
       <DetailsBadge>
         <strong className={styles.strong}>Level:&nbsp;</strong>
-        <Icon size="xs" name={SIGNATURE_ICONS[signatureType] || SIGNATURE_ICONS.DEFAULT} />
+        <Icon size="xs" name={signatureIcon} />
         &nbsp;
         {signatureTypeText}
       </DetailsBadge>
@@ -43,7 +41,7 @@ export const PluginSignatureDetailsBadge: React.FC<PluginSignatureDetailsBadgePr
       </DetailsBadge>
     </>
   );
-};
+}
 
 export const DetailsBadge: React.FC = ({ children }) => {
   const styles = useStyles2(getStyles);

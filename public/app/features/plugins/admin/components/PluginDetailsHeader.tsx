@@ -14,7 +14,7 @@ type Props = {
   pluginId?: string;
 };
 
-export const PluginDetailsHeader = ({ pluginId, parentUrl, currentUrl }: Props) => {
+export function PluginDetailsHeader({ pluginId, parentUrl, currentUrl }: Props): React.ReactElement | null {
   const styles = useStyles2(getStyles);
   const { state, dispatch } = usePluginDetails(pluginId!);
   const { plugin, pluginConfig, isInflight, hasUpdate, isInstalled, hasInstalledPanel } = state;
@@ -92,7 +92,7 @@ export const PluginDetailsHeader = ({ pluginId, parentUrl, currentUrl }: Props) 
       </div>
     </div>
   );
-};
+}
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
