@@ -166,3 +166,5 @@ export const matchesKeyword: PluginFilter = (plugin, query) => {
 
   return fields.some((f) => f.includes(query.toLowerCase()));
 };
+
+export const getExternalManageLink = (pluginId: string) => `https://grafana.com/grafana/plugins/${pluginId}`;
