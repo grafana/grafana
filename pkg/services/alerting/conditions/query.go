@@ -308,8 +308,7 @@ func FrameToSeriesSlice(frame *data.Frame) (plugins.DataTimeSeriesSlice, error) 
 	if tsSchema.Type == data.TimeSeriesTypeNot {
 		// If no fields, or only a time field, create an empty plugins.DataTimeSeriesSlice with a single
 		// time series in order to trigger "no data" in alerting.
-		if len(frame.Fields) == 0 || (len(frame.Fields) == 1 && frame.Fields[0].Type().Time()) ||
-			frame.Rows() == 0 {
+		if frame.Rows() == 0 || (len(frame.Fields) == 1 && frame.Fields[0].Type().Time()) {
 			return plugins.DataTimeSeriesSlice{{
 				Name:   frame.Name,
 				Points: make(plugins.DataTimeSeriesPoints, 0),
