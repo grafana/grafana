@@ -1,9 +1,10 @@
 import React from 'react';
+import { TooltipDisplayMode } from '@grafana/schema';
 import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorModeId, getDisplayProcessor } from '@grafana/data';
 import { Story } from '@storybook/react';
 import { useTheme2 } from '../../themes';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { VizTooltip, TooltipDisplayMode, VizTooltipContentProps } from '../VizTooltip';
+import { VizTooltip, VizTooltipContentProps } from '../VizTooltip';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
 import { GraphProps, Graph } from './Graph';
 
