@@ -6,9 +6,9 @@ weight = 113
 
 # Overview of Grafana 8 alerts
 
-Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
+> **Note:** This information is for the new, Grafana 8 Alerts. This is an [opt-in]({{< relref"./opt-in.md" >}}) feature released in Grafana 8.0. Grafana still supports [legacy dashboard alerts]({{< relref "../old-alerting/_index.md" >}}) out of the box. If you find bugs while testing this feature, please create issues in the Grafana GitHub repository.
 
-> **Note:** This information is for the new, Grafana 8 Alerts. This is an [opt-in]({{< relref"./opt-in.md" >}}) feature released in Grafana 8.0. Grafana still supports [legacy dashboard alerts]({{< relref "../old-alerting/_index.md" >}}) out of the box
+Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
 
 Alerts have four main components:
 
