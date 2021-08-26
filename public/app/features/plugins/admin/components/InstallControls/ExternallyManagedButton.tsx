@@ -14,7 +14,7 @@ export function ExternallyManagedButton({ pluginId, pluginStatus }: ExternallyMa
     return (
       <HorizontalGroup height="auto">
         <LinkButton href={externalManageLink} target="_blank" rel="noopener noreferrer">
-          {'Update via grafana.com'}
+          Update via grafana.com
         </LinkButton>
         <LinkButton variant="destructive" href={externalManageLink} target="_blank" rel="noopener noreferrer">
           {'Uninstall via grafana.com'}
