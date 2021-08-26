@@ -19,13 +19,11 @@
     ]
   },
   "editable": true,
-  "gnetId": null,
   "graphTooltip": 0,
   "links": [],
   "liveNow": false,
   "panels": [
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -36,8 +34,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -111,7 +108,6 @@
       "type": "geomap"
     },
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -122,8 +118,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -201,7 +196,6 @@
       "type": "geomap"
     },
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -212,8 +206,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -283,7 +276,6 @@
       "type": "geomap"
     },
     {
-      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -294,8 +286,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
