@@ -3,27 +3,27 @@ import { AppEvents } from '@grafana/data';
 import { Button, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { api } from '../../api';
-import { ActionTypes, CatalogPlugin } from '../../types';
+import { ActionTypes, CatalogPlugin, PluginStatus } from '../../types';
 import { getStyles } from './index';
 
 type InstallControlsButtonProps = {
-  disabled: boolean;
+  isInProgress: boolean;
   hasInstalledPanel: boolean;
   dispatch: React.Dispatch<any>;
   plugin: CatalogPlugin;
-  pluginStatus: 'install' | 'update' | 'uninstall';
+  pluginStatus: PluginStatus;
 };
 
 export function InstallControlsButton({
-  disabled,
+  isInProgress,
   dispatch,
   plugin,
   pluginStatus,
   hasInstalledPanel,
 }: InstallControlsButtonProps) {
-  const uninstallBtnText = disabled ? 'Uninstalling' : 'Uninstall';
-  const updateBtnText = disabled ? 'Updating' : 'Update';
-  const installBtnText = disabled ? 'Installing' : 'Install';
+  const uninstallBtnText = isInProgress ? 'Uninstalling' : 'Uninstall';
+  const updateBtnText = isInProgress ? 'Updating' : 'Update';
+  const installBtnText = isInProgress ? 'Installing' : 'Install';
   const styles = useStyles2(getStyles);
 
   const onInstall = async () => {
@@ -59,10 +59,10 @@ export function InstallControlsButton({
     }
   };
 
-  if (pluginStatus === 'uninstall') {
+  if (pluginStatus === PluginStatus.UNINSTALL) {
     return (
       <HorizontalGroup height="auto">
-        <Button variant="destructive" disabled={disabled} onClick={onUninstall}>
+        <Button variant="destructive" disabled={isInProgress} onClick={onUninstall}>
           {uninstallBtnText}
         </Button>
         {hasInstalledPanel && (
@@ -72,13 +72,13 @@ export function InstallControlsButton({
     );
   }
 
-  if (pluginStatus === 'update') {
+  if (pluginStatus === PluginStatus.UPDATE) {
     return (
       <HorizontalGroup height="auto">
-        <Button disabled={disabled} onClick={onUpdate}>
+        <Button disabled={isInProgress} onClick={onUpdate}>
           {updateBtnText}
         </Button>
-        <Button variant="destructive" disabled={disabled} onClick={onUninstall}>
+        <Button variant="destructive" disabled={isInProgress} onClick={onUninstall}>
           {uninstallBtnText}
         </Button>
       </HorizontalGroup>
@@ -86,7 +86,7 @@ export function InstallControlsButton({
   }
 
   return (
-    <Button disabled={disabled} onClick={onInstall}>
+    <Button disabled={isInProgress} onClick={onInstall}>
       {installBtnText}
     </Button>
   );

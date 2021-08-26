@@ -1,16 +1,17 @@
 import React from 'react';
-import { getExternalManageLink } from '../../helpers';
 import { HorizontalGroup, LinkButton } from '@grafana/ui';
+import { getExternalManageLink } from '../../helpers';
+import { PluginStatus } from '../../types';
 
 type ExternallyManagedButtonProps = {
   pluginId: string;
-  pluginStatus: 'install' | 'update' | 'uninstall';
+  pluginStatus: PluginStatus;
 };
 
 export function ExternallyManagedButton({ pluginId, pluginStatus }: ExternallyManagedButtonProps) {
   const externalManageLink = getExternalManageLink(pluginId);
 
-  if (pluginStatus === 'update') {
+  if (pluginStatus === PluginStatus.UPDATE) {
     return (
       <HorizontalGroup height="auto">
         <LinkButton href={externalManageLink} target="_blank" rel="noopener noreferrer">
@@ -23,7 +24,7 @@ export function ExternallyManagedButton({ pluginId, pluginStatus }: ExternallyMa
     );
   }
 
-  if (pluginStatus === 'uninstall') {
+  if (pluginStatus === PluginStatus.UNINSTALL) {
     return (
       <LinkButton variant="destructive" href={externalManageLink} target="_blank" rel="noopener noreferrer">
         {'Uninstall via grafana.com'}
