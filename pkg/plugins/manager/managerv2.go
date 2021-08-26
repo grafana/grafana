@@ -70,7 +70,7 @@ func newManagerV2(cfg *setting.Cfg, license models.Licensing,
 	return &PluginManagerV2{
 		Cfg:     cfg,
 		plugins: map[string]*plugins.PluginV2{},
-		log:     log.New("plugin.managerv2"),
+		log:     log.New("plugin.manager.v2"),
 	}
 }
 

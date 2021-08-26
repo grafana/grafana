@@ -234,9 +234,8 @@ func (pm *PluginManager) Plugins() []*plugins.PluginBase {
 		var rslt []*plugins.PluginBase
 		for _, p := range pm.PluginManagerV2.Plugins() {
 			rslt = append(rslt, fromV2(p))
-
-			return rslt
 		}
+		return rslt
 	}
 
 	pm.pluginsMu.RLock()
@@ -255,9 +254,8 @@ func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
 		var rslt []*plugins.DataSourcePlugin
 		for _, p := range pm.PluginManagerV2.Plugins(plugins.DataSource) {
 			rslt = append(rslt, dataSourceFromV2(p))
-
-			return rslt
 		}
+		return rslt
 	}
 
 	pm.pluginsMu.RLock()
@@ -276,9 +274,8 @@ func (pm *PluginManager) Apps() []*plugins.AppPlugin {
 		var rslt []*plugins.AppPlugin
 		for _, p := range pm.PluginManagerV2.Plugins(plugins.App) {
 			rslt = append(rslt, appFromV2(p))
-
-			return rslt
 		}
+		return rslt
 	}
 
 	pm.pluginsMu.RLock()
@@ -297,9 +294,8 @@ func (pm *PluginManager) Panels() []*plugins.PanelPlugin {
 		var rslt []*plugins.PanelPlugin
 		for _, p := range pm.PluginManagerV2.Plugins(plugins.Panel) {
 			rslt = append(rslt, panelFromV2(p))
-
-			return rslt
 		}
+		return rslt
 	}
 
 	pm.pluginsMu.RLock()
