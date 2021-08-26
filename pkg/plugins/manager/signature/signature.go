@@ -46,9 +46,6 @@ func (s *validator) Validate(plugin *plugins.PluginV2) error {
 				return nil
 			}
 		}
-	} else {
-		logger.Debug("Non-valid plugin Signature", "pluginID", plugin.ID, "pluginDir", plugin.PluginDir,
-			"state", plugin.Signature)
 	}
 
 	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {

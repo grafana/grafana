@@ -99,8 +99,6 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 }
 
 func CalculateState(log log.Logger, plugin *plugins.PluginV2) (plugins.PluginSignatureState, error) {
-	log.Debug("Getting signature state of plugin", "plugin", plugin.ID, "isBackend", plugin.Backend)
-
 	if plugin.IsCorePlugin() {
 		return plugins.PluginSignatureState{
 			Status: plugins.PluginSignatureInternal,
@@ -169,7 +167,6 @@ func CalculateState(log log.Logger, plugin *plugins.PluginV2) (plugins.PluginSig
 	manifestFiles := make(map[string]bool, len(manifest.Files))
 
 	// Verify the manifest contents
-	log.Debug("Verifying contents of plugin manifest", "plugin", plugin.ID)
 	for p, hash := range manifest.Files {
 		// Open the file
 		fp := filepath.Join(plugin.PluginDir, p)

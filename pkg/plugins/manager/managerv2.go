@@ -455,7 +455,6 @@ func (m *PluginManagerV2) isRegistered(pluginID string) bool {
 }
 
 func (m *PluginManagerV2) register(p *plugins.PluginV2) error {
-	m.log.Debug("Registering plugin", "pluginId", p.ID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
 

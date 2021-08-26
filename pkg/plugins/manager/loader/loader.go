@@ -137,8 +137,6 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 				break
 			}
 		}
-
-		logger.Debug("Found plugin", "id", plugin.ID, "signature", plugin.Signature, "hasParent", plugin.Parent != nil)
 	}
 
 	// validate signatures
