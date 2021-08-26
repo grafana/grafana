@@ -6,7 +6,7 @@ import { config } from '@grafana/runtime';
 import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { CatalogPluginDetails } from '../../types';
+import { CatalogPluginDetails, PluginStatus } from '../../types';
 import { isGrafanaAdmin, getExternalManageLink } from '../../helpers';
 import { ExternallyManagedButton } from './ExternallyManagedButton';
 import { InstallControlsButton } from './InstallControlsButton';
@@ -31,7 +31,7 @@ export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, ha
         includePrerelease: true,
       })
     : false;
-  const pluginStatus = isInstalled ? (hasUpdate ? 'update' : 'uninstall') : 'install';
+  const pluginStatus = isInstalled ? (hasUpdate ? PluginStatus.UPDATE : PluginStatus.UNINSTALL) : PluginStatus.INSTALL;
 
   if (plugin.isCore) {
     return null;
@@ -81,7 +81,7 @@ export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, ha
 
   return (
     <InstallControlsButton
-      disabled={isInflight}
+      isInProgress={isInflight}
       dispatch={dispatch}
       plugin={plugin}
       pluginStatus={pluginStatus}
