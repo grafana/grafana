@@ -9,14 +9,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -30,19 +28,6 @@ import (
 )
 
 var _ plugins.ManagerV2 = (*PluginManagerV2)(nil)
-
-var corePluginPaths = map[string]string{
-	"cloudwatch":                       "datasource/cloudwatch",
-	"testdata":                         "datasource/testdata",
-	"graphite":                         "datasource/graphite",
-	"opentsdb":                         "datasource/opentsdb",
-	"grafana-azure-monitor-datasource": "datasource/grafana-azure-monitor-datasource",
-	"influxdb":                         "datasource/influxdb",
-	"prometheus":                       "datasource/prometheus",
-	"elasticsearch":                    "datasource/elasticsearch",
-	"loki":                             "datasource/loki",
-	"tempo":                            "datasource/tempo",
-}
 
 type PluginManagerV2 struct {
 	Cfg                    *setting.Cfg
@@ -68,9 +53,11 @@ func ProvideServiceV2(cfg *setting.Cfg, license models.Licensing,
 func newManagerV2(cfg *setting.Cfg, license models.Licensing,
 	pluginRequestValidator models.PluginRequestValidator) *PluginManagerV2 {
 	return &PluginManagerV2{
-		Cfg:     cfg,
-		plugins: map[string]*plugins.PluginV2{},
-		log:     log.New("plugin.manager.v2"),
+		Cfg:                    cfg,
+		License:                license,
+		PluginRequestValidator: pluginRequestValidator,
+		plugins:                map[string]*plugins.PluginV2{},
+		log:                    log.New("plugin.manager.v2"),
 	}
 }
 
@@ -94,21 +81,8 @@ func (m *PluginManagerV2) init() error {
 		return err
 	}
 
-	externalPluginsDir := m.Cfg.PluginsPath
-	exists, err := fs.Exists(externalPluginsDir)
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		if err = os.MkdirAll(externalPluginsDir, os.ModePerm); err != nil {
-			m.log.Error("Failed to create plugins directory", "dir", externalPluginsDir, "error", err)
-		}
-		return nil
-	}
-
 	// install External plugins
-	err = m.installPlugins(externalPluginsDir)
+	err = m.installPlugins(m.Cfg.PluginsPath)
 	if err != nil {
 		return err
 	}
@@ -132,11 +106,10 @@ func (m *PluginManagerV2) IsEnabled() bool {
 }
 
 func (m *PluginManagerV2) installPlugins(path string) error {
-	loadedPlugins, err := m.pluginLoader.LoadAll(path)
+	loadedPlugins, err := m.pluginLoader.LoadAll(path, m.registeredPlugins())
 	if err != nil {
 		return err
 	}
-	loadedPlugins = m.filterOutDuplicates(loadedPlugins)
 
 	for _, p := range loadedPlugins {
 		if err := m.registerAndStart(context.Background(), p); err != nil {
@@ -147,33 +120,16 @@ func (m *PluginManagerV2) installPlugins(path string) error {
 	return nil
 }
 
-// filterOutDuplicates will strip duplicate plugins or plugins that are already installed
-func (m *PluginManagerV2) filterOutDuplicates(loadedPlugins []*plugins.PluginV2) []*plugins.PluginV2 {
-	var result []*plugins.PluginV2
-
+func (m *PluginManagerV2) registeredPlugins() map[string]struct{} {
 	pluginsByID := make(map[string]struct{})
-	for _, scannedPlugin := range loadedPlugins {
-		//TODO make duplicate checking more intelligent
-		if _, dupe := pluginsByID[scannedPlugin.ID]; dupe {
-			m.log.Warn("Skipping plugin as it's a duplicate", "id", scannedPlugin.ID)
-			continue
-		}
-		pluginsByID[scannedPlugin.ID] = struct{}{}
 
-		if existing := m.Plugin(scannedPlugin.ID); existing != nil {
-			m.log.Debug("Skipping plugin as it's already installed", "plugin", existing.ID, "version", existing.Info.Version)
-			continue
-		}
-
-		// temporary check to ignore Core plugins that are programmatically managed
-		if _, canIgnore := corePluginPaths[scannedPlugin.ID]; canIgnore {
-			continue
-		}
-
-		result = append(result, scannedPlugin)
+	m.pluginsMu.RLock()
+	defer m.pluginsMu.RUnlock()
+	for _, p := range m.plugins {
+		pluginsByID[p.ID] = struct{}{}
 	}
 
-	return result
+	return pluginsByID
 }
 
 func (m *PluginManagerV2) InitializeCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {

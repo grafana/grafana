@@ -31,12 +31,13 @@ func TestLoader_LoadAll(t *testing.T) {
 		return
 	}
 	tests := []struct {
-		name       string
-		cfg        *setting.Cfg
-		log        log.Logger
-		pluginPath string
-		want       []*plugins.PluginV2
-		wantErr    bool
+		name            string
+		cfg             *setting.Cfg
+		log             log.Logger
+		pluginPath      string
+		existingPlugins map[string]struct{}
+		want            []*plugins.PluginV2
+		wantErr         bool
 	}{
 		{
 			name: "Load a Core plugin",
@@ -90,7 +91,7 @@ func TestLoader_LoadAll(t *testing.T) {
 		}, {
 			name: "Load a Bundled plugin",
 			cfg: &setting.Cfg{
-				BundledPluginsPath: filepath.Join(parentDir, "testdata/unsigned-datasource"),
+				BundledPluginsPath: filepath.Join(parentDir, "testdata"),
 			},
 			pluginPath: "../testdata/unsigned-datasource",
 			want: []*plugins.PluginV2{
@@ -125,12 +126,90 @@ func TestLoader_LoadAll(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		}, {
+			name: "Load an External plugin",
+			cfg: &setting.Cfg{
+				PluginsPath: filepath.Join(parentDir),
+			},
+			pluginPath: "../testdata/symbolic-plugin-dirs",
+			want: []*plugins.PluginV2{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "test-app",
+						Type: "app",
+						Name: "Test App",
+						Info: plugins.PluginInfo{
+							Author: plugins.PluginInfoLink{
+								Name: "Test Inc.",
+								Url:  "http://test.com",
+							},
+							Logos: plugins.PluginLogos{
+								Small: "public/plugins/test-app/img/logo_small.png",
+								Large: "public/plugins/test-app/img/logo_large.png",
+							},
+							Links: []plugins.PluginInfoLink{
+								{Name: "Project site", Url: "http://project.com"},
+								{Name: "License & Terms", Url: "http://license.com"},
+							},
+							Description: "Official Grafana Test App & Dashboard bundle",
+							Screenshots: []plugins.PluginScreenshots{
+								{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
+								{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
+							},
+							Version: "1.0.0",
+							Updated: "2015-02-10",
+						},
+						Dependencies: plugins.PluginDependencies{
+							GrafanaVersion: "3.x.x",
+							Plugins: []plugins.PluginDependencyItem{
+								{Type: "datasource", Id: "graphite", Name: "Graphite", Version: "1.0.0"},
+								{Type: "panel", Id: "graph", Name: "Graph", Version: "1.0.0"},
+							},
+						},
+						Includes: []*plugins.PluginInclude{
+							{
+								Name: "Nginx Connections",
+								Path: "dashboards/connections.json",
+								Type: "dashboard",
+								Role: "Viewer",
+								Slug: "nginx-connections",
+							},
+							{
+								Name: "Nginx Memory",
+								Path: "dashboards/memory.json",
+								Type: "dashboard",
+								Role: "Viewer",
+								Slug: "nginx-memory",
+							},
+							{
+								Name: "Nginx Panel",
+								Type: "panel",
+								Role: "Viewer",
+								Slug: "nginx-panel"},
+							{
+								Name: "Nginx Datasource",
+								Type: "datasource",
+								Role: "Viewer",
+								Slug: "nginx-datasource",
+							},
+						},
+					},
+					Class:         plugins.External,
+					Module:        "plugins/test-app/module",
+					BaseURL:       "public/plugins/test-app",
+					PluginDir:     filepath.Join(parentDir, "testdata/includes-symlinks"),
+					Signature:     "valid",
+					SignatureType: plugins.GrafanaType,
+					SignatureOrg:  "Grafana Labs",
+				},
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := New(nil, nil, tt.cfg)
-			got, err := l.LoadAll(tt.pluginPath)
+			got, err := l.LoadAll(tt.pluginPath, tt.existingPlugins)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LoadAll() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -216,18 +295,42 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 	parent.Children = []*plugins.PluginV2{child}
 	child.Parent = parent
 
-	expected := []*plugins.PluginV2{parent, child}
-
 	t.Run("Load nested External plugins", func(t *testing.T) {
+		expected := []*plugins.PluginV2{parent, child}
 		cfg := &setting.Cfg{
 			PluginsPath: parentDir,
 		}
 
 		l := New(nil, nil, cfg)
 
-		got, err := l.LoadAll("../testdata/nested-plugins")
+		got, err := l.LoadAll("../testdata/nested-plugins", map[string]struct{}{})
 		assert.NoError(t, err)
-		assert.Len(t, got, 2)
+
+		// to ensure we can compare with expected
+		sort.SliceStable(got, func(i, j int) bool {
+			return got[i].ID < got[j].ID
+		})
+
+		if !cmp.Equal(got, expected, compareOpts) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+		}
+	})
+
+	t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
+		// parent/child links will not be created when either plugins are provided in the existingPlugins map
+		parent.Children = nil
+		expected := []*plugins.PluginV2{parent}
+
+		cfg := &setting.Cfg{
+			PluginsPath: parentDir,
+		}
+
+		l := New(nil, nil, cfg)
+
+		got, err := l.LoadAll("../testdata/nested-plugins", map[string]struct{}{
+			"test-panel": {},
+		})
+		assert.NoError(t, err)
 
 		// to ensure we can compare with expected
 		sort.SliceStable(got, func(i, j int) bool {
@@ -239,6 +342,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 		}
 	})
 }
+
 func TestLoader_readPluginJSON(t *testing.T) {
 	tests := []struct {
 		name       string

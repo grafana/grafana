@@ -36,9 +36,9 @@ func (f *Finder) Find(pluginsDir string) ([]string, error) {
 			} else {
 				logger.Info("External plugins directory created", "directory", pluginsDir)
 			}
+		} else {
+			return nil, fmt.Errorf("aborting install as plugins directory %s does not exist", pluginsDir)
 		}
-	} else {
-		return nil, fmt.Errorf("aborting install as plugins directory %s does not exist", pluginsDir)
 	}
 	pluginJSONPaths, err = f.getPluginJSONPaths(pluginsDir)
 	if err != nil {
