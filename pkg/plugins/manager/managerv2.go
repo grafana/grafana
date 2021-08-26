@@ -132,15 +132,6 @@ func (m *PluginManagerV2) IsEnabled() bool {
 }
 
 func (m *PluginManagerV2) installPlugins(path string) error {
-	exists, err := fs.Exists(path)
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		return fmt.Errorf("aborting install as plugins directory %s does not exist", path)
-	}
-
 	loadedPlugins, err := m.pluginLoader.LoadAll(path)
 	if err != nil {
 		return err

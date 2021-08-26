@@ -29,17 +29,20 @@ func (f *Finder) Find(pluginsDir string) ([]string, error) {
 	}
 
 	var pluginJSONPaths []string
-	if !exists && fs.NaiveEqual(f.cfg.PluginsPath, pluginsDir) {
-		if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
-			logger.Error("Failed to create external plugins directory", "dir", pluginsDir, "error", err)
-		} else {
-			logger.Info("External plugins directory created", "directory", pluginsDir)
+	if !exists {
+		if fs.NaiveEqual(f.cfg.PluginsPath, pluginsDir) {
+			if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
+				logger.Error("Failed to create external plugins directory", "dir", pluginsDir, "error", err)
+			} else {
+				logger.Info("External plugins directory created", "directory", pluginsDir)
+			}
 		}
 	} else {
-		pluginJSONPaths, err = f.getPluginJSONPaths(pluginsDir)
-		if err != nil {
-			return nil, err
-		}
+		return nil, fmt.Errorf("aborting install as plugins directory %s does not exist", pluginsDir)
+	}
+	pluginJSONPaths, err = f.getPluginJSONPaths(pluginsDir)
+	if err != nil {
+		return nil, err
 	}
 
 	var pluginSettingJSONPaths []string
