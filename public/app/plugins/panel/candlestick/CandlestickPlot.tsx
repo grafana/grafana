@@ -4,7 +4,7 @@ import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { Themeable2, UPlotConfigBuilder, UPlotChart, VizLayout, ScaleDirection, ScaleOrientation } from '@grafana/ui';
 
 import { PanelOptions } from './models.gen';
-import { ScaleDistribution } from '@grafana/ui/src/components/uPlot/models.gen';
+import { ScaleDistribution } from '@grafana/schema';
 import { CandlestickFields } from './types';
 
 export interface CandlestickProps extends Themeable2 {
