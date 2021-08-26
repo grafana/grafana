@@ -84,7 +84,7 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 		logger.Info(fmt.Sprintf("Successfully added %s plugin", p.Class), "pluginID", p.ID)
 	}
 
-	pluginLog := log.New("pluginID", p.ID)
+	pluginLog := log.New(p.ID)
 	p.SetLogger(pluginLog)
 
 	if p.Backend {
