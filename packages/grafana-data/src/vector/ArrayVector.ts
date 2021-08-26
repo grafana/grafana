@@ -44,7 +44,7 @@ export class ArrayVector<T = any> extends FunctionalVector<T> implements Mutable
 
 /*
 // WIP polyfill for replacing ArrayVector() with a plain array
-// https://jsfiddle.net/7gfwqrmt/1/
+// https://jsfiddle.net/Lbj7co84/
 // TODO: typings kung fu
 
 // JS original sin
@@ -57,9 +57,6 @@ Object.assign(Array.prototype, {
   },
   add(value) {
   	this.push(value);
-  },
-  get(idx) {
-  	return this[idx];
   },
   toArray() {
   	return this;
