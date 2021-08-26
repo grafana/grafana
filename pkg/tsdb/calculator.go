@@ -113,15 +113,24 @@ func GetIntervalFrom(dsInterval, queryInterval string, queryIntervalMS int64, de
 	if interval == "" {
 		return defaultInterval, nil
 	}
-	interval = strings.Replace(strings.Replace(interval, "<", "", 1), ">", "", 1)
-	isPureNum, err := regexp.MatchString(`^\d+$`, interval)
+
+	parsedInterval, err := ParseIntervalStringToTimeDuration(interval)
+	if err != nil {
+		return time.Duration(0), err
+	}
+	return parsedInterval, nil
+}
+
+func ParseIntervalStringToTimeDuration(interval string) (time.Duration, error) {
+	intrvl := strings.Replace(strings.Replace(interval, "<", "", 1), ">", "", 1)
+	isPureNum, err := regexp.MatchString(`^\d+$`, intrvl)
 	if err != nil {
 		return time.Duration(0), err
 	}
 	if isPureNum {
-		interval += "s"
+		intrvl += "s"
 	}
-	parsedInterval, err := gtime.ParseDuration(interval)
+	parsedInterval, err := gtime.ParseDuration(intrvl)
 	if err != nil {
 		return time.Duration(0), err
 	}

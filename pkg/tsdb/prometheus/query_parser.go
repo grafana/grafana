@@ -17,6 +17,9 @@ type QueryModel struct {
 	RangeQuery     bool   `json:"range"`
 	InstantQuery   bool   `json:"instant"`
 	IntervalFactor int    `json:"intervalFactor"`
+	// IsBackendQuery is used to track if we need to calculate interval or if it was calculated
+	// on client side. We can remove this when we fully migrate to running all queries trough backend.
+	IsBackendQuery bool `json:"isBackendQuery"`
 }
 
 func (s *Service) parseQuery(dsInfo *DatasourceInfo, queryContext *backend.QueryDataRequest) (
@@ -58,6 +61,15 @@ func createQuery(model *QueryModel, step time.Duration, query backend.DataQuery)
 }
 
 func (s *Service) createStep(dsInfo *DatasourceInfo, model *QueryModel, query backend.DataQuery) (time.Duration, error) {
+	// If we have interval and query is processed as backend query, we have correct step and we only need to parse it from string to time.Duration
+	if model.IsBackendQuery && model.Interval != "" {
+		step, err := tsdb.ParseIntervalStringToTimeDuration(model.Interval)
+		if err != nil {
+			return time.Duration(0), err
+		}
+		return step, nil
+	}
+
 	intervalMode := "min"
 	hasQueryInterval := model.Interval != ""
 

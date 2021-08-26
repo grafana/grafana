@@ -217,6 +217,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
         target.expr = this.templateSrv.replace(target.expr, targetScopedVars, this.interpolateQueryExpr);
         target.interval = `${interval}s`;
+        target.isBackendQuery = true;
 
         if (target.instant && target.range) {
           const targetInstant: PromQuery = {
@@ -553,12 +554,14 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
   }
 
+  // This is the same logic as used before
+  // TODO: Document how are different interval used
   processIntervalV2(target: PromQuery, options: DataQueryRequest<PromQuery>) {
     const stepInterval = rangeUtil.intervalToSeconds(
       this.templateSrv.replace(target.interval || options.interval, options.scopedVars)
     );
 
-    let scrapeInterval = target.interval
+    let queryInterval = target.interval
       ? rangeUtil.intervalToSeconds(this.templateSrv.replace(target.interval, options.scopedVars))
       : rangeUtil.intervalToSeconds(this.interval);
 
@@ -568,13 +571,13 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
     const adjustedInterval = this.adjustInterval(interval, stepInterval, range, target.intervalFactor, target.stepMode);
 
     // Fall back to the default scrape interval of 15s if scrapeInterval is 0 for some reason.
-    if (scrapeInterval === 0) {
-      scrapeInterval = 15;
+    if (queryInterval === 0) {
+      queryInterval = 15;
     }
 
     let scopedVars = {
       ...options.scopedVars,
-      ...this.getRateIntervalScopedVariable(interval, scrapeInterval),
+      ...this.getRateIntervalScopedVariable(interval, queryInterval),
     };
 
     if (interval !== adjustedInterval) {
@@ -582,7 +585,7 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
       scopedVars = Object.assign({}, scopedVars, {
         __interval: { text: interval + 's', value: interval + 's' },
         __interval_ms: { text: interval * 1000, value: interval * 1000 },
-        ...this.getRateIntervalScopedVariable(interval, scrapeInterval),
+        ...this.getRateIntervalScopedVariable(interval, queryInterval),
       });
     }
 
