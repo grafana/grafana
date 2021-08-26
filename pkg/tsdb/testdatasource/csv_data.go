@@ -30,7 +30,7 @@ func (p *TestDataPlugin) handleCsvContentScenario(ctx context.Context, req *back
 		csvContent := model.Get("csvContent").MustString()
 		alias := model.Get("alias").MustString("")
 
-		frame, err := p.loadCsvContent(strings.NewReader(csvContent), alias)
+		frame, err := LoadCsvContent(strings.NewReader(csvContent), alias)
 		if err != nil {
 			return nil, err
 		}
@@ -94,10 +94,11 @@ func (p *TestDataPlugin) loadCsvFile(fileName string) (*data.Frame, error) {
 		}
 	}()
 
-	return p.loadCsvContent(fileReader, fileName)
+	return LoadCsvContent(fileReader, fileName)
 }
 
-func (p *TestDataPlugin) loadCsvContent(ioReader io.Reader, name string) (*data.Frame, error) {
+// LoadCsvContent should be moved to the SDK
+func LoadCsvContent(ioReader io.Reader, name string) (*data.Frame, error) {
 	reader := csv.NewReader(ioReader)
 
 	// Read the header records
