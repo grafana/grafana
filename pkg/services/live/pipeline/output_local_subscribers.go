@@ -12,7 +12,7 @@ import (
 )
 
 type LocalSubscribersOutput struct {
-	// TODO: refactor to depend on interface.
+	// TODO: refactor to depend on interface (avoid Centrifuge dependency here).
 	node *centrifuge.Node
 }
 

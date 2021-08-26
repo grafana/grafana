@@ -10,6 +10,7 @@ type KeepFieldsProcessorConfig struct {
 	FieldNames []string `json:"fieldNames"`
 }
 
+// KeepFieldsProcessor can keep specified fields in a data.Frame dropping all other fields.
 type KeepFieldsProcessor struct {
 	config KeepFieldsProcessorConfig
 }

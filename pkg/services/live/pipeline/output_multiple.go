@@ -6,6 +6,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+// MultipleOutputter can combine several Outputter and
+// execute them sequentially.
 type MultipleOutputter struct {
 	Outputters []Outputter
 }

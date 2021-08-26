@@ -10,6 +10,7 @@ type DropFieldsProcessorConfig struct {
 	FieldNames []string `json:"fieldNames"`
 }
 
+// DropFieldsProcessor can drop specified fields from a data.Frame.
 type DropFieldsProcessor struct {
 	config DropFieldsProcessorConfig
 }

@@ -12,6 +12,8 @@ type RedirectOutputConfig struct {
 	Channel string `json:"channel"`
 }
 
+// RedirectOutput passes processing control to the rule defined
+// for a configured channel.
 type RedirectOutput struct {
 	pipeline *Pipeline
 	config   RedirectOutputConfig

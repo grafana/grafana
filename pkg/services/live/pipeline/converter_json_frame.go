@@ -9,6 +9,7 @@ import (
 
 type JsonFrameConverterConfig struct{}
 
+// JsonFrameConverter decodes single data.Frame from JSON.
 type JsonFrameConverter struct {
 	config JsonFrameConverterConfig
 }

@@ -13,17 +13,33 @@ type ThresholdOutputConfig struct {
 	Channel   string `json:"channel"`
 }
 
-type ThresholdOutput struct {
-	frameStorage *FrameStorage
-	pipeline     *Pipeline
-	config       ThresholdOutputConfig
+//go:generate mockgen -destination=output_threshold_mock.go -package=pipeline github.com/grafana/grafana/pkg/services/live/pipeline FrameGetSetter,FrameProcessor
+
+type FrameGetSetter interface {
+	Get(orgID int64, channel string) (*data.Frame, bool, error)
+	Set(orgID int64, channel string, frame *data.Frame) error
 }
 
-func NewThresholdOutput(frameStorage *FrameStorage, pipeline *Pipeline, config ThresholdOutputConfig) *ThresholdOutput {
-	return &ThresholdOutput{frameStorage: frameStorage, pipeline: pipeline, config: config}
+type FrameProcessor interface {
+	ProcessFrame(ctx context.Context, orgID int64, channelID string, frame *data.Frame) error
+}
+
+// ThresholdOutput can monitor threshold transitions of the specified field and output
+// special state frame to the configured channel.
+type ThresholdOutput struct {
+	frameStorage   FrameGetSetter
+	frameProcessor FrameProcessor
+	config         ThresholdOutputConfig
+}
+
+func NewThresholdOutput(frameStorage FrameGetSetter, pipeline FrameProcessor, config ThresholdOutputConfig) *ThresholdOutput {
+	return &ThresholdOutput{frameStorage: frameStorage, frameProcessor: pipeline, config: config}
 }
 
 func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) error {
+	if frame == nil {
+		return nil
+	}
 	previousFrame, previousFrameOk, err := l.frameStorage.Get(vars.OrgID, l.config.Channel)
 	if err != nil {
 		return err
@@ -39,11 +55,9 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 	if currentFrameFieldIndex < 0 {
 		return nil
 	}
-
 	if frame.Fields[currentFrameFieldIndex].Config == nil {
 		return nil
 	}
-
 	if frame.Fields[currentFrameFieldIndex].Config.Thresholds == nil {
 		return nil
 	}
@@ -68,7 +82,7 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 
 	for i := 0; i < frame.Fields[currentFrameFieldIndex].Len(); i++ {
 		// TODO: support other numeric types.
-		value, ok := frame.Fields[currentFrameFieldIndex].At(0).(*float64)
+		value, ok := frame.Fields[currentFrameFieldIndex].At(i).(*float64)
 		if !ok {
 			return nil
 		}
@@ -85,22 +99,10 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 			break
 		}
 		if previousState == nil || currentThreshold.State != *previousState {
-			fTime := data.NewFieldFromFieldType(data.FieldTypeTime, 1)
-			fTime.Name = "time"
-			fTime.Set(0, time.Now())
-			f1 := data.NewFieldFromFieldType(data.FieldTypeFloat64, 1)
-			f1.Set(0, *value)
-			f1.Name = "value"
-			f2 := data.NewFieldFromFieldType(data.FieldTypeString, 1)
-			f2.Set(0, currentThreshold.State)
-			f2.Name = "state"
-			f3 := data.NewFieldFromFieldType(data.FieldTypeString, 1)
-			f3.Set(0, currentThreshold.Color)
-			f3.Name = "color"
-			stateFrame := data.NewFrame("state", fTime, f1, f2, f3)
-			_ = l.frameStorage.Put(vars.OrgID, l.config.Channel, stateFrame)
+			stateFrame := generateStateFrame(time.Now(), *value, currentThreshold.State, currentThreshold.Color)
+			_ = l.frameStorage.Set(vars.OrgID, l.config.Channel, stateFrame)
 			// TODO: create single frame.
-			err := l.pipeline.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, stateFrame)
+			err := l.frameProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, stateFrame)
 			if err != nil {
 				return err
 			}
@@ -109,4 +111,20 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 	}
 
 	return nil
+}
+
+func generateStateFrame(tm time.Time, value float64, state string, color string) *data.Frame {
+	fTime := data.NewFieldFromFieldType(data.FieldTypeTime, 1)
+	fTime.Name = "time"
+	fTime.Set(0, tm)
+	f1 := data.NewFieldFromFieldType(data.FieldTypeFloat64, 1)
+	f1.Set(0, value)
+	f1.Name = "value"
+	f2 := data.NewFieldFromFieldType(data.FieldTypeString, 1)
+	f2.Set(0, state)
+	f2.Name = "state"
+	f3 := data.NewFieldFromFieldType(data.FieldTypeString, 1)
+	f3.Set(0, color)
+	f3.Name = "color"
+	return data.NewFrame("state", fTime, f1, f2, f3)
 }

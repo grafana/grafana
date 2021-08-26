@@ -13,26 +13,25 @@ type ChangeLogOutputConfig struct {
 	Channel   string `json:"channel"`
 }
 
+// ChangeLogOutput can monitor value changes of the specified field and output
+// special change frame to the configured channel.
 type ChangeLogOutput struct {
-	frameStorage *FrameStorage
-	pipeline     *Pipeline
-	config       ChangeLogOutputConfig
+	frameStorage   FrameGetSetter
+	frameProcessor FrameProcessor
+	config         ChangeLogOutputConfig
 }
 
-func NewChangeLogOutput(frameStorage *FrameStorage, pipeline *Pipeline, config ChangeLogOutputConfig) *ChangeLogOutput {
-	return &ChangeLogOutput{frameStorage: frameStorage, pipeline: pipeline, config: config}
+func NewChangeLogOutput(frameStorage FrameGetSetter, pipeline FrameProcessor, config ChangeLogOutputConfig) *ChangeLogOutput {
+	return &ChangeLogOutput{frameStorage: frameStorage, frameProcessor: pipeline, config: config}
 }
 
 func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) error {
 	previousFrame, ok, err := l.frameStorage.Get(vars.OrgID, l.config.Channel)
 	defer func() {
-		_ = l.frameStorage.Put(vars.OrgID, l.config.Channel, frame)
+		_ = l.frameStorage.Set(vars.OrgID, l.config.Channel, frame)
 	}()
 	if err != nil {
 		return err
-	}
-	if !ok {
-		return nil
 	}
 
 	fieldName := l.config.FieldName
@@ -40,11 +39,14 @@ func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.
 	previousFrameFieldIndex := -1
 	currentFrameFieldIndex := -1
 
-	for i, f := range previousFrame.Fields {
-		if f.Name == fieldName {
-			previousFrameFieldIndex = i
+	if ok {
+		for i, f := range previousFrame.Fields {
+			if f.Name == fieldName {
+				previousFrameFieldIndex = i
+			}
 		}
 	}
+
 	for i, f := range frame.Fields {
 		if f.Name == fieldName {
 			currentFrameFieldIndex = i
@@ -75,7 +77,7 @@ func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.
 				f2.Name = "new"
 				changeFrame := data.NewFrame("change", fTime, f1, f2)
 				// TODO: construct single frame.
-				err = l.pipeline.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, changeFrame)
+				err = l.frameProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, changeFrame)
 				if err != nil {
 					return err
 				}

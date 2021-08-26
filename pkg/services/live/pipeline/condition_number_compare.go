@@ -7,14 +7,17 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+// NumberCompareCondition can compare numbers.
 type NumberCompareCondition struct {
 	FieldName string
 	Op        NumberCompareOp
 	Value     float64
 }
 
+// NumberCompareOp is an comparison operator.
 type NumberCompareOp string
 
+// Known NumberCompareOp types.
 const (
 	NumberCompareOpLt  NumberCompareOp = "lt"
 	NumberCompareOpGt  NumberCompareOp = "gt"

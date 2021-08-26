@@ -20,6 +20,10 @@ func (t testStorageAlt) ListChannelRules(_ context.Context, cmd ListLiveChannelR
 			OrgId:   1,
 			Pattern: "stream/telegraf/:metric",
 		},
+		{
+			OrgId:   1,
+			Pattern: "stream/telegraf/:metric/:extra",
+		},
 	}, nil
 }
 
@@ -37,6 +41,17 @@ func TestStorage_Get(t *testing.T) {
 	val, ok := ps.Get("metric")
 	require.True(t, ok)
 	require.Equal(t, "mem", val)
+
+	rule, ps, ok, err = s.Get(1, "stream/telegraf/mem/rss")
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Nil(t, rule.Converter)
+	val, ok = ps.Get("metric")
+	require.True(t, ok)
+	require.Equal(t, "mem", val)
+	val, ok = ps.Get("extra")
+	require.True(t, ok)
+	require.Equal(t, "rss", val)
 }
 
 func BenchmarkGetAlt(b *testing.B) {

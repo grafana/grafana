@@ -11,12 +11,17 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
+// Pipeline allows processing custom input data according to user-defined rules.
+// This includes:
+// * transforming custom input to data.Frame objects
+// * do some processing on these frames
+// * output resulting frames to various destinations.
 type Pipeline struct {
 	managedStream *managedstream.Runner
 	cache         *CacheSegmentedTree
 }
 
-// New ...
+// New creates new Pipeline.
 func New(managedStream *managedstream.Runner, node *centrifuge.Node) (*Pipeline, error) {
 	p := &Pipeline{
 		managedStream: managedStream,

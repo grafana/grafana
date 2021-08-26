@@ -6,6 +6,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+// MultipleProcessor can combine several Processor and
+// execute them sequentially.
 type MultipleProcessor struct {
 	Processors []Processor
 }

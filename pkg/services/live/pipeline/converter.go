@@ -10,7 +10,7 @@ import (
 // Channel is used for rule routing, if the channel is empty then frame processing
 // will try to take current rule Processor and Outputter. If channel is not empty
 // then frame processing will be redirected to a corresponding channel rule.
-// TODO: avoid recursion.
+// TODO: avoid recursion, increment a counter while frame travels over pipeline steps, make it configurable.
 type ChannelFrame struct {
 	Channel string
 	Frame   *data.Frame

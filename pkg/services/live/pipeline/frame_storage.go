@@ -20,7 +20,7 @@ func NewFrameStorage() *FrameStorage {
 	}
 }
 
-func (s *FrameStorage) Put(orgID int64, channel string, frame *data.Frame) error {
+func (s *FrameStorage) Set(orgID int64, channel string, frame *data.Frame) error {
 	key := orgchannel.PrependOrgID(orgID, channel)
 	s.mu.Lock()
 	defer s.mu.Unlock()
