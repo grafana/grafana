@@ -5,16 +5,8 @@ import {
   identityOverrideProcessor,
 } from '@grafana/data';
 import React from 'react';
-import {
-  graphFieldOptions,
-  HorizontalGroup,
-  IconButton,
-  Input,
-  RadioButtonGroup,
-  StackingConfig,
-  StackingMode,
-  Tooltip,
-} from '../..';
+import { graphFieldOptions, HorizontalGroup, IconButton, Input, RadioButtonGroup, Tooltip } from '../..';
+import { StackingConfig, StackingMode } from '@grafana/schema';
 
 export const StackingEditor: React.FC<FieldOverrideEditorProps<StackingConfig, any>> = ({
   value,

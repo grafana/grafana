@@ -8,26 +8,26 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/evaluator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// OSSAccessControlService is the service implementing role based access control.
-type OSSAccessControlService struct {
-	Cfg           *setting.Cfg          `inject:""`
-	UsageStats    usagestats.UsageStats `inject:""`
-	Log           log.Logger
-	registrations accesscontrol.RegistrationList
+func ProvideService(cfg *setting.Cfg, usageStats usagestats.UsageStats) *OSSAccessControlService {
+	s := &OSSAccessControlService{
+		Cfg:        cfg,
+		UsageStats: usageStats,
+		Log:        log.New("accesscontrol"),
+	}
+	s.registerUsageMetrics()
+	return s
 }
 
-// Init initializes the OSSAccessControlService.
-func (ac *OSSAccessControlService) Init() error {
-	ac.Log = log.New("accesscontrol")
-
-	ac.registerUsageMetrics()
-
-	return nil
+// OSSAccessControlService is the service implementing role based access control.
+type OSSAccessControlService struct {
+	Cfg           *setting.Cfg
+	UsageStats    usagestats.UsageStats
+	Log           log.Logger
+	registrations accesscontrol.RegistrationList
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
@@ -55,9 +55,17 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 	return 1
 }
 
-// Evaluate evaluates access to the given resource
-func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
-	return evaluator.Evaluate(ctx, ac, user, permission, scope...)
+// Evaluate evaluates access to the given resources
+func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+	timer := prometheus.NewTimer(metrics.MAccessEvaluationsSummary)
+	defer timer.ObserveDuration()
+	metrics.MAccessEvaluationCount.Inc()
+
+	permissions, err := ac.GetUserPermissions(ctx, user)
+	if err != nil {
+		return false, err
+	}
+	return evaluator.Evaluate(accesscontrol.GroupScopesByAction(permissions))
 }
 
 // GetUserPermissions returns user permissions based on built-in roles

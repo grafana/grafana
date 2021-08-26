@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,25 +26,31 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/opentracing/opentracing-go"
 )
 
 type Service struct {
-	logger               log.Logger
-	im                   instancemgmt.InstanceManager
-	BackendPluginManager backendplugin.Manager `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
-	HTTPClientProvider   httpclient.Provider   `inject:""`
+	logger log.Logger
+	im     instancemgmt.InstanceManager
 }
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "GraphiteService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
+func ProvideService(httpClientProvider httpclient.Provider, manager backendplugin.Manager) (*Service, error) {
+	s := &Service{
+		logger: log.New("tsdb.graphite"),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+	}
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
 	})
+
+	if err := manager.Register("graphite", factory); err != nil {
+		s.logger.Error("Failed to register plugin", "error", err)
+		return nil, err
+	}
+
+	return s, nil
 }
 
 type datasourceInfo struct {
@@ -72,20 +79,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 		return model, nil
 	}
-}
-
-func (s *Service) Init() error {
-	s.logger = log.New("tsdb.graphite")
-	s.im = datasource.NewInstanceManager(newInstanceSettings(s.HTTPClientProvider))
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "graphite", factory); err != nil {
-		s.logger.Error("Failed to register plugin", "error", err)
-	}
-	return nil
 }
 
 func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
@@ -248,15 +241,25 @@ func (s *Service) toDataFrames(response *http.Response) (frames data.Frames, err
 			values = append(values, value)
 		}
 
+		tags := make(map[string]string)
+		for name, value := range series.Tags {
+			switch value := value.(type) {
+			case string:
+				tags[name] = value
+			case float64:
+				tags[name] = strconv.FormatFloat(value, 'f', -1, 64)
+			}
+		}
+
 		frames = append(frames, data.NewFrame(name,
 			data.NewField("time", nil, timeVector),
-			data.NewField("value", series.Tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
+			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
 
 		if setting.Env == setting.Dev {
 			s.logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
 		}
 	}
-	return
+	return frames, nil
 }
 
 func (s *Service) createRequest(dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {

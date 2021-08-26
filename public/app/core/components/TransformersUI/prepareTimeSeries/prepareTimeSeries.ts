@@ -1,6 +1,7 @@
 import {
   SynchronousDataTransformerInfo,
   DataFrame,
+  DataFrameType,
   FieldType,
   DataTransformerID,
   outerJoinDataFrames,
@@ -54,7 +55,10 @@ export function toTimeSeriesMany(data: DataFrame[]): DataFrame[] {
       result.push({
         name: frame.name,
         refId: frame.refId,
-        meta: frame.meta,
+        meta: {
+          ...frame.meta,
+          type: DataFrameType.TimeSeriesMany,
+        },
         fields: [timeField, field],
         length: frame.length,
       });

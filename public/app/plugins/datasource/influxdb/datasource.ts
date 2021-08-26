@@ -1,36 +1,36 @@
-import { cloneDeep, map as _map, reduce, get, has, extend, omit, pick, isString } from 'lodash';
-
+import { cloneDeep, extend, get, has, isString, map as _map, omit, pick, reduce } from 'lodash';
+import { lastValueFrom, Observable, of, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { v4 as uuidv4 } from 'uuid';
+import { DataSourceWithBackend, frameToMetricFindValue, getBackendSrv } from '@grafana/runtime';
 import {
-  dateMath,
-  DataSourceInstanceSettings,
-  ScopedVars,
+  AnnotationEvent,
+  AnnotationQueryRequest,
+  ArrayVector,
+  DataFrame,
+  DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
+  DataSourceInstanceSettings,
+  dateMath,
   dateTime,
+  FieldType,
   LoadingState,
-  QueryResultMeta,
   MetricFindValue,
-  AnnotationQueryRequest,
-  AnnotationEvent,
-  DataQueryError,
-  DataFrame,
-  TimeSeries,
+  QueryResultMeta,
+  ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
-  FieldType,
-  ArrayVector,
+  TimeSeries,
 } from '@grafana/data';
-import { v4 as uuidv4 } from 'uuid';
+
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
-import { InfluxQuery, InfluxOptions, InfluxVersion } from './types';
+import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { getBackendSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
-import { Observable, throwError, of } from 'rxjs';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
-import { catchError, map } from 'rxjs/operators';
 import { buildRawQuery } from './queryUtils';
 
 // we detect the field type based on the value-array
@@ -310,17 +310,15 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     let query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = this.templateSrv.replace(query, undefined, 'regex');
 
-    return this._seriesQuery(query, options)
-      .toPromise()
-      .then((data: any) => {
-        if (!data || !data.results || !data.results[0]) {
-          throw { message: 'No results in response from InfluxDB' };
-        }
-        return new InfluxSeries({
-          series: data.results[0].series,
-          annotation: options.annotation,
-        }).getAnnotations();
-      });
+    return lastValueFrom(this._seriesQuery(query, options)).then((data: any) => {
+      if (!data || !data.results || !data.results[0]) {
+        throw { message: 'No results in response from InfluxDB' };
+      }
+      return new InfluxSeries({
+        series: data.results[0].series,
+        annotation: options.annotation,
+      }).getAnnotations();
+    });
   }
 
   targetContainsTemplate(target: any) {
@@ -370,27 +368,24 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         refId: 'metricFindQuery',
         query,
       };
-      return super
-        .query({
+      return lastValueFrom(
+        super.query({
           ...options, // includes 'range'
           targets: [target],
         } as DataQueryRequest)
-        .toPromise()
-        .then((rsp) => {
-          if (rsp.data?.length) {
-            return frameToMetricFindValue(rsp.data[0]);
-          }
-          return [];
-        });
+      ).then((rsp) => {
+        if (rsp.data?.length) {
+          return frameToMetricFindValue(rsp.data[0]);
+        }
+        return [];
+      });
     }
 
     const interpolated = this.templateSrv.replace(query, undefined, 'regex');
 
-    return this._seriesQuery(interpolated, options)
-      .toPromise()
-      .then((resp) => {
-        return this.responseParser.parse(query, resp);
-      });
+    return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
+      return this.responseParser.parse(query, resp);
+    });
   }
 
   getTagKeys(options: any = {}) {
@@ -453,9 +448,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         },
       } as DataQueryRequest<InfluxQuery>;
 
-      return super
-        .query(request)
-        .toPromise()
+      return lastValueFrom(super.query(request))
         .then((res: DataQueryResponse) => {
           if (!res || !res.data || res.state !== LoadingState.Done) {
             console.error('InfluxDB Error', res);
@@ -477,8 +470,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
     const query = queryBuilder.buildExploreQuery('RETENTION POLICIES');
 
-    return this._seriesQuery(query)
-      .toPromise()
+    return lastValueFrom(this._seriesQuery(query))
       .then((res: any) => {
         const error = get(res, 'results[0].error');
         if (error) {

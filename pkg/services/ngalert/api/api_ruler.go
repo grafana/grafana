@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 
-	coreapi "github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -304,5 +304,5 @@ func toNamespaceErrorResponse(err error) response.Response {
 	if errors.Is(err, models.ErrDashboardIdentifierNotSet) {
 		return ErrResp(http.StatusBadRequest, err, err.Error())
 	}
-	return coreapi.ToFolderErrorResponse(err)
+	return apierrors.ToFolderErrorResponse(err)
 }

@@ -1,3 +1,4 @@
+import { LegendDisplayMode } from '@grafana/schema';
 import {
   ApplyFieldOverrideOptions,
   DataTransformerConfig,
@@ -6,7 +7,7 @@ import {
   NavModelItem,
   PanelData,
 } from '@grafana/data';
-import { LegendDisplayMode, Table, TimeSeries } from '@grafana/ui';
+import { Table, TimeSeries } from '@grafana/ui';
 import { config } from 'app/core/config';
 import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
