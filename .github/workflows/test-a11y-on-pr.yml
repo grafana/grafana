@@ -15,7 +15,7 @@ jobs:
         run: yarn install --pure-lockfile
 
       - name: Run pa11y-ci.
-        run: yarn pa11y 2>&1 | tee pa11y_output.txt
+        run: yarn test:accessibility-pr 2>&1 | tee pa11y_output.txt
 
       - name: Read pa11y_output file.
         id: pa11y_output
