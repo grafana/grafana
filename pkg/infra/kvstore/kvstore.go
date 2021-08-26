@@ -8,7 +8,7 @@ import (
 )
 
 func ProvideService(sqlStore *sqlstore.SQLStore) KVStore {
-	s := &KVStoreSQL{
+	s := &kvStoreSQL{
 		sqlStore: sqlStore,
 		log:      log.New("infra.kvstore.sql"),
 	}

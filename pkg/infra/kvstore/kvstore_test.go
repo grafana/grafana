@@ -17,7 +17,7 @@ func createTestableKVStore(t *testing.T) KVStore {
 
 	sqlstore := sqlstore.InitTestDB(t)
 
-	kv := &KVStoreSQL{
+	kv := &kvStoreSQL{
 		sqlStore: sqlstore,
 		log:      log.New("infra.kvstore.sql"),
 	}

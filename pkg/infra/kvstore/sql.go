@@ -8,14 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-// KVStoreSQL provides a key/value store backed by the Grafana database
-type KVStoreSQL struct {
+// kvStoreSQL provides a key/value store backed by the Grafana database
+type kvStoreSQL struct {
 	log      log.Logger
 	sqlStore *sqlstore.SQLStore
 }
 
 // Get an item from the store
-func (kv *KVStoreSQL) Get(ctx context.Context, orgId int64, namespace string, key string) (string, error) {
+func (kv *kvStoreSQL) Get(ctx context.Context, orgId int64, namespace string, key string) (string, error) {
 	item := KVStoreItem{
 		OrgId:     &orgId,
 		Namespace: &namespace,
@@ -41,7 +41,7 @@ func (kv *KVStoreSQL) Get(ctx context.Context, orgId int64, namespace string, ke
 }
 
 // Set an item in the store
-func (kv *KVStoreSQL) Set(ctx context.Context, orgId int64, namespace string, key string, value string) error {
+func (kv *kvStoreSQL) Set(ctx context.Context, orgId int64, namespace string, key string, value string) error {
 	return kv.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		item := KVStoreItem{
 			OrgId:     &orgId,
