@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -35,31 +34,30 @@ const (
 
 const ServiceName = "ContextHandler"
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         ServiceName,
-		Instance:     &ContextHandler{},
-		InitPriority: registry.High,
-	})
+func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
+	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore *sqlstore.SQLStore) *ContextHandler {
+	return &ContextHandler{
+		Cfg:              cfg,
+		AuthTokenService: tokenService,
+		JWTAuthService:   jwtService,
+		RemoteCache:      remoteCache,
+		RenderService:    renderService,
+		SQLStore:         sqlStore,
+	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg              *setting.Cfg             `inject:""`
-	AuthTokenService models.UserTokenService  `inject:""`
-	JWTAuthService   models.JWTService        `inject:""`
-	RemoteCache      *remotecache.RemoteCache `inject:""`
-	RenderService    rendering.Service        `inject:""`
-	SQLStore         *sqlstore.SQLStore       `inject:""`
+	Cfg              *setting.Cfg
+	AuthTokenService models.UserTokenService
+	JWTAuthService   models.JWTService
+	RemoteCache      *remotecache.RemoteCache
+	RenderService    rendering.Service
+	SQLStore         *sqlstore.SQLStore
 
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
-}
-
-// Init initializes the service.
-func (h *ContextHandler) Init() error {
-	return nil
 }
 
 type reqContextKey struct{}

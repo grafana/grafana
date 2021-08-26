@@ -24,7 +24,7 @@ These features are included in the Grafana open source edition.
 
 Grafana 8.1 introduces the foundation for our new map panel. This new panel leverages [OpenLayers](https://openlayers.org/) and gives us a flexible solution for extending the way we use the new Geomap panel moving forward. The new Geomap panel includes multiple base layer styles (map layer options), as well as a more open data layer. The data layer can use coordinates and geo-hashed data in addition to a lookup table.
 
-The Geomap panel is also able to share views across multiple Geomap panels on the same dashboard, making it straightforward to visualize and explore multiple types of geospatial data using the same map zoom and focus settings. For more information, refer to [Geomap panel]({{< relref "../panels/visualizations/geomap.md" >}}).
+The Geomap panel is also able to share views across multiple Geomap panels on the same dashboard, making it straightforward to visualize and explore multiple types of geospatial data using the same map zoom and focus settings. For more information, refer to [Geomap panel]({{< relref "../visualizations/geomap.md" >}}).
 {{< figure src="/static/img/docs/geomap-panel/geomap_with_heatmap.png" max-width="850px" caption="Geomap panel: Heatmap" >}}
 
 ## Annotation panel
@@ -43,9 +43,9 @@ Color scheme **From thresholds**:
 Color scheme: **Green-Yellow-Red (by value)**
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_line.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
 
-For more on how to configure Graphs with by value color schemes read [Graph and color schemes]({{< relref "../panels/visualizations/time-series/_index.md" >}}).
+For more on how to configure Graphs with by value color schemes read [Graph and color schemes]({{< relref "../visualizations/time-series/_index.md" >}}).
 
-You can also create annotations on the new Time series panel]({{< relref "../panels/visualizations/time-series/annotate-time-series.md" >}}), bringing it closer to parity with the legacy Graph Panel. To learn more, refer to the [time series panel]({{< relref "../panels/visualizations/time-series/_index.md" >}}).
+You can also create annotations on the new Time series panel]({{< relref "../visualizations/time-series/annotate-time-series.md" >}}), bringing it closer to parity with the legacy Graph Panel. To learn more, refer to the [time series panel]({{< relref "../visualizations/time-series/_index.md" >}}).
 
 ### Transformations improvements
 
@@ -103,7 +103,7 @@ And here is the prettified JSON log.
 
 {{< figure src="/static/img/docs/panels/pretty-json/prettified-json.png" max-width="1200px" caption="Prettified JSON" >}}
 
-For more on how to prettify JSON logs, refer to [Visualization]({{< relref "../panels/visualizations/_index.md" >}}) and [Display]({{< relref "../panels/visualizations/logs-panel.md" >}}) options.
+For more on how to prettify JSON logs, refer to [Visualization]({{< relref "../visualizations/_index.md" >}}) and [Display]({{< relref "../visualizations/logs-panel.md" >}}) options.
 
 ### Plugin catalog - Updated UX and extended features
 
@@ -111,7 +111,7 @@ We’ve made some changes to the plugins UI to help make it easier to discover a
 
 #### Documentation updates
 
-New panel summaries and preview on the top level [Visualizations]({{< relref "../panels/visualizations/_index.md" >}}) page to help users pick or learn about specific visualizations more easily.
+New panel summaries and preview on the top level [Visualizations]({{< relref "../visualizations/_index.md" >}}) page to help users pick or learn about specific visualizations more easily.
 
 ### Upcoming changes to the Select component
 

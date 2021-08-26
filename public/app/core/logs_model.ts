@@ -1,5 +1,5 @@
 import { size } from 'lodash';
-import { BarAlignment, DrawStyle, StackingMode } from '@grafana/schema';
+import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 
 import {
@@ -145,7 +145,7 @@ export function makeDataFramesForLogs(sortedRows: LogRowModel[], bucketSize: num
     data.fields[valueField.index].config.decimals = 0;
 
     data.fields[valueField.index].config.custom = {
-      drawStyle: DrawStyle.Bars,
+      drawStyle: GraphDrawStyle.Bars,
       barAlignment: BarAlignment.Center,
       barWidthFactor: 0.9,
       barMaxWidth: 5,
