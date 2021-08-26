@@ -308,7 +308,7 @@ func FrameToSeriesSlice(frame *data.Frame) (plugins.DataTimeSeriesSlice, error) 
 	if tsSchema.Type == data.TimeSeriesTypeNot {
 		// If no fields, or only a time field, create an empty plugins.DataTimeSeriesSlice with a single
 		// time series in order to trigger "no data" in alerting.
-		if len(frame.Fields) == 0 || (len(frame.Fields) == 1 && frame.Fields[0].Type().Time()) {
+		if frame.Rows() == 0 || (len(frame.Fields) == 1 && frame.Fields[0].Type().Time()) {
 			return plugins.DataTimeSeriesSlice{{
 				Name:   frame.Name,
 				Points: make(plugins.DataTimeSeriesPoints, 0),
@@ -316,7 +316,6 @@ func FrameToSeriesSlice(frame *data.Frame) (plugins.DataTimeSeriesSlice, error) 
 		}
 		return nil, fmt.Errorf("input frame is not recognized as a time series")
 	}
-
 	seriesCount := len(tsSchema.ValueIndices)
 	seriesSlice := make(plugins.DataTimeSeriesSlice, 0, seriesCount)
 	timeField := frame.Fields[tsSchema.TimeIndex]
