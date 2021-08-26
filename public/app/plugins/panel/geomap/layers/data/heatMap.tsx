@@ -24,7 +24,7 @@ export interface HeatmapConfig {
 const defaultOptions: HeatmapConfig = {
   weight: {
     fixed: 1,
-    min: 0, 
+    min: 0,
     max: 1,
   },
   blur: 15,
@@ -76,8 +76,8 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
 
         // Get data points (latitude and longitude coordinates)
         const info = dataFrameToPoints(frame, matchers);
-        if(info.warning) {
-          console.log( 'WARN', info.warning);
+        if (info.warning) {
+          console.log('WARN', info.warning);
           return; // ???
         }
 
@@ -86,18 +86,18 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
         // Map each data value into new points
         for (let i = 0; i < frame.length; i++) {
           const cluster = new Feature({
-              geometry: info.points[i],
-              value: weightDim.get(i),
+            geometry: info.points[i],
+            value: weightDim.get(i),
           });
           vectorSource.addFeature(cluster);
-        };
+        }
         vectorLayer.setSource(vectorSource);
 
         // Set heatmap gradient colors
         let colors = ['#00f', '#0ff', '#0f0', '#ff0', '#f00'];
 
         // Either the configured field or the first numeric field value
-        const field = weightDim.field ?? frame.fields.find(field => field.type === FieldType.number);
+        const field = weightDim.field ?? frame.fields.find((field) => field.type === FieldType.number);
         if (field) {
           const colorMode = getFieldColorModeForField(field);
           if (colorMode.isContinuous && colorMode.getColors) {
@@ -123,7 +123,8 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
           max: 1,
           hideRange: true, // Don't show the scale factor
         },
-        defaultValue: { // Configured values
+        defaultValue: {
+          // Configured values
           fixed: 1,
           min: 0,
           max: 1,
@@ -135,9 +136,9 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
         name: 'Radius',
         defaultValue: defaultOptions.radius,
         settings: {
-            min: 1,
-            max: 50,
-            step: 1,
+          min: 1,
+          max: 50,
+          step: 1,
         },
       })
       .addSliderInput({
