@@ -19,7 +19,7 @@ import {
   RadioButtonGroup,
   VerticalGroup,
 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
 import { deletePlaylist } from './api';
@@ -28,9 +28,9 @@ interface ConnectedProps {
   navModel: NavModel;
 }
 
-interface Props extends ConnectedProps, GrafanaRouteComponentProps {}
+export interface PlaylistPageProps extends ConnectedProps, GrafanaRouteComponentProps {}
 
-export const PlaylistPage: FC<Props> = ({ navModel }) => {
+export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [startPlaylist, setStartPlaylist] = useState<PlaylistDTO | undefined>();
   const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistDTO | undefined>();
@@ -74,7 +74,7 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
                 icon="trash-alt"
                 variant="destructive"
               >
-                Delete
+                Delete playlist
               </Button>
             </Card.Actions>
           </Card>
