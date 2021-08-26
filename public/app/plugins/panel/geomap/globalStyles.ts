@@ -2,7 +2,6 @@ import { css } from '@emotion/react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import 'ol/ol.css';
-import tinycolor from 'tinycolor2';
 
 /**
  * Will be loaded *after* the css above
@@ -45,11 +44,9 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
   //   border: 2px dotted rgba(0,60,136,0.7);
   // }
 
-  const bg = tinycolor(theme.v1.colors.panelBg);
-  const button = tinycolor(theme.colors.secondary.main);
   return css`
     .ol-scale-line {
-      background: ${bg.setAlpha(0.7).toRgbString()}; // rgba(0,60,136,0.3);
+      background: ${theme.colors.border.weak}; // rgba(0,60,136,0.3);
     }
     .ol-scale-line-inner {
       border: 1px solid ${theme.colors.text.primary}; // #eee;
@@ -57,28 +54,27 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
       color: ${theme.colors.text.primary}; //  #eee;
     }
     .ol-control {
-      background-color: ${bg.setAlpha(0.4).toRgbString()}; //rgba(255,255,255,0.4);
+      background-color: ${theme.colors.background.secondary}; //rgba(255,255,255,0.4);
     }
     .ol-control:hover {
-      background-color: ${bg.setAlpha(0.6).toRgbString()}; // rgba(255,255,255,0.6);
+      background-color: ${theme.colors.action.hover}; // rgba(255,255,255,0.6);
     }
     .ol-control button {
-      color: ${bg.setAlpha(0.8).toRgbString()}; // white;
-      background-color: ${button.setAlpha(0.5).toRgbString()}; // rgba(0,60,136,0.5);
+      color: ${theme.colors.secondary.text}; // white;
+      background-color: ${theme.colors.secondary.main}; // rgba(0,60,136,0.5);
     }
     .ol-control button:hover {
-      background-color: ${button.setAlpha(0.7).toRgbString()}; // rgba(0,60,136,0.7);
+      background-color: ${theme.colors.secondary.shade}; // rgba(0,60,136,0.5);
     }
     .ol-control button:focus {
-      // same as button
-      background-color: ${button.setAlpha(0.5).toRgbString()}; // rgba(0,60,136,0.5);
+      background-color: ${theme.colors.secondary.main}; // rgba(0,60,136,0.5);
     }
     .ol-attribution ul {
       color: ${theme.colors.text.primary}; //  #000;
-      text-shadow: 0 0 0px #fff; // removes internal styling!
+      text-shadow: none;
     }
     .ol-attribution:not(.ol-collapsed) {
-      background-color: ${bg.setAlpha(0.8).toRgbString()}; // rgba(255,255,255,0.8);
+      background-color: ${theme.colors.background.secondary}; // rgba(255,255,255,0.8);
     }
   `;
 }
