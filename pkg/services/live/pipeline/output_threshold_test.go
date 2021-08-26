@@ -10,22 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func generateStateFrame(tm time.Time, value float64, state string, color string) *data.Frame {
-	fTime := data.NewFieldFromFieldType(data.FieldTypeTime, 1)
-	fTime.Name = "time"
-	fTime.Set(0, tm)
-	f1 := data.NewFieldFromFieldType(data.FieldTypeFloat64, 1)
-	f1.Set(0, value)
-	f1.Name = "value"
-	f2 := data.NewFieldFromFieldType(data.FieldTypeString, 1)
-	f2.Set(0, state)
-	f2.Name = "state"
-	f3 := data.NewFieldFromFieldType(data.FieldTypeString, 1)
-	f3.Set(0, color)
-	f3.Name = "color"
-	return data.NewFrame("state", fTime, f1, f2, f3)
-}
-
 func TestThresholdOutput_Output(t *testing.T) {
 	type fields struct {
 		frameStorage   FrameGetSetter

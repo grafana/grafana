@@ -40,7 +40,7 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 	if frame == nil {
 		return nil
 	}
-	previousFrame, previousFrameOk, err := l.frameStorage.Get(vars.OrgID, l.config.Channel)
+	previousFrame, previousFrameOk, err := l.frameStorage.Get(vars.OrgID, vars.Channel)
 	if err != nil {
 		return err
 	}
@@ -145,5 +145,5 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 		}
 	}
 
-	return l.frameStorage.Set(vars.OrgID, l.config.Channel, frame)
+	return l.frameStorage.Set(vars.OrgID, vars.Channel, frame)
 }

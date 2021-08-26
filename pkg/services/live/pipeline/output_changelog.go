@@ -26,7 +26,7 @@ func NewChangeLogOutput(frameStorage FrameGetSetter, pipeline FrameProcessor, co
 }
 
 func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) error {
-	previousFrame, previousFrameOK, err := l.frameStorage.Get(vars.OrgID, l.config.Channel)
+	previousFrame, previousFrameOK, err := l.frameStorage.Get(vars.OrgID, vars.Channel)
 	if err != nil {
 		return err
 	}
@@ -85,5 +85,5 @@ func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.
 		}
 	}
 
-	return l.frameStorage.Set(vars.OrgID, l.config.Channel, frame)
+	return l.frameStorage.Set(vars.OrgID, vars.Channel, frame)
 }
