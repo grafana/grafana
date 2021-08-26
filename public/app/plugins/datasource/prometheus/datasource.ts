@@ -416,7 +416,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
             key: requestId,
             state: LoadingState.Done,
             error: {
-              message: `The specified step interval is lower than the safe interval and has automatically been set to ${queries[index].step} Consider adjusting the interval or the time range`,
+              message:
+                'The specified step interval is lower than the safe interval and has automatically been set to the safe interval. Consider adjusting the interval or the time range',
             },
           };
         }
