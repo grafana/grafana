@@ -2,7 +2,6 @@ import React, { useEffect, useMemo } from 'react';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { Modal, Button, Form, Field, Input, useStyles2 } from '@grafana/ui';
 import { durationValidationPattern } from '../../utils/time';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { useDispatch } from 'react-redux';
 import { updateLotexNamespaceAndGroupAction } from '../../state/actions';
@@ -117,7 +116,7 @@ export function EditCloudGroupModal(props: Props): React.ReactElement {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   modal: css`
     max-width: 560px;
   `,
