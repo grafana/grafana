@@ -14,7 +14,7 @@ import (
 
 func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager) (*TestDataPlugin, error) {
 	resourceMux := http.NewServeMux()
-	p := new(resourceMux)
+	p := new(cfg, resourceMux)
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler:    p.queryMux,
 		CallResourceHandler: httpadapter.New(resourceMux),
@@ -28,9 +28,10 @@ func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager) (*TestDataP
 	return p, nil
 }
 
-func new(resourceMux *http.ServeMux) *TestDataPlugin {
+func new(cfg *setting.Cfg, resourceMux *http.ServeMux) *TestDataPlugin {
 	p := &TestDataPlugin{
 		logger:    log.New("tsdb.testdata"),
+		cfg:       cfg,
 		scenarios: map[string]*Scenario{},
 		queryMux:  datasource.NewQueryTypeMux(),
 	}
