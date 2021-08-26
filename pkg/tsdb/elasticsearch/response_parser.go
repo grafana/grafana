@@ -201,7 +201,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				tags[k] = v
 			}
 			tags["metric"] = countType
-			frames = append(frames, data.NewFrame(metric.Field,
+			frames = append(frames, data.NewFrame("",
 				data.NewField("time", nil, timeVector),
 				data.NewField("value", tags, values)))
 		case percentilesType:
@@ -235,7 +235,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 					timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
 					values = append(values, value)
 				}
-				frames = append(frames, data.NewFrame(metric.Field,
+				frames = append(frames, data.NewFrame("",
 					data.NewField("time", nil, timeVector),
 					data.NewField("value", tags, values)))
 			}
@@ -277,7 +277,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 					}
 				}
 
-				frames = append(frames, data.NewFrame(metricField.(string),
+				frames = append(frames, data.NewFrame("",
 					data.NewField("time", nil, timeVector),
 					data.NewField("value", tags, values),
 				))
@@ -324,7 +324,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 					values = append(values, value)
 				}
 				labels := tags
-				frames = append(frames, data.NewFrame(metric.Field,
+				frames = append(frames, data.NewFrame("",
 					data.NewField("time", nil, timeVector),
 					data.NewField("value", labels, values)))
 			}
@@ -352,7 +352,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
 				values = append(values, value)
 			}
-			frames = append(frames, data.NewFrame(metric.Field,
+			frames = append(frames, data.NewFrame("",
 				data.NewField("time", nil, timeVector),
 				data.NewField("value", tags, values)))
 		}
@@ -566,9 +566,9 @@ func (rp *responseParser) nameFields(queryResult backend.DataResponse, target *Q
 	}
 	metricTypeCount := len(set)
 	for i := range frames {
-		frames[i].Name = rp.getFieldName(*frames[i].Fields[1], target, metricTypeCount)
+		fieldName := rp.getFieldName(*frames[i].Fields[1], target, metricTypeCount)
 		for _, field := range frames[i].Fields {
-			field.SetConfig(&data.FieldConfig{DisplayNameFromDS: rp.getFieldName(*frames[i].Fields[1], target, metricTypeCount)})
+			field.SetConfig(&data.FieldConfig{DisplayNameFromDS: fieldName})
 		}
 	}
 }
