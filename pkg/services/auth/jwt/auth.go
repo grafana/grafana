@@ -7,37 +7,33 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 const ServiceName = "AuthService"
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         ServiceName,
-		Instance:     &AuthService{},
-		InitPriority: registry.Medium,
-	})
+func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache) (*AuthService, error) {
+	s := newService(cfg, remoteCache)
+	if err := s.init(); err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }
 
-type AuthService struct {
-	Cfg         *setting.Cfg             `inject:""`
-	RemoteCache *remotecache.RemoteCache `inject:""`
-
-	keySet           keySet
-	log              log.Logger
-	expect           map[string]interface{}
-	expectRegistered jwt.Expected
+func newService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache) *AuthService {
+	return &AuthService{
+		Cfg:         cfg,
+		RemoteCache: remoteCache,
+		log:         log.New("auth.jwt"),
+	}
 }
 
-func (s *AuthService) Init() error {
+func (s *AuthService) init() error {
 	if !s.Cfg.JWTAuthEnabled {
 		return nil
 	}
-
-	s.log = log.New("auth.jwt")
 
 	if err := s.initClaimExpectations(); err != nil {
 		return err
@@ -47,6 +43,16 @@ func (s *AuthService) Init() error {
 	}
 
 	return nil
+}
+
+type AuthService struct {
+	Cfg         *setting.Cfg
+	RemoteCache *remotecache.RemoteCache
+
+	keySet           keySet
+	log              log.Logger
+	expect           map[string]interface{}
+	expectRegistered jwt.Expected
 }
 
 func (s *AuthService) Verify(ctx context.Context, strToken string) (models.JWTClaims, error) {

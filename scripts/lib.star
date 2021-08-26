@@ -1,6 +1,6 @@
 load('scripts/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
-grabpl_version = '2.3.3'
+grabpl_version = '2.4.0'
 build_image = 'grafana/build-container:1.4.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -225,6 +225,9 @@ def lint_backend_step(edition):
             'initialize',
         ],
         'commands': [
+            # Generate Go code, will install Wire
+            # TODO: Install Wire in Docker image instead
+            'make gen-go',
             # Don't use Make since it will re-download the linters
             './bin/grabpl lint-backend --edition {}'.format(edition),
         ],
@@ -317,7 +320,7 @@ def upload_cdn(edition):
         'name': 'upload-cdn-assets' + enterprise2_sfx(edition),
         'image': publish_image,
         'depends_on': [
-            'package' + enterprise2_sfx(edition),
+            'end-to-end-tests-server' + enterprise2_sfx(edition),
         ],
         'environment': {
             'GCP_GRAFANA_UPLOAD_KEY': from_secret('gcp_key'),
@@ -826,7 +829,6 @@ def release_canary_npm_packages_step(edition):
         'image': build_image,
         'depends_on': [
             'end-to-end-tests',
-            'end-to-end-tests-server',
         ],
         'environment': {
             'GITHUB_PACKAGE_TOKEN': from_secret('github_package_token'),
@@ -874,9 +876,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         cmd = './bin/grabpl upload-packages --edition {}{}'.format(edition, packages_bucket)
 
     dependencies = [
-        'package' + enterprise2_sfx(edition),
         'end-to-end-tests' + enterprise2_sfx(edition),
-        'end-to-end-tests-server',
         'mysql-integration-tests',
         'postgres-integration-tests',
     ]

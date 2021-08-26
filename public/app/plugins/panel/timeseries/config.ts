@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import {
   BarAlignment,
-  DrawStyle,
+  GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
@@ -26,7 +26,7 @@ import { SpanNullsEditor } from './SpanNullsEditor';
 import { ThresholdsStyleEditor } from './ThresholdsStyleEditor';
 
 export const defaultGraphConfig: GraphFieldConfig = {
-  drawStyle: DrawStyle.Line,
+  drawStyle: GraphDrawStyle.Line,
   lineInterpolation: LineInterpolation.Linear,
   lineWidth: 1,
   fillOpacity: 0,
@@ -74,7 +74,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             options: graphFieldOptions.lineInterpolation,
           },
-          showIf: (c) => c.drawStyle === DrawStyle.Line,
+          showIf: (c) => c.drawStyle === GraphDrawStyle.Line,
         })
         .addRadio({
           path: 'barAlignment',
@@ -84,7 +84,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             options: graphFieldOptions.barAlignment,
           },
-          showIf: (c) => c.drawStyle === DrawStyle.Bars,
+          showIf: (c) => c.drawStyle === GraphDrawStyle.Bars,
         })
         .addSliderInput({
           path: 'lineWidth',
@@ -96,7 +96,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             max: 10,
             step: 1,
           },
-          showIf: (c) => c.drawStyle !== DrawStyle.Points,
+          showIf: (c) => c.drawStyle !== GraphDrawStyle.Points,
         })
         .addSliderInput({
           path: 'fillOpacity',
@@ -108,7 +108,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             max: 100,
             step: 1,
           },
-          showIf: (c) => c.drawStyle !== DrawStyle.Points,
+          showIf: (c) => c.drawStyle !== GraphDrawStyle.Points,
         })
         .addRadio({
           path: 'gradientMode',
@@ -118,7 +118,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             options: graphFieldOptions.fillGradient,
           },
-          showIf: (c) => c.drawStyle !== DrawStyle.Points,
+          showIf: (c) => c.drawStyle !== GraphDrawStyle.Points,
         })
         .addCustomEditor({
           id: 'fillBelowTo',
@@ -136,7 +136,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           path: 'lineStyle',
           name: 'Line style',
           category: categoryStyles,
-          showIf: (c) => c.drawStyle === DrawStyle.Line,
+          showIf: (c) => c.drawStyle === GraphDrawStyle.Line,
           editor: LineStyleEditor,
           override: LineStyleEditor,
           process: identityOverrideProcessor,
@@ -150,7 +150,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           defaultValue: false,
           editor: SpanNullsEditor,
           override: SpanNullsEditor,
-          showIf: (c) => c.drawStyle === DrawStyle.Line,
+          showIf: (c) => c.drawStyle === GraphDrawStyle.Line,
           shouldApply: (f) => f.type !== FieldType.time,
           process: identityOverrideProcessor,
         })
@@ -162,7 +162,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             options: graphFieldOptions.showPoints,
           },
-          showIf: (c) => c.drawStyle !== DrawStyle.Points,
+          showIf: (c) => c.drawStyle !== GraphDrawStyle.Points,
         })
         .addSliderInput({
           path: 'pointSize',
@@ -174,7 +174,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             max: 40,
             step: 1,
           },
-          showIf: (c) => c.showPoints !== PointVisibility.Never || c.drawStyle === DrawStyle.Points,
+          showIf: (c) => c.showPoints !== PointVisibility.Never || c.drawStyle === GraphDrawStyle.Points,
         });
 
       commonOptionsBuilder.addStackingConfig(builder, cfg.stacking, categoryStyles);

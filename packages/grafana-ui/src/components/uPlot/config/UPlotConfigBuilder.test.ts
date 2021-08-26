@@ -4,7 +4,7 @@ import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 import {
   GraphGradientMode,
   AxisPlacement,
-  DrawStyle,
+  GraphDrawStyle,
   PointVisibility,
   ScaleOrientation,
   ScaleDirection,
@@ -417,7 +417,7 @@ describe('UPlotConfigBuilder', () => {
   it('when fillColor is not set fill', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       scaleKey: 'scale-x',
       lineColor: '#0000ff',
       theme: darkTheme,
@@ -429,7 +429,7 @@ describe('UPlotConfigBuilder', () => {
   it('when fillOpacity is set', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       scaleKey: 'scale-x',
       lineColor: '#FFAABB',
       fillOpacity: 50,
@@ -442,7 +442,7 @@ describe('UPlotConfigBuilder', () => {
   it('when fillColor is set ignore fillOpacity', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       scaleKey: 'scale-x',
       lineColor: '#FFAABB',
       fillOpacity: 50,
@@ -456,7 +456,7 @@ describe('UPlotConfigBuilder', () => {
   it('when fillGradient mode is opacity', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       scaleKey: 'scale-x',
       lineColor: '#FFAABB',
       fillOpacity: 50,
@@ -470,7 +470,7 @@ describe('UPlotConfigBuilder', () => {
   it('allows series configuration', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       scaleKey: 'scale-x',
       fillOpacity: 50,
       gradientMode: GraphGradientMode.Opacity,
@@ -534,7 +534,7 @@ describe('UPlotConfigBuilder', () => {
       const builder = new UPlotConfigBuilder();
       builder.setStacking();
       builder.addSeries({
-        drawStyle: DrawStyle.Line,
+        drawStyle: GraphDrawStyle.Line,
         scaleKey: 'scale-x',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
@@ -545,7 +545,7 @@ describe('UPlotConfigBuilder', () => {
         theme: darkTheme,
       });
       builder.addSeries({
-        drawStyle: DrawStyle.Line,
+        drawStyle: GraphDrawStyle.Line,
         scaleKey: 'scale-x',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
@@ -558,7 +558,7 @@ describe('UPlotConfigBuilder', () => {
       });
 
       builder.addSeries({
-        drawStyle: DrawStyle.Line,
+        drawStyle: GraphDrawStyle.Line,
         scaleKey: 'scale-x',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
