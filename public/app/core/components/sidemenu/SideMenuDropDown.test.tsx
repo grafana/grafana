@@ -1,50 +1,51 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { BrowserRouter } from 'react-router-dom';
 import SideMenuDropDown from './SideMenuDropDown';
 
-const setup = (propOverrides?: object) => {
-  const props = Object.assign(
+describe('SideMenuDropDown', () => {
+  const mockHeaderText = 'MyHeaderText';
+  const mockHeaderUrl = '/route';
+  const mockOnHeaderClick = jest.fn();
+  const mockItems = [
     {
-      link: {
-        text: 'link',
-      },
+      text: 'First link',
     },
-    propOverrides
-  );
+    {
+      text: 'Second link',
+    },
+  ];
 
-  return shallow(<SideMenuDropDown {...props} />);
-};
-
-describe('Render', () => {
-  it('should render component', () => {
-    const wrapper = setup();
-
-    expect(wrapper).toMatchSnapshot();
+  it('displays the header text', () => {
+    render(<SideMenuDropDown headerText={mockHeaderText} />);
+    const text = screen.getByText(mockHeaderText);
+    expect(text).toBeInTheDocument();
   });
 
-  it('should render children', () => {
-    const wrapper = setup({
-      link: {
-        text: 'link',
-        children: [{ id: 1 }, { id: 2 }, { id: 3 }],
-      },
-    });
-
-    expect(wrapper).toMatchSnapshot();
+  it('attaches the link to the header text if provided', () => {
+    render(
+      <BrowserRouter>
+        <SideMenuDropDown headerText={mockHeaderText} headerUrl={mockHeaderUrl} />
+      </BrowserRouter>
+    );
+    const link = screen.getByRole('link', { name: mockHeaderText });
+    expect(link).toBeInTheDocument();
   });
 
-  it('should not render hideFromMenu children', () => {
-    const wrapper = setup({
-      link: {
-        text: 'link',
-        children: [
-          { id: 1, hideFromMenu: false },
-          { id: 2, hideFromMenu: true },
-          { id: 3, hideFromMenu: false },
-        ],
-      },
-    });
+  it('calls the onHeaderClick function when the header is clicked', () => {
+    render(<SideMenuDropDown headerText={mockHeaderText} onHeaderClick={mockOnHeaderClick} />);
+    const text = screen.getByText(mockHeaderText);
+    expect(text).toBeInTheDocument();
+    userEvent.click(text);
+    expect(mockOnHeaderClick).toHaveBeenCalled();
+  });
 
-    expect(wrapper).toMatchSnapshot();
+  it('displays the items', () => {
+    render(<SideMenuDropDown headerText={mockHeaderText} items={mockItems} />);
+    mockItems.forEach(({ text }) => {
+      const childItem = screen.getByText(text);
+      expect(childItem).toBeInTheDocument();
+    });
   });
 });
