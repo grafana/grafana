@@ -1,3 +1,6 @@
+import { identity, omit, pick, pickBy } from 'lodash';
+import { lastValueFrom, Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import {
   DataQueryRequest,
   DataQueryResponse,
@@ -9,14 +12,12 @@ import {
   MutableDataFrame,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+
 import { serializeParams } from 'app/core/utils/fetch';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
 import { createTableFrame, createTraceFrame } from './responseTransform';
 import { createGraphFrames } from './graphTransform';
 import { JaegerQuery } from './types';
-import { identity, omit, pick, pickBy } from 'lodash';
 import { convertTagsLogfmt } from './util';
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 
@@ -27,7 +28,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   }
 
   async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
-    const res = await this._request(url, params, { hideFromInspector: true }).toPromise();
+    const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
     return res.data.data;
   }
 
@@ -57,8 +58,13 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
       if (!this.uploadedJson) {
         return of({ data: [] });
       }
-      const traceData = JSON.parse(this.uploadedJson as string).data[0];
-      return of({ data: [createTraceFrame(traceData), ...createGraphFrames(traceData)] });
+
+      try {
+        const traceData = JSON.parse(this.uploadedJson as string).data[0];
+        return of({ data: [createTraceFrame(traceData), ...createGraphFrames(traceData)] });
+      } catch (error) {
+        return of({ error: { message: 'JSON is not valid Jaeger format' }, data: [] });
+      }
     }
 
     let jaegerQuery = pick(target, ['operation', 'service', 'tags', 'minDuration', 'maxDuration', 'limit']);
@@ -87,8 +93,8 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   }
 
   async testDatasource(): Promise<any> {
-    return this._request('/api/services')
-      .pipe(
+    return lastValueFrom(
+      this._request('/api/services').pipe(
         map((res) => {
           const values: any[] = res?.data?.data || [];
           const testResult =
@@ -121,7 +127,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
           return of({ status: 'error', message: message });
         })
       )
-      .toPromise();
+    );
   }
 
   getTimeRange(): { start: number; end: number } {

@@ -5,23 +5,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var ErrInvalidQuotaTarget = errors.New("invalid quota target")
 
-func init() {
-	registry.RegisterService(&QuotaService{})
+func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService) *QuotaService {
+	return &QuotaService{
+		Cfg:              cfg,
+		AuthTokenService: tokenService,
+	}
 }
 
 type QuotaService struct {
-	AuthTokenService models.UserTokenService `inject:""`
-	Cfg              *setting.Cfg            `inject:""`
-}
-
-func (qs *QuotaService) Init() error {
-	return nil
+	AuthTokenService models.UserTokenService
+	Cfg              *setting.Cfg
 }
 
 func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool, error) {

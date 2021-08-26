@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -19,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/api"
@@ -41,35 +41,36 @@ type DatasourceInfo struct {
 	TimeInterval   string
 }
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "PrometheusService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
-	})
-}
-
 type Service struct {
-	BackendPluginManager backendplugin.Manager `inject:""`
-	HTTPClientProvider   httpclient.Provider   `inject:""`
-	intervalCalculator   tsdb.Calculator
-	im                   instancemgmt.InstanceManager
+	httpClientProvider httpclient.Provider
+	intervalCalculator tsdb.Calculator
+	im                 instancemgmt.InstanceManager
 }
 
-func (s *Service) Init() error {
+func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager backendplugin.Manager) (*Service, error) {
 	plog.Debug("initializing")
 	im := datasource.NewInstanceManager(newInstanceSettings())
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newService(im, s.HTTPClientProvider),
-	})
-	if err := s.BackendPluginManager.Register("prometheus", factory); err != nil {
-		plog.Error("Failed to register plugin", "error", err)
+
+	s := &Service{
+		httpClientProvider: httpClientProvider,
+		intervalCalculator: tsdb.NewCalculator(),
+		im:                 im,
 	}
-	return nil
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
+	if err := backendPluginManager.Register("prometheus", factory); err != nil {
+		plog.Error("Failed to register plugin", "error", err)
+		return nil, err
+	}
+
+	return s, nil
 }
 
 func newInstanceSettings() datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		defaultHttpMethod := http.MethodPost
 		jsonData := map[string]interface{}{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
@@ -82,7 +83,7 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 
 		httpMethod, ok := jsonData["httpMethod"].(string)
 		if !ok {
-			return nil, errors.New("no http method provided")
+			httpMethod = defaultHttpMethod
 		}
 
 		// timeInterval can be a string or can be missing.
@@ -110,15 +111,6 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 	}
 }
 
-// newService creates a new executor func.
-func newService(im instancemgmt.InstanceManager, httpClientProvider httpclient.Provider) *Service {
-	return &Service{
-		im:                 im,
-		HTTPClientProvider: httpClientProvider,
-		intervalCalculator: tsdb.NewCalculator(),
-	}
-}
-
 //nolint: staticcheck // plugins.DataResponse deprecated
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if len(req.Queries) == 0 {
@@ -129,7 +121,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if err != nil {
 		return nil, err
 	}
-
 	client, err := getClient(dsInfo, s)
 	if err != nil {
 		return nil, err
@@ -179,14 +170,15 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 func getClient(dsInfo *DatasourceInfo, s *Service) (apiv1.API, error) {
 	opts := &sdkhttpclient.Options{
-		Timeouts: dsInfo.HTTPClientOpts.Timeouts,
-		TLS:      dsInfo.HTTPClientOpts.TLS,
+		Timeouts:  dsInfo.HTTPClientOpts.Timeouts,
+		TLS:       dsInfo.HTTPClientOpts.TLS,
+		BasicAuth: dsInfo.HTTPClientOpts.BasicAuth,
 	}
 
 	customMiddlewares := customQueryParametersMiddleware(plog)
 	opts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
 
-	roundTripper, err := s.HTTPClientProvider.GetTransport(*opts)
+	roundTripper, err := s.httpClientProvider.GetTransport(*opts)
 	if err != nil {
 		return nil, err
 	}

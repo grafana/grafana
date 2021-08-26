@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { QueryEditorProps } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { FileDropzone, InlineField, InlineFieldRow, Input, RadioButtonGroup, useTheme2 } from '@grafana/ui';
+import { FileDropzone, InlineField, InlineFieldRow, QueryField, RadioButtonGroup, useTheme2 } from '@grafana/ui';
 import React from 'react';
 import { JaegerDatasource } from '../datasource';
 import { JaegerQuery, JaegerQueryType } from '../types';
@@ -11,6 +10,11 @@ type Props = QueryEditorProps<JaegerDatasource, JaegerQuery>;
 
 export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) {
   const theme = useTheme2();
+
+  const onChangeQuery = (value: string) => {
+    const nextQuery: JaegerQuery = { ...query, query: value };
+    onChange(nextQuery);
+  };
 
   const renderEditorBody = () => {
     switch (query.queryType) {
@@ -32,16 +36,12 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         return (
           <InlineFieldRow>
             <InlineField label="Trace ID" labelWidth={21} grow>
-              <Input
-                aria-label={selectors.components.DataSource.Jaeger.traceIDInput}
-                placeholder="Eg. 4050b8060d659e52"
-                value={query.query || ''}
-                onChange={(v) =>
-                  onChange({
-                    ...query,
-                    query: v.currentTarget.value,
-                  })
-                }
+              <QueryField
+                query={query.query}
+                onChange={onChangeQuery}
+                onRunQuery={onRunQuery}
+                placeholder={'Enter a Trace ID (run with Shift+Enter)'}
+                portalOrigin="jaeger"
               />
             </InlineField>
           </InlineFieldRow>

@@ -47,14 +47,14 @@ func setupAMTest(t *testing.T) *Alertmanager {
 		Logger:                 log.New("alertmanager-test"),
 	}
 
-	am, err := New(cfg, store, m)
+	am, err := newAlertmanager(1, cfg, store, m)
 	require.NoError(t, err)
 	return am
 }
 
 func TestAlertmanager_ShouldUseDefaultConfigurationWhenNoConfiguration(t *testing.T) {
 	am := setupAMTest(t)
-	require.NoError(t, am.SyncAndApplyConfigFromDatabase(mainOrgID))
+	require.NoError(t, am.SyncAndApplyConfigFromDatabase())
 	require.NotNil(t, am.config)
 }
 
