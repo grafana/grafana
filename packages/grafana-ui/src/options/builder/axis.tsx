@@ -68,7 +68,7 @@ export function addAxisConfig(
       },
     })
     .addRadio({
-      path: 'showGrid',
+      path: 'axisGridShow',
       name: 'Show grid lines',
       category,
       defaultValue: undefined,

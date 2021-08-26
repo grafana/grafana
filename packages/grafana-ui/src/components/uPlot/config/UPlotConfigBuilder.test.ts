@@ -329,7 +329,7 @@ describe('UPlotConfigBuilder', () => {
       placement: AxisPlacement.Bottom,
       isTime: false,
       formatValue: () => 'test value',
-      grid: false,
+      grid: { show: false },
       show: true,
       theme: darkTheme,
       values: [],
@@ -756,7 +756,7 @@ describe('UPlotConfigBuilder', () => {
 
       builder.addAxis({
         scaleKey: 'y2',
-        grid: true,
+        grid: { show: true },
         theme: darkTheme,
       });
       builder.addAxis({
@@ -776,20 +776,20 @@ describe('UPlotConfigBuilder', () => {
       const builder = new UPlotConfigBuilder();
       builder.addAxis({
         scaleKey: 'x',
-        grid: false,
+        grid: { show: false },
         placement: AxisPlacement.Bottom,
         theme: darkTheme,
       });
 
       builder.addAxis({
         scaleKey: 'y1',
-        grid: false,
+        grid: { show: false },
         theme: darkTheme,
       });
 
       builder.addAxis({
         scaleKey: 'y2',
-        grid: true,
+        grid: { show: true },
         theme: darkTheme,
       });
 

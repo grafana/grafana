@@ -36,7 +36,7 @@ export const defaultGraphConfig: GraphFieldConfig = {
     mode: StackingMode.None,
     group: 'A',
   },
-  showGrid: true,
+  axisGridShow: true,
 };
 
 const categoryStyles = ['Graph styles'];

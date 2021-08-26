@@ -79,7 +79,7 @@ export class UPlotConfigBuilder {
 
   addAxis(props: AxisProps) {
     props.placement = props.placement ?? AxisPlacement.Auto;
-
+    props.grid = props.grid ?? {};
     if (this.axes[props.scaleKey]) {
       this.axes[props.scaleKey].merge(props);
       return;
@@ -95,7 +95,7 @@ export class UPlotConfigBuilder {
     }
 
     if (props.placement === AxisPlacement.Hidden) {
-      props.show = false;
+      props.grid.show = false;
       props.size = 0;
     }
 
@@ -235,7 +235,7 @@ export class UPlotConfigBuilder {
 
   private ensureNonOverlappingAxes(axes: UPlotAxisBuilder[]): UPlotAxisBuilder[] {
     const xAxis = axes.find((a) => a.props.scaleKey === 'x');
-    const axesWithoutGridSet = axes.filter((a) => a.props.grid === undefined);
+    const axesWithoutGridSet = axes.filter((a) => a.props.grid?.show === undefined);
     const firstValueAxisIdx = axesWithoutGridSet.findIndex(
       (a) => a.props.placement === AxisPlacement.Left || (a.props.placement === AxisPlacement.Bottom && a !== xAxis)
     );
@@ -243,9 +243,9 @@ export class UPlotConfigBuilder {
     // For all axes with no grid set, set the grid automatically (grid only for first left axis )
     for (let i = 0; i < axesWithoutGridSet.length; i++) {
       if (axesWithoutGridSet[i] === xAxis || i === firstValueAxisIdx) {
-        axesWithoutGridSet[i].props.grid = true;
+        axesWithoutGridSet[i].props.grid!.show = true;
       } else {
-        axesWithoutGridSet[i].props.grid = false;
+        axesWithoutGridSet[i].props.grid!.show = false;
       }
     }
 
