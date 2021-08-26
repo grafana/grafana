@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -23,23 +22,14 @@ var tmplResetPassword = "reset_password"
 var tmplSignUpStarted = "signup_started"
 var tmplWelcomeOnSignUp = "welcome_on_signup"
 
-func init() {
-	registry.RegisterService(&NotificationService{})
-}
-
-type NotificationService struct {
-	Bus bus.Bus      `inject:""`
-	Cfg *setting.Cfg `inject:""`
-
-	mailQueue    chan *Message
-	webhookQueue chan *Webhook
-	log          log.Logger
-}
-
-func (ns *NotificationService) Init() error {
-	ns.log = log.New("notifications")
-	ns.mailQueue = make(chan *Message, 10)
-	ns.webhookQueue = make(chan *Webhook, 10)
+func ProvideService(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, error) {
+	ns := &NotificationService{
+		Bus:          bus,
+		Cfg:          cfg,
+		log:          log.New("notifications"),
+		mailQueue:    make(chan *Message, 10),
+		webhookQueue: make(chan *Webhook, 10),
+	}
 
 	ns.Bus.AddHandler(ns.sendResetPasswordEmail)
 	ns.Bus.AddHandler(ns.validateResetPasswordCode)
@@ -60,19 +50,27 @@ func (ns *NotificationService) Init() error {
 		templatePattern := filepath.Join(ns.Cfg.StaticRootPath, pattern)
 		_, err := mailTemplates.ParseGlob(templatePattern)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	if !util.IsEmail(ns.Cfg.Smtp.FromAddress) {
-		return errors.New("invalid email address for SMTP from_address config")
+		return nil, errors.New("invalid email address for SMTP from_address config")
 	}
 
-	if setting.EmailCodeValidMinutes == 0 {
-		setting.EmailCodeValidMinutes = 120
+	if cfg.EmailCodeValidMinutes == 0 {
+		cfg.EmailCodeValidMinutes = 120
 	}
+	return ns, nil
+}
 
-	return nil
+type NotificationService struct {
+	Bus bus.Bus
+	Cfg *setting.Cfg
+
+	mailQueue    chan *Message
+	webhookQueue chan *Webhook
+	log          log.Logger
 }
 
 func (ns *NotificationService) Run(ctx context.Context) error {
@@ -151,7 +149,7 @@ func (ns *NotificationService) sendEmailCommandHandler(cmd *models.SendEmailComm
 }
 
 func (ns *NotificationService) sendResetPasswordEmail(cmd *models.SendResetPasswordEmailCommand) error {
-	code, err := createUserEmailCode(cmd.User, nil)
+	code, err := createUserEmailCode(ns.Cfg, cmd.User, nil)
 	if err != nil {
 		return err
 	}
@@ -176,7 +174,7 @@ func (ns *NotificationService) validateResetPasswordCode(query *models.ValidateR
 		return err
 	}
 
-	validEmailCode, err := validateUserEmailCode(userQuery.Result, query.Code)
+	validEmailCode, err := validateUserEmailCode(ns.Cfg, userQuery.Result, query.Code)
 	if err != nil {
 		return err
 	}

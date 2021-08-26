@@ -1,6 +1,11 @@
-
 import React, { ReactNode } from 'react';
-import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, FrameGeometrySourceMode } from '@grafana/data';
+import {
+  MapLayerRegistryItem,
+  MapLayerOptions,
+  PanelData,
+  GrafanaTheme2,
+  FrameGeometrySourceMode,
+} from '@grafana/data';
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
@@ -8,7 +13,12 @@ import * as source from 'ol/source';
 
 import tinycolor from 'tinycolor2';
 import { dataFrameToPoints, getLocationMatchers } from '../../utils/location';
-import { ColorDimensionConfig, ScaleDimensionConfig, getScaledDimension, getColorDimension } from 'app/features/dimensions';
+import {
+  ColorDimensionConfig,
+  ScaleDimensionConfig,
+  getScaledDimension,
+  getColorDimension,
+} from 'app/features/dimensions';
 import { ScaleDimensionEditor, ColorDimensionEditor } from 'app/features/dimensions/editors';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
@@ -31,23 +41,23 @@ const defaultOptions: MarkersConfig = {
     max: 15,
   },
   color: {
-    fixed: 'dark-green', // picked from theme 
+    fixed: 'dark-green', // picked from theme
   },
   fillOpacity: 0.4,
   shape: 'circle',
   showLegend: true,
 };
 
-export const MARKERS_LAYER_ID = "markers";
+export const MARKERS_LAYER_ID = 'markers';
 
 // Used by default when nothing is configured
-export const defaultMarkersConfig:MapLayerOptions<MarkersConfig> = {
+export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
   type: MARKERS_LAYER_ID,
   config: defaultOptions,
   location: {
     mode: FrameGeometrySourceMode.Auto,
-  }
-}
+  },
+};
 
 /**
  * Map layer configuration for circle overlay
@@ -72,31 +82,27 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       ...options?.config,
     };
 
-    const legendProps= new ReplaySubject<MarkersLegendProps>(1);
-    let legend:ReactNode = null;
+    const legendProps = new ReplaySubject<MarkersLegendProps>(1);
+    let legend: ReactNode = null;
     if (config.showLegend) {
-      legend = <ObservablePropsWrapper 
-        watch={legendProps}  
-        initialSubProps={{}}  
-        child={MarkersLegend}
-      />
+      legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
     const shape = markerMakers.getIfExists(config.shape) ?? circleMarker;
-    
+
     return {
       init: () => vectorLayer,
       legend: legend,
       update: (data: PanelData) => {
-        if(!data.series?.length) {
+        if (!data.series?.length) {
           return; // ignore empty
         }
 
         const features: Feature[] = [];
 
-        for(const frame of data.series) {
+        for (const frame of data.series) {
           const info = dataFrameToPoints(frame, matchers);
-          if(info.warning) {
-            console.log( 'Could not find locations', info.warning);
+          if (info.warning) {
+            console.log('Could not find locations', info.warning);
             continue; // ???
           }
 
@@ -114,7 +120,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             const radius = sizeDim.get(i);
 
             // Create a new Feature for each point returned from dataFrameToPoints
-            const dot = new Feature( info.points[i] );
+            const dot = new Feature(info.points[i]);
             dot.setProperties({
               frame,
               rowIndex: i,
@@ -122,7 +128,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
             dot.setStyle(shape!.make(color, fillColor, radius));
             features.push(dot);
-          };
+          }
 
           // Post updates to the legend component
           if (legend) {
@@ -149,7 +155,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         name: 'Marker Color',
         editor: ColorDimensionEditor,
         settings: {},
-        defaultValue: { // Configured values
+        defaultValue: {
+          // Configured values
           fixed: 'grey',
         },
       })
@@ -162,7 +169,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           min: 1,
           max: 100, // possible in the UI
         },
-        defaultValue: { // Configured values
+        defaultValue: {
+          // Configured values
           fixed: 5,
           min: 1,
           max: 20,
@@ -185,7 +193,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           max: 1,
           step: 0.1,
         },
-        showIf: (cfg) => (markerMakers.getIfExists((cfg as any).config?.shape)?.hasFill),
+        showIf: (cfg) => markerMakers.getIfExists((cfg as any).config?.shape)?.hasFill,
       })
       .addBooleanSwitch({
         path: 'config.showLegend',

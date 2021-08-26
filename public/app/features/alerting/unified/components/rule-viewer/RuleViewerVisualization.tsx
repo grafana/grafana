@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
-import { DataSourceInstanceSettings, dateTime, DateTime, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
-import { getDataSourceSrv, PanelRenderer } from '@grafana/runtime';
+import { DataSourceInstanceSettings, DateTime, dateTime, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
+import { config, getDataSourceSrv, PanelRenderer } from '@grafana/runtime';
 import { Alert, CodeEditor, DateTimePicker, LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { PanelOptions } from 'app/plugins/panel/table/models.gen';
@@ -126,7 +126,7 @@ function createExploreLink(settings: DataSourceInstanceSettings, query: AlertQue
   const { refId, ...rest } = query.model;
   const queryParams = { ...rest, datasource: name };
 
-  return urlUtil.renderUrl('/explore', {
+  return urlUtil.renderUrl(`${config.appSubUrl}/explore`, {
     left: JSON.stringify(['now-1h', 'now', name, queryParams]),
   });
 }

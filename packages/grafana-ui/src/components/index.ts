@@ -82,8 +82,6 @@ export {
   VizTooltip,
   VizTooltipContainer,
   SeriesTable,
-  VizTooltipOptions,
-  TooltipDisplayMode,
   SeriesTableProps,
   SeriesTableRow,
   SeriesTableRowProps,
@@ -106,7 +104,6 @@ export {
 } from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
 export { VizLegendItem, SeriesVisibilityChangeBehavior } from './VizLegend/types';
-export { LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/models.gen';
 export { VizLegend } from './VizLegend/VizLegend';
 export { VizLegendListItem } from './VizLegend/VizLegendListItem';
 
@@ -241,7 +238,6 @@ export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
 export * from './uPlot/config';
-export { ScaleDistribution } from './uPlot/models.gen';
 export { UPlotConfigBuilder, UPlotConfigPrepFn } from './uPlot/config/UPlotConfigBuilder';
 export { UPlotChart } from './uPlot/Plot';
 export { PlotLegend } from './uPlot/PlotLegend';

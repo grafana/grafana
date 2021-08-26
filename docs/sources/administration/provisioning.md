@@ -448,7 +448,7 @@ The following sections detail the supported settings and secure settings for eac
 | ---------- | -------------- |
 | url        | yes            |
 | avatar_url |                |
-| message    |                |
+| content    |                |
 
 #### Alert notification `slack`
 
