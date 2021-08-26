@@ -11,7 +11,7 @@ import {
   GraphTresholdsStyleMode,
   ScaleDistribution,
 } from '@grafana/schema';
-import { createTheme, GrafanaTheme2, ThresholdsMode } from '@grafana/data';
+import { createTheme, ThresholdsMode } from '@grafana/data';
 
 describe('UPlotConfigBuilder', () => {
   const darkTheme = createTheme();
