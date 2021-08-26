@@ -31,7 +31,7 @@ If you install from the YUM repository, then Grafana is automatically updated ev
 | Grafana OSS               | grafana            | `https://packages.grafana.com/oss/rpm`             |
 | Grafana OSS (Beta)        | grafana            | `https://packages.grafana.com/oss/rpm-beta`        |
 
-> The Enterprise Edition is the default and recommended edition. It includes all the features of the OSS Edition, can be used for free and can be upgraded to the [full Enterprise feature set](https://grafana.com/products/enterprise/?utm_source=grafana-install-page), including support for [Enterprise plugins](https://grafana.com/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
+> **Note:** Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS Edition. You can also upgrade to the [full Enterprise feature set](https://grafana.com/products/enterprise/?utm_source=grafana-install-page) and has support for [Enterprise plugins](https://grafana.com/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
 
 Add a new file to your YUM repo using the method of your choice. The command below uses `nano`.
 

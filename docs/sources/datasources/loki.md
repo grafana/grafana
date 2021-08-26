@@ -14,7 +14,7 @@ Add it as a data source and you are ready to build dashboards or query your log 
 
 ## Hosted Loki
 
-You can run Loki on your own hardware or use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-dashboards-grafana). The free forever plan includes Grafana, 50 GB of loki logs, 10K Prometheus series, and more. [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-loki&plcmt=in-text).
+You can run Loki on your own hardware or use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-logs). The free forever plan includes Grafana, 50 GB of Loki logs, 10K Prometheus series, and more. [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-loki&plcmt=in-text).
 
 ## Loki settings
 
@@ -29,7 +29,6 @@ To access Loki settings, click the **Configuration** (gear) icon, then click **D
 | `Maximum lines`       | Upper limit for the number of log lines returned by Loki (default is 1000). Lower this limit if your browser is sluggish when displaying logs in Explore. |
 
 > **Note:** To troubleshoot configuration and other issues, check the log file located at /var/log/grafana/grafana.log on Unix systems or in <grafana_install_dir>/data/log on other platforms and manual installations.
-
 
 ### Derived fields
 

@@ -12,7 +12,7 @@ Grafana includes built-in support for Prometheus. This topic explains options, v
 
 ## Hosted Prometheus
 
-You can run Prometheus on your own hardware or use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-dashboards-grafana). The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs and more. [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=doc-grafana-&plcmt=in-text).
+Run Prometheus on your own hardware or use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-dashboards-grafana). The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs and more. [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=doc-grafana-&plcmt=in-text).
 
 ## Prometheus settings
 
