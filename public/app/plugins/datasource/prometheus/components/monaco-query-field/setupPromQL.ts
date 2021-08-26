@@ -59,7 +59,7 @@ function getMonacoCompletionItemProvider(
   };
 
   return {
-    triggerCharacters: ['{', ',', '[', '('],
+    triggerCharacters: ['{', ',', '[', '(', '='],
     provideCompletionItems,
   };
 }
