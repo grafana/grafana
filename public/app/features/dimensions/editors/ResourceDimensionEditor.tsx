@@ -87,8 +87,8 @@ export const ResourceDimensionEditor: FC<
       )}
       {mode === ResourceDimensionMode.Fixed && (
         <InlineFieldRow>
-          {resourceType === 'icon' && <IconModal {...props} />}
-          {resourceType === 'image' && (
+          {(resourceType === 'icon' || resourceType === 'image') && <IconModal {...props} />}
+          {/* {resourceType === 'image' && (
             <InlineField label="Image" labelWidth={labelWidth} grow={true}>
               <StringValueEditor
                 context={context}
@@ -97,7 +97,7 @@ export const ResourceDimensionEditor: FC<
                 item={dummyImageStringSettings}
               />
             </InlineField>
-          )}
+          )} */}
         </InlineFieldRow>
       )}
       {mode === ResourceDimensionMode.Mapping && (

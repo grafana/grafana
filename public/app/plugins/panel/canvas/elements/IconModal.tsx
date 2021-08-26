@@ -1,40 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Modal, Button, TabContent, ModalTabsHeader } from '@grafana/ui';
-import { SelectableValue, StandardEditorProps } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { StandardEditorProps } from '@grafana/data';
+
 import Cards from './Cards';
 import ImageUploader from './ImageUploader';
 
 const IconModal = (props: StandardEditorProps) => {
-  const { onChange } = props;
+  const { onChange, value, item } = props;
   const [isOpen, setOpen] = useState(false);
-  const [icons, setIcons] = useState<SelectableValue[]>([]);
+
   const [activeTab, setActiveTab] = useState('select');
   const [isOpenUpload, setIsOpenUpload] = useState(false);
-  const [folder, setFolder] = useState<SelectableValue<string>>({ label: 'icons', value: 'img/icons/unicons/' });
 
-  const iconRoot = (window as any).__grafana_public_path__ + folder.value;
   const onSelectIcon = (value: string) => {
     onChange({ fixed: value, mode: 'fixed' });
     setOpen(false);
   };
-  const onSelectFolder = (value: SelectableValue<string>) => {
-    setFolder(value);
-  };
-
-  useEffect(() => {
-    getBackendSrv()
-      .get(`${iconRoot}/index.json`)
-      .then((data) => {
-        setIcons(
-          data.files.map((icon: string) => ({
-            value: icon,
-            label: icon,
-            imgUrl: iconRoot + icon,
-          }))
-        );
-      });
-  }, [iconRoot]);
 
   const tabs = [
     { label: 'Select Image', value: 'select', active: true },
@@ -54,12 +35,12 @@ const IconModal = (props: StandardEditorProps) => {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>Select Icon</Button>
+      <Button onClick={() => setOpen(true)}>Select Item</Button>
       {isOpen && (
         <Modal isOpen={isOpen} title={modalHeader} onDismiss={() => setOpen(false)} closeOnEscape>
           <TabContent>
             {activeTab === 'select' && (
-              <Cards cards={icons} onSelectIcon={onSelectIcon} onSelectFolder={onSelectFolder} {...props}></Cards>
+              <Cards onSelectIcon={onSelectIcon} value={value} folder={item.settings.resourceType}></Cards>
             )}
             {activeTab === 'upload' && <Button onClick={() => setIsOpenUpload(true)}>Upload</Button>}
             {isOpenUpload && (
