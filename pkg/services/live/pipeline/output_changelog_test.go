@@ -67,14 +67,10 @@ func TestChangeLogOutput_NoPreviousFrame_MultipleRows(t *testing.T) {
 		var y = 5.0
 		require.Equal(t, x, frame.Fields[1].At(0).(*float64))
 		require.Equal(t, &y, frame.Fields[2].At(0))
-	}).Times(1)
-
-	mockFrameProcessor.EXPECT().ProcessFrame(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, orgID int64, channelID string, frame *data.Frame) {
-		require.Len(t, frame.Fields, 3)
-		var x = 5.0
-		var y = 20.0
-		require.Equal(t, &x, frame.Fields[1].At(0).(*float64))
-		require.Equal(t, &y, frame.Fields[2].At(0))
+		var z = 5.0
+		var v = 20.0
+		require.Equal(t, &z, frame.Fields[1].At(1).(*float64))
+		require.Equal(t, &v, frame.Fields[2].At(1))
 	}).Times(1)
 
 	outputter := NewChangeLogOutput(mockStorage, mockFrameProcessor, ChangeLogOutputConfig{

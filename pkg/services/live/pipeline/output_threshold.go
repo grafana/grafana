@@ -71,14 +71,44 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 		return nil
 	}
 
-	var previousState *string
+	previousFrameFieldIndex := -1
 	if previousFrameOk {
-		previousStateString, ok := previousFrame.Fields[2].At(previousFrame.Fields[2].Len() - 1).(string)
-		if !ok {
-			return fmt.Errorf("can't convert state to string")
+		for i, f := range previousFrame.Fields {
+			if f.Name == fieldName {
+				previousFrameFieldIndex = i
+			}
 		}
-		previousState = &previousStateString
 	}
+
+	var previousState *string
+	if previousFrameOk && previousFrameFieldIndex >= 0 {
+		var previousThreshold data.Threshold
+		value, ok := previousFrame.Fields[previousFrameFieldIndex].At(previousFrame.Fields[0].Len() - 1).(*float64)
+		if !ok {
+			return nil
+		}
+		if value == nil {
+			// TODO: what should we do here?
+			return nil
+		}
+		for _, threshold := range frame.Fields[currentFrameFieldIndex].Config.Thresholds.Steps {
+			if *value >= float64(threshold.Value) {
+				previousThreshold = threshold
+				previousState = &previousThreshold.State
+				continue
+			}
+			break
+		}
+	}
+
+	fTime := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
+	fTime.Name = "time"
+	f1 := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
+	f1.Name = "value"
+	f2 := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	f2.Name = "state"
+	f3 := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	f3.Name = "color"
 
 	for i := 0; i < frame.Fields[currentFrameFieldIndex].Len(); i++ {
 		// TODO: support other numeric types.
@@ -99,32 +129,21 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 			break
 		}
 		if previousState == nil || currentThreshold.State != *previousState {
-			stateFrame := generateStateFrame(time.Now(), *value, currentThreshold.State, currentThreshold.Color)
-			_ = l.frameStorage.Set(vars.OrgID, l.config.Channel, stateFrame)
-			// TODO: create single frame.
-			err := l.frameProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, stateFrame)
-			if err != nil {
-				return err
-			}
+			fTime.Append(time.Now())
+			f1.Append(*value)
+			f2.Append(currentThreshold.State)
+			f3.Append(currentThreshold.Color)
 			previousState = &currentThreshold.State
 		}
 	}
 
-	return nil
-}
+	if fTime.Len() > 0 {
+		stateFrame := data.NewFrame("state", fTime, f1, f2, f3)
+		err := l.frameProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, stateFrame)
+		if err != nil {
+			return err
+		}
+	}
 
-func generateStateFrame(tm time.Time, value float64, state string, color string) *data.Frame {
-	fTime := data.NewFieldFromFieldType(data.FieldTypeTime, 1)
-	fTime.Name = "time"
-	fTime.Set(0, tm)
-	f1 := data.NewFieldFromFieldType(data.FieldTypeFloat64, 1)
-	f1.Set(0, value)
-	f1.Name = "value"
-	f2 := data.NewFieldFromFieldType(data.FieldTypeString, 1)
-	f2.Set(0, state)
-	f2.Name = "state"
-	f3 := data.NewFieldFromFieldType(data.FieldTypeString, 1)
-	f3.Set(0, color)
-	f3.Name = "color"
-	return data.NewFrame("state", fTime, f1, f2, f3)
+	return l.frameStorage.Set(vars.OrgID, l.config.Channel, frame)
 }

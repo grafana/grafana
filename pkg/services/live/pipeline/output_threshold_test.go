@@ -10,6 +10,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func generateStateFrame(tm time.Time, value float64, state string, color string) *data.Frame {
+	fTime := data.NewFieldFromFieldType(data.FieldTypeTime, 1)
+	fTime.Name = "time"
+	fTime.Set(0, tm)
+	f1 := data.NewFieldFromFieldType(data.FieldTypeFloat64, 1)
+	f1.Set(0, value)
+	f1.Name = "value"
+	f2 := data.NewFieldFromFieldType(data.FieldTypeString, 1)
+	f2.Set(0, state)
+	f2.Name = "state"
+	f3 := data.NewFieldFromFieldType(data.FieldTypeString, 1)
+	f3.Set(0, color)
+	f3.Name = "color"
+	return data.NewFrame("state", fTime, f1, f2, f3)
+}
+
 func TestThresholdOutput_Output(t *testing.T) {
 	type fields struct {
 		frameStorage   FrameGetSetter
@@ -114,20 +130,17 @@ func TestThresholdOutput_NoPreviousFrame_MultipleRows(t *testing.T) {
 		return nil, false, nil
 	}).Times(1)
 
-	mockStorage.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
+	mockStorage.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	mockFrameProcessor.EXPECT().ProcessFrame(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, orgID int64, channelID string, frame *data.Frame) {
 		require.Len(t, frame.Fields, 4)
 		require.Equal(t, 5.0, frame.Fields[1].At(0))
 		require.Equal(t, "", frame.Fields[2].At(0))
 		require.Equal(t, "", frame.Fields[3].At(0))
-	}).Times(1)
 
-	mockFrameProcessor.EXPECT().ProcessFrame(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, orgID int64, channelID string, frame *data.Frame) {
-		require.Len(t, frame.Fields, 4)
-		require.Equal(t, 20.0, frame.Fields[1].At(0))
-		require.Equal(t, "normal", frame.Fields[2].At(0))
-		require.Equal(t, "green", frame.Fields[3].At(0))
+		require.Equal(t, 20.0, frame.Fields[1].At(1))
+		require.Equal(t, "normal", frame.Fields[2].At(1))
+		require.Equal(t, "green", frame.Fields[3].At(1))
 	}).Times(1)
 
 	outputter := NewThresholdOutput(mockStorage, mockFrameProcessor, ThresholdOutputConfig{
@@ -170,11 +183,15 @@ func TestThresholdOutput_WithPreviousFrame_SingleRow(t *testing.T) {
 	mockFrameProcessor := NewMockFrameProcessor(mockCtrl)
 
 	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(orgID int64, channel string) (*data.Frame, bool, error) {
-		frame := generateStateFrame(time.Now(), 20.0, "normal", "green")
+		f1 := data.NewField("time", nil, make([]time.Time, 1))
+		f1.Set(0, time.Now())
+		f2 := data.NewField("test", nil, make([]*float64, 1))
+		f2.SetConcrete(0, 20.0)
+		frame := data.NewFrame("test", f1, f2)
 		return frame, true, nil
 	}).Times(1)
 
-	mockStorage.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	mockStorage.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	mockFrameProcessor.EXPECT().ProcessFrame(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
@@ -216,13 +233,17 @@ func TestThresholdOutput_WithPreviousFrame_MultipleRows(t *testing.T) {
 	mockFrameProcessor := NewMockFrameProcessor(mockCtrl)
 
 	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(orgID int64, channel string) (*data.Frame, bool, error) {
-		frame := generateStateFrame(time.Now(), 20.0, "normal", "green")
+		f1 := data.NewField("time", nil, make([]time.Time, 1))
+		f1.Set(0, time.Now())
+		f2 := data.NewField("test", nil, make([]*float64, 1))
+		f2.SetConcrete(0, 20.0)
+		frame := data.NewFrame("test", f1, f2)
 		return frame, true, nil
 	}).Times(1)
 
-	mockStorage.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
+	mockStorage.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
-	mockFrameProcessor.EXPECT().ProcessFrame(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
+	mockFrameProcessor.EXPECT().ProcessFrame(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	outputter := NewThresholdOutput(mockStorage, mockFrameProcessor, ThresholdOutputConfig{
 		FieldName: "test",

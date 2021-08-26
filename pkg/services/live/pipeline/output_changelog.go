@@ -26,10 +26,7 @@ func NewChangeLogOutput(frameStorage FrameGetSetter, pipeline FrameProcessor, co
 }
 
 func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) error {
-	previousFrame, ok, err := l.frameStorage.Get(vars.OrgID, l.config.Channel)
-	defer func() {
-		_ = l.frameStorage.Set(vars.OrgID, l.config.Channel, frame)
-	}()
+	previousFrame, previousFrameOK, err := l.frameStorage.Get(vars.OrgID, l.config.Channel)
 	if err != nil {
 		return err
 	}
@@ -37,9 +34,7 @@ func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.
 	fieldName := l.config.FieldName
 
 	previousFrameFieldIndex := -1
-	currentFrameFieldIndex := -1
-
-	if ok {
+	if previousFrameOK {
 		for i, f := range previousFrame.Fields {
 			if f.Name == fieldName {
 				previousFrameFieldIndex = i
@@ -47,6 +42,7 @@ func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.
 		}
 	}
 
+	currentFrameFieldIndex := -1
 	for i, f := range frame.Fields {
 		if f.Name == fieldName {
 			currentFrameFieldIndex = i
@@ -59,6 +55,13 @@ func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.
 		previousValue = previousFrame.Fields[previousFrameFieldIndex].At(previousFrame.Fields[previousFrameFieldIndex].Len() - 1)
 	}
 
+	fTime := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
+	fTime.Name = "time"
+	f1 := data.NewFieldFromFieldType(frame.Fields[currentFrameFieldIndex].Type(), 0)
+	f1.Name = "old"
+	f2 := data.NewFieldFromFieldType(frame.Fields[currentFrameFieldIndex].Type(), 0)
+	f2.Name = "new"
+
 	if currentFrameFieldIndex >= 0 {
 		for i := 0; i < frame.Fields[currentFrameFieldIndex].Len(); i++ {
 			currentValue := frame.Fields[currentFrameFieldIndex].At(i)
@@ -66,24 +69,21 @@ func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.
 				previousValue,
 				currentValue,
 			) {
-				fTime := data.NewFieldFromFieldType(data.FieldTypeTime, 1)
-				fTime.Name = "time"
-				fTime.Set(0, time.Now())
-				f1 := data.NewFieldFromFieldType(frame.Fields[currentFrameFieldIndex].Type(), 1)
-				f1.Set(0, previousValue)
-				f1.Name = "old"
-				f2 := data.NewFieldFromFieldType(frame.Fields[currentFrameFieldIndex].Type(), 1)
-				f2.Set(0, currentValue)
-				f2.Name = "new"
-				changeFrame := data.NewFrame("change", fTime, f1, f2)
-				// TODO: construct single frame.
-				err = l.frameProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, changeFrame)
-				if err != nil {
-					return err
-				}
+				fTime.Append(time.Now())
+				f1.Append(previousValue)
+				f2.Append(currentValue)
 				previousValue = currentValue
 			}
 		}
 	}
-	return nil
+
+	if fTime.Len() > 0 {
+		changeFrame := data.NewFrame("change", fTime, f1, f2)
+		err = l.frameProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, changeFrame)
+		if err != nil {
+			return err
+		}
+	}
+
+	return l.frameStorage.Set(vars.OrgID, l.config.Channel, frame)
 }
