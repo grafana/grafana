@@ -65,8 +65,9 @@ export default class BottomNavLinks extends PureComponent<Props, State> {
           </span>
         </Link>
         <SideMenuDropDown
-          items={children}
           headerText={link.text}
+          headerUrl={link.url}
+          items={children}
           reverseDirection
           subtitleText={link.showOrgSwitcher ? `Current Org.: ${user.orgName}` : link.subTitle}
         />
