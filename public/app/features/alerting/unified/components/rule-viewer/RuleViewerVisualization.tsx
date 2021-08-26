@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
-import { DataSourceInstanceSettings, dateTime, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
+import { DataSourceInstanceSettings, dateTime, DateTime, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
 import { getDataSourceSrv, PanelRenderer } from '@grafana/runtime';
 import { Alert, CodeEditor, DateTimePicker, LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -13,6 +13,7 @@ import { TABLE, TIMESERIES } from '../../utils/constants';
 type RuleViewerVisualizationProps = {
   data?: PanelData;
   query: AlertQuery;
+  onChangeQuery: (query: AlertQuery) => void;
 };
 
 const headerHeight = 4;
@@ -20,7 +21,7 @@ const headerHeight = 4;
 export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JSX.Element | null {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { data, query } = props;
+  const { data, query, onChangeQuery } = props;
   const defaultPanel = isExpressionQuery(query.model) ? TABLE : TIMESERIES;
   const [panel, setPanel] = useState<SupportedPanelPlugins>(defaultPanel);
   const dsSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
@@ -50,6 +51,24 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
     );
   }
 
+  const relativeTimeRange = query.relativeTimeRange;
+  const onTimeChange = (newDateTime: DateTime) => {
+    const now = dateTime().unix() - newDateTime.unix();
+
+    if (relativeTimeRange) {
+      const interval = relativeTimeRange.from - relativeTimeRange.to;
+      onChangeQuery({
+        ...query,
+        relativeTimeRange: { from: now + interval, to: now },
+      });
+    }
+  };
+
+  let datetime = dateTime();
+  if (relativeTimeRange) {
+    datetime = relativeTimeRange.to === 0 ? dateTime() : dateTime().subtract(relativeTimeRange.to, 'seconds');
+  }
+
   return (
     <div className={styles.content}>
       <AutoSizer>
@@ -62,7 +81,7 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
                   <span className={styles.dataSource}>({dsSettings.name})</span>
                 </div>
                 <div className={styles.actions}>
-                  {!isExpressionQuery(query.model) ? <DateTimePicker date={dateTime()} onChange={() => {}} /> : null}
+                  {!isExpressionQuery(query.model) ? <DateTimePicker date={datetime} onChange={onTimeChange} /> : null}
                   <PanelPluginsButtonGroup onChange={setPanel} value={panel} size="md" />
                   {!isExpressionQuery(query.model) && (
                     <>
