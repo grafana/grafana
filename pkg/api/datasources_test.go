@@ -435,6 +435,30 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
 			},
 		},
+		{
+			busStubs: []bus.HandlerFunc{getDatasourceStub},
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesGetIdByName should return 200 for user with correct permissions",
+				url:          fmt.Sprintf("/api/datasources/id/%v", testDatasource.Name),
+				method:       http.MethodGet,
+				permissions: []*accesscontrol.Permission{
+					{
+						Action: ActionDatasourcesIDRead,
+						Scope:  fmt.Sprintf("datasources:name:%v", testDatasource.Name),
+					},
+				},
+			},
+		},
+		{
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesGetIdByName should return 403 for user without required permissions",
+				url:          fmt.Sprintf("/api/datasources/id/%v", testDatasource.Name),
+				method:       http.MethodGet,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
 	}
 
 	for _, test := range tests {
