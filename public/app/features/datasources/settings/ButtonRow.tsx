@@ -18,7 +18,7 @@ export interface Props {
 const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest, exploreUrl }) => {
   const canEditDataSources = !isReadOnly && contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
   const canDeleteDataSources = !isReadOnly && contextSrv.hasPermission(AccessControlAction.DataSourcesDelete);
-  const canExploreDataSources = !isReadOnly && contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
+  const canExploreDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
 
   return (
     <div className="gf-form-button-row">
