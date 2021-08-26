@@ -22,8 +22,8 @@ source "/etc/profile"
 npm i -g yarn
 
 # Install Go
-filename="go1.16.1.linux-amd64.tar.gz"
-get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "3edc22f8332231c3ba8be246f184b736b8d28f06ce24f08168d8ecf052549769"
+filename="go1.16.7.linux-amd64.tar.gz"
+get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "7fe7a73f55ba3e2285da36f8b085e5c0159e9564ef5f63ee0ed6b818ade8ef04"
 untar_file "/tmp/$filename"
 
 # Install golangci-lint
