@@ -21,7 +21,7 @@ export function PluginDetailsSignature({ plugin, className }: PluginDetailsSigna
   return (
     <Alert
       severity="warning"
-      title="Invlaid plugin signature"
+      title="Invalid plugin signature"
       aria-label={selectors.pages.PluginPage.signatureInfo}
       className={className}
     >
