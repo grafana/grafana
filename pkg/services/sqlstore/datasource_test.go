@@ -90,6 +90,33 @@ func TestDataAccess(t *testing.T) {
 			require.Error(t, err)
 			require.IsType(t, models.ErrDataSourceUidExists, err)
 		})
+
+		t.Run("fires an event when the datasource is added", func(t *testing.T) {
+			InitTestDB(t)
+
+			var created *events.DataSourceCreated
+			bus.AddEventListener(func(e *events.DataSourceCreated) error {
+				created = e
+				return nil
+			})
+
+			err := AddDataSource(&defaultAddDatasourceCommand)
+			require.NoError(t, err)
+
+			require.Eventually(t, func() bool {
+				return assert.NotNil(t, created)
+			}, time.Second, time.Millisecond)
+
+			query := models.GetDataSourcesQuery{OrgId: 10}
+			err = GetDataSources(&query)
+			require.NoError(t, err)
+			require.Equal(t, 1, len(query.Result))
+
+			require.Equal(t, query.Result[0].Id, created.ID)
+			require.Equal(t, query.Result[0].Uid, created.UID)
+			require.Equal(t, int64(10), created.OrgID)
+			require.Equal(t, "nisse", created.Name)
+		})
 	})
 
 	t.Run("UpdateDataSource", func(t *testing.T) {
