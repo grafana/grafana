@@ -81,7 +81,11 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
                 </div>
                 <div className={styles.actions}>
                   {!isExpressionQuery(query.model) && relativeTimeRange ? (
-                    <DateTimePicker date={setDateTime(relativeTimeRange.to)} onChange={onTimeChange} />
+                    <DateTimePicker
+                      date={setDateTime(relativeTimeRange.to)}
+                      onChange={onTimeChange}
+                      maxDate={new Date()}
+                    />
                   ) : null}
                   <PanelPluginsButtonGroup onChange={setPanel} value={panel} size="md" />
                   {!isExpressionQuery(query.model) && (
