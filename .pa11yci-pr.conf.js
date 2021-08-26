@@ -20,12 +20,12 @@ var config = {
     },
     {
       url: '${HOST}/?orgId=1',
-      threshold: 4,
+      threshold: 7,
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge',
       hideElements: '.sidemenu',
-      threshold: 37,
+      threshold: 2,
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings',
@@ -35,47 +35,47 @@ var config = {
     {
       url: '${HOST}/?orgId=1&search=open',
       rootElement: '.main-view',
-      threshold: 38,
+      threshold: 15,
     },
     {
       url: '${HOST}/alerting/list',
       rootElement: '.main-view',
-      threshold: 21,
+      threshold: 7,
     },
     {
       url: '${HOST}/datasources',
       rootElement: '.main-view',
-      threshold: 43,
+      threshold: 36,
     },
     {
       url: '${HOST}/org/users',
       rootElement: '.main-view',
-      threshold: 10,
+      threshold: 4,
     },
     {
       url: '${HOST}/org/teams',
       rootElement: '.main-view',
-      threshold: 7,
+      threshold: 1,
     },
     {
       url: '${HOST}/plugins',
       rootElement: '.main-view',
-      threshold: 9,
+      threshold: 41,
     },
     {
       url: '${HOST}/org',
       rootElement: '.main-view',
-      threshold: 8,
+      threshold: 2,
     },
     {
       url: '${HOST}/org/apikeys',
       rootElement: '.main-view',
-      threshold: 11,
+      threshold: 5,
     },
     {
       url: '${HOST}/dashboards',
       rootElement: '.main-view',
-      threshold: 70,
+      threshold: 8,
     },
   ],
 };
