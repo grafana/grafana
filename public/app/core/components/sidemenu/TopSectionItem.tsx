@@ -43,7 +43,7 @@ const TopSectionItem: FC<Props> = ({ link, onClick }) => {
   return (
     <div className="sidemenu-item dropdown">
       {anchor}
-      <SideMenuDropDown link={link} onHeaderClick={onClick} />
+      <SideMenuDropDown items={link.children} headerText={link.text} headerUrl={link.url} onHeaderClick={onClick} />
     </div>
   );
 };
