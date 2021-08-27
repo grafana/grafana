@@ -190,7 +190,7 @@ export class TablePanel extends Component<Props> {
       const summary = options.footerSummary!;
       const fields = options.footerSummary?.fields;
       const cells = frame.fields.map((f, i) => {
-        if (fields) {
+        if (fields || fields === '') {
           if (fields.includes('') && f.type === FieldType.number) {
             return this.getSummaryCell(i, summary.reducer, f, false);
           }
@@ -324,17 +324,22 @@ export class TablePanel extends Component<Props> {
     return sum / values.length;
   }
 
-  getCurrentFrameIndex() {
+  getCurrentFrameIndex(frames: DataFrame[]) {
     const { data, options } = this.props;
-    const count = data.series?.length;
+    const count = frames.length;
     return options.frameIndex > 0 && options.frameIndex < count ? options.frameIndex : 0;
   }
 
   render() {
-    const { data, height, width } = this.props;
+    const { data, height, width, options } = this.props;
 
-    const count = data.series?.length;
-    const hasFields = data.series[0]?.fields.length;
+    let frames = data.series;
+    let count = frames?.length;
+    if (options.footerMode === 'frame' && count > 1) {
+      frames = frames.filter((f) => f.name !== options.footerFrame);
+      count = frames.length;
+    }
+    const hasFields = frames[0]?.fields.length;
 
     if (!count || !hasFields) {
       return <div className={tableStyles.noData}>No data</div>;
@@ -343,8 +348,8 @@ export class TablePanel extends Component<Props> {
     if (count > 1) {
       const inputHeight = config.theme.spacing.formInputHeight;
       const padding = 8 * 2;
-      const currentIndex = this.getCurrentFrameIndex();
-      const names = data.series.map((frame, index) => {
+      const currentIndex = this.getCurrentFrameIndex(frames);
+      const names = frames.map((frame, index) => {
         return {
           label: getFrameDisplayName(frame),
           value: index,
