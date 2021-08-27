@@ -1,7 +1,6 @@
 import {
   ArrayVector,
   DataFrame,
-  ensureTimeField,
   Field,
   FieldType,
   getDisplayProcessor,
@@ -32,7 +31,7 @@ export function prepareGraphableFields(
         case FieldType.time:
           isTimeseries = true;
           hasTimeseries = true;
-          fields.push(ensureTimeField(field));
+          fields.push(field);
           break;
         case FieldType.number:
           changed = true;

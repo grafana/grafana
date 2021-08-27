@@ -89,9 +89,6 @@ export const ConvertFieldTypeTransformerEditor: React.FC<TransformerUIProps<Conv
     [onChange, options]
   );
 
-  //TODO
-  //show units for fields
-
   return (
     <>
       {options.conversions.map((c: ConvertFieldTypeOptions, idx: number) => {
@@ -105,7 +102,7 @@ export const ConvertFieldTypeTransformerEditor: React.FC<TransformerUIProps<Conv
                 item={fieldNamePickerSettings}
               />
             </InlineField>
-            <InlineField label={'As'}>
+            <InlineField label={'as'}>
               <Select
                 menuShouldPortal
                 options={allTypes}

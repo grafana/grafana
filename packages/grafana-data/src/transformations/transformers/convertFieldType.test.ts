@@ -2,186 +2,102 @@ import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ArrayVector } from '../../vector';
-import { ensureTimeField, convertFieldType, convertFieldTypeTransformer } from './convertFieldType';
+import { ensureTimeField, convertFieldType, convertFieldTypes, convertFieldTypeTransformer } from './convertFieldType';
 
-describe('field conversion transformer', () => {
-  beforeAll(() => {
-    mockTransformationsRegistry([convertFieldTypeTransformer]);
-  });
-
+describe('field convert type', () => {
   it('will parse properly formatted strings to time', () => {
-    const options = {
-      conversions: [{ targetField: 'proper dates', destinationType: FieldType.time }],
+    const options = { targetField: 'proper dates', destinationType: FieldType.time };
+
+    const stringTime = {
+      name: 'proper dates',
+      type: FieldType.string,
+      values: new ArrayVector([
+        '2021-07-19 00:00:00.000',
+        '2021-07-23 00:00:00.000',
+        '2021-07-25 00:00:00.000',
+        '2021-08-01 00:00:00.000',
+        '2021-08-02 00:00:00.000',
+      ]),
+      config: {},
     };
 
-    const stringTime = toDataFrame({
-      fields: [
-        {
-          name: 'proper dates',
-          type: FieldType.string,
-          values: [
-            '2021-07-19 00:00:00.000',
-            '2021-07-23 00:00:00.000',
-            '2021-07-25 00:00:00.000',
-            '2021-08-01 00:00:00.000',
-            '2021-08-02 00:00:00.000',
-          ],
-        },
-        { name: 'A', type: FieldType.number, values: [1, 2, 3, 4, 5] },
-      ],
+    const timefield = convertFieldType(stringTime, options);
+    expect(timefield).toEqual({
+      name: 'proper dates',
+      type: FieldType.time,
+      values: new ArrayVector([1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000]),
+      config: {},
     });
-
-    const timeified = convertFieldType(options, [stringTime]);
-    expect(
-      timeified[0].fields.map((f) => ({
-        name: f.name,
-        type: f.type,
-        values: f.values.toArray(),
-        config: f.config,
-      }))
-    ).toEqual([
-      {
-        config: {},
-        name: 'proper dates',
-        type: FieldType.time,
-        values: [1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000],
-      },
-      { config: {}, name: 'A', type: 'number', values: [1, 2, 3, 4, 5] },
-    ]);
   });
-
   it('will parse string time to specified format in time', () => {
-    const options = {
-      conversions: [{ targetField: 'format to year', destinationType: FieldType.time, dateFormat: 'YYYY' }],
+    const options = { targetField: 'format to year', destinationType: FieldType.time, dateFormat: 'YYYY' };
+
+    const yearFormat = {
+      name: 'format to year',
+      type: FieldType.string,
+      values: new ArrayVector([
+        '2017-07-19 00:00:00.000',
+        '2018-07-23 00:00:00.000',
+        '2019-07-25 00:00:00.000',
+        '2020-08-01 00:00:00.000',
+        '2021-08-02 00:00:00.000',
+      ]),
+      config: {},
     };
 
-    const yearFormat = toDataFrame({
-      fields: [
-        { name: 'A', type: FieldType.number, values: [1, 2, 3, 4, 5] },
-        {
-          name: 'format to year',
-          type: FieldType.string,
-          values: [
-            '2017-07-19 00:00:00.000',
-            '2018-07-23 00:00:00.000',
-            '2019-07-25 00:00:00.000',
-            '2020-08-01 00:00:00.000',
-            '2021-08-02 00:00:00.000',
-          ],
-        },
-      ],
+    const timefield = convertFieldType(yearFormat, options);
+    expect(timefield).toEqual({
+      name: 'format to year',
+      type: FieldType.time,
+      values: new ArrayVector([1483246800000, 1514782800000, 1546318800000, 1577854800000, 1609477200000]),
+      config: {},
     });
-
-    const timeified = convertFieldType(options, [yearFormat]);
-    expect(
-      timeified[0].fields.map((f) => ({
-        name: f.name,
-        type: f.type,
-        values: f.values.toArray(),
-        config: f.config,
-      }))
-    ).toEqual([
-      { config: {}, name: 'A', type: 'number', values: [1, 2, 3, 4, 5] },
-      {
-        config: {},
-        name: 'format to year',
-        type: FieldType.time,
-        values: [1483246800000, 1514782800000, 1546318800000, 1577854800000, 1609477200000],
-      },
-    ]);
   });
 
   it('will not parse improperly formatted date strings', () => {
-    const options = {
-      conversions: [{ targetField: 'misformatted dates', destinationType: FieldType.time }],
+    const options = { targetField: 'misformatted dates', destinationType: FieldType.time };
+
+    const misformattedStrings = {
+      name: 'misformatted dates',
+      type: FieldType.string,
+      values: new ArrayVector(['2021/08-01 00:00.00:000', '2021/08/01 00.00-000', '2021/08-01 00:00.00:000']),
+      config: { unit: 'time' },
     };
 
-    const misformattedStrings = toDataFrame({
-      fields: [
-        {
-          name: 'misformatted dates',
-          type: FieldType.string,
-          values: ['2021/08-01 00:00.00:000', '2021/08/01 00.00-000', '2021/08-01 00:00.00:000'],
-          config: { unit: 'time' },
-        },
-        { name: 'A', type: FieldType.number, values: [1, 2, 3, 4, 5] },
-      ],
+    const timefield = convertFieldType(misformattedStrings, options);
+    expect(timefield).toEqual({
+      name: 'misformatted dates',
+      type: FieldType.time,
+      values: new ArrayVector([null, null, null]),
+      config: { unit: 'time' },
     });
-
-    const timeified = convertFieldType(options, [misformattedStrings]);
-    expect(
-      timeified[0].fields.map((f) => ({
-        name: f.name,
-        type: f.type,
-        values: f.values.toArray(),
-        config: f.config,
-      }))
-    ).toEqual([
-      {
-        name: 'misformatted dates',
-        type: FieldType.time,
-        values: [null, null, null, null, null],
-        config: { unit: 'time' },
-      },
-      { config: {}, name: 'A', type: FieldType.number, values: [1, 2, 3, 4, 5] },
-    ]);
   });
 
   it('can convert strings to numbers', () => {
-    const options = {
-      conversions: [{ targetField: 'stringy nums', destinationType: FieldType.number }],
+    const options = { targetField: 'stringy nums', destinationType: FieldType.number };
+
+    const stringyNumbers = {
+      name: 'stringy nums',
+      type: FieldType.string,
+      values: new ArrayVector(['10', '12', '30', '14', '10']),
+      config: {},
     };
 
-    const stringyNumbers = toDataFrame({
-      fields: [
-        { name: 'A', type: FieldType.number, values: [1, 2, 3, 4, 5] },
-        {
-          name: 'proper dates',
-          type: FieldType.string,
-          values: [
-            '2021-07-19 00:00:00.000',
-            '2021-07-23 00:00:00.000',
-            '2021-07-25 00:00:00.000',
-            '2021-08-01 00:00:00.000',
-            '2021-08-02 00:00:00.000',
-          ],
-        },
-        { name: 'stringy nums', type: FieldType.string, values: ['10', '12', '30', '14', '10'] },
-      ],
+    const numbers = convertFieldType(stringyNumbers, options);
+
+    expect(numbers).toEqual({
+      name: 'stringy nums',
+      type: FieldType.number,
+      values: new ArrayVector([10, 12, 30, 14, 10]),
+      config: {},
     });
-
-    const numbers = convertFieldType(options, [stringyNumbers]);
-
-    expect(
-      numbers[0].fields.map((f) => ({
-        name: f.name,
-        type: f.type,
-        values: f.values.toArray(),
-        config: f.config,
-      }))
-    ).toEqual([
-      { config: {}, name: 'A', type: FieldType.number, values: [1, 2, 3, 4, 5] },
-      {
-        name: 'proper dates',
-        type: FieldType.string,
-        values: [
-          '2021-07-19 00:00:00.000',
-          '2021-07-23 00:00:00.000',
-          '2021-07-25 00:00:00.000',
-          '2021-08-01 00:00:00.000',
-          '2021-08-02 00:00:00.000',
-        ],
-        config: {},
-      },
-      {
-        name: 'stringy nums',
-        type: FieldType.number,
-        values: [10, 12, 30, 14, 10],
-        config: {},
-      },
-    ]);
   });
+});
 
+describe('field convert types transformer', () => {
+  beforeAll(() => {
+    mockTransformationsRegistry([convertFieldTypeTransformer]);
+  });
   it('can convert multiple fields', () => {
     const options = {
       conversions: [
@@ -208,27 +124,21 @@ describe('field conversion transformer', () => {
       ],
     });
 
-    const numbers = convertFieldType(options, [stringyNumbers]);
+    const numbers = convertFieldTypes(options, [stringyNumbers]);
     expect(
       numbers[0].fields.map((f) => ({
-        name: f.name,
         type: f.type,
         values: f.values.toArray(),
-        config: f.config,
       }))
     ).toEqual([
-      { config: {}, name: 'A', type: FieldType.number, values: [1, 2, 3, 4, 5] },
+      { type: FieldType.number, values: [1, 2, 3, 4, 5] },
       {
-        config: {},
-        name: 'proper dates',
         type: FieldType.time,
         values: [1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000],
       },
       {
-        name: 'stringy nums',
         type: FieldType.number,
         values: [10, 12, 30, 14, 10],
-        config: {},
       },
     ]);
   });
@@ -252,22 +162,18 @@ describe('field conversion transformer', () => {
       ],
     });
 
-    const booleans = convertFieldType(options, [comboTypes]);
+    const booleans = convertFieldTypes(options, [comboTypes]);
     expect(
       booleans[0].fields.map((f) => ({
-        name: f.name,
         type: f.type,
         values: f.values.toArray(),
-        config: f.config,
       }))
     ).toEqual([
       {
-        config: {},
-        name: 'numbers',
         type: FieldType.boolean,
         values: [true, false, true, false, false],
       },
-      { config: {}, name: 'strings', type: FieldType.boolean, values: [true, true, true, true, true] },
+      { type: FieldType.boolean, values: [true, true, true, true, true] },
     ]);
   });
 
@@ -287,24 +193,18 @@ describe('field conversion transformer', () => {
       ],
     });
 
-    const stringified = convertFieldType(options, [comboTypes]);
+    const stringified = convertFieldTypes(options, [comboTypes]);
     expect(
       stringified[0].fields.map((f) => ({
-        name: f.name,
         type: f.type,
         values: f.values.toArray(),
-        config: f.config,
       }))
     ).toEqual([
       {
-        config: {},
-        name: 'numbers',
         type: FieldType.string,
         values: ['-100', '0', '1', 'null', 'NaN'],
       },
       {
-        config: {},
-        name: 'strings',
         type: FieldType.string,
         values: ['true', 'false', '0', '99', '2021-08-02 00:00:00.000'],
       },

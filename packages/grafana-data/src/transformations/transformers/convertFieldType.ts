@@ -11,8 +11,8 @@ export interface ConvertFieldTypeTransformerOptions {
 }
 
 export interface ConvertFieldTypeOptions {
-  targetField: string | undefined;
-  destinationType: FieldType | undefined;
+  targetField?: string;
+  destinationType?: FieldType;
   dateFormat?: string;
 }
 
@@ -34,7 +34,7 @@ export const convertFieldTypeTransformer: SynchronousDataTransformerInfo<Convert
     if (!Array.isArray(data) || data.length === 0) {
       return data;
     }
-    const timeParsed = convertFieldType(options, data);
+    const timeParsed = convertFieldTypes(options, data);
     if (!timeParsed) {
       return [];
     }
@@ -45,7 +45,7 @@ export const convertFieldTypeTransformer: SynchronousDataTransformerInfo<Convert
 /**
  * @alpha
  */
-export function convertFieldType(options: ConvertFieldTypeTransformerOptions, frames: DataFrame[]): DataFrame[] {
+export function convertFieldTypes(options: ConvertFieldTypeTransformerOptions, frames: DataFrame[]): DataFrame[] {
   if (!options.conversions.length) {
     return frames;
   }
@@ -59,20 +59,7 @@ export function convertFieldType(options: ConvertFieldTypeTransformerOptions, fr
         if (field.name === options.conversions[cIdx].targetField) {
           //check in about matchers with Ryan
           const conversion = options.conversions[cIdx];
-          switch (conversion.destinationType) {
-            case FieldType.time:
-              frame.fields[fieldIdx] = ensureTimeField(field, conversion.dateFormat);
-              break;
-            case FieldType.number:
-              frame.fields[fieldIdx] = fieldToNumberField(field);
-              break;
-            case FieldType.string:
-              frame.fields[fieldIdx] = fieldToStringField(field);
-              break;
-            case FieldType.boolean:
-              frame.fields[fieldIdx] = fieldToBooleanField(field);
-              break;
-          }
+          frame.fields[fieldIdx] = convertFieldType(field, conversion);
           break;
         }
       }
@@ -80,6 +67,21 @@ export function convertFieldType(options: ConvertFieldTypeTransformerOptions, fr
     frameCopy.push(frame);
   });
   return frameCopy;
+}
+
+export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): Field {
+  switch (opts.destinationType) {
+    case FieldType.time:
+      return ensureTimeField(field, opts.dateFormat);
+    case FieldType.number:
+      return fieldToNumberField(field);
+    case FieldType.string:
+      return fieldToStringField(field);
+    case FieldType.boolean:
+      return fieldToBooleanField(field);
+    default:
+      return field;
+  }
 }
 
 export function fieldToTimeField(field: Field, dateFormat?: string): Field {
