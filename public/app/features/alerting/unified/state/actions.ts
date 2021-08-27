@@ -1,4 +1,4 @@
-import { locationService } from '@grafana/runtime';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
   AlertmanagerAlert,
@@ -31,6 +31,7 @@ import {
 } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
+  deleteNamespace,
   deleteRulerRulesGroup,
   fetchRulerRules,
   fetchRulerRulesGroup,
@@ -41,7 +42,7 @@ import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
 import { makeAMLink, retryWhile } from '../utils/misc';
 import { isFetchError, withAppEvents, withSerializedError } from '../utils/redux';
-import { formValuesToRulerAlertingRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
+import { formValuesToRulerRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
 import {
   isCloudRuleIdentifier,
   isGrafanaRuleIdentifier,
@@ -50,7 +51,6 @@ import {
   isRulerNotSupportedResponse,
 } from '../utils/rules';
 import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
-import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruleId from '../utils/rule-id';
 import { isEmpty } from 'lodash';
 import messageFromError from 'app/plugins/datasource/grafana-azure-monitor-datasource/utils/messageFromError';
@@ -251,7 +251,7 @@ export function deleteRuleAction(
 
 async function saveLotexRule(values: RuleFormValues, existing?: RuleWithLocation): Promise<RuleIdentifier> {
   const { dataSourceName, group, namespace } = values;
-  const formRule = formValuesToRulerAlertingRuleDTO(values);
+  const formRule = formValuesToRulerRuleDTO(values);
   if (dataSourceName && group && namespace) {
     // if we're updating a rule...
     if (existing) {
@@ -373,7 +373,7 @@ export const saveRuleFormAction = createAsyncThunk(
           const { type } = values;
           // in case of system (cortex/loki)
           let identifier: RuleIdentifier;
-          if (type === RuleFormType.cloud) {
+          if (type === RuleFormType.cloudAlerting || type === RuleFormType.cloudRecording) {
             identifier = await saveLotexRule(values, existing);
             // in case of grafana managed
           } else if (type === RuleFormType.grafana) {
@@ -545,7 +545,7 @@ export const deleteTemplateAction = (templateName: string, alertManagerSourceNam
 
 export const fetchFolderAction = createAsyncThunk(
   'unifiedalerting/fetchFolder',
-  (uid: string): Promise<FolderDTO> => withSerializedError(backendSrv.getFolderByUid(uid))
+  (uid: string): Promise<FolderDTO> => withSerializedError((getBackendSrv() as any).getFolderByUid(uid))
 );
 
 export const fetchFolderIfNotFetchedAction = (uid: string): ThunkResult<void> => {
@@ -619,5 +619,91 @@ export const testReceiversAction = createAsyncThunk(
       errorMessage: 'Failed to send test alert.',
       successMessage: 'Test alert sent.',
     });
+  }
+);
+
+interface UpdateNamespaceAndGroupOptions {
+  rulesSourceName: string;
+  namespaceName: string;
+  groupName: string;
+  newNamespaceName: string;
+  newGroupName: string;
+  groupInterval?: string;
+}
+
+// allows renaming namespace, renaming group and changing group interval, all in one go
+export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
+  'unifiedalerting/updateLotexNamespaceAndGroup',
+  async (options: UpdateNamespaceAndGroupOptions, thunkAPI): Promise<void> => {
+    return withAppEvents(
+      withSerializedError(
+        (async () => {
+          const { rulesSourceName, namespaceName, groupName, newNamespaceName, newGroupName, groupInterval } = options;
+          if (options.rulesSourceName === GRAFANA_RULES_SOURCE_NAME) {
+            throw new Error(`this action does not support Grafana rules`);
+          }
+          // fetch rules and perform sanity checks
+          const rulesResult = await fetchRulerRules(rulesSourceName);
+          if (!rulesResult[namespaceName]) {
+            throw new Error(`Namespace "${namespaceName}" not found.`);
+          }
+          const existingGroup = rulesResult[namespaceName].find((group) => group.name === groupName);
+          if (!existingGroup) {
+            throw new Error(`Group "${groupName}" not found.`);
+          }
+          if (newGroupName !== groupName && !!rulesResult[namespaceName].find((group) => group.name === newGroupName)) {
+            throw new Error(`Group "${newGroupName}" already exists.`);
+          }
+          if (newNamespaceName !== namespaceName && !!rulesResult[newNamespaceName]) {
+            throw new Error(`Namespace "${newNamespaceName}" already exists.`);
+          }
+          if (
+            newNamespaceName === namespaceName &&
+            groupName === newGroupName &&
+            groupInterval === existingGroup.interval
+          ) {
+            throw new Error('Nothing changed.');
+          }
+
+          // if renaming namespace - make new copies of all groups, then delete old namespace
+          if (newNamespaceName !== namespaceName) {
+            for (const group of rulesResult[namespaceName]) {
+              await setRulerRuleGroup(
+                rulesSourceName,
+                newNamespaceName,
+                group.name === groupName
+                  ? {
+                      ...group,
+                      name: newGroupName,
+                      interval: groupInterval,
+                    }
+                  : group
+              );
+            }
+            await deleteNamespace(rulesSourceName, namespaceName);
+
+            // if only modifying group...
+          } else {
+            // save updated group
+            await setRulerRuleGroup(rulesSourceName, namespaceName, {
+              ...existingGroup,
+              name: newGroupName,
+              interval: groupInterval,
+            });
+            // if group name was changed, delete old group
+            if (newGroupName !== groupName) {
+              await deleteRulerRulesGroup(rulesSourceName, namespaceName, groupName);
+            }
+          }
+
+          // refetch all rules
+          await thunkAPI.dispatch(fetchRulerRulesAction(rulesSourceName));
+        })()
+      ),
+      {
+        errorMessage: 'Failed to update namespace / group',
+        successMessage: 'Update successful',
+      }
+    );
   }
 );

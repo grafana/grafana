@@ -1,41 +1,32 @@
 package plugindashboards
 
 import (
-	"context"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:     "PluginDashboardService",
-		Instance: &Service{},
-	})
+func ProvideService(dataService *tsdb.Service, pluginManager plugins.Manager, sqlStore *sqlstore.SQLStore) *Service {
+	s := &Service{
+		DataService:   dataService,
+		PluginManager: pluginManager,
+		SQLStore:      sqlStore,
+		logger:        log.New("plugindashboards"),
+	}
+	bus.AddEventListener(s.handlePluginStateChanged)
+	s.updateAppDashboards()
+	return s
 }
 
 type Service struct {
-	DataService   *tsdb.Service      `inject:""`
-	PluginManager plugins.Manager    `inject:""`
-	SQLStore      *sqlstore.SQLStore `inject:""`
+	DataService   *tsdb.Service
+	PluginManager plugins.Manager
+	SQLStore      *sqlstore.SQLStore
 
 	logger log.Logger
-}
-
-func (s *Service) Init() error {
-	bus.AddEventListener(s.handlePluginStateChanged)
-	s.logger = log.New("plugindashboards")
-	return nil
-}
-
-func (s *Service) Run(ctx context.Context) error {
-	s.updateAppDashboards()
-	return nil
 }
 
 func (s *Service) updateAppDashboards() {
