@@ -32,7 +32,7 @@ func (s *Service) parseQuery(dsInfo *DatasourceInfo, queryContext *backend.Query
 			return nil, err
 		}
 
-		step, err := s.createStep(dsInfo, model, query)
+		step, err := createStep(dsInfo, model, query, s.intervalCalculator)
 		if err != nil {
 			return nil, err
 		}
@@ -60,7 +60,7 @@ func createQuery(model *QueryModel, step time.Duration, query backend.DataQuery)
 	return &queryModel
 }
 
-func (s *Service) createStep(dsInfo *DatasourceInfo, model *QueryModel, query backend.DataQuery) (time.Duration, error) {
+func createStep(dsInfo *DatasourceInfo, model *QueryModel, query backend.DataQuery, intervalCalculator tsdb.Calculator) (time.Duration, error) {
 	// If we have interval and query is processed as backend query, we have correct step and we only need to parse it from string to time.Duration
 	if model.IsBackendQuery && model.Interval != "" {
 		step, err := tsdb.ParseIntervalStringToTimeDuration(model.Interval)
@@ -82,11 +82,11 @@ func (s *Service) createStep(dsInfo *DatasourceInfo, model *QueryModel, query ba
 		intervalMode = model.StepMode
 	}
 	// Calculate interval value from query or data source settings or use default value
-	calculatedInterval, err := s.intervalCalculator.Calculate(query.TimeRange, foundInterval, tsdb.IntervalMode(intervalMode))
+	calculatedInterval, err := intervalCalculator.Calculate(query.TimeRange, foundInterval, tsdb.IntervalMode(intervalMode))
 	if err != nil {
 		return time.Duration(0), err
 	}
-	safeInterval := s.intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(safeRes))
+	safeInterval := intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(safeRes))
 
 	var adjustedInterval time.Duration
 	if calculatedInterval.Value > safeInterval.Value {
