@@ -60,23 +60,24 @@ func postTestData() {
 		if i%10 == 0 {
 			d.Value3 = nil
 		}
-		data, _ := json.Marshal(d)
-		log.Println(string(data))
-		req, _ := http.NewRequest("POST", "http://localhost:3000/api/live/push/json/auto", bytes.NewReader(data))
+		jsonData, _ := json.Marshal(d)
+		log.Println(string(jsonData))
+
+		req, _ := http.NewRequest("POST", "http://localhost:3000/api/live/push/json/auto", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
 		_ = resp.Body.Close()
-		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/json/tip", bytes.NewReader(data))
+		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/json/tip", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
 		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
 		_ = resp.Body.Close()
-		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/json/exact", bytes.NewReader(data))
+		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/json/exact", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
 		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
@@ -100,7 +101,7 @@ func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannel
 			Pattern:   "plugin/testdata/random-20Hz-stream",
 			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
 			Outputter: NewMultipleOutputter(
-				NewLocalSubscribersOutput(f.node),
+				NewManagedStreamOutput(f.managedStream),
 				NewRedirectOutput(f.pipeline, RedirectOutputConfig{
 					Channel: "stream/testdata/random-20Hz-stream",
 				}),
@@ -265,7 +266,7 @@ func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannel
 			}),
 			Outputter: NewMultipleOutputter(
 				NewManagedStreamOutput(f.managedStream),
-				NewRemoteWriteOutput(RemoteWriteOutputConfig{
+				NewRemoteWriteOutput(RemoteWriteConfig{
 					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
 					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
 					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
@@ -299,7 +300,7 @@ func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannel
 			Pattern: "stream/json/exact/value3/changes",
 			Outputter: NewMultipleOutputter(
 				NewManagedStreamOutput(f.managedStream),
-				NewRemoteWriteOutput(RemoteWriteOutputConfig{
+				NewRemoteWriteOutput(RemoteWriteConfig{
 					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
 					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
 					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),

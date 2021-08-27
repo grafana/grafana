@@ -214,6 +214,8 @@ func (g *GrafanaLive) Init() error {
 		node.SetPresenceManager(presenceManager)
 	}
 
+	channelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, nil)
+
 	var managedStreamRunner *managedstream.Runner
 	if g.IsHA() {
 		redisClient := redis.NewClient(&redis.Options{
@@ -225,11 +227,13 @@ func (g *GrafanaLive) Init() error {
 		}
 		managedStreamRunner = managedstream.NewRunner(
 			g.Publish,
+			channelLocalPublisher,
 			managedstream.NewRedisFrameCache(redisClient),
 		)
 	} else {
 		managedStreamRunner = managedstream.NewRunner(
 			g.Publish,
+			channelLocalPublisher,
 			managedstream.NewMemoryFrameCache(),
 		)
 	}
@@ -243,9 +247,9 @@ func (g *GrafanaLive) Init() error {
 	}
 
 	g.contextGetter = liveplugin.NewContextGetter(g.PluginContextProvider)
-	channelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, g.Pipeline)
+	pipelinedChannelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, g.Pipeline)
 	numLocalSubscribersGetter := liveplugin.NewNumLocalSubscribersGetter(node)
-	g.runStreamManager = runstream.NewManager(channelLocalPublisher, numLocalSubscribersGetter, g.contextGetter)
+	g.runStreamManager = runstream.NewManager(pipelinedChannelLocalPublisher, numLocalSubscribersGetter, g.contextGetter)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
@@ -695,7 +699,7 @@ func (g *GrafanaLive) handlePluginScope(_ *models.SignedInUser, namespace string
 }
 
 func (g *GrafanaLive) handleStreamScope(u *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	return g.ManagedStreamRunner.GetOrCreateStream(u.OrgId, namespace)
+	return g.ManagedStreamRunner.GetOrCreateStream(u.OrgId, live.ScopeStream, namespace)
 }
 
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {

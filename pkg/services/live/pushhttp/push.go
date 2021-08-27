@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/convert"
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
 	"github.com/grafana/grafana/pkg/setting"
+
+	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
 var (
@@ -47,7 +49,7 @@ func (g *Gateway) Run(ctx context.Context) error {
 func (g *Gateway) Handle(ctx *models.ReqContext) {
 	streamID := ctx.Params(":streamId")
 
-	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, streamID)
+	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, liveDto.ScopeStream, streamID)
 	if err != nil {
 		logger.Error("Error getting stream", "error", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)

@@ -13,10 +13,11 @@ import (
 )
 
 type fileStorage struct {
-	node          *centrifuge.Node
-	managedStream *managedstream.Runner
-	frameStorage  *FrameStorage
-	pipeline      *Pipeline
+	node                *centrifuge.Node
+	managedStream       *managedstream.Runner
+	frameStorage        *FrameStorage
+	pipeline            *Pipeline
+	remoteWriteBackends []RemoteWriteBackend
 }
 
 type JsonAutoSettings struct{}
@@ -51,6 +52,10 @@ type ConditionalOutputConfig struct {
 	Outputter *OutputterConfig        `json:"outputter"`
 }
 
+type RemoteWriteOutputConfig struct {
+	UID string `json:"uid"`
+}
+
 type OutputterConfig struct {
 	Type                    string                     `json:"type"`
 	ManagedStreamConfig     *ManagedStreamOutputConfig `json:"managedStream,omitempty"`
@@ -73,8 +78,14 @@ type ChannelRule struct {
 	Settings ChannelRuleSettings `json:"settings"`
 }
 
+type RemoteWriteBackend struct {
+	UID      string             `json:"uid"`
+	Settings *RemoteWriteConfig `json:"settings"`
+}
+
 type ChannelRules struct {
-	Rules []ChannelRule `json:"rules"`
+	Rules               []ChannelRule        `json:"rules"`
+	RemoteWriteBackends []RemoteWriteBackend `json:"remoteWriteBackends"`
 }
 
 func (f *fileStorage) extractConverter(config *ConverterConfig) (Converter, error) {
@@ -242,7 +253,11 @@ func (f *fileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 		if config.RemoteWriteOutputConfig == nil {
 			return nil, missingConfiguration
 		}
-		return NewRemoteWriteOutput(*config.RemoteWriteOutputConfig), nil
+		remoteWriteConfig, ok := f.getRemoteWriteConfig(config.RemoteWriteOutputConfig.UID)
+		if !ok {
+			return nil, fmt.Errorf("unknown remote write backend uid: %s", config.RemoteWriteOutputConfig.UID)
+		}
+		return NewRemoteWriteOutput(*remoteWriteConfig), nil
 	case "changeLog":
 		if config.ChangeLogOutputConfig == nil {
 			return nil, missingConfiguration
@@ -253,6 +268,15 @@ func (f *fileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 	}
 }
 
+func (f *fileStorage) getRemoteWriteConfig(uid string) (*RemoteWriteConfig, bool) {
+	for _, rwb := range f.remoteWriteBackends {
+		if rwb.UID == uid {
+			return rwb.Settings, true
+		}
+	}
+	return nil, false
+}
+
 func (f *fileStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
 	ruleBytes, _ := ioutil.ReadFile(os.Getenv("GF_LIVE_CHANNEL_RULES_FILE"))
 	var channelRules ChannelRules
@@ -260,6 +284,8 @@ func (f *fileStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 	if err != nil {
 		return nil, err
 	}
+
+	f.remoteWriteBackends = channelRules.RemoteWriteBackends
 
 	var rules []*LiveChannelRule
 

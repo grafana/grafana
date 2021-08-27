@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/remotewrite"
 )
 
-type RemoteWriteOutputConfig struct {
+type RemoteWriteConfig struct {
 	// Endpoint to send streaming frames to.
 	Endpoint string `json:"endpoint"`
 	// User is a user for remote write request.
@@ -24,11 +24,11 @@ type RemoteWriteOutputConfig struct {
 }
 
 type RemoteWriteOutput struct {
-	config     RemoteWriteOutputConfig
+	config     RemoteWriteConfig
 	httpClient *http.Client
 }
 
-func NewRemoteWriteOutput(config RemoteWriteOutputConfig) *RemoteWriteOutput {
+func NewRemoteWriteOutput(config RemoteWriteConfig) *RemoteWriteOutput {
 	return &RemoteWriteOutput{
 		config:     config,
 		httpClient: &http.Client{Timeout: 2 * time.Second},

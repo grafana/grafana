@@ -17,7 +17,7 @@ func NewManagedStreamOutput(managedStream *managedstream.Runner) *ManagedStreamO
 }
 
 func (l *ManagedStreamOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) error {
-	stream, err := l.managedStream.GetOrCreateStream(vars.OrgID, vars.Namespace)
+	stream, err := l.managedStream.GetOrCreateStream(vars.OrgID, vars.Scope, vars.Namespace)
 	if err != nil {
 		logger.Error("Error getting stream", "error", err)
 		return err
