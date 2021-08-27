@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { ServerStats, Props } from './ServerStats';
+import { ServerStats } from './ServerStats';
 import { ServerStat } from './state/apis';
 
 const stats: ServerStat = {
@@ -23,21 +23,13 @@ const stats: ServerStat = {
   viewers: 2,
 };
 
-const getServerStats = () => {
-  return Promise.resolve(stats);
-};
+jest.mock('./state/apis', () => ({
+  getServerStats: async () => stats,
+}));
 
-const setup = (propOverrides?: Partial<Props>) => {
-  const props: Props = {
-    getServerStats,
-  };
-  Object.assign(props, propOverrides);
-
-  render(<ServerStats {...props} />);
-};
 describe('ServerStats', () => {
   it('Should render page with stats', async () => {
-    setup();
+    render(<ServerStats />);
     expect(await screen.findByRole('heading', { name: /instance statistics/i })).toBeInTheDocument();
     expect(screen.getByText('Dashboards (starred)')).toBeInTheDocument();
     expect(screen.getByText('Tags')).toBeInTheDocument();

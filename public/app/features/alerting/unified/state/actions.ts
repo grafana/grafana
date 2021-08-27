@@ -31,6 +31,7 @@ import {
 } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
+  deleteNamespace,
   deleteRulerRulesGroup,
   fetchRulerRules,
   fetchRulerRulesGroup,
@@ -618,5 +619,91 @@ export const testReceiversAction = createAsyncThunk(
       errorMessage: 'Failed to send test alert.',
       successMessage: 'Test alert sent.',
     });
+  }
+);
+
+interface UpdateNamespaceAndGroupOptions {
+  rulesSourceName: string;
+  namespaceName: string;
+  groupName: string;
+  newNamespaceName: string;
+  newGroupName: string;
+  groupInterval?: string;
+}
+
+// allows renaming namespace, renaming group and changing group interval, all in one go
+export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
+  'unifiedalerting/updateLotexNamespaceAndGroup',
+  async (options: UpdateNamespaceAndGroupOptions, thunkAPI): Promise<void> => {
+    return withAppEvents(
+      withSerializedError(
+        (async () => {
+          const { rulesSourceName, namespaceName, groupName, newNamespaceName, newGroupName, groupInterval } = options;
+          if (options.rulesSourceName === GRAFANA_RULES_SOURCE_NAME) {
+            throw new Error(`this action does not support Grafana rules`);
+          }
+          // fetch rules and perform sanity checks
+          const rulesResult = await fetchRulerRules(rulesSourceName);
+          if (!rulesResult[namespaceName]) {
+            throw new Error(`Namespace "${namespaceName}" not found.`);
+          }
+          const existingGroup = rulesResult[namespaceName].find((group) => group.name === groupName);
+          if (!existingGroup) {
+            throw new Error(`Group "${groupName}" not found.`);
+          }
+          if (newGroupName !== groupName && !!rulesResult[namespaceName].find((group) => group.name === newGroupName)) {
+            throw new Error(`Group "${newGroupName}" already exists.`);
+          }
+          if (newNamespaceName !== namespaceName && !!rulesResult[newNamespaceName]) {
+            throw new Error(`Namespace "${newNamespaceName}" already exists.`);
+          }
+          if (
+            newNamespaceName === namespaceName &&
+            groupName === newGroupName &&
+            groupInterval === existingGroup.interval
+          ) {
+            throw new Error('Nothing changed.');
+          }
+
+          // if renaming namespace - make new copies of all groups, then delete old namespace
+          if (newNamespaceName !== namespaceName) {
+            for (const group of rulesResult[namespaceName]) {
+              await setRulerRuleGroup(
+                rulesSourceName,
+                newNamespaceName,
+                group.name === groupName
+                  ? {
+                      ...group,
+                      name: newGroupName,
+                      interval: groupInterval,
+                    }
+                  : group
+              );
+            }
+            await deleteNamespace(rulesSourceName, namespaceName);
+
+            // if only modifying group...
+          } else {
+            // save updated group
+            await setRulerRuleGroup(rulesSourceName, namespaceName, {
+              ...existingGroup,
+              name: newGroupName,
+              interval: groupInterval,
+            });
+            // if group name was changed, delete old group
+            if (newGroupName !== groupName) {
+              await deleteRulerRulesGroup(rulesSourceName, namespaceName, groupName);
+            }
+          }
+
+          // refetch all rules
+          await thunkAPI.dispatch(fetchRulerRulesAction(rulesSourceName));
+        })()
+      ),
+      {
+        errorMessage: 'Failed to update namespace / group',
+        successMessage: 'Update successful',
+      }
+    );
   }
 );
