@@ -8,7 +8,7 @@ import Page from '../../core/components/Page/Page';
 import { getNavModel } from '../../core/selectors/navModel';
 import { LicenseChrome } from './LicenseChrome';
 import { StoreState } from '../../types';
-import ServerStats from './ServerStats';
+import { ServerStats } from './ServerStats';
 
 interface Props {
   navModel: NavModel;
