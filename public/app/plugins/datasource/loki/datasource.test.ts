@@ -783,7 +783,7 @@ describe('LokiDatasource', () => {
   });
 
   describe('addAdHocFilters', () => {
-    describe('when called with ADD_FILTER', () => {
+    describe('when called with "=" operator', () => {
       const adHocFilters = [
         {
           condition: '',
