@@ -1,15 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
-import { Pagination, Tooltip, stylesFactory, LinkButton, Icon } from '@grafana/ui';
-import { AccessControlAction, StoreState, UserDTO } from '../../types';
+import { Pagination, Tooltip, LinkButton, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
-import { getNavModel } from '../../core/selectors/navModel';
-import { fetchUsers, changeQuery, changePage } from './state/actions';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { getNavModel } from '../../core/selectors/navModel';
+import { AccessControlAction, StoreState, UserDTO } from '../../types';
+import { fetchUsers, changeQuery, changePage } from './state/actions';
 
 const mapDispatchToProps = {
   fetchUsers,
@@ -32,9 +33,19 @@ interface OwnProps {}
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-const UserListAdminPageUnConnected: React.FC<Props> = (props) => {
-  const styles = getStyles();
-  const { fetchUsers, navModel, query, changeQuery, users, showPaging, totalPages, page, changePage } = props;
+const UserListAdminPageUnConnected: React.FC<Props> = ({
+  fetchUsers,
+  navModel,
+  query,
+  changeQuery,
+  users,
+  showPaging,
+  totalPages,
+  page,
+  changePage,
+}) => {
+  const styles = useStyles2(getStyles);
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     fetchUsers();
@@ -46,11 +57,20 @@ const UserListAdminPageUnConnected: React.FC<Props> = (props) => {
         <>
           <div className="page-action-bar">
             <div className="gf-form gf-form--grow">
+              <RadioButtonGroup
+                options={[
+                  { label: 'All users', value: 'all' },
+                  { label: 'Active last 30 days', value: 'activeLast30Days' },
+                ]}
+                onChange={setFilter}
+                value={filter}
+                className={styles.filter}
+              />
               <FilterInput
                 placeholder="Search user by login, email, or name."
                 autoFocus={true}
                 value={query}
-                onChange={(value) => changeQuery(value)}
+                onChange={changeQuery}
               />
             </div>
             {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
@@ -134,12 +154,15 @@ const renderUser = (user: UserDTO) => {
   );
 };
 
-const getStyles = stylesFactory(() => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     table: css`
       margin-top: 28px;
     `,
+    filter: css`
+      margin-right: ${theme.spacing(1)};
+    `,
   };
-});
+};
 
 export default hot(module)(connector(UserListAdminPageUnConnected));
