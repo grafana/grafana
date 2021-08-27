@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 
 	"github.com/gosimple/slug"
@@ -26,14 +28,16 @@ import (
 var logger = log.New("plugin.initializer")
 
 type Initializer struct {
-	cfg     *setting.Cfg
-	license models.Licensing
+	cfg                *setting.Cfg
+	license            models.Licensing
+	corePluginRegistry coreplugin.Registry
 }
 
-func New(cfg *setting.Cfg, license models.Licensing) Initializer {
+func New(cfg *setting.Cfg, license models.Licensing, corePluginRegistry coreplugin.Registry) Initializer {
 	return Initializer{
-		cfg:     cfg,
-		license: license,
+		cfg:                cfg,
+		license:            license,
+		corePluginRegistry: corePluginRegistry,
 	}
 }
 
@@ -81,7 +85,7 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 	}
 
 	if !p.IsCorePlugin() {
-		logger.Info(fmt.Sprintf("Successfully added %s plugin", p.Class), "pluginID", p.ID)
+		logger.Info(fmt.Sprintf("Successfully initialized %s plugin", p.Class), "pluginID", p.ID)
 	}
 
 	pluginLog := log.New(p.ID)
@@ -97,6 +101,12 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 					return nil
 				},
 			)
+		} else if p.IsCorePlugin() {
+			var err error
+			backendFactory, err = i.corePluginRegistry.BackendFactory(p.ID)
+			if err != nil {
+				return err
+			}
 		} else {
 			cmd := plugins.ComposePluginStartCommand(p.Executable)
 			backendFactory = grpcplugin.NewBackendPlugin(p.ID, filepath.Join(p.PluginDir, cmd))

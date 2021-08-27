@@ -15,7 +15,7 @@ import (
 )
 
 func TestTestdataScenarios(t *testing.T) {
-	p := &TestDataPlugin{}
+	s := &Service{}
 
 	t.Run("random walk ", func(t *testing.T) {
 		t.Run("Should start at the requested value", func(t *testing.T) {
@@ -42,7 +42,7 @@ func TestTestdataScenarios(t *testing.T) {
 				Queries:       []backend.DataQuery{query},
 			}
 
-			resp, err := p.handleRandomWalkScenario(context.Background(), req)
+			resp, err := s.handleRandomWalkScenario(context.Background(), req)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 
@@ -85,7 +85,7 @@ func TestTestdataScenarios(t *testing.T) {
 				Queries:       []backend.DataQuery{query},
 			}
 
-			resp, err := p.handleRandomWalkTableScenario(context.Background(), req)
+			resp, err := s.handleRandomWalkTableScenario(context.Background(), req)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 
@@ -141,7 +141,7 @@ func TestTestdataScenarios(t *testing.T) {
 				Queries:       []backend.DataQuery{query},
 			}
 
-			resp, err := p.handleRandomWalkTableScenario(context.Background(), req)
+			resp, err := s.handleRandomWalkTableScenario(context.Background(), req)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 

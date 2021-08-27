@@ -1,8 +1,8 @@
 {
+  "id": "testdata",
   "type": "datasource",
   "name": "TestData DB",
-  "id": "testdata",
-
+  "backend": true,
   "metrics": true,
   "logs": true,
   "alerting": true,

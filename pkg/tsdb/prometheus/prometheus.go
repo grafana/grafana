@@ -18,8 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/api"
@@ -47,7 +45,7 @@ type Service struct {
 	im                 instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager backendplugin.Manager) (*Service, error) {
+func ProvideService(httpClientProvider httpclient.Provider) (*Service, error) {
 	plog.Debug("initializing")
 	im := datasource.NewInstanceManager(newInstanceSettings())
 
@@ -55,14 +53,6 @@ func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager
 		httpClientProvider: httpClientProvider,
 		intervalCalculator: tsdb.NewCalculator(),
 		im:                 im,
-	}
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-	if err := backendPluginManager.Register("prometheus", factory); err != nil {
-		plog.Error("Failed to register plugin", "error", err)
-		return nil, err
 	}
 
 	return s, nil

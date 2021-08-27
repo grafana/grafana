@@ -3,7 +3,7 @@
   "name": "Tempo",
   "id": "tempo",
   "category": "tracing",
-
+  "backend": true,
   "metrics": false,
   "alerting": false,
   "annotations": false,

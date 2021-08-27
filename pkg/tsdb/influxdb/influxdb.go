@@ -16,8 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
@@ -33,22 +31,13 @@ type Service struct {
 
 var ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
 
-func ProvideService(httpClient httpclient.Provider, backendPluginManager backendplugin.Manager) (*Service, error) {
+func ProvideService(httpClient httpclient.Provider) (*Service, error) {
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClient))
 	s := &Service{
 		QueryParser:    &InfluxdbQueryParser{},
 		ResponseParser: &ResponseParser{},
 		glog:           log.New("tsdb.influxdb"),
 		im:             im,
-	}
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	if err := backendPluginManager.Register("influxdb", factory); err != nil {
-		s.glog.Error("Failed to register plugin", "error", err)
-		return nil, err
 	}
 
 	return s, nil

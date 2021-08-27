@@ -10,7 +10,7 @@
     { "type": "dashboard", "name": "Azure SQL Database Insights", "path": "dashboards/sqldb.json" },
     { "type": "dashboard", "name": "Azure Data Explorer Insights", "path": "dashboards/adx.json" }
   ],
-
+  "backend": true,
   "info": {
     "description": "Data source for Microsoft Azure Monitor & Application Insights",
     "author": {

@@ -15,40 +15,40 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
-func (p *TestDataPlugin) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/", p.testGetHandler)
-	mux.HandleFunc("/scenarios", p.getScenariosHandler)
-	mux.HandleFunc("/stream", p.testStreamHandler)
-	mux.Handle("/test", createJSONHandler(p.logger))
-	mux.Handle("/test/json", createJSONHandler(p.logger))
-	mux.HandleFunc("/boom", p.testPanicHandler)
+func (s *Service) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/", s.testGetHandler)
+	mux.HandleFunc("/scenarios", s.getScenariosHandler)
+	mux.HandleFunc("/stream", s.testStreamHandler)
+	mux.Handle("/test", createJSONHandler(s.logger))
+	mux.Handle("/test/json", createJSONHandler(s.logger))
+	mux.HandleFunc("/boom", s.testPanicHandler)
 }
 
-func (p *TestDataPlugin) testGetHandler(rw http.ResponseWriter, req *http.Request) {
-	p.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+func (s *Service) testGetHandler(rw http.ResponseWriter, req *http.Request) {
+	s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 	if req.Method != http.MethodGet {
 		return
 	}
 
 	if _, err := rw.Write([]byte("Hello world from test datasource!")); err != nil {
-		p.logger.Error("Failed to write response", "error", err)
+		s.logger.Error("Failed to write response", "error", err)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (p *TestDataPlugin) getScenariosHandler(rw http.ResponseWriter, req *http.Request) {
+func (s *Service) getScenariosHandler(rw http.ResponseWriter, req *http.Request) {
 	result := make([]interface{}, 0)
 
 	scenarioIds := make([]string, 0)
-	for id := range p.scenarios {
+	for id := range s.scenarios {
 		scenarioIds = append(scenarioIds, id)
 	}
 	sort.Strings(scenarioIds)
 
 	for _, scenarioID := range scenarioIds {
-		scenario := p.scenarios[scenarioID]
+		scenario := s.scenarios[scenarioID]
 		result = append(result, map[string]interface{}{
 			"id":          scenario.ID,
 			"name":        scenario.Name,
@@ -59,18 +59,18 @@ func (p *TestDataPlugin) getScenariosHandler(rw http.ResponseWriter, req *http.R
 
 	bytes, err := json.Marshal(&result)
 	if err != nil {
-		p.logger.Error("Failed to marshal response body to JSON", "error", err)
+		s.logger.Error("Failed to marshal response body to JSON", "error", err)
 	}
 
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
 	if _, err := rw.Write(bytes); err != nil {
-		p.logger.Error("Failed to write response", "error", err)
+		s.logger.Error("Failed to write response", "error", err)
 	}
 }
 
-func (p *TestDataPlugin) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
-	p.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+func (s *Service) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
+	s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 	if req.Method != http.MethodGet {
 		return
@@ -95,7 +95,7 @@ func (p *TestDataPlugin) testStreamHandler(rw http.ResponseWriter, req *http.Req
 
 	for i := 1; i <= count; i++ {
 		if _, err := io.WriteString(rw, fmt.Sprintf("Message #%d", i)); err != nil {
-			p.logger.Error("Failed to write response", "error", err)
+			s.logger.Error("Failed to write response", "error", err)
 			return
 		}
 		rw.(http.Flusher).Flush()
@@ -152,6 +152,6 @@ func createJSONHandler(logger log.Logger) http.Handler {
 	})
 }
 
-func (p *TestDataPlugin) testPanicHandler(rw http.ResponseWriter, req *http.Request) {
+func (s *Service) testPanicHandler(rw http.ResponseWriter, req *http.Request) {
 	panic("BOOM")
 }

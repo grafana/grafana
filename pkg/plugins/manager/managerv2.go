@@ -14,13 +14,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+
+	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -33,31 +36,33 @@ type PluginManagerV2 struct {
 	Cfg                    *setting.Cfg
 	License                models.Licensing
 	PluginRequestValidator models.PluginRequestValidator
-	pluginInstaller        plugins.PluginInstaller
-	pluginLoader           loader.Loader
 
-	log       log.Logger
-	plugins   map[string]*plugins.PluginV2
-	pluginsMu sync.RWMutex
+	plugins         map[string]*plugins.PluginV2
+	pluginInstaller plugins.PluginInstaller
+	pluginLoader    loader.Loader
+	pluginsMu       sync.RWMutex
+	log             log.Logger
 }
 
-func ProvideServiceV2(cfg *setting.Cfg, license models.Licensing,
-	requestValidator models.PluginRequestValidator) (*PluginManagerV2, error) {
-	pm := newManagerV2(cfg, license, requestValidator)
+func ProvideServiceV2(cfg *setting.Cfg, license models.Licensing, requestValidator models.PluginRequestValidator,
+	corePluginRegistry coreplugin.Registry) (*PluginManagerV2, error) {
+	pm := newManagerV2(cfg, license, requestValidator, corePluginRegistry)
 	if err := pm.init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func newManagerV2(cfg *setting.Cfg, license models.Licensing,
-	pluginRequestValidator models.PluginRequestValidator) *PluginManagerV2 {
+func newManagerV2(cfg *setting.Cfg, license models.Licensing, pluginRequestValidator models.PluginRequestValidator,
+	corePluginRegistry coreplugin.Registry) *PluginManagerV2 {
 	return &PluginManagerV2{
 		Cfg:                    cfg,
 		License:                license,
 		PluginRequestValidator: pluginRequestValidator,
 		plugins:                map[string]*plugins.PluginV2{},
 		log:                    log.New("plugin.manager.v2"),
+		pluginInstaller:        installer.New(false, cfg.BuildVersion, NewInstallerLogger("plugin.installer", true)),
+		pluginLoader:           loader.New(nil, nil, cfg, corePluginRegistry),
 	}
 }
 
@@ -65,9 +70,6 @@ func (m *PluginManagerV2) init() error {
 	if !m.IsEnabled() {
 		return nil
 	}
-
-	m.pluginInstaller = installer.New(false, m.Cfg.BuildVersion, NewInstallerLogger("plugin.installer", true))
-	m.pluginLoader = loader.New(nil, nil, m.Cfg)
 
 	// install Core plugins
 	err := m.installPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins"))

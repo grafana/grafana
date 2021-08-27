@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -33,15 +35,16 @@ type Loader struct {
 	errs map[string]error
 	// allowUnsignedPluginsCondition changes the policy for allowing unsigned plugins. Signature validation only
 	// runs when plugins are starting, therefore running plugins will not be terminated if they violate the new policy.
-	allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc
+	AllowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc
 }
 
-func New(allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc, license models.Licensing, cfg *setting.Cfg) Loader {
+func New(allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc, license models.Licensing, cfg *setting.Cfg,
+	corePluginRegistry coreplugin.Registry) Loader {
 	return Loader{
 		cfg:                           cfg,
-		allowUnsignedPluginsCondition: allowUnsignedPluginsCondition,
+		AllowUnsignedPluginsCondition: allowUnsignedPluginsCondition,
 		pluginFinder:                  finder.New(cfg),
-		pluginInitializer:             initializer.New(cfg, license),
+		pluginInitializer:             initializer.New(cfg, license, corePluginRegistry),
 		errs:                          make(map[string]error),
 	}
 }
@@ -71,7 +74,7 @@ func (l *Loader) LoadAll(path string, existingPlugins map[string]struct{}) ([]*p
 func (l *Loader) LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*plugins.PluginV2, error) {
 	p, err := l.Load(path, map[string]struct{}{})
 	if err != nil {
-		logger.Error("plugin failed to load core plugin", "err", err)
+		logger.Error("failed to load core plugin", "err", err)
 	}
 
 	err = l.pluginInitializer.InitializeWithFactory(p, factory)
@@ -141,7 +144,7 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 
 	// validate signatures
 	for _, plugin := range loadedPlugins {
-		signingError := signature.NewValidator(l.cfg, plugin.Class, l.allowUnsignedPluginsCondition).Validate(plugin)
+		signingError := signature.NewValidator(l.cfg, plugin.Class, l.AllowUnsignedPluginsCondition).Validate(plugin)
 		if signingError != nil {
 			logger.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.ID,
 				"signature", plugin.Signature, "status", signingError)

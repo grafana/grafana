@@ -27,6 +27,7 @@ var permittedFileExts = []string{
 	".woff", ".woff2", ".eot", ".ttf", ".otf",
 	".wav", ".mp3",
 	".md", ".pdf", ".txt",
+	".xml", ".csv",
 }
 
 func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {

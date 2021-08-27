@@ -208,7 +208,7 @@ func TestLoader_LoadAll(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := New(nil, nil, tt.cfg)
+			l := new(nil, nil, tt.cfg)
 			got, err := l.LoadAll(tt.pluginPath, tt.existingPlugins)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LoadAll() error = %v, wantErr %v", err, tt.wantErr)
@@ -301,7 +301,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			PluginsPath: parentDir,
 		}
 
-		l := New(nil, nil, cfg)
+		l := new(nil, nil, cfg)
 
 		got, err := l.LoadAll("../testdata/nested-plugins", map[string]struct{}{})
 		assert.NoError(t, err)
@@ -325,7 +325,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			PluginsPath: parentDir,
 		}
 
-		l := New(nil, nil, cfg)
+		l := new(nil, nil, cfg)
 
 		got, err := l.LoadAll("../testdata/nested-plugins", map[string]struct{}{
 			"test-panel": {},
@@ -407,7 +407,7 @@ func TestLoader_readPluginJSON(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := New(nil, nil, nil)
+			l := new(nil, nil, nil)
 			got, err := l.readPluginJSON(tt.pluginPath)
 			if (err != nil) && !tt.failed {
 				t.Errorf("readPluginJSON() error = %v, failed %v", err, tt.failed)

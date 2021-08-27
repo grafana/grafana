@@ -142,7 +142,7 @@ func Test_newMux(t *testing.T) {
 					},
 				},
 			}
-			mux := s.newMux()
+			mux := s.NewMux()
 			res, err := mux.QueryData(context.TODO(), &backend.QueryDataRequest{
 				PluginContext: backend.PluginContext{},
 				Queries: []backend.DataQuery{
