@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { PlaylistPage, PlaylistPageProps } from './PlaylistPage';
 import { locationService } from '../../../../packages/grafana-runtime/src';
 
@@ -43,17 +43,20 @@ function getTestContext(propOverrides?: object) {
   return render(<PlaylistPage {...props} />);
 }
 
-//make sure that the search, cards, and buttons are rendered correctly
-// make sure that the playlist title exist
-// make sure that the buttons exist
-
-// function rows() {
-//   return screen.getAllByRole('row', { name: /playlist item row/i });
-// }
-
 describe('PlaylistPage', () => {
+  describe('when mounted without a playlist', () => {
+    it('page should load', () => {
+      fnMock.mockResolvedValue([]);
+      const { getByText } = getTestContext();
+      expect(getByText(/loading/i)).toBeInTheDocument();
+    });
+    it('then show empty list', async () => {
+      const { getByText } = getTestContext();
+      await waitFor(() => getByText('There are no playlists created yet'));
+    });
+  });
   describe('when mounted with a playlist', () => {
-    it('then buttons should be rendered correctly', async () => {
+    it('page should load', () => {
       fnMock.mockResolvedValue([
         {
           id: 0,
@@ -66,25 +69,15 @@ describe('PlaylistPage', () => {
           ],
         },
       ]);
-      const { debug, getByText } = getTestContext();
+      const { getByText } = getTestContext();
       expect(getByText(/loading/i)).toBeInTheDocument();
+    });
+    it('then playlist title and buttons should appear on the page', async () => {
+      const { getByRole, getByText } = getTestContext();
       await waitFor(() => getByText('A test playlist'));
-      debug();
-      expect(screen.getByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /Edit playlist/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Delete playlist/i })).toBeInTheDocument();
+      expect(getByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
+      expect(getByRole('link', { name: /Edit playlist/i })).toBeInTheDocument();
+      expect(getByRole('button', { name: /Delete playlist/i })).toBeInTheDocument();
     });
   });
-
-  //   describe('when deleting a playlist item', () => {
-  //     it('then the item should be removed and other items should be correct', () => {
-  //       getTestContext();
-
-  //       expect(rows()).toHaveLength(3);
-  //       userEvent.click(within(rows()[2]).getByRole('button', { name: /delete playlist/i }));
-  //       expect(rows()).toHaveLength(2);
-  //       expectCorrectRow({ index: 0, type: 'id', title: 'first item', first: true });
-  //       expectCorrectRow({ index: 1, type: 'id', title: 'middle item', last: true });
-  //     });
-  //   });
 });
