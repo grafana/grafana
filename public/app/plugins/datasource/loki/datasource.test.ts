@@ -886,8 +886,6 @@ describe('LokiDatasource', () => {
 
 function assertAdHocFilters(query: string, expectedResults: string, ds: LokiDatasource) {
   const lokiQuery: LokiQuery = { refId: 'A', expr: query };
-  // below could be in beforeEach()
-  // const ds = createLokiDSForTests(templateSrvMock);
   const result = ds.addAdHocFilters(lokiQuery.expr);
 
   expect(result).toEqual(expectedResults);
