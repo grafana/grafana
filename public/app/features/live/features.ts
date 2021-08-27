@@ -1,5 +1,6 @@
 import { LiveChannelType } from '@grafana/data';
 import { getDashboardChannelsFeature } from './dashboard/dashboardWatcher';
+import { getNoticeChannelsFeature } from './notice/noticeListener';
 import { grafanaLiveCoreFeatures } from './scopes';
 
 export function registerLiveFeatures() {
@@ -31,4 +32,7 @@ export function registerLiveFeatures() {
 
   // dashboard/*
   grafanaLiveCoreFeatures.register(getDashboardChannelsFeature());
+
+  // notice/${role}
+  grafanaLiveCoreFeatures.register(getNoticeChannelsFeature());
 }

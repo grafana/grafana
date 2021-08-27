@@ -164,6 +164,37 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
 
+	noticeRunner := features.NewNoticeRunner(g.storage, g.Publish)
+	g.GrafanaScope.Features["notice"] = noticeRunner
+
+	// HACK ALERT... just to show something working!!!
+	go func() {
+		orgId := int64(1)
+		time.Sleep(5 * time.Second)
+		_ = noticeRunner.Process(orgId, models.ROLE_VIEWER, models.LiveNoticeRequest{
+			Action: models.LiveNoticeIncludeKind,
+			Notice: &models.LiveNotice{
+				Kind: "sample-viewer-message",
+			},
+		})
+
+		time.Sleep(5 * time.Second)
+		_ = noticeRunner.Process(orgId, models.ROLE_EDITOR, models.LiveNoticeRequest{
+			Action: models.LiveNoticeIncludeKind,
+			Notice: &models.LiveNotice{
+				Kind: "sample-editor-message",
+			},
+		})
+
+		time.Sleep(5 * time.Second)
+		_ = noticeRunner.Process(orgId, models.ROLE_ADMIN, models.LiveNoticeRequest{
+			Action: models.LiveNoticeIncludeKind,
+			Notice: &models.LiveNotice{
+				Kind: "sample-admin-message",
+			},
+		})
+	}()
+
 	var managedStreamRunner *managedstream.Runner
 	if g.IsHA() {
 		redisClient := redis.NewClient(&redis.Options{
