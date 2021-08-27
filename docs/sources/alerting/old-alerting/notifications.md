@@ -258,7 +258,7 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 
 ### Sensu Go
 
-Grafana alert notifications can be sent to [Sensu]((https://sensu.io)) Go as events via the API. This operation requires an API Key. Refer to the [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication) for information on creating this key.
+Grafana alert notifications can be sent to [Sensu]((https://sensu.io)) Go as events via the API. This operation requires an API key. For information on creating this key, refer to the [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication).
 
 ## Enable images in notifications {#external-image-store}
 
