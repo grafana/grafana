@@ -3,6 +3,7 @@ import {
   DataFrameFieldIndex,
   FALLBACK_COLOR,
   FieldColorMode,
+  FieldColorModeId,
   GrafanaTheme2,
   ThresholdsConfig,
 } from '@grafana/data';
@@ -139,7 +140,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   private getLineColor(): Series.Stroke {
     const { lineColor, gradientMode, colorMode, thresholds, theme } = this.props;
 
-    if (gradientMode === GraphGradientMode.Scheme) {
+    if (gradientMode === GraphGradientMode.Scheme && colorMode?.id !== FieldColorModeId.Fixed) {
       return getScaleGradientFn(1, theme, colorMode, thresholds);
     }
 
@@ -162,7 +163,10 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       case GraphGradientMode.Hue:
         return getHueGradientFn((fillColor ?? lineColor)!, opacityPercent, theme);
       case GraphGradientMode.Scheme:
-        return getScaleGradientFn(opacityPercent, theme, colorMode, thresholds);
+        if (colorMode?.id !== FieldColorModeId.Fixed) {
+          return getScaleGradientFn(opacityPercent, theme, colorMode, thresholds);
+        }
+      // intentional fall-through to handle Scheme with Fixed color
       default:
         if (opacityPercent > 0) {
           return colorManipulator.alpha(lineColor ?? '', opacityPercent);
