@@ -64,18 +64,20 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
                 Start playlist
               </Button>
               {contextSrv.isEditor && (
-                <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.id}`} icon="cog">
-                  Edit playlist
-                </LinkButton>
+                <>
+                  <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.id}`} icon="cog">
+                    Edit playlist
+                  </LinkButton>
+                  <Button
+                    disabled={false}
+                    onClick={() => setPlaylistToDelete(playlist.id)}
+                    icon="trash-alt"
+                    variant="destructive"
+                  >
+                    Delete playlist
+                  </Button>
+                </>
               )}
-              <Button
-                disabled={false}
-                onClick={() => setPlaylistToDelete(playlist.id)}
-                icon="trash-alt"
-                variant="destructive"
-              >
-                Delete playlist
-              </Button>
             </Card.Actions>
           </Card>
         ))}
