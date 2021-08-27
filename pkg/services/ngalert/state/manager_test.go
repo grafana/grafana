@@ -350,7 +350,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 					},
 					StartsAt:           evaluationTime.Add(80 * time.Second),
-					EndsAt:             evaluationTime.Add(80 * time.Second).Add(1 * time.Minute),
+					EndsAt:             evaluationTime.Add(80 * time.Second).Add(3 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(80 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},

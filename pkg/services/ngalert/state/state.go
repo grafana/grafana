@@ -151,10 +151,14 @@ func (a *State) TrimResults(alertRule *ngModels.AlertRule) {
 	a.Results = newResults
 }
 
+// setEndsAt sets the ending timestamp of the alert.
+// The internal Alertmanager will use this time to know when it should automatically resolve the alert
+// in case it hasn't received additional notifications. Under regular operations the scheduler will continue to send the
+// alert with an updated EndsAt, if the alert is resolved then a last notification is sent with EndsAt = last evaluation time.
 func (a *State) setEndsAt(alertRule *ngModels.AlertRule, result eval.Result) {
 	if int64(alertRule.For.Seconds()) > alertRule.IntervalSeconds {
 		// For is set and longer than IntervalSeconds
-		a.EndsAt = result.EvaluatedAt.Add(alertRule.For)
+		a.EndsAt = result.EvaluatedAt.Add(alertRule.For * 3)
 	} else {
 		// For is not set or is less than or equal to IntervalSeconds
 		a.EndsAt = result.EvaluatedAt.Add(time.Duration(alertRule.IntervalSeconds*2) * time.Second)

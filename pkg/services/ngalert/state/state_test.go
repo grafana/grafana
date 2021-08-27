@@ -166,8 +166,8 @@ func TestSetEndsAt(t *testing.T) {
 			},
 		},
 		{
-			name:      "For: 11s Interval: 10s EndsAt should be evaluation time + For duration",
-			expected:  evaluationTime.Add(11 * time.Second),
+			name:      "For: 11s Interval: 10s EndsAt should be evaluation time + 3 x For duration",
+			expected:  evaluationTime.Add(33 * time.Second),
 			testState: &State{},
 			testRule: &ngmodels.AlertRule{
 				For:             11 * time.Second,
@@ -178,8 +178,8 @@ func TestSetEndsAt(t *testing.T) {
 			},
 		},
 		{
-			name:      "For: 20s Interval: 10s EndsAt should be evaluation time + For duration",
-			expected:  evaluationTime.Add(20 * time.Second),
+			name:      "For: 20s Interval: 10s EndsAt should be evaluation time + 3 x For duration",
+			expected:  evaluationTime.Add(60 * time.Second),
 			testState: &State{},
 			testRule: &ngmodels.AlertRule{
 				For:             20 * time.Second,
