@@ -1,4 +1,4 @@
-VERSION = dev
+ VERSION = dev
 TAG = grafana/build-container
 USER_ID = $(shell id -u)
 GROUP_ID = $(shell id -g)
@@ -38,6 +38,18 @@ run-with-local-source-copy:
 		${TAG}:${VERSION} \
 		bash -c "/tmp/bootstrap.sh; tail -f /dev/null"
 	docker cp "${GOPATH}/src/github.com/grafana/grafana" grafana-build:/go/src/github.com/grafana/
+	docker exec -ti grafana-build bash
+
+run-with-local-source-enterprise-copy:
+	docker run -d \
+		-e "CIRCLE_BRANCH=local" \
+		-e "CIRCLE_BUILD_NUM=472" \
+		-w "/go/src/github.com/grafana/grafana" \
+		--name grafana-build \
+		${TAG}:${VERSION} \
+		bash -c "/tmp/bootstrap.sh; tail -f /dev/null"
+	docker cp "${GOPATH}/src/github.com/grafana/grafana" grafana-build:/go/src/github.com/grafana/
+	docker cp "${GOPATH}/src/github.com/grafana/grafana-enterprise" grafana-build:/go/src/github.com/grafana/
 	docker exec -ti grafana-build bash
 
 update-source:

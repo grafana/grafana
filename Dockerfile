@@ -19,7 +19,7 @@ RUN yarn build
 
 FROM golang:1.16.1-alpine3.14 as go-builder
 
-RUN apk add --no-cache gcc g++
+RUN apk add --no-cache gcc g++ krb5-libs krb5-dev
 
 WORKDIR $GOPATH/src/github.com/grafana/grafana
 
@@ -51,7 +51,9 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 WORKDIR $GF_PATHS_HOME
 
 RUN apk add --no-cache ca-certificates bash tzdata && \
-    apk add --no-cache openssl musl-utils libcrypto1.1>1.1.1l-r0 libssl1.1>1.1.1l-r0
+    apk add --no-cache openssl musl-utils libcrypto1.1>1.1.1l-r0 libssl1.1>1.1.1l-r0 && \
+    apk add --no-cache krb5-libs krb5 && \
+    ln -s /usr/lib/libgssapi_krb5.so.2 /usr/lib/libgssapi_krb5.so
 
 COPY conf ./conf
 
