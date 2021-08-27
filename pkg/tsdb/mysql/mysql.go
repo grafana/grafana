@@ -36,9 +36,8 @@ const (
 var logger = log.New("tsdb.mysql")
 
 type Service struct {
-	Cfg                *setting.Cfg
-	HTTPClientProvider httpclient.Provider
-	im                 instancemgmt.InstanceManager
+	Cfg *setting.Cfg
+	im  instancemgmt.InstanceManager
 }
 
 func characterEscape(s string, escapeChar string) string {
@@ -47,9 +46,8 @@ func characterEscape(s string, escapeChar string) string {
 
 func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager, httpClientProvider httpclient.Provider) (*Service, error) {
 	s := &Service{
-		Cfg:                cfg,
-		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		HTTPClientProvider: httpClientProvider,
+		Cfg: cfg,
+		im:  datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,

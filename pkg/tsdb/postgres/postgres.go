@@ -34,7 +34,7 @@ func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager) (*Service, 
 		QueryDataHandler: s,
 	})
 
-	if err := manager.RegisterAndStart(context.Background(), "postgres", factory); err != nil {
+	if err := manager.Register("postgres", factory); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}
 	return s, nil
