@@ -315,15 +315,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const subQueries = queries.map((query, index) => {
       const target = activeTargets[index];
-      // Check if the current interval is below safe interval
-      let belowSafeInterval = false;
-      if (query.step && target.interval && target.stepMode) {
-        const currentStepInterval = query.step;
-        const targetStepInterval = parseInt(target.interval.slice(0, -1), 10);
-        if (target.stepMode !== 'min' && currentStepInterval > targetStepInterval) {
-          belowSafeInterval = true;
-        }
-      }
 
       const filterAndMapResponse = pipe(
         // Decrease the counter here. We assume that each request returns only single value and then completes
@@ -339,7 +330,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           });
 
           // Add an error message if the current interval is below the safe interval
-          if (belowSafeInterval) {
+          if (this.isBelowSafeInterval(query, target)) {
             return {
               data,
               key: query.requestId,
@@ -365,6 +356,18 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return merge(...subQueries);
   }
 
+  // Check if the current interval is below safe interval
+  private isBelowSafeInterval(query: PromQueryRequest, target: PromQuery) {
+    if (query.step && target.interval && target.stepMode) {
+      const currentStepInterval = query.step;
+      const targetStepInterval = rangeUtil.intervalToSeconds(target.interval);
+
+      return target.stepMode !== 'min' && currentStepInterval > targetStepInterval;
+    }
+
+    return false;
+  }
+
   private panelsQuery(
     queries: PromQueryRequest[],
     activeTargets: PromQuery[],
@@ -374,15 +377,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   ) {
     const observables = queries.map((query, index) => {
       const target = activeTargets[index];
-      // Check if the current interval is below safe interval
-      let belowSafeInterval = false;
-      if (query.step && target.interval && target.stepMode) {
-        const currentStepInterval = query.step;
-        const targetStepInterval = rangeUtil.intervalToSeconds(target.interval);
-        if (target.stepMode !== 'min' && currentStepInterval > targetStepInterval) {
-          belowSafeInterval = true;
-        }
-      }
 
       const filterAndMapResponse = pipe(
         filter((response: any) => (response.cancelled ? false : true)),
@@ -394,41 +388,60 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
             scopedVars,
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
-          return data;
-        })
-      );
 
-      return { source: this.runQuery(query, end, filterAndMapResponse), belowSafeInterval };
-    });
+          if (this.isBelowSafeInterval(query, target)) {
+            return {
+              data,
+              key: requestId,
+              state: LoadingState.Done,
+              error: {
+                message:
+                  'The specified step interval is lower than the safe interval and has automatically been set to the safe interval. Consider adjusting the interval or the time range',
+              },
+            };
+          }
 
-    const sources = observables.map((observable) => observable.source);
-    const safeIntervalFlags = observables.map((observable) => observable.belowSafeInterval);
-    return forkJoin(sources).pipe(
-      map((results, index) => {
-        const data = results.reduce((result, current) => {
-          return [...result, ...current];
-        }, []);
-
-        // Add an error message if the current interval is below the safe interval
-        if (safeIntervalFlags[index]) {
           return {
             data,
             key: requestId,
             state: LoadingState.Done,
-            error: {
-              message:
-                'The specified step interval is lower than the safe interval and has automatically been set to the safe interval. Consider adjusting the interval or the time range',
-            },
-          };
-        }
+          } as DataQueryResponse;
+        })
+      );
 
-        return {
-          data,
-          key: requestId,
-          state: LoadingState.Done,
-        };
-      })
-    );
+      return this.runQuery(query, end, filterAndMapResponse);
+    });
+
+    return merge(...observables);
+
+    // const sources = observables.map((observable) => observable.source);
+    //const safeIntervalFlags = observables.map((observable) => observable.belowSafeInterval);
+    // return forkJoin(observables).pipe(
+    //   map((results, index) => {
+    //     const data = results.reduce((result, current) => {
+    //       return [...result, ...current];
+    //     }, []);
+
+    //     // Add an error message if the current interval is below the safe interval
+    //     if (safeIntervalFlags[index]) {
+    //       return {
+    //         data,
+    //         key: requestId,
+    //         state: LoadingState.Done,
+    //         error: {
+    //           message:
+    //             'The specified step interval is lower than the safe interval and has automatically been set to the safe interval. Consider adjusting the interval or the time range',
+    //         },
+    //       };
+    //     }
+
+    //     return {
+    //       data,
+    //       key: requestId,
+    //       state: LoadingState.Done,
+    //     };
+    //   })
+    //);
   }
 
   private runQuery<T>(query: PromQueryRequest, end: number, filter: OperatorFunction<any, T>): Observable<T> {
