@@ -5,6 +5,7 @@ import LRU from 'lru-cache';
 import {
   AnnotationEvent,
   CoreApp,
+  DataFrame,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -345,7 +346,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
             data,
             key: query.requestId,
             state: runningQueriesCount === 0 ? LoadingState.Done : LoadingState.Loading,
-          } as DataQueryResponse;
+          };
         })
       );
 
@@ -374,43 +375,64 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     requestId: string,
     scopedVars: ScopedVars
   ) {
+    console.log(queries);
     const observables = queries.map((query, index) => {
       const target = activeTargets[index];
 
       const filterAndMapResponse = pipe(
         filter((response: any) => (response.cancelled ? false : true)),
-        map((response: any) => {
-          const data = transform(response, {
-            query,
-            target,
-            responseListLength: queries.length,
-            scopedVars,
-            exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
-          });
+        map(
+          (response: any): DataQueryResponse => {
+            const data = transform(response, {
+              query,
+              target,
+              responseListLength: queries.length,
+              scopedVars,
+              exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
+            });
 
-          if (this.isBelowSafeInterval(query, target)) {
+            if (this.isBelowSafeInterval(query, target)) {
+              return {
+                data,
+                error: {
+                  message: `The specified ${target.interval} step interval is lower than the safe interval and has automatically been set to ${query.step}s. Consider adjusting the interval or the time range`,
+                },
+              };
+            }
+
             return {
               data,
-              key: requestId,
-              state: LoadingState.Done,
-              error: {
-                message: `The specified ${target.interval} step interval is lower than the safe interval and has automatically been set to ${query.step}s. Consider adjusting the interval or the time range`,
-              },
             };
           }
-
-          return {
-            data,
-            key: requestId,
-            state: LoadingState.Done,
-          } as DataQueryResponse;
-        })
+        )
       );
 
       return this.runQuery(query, end, filterAndMapResponse);
     });
 
-    return merge(...observables);
+    return forkJoin(observables).pipe(
+      map((results) => {
+        let data: DataFrame[] = [],
+          error: string | undefined;
+
+        for (const result of results) {
+          data = [...data, ...result.data];
+          // we only want to show the last error to be consistent with what happens in explore
+          error = result.error?.message || error;
+        }
+
+        return {
+          data,
+          key: requestId,
+          state: LoadingState.Done,
+          ...(error && {
+            error: {
+              message: error,
+            },
+          }),
+        };
+      })
+    );
   }
 
   private runQuery<T>(query: PromQueryRequest, end: number, filter: OperatorFunction<any, T>): Observable<T> {
