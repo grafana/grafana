@@ -734,7 +734,6 @@ describe('UPlotConfigBuilder', () => {
 
       const axesConfig = builder.getConfig().axes!;
 
-      // console.log(axesConfig);
       expect(axesConfig[0].grid!.show).toBe(true);
       expect(axesConfig[1].grid!.show).toBe(true);
       expect(axesConfig[2].grid!.show).toBe(false);
