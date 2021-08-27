@@ -89,7 +89,7 @@ export type Intent =
     }
   | {
       type: 'LABEL_NAMES_FOR_SELECTOR';
-      metricName: string;
+      metricName?: string;
       otherLabels: Label[];
     }
   | {
@@ -99,7 +99,7 @@ export type Intent =
     }
   | {
       type: 'LABEL_VALUES';
-      metricName: string;
+      metricName?: string;
       labelName: string;
       otherLabels: Label[];
     };
@@ -307,6 +307,9 @@ function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): 
     }
   }
 
+  // now we need to find the other names
+  const otherLabels = getLabels(labelMatchersNode, text);
+
   const metricNameNode = walk(labelMatchersNode, [
     ['parent', 'VectorSelector'],
     ['firstChild', 'MetricIdentifier'],
@@ -314,13 +317,15 @@ function resolveLabelMatcherError(node: SyntaxNode, text: string, pos: number): 
   ]);
 
   if (metricNameNode === null) {
-    return null;
+    // we are probably in a situation without a metric name
+    return {
+      type: 'LABEL_VALUES',
+      labelName,
+      otherLabels,
+    };
   }
 
   const metricName = getNodeText(metricNameNode, text);
-
-  // now we need to find the other names
-  const otherLabels = getLabels(labelMatchersNode, text);
 
   return {
     type: 'LABEL_VALUES',
@@ -354,12 +359,18 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
     ['firstChild', 'MetricIdentifier'],
     ['firstChild', 'Identifier'],
   ]);
-  if (metricNameNode === null) {
-    return null;
-  }
-  const metricName = getNodeText(metricNameNode, text);
 
   const otherLabels = getLabels(node, text);
+
+  if (metricNameNode === null) {
+    // we are probably in a situation without a metric name.
+    return {
+      type: 'LABEL_NAMES_FOR_SELECTOR',
+      otherLabels,
+    };
+  }
+
+  const metricName = getNodeText(metricNameNode, text);
 
   return {
     type: 'LABEL_NAMES_FOR_SELECTOR',

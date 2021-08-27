@@ -75,6 +75,16 @@ describe('intent', () => {
         { name: 'two', value: 'val2' },
       ],
     });
+
+    assertIntent('{^}', {
+      type: 'LABEL_NAMES_FOR_SELECTOR',
+      otherLabels: [],
+    });
+
+    assertIntent('{one="val1",^}', {
+      type: 'LABEL_NAMES_FOR_SELECTOR',
+      otherLabels: [{ name: 'one', value: 'val1' }],
+    });
   });
 
   it('handles label values', () => {
@@ -88,6 +98,12 @@ describe('intent', () => {
     assertIntent('something{job=^,host="h1"}', {
       type: 'LABEL_VALUES',
       metricName: 'something',
+      labelName: 'job',
+      otherLabels: [{ name: 'host', value: 'h1' }],
+    });
+
+    assertIntent('{job=^,host="h1"}', {
+      type: 'LABEL_VALUES',
       labelName: 'job',
       otherLabels: [{ name: 'host', value: 'h1' }],
     });

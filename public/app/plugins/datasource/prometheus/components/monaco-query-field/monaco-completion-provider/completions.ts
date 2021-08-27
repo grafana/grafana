@@ -51,14 +51,21 @@ async function getAllHistoryCompletions(dataProvider: DataProvider): Promise<Com
   }));
 }
 
-function makeSelector(metricName: string, labels: Label[]): string {
-  // FIXME: check if this deals well with usually-escaped-non-ascii things
-  const labelTexts = labels.map((label) => `${label.name}="${label.value}"`);
-  return `{__name__="${metricName}",${labelTexts.join(',')}}`;
+function makeSelector(metricName: string | undefined, labels: Label[]): string {
+  const allLabels = [...labels];
+
+  // we transform the metricName to a label, if it exists
+  if (metricName !== undefined) {
+    allLabels.push({ name: '__name__', value: metricName });
+  }
+
+  const allLabelTexts = allLabels.map((label) => `${label.name}="${label.value}"`);
+
+  return `{${allLabelTexts.join(',')}}`;
 }
 
 async function getLabelNamesForCompletions(
-  metric: string,
+  metric: string | undefined,
   suffix: string,
   triggerOnInsert: boolean,
   otherLabels: Label[],
@@ -77,14 +84,14 @@ async function getLabelNamesForCompletions(
 }
 
 async function getLabelNamesForSelectorCompletions(
-  metric: string,
+  metric: string | undefined,
   otherLabels: Label[],
   dataProvider: DataProvider
 ): Promise<Completion[]> {
   return getLabelNamesForCompletions(metric, '=', true, otherLabels, dataProvider);
 }
 async function getLabelNamesForByCompletions(
-  metric: string,
+  metric: string | undefined,
   otherLabels: Label[],
   dataProvider: DataProvider
 ): Promise<Completion[]> {
@@ -92,7 +99,7 @@ async function getLabelNamesForByCompletions(
 }
 
 async function getLabelValuesForMetricCompletions(
-  metric: string,
+  metric: string | undefined,
   labelName: string,
   otherLabels: Label[],
   dataProvider: DataProvider
