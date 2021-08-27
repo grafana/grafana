@@ -609,6 +609,12 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 		whereParams = append(whereParams, query.AuthModule)
 	}
 
+	if query.Filter == models.ActiveLast30Days {
+		activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
+		whereConditions = append(whereConditions, `last_seen_at >`)
+		whereParams = append(whereParams, activeUserDeadlineDate)
+	}
+
 	if len(whereConditions) > 0 {
 		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 	}
