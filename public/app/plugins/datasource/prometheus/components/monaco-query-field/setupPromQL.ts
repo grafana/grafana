@@ -1,5 +1,8 @@
 import { promLanguageDefinition } from 'monaco-promql';
-import type { monaco as monacoNS, Monaco } from './monacoTypes';
+// we use "import type", so we will not bundle the monaco-editor with the code
+import type monacoNS from 'monaco-editor';
+type Monaco = typeof monacoNS;
+
 import { getIntent } from './intent';
 import { getCompletions, DataProvider } from './completions';
 
