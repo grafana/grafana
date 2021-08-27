@@ -22,8 +22,8 @@ import (
 )
 
 var (
-	pluginRendererLog = log.New("renderer", "plugin")
-	httpRendererLog   = log.New("renderer", "http")
+	pluginRendererLog = log.New("renderer.plugin")
+	httpRendererLog   = log.New("renderer.http")
 )
 
 func init() {

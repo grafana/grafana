@@ -28,10 +28,6 @@ export function usePlugins(): CatalogPluginsState {
     }
 
     for (const plugin of remote) {
-      if (plugin.typeCode === 'renderer') {
-        continue;
-      }
-
       if (!Boolean(plugin.versionSignatureType)) {
         continue;
       }

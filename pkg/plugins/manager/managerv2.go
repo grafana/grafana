@@ -485,26 +485,8 @@ func (m *PluginManagerV2) registerAndStart(ctx context.Context, plugin *plugins.
 	return nil
 }
 
-func (m *PluginManagerV2) unregister(plugin *plugins.PluginV2) error {
-	m.pluginsMu.Lock()
-	defer m.pluginsMu.Unlock()
-
-	delete(m.plugins, plugin.ID)
-
-	return nil
-}
-
-func (m *PluginManagerV2) unregisterAndStop(ctx context.Context, pluginID string) error {
-	m.log.Debug("Unregistering plugin", "pluginId", pluginID)
-	m.pluginsMu.Lock()
-	defer m.pluginsMu.Unlock()
-
-	p := m.Plugin(pluginID)
-	if p == nil {
-		return fmt.Errorf("plugin %s is not registered", pluginID)
-	}
-
-	m.log.Debug("Stopping plugin process", "pluginId", pluginID)
+func (m *PluginManagerV2) unregisterAndStop(ctx context.Context, p *plugins.PluginV2) error {
+	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
 	if err := p.Decommission(); err != nil {
 		return err
 	}
@@ -513,9 +495,9 @@ func (m *PluginManagerV2) unregisterAndStop(ctx context.Context, pluginID string
 		return err
 	}
 
-	delete(m.plugins, pluginID)
+	delete(m.plugins, p.ID)
 
-	m.log.Debug("Plugin unregistered", "pluginId", pluginID)
+	m.log.Debug("Plugin unregistered", "pluginId", p.ID)
 	return nil
 }
 
@@ -580,15 +562,10 @@ func (m *PluginManagerV2) Uninstall(ctx context.Context, pluginID string) error 
 	}
 
 	if m.isRegistered(pluginID) {
-		err := m.unregisterAndStop(ctx, pluginID)
+		err := m.unregisterAndStop(ctx, plugin)
 		if err != nil {
 			return err
 		}
-	}
-
-	err = m.unregister(plugin)
-	if err != nil {
-		return err
 	}
 
 	return m.pluginInstaller.Uninstall(ctx, plugin.PluginDir)
