@@ -26,7 +26,7 @@ func parseResponse(value model.Value, query *PrometheusQuery) (data.Frames, erro
 
 	scalar, ok := value.(*model.Scalar)
 	if ok {
-		newFrames := scalarToDataFrames(*scalar)
+		newFrames := scalarToDataFrames(scalar)
 		frames = append(frames, newFrames...)
 	}
 
@@ -37,7 +37,7 @@ func parseResponse(value model.Value, query *PrometheusQuery) (data.Frames, erro
 	return frames, nil
 }
 
-func scalarToDataFrames(scalar model.Scalar) data.Frames {
+func scalarToDataFrames(scalar *model.Scalar) data.Frames {
 	timeVector := []time.Time{time.Unix(scalar.Timestamp.Unix(), 0).UTC()}
 	values := []float64{float64(scalar.Value)}
 	name := fmt.Sprintf("%g", values[0])
