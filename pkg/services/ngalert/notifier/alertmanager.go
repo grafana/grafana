@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	gokit_log "github.com/go-kit/kit/log"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
@@ -642,15 +643,8 @@ func isValidLabelName(ln model.LabelName) bool {
 	if len(ln) == 0 {
 		return false
 	}
-	for i, b := range ln {
-		if !((b >= 'a' && b <= 'z') ||
-			(b >= 'A' && b <= 'Z') ||
-			b == '_' ||
-			(i > 0 && (b == ' ' || (b >= '0' && b <= '9')))) {
-			return false
-		}
-	}
-	return true
+
+	return utf8.ValidString(string(ln))
 }
 
 // AlertValidationError is the error capturing the validation errors
