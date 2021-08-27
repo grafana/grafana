@@ -4,24 +4,27 @@ import { PluginSignatureBadge } from '@grafana/ui';
 import { PluginSignatureDetailsBadge } from './PluginSignatureDetailsBadge';
 
 type Props = {
-  className?: string;
-  plugin: GrafanaPlugin<PluginMeta<{}>>;
+  installedPlugin?: GrafanaPlugin<PluginMeta<{}>>;
 };
 
 // Designed to show plugin signature information in the header on the plugin's details page
-export function PluginDetailsHeaderSignature({ plugin, className }: Props): React.ReactElement | null {
-  const isSignatureValid = plugin.meta.signature === PluginSignatureStatus.valid;
+export function PluginDetailsHeaderSignature({ installedPlugin }: Props): React.ReactElement | null {
+  if (!installedPlugin) {
+    return null;
+  }
+
+  const isSignatureValid = installedPlugin.meta.signature === PluginSignatureStatus.valid;
 
   return (
     <div>
       <a href="https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/" target="_blank" rel="noreferrer">
-        <PluginSignatureBadge status={plugin.meta.signature} />
+        <PluginSignatureBadge status={installedPlugin.meta.signature} />
       </a>
 
       {isSignatureValid && (
         <PluginSignatureDetailsBadge
-          signatureType={plugin.meta.signatureType}
-          signatureOrg={plugin.meta.signatureOrg}
+          signatureType={installedPlugin.meta.signatureType}
+          signatureOrg={installedPlugin.meta.signatureOrg}
         />
       )}
     </div>

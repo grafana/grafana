@@ -32,7 +32,7 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
     );
   }
 
-  if (!plugin || !pluginConfig) {
+  if (!plugin) {
     return null;
   }
 
@@ -63,7 +63,7 @@ export default function PluginDetails({ match }: PluginDetailsProps): JSX.Elemen
               </>
             </Alert>
           )}
-          <PluginDetailsSignature plugin={pluginConfig} className={styles.signature} />
+          <PluginDetailsSignature installedPlugin={pluginConfig} className={styles.signature} />
           <PluginDetailsBody tab={tab} plugin={pluginConfig} remoteVersions={plugin.versions} readme={plugin.readme} />
         </TabContent>
       </PluginPage>

@@ -19,7 +19,7 @@ export function PluginDetailsHeader({ pluginId, parentUrl, currentUrl }: Props):
   const { state, dispatch } = usePluginDetails(pluginId!);
   const { plugin, pluginConfig, isInflight, hasUpdate, isInstalled, hasInstalledPanel } = state;
 
-  if (!plugin || !pluginConfig) {
+  if (!plugin) {
     return null;
   }
 
@@ -76,7 +76,7 @@ export function PluginDetailsHeader({ pluginId, parentUrl, currentUrl }: Props):
           {plugin.version && <span>{plugin.version}</span>}
 
           {/* Signature information */}
-          <PluginDetailsHeaderSignature plugin={pluginConfig} />
+          <PluginDetailsHeaderSignature installedPlugin={pluginConfig} />
         </div>
 
         <p>{plugin.description}</p>

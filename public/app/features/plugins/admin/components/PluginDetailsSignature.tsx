@@ -5,13 +5,20 @@ import { Alert } from '@grafana/ui';
 
 type PluginDetailsSignatureProps = {
   className?: string;
-  plugin: GrafanaPlugin<PluginMeta<{}>>;
+  installedPlugin?: GrafanaPlugin<PluginMeta<{}>>;
 };
 
 // Designed to show signature information inside the active tab on the plugin's details page
-export function PluginDetailsSignature({ plugin, className }: PluginDetailsSignatureProps): React.ReactElement | null {
-  const isSignatureValid = plugin.meta.signature === PluginSignatureStatus.valid;
-  const isCore = plugin.meta.signature === PluginSignatureStatus.internal;
+export function PluginDetailsSignature({
+  className,
+  installedPlugin,
+}: PluginDetailsSignatureProps): React.ReactElement | null {
+  if (!installedPlugin) {
+    return null;
+  }
+
+  const isSignatureValid = installedPlugin.meta.signature === PluginSignatureStatus.valid;
+  const isCore = installedPlugin.meta.signature === PluginSignatureStatus.internal;
 
   // The basic information is already available in the header
   if (isSignatureValid || isCore) {
