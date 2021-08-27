@@ -1,6 +1,5 @@
 import { promLanguageDefinition } from 'monaco-promql';
-// we use "import type", so we will not bundle the monaco-editor with the code
-import type monacoNS from 'monaco-editor';
+import type { monacoNS } from '@grafana/ui';
 type Monaco = typeof monacoNS;
 
 import { getIntent } from './intent';
