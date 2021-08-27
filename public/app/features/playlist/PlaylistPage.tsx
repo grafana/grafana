@@ -33,8 +33,8 @@ export interface PlaylistPageProps extends ConnectedProps, GrafanaRouteComponent
 export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [startPlaylist, setStartPlaylist] = useState<PlaylistDTO | undefined>();
-  const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistDTO | undefined>();
-  const [forcePlaylistsFetch, setforcePlaylistsFetch] = useState(0);
+  const [playlistToDelete, setPlaylistToDelete] = useState<number | undefined>();
+  const [forcePlaylistsFetch, setForcePlaylistsFetch] = useState(0);
 
   const { value: playlists, loading } = useAsync(async () => {
     return getBackendSrv().get('/api/playlists', { query: searchQuery }) as Promise<PlaylistDTO[]>;
@@ -70,7 +70,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
               )}
               <Button
                 disabled={false}
-                onClick={() => setPlaylistToDelete(playlist)}
+                onClick={() => setPlaylistToDelete(playlist.id)}
                 icon="trash-alt"
                 variant="destructive"
               >
@@ -82,6 +82,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
       </>
     );
   }
+  const playlistItemToDelete = playlists?.find(({ id }) => id === playlistToDelete);
 
   return (
     <Page navModel={navModel}>
@@ -94,14 +95,14 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
           />
         )}
         {content}
-        {playlistToDelete && (
+        {playlistItemToDelete && (
           <ConfirmModal
-            title={playlistToDelete.name}
+            title={playlistItemToDelete.name}
             confirmText="delete"
-            body={`Are you sure you want to delete '${playlistToDelete.name}' from your playlist?`}
+            body={`Are you sure you want to delete '${playlistItemToDelete.name}' playlist?`}
             onConfirm={() => {
-              deletePlaylist(playlistToDelete.id).finally(() => {
-                setforcePlaylistsFetch(forcePlaylistsFetch + 1);
+              deletePlaylist(playlistItemToDelete.id).finally(() => {
+                setForcePlaylistsFetch(forcePlaylistsFetch + 1);
                 setPlaylistToDelete(undefined);
               });
             }}
