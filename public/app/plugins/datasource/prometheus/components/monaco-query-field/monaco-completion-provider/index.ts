@@ -1,11 +1,10 @@
-import { promLanguageDefinition } from 'monaco-promql';
 import type { monacoNS } from '@grafana/ui';
 type Monaco = typeof monacoNS;
 
 import { getIntent } from './intent';
 import { getCompletions, DataProvider } from './completions';
 
-function getMonacoCompletionItemProvider(
+export function getCompletionProvider(
   monaco: Monaco,
   dataProvider: DataProvider
 ): monacoNS.languages.CompletionItemProvider {
@@ -59,16 +58,3 @@ function getMonacoCompletionItemProvider(
     provideCompletionItems,
   };
 }
-
-export const setupPromQL = (monaco: Monaco, dataProvider: DataProvider) => {
-  const langId = promLanguageDefinition.id;
-  monaco.languages.register(promLanguageDefinition);
-  promLanguageDefinition.loader().then((mod) => {
-    monaco.languages.setMonarchTokensProvider(langId, mod.language);
-    monaco.languages.setLanguageConfiguration(langId, mod.languageConfiguration);
-    const completionProvider = getMonacoCompletionItemProvider(monaco, dataProvider);
-    monaco.languages.registerCompletionItemProvider(langId, completionProvider);
-  });
-
-  // FIXME: should we unregister this at end end?
-};

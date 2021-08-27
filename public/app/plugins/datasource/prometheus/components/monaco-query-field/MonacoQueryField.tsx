@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import { CodeEditor, CodeEditorMonacoOptions } from '@grafana/ui';
 import { useLatest } from 'react-use';
-import { setupPromQL } from './setupPromQL';
+import { promLanguageDefinition } from 'monaco-promql';
+import { getCompletionProvider } from './monaco-completion-provider';
 import { Props } from './MonacoQueryFieldProps';
 
 const options: CodeEditorMonacoOptions = {
@@ -56,7 +57,18 @@ const MonacoQueryField = (props: Props) => {
             return Promise.resolve(result);
           };
 
-          setupPromQL(monaco, { getSeries, getHistory, getAllMetricNames });
+          const dataProvider = { getSeries, getHistory, getAllMetricNames };
+
+          const langId = promLanguageDefinition.id;
+          monaco.languages.register(promLanguageDefinition);
+          promLanguageDefinition.loader().then((mod) => {
+            monaco.languages.setMonarchTokensProvider(langId, mod.language);
+            monaco.languages.setLanguageConfiguration(langId, mod.languageConfiguration);
+            const completionProvider = getCompletionProvider(monaco, dataProvider);
+            monaco.languages.registerCompletionItemProvider(langId, completionProvider);
+          });
+
+          // FIXME: should we unregister this at end end?
         }}
         onEditorDidMount={(editor, monaco) => {
           // this code makes the editor resize itself so that the content fits

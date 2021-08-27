@@ -1,6 +1,7 @@
 import type { Intent, Label } from './intent';
 import { NeverCaseError } from './util';
-import { FUNCTIONS } from '../../promql';
+// FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
+import { FUNCTIONS } from '../../../promql';
 
 type Completion = {
   label: string;
