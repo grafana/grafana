@@ -22,14 +22,14 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     const variableNames = templateSrv.getVariables().map((v) => `$${v.name}`);
     const subscriptionVar = _.find(target.subscriptions, (sub) => _.includes(variableNames, sub));
     const interpolatedSubscriptions = templateSrv
-      .replace(subscriptionVar, scopedVars, this.interpolateVariable)
+      .replace(subscriptionVar, scopedVars, (v: any) => v)
       .split(',')
       .filter((v) => v.length > 0);
     const subscriptions = [
       ...interpolatedSubscriptions,
       ..._.filter(target.subscriptions, (sub) => !_.includes(variableNames, sub)),
     ];
-    const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
+    const query = templateSrv.replace(item.query, scopedVars);
 
     return {
       refId: target.refId,
@@ -40,28 +40,5 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
         query,
       },
     };
-  }
-
-  interpolateVariable(value: string, variable: { multi: any; includeAll: any }) {
-    if (typeof value === 'string') {
-      if (variable.multi || variable.includeAll) {
-        return "'" + value + "'";
-      } else {
-        return value;
-      }
-    }
-
-    if (typeof value === 'number' || Array.isArray(value)) {
-      return value;
-    }
-
-    const quotedValues = _.map(value, (val) => {
-      if (typeof value === 'number') {
-        return value;
-      }
-
-      return "'" + val + "'";
-    });
-    return quotedValues.join(',');
   }
 }
