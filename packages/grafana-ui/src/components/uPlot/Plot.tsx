@@ -19,7 +19,11 @@ function sameConfig(prevProps: PlotProps, nextProps: PlotProps) {
 function sameTimeRange(prevProps: PlotProps, nextProps: PlotProps) {
   let prevTime = prevProps.timeRange;
   let nextTime = nextProps.timeRange;
-  return nextTime.from.valueOf() === prevTime.from.valueOf() && nextTime.to.valueOf() === prevTime.to.valueOf();
+
+  return (
+    prevTime === nextTime ||
+    (nextTime.from.valueOf() === prevTime.from.valueOf() && nextTime.to.valueOf() === prevTime.to.valueOf())
+  );
 }
 
 type UPlotChartState = {
