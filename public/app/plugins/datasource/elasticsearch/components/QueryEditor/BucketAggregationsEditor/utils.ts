@@ -14,7 +14,7 @@ export const bucketAggregationConfig: BucketsConfiguration = {
     label: 'Terms',
     requiresField: true,
     defaultSettings: {
-      min_doc_count: '0',
+      min_doc_count: '1',
       size: '10',
       order: 'desc',
       orderBy: '_term',
