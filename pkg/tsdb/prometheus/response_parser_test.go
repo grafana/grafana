@@ -13,7 +13,7 @@ func TestParseResponse(t *testing.T) {
 	t.Run("value is not of type matrix, vector or scalar", func(t *testing.T) {
 		queryRes := data.Frames{}
 		value := p.Vector{}
-		res, err := parseResponse(value, nil)
+		res, err := parseResponse(value, PrometheusQuery{})
 
 		require.Equal(t, queryRes, res)
 		require.Error(t, err, nil)
@@ -33,7 +33,7 @@ func TestParseResponse(t *testing.T) {
 				Values: values,
 			},
 		}
-		query := &PrometheusQuery{
+		query := PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
 		res, err := parseResponse(value, query)
@@ -62,7 +62,7 @@ func TestParseResponse(t *testing.T) {
 				Timestamp: 1000,
 			},
 		}
-		query := &PrometheusQuery{
+		query := PrometheusQuery{
 			LegendFormat: "legend {{app}}",
 		}
 		res, err := parseResponse(value, query)
@@ -88,7 +88,7 @@ func TestParseResponse(t *testing.T) {
 			Value:     1,
 			Timestamp: 1000,
 		}
-		query := &PrometheusQuery{}
+		query := PrometheusQuery{}
 		res, err := parseResponse(value, query)
 		require.NoError(t, err)
 
@@ -111,7 +111,7 @@ func TestParseResponse(t *testing.T) {
 			p.LabelName("device"): p.LabelValue("mobile"),
 		}
 
-		query := &PrometheusQuery{
+		query := PrometheusQuery{
 			LegendFormat: "legend {{app}} {{ device }} {{broken}}",
 		}
 
@@ -125,7 +125,7 @@ func TestParseResponse(t *testing.T) {
 			p.LabelName("device"):          p.LabelValue("mobile"),
 		}
 
-		query := &PrometheusQuery{
+		query := PrometheusQuery{
 			LegendFormat: "",
 		}
 

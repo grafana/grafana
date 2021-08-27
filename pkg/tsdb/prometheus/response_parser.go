@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-func parseResponse(value model.Value, query *PrometheusQuery) (data.Frames, error) {
+func parseResponse(value model.Value, query PrometheusQuery) (data.Frames, error) {
 	frames := data.Frames{}
 
 	matrix, ok := value.(model.Matrix)
@@ -48,7 +48,7 @@ func scalarToDataFrames(scalar *model.Scalar) data.Frames {
 	return frames
 }
 
-func vectorToDataFrames(vector model.Vector, query *PrometheusQuery) data.Frames {
+func vectorToDataFrames(vector model.Vector, query PrometheusQuery) data.Frames {
 	frames := data.Frames{}
 
 	for _, v := range vector {
@@ -67,7 +67,7 @@ func vectorToDataFrames(vector model.Vector, query *PrometheusQuery) data.Frames
 	return frames
 }
 
-func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames {
+func matrixToDataFrames(matrix model.Matrix, query PrometheusQuery) data.Frames {
 	frames := data.Frames{}
 
 	for _, v := range matrix {
@@ -90,7 +90,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery) data.Frames
 	return frames
 }
 
-func formatLegend(metric model.Metric, query *PrometheusQuery) string {
+func formatLegend(metric model.Metric, query PrometheusQuery) string {
 	var legend string
 
 	if query.LegendFormat == "" {

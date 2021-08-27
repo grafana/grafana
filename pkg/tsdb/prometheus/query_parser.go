@@ -23,8 +23,8 @@ type QueryModel struct {
 }
 
 func (s *Service) parseQuery(dsInfo *DatasourceInfo, queryContext *backend.QueryDataRequest) (
-	[]*PrometheusQuery, error) {
-	qs := []*PrometheusQuery{}
+	[]PrometheusQuery, error) {
+	qs := []PrometheusQuery{}
 	for _, query := range queryContext.Queries {
 		model := &QueryModel{}
 		err := json.Unmarshal(query.JSON, model)
@@ -42,7 +42,7 @@ func (s *Service) parseQuery(dsInfo *DatasourceInfo, queryContext *backend.Query
 	return qs, nil
 }
 
-func createQuery(model *QueryModel, step time.Duration, query backend.DataQuery) *PrometheusQuery {
+func createQuery(model *QueryModel, step time.Duration, query backend.DataQuery) PrometheusQuery {
 	queryType := Range
 	if model.InstantQuery {
 		queryType = Instant
@@ -57,7 +57,7 @@ func createQuery(model *QueryModel, step time.Duration, query backend.DataQuery)
 		RefId:        query.RefID,
 		QueryType:    queryType,
 	}
-	return &queryModel
+	return queryModel
 }
 
 func createStep(dsInfo *DatasourceInfo, model *QueryModel, query backend.DataQuery, intervalCalculator tsdb.Calculator) (time.Duration, error) {
