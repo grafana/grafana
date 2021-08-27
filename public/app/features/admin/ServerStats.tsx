@@ -1,20 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
 import { css } from '@emotion/css';
 import { CardContainer, LinkButton, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { AccessControlAction, StoreState } from 'app/types';
-import { getNavModel } from 'app/core/selectors/navModel';
+import { AccessControlAction } from 'app/types';
 import { getServerStats, ServerStat } from './state/apis';
 import { contextSrv } from '../../core/services/context_srv';
 import { Loader } from '../plugins/admin/components/Loader';
 
-export interface Props {
-  getServerStats: () => Promise<ServerStat | null>;
-}
-
-export const ServerStats = ({ getServerStats }: Props) => {
+export const ServerStats = () => {
   const [stats, setStats] = useState<ServerStat | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const styles = useStyles2(getStyles);
@@ -24,7 +17,7 @@ export const ServerStats = ({ getServerStats }: Props) => {
       setStats(stats);
       setIsLoading(false);
     });
-  }, [getServerStats]);
+  }, []);
 
   if (!contextSrv.hasPermission(AccessControlAction.ActionServerStatsRead)) {
     return null;
@@ -131,11 +124,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'server-stats'),
-  getServerStats,
-});
-
 type StatCardProps = {
   content: Array<Record<string, number | string>>;
   footer?: JSX.Element;
@@ -184,4 +172,3 @@ const getCardStyles = (theme: GrafanaTheme2) => {
     `,
   };
 };
-export default hot(module)(connect(mapStateToProps)(ServerStats));
