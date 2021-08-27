@@ -14,16 +14,21 @@ export const modelVersion = Object.freeze([1, 0]);
 export interface PanelOptions {
   frameIndex: number;
   showHeader: boolean;
-  showFooter: boolean;
   sortBy?: TableSortByFieldState[];
-  footerFunctions?: string;
+  footerMode?: 'auto' | 'summary' | 'frame' | 'none';
+  footerFrame?: number;
+  footerSummary?: TableFooterSummary; // TODO: should be array (options builder is limited)
+  footerLabelMode?: 'auto' | 'first' | 'inline';
+}
+
+interface TableFooterSummary {
+  reducer: string;
+  fields: string; // TODO!
 }
 
 export const defaultPanelOptions: PanelOptions = {
   frameIndex: 0,
   showHeader: true,
-  showFooter: false,
-  footerFunctions: 'sum',
 };
 
 export interface PanelFieldConfig {

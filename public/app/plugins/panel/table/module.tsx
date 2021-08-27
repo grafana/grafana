@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { FieldOverrideContext, getFieldDisplayName, PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
 import { PanelOptions, PanelFieldConfig, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
@@ -82,18 +82,26 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
         description: "To display table's header or not to display",
         defaultValue: defaultPanelOptions.showHeader,
       })
-      .addBooleanSwitch({
-        path: 'showFooter',
-        name: 'Show footer',
-        description: 'Show/hide footers in table',
-        defaultValue: defaultPanelOptions.showFooter,
+      .addRadio({
+        category: ['Table footer'],
+        path: 'footerMode',
+        name: 'Mode',
+        settings: {
+          options: [
+            { label: 'none', value: 'none' },
+            // { label: 'auto', value: 'auto' },  // TODO: when frame meta supports this
+            { label: 'summary', value: 'summary' },
+            { label: 'frame', value: 'frame' },
+          ],
+        },
+        defaultValue: 'none',
       })
       .addSelect({
-        path: 'footerFunctions',
-        name: 'Footer functions',
-        description: 'Functions to calculate footer values',
+        category: ['Table footer'],
+        path: 'footerSummary.reducer',
+        name: 'Summarize',
+        description: 'Summarize values on footer',
         settings: {
-          multi: true,
           options: [
             { value: 'min', label: 'Min' },
             { value: 'max', label: 'Max' },
@@ -101,7 +109,48 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
             { value: 'avg', label: 'Avg' },
           ],
         },
-        defaultValue: defaultPanelOptions.footerFunctions,
-        showIf: (currentConfig) => currentConfig.showFooter === true,
+        defaultValue: 'sum',
+        showIf: (cfg) => cfg.footerMode === 'summary',
+      })
+      .addMultiSelect({
+        path: 'footerSummary.fields',
+        name: 'Fields',
+        description: 'Select the fields that should be summarized',
+        category: ['Table footer'],
+        settings: {
+          allowCustomValue: false,
+          options: [],
+          getOptions: async (context: FieldOverrideContext) => {
+            const options = [{ value: '', label: 'Numeric Fields' }];
+            if (context && context.data && context.data.length > 0) {
+              const frame = context.data[0];
+              for (const field of frame.fields) {
+                const name = getFieldDisplayName(field, frame, context.data);
+                const value = field.name;
+                options.push({ value, label: name });
+              }
+            }
+            return options;
+          },
+        },
+        defaultValue: '',
+        showIf: (cfg) => cfg.footerMode === 'summary',
+      })
+      .addSelect({
+        category: ['Table footer'],
+        path: 'footerFrame',
+        name: 'Frame',
+        description: 'Select a Frame to use as the summary',
+        settings: {
+          options: [],
+          getOptions: async (context: FieldOverrideContext) => {
+            if (context && context.data && context.data.length > 1) {
+              const frames = context.data.filter((_, i) => i > 0);
+              return frames.map((f) => ({ value: f.name, label: f.name }));
+            }
+            return [];
+          },
+        },
+        showIf: (cfg) => cfg.footerMode === 'frame',
       });
   });
