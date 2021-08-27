@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { css, cx } from '@emotion/css';
 import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
@@ -10,12 +10,13 @@ import { contextSrv } from 'app/core/core';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { getNavModel } from '../../core/selectors/navModel';
 import { AccessControlAction, StoreState, UserDTO } from '../../types';
-import { fetchUsers, changeQuery, changePage } from './state/actions';
+import { fetchUsers, changeQuery, changePage, changeFilter } from './state/actions';
 
 const mapDispatchToProps = {
   fetchUsers,
   changeQuery,
   changePage,
+  changeFilter,
 };
 
 const mapStateToProps = (state: StoreState) => ({
@@ -25,6 +26,7 @@ const mapStateToProps = (state: StoreState) => ({
   showPaging: state.userListAdmin.showPaging,
   totalPages: state.userListAdmin.totalPages,
   page: state.userListAdmin.page,
+  filter: state.userListAdmin.filter,
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -43,9 +45,10 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
   totalPages,
   page,
   changePage,
+  changeFilter,
+  filter,
 }) => {
   const styles = useStyles2(getStyles);
-  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     fetchUsers();
@@ -62,7 +65,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
                   { label: 'All users', value: 'all' },
                   { label: 'Active last 30 days', value: 'activeLast30Days' },
                 ]}
-                onChange={setFilter}
+                onChange={changeFilter}
                 value={filter}
                 className={styles.filter}
               />

@@ -128,6 +128,7 @@ const initialUserListAdminState: UserListAdminState = {
   perPage: 50,
   totalPages: 1,
   showPaging: false,
+  filter: 'all',
 };
 
 interface UsersFetched {
@@ -162,10 +163,14 @@ export const userListAdminSlice = createSlice({
       ...state,
       page: action.payload,
     }),
+    filterChanged: (state, action: PayloadAction<string>) => ({
+      ...state,
+      filter: action.payload,
+    }),
   },
 });
 
-export const { usersFetched, queryChanged, pageChanged } = userListAdminSlice.actions;
+export const { usersFetched, queryChanged, pageChanged, filterChanged } = userListAdminSlice.actions;
 export const userListAdminReducer = userListAdminSlice.reducer;
 
 export default {
