@@ -144,6 +144,7 @@ export interface AxisConfig {
   axisWidth?: number; // pixels ideally auto?
   axisSoftMin?: number;
   axisSoftMax?: number;
+  axisGridShow?: boolean;
   scaleDistribution?: ScaleDistributionConfig;
 }
 

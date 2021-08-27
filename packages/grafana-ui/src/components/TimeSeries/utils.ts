@@ -79,6 +79,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       placement: AxisPlacement.Bottom,
       timeZone,
       theme,
+      grid: { show: xField.config.custom?.axisGridShow },
     });
   } else {
     // Not time!
@@ -96,6 +97,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       scaleKey: xScaleKey,
       placement: AxisPlacement.Bottom,
       theme,
+      grid: { show: xField.config.custom?.axisGridShow },
     });
   }
 
@@ -147,6 +149,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
         placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
         formatValue: (v) => formattedValueToString(fmt(v)),
         theme,
+        grid: { show: customConfig.axisGridShow },
       });
     }
 
