@@ -1,6 +1,7 @@
 package state
 
 import (
+	"bytes"
 	"fmt"
 	html_template "html/template"
 	"math"
@@ -9,6 +10,8 @@ import (
 	"strings"
 	text_template "text/template"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
 var funcMap = text_template.FuncMap{
@@ -24,6 +27,65 @@ var funcMap = text_template.FuncMap{
 	"reReplaceAll":       reReplaceAll,
 	"args":               args,
 	"safeHtml":           safeHtml,
+}
+
+// templateCaptureValue represents each value in .Values in the annotations
+// and labels template.
+type templateCaptureValue struct {
+	Labels map[string]string
+	Value  *float64
+}
+
+// String implements the Stringer interface to print the value of each RefID
+// in the template via {{ $values.A }} rather than {{ $values.A.Value }}.
+func (v templateCaptureValue) String() string {
+	if v.Value != nil {
+		return strconv.FormatFloat(*v.Value, 'f', -1, 64)
+	}
+	return "null"
+}
+
+func expandTemplate(name, text string, labels map[string]string, alertInstance eval.Result) (result string, resultErr error) {
+	name = "__alert_" + name
+	text = "{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}" + text
+	// It'd better to have no alert description than to kill the whole process
+	// if there's a bug in the template.
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			resultErr, ok = r.(error)
+			if !ok {
+				resultErr = fmt.Errorf("panic expanding template %v: %v", name, r)
+			}
+		}
+	}()
+
+	tmpl, err := text_template.New(name).Funcs(funcMap).Option("missingkey=error").Parse(text)
+	if err != nil {
+		return "", fmt.Errorf("error parsing template %v: %s", name, err.Error())
+	}
+	var buffer bytes.Buffer
+	if err := tmpl.Execute(&buffer, struct {
+		Labels map[string]string
+		Values map[string]templateCaptureValue
+		Value  string
+	}{
+		Labels: labels,
+		Values: func() map[string]templateCaptureValue {
+			m := make(map[string]templateCaptureValue)
+			for k, v := range alertInstance.Values {
+				m[k] = templateCaptureValue{
+					Labels: v.Labels,
+					Value:  v.Value,
+				}
+			}
+			return m
+		}(),
+		Value: alertInstance.EvaluationString,
+	}); err != nil {
+		return "", fmt.Errorf("error executing template %v: %s", name, err.Error())
+	}
+	return buffer.String(), nil
 }
 
 func humanize(i interface{}) (string, error) {
