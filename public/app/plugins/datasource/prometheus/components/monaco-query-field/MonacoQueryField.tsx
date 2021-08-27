@@ -29,6 +29,15 @@ const MonacoQueryField = (props: Props) => {
     <div
       // NOTE: we will be setting inline-style-width/height on this element
       ref={containerRef}
+      style={{
+        // FIXME:
+        // this is how the non-monaco query-editor is styled,
+        // through the "gf-form" class
+        // so to have the same effect, we do the same.
+        // this should be applied somehow differently probably,
+        // like a min-height on the whole row.
+        marginBottom: '4px',
+      }}
     >
       <CodeEditor
         onBlur={onChange}
