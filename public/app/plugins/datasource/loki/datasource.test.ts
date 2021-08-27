@@ -827,7 +827,7 @@ describe('LokiDatasource', () => {
       });
     });
 
-    describe('when called with ADD_FILTER_OUT', () => {
+    describe('when called with "!=" operator', () => {
       const adHocFilters = [
         {
           condition: '',
