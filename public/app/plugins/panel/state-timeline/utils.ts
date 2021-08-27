@@ -9,7 +9,6 @@ import {
   FieldConfig,
   FieldType,
   formattedValueToString,
-  getFieldColorModeForField,
   getFieldDisplayName,
   getValueFormat,
   GrafanaTheme2,
@@ -206,15 +205,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
       scaleKey: FIXED_UNIT,
       pathBuilder: coreConfig.drawPaths,
       pointsBuilder: coreConfig.drawPoints,
-      colorMode: getFieldColorModeForField(field),
+      //colorMode,
       lineWidth: customConfig.lineWidth,
       fillOpacity: customConfig.fillOpacity,
       theme,
       show: !customConfig.hideFrom?.viz,
       thresholds: config.thresholds,
-      hardMin: field.config.min,
-      hardMax: field.config.max,
-
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
     });
