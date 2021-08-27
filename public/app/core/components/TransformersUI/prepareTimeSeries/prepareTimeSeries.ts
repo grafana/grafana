@@ -135,9 +135,18 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
       continue;
     }
 
+    type TimeWideRowIndex = {
+      time: any;
+      wideRowIndex: number;
+    };
+    const sortedTimeRowIndices: TimeWideRowIndex[] = [];
     const sortedUniqueLabelKeys: string[] = [];
     const uniqueFactorNames: string[] = [];
     const uniqueFactorNamesWithWideIndices: string[] = [];
+
+    for (let wideRowIndex = 0; wideRowIndex < frame.length; wideRowIndex++) {
+      sortedTimeRowIndices.push({ time: timeField.values.get(wideRowIndex), wideRowIndex: wideRowIndex });
+    }
 
     for (const labelKeys in labelKeyToWideIndices) {
       sortedUniqueLabelKeys.push(labelKeys);
@@ -149,6 +158,7 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
       uniqueFactorNamesWithWideIndices.push(name);
     }
 
+    sortedTimeRowIndices.sort((a, b) => a.time - b.time);
     sortedUniqueLabelKeys.sort();
     uniqueFactorNames.sort();
     uniqueValueNames.sort();
@@ -167,8 +177,8 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
       longFrame.addField({ name: name, type: FieldType.string });
     }
 
-    for (let wideRowIndex = 0; wideRowIndex < frame.length; wideRowIndex++) {
-      const time = timeField.values.get(wideRowIndex);
+    for (const timeWideRowIndex of sortedTimeRowIndices) {
+      const { time, wideRowIndex } = timeWideRowIndex;
 
       for (const labelKeys of sortedUniqueLabelKeys) {
         const rowValues: Record<string, any> = {};
