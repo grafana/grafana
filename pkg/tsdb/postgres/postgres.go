@@ -24,32 +24,26 @@ import (
 
 var logger = log.New("tsdb.postgres")
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "PostgresService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
-	})
-}
-
-type Service struct {
-	Cfg                  *setting.Cfg          `inject:""`
-	BackendPluginManager backendplugin.Manager `inject:""`
-	tlsManager           tlsSettingsProvider
-	im                   instancemgmt.InstanceManager
-}
-
-func (s *Service) Init() error {
-	s.tlsManager = newTLSManager(logger, s.Cfg.DataPath)
+func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager) (*Service, error) {
+	s := &Service{
+		Cfg:        cfg,
+		tlsManager: newTLSManager(logger, cfg.DataPath),
+	}
 	s.im = datasource.NewInstanceManager(s.newInstanceSettings())
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
 
-	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "postgres", factory); err != nil {
+	if err := manager.RegisterAndStart(context.Background(), "postgres", factory); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}
-	return nil
+	return s, nil
+}
+
+type Service struct {
+	Cfg        *setting.Cfg
+	tlsManager tlsSettingsProvider
+	im         instancemgmt.InstanceManager
 }
 
 func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {

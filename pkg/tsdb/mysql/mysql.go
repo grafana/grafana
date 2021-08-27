@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/go-sql-driver/mysql"
@@ -37,34 +36,29 @@ const (
 var logger = log.New("tsdb.mysql")
 
 type Service struct {
-	Cfg                  *setting.Cfg          `inject:""`
-	BackendPluginManager backendplugin.Manager `inject:""`
-	HTTPClientProvider   httpclient.Provider   `inject:""`
-	im                   instancemgmt.InstanceManager
+	Cfg                *setting.Cfg
+	HTTPClientProvider httpclient.Provider
+	im                 instancemgmt.InstanceManager
 }
 
 func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "MySQLService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
-	})
-}
-
-func (s *Service) Init() error {
-	s.im = datasource.NewInstanceManager(newInstanceSettings(s.HTTPClientProvider))
+func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager, httpClientProvider httpclient.Provider) (*Service, error) {
+	s := &Service{
+		Cfg:                cfg,
+		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		HTTPClientProvider: httpClientProvider,
+	}
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
 
-	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "mysql", factory); err != nil {
+	if err := manager.RegisterAndStart(context.Background(), "mysql", factory); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}
-	return nil
+	return s, nil
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {

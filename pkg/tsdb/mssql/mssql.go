@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -28,29 +27,22 @@ import (
 
 var logger = log.New("tsdb.mssql")
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "MSSQLService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
-	})
-}
-
 type Service struct {
-	BackendPluginManager backendplugin.Manager `inject:""`
-	im                   instancemgmt.InstanceManager
+	im instancemgmt.InstanceManager
 }
 
-func (s *Service) Init() error {
-	s.im = datasource.NewInstanceManager(newInstanceSettings())
+func ProvideService(manager backendplugin.Manager) (*Service, error) {
+	s := &Service{
+		im: datasource.NewInstanceManager(newInstanceSettings()),
+	}
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
 
-	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "mssql", factory); err != nil {
+	if err := manager.RegisterAndStart(context.Background(), "mssql", factory); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}
-	return nil
+	return s, nil
 }
 
 func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {

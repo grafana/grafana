@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/loki/pkg/logcli/client"
 	"github.com/grafana/loki/pkg/loghttp"
@@ -39,7 +38,7 @@ func ProvideService(httpClientProvider httpclient.Provider, manager backendplugi
 	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
 	s := &Service{
 		im:                 im,
-		intervalCalculator: tsdb.NewCalculator(),
+		intervalCalculator: intervalv2.NewCalculator(),
 		plog:               log.New("tsdb.loki"),
 	}
 

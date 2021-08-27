@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/api"
@@ -44,7 +43,7 @@ type DatasourceInfo struct {
 
 type Service struct {
 	httpClientProvider httpclient.Provider
-	intervalCalculator tsdb.Calculator
+	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
 }
 
@@ -54,7 +53,7 @@ func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager
 
 	s := &Service{
 		httpClientProvider: httpClientProvider,
-		intervalCalculator: tsdb.NewCalculator(),
+		intervalCalculator: intervalv2.NewCalculator(),
 		im:                 im,
 	}
 
