@@ -336,8 +336,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
               key: query.requestId,
               state: LoadingState.Done,
               error: {
-                message:
-                  'The specified step interval is lower than the safe interval and has automatically been set to the safe interval. Consider adjusting the interval or the time range',
+                message: `The specified ${target.interval} step interval is lower than the safe interval and has automatically been set to ${query.step}s. Consider adjusting the interval or the time range`,
               },
             };
           }
@@ -395,8 +394,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
               key: requestId,
               state: LoadingState.Done,
               error: {
-                message:
-                  'The specified step interval is lower than the safe interval and has automatically been set to the safe interval. Consider adjusting the interval or the time range',
+                message: `The specified ${target.interval} step interval is lower than the safe interval and has automatically been set to ${query.step}s. Consider adjusting the interval or the time range`,
               },
             };
           }
@@ -413,35 +411,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     });
 
     return merge(...observables);
-
-    // const sources = observables.map((observable) => observable.source);
-    //const safeIntervalFlags = observables.map((observable) => observable.belowSafeInterval);
-    // return forkJoin(observables).pipe(
-    //   map((results, index) => {
-    //     const data = results.reduce((result, current) => {
-    //       return [...result, ...current];
-    //     }, []);
-
-    //     // Add an error message if the current interval is below the safe interval
-    //     if (safeIntervalFlags[index]) {
-    //       return {
-    //         data,
-    //         key: requestId,
-    //         state: LoadingState.Done,
-    //         error: {
-    //           message:
-    //             'The specified step interval is lower than the safe interval and has automatically been set to the safe interval. Consider adjusting the interval or the time range',
-    //         },
-    //       };
-    //     }
-
-    //     return {
-    //       data,
-    //       key: requestId,
-    //       state: LoadingState.Done,
-    //     };
-    //   })
-    //);
   }
 
   private runQuery<T>(query: PromQueryRequest, end: number, filter: OperatorFunction<any, T>): Observable<T> {
