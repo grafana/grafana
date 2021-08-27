@@ -772,7 +772,7 @@ describe('UPlotConfigBuilder', () => {
       expect(axesConfig[3].grid!.show).toBe(false);
     });
 
-    it('handles  explicite grid settings', () => {
+    it('handles explicit grid settings', () => {
       const builder = new UPlotConfigBuilder();
       builder.addAxis({
         scaleKey: 'x',
