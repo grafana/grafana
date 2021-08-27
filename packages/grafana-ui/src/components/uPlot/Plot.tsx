@@ -16,6 +16,16 @@ function sameConfig(prevProps: PlotProps, nextProps: PlotProps) {
   return nextProps.config === prevProps.config;
 }
 
+function sameTimeRange(prevProps: PlotProps, nextProps: PlotProps) {
+  let prevTime = prevProps.timeRange;
+  let nextTime = nextProps.timeRange;
+
+  return (
+    prevTime === nextTime ||
+    (nextTime.from.valueOf() === prevTime.from.valueOf() && nextTime.to.valueOf() === prevTime.to.valueOf())
+  );
+}
+
 type UPlotChartState = {
   ctx: PlotContextType;
 };
