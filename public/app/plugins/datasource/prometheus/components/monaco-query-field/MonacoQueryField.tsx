@@ -14,6 +14,7 @@ const options: monacoNS.editor.IStandaloneEditorConstructionOptions = {
   overviewRulerBorder: false,
   folding: false,
   scrollBeyondLastLine: false,
+  renderLineHighlight: 'none',
 };
 
 const MonacoQueryField = (props: Props) => {
