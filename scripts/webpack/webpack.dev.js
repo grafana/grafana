@@ -37,7 +37,6 @@ module.exports = (env = {}) =>
             options: getBabelConfig({ BABEL_ENV: 'dev' }),
           },
           exclude: /node_modules/,
-          include: [path.resolve(__dirname, '../../public/'), path.resolve(__dirname, '../../packages/')],
         },
         require('./sass.rule.js')({
           sourceMap: false,
