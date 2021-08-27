@@ -176,7 +176,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           key: `${target.refId}_instant`,
         };
       }),
-      catchError((err: any) => this.throwUnless(err, err.status === 404, target))
+      catchError((err: FetchError) => throwError(() => this.processError(err, target)))
     );
   };
 
@@ -236,7 +236,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const query = this.createRangeQuery(target, options, maxDataPoints);
 
     return this._request(RANGE_QUERY_ENDPOINT, query).pipe(
-      catchError((err: any) => this.throwUnless(err, err.status === 404, target)),
+      catchError((err: FetchError) => throwError(() => this.processError(err, target))),
       switchMap((response: { data: LokiResponse; status: number }) =>
         processRangeQueryResponse(
           response.data,
@@ -281,7 +281,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         state: LoadingState.Streaming,
       })),
       catchError((err: any) => {
-        return throwError(`Live tailing was stopped due to following error: ${err.reason}`);
+        return throwError(() => `Live tailing was stopped due to following error: ${err.reason}`);
       })
     );
   };
@@ -452,10 +452,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return lastValueFrom(
       this._request(RANGE_QUERY_ENDPOINT, target).pipe(
         catchError((err: any) => {
-          if (err.status === 404) {
-            return of(err);
-          }
-
           const error: DataQueryError = {
             message: 'Error during context query. Please check JS console logs.',
             status: err.status,
@@ -623,15 +619,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   showContextToggle(row?: LogRowModel): boolean {
     return (row && row.searchWords && row.searchWords.length > 0) === true;
-  }
-
-  throwUnless(err: FetchError, condition: boolean, target: LokiQuery) {
-    if (condition) {
-      return of(err);
-    }
-
-    const error = this.processError(err, target);
-    throw error;
   }
 
   processError(err: FetchError, target: LokiQuery) {
