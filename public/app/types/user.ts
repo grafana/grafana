@@ -108,4 +108,5 @@ export interface UserListAdminState {
   totalPages: number;
   showPaging: boolean;
   filter: string;
+  isLoading: boolean;
 }

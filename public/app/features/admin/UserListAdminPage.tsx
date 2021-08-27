@@ -11,6 +11,7 @@ import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { getNavModel } from '../../core/selectors/navModel';
 import { AccessControlAction, StoreState, UserDTO } from '../../types';
 import { fetchUsers, changeQuery, changePage, changeFilter } from './state/actions';
+import PageLoader from '../../core/components/PageLoader/PageLoader';
 
 const mapDispatchToProps = {
   fetchUsers,
@@ -27,6 +28,7 @@ const mapStateToProps = (state: StoreState) => ({
   totalPages: state.userListAdmin.totalPages,
   page: state.userListAdmin.page,
   filter: state.userListAdmin.filter,
+  isLoading: state.userListAdmin.isLoading,
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -47,6 +49,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
   changePage,
   changeFilter,
   filter,
+  isLoading,
 }) => {
   const styles = useStyles2(getStyles);
 
@@ -57,54 +60,58 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <>
-          <div className="page-action-bar">
-            <div className="gf-form gf-form--grow">
-              <RadioButtonGroup
-                options={[
-                  { label: 'All users', value: 'all' },
-                  { label: 'Active last 30 days', value: 'activeLast30Days' },
-                ]}
-                onChange={changeFilter}
-                value={filter}
-                className={styles.filter}
-              />
-              <FilterInput
-                placeholder="Search user by login, email, or name."
-                autoFocus={true}
-                value={query}
-                onChange={changeQuery}
-              />
+        <div className="page-action-bar">
+          <div className="gf-form gf-form--grow">
+            <RadioButtonGroup
+              options={[
+                { label: 'All users', value: 'all' },
+                { label: 'Active last 30 days', value: 'activeLast30Days' },
+              ]}
+              onChange={changeFilter}
+              value={filter}
+              className={styles.filter}
+            />
+            <FilterInput
+              placeholder="Search user by login, email, or name."
+              autoFocus={true}
+              value={query}
+              onChange={changeQuery}
+            />
+          </div>
+          {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
+            <LinkButton href="admin/users/create" variant="primary">
+              New user
+            </LinkButton>
+          )}
+        </div>
+        {isLoading ? (
+          <PageLoader />
+        ) : (
+          <>
+            <div className={cx(styles.table, 'admin-list-table')}>
+              <table className="filter-table form-inline filter-table--hover">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Login</th>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>
+                      Seen&nbsp;
+                      <Tooltip placement="top" content="Time since user was seen using Grafana">
+                        <Icon name="question-circle" />
+                      </Tooltip>
+                    </th>
+                    <th></th>
+                    <th style={{ width: '1%' }}></th>
+                  </tr>
+                </thead>
+                <tbody>{users.map(renderUser)}</tbody>
+              </table>
             </div>
-            {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
-              <LinkButton href="admin/users/create" variant="primary">
-                New user
-              </LinkButton>
-            )}
-          </div>
-          <div className={cx(styles.table, 'admin-list-table')}>
-            <table className="filter-table form-inline filter-table--hover">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Login</th>
-                  <th>Email</th>
-                  <th>Name</th>
-                  <th>
-                    Seen&nbsp;
-                    <Tooltip placement="top" content="Time since user was seen using Grafana">
-                      <Icon name="question-circle" />
-                    </Tooltip>
-                  </th>
-                  <th></th>
-                  <th style={{ width: '1%' }}></th>
-                </tr>
-              </thead>
-              <tbody>{users.map(renderUser)}</tbody>
-            </table>
-          </div>
-          {showPaging && <Pagination numberOfPages={totalPages} currentPage={page} onNavigate={changePage} />}
-        </>
+            {showPaging && <Pagination numberOfPages={totalPages} currentPage={page} onNavigate={changePage} />}
+          </>
+        )}
       </Page.Contents>
     </Page>
   );

@@ -20,6 +20,8 @@ import {
   queryChanged,
   pageChanged,
   filterChanged,
+  usersFetchBegin,
+  usersFetchEnd,
 } from './reducers';
 import { debounce } from 'lodash';
 import { contextSrv } from 'app/core/core';
@@ -265,6 +267,7 @@ export function fetchUsers(): ThunkResult<void> {
       );
       dispatch(usersFetched(result));
     } catch (error) {
+      usersFetchEnd();
       console.error(error);
     }
   };
@@ -274,6 +277,7 @@ const fetchUsersWithDebounce = debounce((dispatch) => dispatch(fetchUsers()), 50
 
 export function changeQuery(query: string): ThunkResult<void> {
   return async (dispatch) => {
+    dispatch(usersFetchBegin());
     dispatch(queryChanged(query));
     fetchUsersWithDebounce(dispatch);
   };
@@ -281,6 +285,7 @@ export function changeQuery(query: string): ThunkResult<void> {
 
 export function changeFilter(filter: string): ThunkResult<void> {
   return async (dispatch) => {
+    dispatch(usersFetchBegin());
     dispatch(filterChanged(filter));
     fetchUsersWithDebounce(dispatch);
   };
@@ -288,6 +293,7 @@ export function changeFilter(filter: string): ThunkResult<void> {
 
 export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
+    dispatch(usersFetchBegin());
     dispatch(pageChanged(page));
     dispatch(fetchUsers());
   };

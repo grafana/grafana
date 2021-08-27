@@ -33,6 +33,7 @@ const makeInitialUserListAdminState = (): UserListAdminState => ({
   totalPages: 1,
   showPaging: false,
   filter: 'all',
+  isLoading: false,
 });
 
 const getTestUserMapping = (): LdapUser => ({
