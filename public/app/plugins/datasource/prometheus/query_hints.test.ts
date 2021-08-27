@@ -5,12 +5,12 @@ import { PromQuery } from './types';
 describe('getQueryHints()', () => {
   it('returns no hints for no series', () => {
     const promQuery: PromQuery = { refId: 'bar', expr: '' };
-    expect(getQueryHints(promQuery, [])).toEqual([]);
+    expect(getQueryHints(promQuery.expr, [])).toEqual([]);
   });
 
   it('returns no hints for empty series', () => {
     const promQuery: PromQuery = { refId: 'bar', expr: '' };
-    expect(getQueryHints(promQuery, [{ datapoints: [] }])).toEqual([]);
+    expect(getQueryHints(promQuery.expr, [{ datapoints: [] }])).toEqual([]);
   });
 
   it('returns a rate hint for a counter metric', () => {
@@ -23,7 +23,7 @@ describe('getQueryHints()', () => {
       },
     ];
     const promQuery = { refId: 'bar', expr: 'metric_total' };
-    const hints = getQueryHints(promQuery, series);
+    const hints = getQueryHints(promQuery.expr, series);
 
     expect(hints!.length).toBe(1);
     expect(hints![0]).toMatchObject({
@@ -50,7 +50,7 @@ describe('getQueryHints()', () => {
     const datasource = mock as PrometheusDatasource;
     let promQuery = { refId: 'bar', expr: 'foo' };
 
-    let hints = getQueryHints(promQuery, series, datasource);
+    let hints = getQueryHints(promQuery.expr, series, datasource);
     expect(hints!.length).toBe(1);
     expect(hints![0]).toMatchObject({
       label: 'Metric foo is a counter.',
@@ -64,7 +64,7 @@ describe('getQueryHints()', () => {
 
     promQuery = { ...promQuery, expr: 'foo_foo' };
     // Test substring match not triggering hint
-    hints = getQueryHints(promQuery, series, datasource);
+    hints = getQueryHints(promQuery.expr, series, datasource);
     expect(hints).toEqual([]);
   });
 
@@ -78,7 +78,7 @@ describe('getQueryHints()', () => {
       },
     ];
     const promQuery = { refId: 'bar', expr: 'rate(metric_total[1m])' };
-    const hints = getQueryHints(promQuery, series);
+    const hints = getQueryHints(promQuery.expr, series);
     expect(hints).toEqual([]);
   });
 
@@ -92,7 +92,7 @@ describe('getQueryHints()', () => {
       },
     ];
     const promQuery = { refId: 'bar', expr: 'increase(metric_total[1m])' };
-    const hints = getQueryHints(promQuery, series);
+    const hints = getQueryHints(promQuery.expr, series);
     expect(hints).toEqual([]);
   });
 
@@ -106,7 +106,7 @@ describe('getQueryHints()', () => {
       },
     ];
     const promQuery = { refId: 'bar', expr: 'sum(metric_total)' };
-    const hints = getQueryHints(promQuery, series);
+    const hints = getQueryHints(promQuery.expr, series);
     expect(hints!.length).toBe(1);
     expect(hints![0].label).toContain('rate()');
     expect(hints![0].fix).toBeUndefined();
@@ -115,7 +115,7 @@ describe('getQueryHints()', () => {
   it('returns a histogram hint for a bucket series', () => {
     const promQuery = { refId: 'bar', expr: 'metric_bucket' };
     const series = [{ datapoints: [[23, 1000]] }];
-    const hints = getQueryHints(promQuery, series);
+    const hints = getQueryHints(promQuery.expr, series);
     expect(hints!.length).toBe(1);
     expect(hints![0]).toMatchObject({
       label: 'Time series has buckets, you probably wanted a histogram.',
@@ -137,7 +137,7 @@ describe('getQueryHints()', () => {
       ],
     }));
     const promQuery = { refId: 'bar', expr: 'metric' };
-    const hints = getQueryHints(promQuery, series);
+    const hints = getQueryHints(promQuery.expr, series);
     expect(hints!.length).toBe(1);
     expect(hints![0]).toMatchObject({
       type: 'ADD_SUM',
