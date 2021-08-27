@@ -45,7 +45,7 @@ const reduceNamespaces = (filters: FilterState) => {
 const reduceGroups = (filters: FilterState) => {
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
     const rules = group.rules.filter((rule) => {
-      if (!filters.showRecordingRules && rule.promRule?.type === PromRuleType.Recording) {
+      if (filters.ruleType && filters.ruleType !== rule.promRule?.type) {
         return false;
       }
       if (filters.dataSource && isGrafanaRulerRule(rule.rulerRule) && !isQueryingDataSource(rule.rulerRule, filters)) {

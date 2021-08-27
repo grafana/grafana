@@ -1,10 +1,10 @@
 import React, { FormEvent, useState } from 'react';
-import { Button, Icon, Input, Label, RadioButtonGroup, Switch, Tooltip, useStyles } from '@grafana/ui';
+import { Button, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles } from '@grafana/ui';
 import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { debounce } from 'lodash';
 
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { getFiltersFromUrlParams } from '../../utils/misc';
 import { DataSourcePicker } from '@grafana/runtime';
@@ -23,6 +23,17 @@ const ViewOptions: SelectableValue[] = [
   },
 ];
 
+const RuleTypeOptions: SelectableValue[] = [
+  {
+    label: 'Alert rule',
+    value: PromRuleType.Alerting,
+  },
+  {
+    label: 'Recording rule',
+    value: PromRuleType.Recording,
+  },
+];
+
 const RulesFilter = () => {
   const [queryParams, setQueryParams] = useQueryParams();
   // This key is used to force a rerender on the inputs when the filters are cleared
@@ -30,7 +41,7 @@ const RulesFilter = () => {
   const dataSourceKey = `dataSource-${filterKey}`;
   const queryStringKey = `queryString-${filterKey}`;
 
-  const { dataSource, alertState, queryString, showRecordingRules } = getFiltersFromUrlParams(queryParams);
+  const { dataSource, alertState, queryString, ruleType } = getFiltersFromUrlParams(queryParams);
 
   const styles = useStyles(getStyles);
   const stateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
@@ -55,9 +66,8 @@ const RulesFilter = () => {
     setQueryParams({ view });
   };
 
-  const handleRecordingRulesChange = (_: FormEvent<HTMLInputElement>) => {
-    const value = showRecordingRules ? null : true;
-    setQueryParams({ showRecordingRules: value });
+  const handleRuleTypeChange = (ruleType: PromRuleType) => {
+    setQueryParams({ ruleType });
   };
 
   const handleClearFiltersClick = () => {
@@ -65,7 +75,7 @@ const RulesFilter = () => {
       alertState: null,
       queryString: null,
       dataSource: null,
-      showRecordingRules: null,
+      ruleType: null,
     });
     setTimeout(() => setFilterKey(filterKey + 1), 100);
   };
@@ -114,6 +124,10 @@ const RulesFilter = () => {
             <RadioButtonGroup options={stateOptions} value={alertState} onChange={handleAlertStateChange} />
           </div>
           <div className={styles.rowChild}>
+            <Label>Rule type</Label>
+            <RadioButtonGroup options={RuleTypeOptions} value={ruleType} onChange={handleRuleTypeChange} />
+          </div>
+          <div className={styles.rowChild}>
             <Label>View as</Label>
             <RadioButtonGroup
               options={ViewOptions}
@@ -121,16 +135,8 @@ const RulesFilter = () => {
               onChange={handleViewChange}
             />
           </div>
-          <div className={styles.rowChild}>
-            <Label description="Include recording rules in results">Show recording rules</Label>
-            <Switch
-              value={showRecordingRules}
-              disabled={queryParams['view'] === 'state'}
-              onChange={handleRecordingRulesChange}
-            />
-          </div>
         </div>
-        {(dataSource || alertState || queryString) && (
+        {(dataSource || alertState || queryString || ruleType) && (
           <div className={styles.flexRow}>
             <Button
               className={styles.clearButton}
