@@ -3,6 +3,7 @@ import _ from 'lodash';
 import { AzureMonitorQuery, AzureDataSourceJsonData, AzureQueryType } from '../types';
 import { ScopedVars } from '@grafana/data';
 import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { interpolateVariable } from '../utils/common';
 
 export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
@@ -29,7 +30,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
       ...interpolatedSubscriptions,
       ..._.filter(target.subscriptions, (sub) => !_.includes(variableNames, sub)),
     ];
-    const query = templateSrv.replace(item.query, scopedVars);
+    const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
 
     return {
       refId: target.refId,
