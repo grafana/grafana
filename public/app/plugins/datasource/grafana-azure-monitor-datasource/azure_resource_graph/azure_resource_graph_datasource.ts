@@ -19,12 +19,22 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     }
 
     const templateSrv = getTemplateSrv();
+    const variableNames = templateSrv.getVariables().map((v) => `$${v.name}`);
+    const subscriptionVar = _.find(target.subscriptions, (sub) => _.includes(variableNames, sub));
+    const interpolatedSubscriptions = templateSrv
+      .replace(subscriptionVar, scopedVars, this.interpolateVariable)
+      .split(',')
+      .filter((v) => v.length > 0);
+    const subscriptions = [
+      ...interpolatedSubscriptions,
+      ..._.filter(target.subscriptions, (sub) => !_.includes(variableNames, sub)),
+    ];
     const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
 
     return {
       refId: target.refId,
       queryType: AzureQueryType.AzureResourceGraph,
-      subscriptions: target.subscriptions,
+      subscriptions,
       azureResourceGraph: {
         resultFormat: 'table',
         query,
@@ -41,7 +51,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
       }
     }
 
-    if (typeof value === 'number') {
+    if (typeof value === 'number' || Array.isArray(value)) {
       return value;
     }
 
