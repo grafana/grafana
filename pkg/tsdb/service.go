@@ -11,8 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/builtin"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
-	"github.com/grafana/grafana/pkg/tsdb/grafana"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
@@ -24,7 +24,7 @@ func NewService(
 	oauthTokenService *oauthtoken.Service, httpClientProvider httpclient.Provider,
 	cloudMonitoringService *cloudmonitoring.Service,
 	postgresService *postgres.PostgresService,
-	buildinGrafanaDS *grafana.GrafanaDatasource,
+	buildinGrafanaDS *builtin.BuiltinGrafanaDatasource,
 ) *Service {
 	s := newService(cfg, pluginManager, backendPluginManager, oauthTokenService, buildinGrafanaDS)
 
@@ -40,7 +40,7 @@ func NewService(
 
 func newService(cfg *setting.Cfg, manager plugins.Manager, backendPluginManager backendplugin.Manager,
 	oauthTokenService oauthtoken.OAuthTokenService,
-	buildinGrafanaDS *grafana.GrafanaDatasource) *Service {
+	buildinGrafanaDS *builtin.BuiltinGrafanaDatasource) *Service {
 	return &Service{
 		Cfg:                  cfg,
 		PluginManager:        manager,
@@ -58,7 +58,7 @@ type Service struct {
 	PluginManager        plugins.Manager
 	BackendPluginManager backendplugin.Manager
 	OAuthTokenService    oauthtoken.OAuthTokenService
-	buildinGrafanaDS     *grafana.GrafanaDatasource
+	buildinGrafanaDS     *builtin.BuiltinGrafanaDatasource
 
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
