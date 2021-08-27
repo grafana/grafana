@@ -4,7 +4,7 @@ import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 export type CodeEditorChangeHandler = (value: string) => void;
 export type CodeEditorSuggestionProvider = () => CodeEditorSuggestionItem[];
 
-export type { monacoType as monacoNS };
+export type { monacoType as monacoTypes };
 export type Monaco = typeof monacoType;
 export type MonacoEditor = monacoType.editor.IStandaloneCodeEditor;
 export type MonacoOptions = monacoType.editor.IStandaloneEditorConstructionOptions;

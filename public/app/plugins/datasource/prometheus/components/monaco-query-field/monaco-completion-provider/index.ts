@@ -1,5 +1,5 @@
-import type { monacoNS } from '@grafana/ui';
-type Monaco = typeof monacoNS;
+import type { monacoTypes } from '@grafana/ui';
+type Monaco = typeof monacoTypes;
 
 import { getIntent } from './intent';
 import { getCompletions, DataProvider } from './completions';
@@ -7,11 +7,11 @@ import { getCompletions, DataProvider } from './completions';
 export function getCompletionProvider(
   monaco: Monaco,
   dataProvider: DataProvider
-): monacoNS.languages.CompletionItemProvider {
+): monacoTypes.languages.CompletionItemProvider {
   const provideCompletionItems = (
-    model: monacoNS.editor.ITextModel,
-    position: monacoNS.Position
-  ): monacoNS.languages.ProviderResult<monacoNS.languages.CompletionList> => {
+    model: monacoTypes.editor.ITextModel,
+    position: monacoTypes.Position
+  ): monacoTypes.languages.ProviderResult<monacoTypes.languages.CompletionList> => {
     const word = model.getWordAtPosition(position);
     const range =
       word != null

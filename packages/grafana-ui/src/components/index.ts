@@ -43,7 +43,7 @@ export { QueryField } from './QueryField/QueryField';
 export { CodeEditor } from './Monaco/CodeEditorLazy';
 export {
   Monaco,
-  monacoNS,
+  monacoTypes,
   MonacoEditor,
   MonacoOptions as CodeEditorMonacoOptions,
   CodeEditorSuggestionItem,
