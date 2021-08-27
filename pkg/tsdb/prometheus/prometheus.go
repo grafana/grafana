@@ -151,22 +151,22 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		case Instant:
 			results, _, err = client.Query(ctx, query.Expr, query.End)
 			if err != nil {
-				return &result, err
+				return &result, fmt.Errorf("error: %v, for query: %s", err, query.Expr)
 			}
 		case Range:
 			results, _, err = client.QueryRange(ctx, query.Expr, timeRange)
 			if err != nil {
-				return &result, err
+				return &result, fmt.Errorf("error: %v, for query: %s", err, query.Expr)
 			}
 		}
 
 		// Parse response to dataFrames
-		frame, err := parseResponse(results, query)
+		frames, err := parseResponse(results, query)
 		if err != nil {
 			return &result, err
 		}
 		result.Responses[query.RefId] = backend.DataResponse{
-			Frames: frame,
+			Frames: frames,
 		}
 	}
 
