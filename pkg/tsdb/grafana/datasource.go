@@ -11,14 +11,24 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
+
+func ProvideService(cfg *setting.Cfg) *GrafanaDatasource {
+	logger := log.New("tsdb.grafana")
+	return &GrafanaDatasource{
+		StaticRootPath: cfg.StaticRootPath,
+		logger:         logger,
+	}
+}
 
 // GrafanaDatasource exists regardless of user settings
 type GrafanaDatasource struct {
 	// path to the public folder
 	StaticRootPath string
+	logger         log.Logger
 	OKRoots        []string
 }
 
@@ -29,11 +39,6 @@ var (
 	_ backend.QueryDataHandler   = (*GrafanaDatasource)(nil)
 	_ backend.CheckHealthHandler = (*GrafanaDatasource)(nil)
 )
-
-// NewGrafanaDatasource creates a new datasource instance.
-func NewGrafanaDatasource() *GrafanaDatasource {
-	return &GrafanaDatasource{}
-}
 
 func (ds *GrafanaDatasource) QueryData(_ context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
@@ -130,7 +135,7 @@ func (ds *GrafanaDatasource) doReadQuery(query backend.DataQuery) backend.DataRe
 
 	defer func() {
 		if err := fileReader.Close(); err != nil {
-			logger.Warn("Failed to close file", "err", err, "path", path)
+			ds.logger.Warn("Failed to close file", "err", err, "path", path)
 		}
 	}()
 

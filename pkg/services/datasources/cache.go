@@ -31,6 +31,14 @@ func (dc *CacheServiceImpl) GetDatasource(
 	user *models.SignedInUser,
 	skipCache bool,
 ) (*models.DataSource, error) {
+	if datasourceID == -1 {
+		return &models.DataSource{
+			Type:  "grafana",
+			OrgId: user.OrgId,
+			Id:    -1,
+			Name:  "-- Grafana --",
+		}, nil
+	}
 	cacheKey := idKey(datasourceID)
 
 	if !skipCache {
@@ -62,6 +70,14 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 ) (*models.DataSource, error) {
 	if datasourceUID == "" {
 		return nil, fmt.Errorf("can not get data source by uid, uid is empty")
+	}
+	if datasourceUID == "grafana" {
+		return &models.DataSource{
+			Type:  "grafana",
+			OrgId: user.OrgId,
+			Id:    -1,
+			Name:  "-- Grafana --",
+		}, nil
 	}
 	if user.OrgId == 0 {
 		return nil, fmt.Errorf("can not get data source by uid, orgId is missing")
