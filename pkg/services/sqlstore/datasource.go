@@ -214,6 +214,14 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 		}
 
 		cmd.Result = ds
+
+		sess.publishAfterCommit(&events.DataSourceCreated{
+			Timestamp: time.Now(),
+			Name:      cmd.Name,
+			ID:        ds.Id,
+			UID:       cmd.Uid,
+			OrgID:     cmd.OrgId,
+		})
 		return nil
 	})
 }
