@@ -1,11 +1,10 @@
 import React, { useRef } from 'react';
-import { CodeEditor } from '@grafana/ui';
-import type { monaco as monacoNS } from './monacoTypes';
+import { CodeEditor, CodeEditorMonacoOptions } from '@grafana/ui';
 import { useLatest } from 'react-use';
 import { setupPromQL } from './setupPromQL';
 import { Props } from './MonacoQueryFieldProps';
 
-const options: monacoNS.editor.IStandaloneEditorConstructionOptions = {
+const options: CodeEditorMonacoOptions = {
   lineNumbers: 'off',
   minimap: { enabled: false },
   lineDecorationsWidth: 0,
