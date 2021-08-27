@@ -6,10 +6,46 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var now = time.Now()
+
+func TestPrometheusQueryParser_calculateStep(t *testing.T) {
+	calculator := tsdb.NewCalculator(tsdb.CalculatorOptions{})
+	expr := "test"
+	timeRange := backend.TimeRange{
+		From: now,
+		To:   now.Add(12 * time.Hour),
+	}
+
+	dsInfo := &DatasourceInfo{}
+	testCases := []struct {
+		name     string
+		model    QueryModel
+		query    backend.DataQuery
+		expected time.Duration
+	}{
+		{"Interval: nil, StepMode: nil, IsBackendQuery: false", QueryModel{Expr: expr, Interval: "", StepMode: "", IsBackendQuery: false}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
+		{"Interval: 15s, StepMode: min, IsBackendQuery: false", QueryModel{Expr: expr, Interval: "15s", StepMode: "min", IsBackendQuery: false}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
+		{"Interval: 15s, StepMode: min, IsBackendQuery: true", QueryModel{Expr: expr, Interval: "15s", StepMode: "min", IsBackendQuery: true}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(15) * time.Second},
+		{"Interval: 7s, StepMode: exact, IsBackendQuery: false", QueryModel{Expr: expr, Interval: "7s", StepMode: "exact", IsBackendQuery: false}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(7) * time.Second},
+		{"Interval: 7s, StepMode: exact, IsBackendQuery: true", QueryModel{Expr: expr, Interval: "7s", StepMode: "exact", IsBackendQuery: true}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(7) * time.Second},
+		{"Interval: 6s, StepMode: max, IsBackendQuery: false", QueryModel{Expr: expr, Interval: "6s", StepMode: "max", IsBackendQuery: false}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(6) * time.Second},
+		{"Interval: 6s, StepMode: max, IsBackendQuery: true", QueryModel{Expr: expr, Interval: "6s", StepMode: "max", IsBackendQuery: true}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(6) * time.Second},
+		{"Interval: 100s, StepMode: max, IsBackendQuery: false", QueryModel{Expr: expr, Interval: "100s", StepMode: "max", IsBackendQuery: false}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
+		{"Interval: 100s, StepMode: max, IsBackendQuery: true", QueryModel{Expr: expr, Interval: "100s", StepMode: "max", IsBackendQuery: true}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(100) * time.Second},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			step, err := createStep(dsInfo, &tc.model, tc.query, calculator)
+			require.Nil(t, err)
+			assert.Equal(t, tc.expected, step)
+		})
+	}
+}
 
 func TestPrometheusQueryParser_parseQuery(t *testing.T) {
 	service := Service{
