@@ -819,7 +819,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   getQueryHints(query: PromQuery, result: any[]) {
-    return getQueryHints(query, result, this);
+    return getQueryHints(query.expr ?? '', result, this);
   }
 
   getInitHints() {

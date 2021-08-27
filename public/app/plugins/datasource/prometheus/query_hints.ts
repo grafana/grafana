@@ -1,18 +1,16 @@
 import { size } from 'lodash';
 import { QueryHint, QueryFix } from '@grafana/data';
 import { PrometheusDatasource } from './datasource';
-import { PromQuery } from './types';
 
 /**
  * Number of time series results needed before starting to suggest sum aggregation hints
  */
 export const SUM_HINT_THRESHOLD_COUNT = 20;
 
-export function getQueryHints(promQuery: PromQuery, series?: any[], datasource?: PrometheusDatasource): QueryHint[] {
+export function getQueryHints(query: string, series?: any[], datasource?: PrometheusDatasource): QueryHint[] {
   const hints = [];
 
   // ..._bucket metric needs a histogram_quantile()
-  const query = promQuery.expr || '';
   const histogramMetric = query.trim().match(/^\w+_bucket$/);
   if (histogramMetric) {
     const label = 'Time series has buckets, you probably wanted a histogram.';
