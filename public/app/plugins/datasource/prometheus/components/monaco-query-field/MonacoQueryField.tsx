@@ -15,6 +15,7 @@ const options: monacoNS.editor.IStandaloneEditorConstructionOptions = {
   folding: false,
   scrollBeyondLastLine: false,
   renderLineHighlight: 'none',
+  fontSize: 14,
 };
 
 const MonacoQueryField = (props: Props) => {
