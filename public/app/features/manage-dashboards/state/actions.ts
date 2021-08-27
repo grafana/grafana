@@ -94,7 +94,10 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
     });
 
     const result = await getBackendSrv().post('api/dashboards/import', {
-      dashboard: { ...dashboard, title: importDashboardForm.title, uid: importDashboardForm.uid },
+      // uid: if user changed it, take the new uid from importDashboardForm,
+      // else read it from original dashboard
+      // by default the uid input is disabled, onSubmit ignores values from disabled inputs
+      dashboard: { ...dashboard, title: importDashboardForm.title, uid: importDashboardForm.uid || dashboard.uid },
       overwrite: true,
       inputs: inputsToPersist,
       folderId: importDashboardForm.folder.id,
