@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/schema",
-  "version": "8.1.0-pre",
+  "version": "8.2.0-pre.0",
   "description": "Grafana Schema Library",
   "keywords": [
     "typescript"
@@ -21,7 +21,6 @@
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
   "devDependencies": {
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@rollup/plugin-commonjs": "16.0.0",
