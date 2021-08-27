@@ -1,5 +1,4 @@
-import type { monacoTypes } from '@grafana/ui';
-type Monaco = typeof monacoTypes;
+import type { Monaco, monacoTypes } from '@grafana/ui';
 
 import { getIntent } from './intent';
 import { getCompletions, DataProvider } from './completions';
