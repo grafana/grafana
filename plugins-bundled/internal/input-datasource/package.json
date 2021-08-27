@@ -15,9 +15,9 @@
   },
   "author": "Grafana Labs",
   "devDependencies": {
-    "@grafana/data": "^8.2.0-pre.0",
-    "@grafana/toolkit": "^8.2.0-pre.0",
-    "@grafana/ui": "^8.2.0-pre.0"
+    "@grafana/data": "8.2.0-pre.0",
+    "@grafana/toolkit": "8.2.0-pre.0",
+    "@grafana/ui": "8.2.0-pre.0"
   },
   "volta": {
     "extends": "../../../package.json"
