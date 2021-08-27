@@ -15,8 +15,11 @@ export const QueryStep: FC = () => {
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
   return (
-    <RuleEditorSection stepNo={2} title="Create a query to be alerted on">
-      {type === RuleFormType.cloud && dataSourceName && (
+    <RuleEditorSection
+      stepNo={2}
+      title={type === RuleFormType.cloudRecording ? 'Create a query to be recorded' : 'Create a query to be alerted on'}
+    >
+      {(type === RuleFormType.cloudRecording || type === RuleFormType.cloudAlerting) && dataSourceName && (
         <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
           <InputControl
             name="expression"

@@ -1,4 +1,4 @@
-FROM node:14.16.0-alpine3.13 as js-builder
+FROM node:16-alpine3.14 as js-builder
 
 WORKDIR /usr/src/app/
 
@@ -17,7 +17,7 @@ COPY emails emails
 ENV NODE_ENV production
 RUN yarn build
 
-FROM golang:1.16.1-alpine3.13 as go-builder
+FROM golang:1.16.1-alpine3.14 as go-builder
 
 RUN apk add --no-cache gcc g++ krb5-libs krb5-dev
 
@@ -33,7 +33,7 @@ RUN go mod verify
 RUN go run build.go build
 
 # Final stage
-FROM alpine:3.13
+FROM alpine:3.14.1
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 
@@ -51,7 +51,8 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 WORKDIR $GF_PATHS_HOME
 
 RUN apk add --no-cache ca-certificates bash tzdata && \
-    apk add --no-cache openssl musl-utils krb5-libs krb5 && \
+    apk add --no-cache openssl musl-utils libcrypto1.1>1.1.1l-r0 libssl1.1>1.1.1l-r0 && \
+    apk add --no-cache krb5-libs krb5 && \
     ln -s /usr/lib/libgssapi_krb5.so.2 /usr/lib/libgssapi_krb5.so
 
 COPY conf ./conf

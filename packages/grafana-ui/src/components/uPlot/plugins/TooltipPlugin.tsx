@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { Portal } from '../../Portal/Portal';
 import { usePlotContext } from '../context';
+import { TooltipDisplayMode } from '@grafana/schema';
 import {
   CartesianCoords2D,
   DashboardCursorSync,
@@ -12,7 +13,7 @@ import {
   getFieldDisplayName,
   TimeZone,
 } from '@grafana/data';
-import { SeriesTable, SeriesTableRowProps, TooltipDisplayMode, VizTooltipContainer } from '../../VizTooltip';
+import { SeriesTable, SeriesTableRowProps, VizTooltipContainer } from '../../VizTooltip';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { findMidPointYPosition, pluginLog } from '../utils';
 import { useTheme2 } from '../../../themes/ThemeContext';
@@ -93,25 +94,31 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
-    if (config.tooltipInterpolator) {
+    const tooltipInterpolator = config.getTooltipInterpolator();
+    if (tooltipInterpolator) {
       // Custom toolitp positioning
       config.addHook('setCursor', (u) => {
-        config.tooltipInterpolator!(setFocusedSeriesIdx, setFocusedPointIdx, (clear) => {
-          if (clear) {
-            setCoords(null);
-            return;
-          }
+        tooltipInterpolator(
+          setFocusedSeriesIdx,
+          setFocusedPointIdx,
+          (clear) => {
+            if (clear) {
+              setCoords(null);
+              return;
+            }
 
-          const bbox = plotCtx.getCanvasBoundingBox();
-          if (!bbox) {
-            return;
-          }
+            const bbox = plotCtx.getCanvasBoundingBox();
+            if (!bbox) {
+              return;
+            }
 
-          const { x, y } = positionTooltip(u, bbox);
-          if (x !== undefined && y !== undefined) {
-            setCoords({ x, y });
-          }
-        })(u);
+            const { x, y } = positionTooltip(u, bbox);
+            if (x !== undefined && y !== undefined) {
+              setCoords({ x, y });
+            }
+          },
+          u
+        );
       });
     } else {
       config.addHook('setLegend', (u) => {

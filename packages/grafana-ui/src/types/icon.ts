@@ -100,6 +100,7 @@ export const getAvailableIcons = () =>
     'list-ui-alt',
     'list-ul',
     'lock',
+    'message',
     'minus',
     'minus-circle',
     'mobile-android',

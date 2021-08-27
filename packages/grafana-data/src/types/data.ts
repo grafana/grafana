@@ -3,6 +3,7 @@ import { DataTransformerConfig } from './transformations';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
 import { PanelPluginDataSupport } from '.';
 import { DataTopic } from './query';
+import { DataFrameType } from './dataFrameTypes';
 
 export type KeyValue<T = any> = Record<string, T>;
 
@@ -25,6 +26,8 @@ export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace' | 
  * @public
  */
 export interface QueryResultMeta {
+  type?: DataFrameType;
+
   /** DatasSource Specific Values */
   custom?: Record<string, any>;
 
