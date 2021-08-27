@@ -19,8 +19,15 @@ import (
 func ProvideService(cfg *setting.Cfg) *GrafanaDatasource {
 	logger := log.New("tsdb.grafana")
 	return &GrafanaDatasource{
-		StaticRootPath: cfg.StaticRootPath,
 		logger:         logger,
+		StaticRootPath: cfg.StaticRootPath,
+		OKRoots: []string{
+			"testdata",
+			"img/icons",
+			"img/bg",
+			"gazetteer",
+			"upload", // does not exist yet
+		},
 	}
 }
 
