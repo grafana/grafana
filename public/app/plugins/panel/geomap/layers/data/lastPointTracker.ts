@@ -53,13 +53,13 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
         const frame = data.series[0];
         if (frame && frame.length) {
           const info = dataFrameToPoints(frame, matchers);
-          if(info.warning) {
-            console.log( 'WARN', info.warning);
+          if (info.warning) {
+            console.log('WARN', info.warning);
             return; // ???
           }
 
-          if(info.points?.length) {
-            const last = info.points[info.points.length-1];
+          if (info.points?.length) {
+            const last = info.points[info.points.length - 1];
             point.setGeometry(last);
           }
         }

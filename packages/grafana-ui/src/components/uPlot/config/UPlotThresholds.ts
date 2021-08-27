@@ -1,7 +1,7 @@
 import { GrafanaTheme2, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
-import tinycolor from 'tinycolor2';
-import { GraphThresholdsStyleConfig, GraphTresholdsStyleMode } from '../config';
+import { GraphThresholdsStyleConfig, GraphTresholdsStyleMode } from '@grafana/schema';
 import { getDataRange, GradientDirection, scaleGradient } from './gradientFills';
+import tinycolor from 'tinycolor2';
 
 export interface UPlotThresholdOptions {
   scaleKey: string;

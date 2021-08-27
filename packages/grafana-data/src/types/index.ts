@@ -1,5 +1,6 @@
 export * from './data';
 export * from './dataFrame';
+export * from './dataFrameTypes';
 export * from './dataLink';
 export * from './dashboard';
 export * from './query';
