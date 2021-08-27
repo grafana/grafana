@@ -46,8 +46,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   infoWrap: css`
     padding: 8px;
     th {
-      font-weight: bold;
-      padding: 2px 10px 2px 0px;
+      font-weight: ${theme.typography.fontWeightMedium};
+      padding: ${theme.spacing(0.25, 2)};
     }
   `,
   highlight: css`
