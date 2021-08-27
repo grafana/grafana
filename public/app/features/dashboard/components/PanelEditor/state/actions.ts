@@ -1,7 +1,7 @@
 import { DashboardModel, PanelModel } from '../../../state';
 import { ThunkResult } from 'app/types';
 import {
-  closeCompleted,
+  closeEditor,
   PANEL_EDITOR_UI_STATE_STORAGE_KEY,
   PanelEditorUIState,
   setPanelEditorUIState,
@@ -105,8 +105,8 @@ export function exitPanelEditor(): ThunkResult<void> {
       dashboard.exitPanelEditor();
     }
 
+    dispatch(closeEditor());
     dispatch(cleanUpEditPanel());
-    dispatch(closeCompleted());
   };
 }
 
