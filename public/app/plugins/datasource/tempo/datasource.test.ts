@@ -119,6 +119,18 @@ describe('Tempo data source', () => {
     expect(field.values.length).toBe(6);
   });
 
+  it('should fail on invalid json file upload', async () => {
+    const ds = new TempoDatasource(defaultSettings);
+    ds.uploadedJson = JSON.stringify(mockInvalidJson);
+    const response = await lastValueFrom(
+      ds.query({
+        targets: [{ queryType: 'upload', refId: 'A' }],
+      } as any)
+    );
+    expect(response.error?.message).toBeDefined();
+    expect(response.data.length).toBe(0);
+  });
+
   it('should build search query correctly', () => {
     const ds = new TempoDatasource(defaultSettings);
     const tempoQuery: TempoQuery = {
@@ -229,3 +241,36 @@ const secondsPromMetric = new MutableDataFrame({
     { name: 'Value #tempo_service_graph_request_server_seconds_sum', values: [10, 40] },
   ],
 });
+
+const mockInvalidJson = {
+  batches: [
+    {
+      resource: {
+        attributes: [],
+      },
+      instrumentation_library_spans: [
+        {
+          instrumentation_library: {},
+          spans: [
+            {
+              trace_id: 'AAAAAAAAAABguiq7RPE+rg==',
+              span_id: 'cmteMBAvwNA=',
+              parentSpanId: 'OY8PIaPbma4=',
+              name: 'HTTP GET - root',
+              kind: 'SPAN_KIND_SERVER',
+              startTimeUnixNano: '1627471657255809000',
+              endTimeUnixNano: '1627471657256268000',
+              attributes: [
+                { key: 'http.status_code', value: { intValue: '200' } },
+                { key: 'http.method', value: { stringValue: 'GET' } },
+                { key: 'http.url', value: { stringValue: '/' } },
+                { key: 'component', value: { stringValue: 'net/http' } },
+              ],
+              status: {},
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
