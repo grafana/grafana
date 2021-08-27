@@ -244,6 +244,8 @@ For files exporting multiple utility functions, use the name that describes the 
 - Use `reducers.ts` Redux reducers.
 - Use `*.test.ts(x)` for test files.
 
+- Use kebab case for directory names: lowercase, words delimited by hyphen ( `-` ). For example, `features/new-important-feature/utils.ts`.
+
 ### Code organization
 
 Organize your code in a directory that encloses feature code:
