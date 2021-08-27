@@ -15,10 +15,10 @@ import (
 func createTestableKVStore(t *testing.T) KVStore {
 	t.Helper()
 
-	sqlstore := sqlstore.InitTestDB(t)
+	sqlStore := sqlstore.InitTestDB(t)
 
 	kv := &kvStoreSQL{
-		sqlStore: sqlstore,
+		sqlStore: sqlStore,
 		log:      log.New("infra.kvstore.sql"),
 	}
 
@@ -71,9 +71,10 @@ func TestKVStore(t *testing.T) {
 
 	t.Run("get existing keys", func(t *testing.T) {
 		for _, tc := range testCases {
-			value, err := kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Key)
+			value, ok, err := kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Key)
 			require.NoError(t, err)
-			assert.Equal(t, tc.Value(), value)
+			require.True(t, ok)
+			require.Equal(t, tc.Value(), value)
 		}
 	})
 
@@ -97,17 +98,19 @@ func TestKVStore(t *testing.T) {
 		}
 
 		for _, tc := range tcs {
-			value, err := kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Key)
-			assert.Equal(t, ErrNotFound, err)
-			assert.Equal(t, "", value)
+			value, ok, err := kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Key)
+			require.Nil(t, err)
+			require.False(t, ok)
+			require.Equal(t, "", value)
 		}
 	})
 
 	t.Run("modify existing key", func(t *testing.T) {
 		tc := testCases[0]
 
-		value, err := kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Key)
+		value, ok, err := kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Key)
 		require.NoError(t, err)
+		require.True(t, ok)
 		assert.Equal(t, tc.Value(), value)
 
 		tc.Revision += 1
@@ -115,8 +118,9 @@ func TestKVStore(t *testing.T) {
 		err = kv.Set(ctx, tc.OrgId, tc.Namespace, tc.Key, tc.Value())
 		require.NoError(t, err)
 
-		value, err = kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Key)
+		value, ok, err = kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Key)
 		require.NoError(t, err)
+		require.True(t, ok)
 		assert.Equal(t, tc.Value(), value)
 	})
 
@@ -125,17 +129,40 @@ func TestKVStore(t *testing.T) {
 
 		client := WithNamespace(kv, tc.OrgId, tc.Namespace)
 
-		value, err := client.Get(ctx, tc.Key)
+		value, ok, err := client.Get(ctx, tc.Key)
 		require.NoError(t, err)
-		assert.Equal(t, tc.Value(), value)
+		require.True(t, ok)
+		require.Equal(t, tc.Value(), value)
 
 		tc.Revision += 1
 
 		err = client.Set(ctx, tc.Key, tc.Value())
 		require.NoError(t, err)
 
-		value, err = client.Get(ctx, tc.Key)
+		value, ok, err = client.Get(ctx, tc.Key)
 		require.NoError(t, err)
+		require.True(t, ok)
 		assert.Equal(t, tc.Value(), value)
+	})
+
+	t.Run("deleting keys", func(t *testing.T) {
+		var stillHasKeys bool
+		for _, tc := range testCases {
+			if _, ok, err := kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Key); err == nil && ok {
+				stillHasKeys = true
+				break
+			}
+		}
+		require.True(t, stillHasKeys,
+			"we are going to test key deletion, but there are no keys to delete in the database")
+		for _, tc := range testCases {
+			err := kv.Del(ctx, tc.OrgId, tc.Namespace, tc.Key)
+			require.NoError(t, err)
+		}
+		for _, tc := range testCases {
+			_, ok, err := kv.Get(ctx, tc.OrgId, tc.Namespace, tc.Key)
+			require.NoError(t, err)
+			require.False(t, ok, "all keys should be deleted at this point")
+		}
 	})
 }
