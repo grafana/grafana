@@ -9,7 +9,9 @@ import {
   FieldMatcherID,
   Field,
   MutableDataFrame,
+  ArrayVector,
 } from '@grafana/data';
+import { Labels } from 'app/types/unified-alerting-dto';
 import { map } from 'rxjs/operators';
 
 /**
@@ -40,30 +42,95 @@ export function toTimeSeriesMany(data: DataFrame[]): DataFrame[] {
   }
 
   const result: DataFrame[] = [];
-  for (const frame of data) {
-    const timeField = frame.fields.find((field) => {
-      return field.type === FieldType.time;
-    });
-
-    if (!timeField) {
+  for (const frame of toTimeSeriesLong(data)) {
+    const timeField = frame.fields[0];
+    if (!timeField || timeField.type !== FieldType.time) {
       continue;
     }
-
+    const valueFields: Field[] = [];
+    const labelFields: Field[] = [];
     for (const field of frame.fields) {
-      if (field.type !== FieldType.number) {
-        continue;
+      switch (field.type) {
+        case FieldType.number:
+        case FieldType.boolean:
+          valueFields.push(field);
+          break;
+        case FieldType.string:
+          labelFields.push(field);
+          break;
       }
+    }
 
-      result.push({
-        name: frame.name,
-        refId: frame.refId,
-        meta: {
-          ...frame.meta,
-          type: DataFrameType.TimeSeriesMany,
-        },
-        fields: [timeField, field],
-        length: frame.length,
-      });
+    for (const field of valueFields) {
+      if (labelFields.length) {
+        // new frame for each label key
+        type frameBuilder = {
+          time: number[];
+          value: number[];
+          key: string;
+          labels: Labels;
+        };
+        const builders = new Map<string, frameBuilder>();
+        for (let i = 0; i < frame.length; i++) {
+          const time = timeField.values.get(i);
+          const value = field.values.get(i);
+          if (value === undefined || time == null) {
+            continue; // skip values left over from join
+          }
+
+          const key = labelFields.map((f) => f.values.get(i)).join('/');
+          let builder = builders.get(key);
+          if (!builder) {
+            builder = {
+              key,
+              time: [],
+              value: [],
+              labels: {},
+            };
+            for (const label of labelFields) {
+              builder.labels[label.name] = label.values.get(i);
+            }
+            builders.set(key, builder);
+          }
+          builder.time.push(time);
+          builder.value.push(value);
+        }
+
+        // Add a frame for each distinct value
+        for (const b of builders.values()) {
+          result.push({
+            name: frame.name,
+            refId: frame.refId,
+            meta: {
+              ...frame.meta,
+              type: DataFrameType.TimeSeriesMany,
+            },
+            fields: [
+              {
+                ...timeField,
+                values: new ArrayVector(b.time),
+              },
+              {
+                ...field,
+                values: new ArrayVector(b.value),
+                labels: b.labels,
+              },
+            ],
+            length: frame.length,
+          });
+        }
+      } else {
+        result.push({
+          name: frame.name,
+          refId: frame.refId,
+          meta: {
+            ...frame.meta,
+            type: DataFrameType.TimeSeriesMany,
+          },
+          fields: [timeField, field],
+          length: frame.length,
+        });
+      }
     }
   }
   return result;

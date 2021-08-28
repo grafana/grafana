@@ -27,6 +27,7 @@ const manyInfo = {
       <li>Multiple frames</li>
       <li>Each frame has two fields: time, value</li>
       <li>Time in ascending order</li>
+      <li>String values are represented as labels</li>
       <li>All values are numeric</li>
     </ul>
   ),
@@ -35,13 +36,14 @@ const manyInfo = {
 const longInfo = {
   label: 'Long time series',
   value: timeSeriesFormat.TimeSeriesLong,
-  description: 'Creates a single frame in long format',
+  description: 'Convert each frame to long format',
   info: (
     <ul>
       <li>Single frame</li>
       <li>1st field is time field</li>
-      <li>Time in ascending order</li>
-      <li>Multiple value fields of any type (number fields come before label fields such as string or boolean)</li>
+      <li>Time in ascending order, but may have duplictes</li>
+      <li>String values are represented as separate fields rather than as labels</li>
+      <li>Multiple value fields may exist</li>
     </ul>
   ),
 };
