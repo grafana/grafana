@@ -12,7 +12,7 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0
 replace k8s.io/client-go => k8s.io/client-go v0.18.8
 
 // Override mysql driver with kerb5 enabled fork
-replace github.com/go-sql-driver/mysql => github.com/grafana/mysql v1.6.2
+replace github.com/go-sql-driver/mysql => github.com/grafana/mysql v1.6.3
 
 require (
 	cloud.google.com/go/storage v1.14.0
@@ -70,6 +70,7 @@ require (
 	github.com/laher/mergefs v0.1.1
 	github.com/lib/pq v1.10.0
 	github.com/linkedin/goavro/v2 v2.10.0
+	github.com/m3db/prometheus_remote_client_golang v0.4.4 // indirect
 	github.com/magefile/mage v1.11.0
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.7
