@@ -2,7 +2,6 @@
 import { toString, toNumber as _toNumber, isEmpty, isBoolean } from 'lodash';
 
 // Types
-import { StackingMode } from '@grafana/schema';
 import { Field, FieldType } from '../types/dataFrame';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
@@ -66,10 +65,6 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   } else if (field.type === FieldType.boolean) {
     if (!isBooleanUnit(unit)) {
       unit = 'bool';
-    }
-  } else if (field.type === FieldType.number) {
-    if (config.custom?.stacking?.mode === StackingMode.Percent) {
-      unit = 'percentunit';
     }
   }
 
