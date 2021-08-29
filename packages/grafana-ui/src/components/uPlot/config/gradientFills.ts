@@ -172,11 +172,36 @@ export function getDataRange(plot: uPlot, scaleKey: string) {
   return [min, max];
 }
 
+export function getThresholdRange(
+  u: uPlot,
+  scaleKey: string,
+  hardMin?: number | null,
+  hardMax?: number | null,
+  softMin?: number | null,
+  softMax?: number | null
+) {
+  let min = hardMin ?? softMin ?? null;
+  let max = hardMax ?? softMax ?? null;
+
+  if (min == null || max == null) {
+    let [dataMin, dataMax] = getDataRange(u, scaleKey);
+
+    min = min ?? dataMin ?? 0;
+    max = max ?? dataMax ?? 100;
+  }
+
+  return [min, max];
+}
+
 export function getScaleGradientFn(
   opacity: number,
   theme: GrafanaTheme2,
   colorMode?: FieldColorMode,
-  thresholds?: ThresholdsConfig
+  thresholds?: ThresholdsConfig,
+  hardMin?: number | null,
+  hardMax?: number | null,
+  softMin?: number | null,
+  softMax?: number | null
 ): (self: uPlot, seriesIdx: number) => CanvasGradient | string {
   if (!colorMode) {
     throw Error('Missing colorMode required for color scheme gradients');
@@ -199,7 +224,7 @@ export function getScaleGradientFn(
         );
         gradient = scaleGradient(plot, scaleKey, GradientDirection.Up, valueStops, true);
       } else {
-        const [min, max] = getDataRange(plot, scaleKey);
+        const [min, max] = getThresholdRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
         const range = max - min;
         const valueStops = thresholds.steps.map(
           (step) =>
@@ -212,7 +237,7 @@ export function getScaleGradientFn(
       }
     } else if (colorMode.getColors) {
       const colors = colorMode.getColors(theme);
-      const [min, max] = getDataRange(plot, scaleKey);
+      const [min, max] = getThresholdRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
       const range = max - min;
       const valueStops = colors.map(
         (color, i) =>

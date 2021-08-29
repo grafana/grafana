@@ -1,6 +1,6 @@
 import { GrafanaTheme2, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
 import { GraphThresholdsStyleConfig, GraphTresholdsStyleMode } from '@grafana/schema';
-import { getDataRange, GradientDirection, scaleGradient } from './gradientFills';
+import { getThresholdRange, GradientDirection, scaleGradient } from './gradientFills';
 import tinycolor from 'tinycolor2';
 
 export interface UPlotThresholdOptions {
@@ -8,23 +8,27 @@ export interface UPlotThresholdOptions {
   thresholds: ThresholdsConfig;
   config: GraphThresholdsStyleConfig;
   theme: GrafanaTheme2;
+  hardMin?: number | null;
+  hardMax?: number | null;
+  softMin?: number | null;
+  softMax?: number | null;
 }
 
 export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
   return (u: uPlot) => {
     const ctx = u.ctx;
-    const { scaleKey, thresholds, theme, config } = options;
+    const { scaleKey, thresholds, theme, config, hardMin, hardMax, softMin, softMax } = options;
     const { min: xMin, max: xMax } = u.scales.x;
     const { min: yMin, max: yMax } = u.scales[scaleKey];
 
-    if (xMin === undefined || xMax === undefined || yMin === undefined || yMax === undefined) {
+    if (xMin == null || xMax == null || yMin == null || yMax == null) {
       return;
     }
 
     let { steps, mode } = thresholds;
 
     if (mode === ThresholdsMode.Percentage) {
-      let [min, max] = getDataRange(u, scaleKey);
+      let [min, max] = getThresholdRange(u, scaleKey, hardMin, hardMax, softMin, softMax);
       let range = max - min;
 
       steps = steps.map((step) => ({
