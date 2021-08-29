@@ -170,6 +170,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     placement: AxisPlacement.Bottom,
     timeZone,
     theme,
+    grid: { show: true },
   });
 
   builder.addAxis({
@@ -178,7 +179,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     placement: AxisPlacement.Left,
     splits: coreConfig.ySplits,
     values: coreConfig.yValues,
-    grid: false,
+    grid: { show: false },
     ticks: false,
     gap: 16,
     theme,
