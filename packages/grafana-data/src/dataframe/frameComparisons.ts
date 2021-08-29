@@ -35,14 +35,19 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipConfi
       return false;
     }
 
-    // Do not check the config fields
-    if (skipConfig) {
-      continue;
+    // Check if only one field has labels
+    if ((fA.labels != null && fB.labels == null) || (fB.labels != null && fA.labels == null)) {
+      return false;
     }
 
     // Check if labels are different
     if (fA.labels && fB.labels && !shallowCompare(fA.labels, fB.labels)) {
       return false;
+    }
+
+    // Do not check the config fields
+    if (skipConfig) {
+      continue;
     }
 
     const cfgA = fA.config as any;
