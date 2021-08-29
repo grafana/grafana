@@ -1,6 +1,6 @@
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { LabelsToFieldsOptions, labelsToFieldsTransformer } from './labelsToFields';
-import { DataTransformerConfig, FieldDTO, FieldType } from '../../types';
+import { DataFrame, DataTransformerConfig, FieldDTO, FieldType } from '../../types';
 import { DataTransformerID } from './ids';
 import { toDataFrame, toDataFrameDTO } from '../../dataframe';
 import { transformDataFrame } from '../transformDataFrame';
@@ -110,15 +110,42 @@ describe('Labels as Columns', () => {
 
     await expect(transformDataFrame([cfg], [oneValueOneLabelA, oneValueOneLabelB])).toEmitValuesWith((received) => {
       const data = received[0];
-      const result = toDataFrameDTO(data[0]);
+      expect(data.length).toEqual(2);
 
-      const expected: FieldDTO[] = [
-        { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
-        { name: 'location', type: FieldType.string, values: ['inside', 'outside'], config: {} },
-        { name: 'temp', type: FieldType.number, values: [1, -1], config: {} },
-      ];
-
-      expect(result.fields).toEqual(expected);
+      expect(toSimpleObject(data[0])).toMatchInlineSnapshot(`
+        Object {
+          "location": Array [
+            "inside",
+          ],
+          "temp": Array [
+            1,
+          ],
+          "time": Array [
+            1000,
+          ],
+        }
+      `);
+      expect(toSimpleObject(data[1])).toMatchInlineSnapshot(`
+        Object {
+          "location": Array [
+            "outside",
+          ],
+          "temp": Array [
+            -1,
+          ],
+          "time": Array [
+            2000,
+          ],
+        }
+      `);
     });
   });
 });
+
+function toSimpleObject(frame: DataFrame) {
+  const obj: any = {};
+  for (const field of frame.fields) {
+    obj[field.name] = field.values.toArray();
+  }
+  return obj;
+}
