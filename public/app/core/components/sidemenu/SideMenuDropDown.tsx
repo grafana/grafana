@@ -1,44 +1,41 @@
-import React, { FC } from 'react';
-import { filter } from 'lodash';
+import React from 'react';
 import DropDownChild from './DropDownChild';
 import { NavModelItem } from '@grafana/data';
 import { IconName, Link } from '@grafana/ui';
 
 interface Props {
-  link: NavModelItem;
+  items?: NavModelItem[];
+  headerText: string;
+  headerUrl?: string;
   onHeaderClick?: () => void;
 }
 
-const SideMenuDropDown: FC<Props> = (props) => {
-  const { link, onHeaderClick } = props;
-  let childrenLinks: NavModelItem[] = [];
-  if (link.children) {
-    childrenLinks = filter(link.children, (item) => !item.hideFromMenu);
-  }
-
-  const linkContent = <span className="sidemenu-item-text">{link.text}</span>;
-  const anchor = link.url ? (
-    <Link href={link.url} onClick={onHeaderClick} className="side-menu-header-link">
-      {linkContent}
+const SideMenuDropDown = ({ items = [], headerText, headerUrl, onHeaderClick }: Props) => {
+  const headerContent = <span className="sidemenu-item-text">{headerText}</span>;
+  const header = headerUrl ? (
+    <Link href={headerUrl} onClick={onHeaderClick} className="side-menu-header-link">
+      {headerContent}
     </Link>
   ) : (
     <a onClick={onHeaderClick} className="side-menu-header-link">
-      {linkContent}
+      {headerContent}
     </a>
   );
 
   return (
     <ul className="dropdown-menu dropdown-menu--sidemenu" role="menu">
-      <li className="side-menu-header">{anchor}</li>
-      {childrenLinks.map((child, index) => (
-        <DropDownChild
-          key={`${child.url}-${index}`}
-          isDivider={child.divider}
-          icon={child.icon as IconName}
-          text={child.text}
-          url={child.url}
-        />
-      ))}
+      <li className="side-menu-header">{header}</li>
+      {items
+        .filter((item) => !item.hideFromMenu)
+        .map((child, index) => (
+          <DropDownChild
+            key={`${child.url}-${index}`}
+            isDivider={child.divider}
+            icon={child.icon as IconName}
+            text={child.text}
+            url={child.url}
+          />
+        ))}
     </ul>
   );
 };

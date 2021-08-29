@@ -60,7 +60,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
         })
         .addFieldNamePicker({
           path: 'location.latitude',
-          name: 'Latitude Field',
+          name: 'Latitude field',
           settings: {
             filter: (f: Field) => f.type === FieldType.number,
             noFieldsMessage: 'No numeric fields found',
@@ -69,7 +69,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
         })
         .addFieldNamePicker({
           path: 'location.longitude',
-          name: 'Longitude Field',
+          name: 'Longitude field',
           settings: {
             filter: (f: Field) => f.type === FieldType.number,
             noFieldsMessage: 'No numeric fields found',
@@ -78,7 +78,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
         })
         .addFieldNamePicker({
           path: 'location.geohash',
-          name: 'Geohash Field',
+          name: 'Geohash field',
           settings: {
             filter: (f: Field) => f.type === FieldType.string,
             noFieldsMessage: 'No strings fields found',
@@ -89,7 +89,7 @@ export const LayerEditor: FC<LayerEditorProps> = ({ options, onChange, data, fil
         })
         .addFieldNamePicker({
           path: 'location.lookup',
-          name: 'Lookup Field',
+          name: 'Lookup field',
           settings: {
             filter: (f: Field) => f.type === FieldType.string,
             noFieldsMessage: 'No strings fields found',
