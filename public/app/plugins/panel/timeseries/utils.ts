@@ -1,13 +1,5 @@
-import {
-  ArrayVector,
-  DataFrame,
-  Field,
-  FieldType,
-  getDisplayProcessor,
-  GrafanaTheme2,
-  isBooleanUnit,
-} from '@grafana/data';
-import { GraphFieldConfig, LineInterpolation, StackingMode } from '@grafana/schema';
+import { ArrayVector, DataFrame, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
+import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 
 // This will return a set of frames with only graphable values included
 export function prepareGraphableFields(
@@ -46,12 +38,6 @@ export function prepareGraphableFields(
               })
             ),
           };
-
-          if (copy.config.custom?.stacking?.mode === StackingMode.Percent) {
-            copy.config.unit = 'percentunit';
-            copy.display = getDisplayProcessor({ field: copy, theme });
-          }
-
           fields.push(copy);
           break; // ok
         case FieldType.boolean:
@@ -80,10 +66,6 @@ export function prepareGraphableFields(
               })
             ),
           };
-          if (!isBooleanUnit(config.unit)) {
-            config.unit = 'bool';
-            copy.display = getDisplayProcessor({ field: copy, theme });
-          }
           fields.push(copy);
           break;
         default:
