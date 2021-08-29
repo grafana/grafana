@@ -231,7 +231,7 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
     uniqueValueNames.sort();
 
     const longFrame = new MutableDataFrame({
-      name: frame.name,
+      ...frame,
       meta: { ...frame.meta, type: DataFrameType.TimeSeriesLong },
       fields: [{ name: timeField.name, type: timeField.type }],
     });
