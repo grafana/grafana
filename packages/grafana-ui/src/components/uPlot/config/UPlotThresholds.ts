@@ -33,7 +33,7 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
 
       steps = steps.map((step) => ({
         ...step,
-        value: yMin + range * (step.value / 100),
+        value: min + range * (step.value / 100),
       }));
     }
 
