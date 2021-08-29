@@ -31,12 +31,22 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
           continue;
         }
 
-        let name = field.name;
+        const sansLabels = {
+          ...field,
+          config: {
+            ...field.config,
+            // we need to clear thes for this transform as these can contain label names that we no longer want
+            displayName: undefined,
+            displayNameFromDS: undefined,
+          },
+          labels: undefined,
+        };
+        newFields.push(sansLabels);
 
         for (const labelName of Object.keys(field.labels)) {
           // if we should use this label as the value field name store it and skip adding this as a separate field
           if (options.valueLabel === labelName) {
-            name = field.labels[labelName];
+            sansLabels.name = field.labels[labelName];
             continue;
           }
 
@@ -48,19 +58,6 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
             config: {},
           });
         }
-
-        // add the value field but clear out any labels or displayName
-        newFields.push({
-          ...field,
-          name,
-          config: {
-            ...field.config,
-            // we need to clear thes for this transform as these can contain label names that we no longer want
-            displayName: undefined,
-            displayNameFromDS: undefined,
-          },
-          labels: undefined,
-        });
       }
 
       result.push({

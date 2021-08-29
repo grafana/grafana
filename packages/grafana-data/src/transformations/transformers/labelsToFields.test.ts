@@ -26,21 +26,26 @@ describe('Labels as Columns', () => {
 
     await expect(transformDataFrame([cfg], [source])).toEmitValuesWith((received) => {
       const data = received[0];
-      const result = toDataFrameDTO(data[0]);
-
-      const expected: FieldDTO[] = [
-        { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
-        {
-          name: 'location',
-          type: FieldType.string,
-          values: ['inside', 'inside'],
-          config: {},
-        },
-        { name: 'feelsLike', type: FieldType.string, values: ['ok', 'ok'], config: {} },
-        { name: 'Value', type: FieldType.number, values: [1, 2], config: {} },
-      ];
-
-      expect(result.fields).toEqual(expected);
+      expect(toSimpleObject(data[0])).toMatchInlineSnapshot(`
+        Object {
+          "Value": Array [
+            1,
+            2,
+          ],
+          "feelsLike": Array [
+            "ok",
+            "ok",
+          ],
+          "location": Array [
+            "inside",
+            "inside",
+          ],
+          "time": Array [
+            1000,
+            2000,
+          ],
+        }
+      `);
     });
   });
 
@@ -73,13 +78,13 @@ describe('Labels as Columns', () => {
 
       const expected: FieldDTO[] = [
         { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
+        { name: 'Request', type: FieldType.number, values: [1, 2], config: {} },
         {
           name: 'location',
           type: FieldType.string,
           values: ['inside', 'inside'],
           config: {},
         },
-        { name: 'Request', type: FieldType.number, values: [1, 2], config: {} },
       ];
 
       expect(result.fields).toEqual(expected);

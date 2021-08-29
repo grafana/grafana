@@ -1,3 +1,10 @@
+8.2.0...
+
+### Breaking changes
+
+The "labels to fields" transformer was changed so that label values are ordered after the value and multiple frames are not
+automatically joined into a single frame.
+
 <!-- 8.1.2 START -->
 
 # 8.1.2 (2021-08-19)
