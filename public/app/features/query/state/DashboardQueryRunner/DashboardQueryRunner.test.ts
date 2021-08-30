@@ -23,8 +23,8 @@ function getTestContext() {
   const runner = createDashboardQueryRunner({ dashboard: options.dashboard, timeSrv: timeSrvMock });
 
   const getResults: AlertStateInfo[] = [
-    { id: 1, state: AlertState.Alerting, newStateDate: '2021-01-01', dashboardId: 1, panelId: 1 },
-    { id: 2, state: AlertState.Alerting, newStateDate: '2021-02-01', dashboardId: 1, panelId: 2 },
+    { id: 1, state: AlertState.Alerting, dashboardId: 1, panelId: 1 },
+    { id: 2, state: AlertState.Alerting, dashboardId: 1, panelId: 2 },
   ];
   const getMock = jest.spyOn(backendSrv, 'get').mockResolvedValue(getResults);
   const executeAnnotationQueryMock = jest
@@ -291,7 +291,6 @@ function getExpectedForAllResult(): DashboardQueryRunnerResult {
     alertState: {
       dashboardId: 1,
       id: 1,
-      newStateDate: '2021-01-01',
       panelId: 1,
       state: AlertState.Alerting,
     },

@@ -1,10 +1,12 @@
-import { AlertState, AlertStateInfo, getDefaultTimeRange, TimeRange } from '@grafana/data';
+import { AlertState, getDefaultTimeRange, TimeRange } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardQueryRunnerOptions } from './types';
-import { AlertStatesWorker } from './AlertStatesWorker';
+import { UnifiedAlertStatesWorker } from './UnifiedAlertStatesWorker';
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import * as store from '../../../../store/store';
+import { PromAlertingRuleState, PromRuleDTO, PromRulesResponse, PromRuleType } from 'app/types/unified-alerting-dto';
+import { Annotation } from 'app/features/alerting/unified/utils/constants';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -12,7 +14,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 function getDefaultOptions(): DashboardQueryRunnerOptions {
-  const dashboard: any = { id: 'an id' };
+  const dashboard: any = { id: 'an id', uid: 'a uid' };
   const range = getDefaultTimeRange();
 
   return { dashboard, range };
@@ -28,7 +30,7 @@ function getTestContext() {
 }
 
 describe('AlertStatesWorker', () => {
-  const worker = new AlertStatesWorker();
+  const worker = new UnifiedAlertStatesWorker();
 
   describe('when canWork is called with correct props', () => {
     it('then it should return true', () => {
@@ -72,18 +74,68 @@ describe('AlertStatesWorker', () => {
   });
 
   describe('when run is called with correct props and request is successful', () => {
+    function mockPromRuleDTO(overrides: Partial<PromRuleDTO>): PromRuleDTO {
+      return {
+        alerts: [],
+        health: 'ok',
+        name: 'foo',
+        query: 'foo',
+        type: PromRuleType.Alerting,
+        state: PromAlertingRuleState.Firing,
+        labels: {},
+        annotations: {},
+        ...overrides,
+      };
+    }
     it('then it should return the correct results', async () => {
-      const getResults: AlertStateInfo[] = [
-        { id: 1, state: AlertState.Alerting, dashboardId: 1, panelId: 1 },
-        { id: 2, state: AlertState.Alerting, dashboardId: 1, panelId: 2 },
-      ];
+      const getResults: PromRulesResponse = {
+        status: 'success',
+        data: {
+          groups: [
+            {
+              name: 'group',
+              file: '',
+              interval: 1,
+              rules: [
+                mockPromRuleDTO({
+                  state: PromAlertingRuleState.Firing,
+                  annotations: {
+                    [Annotation.dashboardUID]: 'a uid',
+                    [Annotation.panelID]: '1',
+                  },
+                }),
+                mockPromRuleDTO({
+                  state: PromAlertingRuleState.Inactive,
+                  annotations: {
+                    [Annotation.dashboardUID]: 'a uid',
+                    [Annotation.panelID]: '2',
+                  },
+                }),
+                mockPromRuleDTO({
+                  state: PromAlertingRuleState.Pending,
+                  annotations: {
+                    [Annotation.dashboardUID]: 'a uid',
+                    [Annotation.panelID]: '2',
+                  },
+                }),
+              ],
+            },
+          ],
+        },
+      };
       const { getMock, options } = getTestContext();
       getMock.mockResolvedValue(getResults);
 
       await expect(worker.work(options)).toEmitValuesWith((received) => {
         expect(received).toHaveLength(1);
         const results = received[0];
-        expect(results).toEqual({ alertStates: getResults, annotations: [] });
+        expect(results).toEqual({
+          alertStates: [
+            { id: 0, state: AlertState.Alerting, dashboardId: 'an id', panelId: 1 },
+            { id: 1, state: AlertState.Pending, dashboardId: 'an id', panelId: 2 },
+          ],
+          annotations: [],
+        });
         expect(getMock).toHaveBeenCalledTimes(1);
       });
     });
