@@ -4,7 +4,7 @@ import { Icon, useStyles2, CardContainer, VerticalGroup } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { CatalogPlugin } from '../types';
 import { PluginLogo } from './PluginLogo';
-import { PluginBadges } from './PluginBadges';
+import { PluginListBadges } from './PluginListBadges';
 
 const LOGO_SIZE = '48px';
 
@@ -42,7 +42,7 @@ export function PluginListCard({ plugin, pathName }: PluginListCardProps) {
           )}
         </div>
         <p className={styles.orgName}>By {orgName}</p>
-        <PluginBadges plugin={plugin} />
+        <PluginListBadges plugin={plugin} />
       </VerticalGroup>
     </CardContainer>
   );

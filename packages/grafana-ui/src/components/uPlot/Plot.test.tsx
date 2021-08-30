@@ -2,7 +2,7 @@ import React from 'react';
 import { UPlotChart } from './Plot';
 import { render } from '@testing-library/react';
 import { ArrayVector, dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
-import { GraphFieldConfig, DrawStyle } from '@grafana/schema';
+import { GraphFieldConfig, GraphDrawStyle } from '@grafana/schema';
 import uPlot from 'uplot';
 import createMockRaf from 'mock-raf';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
@@ -42,7 +42,7 @@ const mockData = () => {
     values: new ArrayVector([10, 20, 5]),
     config: {
       custom: {
-        drawStyle: DrawStyle.Line,
+        drawStyle: GraphDrawStyle.Line,
       },
     } as FieldConfig<GraphFieldConfig>,
   });
