@@ -59,7 +59,7 @@ export async function addLibraryPanel(
 ): Promise<LibraryElementDTO> {
   const { result } = await getBackendSrv().post(`/api/library-elements`, {
     folderId,
-    name: panelSaveModel.title,
+    name: panelSaveModel.libraryPanel.name,
     model: panelSaveModel,
     kind: LibraryElementKind.Panel,
   });
@@ -72,7 +72,7 @@ export async function updateLibraryPanel(
 ): Promise<LibraryElementDTO> {
   const { result } = await getBackendSrv().patch(`/api/library-elements/${panelSaveModel.libraryPanel.uid}`, {
     folderId,
-    name: panelSaveModel.title,
+    name: panelSaveModel.libraryPanel.name,
     model: panelSaveModel,
     version: panelSaveModel.libraryPanel.version,
     kind: LibraryElementKind.Panel,
