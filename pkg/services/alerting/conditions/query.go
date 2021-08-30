@@ -113,7 +113,7 @@ func calculateInterval(timeRange plugins.DataTimeRange, model *simplejson.Json, 
 	// interval.GetIntervalFrom has two problems (but they do not affect us here):
 	// - it returns the min-interval, so it should be called interval.GetMinIntervalFrom
 	// - it falls back to model.intervalMs. it should not, because that one is the real final
-	//   interval-value calculated by the brower. but, in this specific case (old-alert),
+	//   interval-value calculated by the browser. but, in this specific case (old-alert),
 	//   that value is not set, so the fallback never happens.
 	minInterval, err := interval.GetIntervalFrom(dsInfo, model, time.Duration(0))
 
