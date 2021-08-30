@@ -37,7 +37,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/denisenkom/go-mssqldb v0.0.0-20200910202707-1e08a3fab204
 	github.com/dop251/goja v0.0.0-20210804101310-32956a348b49
-	github.com/fanyang01/radix v0.0.0-20160415095728-e1747dd9eeac
 	github.com/fatih/color v1.10.0
 	github.com/gchaincl/sqlhooks v1.3.0
 	github.com/getsentry/sentry-go v0.10.0
