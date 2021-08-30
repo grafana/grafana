@@ -65,6 +65,10 @@
   overflow: auto;
   margin: 0 auto;
 
+  @media only screen and (max-width: 769px) {
+    max-width: calc(100vw - (#{$side-menu-width + ($space-sm * 2)}));
+  }
+
   .filter-table {
     border-collapse: collapse;
   }
