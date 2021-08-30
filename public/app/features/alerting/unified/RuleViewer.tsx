@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
@@ -27,6 +27,7 @@ import { AlertLabels } from './components/AlertLabels';
 import { RuleDetailsExpression } from './components/rules/RuleDetailsExpression';
 import { RuleDetailsAnnotations } from './components/rules/RuleDetailsAnnotations';
 import * as ruleId from './utils/rule-id';
+import { AlertQuery } from '../../../types/unified-alerting-dto';
 
 type RuleViewerProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
 
@@ -41,7 +42,8 @@ export function RuleViewer({ match }: RuleViewerProps) {
   const { loading, error, result: rule } = useCombinedRule(identifier, sourceName);
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());
-  const queries = useMemo(() => alertRuleToQueries(rule), [rule]);
+  const queries2 = useMemo(() => alertRuleToQueries(rule), [rule]);
+  const [queries, setQueries] = useState<AlertQuery[]>([]);
 
   const onRunQueries = useCallback(() => {
     if (queries.length > 0) {
@@ -50,12 +52,27 @@ export function RuleViewer({ match }: RuleViewerProps) {
   }, [queries, runner]);
 
   useEffect(() => {
+    setQueries(queries2);
+  }, [queries2]);
+
+  useEffect(() => {
     onRunQueries();
   }, [onRunQueries]);
 
   useEffect(() => {
     return () => runner.destroy();
   }, [runner]);
+
+  const onChangeQuery = useCallback((query: AlertQuery) => {
+    setQueries((queries) =>
+      queries.map((q) => {
+        if (q.refId === query.refId) {
+          return query;
+        }
+        return q;
+      })
+    );
+  }, []);
 
   if (!sourceName) {
     return (
@@ -143,7 +160,11 @@ export function RuleViewer({ match }: RuleViewerProps) {
               {queries.map((query) => {
                 return (
                   <div key={query.refId} className={styles.query}>
-                    <RuleViewerVisualization query={query} data={data && data[query.refId]} />
+                    <RuleViewerVisualization
+                      query={query}
+                      data={data && data[query.refId]}
+                      onChangeQuery={onChangeQuery}
+                    />
                   </div>
                 );
               })}
