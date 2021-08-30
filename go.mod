@@ -46,13 +46,14 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/gofrs/uuid v4.0.0+incompatible
 	github.com/golang/mock v1.5.0
+	github.com/google/wire v0.5.0
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/grafana-aws-sdk v0.7.0
-	github.com/grafana/grafana-plugin-sdk-go v0.111.0
+	github.com/grafana/grafana-plugin-sdk-go v0.112.0
 	github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.1
@@ -67,6 +68,7 @@ require (
 	github.com/laher/mergefs v0.1.1
 	github.com/lib/pq v1.10.0
 	github.com/linkedin/goavro/v2 v2.10.0
+	github.com/m3db/prometheus_remote_client_golang v0.4.4 // indirect
 	github.com/magefile/mage v1.11.0
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.7
@@ -96,7 +98,7 @@ require (
 	github.com/xorcare/pointer v1.1.0
 	github.com/yudai/gojsondiff v1.0.0
 	go.opentelemetry.io/collector v0.31.0
-	go.opentelemetry.io/collector/model v0.31.0 // indirect
+	go.opentelemetry.io/collector/model v0.31.0
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f // indirect
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e

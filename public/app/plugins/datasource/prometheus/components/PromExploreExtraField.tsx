@@ -3,16 +3,20 @@ import React, { memo } from 'react';
 import { css, cx } from '@emotion/css';
 
 // Types
-import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
-import { PromQuery } from '../types';
+import { InlineFormLabel, RadioButtonGroup, Select } from '@grafana/ui';
+import { PromQuery, StepMode } from '../types';
 import { PromExemplarField } from './PromExemplarField';
 import { PrometheusDatasource } from '../datasource';
+import { STEP_MODES } from './PromQueryEditor';
+import { SelectableValue } from '@grafana/data';
 
 export interface PromExploreExtraFieldProps {
   queryType: string;
   stepValue: string;
+  stepMode: StepMode;
   query: PromQuery;
-  onStepChange: (e: React.SyntheticEvent<HTMLInputElement>) => void;
+  onStepModeChange: (option: SelectableValue<StepMode>) => void;
+  onStepIntervalChange: (e: React.SyntheticEvent<HTMLInputElement>) => void;
   onKeyDownFunc: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onQueryTypeChange: (value: string) => void;
   onChange: (value: PromQuery) => void;
@@ -20,7 +24,18 @@ export interface PromExploreExtraFieldProps {
 }
 
 export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
-  ({ queryType, stepValue, query, onChange, onStepChange, onQueryTypeChange, onKeyDownFunc, datasource }) => {
+  ({
+    queryType,
+    stepValue,
+    stepMode,
+    query,
+    onChange,
+    onStepModeChange,
+    onStepIntervalChange,
+    onQueryTypeChange,
+    onKeyDownFunc,
+    datasource,
+  }) => {
     const rangeOptions = [
       { value: 'range', label: 'Range', description: 'Run query over a range of time.' },
       {
@@ -67,11 +82,20 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
           >
             Step
           </InlineFormLabel>
+          <Select
+            menuShouldPortal
+            className={'select-container'}
+            width={16}
+            isSearchable={false}
+            options={STEP_MODES}
+            onChange={onStepModeChange}
+            value={stepMode}
+          />
           <input
             type={'text'}
             className="gf-form-input width-4"
             placeholder={'auto'}
-            onChange={onStepChange}
+            onChange={onStepIntervalChange}
             onKeyDown={onKeyDownFunc}
             value={stepValue}
           />

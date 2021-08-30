@@ -68,7 +68,7 @@ You can untoggle `Match Exact` to include metrics that have other dimensions def
 
 {{< figure src="/static/img/docs/v65/cloudwatch-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch deep linking" >}}
 
-Left-clicking a time series in the panel displays a context menu with a link to `View in CloudWatch console`. Clicking that link opens  the CloudWatch console and displays all the metrics for that query. If you are not currently logged in to the CloudWatch console, then the link opens the login page. The link is valid for any account, but it only displays the right metrics if you are logged in to the account that corresponds to the selected data source in Grafana.
+Left-clicking a time series in the panel displays a context menu with a link to `View in CloudWatch console`. Clicking that link opens the CloudWatch console and displays all the metrics for that query. If you are not currently logged in to the CloudWatch console, then the link opens the login page. The link is valid for any account, but it only displays the right metrics if you are logged in to the account that corresponds to the selected data source in Grafana.
 
 This feature is not available for metrics based on math expressions.
 
@@ -127,7 +127,7 @@ In the Datasource configuration for Graphite, you can change the type to Metrict
 Metrictank returns 2 kinds of additional metadata along its responses:
 
 - **Performance information:** Time spent querying index, fetching data, running processing functions, the number of series and points fetched, cache hits/misses, etc. This can be useful for optimizing queries or tuning the chunk cache.
-- **Lineage information about the returned series:** Which archive was fetched from (raw or rollup), which (if any) runtime consolidation was applied (using which processing function), etc.  This is very useful information for anyone trying to understand how their data was generated and why it may not look as expected.
+- **Lineage information about the returned series:** Which archive was fetched from (raw or rollup), which (if any) runtime consolidation was applied (using which processing function), etc. This is very useful information for anyone trying to understand how their data was generated and why it may not look as expected.
 
 To see the metadata response from Metrictank you can inspect the response using the Query Inspector found in the panel queries tab.
 Grafana 6.5 includes a new `Panel Inspector` in alpha/preview where you also can see the metadata response from Metrictank.
