@@ -12,7 +12,7 @@ func addKVStoreMigrations(mg *Migrator) {
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "namespace", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "key", Type: DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "value", Type: DB_Text, Nullable: false},
+			{Name: "value", Type: DB_MediumText, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
