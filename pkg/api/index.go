@@ -154,7 +154,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	}
 
 	dashboardChildNavs := []*dtos.NavLink{
-		{Text: "Home", Id: "home", Url: hs.Cfg.AppSubURL + "/", Icon: "home-alt", HideFromTabs: true},
+		// {Text: "Home", Id: "home", Url: hs.Cfg.AppSubURL + "/", Icon: "home-alt", HideFromTabs: true},
 		{Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true},
 		{Text: "Manage", Id: "manage-dashboards", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap"},
 		{Text: "Playlists", Id: "playlists", Url: hs.Cfg.AppSubURL + "/playlists", Icon: "presentation-play"},
@@ -177,73 +177,73 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	}
 
 	navTree = append(navTree, &dtos.NavLink{
-		Text:       "Dashboards",
+		Text:       "Dashboard",
 		Id:         "dashboards",
 		SubTitle:   "Manage dashboards and folders",
-		Icon:       "apps",
+		Icon:       "home-alt",
 		Url:        hs.Cfg.AppSubURL + "/",
 		SortWeight: dtos.WeightDashboard,
 		Children:   dashboardChildNavs,
 	})
 
-	canExplore := func(context *models.ReqContext) bool {
-		return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit
-	}
+	// canExplore := func(context *models.ReqContext) bool {
+	// 	return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit
+	// }
 
-	if setting.ExploreEnabled && hasAccess(canExplore, ac.ActionDatasourcesExplore) {
-		navTree = append(navTree, &dtos.NavLink{
-			Text:       "Explore",
-			Id:         "explore",
-			SubTitle:   "Explore your data",
-			Icon:       "compass",
-			SortWeight: dtos.WeightExplore,
-			Url:        hs.Cfg.AppSubURL + "/explore",
-		})
-	}
+	// if setting.ExploreEnabled && hasAccess(canExplore, ac.ActionDatasourcesExplore) {
+	// 	navTree = append(navTree, &dtos.NavLink{
+	// 		Text:       "Explore",
+	// 		Id:         "explore",
+	// 		SubTitle:   "Explore your data",
+	// 		Icon:       "compass",
+	// 		SortWeight: dtos.WeightExplore,
+	// 		Url:        hs.Cfg.AppSubURL + "/explore",
+	// 	})
+	// }
 
 	if c.IsSignedIn {
 		navTree = append(navTree, hs.getProfileNode(c))
 	}
 
-	if setting.AlertingEnabled {
-		alertChildNavs := []*dtos.NavLink{
-			{Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul"},
-		}
-		if hs.Cfg.IsNgAlertEnabled() {
-			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Notifications", Id: "notifications", Url: hs.Cfg.AppSubURL + "/alerting/alertmanager", Icon: "layer-group"})
-			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: hs.Cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
-		}
-		if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
-			if hs.Cfg.IsNgAlertEnabled() {
-				alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-					Text: "Contact points", Id: "receivers", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
-					Icon: "comment-alt-share",
-				})
-				alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Notification policies", Id: "am-routes", Url: hs.Cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
-			} else {
-				alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-					Text: "Notification channels", Id: "channels", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
-					Icon: "comment-alt-share",
-				})
-			}
-		}
-		if c.OrgRole == models.ROLE_ADMIN {
-			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-				Text: "Admin", Id: "alerting-admin", Url: hs.Cfg.AppSubURL + "/alerting/admin",
-				Icon: "cog",
-			})
-		}
+	// if setting.AlertingEnabled {
+	// 	alertChildNavs := []*dtos.NavLink{
+	// 		{Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul"},
+	// 	}
+	// 	if hs.Cfg.IsNgAlertEnabled() {
+	// 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Notifications", Id: "notifications", Url: hs.Cfg.AppSubURL + "/alerting/alertmanager", Icon: "layer-group"})
+	// 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: hs.Cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
+	// 	}
+	// 	if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
+	// 		if hs.Cfg.IsNgAlertEnabled() {
+	// 			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+	// 				Text: "Contact points", Id: "receivers", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
+	// 				Icon: "comment-alt-share",
+	// 			})
+	// 			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Notification policies", Id: "am-routes", Url: hs.Cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
+	// 		} else {
+	// 			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+	// 				Text: "Notification channels", Id: "channels", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
+	// 				Icon: "comment-alt-share",
+	// 			})
+	// 		}
+	// 	}
+	// 	if c.OrgRole == models.ROLE_ADMIN {
+	// 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+	// 			Text: "Admin", Id: "alerting-admin", Url: hs.Cfg.AppSubURL + "/alerting/admin",
+	// 			Icon: "cog",
+	// 		})
+	// 	}
 
-		navTree = append(navTree, &dtos.NavLink{
-			Text:       "Alerting",
-			SubTitle:   "Alert rules and notifications",
-			Id:         "alerting",
-			Icon:       "bell",
-			Url:        hs.Cfg.AppSubURL + "/alerting/list",
-			Children:   alertChildNavs,
-			SortWeight: dtos.WeightAlerting,
-		})
-	}
+	// 	navTree = append(navTree, &dtos.NavLink{
+	// 		Text:       "Alerting",
+	// 		SubTitle:   "Alert rules and notifications",
+	// 		Id:         "alerting",
+	// 		Icon:       "bell",
+	// 		Url:        hs.Cfg.AppSubURL + "/alerting/list",
+	// 		Children:   alertChildNavs,
+	// 		SortWeight: dtos.WeightAlerting,
+	// 	})
+	// }
 
 	appLinks, err := hs.getAppLinks(c)
 	if err != nil {
@@ -466,8 +466,8 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		NewGrafanaVersionExists: hs.PluginManager.GrafanaHasUpdate(),
 		AppName:                 setting.ApplicationName,
 		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
-		FavIcon:                 "public/img/fav32.png",
-		AppleTouchIcon:          "public/img/apple-touch-icon.png",
+		FavIcon:                 "public/img/fav32_cw.png",
+		AppleTouchIcon:          "public/img/apple-touch-icon-cw.png",
 		AppTitle:                "CoreWatts",
 		NavTree:                 navTree,
 		Sentry:                  &hs.Cfg.Sentry,

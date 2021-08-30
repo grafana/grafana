@@ -209,16 +209,18 @@ li.sidemenu-org-switcher {
   min-height: $navbarHeight;
   position: relative;
   height: $navbarHeight - 1px;
+  background-color: #35086D;
 
   &:hover {
     background: lightOrDark($side-menu-bg, $gray25);
   }
 
   img {
-    width: 26px;
+    width: 32px;
     position: relative;
     top: 5px;
-    left: 8px;
+    left: 3px;
+    background: $blue-base;
   }
 }
 

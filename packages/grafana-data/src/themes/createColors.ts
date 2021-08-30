@@ -142,7 +142,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   action = {
     hover: `rgba(${this.whiteBase}, 0.08)`,
-    panelHeaderHover: 'rgba(218, 232, 238, 1)',
+    panelHeaderHover: 'rgba(219, 218, 238, 1)',
     selected: `rgba(${this.whiteBase}, 0.12)`,
     focus: `rgba(${this.whiteBase}, 0.16)`,
     hoverOpacity: 0.08,
@@ -224,7 +224,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   action = {
     hover: `rgba(${this.blackBase}, 0.04)`,
-    panelHeaderHover: 'rgba(218, 232, 238, 1)',
+    panelHeaderHover: 'rgba(219, 218, 238, 1)',
     selected: `rgba(${this.blackBase}, 0.08)`,
     hoverOpacity: 0.08,
     focus: `rgba(${this.blackBase}, 0.12)`,
