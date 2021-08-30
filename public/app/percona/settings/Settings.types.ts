@@ -67,6 +67,8 @@ export interface AdvancedChangePayload extends AdvancedPayload {
   stt_check_intervals?: SttCheckIntervalsPayload;
   enable_dbaas?: boolean;
   disable_dbaas?: boolean;
+  enable_updates?: boolean;
+  disable_updates?: boolean;
 }
 
 export interface MetricsResolutionsPayload {
