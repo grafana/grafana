@@ -154,6 +154,7 @@ export class TablePanel extends Component<Props> {
     return { cells: undefined };
   }
 
+  // get the footer cells from data provided by another frame
   getProvidedFooter(frame: DataFrame): Footer {
     const { options, data } = this.props;
 
@@ -310,9 +311,6 @@ export class TablePanel extends Component<Props> {
           value: index,
         };
       });
-
-      // TODO: something like this to allow passing in pre-calculated footer values?
-      // const footer = data.series.find((f) => f.meta?.custom?.['footer'] !== undefined);
 
       return (
         <div className={tableStyles.wrapper}>
