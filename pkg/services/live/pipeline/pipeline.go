@@ -27,7 +27,7 @@ func New(managedStream *managedstream.Runner, node *centrifuge.Node) (*Pipeline,
 		managedStream: managedStream,
 	}
 	logger.Info("Live pipeline initialization")
-	storage := &hardcodedStorage{
+	storage := &fileStorage{
 		node:          node,
 		managedStream: p.managedStream,
 		frameStorage:  NewFrameStorage(),
