@@ -21,10 +21,9 @@ import {
   UPlotConfigBuilder,
   UPlotConfigPrepFn,
   VizLegendItem,
-  VizLegendOptions,
 } from '@grafana/ui';
 import { getConfig, TimelineCoreOptions } from './timeline';
-import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
+import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import { TimelineFieldConfig, TimelineOptions } from './types';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
@@ -168,6 +167,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     placement: AxisPlacement.Bottom,
     timeZone,
     theme,
+    grid: { show: true },
   });
 
   builder.addAxis({
@@ -176,7 +176,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     placement: AxisPlacement.Left,
     splits: coreConfig.ySplits,
     values: coreConfig.yValues,
-    grid: false,
+    grid: { show: false },
     ticks: false,
     gap: 16,
     theme,

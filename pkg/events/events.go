@@ -46,3 +46,19 @@ type UserUpdated struct {
 	Login     string    `json:"login"`
 	Email     string    `json:"email"`
 }
+
+type DataSourceDeleted struct {
+	Timestamp time.Time `json:"timestamp"`
+	Name      string    `json:"name"`
+	ID        int64     `json:"id"`
+	UID       string    `json:"uid"`
+	OrgID     int64     `json:"org_id"`
+}
+
+type DataSourceCreated struct {
+	Timestamp time.Time `json:"timestamp"`
+	Name      string    `json:"name"`
+	ID        int64     `json:"id"`
+	UID       string    `json:"uid"`
+	OrgID     int64     `json:"org_id"`
+}
