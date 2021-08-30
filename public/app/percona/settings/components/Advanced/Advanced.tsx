@@ -112,6 +112,7 @@ export const Advanced: FC<AdvancedProps> = ({
       rareInterval,
       standardInterval,
       frequentInterval,
+      updates,
     } = values;
     const sttCheckIntervals = {
       rare_interval: `${convertHoursStringToSeconds(rareInterval)}s`,
@@ -136,6 +137,8 @@ export const Advanced: FC<AdvancedProps> = ({
       disable_backup_management: !backup,
       enable_dbaas: dbaas,
       disable_dbaas: !dbaas,
+      enable_updates: updates,
+      disable_updates: !updates,
     };
     const onError = () => FEATURE_KEYS.forEach((key) => form.change(key, initialValues[key]));
 
@@ -189,8 +192,6 @@ export const Advanced: FC<AdvancedProps> = ({
               tooltip={updatesTooltip}
               tooltipLinkText={tooltipLinkText}
               link={updatesLink}
-              className={styles.switchDisabled}
-              disabled
               dataQa="advanced-updates"
               component={SwitchRow}
             />
