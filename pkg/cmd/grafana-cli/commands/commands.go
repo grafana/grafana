@@ -4,13 +4,13 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/urfave/cli/v2"
@@ -21,14 +21,13 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		cmd := &utils.ContextCommandLine{Context: context}
 		debug := cmd.Bool("debug")
 
-		cfg := setting.NewCfg()
-
 		configOptions := strings.Split(cmd.String("configOverrides"), " ")
-		if err := cfg.Load(&setting.CommandLineArgs{
+		cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 			Config:   cmd.ConfigFile(),
 			HomePath: cmd.HomePath(),
 			Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
-		}); err != nil {
+		})
+		if err != nil {
 			return errutil.Wrap("failed to load configuration", err)
 		}
 
@@ -36,14 +35,12 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 			cfg.LogConfigSources()
 		}
 
-		engine := &sqlstore.SQLStore{}
-		engine.Cfg = cfg
-		engine.Bus = bus.GetBus()
-		if err := engine.Init(); err != nil {
-			return errutil.Wrap("failed to initialize SQL engine", err)
+		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{})
+		if err != nil {
+			return errutil.Wrap("failed to initialize SQL store", err)
 		}
 
-		if err := command(cmd, engine); err != nil {
+		if err := command(cmd, sqlStore); err != nil {
 			return err
 		}
 
@@ -61,6 +58,12 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 
 		logger.Info(color.GreenString("Please restart Grafana after installing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
 		return nil
+	}
+}
+
+func runCueCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) error {
+	return func(context *cli.Context) error {
+		return command(&utils.ContextCommandLine{Context: context})
 	}
 }
 
@@ -138,7 +141,7 @@ var cueCommands = []*cli.Command{
 	{
 		Name:   "validate-schema",
 		Usage:  "validate known *.cue files in the Grafana project",
-		Action: runPluginCommand(cmd.validateScuemata),
+		Action: runCueCommand(cmd.validateScuemata),
 		Description: `validate-schema checks that all CUE schema files are valid with respect
 to basic standards - valid CUE, valid scuemata, etc. Note that this
 command checks only paths that existed when grafana-cli was compiled,
@@ -153,7 +156,7 @@ so must be recompiled to validate newly-added CUE files.`,
 	{
 		Name:   "validate-resource",
 		Usage:  "validate resource files (e.g. dashboard JSON) against schema",
-		Action: runPluginCommand(cmd.validateResources),
+		Action: runCueCommand(cmd.validateResources),
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "dashboard",

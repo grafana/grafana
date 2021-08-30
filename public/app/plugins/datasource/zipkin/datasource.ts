@@ -1,5 +1,7 @@
+import { lastValueFrom, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
 import {
-  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
@@ -7,37 +9,44 @@ import {
   FieldType,
   MutableDataFrame,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+
 import { serializeParams } from '../../../core/utils/fetch';
 import { apiPrefix } from './constants';
-import { ZipkinSpan } from './types';
-import { transformResponse } from './utils/transforms';
+import { ZipkinQuery, ZipkinSpan } from './types';
 import { createGraphFrames } from './utils/graphTransform';
-
-export interface ZipkinQuery extends DataQuery {
-  query: string;
-}
+import { transformResponse } from './utils/transforms';
 
 export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
+  uploadedJson: string | ArrayBuffer | null = null;
   constructor(private instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
   }
 
   query(options: DataQueryRequest<ZipkinQuery>): Observable<DataQueryResponse> {
-    const traceId = options.targets[0]?.query;
-    if (traceId) {
-      return this.request<ZipkinSpan[]>(`${apiPrefix}/trace/${encodeURIComponent(traceId)}`).pipe(
+    const target = options.targets[0];
+    if (target.queryType === 'upload') {
+      if (!this.uploadedJson) {
+        return of({ data: [] });
+      }
+
+      try {
+        const traceData = JSON.parse(this.uploadedJson as string);
+        return of(responseToDataQueryResponse({ data: traceData }));
+      } catch (error) {
+        return of({ error: { message: 'JSON is not valid Zipkin format' }, data: [] });
+      }
+    }
+
+    if (target.query) {
+      return this.request<ZipkinSpan[]>(`${apiPrefix}/trace/${encodeURIComponent(target.query)}`).pipe(
         map(responseToDataQueryResponse)
       );
-    } else {
-      return of(emptyDataQueryResponse);
     }
+    return of(emptyDataQueryResponse);
   }
 
   async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
-    const res = await this.request(url, params, { hideFromInspector: true }).toPromise();
+    const res = await lastValueFrom(this.request(url, params, { hideFromInspector: true }));
     return res.data;
   }
 

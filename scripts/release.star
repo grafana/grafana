@@ -74,8 +74,8 @@ def get_steps(edition, ver_mode):
     steps = [
         codespell_step(),
         shellcheck_step(),
-        test_backend_step(edition=edition, tries=tries),
         lint_backend_step(edition=edition),
+        test_backend_step(edition=edition, tries=tries),
         test_frontend_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
@@ -87,8 +87,8 @@ def get_steps(edition, ver_mode):
     if include_enterprise2:
         edition2 = 'enterprise2'
         steps.extend([
-            test_backend_step(edition=edition2, tries=tries),
             lint_backend_step(edition=edition2),
+            test_backend_step(edition=edition2, tries=tries),
             build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
         ])
 
@@ -123,9 +123,9 @@ def get_steps(edition, ver_mode):
         edition2 = 'enterprise2'
         steps.extend([
             package_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
-            upload_cdn(edition=edition2),
             e2e_tests_server_step(edition=edition2, port=3002),
             e2e_tests_step(edition=edition2, port=3002, tries=3),
+            upload_cdn(edition=edition2),
         ])
         if should_upload:
             steps.append(upload_packages_step(edition=edition2, ver_mode=ver_mode))

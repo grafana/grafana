@@ -23,9 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -111,7 +109,7 @@ func TestMiddlewareContext(t *testing.T) {
 				Settings: map[string]interface{}{},
 				NavTree:  []*dtos.NavLink{},
 			}
-			t.Log("Calling HTML", "data", data, "render", c.Render)
+			t.Log("Calling HTML", "data", data)
 			c.HTML(200, "index-template", data)
 			t.Log("Returned HTML with code 200")
 		}
@@ -632,11 +630,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 
 		sc.m = macaron.New()
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
-		sc.m.Use(AddCSPHeader(cfg, logger))
-		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
-			Directory: viewsPath,
-			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-		}))
+		sc.m.UseMiddleware(AddCSPHeader(cfg, logger))
+		sc.m.UseMiddleware(macaron.Renderer(viewsPath, "[[", "]]"))
 
 		ctxHdlr := getContextHandler(t, cfg)
 		sc.sqlStore = ctxHdlr.SQLStore
@@ -672,47 +667,18 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	t.Helper()
 
 	sqlStore := sqlstore.InitTestDB(t)
-	remoteCacheSvc := &remotecache.RemoteCache{}
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
 		Name: "database",
 	}
+	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore)
+	require.NoError(t, err)
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
-	ctxHdlr := &contexthandler.ContextHandler{}
-
-	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
-		{
-			Name:     sqlstore.ServiceName,
-			Instance: sqlStore,
-		},
-		{
-			Name:     remotecache.ServiceName,
-			Instance: remoteCacheSvc,
-		},
-		{
-			Name:     auth.ServiceName,
-			Instance: userAuthTokenSvc,
-		},
-		{
-			Name:     rendering.ServiceName,
-			Instance: renderSvc,
-		},
-		{
-			Name:     jwt.ServiceName,
-			Instance: authJWTSvc,
-		},
-		{
-			Name:     contexthandler.ServiceName,
-			Instance: ctxHdlr,
-		},
-	})
-	require.NoError(t, err)
-
-	return ctxHdlr
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore)
 }
 
 type fakeRenderService struct {

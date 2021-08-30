@@ -29,7 +29,7 @@ export const DEFAULT_STEP_MODE: SelectableValue<StepMode> = {
   label: 'Minimum',
 };
 
-const STEP_MODES: Array<SelectableValue<StepMode>> = [
+export const STEP_MODES: Array<SelectableValue<StepMode>> = [
   DEFAULT_STEP_MODE,
   {
     value: 'max',
@@ -58,7 +58,13 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
   constructor(props: PromQueryEditorProps) {
     super(props);
     // Use default query to prevent undefined input values
-    const defaultQuery: Partial<PromQuery> = { expr: '', legendFormat: '', interval: '', exemplar: true };
+    const defaultQuery: Partial<PromQuery> = {
+      expr: '',
+      legendFormat: '',
+      interval: '',
+      exemplar: true,
+      stepMode: DEFAULT_STEP_MODE.value,
+    };
     const query = Object.assign({}, defaultQuery, props.query);
     this.query = query;
     // Query target properties that are fully controlled inputs
@@ -178,6 +184,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 Step
               </InlineFormLabel>
               <Select
+                menuShouldPortal
                 className={'select-container'}
                 width={16}
                 isSearchable={false}
@@ -197,6 +204,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
             <div className="gf-form">
               <div className="gf-form-label">Resolution</div>
               <Select
+                menuShouldPortal
                 isSearchable={false}
                 options={INTERVAL_FACTOR_OPTIONS}
                 onChange={this.onIntervalFactorChange}
@@ -206,6 +214,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
             <div className="gf-form">
               <div className="gf-form-label width-7">Format</div>
               <Select
+                menuShouldPortal
                 className={'select-container'}
                 width={16}
                 isSearchable={false}

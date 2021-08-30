@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -18,18 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
 	remotecache.Register(&RenderUser{})
-	registry.Register(&registry.Descriptor{
-		Name:         ServiceName,
-		Instance:     &RenderingService{},
-		InitPriority: registry.High,
-	})
 }
 
 const ServiceName = "RenderingService"
@@ -47,42 +42,52 @@ type RenderingService struct {
 	renderAction    renderFunc
 	renderCSVAction renderCSVFunc
 	domain          string
-	inProgressCount int
+	inProgressCount int32
 	version         string
 
-	Cfg                *setting.Cfg             `inject:""`
-	RemoteCacheService *remotecache.RemoteCache `inject:""`
-	PluginManager      plugins.Manager          `inject:""`
+	Cfg                *setting.Cfg
+	RemoteCacheService *remotecache.RemoteCache
+	PluginManager      plugins.Manager
 }
 
-func (rs *RenderingService) Init() error {
-	rs.log = log.New("rendering")
-
+func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm plugins.Manager) (*RenderingService, error) {
 	// ensure ImagesDir exists
-	err := os.MkdirAll(rs.Cfg.ImagesDir, 0700)
+	err := os.MkdirAll(cfg.ImagesDir, 0700)
 	if err != nil {
-		return fmt.Errorf("failed to create images directory %q: %w", rs.Cfg.ImagesDir, err)
+		return nil, fmt.Errorf("failed to create images directory %q: %w", cfg.ImagesDir, err)
 	}
 
 	// ensure CSVsDir exists
-	err = os.MkdirAll(rs.Cfg.CSVsDir, 0700)
+	err = os.MkdirAll(cfg.CSVsDir, 0700)
 	if err != nil {
-		return fmt.Errorf("failed to create CSVs directory %q: %w", rs.Cfg.CSVsDir, err)
+		return nil, fmt.Errorf("failed to create CSVs directory %q: %w", cfg.CSVsDir, err)
 	}
 
+	var domain string
 	// set value used for domain attribute of renderKey cookie
 	switch {
-	case rs.Cfg.RendererUrl != "":
+	case cfg.RendererUrl != "":
 		// RendererCallbackUrl has already been passed, it won't generate an error.
-		u, _ := url.Parse(rs.Cfg.RendererCallbackUrl)
-		rs.domain = u.Hostname()
-	case rs.Cfg.HTTPAddr != setting.DefaultHTTPAddr:
-		rs.domain = rs.Cfg.HTTPAddr
+		u, err := url.Parse(cfg.RendererCallbackUrl)
+		if err != nil {
+			return nil, err
+		}
+
+		domain = u.Hostname()
+	case cfg.HTTPAddr != setting.DefaultHTTPAddr:
+		domain = cfg.HTTPAddr
 	default:
-		rs.domain = "localhost"
+		domain = "localhost"
 	}
 
-	return nil
+	s := &RenderingService{
+		Cfg:                cfg,
+		RemoteCacheService: remoteCache,
+		PluginManager:      pm,
+		log:                log.New("rendering"),
+		domain:             domain,
+	}
+	return s, nil
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {
@@ -179,7 +184,7 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 }
 
 func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
-	if rs.inProgressCount > opts.ConcurrentLimit {
+	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
 		return &RenderResult{
 			FilePath: filepath.Join(setting.HomePath, "public/img/rendering_limit.png"),
 		}, nil
@@ -204,12 +209,10 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	defer rs.deleteRenderKey(renderKey)
 
 	defer func() {
-		rs.inProgressCount--
-		metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
+		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
 	}()
 
-	rs.inProgressCount++
-	metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
+	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
 	return rs.renderAction(ctx, renderKey, opts)
 }
 
@@ -224,7 +227,7 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts) (*Rende
 }
 
 func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error) {
-	if rs.inProgressCount > opts.ConcurrentLimit {
+	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
 		return nil, ErrConcurrentLimitReached
 	}
 
@@ -241,12 +244,10 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts) (*Rende
 	defer rs.deleteRenderKey(renderKey)
 
 	defer func() {
-		rs.inProgressCount--
-		metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
+		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
 	}()
 
-	rs.inProgressCount++
-	metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
+	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
 	return rs.renderCSVAction(ctx, renderKey, opts)
 }
 

@@ -45,6 +45,7 @@ Depending on which LDAP server you're using and how that's configured your Grafa
 See [configuration examples](#configuration-examples) for more information.
 
 **LDAP specific configuration file (ldap.toml) example:**
+
 ```bash
 [[servers]]
 # Ldap server host (specify multiple hosts space separated)
@@ -104,12 +105,11 @@ Within this view, you'll be able to see which LDAP servers are currently reachab
 
 {{< figure src="/static/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
 
-
 To use the debug view:
 
- 1. Type the username of a user that exists within any of your LDAP server(s)
- 1. Then, press "Run"
- 1. If the user is found within any of your LDAP instances, the mapping information is displayed
+1.  Type the username of a user that exists within any of your LDAP server(s)
+1.  Then, press "Run"
+1.  If the user is found within any of your LDAP instances, the mapping information is displayed
 
 {{< figure src="/static/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
 
@@ -138,6 +138,7 @@ In this case you skip providing a `bind_password` and instead provide a `bind_dn
 The search filter and search bases settings are still needed to perform the LDAP search to retrieve the other LDAP information (like LDAP groups and email).
 
 ### POSIX schema
+
 If your LDAP server does not support the memberOf attribute add these options:
 
 ```bash
@@ -151,13 +152,14 @@ group_search_filter_user_attribute = "uid"
 
 ### Group Mappings
 
-In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organization and role.  These will be synced every time the user logs in, with LDAP being
+In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organization and role. These will be synced every time the user logs in, with LDAP being
 the authoritative source. So, if you change a user's role in the Grafana Org. Users page, this change will be reset the next time the user logs in. If you
 change the LDAP groups of a user, the change will take effect the next time the user logs in.
 
 The first group mapping that an LDAP user is matched to will be used for the sync. If you have LDAP users that fit multiple mappings, the topmost mapping in the TOML configuration will be used.
 
 **LDAP specific configuration file (ldap.toml) example:**
+
 ```bash
 [[servers]]
 # other settings omitted for clarity
@@ -180,12 +182,12 @@ group_dn = "*"
 org_role = "Viewer"
 ```
 
-Setting | Required | Description | Default
------------- | ------------ | ------------- | -------------
-`group_dn` | Yes | LDAP distinguished name (DN) of LDAP group. If you want to match all (or no LDAP groups) then you can use wildcard (`"*"`) |
-`org_role` | Yes | Assign users of `group_dn` the organization role `"Admin"`, `"Editor"` or `"Viewer"` |
-`org_id` | No | The Grafana organization database id. Setting this allows for multiple group_dn's to be assigned to the same `org_role` provided the `org_id` differs | `1` (default org id)
-`grafana_admin` | No | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organizations and users. Available in Grafana v5.3 and above | `false`
+| Setting         | Required | Description                                                                                                                                                              | Default              |
+| --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
+| `group_dn`      | Yes      | LDAP distinguished name (DN) of LDAP group. If you want to match all (or no LDAP groups) then you can use wildcard (`"*"`)                                               |
+| `org_role`      | Yes      | Assign users of `group_dn` the organization role `"Admin"`, `"Editor"` or `"Viewer"`                                                                                     |
+| `org_id`        | No       | The Grafana organization database id. Setting this allows for multiple group_dn's to be assigned to the same `org_role` provided the `org_id` differs                    | `1` (default org id) |
+| `grafana_admin` | No       | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organizations and users. Available in Grafana v5.3 and above | `false`              |
 
 ### Nested/recursive group membership
 
@@ -193,6 +195,7 @@ Users with nested/recursive group membership must have an LDAP server that suppo
 and configure `group_search_filter` in a way that it returns the groups the submitted username is a member of.
 
 To configure `group_search_filter`:
+
 - You can set `group_search_base_dns` to specify where the matching groups are defined.
 - If you do not use `group_search_base_dns`, then the previously defined `search_base_dns` is used.
 
@@ -224,6 +227,7 @@ For troubleshooting, by changing `member_of` in `[servers.attributes]` to "dn" i
 [OpenLDAP](http://www.openldap.org/) is an open source directory service.
 
 **LDAP specific configuration file (ldap.toml):**
+
 ```bash
 [[servers]]
 host = "127.0.0.1"
@@ -248,6 +252,7 @@ email =  "email"
 Grafana does support receiving information from multiple LDAP servers.
 
 **LDAP specific configuration file (ldap.toml):**
+
 ```bash
 # --- First LDAP Server ---
 
@@ -300,7 +305,7 @@ org_role = "Viewer"
 
 ### Active Directory
 
-[Active Directory](https://technet.microsoft.com/en-us/library/hh831484(v=ws.11).aspx) is a directory service which is commonly used in Windows environments.
+[Active Directory](<https://technet.microsoft.com/en-us/library/hh831484(v=ws.11).aspx>) is a directory service which is commonly used in Windows environments.
 
 Assuming the following Active Directory server setup:
 
@@ -309,6 +314,7 @@ Assuming the following Active Directory server setup:
 - DNS name: `corp.local`
 
 **LDAP specific configuration file (ldap.toml):**
+
 ```bash
 [[servers]]
 host = "10.0.0.1"
@@ -327,12 +333,10 @@ email =  "mail"
 # [[servers.group_mappings]] omitted for clarity
 ```
 
-
-
 #### Port requirements
 
 In above example SSL is enabled and an encrypted port have been configured. If your Active Directory don't support SSL please change `enable_ssl = false` and `port = 389`.
-Please inspect your Active Directory configuration and documentation to find the correct settings. For more information about Active Directory and port requirements see [link](https://technet.microsoft.com/en-us/library/dd772723(v=ws.10)).
+Please inspect your Active Directory configuration and documentation to find the correct settings. For more information about Active Directory and port requirements see [link](<https://technet.microsoft.com/en-us/library/dd772723(v=ws.10)>).
 
 ## Troubleshooting
 

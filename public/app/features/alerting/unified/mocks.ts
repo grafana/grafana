@@ -1,5 +1,14 @@
 import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta, ScopedVars } from '@grafana/data';
-import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+import {
+  GrafanaAlertStateDecision,
+  GrafanaRuleDefinition,
+  PromAlertingRuleState,
+  PromRuleType,
+  RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
+  RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
@@ -17,7 +26,7 @@ let nextDataSourceId = 1;
 export const mockDataSource = (
   partial: Partial<DataSourceInstanceSettings> = {},
   meta: Partial<DataSourcePluginMeta> = {}
-): DataSourceInstanceSettings => {
+): DataSourceInstanceSettings<any> => {
   const id = partial.id ?? nextDataSourceId++;
 
   return {
@@ -25,6 +34,7 @@ export const mockDataSource = (
     uid: `mock-ds-${nextDataSourceId}`,
     type: 'prometheus',
     name: `Prometheus-${id}`,
+    access: 'proxy',
     jsonData: {},
     meta: ({
       info: {
@@ -50,6 +60,57 @@ export const mockPromAlert = (partial: Partial<Alert> = {}): Alert => ({
   },
   state: PromAlertingRuleState.Firing,
   value: '1e+00',
+  ...partial,
+});
+
+export const mockRulerGrafanaRule = (
+  partial: Partial<RulerGrafanaRuleDTO> = {},
+  partialDef: Partial<GrafanaRuleDefinition> = {}
+): RulerGrafanaRuleDTO => {
+  return {
+    for: '1m',
+    grafana_alert: {
+      uid: '123',
+      title: 'myalert',
+      namespace_uid: '123',
+      namespace_id: 1,
+      condition: 'A',
+      no_data_state: GrafanaAlertStateDecision.Alerting,
+      exec_err_state: GrafanaAlertStateDecision.Alerting,
+      data: [
+        {
+          datasourceUid: '123',
+          refId: 'A',
+          queryType: 'huh',
+          model: {} as any,
+        },
+      ],
+      ...partialDef,
+    },
+    annotations: {
+      message: 'alert with severity "{{.warning}}}"',
+    },
+    labels: {
+      severity: 'warning',
+    },
+    ...partial,
+  };
+};
+
+export const mockRulerAlertingRule = (partial: Partial<RulerAlertingRuleDTO> = {}): RulerAlertingRuleDTO => ({
+  alert: 'alert1',
+  expr: 'up = 1',
+  labels: {
+    severity: 'warning',
+  },
+  annotations: {
+    summary: 'test alert',
+  },
+});
+
+export const mockRulerRuleGroup = (partial: Partial<RulerRuleGroupDTO> = {}): RulerRuleGroupDTO => ({
+  name: 'group1',
+  rules: [mockRulerAlertingRule()],
   ...partial,
 });
 
@@ -136,7 +197,7 @@ export const mockAlertGroup = (partial: Partial<AlertmanagerGroup> = {}): Alertm
       mockAlertmanagerAlert(),
       mockAlertmanagerAlert({
         status: { state: AlertState.Suppressed, silencedBy: ['123456abcdef'], inhibitedBy: [] },
-        labels: { severity: 'warning', region: 'US-Central', foo: 'bar' },
+        labels: { severity: 'warning', region: 'US-Central', foo: 'bar', ...partial.labels },
       }),
     ],
     ...partial,
@@ -308,4 +369,27 @@ export const someCloudAlertManagerConfig: AlertManagerCortexConfig = {
       },
     ],
   },
+};
+
+export const somePromRules = (dataSourceName = 'Prometheus'): RuleNamespace[] => [
+  {
+    dataSourceName,
+    name: 'namespace1',
+    groups: [
+      mockPromRuleGroup({ name: 'group1', rules: [mockPromAlertingRule({ name: 'alert1' })] }),
+      mockPromRuleGroup({ name: 'group2', rules: [mockPromAlertingRule({ name: 'alert2' })] }),
+    ],
+  },
+  {
+    dataSourceName,
+    name: 'namespace2',
+    groups: [mockPromRuleGroup({ name: 'group3', rules: [mockPromAlertingRule({ name: 'alert3' })] })],
+  },
+];
+export const someRulerRules: RulerRulesConfigDTO = {
+  namespace1: [
+    mockRulerRuleGroup({ name: 'group1', rules: [mockRulerAlertingRule({ alert: 'alert1' })] }),
+    mockRulerRuleGroup({ name: 'group2', rules: [mockRulerAlertingRule({ alert: 'alert2' })] }),
+  ],
+  namespace2: [mockRulerRuleGroup({ name: 'group3', rules: [mockRulerAlertingRule({ alert: 'alert3' })] })],
 };

@@ -10,23 +10,21 @@ import {
   FieldColorModeId,
   FieldConfigSource,
   getFrameDisplayName,
-  GrafanaTheme,
+  GrafanaTheme2,
   TimeZone,
 } from '@grafana/data';
 import {
-  DrawStyle,
   Icon,
-  LegendDisplayMode,
   PanelContext,
   PanelContextProvider,
   SeriesVisibilityChangeMode,
   TimeSeries,
-  TooltipDisplayMode,
   TooltipPlugin,
-  useStyles,
+  useStyles2,
   useTheme2,
   ZoomPlugin,
 } from '@grafana/ui';
+import { LegendDisplayMode, TooltipDisplayMode, GraphDrawStyle } from '@grafana/schema';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { ContextMenuPlugin } from 'app/plugins/panel/timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from 'app/plugins/panel/timeseries/plugins/ExemplarsPlugin';
@@ -85,7 +83,7 @@ export function ExploreGraphNGPanel({
         mode: FieldColorModeId.PaletteClassic,
       },
       custom: {
-        drawStyle: DrawStyle.Line,
+        drawStyle: GraphDrawStyle.Line,
         fillOpacity: 0,
         pointSize: 5,
       },
@@ -93,7 +91,7 @@ export function ExploreGraphNGPanel({
     overrides: [],
   });
 
-  const style = useStyles(getStyles);
+  const style = useStyles2(getStyles);
   const timeRange = {
     from: dateTime(absoluteRange.from),
     to: dateTime(absoluteRange.to),
@@ -188,24 +186,24 @@ export function ExploreGraphNGPanel({
   );
 }
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   timeSeriesDisclaimer: css`
     label: time-series-disclaimer;
     width: 300px;
-    margin: ${theme.spacing.sm} auto;
+    margin: ${theme.spacing(1)} auto;
     padding: 10px 0;
-    border-radius: ${theme.border.radius.md};
+    border-radius: ${theme.spacing(2)};
     text-align: center;
-    background-color: ${theme.colors.bg1};
+    background-color: ${theme.colors.background.primary};
   `,
   disclaimerIcon: css`
     label: disclaimer-icon;
-    color: ${theme.palette.yellow};
-    margin-right: ${theme.spacing.xs};
+    color: ${theme.colors.warning.main};
+    margin-right: ${theme.spacing(0.5)};
   `,
   showAllTimeSeries: css`
     label: show-all-time-series;
     cursor: pointer;
-    color: ${theme.colors.linkExternal};
+    color: ${theme.colors.text.link};
   `,
 });

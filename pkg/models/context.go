@@ -36,7 +36,7 @@ func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err er
 	ctx.Data["AppSubUrl"] = cfg.AppSubURL
 	ctx.Data["Theme"] = "dark"
 
-	ctx.HTML(status, cfg.ErrTemplateName)
+	ctx.HTML(status, cfg.ErrTemplateName, ctx.Data)
 }
 
 func (ctx *ReqContext) IsApiRequest() bool {

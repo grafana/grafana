@@ -29,7 +29,7 @@ export const PasswordField: FC<Props> = React.forwardRef<HTMLInputElement, Props
             name={showPassword ? 'eye-slash' : 'eye'}
             type="button"
             aria-controls={id}
-            aria-role="switch"
+            role="switch"
             aria-checked={showPassword}
             aria-label="Show password"
             onClick={() => {

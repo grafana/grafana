@@ -1,5 +1,13 @@
-import { toDataFrame, ArrayVector, DataFrame, FieldType, toDataFrameDTO, DataFrameDTO } from '@grafana/data';
-import { prepareTimeSeries, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
+import {
+  toDataFrame,
+  ArrayVector,
+  DataFrame,
+  FieldType,
+  toDataFrameDTO,
+  DataFrameDTO,
+  DataFrameType,
+} from '@grafana/data';
+import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
 describe('Prepair time series transformer', () => {
   it('should transform wide to many', () => {
@@ -19,7 +27,7 @@ describe('Prepair time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMany,
     };
 
-    expect(prepareTimeSeries(source, config)).toEqual([
+    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([
       toEquableDataFrame({
         name: 'wide',
         refId: 'A',
@@ -27,6 +35,9 @@ describe('Prepair time series transformer', () => {
           { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
           { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
         ],
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
         length: 6,
       }),
       toEquableDataFrame({
@@ -36,6 +47,9 @@ describe('Prepair time series transformer', () => {
           { name: 'time', type: FieldType.time, values: [10, 9, 8, 7, 6, 5] },
           { name: 'more', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
         length: 6,
       }),
     ]);
@@ -59,7 +73,7 @@ describe('Prepair time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMany,
     };
 
-    expect(prepareTimeSeries(source, config)).toEqual([
+    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([
       toEquableDataFrame({
         name: 'wide',
         refId: 'A',
@@ -68,6 +82,9 @@ describe('Prepair time series transformer', () => {
           { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
         ],
         length: 6,
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
       }),
       toEquableDataFrame({
         name: 'wide',
@@ -77,6 +94,9 @@ describe('Prepair time series transformer', () => {
           { name: 'more', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
         length: 6,
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
       }),
     ]);
   });
@@ -107,7 +127,7 @@ describe('Prepair time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMany,
     };
 
-    expect(prepareTimeSeries(source, config)).toEqual([
+    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([
       toEquableDataFrame({
         name: 'wide',
         refId: 'A',
@@ -116,6 +136,9 @@ describe('Prepair time series transformer', () => {
           { name: 'count', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
         ],
         length: 6,
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
       }),
       toEquableDataFrame({
         name: 'wide',
@@ -125,6 +148,9 @@ describe('Prepair time series transformer', () => {
           { name: 'another', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
         length: 6,
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
       }),
       toEquableDataFrame({
         name: 'long',
@@ -134,6 +160,9 @@ describe('Prepair time series transformer', () => {
           { name: 'value', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
         length: 6,
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
       }),
     ]);
   });
@@ -162,7 +191,16 @@ describe('Prepair time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMany,
     };
 
-    expect(toEquableDataFrames(prepareTimeSeries(source, config))).toEqual(toEquableDataFrames(source));
+    expect(toEquableDataFrames(prepareTimeSeriesTransformer.transformer(config)(source))).toEqual(
+      toEquableDataFrames(
+        source.map((frame) => ({
+          ...frame,
+          meta: {
+            type: DataFrameType.TimeSeriesMany,
+          },
+        }))
+      )
+    );
   });
 
   it('should return empty array when no timeseries exist', () => {
@@ -191,7 +229,7 @@ describe('Prepair time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMany,
     };
 
-    expect(prepareTimeSeries(source, config)).toEqual([]);
+    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([]);
   });
 });
 

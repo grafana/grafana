@@ -14,7 +14,7 @@ export const bucketAggregationConfig: BucketsConfiguration = {
     label: 'Terms',
     requiresField: true,
     defaultSettings: {
-      min_doc_count: '0',
+      min_doc_count: '1',
       size: '10',
       order: 'desc',
       orderBy: '_term',
@@ -79,7 +79,7 @@ export const orderByOptions = [
 /**
  * This returns the valid options for each of the enabled extended stat
  */
-function createOrderByOptionsForExtendedStats(metric: ExtendedStats): OrderByOption[] {
+function createOrderByOptionsForExtendedStats(metric: ExtendedStats): SelectableValue<string> {
   if (!metric.meta) {
     return [];
   }

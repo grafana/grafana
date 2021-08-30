@@ -40,12 +40,6 @@ func New(managedStream *managedstream.Runner, node *centrifuge.Node) (*Pipeline,
 	return &Pipeline{cache: NewCacheSegmentedTree(storage)}, nil
 }
 
-// Run ...
-func (p *Pipeline) Run(ctx context.Context) error {
-	<-ctx.Done()
-	return ctx.Err()
-}
-
 func (p *Pipeline) Get(orgID int64, channel string) (*LiveChannelRule, bool, error) {
 	rule, _, ok, err := p.cache.Get(orgID, channel)
 	return rule, ok, err

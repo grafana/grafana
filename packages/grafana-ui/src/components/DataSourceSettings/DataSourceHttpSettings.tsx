@@ -62,6 +62,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
     onChange,
     showAccessOptions,
     sigV4AuthToggleEnabled,
+    showForwardOAuthIdentityOption,
     azureAuthSettings,
   } = props;
   let urlTooltip;
@@ -100,6 +101,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
 
   const accessSelect = (
     <Select
+      menuShouldPortal
       width={20}
       options={ACCESS_OPTIONS}
       value={ACCESS_OPTIONS.filter((o) => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION}
@@ -249,6 +251,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             <HttpProxySettings
               dataSourceConfig={dataSourceConfig}
               onChange={(jsonData) => onSettingsChange({ jsonData })}
+              showForwardOAuthIdentityOption={showForwardOAuthIdentityOption}
             />
           )}
         </div>
@@ -267,7 +270,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             <azureAuthSettings.azureSettingsUI dataSourceConfig={dataSourceConfig} onChange={onChange} />
           )}
 
-        {dataSourceConfig.jsonData.sigV4Auth && <SigV4AuthSettings {...props} />}
+        {dataSourceConfig.jsonData.sigV4Auth && sigV4AuthToggleEnabled && <SigV4AuthSettings {...props} />}
 
         {(dataSourceConfig.jsonData.tlsAuth || dataSourceConfig.jsonData.tlsAuthWithCACert) && (
           <TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />

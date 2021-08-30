@@ -9,26 +9,28 @@ import (
 )
 
 func TestPredefinedRoles(t *testing.T) {
-	for name, r := range FixedRoles {
+	for name, role := range FixedRoles {
 		assert.Truef(t,
 			strings.HasPrefix(name, "fixed:"),
 			"expected all fixed roles to be prefixed by 'fixed:', found role '%s'", name,
 		)
-		assert.Equal(t, name, r.Name)
-		assert.NotZero(t, r.Version)
-		// assert.NotEmpty(t, r.Description)
+		assert.Equal(t, name, role.Name)
+		assert.NotZero(t, role.Version)
 	}
 }
 
 func TestPredefinedRoleGrants(t *testing.T) {
-	for _, v := range FixedRoleGrants {
+	for _, grants := range FixedRoleGrants {
+		// Check grants list is sorted
 		assert.True(t,
-			sort.SliceIsSorted(v, func(i, j int) bool {
-				return v[i] < v[j]
+			sort.SliceIsSorted(grants, func(i, j int) bool {
+				return grants[i] < grants[j]
 			}),
 			"require role grant lists to be sorted",
 		)
-		for _, r := range v {
+
+		// Check all granted roles have been registered
+		for _, r := range grants {
 			assert.Contains(t, FixedRoles, r)
 		}
 	}
