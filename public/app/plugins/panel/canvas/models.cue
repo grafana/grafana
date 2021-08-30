@@ -19,7 +19,8 @@ Family: {
         [
             {
                 PanelOptions: {
-                    // nothing for now
+                    // anything for now
+                    ...
                 }
             }
         ]

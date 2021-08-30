@@ -229,7 +229,7 @@ export class Scene {
   data?: PanelData;
 
   constructor(cfg: CanvasGroupOptions, public onSave: (cfg: CanvasGroupOptions) => void) {
-    this.load(cfg);
+    this.root = this.load(cfg);
   }
 
   load(cfg: CanvasGroupOptions) {
@@ -251,6 +251,7 @@ export class Scene {
         this.selected.next(v);
       }
     });
+    return this.root;
   }
 
   context: CanvasSceneContext = {
