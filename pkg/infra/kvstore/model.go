@@ -1,15 +1,11 @@
 package kvstore
 
 import (
-	"errors"
 	"time"
 )
 
-var (
-	ErrNotFound = errors.New("key/value item not found")
-)
-
-type KVStoreItem struct {
+// Item stored in k/v store.
+type Item struct {
 	Id        int64
 	OrgId     *int64
 	Namespace *string
@@ -20,6 +16,6 @@ type KVStoreItem struct {
 	Updated time.Time
 }
 
-func (k *KVStoreItem) TableName() string {
+func (i *Item) TableName() string {
 	return "kv_store"
 }

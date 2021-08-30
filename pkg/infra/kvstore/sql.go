@@ -15,12 +15,13 @@ type kvStoreSQL struct {
 }
 
 // Get an item from the store
-func (kv *kvStoreSQL) Get(ctx context.Context, orgId int64, namespace string, key string) (string, error) {
-	item := KVStoreItem{
+func (kv *kvStoreSQL) Get(ctx context.Context, orgId int64, namespace string, key string) (string, bool, error) {
+	item := Item{
 		OrgId:     &orgId,
 		Namespace: &namespace,
 		Key:       &key,
 	}
+	var itemFound bool
 
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		has, err := dbSession.Get(&item)
@@ -30,20 +31,20 @@ func (kv *kvStoreSQL) Get(ctx context.Context, orgId int64, namespace string, ke
 		}
 		if !has {
 			kv.log.Debug("kvstore value not found", "orgId", orgId, "namespace", namespace, "key", key)
-			return ErrNotFound
+			return nil
 		}
-
+		itemFound = true
 		kv.log.Debug("got kvstore value", "orgId", orgId, "namespace", namespace, "key", key, "value", item.Value)
 		return nil
 	})
 
-	return item.Value, err
+	return item.Value, itemFound, err
 }
 
 // Set an item in the store
 func (kv *kvStoreSQL) Set(ctx context.Context, orgId int64, namespace string, key string, value string) error {
 	return kv.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		item := KVStoreItem{
+		item := Item{
 			OrgId:     &orgId,
 			Namespace: &namespace,
 			Key:       &key,
@@ -82,4 +83,13 @@ func (kv *kvStoreSQL) Set(ctx context.Context, orgId int64, namespace string, ke
 		}
 		return err
 	})
+}
+
+// Del deletes an item from the store.
+func (kv *kvStoreSQL) Del(ctx context.Context, orgId int64, namespace string, key string) error {
+	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		_, err := dbSession.Exec("DELETE FROM kv_store WHERE org_id=? and namespace=? and key=?", orgId, namespace, key)
+		return err
+	})
+	return err
 }
