@@ -161,16 +161,15 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
-      const itemKey = panel.key;
 
       // Update is in view state
       panel.isInView = this.isInView(panel);
 
       panelElements.push(
         <GrafanaGridItem
-          key={itemKey}
+          key={panel.key}
           className={panelClasses}
-          data-panelid={itemKey}
+          data-panelid={panel.key}
           gridPos={panel.gridPos}
           gridWidth={gridWidth}
           windowHeight={this.windowHeight}
@@ -178,7 +177,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
           isViewing={panel.isViewing}
         >
           {(width: number, height: number) => {
-            return this.renderPanel(panel, width, height, itemKey);
+            return this.renderPanel(panel, width, height, panel.key);
           }}
         </GrafanaGridItem>
       );
