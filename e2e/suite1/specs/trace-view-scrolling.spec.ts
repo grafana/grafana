@@ -21,7 +21,9 @@ describe('Trace view', () => {
 
     e2e.components.QueryField.container().should('be.visible').type('long-trace');
 
-    e2e.components.RefreshPicker.runButton().should('be.visible').focus();
+    e2e().wait(500);
+
+    e2e.components.RefreshPicker.runButton().should('be.visible').click();
 
     e2e().wait('@longTrace');
 

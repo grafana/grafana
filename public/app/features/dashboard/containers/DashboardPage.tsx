@@ -68,14 +68,9 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-interface OwnProps {
-  isPanelEditorOpen?: boolean;
-}
-
 export type Props = Themeable2 &
   GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> &
-  ConnectedProps<typeof connector> &
-  OwnProps;
+  ConnectedProps<typeof connector>;
 
 export interface State {
   editPanel: PanelModel | null;
