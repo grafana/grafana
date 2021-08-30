@@ -2,13 +2,13 @@ import React, { FC, useCallback } from 'react';
 import appEvents from '../../app_events';
 import TopSection from './TopSection';
 import BottomSection from './BottomSection';
-import config from 'app/core/config';
+// import config from 'app/core/config';
 import { CoreEvents, KioskMode } from 'app/types';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { Icon } from '@grafana/ui';
 import { useLocation } from 'react-router-dom';
 
-const homeUrl = config.appSubUrl || '/';
+// const homeUrl = config.appSubUrl || '/';
 
 export const SideMenu: FC = React.memo(() => {
   const location = useLocation();
@@ -25,7 +25,7 @@ export const SideMenu: FC = React.memo(() => {
 
   return (
     <nav className="sidemenu" data-testid="sidemenu">
-      <a href={homeUrl} className="sidemenu__logo" key="logo">
+      <a /*href={homeUrl}*/ className="sidemenu__logo" key="logo">
         <Branding.MenuLogo />
       </a>
       <div className="sidemenu__logo_small_breakpoint" onClick={toggleSideMenuSmallBreakpoint} key="hamburger">

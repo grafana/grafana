@@ -43,4 +43,5 @@ export const palette = {
   orangeLightText: '#BD4B00',
   purpleLightMain: '#3B097A',
   purpleLightText: '#3B097A',
+  purpleLightHighlight: '#550FAC',
 };

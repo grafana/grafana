@@ -47,7 +47,7 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     headerHeight: 4,
     background: colors.background.primary,
     borderColor: colors.border.weak,
-    boxShadow: 'none',
+    boxShadow: '0px 15px 30px #0000001A',
   };
 
   const input = {

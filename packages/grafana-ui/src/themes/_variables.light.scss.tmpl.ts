@@ -124,8 +124,8 @@ $hr-border-color: $gray-4 !default;
 // -------------------------
 $panel-bg: ${theme.components.panel.background};
 $panel-border: 1px solid ${theme.components.panel.borderColor};
-$panel-header-hover-bg: ${theme.colors.action.hover};
-$panel-box-shadow: ${theme.components.panel.boxShadow};
+$panel-header-hover-bg: ${theme.colors.action.panelHeaderHover};
+$panel-box-shadow: 0px 15px 30px #0000001A;
 $panel-corner: $panel-bg;
 
 // Page header
@@ -252,8 +252,8 @@ $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
 $side-menu-item-hover-bg: ${theme.v1.palette.gray25}; //
 $side-menu-shadow: 5px 0px 10px -5px $gray-1;
 $side-menu-link-color: $gray-4;
-$side-menu-icon-color: ${theme.v1.palette.gray70}; //
-$side-menu-header-color: ${theme.v1.palette.gray95};
+$side-menu-icon-color: ${theme.v1.palette.white}; //
+$side-menu-header-color: ${theme.colors.primary.main};
 
 // Menu dropdowns
 // -------------------------
