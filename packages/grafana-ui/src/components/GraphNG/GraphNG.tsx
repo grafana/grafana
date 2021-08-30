@@ -12,8 +12,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
-
-import { VizLegendOptions } from '../VizLegend/models.gen';
+import { VizLegendOptions } from '@grafana/schema';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
 import { Subscription } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';

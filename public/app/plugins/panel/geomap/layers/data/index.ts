@@ -7,8 +7,8 @@ import { lastPointTracker } from './lastPointTracker';
  * Registry for layer handlers
  */
 export const dataLayers = [
-    markersLayer,
-    heatmapLayer,
-    lastPointTracker,
-    geojsonMapper, // dummy for now
+  markersLayer,
+  heatmapLayer,
+  lastPointTracker,
+  geojsonMapper, // dummy for now
 ];

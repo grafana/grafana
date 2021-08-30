@@ -1,5 +1,5 @@
 import React, { FC, useCallback } from 'react';
-
+import { VizTooltipOptions } from '@grafana/schema';
 import {
   FieldDisplay,
   FALLBACK_COLOR,
@@ -9,7 +9,6 @@ import {
   DataHoverEvent,
 } from '@grafana/data';
 import {
-  VizTooltipOptions,
   useTheme2,
   useStyles2,
   SeriesTableRowProps,
