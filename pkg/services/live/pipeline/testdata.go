@@ -10,7 +10,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 )
@@ -89,7 +88,6 @@ func postTestData() {
 }
 
 type hardcodedStorage struct {
-	node          *centrifuge.Node
 	managedStream *managedstream.Runner
 	frameStorage  *FrameStorage
 	pipeline      *Pipeline
