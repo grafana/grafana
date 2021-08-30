@@ -8,6 +8,10 @@ export interface PanelMergeInfo {
   actions: Record<string, number[]>;
 }
 
+// values that are safe to change without needing a full panel refresh
+// TODO: options and fieldConfig?
+const mutableKeys = new Set<keyof PanelModel>(['gridPos', 'title', 'description', 'transparent']);
+
 export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMergeInfo {
   const panels: PanelModel[] = [];
   const info = {
@@ -31,7 +35,7 @@ export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMe
         nextId = findNextPanelID([current, data]);
       }
       id = nextId++;
-      p = { ...p, id };
+      p = { ...p, id }; // clone with new ID
     }
     inputPanels.set(id, p);
   }
@@ -56,32 +60,29 @@ export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMe
     // Check if it is the same type
     if (panel.type === target.type) {
       const save = panel.getSaveModel();
-      const changed: string[] = [];
-      let hasChanges = false;
+      let isNoop = true;
+      let doUpdate = false;
       for (const [key, value] of Object.entries(target)) {
-        if (!isEqualWith(value, save[key], infinityAsNull)) {
+        if (!isEqualWith(value, save[key], infinityEqualsNull)) {
           info.changed = true;
-          hasChanges = true;
-          switch (key) {
-            case 'gridPos':
-              panel.gridPos = value;
-              break;
-            case 'title':
-              panel.title = value;
-              break;
-            default:
-              changed.push(key);
+          isNoop = false;
+          if (mutableKeys.has(key as any)) {
+            (panel as any)[key] = value;
+            doUpdate = true;
+          } else {
+            doUpdate = false;
+            break; // needs full replace
           }
         }
       }
 
-      if (!hasChanges) {
+      if (isNoop) {
         panels.push(panel);
         info.actions.noop.push(panel.id);
         continue;
       }
 
-      if (!changed.length) {
+      if (doUpdate) {
         panels.push(panel);
         info.actions.update.push(panel.id);
         continue;
@@ -106,8 +107,12 @@ export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMe
   return info;
 }
 
-function infinityAsNull(a: any, b: any) {
-  if (a == null && (b === Infinity || b === -Infinity)) {
+// Since +- Infinity are saved as null in JSON, we need to make them equal here also
+function infinityEqualsNull(a: any, b: any) {
+  if (a == null && (b === Infinity || b === -Infinity || b == null)) {
+    return true;
+  }
+  if (b == null && (a === Infinity || a === -Infinity || a == null)) {
     return true;
   }
   return undefined; // use default comparison

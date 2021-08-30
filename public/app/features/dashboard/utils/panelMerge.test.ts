@@ -57,6 +57,7 @@ describe('Merge dashbaord panels', () => {
           ],
           "remove": Array [],
           "replace": Array [],
+          "update": Array [],
         }
       `);
     });
@@ -123,6 +124,7 @@ describe('Merge dashbaord panels', () => {
           "replace": Array [
             2,
           ],
+          "update": Array [],
         }
       `);
     });
