@@ -243,7 +243,16 @@ export class DashboardModel {
     return copy;
   }
 
-  /** This will load a new dashboard, but keep existing panels unchanged */
+  /**
+   * This will load a new dashboard, but keep existing panels unchanged
+   *
+   * This function can be used to implement:
+   * 1. potentially faster loading dashboard loading
+   * 2. dynamic dashboard behavior
+   * 3. "live" dashboard editing
+   *
+   * @internal and experimental
+   */
   updatePanels(panels: IPanelModel[]): PanelMergeInfo {
     const info = mergePanels(this.panels, panels ?? []);
     if (info.changed) {

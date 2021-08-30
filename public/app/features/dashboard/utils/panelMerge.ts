@@ -8,8 +8,8 @@ export interface PanelMergeInfo {
   actions: Record<string, number[]>;
 }
 
-// values that are safe to change without needing a full panel refresh
-// TODO: options and fieldConfig?
+// Values that are safe to change without a full panel unmount/remount
+// TODO: options and fieldConfig should also be supported
 const mutableKeys = new Set<keyof PanelModel>(['gridPos', 'title', 'description', 'transparent']);
 
 export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMergeInfo {
