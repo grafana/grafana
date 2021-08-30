@@ -4,8 +4,8 @@ import { formattedValueToString, getFieldColorModeForField, GrafanaTheme2 } from
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { DimensionSupplier } from 'app/features/dimensions';
+import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils'; 
 import { getMinMaxAndDelta } from '../../../../../../../packages/grafana-data/src/field/scale';
-import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils';
 
 export interface MarkersLegendProps {
   color?: DimensionSupplier<string>;
