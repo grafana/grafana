@@ -144,7 +144,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
   renderMissingEditRightsMessage() {
     return (
-      <Alert aria-label={selectors.pages.DataSource.readOnly} severity="info" title="Missing rights">
+      <Alert severity="info" title="Missing rights">
         You are not allowed to modify this data source. Please contact your server admin to update this data source.
       </Alert>
     );
