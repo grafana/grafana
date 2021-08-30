@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { Threshold, GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 import Draggable, { DraggableBounds } from 'react-draggable';
 
 interface ThresholdDragHandleProps {
@@ -22,8 +22,12 @@ export const ThresholdDragHandle: React.FC<ThresholdDragHandleProps> = ({
   onChange,
 }) => {
   const theme = useTheme2();
-  const styles = getStyles(theme, step);
+  const styles = useStyles2(getStyles);
   const [currentValue, setCurrentValue] = useState(step.value);
+
+  const textColor = useMemo(() => {
+    return theme.colors.getContrastText(theme.visualization.getColorByName(step.color));
+  }, [step.color, theme]);
 
   return (
     <Draggable
@@ -36,7 +40,10 @@ export const ThresholdDragHandle: React.FC<ThresholdDragHandleProps> = ({
       position={{ x: 0, y }}
       bounds={dragBounds}
     >
-      <div className={styles.handle}>
+      <div
+        className={styles.handle}
+        style={{ color: textColor, background: step.color, borderColor: step.color, borderWidth: 0 }}
+      >
         <span className={styles.handleText}>{formatValue(currentValue)}</span>
       </div>
     </Draggable>
@@ -45,10 +52,7 @@ export const ThresholdDragHandle: React.FC<ThresholdDragHandleProps> = ({
 
 ThresholdDragHandle.displayName = 'ThresholdDragHandle';
 
-const getStyles = (theme: GrafanaTheme2, step: Threshold) => {
-  const background = step.color;
-  const textColor = theme.colors.getContrastText(theme.visualization.getColorByName(step.color));
-
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     handle: css`
       position: absolute;
@@ -58,8 +62,6 @@ const getStyles = (theme: GrafanaTheme2, step: Threshold) => {
       margin-left: 9px;
       margin-top: -9px;
       cursor: grab;
-      background: ${background};
-      color: ${textColor};
       font-size: ${theme.typography.bodySmall.fontSize};
       &:before {
         content: '';
@@ -68,7 +70,9 @@ const getStyles = (theme: GrafanaTheme2, step: Threshold) => {
         bottom: 0;
         width: 0;
         height: 0;
-        border-right: 9px solid ${background};
+        border-right-style: solid;
+        border-right-width: 9px;
+        border-right-color: inherit;
         border-top: 9px solid transparent;
         border-bottom: 9px solid transparent;
       }
