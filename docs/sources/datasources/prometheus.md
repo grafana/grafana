@@ -250,7 +250,7 @@ If you are running Grafana in an Amazon EKS cluster, follow the AWS guide to [Qu
 
 Exemplars are a way to associate higher cardinality metadata from a specific event with traditional time series data. For more information, refer to the [Introduction to exemplars]({{< relref "../basics/exemplars/_index.md">}}) topic. If there are multiple exemplars for the same metric name, Grafana shows only the first.
 
-> **Note:** Exemplars are available in Prometheus 2.26+ and Grafana 7.4+.
+> **Note:** Exemplars are available in Prometheus 2.26+ and in Grafana 7.4+.
 
 To configure exemplars
 
