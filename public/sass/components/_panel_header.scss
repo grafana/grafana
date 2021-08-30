@@ -1,9 +1,11 @@
 $panel-header-no-title-zindex: 1;
 
 .panel-header {
+  background-color: $panel-header-hover-bg;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
   &:hover {
     transition: background-color 0.1s ease-in-out;
-    background-color: $panel-header-hover-bg;
   }
 }
 
@@ -13,6 +15,8 @@ $panel-header-no-title-zindex: 1;
     left: min(50px, 10%); // allows space for interaction in the corders
     right: min(50px, 10%);
     z-index: $panel-header-z-index;
+    left: 0;
+    right: 0;
 
     &:hover {
       left: 0;

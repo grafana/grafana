@@ -381,7 +381,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
  * Styles
  */
 export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
-  const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 2, 2) : theme.spacing(2);
+  const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 3, 3) : theme.spacing(2);
   return {
     dashboardContainer: css`
       position: absolute;

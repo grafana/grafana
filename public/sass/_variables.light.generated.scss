@@ -17,7 +17,7 @@ $theme-name: light;
 // -------------------------
 $blue-light: #3B097A;
 $blue-base: #3B097A;
-$blue-shade: rgb(47, 7, 97);
+$blue-shade: #550FAC;
 $red-base: #E0226E;
 $red-shade: rgb(179, 27, 88);
 $green-base: #1A7F4B;
@@ -126,8 +126,8 @@ $hr-border-color: $gray-4 !default;
 // -------------------------
 $panel-bg: #fff;
 $panel-border: 1px solid rgba(36, 41, 46, 0.12);
-$panel-header-hover-bg: rgba(36, 41, 46, 0.04);
-$panel-box-shadow: none;
+$panel-header-hover-bg: rgba(219, 218, 238, 1);
+$panel-box-shadow: 0px 15px 30px #0000001A;
 $panel-corner: $panel-bg;
 
 // Page header

@@ -67,6 +67,7 @@
   .divider {
     height: 1px;
     margin: $space-sm 0; // 8px 1px
+    margin-top: 0;
     overflow: hidden;
     background-color: $dropdownDividerTop;
     border-bottom: 1px solid $dropdownDividerBottom;
