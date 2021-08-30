@@ -9,11 +9,13 @@ type Panel = {
 
 type Dashboard = { title: string; panels: Panel[]; [key: string]: unknown };
 
+type ImportDashboardOptions = { queryWaitTime?: number };
+
 /**
  * Smoke test a datasource by quickly importing a test dashboard for it
  * @param dashboardToImport a sample dashboard
  */
-export const importDashboard = (dashboardToImport: Dashboard) => {
+export const importDashboard = (dashboardToImport: Dashboard, options?: ImportDashboardOptions) => {
   e2e().visit(fromBaseUrl('/dashboard/import'));
 
   // Note: normally we'd use 'click' and then 'type' here, but the json object is so big that using 'val' is much faster
@@ -21,7 +23,13 @@ export const importDashboard = (dashboardToImport: Dashboard) => {
   e2e.components.DashboardImportPage.submit().click({ force: true });
   e2e.components.ImportDashboardForm.name().click({ force: true }).clear().type(dashboardToImport.title);
   e2e.components.ImportDashboardForm.submit().click({ force: true });
-  e2e().wait(3000);
+
+  // wait for the imported query page to finish loading. Some queries may take a long time to finish
+  if (options && options.queryWaitTime) {
+    e2e().wait(options.queryWaitTime);
+  } else {
+    e2e().wait(3000);
+  }
 
   // save the newly imported dashboard to context so it'll get properly deleted later
   e2e()
