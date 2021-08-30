@@ -83,7 +83,6 @@ module.exports = {
           to: '../lib/monaco/', // inside the public/build folder
           globOptions: {
             ignore: [
-              '**/language/typescript/**', // 10mb
               '**/*.map', // debug files
             ],
           },
