@@ -55,43 +55,6 @@ type CoreGrafanaScope struct {
 	Dashboards models.DashboardActivityChannel
 }
 
-// GrafanaLive manages live real-time connections to Grafana (over WebSocket at this moment).
-// The main concept here is Channel. Connections can subscribe to many channels. Each channel
-// can have different permissions and properties but once a connection subscribed to a channel
-// it starts receiving all messages published into this channel. Thus GrafanaLive is a PUB/SUB
-// server.
-type GrafanaLive struct {
-	PluginContextProvider *plugincontext.Provider
-	Cfg                   *setting.Cfg
-	RouteRegister         routing.RouteRegister
-	LogsService           *cloudwatch.LogsService
-	PluginManager         *manager.PluginManager
-	CacheService          *localcache.CacheService
-	DataSourceCache       datasources.CacheService
-	SQLStore              *sqlstore.SQLStore
-
-	node         *centrifuge.Node
-	surveyCaller *survey.Caller
-
-	// Websocket handlers
-	websocketHandler     interface{}
-	pushWebsocketHandler interface{}
-
-	// Full channel handler
-	channels   map[string]models.ChannelHandler
-	channelsMu sync.RWMutex
-
-	// The core internal features
-	GrafanaScope CoreGrafanaScope
-
-	ManagedStreamRunner *managedstream.Runner
-	Pipeline            *pipeline.Pipeline
-
-	contextGetter    *liveplugin.ContextGetter
-	runStreamManager *runstream.Manager
-	storage          *database.Storage
-}
-
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	logsService *cloudwatch.LogsService, pluginManager *manager.PluginManager, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore) (*GrafanaLive, error) {
@@ -344,6 +307,43 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	}, middleware.ReqOrgAdmin)
 
 	return g, nil
+}
+
+// GrafanaLive manages live real-time connections to Grafana (over WebSocket at this moment).
+// The main concept here is Channel. Connections can subscribe to many channels. Each channel
+// can have different permissions and properties but once a connection subscribed to a channel
+// it starts receiving all messages published into this channel. Thus GrafanaLive is a PUB/SUB
+// server.
+type GrafanaLive struct {
+	PluginContextProvider *plugincontext.Provider
+	Cfg                   *setting.Cfg
+	RouteRegister         routing.RouteRegister
+	LogsService           *cloudwatch.LogsService
+	PluginManager         *manager.PluginManager
+	CacheService          *localcache.CacheService
+	DataSourceCache       datasources.CacheService
+	SQLStore              *sqlstore.SQLStore
+
+	node         *centrifuge.Node
+	surveyCaller *survey.Caller
+
+	// Websocket handlers
+	websocketHandler     interface{}
+	pushWebsocketHandler interface{}
+
+	// Full channel handler
+	channels   map[string]models.ChannelHandler
+	channelsMu sync.RWMutex
+
+	// The core internal features
+	GrafanaScope CoreGrafanaScope
+
+	ManagedStreamRunner *managedstream.Runner
+	Pipeline            *pipeline.Pipeline
+
+	contextGetter    *liveplugin.ContextGetter
+	runStreamManager *runstream.Manager
+	storage          *database.Storage
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
