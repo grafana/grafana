@@ -5,7 +5,6 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
 ## Table of Contents
 
 - [Frontend Style Guide](#frontend-style-guide)
-
   - [Table of Contents](#table-of-contents)
   - [Basic rules](#basic-rules)
     - [Naming conventions](#naming-conventions)
@@ -200,7 +199,7 @@ In general, you should let Typescript infer the types so that there's no need to
 There are some exceptions to this:
 
 ```typescript
-// Typescript needs to know type of arrays or objects otherwise it would infer it as array of any
+// Typescript needs to know type of arrays or objects otherwise it would infer it as array of any 
 
 // bad
 const stringArray = [];
@@ -217,18 +216,18 @@ Specify function return types explicitly in new code. This improves readability 
 // bad
 function transform(value?: string) {
   if (!value) {
-    return undefined;
+    return undefined
   }
-  return applyTransform(value);
-}
+  return applyTransform(value)
+};
 
 // good
 function transform(value?: string): TransformedValue | undefined {
   if (!value) {
-    return undefined;
+    return undefined
   }
-  return applyTransform(value);
-}
+  return applyTransform(value)
+};
 ```
 
 ### File and directory naming conventions
