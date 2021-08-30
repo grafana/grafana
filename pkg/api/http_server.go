@@ -136,8 +136,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService) (*HTTPServer, error) {
 	macaron.Env = cfg.Env
 	m := macaron.New()
-	// automatically set HEAD for every GET
-	m.SetAutoHead(true)
 
 	hs := &HTTPServer{
 		Cfg:                    cfg,

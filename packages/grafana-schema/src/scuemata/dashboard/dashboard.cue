@@ -76,10 +76,10 @@ Family: scuemata.#Family & {
                 panels?: [...(#Panel | #GraphPanel | #RowPanel)]
 
                 // TODO docs
-                #FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(targetType="enum")
+                #FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(kind="enum")
 
                 // TODO docs
-                #FieldColorSeriesByMode: "min" | "max" | "last" @cuetsy(targetType="type")
+                #FieldColorSeriesByMode: "min" | "max" | "last" @cuetsy(kind="type")
 
                 // TODO docs
                 #FieldColor: {
@@ -89,7 +89,7 @@ Family: scuemata.#Family & {
                     fixedColor?: string
                     // Some visualizations need to know how to assign a series color from by value color schemes
                     seriesBy?: #FieldColorSeriesByMode
-                } @cuetsy(targetType="interface")
+                } @cuetsy(kind="interface")
 
                 // TODO docs
                 #Threshold: {
@@ -102,16 +102,16 @@ Family: scuemata.#Family & {
                     // TODO are the values here enumerable into a disjunction?
                     // Some seem to be listed in typescript comment
                     state?: string
-                } @cuetsy(targetType="interface")
+                } @cuetsy(kind="interface")
 
-                #ThresholdsMode: "absolute" | "percentage" @cuetsy(targetType="enum")
+                #ThresholdsMode: "absolute" | "percentage" @cuetsy(kind="enum")
 
                 #ThresholdsConfig: {
                     mode: #ThresholdsMode
 
                     // Must be sorted by 'value', first value is always -Infinity
                     steps: [...#Threshold]
-                } @cuetsy(targetType="interface")
+                } @cuetsy(kind="interface")
 
                 // TODO docs
                 // FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
