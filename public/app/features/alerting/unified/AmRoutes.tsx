@@ -132,6 +132,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 100%;
     height: 0;
     margin-bottom: ${theme.spacing(2)};
-    border-bottom: solid 1px ${theme.colors.border.medium};
   `,
 });
