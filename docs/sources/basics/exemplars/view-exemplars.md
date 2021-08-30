@@ -9,6 +9,8 @@ weight = 400
 
 When support for exemplar support is enabled for a Prometheus data source, you can view exemplar data either in the Explore view or from the Loki log details.
 
+> **Note:** If there are multiple exemplars for the same metric name, Grafana shows only the first.
+
 ## In Explore
 
 Explore visualizes exemplar traces as highlighted stars alongside metrics data. For more information on how Explore visualizes trace data, refer to [Tracing in Explore]({{< relref "../../explore/trace-integration.md" >}}).

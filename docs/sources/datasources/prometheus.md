@@ -248,11 +248,13 @@ If you are running Grafana in an Amazon EKS cluster, follow the AWS guide to [Qu
 
 ## Configuring exemplars
 
-> **Note:** This feature is available in Prometheus 2.26+ and Grafana 7.4+.
+Exemplars are a way to associate higher cardinality metadata from a specific event with traditional time series data. For more information, refer to the [Introduction to exemplars]({{< relref "../basics/exemplars/_index.md">}}) topic. If there are multiple exemplars for the same metric name, Grafana shows only the first.
 
-Grafana 7.4 and later versions have the capability to show exemplars data alongside a metric both in Explore and Dashboards.
-Exemplars are a way to associate higher cardinality metadata from a specific event with traditional timeseries data.
-{{< figure src="/static/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
+> **Note:** Exemplars are available in Prometheus 2.26+ and Grafana 7.4+.
 
-Configure Exemplars in the data source settings by adding external or internal links.
+To configure exemplars
+
+1. Go to the Exemplars section in the Prometheus data source settings page.
+1. Add external or internal links. You can add more than one link, each with its URL unique label name.
+
 {{< figure src="/static/img/docs/v74/exemplars-setting.png" class="docs-image--no-shadow" caption="Screenshot of the Exemplars configuration" >}}
