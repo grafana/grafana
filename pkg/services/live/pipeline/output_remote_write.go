@@ -18,9 +18,6 @@ type RemoteWriteConfig struct {
 	User string `json:"user"`
 	// Password for remote write endpoint.
 	Password string `json:"password"`
-	// SampleMilliseconds allow setting minimal time before
-	// different remote writes for a channel. 0 means no sampling interval.
-	SampleMilliseconds int64 `json:"sampleMilliseconds"`
 }
 
 type RemoteWriteOutput struct {

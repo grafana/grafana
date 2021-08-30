@@ -99,7 +99,7 @@ func (d *doc) addNil() {
 	}
 }
 
-func JSONDocToFrame(name string, body []byte, fields map[string]Field) (*data.Frame, error) {
+func jsonDocToFrame(name string, body []byte, fields map[string]Field, nowTimeFunc func() time.Time) (*data.Frame, error) {
 	d := doc{
 		iterator:   jsoniter.ParseBytes(jsoniter.ConfigDefault, body),
 		path:       make([]string, 0),
@@ -108,7 +108,7 @@ func JSONDocToFrame(name string, body []byte, fields map[string]Field) (*data.Fr
 	}
 
 	f := data.NewFieldFromFieldType(data.FieldTypeTime, 1)
-	f.Set(0, time.Now())
+	f.Set(0, nowTimeFunc())
 	d.fields = append(d.fields, f)
 
 	err := d.next()

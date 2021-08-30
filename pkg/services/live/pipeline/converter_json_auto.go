@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"time"
 )
 
 type AutoJsonConverterConfig struct {
@@ -9,7 +10,8 @@ type AutoJsonConverterConfig struct {
 }
 
 type AutoJsonConverter struct {
-	config AutoJsonConverterConfig
+	config      AutoJsonConverterConfig
+	nowTimeFunc func() time.Time
 }
 
 func NewAutoJsonConverter(c AutoJsonConverterConfig) *AutoJsonConverter {
@@ -23,7 +25,11 @@ func NewAutoJsonConverter(c AutoJsonConverterConfig) *AutoJsonConverter {
 // Custom time can be injected on Processor stage theoretically.
 // Custom labels can be injected on Processor stage theoretically.
 func (c *AutoJsonConverter) Convert(_ context.Context, vars Vars, body []byte) ([]*ChannelFrame, error) {
-	frame, err := JSONDocToFrame(vars.Path, body, c.config.FieldTips)
+	nowTimeFunc := c.nowTimeFunc
+	if nowTimeFunc == nil {
+		nowTimeFunc = time.Now
+	}
+	frame, err := jsonDocToFrame(vars.Path, body, c.config.FieldTips, nowTimeFunc)
 	if err != nil {
 		return nil, err
 	}

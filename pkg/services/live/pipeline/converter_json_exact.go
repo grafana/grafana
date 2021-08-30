@@ -20,7 +20,8 @@ type ExactJsonConverterConfig struct {
 // ExactJsonConverter can convert JSON to a single data.Frame according to
 // user-defined field configuration and value extraction rules.
 type ExactJsonConverter struct {
-	config ExactJsonConverterConfig
+	config      ExactJsonConverterConfig
+	nowTimeFunc func() time.Time
 }
 
 func NewExactJsonConverter(c ExactJsonConverterConfig) *ExactJsonConverter {
@@ -82,7 +83,6 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 			}
 		} else if strings.HasPrefix(f.Value, "{") {
 			// Goja script.
-			// TODO: reuse vm for JSON parsing.
 			script := strings.Trim(f.Value, "{}")
 			var err error
 			initGojaOnce.Do(func() {
@@ -110,7 +110,11 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 		} else if f.Value == "#{now}" {
 			// Variable.
 			// TODO: make consistent with Grafana variables?
-			field.SetConcrete(0, time.Now())
+			nowTimeFunc := c.nowTimeFunc
+			if nowTimeFunc == nil {
+				nowTimeFunc = time.Now
+			}
+			field.SetConcrete(0, nowTimeFunc())
 		}
 
 		labels := map[string]string{}
@@ -124,15 +128,12 @@ func (c *ExactJsonConverter) Convert(_ context.Context, vars Vars, body []byte) 
 				if len(value) == 0 {
 					labels[label.Name] = ""
 				} else if len(value) == 1 {
-					val, ok := value[0].(string)
-					if ok {
-						labels[label.Name] = val
-					}
+					labels[label.Name] = fmt.Sprintf("%v", value[0])
 				} else {
 					return nil, errors.New("too many values for a label")
 				}
 			} else if strings.HasPrefix(label.Value, "{") {
-				script := strings.Trim(f.Value, "{}")
+				script := strings.Trim(label.Value, "{}")
 				var err error
 				initGojaOnce.Do(func() {
 					gojaRuntime, err = getRuntime(body)

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pipeline/tree"
 )
 
+// CacheSegmentedTree provides a fast access to channel rule configuration.
 type CacheSegmentedTree struct {
 	radixMu sync.RWMutex
 	radix   map[int64]*tree.Node

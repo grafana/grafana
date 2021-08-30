@@ -72,9 +72,10 @@ func (r *gojaRuntime) getString(script string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	stringVal, ok := v.Export().(string)
+	exportedVal := v.Export()
+	stringVal, ok := exportedVal.(string)
 	if !ok {
-		return "", errors.New("unexpected return value")
+		return "", fmt.Errorf("unexpected return value: %v (%T), script: %s", exportedVal, exportedVal, script)
 	}
 	return stringVal, nil
 }
