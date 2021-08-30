@@ -1,10 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { Label, Input, Button } from '@grafana/ui';
+import { PanelModel } from '@grafana/data';
 
-// Not public flavors
+// Not from the public API (but same objects)
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { PanelModel } from '../../../../../packages/grafana-data/src';
 
 export function ExperimentalPanel() {
   const [dashboardId, setDashboardId] = useState<string>();
@@ -17,9 +17,8 @@ export function ExperimentalPanel() {
       .then((data) => {
         const dash = data.dashboard;
         console.log('About to merge/update', dash);
-        // alert(`About to merge/update: ${dash.uid} // ${dash.title}`);
         const info = getDashboardSrv().getCurrent()!.updatePanels(dash.panels);
-        console.log('INFO', info);
+        console.log('LOAD', info);
       });
   }, [dashboardId]);
 
@@ -34,7 +33,7 @@ export function ExperimentalPanel() {
       } as unknown) as PanelModel,
     ];
     const info = dash.updatePanels(newPanels);
-    console.log('INFO', info);
+    console.log('appendPanel', info);
   }, []);
 
   const setWidths = useCallback(() => {
@@ -45,7 +44,7 @@ export function ExperimentalPanel() {
       return s;
     });
     const info = dash.updatePanels(newPanels);
-    console.log('INFO', info);
+    console.log('setWidths', info);
   }, []);
 
   return (
