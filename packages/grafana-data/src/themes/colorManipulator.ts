@@ -261,10 +261,16 @@ export function alpha(color: string, value: number) {
 
   value = clamp(value);
 
-  // hex 6, hex 8 (w/alpha)
+  // hex 3, hex 4 (w/alpha), hex 6, hex 8 (w/alpha)
   if (color[0] === '#') {
     if (color.length === 9) {
       color = color.substring(0, 7);
+    } else if (color.length <= 5) {
+      let c = '#';
+      for (let i = 1; i < 4; i++) {
+        c += color[i] + color[i];
+      }
+      color = c;
     }
 
     return (

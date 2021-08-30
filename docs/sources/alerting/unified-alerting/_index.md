@@ -8,9 +8,9 @@ weight = 113
 
 Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
 
-> **Note:** This information is for the new, Grafana 8 Alerts. This is an [opt-in]({{< relref"./opt-in.md" >}}) feature released in Grafana 8.0. Grafana still supports [legacy dashboard alerts]({{< relref "../old-alerting/_index.md" >}}) out of the box
+> **Note:** Grafana 8 alerts (beta) is an [opt-in]({{< relref"./opt-in.md" >}}) feature. Out of the box, Grafana still supports old [legacy dashboard alerts]({{< relref "../old-alerting/_index.md" >}}). We encourage you to create issues in the Grafana GitHub repository for bugs found while testing this new feature.
 
-Alerts have four main components:
+Grafana 8 alerts have four main components:
 
 - Alerting rule - One or more query and/or expression, a condition, the frequency of evaluation, and the (optional) duration that a condition must be met before creating an alert.
 - Contact point - A channel for sending notifications when the conditions of an alerting rule are met.

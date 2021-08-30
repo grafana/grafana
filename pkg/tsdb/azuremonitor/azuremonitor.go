@@ -32,12 +32,13 @@ var (
 )
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, pluginManager plugins.Manager, backendPluginManager backendplugin.Manager) *Service {
+	proxy := &httpServiceProxy{}
 	executors := map[string]azDatasourceExecutor{
-		azureMonitor:       &AzureMonitorDatasource{},
-		appInsights:        &ApplicationInsightsDatasource{},
-		azureLogAnalytics:  &AzureLogAnalyticsDatasource{},
-		insightsAnalytics:  &InsightsAnalyticsDatasource{},
-		azureResourceGraph: &AzureResourceGraphDatasource{},
+		azureMonitor:       &AzureMonitorDatasource{proxy: proxy},
+		appInsights:        &ApplicationInsightsDatasource{proxy: proxy},
+		azureLogAnalytics:  &AzureLogAnalyticsDatasource{proxy: proxy},
+		insightsAnalytics:  &InsightsAnalyticsDatasource{proxy: proxy},
+		azureResourceGraph: &AzureResourceGraphDatasource{proxy: proxy},
 	}
 
 	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, *httpClientProvider, executors))

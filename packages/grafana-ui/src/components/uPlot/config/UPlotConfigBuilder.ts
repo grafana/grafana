@@ -42,7 +42,6 @@ export class UPlotConfigBuilder {
   private isStacking = false;
   private select: uPlot.Select | undefined;
   private hasLeftAxis = false;
-  private hasBottomAxis = false;
   private hooks: Hooks.Arrays = {};
   private tz: string | undefined = undefined;
   private sync = false;
@@ -80,7 +79,7 @@ export class UPlotConfigBuilder {
 
   addAxis(props: AxisProps) {
     props.placement = props.placement ?? AxisPlacement.Auto;
-
+    props.grid = props.grid ?? {};
     if (this.axes[props.scaleKey]) {
       this.axes[props.scaleKey].merge(props);
       return;
@@ -91,17 +90,12 @@ export class UPlotConfigBuilder {
       props.placement = this.hasLeftAxis ? AxisPlacement.Right : AxisPlacement.Left;
     }
 
-    switch (props.placement) {
-      case AxisPlacement.Left:
-        this.hasLeftAxis = true;
-        break;
-      case AxisPlacement.Bottom:
-        this.hasBottomAxis = true;
-        break;
+    if (props.placement === AxisPlacement.Left) {
+      this.hasLeftAxis = true;
     }
 
     if (props.placement === AxisPlacement.Hidden) {
-      props.show = false;
+      props.grid.show = false;
       props.size = 0;
     }
 
@@ -233,24 +227,30 @@ export class UPlotConfigBuilder {
     return config;
   }
 
-  private ensureNonOverlappingAxes(axes: UPlotAxisBuilder[]): UPlotAxisBuilder[] {
-    for (const axis of axes) {
-      if (axis.props.placement === AxisPlacement.Right && this.hasLeftAxis) {
-        axis.props.grid = false;
-      }
-      if (axis.props.placement === AxisPlacement.Top && this.hasBottomAxis) {
-        axis.props.grid = false;
-      }
-    }
-
-    return axes;
-  }
-
   private tzDate = (ts: number) => {
     let date = new Date(ts);
 
     return this.tz ? uPlot.tzDate(date, this.tz) : date;
   };
+
+  private ensureNonOverlappingAxes(axes: UPlotAxisBuilder[]): UPlotAxisBuilder[] {
+    const xAxis = axes.find((a) => a.props.scaleKey === 'x');
+    const axesWithoutGridSet = axes.filter((a) => a.props.grid?.show === undefined);
+    const firstValueAxisIdx = axesWithoutGridSet.findIndex(
+      (a) => a.props.placement === AxisPlacement.Left || (a.props.placement === AxisPlacement.Bottom && a !== xAxis)
+    );
+
+    // For all axes with no grid set, set the grid automatically (grid only for first left axis )
+    for (let i = 0; i < axesWithoutGridSet.length; i++) {
+      if (axesWithoutGridSet[i] === xAxis || i === firstValueAxisIdx) {
+        axesWithoutGridSet[i].props.grid!.show = true;
+      } else {
+        axesWithoutGridSet[i].props.grid!.show = false;
+      }
+    }
+
+    return axes;
+  }
 }
 
 /** @alpha */
