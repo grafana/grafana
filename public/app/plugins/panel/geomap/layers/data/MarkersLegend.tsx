@@ -4,7 +4,7 @@ import { formattedValueToString, getFieldColorModeForField, GrafanaTheme2 } from
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { DimensionSupplier } from 'app/features/dimensions';
-import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils'; 
+import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils';
 import { getMinMaxAndDelta } from '../../../../../../../packages/grafana-data/src/field/scale';
 
 export interface MarkersLegendProps {
@@ -60,14 +60,14 @@ export function MarkersLegend(props: MarkersLegendProps) {
   const items = getThresholdItems(color.field!.config, config.theme2);
   return (
     <div className={style.infoWrap}>
-        <div className={style.legend}>
-          {items.map((item: VizLegendItem, idx:number) => (
-              <div key={`${idx}/${item.label}`} className={style.legendItem}>
-                <i style={{ background: item.color }}></i>
-                {item.label}
-              </div>
-            ))}
-        </div>
+      <div className={style.legend}>
+        {items.map((item: VizLegendItem, idx: number) => (
+          <div key={`${idx}/${item.label}`} className={style.legendItem}>
+            <i style={{ background: item.color }}></i>
+            {item.label}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
