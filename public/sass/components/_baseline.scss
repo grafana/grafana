@@ -3,19 +3,25 @@
   overflow: auto;
   padding-bottom: $space-md;
 
+  .no-margin {
+    h1 {
+      margin: 0;
+    }
+  }
+
   .sub-title {
-    padding: 0 $space-md;
+    padding: 0 $space-lg;
     margin-bottom: $space-lg;
   }
 
   hr {
-    max-width: calc(100vw - (#{$side-menu-width + ($space-md * 2)}));
+    max-width: calc(100vw - (#{$side-menu-width + ($space-lg * 2)}));
     margin: $space-lg auto;
   }
 }
 
 .baseline-entry-form {
-  padding: $space-md;
+  padding: $space-md $space-lg;
 }
 
 .baseline-field-group {
@@ -55,7 +61,7 @@
 
 .baseline-entry-table-container {  
   position: relative;  
-  max-width: calc(100vw - (#{$side-menu-width + ($space-md * 2)}));
+  max-width: calc(100vw - (#{$side-menu-width + ($space-lg * 2)}));
   overflow: auto;
   margin: 0 auto;
 

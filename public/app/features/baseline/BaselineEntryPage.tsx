@@ -39,7 +39,7 @@ export function BaselineEntryPage({
 
   return (
     <div className="baseline-entry">
-      <PageToolbar title={`Baseline Entry`} />
+      <PageToolbar title={`Baseline Entry`} className="no-margin" />
       <div className="sub-title">Possible microcopy providing high level explanation of the chart.</div>
       <BaselineEntryForm addBaselineEntry={submitBaselineEntry} isSavingBaselineEntry={isUpdating} />
       <hr></hr>

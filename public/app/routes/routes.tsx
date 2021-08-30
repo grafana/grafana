@@ -517,7 +517,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/baseline',
-      roles: () => ['Editor', 'Admin'],
+      // roles: () => ['Editor', 'Admin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "BaselineEntryPage" */ 'app/features/baseline/BaselineEntryPage')
       ),
