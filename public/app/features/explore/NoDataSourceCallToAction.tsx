@@ -2,9 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { LinkButton, CallToActionCard, Icon, useTheme2 } from '@grafana/ui';
 
-// Services & Utils
 import { contextSrv } from 'app/core/core';
-// Types
 import { AccessControlAction } from 'app/types';
 
 export const NoDataSourceCallToAction = () => {
