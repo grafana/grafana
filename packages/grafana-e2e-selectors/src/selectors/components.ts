@@ -137,8 +137,8 @@ export const Components = {
     active: () => '[class*="-activeTabStyle"]',
   },
   RefreshPicker: {
-    runButton: 'RefreshPicker run button',
-    intervalButton: 'RefreshPicker interval button',
+    runButton: 'data-testid RefreshPicker run button',
+    intervalButton: 'Choose refresh time interval',
   },
   QueryTab: {
     content: 'Query editor tab content',

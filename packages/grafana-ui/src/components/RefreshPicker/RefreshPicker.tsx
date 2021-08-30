@@ -71,7 +71,7 @@ export class RefreshPicker extends PureComponent<Props> {
           onClick={onRefresh}
           variant={variant}
           icon={isLoading ? 'fa fa-spinner' : 'sync'}
-          aria-label={selectors.components.RefreshPicker.runButton}
+          data-testid={selectors.components.RefreshPicker.runButton}
         >
           {text}
         </ToolbarButton>
