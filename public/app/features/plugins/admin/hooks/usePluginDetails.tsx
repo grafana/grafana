@@ -3,14 +3,13 @@ import { PluginType, PluginIncludeType, GrafanaPlugin, PluginMeta } from '@grafa
 import { api } from '../api';
 import { loadPlugin } from '../../PluginPage';
 import { getCatalogPluginDetails, isOrgAdmin } from '../helpers';
-import { ActionTypes, CatalogPluginDetails, PluginDetailsActions, PluginDetailsState } from '../types';
-import { PLUGIN_TAB_LABELS } from '../constants';
+import { ActionTypes, CatalogPluginDetails, PluginDetailsActions, PluginDetailsState, PluginTabLabels } from '../types';
 
 type Tab = {
-  label: PLUGIN_TAB_LABELS;
+  label: PluginTabLabels;
 };
 
-const defaultTabs: Tab[] = [{ label: PLUGIN_TAB_LABELS.OVERVIEW }, { label: PLUGIN_TAB_LABELS.VERSIONS }];
+const defaultTabs: Tab[] = [{ label: PluginTabLabels.OVERVIEW }, { label: PluginTabLabels.VERSIONS }];
 
 const initialState = {
   hasInstalledPanel: false,
@@ -153,7 +152,7 @@ export const usePluginDetails = (id: string) => {
       if (pluginConfig.meta.type === PluginType.app) {
         if (pluginConfig.angularConfigCtrl) {
           tabs.push({
-            label: PLUGIN_TAB_LABELS.CONFIG,
+            label: PluginTabLabels.CONFIG,
           });
         }
 
@@ -161,14 +160,14 @@ export const usePluginDetails = (id: string) => {
         if (pluginConfig.configPages) {
           for (const page of pluginConfig.configPages) {
             tabs.push({
-              label: page.title as PLUGIN_TAB_LABELS,
+              label: page.title as PluginTabLabels,
             });
           }
         }
 
         if (pluginConfig.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
           tabs.push({
-            label: PLUGIN_TAB_LABELS.DASHBOARDS,
+            label: PluginTabLabels.DASHBOARDS,
           });
         }
       }
