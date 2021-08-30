@@ -223,3 +223,9 @@ export type PluginsByFilterType = {
 };
 
 export type PluginFilter = (plugin: CatalogPlugin, query: string) => boolean;
+
+export enum PluginStatus {
+  INSTALL = 'INSTALL',
+  UNINSTALL = 'UNINSTALL',
+  UPDATE = 'UPDATE',
+}

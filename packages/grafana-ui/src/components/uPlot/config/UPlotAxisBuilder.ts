@@ -13,7 +13,7 @@ export interface AxisProps {
   size?: number | null;
   gap?: number;
   placement?: AxisPlacement;
-  grid?: boolean;
+  grid?: Axis.Grid;
   ticks?: boolean;
   formatValue?: (v: any) => string;
   incrs?: Axis.Incrs;
@@ -43,7 +43,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       label,
       show = true,
       placement = AxisPlacement.Auto,
-      grid = true,
+      grid = { show: true },
       ticks = true,
       gap = 5,
       formatValue,
@@ -74,7 +74,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       labelGap: 0,
 
       grid: {
-        show: grid,
+        show: grid.show,
         stroke: gridColor,
         width: 1 / devicePixelRatio,
       },
