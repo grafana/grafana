@@ -7,18 +7,17 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 
 	gocontext "context"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -110,44 +109,21 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler plug
 	}, nil
 }
 
-func getMinInterval(model *simplejson.Json, dsInfo *models.DataSource) (time.Duration, error) {
-	minIntervalString := ""
-
-	// if panel-min-interval exists, that is the min-interval we use.
-	// otherwise we use datasource-min-interval (if it exists)
-	panelMinIntervalString := model.Get("interval").MustString("")
-	if panelMinIntervalString != "" {
-		minIntervalString = panelMinIntervalString
-	} else {
-		dataSourceMinIntervalString := dsInfo.JsonData.Get("timeInterval").MustString("")
-		if dataSourceMinIntervalString != "" {
-			minIntervalString = dataSourceMinIntervalString
-		}
-	}
-
-	if minIntervalString == "" {
-		return time.Duration(0), nil
-	}
-
-	return tsdb.MinIntervalStringToDuration(minIntervalString)
-}
-
 func calculateInterval(timeRange plugins.DataTimeRange, model *simplejson.Json, dsInfo *models.DataSource) (time.Duration, error) {
-
-	minInterval, err := getMinInterval(model, dsInfo)
+	// interval.GetIntervalFrom has two problems (but they do not affect us here):
+	// - it returns the min-interval, so it should be called interval.GetMinIntervalFrom
+	// - it falls back to model.intervalMs. it should not, because that one is the real final
+	//   interval-value calculated by the brower. but, in this specific case (old-alert),
+	//   that value is not set, so the fallback never happens.
+	minInterval, err := interval.GetIntervalFrom(dsInfo, model, time.Duration(0))
 
 	if err != nil {
 		return time.Duration(0), err
 	}
 
-	calc := tsdb.NewCalculator()
+	calc := interval.NewCalculator()
 
-	newFormatTimeRange := backend.TimeRange{
-		From: timeRange.MustGetFrom(),
-		To:   timeRange.MustGetTo(),
-	}
-
-	interval, err := calc.Calculate(newFormatTimeRange, minInterval, tsdb.Min)
+	interval, err := calc.Calculate(timeRange, minInterval, "min")
 	if err != nil {
 		return time.Duration(0), err
 	}
@@ -286,7 +262,7 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, t
 				Model:         queryModel,
 				DataSource:    datasource,
 				QueryType:     queryModel.Get("queryType").MustString(""),
-				MaxDataPoints: tsdb.DefaultRes,
+				MaxDataPoints: interval.DefaultRes,
 				IntervalMS:    calculatedInterval.Milliseconds(),
 			},
 		},
