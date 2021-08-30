@@ -8,11 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/securedata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -266,7 +267,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				jsonModelEncoded, err := jsonModel.Encode()
 				require.NoError(t, err)
 
-				encrypted, err := securedata.Encrypt(jsonModelEncoded)
+				encrypted, err := new(ossencryption.Service).Encrypt(jsonModelEncoded, setting.SecretKey)
 				require.NoError(t, err)
 
 				// mock snapshot with encrypted dashboard info

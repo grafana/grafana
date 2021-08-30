@@ -42,7 +42,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 
 			assert.NotNil(t, query.Result)
 
-			dashboard, err := query.Result.DashboardJSON()
+			dashboard, err := query.Result.Dashboard
 			require.NoError(t, err)
 			assert.Equal(t, "mupp", dashboard.Get("hello").MustString())
 		})
