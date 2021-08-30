@@ -10,6 +10,10 @@ weight = 1300
 
 Grafana includes built-in support for Prometheus. This topic explains options, variables, querying, and other options specific to the Prometheus data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
+## Hosted Prometheus
+
+Run Prometheus on your own hardware or use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-dashboards-grafana). The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs and more. [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=doc-grafana-&plcmt=in-text).
+
 ## Prometheus settings
 
 To access Prometheus settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Prometheus data source.
@@ -63,7 +67,7 @@ Open a graph in edit mode by clicking the title > Edit (or by pressing `e` key w
 The Prometheus data source allows you to run "instant" queries, which query only the latest value.
 You can visualize the results in a table panel to see all available labels of a timeseries.
 
-Instant query results are made up only of one data point per series but can be shown in the graph panel with the help of [series overrides]({{< relref "../panels/visualizations/graph-panel.md#series-overrides" >}}).
+Instant query results are made up only of one data point per series but can be shown in the graph panel with the help of [series overrides]({{< relref "../visualizations/graph-panel.md#series-overrides" >}}).
 To show them in the graph as a latest value point, add a series override and select `Points > true`.
 To show a horizontal line across the whole graph, add a series override and select `Transform > constant`.
 
