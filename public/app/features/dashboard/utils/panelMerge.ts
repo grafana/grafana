@@ -16,13 +16,24 @@ export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMe
       add: [] as number[],
       remove: [] as number[],
       replace: [] as number[],
+      update: [] as number[],
       noop: [] as number[],
     },
     panels,
   };
+
+  let nextId = 0;
   const inputPanels = new Map<number, IPanelModel>();
-  for (const p of data) {
-    inputPanels.set(p.id, p);
+  for (let p of data) {
+    let { id } = p;
+    if (!id) {
+      if (!nextId) {
+        nextId = findNextPanelID([current, data]);
+      }
+      id = nextId++;
+      p = { ...p, id };
+    }
+    inputPanels.set(id, p);
   }
 
   for (const panel of current) {
@@ -46,18 +57,35 @@ export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMe
     if (panel.type === target.type) {
       const save = panel.getSaveModel();
       const changed: string[] = [];
+      let hasChanges = false;
       for (const [key, value] of Object.entries(target)) {
         if (!isEqualWith(value, save[key], infinityAsNull)) {
-          changed.push(key);
+          info.changed = true;
+          hasChanges = true;
+          switch (key) {
+            case 'gridPos':
+              panel.gridPos = value;
+              break;
+            case 'title':
+              panel.title = value;
+              break;
+            default:
+              changed.push(key);
+          }
         }
       }
 
-      if (!changed.length) {
+      if (!hasChanges) {
         panels.push(panel);
         info.actions.noop.push(panel.id);
         continue;
       }
-      // TODO, some properties may not require full refresh
+
+      if (!changed.length) {
+        panels.push(panel);
+        info.actions.update.push(panel.id);
+        continue;
+      }
     }
     panel.destroy();
 
@@ -83,4 +111,16 @@ function infinityAsNull(a: any, b: any) {
     return true;
   }
   return undefined; // use default comparison
+}
+
+function findNextPanelID(args: IPanelModel[][]): number {
+  let max = 0;
+  for (const panels of args) {
+    for (const panel of panels) {
+      if (panel.id > max) {
+        max = panel.id;
+      }
+    }
+  }
+  return max + 1;
 }
