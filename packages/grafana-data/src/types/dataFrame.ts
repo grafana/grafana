@@ -226,4 +226,85 @@ export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';
 export interface DataFrameFieldIndex {
   frameIndex: number;
   fieldIndex: number;
+  seriesIndex?: number;
+  displayName?: string;
+}
+
+/**
+ * @internal
+ */
+export interface FieldMap {
+  // cache for getFieldDisplayName() for lookups which rely on field names
+  names: string[];
+
+  // total count of matched fields
+  count: number;
+
+  // field indices of interest e.g. filtered by FieldMatchers and/or mapped from Dimensions
+  x: number;
+  y: number | number[]; // number[] for AlignedData
+  color?: number;
+  label?: number;
+  size?: number;
+  symbol?: number;
+
+  // field indices of interest in specific contexts
+  tooltip?: number[];
+  legend?: number[];
+}
+
+/*
+// ohlc field map
+export interface FrameFieldMapOHLC {
+  x: // time
+  o: // open
+  h: // high
+  l: // low
+  c: // close
+  v: // volume
+  color?: number; // synthetic? based on direction of close - open (intra-period), or close - close (inter-period)
+
+  // field indices of interest in specific contexts
+  tooltip?: number[];
+  legend?: number[];
+}
+*/
+
+/*
+// box & whisker field map
+export interface FrameFieldMapBox {
+  label?: number;
+  med:
+  avg:
+  min:
+  max:
+  q2:
+  q3:
+  color?: // synthetic
+
+  // field indices of interest in specific contexts
+  tooltip?: number[];
+  legend?: number[];
+}
+*/
+
+/**
+ * @internal
+ */
+export interface FieldLookup {
+  // frame-matched
+  fieldMaps: FieldMap[];
+  // maps displayName => DataFrameFieldIndex
+  byName: Map<string, DataFrameFieldIndex>;
+  // maps enumerated/flat seriesIndex => DataFrameFieldIndex
+  byIndex: Map<string, DataFrameFieldIndex>;
+
+  // util exposed to mutate field.state.seriesIndex of 'y' fields
+  //   a. using 'y' fields of all frames (AlignedData)
+  //   b. using frame's index (FacetedData)
+  //
+  // TODO: not sure if this should be here or external
+  // will need to be run as part of fieldPrep on every data update
+  // something like myPrepFieldLookup(frames) => {lookup: FieldLookup, enumerate: (frames: DataFrame[]) => void}
+  enumerate: (frames: DataFrame[]) => void;
 }

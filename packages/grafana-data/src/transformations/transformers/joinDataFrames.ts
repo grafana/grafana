@@ -1,4 +1,4 @@
-import { DataFrame, Field, FieldMatcher, FieldType, Vector } from '../../types';
+import { DataFrame, Field, FieldMap, FieldMatcher, FieldType, Vector } from '../../types';
 import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
@@ -63,6 +63,60 @@ export interface JoinOptions {
 
 function getJoinMatcher(options: JoinOptions): FieldMatcher {
   return options.joinBy ?? pickBestJoinField(options.frames);
+}
+
+const fieldMapNonDims = new Set(['count', 'names', 'legend', 'tooltip']);
+
+/**
+ * This will join the values of all fields in the fieldMap which are not joinDim (typically 'x')
+ */
+export function outerJoinFieldValues(frames: DataFrame[], fieldMaps: FieldMap[], joinDim: string) {
+  const nullModes: JoinNullMode[][] = [];
+  const tables: AlignedData[] = [];
+
+  for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+    const frame = frames[frameIndex];
+    const fieldMap = fieldMaps[frameIndex];
+    const joinFieldIdx = fieldMap[joinDim]; // assumes joinFieldIdx non-array, for now
+
+    if (joinFieldIdx == null || fieldMap.count === 0) {
+      continue;
+    }
+
+    const frameValues = new Set([frame.fields[joinFieldIdx].values.toArray()]);
+    const nullModesFrame: JoinNullMode[] = [NULL_REMOVE];
+
+    for (let [dim, fieldIndices] of Object.entries(fieldMap)) {
+      if (dim === joinDim || fieldMapNonDims.has(dim)) {
+        continue;
+      }
+
+      if (!Array.isArray(fieldIndices)) {
+        fieldIndices = [fieldIndices];
+      }
+
+      for (const fieldIdx of fieldIndices) {
+        if (fieldIdx === joinFieldIdx) {
+          continue;
+        }
+
+        const field = frame.fields[fieldIdx];
+        const values = field.values.toArray();
+
+        if (!frameValues.has(values)) {
+          frameValues.add(values);
+          let spanNulls = field.config.custom?.spanNulls;
+          nullModesFrame.push(spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND);
+        }
+      }
+    }
+
+    nullModes.push(nullModesFrame);
+
+    tables.push([...frameValues]);
+  }
+
+  return join(tables, nullModes);
 }
 
 /**
