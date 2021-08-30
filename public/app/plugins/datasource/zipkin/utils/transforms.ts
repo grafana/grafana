@@ -1,5 +1,5 @@
 import { identity } from 'lodash';
-import { ZipkinAnnotation, ZipkinSpan } from '../types';
+import { ZipkinAnnotation, ZipkinEndpoint, ZipkinSpan } from '../types';
 import { DataFrame, FieldType, MutableDataFrame, TraceKeyValuePair, TraceLog, TraceSpanRow } from '@grafana/data';
 
 /**
@@ -22,6 +22,9 @@ export function transformResponse(zSpans: ZipkinSpan[]): DataFrame {
     ],
     meta: {
       preferredVisualisationType: 'trace',
+      custom: {
+        traceFormat: 'zipkin',
+      },
     },
   });
 
@@ -112,3 +115,53 @@ function valueToTag<T>(key: string, value: T): TraceKeyValuePair<T> | undefined 
     value,
   };
 }
+
+/**
+ * Transforms data frame to Zipkin response
+ */
+export const transformToZipkin = (data: MutableDataFrame): ZipkinSpan[] => {
+  let response: ZipkinSpan[] = [];
+
+  for (let i = 0; i < data.length; i++) {
+    const span = data.get(i);
+    response.push({
+      traceId: span.traceID,
+      parentId: span.parentSpanID,
+      name: span.operationName,
+      id: span.spanID,
+      timestamp: span.startTime * 1000,
+      duration: span.duration * 1000,
+      localEndpoint: getEndpoint(span),
+      annotations: span.logs.length
+        ? span.logs.map((l: TraceLog) => ({ timestamp: l.timestamp, value: l.fields[0].value }))
+        : undefined,
+      tags: span.tags.length
+        ? span.tags
+            .filter((t: TraceKeyValuePair) => t.key !== 'kind')
+            .reduce((tags: { [key: string]: string }, t: TraceKeyValuePair) => {
+              if (t.key === 'error') {
+                return {
+                  ...tags,
+                  [t.key]: span.tags.find((t: TraceKeyValuePair) => t.key === 'errorValue').value || '',
+                };
+              }
+              return { ...tags, [t.key]: t.value };
+            }, {})
+        : undefined,
+      kind: span.tags.find((t: TraceKeyValuePair) => t.key === 'kind')?.value ?? undefined,
+    });
+  }
+
+  return response;
+};
+
+const getEndpoint = (span: any): ZipkinEndpoint | undefined => {
+  return span.serviceName !== 'unknown'
+    ? {
+        serviceName: span.serviceName,
+        ipv4: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'ipv4')?.value ?? undefined,
+        ipv6: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'ipv6')?.value ?? undefined,
+        port: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'port')?.value ?? undefined,
+      }
+    : undefined;
+};

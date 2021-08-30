@@ -8,6 +8,7 @@ import {
   DataTransformerID,
   dateTimeFormat,
   dateTimeFormatISO,
+  MutableDataFrame,
   SelectableValue,
   toCSV,
   transformDataFrame,
@@ -22,6 +23,8 @@ import { css } from '@emotion/css';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 import { PanelModel } from 'app/features/dashboard/state';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
+import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
+import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transforms';
 
 interface Props {
   isLoading: boolean;
@@ -122,6 +125,41 @@ export class InspectDataTab extends PureComponent<Props, State> {
     saveAs(blob, fileName);
   };
 
+  exportTracesAsJson = () => {
+    const { data, panel } = this.props;
+    if (!data) {
+      return;
+    }
+
+    for (const df of data) {
+      switch (df.meta?.custom?.traceFormat) {
+        case 'jaeger': {
+          let res = transformToJaeger(new MutableDataFrame(df));
+          this.saveTraceJson(res, panel);
+          break;
+        }
+        case 'zipkin': {
+          let res = transformToZipkin(new MutableDataFrame(df));
+          this.saveTraceJson(res, panel);
+          break;
+        }
+        case 'otlp':
+        default: {
+          break;
+        }
+      }
+    }
+  };
+
+  saveTraceJson = (json: any, panel?: PanelModel) => {
+    const blob = new Blob([JSON.stringify(json)], {
+      type: 'application/json',
+    });
+    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
+    const fileName = `${displayTitle}-traces-${dateTimeFormat(new Date())}.json`;
+    saveAs(blob, fileName);
+  };
+
   onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
     this.setState({
       transformId:
@@ -180,6 +218,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const index = !dataFrames[dataFrameIndex] ? 0 : dataFrameIndex;
     const dataFrame = dataFrames[index];
     const hasLogs = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'logs');
+    const hasTraces = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'trace');
 
     return (
       <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
@@ -216,6 +255,18 @@ export class InspectDataTab extends PureComponent<Props, State> {
               `}
             >
               Download logs
+            </Button>
+          )}
+          {hasTraces && (
+            <Button
+              variant="primary"
+              onClick={this.exportTracesAsJson}
+              className={css`
+                margin-bottom: 10px;
+                margin-left: 10px;
+              `}
+            >
+              Download traces
             </Button>
           )}
         </div>

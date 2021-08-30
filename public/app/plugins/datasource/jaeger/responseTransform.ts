@@ -1,6 +1,13 @@
-import { DataFrame, DataSourceInstanceSettings, FieldType, MutableDataFrame, TraceSpanRow } from '@grafana/data';
+import {
+  DataFrame,
+  DataSourceInstanceSettings,
+  FieldType,
+  MutableDataFrame,
+  TraceLog,
+  TraceSpanRow,
+} from '@grafana/data';
 import { transformTraceData } from '@jaegertracing/jaeger-ui-components';
-import { Span, TraceProcess, TraceResponse } from './types';
+import { JaegerResponse, Span, TraceProcess, TraceResponse } from './types';
 
 export function createTraceFrame(data: TraceResponse): DataFrame {
   const spans = data.spans.map((s) => toSpanRow(s, data.processes));
@@ -111,8 +118,8 @@ function transformToTraceData(data: TraceResponse) {
   };
 }
 
-export function transformToJaeger(data: MutableDataFrame): TraceResponse {
-  let response: TraceResponse = {
+export function transformToJaeger(data: MutableDataFrame): JaegerResponse {
+  let traceResponse: TraceResponse = {
     traceID: '',
     spans: [],
     processes: {},
@@ -124,21 +131,21 @@ export function transformToJaeger(data: MutableDataFrame): TraceResponse {
     const span = data.get(i);
 
     // Set traceID
-    if (!response.traceID) {
-      response.traceID = span.traceID;
+    if (!traceResponse.traceID) {
+      traceResponse.traceID = span.traceID;
     }
 
     // Create process if doesn't exist
     if (!processes.find((p) => p === span.serviceName)) {
       processes.push(span.serviceName);
-      response.processes[`p${processes.length}`] = {
+      traceResponse.processes[`p${processes.length}`] = {
         serviceName: span.serviceName,
         tags: span.serviceTags,
       };
     }
 
     // Create span
-    response.spans.push({
+    traceResponse.spans.push({
       traceID: span.traceID,
       spanID: span.spanID,
       duration: span.duration * 1000,
@@ -152,15 +159,20 @@ export function transformToJaeger(data: MutableDataFrame): TraceResponse {
           ]
         : [],
       flags: 0,
-      logs: span.logs,
+      logs: span.logs.map((l: TraceLog) => ({
+        ...l,
+        timestamp: l.timestamp * 1000,
+      })),
       operationName: span.operationName,
       processID:
-        Object.keys(response.processes).find((key) => response.processes[key].serviceName === span.serviceName) || '',
+        Object.keys(traceResponse.processes).find(
+          (key) => traceResponse.processes[key].serviceName === span.serviceName
+        ) || '',
       startTime: span.startTime * 1000,
       tags: span.tags,
       warnings: span.warnings ? span.warnings : null,
     });
   }
 
-  return response;
+  return { data: [traceResponse], total: 0, limit: 0, offset: 0, errors: null };
 }
