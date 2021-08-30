@@ -148,8 +148,8 @@ describe('Table', () => {
 
   describe('when mounted with footer', () => {
     it('then footer should be displayed', () => {
-      const footer = ['a', 'b', 'c'];
-      getTestContext({ footer });
+      const footerValues = ['a', 'b', 'c'];
+      getTestContext({ footerValues });
       expect(getTable()).toBeInTheDocument();
       expect(getFooter()).toBeInTheDocument();
     });

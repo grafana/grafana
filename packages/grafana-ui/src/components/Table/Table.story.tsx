@@ -183,7 +183,7 @@ export const Footer: Story = (args) => {
 
   return (
     <div className="panel-container" style={{ width: 'auto', height: 'unset' }}>
-      <Table data={data} height={args.height} width={args.width} footer={footer} {...args} footerHeight={56} />
+      <Table data={data} height={args.height} width={args.width} footerValues={footer} {...args} footerHeight={56} />
     </div>
   );
 };
