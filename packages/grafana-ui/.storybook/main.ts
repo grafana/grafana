@@ -1,6 +1,6 @@
 const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const FilterWarningsPlugin = require('webpack-filter-warnings-plugin');
 const getBabelConfig = require('../../../scripts/webpack/babel.config');
 
@@ -126,7 +126,7 @@ module.exports = {
         },
         minimize: isProductionBuild,
         minimizer: isProductionBuild
-          ? [new TerserPlugin({ parallel: false, exclude: /monaco/ }), new OptimizeCSSAssetsPlugin({})]
+          ? [new TerserPlugin({ parallel: false, exclude: /monaco/ }), new CssMinimizerPlugin()]
           : [],
       };
     }
