@@ -217,9 +217,12 @@ func convertToFloat(i interface{}) (float64, error) {
 	}
 }
 
-func reReplaceAll(pattern, repl, text string) string {
-	re := regexp.MustCompile(pattern)
-	return re.ReplaceAllString(text, repl)
+func reReplaceAll(pattern, repl, text string) (string, error) {
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return "", err
+	}
+	return re.ReplaceAllString(text, repl), nil
 }
 
 func args(args ...interface{}) map[string]interface{} {

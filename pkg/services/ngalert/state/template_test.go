@@ -285,27 +285,27 @@ func TestExpandTemplate(t *testing.T) {
 		expected: "2015-06-23 13:19:44.128 +0000 UTC",
 	}, {
 		name:     "title",
-		text:     "{{ \"aa bb CC\" | title }}",
+		text:     `{{ "aa bb CC" | title }}`,
 		expected: "Aa Bb CC",
 	}, {
 		name:     "toUpper",
-		text:     "{{ \"aa bb CC\" | toUpper }}",
+		text:     `{{ "aa bb CC" | toUpper }}`,
 		expected: "AA BB CC",
 	}, {
 		name:     "toLower",
-		text:     "{{ \"aA bB CC\" | toLower }}",
+		text:     `{{ "aA bB CC" | toLower }}`,
 		expected: "aa bb cc",
 	}, {
 		name:     "match",
-		text:     "{{ match \"a+\" \"aa\" }} {{ match \"a+\" \"b\" }}",
+		text:     `{{ match "a+" "aa" }} {{ match "a+" "b" }}`,
 		expected: "true false",
 	}, {
 		name:     "match",
-		text:     "{{ match \"a+\" \"aa\" }} {{ match \"a+\" \"b\" }}",
+		text:     `{{ match "a+" "aa" }} {{ match "a+" "b" }}`,
 		expected: "true false",
 	}, {
 		name:     "pass multiple arguments to templates",
-		text:     "{{define \"x\"}}{{.arg0}} {{.arg1}}{{end}}{{template \"x\" (args 1 \"2\")}}",
+		text:     `{{define "x"}}{{.arg0}} {{.arg1}}{{end}}{{template "x" (args 1 "2")}}`,
 		expected: "1 2",
 	},
 	}
