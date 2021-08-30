@@ -95,7 +95,7 @@ function getTable(): HTMLElement {
 }
 
 function getFooter(): HTMLElement {
-  return screen.getByLabelText('table footer');
+  return screen.getByTestId('table-footer');
 }
 
 function getColumnHeader(name: string | RegExp): HTMLElement {

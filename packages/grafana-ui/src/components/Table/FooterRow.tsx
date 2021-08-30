@@ -49,7 +49,7 @@ export const FooterRow = (props: FooterRowProps) => {
             className={tableStyles.tfoot}
             {...footerGroupProps}
             key={key}
-            aria-label={e2eSelectorsTable.footer}
+            data-testid={e2eSelectorsTable.footer}
             style={height ? { height: `${height}px` } : undefined}
           >
             <tr>
