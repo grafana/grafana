@@ -237,8 +237,14 @@ export function getScaleGradientFn(
       }
     } else if (colorMode.getColors) {
       const colors = colorMode.getColors(theme);
-      const [min, max] = getThresholdRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
+      const { min: scaleMin, max: scaleMax } = plot.scales[scaleKey];
+
+      // 1.1 divisor is to remove the 10% scale padding added to the raw data when auto-ranging
+      let min = scaleMin === 0 ? 0 : scaleMin! / 1.1;
+      let max = scaleMax === 0 ? 0 : scaleMax! / 1.1;
+
       const range = max - min;
+
       const valueStops = colors.map(
         (color, i) =>
           [
