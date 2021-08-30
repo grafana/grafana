@@ -42,7 +42,7 @@ export interface Props {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
-  footer?: ReactNode[];
+  footerValues?: ReactNode[];
   footerHeight?: number;
 }
 
@@ -123,7 +123,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     noHeader,
     resizable = true,
     initialSortBy,
-    footer,
+    footerValues,
     footerHeight,
   } = props;
   const tableStyles = useStyles2(getTableStyles);
@@ -141,11 +141,11 @@ export const Table: FC<Props> = memo((props: Props) => {
   }, [data]);
 
   // React-table column definitions
-  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth, footer), [
+  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth, footerValues), [
     data,
     width,
     columnMinWidth,
-    footer,
+    footerValues,
   ]);
 
   // Internal react table state reducer
@@ -222,7 +222,7 @@ export const Table: FC<Props> = memo((props: Props) => {
             </div>
           )}
           <FooterRow
-            footer={footer}
+            footer={footerValues}
             footerGroups={footerGroups}
             totalColumnsWidth={totalColumnsWidth}
             height={footerHeight}

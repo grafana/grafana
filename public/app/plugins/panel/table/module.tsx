@@ -91,7 +91,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
             { label: 'none', value: 'none' },
             // { label: 'auto', value: 'auto' },  // TODO: when frame meta supports this
             { label: 'summary', value: 'summary' },
-            { label: 'frame', value: 'frame' },
+            { label: 'provided', value: 'frame' },
           ],
         },
         defaultValue: 'none',

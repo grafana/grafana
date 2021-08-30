@@ -101,7 +101,7 @@ export class TablePanel extends Component<Props> {
   renderTable(frame: DataFrame, width: number, height: number) {
     const { options } = this.props;
 
-    const footer = this.getFooter2(frame);
+    const footer = this.getFooter(frame);
 
     return (
       <Table
@@ -114,76 +114,21 @@ export class TablePanel extends Component<Props> {
         onSortByChange={this.onSortByChange}
         onColumnResize={this.onColumnResize}
         onCellFilterAdded={this.onCellFilterAdded}
-        footer={footer.cells}
+        footerValues={footer.cells}
         footerHeight={footer.height}
       />
     );
   }
 
-  getFooter2(frame: DataFrame): Footer {
-    const { options, data } = this.props;
+  getFooter(frame: DataFrame): Footer {
+    const { options } = this.props;
 
     if (options.footerMode === 'none') {
       return { cells: undefined };
     }
 
     if (options.footerMode === 'frame') {
-      const summaryFrame = data.series.find((f) => f.name === options.footerFrame);
-      if (summaryFrame === undefined) {
-        return { cells: undefined };
-      }
-
-      // group cells by field for multi value cells
-      const cellsByField: KeyValue = {};
-      frame.fields.forEach((f, i) => {
-        for (const sf of summaryFrame!.fields) {
-          // TODO: how to define fields/aggregates that link to the main frame columns
-          const fieldName = sf.name;
-          // TODO: change - this is specific to salesforce
-          // a!Foo = average of Foo
-          const funcField = fieldName.split('!');
-          const funcs: KeyValue = {
-            a: 'avg',
-            s: 'sum',
-          };
-          if (funcField.length > 1) {
-            const func = funcField[0];
-            const name = funcField[1];
-
-            if (name === f.name) {
-              const reducer = funcs[func];
-              const cell = this.getSummaryCell2(i, reducer, sf, true);
-              const fieldCells = cellsByField[name] || [];
-              fieldCells.push(cell);
-              cellsByField[name] = fieldCells;
-              continue;
-            }
-          }
-          continue;
-        }
-      });
-
-      let height: number | undefined;
-      const cells = frame.fields.map((f, i) => {
-        const fieldCells = cellsByField[f.name];
-        if (fieldCells === undefined) {
-          if (i === 0) {
-            // set the first col val to "Total" if not set
-            return 'Total';
-          }
-          return;
-        }
-        if (fieldCells.length > 1) {
-          const expandedHeight = fieldCells.length * 27;
-          height = height || 0;
-          if (height < expandedHeight) {
-            height = expandedHeight;
-          }
-        }
-        return this.getSummaryList2(fieldCells);
-      });
-
-      return { cells, height };
+      return this.getProvidedFooter(frame);
     }
 
     if (options.footerMode === 'summary') {
@@ -192,10 +137,10 @@ export class TablePanel extends Component<Props> {
       const cells = frame.fields.map((f, i) => {
         if (fields || fields === '') {
           if (fields.includes('') && f.type === FieldType.number) {
-            return this.getSummaryCell(i, summary.reducer, f, false);
+            return this.calculateSummaryCell(i, summary.reducer, f, false);
           }
           if (fields.includes(f.name)) {
-            return this.getSummaryCell(i, summary.reducer, f, false);
+            return this.calculateSummaryCell(i, summary.reducer, f, false);
           }
           if (i === 0) {
             return summary.reducer.toUpperCase();
@@ -209,45 +154,55 @@ export class TablePanel extends Component<Props> {
     return { cells: undefined };
   }
 
-  // TODO: remove - this was using overrides to manage fields
-  getFooter(frame: DataFrame): Footer {
-    const { fieldConfig } = this.props;
+  getProvidedFooter(frame: DataFrame): Footer {
+    const { options, data } = this.props;
 
-    if (!fieldConfig.defaults.custom?.summary || fieldConfig.defaults.custom?.summary === '') {
+    const summaryFrame = data.series.find((f) => f.name === options.footerFrame);
+    if (summaryFrame === undefined) {
       return { cells: undefined };
     }
 
-    const matcherId = FieldMatcherID.byName;
-    const overrides = fieldConfig.overrides;
+    // group cells by field for multi value cells
+    const cellsByField: KeyValue = {};
+    frame.fields.forEach((f, i) => {
+      for (const sf of summaryFrame!.fields) {
+        const referenceField: string = sf.config?.custom?.['referenceField'];
+        const reducer: string = sf.config?.custom?.['reducer'];
+        if (referenceField === f.name) {
+          const cell = this.getSummaryCell(i, reducer, sf, true);
+          const fieldCells = cellsByField[referenceField] || [];
+          fieldCells.push(cell);
+          cellsByField[referenceField] = fieldCells;
+          continue;
+        }
+        continue;
+      }
+    });
 
-    let height;
+    let height: number | undefined;
     const cells = frame.fields.map((f, i) => {
-      if (f.type !== FieldType.number) {
+      const fieldCells = cellsByField[f.name];
+      if (fieldCells === undefined) {
+        if (i === 0) {
+          // set the first col val to "Total" if not set
+          return 'Total';
+        }
         return;
       }
-
-      let functionName = fieldConfig.defaults.custom.summary;
-
-      // TODO - only supporting name matcher here - how to support regex etc
-      const override = overrides.find((o) => o.matcher.id === matcherId && o.matcher.options === f.config.displayName);
-      if (override && override.properties.length > 1) {
-        const summaryProps = override.properties.filter((o: any) => o.id === 'custom.summary');
-        const list = this.getSummaryList(summaryProps, i, f);
-        height = summaryProps.length * 27;
-        return list;
+      if (fieldCells.length > 1) {
+        const expandedHeight = fieldCells.length * 27;
+        height = height || 0;
+        if (height < expandedHeight) {
+          height = expandedHeight;
+        }
       }
-
-      const fieldSummary = f.config.custom?.summary;
-      if (functionName !== fieldSummary) {
-        functionName = fieldSummary;
-      }
-
-      return this.getSummaryCell(i, functionName, f, false);
+      return this.getProvidedList(fieldCells);
     });
+
     return { cells, height };
   }
 
-  getSummaryList2(summaries: ReactNode[]) {
+  getProvidedList(summaries: ReactNode[]) {
     return (
       <ul style={{ listStyle: 'none', width: '100%' }}>
         {summaries.map((s: ReactNode, idx: number) => {
@@ -259,7 +214,7 @@ export class TablePanel extends Component<Props> {
 
   getSummaryList(summaryProps: DynamicConfigValue[], fieldIndex: number, f: Field) {
     const summaries = summaryProps.map((o: any) => {
-      return this.getSummaryCell(fieldIndex, o.value, f, false);
+      return this.calculateSummaryCell(fieldIndex, o.value, f, false);
     });
     return (
       <ul style={{ listStyle: 'none', width: '100%' }}>
@@ -270,12 +225,12 @@ export class TablePanel extends Component<Props> {
     );
   }
 
-  getSummaryCell2(i: number, functionName: string, f: Field, showLabel: boolean) {
+  getSummaryCell(i: number, functionName: string, f: Field, showLabel: boolean) {
     const formatted = this.format(f.values.get(0), f);
     return <SummaryCell key={i} func={functionName} value={formatted} showLabel={showLabel}></SummaryCell>;
   }
 
-  getSummaryCell(i: number, functionName: string, f: Field, showLabel: boolean) {
+  calculateSummaryCell(i: number, functionName: string, f: Field, showLabel: boolean) {
     if (functionName === '') {
       return undefined;
     }
@@ -325,7 +280,7 @@ export class TablePanel extends Component<Props> {
   }
 
   getCurrentFrameIndex(frames: DataFrame[]) {
-    const { data, options } = this.props;
+    const { options } = this.props;
     const count = frames.length;
     return options.frameIndex > 0 && options.frameIndex < count ? options.frameIndex : 0;
   }
