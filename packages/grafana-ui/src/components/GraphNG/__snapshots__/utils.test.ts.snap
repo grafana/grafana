@@ -98,6 +98,7 @@ Object {
     },
   },
   "hooks": Object {},
+  "padding": undefined,
   "scales": Object {
     "__fixed": Object {
       "auto": true,

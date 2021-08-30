@@ -37,6 +37,7 @@ describe('UPlotConfigBuilder', () => {
             },
           },
           "hooks": Object {},
+          "padding": undefined,
           "scales": Object {},
           "select": undefined,
           "series": Array [
@@ -86,6 +87,7 @@ describe('UPlotConfigBuilder', () => {
             },
           },
           "hooks": Object {},
+          "padding": undefined,
           "scales": Object {
             "scale-x": Object {
               "auto": false,
@@ -164,6 +166,7 @@ describe('UPlotConfigBuilder', () => {
               },
             },
             "hooks": Object {},
+            "padding": undefined,
             "scales": Object {
               "scale-y": Object {
                 "auto": true,
@@ -215,6 +218,7 @@ describe('UPlotConfigBuilder', () => {
                 },
               },
               "hooks": Object {},
+              "padding": undefined,
               "scales": Object {
                 "scale-y": Object {
                   "auto": true,
@@ -267,6 +271,7 @@ describe('UPlotConfigBuilder', () => {
                 },
               },
               "hooks": Object {},
+              "padding": undefined,
               "scales": Object {
                 "scale-y": Object {
                   "auto": true,
@@ -382,6 +387,7 @@ describe('UPlotConfigBuilder', () => {
           },
         },
         "hooks": Object {},
+        "padding": undefined,
         "scales": Object {},
         "select": undefined,
         "series": Array [
@@ -499,6 +505,7 @@ describe('UPlotConfigBuilder', () => {
           },
         },
         "hooks": Object {},
+        "padding": undefined,
         "scales": Object {},
         "select": undefined,
         "series": Array [
@@ -612,6 +619,7 @@ describe('UPlotConfigBuilder', () => {
             },
           },
           "hooks": Object {},
+          "padding": undefined,
           "scales": Object {},
           "select": undefined,
           "series": Array [
