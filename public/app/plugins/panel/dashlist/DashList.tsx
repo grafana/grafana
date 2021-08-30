@@ -103,18 +103,6 @@ export function DashList(props: PanelProps<DashListOptions>) {
     ];
   }, [dashboards]);
 
-  const loadDashboard = (info: Dashboard) => {
-    getBackendSrv()
-      .getDashboardByUid(info.uid!)
-      .then((data) => {
-        const dash = data.dashboard;
-        console.log('About to merge/update', dash);
-        // alert(`About to merge/update: ${dash.uid} // ${dash.title}`);
-        const info = getDashboardSrv().getCurrent()!.updatePanels(dash.panels);
-        console.log('INFO', info);
-      });
-  };
-
   const { showStarred, showRecentlyViewed, showHeadings, showSearch } = props.options;
 
   const dashboardGroups: DashboardGroup[] = [
@@ -148,7 +136,7 @@ export function DashList(props: PanelProps<DashListOptions>) {
                   <li className={css.dashlistItem} key={`dash-${dash.id}`}>
                     <div className={css.dashlistLink}>
                       <div className={css.dashlistLinkBody}>
-                        <a className={css.dashlistTitle} onClick={() => loadDashboard(dash)}>
+                        <a className={css.dashlistTitle} href={dash.url}>
                           {dash.title}
                         </a>
                         {dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}

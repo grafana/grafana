@@ -1,4 +1,4 @@
-import { PanelModel } from '../../../../../packages/grafana-data/src';
+import { PanelModel } from '@grafana/data';
 import { DashboardModel } from '../state/DashboardModel';
 
 describe('Merge dashbaord panels', () => {
@@ -26,7 +26,7 @@ describe('Merge dashbaord panels', () => {
                 thresholds: {
                   mode: 'absolute',
                   steps: [
-                    { color: 'green', value: null },
+                    { color: 'green', value: -Infinity }, // save model has this as null
                     { color: 'red', value: 80 },
                   ],
                 },

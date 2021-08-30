@@ -1,5 +1,5 @@
-import { PanelModel as IPanelModel, Threshold } from '@grafana/data';
-import { isEqual } from 'lodash';
+import { PanelModel as IPanelModel } from '@grafana/data';
+import { isEqualWith } from 'lodash';
 import { PanelModel } from '../state';
 
 export interface PanelMergeInfo {
@@ -26,7 +26,7 @@ export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMe
   }
 
   for (const panel of current) {
-    const target = inputPanels.get(panel.id) as PanelModel; // the same model
+    const target = inputPanels.get(panel.id) as PanelModel;
     if (!target) {
       info.changed = true;
       info.actions.remove.push(panel.id);
@@ -35,40 +35,37 @@ export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMe
     }
     inputPanels.delete(panel.id);
 
-    // Type changed trigger full refresh
-    if (panel.type !== target.type) {
-      panel.destroy();
-
-      const next = new PanelModel(target);
-      next.key = `${next.id}-update-${Date.now()}`; // force react replacement
-      panels.push(next);
-      info.changed = true;
-      info.actions.replace.push(panel.id);
+    // Fast comparison when working with the same panel objects
+    if (target === panel) {
+      panels.push(panel);
+      info.actions.noop.push(panel.id);
       continue;
     }
 
-    // All new properties are the same
-    const save = normalizeSaveModel(panel.getSaveModel());
-    const changed: string[] = [];
-    for (const [key, value] of Object.entries(target)) {
-      if (!isEqual(value, save[key])) {
-        changed.push(key);
+    // Check if it is the same type
+    if (panel.type === target.type) {
+      const save = panel.getSaveModel();
+      const changed: string[] = [];
+      for (const [key, value] of Object.entries(target)) {
+        if (!isEqualWith(value, save[key], infinityAsNull)) {
+          changed.push(key);
+        }
       }
-    }
 
-    if (changed.length) {
-      panel.destroy();
-      console.log('CHANGED', panel.id, panel.title, changed);
-
-      const next = new PanelModel(target);
-      next.key = `${next.id}-update-${Date.now()}`; // force react replacement
-      panels.push(next);
-      info.changed = true;
-      info.actions.replace.push(panel.id);
-    } else {
-      panels.push(panel);
-      info.actions.noop.push(panel.id);
+      if (!changed.length) {
+        panels.push(panel);
+        info.actions.noop.push(panel.id);
+        continue;
+      }
+      // TODO, some properties may not require full refresh
     }
+    panel.destroy();
+
+    const next = new PanelModel(target);
+    next.key = `${next.id}-update-${Date.now()}`; // force react invalidate
+    panels.push(next);
+    info.changed = true;
+    info.actions.replace.push(panel.id);
   }
 
   // Add the new panels
@@ -81,13 +78,9 @@ export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMe
   return info;
 }
 
-// Some values (like -Infinity) don't save the same in the panel
-export function normalizeSaveModel(model: any): any {
-  const t = model.fieldConfig?.defaults?.thresholds?.steps as Threshold[];
-  if (t) {
-    if (t[0].value === -Infinity) {
-      t[0].value = null as any;
-    }
+function infinityAsNull(a: any, b: any) {
+  if (a == null && (b === Infinity || b === -Infinity)) {
+    return true;
   }
-  return model;
+  return undefined; // use default comparison
 }
