@@ -182,6 +182,11 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
 
+      hardMin: field.config.min,
+      hardMax: field.config.max,
+      softMin: customConfig.axisSoftMin,
+      softMax: customConfig.axisSoftMax,
+
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: {
         fieldIndex: i,

@@ -26,10 +26,15 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   scaleKey: string;
   pxAlign?: boolean;
   gradientMode?: GraphGradientMode;
+
   /** Used when gradientMode is set to Scheme */
   thresholds?: ThresholdsConfig;
-  /** Used when gradientMode is set to Scheme  */
   colorMode?: FieldColorMode;
+  hardMin?: number | null;
+  hardMax?: number | null;
+  softMin?: number | null;
+  softMax?: number | null;
+
   drawStyle?: GraphDrawStyle;
   pathBuilder?: Series.PathBuilder;
   pointsFilter?: Series.Points.Filter;
@@ -138,17 +143,29 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   }
 
   private getLineColor(): Series.Stroke {
-    const { lineColor, gradientMode, colorMode, thresholds, theme } = this.props;
+    const { lineColor, gradientMode, colorMode, thresholds, theme, hardMin, hardMax, softMin, softMax } = this.props;
 
     if (gradientMode === GraphGradientMode.Scheme && colorMode?.id !== FieldColorModeId.Fixed) {
-      return getScaleGradientFn(1, theme, colorMode, thresholds);
+      return getScaleGradientFn(1, theme, colorMode, thresholds, hardMin, hardMax, softMin, softMax);
     }
 
     return lineColor ?? FALLBACK_COLOR;
   }
 
   private getFill(): Series.Fill | undefined {
-    const { lineColor, fillColor, gradientMode, fillOpacity, colorMode, thresholds, theme } = this.props;
+    const {
+      lineColor,
+      fillColor,
+      gradientMode,
+      fillOpacity,
+      colorMode,
+      thresholds,
+      theme,
+      hardMin,
+      hardMax,
+      softMin,
+      softMax,
+    } = this.props;
 
     if (fillColor) {
       return fillColor;
@@ -164,7 +181,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
         return getHueGradientFn((fillColor ?? lineColor)!, opacityPercent, theme);
       case GraphGradientMode.Scheme:
         if (colorMode?.id !== FieldColorModeId.Fixed) {
-          return getScaleGradientFn(opacityPercent, theme, colorMode, thresholds);
+          return getScaleGradientFn(opacityPercent, theme, colorMode, thresholds, hardMin, hardMax, softMin, softMax);
         }
       // intentional fall-through to handle Scheme with Fixed color
       default:
