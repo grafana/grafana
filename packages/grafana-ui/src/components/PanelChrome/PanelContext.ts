@@ -1,4 +1,4 @@
-import { EventBusSrv, EventBus, DashboardCursorSync, AnnotationEventUIModel } from '@grafana/data';
+import { EventBusSrv, EventBus, DashboardCursorSync, AnnotationEventUIModel, ThresholdsConfig } from '@grafana/data';
 import React from 'react';
 import { SeriesVisibilityChangeMode } from '.';
 
@@ -22,6 +22,20 @@ export interface PanelContext {
   onAnnotationCreate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationUpdate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationDelete?: (id: string) => void;
+
+  /**
+   * Enables modifying thresholds directly from the panel
+   *
+   * @alpha -- experimental
+   */
+  canEditThresholds?: boolean;
+
+  /**
+   * Called when a panel wants to change default thresholds configuration
+   *
+   * @alpha -- experimental
+   */
+  onThresholdsChange?: (thresholds: ThresholdsConfig) => void;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({

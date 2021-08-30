@@ -1,4 +1,4 @@
-import uPlot, { Cursor, Band, Hooks, Select, AlignedData } from 'uplot';
+import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding } from 'uplot';
 import { merge } from 'lodash';
 import {
   DataFrame,
@@ -50,6 +50,7 @@ export class UPlotConfigBuilder {
   private thresholds: Record<string, UPlotThresholdOptions> = {};
   // Custom handler for closest datapoint and series lookup
   private tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
+  private padding?: Padding = undefined;
 
   prepData: PrepData | undefined = undefined;
 
@@ -164,6 +165,10 @@ export class UPlotConfigBuilder {
     return this.sync;
   }
 
+  setPadding(padding: Padding) {
+    this.padding = padding;
+  }
+
   getConfig() {
     const config: PlotConfig = {
       series: [
@@ -203,6 +208,7 @@ export class UPlotConfigBuilder {
     });
 
     config.tzDate = this.tzDate;
+    config.padding = this.padding;
 
     if (this.isStacking) {
       // Let uPlot handle bands and fills
