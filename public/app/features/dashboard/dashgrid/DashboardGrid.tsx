@@ -57,8 +57,10 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.panelMap = {};
 
     for (const panel of this.props.dashboard.panels) {
-      const stringId = panel.key;
-      this.panelMap[stringId] = panel;
+      if (!panel.key) {
+        panel.key = `panel-${panel.id}-${Date.now()}`;
+      }
+      this.panelMap[panel.key] = panel;
 
       if (!panel.gridPos) {
         console.log('panel without gridpos');
@@ -66,7 +68,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
       }
 
       const panelPos: any = {
-        i: stringId,
+        i: panel.key,
         x: panel.gridPos.x,
         y: panel.gridPos.y,
         w: panel.gridPos.w,
