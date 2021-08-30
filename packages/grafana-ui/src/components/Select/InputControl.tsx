@@ -5,7 +5,7 @@ import { getInputStyles } from '../Input/Input';
 import { css, cx } from '@emotion/css';
 import { stylesFactory } from '../../themes';
 import { GrafanaTheme2 } from '@grafana/data';
-import { focusCss } from '../../themes/mixins';
+import { inputFocusCss } from '../../themes/mixins';
 
 interface InputControlProps {
   /** Show an icon as a prefix in the input */
@@ -26,7 +26,7 @@ const getInputControlStyles = stylesFactory(
         sharedInputStyle(theme, invalid),
         focused &&
           css`
-            ${focusCss(theme.v1)}
+            ${inputFocusCss(theme.v1)}
           `,
         disabled && styles.inputDisabled,
         css`

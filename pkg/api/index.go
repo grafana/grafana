@@ -155,26 +155,26 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	dashboardChildNavs := []*dtos.NavLink{
 		// {Text: "Home", Id: "home", Url: hs.Cfg.AppSubURL + "/", Icon: "home-alt", HideFromTabs: true},
-		{Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true},
+		// {Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true},
 		{Text: "Manage", Id: "manage-dashboards", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap"},
-		{Text: "Playlists", Id: "playlists", Url: hs.Cfg.AppSubURL + "/playlists", Icon: "presentation-play"},
+		// {Text: "Playlists", Id: "playlists", Url: hs.Cfg.AppSubURL + "/playlists", Icon: "presentation-play"},
 	}
 
-	if c.IsSignedIn {
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-			Text: "Snapshots",
-			Id:   "snapshots",
-			Url:  hs.Cfg.AppSubURL + "/dashboard/snapshots",
-			Icon: "camera",
-		})
+	// if c.IsSignedIn {
+	// 	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+	// 		Text: "Snapshots",
+	// 		Id:   "snapshots",
+	// 		Url:  hs.Cfg.AppSubURL + "/dashboard/snapshots",
+	// 		Icon: "camera",
+	// 	})
 
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-			Text: "Library panels",
-			Id:   "library-panels",
-			Url:  hs.Cfg.AppSubURL + "/library-panels",
-			Icon: "library-panel",
-		})
-	}
+	// 	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+	// 		Text: "Library panels",
+	// 		Id:   "library-panels",
+	// 		Url:  hs.Cfg.AppSubURL + "/library-panels",
+	// 		Icon: "library-panel",
+	// 	})
+	// }
 
 	navTree = append(navTree, &dtos.NavLink{
 		Text:       "Dashboard",
@@ -349,6 +349,15 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		HideFromMenu: true,
 		SortWeight:   dtos.WeightHelp,
 		Children:     []*dtos.NavLink{},
+	})
+	
+	navTree = append(navTree, &dtos.NavLink{
+		Text:       "Baseline",
+		Id:         "baseline",
+		SubTitle:   "Baseline Data Entry",
+		Icon:       "graph-bar",
+		SortWeight: dtos.WeightDashboard,
+		Url:        hs.Cfg.AppSubURL + "/baseline",
 	})
 
 	return navTree, nil

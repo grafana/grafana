@@ -18,6 +18,7 @@ import { ApiKeysState } from './apiKeys';
 import { TemplatingState } from '../features/variables/state/reducers';
 import { ImportDashboardState } from '../features/manage-dashboards/state/reducers';
 import { UserState } from 'app/features/profile/state/reducers';
+import { BaselineEntryState } from 'app/features/baseline/state/reducers';
 
 export interface StoreState {
   navIndex: NavIndex;
@@ -43,6 +44,7 @@ export interface StoreState {
   importDashboard: ImportDashboardState;
   notificationChannel: NotificationChannelState;
   unifiedAlerting: UnifiedAlertingState;
+  baseline: BaselineEntryState;
 }
 
 /*

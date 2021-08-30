@@ -515,6 +515,13 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
       ),
     },
+    {
+      path: '/baseline',
+      // roles: () => ['Editor', 'Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "BaselineEntryPage" */ 'app/features/baseline/BaselineEntryPage')
+      ),
+    },
     ...getPluginsAdminRoutes(),
     ...extraRoutes,
     {

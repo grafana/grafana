@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
-import { focusCss } from '../../themes/mixins';
+import { focusCss, inputFocusCss } from '../../themes/mixins';
 import { ComponentSize } from '../../types/size';
 
 export const getFocusStyle = (theme: GrafanaTheme) => css`
@@ -9,9 +9,15 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
   }
 `;
 
+export const getInputFocusStyle = (theme: GrafanaTheme) => css`
+  &:focus {
+    ${inputFocusCss(theme)}
+  }
+`;
+
 export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
   const borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
-  const borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
+  const borderColorHover = invalid ? theme.colors.primary.main : theme.components.input.borderHover;
   const background = theme.components.input.background;
   const textColor = theme.components.input.text;
 

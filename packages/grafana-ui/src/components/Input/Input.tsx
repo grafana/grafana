@@ -1,7 +1,7 @@
 import React, { HTMLProps, ReactNode } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
+import { getInputFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { Spinner } from '../Spinner/Spinner';
 import { useClientRect } from '../../utils/useClientRect';
@@ -55,7 +55,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
         display: flex;
         width: ${width ? `${theme.spacing(width)}` : '100%'};
         height: ${theme.spacing(theme.components.height.md)};
-        border-radius: ${theme.shape.borderRadius()};
+        border-radius: ${theme.shape.borderRadius(2)};
         &:hover {
           > .prefix,
           .suffix,
@@ -130,14 +130,14 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     `,
 
     input: cx(
-      getFocusStyle(theme.v1),
+      getInputFocusStyle(theme.v1),
       sharedInputStyle(theme, invalid),
       css`
         label: input-input;
         position: relative;
         z-index: 0;
         flex-grow: 1;
-        border-radius: ${theme.shape.borderRadius()};
+        border-radius: ${theme.shape.borderRadius(2)};
         height: 100%;
         width: 100%;
       `
