@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { css } from '@emotion/css';
 import { DataSourceInstanceSettings, DateTime, dateTime, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
 import { config, getDataSourceSrv, PanelRenderer } from '@grafana/runtime';
@@ -31,6 +31,25 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
     showHeader: true,
   });
 
+  const onTimeChange = useCallback(
+    (newDateTime: DateTime) => {
+      const now = dateTime().unix() - newDateTime.unix();
+
+      if (relativeTimeRange) {
+        const interval = relativeTimeRange.from - relativeTimeRange.to;
+        onChangeQuery({
+          ...query,
+          relativeTimeRange: { from: now + interval, to: now },
+        });
+      }
+    },
+    [onChangeQuery, query, relativeTimeRange]
+  );
+
+  const setDateTime = useCallback((relativeTimeRangeTo: number) => {
+    return relativeTimeRangeTo === 0 ? dateTime() : dateTime().subtract(relativeTimeRangeTo, 'seconds');
+  }, []);
+
   if (!data) {
     return null;
   }
@@ -51,22 +70,6 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
       </div>
     );
   }
-
-  const onTimeChange = (newDateTime: DateTime) => {
-    const now = dateTime().unix() - newDateTime.unix();
-
-    if (relativeTimeRange) {
-      const interval = relativeTimeRange.from - relativeTimeRange.to;
-      onChangeQuery({
-        ...query,
-        relativeTimeRange: { from: now + interval, to: now },
-      });
-    }
-  };
-
-  const setDateTime = (relativeTimeRangeTo: number) => {
-    return relativeTimeRangeTo === 0 ? dateTime() : dateTime().subtract(relativeTimeRangeTo, 'seconds');
-  };
 
   return (
     <div className={styles.content}>
