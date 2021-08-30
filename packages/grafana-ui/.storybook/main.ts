@@ -44,6 +44,22 @@ module.exports = {
   },
   webpackFinal: async (config: any, { configType }: any) => {
     const isProductionBuild = configType === 'PRODUCTION';
+
+    // remove svg from default storybook webpack 5 config so we can use `raw-loader`
+    config.module.rules = config.module.rules.map((rule: any) => {
+      if (
+        String(rule.test) ===
+        String(/\.(svg|ico|jpg|jpeg|png|apng|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/)
+      ) {
+        return {
+          ...rule,
+          test: /\.(ico|jpg|jpeg|png|apng|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
+        };
+      }
+
+      return rule;
+    });
+
     config.module.rules = [
       ...(config.module.rules || []),
       {
@@ -90,6 +106,11 @@ module.exports = {
             },
           },
         ],
+      },
+      // for pre-caching SVGs as part of the JS bundles
+      {
+        test: /\.svg$/,
+        use: 'raw-loader',
       },
       {
         test: require.resolve('jquery'),
