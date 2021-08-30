@@ -75,11 +75,11 @@ See or [expressions documentation]({{< relref "../../../panels/expressions.md" >
 
 Toggle **Configure no data and error handling** switch to configure how the rule should handle cases where evaluation results in error or returns no data.
 
-| No Data Option | Description                                            |
-| -------------- | ------------------------------------------------------ |
-| No Data        | Set alert state to `NoData` and rule state to `Normal` |
-| Alerting       | Set alert rule state to `Alerting`                     |
-| Ok             | Set alert rule state to `Normal`                       |
+| No Data Option | Description                                                                                                 |
+| -------------- | ----------------------------------------------------------------------------------------------------------- |
+| No Data        | Set alert state to `NoData` and rule state to `Normal` (notifications are not sent on NoData states). |
+| Alerting       | Set alert rule state to `Alerting`.                                                                          |
+| Ok             | Set alert rule state to `Normal`.                                                                            |
 
 | Error or timeout option | Description                        |
 | ----------------------- | ---------------------------------- |

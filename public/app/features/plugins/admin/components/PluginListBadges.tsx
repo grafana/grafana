@@ -9,9 +9,9 @@ type PluginBadgeType = {
   plugin: CatalogPlugin;
 };
 
-export function PluginBadges({ plugin }: PluginBadgeType) {
+export function PluginListBadges({ plugin }: PluginBadgeType) {
   if (plugin.isEnterprise) {
-    return <EnterpriseBadge id={plugin.id} />;
+    return <EnterpriseBadge plugin={plugin} />;
   }
   return (
     <HorizontalGroup>
@@ -21,12 +21,12 @@ export function PluginBadges({ plugin }: PluginBadgeType) {
   );
 }
 
-function EnterpriseBadge({ id }: { id: string }) {
+function EnterpriseBadge({ plugin }: { plugin: CatalogPlugin }) {
   const customBadgeStyles = useStyles2(getBadgeColor);
   const onClick = (ev: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     ev.preventDefault();
     window.open(
-      `https://grafana.com/grafana/plugins/${id}?utm_source=grafana_catalog_learn_more`,
+      `https://grafana.com/grafana/plugins/${plugin.id}?utm_source=grafana_catalog_learn_more`,
       '_blank',
       'noopener,noreferrer'
     );
@@ -38,6 +38,7 @@ function EnterpriseBadge({ id }: { id: string }) {
 
   return (
     <HorizontalGroup>
+      <PluginSignatureBadge status={plugin.signature} />
       <Badge icon="lock" aria-label="lock icon" text="Enterprise" color="blue" className={customBadgeStyles} />
       <Button size="sm" fill="text" icon="external-link-alt" onClick={onClick}>
         Learn more
