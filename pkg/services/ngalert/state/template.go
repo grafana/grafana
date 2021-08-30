@@ -234,5 +234,6 @@ func args(args ...interface{}) map[string]interface{} {
 }
 
 func safeHtml(text string) html_template.HTML {
+	// nolint:gosec
 	return html_template.HTML(text)
 }
