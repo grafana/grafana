@@ -12,11 +12,10 @@ import {
 
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
-import { CellComponent, TableCellDisplayMode, TableFieldOptions } from './types';
+import { CellComponent, TableCellDisplayMode, TableFieldOptions, TableFooterItem } from './types';
 import { JSONViewCell } from './JSONViewCell';
 import { ImageCell } from './ImageCell';
-import { ReactNode } from 'react';
-import { EmptyCell } from './FooterRow';
+import { getFooterValue } from './FooterRow';
 
 export function getTextAlign(field?: Field): ContentPosition {
   if (!field) {
@@ -47,7 +46,7 @@ export function getColumns(
   data: DataFrame,
   availableWidth: number,
   columnMinWidth: number,
-  footers?: ReactNode[]
+  footerValues?: TableFooterItem[]
 ): Column[] {
   const columns: any[] = [];
   let fieldCountWithoutWidth = data.fields.length;
@@ -88,7 +87,7 @@ export function getColumns(
       minWidth: fieldTableOptions.minWidth || columnMinWidth,
       filter: memoizeOne(filterByValue(field)),
       justifyContent: getTextAlign(field),
-      Footer: footers?.[fieldIndex] ?? EmptyCell,
+      Footer: getFooterValue(fieldIndex, footerValues),
     });
   }
 

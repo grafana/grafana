@@ -1,4 +1,4 @@
-import React, { FC, memo, ReactNode, useCallback, useMemo } from 'react';
+import React, { FC, memo, useCallback, useMemo } from 'react';
 import { DataFrame, getFieldDisplayName } from '@grafana/data';
 import {
   Cell,
@@ -17,6 +17,7 @@ import { getColumns, sortCaseInsensitive, sortNumber } from './utils';
 import {
   TableColumnResizeActionCallback,
   TableFilterActionCallback,
+  TableFooterItem,
   TableSortByActionCallback,
   TableSortByFieldState,
 } from './types';
@@ -42,8 +43,7 @@ export interface Props {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
-  footer?: ReactNode[];
-  footerHeight?: number;
+  footerValues?: TableFooterItem[];
 }
 
 interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}>, UseFiltersState<{}> {}
@@ -123,8 +123,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     noHeader,
     resizable = true,
     initialSortBy,
-    footer,
-    footerHeight,
+    footerValues,
   } = props;
   const tableStyles = useStyles2(getTableStyles);
 
@@ -141,11 +140,11 @@ export const Table: FC<Props> = memo((props: Props) => {
   }, [data]);
 
   // React-table column definitions
-  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth, footer), [
+  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth, footerValues), [
     data,
     width,
     columnMinWidth,
-    footer,
+    footerValues,
   ]);
 
   // Internal react table state reducer
@@ -221,12 +220,7 @@ export const Table: FC<Props> = memo((props: Props) => {
               No data
             </div>
           )}
-          <FooterRow
-            footer={footer}
-            footerGroups={footerGroups}
-            totalColumnsWidth={totalColumnsWidth}
-            height={footerHeight}
-          />
+          <FooterRow footerValues={footerValues} footerGroups={footerGroups} totalColumnsWidth={totalColumnsWidth} />
         </div>
       </CustomScrollbar>
     </div>

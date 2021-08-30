@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { merge } from 'lodash';
 import { Table } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -16,6 +16,7 @@ import {
   formattedValueToString,
 } from '@grafana/data';
 import { prepDataForStorybook } from '../../utils/storybook/data';
+import { TableFooterItem } from './types';
 
 export default {
   title: 'Visualizations/Table',
@@ -94,7 +95,7 @@ function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): D
   return prepDataForStorybook([data], theme)[0];
 }
 
-function buildFooterData(data: DataFrame): ReactNode[] {
+function buildFooterData(data: DataFrame): TableFooterItem[] {
   const values = data.fields[3].values.toArray();
   const valueSum = values.reduce((prev, curr) => {
     return prev + curr;
@@ -104,13 +105,11 @@ function buildFooterData(data: DataFrame): ReactNode[] {
   const displayValue = valueField.display ? valueField.display(valueSum) : valueSum;
   const val = valueField.display ? formattedValueToString(displayValue) : displayValue;
 
-  const valCell = (
-    <ul style={{ listStyle: 'none' }}>
-      <li>sum: {val}</li>
-      <li>min: {5.2}</li>
-    </ul>
-  );
-  return ['Totals', <div key={1}>10</div>, null, valCell, '100%'];
+  const sum = { sum: val };
+  const min = { min: String(5.2) };
+  const valCell = [sum, min];
+
+  return ['Totals', '10', undefined, valCell, '100%'];
 }
 
 const defaultThresholds: ThresholdsConfig = {
@@ -183,7 +182,7 @@ export const Footer: Story = (args) => {
 
   return (
     <div className="panel-container" style={{ width: 'auto', height: 'unset' }}>
-      <Table data={data} height={args.height} width={args.width} footer={footer} {...args} footerHeight={56} />
+      <Table data={data} height={args.height} width={args.width} footerValues={footer} {...args} />
     </div>
   );
 };
