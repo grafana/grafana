@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -79,6 +80,7 @@ var wireBasicSet = wire.NewSet(
 	routing.ProvideRegister,
 	wire.Bind(new(routing.RouteRegister), new(*routing.RouteRegisterImpl)),
 	hooks.ProvideService,
+	kvstore.ProvideService,
 	localcache.ProvideService,
 	usagestats.ProvideService,
 	wire.Bind(new(usagestats.UsageStats), new(*usagestats.UsageStatsService)),
