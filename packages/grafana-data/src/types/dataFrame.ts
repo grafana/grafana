@@ -234,9 +234,6 @@ export interface DataFrameFieldIndex {
  * @internal
  */
 export interface FieldMap {
-  // cache for getFieldDisplayName() for lookups which rely on field names
-  names: string[];
-
   // total count of matched fields
   count: number;
 

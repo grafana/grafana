@@ -65,7 +65,7 @@ function getJoinMatcher(options: JoinOptions): FieldMatcher {
   return options.joinBy ?? pickBestJoinField(options.frames);
 }
 
-const fieldMapNonDims = new Set(['count', 'names', 'legend', 'tooltip']);
+const fieldMapNonDims = new Set(['count', 'legend', 'tooltip']);
 
 /**
  * This will join the values of all fields in the fieldMap which are not joinDim (typically 'x')

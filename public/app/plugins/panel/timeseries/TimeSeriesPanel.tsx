@@ -8,7 +8,7 @@ import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { TimeSeriesOptions } from './types';
-import { prepareGraphableFields } from './utils';
+import { prepareGraphableFields, prepFieldLookup } from './utils';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
@@ -29,7 +29,12 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, range: timeRange });
   };
 
-  const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);
+  const fieldLookup = useMemo(() => prepFieldLookup(data?.series), [data.structureRev]);
+
+  const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2, fieldLookup), [
+    data,
+    fieldLookup,
+  ]);
 
   if (!frames || warn) {
     return (
