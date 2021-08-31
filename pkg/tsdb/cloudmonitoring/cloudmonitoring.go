@@ -115,9 +115,7 @@ type datasourceInfo struct {
 	DefaultProject     string `json:"DefaultProject"`
 
 	client *http.Client
-	URL    string
-
-	fallback backend.DataSourceInstanceSettings
+	url    string
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -147,9 +145,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			AuthenticationType: authenticationType,
 			DefaultProject:     jsonData.DefaultProject,
 			Type:               jsonData.Type,
-			URL:                settings.URL,
+			url:                settings.URL,
 			client:             client,
-			fallback:           settings,
 		}
 		return model, nil
 	}
@@ -570,7 +567,7 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 }
 
 func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginContext, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.URL)
+	u, err := url.Parse(dsInfo.url)
 	if err != nil {
 		return nil, err
 	}
