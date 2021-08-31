@@ -107,6 +107,7 @@ $font-size-sm: ${theme.v1.typography.size.sm} !default;
 $font-size-xs: ${theme.v1.typography.size.xs} !default;
 
 $line-height-base: ${theme.v1.typography.lineHeight.md} !default;
+$line-height: 2 !default;
 
 $font-weight-regular: ${theme.v1.typography.weight.regular} !default;
 $font-weight-semi-bold: ${theme.v1.typography.weight.semibold} !default;

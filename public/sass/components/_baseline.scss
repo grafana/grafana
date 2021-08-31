@@ -12,11 +12,26 @@
   .sub-title {
     padding: 0 $space-lg;
     margin-bottom: $space-lg;
+    color: $gray60;
   }
 
   hr {
     max-width: calc(100vw - (#{$side-menu-width + ($space-lg * 2)}));
     margin: $space-lg auto;
+  }
+
+  hr.spacious {
+    margin: 60px auto;
+  }
+
+  .page-header {
+    padding-bottom: 0;
+  }
+
+  .page-toolbar {
+    padding-top: $space-sm;
+    padding-bottom: $space-sm;
+    color: $gray60;
   }
 }
 

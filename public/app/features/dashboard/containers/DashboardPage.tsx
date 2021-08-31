@@ -4,7 +4,7 @@ import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
-import { CustomScrollbar, ScrollbarPosition, stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
+import { CustomScrollbar, ScrollbarPosition, stylesFactory, Themeable2, withTheme2, PageHeader } from '@grafana/ui';
 
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { Branding } from 'app/core/components/Branding/Branding';
@@ -327,6 +327,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     return (
       <div className={containerClassNames}>
+        <PageHeader title={dashboard.title} className="no-margin" pageIcon="apps">
+          <Branding.LoginLogo className={styles.pageHeaderLogo} />
+        </PageHeader>
         {kioskMode !== KioskMode.Full && (
           <header aria-label={selectors.pages.Dashboard.DashNav.nav}>
             <DashNav
@@ -403,6 +406,11 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
       padding: ${contentPadding};
       flex-basis: 100%;
       flex-grow: 1;
+    `,
+    pageHeaderLogo: css`
+      width: 100%;
+      max-width: 120px;
+      margin-bottom: 0px;
     `,
   };
 });

@@ -15,6 +15,22 @@
   @include media-breakpoint-up(md) {
     margin-top: 0;
   }
+
+  hr.flex-basis-full {
+    flex-basis: 100%;
+  }
+}
+
+.custom-page-header {
+  padding-bottom: 0 !important;
+
+  hr {
+    margin-bottom: 0;
+  }
+
+  h1 {
+    margin-bottom: 0;
+  }
 }
 
 .page-header__inner {

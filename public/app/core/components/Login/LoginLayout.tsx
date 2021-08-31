@@ -101,6 +101,11 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       max-width: 120px;
       margin-bottom: 15px;
     `,
+    pageHeaderLogo: css`
+      width: 100%;
+      max-width: 120px;
+      margin-bottom: 0px;
+    `,
     loginLogoWrapper: css`
       display: flex;
       align-items: center;

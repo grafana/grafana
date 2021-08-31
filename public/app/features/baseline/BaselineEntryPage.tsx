@@ -2,10 +2,12 @@ import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 import { hot } from 'react-hot-loader';
-import { PageToolbar, Tooltip, Icon } from '@grafana/ui';
+import { PageToolbar, PageHeader, Tooltip, Icon, useStyles2 } from '@grafana/ui';
 import { BaselineDTO, StoreState } from 'app/types';
 import { initBaselineEntryPage, submitBaselineEntry } from './state/actions';
 import BaselineEntryForm from './BaselineEntryForm';
+import { getLoginStyles } from 'app/core/components/Login/LoginLayout';
+import { Branding } from 'app/core/components/Branding/Branding';
 
 export interface OwnProps {}
 
@@ -37,12 +39,17 @@ export function BaselineEntryPage({
 }: Props) {
   useMount(() => initBaselineEntryPage());
 
+  const loginStyles = useStyles2(getLoginStyles);
+
   return (
     <div className="baseline-entry">
+      <PageHeader title={`H&L Energy Optimisation Dashboard`} className="no-margin" pageIcon="graph-bar">
+        <Branding.LoginLogo className={loginStyles.pageHeaderLogo} />
+      </PageHeader>
       <PageToolbar title={`Baseline Entry`} className="no-margin" />
       <div className="sub-title">Possible microcopy providing high level explanation of the chart.</div>
       <BaselineEntryForm addBaselineEntry={submitBaselineEntry} isSavingBaselineEntry={isUpdating} />
-      <hr></hr>
+      <hr className="spacious"></hr>
       <div className="baseline-entry-table-container">
         <table className="baseline-entry-table filter-table form-inline filter-table--hover">
           <thead>

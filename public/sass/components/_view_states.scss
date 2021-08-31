@@ -37,6 +37,14 @@
     }
   }
 
+  .page-header {
+    padding-left: $side-menu-width;
+
+    &--fullscreen {
+      padding-left: $space-md;
+    }
+  }
+
   .submenu-controls {
     display: none;
   }
@@ -50,6 +58,10 @@
     display: none;
   }
 
+  .page-header {
+    display: none;
+  }
+
   .submenu-controls {
     display: none;
   }
@@ -57,6 +69,14 @@
 
 @include media-breakpoint-down(sm) {
   div.page-toolbar {
+    padding-left: 53px;
+
+    &--fullscreen {
+      padding-left: $space-md;
+    }
+  }
+  
+  div.page-header {
     padding-left: 53px;
 
     &--fullscreen {
