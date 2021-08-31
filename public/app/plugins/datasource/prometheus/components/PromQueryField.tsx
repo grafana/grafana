@@ -26,7 +26,6 @@ import {
   toLegacyResponseData,
   HistoryItem,
   TimeRange,
-  PanelData,
 } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
@@ -154,11 +153,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     }
   }
 
-  getHints(datasource: PrometheusDatasource, data: PanelData, query: PromQuery) {
-    const result = isDataFrame(data.series[0]) ? data.series.map(toLegacyResponseData) : data.series;
-    return datasource.getQueryHints(query, result);
-  }
-
   refreshHint = () => {
     const { datasource, query, data } = this.props;
     const initHints = datasource.getInitHints();
@@ -171,7 +165,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       return;
     }
 
-    const queryHints = this.getHints(datasource, data, query);
+    const result = isDataFrame(data.series[0]) ? data.series.map(toLegacyResponseData) : data.series;
+    const queryHints = datasource.getQueryHints(query, result);
     let queryHint = queryHints.length > 0 ? queryHints[0] : null;
 
     this.setState({ hint: queryHint ?? initHint });
