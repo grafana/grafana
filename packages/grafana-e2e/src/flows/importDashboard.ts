@@ -36,6 +36,14 @@ export const importDashboard = (dashboardToImport: Dashboard) => {
         });
       });
     });
+  // inspect if dashboard kept the uid from json
+  e2e.components.PageToolbar.item('Dashboard settings').click();
+  e2e.pages.Dashboard.Settings.General.sectionItems('JSON Model').click({ force: true }).wait(2000);
+
+  e2e.components.CodeEditor.container().contains('"uid": "6V0Nzyz7k"').wait(2000);
+
+  // click to go back to the dashboard.
+  e2e.components.BackButton.backArrow().click({ force: true }).wait(2000);
 
   // inspect first panel and verify data has been processed for it
   e2e.components.Panels.Panel.title(dashboardToImport.panels[0].title).click({ force: true });
