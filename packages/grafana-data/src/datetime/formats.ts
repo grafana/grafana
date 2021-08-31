@@ -92,7 +92,7 @@ export function localTimeFormat(
     return fallback ?? DEFAULT_SYSTEM_DATE_FORMAT;
   }
 
-  if (!locale) {
+  if (!locale && navigator) {
     locale = [...navigator.languages];
   }
 
