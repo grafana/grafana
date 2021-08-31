@@ -96,13 +96,13 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
                     <th>Login</th>
                     <th>Email</th>
                     <th>Name</th>
+                    <th>Server admin</th>
                     <th>
-                      Seen&nbsp;
+                      Last active&nbsp;
                       <Tooltip placement="top" content="Time since user was seen using Grafana">
                         <Icon name="question-circle" />
                       </Tooltip>
                     </th>
-                    <th></th>
                     <th style={{ width: '1%' }}></th>
                   </tr>
                 </thead>
@@ -142,7 +142,6 @@ const renderUser = (user: UserDTO) => {
           {user.name}
         </a>
       </td>
-      <td className="link-td">{user.lastSeenAtAge && <a href={editUrl}>{user.lastSeenAtAge}</a>}</td>
       <td className="link-td">
         {user.isAdmin && (
           <a href={editUrl}>
@@ -152,6 +151,7 @@ const renderUser = (user: UserDTO) => {
           </a>
         )}
       </td>
+      <td className="link-td">{user.lastSeenAtAge && <a href={editUrl}>{user.lastSeenAtAge}</a>}</td>
       <td className="text-right">
         {Array.isArray(user.authLabels) && user.authLabels.length > 0 && (
           <TagBadge label={user.authLabels[0]} removeIcon={false} count={0} />
