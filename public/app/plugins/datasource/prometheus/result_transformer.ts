@@ -21,6 +21,7 @@ import {
   isExemplarData,
   isMatrixData,
   MatrixOrVectorResult,
+  PromDataErrorResponse,
   PromDataSuccessResponse,
   PromMetric,
   PromQuery,
@@ -38,7 +39,7 @@ interface TimeAndValue {
 }
 
 export function transform(
-  response: FetchResponse<PromDataSuccessResponse>,
+  response: FetchResponse<PromDataSuccessResponse | PromDataErrorResponse>,
   transformOptions: {
     query: PromQueryRequest;
     exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
