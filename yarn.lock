@@ -15383,6 +15383,23 @@ levn@^0.4.1:
     prelude-ls "^1.2.1"
     type-check "~0.4.0"
 
+lezer-promql@0.20.0:
+  version "0.20.0"
+  resolved "https://registry.yarnpkg.com/lezer-promql/-/lezer-promql-0.20.0.tgz#d5d233fa5dfc5fb7fcd3efe0022fd31dd2f2d539"
+  integrity sha512-1CHG77fFghl032FfHT33buGyAHiTaMy2fqicEhcp2wWnbxZxS+Jt6gMzEUaf/TmRTIUJofj9uLar7iL22Jazug==
+
+lezer-tree@0.13.2, lezer-tree@^0.13.2:
+  version "0.13.2"
+  resolved "https://registry.yarnpkg.com/lezer-tree/-/lezer-tree-0.13.2.tgz#00f4671309b15c27b131f637e430ce2d4d5f7065"
+  integrity sha512-15ZxW8TxVNAOkHIo43Iouv4zbSkQQ5chQHBpwXcD2bBFz46RB4jYLEEww5l1V0xyIx9U2clSyyrLes+hAUFrGQ==
+
+lezer@0.13.5:
+  version "0.13.5"
+  resolved "https://registry.yarnpkg.com/lezer/-/lezer-0.13.5.tgz#6000536bca7e24a5bd62e8cb4feff28b37e7dd8f"
+  integrity sha512-cAiMQZGUo2BD8mpcz7Nv1TlKzWP7YIdIRrX41CiP5bk5t4GHxskOxWUx2iAOuHlz8dO+ivbuXr0J1bfHsWD+lQ==
+  dependencies:
+    lezer-tree "^0.13.2"
+
 lilconfig@^2.0.3:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/lilconfig/-/lilconfig-2.0.3.tgz#68f3005e921dafbd2a2afb48379986aa6d2579fd"
@@ -16526,6 +16543,11 @@ monaco-editor@0.21.2:
   version "0.21.2"
   resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.21.2.tgz#37054e63e480d51a2dd17d609dcfb192304d5605"
   integrity sha512-jS51RLuzMaoJpYbu7F6TPuWpnWTLD4kjRW0+AZzcryvbxrTwhNy1KC9yboyKpgMTahpUbDUsuQULoo0GV1EPqg==
+
+monaco-promql@^1.7.2:
+  version "1.7.2"
+  resolved "https://registry.yarnpkg.com/monaco-promql/-/monaco-promql-1.7.2.tgz#e17cacb6abd0adece90a72a0f67221293dc64664"
+  integrity sha512-T8k6tKalUbhgD+anB5Nw9K9Cb/yWhGq5YU9PDhALyS+hkFsrk0SwAfRBL1uqGNu+XGJ4xCGOwzhDFLiemRf+bw==
 
 moo-color@^1.0.2:
   version "1.0.2"
