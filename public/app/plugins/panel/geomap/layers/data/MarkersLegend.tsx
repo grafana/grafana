@@ -52,7 +52,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
   }
 
   const thresholds = color.field?.config?.thresholds;
-  if (!thresholds || thresholds.steps.length <2) {
+  if (!thresholds || thresholds.steps.length < 2) {
     return <div></div>; // don't show anything in the legend
   }
 
