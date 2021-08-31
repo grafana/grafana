@@ -69,6 +69,12 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   }
   if (actions.queriesChanged.match(action)) {
     state.queries = action.payload;
+    handleTargetChanged(state);
+  }
+  if (actions.queryChanged.match(action)) {
+    state.target.target = action.payload.target || '';
+    await parseTarget(state);
+    handleTargetChanged(state);
   }
   if (actions.segmentValueChanged.match(action)) {
     const { segment: segmentOrString, index: segmentIndex } = action.payload;

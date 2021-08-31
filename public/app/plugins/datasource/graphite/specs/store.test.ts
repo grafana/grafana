@@ -167,6 +167,22 @@ describe('Graphite actions', async () => {
     });
   });
 
+  describe('when changing the query from the outside', () => {
+    it('should update the model', async () => {
+      ctx.state.datasource.metricFindQuery = () => Promise.resolve([{ text: '*' }]);
+
+      await changeTarget(ctx, 'my.query.*');
+      expect(ctx.state.target.target).toBe('my.query.*');
+      expect(ctx.state.segments[0].value).toBe('my');
+      expect(ctx.state.segments[1].value).toBe('query');
+
+      await ctx.dispatch(actions.queryChanged({ target: 'new.metrics.*', refId: 'A' }));
+      expect(ctx.state.target.target).toBe('new.metrics.*');
+      expect(ctx.state.segments[0].value).toBe('new');
+      expect(ctx.state.segments[1].value).toBe('metrics');
+    });
+  });
+
   describe('when initializing target without metric expression and function with series-ref', () => {
     beforeEach(async () => {
       ctx.state.datasource.metricFindQuery = () => Promise.resolve([]);
@@ -310,14 +326,14 @@ describe('Graphite actions', async () => {
     });
 
     it('targetFull should include nested queries', async () => {
-      ctx.state.queries = [
-        {
-          target: 'nested.query.count',
-          refId: 'A',
-        },
-      ];
-
-      await changeTarget(ctx, ctx.target.target);
+      await ctx.dispatch(
+        actions.queriesChanged([
+          {
+            target: 'nested.query.count',
+            refId: 'A',
+          },
+        ])
+      );
 
       expect(ctx.state.target.target).toBe('scaleToSeconds(#A, 60)');
 
