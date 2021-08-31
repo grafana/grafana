@@ -15,20 +15,22 @@ const dataKeysTable = "data_keys"
 var logger = log.New("secrets-store")
 
 type SecretsStoreImpl struct {
-	SQLStore *sqlstore.SQLStore `inject:""`
+	sqlStore *sqlstore.SQLStore
 }
 
-func (ss *SecretsStoreImpl) Init() error {
-	return nil
+func ProvideSecretsStore(sqlStore *sqlstore.SQLStore) *SecretsStoreImpl {
+	return &SecretsStoreImpl{
+		sqlStore: sqlStore,
+	}
 }
 
 func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, name string) (*types.DataKey, error) {
 	dataKey := &types.DataKey{}
 	var exists bool
 
-	err := ss.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		ex, err := sess.Table(dataKeysTable).
-			Where("name = ? AND active = ?", name, ss.SQLStore.Dialect.BooleanStr(true)).
+			Where("name = ? AND active = ?", name, ss.sqlStore.Dialect.BooleanStr(true)).
 			Get(dataKey)
 		exists = ex
 		return err
@@ -48,7 +50,7 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, name string) (*types
 
 func (ss *SecretsStoreImpl) GetAllDataKeys(ctx context.Context) ([]*types.DataKey, error) {
 	result := make([]*types.DataKey, 0)
-	err := ss.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		err := sess.Table(dataKeysTable).Find(&result)
 		return err
 	})
@@ -63,7 +65,7 @@ func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey types.Dat
 	dataKey.Created = time.Now()
 	dataKey.Updated = dataKey.Created
 
-	err := ss.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Table(dataKeysTable).Insert(&dataKey)
 		return err
 	})
@@ -72,7 +74,7 @@ func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey types.Dat
 }
 
 func (ss *SecretsStoreImpl) DeleteDataKey(ctx context.Context, name string) error {
-	return ss.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Table(dataKeysTable).Delete(&types.DataKey{Name: name})
 
 		return err

@@ -22,8 +22,8 @@ type EncryptionServiceImpl interface {
 
 type OSSEncryptionService struct{}
 
-func (s *OSSEncryptionService) Init() error {
-	return nil
+func ProvideOSSEncryptionService() OSSEncryptionService {
+	return OSSEncryptionService{}
 }
 
 func (s OSSEncryptionService) Encrypt(payload, secret []byte) ([]byte, error) {

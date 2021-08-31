@@ -18,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const defaultProvider = "grafana-provider"
+
 var logger = log.New("secrets")
 
 type SecretsStore interface {
@@ -28,14 +30,35 @@ type SecretsStore interface {
 }
 
 type SecretsService struct {
-	Store    SecretsStore                     `inject:""`
-	Bus      bus.Bus                          `inject:""`
-	Enc      encryption.EncryptionServiceImpl `inject:""`
-	Settings setting.Provider                 `inject:""`
+	store    SecretsStore
+	bus      bus.Bus
+	enc      encryption.EncryptionServiceImpl
+	settings setting.Provider
 
 	defaultProvider string
 	providers       map[string]Provider
 	dataKeyCache    map[string]dataKeyCacheItem
+}
+
+func ProvideSecretsService(store SecretsStore, bus bus.Bus, enc encryption.EncryptionServiceImpl, settings setting.Provider) SecretsService {
+	providers := map[string]Provider{
+		defaultProvider: newGrafanaProvider(settings, enc),
+	}
+
+	s := SecretsService{
+		store:           store,
+		bus:             bus,
+		enc:             enc,
+		settings:        settings,
+		defaultProvider: defaultProvider,
+		providers:       providers,
+		dataKeyCache:    make(map[string]dataKeyCacheItem),
+	}
+
+	util.Encrypt = s.Encrypt
+	util.Decrypt = s.Decrypt
+
+	return s
 }
 
 type dataKeyCacheItem struct {
@@ -46,21 +69,6 @@ type dataKeyCacheItem struct {
 type Provider interface {
 	Encrypt(blob []byte) ([]byte, error)
 	Decrypt(blob []byte) ([]byte, error)
-}
-
-func (s *SecretsService) Init() error {
-	s.providers = map[string]Provider{
-		"grafana-provider": newGrafanaProvider(s.Settings, s.Enc),
-	}
-	s.defaultProvider = "grafana-provider"
-	logger.Debug("configured secrets provider", s.defaultProvider)
-
-	s.dataKeyCache = make(map[string]dataKeyCacheItem)
-
-	util.Encrypt = s.Encrypt
-	util.Decrypt = s.Decrypt
-
-	return nil
 }
 
 // newDataKey creates a new random DEK, caches it and returns its value
@@ -82,7 +90,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 	}
 
 	// 3. Store its encrypted value in db
-	err = s.Store.CreateDataKey(ctx, types.DataKey{
+	err = s.store.CreateDataKey(ctx, types.DataKey{
 		Active:        true, // TODO: right now we do never mark a key as deactivated
 		Name:          name,
 		Provider:      s.defaultProvider,
@@ -129,7 +137,7 @@ func (s *SecretsService) Encrypt(payload []byte, opt util.EncryptionOption) ([]b
 		}
 	}
 
-	encrypted, err := s.Enc.Encrypt(payload, dataKey)
+	encrypted, err := s.enc.Encrypt(payload, dataKey)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +162,7 @@ func (s *SecretsService) Decrypt(payload []byte) ([]byte, error) {
 	var dataKey []byte
 
 	if payload[0] != '#' {
-		secretKey := s.Settings.KeyValue("security", "secret_key").Value()
+		secretKey := s.settings.KeyValue("security", "secret_key").Value()
 		dataKey = []byte(secretKey)
 	} else {
 		payload = payload[1:]
@@ -176,7 +184,7 @@ func (s *SecretsService) Decrypt(payload []byte) ([]byte, error) {
 		}
 	}
 
-	return s.Enc.Decrypt(payload, dataKey)
+	return s.enc.Decrypt(payload, dataKey)
 }
 
 // dataKey looks up DEK in cache or database, and decrypts it
@@ -190,7 +198,7 @@ func (s *SecretsService) dataKey(name string) ([]byte, error) {
 	}
 
 	// 1. get encrypted data key from database
-	dataKey, err := s.Store.GetDataKey(context.Background(), name)
+	dataKey, err := s.store.GetDataKey(context.Background(), name)
 	if err != nil {
 		return nil, err
 	}

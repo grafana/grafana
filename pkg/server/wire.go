@@ -4,6 +4,9 @@ package server
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/services/secrets/encryption"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api"
@@ -133,6 +136,11 @@ var wireBasicSet = wire.NewSet(
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
+	secrets.ProvideSecretsService,
+	database.ProvideSecretsStore,
+	wire.Bind(new(secrets.SecretsStore), new(*database.SecretsStoreImpl)),
+	encryption.ProvideOSSEncryptionService,
+	wire.Bind(new(encryption.EncryptionServiceImpl), new(encryption.OSSEncryptionService)),
 )
 
 var wireSet = wire.NewSet(
