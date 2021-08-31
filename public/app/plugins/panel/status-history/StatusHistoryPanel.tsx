@@ -18,6 +18,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
   options,
   width,
   height,
+  transparent,
   onChangeTimeRange,
 }) => {
   const theme = useTheme2();
@@ -63,6 +64,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
       {...options}
       // hardcoded
       mode={TimelineMode.Samples}
+      transparent={transparent}
     >
       {(config, alignedFrame) => {
         return (

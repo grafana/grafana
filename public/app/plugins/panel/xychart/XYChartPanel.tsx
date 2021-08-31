@@ -15,6 +15,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   height,
   options,
   fieldConfig,
+  transparent,
   onFieldConfigChange,
 }) => {
   const dims = useMemo(() => getXYDimensions(options.dims, data.series), [options.dims, data.series]);
@@ -52,6 +53,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       width={width}
       height={height}
       legend={options.legend}
+      transparent={transparent}
       onLegendClick={onLegendClick}
     >
       {(config, alignedDataFrame) => {

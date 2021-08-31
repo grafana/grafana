@@ -19,6 +19,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   options,
   width,
   height,
+  transparent,
   onChangeTimeRange,
 }) => {
   const theme = useTheme2();
@@ -81,6 +82,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       legendItems={legendItems}
       {...options}
       mode={TimelineMode.Changes}
+      transparent={transparent}
     >
       {(config, alignedFrame) => {
         return (

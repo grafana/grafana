@@ -24,7 +24,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
-    const { timeRange, options } = this.props;
+    const { timeRange, options, transparent } = this.props;
     const { value, alignmentFactors, width, height, count } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline = value.sparkline;
@@ -48,6 +48,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         theme={config.theme2}
         onClick={openMenu}
         className={targetClassName}
+        transparent={transparent}
       />
     );
   };

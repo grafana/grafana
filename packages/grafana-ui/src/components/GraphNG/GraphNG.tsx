@@ -31,6 +31,8 @@ export const FIXED_UNIT = '__fixed';
  */
 export type PropDiffFn<T extends any = any> = (prev: T, next: T) => boolean;
 
+const DEFAULT_PROPS_TO_DIFF = ['transparent'];
+
 export interface GraphNGProps extends Themeable2 {
   frames: DataFrame[];
   structureRev?: number; // a number that will change when the frames[] structure changes
@@ -46,10 +48,11 @@ export interface GraphNGProps extends Themeable2 {
   propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame;
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
+  transparent?: boolean;
 }
 
 function sameProps(prevProps: any, nextProps: any, propsToDiff: Array<string | PropDiffFn> = []) {
-  for (const propName of propsToDiff) {
+  for (const propName of [...propsToDiff, ...DEFAULT_PROPS_TO_DIFF]) {
     if (typeof propName === 'function') {
       if (!propName(prevProps, nextProps)) {
         return false;
@@ -109,7 +112,8 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
       let config = this.state?.config;
 
       if (withConfig) {
-        config = props.prepConfig(alignedFrame, this.props.frames, this.getTimeRange);
+        config = this.getConfig(alignedFrame);
+
         pluginLog('GraphNG', false, 'config prepared', config);
       }
 
@@ -124,6 +128,18 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     return state;
   }
+
+  getConfig = (alignedFrame: DataFrame) => {
+    const { frames, prepConfig, transparent, theme } = this.props;
+    const config = prepConfig(alignedFrame, frames, this.getTimeRange);
+    if (transparent) {
+      config.setBackground(theme.colors.background.canvas);
+    } else {
+      config.setBackground(theme.components.panel.background);
+    }
+
+    return config;
+  };
 
   componentDidMount() {
     this.panelContext = this.context as PanelContext;
@@ -194,7 +210,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
           propsChanged;
 
         if (shouldReconfig) {
-          newState.config = this.props.prepConfig(newState.alignedFrame, this.props.frames, this.getTimeRange);
+          newState.config = this.getConfig(newState.alignedFrame);
           newState.alignedData = newState.config.prepData!(newState.alignedFrame);
           pluginLog('GraphNG', false, 'config recreated', newState.config);
         }

@@ -11,7 +11,14 @@ interface Props extends PanelProps<BarChartOptions> {}
 /**
  * @alpha
  */
-export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone }) => {
+export const BarChartPanel: React.FunctionComponent<Props> = ({
+  data,
+  options,
+  width,
+  height,
+  timeZone,
+  transparent,
+}) => {
   const theme = useTheme2();
 
   const { frames, warn } = useMemo(() => prepareGraphableFrames(data?.series, theme, options.stacking), [
@@ -53,6 +60,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
       height={height}
       {...options}
       orientation={orientation}
+      transparent={transparent}
     >
       {(config, alignedFrame) => {
         return <TooltipPlugin data={alignedFrame} config={config} mode={tooltip.mode} timeZone={timeZone} />;

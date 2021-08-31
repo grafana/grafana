@@ -164,6 +164,13 @@ export class UPlotConfigBuilder {
     return this.sync;
   }
 
+  setBackground(background: string) {
+    this.addHook('drawClear', (u) => {
+      u.ctx.fillStyle = background;
+      u.ctx.fillRect(0, 0, u.width * window.devicePixelRatio, u.height * window.devicePixelRatio);
+    });
+  }
+
   getConfig() {
     const config: PlotConfig = {
       series: [

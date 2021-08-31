@@ -29,6 +29,7 @@ export interface SparklineProps extends Themeable2 {
   height: number;
   config?: FieldConfig<GraphFieldConfig>;
   sparkline: FieldSparkline;
+  transparent?: boolean;
 }
 
 interface State {
@@ -99,8 +100,14 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
   }
 
   prepareConfig(data: DataFrame) {
-    const { theme } = this.props;
+    const { theme, transparent } = this.props;
     const builder = new UPlotConfigBuilder();
+
+    if (transparent) {
+      builder.setBackground(theme.colors.background.canvas);
+    } else {
+      builder.setBackground(theme.components.panel.background);
+    }
 
     builder.setCursor({
       show: false,

@@ -62,12 +62,13 @@ export interface Props extends Themeable2 {
   textMode?: BigValueTextMode;
   /** If true disables the tooltip */
   hasLinks?: boolean;
-
   /**
    * If part of a series of stat panes, this is the total number.
    * Used by BigValueTextMode.Auto text mode.
    */
   count?: number;
+  /** Whether or not surrounding panel is transparent */
+  transparent?: boolean;
 }
 
 export class BigValue extends PureComponent<Props> {

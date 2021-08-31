@@ -153,7 +153,7 @@ export abstract class BigValueLayout {
   }
 
   renderChart(): JSX.Element | null {
-    const { sparkline, colorMode } = this.props;
+    const { sparkline, colorMode, transparent } = this.props;
 
     if (!sparkline || sparkline.y?.type !== FieldType.number) {
       return null;
@@ -193,6 +193,7 @@ export abstract class BigValueLayout {
           sparkline={sparkline}
           config={config}
           theme={this.props.theme}
+          transparent={transparent}
         />
       </div>
     );

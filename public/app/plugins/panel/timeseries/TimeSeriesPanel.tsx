@@ -20,6 +20,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   width,
   height,
   options,
+  transparent,
   onChangeTimeRange,
   replaceVariables,
 }) => {
@@ -50,6 +51,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       width={width}
       height={height}
       legend={options.legend}
+      transparent={transparent}
     >
       {(config, alignedDataFrame) => {
         return (
