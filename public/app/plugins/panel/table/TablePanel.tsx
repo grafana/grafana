@@ -148,11 +148,11 @@ export class TablePanel extends Component<Props> {
     if (summary === undefined) {
       return [];
     }
-    const fields = options.footerSummary?.fields;
-
     if (Array.isArray(summary.calcs) && summary.calcs.length === 0) {
       return [];
     }
+
+    const fields = options.footerSummary?.fields;
     // calculate the cells
     const cells = frame.fields.map((f, i) => {
       if (fields || fields === '') {
