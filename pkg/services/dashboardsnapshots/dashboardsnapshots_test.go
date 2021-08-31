@@ -16,7 +16,7 @@ func TestDashboardSnapshotsService(t *testing.T) {
 
 	s := &Service{
 		SQLStore:          sqlStore,
-		EncryptionService: new(ossencryption.Service),
+		EncryptionService: ossencryption.ProvideService(),
 	}
 
 	origSecret := setting.SecretKey

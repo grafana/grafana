@@ -29,7 +29,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 		rawDashboard, err := dashboard.Encode()
 		require.NoError(t, err)
 
-		encryptedDashboard, err := new(ossencryption.Service).Encrypt(rawDashboard, setting.SecretKey)
+		encryptedDashboard, err := ossencryption.ProvideService().Encrypt(rawDashboard, setting.SecretKey)
 		require.NoError(t, err)
 
 		cmd := models.CreateDashboardSnapshotCommand{
@@ -49,7 +49,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 
 			assert.NotNil(t, query.Result)
 
-			decryptedDashboard, err := new(ossencryption.Service).Decrypt(
+			decryptedDashboard, err := ossencryption.ProvideService().Decrypt(
 				query.Result.DashboardEncrypted,
 				setting.SecretKey,
 			)
@@ -130,7 +130,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 		})
 
 		t.Run("Should have encrypted dashboard data", func(t *testing.T) {
-			decryptedDashboard, err := new(ossencryption.Service).Decrypt(
+			decryptedDashboard, err := ossencryption.ProvideService().Decrypt(
 				cmd.Result.DashboardEncrypted,
 				setting.SecretKey,
 			)
