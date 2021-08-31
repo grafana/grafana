@@ -12,14 +12,27 @@ import { ReduceDataOptions } from '@grafana/data';
 // need directly consider the most recent version of the schema.
 export const modelVersion = Object.freeze([1, 0]);
 
+export enum FooterMode {
+  auto = 'auto',
+  summary = 'summary',
+  frame = 'frame',
+  none = 'none',
+}
+
+export enum FooterLabelMode {
+  auto = 'auto',
+  first = 'first',
+  inline = 'inline',
+}
+
 export interface PanelOptions {
   frameIndex: number;
   showHeader: boolean;
   sortBy?: TableSortByFieldState[];
-  footerMode?: 'auto' | 'summary' | 'frame' | 'none';
+  footerMode?: FooterMode;
   footerFrame?: number;
   footerSummary?: TableFooterSummary; // TODO: should be array (options builder is limited)
-  footerLabelMode?: 'auto' | 'first' | 'inline';
+  footerLabelMode?: FooterLabelMode;
   reduceOptions: ReduceDataOptions;
 }
 
