@@ -99,7 +99,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     placement: vizOrientation.xOri === 0 ? AxisPlacement.Bottom : AxisPlacement.Left,
     splits: config.xSplits,
     values: config.xValues,
-    grid: false,
+    grid: { show: false },
     ticks: false,
     gap: 15,
     theme,
@@ -134,6 +134,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
+      hardMin: field.config.min,
+      hardMax: field.config.max,
+      softMin: customConfig.axisSoftMin,
+      softMax: customConfig.axisSoftMax,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: {
@@ -174,6 +178,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
         placement,
         formatValue: (v) => formattedValueToString(field.display!(v)),
         theme,
+        grid: { show: customConfig.axisGridShow },
       });
     }
 
