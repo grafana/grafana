@@ -2,26 +2,20 @@ package secrets
 
 import (
 	"context"
+
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-
-	"github.com/grafana/grafana/pkg/services/secrets/types"
-
 	"github.com/grafana/grafana/pkg/services/secrets/database"
-
-	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/grafana/grafana/pkg/services/secrets/encryption"
-	"gopkg.in/ini.v1"
-
-	"github.com/stretchr/testify/assert"
-
+	"github.com/grafana/grafana/pkg/services/secrets/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 )
 
 func TestSecrets_EnvelopeEncryption(t *testing.T) {
@@ -153,7 +147,7 @@ func setupSecretService(t *testing.T) SecretsService {
 	return ProvideSecretsService(
 		database.ProvideSecretsStore(sqlstore.InitTestDB(t)),
 		bus.New(),
-		&encryption.OSSEncryptionService{},
+		ossencryption.ProvideService(),
 		settings,
 	)
 }

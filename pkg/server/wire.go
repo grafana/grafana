@@ -4,10 +4,6 @@ package server
 
 import (
 	"github.com/google/wire"
-	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/secrets/database"
-	"github.com/grafana/grafana/pkg/services/secrets/encryption"
-
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -49,6 +45,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -139,8 +137,6 @@ var wireBasicSet = wire.NewSet(
 	secrets.ProvideSecretsService,
 	database.ProvideSecretsStore,
 	wire.Bind(new(secrets.SecretsStore), new(*database.SecretsStoreImpl)),
-	encryption.ProvideOSSEncryptionService,
-	wire.Bind(new(encryption.EncryptionServiceImpl), new(encryption.OSSEncryptionService)),
 )
 
 var wireSet = wire.NewSet(
