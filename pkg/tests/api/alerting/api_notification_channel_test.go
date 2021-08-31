@@ -34,7 +34,7 @@ func TestTestReceivers(t *testing.T) {
 	t.Run("assert no receivers returns 400 Bad Request", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-			EnableFeatureToggles: []string{"ngalert"},
+			EnableUnifiedAlerting: true,
 		})
 
 		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -64,7 +64,7 @@ func TestTestReceivers(t *testing.T) {
 	t.Run("assert working receiver returns OK", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-			EnableFeatureToggles: []string{"ngalert"},
+			EnableUnifiedAlerting: true,
 		})
 
 		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -131,7 +131,7 @@ func TestTestReceivers(t *testing.T) {
 	t.Run("assert invalid receiver returns 400 Bad Request", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-			EnableFeatureToggles: []string{"ngalert"},
+			EnableUnifiedAlerting: true,
 		})
 
 		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -194,7 +194,7 @@ func TestTestReceivers(t *testing.T) {
 	t.Run("assert timed out receiver returns 408 Request Timeout", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-			EnableFeatureToggles: []string{"ngalert"},
+			EnableUnifiedAlerting: true,
 		})
 
 		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -266,7 +266,7 @@ func TestTestReceivers(t *testing.T) {
 	t.Run("assert multiple different errors returns 207 Multi Status", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-			EnableFeatureToggles: []string{"ngalert"},
+			EnableUnifiedAlerting: true,
 		})
 
 		grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -359,8 +359,8 @@ func TestTestReceivers(t *testing.T) {
 
 func TestNotificationChannels(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"ngalert"},
-		DisableAnonymous:     true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
 	})
 
 	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)

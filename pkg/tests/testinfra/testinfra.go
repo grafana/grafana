@@ -239,6 +239,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = usersSection.NewKey("viewers_can_edit", "true")
 			require.NoError(t, err)
 		}
+		if o.EnableUnifiedAlerting {
+			unifiedAlertingSection, err := cfg.NewSection("unified_alerting")
+			require.NoError(t, err)
+			_, err = unifiedAlertingSection.NewKey("enabled", "true")
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -257,6 +263,7 @@ type GrafanaOpts struct {
 	NGAlertAdminConfigIntervalSeconds int
 	AnonymousUserRole                 models.RoleType
 	EnableQuota                       bool
+	EnableUnifiedAlerting             bool
 	DisableAnonymous                  bool
 	CatalogAppEnabled                 bool
 	ViewersCanEdit                    bool

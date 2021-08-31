@@ -30,9 +30,8 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 
 	cfg := setting.NewCfg()
 	cfg.AlertingBaseInterval = baseInterval
-	// AlertNG is disabled by default and only if it's enabled
-	// its database migrations run and the relative database tables are created
-	cfg.FeatureToggles = map[string]bool{"ngalert": true}
+	// AlertNG database migrations run and the relative database tables are created only when it's enabled
+	cfg.UnifiedAlertingEnabled = true
 
 	m := metrics.NewMetrics(prometheus.NewRegistry())
 	ng, err := ngalert.ProvideService(cfg, nil, routing.NewRouteRegister(), sqlstore.InitTestDB(t), nil, nil, nil,

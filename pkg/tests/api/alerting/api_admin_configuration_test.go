@@ -21,7 +21,7 @@ import (
 
 func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles:              []string{"ngalert"},
+		EnableUnifiedAlerting:             true,
 		DisableAnonymous:                  true,
 		NGAlertAdminConfigIntervalSeconds: 2,
 	})
