@@ -24,14 +24,13 @@ export interface PlaylistPageProps extends ConnectedProps, GrafanaRouteComponent
 export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [startPlaylist, setStartPlaylist] = useState<PlaylistDTO | undefined>();
-  const [playlistToDelete, setPlaylistToDelete] = useState<number | undefined>();
+  const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistDTO | undefined>();
   const [forcePlaylistsFetch, setForcePlaylistsFetch] = useState(0);
 
   const { value: playlists, loading } = useAsync(async () => {
     return getBackendSrv().get('/api/playlists', { query: searchQuery }) as Promise<PlaylistDTO[]>;
   }, [forcePlaylistsFetch]);
   const hasPlaylists = playlists && playlists.length > 0;
-  const playlistItemToDelete = playlists?.find(({ id }) => id === playlistToDelete);
 
   let content = (
     <EmptyListCTA
@@ -62,7 +61,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
                   </LinkButton>
                   <Button
                     disabled={false}
-                    onClick={() => setPlaylistToDelete(playlist.id)}
+                    onClick={() => setPlaylistToDelete({ id: playlist.id, name: playlist.name })}
                     icon="trash-alt"
                     variant="destructive"
                   >
@@ -87,13 +86,13 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
           />
         )}
         {content}
-        {playlistItemToDelete && (
+        {playlistToDelete && (
           <ConfirmModal
-            title={playlistItemToDelete.name}
+            title={playlistToDelete.name}
             confirmText="delete"
-            body={`Are you sure you want to delete '${playlistItemToDelete.name}' playlist?`}
+            body={`Are you sure you want to delete '${playlistToDelete.name}' playlist?`}
             onConfirm={() => {
-              deletePlaylist(playlistItemToDelete.id).finally(() => {
+              deletePlaylist(playlistToDelete.id).finally(() => {
                 setForcePlaylistsFetch(forcePlaylistsFetch + 1);
                 setPlaylistToDelete(undefined);
               });
