@@ -584,9 +584,9 @@ export class DashboardModel {
       return sourcePanel;
     }
 
-    const clone = new PanelModel(sourcePanel.getSaveModel());
-
-    clone.id = this.getNextPanelId();
+    const m = sourcePanel.getSaveModel();
+    m.id = this.getNextPanelId();
+    const clone = new PanelModel(m);
 
     // insert after source panel + value index
     this.panels.splice(sourcePanelIndex + valueIndex, 0, clone);
@@ -748,6 +748,7 @@ export class DashboardModel {
   updateRepeatedPanelIds(panel: PanelModel, repeatedByRow?: boolean) {
     panel.repeatPanelId = panel.id;
     panel.id = this.getNextPanelId();
+    panel.key = `${panel.id}`;
     panel.repeatIteration = this.iteration;
     if (repeatedByRow) {
       panel.repeatedByRow = true;

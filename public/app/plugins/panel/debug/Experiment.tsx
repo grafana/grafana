@@ -40,7 +40,11 @@ export function ExperimentalPanel() {
     const dash = getDashboardSrv().getCurrent()!;
     const newPanels = dash.panels.map((p) => {
       const s = p.getSaveModel();
-      s.gridPos.w = 24; // full width;
+      if (s.gridPos.w === 24) {
+        s.gridPos.w = 3 + Math.floor(Math.random() * 20);
+      } else {
+        s.gridPos.w = 24; // full width;
+      }
       return s;
     });
     const info = dash.updatePanels(newPanels);
