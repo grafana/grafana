@@ -15,7 +15,7 @@
 package grafanaschema
 
 import (
-    ui "github.com/grafana/grafana/cue/ui:grafanaschema"
+    ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
 Family: {
@@ -26,15 +26,7 @@ Family: {
                     legend: ui.VizLegendOptions
                     tooltip: ui.VizTooltipOptions
                 }
-                PanelFieldConfig: {
-                    ui.LineConfig
-                    ui.FillConfig
-                    ui.PointsConfig
-                    ui.AxisConfig
-                    drawStyle?:    ui.DrawStyle
-                    gradientMode?: ui.GraphGradientMode
-                    hideFrom?:     ui.HideSeriesConfig
-                }
+                PanelFieldConfig: ui.GraphFieldConfig
             }
         ]
     ]

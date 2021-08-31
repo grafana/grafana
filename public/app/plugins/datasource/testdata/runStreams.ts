@@ -16,7 +16,7 @@ import {
 
 import { TestDataQuery, StreamingQuery } from './types';
 import { getRandomLine } from './LogIpsum';
-import { perf } from 'app/features/live/perf';
+import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
 
 export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',
@@ -105,14 +105,14 @@ export function runSignalStream(
     const pushNextEvent = () => {
       addNextRow(Date.now());
 
-      const elapsed = perf.last - lastSent;
-      if (elapsed > 1000 || perf.ok) {
+      const elapsed = liveTimer.lastUpdate - lastSent;
+      if (elapsed > 1000 || liveTimer.ok) {
         subscriber.next({
           data: [frame],
           key: streamId,
           state: LoadingState.Streaming,
         });
-        lastSent = perf.last;
+        lastSent = liveTimer.lastUpdate;
       }
 
       timeoutId = setTimeout(pushNextEvent, speed);

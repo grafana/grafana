@@ -15,6 +15,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
         }
       }
       queryType="range"
+      resolution={1}
     />
   }
   data={

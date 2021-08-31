@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -19,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/api"
@@ -38,37 +38,39 @@ type DatasourceInfo struct {
 	HTTPClientOpts sdkhttpclient.Options
 	URL            string
 	HTTPMethod     string
-}
-
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "PrometheusService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
-	})
+	TimeInterval   string
 }
 
 type Service struct {
-	BackendPluginManager backendplugin.Manager `inject:""`
-	HTTPClientProvider   httpclient.Provider   `inject:""`
-	intervalCalculator   tsdb.Calculator
-	im                   instancemgmt.InstanceManager
+	httpClientProvider httpclient.Provider
+	intervalCalculator tsdb.Calculator
+	im                 instancemgmt.InstanceManager
 }
 
-func (s *Service) Init() error {
+func ProvideService(httpClientProvider httpclient.Provider, backendPluginManager backendplugin.Manager) (*Service, error) {
 	plog.Debug("initializing")
 	im := datasource.NewInstanceManager(newInstanceSettings())
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newService(im, s.HTTPClientProvider),
-	})
-	if err := s.BackendPluginManager.Register("prometheus", factory); err != nil {
-		plog.Error("Failed to register plugin", "error", err)
+
+	s := &Service{
+		httpClientProvider: httpClientProvider,
+		intervalCalculator: tsdb.NewCalculator(),
+		im:                 im,
 	}
-	return nil
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
+	if err := backendPluginManager.Register("prometheus", factory); err != nil {
+		plog.Error("Failed to register plugin", "error", err)
+		return nil, err
+	}
+
+	return s, nil
 }
 
 func newInstanceSettings() datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		defaultHttpMethod := http.MethodPost
 		jsonData := map[string]interface{}{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
@@ -81,7 +83,21 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 
 		httpMethod, ok := jsonData["httpMethod"].(string)
 		if !ok {
-			return nil, errors.New("no http method provided")
+			httpMethod = defaultHttpMethod
+		}
+
+		// timeInterval can be a string or can be missing.
+		// if it is missing, we set it to empty-string
+
+		timeInterval := ""
+
+		timeIntervalJson := jsonData["timeInterval"]
+		if timeIntervalJson != nil {
+			// if it is not nil, it must be a string
+			timeInterval, ok = timeIntervalJson.(string)
+			if !ok {
+				return nil, errors.New("invalid time-interval provided")
+			}
 		}
 
 		mdl := DatasourceInfo{
@@ -89,17 +105,9 @@ func newInstanceSettings() datasource.InstanceFactoryFunc {
 			URL:            settings.URL,
 			HTTPClientOpts: httpCliOpts,
 			HTTPMethod:     httpMethod,
+			TimeInterval:   timeInterval,
 		}
 		return mdl, nil
-	}
-}
-
-// newService creates a new executor func.
-func newService(im instancemgmt.InstanceManager, httpClientProvider httpclient.Provider) *Service {
-	return &Service{
-		im:                 im,
-		HTTPClientProvider: httpClientProvider,
-		intervalCalculator: tsdb.NewCalculator(),
 	}
 }
 
@@ -113,7 +121,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if err != nil {
 		return nil, err
 	}
-
 	client, err := getClient(dsInfo, s)
 	if err != nil {
 		return nil, err
@@ -123,7 +130,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		Responses: backend.Responses{},
 	}
 
-	queries, err := s.parseQuery(req.Queries)
+	queries, err := s.parseQuery(req.Queries, dsInfo)
 	if err != nil {
 		return &result, err
 	}
@@ -163,14 +170,15 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 func getClient(dsInfo *DatasourceInfo, s *Service) (apiv1.API, error) {
 	opts := &sdkhttpclient.Options{
-		Timeouts: dsInfo.HTTPClientOpts.Timeouts,
-		TLS:      dsInfo.HTTPClientOpts.TLS,
+		Timeouts:  dsInfo.HTTPClientOpts.Timeouts,
+		TLS:       dsInfo.HTTPClientOpts.TLS,
+		BasicAuth: dsInfo.HTTPClientOpts.BasicAuth,
 	}
 
 	customMiddlewares := customQueryParametersMiddleware(plog)
 	opts.Middlewares = []sdkhttpclient.Middleware{customMiddlewares}
 
-	roundTripper, err := s.HTTPClientProvider.GetTransport(*opts)
+	roundTripper, err := s.httpClientProvider.GetTransport(*opts)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +225,7 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 	return string(result)
 }
 
-func (s *Service) parseQuery(queries []backend.DataQuery) (
+func (s *Service) parseQuery(queries []backend.DataQuery, dsInfo *DatasourceInfo) (
 	[]*PrometheusQuery, error) {
 	var intervalMode string
 	var adjustedInterval time.Duration
@@ -239,7 +247,7 @@ func (s *Service) parseQuery(queries []backend.DataQuery) (
 		end := queryModel.TimeRange.To
 		queryInterval := jsonModel.Get("interval").MustString("")
 
-		dsInterval, err := tsdb.GetIntervalFrom(queryInterval, "", 0, 15*time.Second)
+		foundInterval, err := tsdb.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, 0, 15*time.Second)
 		hasQueryInterval := queryInterval != ""
 		// Only use stepMode if we have interval in query, otherwise use "min"
 		if hasQueryInterval {
@@ -253,7 +261,7 @@ func (s *Service) parseQuery(queries []backend.DataQuery) (
 			return nil, err
 		}
 
-		calculatedInterval, err := s.intervalCalculator.Calculate(queries[0].TimeRange, dsInterval, tsdb.IntervalMode(intervalMode))
+		calculatedInterval, err := s.intervalCalculator.Calculate(queries[0].TimeRange, foundInterval, tsdb.IntervalMode(intervalMode))
 		if err != nil {
 			return nil, err
 		}

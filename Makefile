@@ -2,7 +2,10 @@
 ##
 ## For more information, refer to https://suva.sh/posts/well-documented-makefiles/
 
+WIRE_TAGS = "oss"
+
 -include local/Makefile
+include .bingo/Variables.mk
 
 .PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go golangci-lint test-go test-js test run run-frontend clean devenv devenv-down protobuf drone help
 
@@ -27,7 +30,11 @@ node_modules: package.json yarn.lock ## Install node modules.
 
 ##@ Building
 
-build-go: ## Build all Go binaries.
+gen-go: $(WIRE)
+	@echo "generate go files"
+	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
+
+build-go: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go build
 
@@ -36,7 +43,7 @@ build-server: ## Build Grafana server.
 	$(GO) run build.go build-server
 
 build-cli: ## Build Grafana CLI application.
-	@echo "build in CI environment"
+	@echo "build grafana-cli"
 	$(GO) run build.go build-cli
 
 build-js: ## Build frontend assets.
@@ -91,7 +98,7 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 build-docker-dev: ## Build Docker image for development (fast).
 	@echo "build development container"
 	@echo "\033[92mInfo:\033[0m the frontend code is expected to be built already."
-	$(GO) run build.go -goos linux -pkg-arch amd64 ${OPT} build pkg-archive latest
+	$(GO) run build.go -goos linux -pkg-arch amd64 ${OPT} build latest
 	cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
 	cd packaging/docker && docker build --tag grafana/grafana:dev .
 
@@ -141,7 +148,7 @@ clean: ## Clean up intermediate build artifacts.
 	rm -rf public/build
 
 # This repository's configuration is protected (https://readme.drone.io/signature/).
-# Use this make target to regenerate the configuration YAML files when 
+# Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
 drone:
 	drone starlark

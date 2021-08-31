@@ -21,7 +21,7 @@ import (
 	"github.com/gobwas/glob"
 
 	"github.com/prometheus/common/model"
-	ini "gopkg.in/ini.v1"
+	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/components/gtime"
@@ -44,6 +44,7 @@ const (
 	Dev              = "development"
 	Prod             = "production"
 	Test             = "test"
+	ApplicationName  = "Grafana"
 )
 
 // This constant corresponds to the default value for ldap_sync_ttl in .ini files
@@ -64,12 +65,11 @@ var (
 	InstanceName     string
 
 	// build
-	BuildVersion    string
-	BuildCommit     string
-	BuildBranch     string
-	BuildStamp      int64
-	IsEnterprise    bool
-	ApplicationName string
+	BuildVersion string
+	BuildCommit  string
+	BuildBranch  string
+	BuildStamp   int64
+	IsEnterprise bool
 
 	// packaging
 	Packaging = "unknown"
@@ -84,7 +84,6 @@ var (
 	// Security settings.
 	SecretKey              string
 	DisableGravatar        bool
-	EmailCodeValidMinutes  int
 	DataProxyWhiteList     map[string]bool
 	CookieSecure           bool
 	CookieSameSiteDisabled bool
@@ -204,6 +203,9 @@ type Cfg struct {
 	EnableGzip       bool
 	EnforceDomain    bool
 
+	// Security settings
+	EmailCodeValidMinutes int
+
 	// build
 	BuildVersion string
 	BuildCommit  string
@@ -215,6 +217,7 @@ type Cfg struct {
 	Packaging string
 
 	// Paths
+	HomePath           string
 	ProvisioningPath   string
 	DataPath           string
 	LogsPath           string
@@ -402,9 +405,18 @@ type Cfg struct {
 	// Grafana.com URL
 	GrafanaComURL string
 
+	// Alerting
+
+	// AlertingBaseInterval controls the alerting base interval in seconds.
+	// Only for internal use and not user configuration.
+	AlertingBaseInterval time.Duration
+
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]interface{}
 	GeomapEnableCustomBaseLayers bool
+
+	// Unified Alerting
+	AdminConfigPollInterval time.Duration
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -471,6 +483,7 @@ func RedactedValue(key, value string) string {
 		"PRIVATE_KEY",
 		"SECRET_KEY",
 		"CERTIFICATE",
+		"ACCOUNT_KEY",
 	} {
 		if strings.Contains(uppercased, pattern) {
 			return RedactedPassword
@@ -632,9 +645,9 @@ func makeAbsolute(path string, root string) string {
 	return filepath.Join(root, path)
 }
 
-func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
+func (cfg *Cfg) loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 	if configFile == "" {
-		configFile = filepath.Join(HomePath, CustomInitPath)
+		configFile = filepath.Join(cfg.HomePath, CustomInitPath)
 		// return without error if custom file does not exist
 		if !pathExists(configFile) {
 			return nil
@@ -670,7 +683,7 @@ func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 	return nil
 }
 
-func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
+func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	// load config defaults
 	defaultConfigFile := path.Join(HomePath, "conf/defaults.ini")
 	configFiles = append(configFiles, defaultConfigFile)
@@ -697,7 +710,7 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	applyCommandLineDefaultProperties(commandLineProps, parsedFile)
 
 	// load specified config file
-	err = loadSpecifiedConfigFile(args.Config, parsedFile)
+	err = cfg.loadSpecifiedConfigFile(args.Config, parsedFile)
 	if err != nil {
 		err2 := cfg.initLogging(parsedFile)
 		if err2 != nil {
@@ -744,25 +757,29 @@ func pathExists(path string) bool {
 	return false
 }
 
-func setHomePath(args *CommandLineArgs) {
+func (cfg *Cfg) setHomePath(args CommandLineArgs) {
 	if args.HomePath != "" {
-		HomePath = args.HomePath
+		cfg.HomePath = args.HomePath
+		HomePath = cfg.HomePath
 		return
 	}
 
 	var err error
-	HomePath, err = filepath.Abs(".")
+	cfg.HomePath, err = filepath.Abs(".")
 	if err != nil {
 		panic(err)
 	}
+
+	HomePath = cfg.HomePath
 	// check if homepath is correct
-	if pathExists(filepath.Join(HomePath, "conf/defaults.ini")) {
+	if pathExists(filepath.Join(cfg.HomePath, "conf/defaults.ini")) {
 		return
 	}
 
 	// try down one path
-	if pathExists(filepath.Join(HomePath, "../conf/defaults.ini")) {
-		HomePath = filepath.Join(HomePath, "../")
+	if pathExists(filepath.Join(cfg.HomePath, "../conf/defaults.ini")) {
+		cfg.HomePath = filepath.Join(cfg.HomePath, "../")
+		HomePath = cfg.HomePath
 	}
 }
 
@@ -773,6 +790,15 @@ func NewCfg() *Cfg {
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),
 	}
+}
+
+func NewCfgFromArgs(args CommandLineArgs) (*Cfg, error) {
+	cfg := NewCfg()
+	if err := cfg.Load(args); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
 }
 
 var theCfg *Cfg
@@ -786,7 +812,10 @@ func GetCfg() *Cfg {
 		return theCfg
 	}
 
-	theCfg = NewCfg()
+	theCfg, err := NewCfgFromArgs(CommandLineArgs{})
+	if err != nil {
+		panic(err)
+	}
 	return theCfg
 }
 
@@ -802,8 +831,8 @@ func (cfg *Cfg) validateStaticRootPath() error {
 	return nil
 }
 
-func (cfg *Cfg) Load(args *CommandLineArgs) error {
-	setHomePath(args)
+func (cfg *Cfg) Load(args CommandLineArgs) error {
+	cfg.setHomePath(args)
 
 	// Fix for missing IANA db on Windows
 	_, zoneInfoSet := os.LookupEnv(zoneInfo)
@@ -831,8 +860,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.Packaging = Packaging
 
 	cfg.ErrTemplateName = "error"
-
-	ApplicationName = "Grafana"
 
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
@@ -872,7 +899,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err := readAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
-	if err := readRenderingSettings(iniFile, cfg); err != nil {
+	if err := cfg.readRenderingSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -895,6 +922,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	if err := readAlertingSettings(iniFile); err != nil {
+		return err
+	}
+
+	if err := cfg.readUnifiedAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -990,6 +1021,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err := cfg.readLiveSettings(iniFile); err != nil {
 		return err
 	}
+
+	cfg.LogConfigSources()
 
 	return nil
 }
@@ -1324,7 +1357,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
-func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
+func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	renderSec := iniFile.Section("rendering")
 	cfg.RendererUrl = valueAsString(renderSec, "server_url", "")
 	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
@@ -1346,6 +1379,13 @@ func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
+	return nil
+}
+
+func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
+	ua := iniFile.Section("unified_alerting")
+	s := ua.Key("admin_config_poll_interval_seconds").MustInt(60)
+	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
 	return nil
 }
 

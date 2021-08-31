@@ -4,14 +4,14 @@ import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 import {
   GraphGradientMode,
   AxisPlacement,
-  DrawStyle,
+  GraphDrawStyle,
   PointVisibility,
   ScaleOrientation,
   ScaleDirection,
   GraphTresholdsStyleMode,
-} from '../config';
+  ScaleDistribution,
+} from '@grafana/schema';
 import { createTheme, ThresholdsMode } from '@grafana/data';
-import { ScaleDistribution } from '../models.gen';
 
 describe('UPlotConfigBuilder', () => {
   const darkTheme = createTheme();
@@ -329,7 +329,7 @@ describe('UPlotConfigBuilder', () => {
       placement: AxisPlacement.Bottom,
       isTime: false,
       formatValue: () => 'test value',
-      grid: false,
+      grid: { show: false },
       show: true,
       theme: darkTheme,
       values: [],
@@ -411,13 +411,12 @@ describe('UPlotConfigBuilder', () => {
 
     expect(builder.getAxisPlacement('y1')).toBe(AxisPlacement.Left);
     expect(builder.getAxisPlacement('y2')).toBe(AxisPlacement.Right);
-    expect(builder.getConfig().axes![1].grid!.show).toBe(false);
   });
 
   it('when fillColor is not set fill', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       scaleKey: 'scale-x',
       lineColor: '#0000ff',
       theme: darkTheme,
@@ -429,20 +428,20 @@ describe('UPlotConfigBuilder', () => {
   it('when fillOpacity is set', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       scaleKey: 'scale-x',
       lineColor: '#FFAABB',
       fillOpacity: 50,
       theme: darkTheme,
     });
 
-    expect(builder.getConfig().series[1].fill).toBe('rgba(255, 170, 187, 0.5)');
+    expect(builder.getConfig().series[1].fill).toBe('#FFAABB80');
   });
 
   it('when fillColor is set ignore fillOpacity', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       scaleKey: 'scale-x',
       lineColor: '#FFAABB',
       fillOpacity: 50,
@@ -456,7 +455,7 @@ describe('UPlotConfigBuilder', () => {
   it('when fillGradient mode is opacity', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       scaleKey: 'scale-x',
       lineColor: '#FFAABB',
       fillOpacity: 50,
@@ -470,7 +469,7 @@ describe('UPlotConfigBuilder', () => {
   it('allows series configuration', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       scaleKey: 'scale-x',
       fillOpacity: 50,
       gradientMode: GraphGradientMode.Opacity,
@@ -534,7 +533,7 @@ describe('UPlotConfigBuilder', () => {
       const builder = new UPlotConfigBuilder();
       builder.setStacking();
       builder.addSeries({
-        drawStyle: DrawStyle.Line,
+        drawStyle: GraphDrawStyle.Line,
         scaleKey: 'scale-x',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
@@ -545,7 +544,7 @@ describe('UPlotConfigBuilder', () => {
         theme: darkTheme,
       });
       builder.addSeries({
-        drawStyle: DrawStyle.Line,
+        drawStyle: GraphDrawStyle.Line,
         scaleKey: 'scale-x',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
@@ -558,7 +557,7 @@ describe('UPlotConfigBuilder', () => {
       });
 
       builder.addSeries({
-        drawStyle: DrawStyle.Line,
+        drawStyle: GraphDrawStyle.Line,
         scaleKey: 'scale-x',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
@@ -707,6 +706,97 @@ describe('UPlotConfigBuilder', () => {
       });
 
       expect(addHookFn).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Grid lines visibility', () => {
+    it('handles auto behaviour', () => {
+      const builder = new UPlotConfigBuilder();
+      builder.addAxis({
+        scaleKey: 'x',
+        placement: AxisPlacement.Bottom,
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y1',
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y2',
+        theme: darkTheme,
+      });
+      builder.addAxis({
+        scaleKey: 'y3',
+        theme: darkTheme,
+      });
+
+      const axesConfig = builder.getConfig().axes!;
+
+      expect(axesConfig[0].grid!.show).toBe(true);
+      expect(axesConfig[1].grid!.show).toBe(true);
+      expect(axesConfig[2].grid!.show).toBe(false);
+      expect(axesConfig[3].grid!.show).toBe(false);
+    });
+
+    it('handles auto behaviour with explicite grid settings', () => {
+      const builder = new UPlotConfigBuilder();
+      builder.addAxis({
+        scaleKey: 'x',
+        placement: AxisPlacement.Bottom,
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y1',
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y2',
+        grid: { show: true },
+        theme: darkTheme,
+      });
+      builder.addAxis({
+        scaleKey: 'y3',
+        theme: darkTheme,
+      });
+
+      const axesConfig = builder.getConfig().axes!;
+
+      expect(axesConfig[0].grid!.show).toBe(true);
+      expect(axesConfig[1].grid!.show).toBe(true);
+      expect(axesConfig[2].grid!.show).toBe(true);
+      expect(axesConfig[3].grid!.show).toBe(false);
+    });
+
+    it('handles explicit grid settings', () => {
+      const builder = new UPlotConfigBuilder();
+      builder.addAxis({
+        scaleKey: 'x',
+        grid: { show: false },
+        placement: AxisPlacement.Bottom,
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y1',
+        grid: { show: false },
+        theme: darkTheme,
+      });
+
+      builder.addAxis({
+        scaleKey: 'y2',
+        grid: { show: true },
+        theme: darkTheme,
+      });
+
+      const axesConfig = builder.getConfig().axes!;
+
+      expect(axesConfig[0].grid!.show).toBe(false);
+      expect(axesConfig[1].grid!.show).toBe(false);
+      expect(axesConfig[2].grid!.show).toBe(true);
     });
   });
 });

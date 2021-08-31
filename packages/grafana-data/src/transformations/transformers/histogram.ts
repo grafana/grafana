@@ -1,4 +1,4 @@
-import { DataTransformerInfo } from '../../types';
+import { SynchronousDataTransformerInfo } from '../../types';
 import { map } from 'rxjs/operators';
 
 import { DataTransformerID } from './ids';
@@ -73,7 +73,7 @@ export const histogramFieldInfo = {
 /**
  * @alpha
  */
-export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptions> = {
+export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTransformerOptions> = {
   id: DataTransformerID.histogram,
   name: 'Histogram',
   description: 'Calculate a histogram from input data',
@@ -81,23 +81,18 @@ export const histogramTransformer: DataTransformerInfo<HistogramTransformerOptio
     fields: {},
   },
 
-  /**
-   * Return a modified copy of the series.  If the transform is not or should not
-   * be applied, just return the input series
-   */
-  operator: (options) => (source) =>
-    source.pipe(
-      map((data) => {
-        if (!Array.isArray(data) || data.length === 0) {
-          return data;
-        }
-        const hist = buildHistogram(data, options);
-        if (hist == null) {
-          return [];
-        }
-        return [histogramFieldsToFrame(hist)];
-      })
-    ),
+  operator: (options) => (source) => source.pipe(map((data) => histogramTransformer.transformer(options)(data))),
+
+  transformer: (options: HistogramTransformerOptions) => (data: DataFrame[]) => {
+    if (!Array.isArray(data) || data.length === 0) {
+      return data;
+    }
+    const hist = buildHistogram(data, options);
+    if (hist == null) {
+      return [];
+    }
+    return [histogramFieldsToFrame(hist)];
+  },
 };
 
 /**

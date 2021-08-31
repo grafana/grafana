@@ -3,7 +3,7 @@ import { DataFrame, TimeRange } from '@grafana/data';
 import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { PlotLegend } from '../uPlot/PlotLegend';
-import { LegendDisplayMode } from '../VizLegend/models.gen';
+import { LegendDisplayMode } from '@grafana/schema';
 import { preparePlotConfigBuilder } from './utils';
 import { withTheme2 } from '../../themes/ThemeContext';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
@@ -19,7 +19,16 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const { eventBus, sync } = this.context;
     const { theme, timeZone } = this.props;
-    return preparePlotConfigBuilder({ frame: alignedFrame, theme, timeZone, getTimeRange, eventBus, sync, allFrames });
+
+    return preparePlotConfigBuilder({
+      frame: alignedFrame,
+      theme,
+      timeZone,
+      getTimeRange,
+      eventBus,
+      sync,
+      allFrames,
+    });
   };
 
   renderLegend = (config: UPlotConfigBuilder) => {

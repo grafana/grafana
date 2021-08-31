@@ -6,6 +6,7 @@ import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 import { useDispatch } from 'react-redux';
 import { useEffect } from 'react';
 import { checkIfLotexSupportsEditingRulesAction } from '../state/actions';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 interface ResultBag {
   isEditable?: boolean;
@@ -20,7 +21,7 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   const { folder, loading } = useFolder(folderUID);
 
   useEffect(() => {
-    if (checkEditingRequests[rulesSourceName] === undefined) {
+    if (checkEditingRequests[rulesSourceName] === undefined && rulesSourceName !== GRAFANA_RULES_SOURCE_NAME) {
       dispatch(checkIfLotexSupportsEditingRulesAction(rulesSourceName));
     }
   }, [rulesSourceName, checkEditingRequests, dispatch]);

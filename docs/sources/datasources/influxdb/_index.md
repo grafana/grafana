@@ -126,7 +126,7 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 
 ## Querying logs
 
-Querying and displaying log data from InfluxDB is available in [Explore]({{< relref "../../explore/_index.md" >}}), and in the [logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}) in dashboards.
+Querying and displaying log data from InfluxDB is available in [Explore]({{< relref "../../explore/_index.md" >}}), and in the [logs panel]({{< relref "../../visualizations/logs-panel.md" >}}) in dashboards.
 Select the InfluxDB data source, and then enter a query to display your logs.
 
 ### Log queries
