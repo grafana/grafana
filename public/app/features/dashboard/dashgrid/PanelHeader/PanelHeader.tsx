@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { cx, css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -49,7 +49,6 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
             return (
               <div className="panel-title">
                 <PanelHeaderNotices frames={data.series} panelId={panel.id} />
-                {panel.libraryPanel && <Icon name="library-panel" style={{ marginRight: '4px' }} />}
                 {alertState ? (
                   <Icon
                     name={alertState === 'alerting' ? 'heart-break' : 'heart'}
