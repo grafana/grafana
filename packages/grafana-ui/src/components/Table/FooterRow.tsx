@@ -3,13 +3,13 @@ import { ColumnInstance, HeaderGroup } from 'react-table';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTableStyles, TableStyles } from './styles';
 import { useStyles2 } from '../../themes';
-import { TableFooterItem } from './types';
+import { FooterItem } from './types';
 import { EmptyCell, FooterCell } from './FooterCell';
 
 export interface FooterRowProps {
   totalColumnsWidth: number;
   footerGroups: HeaderGroup[];
-  footerValues?: TableFooterItem[];
+  footerValues?: FooterItem[];
 }
 
 export const FooterRow = (props: FooterRowProps) => {
@@ -85,7 +85,7 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, heig
   );
 }
 
-export function getFooterValue(index: number, footerValues?: TableFooterItem[]) {
+export function getFooterValue(index: number, footerValues?: FooterItem[]) {
   if (footerValues === undefined) {
     return EmptyCell;
   }

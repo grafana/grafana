@@ -16,7 +16,7 @@ import {
   formattedValueToString,
 } from '@grafana/data';
 import { prepDataForStorybook } from '../../utils/storybook/data';
-import { TableFooterItem } from './types';
+import { FooterItem } from './types';
 
 export default {
   title: 'Visualizations/Table',
@@ -95,7 +95,7 @@ function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): D
   return prepDataForStorybook([data], theme)[0];
 }
 
-function buildFooterData(data: DataFrame): TableFooterItem[] {
+function buildFooterData(data: DataFrame): FooterItem[] {
   const values = data.fields[3].values.toArray();
   const valueSum = values.reduce((prev, curr) => {
     return prev + curr;

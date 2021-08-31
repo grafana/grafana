@@ -17,7 +17,7 @@ import { getColumns, sortCaseInsensitive, sortNumber } from './utils';
 import {
   TableColumnResizeActionCallback,
   TableFilterActionCallback,
-  TableFooterItem,
+  FooterItem,
   TableSortByActionCallback,
   TableSortByFieldState,
 } from './types';
@@ -43,7 +43,7 @@ export interface Props {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
-  footerValues?: TableFooterItem[];
+  footerValues?: FooterItem[];
 }
 
 interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}>, UseFiltersState<{}> {}

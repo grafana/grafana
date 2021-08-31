@@ -1,10 +1,10 @@
 import React from 'react';
-import { TableFooterItem } from './types';
+import { FooterItem } from './types';
 import { KeyValue } from '@grafana/data';
 import { css } from '@emotion/css';
 
 export interface FooterProps {
-  value: TableFooterItem;
+  value: FooterItem;
 }
 
 export const FooterCell = (props: FooterProps) => {

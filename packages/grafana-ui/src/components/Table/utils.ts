@@ -12,7 +12,7 @@ import {
 
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
-import { CellComponent, TableCellDisplayMode, TableFieldOptions, TableFooterItem } from './types';
+import { CellComponent, TableCellDisplayMode, TableFieldOptions, FooterItem } from './types';
 import { JSONViewCell } from './JSONViewCell';
 import { ImageCell } from './ImageCell';
 import { getFooterValue } from './FooterRow';
@@ -46,7 +46,7 @@ export function getColumns(
   data: DataFrame,
   availableWidth: number,
   columnMinWidth: number,
-  footerValues?: TableFooterItem[]
+  footerValues?: FooterItem[]
 ): Column[] {
   const columns: any[] = [];
   let fieldCountWithoutWidth = data.fields.length;
