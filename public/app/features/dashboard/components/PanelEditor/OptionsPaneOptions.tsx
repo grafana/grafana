@@ -64,8 +64,10 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   } else {
     switch (listMode) {
       case OptionFilter.All:
-        // Library Panel options first
-        mainBoxElements.push(libraryPanelOptions.render());
+        if (isPanelModelLibraryPanel(panel)) {
+          // Library Panel options first
+          mainBoxElements.push(libraryPanelOptions.render());
+        }
         // Panel frame options second
         mainBoxElements.push(panelFrameOptions.render());
         // If angular add those options next
