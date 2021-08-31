@@ -1994,7 +1994,6 @@ func TestQuota(t *testing.T) {
 	// get the generated rule UID
 	var ruleUID string
 	{
-
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
 		// nolint:gosec
 		resp, err := http.Get(u)
