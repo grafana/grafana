@@ -169,7 +169,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
         <GrafanaGridItem
           key={panel.key}
           className={panelClasses}
-          data-panelid={panel.key}
+          data-panelid={panel.id}
           gridPos={panel.gridPos}
           gridWidth={gridWidth}
           windowHeight={this.windowHeight}
