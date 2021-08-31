@@ -175,5 +175,4 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
 		require.Empty(t, res.Tags)
 		require.Equal(t, time.Second*10, res.Interval)
 	})
-
 }
