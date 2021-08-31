@@ -1,11 +1,15 @@
 import { useReducer, useEffect } from 'react';
-import { PluginType, PluginIncludeType } from '@grafana/data';
+import { PluginType, PluginIncludeType, GrafanaPlugin, PluginMeta } from '@grafana/data';
 import { api } from '../api';
 import { loadPlugin } from '../../PluginPage';
 import { getCatalogPluginDetails, isOrgAdmin } from '../helpers';
-import { ActionTypes, PluginDetailsActions, PluginDetailsState } from '../types';
+import { ActionTypes, CatalogPluginDetails, PluginDetailsActions, PluginDetailsState, PluginTabLabels } from '../types';
 
-const defaultTabs = [{ label: 'Overview' }, { label: 'Version history' }];
+type Tab = {
+  label: PluginTabLabels;
+};
+
+const defaultTabs: Tab[] = [{ label: PluginTabLabels.OVERVIEW }, { label: PluginTabLabels.VERSIONS }];
 
 const initialState = {
   hasInstalledPanel: false,
@@ -84,6 +88,9 @@ const reducer = (state: PluginDetailsState, action: PluginDetailsActions) => {
   }
 };
 
+const pluginCache: Record<string, CatalogPluginDetails> = {};
+const pluginConfigCache: Record<string, GrafanaPlugin<PluginMeta<{}>>> = {};
+
 export const usePluginDetails = (id: string) => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const userCanConfigurePlugins = isOrgAdmin();
@@ -92,8 +99,16 @@ export const usePluginDetails = (id: string) => {
     const fetchPlugin = async () => {
       dispatch({ type: ActionTypes.LOADING });
       try {
-        const value = await api.getPlugin(id);
-        const plugin = getCatalogPluginDetails(value?.local, value?.remote, value?.remoteVersions);
+        let plugin;
+
+        if (pluginCache[id]) {
+          plugin = pluginCache[id];
+        } else {
+          const value = await api.getPlugin(id);
+          plugin = getCatalogPluginDetails(value?.local, value?.remote, value?.remoteVersions);
+          pluginCache[id] = plugin;
+        }
+
         dispatch({ type: ActionTypes.FETCHED_PLUGIN, payload: plugin });
       } catch (error) {
         dispatch({ type: ActionTypes.ERROR, payload: error });
@@ -107,7 +122,15 @@ export const usePluginDetails = (id: string) => {
       if (state.isInstalled) {
         dispatch({ type: ActionTypes.LOADING });
         try {
-          const pluginConfig = await loadPlugin(id);
+          let pluginConfig;
+
+          if (pluginConfigCache[id]) {
+            pluginConfig = pluginConfigCache[id];
+          } else {
+            pluginConfig = await loadPlugin(id);
+            pluginConfigCache[id] = pluginConfig;
+          }
+
           dispatch({ type: ActionTypes.FETCHED_PLUGIN_CONFIG, payload: pluginConfig });
         } catch (error) {
           dispatch({ type: ActionTypes.ERROR, payload: error });
@@ -123,27 +146,28 @@ export const usePluginDetails = (id: string) => {
 
   useEffect(() => {
     const pluginConfig = state.pluginConfig;
-    const tabs: Array<{ label: string }> = [...defaultTabs];
+    const tabs: Tab[] = [...defaultTabs];
 
     if (pluginConfig && userCanConfigurePlugins) {
       if (pluginConfig.meta.type === PluginType.app) {
         if (pluginConfig.angularConfigCtrl) {
           tabs.push({
-            label: 'Config',
+            label: PluginTabLabels.CONFIG,
           });
         }
 
+        // Configuration pages with custom labels
         if (pluginConfig.configPages) {
           for (const page of pluginConfig.configPages) {
             tabs.push({
-              label: page.title,
+              label: page.title as PluginTabLabels,
             });
           }
         }
 
         if (pluginConfig.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
           tabs.push({
-            label: 'Dashboards',
+            label: PluginTabLabels.DASHBOARDS,
           });
         }
       }
