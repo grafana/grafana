@@ -38,7 +38,6 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"x": 0,
 							"y": 0,
 						},
-						"title": "Panel Title",
 					},
 					map[string]interface{}{
 						"id": int64(2),
@@ -48,7 +47,6 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"x": 6,
 							"y": 0,
 						},
-						"title": "Overridden Panel Title",
 						"libraryPanel": map[string]interface{}{
 							"uid":  sc.initialResult.Result.UID,
 							"name": sc.initialResult.Result.Name,
@@ -79,7 +77,6 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"x": 0,
 							"y": 0,
 						},
-						"title": "Panel Title",
 					},
 					map[string]interface{}{
 						"id": int64(2),
@@ -115,7 +112,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 								},
 							},
 						},
-						"title": "Overridden Panel Title",
+						"title": "Text - Library Panel",
 						"type":  "text",
 					},
 				},
@@ -251,7 +248,6 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 							"x": 0,
 							"y": 0,
 						},
-						"title": "Panel Title",
 					},
 					map[string]interface{}{
 						"id": int64(2),
@@ -266,7 +262,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 							"uid":  sc.initialResult.Result.UID,
 							"name": sc.initialResult.Result.Name,
 						},
-						"title": "Overridden panel title",
+						"title": "Text - Library Panel",
 						"type":  "text",
 					},
 				},
@@ -292,7 +288,6 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 							"x": 0,
 							"y": 0,
 						},
-						"title": "Panel Title",
 					},
 					map[string]interface{}{
 						"id": int64(2),
@@ -302,7 +297,6 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 							"x": 6,
 							"y": 0,
 						},
-						"title": "Overridden panel title",
 						"libraryPanel": map[string]interface{}{
 							"uid":  sc.initialResult.Result.UID,
 							"name": sc.initialResult.Result.Name,

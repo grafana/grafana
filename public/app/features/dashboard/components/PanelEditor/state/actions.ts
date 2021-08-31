@@ -4,9 +4,9 @@ import {
   closeEditor,
   PANEL_EDITOR_UI_STATE_STORAGE_KEY,
   PanelEditorUIState,
-  setDiscardChanges,
   setPanelEditorUIState,
   updateEditorInitState,
+  setDiscardChanges,
 } from './reducers';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from 'app/core/store';
@@ -46,7 +46,7 @@ function updateDuplicateLibraryPanels(modifiedPanel: PanelModel, dashboard: Dash
 
     panel.restoreModel({
       ...modifiedSaveModel,
-      ...pick(panel, 'gridPos', 'id', 'title'),
+      ...pick(panel, 'gridPos', 'id'),
     });
 
     // Loaded plugin is not included in the persisted properties

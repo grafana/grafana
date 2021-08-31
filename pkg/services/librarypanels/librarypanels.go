@@ -97,7 +97,6 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqConte
 		elem := dash.Data.Get("panels").GetIndex(i)
 		elem.Set("gridPos", panelAsJSON.Get("gridPos").MustMap())
 		elem.Set("id", panelAsJSON.Get("id").MustInt64())
-		elem.Set("title", panelAsJSON.Get("title").MustString())
 		elem.Set("libraryPanel", map[string]interface{}{
 			"uid":         elementInDB.UID,
 			"name":        elementInDB.Name,
@@ -151,11 +150,9 @@ func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dash
 		// keep only the necessary JSON properties, the rest of the properties should be safely stored in library_panels table
 		gridPos := panelAsJSON.Get("gridPos").MustMap()
 		id := panelAsJSON.Get("id").MustInt64(int64(i))
-		title := panelAsJSON.Get("title").MustString()
 		dash.Data.Get("panels").SetIndex(i, map[string]interface{}{
 			"id":      id,
 			"gridPos": gridPos,
-			"title":   title,
 			"libraryPanel": map[string]interface{}{
 				"uid":  uid,
 				"name": name,

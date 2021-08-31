@@ -18,14 +18,6 @@ export function getLibraryPanelOptionsCategory(props: OptionPaneRenderProps): Op
     descriptor
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: 'Library panel information',
-          render: function renderLibraryPanelInformation() {
-            return <LibraryPanelInformation panel={panel} formatDate={dashboard.formatDate} />;
-          },
-        })
-      )
-      .addItem(
-        new OptionsPaneItemDescriptor({
           title: 'Name',
           value: panel.libraryPanel.name,
           popularRank: 1,
@@ -39,6 +31,14 @@ export function getLibraryPanelOptionsCategory(props: OptionPaneRenderProps): Op
                 }
               />
             );
+          },
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'Library panel information',
+          render: function renderLibraryPanelInformation() {
+            return <LibraryPanelInformation panel={panel} formatDate={dashboard.formatDate} />;
           },
         })
       );
