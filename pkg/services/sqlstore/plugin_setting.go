@@ -3,10 +3,10 @@ package sqlstore
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
@@ -46,6 +46,8 @@ func GetPluginSettingById(query *models.GetPluginSettingByIdQuery) error {
 }
 
 func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
+	encryptedJsonData := securejsondata.GetEncryptedJsonData(cmd.SecureJsonData)
+
 	return inTransaction(func(sess *DBSession) error {
 		var pluginSetting models.PluginSetting
 
@@ -63,7 +65,7 @@ func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
 				Pinned:         cmd.Pinned,
 				JsonData:       cmd.JsonData,
 				PluginVersion:  cmd.PluginVersion,
-				SecureJsonData: cmd.GetEncryptedJsonData(),
+				SecureJsonData: encryptedJsonData,
 				Created:        time.Now(),
 				Updated:        time.Now(),
 			}
@@ -78,12 +80,8 @@ func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
 			_, err = sess.Insert(&pluginSetting)
 			return err
 		}
-		for key, data := range cmd.SecureJsonData {
-			encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
-			if err != nil {
-				return err
-			}
 
+		for key, encryptedData := range encryptedJsonData {
 			pluginSetting.SecureJsonData[key] = encryptedData
 		}
 
