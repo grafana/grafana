@@ -97,6 +97,68 @@ describe('PrometheusDatasource', () => {
         expect(response[0].state).toBe(LoadingState.Done);
       });
     });
+
+    describe('step parameter', () => {
+      describe('When set to exact', () => {
+        it('should return an error if interval is modified', async () => {
+          const request = createDataRequest([{ interval: '1s', stepMode: 'exact' }], {
+            interval: '20s',
+          });
+
+          await expect(ds.query({ ...request, app: CoreApp.Dashboard })).toEmitValuesWith((response) => {
+            expect(response[0].error).toBeDefined();
+          });
+
+          await expect(ds.query({ ...request, app: CoreApp.Explore })).toEmitValuesWith((response) => {
+            expect(response[0].error).toBeDefined();
+          });
+        });
+
+        it('should NOT return an error if interval is not modified', async () => {
+          const request = createDataRequest([{ interval: '1s', stepMode: 'exact' }], {
+            interval: '1s',
+          });
+
+          await expect(ds.query({ ...request, app: CoreApp.Dashboard })).toEmitValuesWith((response) => {
+            expect(response[0].error).not.toBeDefined();
+          });
+
+          await expect(ds.query({ ...request, app: CoreApp.Explore })).toEmitValuesWith((response) => {
+            expect(response[0].error).not.toBeDefined();
+          });
+        });
+      });
+
+      describe('When set to max', () => {
+        it('should return an error if interval is modified', async () => {
+          const request = createDataRequest([{ interval: '1s', stepMode: 'max' }], {
+            interval: '20s',
+          });
+
+          await expect(ds.query({ ...request, app: CoreApp.Dashboard })).toEmitValuesWith((response) => {
+            expect(response[0].error).toBeDefined();
+          });
+
+          await expect(ds.query({ ...request, app: CoreApp.Explore })).toEmitValuesWith((response) => {
+            expect(response[0].error).toBeDefined();
+          });
+        });
+
+        it('should NOT return an error if interval is not modified', async () => {
+          const request = createDataRequest([{ interval: '1s', stepMode: 'max' }], {
+            interval: '1s',
+          });
+
+          await expect(ds.query({ ...request, app: CoreApp.Dashboard })).toEmitValuesWith((response) => {
+            expect(response[0].error).not.toBeDefined();
+          });
+
+          await expect(ds.query({ ...request, app: CoreApp.Explore })).toEmitValuesWith((response) => {
+            expect(response[0].error).not.toBeDefined();
+          });
+        });
+      });
+    });
   });
 
   describe('Datasource metadata requests', () => {
@@ -2226,24 +2288,32 @@ describe('modifyQuery', () => {
   });
 });
 
-function createDataRequest(targets: any[], overrides?: Partial<DataQueryRequest>): DataQueryRequest<PromQuery> {
-  const defaults = {
+function createDataRequest(
+  targets: Array<Partial<PromQuery>>,
+  overrides?: Partial<DataQueryRequest>
+): DataQueryRequest<PromQuery> {
+  const to = dateTime();
+  const from = to.subtract(5, 'minutes');
+
+  const defaults: Partial<DataQueryRequest<PromQuery>> = {
     app: CoreApp.Dashboard,
-    targets: targets.map((t) => {
+    targets: targets.map((t, i) => {
       return {
+        refId: `refid-${i}`,
         instant: false,
-        start: dateTime().subtract(5, 'minutes'),
-        end: dateTime(),
         expr: 'test',
         ...t,
       };
     }),
     range: {
-      from: dateTime(),
-      to: dateTime(),
+      from,
+      to,
+      raw: {
+        from,
+        to,
+      },
     },
     interval: '15s',
-    showingGraph: true,
   };
 
   return Object.assign(defaults, overrides || {}) as DataQueryRequest<PromQuery>;
