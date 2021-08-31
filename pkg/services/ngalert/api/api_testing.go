@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type TestingApiSrv struct {
@@ -24,11 +23,6 @@ type TestingApiSrv struct {
 	DataService     *tsdb.Service
 	DatasourceCache datasources.CacheService
 	log             log.Logger
-}
-
-func (srv TestingApiSrv) RouteTestReceiverConfig(c *models.ReqContext, body apimodels.ExtendedReceiver) response.Response {
-	srv.log.Info("RouteTestReceiverConfig: ", "body", body)
-	return response.JSON(http.StatusOK, util.DynMap{"message": "success"})
 }
 
 func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {

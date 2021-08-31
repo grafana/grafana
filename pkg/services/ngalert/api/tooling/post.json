@@ -86,6 +86,14 @@
    "type": "object",
    "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
   },
+  "AlertManagerNotFound": {
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "AlertManagerNotReady": {
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "AlertManagersResult": {
    "properties": {
     "activeAlertManagers": {
@@ -1340,6 +1348,10 @@
    "type": "object",
    "x-go-package": "github.com/prometheus/alertmanager/config"
   },
+  "PermissionDenied": {
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "Point": {
    "properties": {
     "T": {
@@ -2286,19 +2298,6 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
-  "TestReceiversConfig": {
-   "properties": {
-    "receivers": {
-     "items": {
-      "$ref": "#/definitions/PostableApiReceiver"
-     },
-     "type": "array",
-     "x-go-name": "Receivers"
-    }
-   },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-  },
   "TestReceiversResult": {
    "properties": {
     "notified_at": {
@@ -2572,12 +2571,11 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array",
-   "x-go-name": "AlertGroups",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -2697,7 +2695,6 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -2756,7 +2753,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableAlert",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableAlerts": {
    "items": {
@@ -2767,7 +2766,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -2819,7 +2817,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
    "items": {
@@ -3599,13 +3599,22 @@
     "operationId": "RoutePostTestReceivers",
     "parameters": [
      {
-      "in": "query",
-      "items": {
-       "$ref": "#/definitions/PostableApiReceiver"
-      },
+      "in": "body",
       "name": "receivers",
-      "type": "array",
+      "schema": {
+       "items": {
+        "$ref": "#/definitions/PostableApiReceiver"
+       },
+       "type": "array"
+      },
       "x-go-name": "Receivers"
+     },
+     {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "in": "path",
+      "name": "Recipient",
+      "required": true,
+      "type": "string"
      }
     ],
     "responses": {
@@ -3615,19 +3624,28 @@
        "$ref": "#/definitions/Ack"
       }
      },
-     "207": {
-      "$ref": "#/responses/MultiStatus"
-     },
      "400": {
       "description": "ValidationError",
       "schema": {
        "$ref": "#/definitions/ValidationError"
       }
      },
-     "408": {
-      "description": "Failure",
+     "403": {
+      "description": "PermissionDenied",
       "schema": {
-       "$ref": "#/definitions/Failure"
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     },
+     "404": {
+      "description": "AlertManagerNotFound",
+      "schema": {
+       "$ref": "#/definitions/AlertManagerNotFound"
+      }
+     },
+     "409": {
+      "description": "AlertManagerNotReady",
+      "schema": {
+       "$ref": "#/definitions/AlertManagerNotReady"
       }
      }
     },
@@ -4039,57 +4057,6 @@
     "summary": "Get the discovered and dropped Alertmanagers of the user's organization based on the specified configuration.",
     "tags": [
      "configuration"
-    ]
-   }
-  },
-  "/api/v1/receiver/test/{Recipient}": {
-   "post": {
-    "consumes": [
-     "application/json"
-    ],
-    "description": "Test receiver",
-    "operationId": "RouteTestReceiverConfig",
-    "parameters": [
-     {
-      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
-      "in": "path",
-      "name": "Recipient",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/ExtendedReceiver"
-      }
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "Success",
-      "schema": {
-       "$ref": "#/definitions/Success"
-      }
-     },
-     "412": {
-      "description": "SmtpNotEnabled",
-      "schema": {
-       "$ref": "#/definitions/SmtpNotEnabled"
-      }
-     },
-     "500": {
-      "description": "Failure",
-      "schema": {
-       "$ref": "#/definitions/Failure"
-      }
-     }
-    },
-    "tags": [
-     "testing"
     ]
    }
   },
