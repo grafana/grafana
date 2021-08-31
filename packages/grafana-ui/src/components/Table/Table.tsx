@@ -1,9 +1,8 @@
 import React, { FC, memo, useCallback, useMemo } from 'react';
-import { DataFrame, Field, getFieldDisplayName } from '@grafana/data';
+import { DataFrame, getFieldDisplayName } from '@grafana/data';
 import {
   Cell,
   Column,
-  HeaderGroup,
   useAbsoluteLayout,
   useFilters,
   UseFiltersState,
@@ -18,19 +17,18 @@ import { getColumns, sortCaseInsensitive, sortNumber } from './utils';
 import {
   TableColumnResizeActionCallback,
   TableFilterActionCallback,
+  FooterItem,
   TableSortByActionCallback,
   TableSortByFieldState,
 } from './types';
-import { getTableStyles, TableStyles } from './styles';
-import { Icon } from '../Icon/Icon';
+import { getTableStyles } from './styles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { Filter } from './Filter';
 import { TableCell } from './TableCell';
 import { useStyles2 } from '../../themes';
-import { selectors } from '@grafana/e2e-selectors';
+import { FooterRow } from './FooterRow';
+import { HeaderRow } from './HeaderRow';
 
 const COLUMN_MIN_WIDTH = 150;
-const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
 
 export interface Props {
   ariaLabel?: string;
@@ -45,6 +43,7 @@ export interface Props {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
+  footerValues?: FooterItem[];
 }
 
 interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}>, UseFiltersState<{}> {}
@@ -124,6 +123,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     noHeader,
     resizable = true,
     initialSortBy,
+    footerValues,
   } = props;
   const tableStyles = useStyles2(getTableStyles);
 
@@ -140,7 +140,12 @@ export const Table: FC<Props> = memo((props: Props) => {
   }, [data]);
 
   // React-table column definitions
-  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
+  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth, footerValues), [
+    data,
+    width,
+    columnMinWidth,
+    footerValues,
+  ]);
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
@@ -160,7 +165,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
   );
 
-  const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
+  const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth, footerGroups } = useTable(
     options,
     useFilters,
     useSortBy,
@@ -196,28 +201,10 @@ export const Table: FC<Props> = memo((props: Props) => {
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
 
   return (
-    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel}>
+    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
       <CustomScrollbar hideVerticalTrack={true}>
         <div style={{ width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%' }}>
-          {!noHeader && (
-            <div>
-              {headerGroups.map((headerGroup: HeaderGroup) => {
-                const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
-                return (
-                  <div
-                    className={tableStyles.thead}
-                    {...headerGroupProps}
-                    key={key}
-                    aria-label={e2eSelectorsTable.header}
-                  >
-                    {headerGroup.headers.map((column: Column, index: number) =>
-                      renderHeaderCell(column, tableStyles, data.fields[index])
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {!noHeader && <HeaderRow data={data} headerGroups={headerGroups} />}
           {rows.length > 0 ? (
             <FixedSizeList
               height={height - headerHeight}
@@ -233,6 +220,7 @@ export const Table: FC<Props> = memo((props: Props) => {
               No data
             </div>
           )}
+          <FooterRow footerValues={footerValues} footerGroups={footerGroups} totalColumnsWidth={totalColumnsWidth} />
         </div>
       </CustomScrollbar>
     </div>
@@ -240,37 +228,3 @@ export const Table: FC<Props> = memo((props: Props) => {
 });
 
 Table.displayName = 'Table';
-
-function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) {
-  const headerProps = column.getHeaderProps();
-
-  if (column.canResize) {
-    headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
-  }
-
-  headerProps.style.position = 'absolute';
-  headerProps.style.justifyContent = (column as any).justifyContent;
-
-  return (
-    <div className={tableStyles.headerCell} {...headerProps}>
-      {column.canSort && (
-        <>
-          <div
-            {...column.getSortByToggleProps()}
-            className={tableStyles.headerCellLabel}
-            title={column.render('Header')}
-          >
-            <div>{column.render('Header')}</div>
-            <div>
-              {column.isSorted && (column.isSortedDesc ? <Icon name="arrow-down" /> : <Icon name="arrow-up" />)}
-            </div>
-          </div>
-          {column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
-        </>
-      )}
-      {!column.canSort && column.render('Header')}
-      {!column.canSort && column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
-      {column.canResize && <div {...column.getResizerProps()} className={tableStyles.resizeHandle} />}
-    </div>
-  );
-}
