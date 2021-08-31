@@ -1,101 +1,115 @@
 import React from 'react';
-import { shallow } from 'enzyme';
-import BottomNavLinks from './BottomNavLinks';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { BrowserRouter } from 'react-router-dom';
 import appEvents from '../../app_events';
 import { ShowModalReactEvent } from '../../../types/events';
 import { HelpModal } from '../help/HelpModal';
+import BottomNavLinks from './BottomNavLinks';
 
 jest.mock('../../app_events', () => ({
   publish: jest.fn(),
 }));
 
-const setup = (propOverrides?: object) => {
-  const props = Object.assign(
-    {
-      link: {
-        text: 'Hello',
-      },
-      user: {
-        id: 1,
-        isGrafanaAdmin: false,
-        isSignedIn: false,
-        orgCount: 2,
-        orgRole: '',
-        orgId: 1,
-        login: 'hello',
-        orgName: 'Grafana',
-        timezone: 'UTC',
-        helpFlags1: 1,
-        lightTheme: false,
-        hasEditPermissionInFolders: false,
-      },
-    },
-    propOverrides
-  );
-  return shallow(<BottomNavLinks {...props} />);
-};
+describe('BottomNavLinks', () => {
+  const mockUser = {
+    id: 1,
+    isGrafanaAdmin: false,
+    isSignedIn: false,
+    orgCount: 2,
+    orgRole: '',
+    orgId: 1,
+    login: 'hello',
+    orgName: 'mockOrganization',
+    timezone: 'UTC',
+    helpFlags1: 1,
+    lightTheme: false,
+    hasEditPermissionInFolders: false,
+  };
 
-describe('Render', () => {
-  it('should render component', () => {
-    const wrapper = setup();
+  it('renders the link text', () => {
+    const mockLink = {
+      text: 'Hello',
+    };
 
-    expect(wrapper).toMatchSnapshot();
+    render(
+      <BrowserRouter>
+        <BottomNavLinks link={mockLink} user={mockUser} />
+      </BrowserRouter>
+    );
+    const linkText = screen.getByText(mockLink.text);
+    expect(linkText).toBeInTheDocument();
   });
 
-  it('should render organization switcher', () => {
-    const wrapper = setup({
-      link: {
-        showOrgSwitcher: true,
-      },
-    });
+  it('attaches the link url to the text if provided', () => {
+    const mockLink = {
+      text: 'Hello',
+      url: '/route',
+    };
 
-    wrapper.find('.sidemenu-org-switcher a').simulate('click');
-    expect(wrapper).toMatchSnapshot();
+    render(
+      <BrowserRouter>
+        <BottomNavLinks link={mockLink} user={mockUser} />
+      </BrowserRouter>
+    );
+    const link = screen.getByRole('link', { name: mockLink.text });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', mockLink.url);
   });
 
-  it('should render subtitle', () => {
-    const wrapper = setup({
-      link: {
-        subTitle: 'subtitle',
-      },
-    });
+  it('creates the correct children for the help link', () => {
+    const mockLink = {
+      id: 'help',
+      text: 'Hello',
+    };
 
-    expect(wrapper).toMatchSnapshot();
+    render(
+      <BrowserRouter>
+        <BottomNavLinks link={mockLink} user={mockUser} />
+      </BrowserRouter>
+    );
+    const documentation = screen.getByRole('link', { name: 'Documentation' });
+    const support = screen.getByRole('link', { name: 'Support' });
+    const community = screen.getByRole('link', { name: 'Community' });
+    const keyboardShortcuts = screen.getByText('Keyboard shortcuts');
+
+    expect(documentation).toBeInTheDocument();
+    expect(support).toBeInTheDocument();
+    expect(community).toBeInTheDocument();
+    expect(keyboardShortcuts).toBeInTheDocument();
   });
 
-  it('should render children', () => {
-    const wrapper = setup({
-      link: {
-        children: [
-          {
-            id: '1',
-          },
-          {
-            id: '2',
-          },
-          {
-            id: '3',
-          },
-          {
-            id: '4',
-            hideFromMenu: true,
-          },
-        ],
-      },
-    });
+  it('clicking the keyboard shortcuts button shows the modal', () => {
+    const mockLink = {
+      id: 'help',
+      text: 'Hello',
+    };
 
-    expect(wrapper).toMatchSnapshot();
+    render(
+      <BrowserRouter>
+        <BottomNavLinks link={mockLink} user={mockUser} />
+      </BrowserRouter>
+    );
+    const keyboardShortcuts = screen.getByText('Keyboard shortcuts');
+    expect(keyboardShortcuts).toBeInTheDocument();
+    userEvent.click(keyboardShortcuts);
+    expect(appEvents.publish).toHaveBeenCalledWith(new ShowModalReactEvent({ component: HelpModal }));
   });
-});
 
-describe('Functions', () => {
-  describe('item clicked', () => {
-    const wrapper = setup();
-    it('should emit show modal event if url matches shortcut', () => {
-      const instance = wrapper.instance() as BottomNavLinks;
-      instance.onOpenShortcuts();
+  it('shows the current organization and organization switcher if showOrgSwitcher is true', () => {
+    const mockLink = {
+      showOrgSwitcher: true,
+      text: 'Hello',
+    };
 
-      expect(appEvents.publish).toHaveBeenCalledWith(new ShowModalReactEvent({ component: HelpModal }));
-    });
+    render(
+      <BrowserRouter>
+        <BottomNavLinks link={mockLink} user={mockUser} />
+      </BrowserRouter>
+    );
+    const currentOrg = screen.getByText(new RegExp(mockUser.orgName, 'i'));
+    const orgSwitcher = screen.getByText('Switch organization');
+    expect(currentOrg).toBeInTheDocument();
+    expect(orgSwitcher).toBeInTheDocument();
   });
 });

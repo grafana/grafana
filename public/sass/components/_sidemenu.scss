@@ -67,7 +67,7 @@ $mobile-menu-breakpoint: md;
       .dropdown-menu {
         border: none;
         margin: 0;
-        display: block;
+        display: flex;
         opacity: 0;
         top: 0px;
         // important to overlap it otherwise it can be hidden
@@ -262,7 +262,7 @@ li.sidemenu-org-switcher {
     }
 
     .dropdown-menu--sidemenu {
-      display: block;
+      display: flex;
       position: unset;
       width: 100%;
       float: none;
@@ -276,7 +276,7 @@ li.sidemenu-org-switcher {
     .sidemenu__bottom {
       .dropdown-menu--sidemenu {
         display: flex;
-        flex-direction: column-reverse;
+        flex-direction: column;
       }
     }
   }
