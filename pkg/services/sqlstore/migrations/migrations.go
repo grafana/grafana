@@ -52,6 +52,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 		addLiveChannelMigrations(mg)
 	}
 	ualert.RerunDashAlertMigration(mg)
+	addKVStoreMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
