@@ -90,6 +90,10 @@ var pluginCommands = []*cli.Command{
 		Usage:  "list-versions <plugin id>",
 		Action: runPluginCommand(cmd.listVersionsCommand),
 	}, {
+		Name:   "list-upgradeable",
+		Usage:  "list-upgradeable",
+		Action: runPluginCommand(cmd.listUpgradeableCommand),
+	}, {
 		Name:    "update",
 		Usage:   "update <plugin id>",
 		Aliases: []string{"upgrade"},
