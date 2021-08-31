@@ -36,7 +36,7 @@ export function getLibraryPanelOptionsCategory(props: OptionPaneRenderProps): Op
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: 'Library panel information',
+          title: 'Information',
           render: function renderLibraryPanelInformation() {
             return <LibraryPanelInformation panel={panel} formatDate={dashboard.formatDate} />;
           },
