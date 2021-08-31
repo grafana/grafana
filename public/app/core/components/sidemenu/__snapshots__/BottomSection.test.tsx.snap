@@ -5,30 +5,32 @@ exports[`Render should render component 1`] = `
   className="sidemenu__bottom"
 >
   <SignIn />
-  <BottomNavLinks
+  <SideMenuItem
     key="undefined-0"
-    link={
-      Object {
-        "hideFromMenu": true,
-        "id": "profile",
-      }
-    }
-  />
-  <BottomNavLinks
+    menuItems={Array []}
+    reverseMenuDirection={true}
+  >
+    <span
+      className="icon-circle sidemenu-icon"
+    />
+  </SideMenuItem>
+  <SideMenuItem
     key="undefined-1"
-    link={
-      Object {
-        "hideFromMenu": true,
-      }
-    }
-  />
-  <BottomNavLinks
+    menuItems={Array []}
+    reverseMenuDirection={true}
+  >
+    <span
+      className="icon-circle sidemenu-icon"
+    />
+  </SideMenuItem>
+  <SideMenuItem
     key="undefined-2"
-    link={
-      Object {
-        "hideFromMenu": true,
-      }
-    }
-  />
+    menuItems={Array []}
+    reverseMenuDirection={true}
+  >
+    <span
+      className="icon-circle sidemenu-icon"
+    />
+  </SideMenuItem>
 </div>
 `;
