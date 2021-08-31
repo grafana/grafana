@@ -70,12 +70,15 @@ export async function updateLibraryPanel(
   panelSaveModel: PanelModelWithLibraryPanel,
   folderId: number
 ): Promise<LibraryElementDTO> {
-  const { result } = await getBackendSrv().patch(`/api/library-elements/${panelSaveModel.libraryPanel.uid}`, {
+  const { uid, name, version } = panelSaveModel.libraryPanel;
+  const kind = LibraryElementKind.Panel;
+  const model = { ...panelSaveModel, title: name };
+  const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
     folderId,
-    name: panelSaveModel.libraryPanel.name,
-    model: panelSaveModel,
-    version: panelSaveModel.libraryPanel.version,
-    kind: LibraryElementKind.Panel,
+    name,
+    model,
+    version,
+    kind,
   });
   return result;
 }

@@ -42,6 +42,7 @@ function updatePanelModelWithUpdate(panel: PanelModel, updated: LibraryElementDT
     ...updated.model,
     configRev: 0, // reset config rev, since changes have been saved
     libraryPanel: toPanelModelLibraryPanel(updated),
+    title: panel.title,
   });
   panel.refresh();
 }
