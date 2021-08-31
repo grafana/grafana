@@ -14,7 +14,7 @@ export async function updatePlaylist(id: number, playlist: Playlist) {
 }
 
 export async function deletePlaylist(id: number) {
-  await withDeleteErrorHandling(async () => await getBackendSrv().delete(`/api/playlists/${id}`));
+  await withErrorHandling(async () => await getBackendSrv().delete(`/api/playlists/${id}`), 'Playlist deleted');
 }
 
 export async function getPlaylist(id: number): Promise<Playlist> {
@@ -22,19 +22,11 @@ export async function getPlaylist(id: number): Promise<Playlist> {
   return result;
 }
 
-async function withErrorHandling(apiCall: () => Promise<void>) {
+async function withErrorHandling(apiCall: () => Promise<void>, message = 'Playlist saved') {
   try {
     await apiCall();
-    dispatch(notifyApp(createSuccessNotification('Playlist saved')));
+    dispatch(notifyApp(createSuccessNotification(message)));
   } catch (e) {
     dispatch(notifyApp(createErrorNotification('Unable to save playlist', e)));
-  }
-}
-async function withDeleteErrorHandling(apiCall: () => Promise<void>) {
-  try {
-    await apiCall();
-    dispatch(notifyApp(createSuccessNotification('Playlist deleted')));
-  } catch (e) {
-    dispatch(notifyApp(createErrorNotification('Unable to delete playlist', e)));
   }
 }
