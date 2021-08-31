@@ -6,7 +6,7 @@ export interface QueryModalModel {
 }
 
 export interface QueryModalBodyProps {
-  query: DataQuery;
+  query?: DataQuery;
   onAddQuery?: (q: DataQuery) => void;
 }
 

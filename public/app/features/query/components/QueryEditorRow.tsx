@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { has, cloneDeep } from 'lodash';
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import { AngularComponent, config, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import {
@@ -31,7 +31,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import { QueryModal } from './QueryModal/QueryModal';
 
-interface Props<TQuery extends DataQuery> {
+export interface Props<TQuery extends DataQuery> {
   data: PanelData;
   query: TQuery;
   queries: TQuery[];
@@ -46,6 +46,7 @@ interface Props<TQuery extends DataQuery> {
   onRunQuery: () => void;
   visualization?: ReactNode;
   hideDisableQuery?: boolean;
+  draggable?: boolean;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -55,7 +56,7 @@ interface State<TQuery extends DataQuery> {
   data?: PanelData;
   isOpen?: boolean;
   showingHelp: boolean;
-  addRecordedQuery: boolean;
+  createRecordedQuery: boolean;
 }
 
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
@@ -68,7 +69,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     hasTextEditMode: false,
     data: undefined,
     isOpen: true,
-    addRecordedQuery: false,
+    createRecordedQuery: false,
     showingHelp: false,
   };
 
@@ -265,7 +266,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   onRecordQuery = (state: boolean) => () => {
-    this.setState({ ...this.state, addRecordedQuery: state });
+    this.setState({ ...this.state, createRecordedQuery: state });
   };
 
   renderCollapsedText(): string | null {
@@ -282,11 +283,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderActions = (props: QueryOperationRowRenderProps) => {
     const { query, hideDisableQuery = false } = this.props;
-    const { hasTextEditMode, datasource, showingHelp, addRecordedQuery } = this.state;
+    const { hasTextEditMode, datasource, showingHelp, createRecordedQuery } = this.state;
     const isDisabled = query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
-    const showRecordQuery = true; //config.licenseInfo.hasLicense && config.featureToggles.recordedQueries;
+    const showRecordQuery = config.licenseInfo.hasLicense && config.featureToggles.recordedQueries;
 
     return (
       <HorizontalGroup width="auto">
@@ -307,14 +308,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             }}
           />
         )}
-        {showRecordQuery && <QueryOperationAction title="Record Query" icon="cog" onClick={this.onRecordQuery(true)} />}
         {showRecordQuery && (
-          <QueryModal
-            isOpen={addRecordedQuery}
-            modalKey={'addRecordedQuery'}
-            query={query}
-            onDismiss={this.onRecordQuery(false)}
-          />
+          <>
+            <QueryOperationAction title="Record Query" icon="circle" onClick={this.onRecordQuery(true)} />
+            <QueryModal
+              isOpen={createRecordedQuery}
+              modalKey={'createRecordedQuery'}
+              query={query}
+              onDismiss={this.onRecordQuery(false)}
+            />
+          </>
         )}
         <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
         {!hideDisableQuery && (
@@ -349,7 +352,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   render() {
-    const { query, id, index, visualization } = this.props;
+    const { query, id, index, visualization, draggable } = this.props;
     const { datasource, showingHelp } = this.state;
     const isDisabled = query.hide;
 
@@ -369,7 +372,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       <div aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
           id={id}
-          draggable={true}
+          draggable={draggable ?? true}
           index={index}
           headerElement={this.renderHeader}
           actions={this.renderActions}

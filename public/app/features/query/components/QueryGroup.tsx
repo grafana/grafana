@@ -39,6 +39,7 @@ import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { css } from '@emotion/css';
 import { QueryGroupOptions } from 'app/types';
+import { QueryModal } from './QueryModal';
 
 interface Props {
   queryRunner: PanelQueryRunner;
@@ -59,6 +60,7 @@ interface State {
   data: PanelData;
   isHelpOpen: boolean;
   defaultDataSource?: DataSourceApi;
+  addRecordedQuery: boolean;
 }
 
 export class QueryGroup extends PureComponent<Props, State> {
@@ -73,6 +75,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     isAddingMixed: false,
     isHelpOpen: false,
     scrollTop: 0,
+    addRecordedQuery: false,
     data: {
       state: LoadingState.NotStarted,
       series: [],
@@ -159,6 +162,12 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.onChange({ queries: addQuery(options.queries, this.newQuery()) });
     this.onScrollBottom();
   };
+
+  modalAddQuery(q: DataQuery): void {
+    const { options } = this.props;
+    this.onChange({ queries: addQuery(options.queries, q) });
+    this.onScrollBottom();
+  }
 
   newQuery(): Partial<DataQuery> {
     const { dsSettings, defaultDataSource } = this.state;
@@ -327,9 +336,15 @@ export class QueryGroup extends PureComponent<Props, State> {
     return (dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
   }
 
+  onRecordQuery = (state: boolean) => () => {
+    this.setState({ ...this.state, addRecordedQuery: state });
+  };
+
   renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {
-    const { isAddingMixed } = this.state;
+    const { isAddingMixed, addRecordedQuery } = this.state;
     const showAddButton = !(isAddingMixed || isSharedDashboardQuery(dsSettings.name));
+
+    const showRecordQuery = config.licenseInfo.hasLicense && config.featureToggles.recordedQueries;
 
     return (
       <HorizontalGroup spacing="md" align="flex-start">
@@ -342,6 +357,24 @@ export class QueryGroup extends PureComponent<Props, State> {
           >
             Query
           </Button>
+        )}
+        {showRecordQuery && (
+          <>
+            <Button
+              icon="plus"
+              onClick={this.onRecordQuery(true)}
+              variant="secondary"
+              aria-label={selectors.components.QueryTab.recordedQuery}
+            >
+              Recorded Query
+            </Button>
+            <QueryModal
+              isOpen={addRecordedQuery}
+              onAddQuery={this.modalAddQuery}
+              modalKey={'addRecordedQuery'}
+              onDismiss={this.onRecordQuery(false)}
+            />
+          </>
         )}
         {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (
           <Tooltip content="Beta feature: queries could stop working in next version" placement="right">

@@ -3,14 +3,14 @@ import { Modal } from '@grafana/ui';
 import { QueryModalModel } from './types';
 import { DataQuery } from '@grafana/data';
 
-const content: Map<string, QueryModalModel> = new Map<string, QueryModalModel>();
+const queryModalModels: Map<string, QueryModalModel> = new Map<string, QueryModalModel>();
 
 export function addQueryModal(key: string, modal: QueryModalModel) {
-  content.set(key, modal);
+  queryModalModels.set(key, modal);
 }
 
-interface Props {
-  query: DataQuery;
+export interface Props {
+  query?: DataQuery;
   isOpen: boolean;
   modalKey: string;
   onDismiss: () => void;
@@ -18,8 +18,12 @@ interface Props {
 }
 
 export const QueryModal: React.FC<Props> = ({ query, isOpen, modalKey, onDismiss, onAddQuery }: Props) => {
-  const { title, body: Body } = content.get(modalKey) as QueryModalModel;
+  let content = queryModalModels.get(modalKey);
+  if (!content) {
+    return null;
+  }
 
+  const { title, body: Body } = content as QueryModalModel;
   return (
     <Modal isOpen={isOpen} title={title} onDismiss={onDismiss}>
       <Body query={query} onAddQuery={onAddQuery} />

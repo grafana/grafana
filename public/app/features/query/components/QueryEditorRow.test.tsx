@@ -1,5 +1,8 @@
-import { DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
-import { filterPanelDataToQuery } from './QueryEditorRow';
+import React from 'react';
+import { DataQuery, DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
+import { render, waitFor, screen } from '@testing-library/react';
+import { filterPanelDataToQuery, QueryEditorRow, Props as QueryEditorRowProps } from './QueryEditorRow';
+import { getDataSourceSrv, setDataSourceSrv, config } from '@grafana/runtime';
 
 function makePretendRequest(requestId: string, subRequests?: DataQueryRequest[]): DataQueryRequest {
   return {
@@ -59,5 +62,50 @@ describe('filterPanelDataToQuery', () => {
     expect(panelData.state).toBe(LoadingState.Error);
     // @ts-ignore typescript doesn't understand that panelData can't be undefined here
     expect(panelData.error).toBe(withError.error);
+  });
+});
+
+describe('queryModal', () => {
+  it('should display a create recorded query button when recorded query feature flag is active and hasLicence', async () => {
+    const datasource = {
+      name: 'Testdata',
+      meta: {
+        type: 'datasource',
+        name: 'TestData',
+        id: 'testdata',
+      },
+    };
+    setDataSourceSrv({
+      getInstanceSettings(name: string) {
+        return {
+          name: datasource.name,
+          value: datasource.name,
+          meta: datasource.meta,
+        };
+      },
+      get(name: string) {
+        return Promise.resolve(datasource);
+      },
+    } as any);
+
+    config.licenseInfo.hasLicense = true;
+    config.featureToggles.recordedQueries = true;
+
+    const ds = getDataSourceSrv().getInstanceSettings('');
+    const queries: DataQuery[] = [{ refId: 'A', datasource: JSON.stringify(ds) }];
+    const props = ({
+      query: queries[0],
+      queries: queries,
+      id: 'id',
+      index: 0,
+      dataSource: ds,
+      draggable: false,
+    } as any) as QueryEditorRowProps<DataQuery>;
+
+    render(<QueryEditorRow {...props} />);
+
+    await waitFor(() => {
+      expect(screen.getByTitle('Record Query')).toBeVisible();
+    });
   });
 });
