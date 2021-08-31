@@ -10,41 +10,20 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	windows = "windows"
-	linux   = "linux"
+	GoOSWindows = "windows"
+	GoOSLinux   = "linux"
+
+	ServerBinary = "grafana-server"
+	CLIBinary    = "grafana-cli"
 )
 
-var (
-	//versionRe = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
-	goarch string
-	goos   string
-	gocc   string
-	cgo    bool
-	libc   string
-
-	pkgArch   string
-	version   string = "v1"
-	buildTags []string
-	// deb & rpm does not support semver so have to handle their version a little differently
-	race            bool
-	includeBuildID  bool     = true
-	buildID         string   = "0"
-	serverBinary    string   = "grafana-server"
-	cliBinary       string   = "grafana-cli"
-	binaries        []string = []string{serverBinary, cliBinary}
-	isDev           bool     = false
-	enterprise      bool     = false
-	skipRpmGen      bool     = false
-	skipDebGen      bool     = false
-	printGenVersion bool     = false
-)
+var binaries = []string{ServerBinary, CLIBinary}
 
 func logError(message string, err error) int {
 	log.Println(message, err)
@@ -54,51 +33,23 @@ func logError(message string, err error) int {
 
 // RunCmd runs the build command and returns the exit code
 func RunCmd() int {
-	var buildIDRaw string
-	var buildTagsRaw string
-
-	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
-	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
-	flag.StringVar(&gocc, "cc", "", "CC")
-	flag.StringVar(&libc, "libc", "", "LIBC")
-	flag.StringVar(&buildTagsRaw, "build-tags", "", "Sets custom build tags")
-	flag.BoolVar(&cgo, "cgo-enabled", cgo, "Enable cgo")
-	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
-	flag.BoolVar(&race, "race", race, "Use race detector")
-	flag.BoolVar(&includeBuildID, "includeBuildID", includeBuildID, "IncludeBuildID in package name")
-	flag.BoolVar(&enterprise, "enterprise", enterprise, "Build enterprise version of Grafana")
-	flag.StringVar(&buildIDRaw, "buildID", "0", "Build ID from CI system")
-	flag.BoolVar(&isDev, "dev", isDev, "optimal for development, skips certain steps")
-	flag.BoolVar(&skipRpmGen, "skipRpm", skipRpmGen, "skip rpm package generation (default: false)")
-	flag.BoolVar(&skipDebGen, "skipDeb", skipDebGen, "skip deb package generation (default: false)")
-	flag.BoolVar(&printGenVersion, "gen-version", printGenVersion, "generate Grafana version and output (default: false)")
-	flag.Parse()
+	opts := BuildOptsFromFlags()
 
 	wd, err := os.Getwd()
 	if err != nil {
-		log.Println("Error getting working directory", err)
-		return 1
+		return logError("Error getting working directory", err)
 	}
-
-	buildID = shortenBuildID(buildIDRaw)
 
 	packageJSON, err := OpenPackageJSON(wd)
 	if err != nil {
 		return logError("Error opening package json", err)
 	}
 
-	version, iteration := LinuxPackageVersion(packageJSON.Version, buildID)
-	if pkgArch == "" {
-		pkgArch = goarch
-	}
+	version, iteration := LinuxPackageVersion(packageJSON.Version, opts.buildID)
 
-	if printGenVersion {
+	if opts.printGenVersion {
 		fmt.Print(genPackageVersion(version, iteration))
 		return 0
-	}
-
-	if len(buildTagsRaw) > 0 {
-		buildTags = strings.Split(buildTagsRaw, ",")
 	}
 
 	log.Printf("Version: %s, Linux Version: %s, Package Iteration: %s\n", version, version, iteration)
@@ -111,24 +62,34 @@ func RunCmd() int {
 	for _, cmd := range flag.Args() {
 		switch cmd {
 		case "setup":
-			setup()
+			setup(opts.goos)
 
 		case "build-srv", "build-server":
-			if !isDev {
-				clean()
+			if !opts.isDev {
+				clean(opts)
 			}
 
-			doBuild("grafana-server", "./pkg/cmd/grafana-server", buildTags)
+			if err := doBuild("grafana-server", "./pkg/cmd/grafana-server", opts); err != nil {
+				log.Println(err)
+				return 1
+			}
 
 		case "build-cli":
-			clean()
-			doBuild("grafana-cli", "./pkg/cmd/grafana-cli", buildTags)
+			clean(opts)
+			if err := doBuild("grafana-cli", "./pkg/cmd/grafana-cli", opts); err != nil {
+				log.Println(err)
+				return 1
+			}
 
 		case "build":
 			//clean()
 			for _, binary := range binaries {
+				log.Println("building binaries", cmd)
 				// Can't use filepath.Join here because filepath.Join calls filepath.Clean, which removes the `./` from this path, which upsets `go build`
-				doBuild(binary, fmt.Sprintf("./pkg/cmd/%s", binary), buildTags)
+				if err := doBuild(binary, fmt.Sprintf("./pkg/cmd/%s", binary), opts); err != nil {
+					log.Println(err)
+					return 1
+				}
 			}
 
 		case "build-frontend":
@@ -141,7 +102,7 @@ func RunCmd() int {
 			makeLatestDistCopies()
 
 		case "clean":
-			clean()
+			clean(opts)
 
 		default:
 			log.Println("Unknown command", cmd)
@@ -191,123 +152,159 @@ func genPackageVersion(version string, iteration string) string {
 	}
 }
 
-func setup() {
+func setup(goos string) {
 	args := []string{"install", "-v"}
-	if goos == windows {
+	if goos == GoOSWindows {
 		args = append(args, "-buildmode=exe")
 	}
 	args = append(args, "./pkg/cmd/grafana-server")
 	runPrint("go", args...)
 }
 
-func doBuild(binaryName, pkg string, tags []string) {
+func doBuild(binaryName, pkg string, opts BuildOpts) error {
+	log.Println("building", binaryName, pkg)
 	libcPart := ""
-	if libc != "" {
-		libcPart = fmt.Sprintf("-%s", libc)
+	if opts.libc != "" {
+		libcPart = fmt.Sprintf("-%s", opts.libc)
 	}
-	binary := fmt.Sprintf("./bin/%s-%s%s/%s", goos, goarch, libcPart, binaryName)
-	if isDev {
-		//don't include os/arch/libc in output path in dev environment
-		binary = fmt.Sprintf("./bin/%s", binaryName)
+	binary := fmt.Sprintf("./bin/%s", binaryName)
+
+	//don't include os/arch/libc in output path in dev environment
+	if !opts.isDev {
+		binary = fmt.Sprintf("./bin/%s-%s%s/%s", opts.goos, opts.goarch, libcPart, binaryName)
 	}
 
-	if goos == windows {
+	if opts.goos == GoOSWindows {
 		binary += ".exe"
 	}
 
-	if !isDev {
+	if !opts.isDev {
 		rmr(binary, binary+".md5")
 	}
-	args := []string{"build", "-ldflags", ldflags()}
-	if goos == windows {
+
+	lf, err := ldflags(opts)
+	if err != nil {
+		return err
+	}
+
+	args := []string{"build", "-ldflags", lf}
+
+	if opts.goos == GoOSWindows {
 		// Work around a linking error on Windows: "export ordinal too large"
 		args = append(args, "-buildmode=exe")
 	}
-	if len(tags) > 0 {
-		args = append(args, "-tags", strings.Join(tags, ","))
+
+	if len(opts.buildTags) > 0 {
+		args = append(args, "-tags", strings.Join(opts.buildTags, ","))
 	}
-	if race {
+
+	if opts.race {
 		args = append(args, "-race")
 	}
 
 	args = append(args, "-o", binary)
 	args = append(args, pkg)
 
-	if !isDev {
-		setBuildEnv()
-		runPrint("go", "version")
-		libcPart := ""
-		if libc != "" {
-			libcPart = fmt.Sprintf("/%s", libc)
-		}
-		fmt.Printf("Targeting %s/%s%s\n", goos, goarch, libcPart)
-	}
-
 	runPrint("go", args...)
 
-	if !isDev {
-		// Create an md5 checksum of the binary, to be included in the archive for
-		// automatic upgrades.
-		err := md5File(binary)
-		if err != nil {
-			log.Fatal(err)
-		}
+	if opts.isDev {
+		return nil
 	}
+
+	if err := setBuildEnv(opts); err != nil {
+		return err
+	}
+	runPrint("go", "version")
+	libcPart = ""
+	if opts.libc != "" {
+		libcPart = fmt.Sprintf("/%s", opts.libc)
+	}
+	fmt.Printf("Targeting %s/%s%s\n", opts.goos, opts.goarch, libcPart)
+
+	// Create an md5 checksum of the binary, to be included in the archive for
+	// automatic upgrades.
+	return md5File(binary)
 }
 
-func ldflags() string {
+func ldflags(opts BuildOpts) (string, error) {
+	buildStamp, err := buildStamp()
+	if err != nil {
+		return "", err
+	}
+
 	var b bytes.Buffer
 	b.WriteString("-w")
-	b.WriteString(fmt.Sprintf(" -X main.version=%s", version))
+	b.WriteString(fmt.Sprintf(" -X main.version=%s", opts.version))
 	b.WriteString(fmt.Sprintf(" -X main.commit=%s", getGitSha()))
-	b.WriteString(fmt.Sprintf(" -X main.buildstamp=%d", buildStamp()))
+	b.WriteString(fmt.Sprintf(" -X main.buildstamp=%d", buildStamp))
 	b.WriteString(fmt.Sprintf(" -X main.buildBranch=%s", getGitBranch()))
 	if v := os.Getenv("LDFLAGS"); v != "" {
 		b.WriteString(fmt.Sprintf(" -extldflags \"%s\"", v))
 	}
-	return b.String()
+
+	return b.String(), nil
 }
 
-func setBuildEnv() {
-	os.Setenv("GOOS", goos)
-	if goos == windows {
+func setBuildEnv(opts BuildOpts) error {
+	if err := os.Setenv("GOOS", opts.goos); err != nil {
+		return err
+	}
+
+	if opts.goos == GoOSWindows {
 		// require windows >=7
-		os.Setenv("CGO_CFLAGS", "-D_WIN32_WINNT=0x0601")
+		if err := os.Setenv("CGO_CFLAGS", "-D_WIN32_WINNT=0x0601"); err != nil {
+			return err
+		}
 	}
-	if goarch != "amd64" || goos != linux {
+
+	if opts.goarch != "amd64" || opts.goos != GoOSLinux {
 		// needed for all other archs
-		cgo = true
+		opts.cgo = true
 	}
-	if strings.HasPrefix(goarch, "armv") {
-		os.Setenv("GOARCH", "arm")
-		os.Setenv("GOARM", goarch[4:])
+
+	if strings.HasPrefix(opts.goarch, "armv") {
+		if err := os.Setenv("GOARCH", "arm"); err != nil {
+			return err
+		}
+
+		if err := os.Setenv("GOARM", opts.goarch[4:]); err != nil {
+			return err
+		}
 	} else {
-		os.Setenv("GOARCH", goarch)
+		if err := os.Setenv("GOARCH", opts.goarch); err != nil {
+			return err
+		}
 	}
-	if cgo {
-		os.Setenv("CGO_ENABLED", "1")
+
+	if opts.cgo {
+		if err := os.Setenv("CGO_ENABLED", "1"); err != nil {
+			return err
+		}
 	}
-	if gocc != "" {
-		os.Setenv("CC", gocc)
+
+	if opts.gocc == "" {
+		return nil
 	}
+
+	return os.Setenv("CC", opts.gocc)
 }
 
-func buildStamp() int64 {
+func buildStamp() (int64, error) {
 	// use SOURCE_DATE_EPOCH if set.
-	if s, _ := strconv.ParseInt(os.Getenv("SOURCE_DATE_EPOCH"), 10, 64); s > 0 {
-		return s
+	if v, ok := os.LookupEnv("SOURCE_DATE_EPOCH"); ok {
+		return strconv.ParseInt(v, 10, 64)
 	}
 
 	bs, err := runError("git", "show", "-s", "--format=%ct")
 	if err != nil {
-		return time.Now().Unix()
+		return time.Now().Unix(), nil
 	}
-	s, _ := strconv.ParseInt(string(bs), 10, 64)
-	return s
+
+	return strconv.ParseInt(string(bs), 10, 64)
 }
 
-func clean() {
+func clean(opts BuildOpts) {
 	rmr("dist")
 	rmr("tmp")
-	rmr(filepath.Join(build.Default.GOPATH, fmt.Sprintf("pkg/%s_%s/github.com/grafana", goos, goarch)))
+	rmr(filepath.Join(build.Default.GOPATH, fmt.Sprintf("pkg/%s_%s/github.com/grafana", opts.goos, opts.goarch)))
 }
