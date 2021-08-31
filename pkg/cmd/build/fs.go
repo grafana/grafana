@@ -63,6 +63,8 @@ func shaFile(file string) error {
 }
 
 func md5File(file string) error {
+	// Can ignore gosec G304 because this function is not used in Grafana, only in the build process.
+	//nolint:gosec
 	fd, err := os.Open(file)
 	if err != nil {
 		return err

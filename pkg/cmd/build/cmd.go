@@ -96,7 +96,9 @@ func RunCmd() int {
 			yarn("build")
 
 		case "sha-dist":
-			shaDir("dist")
+			if err := shaDir("dist"); err != nil {
+				return logError("error packaging dist directory", err)
+			}
 
 		case "latest":
 			makeLatestDistCopies()
@@ -134,7 +136,9 @@ func makeLatestDistCopies() {
 	for _, file := range files {
 		for extension, fullName := range latestMapping {
 			if strings.HasSuffix(file.Name(), extension) {
-				runError("cp", path.Join("dist", file.Name()), fullName)
+				if _, err := runError("cp", path.Join("dist", file.Name()), fullName); err != nil {
+					log.Println("error running cp command:", err)
+				}
 			}
 		}
 	}
