@@ -10,6 +10,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/centrifugal/centrifuge"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 )
@@ -87,20 +89,20 @@ func postTestData() {
 	}
 }
 
-type hardcodedStorage struct {
-	managedStream *managedstream.Runner
-	frameStorage  *FrameStorage
-	pipeline      *Pipeline
+type DevStorage struct {
+	Node          *centrifuge.Node
+	ManagedStream *managedstream.Runner
+	FrameStorage  *FrameStorage
 }
 
-func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
+func (f *DevStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
 			Pattern:   "plugin/testdata/random-20Hz-stream",
 			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
 			Outputter: NewMultipleOutputter(
-				NewManagedStreamOutput(f.managedStream),
-				NewRedirectOutput(f.pipeline, RedirectOutputConfig{
+				NewManagedStreamOutput(f.ManagedStream),
+				NewRedirectOutput(RedirectOutputConfig{
 					Channel: "stream/testdata/random-20Hz-stream",
 				}),
 			),
@@ -110,7 +112,7 @@ func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannel
 			Processor: NewKeepFieldsProcessor(KeepFieldsProcessorConfig{
 				FieldNames: []string{"Time", "Min", "Max"},
 			}),
-			Outputter: NewManagedStreamOutput(f.managedStream),
+			Outputter: NewManagedStreamOutput(f.ManagedStream),
 		},
 		{
 			OrgId:   1,
@@ -122,7 +124,7 @@ func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannel
 		{
 			OrgId:     1,
 			Pattern:   "stream/influx/input/:rest",
-			Outputter: NewManagedStreamOutput(f.managedStream),
+			Outputter: NewManagedStreamOutput(f.ManagedStream),
 		},
 		{
 			OrgId:   1,
@@ -135,10 +137,10 @@ func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannel
 				FieldNames: []string{"labels", "time", "usage_user"},
 			}),
 			Outputter: NewMultipleOutputter(
-				NewManagedStreamOutput(f.managedStream),
+				NewManagedStreamOutput(f.ManagedStream),
 				NewConditionalOutput(
 					NewNumberCompareCondition("usage_user", "gte", 50),
-					NewRedirectOutput(f.pipeline, RedirectOutputConfig{
+					NewRedirectOutput(RedirectOutputConfig{
 						Channel: "stream/influx/input/cpu/spikes",
 					}),
 				),
@@ -147,13 +149,13 @@ func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannel
 		{
 			OrgId:     1,
 			Pattern:   "stream/influx/input/cpu/spikes",
-			Outputter: NewManagedStreamOutput(f.managedStream),
+			Outputter: NewManagedStreamOutput(f.ManagedStream),
 		},
 		{
 			OrgId:     1,
 			Pattern:   "stream/json/auto",
 			Converter: NewAutoJsonConverter(AutoJsonConverterConfig{}),
-			Outputter: NewManagedStreamOutput(f.managedStream),
+			Outputter: NewManagedStreamOutput(f.ManagedStream),
 		},
 		{
 			OrgId:   1,
@@ -173,7 +175,7 @@ func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannel
 			Processor: NewDropFieldsProcessor(DropFieldsProcessorConfig{
 				FieldNames: []string{"value2"},
 			}),
-			Outputter: NewManagedStreamOutput(f.managedStream),
+			Outputter: NewManagedStreamOutput(f.ManagedStream),
 		},
 		{
 			OrgId:   1,
@@ -217,14 +219,17 @@ func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannel
 									{
 										Value: 2,
 										State: "normal",
+										Color: "green",
 									},
 									{
 										Value: 6,
 										State: "warning",
+										Color: "orange",
 									},
 									{
 										Value: 8,
 										State: "critical",
+										Color: "red",
 									},
 								},
 							},
@@ -263,17 +268,17 @@ func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannel
 				},
 			}),
 			Outputter: NewMultipleOutputter(
-				NewManagedStreamOutput(f.managedStream),
+				NewManagedStreamOutput(f.ManagedStream),
 				NewRemoteWriteOutput(RemoteWriteConfig{
 					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
 					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
 					Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
 				}),
-				NewChangeLogOutput(f.frameStorage, f.pipeline, ChangeLogOutputConfig{
+				NewChangeLogOutput(f.FrameStorage, ChangeLogOutputConfig{
 					FieldName: "value3",
 					Channel:   "stream/json/exact/value3/changes",
 				}),
-				NewChangeLogOutput(f.frameStorage, f.pipeline, ChangeLogOutputConfig{
+				NewChangeLogOutput(f.FrameStorage, ChangeLogOutputConfig{
 					FieldName: "annotation",
 					Channel:   "stream/json/exact/annotation/changes",
 				}),
@@ -283,11 +288,11 @@ func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannel
 						NewNumberCompareCondition("value1", "gte", 3.0),
 						NewNumberCompareCondition("value2", "gte", 3.0),
 					),
-					NewRedirectOutput(f.pipeline, RedirectOutputConfig{
+					NewRedirectOutput(RedirectOutputConfig{
 						Channel: "stream/json/exact/condition",
 					}),
 				),
-				NewThresholdOutput(f.frameStorage, f.pipeline, ThresholdOutputConfig{
+				NewThresholdOutput(f.FrameStorage, ThresholdOutputConfig{
 					FieldName: "value4",
 					Channel:   "stream/json/exact/value4/state",
 				}),
@@ -297,7 +302,7 @@ func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannel
 			OrgId:   1,
 			Pattern: "stream/json/exact/value3/changes",
 			Outputter: NewMultipleOutputter(
-				NewManagedStreamOutput(f.managedStream),
+				NewManagedStreamOutput(f.ManagedStream),
 				NewRemoteWriteOutput(RemoteWriteConfig{
 					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
 					User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
@@ -308,17 +313,17 @@ func (f *hardcodedStorage) ListChannelRules(_ context.Context, _ ListLiveChannel
 		{
 			OrgId:     1,
 			Pattern:   "stream/json/exact/annotation/changes",
-			Outputter: NewManagedStreamOutput(f.managedStream),
+			Outputter: NewManagedStreamOutput(f.ManagedStream),
 		},
 		{
 			OrgId:     1,
 			Pattern:   "stream/json/exact/condition",
-			Outputter: NewManagedStreamOutput(f.managedStream),
+			Outputter: NewManagedStreamOutput(f.ManagedStream),
 		},
 		{
 			OrgId:     1,
 			Pattern:   "stream/json/exact/value4/state",
-			Outputter: NewManagedStreamOutput(f.managedStream),
+			Outputter: NewManagedStreamOutput(f.ManagedStream),
 		},
 	}, nil
 }

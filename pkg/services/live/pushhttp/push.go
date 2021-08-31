@@ -114,22 +114,19 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 
 	channelID := "stream/" + streamID + "/" + path
 
-	channelFrames, ok, err := g.GrafanaLive.Pipeline.DataToChannelFrames(context.Background(), ctx.OrgId, channelID, body)
+	ruleFound, err := g.GrafanaLive.Pipeline.ProcessInput(context.Background(), ctx.OrgId, channelID, body)
 	if err != nil {
-		logger.Error("Error data to frame", "error", err, "body", string(body))
-		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		logger.Error("Pipeline input processing error", "error", err, "body", string(body))
+		if errors.Is(err, liveDto.ErrInvalidChannelID) {
+			ctx.Resp.WriteHeader(http.StatusBadRequest)
+		} else {
+			ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		}
 		return
 	}
-	if !ok {
+	if !ruleFound {
 		logger.Error("No conversion rule for a channel", "error", err, "channel", channelID)
 		ctx.Resp.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	err = g.GrafanaLive.Pipeline.ProcessChannelFrames(context.Background(), ctx.OrgId, channelID, channelFrames)
-	if err != nil {
-		logger.Error("Error processing frame", "error", err, "data", string(body))
-		ctx.Resp.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }

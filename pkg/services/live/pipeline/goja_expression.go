@@ -9,13 +9,9 @@ import (
 	"github.com/dop251/goja/parser"
 )
 
-type gojaRuntime struct {
-	vm *goja.Runtime
-}
-
 func getRuntime(payload []byte) (*gojaRuntime, error) {
 	vm := goja.New()
-	vm.SetMaxCallStackSize(1024)
+	vm.SetMaxCallStackSize(64)
 	vm.SetParserOptions(parser.WithDisableSourceMaps)
 	r := &gojaRuntime{vm}
 	err := r.init(payload)
@@ -23,6 +19,10 @@ func getRuntime(payload []byte) (*gojaRuntime, error) {
 		return nil, err
 	}
 	return r, nil
+}
+
+type gojaRuntime struct {
+	vm *goja.Runtime
 }
 
 // Parse JSON once.

@@ -16,19 +16,18 @@ type ChangeLogOutputConfig struct {
 // ChangeLogOutput can monitor value changes of the specified field and output
 // special change frame to the configured channel.
 type ChangeLogOutput struct {
-	frameStorage   FrameGetSetter
-	frameProcessor FrameProcessor
-	config         ChangeLogOutputConfig
+	frameStorage FrameGetSetter
+	config       ChangeLogOutputConfig
 }
 
-func NewChangeLogOutput(frameStorage FrameGetSetter, pipeline FrameProcessor, config ChangeLogOutputConfig) *ChangeLogOutput {
-	return &ChangeLogOutput{frameStorage: frameStorage, frameProcessor: pipeline, config: config}
+func NewChangeLogOutput(frameStorage FrameGetSetter, config ChangeLogOutputConfig) *ChangeLogOutput {
+	return &ChangeLogOutput{frameStorage: frameStorage, config: config}
 }
 
-func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) error {
-	previousFrame, previousFrameOK, err := l.frameStorage.Get(vars.OrgID, vars.Channel)
+func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+	previousFrame, previousFrameOK, err := l.frameStorage.Get(vars.OrgID, l.config.Channel)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	fieldName := l.config.FieldName
@@ -79,11 +78,15 @@ func (l ChangeLogOutput) Output(_ context.Context, vars OutputVars, frame *data.
 
 	if fTime.Len() > 0 {
 		changeFrame := data.NewFrame("change", fTime, f1, f2)
-		err = l.frameProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, changeFrame)
+		err := l.frameStorage.Set(vars.OrgID, l.config.Channel, frame)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		return []*ChannelFrame{{
+			Channel: l.config.Channel,
+			Frame:   changeFrame,
+		}}, nil
 	}
 
-	return l.frameStorage.Set(vars.OrgID, vars.Channel, frame)
+	return nil, l.frameStorage.Set(vars.OrgID, l.config.Channel, frame)
 }

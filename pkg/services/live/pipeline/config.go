@@ -12,11 +12,11 @@ import (
 	"github.com/centrifugal/centrifuge"
 )
 
-type fileStorage struct {
-	node                *centrifuge.Node
-	managedStream       *managedstream.Runner
-	frameStorage        *FrameStorage
-	pipeline            *Pipeline
+// FileStorage can load channel rules from a file on disk.
+type FileStorage struct {
+	Node                *centrifuge.Node
+	ManagedStream       *managedstream.Runner
+	FrameStorage        *FrameStorage
 	remoteWriteBackends []RemoteWriteBackend
 }
 
@@ -58,7 +58,7 @@ type RemoteWriteOutputConfig struct {
 
 type OutputterConfig struct {
 	Type                    string                     `json:"type"`
-	ManagedStreamConfig     *ManagedStreamOutputConfig `json:"managedStream,omitempty"`
+	ManagedStreamConfig     *ManagedStreamOutputConfig `json:"ManagedStream,omitempty"`
 	MultipleOutputterConfig *MultipleOutputterConfig   `json:"multiple,omitempty"`
 	RedirectOutputConfig    *RedirectOutputConfig      `json:"redirect,omitempty"`
 	ConditionalOutputConfig *ConditionalOutputConfig   `json:"conditional,omitempty"`
@@ -88,7 +88,7 @@ type ChannelRules struct {
 	RemoteWriteBackends []RemoteWriteBackend `json:"remoteWriteBackends"`
 }
 
-func (f *fileStorage) extractConverter(config *ConverterConfig) (Converter, error) {
+func (f *FileStorage) extractConverter(config *ConverterConfig) (Converter, error) {
 	if config == nil {
 		return nil, nil
 	}
@@ -119,7 +119,7 @@ func (f *fileStorage) extractConverter(config *ConverterConfig) (Converter, erro
 	}
 }
 
-func (f *fileStorage) extractProcessor(config *ProcessorConfig) (Processor, error) {
+func (f *FileStorage) extractProcessor(config *ProcessorConfig) (Processor, error) {
 	if config == nil {
 		return nil, nil
 	}
@@ -171,7 +171,7 @@ type ConditionCheckerConfig struct {
 	NumberCompareConditionConfig   *NumberCompareConditionConfig   `json:"numberCompare,omitempty"`
 }
 
-func (f *fileStorage) extractConditionChecker(config *ConditionCheckerConfig) (ConditionChecker, error) {
+func (f *FileStorage) extractConditionChecker(config *ConditionCheckerConfig) (ConditionChecker, error) {
 	if config == nil {
 		return nil, nil
 	}
@@ -202,7 +202,7 @@ func (f *fileStorage) extractConditionChecker(config *ConditionCheckerConfig) (C
 	}
 }
 
-func (f *fileStorage) extractOutputter(config *OutputterConfig) (Outputter, error) {
+func (f *FileStorage) extractOutputter(config *OutputterConfig) (Outputter, error) {
 	if config == nil {
 		return nil, nil
 	}
@@ -212,7 +212,7 @@ func (f *fileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 		if config.RedirectOutputConfig == nil {
 			return nil, missingConfiguration
 		}
-		return NewRedirectOutput(f.pipeline, *config.RedirectOutputConfig), nil
+		return NewRedirectOutput(*config.RedirectOutputConfig), nil
 	case "multiple":
 		if config.MultipleOutputterConfig == nil {
 			return nil, missingConfiguration
@@ -227,10 +227,10 @@ func (f *fileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 			outputters = append(outputters, outputter)
 		}
 		return NewMultipleOutputter(outputters...), nil
-	case "managedStream":
-		return NewManagedStreamOutput(f.managedStream), nil
+	case "ManagedStream":
+		return NewManagedStreamOutput(f.ManagedStream), nil
 	case "localSubscribers":
-		return NewLocalSubscribersOutput(f.node), nil
+		return NewLocalSubscribersOutput(f.Node), nil
 	case "conditional":
 		if config.ConditionalOutputConfig == nil {
 			return nil, missingConfiguration
@@ -248,7 +248,7 @@ func (f *fileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 		if config.ThresholdOutputConfig == nil {
 			return nil, missingConfiguration
 		}
-		return NewThresholdOutput(f.frameStorage, f.pipeline, *config.ThresholdOutputConfig), nil
+		return NewThresholdOutput(f.FrameStorage, *config.ThresholdOutputConfig), nil
 	case "remoteWrite":
 		if config.RemoteWriteOutputConfig == nil {
 			return nil, missingConfiguration
@@ -262,13 +262,13 @@ func (f *fileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 		if config.ChangeLogOutputConfig == nil {
 			return nil, missingConfiguration
 		}
-		return NewChangeLogOutput(f.frameStorage, f.pipeline, *config.ChangeLogOutputConfig), nil
+		return NewChangeLogOutput(f.FrameStorage, *config.ChangeLogOutputConfig), nil
 	default:
 		return nil, fmt.Errorf("unknown output type: %s", config.Type)
 	}
 }
 
-func (f *fileStorage) getRemoteWriteConfig(uid string) (*RemoteWriteConfig, bool) {
+func (f *FileStorage) getRemoteWriteConfig(uid string) (*RemoteWriteConfig, bool) {
 	for _, rwb := range f.remoteWriteBackends {
 		if rwb.UID == uid {
 			return rwb.Settings, true
@@ -277,7 +277,7 @@ func (f *fileStorage) getRemoteWriteConfig(uid string) (*RemoteWriteConfig, bool
 	return nil, false
 }
 
-func (f *fileStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
+func (f *FileStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
 	ruleBytes, _ := ioutil.ReadFile(os.Getenv("GF_LIVE_CHANNEL_RULES_FILE"))
 	var channelRules ChannelRules
 	err := json.Unmarshal(ruleBytes, &channelRules)

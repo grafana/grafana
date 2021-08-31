@@ -13,36 +13,31 @@ type ThresholdOutputConfig struct {
 	Channel   string `json:"channel"`
 }
 
-//go:generate mockgen -destination=output_threshold_mock.go -package=pipeline github.com/grafana/grafana/pkg/services/live/pipeline FrameGetSetter,FrameProcessor
+//go:generate mockgen -destination=output_threshold_mock.go -package=pipeline github.com/grafana/grafana/pkg/services/live/pipeline FrameGetSetter
 
 type FrameGetSetter interface {
 	Get(orgID int64, channel string) (*data.Frame, bool, error)
 	Set(orgID int64, channel string, frame *data.Frame) error
 }
 
-type FrameProcessor interface {
-	ProcessFrame(ctx context.Context, orgID int64, channelID string, frame *data.Frame) error
-}
-
 // ThresholdOutput can monitor threshold transitions of the specified field and output
 // special state frame to the configured channel.
 type ThresholdOutput struct {
-	frameStorage   FrameGetSetter
-	frameProcessor FrameProcessor
-	config         ThresholdOutputConfig
+	frameStorage FrameGetSetter
+	config       ThresholdOutputConfig
 }
 
-func NewThresholdOutput(frameStorage FrameGetSetter, pipeline FrameProcessor, config ThresholdOutputConfig) *ThresholdOutput {
-	return &ThresholdOutput{frameStorage: frameStorage, frameProcessor: pipeline, config: config}
+func NewThresholdOutput(frameStorage FrameGetSetter, config ThresholdOutputConfig) *ThresholdOutput {
+	return &ThresholdOutput{frameStorage: frameStorage, config: config}
 }
 
-func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) error {
+func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
 	if frame == nil {
-		return nil
+		return nil, nil
 	}
-	previousFrame, previousFrameOk, err := l.frameStorage.Get(vars.OrgID, vars.Channel)
+	previousFrame, previousFrameOk, err := l.frameStorage.Get(vars.OrgID, l.config.Channel)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fieldName := l.config.FieldName
 
@@ -53,22 +48,22 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 		}
 	}
 	if currentFrameFieldIndex < 0 {
-		return nil
+		return nil, nil
 	}
 	if frame.Fields[currentFrameFieldIndex].Config == nil {
-		return nil
+		return nil, nil
 	}
 	if frame.Fields[currentFrameFieldIndex].Config.Thresholds == nil {
-		return nil
+		return nil, nil
 	}
 
 	mode := frame.Fields[currentFrameFieldIndex].Config.Thresholds.Mode
 	if mode != data.ThresholdsModeAbsolute {
-		return fmt.Errorf("unsupported threshold mode: %s", mode)
+		return nil, fmt.Errorf("unsupported threshold mode: %s", mode)
 	}
 
 	if len(frame.Fields[currentFrameFieldIndex].Config.Thresholds.Steps) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	previousFrameFieldIndex := -1
@@ -85,12 +80,14 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 		var previousThreshold data.Threshold
 		value, ok := previousFrame.Fields[previousFrameFieldIndex].At(previousFrame.Fields[0].Len() - 1).(*float64)
 		if !ok {
-			return nil
+			return nil, nil
 		}
 		if value == nil {
 			// TODO: what should we do here?
-			return nil
+			return nil, nil
 		}
+		emptyState := ""
+		previousState = &emptyState
 		for _, threshold := range frame.Fields[currentFrameFieldIndex].Config.Thresholds.Steps {
 			if *value >= float64(threshold.Value) {
 				previousThreshold = threshold
@@ -114,11 +111,11 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 		// TODO: support other numeric types.
 		value, ok := frame.Fields[currentFrameFieldIndex].At(i).(*float64)
 		if !ok {
-			return nil
+			return nil, nil
 		}
 		if value == nil {
 			// TODO: what should we do here?
-			return nil
+			return nil, nil
 		}
 		var currentThreshold data.Threshold
 		for _, threshold := range frame.Fields[currentFrameFieldIndex].Config.Thresholds.Steps {
@@ -139,11 +136,15 @@ func (l *ThresholdOutput) Output(_ context.Context, vars OutputVars, frame *data
 
 	if fTime.Len() > 0 {
 		stateFrame := data.NewFrame("state", fTime, f1, f2, f3)
-		err := l.frameProcessor.ProcessFrame(context.Background(), vars.OrgID, l.config.Channel, stateFrame)
+		err := l.frameStorage.Set(vars.OrgID, l.config.Channel, frame)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		return []*ChannelFrame{{
+			Channel: l.config.Channel,
+			Frame:   stateFrame,
+		}}, nil
 	}
 
-	return l.frameStorage.Set(vars.OrgID, vars.Channel, frame)
+	return nil, l.frameStorage.Set(vars.OrgID, l.config.Channel, frame)
 }

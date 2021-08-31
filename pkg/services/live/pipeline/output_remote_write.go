@@ -32,24 +32,24 @@ func NewRemoteWriteOutput(config RemoteWriteConfig) *RemoteWriteOutput {
 	}
 }
 
-func (r RemoteWriteOutput) Output(_ context.Context, _ OutputVars, frame *data.Frame) error {
+func (r RemoteWriteOutput) Output(_ context.Context, _ OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
 	if r.config.Endpoint == "" {
 		logger.Debug("Skip sending to remote write: no url")
-		return nil
+		return nil, nil
 	}
 
 	// Use remote write for a stream.
 	remoteWriteData, err := remotewrite.SerializeLabelsColumn(frame)
 	if err != nil {
 		logger.Error("Error serializing to remote write format", "error", err)
-		return err
+		return nil, err
 	}
 
 	logger.Debug("Sending to remote write endpoint", "url", r.config.Endpoint, "bodyLength", len(remoteWriteData))
 	req, err := http.NewRequest(http.MethodPost, r.config.Endpoint, bytes.NewReader(remoteWriteData))
 	if err != nil {
 		logger.Error("Error constructing remote write request", "error", err)
-		return err
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/x-protobuf")
 	req.Header.Set("Content-Encoding", "snappy")
@@ -60,13 +60,13 @@ func (r RemoteWriteOutput) Output(_ context.Context, _ OutputVars, frame *data.F
 	resp, err := r.httpClient.Do(req)
 	if err != nil {
 		logger.Error("Error sending remote write request", "error", err)
-		return err
+		return nil, err
 	}
 	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		logger.Error("Unexpected response code from remote write endpoint", "code", resp.StatusCode)
-		return errors.New("unexpected response code from remote write endpoint")
+		return nil, errors.New("unexpected response code from remote write endpoint")
 	}
 	logger.Debug("Successfully sent to remote write endpoint", "url", r.config.Endpoint, "elapsed", time.Since(started))
-	return nil
+	return nil, nil
 }

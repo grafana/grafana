@@ -12,9 +12,8 @@ import (
 
 func TestThresholdOutput_Output(t *testing.T) {
 	type fields struct {
-		frameStorage   FrameGetSetter
-		frameProcessor FrameProcessor
-		config         ThresholdOutputConfig
+		frameStorage FrameGetSetter
+		config       ThresholdOutputConfig
 	}
 	type args struct {
 		in0   context.Context
@@ -30,8 +29,7 @@ func TestThresholdOutput_Output(t *testing.T) {
 		{
 			name: "nil_input_frame",
 			fields: fields{
-				frameStorage:   nil,
-				frameProcessor: nil,
+				frameStorage: nil,
 				config: ThresholdOutputConfig{
 					Channel: "test",
 				},
@@ -43,11 +41,10 @@ func TestThresholdOutput_Output(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := &ThresholdOutput{
-				frameStorage:   tt.fields.frameStorage,
-				frameProcessor: tt.fields.frameProcessor,
-				config:         tt.fields.config,
+				frameStorage: tt.fields.frameStorage,
+				config:       tt.fields.config,
 			}
-			if err := l.Output(tt.args.in0, tt.args.vars, tt.args.frame); (err != nil) != tt.wantErr {
+			if _, err := l.Output(tt.args.in0, tt.args.vars, tt.args.frame); (err != nil) != tt.wantErr {
 				t.Errorf("Output() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -59,7 +56,6 @@ func TestThresholdOutput_NoPreviousFrame_SingleRow(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockStorage := NewMockFrameGetSetter(mockCtrl)
-	mockFrameProcessor := NewMockFrameProcessor(mockCtrl)
 
 	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(orgID int64, channel string) (*data.Frame, bool, error) {
 		return nil, false, nil
@@ -67,14 +63,7 @@ func TestThresholdOutput_NoPreviousFrame_SingleRow(t *testing.T) {
 
 	mockStorage.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
-	mockFrameProcessor.EXPECT().ProcessFrame(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, orgID int64, channelID string, frame *data.Frame) {
-		require.Len(t, frame.Fields, 4)
-		require.Equal(t, 20.0, frame.Fields[1].At(0))
-		require.Equal(t, "normal", frame.Fields[2].At(0))
-		require.Equal(t, "green", frame.Fields[3].At(0))
-	}).Times(1)
-
-	outputter := NewThresholdOutput(mockStorage, mockFrameProcessor, ThresholdOutputConfig{
+	outputter := NewThresholdOutput(mockStorage, ThresholdOutputConfig{
 		FieldName: "test",
 		Channel:   "stream/test/no_previous_frame",
 	})
@@ -99,8 +88,15 @@ func TestThresholdOutput_NoPreviousFrame_SingleRow(t *testing.T) {
 
 	frame := data.NewFrame("test", f1, f2)
 
-	err := outputter.Output(context.Background(), OutputVars{}, frame)
+	channelFrames, err := outputter.Output(context.Background(), OutputVars{}, frame)
 	require.NoError(t, err)
+
+	require.Len(t, channelFrames, 1)
+	stateFrame := channelFrames[0].Frame
+	require.Len(t, stateFrame.Fields, 4)
+	require.Equal(t, 20.0, stateFrame.Fields[1].At(0))
+	require.Equal(t, "normal", stateFrame.Fields[2].At(0))
+	require.Equal(t, "green", stateFrame.Fields[3].At(0))
 }
 
 func TestThresholdOutput_NoPreviousFrame_MultipleRows(t *testing.T) {
@@ -108,7 +104,6 @@ func TestThresholdOutput_NoPreviousFrame_MultipleRows(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockStorage := NewMockFrameGetSetter(mockCtrl)
-	mockFrameProcessor := NewMockFrameProcessor(mockCtrl)
 
 	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(orgID int64, channel string) (*data.Frame, bool, error) {
 		return nil, false, nil
@@ -116,18 +111,7 @@ func TestThresholdOutput_NoPreviousFrame_MultipleRows(t *testing.T) {
 
 	mockStorage.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
-	mockFrameProcessor.EXPECT().ProcessFrame(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, orgID int64, channelID string, frame *data.Frame) {
-		require.Len(t, frame.Fields, 4)
-		require.Equal(t, 5.0, frame.Fields[1].At(0))
-		require.Equal(t, "", frame.Fields[2].At(0))
-		require.Equal(t, "", frame.Fields[3].At(0))
-
-		require.Equal(t, 20.0, frame.Fields[1].At(1))
-		require.Equal(t, "normal", frame.Fields[2].At(1))
-		require.Equal(t, "green", frame.Fields[3].At(1))
-	}).Times(1)
-
-	outputter := NewThresholdOutput(mockStorage, mockFrameProcessor, ThresholdOutputConfig{
+	outputter := NewThresholdOutput(mockStorage, ThresholdOutputConfig{
 		FieldName: "test",
 		Channel:   "stream/test/no_previous_frame",
 	})
@@ -155,8 +139,20 @@ func TestThresholdOutput_NoPreviousFrame_MultipleRows(t *testing.T) {
 
 	frame := data.NewFrame("test", f1, f2)
 
-	err := outputter.Output(context.Background(), OutputVars{}, frame)
+	channelFrames, err := outputter.Output(context.Background(), OutputVars{}, frame)
 	require.NoError(t, err)
+	require.Len(t, channelFrames, 1)
+
+	stateFrame := channelFrames[0].Frame
+
+	require.Len(t, stateFrame.Fields, 4)
+	require.Equal(t, 5.0, stateFrame.Fields[1].At(0))
+	require.Equal(t, "", stateFrame.Fields[2].At(0))
+	require.Equal(t, "", stateFrame.Fields[3].At(0))
+
+	require.Equal(t, 20.0, stateFrame.Fields[1].At(1))
+	require.Equal(t, "normal", stateFrame.Fields[2].At(1))
+	require.Equal(t, "green", stateFrame.Fields[3].At(1))
 }
 
 func TestThresholdOutput_WithPreviousFrame_SingleRow(t *testing.T) {
@@ -164,7 +160,6 @@ func TestThresholdOutput_WithPreviousFrame_SingleRow(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockStorage := NewMockFrameGetSetter(mockCtrl)
-	mockFrameProcessor := NewMockFrameProcessor(mockCtrl)
 
 	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(orgID int64, channel string) (*data.Frame, bool, error) {
 		f1 := data.NewField("time", nil, make([]time.Time, 1))
@@ -177,9 +172,7 @@ func TestThresholdOutput_WithPreviousFrame_SingleRow(t *testing.T) {
 
 	mockStorage.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
-	mockFrameProcessor.EXPECT().ProcessFrame(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
-
-	outputter := NewThresholdOutput(mockStorage, mockFrameProcessor, ThresholdOutputConfig{
+	outputter := NewThresholdOutput(mockStorage, ThresholdOutputConfig{
 		FieldName: "test",
 		Channel:   "stream/test/with_previous_frame",
 	})
@@ -205,8 +198,9 @@ func TestThresholdOutput_WithPreviousFrame_SingleRow(t *testing.T) {
 
 	frame := data.NewFrame("test", f1, f2)
 
-	err := outputter.Output(context.Background(), OutputVars{}, frame)
+	channelFrames, err := outputter.Output(context.Background(), OutputVars{}, frame)
 	require.NoError(t, err)
+	require.Len(t, channelFrames, 0)
 }
 
 func TestThresholdOutput_WithPreviousFrame_MultipleRows(t *testing.T) {
@@ -214,7 +208,6 @@ func TestThresholdOutput_WithPreviousFrame_MultipleRows(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockStorage := NewMockFrameGetSetter(mockCtrl)
-	mockFrameProcessor := NewMockFrameProcessor(mockCtrl)
 
 	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(orgID int64, channel string) (*data.Frame, bool, error) {
 		f1 := data.NewField("time", nil, make([]time.Time, 1))
@@ -227,9 +220,7 @@ func TestThresholdOutput_WithPreviousFrame_MultipleRows(t *testing.T) {
 
 	mockStorage.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
-	mockFrameProcessor.EXPECT().ProcessFrame(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
-
-	outputter := NewThresholdOutput(mockStorage, mockFrameProcessor, ThresholdOutputConfig{
+	outputter := NewThresholdOutput(mockStorage, ThresholdOutputConfig{
 		FieldName: "test",
 		Channel:   "stream/test/with_previous_frame",
 	})
@@ -257,6 +248,7 @@ func TestThresholdOutput_WithPreviousFrame_MultipleRows(t *testing.T) {
 
 	frame := data.NewFrame("test", f1, f2)
 
-	err := outputter.Output(context.Background(), OutputVars{}, frame)
+	channelFrames, err := outputter.Output(context.Background(), OutputVars{}, frame)
 	require.NoError(t, err)
+	require.Len(t, channelFrames, 1)
 }

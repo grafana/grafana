@@ -12,15 +12,17 @@ type MultipleOutputter struct {
 	Outputters []Outputter
 }
 
-func (m MultipleOutputter) Output(ctx context.Context, vars OutputVars, frame *data.Frame) error {
+func (m MultipleOutputter) Output(ctx context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+	var frames []*ChannelFrame
 	for _, out := range m.Outputters {
-		err := out.Output(ctx, vars, frame)
+		f, err := out.Output(ctx, vars, frame)
 		if err != nil {
 			logger.Error("Error outputting frame", "error", err)
-			return err
+			return nil, err
 		}
+		frames = append(frames, f...)
 	}
-	return nil
+	return frames, nil
 }
 
 func NewMultipleOutputter(outputters ...Outputter) *MultipleOutputter {

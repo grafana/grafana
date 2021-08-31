@@ -29,35 +29,26 @@ func (t testStorageAlt) ListChannelRules(_ context.Context, cmd ListLiveChannelR
 
 func TestStorage_Get(t *testing.T) {
 	s := NewCacheSegmentedTree(&testStorageAlt{})
-	rule, _, ok, err := s.Get(1, "stream/telegraf/cpu")
+	rule, ok, err := s.Get(1, "stream/telegraf/cpu")
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.NotNil(t, rule.Converter)
 
-	rule, ps, ok, err := s.Get(1, "stream/telegraf/mem")
+	rule, ok, err = s.Get(1, "stream/telegraf/mem")
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.Nil(t, rule.Converter)
-	val, ok := ps.Get("metric")
-	require.True(t, ok)
-	require.Equal(t, "mem", val)
 
-	rule, ps, ok, err = s.Get(1, "stream/telegraf/mem/rss")
+	rule, ok, err = s.Get(1, "stream/telegraf/mem/rss")
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.Nil(t, rule.Converter)
-	val, ok = ps.Get("metric")
-	require.True(t, ok)
-	require.Equal(t, "mem", val)
-	val, ok = ps.Get("extra")
-	require.True(t, ok)
-	require.Equal(t, "rss", val)
 }
 
-func BenchmarkGetAlt(b *testing.B) {
+func BenchmarkRuleGet(b *testing.B) {
 	s := NewCacheSegmentedTree(&testStorageAlt{})
 	for i := 0; i < b.N; i++ {
-		_, _, ok, err := s.Get(1, "stream/telegraf/cpu")
+		_, ok, err := s.Get(1, "stream/telegraf/cpu")
 		if err != nil || !ok {
 			b.Fatal("unexpected return values")
 		}

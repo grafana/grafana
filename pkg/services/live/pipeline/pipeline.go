@@ -2,14 +2,16 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 	"os"
 
-	"github.com/grafana/grafana/pkg/services/live/managedstream"
-
-	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 )
+
+type ChannelRuleGetter interface {
+	Get(orgID int64, channel string) (*LiveChannelRule, bool, error)
+}
 
 // Pipeline allows processing custom input data according to user-defined rules.
 // This includes:
@@ -17,43 +19,48 @@ import (
 // * do some processing on these frames
 // * output resulting frames to various destinations.
 type Pipeline struct {
-	managedStream *managedstream.Runner
-	cache         *CacheSegmentedTree
+	ruleGetter ChannelRuleGetter
 }
 
 // New creates new Pipeline.
-func New(managedStream *managedstream.Runner, node *centrifuge.Node) (*Pipeline, error) {
-	p := &Pipeline{
-		managedStream: managedStream,
-	}
+func New(ruleGetter ChannelRuleGetter) (*Pipeline, error) {
 	logger.Info("Live pipeline initialization")
-	storage := &fileStorage{
-		node:          node,
-		managedStream: p.managedStream,
-		frameStorage:  NewFrameStorage(),
-		pipeline:      p,
+	p := &Pipeline{
+		ruleGetter: ruleGetter,
 	}
-	p.cache = NewCacheSegmentedTree(storage)
 	if os.Getenv("GF_LIVE_PIPELINE_DEV") != "" {
 		go postTestData() // TODO: temporary for development, remove before merge.
 	}
-	return &Pipeline{cache: NewCacheSegmentedTree(storage)}, nil
+	return p, nil
 }
 
 func (p *Pipeline) Get(orgID int64, channel string) (*LiveChannelRule, bool, error) {
-	rule, _, ok, err := p.cache.Get(orgID, channel)
-	return rule, ok, err
+	return p.ruleGetter.Get(orgID, channel)
 }
 
-func (p *Pipeline) DataToChannelFrames(ctx context.Context, orgID int64, channelID string, body []byte) ([]*ChannelFrame, bool, error) {
-	rule, ruleOk, err := p.Get(orgID, channelID)
+func (p *Pipeline) ProcessInput(ctx context.Context, orgID int64, channelID string, body []byte) (bool, error) {
+	rule, ok, err := p.ruleGetter.Get(orgID, channelID)
 	if err != nil {
-		logger.Error("Error getting rule", "error", err, "data", string(body))
-		return nil, false, err
+		return false, err
 	}
-	if !ruleOk {
-		return nil, false, nil
+	if !ok {
+		return false, nil
 	}
+	channelFrames, ok, err := p.dataToChannelFrames(ctx, *rule, orgID, channelID, body)
+	if err != nil {
+		return false, err
+	}
+	if !ok {
+		return false, nil
+	}
+	err = p.processChannelFrames(ctx, orgID, channelID, channelFrames)
+	if err != nil {
+		return false, fmt.Errorf("error processing frame: %w", err)
+	}
+	return true, nil
+}
+
+func (p *Pipeline) dataToChannelFrames(ctx context.Context, rule LiveChannelRule, orgID int64, channelID string, body []byte) ([]*ChannelFrame, bool, error) {
 	if rule.Converter == nil {
 		return nil, false, nil
 	}
@@ -81,13 +88,13 @@ func (p *Pipeline) DataToChannelFrames(ctx context.Context, orgID int64, channel
 	return frames, true, nil
 }
 
-func (p *Pipeline) ProcessChannelFrames(ctx context.Context, orgID int64, channelID string, channelFrames []*ChannelFrame) error {
+func (p *Pipeline) processChannelFrames(ctx context.Context, orgID int64, channelID string, channelFrames []*ChannelFrame) error {
 	for _, channelFrame := range channelFrames {
 		var processorChannel = channelID
 		if channelFrame.Channel != "" {
 			processorChannel = channelFrame.Channel
 		}
-		err := p.ProcessFrame(ctx, orgID, processorChannel, channelFrame.Frame)
+		err := p.processFrame(ctx, orgID, processorChannel, channelFrame.Frame)
 		if err != nil {
 			return err
 		}
@@ -95,8 +102,8 @@ func (p *Pipeline) ProcessChannelFrames(ctx context.Context, orgID int64, channe
 	return nil
 }
 
-func (p *Pipeline) ProcessFrame(ctx context.Context, orgID int64, channelID string, frame *data.Frame) error {
-	rule, ruleOk, err := p.Get(orgID, channelID)
+func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID string, frame *data.Frame) error {
+	rule, ruleOk, err := p.ruleGetter.Get(orgID, channelID)
 	if err != nil {
 		logger.Error("Error getting rule", "error", err)
 		return err
@@ -135,10 +142,16 @@ func (p *Pipeline) ProcessFrame(ctx context.Context, orgID int64, channelID stri
 	}
 
 	if rule.Outputter != nil {
-		err = rule.Outputter.Output(ctx, outputVars, frame)
+		frames, err := rule.Outputter.Output(ctx, outputVars, frame)
 		if err != nil {
 			logger.Error("Error outputting frame", "error", err)
 			return err
+		}
+		if len(frames) > 0 {
+			err := p.processChannelFrames(ctx, vars.OrgID, vars.Channel, frames)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

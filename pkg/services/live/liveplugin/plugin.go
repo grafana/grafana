@@ -28,23 +28,12 @@ func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte) error 
 		if err != nil {
 			return err
 		}
-		_, ok, err := p.pipeline.Get(orgID, channelID)
+		ok, err := p.pipeline.ProcessInput(context.Background(), orgID, channelID, data)
 		if err != nil {
 			return err
 		}
-		if ok {
-			channelFrames, ok, err := p.pipeline.DataToChannelFrames(context.Background(), orgID, channelID, data)
-			if err != nil {
-				return err
-			}
-			if !ok {
-				return fmt.Errorf("no conversion rule for a channel %s", channelID)
-			}
-			err = p.pipeline.ProcessChannelFrames(context.Background(), orgID, channelID, channelFrames)
-			if err != nil {
-				return fmt.Errorf("error processing frame: %v", err)
-			}
-			return nil
+		if !ok {
+			return fmt.Errorf("no conversion rule for a channel %s", channelID)
 		}
 	}
 	pub := &centrifuge.Publication{

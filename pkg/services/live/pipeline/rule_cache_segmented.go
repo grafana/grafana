@@ -60,26 +60,26 @@ func (s *CacheSegmentedTree) fillOrg(orgID int64) error {
 	return nil
 }
 
-func (s *CacheSegmentedTree) Get(orgID int64, channel string) (*LiveChannelRule, *tree.Params, bool, error) {
+func (s *CacheSegmentedTree) Get(orgID int64, channel string) (*LiveChannelRule, bool, error) {
 	s.radixMu.RLock()
 	_, ok := s.radix[orgID]
 	s.radixMu.RUnlock()
 	if !ok {
 		err := s.fillOrg(orgID)
 		if err != nil {
-			return nil, nil, false, err
+			return nil, false, err
 		}
 	}
 	s.radixMu.RLock()
 	defer s.radixMu.RUnlock()
 	t, ok := s.radix[orgID]
 	if !ok {
-		return nil, nil, false, nil
+		return nil, false, nil
 	}
 	ps := make(tree.Params, 0, 20)
 	nodeValue := t.GetValue("/"+channel, &ps, true)
 	if nodeValue.Handler == nil {
-		return nil, nil, false, nil
+		return nil, false, nil
 	}
-	return nodeValue.Handler.(*LiveChannelRule), nodeValue.Params, true, nil
+	return nodeValue.Handler.(*LiveChannelRule), true, nil
 }

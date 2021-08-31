@@ -15,13 +15,13 @@ func NewConditionalOutput(condition ConditionChecker, outputter Outputter) *Cond
 	return &ConditionalOutput{Condition: condition, Outputter: outputter}
 }
 
-func (l ConditionalOutput) Output(ctx context.Context, vars OutputVars, frame *data.Frame) error {
+func (l ConditionalOutput) Output(ctx context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
 	ok, err := l.Condition.CheckCondition(ctx, frame)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !ok {
-		return nil
+		return nil, nil
 	}
 	return l.Outputter.Output(ctx, vars, frame)
 }

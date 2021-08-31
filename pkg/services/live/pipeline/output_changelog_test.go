@@ -15,7 +15,6 @@ func TestChangeLogOutput_NoPreviousFrame_SingleRow(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockStorage := NewMockFrameGetSetter(mockCtrl)
-	mockFrameProcessor := NewMockFrameProcessor(mockCtrl)
 
 	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(orgID int64, channel string) (*data.Frame, bool, error) {
 		return nil, false, nil
@@ -23,15 +22,7 @@ func TestChangeLogOutput_NoPreviousFrame_SingleRow(t *testing.T) {
 
 	mockStorage.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
-	mockFrameProcessor.EXPECT().ProcessFrame(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, orgID int64, channelID string, frame *data.Frame) {
-		require.Len(t, frame.Fields, 3)
-		var x *float64
-		var y = 20.0
-		require.Equal(t, x, frame.Fields[1].At(0).(*float64))
-		require.Equal(t, &y, frame.Fields[2].At(0))
-	}).Times(1)
-
-	outputter := NewChangeLogOutput(mockStorage, mockFrameProcessor, ChangeLogOutputConfig{
+	outputter := NewChangeLogOutput(mockStorage, ChangeLogOutputConfig{
 		FieldName: "test",
 		Channel:   "stream/test/no_previous_frame",
 	})
@@ -44,8 +35,16 @@ func TestChangeLogOutput_NoPreviousFrame_SingleRow(t *testing.T) {
 
 	frame := data.NewFrame("test", f1, f2)
 
-	err := outputter.Output(context.Background(), OutputVars{}, frame)
+	channelFrames, err := outputter.Output(context.Background(), OutputVars{}, frame)
 	require.NoError(t, err)
+
+	require.Len(t, channelFrames, 1)
+	changeFrame := channelFrames[0].Frame
+	require.Len(t, changeFrame.Fields, 3)
+	var x *float64
+	var y = 20.0
+	require.Equal(t, x, changeFrame.Fields[1].At(0).(*float64))
+	require.Equal(t, &y, changeFrame.Fields[2].At(0))
 }
 
 func TestChangeLogOutput_NoPreviousFrame_MultipleRows(t *testing.T) {
@@ -53,7 +52,6 @@ func TestChangeLogOutput_NoPreviousFrame_MultipleRows(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockStorage := NewMockFrameGetSetter(mockCtrl)
-	mockFrameProcessor := NewMockFrameProcessor(mockCtrl)
 
 	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(orgID int64, channel string) (*data.Frame, bool, error) {
 		return nil, false, nil
@@ -61,19 +59,7 @@ func TestChangeLogOutput_NoPreviousFrame_MultipleRows(t *testing.T) {
 
 	mockStorage.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
-	mockFrameProcessor.EXPECT().ProcessFrame(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, orgID int64, channelID string, frame *data.Frame) {
-		require.Len(t, frame.Fields, 3)
-		var x *float64
-		var y = 5.0
-		require.Equal(t, x, frame.Fields[1].At(0).(*float64))
-		require.Equal(t, &y, frame.Fields[2].At(0))
-		var z = 5.0
-		var v = 20.0
-		require.Equal(t, &z, frame.Fields[1].At(1).(*float64))
-		require.Equal(t, &v, frame.Fields[2].At(1))
-	}).Times(1)
-
-	outputter := NewChangeLogOutput(mockStorage, mockFrameProcessor, ChangeLogOutputConfig{
+	outputter := NewChangeLogOutput(mockStorage, ChangeLogOutputConfig{
 		FieldName: "test",
 		Channel:   "stream/test/no_previous_frame",
 	})
@@ -88,6 +74,17 @@ func TestChangeLogOutput_NoPreviousFrame_MultipleRows(t *testing.T) {
 
 	frame := data.NewFrame("test", f1, f2)
 
-	err := outputter.Output(context.Background(), OutputVars{}, frame)
+	channelFrames, err := outputter.Output(context.Background(), OutputVars{}, frame)
 	require.NoError(t, err)
+	require.Len(t, channelFrames, 1)
+	changeFrame := channelFrames[0].Frame
+	require.Len(t, changeFrame.Fields, 3)
+	var x *float64
+	var y = 5.0
+	require.Equal(t, x, changeFrame.Fields[1].At(0).(*float64))
+	require.Equal(t, &y, changeFrame.Fields[2].At(0))
+	var z = 5.0
+	var v = 20.0
+	require.Equal(t, &z, changeFrame.Fields[1].At(1).(*float64))
+	require.Equal(t, &v, changeFrame.Fields[2].At(1))
 }
