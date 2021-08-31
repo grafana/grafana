@@ -4,7 +4,7 @@ import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { TimelineFieldConfig, TimelineMode, TimelineValueAlignment } from './types';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
-import { BarValueVisibility } from '@grafana/ui';
+import { BarValueVisibility } from '@grafana/schema';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 
 const { round, min, ceil } = Math;

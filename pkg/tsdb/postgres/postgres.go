@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
@@ -18,24 +17,19 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "PostgresService",
-		InitPriority: registry.Low,
-		Instance:     &PostgresService{},
-	})
+func ProvideService(cfg *setting.Cfg) *PostgresService {
+	logger := log.New("tsdb.postgres")
+	return &PostgresService{
+		Cfg:        cfg,
+		logger:     logger,
+		tlsManager: newTLSManager(logger, cfg.DataPath),
+	}
 }
 
 type PostgresService struct {
-	Cfg        *setting.Cfg `inject:""`
+	Cfg        *setting.Cfg
 	logger     log.Logger
 	tlsManager tlsSettingsProvider
-}
-
-func (s *PostgresService) Init() error {
-	s.logger = log.New("tsdb.postgres")
-	s.tlsManager = newTLSManager(s.logger, s.Cfg.DataPath)
-	return nil
 }
 
 //nolint: staticcheck // plugins.DataPlugin deprecated

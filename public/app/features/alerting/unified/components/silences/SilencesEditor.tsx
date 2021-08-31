@@ -1,4 +1,4 @@
-import { Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC, useMemo, useState } from 'react';
 import { Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles } from '@grafana/ui';
 import {
@@ -26,6 +26,7 @@ import { makeAMLink } from '../../utils/misc';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { parseQueryParamMatchers } from '../../utils/matchers';
+import { matcherToMatcherField, matcherFieldToMatcher } from '../../utils/alertmanager';
 
 interface Props {
   silence?: Silence;
@@ -40,7 +41,7 @@ const defaultsFromQuery = (queryParams: UrlQueryMap): Partial<SilenceFormFields>
   if (typeof matchers === 'string') {
     const formMatchers = parseQueryParamMatchers(matchers);
     if (formMatchers.length) {
-      defaults.matchers = formMatchers;
+      defaults.matchers = formMatchers.map(matcherToMatcherField);
     }
   }
 
@@ -69,7 +70,7 @@ const getDefaultFormValues = (queryParams: UrlQueryMap, silence?: Silence): Sile
       createdBy: silence.createdBy,
       duration: intervalToAbbreviatedDurationString(interval),
       isRegex: false,
-      matchers: silence.matchers || [],
+      matchers: silence.matchers?.map(matcherToMatcherField) || [],
       matcherName: '',
       matcherValue: '',
       timeZone: DefaultTimeZone,
@@ -84,7 +85,7 @@ const getDefaultFormValues = (queryParams: UrlQueryMap, silence?: Silence): Sile
       createdBy: config.bootData.user.name,
       duration: '2h',
       isRegex: false,
-      matchers: [{ name: '', value: '', isRegex: false, isEqual: true }],
+      matchers: [{ name: '', value: '', operator: MatcherOperator.equal }],
       matcherName: '',
       matcherValue: '',
       timeZone: DefaultTimeZone,
@@ -107,7 +108,8 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
   const { register, handleSubmit, formState, watch, setValue, clearErrors } = formAPI;
 
   const onSubmit = (data: SilenceFormFields) => {
-    const { id, startsAt, endsAt, comment, createdBy, matchers } = data;
+    const { id, startsAt, endsAt, comment, createdBy, matchers: matchersFields } = data;
+    const matchers = matchersFields.map(matcherFieldToMatcher);
     const payload = pickBy(
       {
         id,

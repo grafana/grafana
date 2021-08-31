@@ -75,11 +75,11 @@ See or [expressions documentation]({{< relref "../../../panels/expressions.md" >
 
 Toggle **Configure no data and error handling** switch to configure how the rule should handle cases where evaluation results in error or returns no data.
 
-| No Data Option | Description                                            |
-| -------------- | ------------------------------------------------------ |
-| No Data        | Set alert state to `NoData` and rule state to `Normal` |
-| Alerting       | Set alert rule state to `Alerting`                     |
-| Ok             | Set alert rule state to `Normal`                       |
+| No Data Option | Description                                                                                           |
+| -------------- | ----------------------------------------------------------------------------------------------------- |
+| No Data        | Set alert state to `NoData` and rule state to `Normal` (notifications are not sent on NoData states). |
+| Alerting       | Set alert rule state to `Alerting`.                                                                   |
+| Ok             | Set alert rule state to `Normal`.                                                                     |
 
 | Error or timeout option | Description                        |
 | ----------------------- | ---------------------------------- |
@@ -106,11 +106,11 @@ Labels are key value pairs that categorize or identify an alert. Labels are used
 
 The following template variables are available when expanding annotations and labels.
 
-| Name    | Description                                                                                                                                                                                                             |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| $labels | The labels from the query or condition. For example, `{{ $labels.instance }}` and `{{ $labels.job }}`.                                                                                                                  |
-| $values | The values of all reduce and math expressions that were evaluated for this alert rule. For example, `{{ $values.A }}`, `{{ $values.A.Labels }}` and `{{ $values.A.Value }}` where `A` is the `refID` of the expression. |
-| $value  | The value string of the alert instance. For example, `[ var='A' labels={instance=foo} value=10 ]`.                                                                                                                      |
+| Name    | Description                                                                                                                                                                                                                                                                         |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| $labels | The labels from the query or condition. For example, `{{ $labels.instance }}` and `{{ $labels.job }}`. This is unavailable when the rule uses a classic condition.                                                                                                                  |
+| $values | The values of all reduce and math expressions that were evaluated for this alert rule. For example, `{{ $values.A }}`, `{{ $values.A.Labels }}` and `{{ $values.A.Value }}` where `A` is the `refID` of the expression. This is unavailable when the rule uses a classic condition. |
+| $value  | The value string of the alert instance. For example, `[ var='A' labels={instance=foo} value=10 ]`.                                                                                                                                                                                  |
 
 ## Preview alerts
 

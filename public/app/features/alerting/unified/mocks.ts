@@ -4,7 +4,10 @@ import {
   GrafanaRuleDefinition,
   PromAlertingRuleState,
   PromRuleType,
+  RulerAlertingRuleDTO,
   RulerGrafanaRuleDTO,
+  RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
@@ -94,6 +97,23 @@ export const mockRulerGrafanaRule = (
   };
 };
 
+export const mockRulerAlertingRule = (partial: Partial<RulerAlertingRuleDTO> = {}): RulerAlertingRuleDTO => ({
+  alert: 'alert1',
+  expr: 'up = 1',
+  labels: {
+    severity: 'warning',
+  },
+  annotations: {
+    summary: 'test alert',
+  },
+});
+
+export const mockRulerRuleGroup = (partial: Partial<RulerRuleGroupDTO> = {}): RulerRuleGroupDTO => ({
+  name: 'group1',
+  rules: [mockRulerAlertingRule()],
+  ...partial,
+});
+
 export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): AlertingRule => {
   return {
     type: PromRuleType.Alerting,
@@ -177,7 +197,7 @@ export const mockAlertGroup = (partial: Partial<AlertmanagerGroup> = {}): Alertm
       mockAlertmanagerAlert(),
       mockAlertmanagerAlert({
         status: { state: AlertState.Suppressed, silencedBy: ['123456abcdef'], inhibitedBy: [] },
-        labels: { severity: 'warning', region: 'US-Central', foo: 'bar' },
+        labels: { severity: 'warning', region: 'US-Central', foo: 'bar', ...partial.labels },
       }),
     ],
     ...partial,
@@ -349,4 +369,27 @@ export const someCloudAlertManagerConfig: AlertManagerCortexConfig = {
       },
     ],
   },
+};
+
+export const somePromRules = (dataSourceName = 'Prometheus'): RuleNamespace[] => [
+  {
+    dataSourceName,
+    name: 'namespace1',
+    groups: [
+      mockPromRuleGroup({ name: 'group1', rules: [mockPromAlertingRule({ name: 'alert1' })] }),
+      mockPromRuleGroup({ name: 'group2', rules: [mockPromAlertingRule({ name: 'alert2' })] }),
+    ],
+  },
+  {
+    dataSourceName,
+    name: 'namespace2',
+    groups: [mockPromRuleGroup({ name: 'group3', rules: [mockPromAlertingRule({ name: 'alert3' })] })],
+  },
+];
+export const someRulerRules: RulerRulesConfigDTO = {
+  namespace1: [
+    mockRulerRuleGroup({ name: 'group1', rules: [mockRulerAlertingRule({ alert: 'alert1' })] }),
+    mockRulerRuleGroup({ name: 'group2', rules: [mockRulerAlertingRule({ alert: 'alert2' })] }),
+  ],
+  namespace2: [mockRulerRuleGroup({ name: 'group3', rules: [mockRulerAlertingRule({ alert: 'alert3' })] })],
 };

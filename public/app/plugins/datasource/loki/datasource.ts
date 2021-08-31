@@ -1,6 +1,6 @@
 // Libraries
 import { cloneDeep, isEmpty, map as lodashMap } from 'lodash';
-import { merge, Observable, of, throwError } from 'rxjs';
+import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import Prism from 'prismjs';
 
@@ -36,7 +36,7 @@ import {
   lokiStreamsToDataFrames,
   processRangeQueryResponse,
 } from './result_transformer';
-import { getHighlighterExpressionsFromQuery, queryHasPipeParser, addParsedLabelToQuery } from './query_utils';
+import { addParsedLabelToQuery, getHighlighterExpressionsFromQuery, queryHasPipeParser } from './query_utils';
 
 import {
   LokiOptions,
@@ -51,6 +51,7 @@ import LanguageProvider from './language_provider';
 import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import syntax from './syntax';
+import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -186,8 +187,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const startNs = this.getTime(options.range.from, false);
       const endNs = this.getTime(options.range.to, true);
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
+
+      const resolution = target.resolution || (DEFAULT_RESOLUTION.value as number);
+
       const adjustedInterval =
-        this.adjustInterval((options as DataQueryRequest<LokiQuery>).intervalMs || 1000, rangeMs) / 1000;
+        this.adjustInterval((options as DataQueryRequest<LokiQuery>).intervalMs || 1000, resolution, rangeMs) / 1000;
       // We want to ceil to 3 decimal places
       const step = Math.ceil(adjustedInterval * 1000) / 1000;
 
@@ -319,7 +323,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   async metadataRequest(url: string, params?: Record<string, string | number>) {
-    const res = await this._request(url, params, { hideFromInspector: true }).toPromise();
+    const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
     return res.data.data || res.data.values || [];
   }
 
@@ -412,21 +416,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        // Temporary fix for log queries that use parser. We don't know which labels are parsed and which are actual labels.
-        // If query has parser, we treat all labels as parsed and use | key="value" syntax (same in ADD_FILTER_OUT)
-        if (queryHasPipeParser(expression) && !isMetricsQuery(expression)) {
-          expression = addParsedLabelToQuery(expression, action.key, action.value, '=');
-        } else {
-          expression = addLabelToQuery(expression, action.key, action.value, undefined, true);
-        }
+        expression = this.addLabelToQuery(expression, action.key, action.value, '=');
         break;
       }
       case 'ADD_FILTER_OUT': {
-        if (queryHasPipeParser(expression) && !isMetricsQuery(expression)) {
-          expression = addParsedLabelToQuery(expression, action.key, action.value, '!=');
-        } else {
-          expression = addLabelToQuery(expression, action.key, action.value, '!=', true);
-        }
+        expression = this.addLabelToQuery(expression, action.key, action.value, '!=');
         break;
       }
       default:
@@ -455,8 +449,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     );
 
     const reverse = options && options.direction === 'FORWARD';
-    return this._request(RANGE_QUERY_ENDPOINT, target)
-      .pipe(
+    return lastValueFrom(
+      this._request(RANGE_QUERY_ENDPOINT, target).pipe(
         catchError((err: any) => {
           if (err.status === 404) {
             return of(err);
@@ -475,7 +469,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           })
         )
       )
-      .toPromise();
+    );
   };
 
   prepareLogRowContextQueryTarget = (row: LogRowModel, limit: number, direction: 'BACKWARD' | 'FORWARD') => {
@@ -520,8 +514,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     // Consider only last 10 minutes otherwise request takes too long
     const startMs = Date.now() - 10 * 60 * 1000;
     const start = `${startMs}000000`; // API expects nanoseconds
-    return this._request(`${LOKI_ENDPOINT}/label`, { start })
-      .pipe(
+    return lastValueFrom(
+      this._request(`${LOKI_ENDPOINT}/label`, { start }).pipe(
         map((res) => {
           const values: any[] = res?.data?.data || res?.data?.values || [];
           const testResult =
@@ -554,21 +548,35 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           return of({ status: 'error', message: message });
         })
       )
-      .toPromise();
+    );
   }
 
   async annotationQuery(options: any): Promise<AnnotationEvent[]> {
-    const { expr, maxLines, instant, tagKeys = '', titleFormat = '', textFormat = '' } = options.annotation;
+    const {
+      expr,
+      maxLines,
+      instant,
+      stepInterval,
+      tagKeys = '',
+      titleFormat = '',
+      textFormat = '',
+    } = options.annotation;
 
     if (!expr) {
       return [];
     }
 
     const interpolatedExpr = this.templateSrv.replace(expr, {}, this.interpolateQueryExpr);
-    const query = { refId: `annotation-${options.annotation.name}`, expr: interpolatedExpr, maxLines, instant };
+    const query = {
+      refId: `annotation-${options.annotation.name}`,
+      expr: interpolatedExpr,
+      maxLines,
+      instant,
+      stepInterval,
+    };
     const { data } = instant
-      ? await this.runInstantQuery(query, options as any).toPromise()
-      : await this.runRangeQuery(query, options as any).toPromise();
+      ? await lastValueFrom(this.runInstantQuery(query, options as any))
+      : await lastValueFrom(this.runRangeQuery(query, options as any));
 
     const annotations: AnnotationEvent[] = [];
     const splitKeys: string[] = tagKeys.split(',').filter((v: string) => v !== '');
@@ -634,14 +642,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return error;
   }
 
-  adjustInterval(interval: number, range: number) {
+  adjustInterval(dynamicInterval: number, resolution: number, range: number) {
     // Loki will drop queries that might return more than 11000 data points.
     // Calibrate interval if it is too small.
-    if (interval !== 0 && range / interval > 11000) {
-      interval = Math.ceil(range / 11000);
+    let safeInterval = range / 11000;
+    if (safeInterval > 1) {
+      safeInterval = Math.ceil(safeInterval);
     }
-    // The min interval is set to 1ms
-    return Math.max(interval, 1);
+
+    let adjustedInterval = Math.max(resolution * dynamicInterval, safeInterval);
+    return adjustedInterval;
   }
 
   addAdHocFilters(queryExpr: string) {
@@ -654,10 +664,20 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       if (operator === '=~' || operator === '!~') {
         value = lokiRegularEscape(value);
       }
-      return addLabelToQuery(acc, key, value, operator);
+
+      return this.addLabelToQuery(acc, key, value, operator);
     }, expr);
 
     return expr;
+  }
+
+  addLabelToQuery(queryExpr: string, key: string, value: string | number, operator: string) {
+    if (queryHasPipeParser(queryExpr) && !isMetricsQuery(queryExpr)) {
+      // If query has parser, we treat all labels as parsed and use | key="value" syntax
+      return addParsedLabelToQuery(queryExpr, key, value, operator);
+    } else {
+      return addLabelToQuery(queryExpr, key, value, operator, true);
+    }
   }
 }
 

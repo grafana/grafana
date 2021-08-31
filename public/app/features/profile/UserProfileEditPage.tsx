@@ -1,7 +1,6 @@
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
-import { hot } from 'react-hot-loader';
 import { NavModel } from '@grafana/data';
 import { VerticalGroup } from '@grafana/ui';
 
@@ -78,4 +77,4 @@ export function UserProfileEditPage({
   );
 }
 
-export default hot(module)(connector(UserProfileEditPage));
+export default connector(UserProfileEditPage);

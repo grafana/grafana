@@ -63,14 +63,14 @@ func init() {
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Description:  "Provide an emoji to use as the icon for the bot's message. Overrides the icon URL.",
-				PropertyName: "iconEmoji",
+				PropertyName: "icon_emoji",
 			},
 			{
 				Label:        "Icon URL",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Description:  "Provide a URL to an image to use as the icon for the bot's message",
-				PropertyName: "iconUrl",
+				PropertyName: "icon_url",
 			},
 			{
 				Label:        "Mention Users",
@@ -299,7 +299,6 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 	body := map[string]interface{}{
 		"channel": sn.recipient,
-		"text":    evalContext.GetNotificationTitle(),
 		"attachments": []map[string]interface{}{
 			attachment,
 		},

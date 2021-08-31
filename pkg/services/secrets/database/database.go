@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/secrets/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -17,10 +16,6 @@ var logger = log.New("secrets-store")
 
 type SecretsStoreImpl struct {
 	SQLStore *sqlstore.SQLStore `inject:""`
-}
-
-func init() {
-	registry.RegisterService(&SecretsStoreImpl{})
 }
 
 func (ss *SecretsStoreImpl) Init() error {

@@ -239,17 +239,19 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                 return <PanelEditorTableView width={width} height={height} panel={panel} dashboard={dashboard} />;
               }
 
+              const panelSize = calculatePanelSize(uiState.mode, width, height, panel);
+
               return (
                 <div className={styles.centeringContainer} style={{ width, height }}>
-                  <div style={calculatePanelSize(uiState.mode, width, height, panel)} data-panelid={panel.editSourceId}>
+                  <div style={panelSize} data-panelid={panel.editSourceId}>
                     <DashboardPanel
                       dashboard={dashboard}
                       panel={panel}
                       isEditing={true}
                       isViewing={false}
                       isInView={true}
-                      width={width}
-                      height={height}
+                      width={panelSize.width}
+                      height={panelSize.height}
                     />
                   </div>
                 </div>

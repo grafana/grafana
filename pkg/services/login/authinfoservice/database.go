@@ -5,10 +5,12 @@ import (
 	"encoding/base64"
 	"time"
 
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var getTime = time.Now
@@ -59,15 +61,15 @@ func (s *Implementation) GetAuthInfo(query *models.GetAuthInfoQuery) error {
 		return models.ErrUserNotFound
 	}
 
-	secretAccessToken, err := decodeAndDecrypt(userAuth.OAuthAccessToken)
+	secretAccessToken, err := s.decodeAndDecrypt(userAuth.OAuthAccessToken)
 	if err != nil {
 		return err
 	}
-	secretRefreshToken, err := decodeAndDecrypt(userAuth.OAuthRefreshToken)
+	secretRefreshToken, err := s.decodeAndDecrypt(userAuth.OAuthRefreshToken)
 	if err != nil {
 		return err
 	}
-	secretTokenType, err := decodeAndDecrypt(userAuth.OAuthTokenType)
+	secretTokenType, err := s.decodeAndDecrypt(userAuth.OAuthTokenType)
 	if err != nil {
 		return err
 	}
@@ -169,18 +171,17 @@ func (s *Implementation) DeleteAuthInfo(cmd *models.DeleteAuthInfoCommand) error
 	})
 }
 
-// decodeAndDecrypt will decode the string with the standard bas64 decoder
-// and then decrypt it with grafana's secretKey
-func decodeAndDecrypt(s string) (string, error) {
+// decodeAndDecrypt will decode the string with the standard base64 decoder and then decrypt it
+func (s *Implementation) decodeAndDecrypt(str string) (string, error) {
 	// Bail out if empty string since it'll cause a segfault in util.Decrypt
-	if s == "" {
+	if str == "" {
 		return "", nil
 	}
-	decoded, err := base64.StdEncoding.DecodeString(s)
+	decoded, err := base64.StdEncoding.DecodeString(str)
 	if err != nil {
 		return "", err
 	}
-	decrypted, err := util.Decrypt(decoded)
+	decrypted, err := s.EncryptionService.Decrypt(decoded, setting.SecretKey)
 	if err != nil {
 		return "", err
 	}

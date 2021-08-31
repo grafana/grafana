@@ -9,19 +9,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/grafana/grafana/pkg/registry"
-
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/crypto/pbkdf2"
 )
-
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "OSSEncryptionService",
-		Instance:     &OSSEncryptionService{},
-		InitPriority: registry.High,
-	})
-}
 
 const saltLength = 8
 

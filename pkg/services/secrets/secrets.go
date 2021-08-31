@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	_ "github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/encryption"
 	"github.com/grafana/grafana/pkg/services/secrets/types"
@@ -20,14 +19,6 @@ import (
 )
 
 var logger = log.New("secrets")
-
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "SecretsService",
-		Instance:     &SecretsService{},
-		InitPriority: registry.High,
-	})
-}
 
 type SecretsStore interface {
 	GetDataKey(ctx context.Context, name string) (*types.DataKey, error)

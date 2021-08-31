@@ -9,7 +9,7 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { Annotation } from '../../utils/constants';
 import { RuleState } from './RuleState';
 import { RuleHealth } from './RuleHealth';
-import { DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 
 type RuleTableColumnProps = DynamicTableColumnProps<CombinedRule>;
@@ -57,9 +57,11 @@ export const RulesTable: FC<Props> = ({
     return <div className={cx(wrapperClass, styles.emptyMessage)}>{emptyMessage}</div>;
   }
 
+  const TableComponent = showGuidelines ? DynamicTableWithGuidelines : DynamicTable;
+
   return (
     <div className={wrapperClass} data-testid="rules-table">
-      <DynamicTableWithGuidelines
+      <TableComponent
         cols={columns}
         isExpandable={true}
         items={items}
