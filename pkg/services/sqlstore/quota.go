@@ -41,7 +41,7 @@ func GetOrgQuotaByTarget(query *models.GetOrgQuotaByTargetQuery) error {
 	}
 
 	var used int64
-	if query.Target != alertRuleTarget || query.IsNgAlertEnabled {
+	if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 		// get quota used.
 		rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s WHERE org_id=?",
 			dialect.Quote(query.Target))
@@ -94,7 +94,7 @@ func GetOrgQuotas(query *models.GetOrgQuotasQuery) error {
 	result := make([]*models.OrgQuotaDTO, len(quotas))
 	for i, q := range quotas {
 		var used int64
-		if q.Target != alertRuleTarget || query.IsNgAlertEnabled {
+		if q.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 			// get quota used.
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(q.Target))
 			resp := make([]*targetCount, 0)
@@ -158,7 +158,7 @@ func GetUserQuotaByTarget(query *models.GetUserQuotaByTargetQuery) error {
 	}
 
 	var used int64
-	if query.Target != alertRuleTarget || query.IsNgAlertEnabled {
+	if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 		// get quota used.
 		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(query.Target))
 		resp := make([]*targetCount, 0)
@@ -205,7 +205,7 @@ func GetUserQuotas(query *models.GetUserQuotasQuery) error {
 	result := make([]*models.UserQuotaDTO, len(quotas))
 	for i, q := range quotas {
 		var used int64
-		if q.Target != alertRuleTarget || query.IsNgAlertEnabled {
+		if q.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 			// get quota used.
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(q.Target))
 			resp := make([]*targetCount, 0)
@@ -258,7 +258,7 @@ func UpdateUserQuota(cmd *models.UpdateUserQuotaCmd) error {
 
 func GetGlobalQuotaByTarget(query *models.GetGlobalQuotaByTargetQuery) error {
 	var used int64
-	if query.Target != alertRuleTarget || query.IsNgAlertEnabled {
+	if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 		// get quota used.
 		rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s",
 			dialect.Quote(query.Target))

@@ -45,10 +45,8 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 
 	_, migrationRun := logs[migTitle]
 
-	ngEnabled := mg.Cfg.IsNgAlertEnabled()
-
 	switch {
-	case ngEnabled && !migrationRun:
+	case mg.Cfg.UnifiedAlertingEnabled && !migrationRun:
 		// Remove the migration entry that removes all unified alerting data. This is so when the feature
 		// flag is removed in future the "remove unified alerting data" migration will be run again.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, rmMigTitle), &clearMigrationEntry{
@@ -62,7 +60,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
 			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
 		})
-	case !ngEnabled && migrationRun:
+	case !mg.Cfg.UnifiedAlertingEnabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, migTitle), &clearMigrationEntry{
@@ -89,10 +87,8 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 
 	_, migrationRun := logs[cloneMigTitle]
 
-	ngEnabled := mg.Cfg.IsNgAlertEnabled()
-
 	switch {
-	case ngEnabled && !migrationRun:
+	case mg.Cfg.UnifiedAlertingEnabled && !migrationRun:
 		// Removes all unified alerting data.  It is not recorded so when the feature
 		// flag is removed in future the "clone remove unified alerting data" migration will be run again.
 		mg.AddMigration(cloneRmMigTitle, &rmMigrationWithoutLogging{})
@@ -103,7 +99,7 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
 		})
 
-	case !ngEnabled && migrationRun:
+	case !mg.Cfg.UnifiedAlertingEnabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, cloneMigTitle), &clearMigrationEntry{

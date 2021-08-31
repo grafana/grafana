@@ -1103,6 +1103,10 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{< relref "../alerting/unified-alerting/_index.md" >}}).
 
+### enabled
+
+Set to `false` to disable Grafana 8 alerts. Default is `true`.
+
 ### admin_config_poll_interval_seconds
 
 Specify the frequency of polling for admin config changes. The default value is `60`.
@@ -1115,7 +1119,7 @@ For more information about the Alerting feature in Grafana, refer to [Alerts ove
 
 ### enabled
 
-Set to `false` to disable alerting engine and hide Alerting in the Grafana UI. Default is `true`.
+Set to `true` to enable legacy alerting engine. Default is `false`.
 
 ### execute_alerts
 
@@ -1661,7 +1665,7 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `ngalert`
+Keys of alpha features to enable, separated by space.
 
 ## [date_formats]
 

@@ -162,5 +162,5 @@ func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
 		return true
 	}
-	return !ng.Cfg.IsNgAlertEnabled()
+	return !ng.Cfg.UnifiedAlertingEnabled
 }

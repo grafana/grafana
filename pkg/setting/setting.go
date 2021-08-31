@@ -416,17 +416,13 @@ type Cfg struct {
 	GeomapEnableCustomBaseLayers bool
 
 	// Unified Alerting
+	UnifiedAlertingEnabled  bool
 	AdminConfigPollInterval time.Duration
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
 func (cfg Cfg) IsLiveConfigEnabled() bool {
 	return cfg.FeatureToggles["live-config"]
-}
-
-// IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
-func (cfg Cfg) IsNgAlertEnabled() bool {
-	return cfg.FeatureToggles["ngalert"]
 }
 
 // IsTrimDefaultsEnabled returns whether the standalone trim dashboard default feature is enabled.
@@ -1384,6 +1380,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 
 func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
 	ua := iniFile.Section("unified_alerting")
+	cfg.UnifiedAlertingEnabled = ua.Key("enabled").MustBool(true)
 	s := ua.Key("admin_config_poll_interval_seconds").MustInt(60)
 	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
 	return nil
@@ -1391,7 +1388,7 @@ func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
 
 func readAlertingSettings(iniFile *ini.File) error {
 	alerting := iniFile.Section("alerting")
-	AlertingEnabled = alerting.Key("enabled").MustBool(true)
+	AlertingEnabled = alerting.Key("enabled").MustBool(false)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
 	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
 
