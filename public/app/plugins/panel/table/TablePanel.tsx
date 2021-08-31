@@ -133,7 +133,7 @@ export class TablePanel extends Component<Props> {
     const currentIndex = this.getCurrentFrameIndex(data.series);
     return getFieldDisplayValues({
       fieldConfig,
-      reduceOptions: options.reduceOptions || [],
+      reduceOptions: options.reduceOptions || { calcs: [] },
       replaceVariables,
       theme: config.theme2,
       data: [data.series[currentIndex]],
@@ -145,6 +145,9 @@ export class TablePanel extends Component<Props> {
     const { options } = this.props;
 
     const summary = options.reduceOptions;
+    if (summary === undefined) {
+      return [];
+    }
     const fields = options.footerSummary?.fields;
 
     if (Array.isArray(summary.calcs) && summary.calcs.length === 0) {

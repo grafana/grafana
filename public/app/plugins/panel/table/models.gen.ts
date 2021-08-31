@@ -33,7 +33,7 @@ export interface PanelOptions {
   footerFrame?: number;
   footerSummary?: TableFooterSummary; // TODO: should be array (options builder is limited)
   footerLabelMode?: FooterLabelMode;
-  reduceOptions: ReduceDataOptions;
+  reduceOptions?: ReduceDataOptions;
 }
 
 interface TableFooterSummary {
