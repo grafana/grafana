@@ -146,7 +146,7 @@ steps:
   depends_on:
   - package
 
-- name: test-a11y-frontend
+- name: test-a11y-frontend-pr
   image: buildkite/puppeteer
   commands:
   - yarn wait-on http://$HOST:$PORT
@@ -3491,6 +3491,6 @@ get:
 
 ---
 kind: signature
-hmac: ce5692c682615ca08f7ca094c1e9639369295c65ff1cf8ee6c68fb9af5e0bc60
+hmac: fd69d54f8f2e784fc9fb9fb36411ee99f2005b30fdc4da7071243fed23ae1719
 
 ...
