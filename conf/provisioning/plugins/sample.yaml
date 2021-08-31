@@ -1,5 +1,6 @@
 # # config file version
 apiVersion: 1
+
 # apps:
 #   - type: grafana-example-app
 #     org_name: Main Org.
@@ -8,10 +9,3 @@ apiVersion: 1
 #     org_id: 1
 #     jsonData:
 #       apiKey: "API KEY"
-
-# aws.yaml
-# apiVersion: 1
-
-# apps:
-#   - type: aws-datasource-provisioner-app
-#     disabled: false

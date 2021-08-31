@@ -1,5 +1,6 @@
   postgres:
     image: postgres:${postgres_version}
+    network_mode: bridge
     environment:
       POSTGRES_USER: grafana
       POSTGRES_PASSWORD: password
