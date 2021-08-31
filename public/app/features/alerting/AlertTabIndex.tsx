@@ -4,4 +4,4 @@ import { PanelAlertTabContent } from './unified/PanelAlertTabContent';
 
 // route between unified and "old" alerting pages based on feature flag
 
-export default config.featureToggles.ngalert ? PanelAlertTabContent : AlertTab;
+export default config.unifiedAlertingEnabled ? PanelAlertTabContent : AlertTab;

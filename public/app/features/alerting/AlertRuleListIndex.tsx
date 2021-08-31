@@ -4,4 +4,4 @@ import AlertRuleList from './AlertRuleList';
 
 // route between unified and "old" alerting pages based on feature flag
 
-export default config.featureToggles.ngalert ? RuleList : AlertRuleList;
+export default config.unifiedAlertingEnabled ? RuleList : AlertRuleList;

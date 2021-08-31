@@ -223,4 +223,4 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     });
 });
 
-export const plugin = config.featureToggles.ngalert ? unifiedAlertList : alertList;
+export const plugin = config.unifiedAlertingEnabled ? unifiedAlertList : alertList;
