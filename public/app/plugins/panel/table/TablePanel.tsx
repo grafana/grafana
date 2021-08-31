@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-
 import { Select, Table } from '@grafana/ui';
 import {
   DataFrame,
@@ -8,12 +7,12 @@ import {
   getFrameDisplayName,
   PanelProps,
   SelectableValue,
-  Vector,
-  vectorator,
   KeyValue,
   formattedValueToString,
   Field,
   DynamicConfigValue,
+  getFieldDisplayValues,
+  FieldDisplay,
 } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { css } from '@emotion/css';
@@ -129,43 +128,70 @@ export class TablePanel extends Component<Props> {
     return undefined;
   }
 
+  getValues = (): FieldDisplay[] => {
+    const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
+    const currentIndex = this.getCurrentFrameIndex(data.series);
+    return getFieldDisplayValues({
+      fieldConfig,
+      reduceOptions: options.reduceOptions || [],
+      replaceVariables,
+      theme: config.theme2,
+      data: [data.series[currentIndex]],
+      timeZone,
+    });
+  };
+
   getSummaryFooterValues(frame: DataFrame) {
     const { options } = this.props;
 
-    const summary = options.footerSummary!;
+    const summary = options.reduceOptions;
     const fields = options.footerSummary?.fields;
 
+    if (Array.isArray(summary.calcs) && summary.calcs.length === 0) {
+      return [];
+    }
     // calculate the cells
     const cells = frame.fields.map((f, i) => {
       if (fields || fields === '') {
         if (fields.includes('') && f.type === FieldType.number) {
-          return this.calculateSummaryCell(i, summary.reducer, f);
+          return this.calculateSummaryCell(i);
         }
         if (fields.includes(f.name)) {
-          return this.calculateSummaryCell(i, summary.reducer, f);
+          return this.calculateSummaryCell(i);
         }
-        if (i === 0) {
-          return summary.reducer.toUpperCase();
+        if (i === 0 && summary.calcs && summary.calcs.length > 0) {
+          const reducer = summary.calcs[0];
+          const formatted = this.capitalizeFirstLetter(reducer.replace(/([A-Z])/g, ' $1').trim());
+          return formatted;
         }
       }
-      return;
+      return [];
     });
 
     // if there are no multi-value cells, don't show the label in the cell
     // it will be shown on the first column
     const multiValue = cells.find((cell) => Array.isArray(cell) && cell.length > 1);
     if (!multiValue) {
-      const clean = cells.map((cell) => {
+      const reducer = summary.calcs[0];
+      const formatted = this.capitalizeFirstLetter(reducer.replace(/([A-Z])/g, ' $1').trim());
+      const clean = cells.map((cell, i) => {
         if (Array.isArray(cell) && cell.length > 0) {
           const cellValue = cell[0];
           const key: string = Object.keys(cellValue)[0];
           return cellValue[key];
+        }
+        if (i === 0 && cell === '') {
+          return formatted;
         }
         return cell;
       });
       return clean;
     }
     return cells;
+  }
+
+  capitalizeFirstLetter(value: string) {
+    return value.charAt(0).toUpperCase() + value.slice(1);
   }
 
   // get the footer cells from data provided by another frame (pre-calculated)
@@ -209,9 +235,9 @@ export class TablePanel extends Component<Props> {
     return cells;
   }
 
-  getSummaryList(summaryProps: DynamicConfigValue[], fieldIndex: number, f: Field) {
+  getSummaryList(summaryProps: DynamicConfigValue[], fieldIndex: number) {
     const summaries = summaryProps.map((o: any) => {
-      return this.calculateSummaryCell(fieldIndex, o.value, f);
+      return this.calculateSummaryCell(fieldIndex);
     });
     return summaries;
   }
@@ -222,53 +248,19 @@ export class TablePanel extends Component<Props> {
     return [value];
   }
 
-  calculateSummaryCell(i: number, functionName: string, f: Field): FooterItem {
-    if (functionName === '') {
+  calculateSummaryCell(i: number): FooterItem {
+    const values = this.getValues();
+    const value = values.find((v) => v.colIndex === i);
+    if (value === undefined) {
       return undefined;
     }
 
-    if (functionName && functionName !== 'avg') {
-      const kv = this as KeyValue;
-      const func: Function = kv[functionName];
-      const val = this.calculate(f.values, func);
-      const formatted = this.format(val, f);
-      return [{ [functionName]: formatted }];
-    }
-
-    const val = this.mean(f.values);
-    const formatted = this.format(val, f) as string;
-    return [{ [functionName]: formatted }];
+    return [{ [value.name]: value.display.text }];
   }
 
   format(val: number, f: Field) {
     const displayValue = f.display ? f.display(val) : { text: String(val) };
     return f.display ? formattedValueToString(displayValue) : displayValue.text;
-  }
-
-  calculate(values: Vector<any>, func: Function) {
-    let calc = 0;
-    const itr = vectorator(values);
-    for (const v of itr) {
-      calc = func(calc, v);
-    }
-    return calc;
-  }
-
-  sum(acc: number, v: number) {
-    return (acc += v);
-  }
-
-  min(v: number, n: number) {
-    return v < n ? v : n;
-  }
-
-  max(v: number, n: number) {
-    return v > n ? v : n;
-  }
-
-  mean(values: Vector<any>) {
-    const sum = this.calculate(values, this.sum);
-    return sum / values.length;
   }
 
   getCurrentFrameIndex(frames: DataFrame[]) {
@@ -282,6 +274,7 @@ export class TablePanel extends Component<Props> {
 
     let frames = data.series;
     let count = frames?.length;
+    // if using a frame as the footer, don't show it in the select list
     if (options.footerMode === 'frame' && count > 1) {
       frames = frames.filter((f) => f.name !== options.footerFrame);
       count = frames.length;

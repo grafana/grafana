@@ -1,4 +1,10 @@
-import { FieldOverrideContext, getFieldDisplayName, PanelPlugin } from '@grafana/data';
+import {
+  FieldOverrideContext,
+  getFieldDisplayName,
+  PanelPlugin,
+  ReducerID,
+  standardEditorsRegistry,
+} from '@grafana/data';
 import { TablePanel } from './TablePanel';
 import { PanelOptions, PanelFieldConfig, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
@@ -96,20 +102,14 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
         },
         defaultValue: 'none',
       })
-      .addSelect({
+      .addCustomEditor({
         category: ['Table footer'],
-        path: 'footerSummary.reducer',
+        id: 'reduceOptions.calcs',
+        path: 'reduceOptions.calcs',
         name: 'Summarize',
-        description: 'Summarize values on footer',
-        settings: {
-          options: [
-            { value: 'min', label: 'Min' },
-            { value: 'max', label: 'Max' },
-            { value: 'sum', label: 'Sum' },
-            { value: 'avg', label: 'Avg' },
-          ],
-        },
-        defaultValue: 'sum',
+        description: 'Choose a reducer function / calculation',
+        editor: standardEditorsRegistry.get('stats-picker').editor as any,
+        defaultValue: [ReducerID.sum],
         showIf: (cfg) => cfg.footerMode === 'summary',
       })
       .addMultiSelect({

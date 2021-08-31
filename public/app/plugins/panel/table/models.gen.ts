@@ -4,6 +4,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 import { TableCellDisplayMode, TableSortByFieldState } from '@grafana/ui';
+import { ReduceDataOptions } from '@grafana/data';
 
 // Only the latest schema version is translated to TypeScript, on the premise
 // that either the dashboard loading process, or (eventually) CUE-defined
@@ -19,6 +20,7 @@ export interface PanelOptions {
   footerFrame?: number;
   footerSummary?: TableFooterSummary; // TODO: should be array (options builder is limited)
   footerLabelMode?: 'auto' | 'first' | 'inline';
+  reduceOptions: ReduceDataOptions;
 }
 
 interface TableFooterSummary {
@@ -29,6 +31,7 @@ interface TableFooterSummary {
 export const defaultPanelOptions: PanelOptions = {
   frameIndex: 0,
   showHeader: true,
+  reduceOptions: { calcs: [] },
 };
 
 export interface PanelFieldConfig {
