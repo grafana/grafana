@@ -1,6 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
 
-import { Playlist } from './types';
+import { Playlist, PlaylistDTO } from './types';
 import { dispatch } from '../../store/store';
 import { notifyApp } from '../../core/actions';
 import { createErrorNotification, createSuccessNotification } from '../../core/copy/appNotification';
@@ -19,6 +19,11 @@ export async function deletePlaylist(id: number) {
 
 export async function getPlaylist(id: number): Promise<Playlist> {
   const result: Playlist = await getBackendSrv().get(`/api/playlists/${id}`);
+  return result;
+}
+
+export async function getAllPlaylist(query: string): Promise<PlaylistDTO[]> {
+  const result: PlaylistDTO[] = await getBackendSrv().get('/api/playlists/', query);
   return result;
 }
 

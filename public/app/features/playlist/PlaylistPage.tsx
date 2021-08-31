@@ -6,13 +6,12 @@ import { StoreState } from 'app/types';
 import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useAsync } from 'react-use';
-import { getBackendSrv } from '@grafana/runtime';
 import { PlaylistDTO } from './types';
 import { Button, Card, ConfirmModal, LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
-import { deletePlaylist } from './api';
+import { deletePlaylist, getAllPlaylist } from './api';
 import { StartModal } from './StartModal';
 
 interface ConnectedProps {
@@ -28,7 +27,7 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   const [forcePlaylistsFetch, setForcePlaylistsFetch] = useState(0);
 
   const { value: playlists, loading } = useAsync(async () => {
-    return getBackendSrv().get('/api/playlists', { query: searchQuery }) as Promise<PlaylistDTO[]>;
+    return getAllPlaylist(searchQuery) as Promise<PlaylistDTO[]>;
   }, [forcePlaylistsFetch]);
   const hasPlaylists = playlists && playlists.length > 0;
   const setPlaylistItemToDelete = () => setPlaylistToDelete(undefined);
