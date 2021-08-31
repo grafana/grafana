@@ -3,17 +3,14 @@ package influxdb
 import (
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 type InfluxdbQueryParser struct{}
 
-func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery, dsInfo *models.DatasourceInfo) (*Query, error) {
+func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery) (*Query, error) {
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't unmarshal query")
@@ -47,32 +44,6 @@ func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery, dsInfo *models.Dat
 		return nil, err
 	}
 
-	interval := query.Interval
-
-	// in old-alert use-case query.Interval is zero.
-	// for this case, to be backawrd-compatible,
-	// we calculate the final alert based on:
-	// - time-range
-	// - min-interval in json
-	// - min-interval from data-source-config
-	if interval == 0*time.Nanosecond {
-		panelMinInterval := model.Get("interval").MustString("")
-		dataSourceMinInterval := dsInfo.TimeInterval
-
-		minInterval, err := tsdb.GetIntervalFrom(dataSourceMinInterval, panelMinInterval, 0, time.Millisecond*1)
-		if err != nil {
-			return nil, err
-		}
-
-		calculator := tsdb.NewCalculator(tsdb.CalculatorOptions{})
-		calculatedInterval, err := calculator.Calculate(query.TimeRange, minInterval, tsdb.Min)
-		if err != nil {
-			return nil, err
-		}
-
-		interval = calculatedInterval.Value
-	}
-
 	return &Query{
 		Measurement:  measurement,
 		Policy:       policy,
@@ -81,7 +52,7 @@ func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery, dsInfo *models.Dat
 		Tags:         tags,
 		Selects:      selects,
 		RawQuery:     rawQuery,
-		Interval:     interval,
+		Interval:     query.Interval,
 		Alias:        alias,
 		UseRawQuery:  useRawQuery,
 		Tz:           tz,

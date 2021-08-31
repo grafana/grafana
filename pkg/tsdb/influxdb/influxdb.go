@@ -159,7 +159,7 @@ func (s *Service) getQuery(dsInfo *models.DatasourceInfo, query *backend.QueryDa
 
 	q := query.Queries[0]
 
-	return s.QueryParser.Parse(q, dsInfo)
+	return s.QueryParser.Parse(q)
 }
 
 func (s *Service) createRequest(ctx context.Context, dsInfo *models.DatasourceInfo, query string) (*http.Request, error) {
