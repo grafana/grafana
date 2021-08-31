@@ -1,3 +1,4 @@
+import { map } from 'lodash';
 import { rangeUtil } from '@grafana/data';
 import TimegrainConverter from '../time_grain_converter';
 import { AzureMonitorOption } from '../types';
@@ -36,3 +37,26 @@ export const routeNames = {
   appInsights: 'appinsights',
   resourceGraph: 'resourcegraph',
 };
+
+export function interpolateVariable(value: any, variable: { multi: any; includeAll: any }) {
+  if (typeof value === 'string') {
+    if (variable.multi || variable.includeAll) {
+      return "'" + value + "'";
+    } else {
+      return value;
+    }
+  }
+
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  const quotedValues = map(value, (val) => {
+    if (typeof value === 'number') {
+      return value;
+    }
+
+    return "'" + val + "'";
+  });
+  return quotedValues.join(',');
+}

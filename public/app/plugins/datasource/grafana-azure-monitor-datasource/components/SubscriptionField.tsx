@@ -69,7 +69,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
       <MultiSelect
         menuShouldPortal
         isClearable
-        value={findOptions(subscriptions, query.subscriptions)}
+        value={findOptions([...subscriptions, ...variableOptionGroup.options], query.subscriptions)}
         inputId="azure-monitor-subscriptions-field"
         onChange={onSubscriptionsChange}
         options={options}
