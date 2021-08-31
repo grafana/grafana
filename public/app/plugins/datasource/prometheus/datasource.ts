@@ -311,6 +311,21 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return this.panelsQuery(queries, activeTargets, end, options.requestId, options.scopedVars);
   }
 
+  private toDataQueryResponse = (
+    query: PromQueryRequest,
+    target: PromQuery,
+    responseListLength: number,
+    scopedVars?: ScopedVars
+  ) => (response: FetchResponse<PromDataSuccessResponse | PromDataErrorResponse>): DataQueryResponse => ({
+    data: transform(response, {
+      query,
+      target,
+      responseListLength,
+      exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
+      scopedVars,
+    }),
+  });
+
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
     let runningQueriesCount = queries.length;
 
@@ -321,51 +336,24 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         // Decrease the counter here. We assume that each request returns only single value and then completes
         // (should hold until there is some streaming requests involved).
         tap(() => runningQueriesCount--),
-        filter((response: any) => (response.cancelled ? false : true)),
-        map((response: any) => {
-          const data = transform(response, {
-            query,
-            target,
-            responseListLength: queries.length,
-            exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
-          });
-
-          // Add an error message if the current interval is below the safe interval
-          if (this.isBelowSafeInterval(query, target)) {
+        filter(isValidResponse),
+        map(this.toDataQueryResponse(query, target, queries.length)),
+        map(addIntervalError(query, target)),
+        map(
+          (data: DataQueryResponse): DataQueryResponse => {
             return {
-              data,
+              ...data,
               key: query.requestId,
-              state: LoadingState.Done,
-              error: {
-                message: `The specified ${target.interval} step interval is lower than the safe interval and has automatically been set to ${query.step}s. Consider adjusting the interval or the time range`,
-              },
+              state: runningQueriesCount === 0 ? LoadingState.Done : LoadingState.Loading,
             };
           }
-
-          return {
-            data,
-            key: query.requestId,
-            state: runningQueriesCount === 0 ? LoadingState.Done : LoadingState.Loading,
-          };
-        })
+        )
       );
 
       return this.runQuery(query, end, filterAndMapResponse);
     });
 
     return merge(...subQueries);
-  }
-
-  // Check if the current interval is below safe interval
-  private isBelowSafeInterval(query: PromQueryRequest, target: PromQuery) {
-    if (query.step && target.interval && target.stepMode) {
-      const currentStepInterval = query.step;
-      const targetStepInterval = rangeUtil.intervalToSeconds(target.interval);
-
-      return target.stepMode !== 'min' && currentStepInterval > targetStepInterval;
-    }
-
-    return false;
   }
 
   private panelsQuery(
@@ -375,36 +363,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     requestId: string,
     scopedVars: ScopedVars
   ) {
-    console.log(queries);
     const observables = queries.map((query, index) => {
       const target = activeTargets[index];
 
       const filterAndMapResponse = pipe(
-        filter((response: any) => (response.cancelled ? false : true)),
-        map(
-          (response: any): DataQueryResponse => {
-            const data = transform(response, {
-              query,
-              target,
-              responseListLength: queries.length,
-              scopedVars,
-              exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
-            });
-
-            if (this.isBelowSafeInterval(query, target)) {
-              return {
-                data,
-                error: {
-                  message: `The specified ${target.interval} step interval is lower than the safe interval and has automatically been set to ${query.step}s. Consider adjusting the interval or the time range`,
-                },
-              };
-            }
-
-            return {
-              data,
-            };
-          }
-        )
+        filter(isValidResponse),
+        map(this.toDataQueryResponse(query, target, queries.length, scopedVars)),
+        map(addIntervalError(query, target))
       );
 
       return this.runQuery(query, end, filterAndMapResponse);
@@ -944,4 +909,46 @@ export function prometheusRegularEscape(value: any) {
 
 export function prometheusSpecialRegexEscape(value: any) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
+}
+
+/**
+ * Given a FetchError or a FetchResponse, checks if the response is processable.
+ * A prometheus response with an error may contain data, so we consider unprocessable only FetchErrors
+ * that has been canceled by Grafana, as they won't contain any data to process.
+ */
+function isValidResponse(response: FetchError | FetchResponse) {
+  return !isFetchErrorResponse(response) || !response.cancelled;
+}
+
+/**
+ * Given a PromtheusQueryRequest and its original target, checks if the interval parameter has
+ * been set to a lower value than the one specified in the `target`
+ */
+function isTargetIntervalBelowSafeInterval(query: PromQueryRequest, target: PromQuery) {
+  if (query.step && target.interval && target.stepMode) {
+    const targetStepInterval = rangeUtil.intervalToSeconds(target.interval);
+
+    return target.stepMode !== 'min' && query.step > targetStepInterval;
+  }
+
+  return false;
+}
+
+/**
+ * Given a Prometheus query request and its corresponding target, returns a function that enriches a DataQueryResponse
+ * with information regarding changes in the interval parameter.
+ */
+function addIntervalError(query: PromQueryRequest, target: PromQuery) {
+  return (data: DataQueryResponse): DataQueryResponse => {
+    if (isTargetIntervalBelowSafeInterval(query, target)) {
+      return {
+        ...data,
+        error: {
+          message: `The specified ${target.interval} step interval is lower than the safe interval and has automatically been set to ${query.step}s. Consider adjusting the interval or the time range`,
+        },
+      };
+    }
+
+    return data;
+  };
 }
