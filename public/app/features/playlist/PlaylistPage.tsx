@@ -30,8 +30,8 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
     return getAllPlaylist(searchQuery) as Promise<PlaylistDTO[]>;
   }, [forcePlaylistsFetch]);
   const hasPlaylists = playlists && playlists.length > 0;
-  const setPlaylistItemToDelete = () => setPlaylistToDelete(undefined);
-  const canDeletePlaylist = () => {
+  const onDismissDelete = () => setPlaylistToDelete(undefined);
+  const onDeletePlaylist = () => {
     playlistToDelete &&
       deletePlaylist(playlistToDelete?.id).finally(() => {
         setForcePlaylistsFetch(forcePlaylistsFetch + 1);
@@ -98,9 +98,9 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
             title={playlistToDelete.name}
             confirmText="delete"
             body={`Are you sure you want to delete '${playlistToDelete.name}' playlist?`}
-            onConfirm={canDeletePlaylist}
+            onConfirm={onDeletePlaylist}
             isOpen={Boolean(playlistToDelete)}
-            onDismiss={setPlaylistItemToDelete}
+            onDismiss={onDismissDelete}
           />
         )}
         {startPlaylist && <StartModal playlist={startPlaylist} onDismiss={() => setStartPlaylist(undefined)} />}
