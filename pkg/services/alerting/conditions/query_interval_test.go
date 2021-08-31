@@ -30,6 +30,8 @@ func TestQueryInterval(t *testing.T) {
 			var dataSourceJson *simplejson.Json = nil
 
 			verifier := func(query plugins.DataSubQuery) {
+				// 5minutes timerange = 300000milliseconds; default-resolution is 1500pixels,
+				// so we should have 300000/1500 = 200milliseconds here
 				So(query.IntervalMS, ShouldEqual, 200)
 				So(query.MaxDataPoints, ShouldEqual, 1500)
 			}
