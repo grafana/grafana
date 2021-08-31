@@ -1,4 +1,4 @@
-import React, { Component, ReactNode } from 'react';
+import React, { Component } from 'react';
 
 import { Select, Table } from '@grafana/ui';
 import {
@@ -18,18 +18,12 @@ import {
 import { PanelOptions } from './models.gen';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
-import { FilterItem, TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
+import { FilterItem, FooterItem, TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 import { dispatch } from '../../../store/store';
 import { applyFilterFromTable } from '../../../features/variables/adhoc/actions';
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
-import { SummaryCell } from './SummaryCell';
 
 interface Props extends PanelProps<PanelOptions> {}
-
-interface Footer {
-  cells?: ReactNode[];
-  height?: number;
-}
 
 export class TablePanel extends Component<Props> {
   footerHeight = undefined;
@@ -101,7 +95,7 @@ export class TablePanel extends Component<Props> {
   renderTable(frame: DataFrame, width: number, height: number) {
     const { options } = this.props;
 
-    const footer = this.getFooter(frame);
+    const footerValues = this.getFooterValues(frame);
 
     return (
       <Table
@@ -114,53 +108,75 @@ export class TablePanel extends Component<Props> {
         onSortByChange={this.onSortByChange}
         onColumnResize={this.onColumnResize}
         onCellFilterAdded={this.onCellFilterAdded}
-        footerValues={footer.cells}
-        footerHeight={footer.height}
+        footerValues={footerValues}
       />
     );
   }
 
-  getFooter(frame: DataFrame): Footer {
+  getFooterValues(frame: DataFrame): FooterItem[] | undefined {
     const { options } = this.props;
 
     if (options.footerMode === 'none') {
-      return { cells: undefined };
+      return undefined;
     }
 
     if (options.footerMode === 'frame') {
-      return this.getProvidedFooter(frame);
+      return this.getProvidedFooterValues(frame);
     }
 
     if (options.footerMode === 'summary') {
-      const summary = options.footerSummary!;
-      const fields = options.footerSummary?.fields;
-      const cells = frame.fields.map((f, i) => {
-        if (fields || fields === '') {
-          if (fields.includes('') && f.type === FieldType.number) {
-            return this.calculateSummaryCell(i, summary.reducer, f, false);
-          }
-          if (fields.includes(f.name)) {
-            return this.calculateSummaryCell(i, summary.reducer, f, false);
-          }
-          if (i === 0) {
-            return summary.reducer.toUpperCase();
-          }
-        }
-        return;
-      });
-      return { cells };
+      return this.getSummaryFooterValues(frame);
     }
 
-    return { cells: undefined };
+    return undefined;
   }
 
-  // get the footer cells from data provided by another frame
-  getProvidedFooter(frame: DataFrame): Footer {
+  getSummaryFooterValues(frame: DataFrame) {
+    const { options } = this.props;
+
+    const summary = options.footerSummary!;
+    const fields = options.footerSummary?.fields;
+
+    // calculate the cells
+    const cells = frame.fields.map((f, i) => {
+      if (fields || fields === '') {
+        if (fields.includes('') && f.type === FieldType.number) {
+          return this.calculateSummaryCell(i, summary.reducer, f);
+        }
+        if (fields.includes(f.name)) {
+          return this.calculateSummaryCell(i, summary.reducer, f);
+        }
+        if (i === 0) {
+          return summary.reducer.toUpperCase();
+        }
+      }
+      return;
+    });
+
+    // if there are no multi-value cells, don't show the label in the cell
+    // it will be shown on the first column
+    const multiValue = cells.find((cell) => Array.isArray(cell) && cell.length > 1);
+    if (!multiValue) {
+      const clean = cells.map((cell) => {
+        if (Array.isArray(cell) && cell.length > 0) {
+          const cellValue = cell[0];
+          const key: string = Object.keys(cellValue)[0];
+          return cellValue[key];
+        }
+        return cell;
+      });
+      return clean;
+    }
+    return cells;
+  }
+
+  // get the footer cells from data provided by another frame (pre-calculated)
+  getProvidedFooterValues(frame: DataFrame): FooterItem[] | undefined {
     const { options, data } = this.props;
 
     const summaryFrame = data.series.find((f) => f.name === options.footerFrame);
     if (summaryFrame === undefined) {
-      return { cells: undefined };
+      return undefined;
     }
 
     // group cells by field for multi value cells
@@ -170,7 +186,7 @@ export class TablePanel extends Component<Props> {
         const referenceField: string = sf.config?.custom?.['referenceField'];
         const reducer: string = sf.config?.custom?.['reducer'];
         if (referenceField === f.name) {
-          const cell = this.getSummaryCell(i, reducer, sf, true);
+          const cell = this.getSummaryCell(i, reducer, sf);
           const fieldCells = cellsByField[referenceField] || [];
           fieldCells.push(cell);
           cellsByField[referenceField] = fieldCells;
@@ -180,58 +196,35 @@ export class TablePanel extends Component<Props> {
       }
     });
 
-    let height: number | undefined;
     const cells = frame.fields.map((f, i) => {
       const fieldCells = cellsByField[f.name];
       if (fieldCells === undefined) {
         if (i === 0) {
-          // set the first col val to "Total" if not set
+          // set the first col val to "Total" if not in use
           return 'Total';
         }
         return;
       }
-      if (fieldCells.length > 1) {
-        const expandedHeight = fieldCells.length * 27;
-        height = height || 0;
-        if (height < expandedHeight) {
-          height = expandedHeight;
-        }
-      }
-      return this.getProvidedList(fieldCells);
+      return fieldCells;
     });
 
-    return { cells, height };
-  }
-
-  getProvidedList(summaries: ReactNode[]) {
-    return (
-      <ul style={{ listStyle: 'none', width: '100%' }}>
-        {summaries.map((s: ReactNode, idx: number) => {
-          return <li key={idx}>{s}</li>;
-        })}
-      </ul>
-    );
+    return cells;
   }
 
   getSummaryList(summaryProps: DynamicConfigValue[], fieldIndex: number, f: Field) {
     const summaries = summaryProps.map((o: any) => {
-      return this.calculateSummaryCell(fieldIndex, o.value, f, false);
+      return this.calculateSummaryCell(fieldIndex, o.value, f);
     });
-    return (
-      <ul style={{ listStyle: 'none', width: '100%' }}>
-        {summaries.map((s: ReactNode, idx: number) => {
-          return <li key={idx}>{s}</li>;
-        })}
-      </ul>
-    );
+    return summaries;
   }
 
-  getSummaryCell(i: number, functionName: string, f: Field, showLabel: boolean) {
+  getSummaryCell(i: number, functionName: string, f: Field): FooterItem {
     const formatted = this.format(f.values.get(0), f);
-    return <SummaryCell key={i} func={functionName} value={formatted} showLabel={showLabel}></SummaryCell>;
+    const value: KeyValue<string> = { [functionName]: formatted };
+    return [value];
   }
 
-  calculateSummaryCell(i: number, functionName: string, f: Field, showLabel: boolean) {
+  calculateSummaryCell(i: number, functionName: string, f: Field): FooterItem {
     if (functionName === '') {
       return undefined;
     }
@@ -241,12 +234,12 @@ export class TablePanel extends Component<Props> {
       const func: Function = kv[functionName];
       const val = this.calculate(f.values, func);
       const formatted = this.format(val, f);
-      return <SummaryCell key={i} func={functionName} value={formatted} showLabel={showLabel}></SummaryCell>;
+      return [{ [functionName]: formatted }];
     }
 
     const val = this.mean(f.values);
     const formatted = this.format(val, f) as string;
-    return <SummaryCell key={i} func={functionName} value={formatted} showLabel={showLabel}></SummaryCell>;
+    return [{ [functionName]: formatted }];
   }
 
   format(val: number, f: Field) {

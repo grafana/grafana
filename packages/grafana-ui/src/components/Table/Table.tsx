@@ -1,4 +1,4 @@
-import React, { FC, memo, ReactNode, useCallback, useMemo } from 'react';
+import React, { FC, memo, useCallback, useMemo } from 'react';
 import { DataFrame, getFieldDisplayName } from '@grafana/data';
 import {
   Cell,
@@ -17,6 +17,7 @@ import { getColumns, sortCaseInsensitive, sortNumber } from './utils';
 import {
   TableColumnResizeActionCallback,
   TableFilterActionCallback,
+  FooterItem,
   TableSortByActionCallback,
   TableSortByFieldState,
 } from './types';
@@ -42,8 +43,7 @@ export interface Props {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
-  footerValues?: ReactNode[];
-  footerHeight?: number;
+  footerValues?: FooterItem[];
 }
 
 interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}>, UseFiltersState<{}> {}
@@ -124,7 +124,6 @@ export const Table: FC<Props> = memo((props: Props) => {
     resizable = true,
     initialSortBy,
     footerValues,
-    footerHeight,
   } = props;
   const tableStyles = useStyles2(getTableStyles);
 
@@ -221,12 +220,7 @@ export const Table: FC<Props> = memo((props: Props) => {
               No data
             </div>
           )}
-          <FooterRow
-            footer={footerValues}
-            footerGroups={footerGroups}
-            totalColumnsWidth={totalColumnsWidth}
-            height={footerHeight}
-          />
+          <FooterRow footerValues={footerValues} footerGroups={footerGroups} totalColumnsWidth={totalColumnsWidth} />
         </div>
       </CustomScrollbar>
     </div>

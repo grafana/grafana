@@ -78,7 +78,7 @@ export const Components = {
       },
       Table: {
         header: 'table header',
-        footer: 'table footer',
+        footer: 'table-footer',
       },
     },
   },

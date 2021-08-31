@@ -1,23 +1,37 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { ColumnInstance, HeaderGroup } from 'react-table';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTableStyles, TableStyles } from './styles';
 import { useStyles2 } from '../../themes';
+import { FooterItem } from './types';
+import { EmptyCell, FooterCell } from './FooterCell';
 
 export interface FooterRowProps {
   totalColumnsWidth: number;
   footerGroups: HeaderGroup[];
-  footer?: ReactNode[];
-  height?: number;
+  footerValues?: FooterItem[];
 }
 
 export const FooterRow = (props: FooterRowProps) => {
-  const { totalColumnsWidth, footerGroups, footer, height } = props;
+  const { totalColumnsWidth, footerGroups, footerValues } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
   const tableStyles = useStyles2(getTableStyles);
+  const EXTENDED_ROW_HEIGHT = 27;
 
-  if (!footer) {
+  if (!footerValues) {
     return null;
+  }
+
+  let length = 0;
+  for (const fv of footerValues) {
+    if (Array.isArray(fv) && fv.length > length) {
+      length = fv.length;
+    }
+  }
+
+  let height: number | undefined;
+  if (footerValues && length > 1) {
+    height = EXTENDED_ROW_HEIGHT * length;
   }
 
   return (
@@ -35,7 +49,7 @@ export const FooterRow = (props: FooterRowProps) => {
             className={tableStyles.tfoot}
             {...footerGroupProps}
             key={key}
-            aria-label={e2eSelectorsTable.footer}
+            data-testid={e2eSelectorsTable.footer}
             style={height ? { height: `${height}px` } : undefined}
           >
             <tr>
@@ -71,6 +85,10 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, heig
   );
 }
 
-export const EmptyCell = (props: any) => {
-  return <span>&nbsp;</span>;
-};
+export function getFooterValue(index: number, footerValues?: FooterItem[]) {
+  if (footerValues === undefined) {
+    return EmptyCell;
+  }
+
+  return FooterCell({ value: footerValues[index] });
+}
