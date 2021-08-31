@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -218,14 +219,12 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		return toNamespaceErrorResponse(err)
 	}
 
-	// TODO validate UID uniqueness in the payload
-
 	//TODO: Should this belong in alerting-api?
 	if ruleGroupConfig.Name == "" {
 		return ErrResp(http.StatusBadRequest, errors.New("rule group name is not valid"), "")
 	}
 
-	var alertRuleUIDs []string
+	alertRuleUIDs := make(map[string]struct{})
 	for _, r := range ruleGroupConfig.Rules {
 		cond := ngmodels.Condition{
 			Condition: r.GrafanaManagedAlert.Condition,
@@ -236,7 +235,11 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 			return ErrResp(http.StatusBadRequest, err, "failed to validate alert rule %q", r.GrafanaManagedAlert.Title)
 		}
 		if r.GrafanaManagedAlert.UID != "" {
-			alertRuleUIDs = append(alertRuleUIDs, r.GrafanaManagedAlert.UID)
+			_, ok := alertRuleUIDs[r.GrafanaManagedAlert.UID]
+			if ok {
+				return ErrResp(http.StatusBadRequest, fmt.Errorf("conflicting UID %q found", r.GrafanaManagedAlert.UID), "failed to validate alert rule %q", r.GrafanaManagedAlert.Title)
+			}
+			alertRuleUIDs[r.GrafanaManagedAlert.UID] = struct{}{}
 		}
 	}
 
@@ -268,7 +271,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	for _, uid := range alertRuleUIDs {
+	for uid := range alertRuleUIDs {
 		srv.manager.RemoveByRuleUID(c.OrgId, uid)
 	}
 

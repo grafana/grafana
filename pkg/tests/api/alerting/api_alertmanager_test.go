@@ -1337,6 +1337,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 					},
 				},
 			},
+			Interval: interval,
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -1356,6 +1357,125 @@ func TestAlertRuleCRUD(t *testing.T) {
 
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 		require.JSONEq(t, `{"message":"failed to update rule group: failed to get alert rule unknown: could not find alert rule"}`, string(b))
+
+		// let's make sure that rule definitions are not affected by the failed POST request.
+		u = fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+		// nolint:gosec
+		resp, err = http.Get(u)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err = ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		assert.Equal(t, resp.StatusCode, 202)
+
+		body, m := rulesNamespaceWithoutVariableValues(t, b)
+		returnedUIDs, ok := m["default,arulegroup"]
+		assert.True(t, ok)
+		assert.Equal(t, 2, len(returnedUIDs))
+		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
+	}
+
+	// try to update by pass two rules with conflicting UIDs
+	{
+		interval, err := model.ParseDuration("30s")
+		require.NoError(t, err)
+
+		rules := apimodels.PostableRuleGroupConfig{
+			Name: "arulegroup",
+			Rules: []apimodels.PostableExtendedRuleNode{
+				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For: interval,
+						Labels: map[string]string{
+							"label1": "val42",
+							"foo":    "bar",
+						},
+						Annotations: map[string]string{
+							"annotation1": "val42",
+							"foo":         "bar",
+						},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						UID:       ruleUID,
+						Title:     "AlwaysNormal",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: "-100",
+								Model: json.RawMessage(`{
+												"type": "math",
+												"expression": "2 + 3 < 1"
+												}`),
+							},
+						},
+						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
+						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
+					},
+				},
+				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For: interval,
+						Labels: map[string]string{
+							"label1": "val42",
+							"foo":    "bar",
+						},
+						Annotations: map[string]string{
+							"annotation1": "val42",
+							"foo":         "bar",
+						},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						UID:       ruleUID,
+						Title:     "AlwaysAlerting",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: "-100",
+								Model: json.RawMessage(`{
+												"type": "math",
+												"expression": "2 + 3 > 1"
+												}`),
+							},
+						},
+						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
+						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
+					},
+				},
+			},
+			Interval: interval,
+		}
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err = enc.Encode(&rules)
+		require.NoError(t, err)
+
+		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Post(u, "application/json", &buf)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		require.JSONEq(t, fmt.Sprintf(`{"message":"failed to validate alert rule \"AlwaysAlerting\": conflicting UID \"%s\" found"}`, ruleUID), string(b))
 
 		// let's make sure that rule definitions are not affected by the failed POST request.
 		u = fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
