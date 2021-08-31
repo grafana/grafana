@@ -39,7 +39,7 @@ func ProvideService(manager backendplugin.Manager) (*Service, error) {
 		QueryDataHandler: s,
 	})
 
-	if err := manager.RegisterAndStart(context.Background(), "mssql", factory); err != nil {
+	if err := manager.Register("mssql", factory); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}
 	return s, nil

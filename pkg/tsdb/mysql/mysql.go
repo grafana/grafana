@@ -53,7 +53,7 @@ func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager, httpClientP
 		QueryDataHandler: s,
 	})
 
-	if err := manager.RegisterAndStart(context.Background(), "mysql", factory); err != nil {
+	if err := manager.Register("mysql", factory); err != nil {
 		logger.Error("Failed to register plugin", "error", err)
 	}
 	return s, nil
