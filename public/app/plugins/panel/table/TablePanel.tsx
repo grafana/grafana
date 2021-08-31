@@ -26,8 +26,6 @@ import { getDashboardSrv } from '../../../features/dashboard/services/DashboardS
 interface Props extends PanelProps<PanelOptions> {}
 
 export class TablePanel extends Component<Props> {
-  footerHeight = undefined;
-
   constructor(props: Props) {
     super(props);
   }
