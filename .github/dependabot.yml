@@ -8,3 +8,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    reviewers:
+      - "grafana/grafana-frontend-platform"
+    versioning-strategy: "increase-if-necessary"
