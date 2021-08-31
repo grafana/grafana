@@ -14,7 +14,7 @@ You can assign and remove permissions for organization roles, users, and teams f
 
 ## Permission levels
 
-Grafana allows three permission levels for files and folders. Each of the permissions is processed independently. These permissions are separate from [organization roles]({{< relref "organization_roles.md">}}).
+There are three permission levels for files and folders. Each of the permissions is processed independently. They permissions are separate from [organization roles]({{< relref "organization_roles.md">}}).
 
 - **Admin -** Can create, edit, or delete dashboards. Can create, edit, and delete folders. Can also change dashboard and folder permissions.
 - **Edit -** Can create and edit dashboards. _Cannot_ change folder or dashboard permissions, or add, edit, or delete folders.
