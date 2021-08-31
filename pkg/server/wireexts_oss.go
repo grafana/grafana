@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
@@ -43,6 +45,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
 	authinfoservice.ProvideOSSUserProtectionService,
 	wire.Bind(new(login.UserProtectionService), new(*authinfoservice.OSSUserProtectionImpl)),
+	ossencryption.ProvideService,
+	wire.Bind(new(encryption.Service), new(*ossencryption.Service)),
 )
 
 var wireExtsSet = wire.NewSet(

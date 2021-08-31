@@ -14,7 +14,7 @@ describe('DropDownChild', () => {
     expect(text).toBeInTheDocument();
   });
 
-  it('attaches the link to the text if provided', () => {
+  it('attaches the url to the text if provided', () => {
     render(
       <BrowserRouter>
         <DropDownChild text={mockText} url={mockUrl} />
@@ -22,6 +22,7 @@ describe('DropDownChild', () => {
     );
     const link = screen.getByRole('link', { name: mockText });
     expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', mockUrl);
   });
 
   it('displays an icon if a valid icon is provided', () => {
