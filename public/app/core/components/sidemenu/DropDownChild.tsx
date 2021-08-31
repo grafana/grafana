@@ -26,15 +26,16 @@ const DropDownChild = ({ isDivider = false, icon, onClick, target, text, url }: 
 
   let anchor = <a onClick={onClick}>{linkContent}</a>;
   if (url) {
-    anchor = url.startsWith('/') ? (
-      <Link onClick={onClick} href={url}>
-        {linkContent}
-      </Link>
-    ) : (
-      <a href={url} target={target} rel="noopener" onClick={onClick}>
-        {linkContent}
-      </a>
-    );
+    anchor =
+      !target && url.startsWith('/') ? (
+        <Link onClick={onClick} href={url}>
+          {linkContent}
+        </Link>
+      ) : (
+        <a href={url} target={target} rel="noopener" onClick={onClick}>
+          {linkContent}
+        </a>
+      );
   }
 
   return isDivider ? <li data-testid="dropdown-child-divider" className="divider" /> : <li>{anchor}</li>;
