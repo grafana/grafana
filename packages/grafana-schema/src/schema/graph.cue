@@ -1,45 +1,47 @@
-AxisPlacement:        "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(targetType="enum")
-PointVisibility:      "auto" | "never" | "always"                             @cuetsy(targetType="enum")
-DrawStyle:            "line" | "bars" | "points"                              @cuetsy(targetType="enum")
-LineInterpolation:    "linear" | "smooth" | "stepBefore" | "stepAfter"        @cuetsy(targetType="enum")
-ScaleDistribution:    "linear" | "log"                                        @cuetsy(targetType="enum")
-GraphGradientMode:    "none" | "opacity" | "hue" | "scheme"                   @cuetsy(targetType="enum")
-StackingMode: "none" | "normal" | "percent" @cuetsy(targetType="enum")
-BarValueVisibility: "auto" | "never" | "always" @cuetsy(targetType="enum")
-BarAlignment: -1 | 0 | 1 @cuetsy(targetType="enum",memberNames="Before|Center|After")
-ScaleOrientation: 0 | 1 @cuetsy(targetType="enum",memberNames="Horizontal|Vertical")
-ScaleDirection: 1 | 1 | -1 | -1 @cuetsy(targetType="enum",memberNames="Up|Right|Down|Left")
+package schema
+
+AxisPlacement:      "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(kind="enum")
+PointVisibility:    "auto" | "never" | "always"                             @cuetsy(kind="enum")
+DrawStyle:          "line" | "bars" | "points"                              @cuetsy(kind="enum")
+LineInterpolation:  "linear" | "smooth" | "stepBefore" | "stepAfter"        @cuetsy(kind="enum")
+ScaleDistribution:  "linear" | "log"                                        @cuetsy(kind="enum")
+GraphGradientMode:  "none" | "opacity" | "hue" | "scheme"                   @cuetsy(kind="enum")
+StackingMode:       "none" | "normal" | "percent"                           @cuetsy(kind="enum")
+BarValueVisibility: "auto" | "never" | "always"                             @cuetsy(kind="enum")
+BarAlignment:       -1 | 0 | 1                                              @cuetsy(kind="enum",memberNames="Before|Center|After")
+ScaleOrientation:   0 | 1                                                   @cuetsy(kind="enum",memberNames="Horizontal|Vertical")
+ScaleDirection:     1 | 1 | -1 | -1                                         @cuetsy(kind="enum",memberNames="Up|Right|Down|Left")
 LineStyle: {
 	fill?: "solid" | "dash" | "dot" | "square"
 	dash?: [...number]
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")
 LineConfig: {
 	lineColor?:         string
 	lineWidth?:         number
 	lineInterpolation?: LineInterpolation
 	lineStyle?:         LineStyle
 	spanNulls?:         bool | number
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")
 BarConfig: {
-	barAlignment?: BarAlignment
+	barAlignment?:   BarAlignment
 	barWidthFactor?: number
-	barMaxWidth?: number
-} @cuetsy(targetType="interface")
+	barMaxWidth?:    number
+} @cuetsy(kind="interface")
 FillConfig: {
 	fillColor?:   string
 	fillOpacity?: number
 	fillBelowTo?: string
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")
 PointsConfig: {
 	showPoints?:  PointVisibility
 	pointSize?:   number
 	pointColor?:  string
 	pointSymbol?: string
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")
 ScaleDistributionConfig: {
 	type: ScaleDistribution
 	log?: number
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")
 AxisConfig: {
 	axisPlacement?:     AxisPlacement
 	axisLabel?:         string
@@ -47,35 +49,35 @@ AxisConfig: {
 	axisSoftMin?:       number
 	axisSoftMax?:       number
 	scaleDistribution?: ScaleDistributionConfig
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")
 HideSeriesConfig: {
 	tooltip: bool
 	legend:  bool
-	viz:   bool
-} @cuetsy(targetType="interface")
+	viz:     bool
+} @cuetsy(kind="interface")
 StackingConfig: {
-  mode?: StackingMode
-  group?: string
-} @cuetsy(targetType="interface")
+	mode?:  StackingMode
+	group?: string
+} @cuetsy(kind="interface")
 StackableFieldConfig: {
-  stacking?: StackingConfig
-} @cuetsy(targetType="interface")
+	stacking?: StackingConfig
+} @cuetsy(kind="interface")
 HideableFieldConfig: {
-  hideFrom?: HideSeriesConfig
-} @cuetsy(targetType="interface")
-GraphTresholdsStyleMode: "off" | "line" | "area" | "line+area" | "series" @cuetsy(targetType="enum",memberNames="Off|Line|Area|LineAndArea|Series")
+	hideFrom?: HideSeriesConfig
+} @cuetsy(kind="interface")
+GraphTresholdsStyleMode: "off" | "line" | "area" | "line+area" | "series" @cuetsy(kind="enum",memberNames="Off|Line|Area|LineAndArea|Series")
 GraphThresholdsStyleConfig: {
-  mode: GraphTresholdsStyleMode
-} @cuetsy(targetType="interface")
+	mode: GraphTresholdsStyleMode
+} @cuetsy(kind="interface")
 GraphFieldConfig: {
-  LineConfig
-  FillConfig
-  PointsConfig
-  AxisConfig
-  BarConfig
-  StackableFieldConfig
-  HideableFieldConfig
-  drawStyle?: DrawStyle
-  gradientMode?: GraphGradientMode
-  thresholdsStyle?: GraphThresholdsStyleConfig
-} @cuetsy(targetType="interface")
+	LineConfig
+	FillConfig
+	PointsConfig
+	AxisConfig
+	BarConfig
+	StackableFieldConfig
+	HideableFieldConfig
+	drawStyle?:       DrawStyle
+	gradientMode?:    GraphGradientMode
+	thresholdsStyle?: GraphThresholdsStyleConfig
+} @cuetsy(kind="interface")

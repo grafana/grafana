@@ -1,5 +1,7 @@
-TooltipDisplayMode:          "single" | "multi" | "none"          @cuetsy(targetType="enum")
+package schema
+
+TooltipDisplayMode: "single" | "multi" | "none" @cuetsy(kind="enum")
 
 VizTooltipOptions: {
-    mode: TooltipDisplayMode
-} @cuetsy(targetType="interface")
+	mode: TooltipDisplayMode
+} @cuetsy(kind="interface")

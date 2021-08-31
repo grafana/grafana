@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -24,7 +23,15 @@ const (
 	ProxyBackend   = "proxy"
 )
 
-var GlobalMetrics = NewMetrics(prometheus.DefaultRegisterer)
+// ProvideService is a Metrics factory.
+func ProvideService() *Metrics {
+	return NewMetrics(prometheus.DefaultRegisterer)
+}
+
+// ProvideServiceForTest is a Metrics factory used for test.
+func ProvideServiceForTest() *Metrics {
+	return NewMetrics(prometheus.NewRegistry())
+}
 
 type Metrics struct {
 	*metrics.Alerts
@@ -37,21 +44,6 @@ type Metrics struct {
 	EvalFailures         *prometheus.CounterVec
 	EvalDuration         *prometheus.SummaryVec
 	GroupRules           *prometheus.GaugeVec
-}
-
-func init() {
-	registry.RegisterService(GlobalMetrics)
-}
-
-func (m *Metrics) Init() error {
-	return nil
-}
-
-// SwapRegisterer overwrites the prometheus register used by a *Metrics in place.
-// It's used by tests to prevent duplicate registration errors
-func (m *Metrics) SwapRegisterer(r prometheus.Registerer) {
-	next := NewMetrics(r)
-	*m = *next
 }
 
 func NewMetrics(r prometheus.Registerer) *Metrics {
