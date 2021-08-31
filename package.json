@@ -259,7 +259,7 @@
     "d3": "5.15.0",
     "d3-force": "^2.1.1",
     "d3-scale-chromatic": "1.5.0",
-    "dangerously-set-html-content": "1.0.6",
+    "dangerously-set-html-content": "1.0.9",
     "debounce-promise": "3.1.2",
     "eventemitter3": "4.0.0",
     "fast-deep-equal": "^3.1.3",
