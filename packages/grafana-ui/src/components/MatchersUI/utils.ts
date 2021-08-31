@@ -79,9 +79,20 @@ export function useSelectOptions(
       if (!found && name === currentName) {
         found = true;
       }
+      const field = displayNames.fields.get(name);
+      let previewValues = '';
+      if (field?.values.length && field.values.length > 2) {
+        previewValues += field.values.get(0);
+        previewValues += `, ${field.values.get(1)}`;
+        previewValues += `, ${field.values.get(2)}`;
+        if (field.values.length > 3) {
+          previewValues += '...';
+        }
+      }
       options.push({
         value: name,
         label: name,
+        description: field ? (previewValues.length > 0 ? `${field.type}: ${previewValues}` : field.type) : undefined,
       });
     }
     for (const name of displayNames.raw) {
