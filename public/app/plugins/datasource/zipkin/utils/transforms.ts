@@ -75,6 +75,16 @@ function transformSpan(span: ZipkinSpan): TraceSpanRow {
     ];
   }
 
+  if (span.shared) {
+    row.tags = [
+      {
+        key: 'shared',
+        value: span.shared,
+      },
+      ...(row.tags ?? []),
+    ];
+  }
+
   return row;
 }
 
@@ -103,6 +113,7 @@ function serviceTags(span: ZipkinSpan): TraceKeyValuePair[] {
     valueToTag('ipv4', endpoint.ipv4),
     valueToTag('ipv6', endpoint.ipv6),
     valueToTag('port', endpoint.port),
+    valueToTag('endpointType', span.localEndpoint ? 'local' : 'remote'),
   ].filter(identity) as TraceKeyValuePair[];
 }
 
@@ -131,13 +142,13 @@ export const transformToZipkin = (data: MutableDataFrame): ZipkinSpan[] => {
       id: span.spanID,
       timestamp: span.startTime * 1000,
       duration: span.duration * 1000,
-      localEndpoint: getEndpoint(span),
+      ...getEndpoint(span),
       annotations: span.logs.length
         ? span.logs.map((l: TraceLog) => ({ timestamp: l.timestamp, value: l.fields[0].value }))
         : undefined,
       tags: span.tags.length
         ? span.tags
-            .filter((t: TraceKeyValuePair) => t.key !== 'kind')
+            .filter((t: TraceKeyValuePair) => t.key !== 'kind' && t.key !== 'endpointType' && t.key !== 'shared')
             .reduce((tags: { [key: string]: string }, t: TraceKeyValuePair) => {
               if (t.key === 'error') {
                 return {
@@ -149,19 +160,27 @@ export const transformToZipkin = (data: MutableDataFrame): ZipkinSpan[] => {
             }, {})
         : undefined,
       kind: span.tags.find((t: TraceKeyValuePair) => t.key === 'kind')?.value ?? undefined,
+      shared: span.tags.find((t: TraceKeyValuePair) => t.key === 'shared')?.value ?? undefined,
     });
   }
 
   return response;
 };
 
-const getEndpoint = (span: any): ZipkinEndpoint | undefined => {
+// Returns remote or local endpoint object
+const getEndpoint = (span: any): { [key: string]: ZipkinEndpoint } | undefined => {
+  const key =
+    span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'endpointType')?.value === 'local'
+      ? 'localEndpoint'
+      : 'remoteEndpoint';
   return span.serviceName !== 'unknown'
     ? {
-        serviceName: span.serviceName,
-        ipv4: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'ipv4')?.value ?? undefined,
-        ipv6: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'ipv6')?.value ?? undefined,
-        port: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'port')?.value ?? undefined,
+        [key]: {
+          serviceName: span.serviceName,
+          ipv4: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'ipv4')?.value ?? undefined,
+          ipv6: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'ipv6')?.value ?? undefined,
+          port: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'port')?.value ?? undefined,
+        },
       }
     : undefined;
 };
