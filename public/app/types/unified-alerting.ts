@@ -85,6 +85,7 @@ export interface CombinedRule {
 
 export interface CombinedRuleGroup {
   name: string;
+  interval?: string;
   rules: CombinedRule[];
 }
 

@@ -106,7 +106,7 @@ const pluginsSlice = createSlice({
     toggleTableView(state) {
       state.tableViewEnabled = !state.tableViewEnabled;
     },
-    closeCompleted: (state) => {
+    closeEditor: (state) => {
       state.isOpen = false;
       state.initDone = false;
       state.isVizPickerOpen = false;
@@ -119,7 +119,7 @@ export const {
   updateEditorInitState,
   setEditorPanelData,
   setDiscardChanges,
-  closeCompleted,
+  closeEditor,
   setPanelEditorUIState,
   toggleVizPicker,
   toggleTableView,

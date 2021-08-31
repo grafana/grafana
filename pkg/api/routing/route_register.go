@@ -10,8 +10,8 @@ import (
 )
 
 type Router interface {
-	Handle(method, pattern string, handlers []macaron.Handler) *macaron.Route
-	Get(pattern string, handlers ...macaron.Handler) *macaron.Route
+	Handle(method, pattern string, handlers []macaron.Handler)
+	Get(pattern string, handlers ...macaron.Handler)
 }
 
 // RouteRegister allows you to add routes and macaron.Handlers

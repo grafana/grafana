@@ -58,8 +58,13 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
       if (!this.uploadedJson) {
         return of({ data: [] });
       }
-      const traceData = JSON.parse(this.uploadedJson as string).data[0];
-      return of({ data: [createTraceFrame(traceData), ...createGraphFrames(traceData)] });
+
+      try {
+        const traceData = JSON.parse(this.uploadedJson as string).data[0];
+        return of({ data: [createTraceFrame(traceData), ...createGraphFrames(traceData)] });
+      } catch (error) {
+        return of({ error: { message: 'JSON is not valid Jaeger format' }, data: [] });
+      }
     }
 
     let jaegerQuery = pick(target, ['operation', 'service', 'tags', 'minDuration', 'maxDuration', 'limit']);
