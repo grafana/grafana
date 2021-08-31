@@ -39,6 +39,7 @@ export interface HistogramProps extends Themeable2 {
   height: number;
   structureRev?: number; // a number that will change when the frames[] structure changes
   legend: VizLegendOptions;
+  transparent?: boolean;
   children?: (builder: UPlotConfigBuilder, frame: DataFrame) => React.ReactNode;
 }
 
@@ -47,10 +48,16 @@ export function getBucketSize(frame: DataFrame) {
   return frame.fields[1].values.get(0) - frame.fields[0].values.get(0);
 }
 
-const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
+const prepConfig = (frame: DataFrame, theme: GrafanaTheme2, transparent?: boolean) => {
   // todo: scan all values in BucketMin and BucketMax fields to assert if uniform bucketSize
 
   let builder = new UPlotConfigBuilder();
+
+  if (transparent) {
+    builder.setBackground(theme.colors.background.canvas);
+  } else {
+    builder.setBackground(theme.components.panel.background);
+  }
 
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
   let bucketSize = getBucketSize(frame);
@@ -242,7 +249,7 @@ export class Histogram extends React.Component<HistogramProps, State> {
       };
 
       if (withConfig) {
-        state.config = prepConfig(alignedFrame, this.props.theme);
+        state.config = prepConfig(alignedFrame, this.props.theme, props.transparent);
       }
     }
 
@@ -259,7 +266,7 @@ export class Histogram extends React.Component<HistogramProps, State> {
   }
 
   componentDidUpdate(prevProps: HistogramProps) {
-    const { structureRev, alignedFrame, bucketSize } = this.props;
+    const { structureRev, alignedFrame, bucketSize, theme, transparent } = this.props;
 
     if (alignedFrame !== prevProps.alignedFrame) {
       let newState = this.prepState(this.props, false);
@@ -273,7 +280,7 @@ export class Histogram extends React.Component<HistogramProps, State> {
           !structureRev;
 
         if (shouldReconfig) {
-          newState.config = prepConfig(alignedFrame, this.props.theme);
+          newState.config = prepConfig(alignedFrame, theme, transparent);
         }
       }
 
