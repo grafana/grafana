@@ -78,14 +78,16 @@ export const RuleList = withErrorBoundary(
             <div className={styles.break} />
             <div className={styles.buttonsContainer}>
               <div className={styles.statsContainer}>
-                <Button
-                  className={styles.expandAllButton}
-                  icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
-                  variant="secondary"
-                  onClick={() => setExpandAll(!expandAll)}
-                >
-                  {expandAll ? 'Collapse all' : 'Expand all'}
-                </Button>
+                {view === 'groups' && (
+                  <Button
+                    className={styles.expandAllButton}
+                    icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
+                    variant="secondary"
+                    onClick={() => setExpandAll(!expandAll)}
+                  >
+                    {expandAll ? 'Collapse all' : 'Expand all'}
+                  </Button>
+                )}
                 <RuleStats showInactive={true} showRecording={true} namespaces={filteredNamespaces} />
               </div>
               {(contextSrv.hasEditPermissionInFolders || contextSrv.isEditor) && (
