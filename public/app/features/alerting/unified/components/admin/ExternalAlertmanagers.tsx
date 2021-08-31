@@ -1,7 +1,8 @@
-import React from 'react';
-import { GrafanaTheme2 } from '@grafana/data';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
-import { Button, Icon, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
+import { AddAlertManagerModal } from './AddAlertManagerModal';
 
 const alertmanagers = [
   { alertmanager: 'test1', url: 'some/url' },
@@ -10,6 +11,7 @@ const alertmanagers = [
 
 export const ExternalAlertmanagers = () => {
   const styles = useStyles2(getStyles);
+  const [modalOpen, setModalState] = useState<boolean>(false);
 
   return (
     <div>
@@ -19,7 +21,9 @@ export const ExternalAlertmanagers = () => {
         input below to discover alertmanagers.
       </div>
       <div className={styles.actions}>
-        <Button type="button">Add Alertmanager</Button>
+        <Button type="button" onClick={() => setModalState(true)}>
+          Add Alertmanager
+        </Button>
       </div>
       <table className="filter-table form-inline filter-table--hover">
         <thead>
@@ -36,14 +40,17 @@ export const ExternalAlertmanagers = () => {
                 <td>{am.alertmanager}</td>
                 <td className="link-td">{am.url}</td>
                 <td>
-                  <Icon name="pen" />
-                  <Icon name="trash-alt" />
+                  <HorizontalGroup>
+                    <Icon name="pen" />
+                    <Icon name="trash-alt" />
+                  </HorizontalGroup>
                 </td>
               </tr>
             );
           })}
         </tbody>
       </table>
+      {modalOpen && <AddAlertManagerModal onClose={() => setModalState(false)} />}
     </div>
   );
 };

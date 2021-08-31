@@ -188,6 +188,18 @@ export async function testReceivers(alertManagerSourceName: string, receivers: R
   }
 }
 
+export async function addAlertManagers(alertManagers: string[]): Promise<void> {
+  await lastValueFrom(
+    getBackendSrv().fetch({
+      method: 'POST',
+      data: { alertmanagers: alertManagers },
+      url: '/api/v1/ngalert/admin_config',
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+  );
+}
+
 function escapeQuotes(value: string): string {
   return value.replace(/"/g, '\\"');
 }

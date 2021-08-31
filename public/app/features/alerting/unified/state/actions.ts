@@ -28,6 +28,7 @@ import {
   fetchStatus,
   deleteAlertManagerConfig,
   testReceivers,
+  addAlertManagers,
 } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
@@ -705,5 +706,15 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
         successMessage: 'Update successful',
       }
     );
+  }
+);
+
+export const addExternalAlertmanagers = createAsyncThunk(
+  'unifiedAlerting/addExternalAlertmanagers',
+  async (alertManagerUrls: string[]): Promise<void> => {
+    return withAppEvents(withSerializedError(addAlertManagers(alertManagerUrls)), {
+      errorMessage: 'Failed adding alertmanagers',
+      successMessage: 'Alertmanagers addded',
+    });
   }
 );
