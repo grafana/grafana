@@ -399,12 +399,9 @@ type amConfigsPerOrg = map[int64]*PostableUserConfig
 func (c *PostableUserConfig) EncryptSecureSettings() error {
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
-			for k, v := range gr.SecureSettings {
-				encryptedData, err := util.Encrypt([]byte(v), util.WithoutScope())
-				if err != nil {
-					return fmt.Errorf("failed to encrypt secure settings: %w", err)
-				}
-				gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+			encryptedData := securejsondata.GetEncryptedJsonData(gr.SecureSettings)
+			for k, v := range encryptedData {
+				gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(v)
 			}
 		}
 	}

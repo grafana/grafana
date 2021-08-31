@@ -53,6 +53,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	}
 	ualert.RerunDashAlertMigration(mg)
 	addSecretsMigration(mg)
+	addKVStoreMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

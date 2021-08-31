@@ -80,6 +80,7 @@ func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
 			_, err = sess.Insert(&pluginSetting)
 			return err
 		}
+
 		for key, encryptedData := range encryptedJsonData {
 			pluginSetting.SecureJsonData[key] = encryptedData
 		}
