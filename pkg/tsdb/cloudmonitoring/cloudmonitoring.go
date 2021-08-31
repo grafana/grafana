@@ -586,7 +586,7 @@ func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginCon
 	req.Header.Set("Content-Type", "application/json")
 
 	// find plugin
-	plugin := s.PluginManager.GetDataSource(dsInfo.Type)
+	plugin := s.PluginManager.GetDataSource("stackdriver")
 	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}
