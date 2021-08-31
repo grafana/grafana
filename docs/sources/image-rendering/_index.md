@@ -35,6 +35,8 @@ In plugin mode, you can specify them directly in the [Grafana configuration file
 
 In remote rendering mode, you can specify them in a `.json` configuration file or, for some of them, you can override the configuration defaults using environment variables.
 
+> Please note that not all settings are available using environment variables. If there is no example using environment variable below, it means that you need to update the configuration file.
+
 ### Configuration file
 
 You can override certain settings by using a configuration file, see [default.json](https://github.com/grafana/grafana-image-renderer/tree/master/default.json) for defaults. Note that any configured environment variable takes precedence over configuration file settings.
@@ -61,6 +63,14 @@ Default mode will create a new browser instance on each request. When handling m
 RENDERING_MODE=default
 ```
 
+```json
+{
+  "rendering": {
+    "mode": "default"
+  }
+}
+```
+
 #### Clustered
 
 With the `clustered` mode, you can configure how many browser instances or incognito pages can execute concurrently. Default is `browser` and will ensure a maximum amount of browser instances can execute concurrently. Mode `context` will ensure a maximum amount of incognito pages can execute concurrently. You can also configure the maximum concurrency allowed which per default is `5`.
@@ -69,8 +79,20 @@ Using a cluster of incognito pages is more performant and consumes less CPU and 
 
 ```bash
 RENDERING_MODE=clustered
-RENDERING_CLUSTERING_MODE=default
+RENDERING_CLUSTERING_MODE=browser
 RENDERING_CLUSTERING_MAX_CONCURRENCY=5
+```
+
+```json
+{
+  "rendering": {
+    "mode": "clustered",
+    "clustering": {
+      "mode": "browser",
+      "maxConcurrency": 5
+    }
+  }
+}
 ```
 
 #### Reusable (experimental)
@@ -79,6 +101,18 @@ When using the rendering mode `reusable`, one browser instance will be created a
 
 ```bash
 RENDERING_MODE=reusable
+```
+
+```json
+{
+  "rendering": {
+    "mode": "clustered",
+    "clustering": {
+      "mode": "default",
+      "maxConcurrency": 5
+    }
+  }
+}
 ```
 
 #### Rendering modes performance and CPU / memory usage
