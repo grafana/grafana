@@ -10,7 +10,7 @@ import (
 
 type (
 	cloudMonitoringQueryExecutor interface {
-		run(ctx context.Context, tsdbQuery *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo) (
+		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo) (
 			*backend.DataResponse, cloudMonitoringResponse, string, error)
 		parseResponse(queryRes *backend.DataResponse, data cloudMonitoringResponse, executedQueryString string) error
 		parseToAnnotations(queryRes *backend.DataResponse, data cloudMonitoringResponse, title, text, tags, refID string) error

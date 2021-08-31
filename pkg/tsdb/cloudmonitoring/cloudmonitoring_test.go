@@ -58,10 +58,10 @@ func TestCloudMonitoring(t *testing.T) {
 
 		t.Run("and query has filters", func(t *testing.T) {
 			query := getBaseQuery()
-			// query.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-			// 	"metricType": "a/metric/type",
-			// 	"filters":    []interface{}{"key", "=", "value", "AND", "key2", "=", "value2", "AND", "resource.type", "=", "another/resource/type"},
-			// })
+			query.Queries[0].JSON = json.RawMessage(`{
+				"metricType": "a/metric/type",
+				"filters":    ["key", "=", "value", "AND", "key2", "=", "value2", "AND", "resource.type", "=", "another/resource/type"]
+			}`)
 
 			qes, err := service.buildQueryExecutors(query)
 			require.NoError(t, err)
@@ -90,10 +90,10 @@ func TestCloudMonitoring(t *testing.T) {
 			t.Run("and IntervalMS is larger than 60000", func(t *testing.T) {
 				tsdbQuery := getBaseQuery()
 				tsdbQuery.Queries[0].Interval = 1000000
-				// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-				// 	"alignmentPeriod": "grafana-auto",
-				// 	"filters":         []interface{}{"key", "=", "value", "AND", "key2", "=", "value2"},
-				// })
+				tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+					"alignmentPeriod": "grafana-auto",
+					"filters":    ["key", "=", "value", "AND", "key2", "=", "value2"]
+				}`)
 
 				qes, err := service.buildQueryExecutors(tsdbQuery)
 				require.NoError(t, err)
@@ -118,10 +118,10 @@ func TestCloudMonitoring(t *testing.T) {
 			t.Run("and IntervalMS is less than 60000", func(t *testing.T) {
 				tsdbQuery := getBaseQuery()
 				tsdbQuery.Queries[0].Interval = 30000
-				// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-				// 	"alignmentPeriod": "grafana-auto",
-				// 	"filters":         []interface{}{"key", "=", "value", "AND", "key2", "=", "value2"},
-				// })
+				tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+					"alignmentPeriod": "grafana-auto",
+					"filters":    ["key", "=", "value", "AND", "key2", "=", "value2"]
+				}`)
 
 				qes, err := service.buildQueryExecutors(tsdbQuery)
 				require.NoError(t, err)
@@ -146,12 +146,17 @@ func TestCloudMonitoring(t *testing.T) {
 		})
 
 		t.Run("and alignmentPeriod is set to cloud-monitoring-auto", func(t *testing.T) { // legacy
+			now := time.Now().UTC()
+
 			t.Run("and range is two hours", func(t *testing.T) {
 				tsdbQuery := getBaseQuery()
-				// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-				// 	"target":          "target",
-				// 	"alignmentPeriod": "cloud-monitoring-auto",
-				// })
+
+				tsdbQuery.Queries[0].TimeRange.From = now.Add(-(time.Hour * 2))
+				tsdbQuery.Queries[0].TimeRange.To = now
+				tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+					"target": "target",
+					"alignmentPeriod": "cloud-monitoring-auto"
+				}`)
 
 				qes, err := service.buildQueryExecutors(tsdbQuery)
 				require.NoError(t, err)
@@ -161,12 +166,13 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and range is 22 hours", func(t *testing.T) {
 				tsdbQuery := getBaseQuery()
-				// tsdbQuery.Queries[0].TimeRange.From = "1538034524922"
-				// tsdbQuery.Queries[0].TimeRange.To = "1538113724922"
-				// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-				// 	"target":          "target",
-				// 	"alignmentPeriod": "cloud-monitoring-auto",
-				// })
+
+				tsdbQuery.Queries[0].TimeRange.From = now.Add(-(time.Hour * 22))
+				tsdbQuery.Queries[0].TimeRange.To = now
+				tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+					"target": "target",
+					"alignmentPeriod": "cloud-monitoring-auto"
+				}`)
 
 				qes, err := service.buildQueryExecutors(tsdbQuery)
 				require.NoError(t, err)
@@ -176,12 +182,12 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and range is 23 hours", func(t *testing.T) {
 				tsdbQuery := getBaseQuery()
-				// tsdbQuery.Queries[0].TimeRange.From = "1538034567985"
-				// tsdbQuery.Queries[0].TimeRange.To = "1538117367985"
-				// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-				// 	"target":          "target",
-				// 	"alignmentPeriod": "cloud-monitoring-auto",
-				// })
+				tsdbQuery.Queries[0].TimeRange.From = now.Add(-(time.Hour * 23))
+				tsdbQuery.Queries[0].TimeRange.To = now
+				tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+					"target": "target",
+					"alignmentPeriod": "cloud-monitoring-auto"
+				}`)
 
 				qes, err := service.buildQueryExecutors(tsdbQuery)
 				require.NoError(t, err)
@@ -191,12 +197,12 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and range is 7 days", func(t *testing.T) {
 				tsdbQuery := getBaseQuery()
-				// tsdbQuery.Queries[0].TimeRange.From = "1538036324073"
-				// tsdbQuery.Queries[0].TimeRange.To = "1538641124073"
-				// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-				// 	"target":          "target",
-				// 	"alignmentPeriod": "cloud-monitoring-auto",
-				// })
+				tsdbQuery.Queries[0].TimeRange.From = now
+				tsdbQuery.Queries[0].TimeRange.To = now.AddDate(0, 0, 7)
+				tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+					"target": "target",
+					"alignmentPeriod": "cloud-monitoring-auto"
+				}`)
 
 				qes, err := service.buildQueryExecutors(tsdbQuery)
 				require.NoError(t, err)
@@ -206,14 +212,16 @@ func TestCloudMonitoring(t *testing.T) {
 		})
 
 		t.Run("and alignmentPeriod is set to stackdriver-auto", func(t *testing.T) { // legacy
+			now := time.Now().UTC()
+
 			t.Run("and range is two hours", func(t *testing.T) {
 				tsdbQuery := getBaseQuery()
-				// tsdbQuery.Queries[0].TimeRange.From = "1538033322461"
-				// tsdbQuery.Queries[0].TimeRange.To = "1538040522461"
-				// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-				// 	"target":          "target",
-				// 	"alignmentPeriod": "stackdriver-auto",
-				// })
+				tsdbQuery.Queries[0].TimeRange.From = now.Add(-(time.Hour * 2))
+				tsdbQuery.Queries[0].TimeRange.To = now
+				tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+					"target": "target",
+					"alignmentPeriod": "stackdriver-auto"
+				}`)
 
 				qes, err := service.buildQueryExecutors(tsdbQuery)
 				require.NoError(t, err)
@@ -227,8 +235,8 @@ func TestCloudMonitoring(t *testing.T) {
 
 				expectedTimeSelection := map[string]string{
 					"timeRange": "custom",
-					"start":     "2018-09-27T07:28:42Z",
-					"end":       "2018-09-27T09:28:42Z",
+					"start":     tsdbQuery.Queries[0].TimeRange.From.Format(time.RFC3339),
+					"end":       tsdbQuery.Queries[0].TimeRange.To.Format(time.RFC3339),
 				}
 				expectedTimeSeriesFilter := map[string]interface{}{
 					"minAlignmentPeriod": `60s`,
@@ -238,12 +246,12 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and range is 22 hours", func(t *testing.T) {
 				tsdbQuery := getBaseQuery()
-				// tsdbQuery.Queries[0].TimeRange.From = "1538034524922"
-				// tsdbQuery.Queries[0].TimeRange.To = "1538113724922"
-				// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-				// 	"target":          "target",
-				// 	"alignmentPeriod": "stackdriver-auto",
-				// })
+				tsdbQuery.Queries[0].TimeRange.From = now.Add(-(time.Hour * 22))
+				tsdbQuery.Queries[0].TimeRange.To = now
+				tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+					"target": "target",
+					"alignmentPeriod": "stackdriver-auto"
+				}`)
 
 				qes, err := service.buildQueryExecutors(tsdbQuery)
 				require.NoError(t, err)
@@ -257,8 +265,8 @@ func TestCloudMonitoring(t *testing.T) {
 
 				expectedTimeSelection := map[string]string{
 					"timeRange": "custom",
-					"start":     "2018-09-27T07:48:44Z",
-					"end":       "2018-09-28T05:48:44Z",
+					"start":     tsdbQuery.Queries[0].TimeRange.From.Format(time.RFC3339),
+					"end":       tsdbQuery.Queries[0].TimeRange.To.Format(time.RFC3339),
 				}
 				expectedTimeSeriesFilter := map[string]interface{}{
 					"minAlignmentPeriod": `60s`,
@@ -268,12 +276,12 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and range is 23 hours", func(t *testing.T) {
 				tsdbQuery := getBaseQuery()
-				// tsdbQuery.Queries[0].TimeRange.From = "1538034567985"
-				// tsdbQuery.Queries[0].TimeRange.To = "1538117367985"
-				// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-				// 	"target":          "target",
-				// 	"alignmentPeriod": "stackdriver-auto",
-				// })
+				tsdbQuery.Queries[0].TimeRange.From = now.Add(-(time.Hour * 23))
+				tsdbQuery.Queries[0].TimeRange.To = now
+				tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+					"target": "target",
+					"alignmentPeriod": "stackdriver-auto"
+				}`)
 
 				qes, err := service.buildQueryExecutors(tsdbQuery)
 				require.NoError(t, err)
@@ -287,8 +295,8 @@ func TestCloudMonitoring(t *testing.T) {
 
 				expectedTimeSelection := map[string]string{
 					"timeRange": "custom",
-					"start":     "2018-09-27T07:49:27Z",
-					"end":       "2018-09-28T06:49:27Z",
+					"start":     tsdbQuery.Queries[0].TimeRange.From.Format(time.RFC3339),
+					"end":       tsdbQuery.Queries[0].TimeRange.To.Format(time.RFC3339),
 				}
 				expectedTimeSeriesFilter := map[string]interface{}{
 					"minAlignmentPeriod": `300s`,
@@ -298,12 +306,13 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and range is 7 days", func(t *testing.T) {
 				tsdbQuery := getBaseQuery()
-				// tsdbQuery.Queries[0].TimeRange.From = "1538036324073"
-				// tsdbQuery.Queries[0].TimeRange.To = "1538641124073"
-				// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-				// 	"target":          "target",
-				// 	"alignmentPeriod": "stackdriver-auto",
-				// })
+
+				tsdbQuery.Queries[0].TimeRange.From = now.AddDate(0, 0, -7)
+				tsdbQuery.Queries[0].TimeRange.To = now
+				tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+					"target": "target",
+					"alignmentPeriod": "stackdriver-auto"
+				}`)
 
 				qes, err := service.buildQueryExecutors(tsdbQuery)
 				require.NoError(t, err)
@@ -317,8 +326,8 @@ func TestCloudMonitoring(t *testing.T) {
 
 				expectedTimeSelection := map[string]string{
 					"timeRange": "custom",
-					"start":     "2018-09-27T08:18:44Z",
-					"end":       "2018-10-04T08:18:44Z",
+					"start":     tsdbQuery.Queries[0].TimeRange.From.Format(time.RFC3339),
+					"end":       tsdbQuery.Queries[0].TimeRange.To.Format(time.RFC3339),
 				}
 				expectedTimeSeriesFilter := map[string]interface{}{
 					"minAlignmentPeriod": `3600s`,
@@ -331,9 +340,9 @@ func TestCloudMonitoring(t *testing.T) {
 			t.Run("and alignment period is within accepted range", func(t *testing.T) {
 				tsdbQuery := getBaseQuery()
 				tsdbQuery.Queries[0].Interval = 1000
-				// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-				// 	"alignmentPeriod": "+600s",
-				// })
+				tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+					"alignmentPeriod": "+600s"
+				}`)
 
 				qes, err := service.buildQueryExecutors(tsdbQuery)
 				require.NoError(t, err)
@@ -359,11 +368,11 @@ func TestCloudMonitoring(t *testing.T) {
 
 		t.Run("and query has aggregation mean set", func(t *testing.T) {
 			tsdbQuery := getBaseQuery()
-			// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-			// 	"metricType":         "a/metric/type",
-			// 	"crossSeriesReducer": "REDUCE_SUM",
-			// 	"view":               "FULL",
-			// })
+			tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+				"metricType":         "a/metric/type",
+				"crossSeriesReducer": "REDUCE_SUM",
+				"view":               "FULL"
+			}`)
 
 			qes, err := service.buildQueryExecutors(tsdbQuery)
 			require.NoError(t, err)
@@ -402,12 +411,12 @@ func TestCloudMonitoring(t *testing.T) {
 
 		t.Run("and query has group bys", func(t *testing.T) {
 			tsdbQuery := getBaseQuery()
-			// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-			// 	"metricType":         "a/metric/type",
-			// 	"crossSeriesReducer": "REDUCE_NONE",
-			// 	"groupBys":           []interface{}{"metric.label.group1", "metric.label.group2"},
-			// 	"view":               "FULL",
-			// })
+			tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+				"metricType":         "a/metric/type",
+				"crossSeriesReducer": "REDUCE_NONE",
+				"groupBys":           ["metric.label.group1", "metric.label.group2"],
+				"view":               "FULL"
+			}`)
 
 			qes, err := service.buildQueryExecutors(tsdbQuery)
 			require.NoError(t, err)
@@ -447,28 +456,6 @@ func TestCloudMonitoring(t *testing.T) {
 
 	t.Run("Parse queries from frontend and build Google Cloud Monitoring API queries", func(t *testing.T) {
 		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
-		// tsdbQuery := plugins.DataQuery{
-		// 	TimeRange: &plugins.DataTimeRange{
-		// 		From: fmt.Sprintf("%v", fromStart.Unix()*1000),
-		// 		To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
-		// 	},
-		// 	Queries: []plugins.DataSubQuery{
-		// 		{
-		// 			Model: simplejson.NewFromAny(map[string]interface{}{
-		// 				"queryType": metricQueryType,
-		// 				"metricQuery": map[string]interface{}{
-		// 					"metricType": "a/metric/type",
-		// 					"view":       "FULL",
-		// 					"aliasBy":    "testalias",
-		// 					"type":       "timeSeriesQuery",
-		// 					"groupBys":   []interface{}{"metric.label.group1", "metric.label.group2"},
-		// 				},
-		// 			}),
-		// 			RefID: "A",
-		// 		},
-		// 	},
-		// }
-
 		tsdbQuery := &backend.QueryDataRequest{
 			Queries: []backend.DataQuery{
 				{
@@ -477,6 +464,16 @@ func TestCloudMonitoring(t *testing.T) {
 						From: fromStart,
 						To:   fromStart.Add(34 * time.Minute),
 					},
+					JSON: json.RawMessage(`{
+		 				 "queryType": "metrics",
+                         "metricQuery": {
+		 					"metricType": "a/metric/type",
+		 					"view":       "FULL",
+		 					"aliasBy":    "testalias",
+		 					"type":       "timeSeriesQuery",
+		 					"groupBys":   ["metric.label.group1", "metric.label.group2"]
+		 				}
+		 			}`),
 				},
 			},
 		}
@@ -517,16 +514,16 @@ func TestCloudMonitoring(t *testing.T) {
 			}
 			verifyDeepLink(t, dl, expectedTimeSelection, expectedTimeSeriesFilter)
 
-			// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-			// 	"queryType": metricQueryType,
-			// 	"metricQuery": map[string]interface{}{
-			// 		"editorMode":  mqlEditorMode,
-			// 		"projectName": "test-proj",
-			// 		"query":       "test-query",
-			// 		"aliasBy":     "test-alias",
-			// 	},
-			// 	"sloQuery": map[string]interface{}{},
-			// })
+			tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+				"queryType": "metrics",
+				 "metricQuery": {
+					"editorMode":  "mql",
+					"projectName": "test-proj",
+					"query":       "test-query",
+					"aliasBy":     "test-alias"
+				},
+				"sloQuery": {}
+			}`)
 
 			qes, err = service.buildQueryExecutors(tsdbQuery)
 			require.NoError(t, err)
@@ -545,19 +542,19 @@ func TestCloudMonitoring(t *testing.T) {
 		})
 
 		t.Run("and query type is SLOs", func(t *testing.T) {
-			// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-			// 	"queryType":   sloQueryType,
-			// 	"metricQuery": map[string]interface{}{},
-			// 	"sloQuery": map[string]interface{}{
-			// 		"projectName":      "test-proj",
-			// 		"alignmentPeriod":  "stackdriver-auto",
-			// 		"perSeriesAligner": "ALIGN_NEXT_OLDER",
-			// 		"aliasBy":          "",
-			// 		"selectorName":     "select_slo_health",
-			// 		"serviceId":        "test-service",
-			// 		"sloId":            "test-slo",
-			// 	},
-			// })
+			tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+				"queryType": "slo",
+				 "sloQuery": {
+					"projectName":      "test-proj",
+					"alignmentPeriod":  "stackdriver-auto",
+					"perSeriesAligner": "ALIGN_NEXT_OLDER",
+					"aliasBy":          "",
+					"selectorName":     "select_slo_health",
+					"serviceId":        "test-service",
+					"sloId":            "test-slo"
+				},
+				"metricQuery": {}
+			}`)
 
 			qes, err := service.buildQueryExecutors(tsdbQuery)
 			require.NoError(t, err)
@@ -573,19 +570,19 @@ func TestCloudMonitoring(t *testing.T) {
 			assert.Equal(t, `aggregation.alignmentPeriod=%2B60s&aggregation.perSeriesAligner=ALIGN_MEAN&filter=select_slo_health%28%22projects%2Ftest-proj%2Fservices%2Ftest-service%2FserviceLevelObjectives%2Ftest-slo%22%29&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z`, queries[0].Target)
 			assert.Equal(t, 5, len(queries[0].Params))
 
-			// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-			// 	"queryType":   sloQueryType,
-			// 	"metricQuery": map[string]interface{}{},
-			// 	"sloQuery": map[string]interface{}{
-			// 		"projectName":      "test-proj",
-			// 		"alignmentPeriod":  "stackdriver-auto",
-			// 		"perSeriesAligner": "ALIGN_NEXT_OLDER",
-			// 		"aliasBy":          "",
-			// 		"selectorName":     "select_slo_compliance",
-			// 		"serviceId":        "test-service",
-			// 		"sloId":            "test-slo",
-			// 	},
-			// })
+			tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+				"queryType": "slo",
+				 "sloQuery": {
+					"projectName":      "test-proj",
+					"alignmentPeriod":  "stackdriver-auto",
+					"perSeriesAligner": "ALIGN_NEXT_OLDER",
+					"aliasBy":          "",
+					"selectorName":     "select_slo_compliance",
+					"serviceId":        "test-service",
+					"sloId":            "test-slo"
+				},
+				"metricQuery": {}
+			}`)
 
 			qes, err = service.buildQueryExecutors(tsdbQuery)
 			require.NoError(t, err)
@@ -1054,14 +1051,14 @@ func TestCloudMonitoring(t *testing.T) {
 
 	t.Run("and query preprocessor is not defined", func(t *testing.T) {
 		tsdbQuery := getBaseQuery()
-		// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-		// 	"metricType":         "a/metric/type",
-		// 	"crossSeriesReducer": "REDUCE_MIN",
-		// 	"perSeriesAligner":   "REDUCE_SUM",
-		// 	"alignmentPeriod":    "+60s",
-		// 	"groupBys":           []string{"labelname"},
-		// 	"view":               "FULL",
-		// })
+		tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+			"metricType":         "a/metric/type",
+			"crossSeriesReducer": "REDUCE_MIN",
+			"perSeriesAligner":   "REDUCE_SUM",
+			"alignmentPeriod":    "+60s",
+			"groupBys":           ["labelname"],
+			"view":               "FULL"
+		}`)
 
 		qes, err := service.buildQueryExecutors(tsdbQuery)
 		require.NoError(t, err)
@@ -1081,15 +1078,15 @@ func TestCloudMonitoring(t *testing.T) {
 
 	t.Run("and query preprocessor is set to none", func(t *testing.T) {
 		tsdbQuery := getBaseQuery()
-		// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-		// 	"metricType":         "a/metric/type",
-		// 	"crossSeriesReducer": "REDUCE_MIN",
-		// 	"perSeriesAligner":   "REDUCE_SUM",
-		// 	"alignmentPeriod":    "+60s",
-		// 	"groupBys":           []string{"labelname"},
-		// 	"view":               "FULL",
-		// 	"preprocessor":       "none",
-		// })
+		tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+			"metricType":         "a/metric/type",
+			"crossSeriesReducer": "REDUCE_MIN",
+			"perSeriesAligner":   "REDUCE_SUM",
+			"alignmentPeriod":    "+60s",
+			"groupBys":           ["labelname"],
+			"view":               "FULL",
+			"preprocessor":       "none"
+		}`)
 
 		qes, err := service.buildQueryExecutors(tsdbQuery)
 		require.NoError(t, err)
@@ -1109,15 +1106,15 @@ func TestCloudMonitoring(t *testing.T) {
 
 	t.Run("and query preprocessor is set to rate and there's no group bys", func(t *testing.T) {
 		tsdbQuery := getBaseQuery()
-		// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-		// 	"metricType":         "a/metric/type",
-		// 	"crossSeriesReducer": "REDUCE_SUM",
-		// 	"perSeriesAligner":   "REDUCE_MIN",
-		// 	"alignmentPeriod":    "+60s",
-		// 	"groupBys":           []string{},
-		// 	"view":               "FULL",
-		// 	"preprocessor":       "rate",
-		// })
+		tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+			"metricType":         "a/metric/type",
+			"crossSeriesReducer": "REDUCE_SUM",
+			"perSeriesAligner":   "REDUCE_MIN",
+			"alignmentPeriod":    "+60s",
+			"groupBys":           [],
+			"view":               "FULL",
+			"preprocessor":       "rate"
+		}`)
 
 		qes, err := service.buildQueryExecutors(tsdbQuery)
 		require.NoError(t, err)
@@ -1135,15 +1132,15 @@ func TestCloudMonitoring(t *testing.T) {
 
 	t.Run("and query preprocessor is set to rate and group bys exist", func(t *testing.T) {
 		tsdbQuery := getBaseQuery()
-		// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-		// 	"metricType":         "a/metric/type",
-		// 	"crossSeriesReducer": "REDUCE_SUM",
-		// 	"perSeriesAligner":   "REDUCE_MIN",
-		// 	"alignmentPeriod":    "+60s",
-		// 	"groupBys":           []string{"labelname"},
-		// 	"view":               "FULL",
-		// 	"preprocessor":       "rate",
-		// })
+		tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+			"metricType":         "a/metric/type",
+			"crossSeriesReducer": "REDUCE_SUM",
+			"perSeriesAligner":   "REDUCE_MIN",
+			"alignmentPeriod":    "+60s",
+			"groupBys":           ["labelname"],
+			"view":               "FULL",
+			"preprocessor":       "rate"
+		}`)
 
 		qes, err := service.buildQueryExecutors(tsdbQuery)
 		require.NoError(t, err)
@@ -1163,15 +1160,15 @@ func TestCloudMonitoring(t *testing.T) {
 
 	t.Run("and query preprocessor is set to delta and there's no group bys", func(t *testing.T) {
 		tsdbQuery := getBaseQuery()
-		// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-		// 	"metricType":         "a/metric/type",
-		// 	"crossSeriesReducer": "REDUCE_MIN",
-		// 	"perSeriesAligner":   "REDUCE_SUM",
-		// 	"alignmentPeriod":    "+60s",
-		// 	"groupBys":           []string{},
-		// 	"view":               "FULL",
-		// 	"preprocessor":       "delta",
-		// })
+		tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+			"metricType":         "a/metric/type",
+			"crossSeriesReducer": "REDUCE_MIN",
+			"perSeriesAligner":   "REDUCE_SUM",
+			"alignmentPeriod":    "+60s",
+			"groupBys":           [],
+			"view":               "FULL",
+			"preprocessor":       "delta"
+		}`)
 
 		qes, err := service.buildQueryExecutors(tsdbQuery)
 		require.NoError(t, err)
@@ -1189,15 +1186,15 @@ func TestCloudMonitoring(t *testing.T) {
 
 	t.Run("and query preprocessor is set to delta and group bys exist", func(t *testing.T) {
 		tsdbQuery := getBaseQuery()
-		// tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-		// 	"metricType":         "a/metric/type",
-		// 	"crossSeriesReducer": "REDUCE_MIN",
-		// 	"perSeriesAligner":   "REDUCE_SUM",
-		// 	"alignmentPeriod":    "+60s",
-		// 	"groupBys":           []string{"labelname"},
-		// 	"view":               "FULL",
-		// 	"preprocessor":       "delta",
-		// })
+		tsdbQuery.Queries[0].JSON = json.RawMessage(`{
+			"metricType":         "a/metric/type",
+			"crossSeriesReducer": "REDUCE_MIN",
+			"perSeriesAligner":   "REDUCE_SUM",
+			"alignmentPeriod":    "+60s",
+			"groupBys":           ["labelname"],
+			"view":               "FULL",
+			"preprocessor":       "delta"
+		}`)
 
 		qes, err := service.buildQueryExecutors(tsdbQuery)
 		require.NoError(t, err)
@@ -1312,26 +1309,14 @@ func getBaseQuery() *backend.QueryDataRequest {
 					From: fromStart,
 					To:   fromStart.Add(34 * time.Minute),
 				},
-				// JSON: ,
+				JSON: json.RawMessage(`{
+					"metricType": "a/metric/type",
+					"view":       "FULL",
+					"aliasBy":    "testalias",
+					"type":       "timeSeriesQuery"
+				}`),
 			},
 		},
 	}
-	// query := plugins.DataQuery{
-	// 	TimeRange: &plugins.DataTimeRange{
-	// 		From: fmt.Sprintf("%v", fromStart.Unix()*1000),
-	// 		To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
-	// 	},
-	// 	Queries: []plugins.DataSubQuery{
-	// 		{
-	// 			Model: simplejson.NewFromAny(map[string]interface{}{
-	// 				"metricType": "a/metric/type",
-	// 				"view":       "FULL",
-	// 				"aliasBy":    "testalias",
-	// 				"type":       "timeSeriesQuery",
-	// 			}),
-	// 			RefID: "A",
-	// 		},
-	// 	},
-	// }
 	return query
 }

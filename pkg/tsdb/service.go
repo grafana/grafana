@@ -29,7 +29,6 @@ func NewService(
 	s.registry["mssql"] = mssql.NewExecutor
 	s.registry["postgres"] = postgresService.NewExecutor
 	s.registry["mysql"] = mysql.New(httpClientProvider)
-	s.registry["stackdriver"] = cloudMonitoringService.NewExecutor
 
 	return s
 }
