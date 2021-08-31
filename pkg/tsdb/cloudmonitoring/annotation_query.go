@@ -15,26 +15,23 @@ type MetricQuery struct {
 	Tags  string `json:"tags"`
 }
 
-func (s *Service) executeAnnotationQuery(ctx context.Context, tsdbQuery *backend.QueryDataRequest, dsInfo datasourceInfo) (
+func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
 	*backend.QueryDataResponse, error) {
-	// result := plugins.DataResponse{
-	// 	Results: make(map[string]plugins.DataQueryResult),
-	// }
 	result := backend.NewQueryDataResponse()
-	firstQuery := tsdbQuery.Queries[0]
+	firstQuery := req.Queries[0]
 
-	queries, err := s.buildQueryExecutors(tsdbQuery)
+	queries, err := s.buildQueryExecutors(req)
 	if err != nil {
 		return result, err
 	}
 
-	queryRes, resp, _, err := queries[0].run(ctx, tsdbQuery, s, dsInfo)
+	queryRes, resp, _, err := queries[0].run(ctx, req, s, dsInfo)
 	if err != nil {
 		return result, err
 	}
 
 	// metricQuery := firstQuery.Model.Get("metricQuery")
-	metricQuery := MetricQuery{}
+	metricQuery := &MetricQuery{}
 	err = json.Unmarshal(firstQuery.JSON, metricQuery)
 	if err != nil {
 		return result, nil
@@ -50,24 +47,8 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, tsdbQuery *backend
 }
 
 func transformAnnotationToFrame(annotationData []map[string]string, result *backend.DataResponse) {
-	// table := plugins.DataTable{
-	// 	Columns: make([]plugins.DataTableColumn, 4),
-	// 	Rows:    make([]plugins.DataRowValues, 0),
-	// }
 	frames := data.Frames{}
-
-	// table.Columns[0].Text = "time"
-	// table.Columns[1].Text = "title"
-	// table.Columns[2].Text = "tags"
-	// table.Columns[3].Text = "text"
-
 	for _, r := range annotationData {
-		// values := make([]interface{}, 4)
-		// values[0] = r["time"]
-		// values[1] = r["title"]
-		// values[2] = r["tags"]
-		// values[3] = r["text"]
-		// table.Rows = append(table.Rows, values)
 		frame := &data.Frame{
 			Name: "Table",
 			Fields: []*data.Field{
@@ -77,13 +58,13 @@ func transformAnnotationToFrame(annotationData []map[string]string, result *back
 				data.NewField("text", nil, r["text"]),
 			},
 			Meta: &data.FrameMeta{
-				// Custom: interface,
+				Custom: map[string]interface{}{
+					"rowCount": len(r),
+				},
 			},
 		}
 		frames = append(frames, frame)
 	}
-	// result.Tables = append(result.Tables, table)
-	// result.Meta.Set("rowCount", len(data))
 	result.Frames = frames
 	slog.Info("anno", "len", len(annotationData))
 }

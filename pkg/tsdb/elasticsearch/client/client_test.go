@@ -9,11 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -319,7 +320,7 @@ func createMultisearchForTest(t *testing.T, c Client) (*MultiSearchRequest, erro
 	t.Helper()
 
 	msb := c.MultiSearch()
-	s := msb.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+	s := msb.Search(intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
 	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
 		a.Interval = "$__interval"
 

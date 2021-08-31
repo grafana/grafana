@@ -4,9 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +16,7 @@ var now = time.Now()
 
 func TestPrometheus(t *testing.T) {
 	service := Service{
-		intervalCalculator: tsdb.NewCalculator(),
+		intervalCalculator: intervalv2.NewCalculator(),
 	}
 
 	t.Run("converting metric name", func(t *testing.T) {

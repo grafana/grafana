@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 var (
@@ -29,8 +30,8 @@ func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error
 		res += query.renderTz()
 	}
 
-	calculator := tsdb.NewCalculator(tsdb.CalculatorOptions{})
-	i, err := calculator.Calculate(queryContext.Queries[0].TimeRange, query.Interval, tsdb.Min)
+	calculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
+	i, err := calculator.Calculate(queryContext.Queries[0].TimeRange, query.Interval, intervalv2.Min)
 	if err != nil {
 		return "", err
 	}

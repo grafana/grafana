@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/loki/pkg/loghttp"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -62,7 +63,7 @@ func TestLoki(t *testing.T) {
 		}
 		service := &Service{
 			intervalCalculator: mockCalculator{
-				interval: tsdb.Interval{
+				interval: intervalv2.Interval{
 					Value: time.Second * 30,
 				},
 			},
@@ -93,7 +94,7 @@ func TestLoki(t *testing.T) {
 		}
 		service := &Service{
 			intervalCalculator: mockCalculator{
-				interval: tsdb.Interval{
+				interval: intervalv2.Interval{
 					Value: time.Minute * 2,
 				},
 			},
@@ -105,7 +106,7 @@ func TestLoki(t *testing.T) {
 
 		service = &Service{
 			intervalCalculator: mockCalculator{
-				interval: tsdb.Interval{
+				interval: intervalv2.Interval{
 					Value: time.Second * 2,
 				},
 			},
@@ -175,13 +176,13 @@ func TestParseResponse(t *testing.T) {
 }
 
 type mockCalculator struct {
-	interval tsdb.Interval
+	interval intervalv2.Interval
 }
 
-func (m mockCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration, intervalMode tsdb.IntervalMode) (tsdb.Interval, error) {
+func (m mockCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration, intervalMode intervalv2.IntervalMode) (intervalv2.Interval, error) {
 	return m.interval, nil
 }
 
-func (m mockCalculator) CalculateSafeInterval(timerange backend.TimeRange, resolution int64) tsdb.Interval {
+func (m mockCalculator) CalculateSafeInterval(timerange backend.TimeRange, resolution int64) intervalv2.Interval {
 	return m.interval
 }
