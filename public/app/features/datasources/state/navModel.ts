@@ -1,5 +1,7 @@
 import { DataSourceSettings, PluginType, PluginInclude, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
 import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
 export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDataSourcePlugin): NavModelItem {
@@ -46,13 +48,15 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   }
 
   if (config.licenseInfo.hasLicense) {
-    navModel.children!.push({
-      active: false,
-      icon: 'lock',
-      id: `datasource-permissions-${dataSource.id}`,
-      text: 'Permissions',
-      url: `datasources/edit/${dataSource.id}/permissions`,
-    });
+    if (contextSrv.hasPermission(AccessControlAction.DataSourcesPermissionsRead)) {
+      navModel.children!.push({
+        active: false,
+        icon: 'lock',
+        id: `datasource-permissions-${dataSource.id}`,
+        text: 'Permissions',
+        url: `datasources/edit/${dataSource.id}/permissions`,
+      });
+    }
 
     navModel.children!.push({
       active: false,
