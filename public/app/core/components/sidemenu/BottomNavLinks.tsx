@@ -37,23 +37,28 @@ export default class BottomNavLinks extends PureComponent<Props, State> {
     const { link, user } = this.props;
     const { showSwitcherModal } = this.state;
 
-    let children = link.children?.slice() || [];
+    let children = link.children || [];
 
     if (link.id === 'help') {
-      children = getFooterLinks();
-      children.push({
-        text: 'Keyboard shortcuts',
-        icon: 'keyboard',
-        onClick: this.onOpenShortcuts,
-      });
+      children = [
+        ...getFooterLinks(),
+        {
+          text: 'Keyboard shortcuts',
+          icon: 'keyboard',
+          onClick: this.onOpenShortcuts,
+        },
+      ];
     }
 
     if (link.showOrgSwitcher) {
-      children.push({
-        text: 'Switch organization',
-        icon: 'arrow-random',
-        onClick: this.toggleSwitcherModal,
-      });
+      children = [
+        ...children,
+        {
+          text: 'Switch organization',
+          icon: 'arrow-random',
+          onClick: this.toggleSwitcherModal,
+        },
+      ];
     }
 
     return (
