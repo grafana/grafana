@@ -99,8 +99,7 @@ export class PanelPlugin<
     return new FieldConfigOptionsRegistry();
   };
 
-  private _optionEditors?: PanelOptionEditorsRegistry;
-  private registerOptionEditors?: (builder: PanelOptionsEditorBuilder<TOptions>) => void;
+  registerOptionEditors: (builder: PanelOptionsEditorBuilder<TOptions>) => void = () => {};
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -126,15 +125,17 @@ export class PanelPlugin<
     let result = this._defaults || {};
 
     if (!this._defaults) {
-      const editors = this.optionEditors;
+     // const builder = new PanelOptionsEditorBuilder<TOptions>();
+      // this.initPanelEditor(builder);
+      // builder.get
 
-      if (!editors || editors.list().length === 0) {
-        return null;
-      }
+      // if (!editors || editors.list().length === 0) {
+      //   return null;
+      // }
 
-      for (const editor of editors.list()) {
-        set(result, editor.id, editor.defaultValue);
-      }
+      // for (const editor of editors.list()) {
+      //   set(result, editor.id, editor.defaultValue);
+      // }
     }
 
     return result;
@@ -177,17 +178,10 @@ export class PanelPlugin<
     return this._fieldConfigRegistry;
   }
 
-  get optionEditors(): PanelOptionEditorsRegistry {
-    if (!this._optionEditors) {
-      const builder = new PanelOptionsEditorBuilder<TOptions>();
-      this._optionEditors = builder.getRegistry();
-
-      if (this.registerOptionEditors) {
-        this.registerOptionEditors(builder);
-      }
+  initPanelEditor(builder: PanelOptionsEditorBuilder<TOptions>) {
+    if (this.registerOptionEditors) {
+      this.registerOptionEditors(builder);
     }
-
-    return this._optionEditors;
   }
 
   /**

@@ -1,5 +1,5 @@
 import { FieldConfigEditorProps, FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
-import { OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
+import { OptionsEditorItem, OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
 import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 import {
   numberOverrideProcessor,
@@ -17,6 +17,7 @@ import {
   unitOverrideProcessor,
   FieldNamePickerConfigSettings,
 } from '../field';
+import { OptionEditorConfig } from '../types/options';
 
 /**
  * Fluent API for declarative creation of field config option editors
@@ -129,6 +130,27 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   }
 }
 
+export interface NestedValueAccess {
+  getValue: (path: string) => any;
+  onChange: (path: string, value: any) => void;
+}
+export interface NestedPanelOptions {
+  builder: (builder: PanelOptionsEditorBuilder<unknown>) => void;
+  values: (parent: NestedValueAccess) => NestedValueAccess;
+}
+
+export class NestedPanelOptionsBuilder implements OptionsEditorItem<any, any, any, any> {
+  id = 'nested-panel-options';
+  name = 'nested';
+  editor = () => null;
+
+  constructor(public path: string, public cfg: OptionEditorConfig<any, NestedPanelOptions, any>) {}
+}
+
+export function isNestedPanelOptions(item: any): item is NestedPanelOptionsBuilder {
+  return item.id === 'nested-panel-options';
+}
+
 /**
  * Fluent API for declarative creation of panel options
  */
@@ -137,6 +159,10 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
   StandardEditorProps,
   PanelOptionsEditorItem<TOptions>
 > {
+  addNestedBuilder(path: string, options: NestedPanelOptions) {
+    return this.addCustomEditor(new NestedPanelOptionsBuilder(path, options));
+  }
+
   addNumberInput<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {
     return this.addCustomEditor({
       ...config,
