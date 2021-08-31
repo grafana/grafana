@@ -1,12 +1,10 @@
-import React, { memo, useState, ChangeEvent, CSSProperties, useEffect, KeyboardEventHandler } from 'react';
+import React, { memo, CSSProperties } from 'react';
 import { areEqual, FixedSizeGrid as Grid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2, SelectableValue } from '../../../../../../packages/grafana-data/src';
-import { Input, useTheme2, stylesFactory, InlineFieldRow, InlineField } from '@grafana/ui';
+import { useTheme2, stylesFactory } from '@grafana/ui';
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
-import { BaseDimensionConfig } from 'app/features/dimensions';
-import { getBackendSrv } from '@grafana/runtime';
 
 interface CellProps {
   columnIndex: number;
@@ -42,8 +40,11 @@ function Cell(props: CellProps) {
             backgroundColor: 'transparent',
           }}
         >
-          {folder === 'icon' && <SVG src={card.imgUrl} onClick={() => onChange(card.value)} className={styles.card} />}
-          {folder === 'image' && <img src={card.imgUrl} onClick={onChange} className={styles.card} />}
+          {folder.value.includes('icons') ? (
+            <SVG src={card.imgUrl} onClick={() => onChange(`${folder.value}/${card.value}`)} className={styles.card} />
+          ) : (
+            <img src={card.imgUrl} onClick={() => onChange(`${folder.value}/${card.value}`)} className={styles.card} />
+          )}
           <h6 className={styles.text}>{card.label.substr(0, card.label.length - 4)}</h6>
         </div>
       )}
@@ -71,74 +72,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, color) => {
   };
 });
 
-function Search({
-  onChangeSearch,
-  value,
-  folder,
-  onChange,
-}: {
-  onChangeSearch: (e: ChangeEvent<HTMLInputElement>) => void;
-  value: BaseDimensionConfig;
-  folder: string;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-}) {
-  return (
-    <>
-      <InlineFieldRow>
-        <InlineField label="Current">
-          <Input defaultValue={value?.fixed} onChange={onChange} />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label="Folder">
-          <Input defaultValue={folder} />
-        </InlineField>
-      </InlineFieldRow>
-      <Input placeholder="Search" onChange={onChangeSearch} />
-    </>
-  );
-}
-
 interface CardProps {
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  value: BaseDimensionConfig;
-  folder: string;
+  onChange: (value: string) => void;
+  cards: SelectableValue[];
+  currentFolder: SelectableValue<string> | undefined;
 }
 
 const Cards = (props: CardProps) => {
-  const { onChange, value, folder } = props;
-  const folders: { [key: string]: string } = { icon: 'img/icons/unicons/', image: 'img/bg/' };
-  const [cards, setCards] = useState<SelectableValue[]>([]);
-
-  const iconRoot = (window as any).__grafana_public_path__ + folders[folder];
-
-  useEffect(() => {
-    getBackendSrv()
-      .get(`${iconRoot}/index.json`)
-      .then((data) => {
-        setCards(
-          data.files.map((icon: string) => ({
-            value: icon,
-            label: icon,
-            imgUrl: iconRoot + icon,
-          }))
-        );
-      });
-  }, [iconRoot]);
-
-  const onChangeSearch = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value) {
-      // exclude file type (.svg) in the search
-      const filtered = cards.filter((card) => card.value.substr(0, card.value.length - 4).includes(e.target.value));
-      setCards(filtered);
-    } else {
-      setCards(cards);
-    }
-  };
+  const { onChange, cards, currentFolder: folder } = props;
 
   return (
     <>
-      <Search onChangeSearch={onChangeSearch} value={value} folder={folder} onChange={onChange} />
       <div
         style={{
           minHeight: '100vh',

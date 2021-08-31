@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import {
   FieldNamePickerConfigSettings,
   StandardEditorProps,
@@ -6,10 +6,9 @@ import {
   StringFieldConfigSettings,
 } from '@grafana/data';
 import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOptions } from '../types';
-import { InlineField, InlineFieldRow, RadioButtonGroup, StringValueEditor } from '@grafana/ui';
+import { InlineField, InlineFieldRow, RadioButtonGroup, StringValueEditor, Button, Modal } from '@grafana/ui';
 import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
-import IconSelector from './IconSelector';
-import IconModal from 'app/plugins/panel/canvas/elements/IconModal';
+import ResourcePicker from 'app/plugins/panel/canvas/editor/ResourcePicker';
 
 const resourceOptions = [
   { label: 'Fixed', value: ResourceDimensionMode.Fixed, description: 'Fixed value' },
@@ -33,6 +32,7 @@ export const ResourceDimensionEditor: FC<
   const { value, context, onChange, item } = props;
   const resourceType = item.settings?.resourceType ?? 'icon';
   const labelWidth = 9;
+  const [isOpen, setOpen] = useState(false);
 
   const onModeChange = useCallback(
     (mode) => {
@@ -53,13 +53,14 @@ export const ResourceDimensionEditor: FC<
     },
     [onChange, value]
   );
-
   const onFixedChange = useCallback(
-    (fixed) => {
+    (fixed: string) => {
+      // TODO: validate if the returned url is in our public folder
       onChange({
         ...value,
         fixed,
       });
+      setOpen(false);
     },
     [onChange, value]
   );
@@ -86,19 +87,18 @@ export const ResourceDimensionEditor: FC<
         </InlineFieldRow>
       )}
       {mode === ResourceDimensionMode.Fixed && (
-        <InlineFieldRow>
-          {(resourceType === 'icon' || resourceType === 'image') && <IconModal {...props} />}
-          {/* {resourceType === 'image' && (
-            <InlineField label="Image" labelWidth={labelWidth} grow={true}>
-              <StringValueEditor
-                context={context}
-                value={value?.fixed}
+        <div>
+          <Button onClick={() => setOpen(true)}>Select Item</Button>
+          {isOpen && (
+            <Modal isOpen={isOpen} title="Select Item" onDismiss={() => setOpen(false)} closeOnEscape>
+              <ResourcePicker
                 onChange={onFixedChange}
-                item={dummyImageStringSettings}
+                value={value?.fixed ?? 'img/bg/p0.png'}
+                mediaType={item.settings?.resourceType ?? 'icon'}
               />
-            </InlineField>
-          )} */}
-        </InlineFieldRow>
+            </Modal>
+          )}
+        </div>
       )}
       {mode === ResourceDimensionMode.Mapping && (
         <InlineFieldRow>
