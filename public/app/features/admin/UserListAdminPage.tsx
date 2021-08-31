@@ -167,7 +167,7 @@ const renderUser = (user: UserDTO) => {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     table: css`
-      margin-top: 28px;
+      margin-top: ${theme.spacing(3)};
     `,
     filter: css`
       margin-right: ${theme.spacing(1)};
