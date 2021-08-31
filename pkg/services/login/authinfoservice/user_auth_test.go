@@ -22,7 +22,7 @@ import (
 //nolint:goconst
 func TestUserAuth(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	srv := ProvideAuthInfoService(bus.New(), sqlStore, &OSSUserProtectionImpl{}, &ossencryption.Service{})
+	srv := ProvideAuthInfoService(bus.New(), sqlStore, &OSSUserProtectionImpl{}, ossencryption.ProvideService())
 
 	t.Run("Given 5 users", func(t *testing.T) {
 		for i := 0; i < 5; i++ {
