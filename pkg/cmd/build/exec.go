@@ -9,6 +9,8 @@ import (
 )
 
 func runError(cmd string, args ...string) ([]byte, error) {
+	// Can ignore gosec G204 because this function is not used in Grafana, only in the build process.
+	//nolint:gosec
 	ecmd := exec.Command(cmd, args...)
 	bs, err := ecmd.CombinedOutput()
 	if err != nil {
@@ -20,6 +22,8 @@ func runError(cmd string, args ...string) ([]byte, error) {
 
 func runPrint(cmd string, args ...string) {
 	log.Println(cmd, strings.Join(args, " "))
+	// Can ignore gosec G204 because this function is not used in Grafana, only in the build process.
+	//nolint:gosec
 	ecmd := exec.Command(cmd, args...)
 	ecmd.Stdout = os.Stdout
 	ecmd.Stderr = os.Stderr

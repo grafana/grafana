@@ -21,7 +21,6 @@ type BuildOpts struct {
 	race            bool
 	includeBuildID  bool
 	buildID         string
-	binaries        []string
 	isDev           bool
 	enterprise      bool
 	skipRpmGen      bool

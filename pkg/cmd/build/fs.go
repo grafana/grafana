@@ -11,8 +11,14 @@ import (
 	"strings"
 )
 
-func shaDir(dir string) {
-	filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
+func logAndClose(c io.Closer) {
+	if err := c.Close(); err != nil {
+		log.Println("error closing:", err)
+	}
+}
+
+func shaDir(dir string) error {
+	return filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
 		if path == dir {
 			return nil
 		}
@@ -28,11 +34,14 @@ func shaDir(dir string) {
 }
 
 func shaFile(file string) error {
+	// Can ignore gosec G304 because this function is not used in Grafana, only in the build process.
+	//nolint:gosec
 	r, err := os.Open(file)
 	if err != nil {
 		return err
 	}
-	defer r.Close()
+
+	defer logAndClose(r)
 
 	h := sha256.New()
 	_, err = io.Copy(h, r)
@@ -58,7 +67,7 @@ func md5File(file string) error {
 	if err != nil {
 		return err
 	}
-	defer fd.Close()
+	defer logAndClose(fd)
 
 	h := md5.New()
 	_, err = io.Copy(h, fd)
@@ -83,6 +92,8 @@ func md5File(file string) error {
 func rmr(paths ...string) {
 	for _, path := range paths {
 		log.Println("rm -r", path)
-		os.RemoveAll(path)
+		if err := os.RemoveAll(path); err != nil {
+			log.Println("error deleting folder", path, "error:", err)
+		}
 	}
 }

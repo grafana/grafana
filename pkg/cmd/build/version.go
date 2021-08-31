@@ -19,7 +19,7 @@ func OpenPackageJSON(dir string) (PackageJSON, error) {
 		return PackageJSON{}, err
 	}
 
-	defer reader.Close()
+	defer logAndClose(reader)
 
 	jsonObj := PackageJSON{}
 	if err := json.NewDecoder(reader).Decode(&jsonObj); err != nil {
