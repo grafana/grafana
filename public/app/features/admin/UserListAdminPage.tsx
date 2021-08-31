@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { css, cx } from '@emotion/css';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { Pagination, Tooltip, stylesFactory, LinkButton, Icon } from '@grafana/ui';
 import { AccessControlAction, StoreState, UserDTO } from '../../types';
@@ -142,4 +141,4 @@ const getStyles = stylesFactory(() => {
   };
 });
 
-export default hot(module)(connector(UserListAdminPageUnConnected));
+export default connector(UserListAdminPageUnConnected);

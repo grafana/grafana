@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
 import { DeleteButton, LinkButton } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
@@ -167,4 +166,4 @@ const mapDispatchToProps = {
   setSearchQuery,
 };
 
-export default hot(module)(connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.teams)(TeamList));
+export default connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.teams)(TeamList);
