@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -33,7 +34,7 @@ func TestQueryInterval(t *testing.T) {
 				// 5minutes timerange = 300000milliseconds; default-resolution is 1500pixels,
 				// so we should have 300000/1500 = 200milliseconds here
 				So(query.IntervalMS, ShouldEqual, 200)
-				So(query.MaxDataPoints, ShouldEqual, 1500)
+				So(query.MaxDataPoints, ShouldEqual, interval.DefaultRes)
 			}
 
 			applyScenario(dataSourceJson, queryModel, verifier)
@@ -47,7 +48,7 @@ func TestQueryInterval(t *testing.T) {
 
 			verifier := func(query plugins.DataSubQuery) {
 				So(query.IntervalMS, ShouldEqual, 123000)
-				So(query.MaxDataPoints, ShouldEqual, 1500)
+				So(query.MaxDataPoints, ShouldEqual, interval.DefaultRes)
 			}
 
 			applyScenario(dataSourceJson, queryModel, verifier)
@@ -64,7 +65,7 @@ func TestQueryInterval(t *testing.T) {
 
 			verifier := func(query plugins.DataSubQuery) {
 				So(query.IntervalMS, ShouldEqual, 71000)
-				So(query.MaxDataPoints, ShouldEqual, 1500)
+				So(query.MaxDataPoints, ShouldEqual, interval.DefaultRes)
 			}
 
 			applyScenario(dataSourceJson, queryModel, verifier)
@@ -83,7 +84,7 @@ func TestQueryInterval(t *testing.T) {
 				// when both panel-min-interval and datasource-min-interval exists,
 				// panel-min-interval is used
 				So(query.IntervalMS, ShouldEqual, 19000)
-				So(query.MaxDataPoints, ShouldEqual, 1500)
+				So(query.MaxDataPoints, ShouldEqual, interval.DefaultRes)
 			}
 
 			applyScenario(dataSourceJson, queryModel, verifier)
