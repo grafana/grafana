@@ -97,7 +97,7 @@ export function localTimeFormat(
   }
 
   // https://momentjs.com/docs/#/displaying/format/
-  const dateTimeFormat = new Intl.DateTimeFormat(locale, options);
+  const dateTimeFormat = new Intl.DateTimeFormat(locale ? locale : undefined, options);
   const parts = dateTimeFormat.formatToParts(new Date());
   const hour12 = dateTimeFormat.resolvedOptions().hour12;
 
