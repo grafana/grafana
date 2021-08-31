@@ -2,7 +2,8 @@
 # All tools are designed to be build inside $GOBIN.
 BINGO_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 GOPATH ?= $(shell go env GOPATH)
-GOBIN  ?= $(firstword $(subst :, ,${GOPATH}))/bin
+PATHSEP := $(if $(COMSPEC),;,:)
+GOBIN  ?= $(firstword $(subst $(PATHSEP), ,$(subst \,/,${GOPATH})))/bin
 GO     ?= $(shell which go)
 
 # Below generated variables ensure that every time a tool under each variable is invoked, the correct version
