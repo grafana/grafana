@@ -1119,7 +1119,7 @@ For more information about the Alerting feature in Grafana, refer to [Alerts ove
 
 ### enabled
 
-Set to `true` to enable legacy alerting engine. Default is `false`.
+Set to `true` and [disable unified alerting]({{<relref "#unified_alerting">}}) to enable legacy alerting engine. Default is `false`.
 
 ### execute_alerts
 
