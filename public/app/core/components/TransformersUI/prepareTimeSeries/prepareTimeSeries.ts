@@ -116,7 +116,7 @@ export function toTimeSeriesMany(data: DataFrame[]): DataFrame[] {
                 labels: b.labels,
               },
             ],
-            length: frame.length,
+            length: b.time.length,
           });
         }
       } else {

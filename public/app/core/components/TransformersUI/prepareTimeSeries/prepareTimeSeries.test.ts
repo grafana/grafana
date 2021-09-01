@@ -176,7 +176,7 @@ describe('Prepare time series transformer', () => {
         refId: 'A',
         fields: [
           { name: 'time', type: FieldType.time, values: [0, 1, 2, 3, 4, 5] },
-          { name: 'count', type: FieldType.number, values: [10, 20, 30, 40, 50, 60] },
+          { name: 'another', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
         length: 6,
         meta: {
@@ -188,7 +188,7 @@ describe('Prepare time series transformer', () => {
         refId: 'A',
         fields: [
           { name: 'time', type: FieldType.time, values: [0, 1, 2, 3, 4, 5] },
-          { name: 'another', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
+          { name: 'count', type: FieldType.number, values: [10, 20, 30, 40, 50, 60] },
         ],
         length: 6,
         meta: {
@@ -273,6 +273,52 @@ describe('Prepare time series transformer', () => {
     };
 
     expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([]);
+  });
+
+  it('should convert long to many', () => {
+    const source = [
+      toDataFrame({
+        name: 'long',
+        refId: 'X',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 1, 2, 2, 3, 3] },
+          { name: 'value', type: FieldType.number, values: [10, 20, 30, 40, 50, 60] },
+          { name: 'region', type: FieldType.string, values: ['a', 'b', 'a', 'b', 'a', 'b'] },
+        ],
+      }),
+    ];
+
+    const config: PrepareTimeSeriesOptions = {
+      format: timeSeriesFormat.TimeSeriesMany,
+    };
+
+    const frames = prepareTimeSeriesTransformer.transformer(config)(source);
+    expect(frames).toEqual([
+      toEquableDataFrame({
+        name: 'long',
+        refId: 'X',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'value', labels: { region: 'a' }, type: FieldType.number, values: [10, 30, 50] },
+        ],
+        length: 3,
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
+      }),
+      toEquableDataFrame({
+        name: 'long',
+        refId: 'X',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'value', labels: { region: 'b' }, type: FieldType.number, values: [20, 40, 60] },
+        ],
+        length: 3,
+        meta: {
+          type: DataFrameType.TimeSeriesMany,
+        },
+      }),
+    ]);
   });
 });
 
