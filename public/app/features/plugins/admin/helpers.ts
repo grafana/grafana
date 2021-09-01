@@ -12,6 +12,41 @@ export function isOrgAdmin() {
   return contextSrv.hasRole('Admin');
 }
 
+export function mergeLocalsAndRemotes(local: LocalPlugin[] = [], remote: RemotePlugin[] = []): CatalogPlugin[] {
+  // TODO<use a Set() here instead of Array.prototype.find()>
+  const catalogPlugins: CatalogPlugin[] = [];
+
+  // add remote
+  remote.forEach((r) => {
+    const localPlugin = local.find((l) => l.id === r.slug);
+
+    catalogPlugins.push(mergeLocalAndRemote(localPlugin, r));
+  });
+
+  // add locals
+  local.forEach((l) => {
+    const catalogPlugin = catalogPlugins.find((p) => p.id === l.id);
+
+    if (!catalogPlugin) {
+      catalogPlugins.push(mergeLocalAndRemote(l));
+    }
+  });
+
+  return catalogPlugins;
+}
+
+export function mergeLocalAndRemote(local?: LocalPlugin, remote?: RemotePlugin): CatalogPlugin {
+  if (!local && remote) {
+    return mapRemoteToCatalog(remote);
+  }
+
+  if (local && !remote) {
+    return mapLocalToCatalog(local);
+  }
+
+  return mapToCatalogPlugin(local, remote);
+}
+
 export function mapRemoteToCatalog(plugin: RemotePlugin): CatalogPlugin {
   const {
     name,
