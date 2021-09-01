@@ -26,7 +26,7 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=ps
       - MYSQL_USER=pmm-agent
-      - MYSQL_PASSWORD=pmm-agent-password
+      - MYSQL_PASSWORD=pmm%*&agent-password
       - UMASK=0777  # for slowlog file
     volumes:
       - ./testdata/mysql:/mysql
