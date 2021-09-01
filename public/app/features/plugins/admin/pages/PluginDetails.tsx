@@ -14,9 +14,9 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ActionTypes } from '../types';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 
-type PluginDetailsProps = GrafanaRouteComponentProps<{ pluginId?: string }>;
+type Props = GrafanaRouteComponentProps<{ pluginId?: string }>;
 
-export default function PluginDetails({ match }: PluginDetailsProps): JSX.Element | null {
+export default function PluginDetails({ match }: Props): JSX.Element | null {
   const { pluginId } = match.params;
   const { state, dispatch } = usePluginDetails(pluginId!);
   const { loading, error, plugin, pluginConfig, tabs, activeTab } = state;
