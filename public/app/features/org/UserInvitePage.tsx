@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import UserInviteForm from './UserInviteForm';
 import { contextSrv, NavModel } from 'app/core/core';
@@ -30,4 +29,4 @@ const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'users'),
 });
 
-export default hot(module)(connect(mapStateToProps)(UserInvitePage));
+export default connect(mapStateToProps)(UserInvitePage);

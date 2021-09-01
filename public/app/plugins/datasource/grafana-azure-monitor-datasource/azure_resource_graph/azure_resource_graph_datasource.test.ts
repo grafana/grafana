@@ -2,9 +2,6 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import AzureResourceGraphDatasource from './azure_resource_graph_datasource';
 import { CustomVariableModel, initialVariableModelState, VariableHide } from 'app/features/variables/types';
-import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
-
-const templateSrv = new TemplateSrv();
 
 const single: CustomVariableModel = {
   ...initialVariableModelState,
@@ -38,7 +35,30 @@ const multi: CustomVariableModel = {
   type: 'custom',
 };
 
-templateSrv.init([single, multi]);
+const subs: CustomVariableModel = {
+  ...initialVariableModelState,
+  id: 'subs',
+  name: 'subs',
+  index: 3,
+  current: { value: ['sub-foo', 'sub-baz'], text: 'sub-foo + sub-baz', selected: true },
+  options: [
+    { selected: true, value: 'sub-foo', text: 'sub-foo' },
+    { selected: false, value: 'sub-bar', text: 'sub-bar' },
+    { selected: true, value: 'sub-baz', text: 'sub-baz' },
+  ],
+  multi: true,
+  includeAll: false,
+  query: '',
+  hide: VariableHide.dontHide,
+  type: 'custom',
+};
+
+const templateSrv = new TemplateSrv({
+  getVariables: () => [subs, single, multi],
+  getVariableWithName: jest.fn(),
+  getFilteredVariables: jest.fn(),
+});
+templateSrv.init([subs, single, multi]);
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
@@ -77,7 +97,7 @@ describe('AzureResourceGraphDatasource', () => {
         azureResourceGraph: { query: 'Resources | var1-foo', resultFormat: 'table' },
         queryType: 'Azure Resource Graph',
         refId: undefined,
-        subscriptions: undefined,
+        subscriptions: [],
       });
     });
 
@@ -95,53 +115,27 @@ describe('AzureResourceGraphDatasource', () => {
         },
         queryType: 'Azure Resource Graph',
         refId: undefined,
-        subscriptions: undefined,
+        subscriptions: [],
       });
     });
   });
 
-  describe('When interpolating variables', () => {
-    beforeEach(() => {
-      ctx.variable = { ...initialCustomVariableModelState };
-    });
-
-    describe('and value is a string', () => {
-      it('should return an unquoted value', () => {
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual('abc');
-      });
-    });
-
-    describe('and value is a number', () => {
-      it('should return an unquoted value', () => {
-        expect(ctx.ds.interpolateVariable(1000, ctx.variable)).toEqual(1000);
-      });
-    });
-
-    describe('and value is an array of strings', () => {
-      it('should return comma separated quoted values', () => {
-        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'], ctx.variable)).toEqual("'a','b','c'");
-      });
-    });
-
-    describe('and variable allows multi-value and value is a string', () => {
-      it('should return a quoted value', () => {
-        ctx.variable.multi = true;
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
-      });
-    });
-
-    describe('and variable contains single quote', () => {
-      it('should return a quoted value', () => {
-        ctx.variable.multi = true;
-        expect(ctx.ds.interpolateVariable("a'bc", ctx.variable)).toEqual("'a'bc'");
-      });
-    });
-
-    describe('and variable allows all and value is a string', () => {
-      it('should return a quoted value', () => {
-        ctx.variable.includeAll = true;
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
-      });
+  it('should apply subscription variable', () => {
+    const target = {
+      subscriptions: ['$subs'],
+      azureResourceGraph: {
+        query: 'resources | where $__contains(name, $var3)',
+        resultFormat: '',
+      },
+    };
+    expect(ctx.ds.applyTemplateVariables(target)).toStrictEqual({
+      azureResourceGraph: {
+        query: `resources | where $__contains(name, 'var3-foo','var3-baz')`,
+        resultFormat: 'table',
+      },
+      queryType: 'Azure Resource Graph',
+      refId: undefined,
+      subscriptions: ['sub-foo', 'sub-baz'],
     });
   });
 });
