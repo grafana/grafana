@@ -2,9 +2,9 @@
 
 ### Breaking changes
 
-The [labels to fields](https://grafana.com/docs/grafana/latest/panels/transformations/types-options/#labels-to-fields) transformer was changed so that frames are not automatically merged into a single frame. To reproduce
-this behavior, simply add an additional [merge](https://grafana.com/docs/grafana/latest/panels/transformations/types-options/#merge) transformation after the [labels to fields](https://grafana.com/docs/grafana/latest/panels/transformations/types-options/#labels-to-fields) step. Any dashboards saved
-before 8.2 will have an additional [merge](https://grafana.com/docs/grafana/latest/panels/transformations/types-options/#merge) transformation applied automatically.
+The [labels to fields](https://grafana.com/docs/grafana/latest/panels/transformations/types-options/#labels-to-fields) transformer was changed so that frames are no longer automatically merged into a single frame. To reproduce this behavior, add a [merge](https://grafana.com/docs/grafana/latest/panels/transformations/types-options/#merge) transformation after the [labels to fields](https://grafana.com/docs/grafana/latest/panels/transformations/types-options/#labels-to-fields) step. 
+
+Dashboards saved before the Grafana 8.2  release will have an additional [merge](https://grafana.com/docs/grafana/latest/panels/transformations/types-options/#merge) transformation applied automatically.
 
 <!-- 8.1.2 START -->
 
