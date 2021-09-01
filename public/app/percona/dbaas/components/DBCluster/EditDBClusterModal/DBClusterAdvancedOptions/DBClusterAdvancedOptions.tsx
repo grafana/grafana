@@ -169,6 +169,12 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
     return () => clearTimeout(expectedTimer);
   }, [memory, cpu, selectedCluster, topology, nodes, single, getExpectedResources, disk, values]);
 
+  useEffect(() => {
+    if (topology === DBClusterTopology.cluster && nodes < MIN_NODES) {
+      change(EditDBClusterFields.nodes, MIN_NODES);
+    }
+  }, [topology]);
+
   return (
     <>
       <RadioButtonGroupField
