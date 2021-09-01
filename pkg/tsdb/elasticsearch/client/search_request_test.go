@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-
 	"github.com/Masterminds/semver"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 func TestSearchRequest(t *testing.T) {

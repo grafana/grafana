@@ -4,12 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	p "github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	p "github.com/prometheus/common/model"
-	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 var now = time.Now()

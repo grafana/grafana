@@ -20,15 +20,14 @@ import (
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
-	// queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: timeSeriesQuery.RefID}
-	queryResult := &backend.DataResponse{}
+	dr := &backend.DataResponse{}
 	projectName := timeSeriesQuery.ProjectName
 
 	if projectName == "" {
 		defaultProject, err := s.getDefaultProject(ctx, dsInfo)
 		if err != nil {
-			queryResult.Error = err
-			return queryResult, cloudMonitoringResponse{}, "", nil
+			dr.Error = err
+			return dr, cloudMonitoringResponse{}, "", nil
 		}
 		projectName = defaultProject
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
@@ -37,8 +36,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	intervalCalculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
 	interval, err := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, intervalv2.Min)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
 	from := req.Queries[0].TimeRange.From
@@ -50,13 +49,13 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 		"query": timeSeriesQuery.Query,
 	})
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 	r, err := s.createRequest(ctx, req.PluginContext, &dsInfo, path.Join("cloudmonitoringv3/projects", projectName, "timeSeries:query"), bytes.NewBuffer(buf))
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "cloudMonitoring MQL query")
@@ -72,24 +71,24 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 		span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(r.Header)); err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
 	r = r.WithContext(ctx)
 	res, err := dsInfo.client.Do(r)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
 	d, err := unmarshalResponse(res)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	return queryResult, d, timeSeriesQuery.Query, nil
+	return dr, d, timeSeriesQuery.Query, nil
 }
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,

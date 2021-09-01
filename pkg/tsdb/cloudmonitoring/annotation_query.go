@@ -12,7 +12,6 @@ import (
 func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
 	*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-	firstQuery := req.Queries[0]
 
 	queries, err := s.buildQueryExecutors(req)
 	if err != nil {
@@ -29,6 +28,8 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 		Text  string `json:"text"`
 		Tags  string `json:"tags"`
 	}{}
+
+	firstQuery := req.Queries[0]
 	err = json.Unmarshal(firstQuery.JSON, &mq)
 	if err != nil {
 		return resp, nil
@@ -39,27 +40,27 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	return resp, err
 }
 
-func transformAnnotationToFrame(annotationData []map[string]string, result *backend.DataResponse) {
+func transformAnnotationToFrame(annotations []map[string]string, result *backend.DataResponse) {
 	frames := data.Frames{}
-	for _, r := range annotationData {
+	for _, a := range annotations {
 		frame := &data.Frame{
 			Name: "Table",
 			Fields: []*data.Field{
-				data.NewField("time", nil, r["time"]),
-				data.NewField("title", nil, r["title"]),
-				data.NewField("tags", nil, r["tags"]),
-				data.NewField("text", nil, r["text"]),
+				data.NewField("time", nil, a["time"]),
+				data.NewField("title", nil, a["title"]),
+				data.NewField("tags", nil, a["tags"]),
+				data.NewField("text", nil, a["text"]),
 			},
 			Meta: &data.FrameMeta{
 				Custom: map[string]interface{}{
-					"rowCount": len(r),
+					"rowCount": len(a),
 				},
 			},
 		}
 		frames = append(frames, frame)
 	}
 	result.Frames = frames
-	slog.Info("anno", "len", len(annotationData))
+	slog.Info("anno", "len", len(annotations))
 }
 
 func formatAnnotationText(annotationText string, pointValue string, metricType string, metricLabels map[string]string, resourceLabels map[string]string) string {

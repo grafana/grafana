@@ -3,9 +3,9 @@ package es
 import (
 	"strings"
 
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-
 	"github.com/Masterminds/semver"
+
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 // SearchRequestBuilder represents a builder which can build a search request
