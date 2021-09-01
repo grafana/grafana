@@ -53,7 +53,6 @@ function saveOrUpdateLibraryPanel(panel: any, folderId: number): Promise<Library
   }
 
   if (panel.libraryPanel && panel.libraryPanel.uid === undefined) {
-    panel.libraryPanel.name = panel.title;
     return addLibraryPanel(panel, folderId!);
   }
 
