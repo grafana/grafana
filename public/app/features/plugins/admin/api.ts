@@ -1,13 +1,19 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
 import { PluginDetails, Org, LocalPlugin, RemotePlugin, CatalogPlugin } from './types';
-import { mergeLocalsAndRemotes } from './helpers';
+import { mergeLocalsAndRemotes, mergeLocalAndRemote } from './helpers';
 
 export async function getCatalogPlugins(): Promise<CatalogPlugin[]> {
   const localPlugins = await getLocalPlugins();
   const remotePlugins = await getRemotePlugins();
 
   return mergeLocalsAndRemotes(localPlugins, remotePlugins);
+}
+
+export async function getCatalogPlugin(id: string): Promise<CatalogPlugin> {
+  const { local, remote } = await getPlugin(id);
+
+  return mergeLocalAndRemote(local, remote);
 }
 
 async function getRemotePlugins(): Promise<RemotePlugin[]> {

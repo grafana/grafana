@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { getCatalogPlugins } from '../api';
+import { getCatalogPlugins, getCatalogPlugin } from '../api';
 
 export const fetchAll = createAsyncThunk('plugins/fetchAll', async (_, thunkApi) => {
   try {
@@ -12,8 +12,7 @@ export const fetchAll = createAsyncThunk('plugins/fetchAll', async (_, thunkApi)
 
 export const fetchSingle = createAsyncThunk('plugins/fetchSingle', async (id: string, thunkApi) => {
   try {
-    // fetch the single plugin from the API
-    // return plugin;
+    return await getCatalogPlugin(id);
   } catch (e) {
     // TODO<add more error handling here>
     return thunkApi.rejectWithValue('Unknown error.');
