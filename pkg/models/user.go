@@ -138,12 +138,17 @@ type GetUserProfileQuery struct {
 	Result UserProfileDTO
 }
 
+type SearchUsersFilter string
+
+const ActiveLast30Days SearchUsersFilter = "activeLast30Days"
+
 type SearchUsersQuery struct {
 	OrgId      int64
 	Query      string
 	Page       int
 	Limit      int
 	AuthModule string
+	Filter     SearchUsersFilter
 
 	IsDisabled *bool
 

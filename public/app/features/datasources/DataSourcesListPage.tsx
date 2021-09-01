@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { hot } from 'react-hot-loader';
 // Services & Utils
 import { contextSrv } from 'app/core/core';
 // Components
@@ -106,4 +105,4 @@ export class DataSourcesListPage extends PureComponent<Props> {
   }
 }
 
-export default hot(module)(connector(DataSourcesListPage));
+export default connector(DataSourcesListPage);
