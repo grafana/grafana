@@ -347,7 +347,6 @@ func TestMSSQL(t *testing.T) {
 			})
 		})
 		t.Run("When doing a metric query using timeGroup with float fill enabled", func(t *testing.T) {
-
 			query := &backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{

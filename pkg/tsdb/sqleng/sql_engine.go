@@ -126,7 +126,6 @@ func (e *DataSourceHandler) transformQueryError(err error) error {
 
 func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
 	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceHandler, error) {
-
 	queryDataHandler := DataSourceHandler{
 		queryResultTransformer: queryResultTransformer,
 		macroEngine:            macroEngine,
