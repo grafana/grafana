@@ -14,6 +14,5 @@ export const Messages = {
     },
     submitButton: 'Discover',
     toMenuButton: 'Return to menu',
-    credentialsDocLink: 'Where do I get the security credentials for my Amazon RDS DB instance',
   },
 };
