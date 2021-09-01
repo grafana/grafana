@@ -6,7 +6,7 @@ import {
   StringFieldConfigSettings,
 } from '@grafana/data';
 import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOptions } from '../types';
-import { InlineField, InlineFieldRow, RadioButtonGroup, StringValueEditor, Button, Modal } from '@grafana/ui';
+import { InlineField, InlineFieldRow, RadioButtonGroup, Button, Modal } from '@grafana/ui';
 import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
 import ResourcePicker from 'app/plugins/panel/canvas/editor/ResourcePicker';
 
@@ -20,17 +20,10 @@ const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerCon
   settings: {},
 } as any;
 
-const dummyImageStringSettings: StandardEditorsRegistryItem<string, StringFieldConfigSettings> = {
-  settings: {
-    placeholder: 'Enter image URL',
-  },
-} as any;
-
 export const ResourceDimensionEditor: FC<
   StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, any>
 > = (props) => {
   const { value, context, onChange, item } = props;
-  const resourceType = item.settings?.resourceType ?? 'icon';
   const labelWidth = 9;
   const [isOpen, setOpen] = useState(false);
 
