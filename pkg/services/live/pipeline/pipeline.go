@@ -135,6 +135,9 @@ func (p *Pipeline) processFrame(ctx context.Context, orgID int64, channelID stri
 			logger.Error("Error processing frame", "error", err)
 			return err
 		}
+		if frame == nil {
+			return nil
+		}
 	}
 
 	outputVars := OutputVars{
