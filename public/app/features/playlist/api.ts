@@ -23,7 +23,7 @@ export async function getPlaylist(id: number): Promise<Playlist> {
 }
 
 export async function getAllPlaylist(query: string): Promise<PlaylistDTO[]> {
-  const result: PlaylistDTO[] = await getBackendSrv().get('/api/playlists/', query);
+  const result: PlaylistDTO[] = await getBackendSrv().get('/api/playlists/', { query });
   return result;
 }
 
