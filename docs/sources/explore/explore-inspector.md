@@ -59,7 +59,7 @@ Grafana generates a TXT file in your default browser download location. You can 
 
 ### Download trace results
 
-Grafana generates a JSON file for the trace results based on the trace datasource type. Jaeger, Zipkin, and OTLP formats are supported.
+Based on the data source type, Grafana generates a JSON file for the trace results in one of the supported formats: Jaeger, Zipkin, or OTLP formats.
 
 1. Open the inspector.
 1. Inspect the trace query results as described above.
