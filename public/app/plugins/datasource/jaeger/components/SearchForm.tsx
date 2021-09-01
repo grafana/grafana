@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import React, { useEffect, useState } from 'react';
@@ -49,9 +50,9 @@ export function SearchForm({ datasource, query, onChange }: Props) {
   }, [datasource, query.service]);
 
   return (
-    <>
+    <div className={css({ maxWidth: '500px' })}>
       <InlineFieldRow>
-        <InlineField label="Service" labelWidth={21} grow>
+        <InlineField label="Service" labelWidth={14} grow>
           <Select
             menuShouldPortal
             options={serviceOptions}
@@ -64,11 +65,12 @@ export function SearchForm({ datasource, query, onChange }: Props) {
               });
             }}
             menuPlacement="bottom"
+            isClearable
           />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Operation" labelWidth={21} grow disabled={!query.service}>
+        <InlineField label="Operation" labelWidth={14} grow disabled={!query.service}>
           <Select
             menuShouldPortal
             options={operationOptions}
@@ -80,11 +82,12 @@ export function SearchForm({ datasource, query, onChange }: Props) {
               })
             }
             menuPlacement="bottom"
+            isClearable
           />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Tags" labelWidth={21} grow>
+        <InlineField label="Tags" labelWidth={14} grow>
           <Input
             value={transformToLogfmt(query.tags)}
             placeholder="http.status_code=200 error=true"
@@ -98,7 +101,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <AdvancedOptions query={query} onChange={onChange} />
-    </>
+    </div>
   );
 }
 

@@ -35,7 +35,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       default:
         return (
           <InlineFieldRow>
-            <InlineField label="Trace ID" labelWidth={21} grow>
+            <InlineField label="Trace ID" labelWidth={14} grow>
               <QueryField
                 query={query.query}
                 onChange={onChangeQuery}
@@ -52,7 +52,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
 
   return (
     <>
-      <div className={css({ width: query.queryType === 'upload' ? '100%' : '50%' })}>
+      <div className={css({ width: '100%' })}>
         <InlineFieldRow>
           <InlineField label="Query type">
             <RadioButtonGroup<JaegerQueryType>
