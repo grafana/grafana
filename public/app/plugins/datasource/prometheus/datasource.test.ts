@@ -6,6 +6,7 @@ import {
   DataQueryResponseData,
   DataSourceInstanceSettings,
   dateTime,
+  getDefaultTimeRange,
   getFieldDisplayName,
   LoadingState,
   toDataFrame,
@@ -99,10 +100,14 @@ describe('PrometheusDatasource', () => {
     });
 
     describe('step parameter', () => {
+      const to = dateTime();
+      const from = dateTime(to).subtract(6, 'hours');
+      const sixHoursRange = { from, to, raw: { from: 'now-6h', to: 'now' } };
+
       describe('When set to exact', () => {
         it('should return an error if interval is modified', async () => {
           const request = createDataRequest([{ interval: '1s', stepMode: 'exact' }], {
-            interval: '20s',
+            range: sixHoursRange,
           });
 
           await expect(ds.query({ ...request, app: CoreApp.Dashboard })).toEmitValuesWith((response) => {
@@ -115,8 +120,8 @@ describe('PrometheusDatasource', () => {
         });
 
         it('should NOT return an error if interval is not modified', async () => {
-          const request = createDataRequest([{ interval: '1s', stepMode: 'exact' }], {
-            interval: '1s',
+          const request = createDataRequest([{ interval: '5s', stepMode: 'exact' }], {
+            range: sixHoursRange,
           });
 
           await expect(ds.query({ ...request, app: CoreApp.Dashboard })).toEmitValuesWith((response) => {
@@ -132,7 +137,7 @@ describe('PrometheusDatasource', () => {
       describe('When set to max', () => {
         it('should return an error if interval is modified', async () => {
           const request = createDataRequest([{ interval: '1s', stepMode: 'max' }], {
-            interval: '20s',
+            range: sixHoursRange,
           });
 
           await expect(ds.query({ ...request, app: CoreApp.Dashboard })).toEmitValuesWith((response) => {
@@ -145,8 +150,8 @@ describe('PrometheusDatasource', () => {
         });
 
         it('should NOT return an error if interval is not modified', async () => {
-          const request = createDataRequest([{ interval: '1s', stepMode: 'max' }], {
-            interval: '1s',
+          const request = createDataRequest([{ interval: '5s', stepMode: 'max' }], {
+            range: sixHoursRange,
           });
 
           await expect(ds.query({ ...request, app: CoreApp.Dashboard })).toEmitValuesWith((response) => {
@@ -2292,27 +2297,17 @@ function createDataRequest(
   targets: Array<Partial<PromQuery>>,
   overrides?: Partial<DataQueryRequest>
 ): DataQueryRequest<PromQuery> {
-  const to = dateTime();
-  const from = to.subtract(5, 'minutes');
-
   const defaults: Partial<DataQueryRequest<PromQuery>> = {
     app: CoreApp.Dashboard,
     targets: targets.map((t, i) => {
       return {
-        refId: `refid-${i}`,
         instant: false,
+        refId: `refid-${i}`,
         expr: 'test',
         ...t,
       };
     }),
-    range: {
-      from,
-      to,
-      raw: {
-        from,
-        to,
-      },
-    },
+    range: getDefaultTimeRange(),
     interval: '15s',
   };
 
