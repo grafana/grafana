@@ -28,9 +28,10 @@ export interface CatalogPlugin {
   type?: PluginType;
   updatedAt: string;
   version: string;
+  details?: CatalogPluginDetails;
 }
 
-export interface CatalogPluginDetails extends CatalogPlugin {
+export interface CatalogPluginDetails {
   readme: string;
   versions: Version[];
   links: Array<{
