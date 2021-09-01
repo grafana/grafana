@@ -1,7 +1,6 @@
 // Libraries
 import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { hot } from 'react-hot-loader';
 
 // Services & Utils
 import store from 'app/core/store';
@@ -72,4 +71,4 @@ export function RichHistoryContainer(props: Props) {
   );
 }
 
-export default hot(module)(connector(RichHistoryContainer));
+export default connector(RichHistoryContainer);
