@@ -54,7 +54,7 @@ func TestPatchLibraryElement(t *testing.T) {
 						"datasource":  "${DS_GDEV-TESTDATA}",
 						"description": "An updated description",
 						"id":          float64(1),
-						"title":       "Panel - New name",
+						"title":       "Model - New name",
 						"type":        "graph",
 					},
 					Version: 2,
@@ -101,7 +101,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 		})
 
-	scenarioWithPanel(t, "When an admin tries to patch a library panel with name only, it should change name successfully, sync title and return correct result",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with name only, it should change name successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := patchLibraryElementCommand{
 				FolderID: -1,
@@ -115,14 +115,14 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.Name = "New Name"
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
-			sc.initialResult.Result.Model["title"] = "New Name"
+			sc.initialResult.Result.Model["title"] = "Text - Library Panel"
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
 
-	scenarioWithPanel(t, "When an admin tries to patch a library panel with model only, it should change model successfully, sync name, type and description fields and return correct result",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with model only, it should change model successfully, sync type and description fields and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := patchLibraryElementCommand{
 				FolderID: -1,
@@ -136,7 +136,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.Type = "graph"
 			sc.initialResult.Result.Description = "New description"
 			sc.initialResult.Result.Model = map[string]interface{}{
-				"title":       "Text - Library Panel",
+				"title":       "New Model Title",
 				"name":        "New Model Name",
 				"type":        "graph",
 				"description": "New description",
@@ -149,7 +149,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 		})
 
-	scenarioWithPanel(t, "When an admin tries to patch a library panel with model.description only, it should change model successfully, sync name, type and description fields and return correct result",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with model.description only, it should change model successfully, sync type and description fields and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := patchLibraryElementCommand{
 				FolderID: -1,
@@ -163,7 +163,6 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.Type = "text"
 			sc.initialResult.Result.Description = "New description"
 			sc.initialResult.Result.Model = map[string]interface{}{
-				"title":       "Text - Library Panel",
 				"type":        "text",
 				"description": "New description",
 			}
@@ -175,7 +174,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			}
 		})
 
-	scenarioWithPanel(t, "When an admin tries to patch a library panel with model.type only, it should change model successfully, sync name, type and description fields and return correct result",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with model.type only, it should change model successfully, sync type and description fields and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := patchLibraryElementCommand{
 				FolderID: -1,
@@ -189,7 +188,6 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.Type = "graph"
 			sc.initialResult.Result.Description = "A description"
 			sc.initialResult.Result.Model = map[string]interface{}{
-				"title":       "Text - Library Panel",
 				"type":        "graph",
 				"description": "A description",
 			}
