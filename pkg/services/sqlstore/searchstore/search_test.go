@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 // package search_test contains integration tests for search
