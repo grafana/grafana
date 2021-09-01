@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -29,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -81,6 +83,7 @@ var wireBasicSet = wire.NewSet(
 	routing.ProvideRegister,
 	wire.Bind(new(routing.RouteRegister), new(*routing.RouteRegisterImpl)),
 	hooks.ProvideService,
+	kvstore.ProvideService,
 	localcache.ProvideService,
 	usagestats.ProvideService,
 	wire.Bind(new(usagestats.UsageStats), new(*usagestats.UsageStatsService)),
@@ -137,6 +140,7 @@ var wireBasicSet = wire.NewSet(
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
+	dashboardsnapshots.ProvideService,
 )
 
 var wireSet = wire.NewSet(
