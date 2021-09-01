@@ -384,7 +384,10 @@ function tagsToAttributes(tags: TraceKeyValuePair[]): opentelemetryProto.common.
           'otel.status_code',
         ].includes(t.key)
     )
-    .reduce((attributes, tag) => [...attributes, { key: tag.key, value: toAttributeValue(tag) }], []);
+    .reduce<opentelemetryProto.common.v1.KeyValue[]>(
+      (attributes, tag) => [...attributes, { key: tag.key, value: toAttributeValue(tag) }],
+      []
+    );
 }
 
 /**
