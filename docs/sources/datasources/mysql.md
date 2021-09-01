@@ -185,6 +185,8 @@ Any column except `time` and `metric` is treated as a value column.
 You may return a column named `metric` that is used as metric name for the value column.
 If you return multiple value columns and a column named `metric` then this column is used as prefix for the series name (only available in Grafana 5.3+).
 
+If you're not satisfied with the default series name formatting, please use the [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}) to customize it.
+
 Resultsets of time series queries need to be sorted by time.
 
 **Example with `metric` column:**
@@ -206,11 +208,11 @@ ORDER BY time
 SELECT
   $__timeGroup(createdAt,'5m',0),
   sum(value_double) as value,
-  measurement
+  measurement as metric
 FROM test_data
 WHERE
   $__timeFilter(createdAt)
-GROUP BY time, measurement
+GROUP BY time, metric
 ORDER BY time
 ```
 
