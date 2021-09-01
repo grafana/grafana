@@ -72,6 +72,7 @@ var converterMap = map[string]data.FieldConverter{
 	"bool":     boolConverter,
 	"decimal":  decimalConverter,
 	"integer":  intConverter,
+	"number":   decimalConverter,
 }
 
 var stringConverter = data.FieldConverter{

@@ -83,7 +83,7 @@ module.exports.pitch = function pitch(remainingRequest) {
 
 function getOutputFilename(options, { target }) {
   if (!options) {
-    return { filename: `[hash].${target}.js`, options: undefined };
+    return { filename: `[fullhash].${target}.js`, options: undefined };
   }
   if (typeof options === 'string') {
     return { filename: options, options: undefined };

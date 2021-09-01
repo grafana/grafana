@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { css, cx } from '@emotion/css';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { Pagination, Tooltip, LinkButton, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -175,4 +174,4 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export default hot(module)(connector(UserListAdminPageUnConnected));
+export default connector(UserListAdminPageUnConnected);
