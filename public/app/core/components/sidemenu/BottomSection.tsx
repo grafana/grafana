@@ -36,7 +36,7 @@ export default function BottomSection() {
   }
 
   return (
-    <div className="sidemenu__bottom">
+    <div data-testid="bottom-section-items" className="sidemenu__bottom">
       {!isSignedIn && <SignIn />}
       {bottomNav.map((link, index) => {
         let menuItems = link.children || [];
