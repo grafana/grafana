@@ -213,7 +213,7 @@ export class TablePanel extends Component<Props> {
         const referenceField: string = sf.config?.custom?.['referenceField'];
         const reducer: string = sf.config?.custom?.['reducer'];
         if (referenceField === f.name) {
-          const cell = this.getSummaryCell(i, reducer, sf);
+          const cell = this.getSummaryCell(reducer, sf);
           const fieldCells = cellsByField[referenceField] || [];
           fieldCells.push(cell);
           cellsByField[referenceField] = fieldCells;
@@ -245,10 +245,10 @@ export class TablePanel extends Component<Props> {
     return summaries;
   }
 
-  getSummaryCell(i: number, functionName: string, f: Field): FooterItem {
+  getSummaryCell(functionName: string, f: Field): KeyValue {
     const formatted = this.format(f.values.get(0), f);
     const value: KeyValue<string> = { [functionName]: formatted };
-    return [value];
+    return value;
   }
 
   calculateSummaryCell(i: number): FooterItem {

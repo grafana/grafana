@@ -94,10 +94,10 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
         name: 'Mode',
         settings: {
           options: [
-            { label: 'none', value: 'none' },
+            { label: 'None', value: 'none' },
             // { label: 'auto', value: 'auto' },  // TODO: when frame meta supports this
-            { label: 'summary', value: 'summary' },
-            { label: 'provided', value: 'frame' },
+            { label: 'Summary', value: 'summary' },
+            { label: 'Provided', value: 'frame' },
           ],
         },
         defaultValue: 'none',
