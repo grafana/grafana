@@ -160,13 +160,8 @@ func GetDashboardSnapshot(c *models.ReqContext) response.Response {
 		return response.Error(404, "Dashboard snapshot not found", err)
 	}
 
-	dashboard, err := snapshot.DashboardJSON()
-	if err != nil {
-		return response.Error(500, "Failed to get dashboard data for dashboard snapshot", err)
-	}
-
 	dto := dtos.DashboardFullWithMeta{
-		Dashboard: dashboard,
+		Dashboard: snapshot.Dashboard,
 		Meta: dtos.DashboardMeta{
 			Type:       models.DashTypeSnapshot,
 			IsSnapshot: true,
@@ -256,11 +251,7 @@ func DeleteDashboardSnapshot(c *models.ReqContext) response.Response {
 		return response.Error(404, "Failed to get dashboard snapshot", nil)
 	}
 
-	dashboard, err := query.Result.DashboardJSON()
-	if err != nil {
-		return response.Error(500, "Failed to get dashboard data for dashboard snapshot", err)
-	}
-	dashboardID := dashboard.Get("id").MustInt64()
+	dashboardID := query.Result.Dashboard.Get("id").MustInt64()
 
 	guardian := guardian.New(dashboardID, c.OrgId, c.SignedInUser)
 	canEdit, err := guardian.CanEdit()

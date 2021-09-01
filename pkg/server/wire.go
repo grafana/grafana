@@ -1,3 +1,4 @@
+//go:build wireinject
 // +build wireinject
 
 package server
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -135,6 +137,7 @@ var wireBasicSet = wire.NewSet(
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	elasticsearch.ProvideService,
+	dashboardsnapshots.ProvideService,
 )
 
 var wireSet = wire.NewSet(

@@ -1,3 +1,4 @@
+//go:build redis
 // +build redis
 
 package managedstream

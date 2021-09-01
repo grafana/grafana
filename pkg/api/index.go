@@ -253,7 +253,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	configNodes := []*dtos.NavLink{}
 
-	if c.OrgRole == models.ROLE_ADMIN {
+	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ActionDatasourcesRead)) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Data sources",
 			Icon:        "database",

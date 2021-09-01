@@ -312,7 +312,7 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
-	http.ServeContent(c.Resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
+	http.ServeContent(c.Resp, c.Req, pluginFilePath, fi.ModTime(), f)
 }
 
 // CheckHealth returns the health of a plugin.

@@ -44,6 +44,6 @@ func ProxyGnetRequest(c *models.ReqContext) {
 	proxyPath := c.Params("*")
 	proxy := ReverseProxyGnetReq(proxyPath)
 	proxy.Transport = grafanaComProxyTransport
-	proxy.ServeHTTP(c.Resp, c.Req.Request)
+	proxy.ServeHTTP(c.Resp, c.Req)
 	c.Resp.Header().Del("Set-Cookie")
 }

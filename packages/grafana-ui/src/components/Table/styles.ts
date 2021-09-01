@@ -71,6 +71,14 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       background: ${headerBg};
       position: relative;
     `,
+    tfoot: css`
+      label: tfoot;
+      height: ${cellHeight}px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: ${headerBg};
+      position: relative;
+    `,
     headerCell: css`
       padding: ${cellPadding}px;
       overflow: hidden;
