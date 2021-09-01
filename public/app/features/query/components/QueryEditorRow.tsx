@@ -31,7 +31,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import { QueryModal } from './QueryModal/QueryModal';
 
-export interface Props<TQuery extends DataQuery> {
+interface Props<TQuery extends DataQuery> {
   data: PanelData;
   query: TQuery;
   queries: TQuery[];

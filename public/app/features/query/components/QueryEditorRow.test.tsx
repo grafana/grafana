@@ -1,7 +1,7 @@
 import React from 'react';
 import { DataQuery, DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
 import { render, waitFor, screen } from '@testing-library/react';
-import { filterPanelDataToQuery, QueryEditorRow, Props as QueryEditorRowProps } from './QueryEditorRow';
+import { filterPanelDataToQuery, QueryEditorRow } from './QueryEditorRow';
 import { getDataSourceSrv, setDataSourceSrv, config } from '@grafana/runtime';
 
 function makePretendRequest(requestId: string, subRequests?: DataQueryRequest[]): DataQueryRequest {
@@ -93,14 +93,14 @@ describe('queryModal', () => {
 
     const ds = getDataSourceSrv().getInstanceSettings('');
     const queries: DataQuery[] = [{ refId: 'A', datasource: JSON.stringify(ds) }];
-    const props = ({
+    const props = {
       query: queries[0],
       queries: queries,
       id: 'id',
       index: 0,
       dataSource: ds,
       draggable: false,
-    } as any) as QueryEditorRowProps<DataQuery>;
+    } as any;
 
     render(<QueryEditorRow {...props} />);
 
