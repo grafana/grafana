@@ -9,41 +9,34 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type MetricQuery struct {
-	Title string `json:"title"`
-	Text  string `json:"text"`
-	Tags  string `json:"tags"`
-}
-
 func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
 	*backend.QueryDataResponse, error) {
-	result := backend.NewQueryDataResponse()
+	resp := backend.NewQueryDataResponse()
 	firstQuery := req.Queries[0]
 
 	queries, err := s.buildQueryExecutors(req)
 	if err != nil {
-		return result, err
+		return resp, err
 	}
 
-	queryRes, resp, _, err := queries[0].run(ctx, req, s, dsInfo)
+	queryRes, dr, _, err := queries[0].run(ctx, req, s, dsInfo)
 	if err != nil {
-		return result, err
+		return resp, err
 	}
 
-	// metricQuery := firstQuery.Model.Get("metricQuery")
-	metricQuery := &MetricQuery{}
-	err = json.Unmarshal(firstQuery.JSON, metricQuery)
+	mq := struct {
+		Title string `json:"title"`
+		Text  string `json:"text"`
+		Tags  string `json:"tags"`
+	}{}
+	err = json.Unmarshal(firstQuery.JSON, &mq)
 	if err != nil {
-		return result, nil
+		return resp, nil
 	}
-	title := metricQuery.Title
-	text := metricQuery.Text
-	tags := metricQuery.Tags
+	err = queries[0].parseToAnnotations(queryRes, dr, mq.Title, mq.Text, mq.Tags, firstQuery.RefID)
+	resp.Responses[firstQuery.RefID] = *queryRes
 
-	err = queries[0].parseToAnnotations(queryRes, resp, title, text, tags, firstQuery.RefID)
-	result.Responses[firstQuery.RefID] = *queryRes
-
-	return result, err
+	return resp, err
 }
 
 func transformAnnotationToFrame(annotationData []map[string]string, result *backend.DataResponse) {
