@@ -38,7 +38,8 @@ export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): FilterState =
   const alertState = queryParams['alertState'] === undefined ? undefined : String(queryParams['alertState']);
   const dataSource = queryParams['dataSource'] === undefined ? undefined : String(queryParams['dataSource']);
   const groupBy = queryParams['groupBy'] === undefined ? undefined : String(queryParams['groupBy']).split(',');
-  return { queryString, alertState, dataSource, groupBy };
+  const silenceState = queryParams['silenceState'] === undefined ? undefined : String(queryParams['silenceState']);
+  return { queryString, alertState, dataSource, groupBy, silenceState };
 };
 
 export function recordToArray(record: Record<string, string>): Array<{ key: string; value: string }> {
