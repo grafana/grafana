@@ -199,6 +199,7 @@ export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
     }
 
     const result = await getBackendSrv().post('/api/datasources', newInstance);
+    await updateFrontendSettings();
     locationService.push(`/datasources/edit/${result.datasource.uid}`);
   };
 }

@@ -30,6 +30,14 @@ import { Echo } from 'app/core/services/echo/Echo';
 
 type Mock = jest.Mock;
 
+jest.mock('app/core/core', () => {
+  return {
+    contextSrv: {
+      hasPermission: () => true,
+    },
+  };
+});
+
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,
