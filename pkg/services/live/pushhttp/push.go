@@ -99,7 +99,7 @@ func (g *Gateway) HandlePath(ctx *models.ReqContext) {
 	streamID := ctx.Params(":streamId")
 	path := ctx.Params(":path")
 
-	body, err := io.ReadAll(ctx.Req.Request.Body)
+	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {
 		logger.Error("Error reading body", "error", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
