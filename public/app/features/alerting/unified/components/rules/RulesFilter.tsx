@@ -125,7 +125,11 @@ const RulesFilter = () => {
           </div>
           <div className={styles.rowChild}>
             <Label>Rule type</Label>
-            <RadioButtonGroup options={RuleTypeOptions} value={ruleType} onChange={handleRuleTypeChange} />
+            <RadioButtonGroup
+              options={RuleTypeOptions}
+              value={ruleType as PromRuleType}
+              onChange={handleRuleTypeChange}
+            />
           </div>
           <div className={styles.rowChild}>
             <Label>View as</Label>
