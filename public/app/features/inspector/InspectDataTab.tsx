@@ -25,6 +25,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
 import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transforms';
+import { transformToOTLP } from 'app/plugins/datasource/tempo/resultTransformer';
 
 interface Props {
   isLoading: boolean;
@@ -132,6 +133,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
 
     for (const df of data) {
+      // Only export traces
+      if (df.meta?.preferredVisualisationType !== 'trace') {
+        continue;
+      }
+
       switch (df.meta?.custom?.traceFormat) {
         case 'jaeger': {
           let res = transformToJaeger(new MutableDataFrame(df));
@@ -145,6 +151,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
         }
         case 'otlp':
         default: {
+          let res = transformToOTLP(new MutableDataFrame(df));
+          this.saveTraceJson(res, panel);
           break;
         }
       }
