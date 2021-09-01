@@ -178,7 +178,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
-  key: string; // unique id in dashboard
+  key: string; // unique in dashboard, changes will force a react reload
 
   /**
    * The PanelModel event bus only used for internal and legacy angular support.
