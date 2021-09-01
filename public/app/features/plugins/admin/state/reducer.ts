@@ -6,7 +6,7 @@ export const pluginsAdapter = createEntityAdapter<CatalogPlugin>();
 
 export const { reducer } = createSlice({
   name: 'plugins',
-  initialState: pluginsAdapter.getInitialState({}),
+  initialState: pluginsAdapter.getInitialState(),
   reducers: {},
   extraReducers: (builder) =>
     builder

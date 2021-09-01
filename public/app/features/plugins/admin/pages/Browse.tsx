@@ -16,8 +16,10 @@ import { usePluginsByFilter } from '../hooks/usePlugins';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { useGetAll } from '../state/hooks';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
+  const catalogPlugins = useGetAll();
   const location = useLocation();
   const query = locationSearchToObject(location.search);
   const navModelId = getNavModelId(route.routeName);
@@ -110,7 +112,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                 text="Loading results"
               />
             ) : (
-              <PluginList plugins={sortedPlugins} />
+              <PluginList plugins={catalogPlugins} />
             )}
           </div>
         </PluginPage>

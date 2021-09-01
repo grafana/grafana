@@ -192,7 +192,7 @@ export enum ActionTypes {
 }
 
 export type PluginDetailsActions =
-  | { type: ActionTypes.FETCHED_PLUGIN; payload: CatalogPluginDetails }
+  | { type: ActionTypes.FETCHED_PLUGIN; payload: CatalogPlugin }
   | { type: ActionTypes.ERROR; payload: Error }
   | { type: ActionTypes.FETCHED_PLUGIN_CONFIG; payload?: GrafanaPlugin<PluginMeta<{}>> }
   | {
