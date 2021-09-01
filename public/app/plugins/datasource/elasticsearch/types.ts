@@ -70,6 +70,7 @@ export interface ElasticsearchQuery extends DataQuery {
   bucketAggs?: BucketAggregation[];
   metrics?: MetricAggregation[];
   timeField?: string;
+  timezone?: string;
 }
 
 export type DataLinkConfig = {

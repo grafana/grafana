@@ -570,6 +570,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         continue;
       }
 
+      target.timezone = options.timezone;
+
       let queryObj;
       if (hasMetricOfType(target, 'logs')) {
         // FIXME: All this logic here should be in the query builder.
