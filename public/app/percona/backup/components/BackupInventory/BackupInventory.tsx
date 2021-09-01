@@ -26,6 +26,7 @@ import {
   DATA_INTERVAL,
 } from './BackupInventory.constants';
 import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
+import { RetryMode } from '../../Backup.types';
 
 export const BackupInventory: FC = () => {
   const [pending, setPending] = useState(true);
@@ -153,13 +154,25 @@ export const BackupInventory: FC = () => {
     setBackupModalVisible(true);
   };
 
-  const handleBackup = async ({ service, location, backupName, description }: AddBackupFormProps) => {
+  const handleBackup = async ({
+    service,
+    location,
+    backupName,
+    description,
+    retryMode,
+    retryInterval,
+    retryTimes,
+  }: AddBackupFormProps) => {
+    const strRetryInterval = `${retryInterval}s`;
+    let resultRetryTimes = retryMode === RetryMode.MANUAL ? 0 : retryTimes;
     try {
       await BackupInventoryService.backup(
         service.value?.id || '',
         location.value || '',
         backupName,
         description,
+        strRetryInterval,
+        resultRetryTimes!,
         generateToken(BACKUP_CANCEL_TOKEN)
       );
       setBackupModalVisible(false);

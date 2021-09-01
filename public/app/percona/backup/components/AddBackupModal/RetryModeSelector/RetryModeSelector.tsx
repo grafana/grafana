@@ -6,7 +6,7 @@ import { Messages } from '../AddBackupModal.messages';
 import { RETRY_MODE_OPTIONS } from '../AddBackupModal.constants';
 import { RetryModeSelectorProps } from './RetryModeSelector.types';
 import { getStyles } from './RetryModeSelector.styles';
-import { retryValidator } from './RetryModeSelector.utils';
+import { retryTimesValidator, retryIntervalValidator } from './RetryModeSelector.utils';
 
 export const RetryModeSelector = ({ retryMode, disabled = false }: RetryModeSelectorProps) => {
   const disabledNumberInputs = retryMode === RetryMode.MANUAL || disabled;
@@ -23,14 +23,14 @@ export const RetryModeSelector = ({ retryMode, disabled = false }: RetryModeSele
       />
       <div className={styles.retryFields}>
         <NumberInputField
-          validators={[retryValidator]}
+          validators={[retryTimesValidator]}
           disabled={disabledNumberInputs}
           fieldClassName={styles.retrySelect}
           name="retryTimes"
           label={Messages.retryTimes}
         />
         <NumberInputField
-          validators={[retryValidator]}
+          validators={[retryIntervalValidator]}
           disabled={disabledNumberInputs}
           fieldClassName={styles.retrySelect}
           name="retryInterval"

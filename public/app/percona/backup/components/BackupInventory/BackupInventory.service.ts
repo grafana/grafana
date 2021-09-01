@@ -44,7 +44,15 @@ export const BackupInventoryService = {
       token
     );
   },
-  async backup(serviceId: string, locationId: string, name: string, description: string, token?: CancelToken) {
+  async backup(
+    serviceId: string,
+    locationId: string,
+    name: string,
+    description: string,
+    retryInterval: string,
+    retryTimes: number,
+    token?: CancelToken
+  ) {
     return api.post(
       `${BASE_URL}/Backups/Start`,
       {
@@ -52,6 +60,8 @@ export const BackupInventoryService = {
         location_id: locationId,
         name,
         description,
+        retry_interval: retryInterval,
+        retries: retryTimes,
       },
       false,
       token
