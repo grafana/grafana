@@ -10,12 +10,15 @@ import {
   Tab,
   StringValueEditor,
   useTheme2,
+  FileUpload,
+  stylesFactory,
 } from '@grafana/ui';
-import { SelectableValue } from '../../../../../../packages/grafana-data/src';
+import { GrafanaTheme2, SelectableValue } from '../../../../../../packages/grafana-data/src';
 import { getBackendSrv } from '@grafana/runtime';
 import Cards from './Cards';
 import SVG from 'react-inlinesvg';
-import ImageUploader from './ImageUploader';
+import { css } from '@emotion/css';
+
 interface Props {
   value: string; //img/icons/unicons/0-plus.svg
   onChange: (value: string) => void;
@@ -28,14 +31,16 @@ function ResourcePicker(props: Props) {
     label: v,
     value: v,
   }));
-  const [currentFolder, setCurrentFolder] = useState<SelectableValue<string>>();
+  const folderOfCurrentValue = folders.filter((folder) => value.indexOf(folder.value) > -1)[0];
+  const [currentFolder, setCurrentFolder] = useState<SelectableValue<string>>(folderOfCurrentValue);
   const [tabs, setTabs] = useState([
     { label: 'Select', active: true },
     { label: 'Upload', active: false },
   ]);
   const [directoryIndex, setDirectoryIndex] = useState<SelectableValue[]>([]);
   const [defaultList, setDefaultList] = useState<SelectableValue[]>([]);
-  const [isOpenUpload, setOpenUpload] = useState(false);
+  const theme = useTheme2();
+  const styles = getStyles(theme, theme.colors.text.primary);
 
   useEffect(() => {
     // we don't want to load everything before picking a folder
@@ -72,7 +77,7 @@ function ResourcePicker(props: Props) {
     }
   };
   const imgSrc = value.indexOf(':/') > 0 ? value : 'public/' + value;
-  const theme = useTheme2();
+
   return (
     <>
       <Label>Current Item</Label>
@@ -94,20 +99,35 @@ function ResourcePicker(props: Props) {
       </TabsBar>
       <TabContent>
         {tabs[0].active && (
-          <>
-            <Select options={folders} onChange={setCurrentFolder} />
+          <div className={styles.tabContent}>
+            <Select options={folders} onChange={setCurrentFolder} value={currentFolder} />
             <Input placeholder="Search" onChange={onChangeSearch} />
             {directoryIndex ? (
               <Cards cards={directoryIndex} onChange={onChange} currentFolder={currentFolder} />
             ) : (
               <Spinner />
             )}
-          </>
+          </div>
         )}
-        {tabs[1].active && <Button onClick={() => setOpenUpload(true)}>Upload</Button>}
-        {isOpenUpload && <ImageUploader />}
+        {tabs[1].active && (
+          <FileUpload
+            onFileUpload={({ currentTarget }) => console.log('file', currentTarget?.files && currentTarget.files[0])}
+            className={styles.tabContent}
+          />
+        )}
       </TabContent>
     </>
   );
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme2, color) => {
+  return {
+    tabContent: css`
+      margin-top: 20px;
+      & > :nth-child(2) {
+        margin-top: 10px;
+      },
+    `,
+  };
+});
 export default ResourcePicker;
