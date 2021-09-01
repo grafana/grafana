@@ -183,10 +183,10 @@ function initEchoSrv() {
     );
   }
 
-  if (config.applicationInsightsInstrumentationKey) {
+  if (config.applicationInsightsConnectionString) {
     registerEchoBackend(
       new ApplicationInsightsBackend({
-        instrumentationKey: config.applicationInsightsInstrumentationKey,
+        connectionString: config.applicationInsightsConnectionString,
       })
     );
   }

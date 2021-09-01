@@ -2,7 +2,7 @@ import $ from 'jquery';
 import { EchoBackend, EchoEventType, isInteractionEvent, isPageviewEvent, PageviewEchoEvent } from '@grafana/runtime';
 
 export interface ApplicationInsightsBackendOptions {
-  instrumentationKey: string;
+  connectionString: string;
 }
 
 export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent, ApplicationInsightsBackendOptions> {
@@ -16,7 +16,7 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
     }).done(function () {
       var applicationInsightsOpts = {
         config: {
-          instrumentationKey: options.instrumentationKey,
+          connectionString: options.connectionString,
         },
       };
       var init = new (window as any).Microsoft.ApplicationInsights.ApplicationInsights(applicationInsightsOpts);

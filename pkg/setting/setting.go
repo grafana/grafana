@@ -138,10 +138,10 @@ var (
 	appliedEnvOverrides          []string
 
 	// analytics
-	GoogleAnalyticsId                     string
-	GoogleTagManagerId                    string
-	RudderstackDataPlaneUrl               string
-	RudderstackWriteKey                   string
+	GoogleAnalyticsId       string
+	GoogleTagManagerId      string
+	RudderstackDataPlaneUrl string
+	RudderstackWriteKey     string
 
 	// LDAP
 	LDAPEnabled           bool
@@ -367,10 +367,10 @@ type Cfg struct {
 	Env string
 
 	// Analytics
-	CheckForUpdates      bool
-	ReportingDistributor string
-	ReportingEnabled     bool
-	ApplicationInsightsInstrumentationKey string
+	CheckForUpdates                     bool
+	ReportingDistributor                string
+	ReportingEnabled                    bool
+	ApplicationInsightsConnectionString string
 
 	// LDAP
 	LDAPEnabled     bool
@@ -921,7 +921,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if len(cfg.ReportingDistributor) >= 100 {
 		cfg.ReportingDistributor = cfg.ReportingDistributor[:100]
 	}
-	cfg.ApplicationInsightsInstrumentationKey = analytics.Key("application_insights_instrumentation_key").String()
+	cfg.ApplicationInsightsConnectionString = analytics.Key("application_insights_connection_string").String()
 
 	if err := readAlertingSettings(iniFile); err != nil {
 		return err
