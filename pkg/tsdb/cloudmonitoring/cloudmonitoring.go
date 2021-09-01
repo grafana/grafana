@@ -156,29 +156,31 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 // executes the queries against the CloudMonitoring API and parses the response into
 // the time series or table format
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	result := backend.NewQueryDataResponse()
+	resp := backend.NewQueryDataResponse()
+
 	model := &QueryModel{}
 	err := json.Unmarshal(req.Queries[0].JSON, model)
 	if err != nil {
-		return result, err
+		return resp, err
 	}
-	queryType := model.Type
+
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
-	switch queryType {
+
+	switch model.Type {
 	case "annotationQuery":
-		result, err = s.executeAnnotationQuery(ctx, req, *dsInfo)
+		resp, err = s.executeAnnotationQuery(ctx, req, *dsInfo)
 	case "getGCEDefaultProject":
-		result, err = s.getGCEDefaultProject(ctx, req, *dsInfo)
+		resp, err = s.getGCEDefaultProject(ctx, req, *dsInfo)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
-		result, err = s.executeTimeSeriesQuery(ctx, req, *dsInfo)
+		resp, err = s.executeTimeSeriesQuery(ctx, req, *dsInfo)
 	}
 
-	return result, err
+	return resp, err
 }
 
 func (s *Service) getGCEDefaultProject(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
@@ -203,26 +205,26 @@ func (s *Service) getGCEDefaultProject(ctx context.Context, req *backend.QueryDa
 
 func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
 	*backend.QueryDataResponse, error) {
-	dr := backend.NewQueryDataResponse()
+	resp := backend.NewQueryDataResponse()
 	queryExecutors, err := s.buildQueryExecutors(req)
 	if err != nil {
-		return dr, err
+		return resp, err
 	}
 
 	for _, queryExecutor := range queryExecutors {
-		queryRes, resp, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo)
+		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo)
 		if err != nil {
-			return dr, err
+			return resp, err
 		}
-		err = queryExecutor.parseResponse(queryRes, resp, executedQueryString)
+		err = queryExecutor.parseResponse(queryRes, dr, executedQueryString)
 		if err != nil {
 			queryRes.Error = err
 		}
 
-		dr.Responses[queryExecutor.getRefID()] = *queryRes
+		resp.Responses[queryExecutor.getRefID()] = *queryRes
 	}
 
-	return dr, nil
+	return resp, nil
 }
 
 func migrateLegacyQueryModel(query *backend.DataQuery) error {
