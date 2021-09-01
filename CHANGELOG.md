@@ -2,8 +2,9 @@
 
 ### Breaking changes
 
-The "labels to fields" transformer was changed so that label values are ordered after the value and multiple frames are not
-automatically joined into a single frame.
+The [labels to fields](https://grafana.com/docs/grafana/latest/panels/transformations/types-options/#labels-to-fields) transformer was changed so that frames are not automatically merged into a single frame. To reproduce
+this behavior, simply add an additional [merge](https://grafana.com/docs/grafana/latest/panels/transformations/types-options/#merge) transformation after the [labels to fields](https://grafana.com/docs/grafana/latest/panels/transformations/types-options/#labels-to-fields) step. Any dashboards saved
+before 8.2 will have an additional [merge](https://grafana.com/docs/grafana/latest/panels/transformations/types-options/#merge) transformation applied automatically.
 
 <!-- 8.1.2 START -->
 
