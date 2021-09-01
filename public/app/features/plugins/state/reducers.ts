@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PluginMeta, PanelPlugin, PluginError } from '@grafana/data';
 import { PluginsState } from 'app/types';
 import { config } from 'app/core/config';
-import { pluginCatalogSlice } from '../admin/state/reducers';
+import { reducer as pluginCatalogReducer } from '../admin/state/reducer';
 import { PluginDashboard } from '../../../types/plugins';
 
 export const initialState: PluginsState = {
@@ -52,7 +52,7 @@ export const {
   panelPluginLoaded,
 } = pluginsSlice.actions;
 
-export const pluginsReducer = config.pluginAdminEnabled ? pluginsSlice.reducer : pluginCatalogSlice.reducer;
+export const pluginsReducer = config.pluginAdminEnabled ? pluginsSlice.reducer : pluginCatalogReducer;
 
 export default {
   plugins: pluginsReducer,
