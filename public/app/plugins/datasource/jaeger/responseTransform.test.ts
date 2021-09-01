@@ -8,7 +8,7 @@ describe('createTraceFrame', () => {
     expect(dataFrame.fields).toMatchObject(testResponseDataFrameFields);
   });
 
-  fit('transforms to jaeger format from data frame', () => {
+  it('transforms to jaeger format from data frame', () => {
     const dataFrame = createTraceFrame(testResponse);
     const response = transformToJaeger(new MutableDataFrame(dataFrame));
     expect(response).toMatchObject({ data: [testResponse] });

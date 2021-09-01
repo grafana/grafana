@@ -159,8 +159,8 @@ export const transformToZipkin = (data: MutableDataFrame): ZipkinSpan[] => {
               return { ...tags, [t.key]: t.value };
             }, {})
         : undefined,
-      kind: span.tags.find((t: TraceKeyValuePair) => t.key === 'kind')?.value ?? undefined,
-      shared: span.tags.find((t: TraceKeyValuePair) => t.key === 'shared')?.value ?? undefined,
+      kind: span.tags.find((t: TraceKeyValuePair) => t.key === 'kind')?.value,
+      shared: span.tags.find((t: TraceKeyValuePair) => t.key === 'shared')?.value,
     });
   }
 
@@ -177,9 +177,9 @@ const getEndpoint = (span: any): { [key: string]: ZipkinEndpoint } | undefined =
     ? {
         [key]: {
           serviceName: span.serviceName,
-          ipv4: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'ipv4')?.value ?? undefined,
-          ipv6: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'ipv6')?.value ?? undefined,
-          port: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'port')?.value ?? undefined,
+          ipv4: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'ipv4')?.value,
+          ipv6: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'ipv6')?.value,
+          port: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'port')?.value,
         },
       }
     : undefined;
