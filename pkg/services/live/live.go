@@ -746,7 +746,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 		return response.Error(code, text, nil)
 	}
 	if reply.Data != nil {
-		_, err = g.node.Publish(cmd.Channel, cmd.Data)
+		err = g.Publish(ctx.OrgId, cmd.Channel, cmd.Data)
 		if err != nil {
 			logger.Error("Error publish to channel", "error", err, "channel", cmd.Channel)
 			return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
