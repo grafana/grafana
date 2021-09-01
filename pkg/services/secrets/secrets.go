@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
 	_ "github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/types"
 	"github.com/grafana/grafana/pkg/setting"
@@ -20,8 +19,6 @@ import (
 )
 
 const defaultProvider = "grafana-provider"
-
-var logger = log.New("secrets")
 
 type SecretsStore interface {
 	GetDataKey(ctx context.Context, name string) (*types.DataKey, error)
