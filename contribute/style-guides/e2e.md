@@ -178,8 +178,8 @@ Prefix your selector string with "data-testid":
 ```typescript
 export const Components = {
   Login: {
-    openButton: 'data-testid-open', // this would look for a data-testid
-    closeButton: 'close-button', // this would look for an aria-label
+    openButton: 'open-button', // this would look for an aria-label
+    closeButton: 'data-testid modal-close-button', // this would look for a data-testid
   },
 };
 ```
@@ -187,5 +187,5 @@ export const Components = {
 and in your component, import the selectors and add the data test id:
 
 ```
-<button data-testid={Selectors.Components.Login.openButton}>
+<button data-testid={Selectors.Components.Login.closeButton}>
 ```
