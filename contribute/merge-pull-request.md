@@ -93,6 +93,8 @@ Some examples when backport is not required:
 
 - The change is supposed to be release in the next major/minor release, e.g. v8.0.0, but the release branch, e.g. v8.0.x, has not yet been created.
 
+> **Note:** You can still backport a pull request after its been merged.
+
 ## Doing the actual merge
 
 Time to actually merge the pull request changes. All commits in a pull request are squashed, hence the GitHub `Squash and merge` button is used to initialize the merge.
