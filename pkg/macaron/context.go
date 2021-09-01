@@ -24,11 +24,6 @@ import (
 	"strings"
 )
 
-// Request represents an HTTP request received by a server or to be sent by a client.
-type Request struct {
-	*http.Request
-}
-
 // ContextInvoker is an inject.FastInvoker wrapper of func(ctx *Context).
 type ContextInvoker func(ctx *Context)
 
@@ -46,7 +41,7 @@ type Context struct {
 	index    int
 
 	*Router
-	Req      Request
+	Req      *http.Request
 	Resp     ResponseWriter
 	params   Params
 	template *template.Template
@@ -144,7 +139,7 @@ func (ctx *Context) Redirect(location string, status ...int) {
 		code = status[0]
 	}
 
-	http.Redirect(ctx.Resp, ctx.Req.Request, location, code)
+	http.Redirect(ctx.Resp, ctx.Req, location, code)
 }
 
 // MaxMemory is the maximum amount of memory to use when parsing a multipart form.
