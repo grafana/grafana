@@ -10,7 +10,7 @@ export const useGetAll = (): CatalogPlugin[] => {
   return useSelector(selectAll);
 };
 
-export const useGetSingle = (id: string): CatalogPlugin => {
+export const useGetSingle = (id: string): CatalogPlugin | undefined => {
   useFetchAll();
 
   return useSelector((state) => selectById(state, id));
