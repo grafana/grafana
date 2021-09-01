@@ -67,7 +67,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     groupWidth,
     barWidth,
     stacking,
-    rawValue: (seriesIdx: number, valueIdx: number) => frame.fields[seriesIdx].values.get(valueIdx),
     formatValue,
     text,
     showValue,

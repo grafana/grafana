@@ -41,7 +41,6 @@ export interface BarsOptions {
   barWidth: number;
   showValue: BarValueVisibility;
   stacking: StackingMode;
-  rawValue: (seriesIdx: number, valueIdx: number) => number | null;
   formatValue: (seriesIdx: number, value: any) => string;
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
@@ -52,7 +51,7 @@ export interface BarsOptions {
  * @internal
  */
 export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
-  const { xOri, xDir: dir, rawValue, formatValue, showValue } = opts;
+  const { xOri, xDir: dir, formatValue, showValue } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
   const isStacked = opts.stacking !== StackingMode.None;
@@ -207,7 +206,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let labelOffset = LABEL_OFFSET_MAX;
 
     barRects.forEach((r, i) => {
-      texts[i] = formatValue(r.sidx, rawValue(r.sidx, r.didx)! / (pctStacked ? alignedTotals![r.sidx][r.didx]! : 1));
+      texts[i] = formatValue(r.sidx, u.data[r.sidx][r.didx]! / (pctStacked ? alignedTotals![r.sidx][r.didx]! : 1));
       labelOffset = Math.min(labelOffset, Math.round(LABEL_OFFSET_FACTOR * (isXHorizontal ? r.w : r.h)));
     });
 
@@ -242,7 +241,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     let curAlign: CanvasTextAlign, curBaseline: CanvasTextBaseline;
 
     barRects.forEach((r, i) => {
-      let value = rawValue(r.sidx, r.didx);
+      let value = u.data[r.sidx][r.didx];
       let text = texts[i];
 
       if (value != null) {
