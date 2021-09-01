@@ -23,8 +23,22 @@ var (
 	defaultMaxCacheExpiration = time.Hour * 24
 )
 
-func init() {
-	registry.RegisterService(&RemoteCache{})
+const (
+	ServiceName = "RemoteCache"
+)
+
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (*RemoteCache, error) {
+	client, err := createClient(cfg.RemoteCacheOptions, sqlStore)
+	if err != nil {
+		return nil, err
+	}
+	s := &RemoteCache{
+		SQLStore: sqlStore,
+		Cfg:      cfg,
+		log:      log.New("cache.remote"),
+		client:   client,
+	}
+	return s, nil
 }
 
 // CacheStorage allows the caller to set, get and delete items in the cache.
@@ -46,8 +60,8 @@ type CacheStorage interface {
 type RemoteCache struct {
 	log      log.Logger
 	client   CacheStorage
-	SQLStore *sqlstore.SqlStore `inject:""`
-	Cfg      *setting.Cfg       `inject:""`
+	SQLStore *sqlstore.SQLStore
+	Cfg      *setting.Cfg
 }
 
 // Get reads object from Cache
@@ -69,15 +83,7 @@ func (ds *RemoteCache) Delete(key string) error {
 	return ds.client.Delete(key)
 }
 
-// Init initializes the service
-func (ds *RemoteCache) Init() error {
-	ds.log = log.New("cache.remote")
-	var err error
-	ds.client, err = createClient(ds.Cfg.RemoteCacheOptions, ds.SQLStore)
-	return err
-}
-
-// Run start the backend processes for cache clients
+// Run starts the backend processes for cache clients.
 func (ds *RemoteCache) Run(ctx context.Context) error {
 	// create new interface if more clients need GC jobs
 	backgroundjob, ok := ds.client.(registry.BackgroundService)
@@ -89,7 +95,7 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func createClient(opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SqlStore) (CacheStorage, error) {
+func createClient(opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SQLStore) (CacheStorage, error) {
 	if opts.Name == redisCacheType {
 		return newRedisStorage(opts)
 	}

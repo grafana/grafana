@@ -44,7 +44,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
   updateFields = () => {
     const frame = this.props.response?.panelData?.series[0];
     if (frame && frame.fields) {
-      const fieldNames = frame.fields.map(f => {
+      const fieldNames = frame.fields.map((f) => {
         const name = getFieldDisplayName(f, frame);
 
         let description = '';
@@ -115,7 +115,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
 
     let picker = fieldNames;
     const current = mapping.value;
-    let currentValue = fieldNames.find(f => current === f.value);
+    let currentValue = fieldNames.find((f) => current === f.value);
     if (current) {
       picker = [...fieldNames];
       if (!currentValue) {
@@ -147,6 +147,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
         </td>
         {/* <td>
           <Select
+            menuShouldPortal
             value={valueOptions.find(v => v.value === mapping.source) || valueOptions[0]}
             options={valueOptions}
             onChange={(v: SelectableValue<AnnotationEventFieldSource>) => {
@@ -156,6 +157,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
         </td> */}
         <td>
           <Select
+            menuShouldPortal
             value={currentValue}
             options={picker}
             placeholder={row.placeholder || row.key}
@@ -185,7 +187,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
           </tr>
         </thead>
         <tbody>
-          {annotationEventNames.map(row => {
+          {annotationEventNames.map((row) => {
             return this.renderRow(row, mappings[row.key] || {}, first);
           })}
         </tbody>

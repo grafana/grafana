@@ -5,6 +5,8 @@ import {
   getColumns,
   getFilteredOptions,
   getTextAlign,
+  rowToFieldValue,
+  sortNumber,
   sortOptions,
   valuesToOptions,
 } from './utils';
@@ -71,28 +73,88 @@ describe('Table utils', () => {
   });
 
   describe('filterByValue', () => {
-    it.each`
-      rows                                                                        | id     | filterValues                        | expected
-      ${[]}                                                                       | ${'0'} | ${[{ value: 'a' }]}                 | ${[]}
-      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${null}                             | ${[{ values: { 0: 'a' } }]}
-      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${undefined}                        | ${[{ values: { 0: 'a' } }]}
-      ${[{ values: { 0: 'a' } }]}                                                 | ${'1'} | ${[{ value: 'b' }]}                 | ${[]}
-      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${[{ value: 'a' }]}                 | ${[{ values: { 0: 'a' } }]}
-      ${[{ values: { 0: 'a' } }, { values: { 1: 'a' } }]}                         | ${'0'} | ${[{ value: 'a' }]}                 | ${[{ values: { 0: 'a' } }]}
-      ${[{ values: { 0: 'a' } }, { values: { 0: 'b' } }, { values: { 0: 'c' } }]} | ${'0'} | ${[{ value: 'a' }, { value: 'b' }]} | ${[{ values: { 0: 'a' } }, { values: { 0: 'b' } }]}
-    `(
-      "when called with rows: '$rows.toString()', id: '$id' and filterValues: '$filterValues' then result should be '$expected'",
-      ({ rows, id, filterValues, expected }) => {
-        expect(filterByValue(rows, id, filterValues)).toEqual(expected);
-      }
-    );
+    describe('happy path', () => {
+      const field: any = { values: new ArrayVector(['a', 'aa', 'ab', 'b', 'ba', 'bb', 'c']) };
+      const rows: any = [
+        { index: 0, values: { 0: 'a' } },
+        { index: 1, values: { 0: 'aa' } },
+        { index: 2, values: { 0: 'ab' } },
+        { index: 3, values: { 0: 'b' } },
+        { index: 4, values: { 0: 'ba' } },
+        { index: 5, values: { 0: 'bb' } },
+        { index: 6, values: { 0: 'c' } },
+      ];
+      const filterValues = [{ value: 'a' }, { value: 'b' }, { value: 'c' }];
+
+      const result = filterByValue(field)(rows, '0', filterValues);
+
+      expect(result).toEqual([
+        { index: 0, values: { 0: 'a' } },
+        { index: 3, values: { 0: 'b' } },
+        { index: 6, values: { 0: 'c' } },
+      ]);
+    });
+
+    describe('fast exit cases', () => {
+      describe('no rows', () => {
+        it('should return empty array', () => {
+          const field: any = { values: new ArrayVector(['a']) };
+          const rows: any = [];
+          const filterValues = [{ value: 'a' }];
+
+          const result = filterByValue(field)(rows, '', filterValues);
+
+          expect(result).toEqual([]);
+        });
+      });
+
+      describe('no filterValues', () => {
+        it('should return rows', () => {
+          const field: any = { values: new ArrayVector(['a']) };
+          const rows: any = [{}];
+          const filterValues = undefined;
+
+          const result = filterByValue(field)(rows, '', filterValues);
+
+          expect(result).toEqual([{}]);
+        });
+      });
+
+      describe('no field', () => {
+        it('should return rows', () => {
+          const field = undefined;
+          const rows: any = [{}];
+          const filterValues = [{ value: 'a' }];
+
+          const result = filterByValue(field)(rows, '', filterValues);
+
+          expect(result).toEqual([{}]);
+        });
+      });
+
+      describe('missing id in values', () => {
+        it('should return rows', () => {
+          const field: any = { values: new ArrayVector(['a', 'b', 'c']) };
+          const rows: any = [
+            { index: 0, values: { 0: 'a' } },
+            { index: 1, values: { 0: 'b' } },
+            { index: 2, values: { 0: 'c' } },
+          ];
+          const filterValues = [{ value: 'a' }, { value: 'b' }, { value: 'c' }];
+
+          const result = filterByValue(field)(rows, '1', filterValues);
+
+          expect(result).toEqual([]);
+        });
+      });
+    });
   });
 
   describe('calculateUniqueFieldValues', () => {
     describe('when called without field', () => {
       it('then it should return an empty object', () => {
         const field = undefined;
-        const rows = [{ id: 0 }];
+        const rows = [{ index: 0 }];
 
         const result = calculateUniqueFieldValues(rows, field);
 
@@ -142,15 +204,15 @@ describe('Table utils', () => {
             text: `${value}.0`,
           })),
         };
-        const rows: any[] = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+        const rows: any[] = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
 
         const result = calculateUniqueFieldValues(rows, field);
 
         expect(field.display).toHaveBeenCalledTimes(5);
         expect(result).toEqual({
-          '1.0': 1,
-          '2.0': 2,
-          '3.0': 3,
+          '1.0': '1.0',
+          '2.0': '2.0',
+          '3.0': '3.0',
         });
       });
     });
@@ -163,7 +225,7 @@ describe('Table utils', () => {
           name: 'value',
           type: FieldType.number,
         };
-        const rows: any[] = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+        const rows: any[] = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
 
         const result = calculateUniqueFieldValues(rows, field);
 
@@ -182,7 +244,7 @@ describe('Table utils', () => {
             name: 'value',
             type: FieldType.number,
           };
-          const rows: any[] = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+          const rows: any[] = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
 
           const result = calculateUniqueFieldValues(rows, field);
 
@@ -192,6 +254,59 @@ describe('Table utils', () => {
             '3': 3,
           });
         });
+      });
+    });
+  });
+
+  describe('rowToFieldValue', () => {
+    describe('happy paths', () => {
+      describe('field without field display', () => {
+        const field: any = { values: new ArrayVector(['a', 'b', 'c']) };
+        const row = { index: 1 };
+
+        const result = rowToFieldValue(row, field);
+
+        expect(result).toEqual('b');
+      });
+
+      describe('field with display processor', () => {
+        const field: Field = {
+          config: {},
+          values: new ArrayVector([1, 2, 2, 1, 3, 5, 6]),
+          name: 'value',
+          type: FieldType.number,
+          display: jest.fn((value: any) => ({
+            numeric: 1,
+            percent: 0.01,
+            color: '',
+            title: `${value}.0`,
+            text: `${value}.0`,
+          })),
+        };
+        const row = { index: 4 };
+
+        const result = rowToFieldValue(row, field);
+
+        expect(result).toEqual('3.0');
+      });
+    });
+
+    describe('quick exist paths', () => {
+      describe('field is missing', () => {
+        const field = undefined;
+        const row = { index: 0 };
+
+        const result = rowToFieldValue(row, field);
+
+        expect(result).toEqual('');
+      });
+      describe('row is missing', () => {
+        const field: any = { values: new ArrayVector(['a', 'b', 'c']) };
+        const row = undefined;
+
+        const result = rowToFieldValue(row, field);
+
+        expect(result).toEqual('');
       });
     });
   });
@@ -298,6 +413,63 @@ describe('Table utils', () => {
 
         expect(result).toEqual([]);
       });
+    });
+  });
+
+  describe('sortNumber', () => {
+    it.each`
+      a                                         | b                                         | expected
+      ${{ values: [] }}                         | ${{ values: [] }}                         | ${0}
+      ${{ values: [undefined] }}                | ${{ values: [undefined] }}                | ${0}
+      ${{ values: [null] }}                     | ${{ values: [null] }}                     | ${0}
+      ${{ values: [Number.POSITIVE_INFINITY] }} | ${{ values: [Number.POSITIVE_INFINITY] }} | ${0}
+      ${{ values: [Number.NEGATIVE_INFINITY] }} | ${{ values: [Number.NEGATIVE_INFINITY] }} | ${0}
+      ${{ values: [Number.POSITIVE_INFINITY] }} | ${{ values: [Number.NEGATIVE_INFINITY] }} | ${1}
+      ${{ values: [Number.NEGATIVE_INFINITY] }} | ${{ values: [Number.POSITIVE_INFINITY] }} | ${-1}
+      ${{ values: ['infinIty'] }}               | ${{ values: ['infinIty'] }}               | ${0}
+      ${{ values: ['infinity'] }}               | ${{ values: ['not infinity'] }}           | ${0}
+      ${{ values: [1] }}                        | ${{ values: [1] }}                        | ${0}
+      ${{ values: [1.5] }}                      | ${{ values: [1.5] }}                      | ${0}
+      ${{ values: [2] }}                        | ${{ values: [1] }}                        | ${1}
+      ${{ values: [25] }}                       | ${{ values: [2.5] }}                      | ${1}
+      ${{ values: [2.5] }}                      | ${{ values: [1.5] }}                      | ${1}
+      ${{ values: [1] }}                        | ${{ values: [2] }}                        | ${-1}
+      ${{ values: [2.5] }}                      | ${{ values: [25] }}                       | ${-1}
+      ${{ values: [1.5] }}                      | ${{ values: [2.5] }}                      | ${-1}
+      ${{ values: [1] }}                        | ${{ values: [] }}                         | ${1}
+      ${{ values: [1] }}                        | ${{ values: [undefined] }}                | ${1}
+      ${{ values: [1] }}                        | ${{ values: [null] }}                     | ${1}
+      ${{ values: [1] }}                        | ${{ values: [Number.POSITIVE_INFINITY] }} | ${-1}
+      ${{ values: [1] }}                        | ${{ values: [Number.NEGATIVE_INFINITY] }} | ${1}
+      ${{ values: [1] }}                        | ${{ values: ['infinIty'] }}               | ${1}
+      ${{ values: [-1] }}                       | ${{ values: ['infinIty'] }}               | ${1}
+      ${{ values: [] }}                         | ${{ values: [1] }}                        | ${-1}
+      ${{ values: [undefined] }}                | ${{ values: [1] }}                        | ${-1}
+      ${{ values: [null] }}                     | ${{ values: [1] }}                        | ${-1}
+      ${{ values: [Number.POSITIVE_INFINITY] }} | ${{ values: [1] }}                        | ${1}
+      ${{ values: [Number.NEGATIVE_INFINITY] }} | ${{ values: [1] }}                        | ${-1}
+      ${{ values: ['infinIty'] }}               | ${{ values: [1] }}                        | ${-1}
+      ${{ values: ['infinIty'] }}               | ${{ values: [-1] }}                       | ${-1}
+    `("when called with a: '$a.toString', b: '$b.toString' then result should be '$expected'", ({ a, b, expected }) => {
+      expect(sortNumber(a, b, '0')).toEqual(expected);
+    });
+
+    it.skip('should have good performance', () => {
+      const ITERATIONS = 100000;
+      const a: any = { values: Array(ITERATIONS) };
+      const b: any = { values: Array(ITERATIONS) };
+      for (let i = 0; i < ITERATIONS; i++) {
+        a.values[i] = Math.random() * Date.now();
+        b.values[i] = Math.random() * Date.now();
+      }
+
+      const start = performance.now();
+      for (let i = 0; i < ITERATIONS; i++) {
+        sortNumber(a, b, i.toString(10));
+      }
+      const stop = performance.now();
+      const diff = stop - start;
+      expect(diff).toBeLessThanOrEqual(20);
     });
   });
 });

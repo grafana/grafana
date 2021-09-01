@@ -63,6 +63,12 @@ export enum PermissionLevel {
   Admin = 4,
 }
 
+export enum PermissionLevelString {
+  View = 'View',
+  Edit = 'Edit',
+  Admin = 'Admin',
+}
+
 export enum DataSourcePermissionLevel {
   Query = 1,
   Admin = 2,
@@ -77,7 +83,7 @@ export enum AclTarget {
 
 export interface AclTargetInfo {
   value: AclTarget;
-  text: string;
+  label: string;
 }
 
 export const dataSourceAclLevels = [
@@ -85,15 +91,19 @@ export const dataSourceAclLevels = [
 ];
 
 export const dashboardAclTargets: AclTargetInfo[] = [
-  { value: AclTarget.Team, text: 'Team' },
-  { value: AclTarget.User, text: 'User' },
-  { value: AclTarget.Viewer, text: 'Everyone With Viewer Role' },
-  { value: AclTarget.Editor, text: 'Everyone With Editor Role' },
+  { value: AclTarget.Team, label: 'Team' },
+  { value: AclTarget.User, label: 'User' },
+  { value: AclTarget.Viewer, label: 'Everyone With Viewer Role' },
+  { value: AclTarget.Editor, label: 'Everyone With Editor Role' },
 ];
 
 export const dashboardPermissionLevels: DashboardPermissionInfo[] = [
-  { value: PermissionLevel.View, label: 'View', description: 'Can view dashboards.' },
-  { value: PermissionLevel.Edit, label: 'Edit', description: 'Can add, edit and delete dashboards.' },
+  { value: PermissionLevel.View, label: PermissionLevelString.View, description: 'Can view dashboards.' },
+  {
+    value: PermissionLevel.Edit,
+    label: PermissionLevelString.Edit,
+    description: 'Can add, edit and delete dashboards.',
+  },
   {
     value: PermissionLevel.Admin,
     label: 'Admin',

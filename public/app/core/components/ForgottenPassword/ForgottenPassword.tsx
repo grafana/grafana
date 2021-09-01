@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import { Form, Field, Input, Button, Legend, Container, useStyles, HorizontalGroup, LinkButton } from '@grafana/ui';
 import { getBackendSrv } from '@grafana/runtime';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import config from 'app/core/config';
 
@@ -51,11 +51,15 @@ export const ForgottenPassword: FC = () => {
             invalid={!!errors.userOrEmail}
             error={errors?.userOrEmail?.message}
           >
-            <Input placeholder="Email or username" name="userOrEmail" ref={register({ required: true })} />
+            <Input
+              id="user-input"
+              placeholder="Email or username"
+              {...register('userOrEmail', { required: 'Email or username is required' })}
+            />
           </Field>
           <HorizontalGroup>
             <Button>Send reset email</Button>
-            <LinkButton variant="link" href={loginHref}>
+            <LinkButton fill="text" href={loginHref}>
               Back to login
             </LinkButton>
           </HorizontalGroup>

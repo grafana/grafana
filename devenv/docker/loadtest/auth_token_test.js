@@ -12,23 +12,26 @@ const client = createClient(endpoint);
 export const setup = () => {
   const basicAuthClient = createBasicAuthClient(endpoint, 'admin', 'admin');
   const orgId = createTestOrgIfNotExists(basicAuthClient);
+  basicAuthClient.withOrgId(orgId);
   const datasourceId = createTestdataDatasourceIfNotExists(basicAuthClient);
-  client.withOrgId(orgId);
+
   return {
-    orgId: orgId,
-    datasourceId: datasourceId,
+    orgId,
+    datasourceId,
   };
 };
 
-export default data => {
+export default (data) => {
+  client.withOrgId(data.orgId);
+
   group('user auth token test', () => {
     if (__ITER === 0) {
       group('user authenticates through ui with username and password', () => {
         let res = client.ui.login('admin', 'admin');
 
         check(res, {
-          'response status is 200': r => r.status === 200,
-          "response has cookie 'grafana_session' with 32 characters": r =>
+          'response status is 200': (r) => r.status === 200,
+          "response has cookie 'grafana_session' with 32 characters": (r) =>
             r.cookies.grafana_session[0].value.length === 32,
         });
       });
@@ -61,7 +64,7 @@ export default data => {
         let responses = client.batch(requests);
         for (let n = 0; n < batchCount; n++) {
           check(responses[n], {
-            'response status is 200': r => r.status === 200,
+            'response status is 200': (r) => r.status === 200,
           });
         }
       });
@@ -71,4 +74,4 @@ export default data => {
   sleep(5);
 };
 
-export const teardown = data => {};
+export const teardown = (data) => {};

@@ -1,6 +1,5 @@
 FROM debian:buster-slim
 
-USER root
 ENV DEBIAN_FRONTEND=noninteractive
 
 COPY scripts scripts

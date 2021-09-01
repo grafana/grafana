@@ -2,13 +2,10 @@
 title = "What's new in Grafana v4.4"
 description = "Feature and improvement highlights for Grafana v4.4"
 keywords = ["grafana", "new", "documentation", "4.4.0", "release notes"]
-type = "docs"
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v4-4/"]
-[menu.docs]
-name = "Version 4.4"
-identifier = "v4.4"
-parent = "whatsnew"
-weight = -3
+weight = -11
+[_build]
+list = false
 +++
 
 ## What's new in Grafana v4.4
@@ -27,6 +24,7 @@ Initial feature request: [#4638](https://github.com/grafana/grafana/issues/4638)
 Pull Request: [#8472](https://github.com/grafana/grafana/pull/8472)
 
 ## Enhancements
+
 - **Elasticsearch**: Added filter aggregation label [#8420](https://github.com/grafana/grafana/pull/8420), thx [@tianzk](github.com/tianzk)
 - **Sensu**: Added option for source and handler [#8405](https://github.com/grafana/grafana/pull/8405), thx [@joemiller](github.com/joemiller)
 - **CSV**: Configurable csv export datetime format [#8058](https://github.com/grafana/grafana/issues/8058), thx [@cederigo](github.com/cederigo)

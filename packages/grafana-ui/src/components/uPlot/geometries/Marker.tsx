@@ -1,4 +1,4 @@
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import React from 'react';
 
 interface MarkerProps {
@@ -17,7 +17,6 @@ export const Marker: React.FC<MarkerProps> = ({ x, y, children }) => {
         position: absolute;
         top: ${y}px;
         left: ${x}px;
-        transform: translate3d(-50%, -50%, 0);
       `}
     >
       {children}

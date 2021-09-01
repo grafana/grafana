@@ -1,15 +1,13 @@
-import angular from 'angular';
-
-const module = angular.module('grafana.directives');
+import { coreModule } from 'app/core/core_module';
 
 export class QueryRowCtrl {
   target: any;
   queryCtrl: any;
   panelCtrl: any;
   panel: any;
-  hasTextEditMode: boolean;
+  hasTextEditMode = false;
 
-  constructor() {
+  $onInit() {
     this.panelCtrl = this.queryCtrl.panelCtrl;
     this.target = this.queryCtrl.target;
     this.panel = this.panelCtrl.panel;
@@ -43,4 +41,4 @@ function queryEditorRowDirective() {
   };
 }
 
-module.directive('queryEditorRow', queryEditorRowDirective);
+coreModule.directive('queryEditorRow', queryEditorRowDirective);

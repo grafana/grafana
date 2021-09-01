@@ -13,13 +13,13 @@ export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
     <table className="filter-table form-inline filter-table--hover">
       <thead>
         <tr>
-          <th>Id</th>
+          <th>ID</th>
           <th>Name</th>
           <th style={{ width: '1%' }}></th>
         </tr>
       </thead>
       <tbody>
-        {orgs.map(org => (
+        {orgs.map((org) => (
           <tr key={`${org.id}-${org.name}`}>
             <td className="link-td">
               <a href={`admin/orgs/edit/${org.id}`}>{org.id}</a>
@@ -40,7 +40,7 @@ export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
           title="Delete"
           body={
             <div>
-              Are you sure you want to delete '{deleteOrg.name}'?
+              Are you sure you want to delete &apos;{deleteOrg.name}&apos;?
               <br /> <small>All dashboards for this organization will be removed!</small>
             </div>
           }

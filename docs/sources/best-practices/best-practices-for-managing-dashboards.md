@@ -1,10 +1,6 @@
 +++
 title = "Best practices for managing dashboards"
 description = "Best practices for managing dashboards in Grafana"
-type = "docs"
-[menu.docs]
-identifier = "best-practices-for-managing-dashboards"
-parent = "best-practices"
 weight = 200
 +++
 
@@ -18,7 +14,7 @@ Here are some principles to consider before you start managing dashboards.
 
 ### Strategic observability
 
-There are several [common observability strategies]({{< relref "common-observability-strategies.md" >}}). You should research them and decide whether one of them works for you or if you want to come up with your own. Either way, have a plan, write it down, and stick to it. 
+There are several [common observability strategies]({{< relref "common-observability-strategies.md" >}}). You should research them and decide whether one of them works for you or if you want to come up with your own. Either way, have a plan, write it down, and stick to it.
 
 Adapt your strategy to changing needs as necessary.
 
@@ -36,6 +32,6 @@ What is your dashboard maturity level? Analyze your current dashboard setup and 
   - In many cases copies are being made to simply customize the view by setting template parameters. This should instead be done by maintaining a link to the master dashboard and customizing the view with [URL parameters]({{< relref "../linking/data-link-variables.md" >}}).
 - When you must copy a dashboard, clearly rename it and _do not_ copy the dashboard tags. Tags are important metadata for dashboards that are used during search. Copying tags can result in false matches.
 - Maintain a dashboard of dashboards or cross-reference dashboards. This can be done in several ways:
-    - Create dashboard links, panel, or data links. Links can go to other dashboards or to external systems. For more information, refer to [Linking]({{< relref "../linking/_index.md" >}}).
-    - Add a [Dashboard list panel]({{< relref "../panels/visualizations/dashboard-list-panel.md" >}}). You can then customize what you see by doing tag or folder searches.
-    - Add a [Text panel]({{< relref "../panels/visualizations/text-panel.md" >}}) and use markdown to customize the display.
+  - Create dashboard links, panel, or data links. Links can go to other dashboards or to external systems. For more information, refer to [Linking]({{< relref "../linking/_index.md" >}}).
+  - Add a [Dashboard list panel]({{< relref "../visualizations/dashboard-list-panel.md" >}}). You can then customize what you see by doing tag or folder searches.
+  - Add a [Text panel]({{< relref "../visualizations/text-panel.md" >}}) and use markdown to customize the display.

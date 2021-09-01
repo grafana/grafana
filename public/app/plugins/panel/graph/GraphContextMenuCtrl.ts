@@ -1,15 +1,15 @@
-import { ContextMenuItem } from '@grafana/ui';
+import { MenuItemProps } from '@grafana/ui';
 import { FlotDataPoint } from '@grafana/data';
 
 export class GraphContextMenuCtrl {
   private source?: FlotDataPoint | null;
   private scope?: any;
-  menuItemsSupplier?: () => ContextMenuItem[];
-  scrollContextElement: HTMLElement | null;
+  menuItemsSupplier?: () => MenuItemProps[];
+  scrollContextElement: HTMLElement | null = null;
   position: {
     x: number;
     y: number;
-  };
+  } = { x: 0, y: 0 };
 
   isVisible: boolean;
 
@@ -61,7 +61,7 @@ export class GraphContextMenuCtrl {
     return this.source;
   };
 
-  setMenuItemsSupplier = (menuItemsSupplier: () => ContextMenuItem[]) => {
+  setMenuItemsSupplier = (menuItemsSupplier: () => MenuItemProps[]) => {
     this.menuItemsSupplier = menuItemsSupplier;
   };
 }

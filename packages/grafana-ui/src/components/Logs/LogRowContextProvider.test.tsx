@@ -164,7 +164,11 @@ describe('LogRowContextProvider', () => {
         return <></>;
       });
       await act(async () => {
-        await mount(<LogRowContextProvider row={row} getRowContext={getRowContextMock} children={mockedChildren} />);
+        await mount(
+          <LogRowContextProvider row={row} getRowContext={getRowContextMock}>
+            {mockedChildren}
+          </LogRowContextProvider>
+        );
       });
     });
   });
@@ -177,6 +181,7 @@ const row: LogRowModel = {
   entry: '4',
   labels: (null as any) as Labels,
   hasAnsi: false,
+  hasUnescapedContent: false,
   raw: '4',
   logLevel: LogLevel.info,
   timeEpochMs: 4,

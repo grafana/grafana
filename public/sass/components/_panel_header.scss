@@ -10,8 +10,14 @@ $panel-header-no-title-zindex: 1;
 .panel-container--no-title {
   .panel-header {
     position: absolute;
-    width: 100%;
+    left: min(50px, 10%); // allows space for interaction in the corders
+    right: min(50px, 10%);
     z-index: $panel-header-z-index;
+
+    &:hover {
+      left: 0;
+      right: 0;
+    }
   }
   .panel-content {
     height: 100%;
@@ -37,22 +43,6 @@ $panel-header-no-title-zindex: 1;
   align-items: center;
 }
 
-.panel-title-text {
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-  max-width: calc(100% - 38px);
-  cursor: pointer;
-  font-weight: $font-weight-semi-bold;
-
-  &:hover {
-    color: $link-hover-color;
-  }
-  .panel-has-alert & {
-    max-width: calc(100% - 54px);
-  }
-}
-
 .panel-menu-container {
   width: 0px;
   height: 19px;
@@ -60,6 +50,8 @@ $panel-header-no-title-zindex: 1;
 }
 
 .panel-menu-toggle {
+  position: absolute;
+  top: calc(50% - 9px);
   color: $text-color-weak;
   cursor: pointer;
   margin: 2px 0 0 2px;
@@ -175,6 +167,15 @@ $panel-header-no-title-zindex: 1;
     &:hover {
       color: darken($white, 10%);
     }
+  }
+
+  code {
+    white-space: normal;
+    word-wrap: break-word;
+  }
+
+  pre > code {
+    display: block;
   }
 
   .panel-info-corner-links {

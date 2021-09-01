@@ -20,7 +20,7 @@ type CommandLine interface {
 	Generic(name string) interface{}
 
 	PluginDirectory() string
-	RepoDirectory() string
+	PluginRepoURL() string
 	PluginURL() string
 }
 
@@ -54,14 +54,10 @@ func (c *ContextCommandLine) PluginDirectory() string {
 	return c.String("pluginsDir")
 }
 
-func (c *ContextCommandLine) RepoDirectory() string {
+func (c *ContextCommandLine) PluginRepoURL() string {
 	return c.String("repo")
 }
 
 func (c *ContextCommandLine) PluginURL() string {
 	return c.String("pluginUrl")
-}
-
-func (c *ContextCommandLine) OptionsString() string {
-	return c.String("configOverrides")
 }

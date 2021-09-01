@@ -2,7 +2,7 @@ FROM node:12.19.0-buster-slim
 
 WORKDIR /root
 
-RUN apt-get update && apt-get install -yq gnupg netcat curl
+RUN apt-get update && apt-get install -yq gnupg netcat curl git
 RUN curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
   echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list && \
   # Cypress dependencies

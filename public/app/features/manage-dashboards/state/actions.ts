@@ -1,21 +1,21 @@
-import { AppEvents, DataSourceInstanceSettings, DataSourceSelectItem, locationUtil } from '@grafana/data';
+import { AppEvents, DataSourceInstanceSettings, locationUtil } from '@grafana/data';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import config from 'app/core/config';
 import {
   clearDashboard,
-  setInputs,
-  setGcomDashboard,
-  setJsonDashboard,
-  InputType,
   ImportDashboardDTO,
+  InputType,
+  setGcomDashboard,
+  setInputs,
+  setJsonDashboard,
 } from './reducers';
-import { updateLocation } from 'app/core/actions';
-import { ThunkResult, FolderInfo, DashboardDTO, DashboardDataDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
 import { appEvents } from '../../../core/core';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { DashboardSearchHit } from '../../search/types';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     try {
       const dashboard = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
       dispatch(setGcomDashboard(dashboard));
@@ -27,14 +27,14 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
 }
 
 export function importDashboardJson(dashboard: any): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(setJsonDashboard(dashboard));
     dispatch(processInputs(dashboard));
   };
 }
 
 function processInputs(dashboardJson: any): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     if (dashboardJson && dashboardJson.__inputs) {
       const inputs: any[] = [];
       dashboardJson.__inputs.forEach((input: any) => {
@@ -62,7 +62,7 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
 }
 
 export function clearLoadedDashboard(): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch) => {
     dispatch(clearDashboard());
   };
 }
@@ -73,13 +73,13 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
     const inputs = getState().importDashboard.inputs;
 
     let inputsToPersist = [] as any[];
-    importDashboardForm.dataSources?.forEach((dataSource: DataSourceSelectItem, index: number) => {
+    importDashboardForm.dataSources?.forEach((dataSource: DataSourceInstanceSettings, index: number) => {
       const input = inputs.dataSources[index];
       inputsToPersist.push({
         name: input.name,
         type: input.type,
         pluginId: input.pluginId,
-        value: dataSource.value,
+        value: dataSource.name,
       });
     });
 
@@ -99,25 +99,20 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
       inputs: inputsToPersist,
       folderId: importDashboardForm.folder.id,
     });
+
     const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
-    dispatch(updateLocation({ path: dashboardUrl }));
+    locationService.push(dashboardUrl);
   };
 }
 
 const getDataSourceOptions = (input: { pluginId: string; pluginName: string }, inputModel: any) => {
-  const sources = Object.values(config.datasources).filter(
-    (val: DataSourceInstanceSettings) => val.type === input.pluginId
-  );
+  const sources = getDataSourceSrv().getList({ pluginId: input.pluginId });
 
   if (sources.length === 0) {
     inputModel.info = 'No data sources of type ' + input.pluginName + ' found';
   } else if (!inputModel.info) {
     inputModel.info = 'Select a ' + input.pluginName + ' data source';
   }
-
-  inputModel.options = sources.map(val => {
-    return { name: val.name, value: val.name, meta: val.meta };
-  });
 };
 
 export function moveDashboards(dashboardUids: string[], toFolder: FolderInfo) {
@@ -219,13 +214,21 @@ export function saveDashboard(options: SaveDashboardOptions) {
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
   return getBackendSrv().request({
     method: 'DELETE',
-    url: `/api/folders/${uid}`,
+    url: `/api/folders/${uid}?forceDeleteRules=true`,
     showSuccessAlert: showSuccessAlert === true,
   });
 }
 
 export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
+}
+
+export function searchFolders(query: any, permission?: PermissionLevelString): Promise<DashboardSearchHit[]> {
+  return getBackendSrv().search({ query, type: 'dash-folder', permission });
+}
+
+export function getFolderById(id: number): Promise<{ id: number; title: string }> {
+  return getBackendSrv().get(`/api/folders/id/${id}`);
 }
 
 export function deleteDashboard(uid: string, showSuccessAlert: boolean) {

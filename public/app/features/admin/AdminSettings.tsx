@@ -1,7 +1,5 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
-
 import { getBackendSrv } from '@grafana/runtime';
 import { NavModel } from '@grafana/data';
 
@@ -43,7 +41,7 @@ export class AdminSettings extends React.PureComponent<Props, State> {
         <Page.Contents isLoading={isLoading}>
           <div className="grafana-info-box span8" style={{ margin: '20px 0 25px 0' }}>
             These system settings are defined in grafana.ini or custom.ini (or overridden in ENV variables). To change
-            these you currently need to restart grafana.
+            these you currently need to restart Grafana.
           </div>
 
           <table className="filter-table">
@@ -74,4 +72,4 @@ const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'server-settings'),
 });
 
-export default hot(module)(connect(mapStateToProps)(AdminSettings));
+export default connect(mapStateToProps)(AdminSettings);

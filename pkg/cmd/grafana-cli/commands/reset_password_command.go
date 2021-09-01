@@ -2,6 +2,7 @@ package commands
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 
@@ -17,7 +18,7 @@ import (
 
 const AdminUserId = 1
 
-func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SqlStore) error {
+func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SQLStore) error {
 	newPassword := ""
 
 	if c.Bool("password-from-stdin") {
@@ -42,7 +43,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SqlStore) erro
 
 	userQuery := models.GetUserByIdQuery{Id: AdminUserId}
 
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(context.Background(), &userQuery); err != nil {
 		return fmt.Errorf("could not read user from database. Error: %v", err)
 	}
 

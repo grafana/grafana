@@ -1,0 +1,557 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Graph Migrations legend with multiple values 1`] = `
+Object {
+  "alert": undefined,
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "auto",
+        "drawStyle": "line",
+        "fillOpacity": 50,
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 5,
+        "showPoints": "never",
+        "spanNulls": true,
+      },
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "A-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "red",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [
+        "mean",
+        "lastNotNull",
+        "sum",
+      ],
+      "displayMode": "table",
+      "placement": "bottom",
+    },
+    "tooltip": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations legend with single value 1`] = `
+Object {
+  "alert": undefined,
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "drawStyle": "points",
+        "spanNulls": false,
+      },
+    },
+    "overrides": Array [],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [
+        "sum",
+      ],
+      "displayMode": "list",
+      "placement": "bottom",
+    },
+    "tooltip": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations legend without values 1`] = `
+Object {
+  "alert": undefined,
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "drawStyle": "points",
+        "spanNulls": false,
+      },
+    },
+    "overrides": Array [],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [],
+      "displayMode": "list",
+      "placement": "bottom",
+    },
+    "tooltip": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations preserves colors from series overrides 1`] = `
+Object {
+  "alert": undefined,
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "hidden",
+        "drawStyle": "line",
+        "fillOpacity": 60,
+        "gradientMode": "opacity",
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 1,
+        "showPoints": "never",
+        "spanNulls": true,
+      },
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "A-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "rgba(165, 72, 170, 0.77)",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [
+        "mean",
+        "lastNotNull",
+        "max",
+        "min",
+        "sum",
+      ],
+      "displayMode": "table",
+      "placement": "bottom",
+    },
+    "tooltip": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations preserves series overrides using a regex alias 1`] = `
+Object {
+  "alert": undefined,
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "hidden",
+        "drawStyle": "line",
+        "fillOpacity": 60,
+        "gradientMode": "opacity",
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 1,
+        "showPoints": "never",
+        "spanNulls": true,
+      },
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byRegexp",
+          "options": "/^A-/",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "rgba(165, 72, 170, 0.77)",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [
+        "mean",
+        "lastNotNull",
+        "max",
+        "min",
+        "sum",
+      ],
+      "displayMode": "table",
+      "placement": "bottom",
+    },
+    "tooltip": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations simple bars 1`] = `
+Object {
+  "alert": undefined,
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "drawStyle": "bars",
+        "fillOpacity": 100,
+        "showPoints": "never",
+        "spanNulls": false,
+      },
+    },
+    "overrides": Array [],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [],
+      "displayMode": "list",
+      "placement": "bottom",
+    },
+    "tooltip": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations stacking groups 1`] = `
+Object {
+  "alert": undefined,
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "auto",
+        "drawStyle": "line",
+        "fillOpacity": 50,
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 5,
+        "showPoints": "never",
+        "spanNulls": true,
+        "stacking": Object {
+          "group": "A",
+          "mode": "normal",
+        },
+      },
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "A-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "red",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "A-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "custom.stacking",
+            "value": Object {
+              "group": "A",
+              "mode": "normal",
+            },
+          },
+        ],
+      },
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "B-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "custom.stacking",
+            "value": Object {
+              "group": "A",
+              "mode": "normal",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [
+        "mean",
+        "lastNotNull",
+        "sum",
+      ],
+      "displayMode": "table",
+      "placement": "bottom",
+    },
+    "tooltip": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations stacking simple 1`] = `
+Object {
+  "alert": undefined,
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "auto",
+        "drawStyle": "line",
+        "fillOpacity": 50,
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 5,
+        "showPoints": "never",
+        "spanNulls": true,
+        "stacking": Object {
+          "group": "A",
+          "mode": "normal",
+        },
+      },
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "A-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "red",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [
+        "mean",
+        "lastNotNull",
+        "sum",
+      ],
+      "displayMode": "table",
+      "placement": "bottom",
+    },
+    "tooltip": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations stairscase 1`] = `
+Object {
+  "alert": undefined,
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "hidden",
+        "drawStyle": "line",
+        "fillOpacity": 60,
+        "gradientMode": "opacity",
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 1,
+        "showPoints": "never",
+        "spanNulls": true,
+      },
+      "displayName": "DISPLAY NAME",
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [
+        "mean",
+        "lastNotNull",
+        "max",
+        "min",
+        "sum",
+      ],
+      "displayMode": "table",
+      "placement": "bottom",
+    },
+    "tooltip": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations stepped line 1`] = `
+Object {
+  "alert": undefined,
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "auto",
+        "drawStyle": "line",
+        "fillOpacity": 50,
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 5,
+        "showPoints": "never",
+        "spanNulls": true,
+      },
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "A-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "red",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [],
+      "displayMode": "list",
+      "placement": "bottom",
+    },
+    "tooltip": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations twoYAxis 1`] = `
+Object {
+  "alert": undefined,
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisLabel": "Y111",
+        "axisPlacement": "auto",
+        "drawStyle": "line",
+        "fillOpacity": 10,
+        "lineStyle": Object {
+          "dash": Array [
+            10,
+            10,
+          ],
+          "fill": "dash",
+        },
+        "lineWidth": 1,
+        "scaleDistribution": Object {
+          "log": 10,
+          "type": "log",
+        },
+        "showPoints": "never",
+        "spanNulls": true,
+      },
+      "decimals": 3,
+      "max": 1000,
+      "min": 0,
+      "nullValueMode": "null",
+      "unit": "areaMI2",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "B-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "unit",
+            "value": "degree",
+          },
+          Object {
+            "id": "decimals",
+            "value": 2,
+          },
+          Object {
+            "id": "min",
+            "value": -10,
+          },
+          Object {
+            "id": "max",
+            "value": 25,
+          },
+          Object {
+            "id": "custom.axisLabel",
+            "value": "Y222",
+          },
+          Object {
+            "id": "custom.lineStyle",
+            "value": Object {
+              "dash": Array [
+                5,
+                8,
+              ],
+              "fill": "dash",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [],
+      "displayMode": "list",
+      "placement": "bottom",
+    },
+    "tooltip": Object {
+      "mode": "single",
+    },
+  },
+}
+`;

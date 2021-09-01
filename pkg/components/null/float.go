@@ -98,9 +98,9 @@ func (f *Float) UnmarshalText(text []byte) error {
 }
 
 // MarshalJSON implements json.Marshaler.
-// It will encode null if this Float is null.
+// It will encode null if this Float is null, NaN, of Inf.
 func (f Float) MarshalJSON() ([]byte, error) {
-	if !f.Valid || math.IsNaN(f.Float64) {
+	if !f.Valid || math.IsNaN(f.Float64) || math.IsInf(f.Float64, 0) {
 		return []byte(nullString), nil
 	}
 	return []byte(strconv.FormatFloat(f.Float64, 'f', -1, 64)), nil
@@ -132,20 +132,6 @@ func (f Float) FullString() string {
 	}
 
 	return fmt.Sprintf("%f", f.Float64)
-}
-
-// SetValid changes this Float's value and also sets it to be non-null.
-func (f *Float) SetValid(n float64) {
-	f.Float64 = n
-	f.Valid = true
-}
-
-// Ptr returns a pointer to this Float's value, or a nil pointer if this Float is null.
-func (f Float) Ptr() *float64 {
-	if !f.Valid {
-		return nil
-	}
-	return &f.Float64
 }
 
 // IsZero returns true for invalid Floats, for future omitempty support (Go 1.4?)

@@ -1,6 +1,23 @@
-import { Pages } from './pages';
-
+// NOTE: by default Component string selectors are set up to be aria-labels,
+// however there are many cases where your component may not need an aria-label
+// (a <button> with clear text, for example, does not need an aria-label as it's already labeled)
+// but you still might need to select it for testing,
+// in that case please add the attribute data-test-id={selector} in the component and
+// prefix your selector string with 'data-test-id' so that when create the selectors we know to search for it on the right attribute
+/**
+ * Selectors grouped/defined in Components
+ *
+ * @alpha
+ */
 export const Components = {
+  TimePicker: {
+    openButton: 'data-testid TimePicker Open Button',
+    fromField: 'TimePicker from field',
+    toField: 'TimePicker to field',
+    applyTimeRange: 'data-testid TimePicker submit button',
+    calendar: 'TimePicker calendar',
+    absoluteTimeRangeTitle: 'data-testid-absolute-time-range-narrow',
+  },
   DataSource: {
     TestData: {
       QueryTab: {
@@ -14,12 +31,28 @@ export const Components = {
         startValue: 'TestData start value',
       },
     },
+    Jaeger: {
+      traceIDInput: 'Trace ID',
+    },
+    Prometheus: {
+      configPage: {
+        exemplarsAddButton: 'Add exemplar config button',
+        internalLinkSwitch: 'Internal link switch',
+      },
+      exemplarMarker: 'Exemplar marker',
+    },
+  },
+  Menu: {
+    MenuComponent: (title: string) => `${title} menu`,
+    MenuGroup: (title: string) => `${title} menu group`,
+    MenuItem: (title: string) => `${title} menu item`,
   },
   Panels: {
     Panel: {
-      title: (title: string) => `Panel header title item ${title}`,
+      title: (title: string) => `data-testid Panel header ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
-      containerByTitle: (title: string) => `Panel container title ${title}`,
+      containerByTitle: (title: string) => `${title} panel`,
+      headerCornerInfo: (mode: string) => `Panel header ${mode}`,
     },
     Visualization: {
       Graph: {
@@ -37,7 +70,20 @@ export const Components = {
       BarGauge: {
         value: 'Bar gauge value',
       },
+      PieChart: {
+        svgSlice: 'Pie Chart Slice',
+      },
+      Text: {
+        container: () => '.markdown-html',
+      },
+      Table: {
+        header: 'table header',
+        footer: 'table-footer',
+      },
     },
+  },
+  VizLegend: {
+    seriesName: (name: string) => `VizLegend series ${name}`,
   },
   Drawer: {
     General: {
@@ -54,15 +100,17 @@ export const Components = {
     },
     OptionsPane: {
       content: 'Panel editor option pane content',
-      close: Pages.Dashboard.Toolbar.toolbarItems('Close options pane'),
-      open: Pages.Dashboard.Toolbar.toolbarItems('Open options pane'),
       select: 'Panel editor option pane select',
-      tab: (title: string) => `Panel editor option pane tab ${title}`,
+      fieldLabel: (type: string) => `${type} field property editor`,
     },
     // not sure about the naming *DataPane*
     DataPane: {
       content: 'Panel editor data pane content',
     },
+    applyButton: 'panel editor apply',
+    toggleVizPicker: 'toggle-viz-picker',
+    toggleVizOptions: 'toggle-viz-options',
+    toggleTableView: 'toggle-table-view',
   },
   PanelInspector: {
     Data: {
@@ -83,6 +131,10 @@ export const Components = {
   Tab: {
     title: (title: string) => `Tab ${title}`,
     active: () => '[class*="-activeTabStyle"]',
+  },
+  RefreshPicker: {
+    runButton: 'RefreshPicker run button',
+    intervalButton: 'RefreshPicker interval button',
   },
   QueryTab: {
     content: 'Query editor tab content',
@@ -109,19 +161,26 @@ export const Components = {
     transformationEditorDebugger: (name: string) => `Transformation editor debugger ${name}`,
   },
   Transforms: {
+    card: (name: string) => `New transform ${name}`,
     Reduce: {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
     },
+    searchInput: 'search transformations',
+  },
+  PageToolbar: {
+    container: () => '.page-toolbar',
+    item: (tooltip: string) => `${tooltip}`,
   },
   QueryEditorToolbarItem: {
     button: (title: string) => `QueryEditor toolbar item button ${title}`,
   },
   BackButton: {
-    backArrow: 'Go Back button',
+    backArrow: 'Go Back',
   },
   OptionsGroup: {
-    toggle: (title: string) => `Options group ${title}`,
+    group: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
+    toggle: (title?: string) => (title ? `Options group ${title} toggle` : 'Options group toggle'),
   },
   PluginVisualization: {
     item: (title: string) => `Plugin visualization item ${title}`,
@@ -147,8 +206,12 @@ export const Components = {
   TimeZonePicker: {
     container: 'Time zone picker select container',
   },
+  TraceViewer: {
+    spanBar: () => '[data-test-id="SpanBar--wrapper"]',
+  },
   QueryField: { container: 'Query field' },
   ValuePicker: {
+    button: (name: string) => `Value picker button ${name}`,
     select: (name: string) => `Value picker select ${name}`,
   },
   Search: {
@@ -156,8 +219,28 @@ export const Components = {
     items: 'Search items',
   },
   DashboardLinks: {
-    container: 'Dashboard link container',
-    dropDown: 'Dashboard link dropdown',
-    link: 'Dashboard link',
+    container: 'data-testid Dashboard link container',
+    dropDown: 'data-testid Dashboard link dropdown',
+    link: 'data-testid Dashboard link',
+  },
+  LoadingIndicator: {
+    icon: 'Loading indicator',
+  },
+  CallToActionCard: {
+    button: (name: string) => `Call to action button ${name}`,
+  },
+  DataLinksContextMenu: {
+    singleLink: 'Data link',
+  },
+  CodeEditor: {
+    container: 'Code editor container',
+  },
+  DashboardImportPage: {
+    textarea: 'data-testid-import-dashboard-textarea',
+    submit: 'data-testid-load-dashboard',
+  },
+  ImportDashboardForm: {
+    name: 'data-testid-import-dashboard-title',
+    submit: 'data-testid-import-dashboard-submit',
   },
 };

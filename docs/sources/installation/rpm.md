@@ -3,11 +3,6 @@ title = "Install on RPM-based Linux"
 description = "Grafana Installation guide for RPM-based Linux, such as Centos, Fedora, OpenSuse, and Red Hat."
 keywords = ["grafana", "installation", "documentation", "centos", "fedora", "opensuse", "redhat"]
 aliases = ["/docs/grafana/latest/installation/installation/rpm"]
-type = "docs"
-[menu.docs]
-name = "Install on RPM-based Linux"
-identifier = "rpm"
-parent = "installation"
 weight = 300
 +++
 
@@ -17,6 +12,9 @@ This page explains how to install Grafana dependencies, download and install Gra
 
 **Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
+## Hosted Grafana
+
+You can run Grafana on your own hardware or use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-dashboards-grafana) and get Grafana without the overhead of installing, maintaining, and scaling your observability stack. The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs and more. [Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
 
 ## 1. Download and install
 
@@ -26,13 +24,14 @@ You can install Grafana from a YUM repository, manually using YUM, manually usin
 
 If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo yum update`.
 
-| Grafana Version            | Package            | Repository                                         |
-|----------------------------|--------------------|----------------------------------------------------|
-| Grafana OSS                | grafana            | `https://packages.grafana.com/oss/rpm`             |
-| Grafana OSS (Beta)         | grafana            | `https://packages.grafana.com/oss/rpm-beta`        |
-| Grafana Enterprise         | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm`      |
-| Grafana Enterprise (Beta)  | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm-beta` |
+| Grafana Version           | Package            | Repository                                         |
+| ------------------------- | ------------------ | -------------------------------------------------- |
+| Grafana Enterprise        | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm`      |
+| Grafana Enterprise (Beta) | grafana-enterprise | `https://packages.grafana.com/enterprise/rpm-beta` |
+| Grafana OSS               | grafana            | `https://packages.grafana.com/oss/rpm`             |
+| Grafana OSS (Beta)        | grafana            | `https://packages.grafana.com/oss/rpm-beta`        |
 
+> **Note:** Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS Edition. You can also upgrade to the [full Enterprise feature set](https://grafana.com/products/enterprise/?utm_source=grafana-install-page) and has support for [Enterprise plugins](https://grafana.com/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
 
 Add a new file to your YUM repo using the method of your choice. The command below uses `nano`.
 
@@ -45,6 +44,7 @@ Choose if you want to install the Open Source or Enterprise edition of Grafana a
 > We recommend all users to install the Enterprise Edition of Grafana, which can be seamlessly upgraded with a Grafana Enterprise [subscription](https://grafana.com/products/enterprise/?utm_source=grafana-install-page).
 
 For Enterprise releases:
+
 ```bash
 [grafana]
 name=grafana
@@ -58,6 +58,7 @@ sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 ```
 
 For OSS releases:
+
 ```bash
 [grafana]
 name=grafana
@@ -84,7 +85,7 @@ sudo yum install grafana-enterprise
 
 If you install manually with YUM, then you will need to manually update Grafana for each new version. To enable automatic updates for your Grafana installation please use the instructions below to install via our YUM repository.
 
-1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
+1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install.
    - The most recent Grafana version is selected by default.
    - The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
 1. Select an **Edition**.
@@ -97,7 +98,8 @@ If you install manually with YUM, then you will need to manually update Grafana 
 wget <rpm package url>
 sudo yum localinstall <local rpm package>
 ```
-   You can also install Grafana using YUM directly:
+
+You can also install Grafana using YUM directly:
 
 ```bash
 sudo yum install <rpm package url>
@@ -109,7 +111,7 @@ If you install with RPM, then you will need to manually update Grafana for each 
 
 **Note:** The .rpm files are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
 
-1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
+1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install.
    - The most recent Grafana version is selected by default.
    - The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
 1. Select an **Edition**.
@@ -185,7 +187,8 @@ sudo /sbin/chkconfig --add grafana-server
 
 The `grafana-server` binary needs the working directory to be the root install directory where the binary and the `public` folder are located.
 
-Start Grafana by running: 
+Start Grafana by running:
+
 ```bash
 ./bin/grafana-server web
 ```

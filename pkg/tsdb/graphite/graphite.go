@@ -10,38 +10,105 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/net/context/ctxhttp"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/opentracing/opentracing-go"
 )
 
-type GraphiteExecutor struct {
-	HttpClient *http.Client
+type Service struct {
+	logger log.Logger
+	im     instancemgmt.InstanceManager
 }
 
-func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &GraphiteExecutor{}, nil
+func ProvideService(httpClientProvider httpclient.Provider, manager backendplugin.Manager) (*Service, error) {
+	s := &Service{
+		logger: log.New("tsdb.graphite"),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+	}
+
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
+
+	if err := manager.Register("graphite", factory); err != nil {
+		s.logger.Error("Failed to register plugin", "error", err)
+		return nil, err
+	}
+
+	return s, nil
 }
 
-var glog = log.New("tsdb.graphite")
-
-func init() {
-	tsdb.RegisterTsdbQueryEndpoint("graphite", NewGraphiteExecutor)
+type datasourceInfo struct {
+	HTTPClient *http.Client
+	URL        string
+	Id         int64
 }
 
-func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{}
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		opts, err := settings.HTTPClientOptions()
+		if err != nil {
+			return nil, err
+		}
 
-	from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
-	until := formatTimeRange(tsdbQuery.TimeRange.To)
-	var target string
+		client, err := httpClientProvider.New(opts)
+		if err != nil {
+			return nil, err
+		}
 
+		model := datasourceInfo{
+			HTTPClient: client,
+			URL:        settings.URL,
+			Id:         settings.ID,
+		}
+
+		return model, nil
+	}
+}
+
+func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+	i, err := s.im.Get(pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+	instance := i.(datasourceInfo)
+	return &instance, nil
+}
+
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if len(req.Queries) == 0 {
+		return nil, fmt.Errorf("query contains no queries")
+	}
+
+	// get datasource info from context
+	dsInfo, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	// take the first query in the request list, since all query should share the same timerange
+	q := req.Queries[0]
+
+	/*
+		graphite doc about from and until, with sdk we are getting absolute instead of relative time
+		https://graphite-api.readthedocs.io/en/latest/api.html#from-until
+	*/
+	from, until := epochMStoGraphiteTime(q.TimeRange)
 	formData := url.Values{
 		"from":          []string{from},
 		"until":         []string{until},
@@ -49,42 +116,45 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		"maxDataPoints": []string{"500"},
 	}
 
+	// Calculate and get the last target of Graphite Request
+	var target string
 	emptyQueries := make([]string, 0)
-	for _, query := range tsdbQuery.Queries {
-		glog.Debug("graphite", "query", query.Model)
+	for _, query := range req.Queries {
+		model, err := simplejson.NewJson(query.JSON)
+		if err != nil {
+			return nil, err
+		}
+		s.logger.Debug("graphite", "query", model)
 		currTarget := ""
-		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
+		if fullTarget, err := model.Get("targetFull").String(); err == nil {
 			currTarget = fullTarget
 		} else {
-			currTarget = query.Model.Get("target").MustString()
+			currTarget = model.Get("target").MustString()
 		}
 		if currTarget == "" {
-			glog.Debug("graphite", "empty query target", query.Model)
-			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", query.Model))
+			s.logger.Debug("graphite", "empty query target", model)
+			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", model))
 			continue
 		}
 		target = fixIntervalFormat(currTarget)
 	}
 
+	var result = backend.QueryDataResponse{}
+
 	if target == "" {
-		glog.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
-		return nil, errors.New("No query target found for the alert rule")
+		s.logger.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
+		return &result, errors.New("no query target found for the alert rule")
 	}
 
 	formData["target"] = []string{target}
 
 	if setting.Env == setting.Dev {
-		glog.Debug("Graphite request", "params", formData)
+		s.logger.Debug("Graphite request", "params", formData)
 	}
 
-	req, err := e.createRequest(dsInfo, formData)
+	graphiteReq, err := s.createRequest(dsInfo, formData)
 	if err != nil {
-		return nil, err
-	}
-
-	httpClient, err := dsInfo.GetHttpClient()
-	if err != nil {
-		return nil, err
+		return &result, err
 	}
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "graphite query")
@@ -92,69 +162,108 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	span.SetTag("from", from)
 	span.SetTag("until", until)
 	span.SetTag("datasource_id", dsInfo.Id)
-	span.SetTag("org_id", dsInfo.OrgId)
+	span.SetTag("org_id", req.PluginContext.OrgID)
 
 	defer span.Finish()
 
 	if err := opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		return nil, err
+		opentracing.HTTPHeadersCarrier(graphiteReq.Header)); err != nil {
+		return &result, err
 	}
 
-	res, err := ctxhttp.Do(ctx, httpClient, req)
+	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, graphiteReq)
 	if err != nil {
-		return nil, err
+		return &result, err
 	}
 
-	data, err := e.parseResponse(res)
+	frames, err := s.toDataFrames(res)
 	if err != nil {
-		return nil, err
+		return &result, err
 	}
 
-	result.Results = make(map[string]*tsdb.QueryResult)
-	queryRes := tsdb.NewQueryResult()
-
-	for _, series := range data {
-		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-			Name:   series.Target,
-			Points: series.DataPoints,
-		})
-
-		if setting.Env == setting.Dev {
-			glog.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
-		}
+	result = backend.QueryDataResponse{
+		Responses: make(backend.Responses),
 	}
 
-	result.Results["A"] = queryRes
-	return result, nil
+	result.Responses["A"] = backend.DataResponse{
+		Frames: frames,
+	}
+
+	return &result, nil
 }
 
-func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
+func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
 	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			s.logger.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if res.StatusCode/100 != 2 {
-		glog.Info("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("Request failed status: %v", res.Status)
+		s.logger.Info("Request failed", "status", res.Status, "body", string(body))
+		return nil, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	var data []TargetResponseDTO
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		glog.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
+		s.logger.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
 		return nil, err
 	}
 
 	return data, nil
 }
 
-func (e *GraphiteExecutor) createRequest(dsInfo *models.DataSource, data url.Values) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.Url)
+func (s *Service) toDataFrames(response *http.Response) (frames data.Frames, error error) {
+	responseData, err := s.parseResponse(response)
+	if err != nil {
+		return nil, err
+	}
+
+	frames = data.Frames{}
+	for _, series := range responseData {
+		timeVector := make([]time.Time, 0, len(series.DataPoints))
+		values := make([]*float64, 0, len(series.DataPoints))
+		name := series.Target
+
+		for _, dataPoint := range series.DataPoints {
+			var timestamp, value, err = parseDataTimePoint(dataPoint)
+			if err != nil {
+				return nil, err
+			}
+			timeVector = append(timeVector, timestamp)
+			values = append(values, value)
+		}
+
+		tags := make(map[string]string)
+		for name, value := range series.Tags {
+			switch value := value.(type) {
+			case string:
+				tags[name] = value
+			case float64:
+				tags[name] = strconv.FormatFloat(value, 'f', -1, 64)
+			}
+		}
+
+		frames = append(frames, data.NewFrame(name,
+			data.NewField("time", nil, timeVector),
+			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
+
+		if setting.Env == setting.Dev {
+			s.logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
+		}
+	}
+	return frames, nil
+}
+
+func (s *Service) createRequest(dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
+	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -162,23 +271,12 @@ func (e *GraphiteExecutor) createRequest(dsInfo *models.DataSource, data url.Val
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(data.Encode()))
 	if err != nil {
-		glog.Info("Failed to create request", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+		s.logger.Info("Failed to create request", "error", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
-	}
-
 	return req, err
-}
-
-func formatTimeRange(input string) string {
-	if input == "now" {
-		return input
-	}
-	return strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(input, "now", ""), "m", "min"), "M", "mon")
 }
 
 func fixIntervalFormat(target string) string {
@@ -191,4 +289,27 @@ func fixIntervalFormat(target string) string {
 		return strings.ReplaceAll(M, "M", "mon")
 	})
 	return target
+}
+
+func epochMStoGraphiteTime(tr backend.TimeRange) (string, string) {
+	return fmt.Sprintf("%d", tr.From.UTC().Unix()), fmt.Sprintf("%d", tr.To.UTC().Unix())
+}
+
+/**
+ * Graphite should always return timestamp as a number but values might be nil when data is missing
+ */
+func parseDataTimePoint(dataTimePoint plugins.DataTimePoint) (time.Time, *float64, error) {
+	if !dataTimePoint[1].Valid {
+		return time.Time{}, nil, errors.New("failed to parse data point timestamp")
+	}
+
+	timestamp := time.Unix(int64(dataTimePoint[1].Float64), 0).UTC()
+
+	if dataTimePoint[0].Valid {
+		var value = new(float64)
+		*value = dataTimePoint[0].Float64
+		return timestamp, value, nil
+	} else {
+		return timestamp, nil, nil
+	}
 }

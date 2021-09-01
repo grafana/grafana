@@ -1,21 +1,21 @@
-import React, { useMemo, useCallback } from 'react';
-import { css, cx } from 'emotion';
+import React, { useCallback } from 'react';
+import { css, cx } from '@emotion/css';
 import {
   DataTransformerID,
-  standardTransformers,
-  TransformerRegistyItem,
-  TransformerUIProps,
   ReducerID,
   SelectableValue,
+  standardTransformers,
+  TransformerRegistryItem,
+  TransformerUIProps,
 } from '@grafana/data';
-import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { Select, StatsPicker, stylesFactory } from '@grafana/ui';
 
 import {
-  GroupByTransformerOptions,
-  GroupByOperationID,
   GroupByFieldOptions,
+  GroupByOperationID,
+  GroupByTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/groupBy';
+import { useAllFieldNamesFromDataFrames } from './utils';
 
 interface FieldProps {
   fieldName: string;
@@ -28,7 +28,7 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
   options,
   onChange,
 }) => {
-  const fieldNames = useMemo(() => getAllFieldNamesFromDataFrames(input), [input]);
+  const fieldNames = useAllFieldNamesFromDataFrames(input);
 
   const onConfigChange = useCallback(
     (fieldName: string) => (config: GroupByFieldOptions) => {
@@ -40,12 +40,14 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
         },
       });
     },
-    [options]
+    // Adding options to the dependency array causes infinite loop here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onChange]
   );
 
   return (
     <div>
-      {fieldNames.map((key: string) => (
+      {fieldNames.map((key) => (
         <GroupByFieldConfiguration
           onConfigChange={onConfigChange(key)}
           fieldName={key}
@@ -84,13 +86,13 @@ export const GroupByFieldConfiguration: React.FC<FieldProps> = ({ fieldName, con
       <div className={cx('gf-form', styles.cell)}>
         <div className={cx('gf-form-spacing', styles.rowSpacing)}>
           <Select
+            menuShouldPortal
             className="width-12"
             options={options}
             value={config?.operation}
             placeholder="Ignored"
             onChange={onChange}
             isClearable
-            menuPlacement="bottom"
           />
         </div>
       </div>
@@ -102,10 +104,9 @@ export const GroupByFieldConfiguration: React.FC<FieldProps> = ({ fieldName, con
             placeholder="Select Stats"
             allowMultiple
             stats={config.aggregations}
-            onChange={stats => {
+            onChange={(stats) => {
               onConfigChange({ ...config, aggregations: stats as ReducerID[] });
             }}
-            menuPlacement="bottom"
           />
         </div>
       )}
@@ -138,7 +139,7 @@ const getStyling = stylesFactory(() => {
   };
 });
 
-export const groupByTransformRegistryItem: TransformerRegistyItem<GroupByTransformerOptions> = {
+export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
   id: DataTransformerID.groupBy,
   editor: GroupByTransformerEditor,
   transformation: standardTransformers.groupByTransformer,

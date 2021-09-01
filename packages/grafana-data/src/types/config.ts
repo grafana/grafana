@@ -2,6 +2,8 @@ import { DataSourceInstanceSettings } from './datasource';
 import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
 import { SystemDateFormatSettings } from '../datetime';
+import { GrafanaTheme2 } from '../themes';
+import { MapLayerOptions } from '../geo/layer';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -18,10 +20,19 @@ export interface BuildInfo {
    */
   isEnterprise: boolean;
   env: string;
-  edition: string;
+  edition: GrafanaEdition;
   latestVersion: string;
   hasUpdate: boolean;
   hideVersion: boolean;
+}
+
+/**
+ * @internal
+ */
+export enum GrafanaEdition {
+  OpenSource = 'Open Source',
+  Pro = 'Pro',
+  Enterprise = 'Enterprise',
 }
 
 /**
@@ -32,17 +43,14 @@ export interface BuildInfo {
  * @public
  */
 export interface FeatureToggles {
-  live: boolean;
-  expressions: boolean;
-  ngalert: boolean;
-  // Just for demo at the moment
-  traceToLogs: boolean;
+  [name: string]: boolean;
 
-  /**
-   * @remarks
-   * Available only in Grafana Enterprise
-   */
-  meta: boolean;
+  ngalert: boolean;
+  trimDefaults: boolean;
+  accesscontrol: boolean;
+  tempoServiceGraph: boolean;
+  tempoSearch: boolean;
+  prometheusMonaco: boolean;
 }
 
 /**
@@ -55,6 +63,20 @@ export interface LicenseInfo {
   expiry: number;
   licenseUrl: string;
   stateInfo: string;
+  hasValidLicense: boolean;
+  edition: GrafanaEdition;
+}
+
+/**
+ * Describes Sentry integration config
+ *
+ * @public
+ */
+export interface SentryConfig {
+  enabled: boolean;
+  dsn: string;
+  customEndpoint: string;
+  sampleRate: number;
 }
 
 /**
@@ -97,10 +119,16 @@ export interface GrafanaConfig {
   viewersCanEdit: boolean;
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
+  liveEnabled: boolean;
   theme: GrafanaTheme;
+  theme2: GrafanaTheme2;
   pluginsToPreload: string[];
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
+  sentry: SentryConfig;
+  customTheme?: any;
+  geomapDefaultBaseLayer?: MapLayerOptions;
+  geomapDisableCustomBaseLayer?: boolean;
 }

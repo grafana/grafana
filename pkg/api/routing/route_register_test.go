@@ -12,24 +12,20 @@ type fakeRouter struct {
 	route []route
 }
 
-func (fr *fakeRouter) Handle(method, pattern string, handlers []macaron.Handler) *macaron.Route {
+func (fr *fakeRouter) Handle(method, pattern string, handlers []macaron.Handler) {
 	fr.route = append(fr.route, route{
 		pattern:  pattern,
 		method:   method,
 		handlers: handlers,
 	})
-
-	return &macaron.Route{}
 }
 
-func (fr *fakeRouter) Get(pattern string, handlers ...macaron.Handler) *macaron.Route {
+func (fr *fakeRouter) Get(pattern string, handlers ...macaron.Handler) {
 	fr.route = append(fr.route, route{
 		pattern:  pattern,
 		method:   http.MethodGet,
 		handlers: handlers,
 	})
-
-	return &macaron.Route{}
 }
 
 func emptyHandlers(n int) []macaron.Handler {
@@ -214,8 +210,13 @@ func TestNamedMiddlewareRouteRegister(t *testing.T) {
 		{method: "GET", pattern: "/user/admin/all", handlers: emptyHandlers(5)},
 	}
 
+	namedMiddlewares := map[string]bool{}
 	// Setup
-	rr := NewRouteRegister(emptyHandler)
+	rr := NewRouteRegister(func(name string) macaron.Handler {
+		namedMiddlewares[name] = true
+
+		return struct{ name string }{name: name}
+	})
 
 	rr.Delete("/admin", emptyHandler("1"))
 	rr.Get("/down", emptyHandler("1"), emptyHandler("2"))
@@ -245,6 +246,10 @@ func TestNamedMiddlewareRouteRegister(t *testing.T) {
 
 		if testTable[i].pattern != fr.route[i].pattern {
 			t.Errorf("want %s got %v", testTable[i].pattern, fr.route[i].pattern)
+		}
+
+		if _, exist := namedMiddlewares[testTable[i].pattern]; !exist {
+			t.Errorf("could not find named route named %s", testTable[i].pattern)
 		}
 
 		if len(testTable[i].handlers) != len(fr.route[i].handlers) {

@@ -14,10 +14,10 @@ import (
 )
 
 var (
-	ErrMissingGroupMembership = &Error{"User not a member of one of the required groups"}
+	errMissingGroupMembership = Error{"user not a member of one of the required groups"}
 )
 
-type HttpGetResponse struct {
+type httpGetResponse struct {
 	Body    []byte
 	Headers http.Header
 }
@@ -44,20 +44,24 @@ func isEmailAllowed(email string, allowedDomains []string) bool {
 	return valid
 }
 
-func HttpGet(client *http.Client, url string) (response HttpGetResponse, err error) {
+func (s *SocialBase) httpGet(client *http.Client, url string) (response httpGetResponse, err error) {
 	r, err := client.Get(url)
 	if err != nil {
 		return
 	}
 
-	defer r.Body.Close()
+	defer func() {
+		if err := r.Body.Close(); err != nil {
+			s.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return
 	}
 
-	response = HttpGetResponse{body, r.Header}
+	response = httpGetResponse{body, r.Header}
 
 	if r.StatusCode >= 300 {
 		err = fmt.Errorf(string(response.Body))
@@ -70,7 +74,7 @@ func HttpGet(client *http.Client, url string) (response HttpGetResponse, err err
 	return
 }
 
-func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (string, error) {
+func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (interface{}, error) {
 	if attributePath == "" {
 		return "", errors.New("no attribute path specified")
 	}
@@ -89,10 +93,40 @@ func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (strin
 		return "", errutil.Wrapf(err, "failed to search user info JSON response with provided path: %q", attributePath)
 	}
 
+	return val, nil
+}
+
+func (s *SocialBase) searchJSONForStringAttr(attributePath string, data []byte) (string, error) {
+	val, err := s.searchJSONForAttr(attributePath, data)
+	if err != nil {
+		return "", err
+	}
+
 	strVal, ok := val.(string)
 	if ok {
 		return strVal, nil
 	}
 
 	return "", nil
+}
+
+func (s *SocialBase) searchJSONForStringArrayAttr(attributePath string, data []byte) ([]string, error) {
+	val, err := s.searchJSONForAttr(attributePath, data)
+	if err != nil {
+		return []string{}, err
+	}
+
+	ifArr, ok := val.([]interface{})
+	if !ok {
+		return []string{}, nil
+	}
+
+	result := []string{}
+	for _, v := range ifArr {
+		if strVal, ok := v.(string); ok {
+			result = append(result, strVal)
+		}
+	}
+
+	return result, nil
 }

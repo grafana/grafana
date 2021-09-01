@@ -1,4 +1,5 @@
-import { AnnotationQuery, DataQuery } from '@grafana/data';
+import { DataQuery } from '@grafana/data';
+import { LiveDataFilter } from '@grafana/runtime';
 
 //----------------------------------------------
 // Query
@@ -6,12 +7,15 @@ import { AnnotationQuery, DataQuery } from '@grafana/data';
 
 export enum GrafanaQueryType {
   RandomWalk = 'randomWalk',
-  RandomStream = 'randomStream',
-  HostMetrics = 'hostmetrics',
+  LiveMeasurements = 'measurements',
+  Annotations = 'annotations',
 }
 
 export interface GrafanaQuery extends DataQuery {
   queryType: GrafanaQueryType; // RandomWalk by default
+  channel?: string;
+  filter?: LiveDataFilter;
+  buffer?: number;
 }
 
 export const defaultQuery: GrafanaQuery = {
@@ -28,7 +32,7 @@ export enum GrafanaAnnotationType {
   Tags = 'tags',
 }
 
-export interface GrafanaAnnotationQuery extends AnnotationQuery<GrafanaQuery> {
+export interface GrafanaAnnotationQuery extends GrafanaQuery {
   type: GrafanaAnnotationType; // tags
   limit: number; // 100
   tags?: string[];

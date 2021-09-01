@@ -1,39 +1,38 @@
-import _ from 'lodash';
-import { colors, ansicolor } from '@grafana/ui';
+import { size } from 'lodash';
+import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
+import { ansicolor, colors } from '@grafana/ui';
 
 import {
-  Labels,
-  LogLevel,
+  AbsoluteTimeRange,
   DataFrame,
+  DataQuery,
+  dateTime,
+  dateTimeFormat,
+  dateTimeFormatTimeAgo,
+  FieldCache,
+  FieldType,
+  FieldWithIndex,
   findCommonLabels,
   findUniqueLabels,
   getLogLevel,
-  FieldType,
   getLogLevelFromKey,
+  Labels,
+  LogLevel,
   LogRowModel,
-  LogsModel,
+  LogsDedupStrategy,
   LogsMetaItem,
   LogsMetaKind,
-  LogsDedupStrategy,
-  GraphSeriesXY,
-  dateTimeFormat,
-  dateTimeFormatTimeAgo,
-  NullValueMode,
-  toDataFrame,
-  FieldCache,
-  FieldWithIndex,
-  getFlotPairs,
-  TimeZone,
-  getDisplayProcessor,
-  textUtil,
-  dateTime,
-  AbsoluteTimeRange,
+  LogsModel,
+  rangeUtil,
   sortInAscendingOrder,
+  textUtil,
+  toDataFrame,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
-
-import { deduplicateLogRowsById } from 'app/core/utils/explore';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
+
+export const LIMIT_LABEL = 'Line limit';
+export const COMMON_LABELS = 'Common labels';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -91,7 +90,7 @@ export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<Log
   });
 }
 
-export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number, timeZone: TimeZone): GraphSeriesXY[] {
+export function makeDataFramesForLogs(sortedRows: LogRowModel[], bucketSize: number): DataFrame[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
   // Should be solved higher up the chain when executing queries & interval calculated and not here but this is a temporary fix.
 
@@ -106,7 +105,6 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
       seriesByLevel[row.logLevel] = series = {
         lastTs: null,
         datapoints: [],
-        alias: row.logLevel,
         target: row.logLevel,
         color: LogLevelColor[row.logLevel],
       };
@@ -138,56 +136,36 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
   return seriesList.map((series, i) => {
     series.datapoints.sort((a: number[], b: number[]) => a[1] - b[1]);
 
-    // EEEP: converts GraphSeriesXY to DataFrame and back again!
     const data = toDataFrame(series);
     const fieldCache = new FieldCache(data);
 
-    const timeField = fieldCache.getFirstFieldOfType(FieldType.time)!;
-    timeField.display = getDisplayProcessor({
-      field: timeField,
-      timeZone,
-    });
-
     const valueField = fieldCache.getFirstFieldOfType(FieldType.number)!;
-    valueField.config = {
-      ...valueField.config,
-      color: series.color,
-    };
 
-    valueField.name = series.alias;
-    const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
-    valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
+    data.fields[valueField.index].config.min = 0;
+    data.fields[valueField.index].config.decimals = 0;
 
-    const points = getFlotPairs({
-      xField: timeField,
-      yField: valueField,
-      nullValueMode: NullValueMode.Null,
-    });
-
-    const graphSeries: GraphSeriesXY = {
-      color: series.color,
-      label: series.alias,
-      data: points,
-      isVisible: true,
-      yAxis: {
-        index: 1,
-        min: 0,
-        tickDecimals: 0,
+    data.fields[valueField.index].config.custom = {
+      drawStyle: GraphDrawStyle.Bars,
+      barAlignment: BarAlignment.Center,
+      barWidthFactor: 0.9,
+      barMaxWidth: 5,
+      lineColor: series.color,
+      pointColor: series.color,
+      fillColor: series.color,
+      lineWidth: 0,
+      fillOpacity: 100,
+      stacking: {
+        mode: StackingMode.Normal,
+        group: 'A',
       },
-      seriesIndex: i,
-      timeField,
-      valueField,
-      // for now setting the time step to be 0,
-      // and handle the bar width by setting lineWidth instead of barWidth in flot options
-      timeStep: 0,
     };
 
-    return graphSeries;
+    return data;
   });
 }
 
 function isLogsData(series: DataFrame) {
-  return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
+  return series.fields.some((f) => f.type === FieldType.time) && series.fields.some((f) => f.type === FieldType.string);
 }
 
 /**
@@ -199,24 +177,31 @@ function isLogsData(series: DataFrame) {
 export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
   intervalMs: number | undefined,
-  timeZone: TimeZone,
-  absoluteRange?: AbsoluteTimeRange
+  absoluteRange?: AbsoluteTimeRange,
+  queries?: DataQuery[]
 ): LogsModel {
   const { logSeries } = separateLogsAndMetrics(dataFrame);
   const logsModel = logSeriesToLogsModel(logSeries);
 
-  // unification: Removed logic for using metrics data in LogsModel as with the unification changes this would result
-  // in the incorrect data being used. Instead logs series are always derived from logs.
   if (logsModel) {
     // Create histogram metrics from logs using the interval as bucket size for the line count
     if (intervalMs && logsModel.rows.length > 0) {
       const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
-      const { visibleRange, bucketSize } = getSeriesProperties(sortedRows, intervalMs, absoluteRange);
+      const { visibleRange, bucketSize, visibleRangeMs, requestedRangeMs } = getSeriesProperties(
+        sortedRows,
+        intervalMs,
+        absoluteRange
+      );
       logsModel.visibleRange = visibleRange;
-      logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
+      logsModel.series = makeDataFramesForLogs(sortedRows, bucketSize);
+
+      if (logsModel.meta) {
+        logsModel.meta = adjustMetaInfo(logsModel, visibleRangeMs, requestedRangeMs);
+      }
     } else {
       logsModel.series = [];
     }
+    logsModel.queries = queries;
     return logsModel;
   }
 
@@ -225,6 +210,7 @@ export function dataFrameToLogsModel(
     rows: [],
     meta: [],
     series: [],
+    queries,
   };
 }
 
@@ -232,7 +218,7 @@ export function dataFrameToLogsModel(
  * Returns a clamped time range and interval based on the visible logs and the given range.
  *
  * @param sortedRows Log rows from the query response
- * @param intervalMs Dynamnic data interval based on available pixel width
+ * @param intervalMs Dynamic data interval based on available pixel width
  * @param absoluteRange Requested time range
  * @param pxPerBar Default: 20, buckets will be rendered as bars, assuming 10px per histogram bar plus some free space around it
  */
@@ -246,23 +232,31 @@ export function getSeriesProperties(
   let visibleRange = absoluteRange;
   let resolutionIntervalMs = intervalMs;
   let bucketSize = Math.max(resolutionIntervalMs * pxPerBar, minimumBucketSize);
+  let visibleRangeMs;
+  let requestedRangeMs;
   // Clamp time range to visible logs otherwise big parts of the graph might look empty
   if (absoluteRange) {
-    const earliest = sortedRows[0].timeEpochMs;
-    const latest = absoluteRange.to;
-    const visibleRangeMs = latest - earliest;
+    const earliestTsLogs = sortedRows[0].timeEpochMs;
+
+    requestedRangeMs = absoluteRange.to - absoluteRange.from;
+    visibleRangeMs = absoluteRange.to - earliestTsLogs;
+
     if (visibleRangeMs > 0) {
       // Adjust interval bucket size for potentially shorter visible range
-      const clampingFactor = visibleRangeMs / (absoluteRange.to - absoluteRange.from);
+      const clampingFactor = visibleRangeMs / requestedRangeMs;
       resolutionIntervalMs *= clampingFactor;
       // Minimum bucketsize of 1s for nicer graphing
       bucketSize = Math.max(Math.ceil(resolutionIntervalMs * pxPerBar), minimumBucketSize);
       // makeSeriesForLogs() aligns dataspoints with time buckets, so we do the same here to not cut off data
-      const adjustedEarliest = Math.floor(earliest / bucketSize) * bucketSize;
-      visibleRange = { from: adjustedEarliest, to: latest };
+      const adjustedEarliest = Math.floor(earliestTsLogs / bucketSize) * bucketSize;
+      visibleRange = { from: adjustedEarliest, to: absoluteRange.to };
+    } else {
+      // We use visibleRangeMs to calculate range coverage of received logs. However, some data sources are rounding up range in requests. This means that received logs
+      // can (in edge cases) be outside of the requested range and visibleRangeMs < 0. In that case, we want to change visibleRangeMs to be 1 so we can calculate coverage.
+      visibleRangeMs = 1;
     }
   }
-  return { bucketSize, visibleRange };
+  return { bucketSize, visibleRange, visibleRangeMs, requestedRangeMs };
 }
 
 function separateLogsAndMetrics(dataFrames: DataFrame[]) {
@@ -270,6 +264,7 @@ function separateLogsAndMetrics(dataFrames: DataFrame[]) {
   const logSeries: DataFrame[] = [];
 
   for (const dataFrame of dataFrames) {
+    // We want to show meta stats even if no result was returned. That's why we are pushing also data frames with no fields.
     if (isLogsData(dataFrame) || !dataFrame.fields.length) {
       logSeries.push(dataFrame);
       continue;
@@ -306,8 +301,12 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   // Find the fields we care about and collect all labels
   let allSeries: LogFields[] = [];
 
-  if (hasFields(logSeries)) {
-    allSeries = logSeries.map(series => {
+  // We are sometimes passing data frames with no fields because we want to calculate correct meta stats.
+  // Therefore we need to filter out series with no fields. These series are used only for meta stats calculation.
+  const seriesWithFields = logSeries.filter((series) => series.fields.length);
+
+  if (seriesWithFields.length) {
+    allSeries = seriesWithFields.map((series) => {
       const fieldCache = new FieldCache(series);
       const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
 
@@ -352,12 +351,17 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       const tsNs = timeNanosecondField ? timeNanosecondField.values.get(j) : undefined;
       const timeEpochNs = tsNs ? tsNs : time.valueOf() + '000000';
 
-      const messageValue: unknown = stringField.values.get(j);
+      // In edge cases, this can be undefined. If undefined, we want to replace it with empty string.
+      const messageValue: unknown = stringField.values.get(j) ?? '';
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
       const message: string = typeof messageValue === 'string' ? messageValue : JSON.stringify(messageValue);
 
       const hasAnsi = textUtil.hasAnsiCodes(message);
+
+      const hasUnescapedContent = !!message.match(/\\n|\\t|\\r/);
+
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
+      const entry = hasAnsi ? ansicolor.strip(message) : message;
 
       let logLevel = LogLevel.unknown;
       if (logLevelField && logLevelField.values.get(j)) {
@@ -365,7 +369,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       } else if (seriesLogLevel) {
         logLevel = seriesLogLevel;
       } else {
-        logLevel = getLogLevel(message);
+        logLevel = getLogLevel(entry);
       }
       rows.push({
         entryFieldIndex: stringField.index,
@@ -379,8 +383,9 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         timeUtc: dateTimeFormat(ts, { timeZone: 'utc' }),
         uniqueLabels,
         hasAnsi,
+        hasUnescapedContent,
         searchWords,
-        entry: hasAnsi ? ansicolor.strip(message) : message,
+        entry,
         raw: message,
         labels: stringField.labels || {},
         uid: idField ? idField.values.get(j) : j.toString(),
@@ -388,45 +393,53 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     }
   }
 
-  const deduplicatedLogRows = deduplicateLogRowsById(rows);
-
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
-  if (_.size(commonLabels) > 0) {
+  if (size(commonLabels) > 0) {
     meta.push({
-      label: 'Common labels',
+      label: COMMON_LABELS,
       value: commonLabels,
       kind: LogsMetaKind.LabelsMap,
     });
   }
 
-  const limits = logSeries.filter(series => series.meta && series.meta.limit);
+  const limits = logSeries.filter((series) => series.meta && series.meta.limit);
   const limitValue = Object.values(
     limits.reduce((acc: any, elem: any) => {
       acc[elem.refId] = elem.meta.limit;
       return acc;
     }, {})
-  ).reduce((acc: number, elem: any) => (acc += elem), 0);
+  ).reduce((acc: number, elem: any) => (acc += elem), 0) as number;
 
-  if (limits.length > 0) {
+  if (limitValue > 0) {
     meta.push({
-      label: 'Limit',
-      value: `${limitValue} (${deduplicatedLogRows.length} returned)`,
-      kind: LogsMetaKind.String,
+      label: LIMIT_LABEL,
+      value: limitValue,
+      kind: LogsMetaKind.Number,
     });
   }
 
-  // Hack to print loki stats in Explore. Should be using proper stats display via drawer in Explore (rework in 7.1)
   let totalBytes = 0;
   const queriesVisited: { [refId: string]: boolean } = {};
+  // To add just 1 error message
+  let errorMetaAdded = false;
 
   for (const series of logSeries) {
     const totalBytesKey = series.meta?.custom?.lokiQueryStatKey;
     const { refId } = series; // Stats are per query, keeping track by refId
 
+    if (!errorMetaAdded && series.meta?.custom?.error) {
+      meta.push({
+        label: '',
+        value: series.meta?.custom.error,
+        kind: LogsMetaKind.Error,
+      });
+      errorMetaAdded = true;
+    }
+
     if (refId && !queriesVisited[refId]) {
       if (totalBytesKey && series.meta?.stats) {
-        const byteStat = series.meta.stats.find(stat => stat.displayName === totalBytesKey);
+        const byteStat = series.meta.stats.find((stat) => stat.displayName === totalBytesKey);
         if (byteStat) {
           totalBytes += byteStat.value;
         }
@@ -448,12 +461,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   return {
     hasUniqueLabels,
     meta,
-    rows: deduplicatedLogRows,
+    rows,
   };
-}
-
-function hasFields(logSeries: DataFrame[]): boolean {
-  return logSeries.some(series => series.fields.length);
 }
 
 function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {
@@ -465,4 +474,34 @@ function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {
     }
   }
   return undefined;
+}
+
+// Used to add additional information to Line limit meta info
+function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requestedRangeMs?: number): LogsMetaItem[] {
+  let logsModelMeta = [...logsModel.meta!];
+
+  const limitIndex = logsModelMeta.findIndex((meta) => meta.label === LIMIT_LABEL);
+  const limit = limitIndex >= 0 && logsModelMeta[limitIndex]?.value;
+
+  if (limit && limit > 0) {
+    let metaLimitValue;
+
+    if (limit === logsModel.rows.length && visibleRangeMs && requestedRangeMs) {
+      const coverage = ((visibleRangeMs / requestedRangeMs) * 100).toFixed(2);
+
+      metaLimitValue = `${limit} reached, received logs cover ${coverage}% (${rangeUtil.msRangeToTimeString(
+        visibleRangeMs
+      )}) of your selected time range (${rangeUtil.msRangeToTimeString(requestedRangeMs)})`;
+    } else {
+      metaLimitValue = `${limit} (${logsModel.rows.length} returned)`;
+    }
+
+    logsModelMeta[limitIndex] = {
+      label: LIMIT_LABEL,
+      value: metaLimitValue,
+      kind: LogsMetaKind.String,
+    };
+  }
+
+  return logsModelMeta;
 }

@@ -2,6 +2,7 @@ package usagestats
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,8 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var usageStatsURL = "https://stats.grafana.org/grafana-usage-report"
@@ -27,19 +26,22 @@ type UsageReport struct {
 	Packaging       string                 `json:"packaging"`
 }
 
-func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
-	version := strings.ReplaceAll(setting.BuildVersion, ".", "_")
+func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, error) {
+	version := strings.ReplaceAll(uss.Cfg.BuildVersion, ".", "_")
 
 	metrics := map[string]interface{}{}
 
+	edition := "oss"
+	if uss.Cfg.IsEnterprise {
+		edition = "enterprise"
+	}
 	report := UsageReport{
-		Version:         version,
-		Metrics:         metrics,
-		Os:              runtime.GOOS,
-		Arch:            runtime.GOARCH,
-		Edition:         getEdition(),
-		HasValidLicense: uss.License.HasValidLicense(),
-		Packaging:       setting.Packaging,
+		Version:   version,
+		Metrics:   metrics,
+		Os:        runtime.GOOS,
+		Arch:      runtime.GOARCH,
+		Edition:   edition,
+		Packaging: uss.Cfg.Packaging,
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
@@ -52,9 +54,9 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 	metrics["stats.users.count"] = statsQuery.Result.Users
 	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
 	metrics["stats.playlist.count"] = statsQuery.Result.Playlists
-	metrics["stats.plugins.apps.count"] = len(plugins.Apps)
-	metrics["stats.plugins.panels.count"] = len(plugins.Panels)
-	metrics["stats.plugins.datasources.count"] = len(plugins.DataSources)
+	metrics["stats.plugins.apps.count"] = uss.PluginManager.AppCount()
+	metrics["stats.plugins.panels.count"] = uss.PluginManager.PanelCount()
+	metrics["stats.plugins.datasources.count"] = uss.PluginManager.DataSourceCount()
 	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
 	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
@@ -68,9 +70,31 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 	metrics["stats.total_auth_token.count"] = statsQuery.Result.AuthTokens
 	metrics["stats.dashboard_versions.count"] = statsQuery.Result.DashboardVersions
 	metrics["stats.annotations.count"] = statsQuery.Result.Annotations
-	metrics["stats.valid_license.count"] = getValidLicenseCount(uss.License.HasValidLicense())
-	metrics["stats.edition.oss.count"] = getOssEditionCount()
-	metrics["stats.edition.enterprise.count"] = getEnterpriseEditionCount()
+	metrics["stats.alert_rules.count"] = statsQuery.Result.AlertRules
+	metrics["stats.library_panels.count"] = statsQuery.Result.LibraryPanels
+	metrics["stats.library_variables.count"] = statsQuery.Result.LibraryVariables
+	metrics["stats.dashboards_viewers_can_edit.count"] = statsQuery.Result.DashboardsViewersCanEdit
+	metrics["stats.dashboards_viewers_can_admin.count"] = statsQuery.Result.DashboardsViewersCanAdmin
+	metrics["stats.folders_viewers_can_edit.count"] = statsQuery.Result.FoldersViewersCanEdit
+	metrics["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
+
+	ossEditionCount := 1
+	enterpriseEditionCount := 0
+	if uss.Cfg.IsEnterprise {
+		enterpriseEditionCount = 1
+		ossEditionCount = 0
+	}
+	metrics["stats.edition.oss.count"] = ossEditionCount
+	metrics["stats.edition.enterprise.count"] = enterpriseEditionCount
+
+	uss.registerExternalMetrics(metrics)
+
+	// must run after registration of external metrics
+	if v, ok := metrics["stats.valid_license.count"]; ok {
+		report.HasValidLicense = v == 1
+	} else {
+		metrics["stats.valid_license.count"] = 0
+	}
 
 	userCount := statsQuery.Result.Users
 	avgAuthTokensPerUser := statsQuery.Result.AuthTokens
@@ -91,7 +115,7 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 	// as sending that name could be sensitive information
 	dsOtherCount := 0
 	for _, dsStat := range dsStats.Result {
-		if models.IsKnownDataSourcePlugin(dsStat.Type) {
+		if uss.ShouldBeReported(dsStat.Type) {
 			metrics["stats.ds."+dsStat.Type+".count"] = dsStat.Count
 		} else {
 			dsOtherCount += dsStat.Count
@@ -99,7 +123,27 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 	}
 	metrics["stats.ds.other.count"] = dsOtherCount
 
-	metrics["stats.packaging."+setting.Packaging+".count"] = 1
+	esDataSourcesQuery := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
+	if err := uss.Bus.Dispatch(&esDataSourcesQuery); err != nil {
+		metricsLogger.Error("Failed to get elasticsearch json data", "error", err)
+		return report, err
+	}
+
+	for _, data := range esDataSourcesQuery.Result {
+		esVersion, err := data.JsonData.Get("esVersion").Int()
+		if err != nil {
+			continue
+		}
+
+		statName := fmt.Sprintf("stats.ds.elasticsearch.v%d.count", esVersion)
+
+		count, _ := metrics[statName].(int64)
+
+		metrics[statName] = count + 1
+	}
+
+	metrics["stats.packaging."+uss.Cfg.Packaging+".count"] = 1
+	metrics["stats.distributor."+uss.Cfg.ReportingDistributor+".count"] = 1
 
 	// Alerting stats
 	alertingUsageStats, err := uss.AlertingUsageStats.QueryUsageStats()
@@ -114,7 +158,7 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 
 	alertingOtherCount := 0
 	for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
-		if models.IsKnownDataSourcePlugin(dsType) {
+		if uss.ShouldBeReported(dsType) {
 			addAlertingUsageStats(dsType, usageCount)
 		} else {
 			alertingOtherCount += usageCount
@@ -141,7 +185,7 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 
 		access := strings.ToLower(dsAccessStat.Access)
 
-		if models.IsKnownDataSourcePlugin(dsAccessStat.Type) {
+		if uss.ShouldBeReported(dsAccessStat.Type) {
 			metrics["stats.ds_access."+dsAccessStat.Type+"."+access+".count"] = dsAccessStat.Count
 		} else {
 			old := dsAccessOtherCount[access]
@@ -166,10 +210,10 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 
 	// Add stats about auth configuration
 	authTypes := map[string]bool{}
-	authTypes["anonymous"] = setting.AnonymousEnabled
-	authTypes["basic_auth"] = setting.BasicAuthEnabled
-	authTypes["ldap"] = setting.LDAPEnabled
-	authTypes["auth_proxy"] = setting.AuthProxyEnabled
+	authTypes["anonymous"] = uss.Cfg.AnonymousEnabled
+	authTypes["basic_auth"] = uss.Cfg.BasicAuthEnabled
+	authTypes["ldap"] = uss.Cfg.LDAPEnabled
+	authTypes["auth_proxy"] = uss.Cfg.AuthProxyEnabled
 
 	for provider, enabled := range uss.oauthProviders {
 		authTypes["oauth_"+provider] = enabled
@@ -183,32 +227,78 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 		metrics["stats.auth_enabled."+authType+".count"] = enabledValue
 	}
 
+	// Get concurrent users stats as histogram
+	concurrentUsersStats, err := uss.GetConcurrentUsersStats(ctx)
+	if err != nil {
+		metricsLogger.Error("Failed to get concurrent users stats", "error", err)
+		return report, err
+	}
+
+	// Histogram is cumulative and metric name has a postfix of le_"<upper inclusive bound>"
+	metrics["stats.auth_token_per_user_le_3"] = concurrentUsersStats.BucketLE3
+	metrics["stats.auth_token_per_user_le_6"] = concurrentUsersStats.BucketLE6
+	metrics["stats.auth_token_per_user_le_9"] = concurrentUsersStats.BucketLE9
+	metrics["stats.auth_token_per_user_le_12"] = concurrentUsersStats.BucketLE12
+	metrics["stats.auth_token_per_user_le_15"] = concurrentUsersStats.BucketLE15
+	metrics["stats.auth_token_per_user_le_inf"] = concurrentUsersStats.BucketLEInf
+
 	return report, nil
 }
 
-func (uss *UsageStatsService) sendUsageStats() {
-	if !setting.ReportingEnabled {
-		return
+func (uss *UsageStatsService) registerExternalMetrics(metrics map[string]interface{}) {
+	for _, fn := range uss.externalMetrics {
+		fnMetrics, err := fn()
+		if err != nil {
+			metricsLogger.Error("Failed to fetch external metrics", "error", err)
+			continue
+		}
+
+		for name, value := range fnMetrics {
+			metrics[name] = value
+		}
+	}
+}
+
+func (uss *UsageStatsService) RegisterMetricsFunc(fn MetricsFunc) {
+	uss.externalMetrics = append(uss.externalMetrics, fn)
+}
+
+func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
+	if !uss.Cfg.ReportingEnabled {
+		return nil
 	}
 
 	metricsLogger.Debug(fmt.Sprintf("Sending anonymous usage stats to %s", usageStatsURL))
 
-	report, err := uss.GetUsageReport()
+	report, err := uss.GetUsageReport(ctx)
 	if err != nil {
-		return
+		return err
 	}
 
-	out, _ := json.MarshalIndent(report, "", " ")
+	out, err := json.MarshalIndent(report, "", " ")
+	if err != nil {
+		return err
+	}
 	data := bytes.NewBuffer(out)
+	sendUsageStats(data)
 
-	client := http.Client{Timeout: 5 * time.Second}
+	return nil
+}
+
+// sendUsageStats sends usage statistics.
+//
+// Stubbable by tests.
+var sendUsageStats = func(data *bytes.Buffer) {
 	go func() {
+		client := http.Client{Timeout: 5 * time.Second}
 		resp, err := client.Post(usageStatsURL, "application/json", data)
 		if err != nil {
 			metricsLogger.Error("Failed to send usage stats", "err", err)
 			return
 		}
-		resp.Body.Close()
+		if err := resp.Body.Close(); err != nil {
+			metricsLogger.Warn("Failed to close response body", "err", err)
+		}
 	}()
 }
 
@@ -224,6 +314,7 @@ func (uss *UsageStatsService) updateTotalStats() {
 	}
 
 	metrics.MStatTotalDashboards.Set(float64(statsQuery.Result.Dashboards))
+	metrics.MStatTotalFolders.Set(float64(statsQuery.Result.Folders))
 	metrics.MStatTotalUsers.Set(float64(statsQuery.Result.Users))
 	metrics.MStatActiveUsers.Set(float64(statsQuery.Result.ActiveUsers))
 	metrics.MStatTotalPlaylists.Set(float64(statsQuery.Result.Playlists))
@@ -236,6 +327,9 @@ func (uss *UsageStatsService) updateTotalStats() {
 	metrics.StatsTotalActiveAdmins.Set(float64(statsQuery.Result.ActiveAdmins))
 	metrics.StatsTotalDashboardVersions.Set(float64(statsQuery.Result.DashboardVersions))
 	metrics.StatsTotalAnnotations.Set(float64(statsQuery.Result.Annotations))
+	metrics.StatsTotalAlertRules.Set(float64(statsQuery.Result.AlertRules))
+	metrics.StatsTotalLibraryPanels.Set(float64(statsQuery.Result.LibraryPanels))
+	metrics.StatsTotalLibraryVariables.Set(float64(statsQuery.Result.LibraryVariables))
 
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := uss.Bus.Dispatch(&dsStats); err != nil {
@@ -248,32 +342,11 @@ func (uss *UsageStatsService) updateTotalStats() {
 	}
 }
 
-func getEdition() string {
-	edition := "oss"
-	if setting.IsEnterprise {
-		edition = "enterprise"
+func (uss *UsageStatsService) ShouldBeReported(dsType string) bool {
+	ds := uss.PluginManager.GetDataSource(dsType)
+	if ds == nil {
+		return false
 	}
 
-	return edition
-}
-
-func getEnterpriseEditionCount() int {
-	if setting.IsEnterprise {
-		return 1
-	}
-	return 0
-}
-
-func getOssEditionCount() int {
-	if setting.IsEnterprise {
-		return 0
-	}
-	return 1
-}
-
-func getValidLicenseCount(validLicense bool) int {
-	if validLicense {
-		return 1
-	}
-	return 0
+	return ds.Signature.IsValid() || ds.Signature.IsInternal()
 }

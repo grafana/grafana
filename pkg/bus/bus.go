@@ -3,14 +3,16 @@ package bus
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/opentracing/opentracing-go"
 )
 
 // HandlerFunc defines a handler function interface.
 type HandlerFunc interface{}
-
-// CtxHandlerFunc defines a context handler function.
-type CtxHandlerFunc func()
 
 // Msg defines a message interface.
 type Msg interface{}
@@ -45,31 +47,36 @@ type Bus interface {
 	SetTransactionManager(tm TransactionManager)
 }
 
-// InTransaction defines an in transaction function
-func (b *InProcBus) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	return b.txMng.InTransaction(ctx, fn)
-}
-
 // InProcBus defines the bus structure
 type InProcBus struct {
+	logger          log.Logger
 	handlers        map[string]HandlerFunc
 	handlersWithCtx map[string]HandlerFunc
 	listeners       map[string][]HandlerFunc
 	txMng           TransactionManager
 }
 
+func ProvideBus() *InProcBus {
+	return globalBus
+}
+
+// InTransaction defines an in transaction function
+func (b *InProcBus) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	return b.txMng.InTransaction(ctx, fn)
+}
+
 // temp stuff, not sure how to handle bus instance, and init yet
 var globalBus = New()
 
 // New initialize the bus
-func New() Bus {
-	bus := &InProcBus{}
-	bus.handlers = make(map[string]HandlerFunc)
-	bus.handlersWithCtx = make(map[string]HandlerFunc)
-	bus.listeners = make(map[string][]HandlerFunc)
-	bus.txMng = &noopTransactionManager{}
-
-	return bus
+func New() *InProcBus {
+	return &InProcBus{
+		logger:          log.New("bus"),
+		handlers:        make(map[string]HandlerFunc),
+		handlersWithCtx: make(map[string]HandlerFunc),
+		listeners:       make(map[string][]HandlerFunc),
+		txMng:           &noopTransactionManager{},
+	}
 }
 
 // Want to get rid of global bus
@@ -86,13 +93,27 @@ func (b *InProcBus) SetTransactionManager(tm TransactionManager) {
 func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
+	span, ctx := opentracing.StartSpanFromContext(ctx, "bus - "+msgName)
+	defer span.Finish()
+
+	span.SetTag("msg", msgName)
+
+	withCtx := true
 	var handler = b.handlersWithCtx[msgName]
 	if handler == nil {
-		return ErrHandlerNotFound
+		withCtx = false
+		handler = b.handlers[msgName]
+		if handler == nil {
+			return ErrHandlerNotFound
+		}
 	}
 
 	var params = []reflect.Value{}
-	params = append(params, reflect.ValueOf(ctx))
+	if withCtx {
+		params = append(params, reflect.ValueOf(ctx))
+	} else if setting.Env == setting.Dev {
+		b.logger.Warn("DispatchCtx called with message handler registered using AddHandler and should be changed to use AddHandlerCtx", "msgName", msgName)
+	}
 	params = append(params, reflect.ValueOf(msg))
 
 	ret := reflect.ValueOf(handler).Call(params)
@@ -107,20 +128,21 @@ func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 func (b *InProcBus) Dispatch(msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
-	var handler = b.handlersWithCtx[msgName]
 	withCtx := true
-
+	handler := b.handlersWithCtx[msgName]
 	if handler == nil {
 		withCtx = false
 		handler = b.handlers[msgName]
-	}
-
-	if handler == nil {
-		return ErrHandlerNotFound
+		if handler == nil {
+			return ErrHandlerNotFound
+		}
 	}
 
 	var params = []reflect.Value{}
 	if withCtx {
+		if setting.Env == setting.Dev {
+			b.logger.Warn("Dispatch called with message handler registered using AddHandlerCtx and should be changed to use DispatchCtx", "msgName", msgName)
+		}
 		params = append(params, reflect.ValueOf(context.Background()))
 	}
 	params = append(params, reflect.ValueOf(msg))
@@ -143,9 +165,13 @@ func (b *InProcBus) Publish(msg Msg) error {
 
 	for _, listenerHandler := range listeners {
 		ret := reflect.ValueOf(listenerHandler).Call(params)
-		err := ret[0].Interface()
-		if err != nil {
-			return err.(error)
+		e := ret[0].Interface()
+		if e != nil {
+			err, ok := e.(error)
+			if ok {
+				return err
+			}
+			return fmt.Errorf("expected listener to return an error, got '%T'", e)
 		}
 	}
 
@@ -162,6 +188,11 @@ func (b *InProcBus) AddHandlerCtx(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(1).Elem().Name()
 	b.handlersWithCtx[queryTypeName] = handler
+}
+
+// GetHandlerCtx returns the handler function for the given struct name.
+func (b *InProcBus) GetHandlerCtx(name string) HandlerFunc {
+	return b.handlersWithCtx[name]
 }
 
 func (b *InProcBus) AddEventListener(handler HandlerFunc) {
@@ -204,12 +235,8 @@ func Publish(msg Msg) error {
 	return globalBus.Publish(msg)
 }
 
-// InTransaction starts a transaction and store it in the context.
-// The caller can then pass a function with multiple DispatchCtx calls that
-// all will be executed in the same transaction. InTransaction will rollback if the
-// callback returns an error.
-func InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	return globalBus.InTransaction(ctx, fn)
+func GetHandlerCtx(name string) HandlerFunc {
+	return globalBus.GetHandlerCtx(name)
 }
 
 func ClearBusHandlers() {

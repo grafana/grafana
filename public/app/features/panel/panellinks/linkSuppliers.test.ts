@@ -1,23 +1,26 @@
 import { getFieldLinksSupplier } from './linkSuppliers';
-import { applyFieldOverrides, DataFrameView, dateTime, FieldDisplay, toDataFrame } from '@grafana/data';
+import { applyFieldOverrides, createTheme, DataFrameView, dateTime, FieldDisplay, toDataFrame } from '@grafana/data';
 import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from './link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
-import { TimeSrv } from '../../dashboard/services/TimeSrv';
-import { getTheme } from '@grafana/ui';
+
+// We do not need more here and TimeSrv is hard to setup fully.
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  getTimeSrv: () => ({
+    timeRangeForUrl() {
+      const from = dateTime().subtract(1, 'h');
+      const to = dateTime();
+      return { from, to, raw: { from, to } };
+    },
+  }),
+}));
 
 describe('getFieldLinksSupplier', () => {
   let originalLinkSrv: LinkService;
+  let templateSrv = new TemplateSrv();
   beforeAll(() => {
-    // We do not need more here and TimeSrv is hard to setup fully.
-    const timeSrvMock: TimeSrv = {
-      timeRangeForUrl() {
-        const from = dateTime().subtract(1, 'h');
-        const to = dateTime();
-        return { from, to, raw: { from, to } };
-      },
-    } as any;
-    const linkService = new LinkSrv(new TemplateSrv(), timeSrvMock);
+    const linkService = new LinkSrv();
     originalLinkSrv = getLinkSrv();
+
     setLinkSrv(linkService);
   });
 
@@ -90,10 +93,8 @@ describe('getFieldLinksSupplier', () => {
         overrides: [],
       },
       replaceVariables: (val: string) => val,
-      getDataSourceSettingsByUid: (val: string) => ({} as any),
       timeZone: 'utc',
-      theme: getTheme(),
-      autoMinMax: true,
+      theme: createTheme(),
     })[0];
 
     const rowIndex = 0;
@@ -110,7 +111,7 @@ describe('getFieldLinksSupplier', () => {
     };
 
     const supplier = getFieldLinksSupplier(fieldDisp);
-    const links = supplier?.getLinks({}).map(m => {
+    const links = supplier?.getLinks(templateSrv.replace.bind(templateSrv)).map((m) => {
       return {
         title: m.title,
         href: m.href,

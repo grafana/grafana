@@ -15,7 +15,7 @@ import (
 func validateTimeRange(item *annotations.Item) error {
 	if item.EpochEnd == 0 {
 		if item.Epoch == 0 {
-			return errors.New("Missing Time Range")
+			return annotations.ErrTimerangeMissing
 		}
 		item.EpochEnd = item.Epoch
 	}
@@ -28,14 +28,14 @@ func validateTimeRange(item *annotations.Item) error {
 	return nil
 }
 
-type SqlAnnotationRepo struct {
+type SQLAnnotationRepo struct {
 }
 
-func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
+func (r *SQLAnnotationRepo) Save(item *annotations.Item) error {
 	return inTransaction(func(sess *DBSession) error {
 		tags := models.ParseTagPairs(item.Tags)
 		item.Tags = models.JoinTagPairs(tags)
-		item.Created = time.Now().UnixNano() / int64(time.Millisecond)
+		item.Created = timeNow().UnixNano() / int64(time.Millisecond)
 		item.Updated = item.Created
 		if item.Epoch == 0 {
 			item.Epoch = item.Created
@@ -64,7 +64,7 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 	})
 }
 
-func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
+func (r *SQLAnnotationRepo) Update(item *annotations.Item) error {
 	return inTransaction(func(sess *DBSession) error {
 		var (
 			isExist bool
@@ -78,10 +78,10 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 			return err
 		}
 		if !isExist {
-			return errors.New("Annotation not found")
+			return errors.New("annotation not found")
 		}
 
-		existing.Updated = time.Now().UnixNano() / int64(time.Millisecond)
+		existing.Updated = timeNow().UnixNano() / int64(time.Millisecond)
 		existing.Text = item.Text
 
 		if item.Epoch != 0 {
@@ -117,7 +117,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 	})
 }
 
-func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+func (r *SQLAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
@@ -234,26 +234,26 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 	return items, nil
 }
 
-func (r *SqlAnnotationRepo) Delete(params *annotations.DeleteParams) error {
+func (r *SQLAnnotationRepo) Delete(params *annotations.DeleteParams) error {
 	return inTransaction(func(sess *DBSession) error {
 		var (
 			sql         string
-			annoTagSql  string
+			annoTagSQL  string
 			queryParams []interface{}
 		)
 
 		sqlog.Info("delete", "orgId", params.OrgId)
 		if params.Id != 0 {
-			annoTagSql = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE id = ? AND org_id = ?)"
+			annoTagSQL = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE id = ? AND org_id = ?)"
 			sql = "DELETE FROM annotation WHERE id = ? AND org_id = ?"
 			queryParams = []interface{}{params.Id, params.OrgId}
 		} else {
-			annoTagSql = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE dashboard_id = ? AND panel_id = ? AND org_id = ?)"
+			annoTagSQL = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE dashboard_id = ? AND panel_id = ? AND org_id = ?)"
 			sql = "DELETE FROM annotation WHERE dashboard_id = ? AND panel_id = ? AND org_id = ?"
 			queryParams = []interface{}{params.DashboardId, params.PanelId, params.OrgId}
 		}
 
-		sqlOrArgs := append([]interface{}{annoTagSql}, queryParams...)
+		sqlOrArgs := append([]interface{}{annoTagSQL}, queryParams...)
 
 		if _, err := sess.Exec(sqlOrArgs...); err != nil {
 			return err
@@ -267,4 +267,53 @@ func (r *SqlAnnotationRepo) Delete(params *annotations.DeleteParams) error {
 
 		return nil
 	})
+}
+
+func (r *SQLAnnotationRepo) FindTags(query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	if query.Limit == 0 {
+		query.Limit = 100
+	}
+
+	var sql bytes.Buffer
+	params := make([]interface{}, 0)
+	tagKey := `tag.` + dialect.Quote("key")
+	tagValue := `tag.` + dialect.Quote("value")
+
+	sql.WriteString(`
+		SELECT
+			` + tagKey + `,
+			` + tagValue + `,
+			count(*) as count
+		FROM tag
+		INNER JOIN annotation_tag ON tag.id = annotation_tag.tag_id
+`)
+
+	sql.WriteString(`WHERE EXISTS(SELECT 1 FROM annotation WHERE annotation.id = annotation_tag.annotation_id AND annotation.org_id = ?)`)
+	params = append(params, query.OrgID)
+
+	sql.WriteString(` AND (` + tagKey + ` ` + dialect.LikeStr() + ` ? OR ` + tagValue + ` ` + dialect.LikeStr() + ` ?)`)
+	params = append(params, `%`+query.Tag+`%`, `%`+query.Tag+`%`)
+
+	sql.WriteString(` GROUP BY ` + tagKey + `,` + tagValue)
+	sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue)
+	sql.WriteString(` ` + dialect.Limit(query.Limit))
+
+	var items []*annotations.Tag
+	if err := x.SQL(sql.String(), params...).Find(&items); err != nil {
+		return annotations.FindTagsResult{Tags: []*annotations.TagsDTO{}}, err
+	}
+
+	tags := make([]*annotations.TagsDTO, 0)
+	for _, item := range items {
+		tag := item.Key
+		if len(item.Value) > 0 {
+			tag = item.Key + ":" + item.Value
+		}
+		tags = append(tags, &annotations.TagsDTO{
+			Tag:   tag,
+			Count: item.Count,
+		})
+	}
+
+	return annotations.FindTagsResult{Tags: tags}, nil
 }

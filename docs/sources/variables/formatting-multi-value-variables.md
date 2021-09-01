@@ -1,13 +1,9 @@
 +++
-title = "Formatting multi-value variables"
-type = "docs"
-[menu.docs]
-identifier = "format-multi-value-variables"
-parent = "variables"
+title = "Multi-value variables"
 weight = 600
 +++
 
-# Formatting multi-value variables
+# Multi-value variables
 
 Interpolating a variable with multiple values selected is tricky as it is not straight forward how to format the multiple values into a string that is valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to inform the templating interpolation engine what format to use for multiple values.
 
@@ -15,7 +11,7 @@ Interpolating a variable with multiple values selected is tricky as it is not st
 
 ## Multi-value variables with a Graphite data source
 
-Graphite uses glob expressions. A variable with multiple values would, in this case, be interpolated as `{host1,host2,host3}` if the current variable value was *host1*, *host2*, and *host3*.
+Graphite uses glob expressions. A variable with multiple values would, in this case, be interpolated as `{host1,host2,host3}` if the current variable value was _host1_, _host2_, and _host3_.
 
 ## Multi-value variables with a Prometheus or InfluxDB data source
 
@@ -25,10 +21,11 @@ InfluxDB and Prometheus use regex expressions, so the same variable would be int
 
 Elasticsearch uses lucene query syntax, so the same variable would be formatted as `("host1" OR "host2" OR "host3")`. In this case, every value must be escaped so that the value only contains lucene control words and quotation marks.
 
-## Formatting troubles
+## Troubleshoot multi-value variables
 
 Automatic escaping and formatting can cause problems and it can be tricky to grasp the logic behind it. Especially for InfluxDB and Prometheus where the use of regex syntax requires that the variable is used in regex operator context.
 
 If you do not want Grafana to do this automatic regex escaping and formatting, then you must do one of the following:
+
 - Turn off the **Multi-value** or **Include All option** options.
 - Use the [raw variable format]({{< relref "advanced-variable-format-options.md#raw" >}}).

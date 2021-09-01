@@ -1,15 +1,14 @@
-import React from 'react';
-import { QueryRow, QueryRowProps } from './QueryRow';
+import React, { ComponentProps } from 'react';
+import { QueryRow } from './QueryRow';
 import { shallow } from 'enzyme';
 import { ExploreId } from 'app/types/explore';
-import { Emitter } from 'app/core/utils/emitter';
-import { DataSourceApi, TimeRange, AbsoluteTimeRange, PanelData } from '@grafana/data';
+import { DataSourceApi, TimeRange, AbsoluteTimeRange, PanelData, EventBusExtended } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
-  const props: QueryRowProps = {
+  const props: ComponentProps<typeof QueryRow> = {
     exploreId: ExploreId.left,
     index: 1,
-    exploreEvents: {} as Emitter,
+    exploreEvents: {} as EventBusExtended,
     changeQuery: jest.fn(),
     datasourceInstance: {} as DataSourceApi,
     highlightLogsExpressionAction: jest.fn() as any,

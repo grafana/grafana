@@ -1,7 +1,7 @@
 // Libraries
-import isNumber from 'lodash/isNumber';
+import { isNumber } from 'lodash';
 
-import { NullValueMode, Field, FieldState, FieldCalcs } from '../types/index';
+import { NullValueMode, Field, FieldState, FieldCalcs, FieldType } from '../types/index';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 export enum ReducerID {
@@ -15,17 +15,16 @@ export enum ReducerID {
   count = 'count',
   range = 'range',
   diff = 'diff',
+  diffperc = 'diffperc',
   delta = 'delta',
   step = 'step',
-
   firstNotNull = 'firstNotNull',
   lastNotNull = 'lastNotNull',
-
   changeCount = 'changeCount',
   distinctCount = 'distinctCount',
-
   allIsZero = 'allIsZero',
   allIsNull = 'allIsNull',
+  allValues = 'allValues',
 }
 
 // Internal function
@@ -45,6 +44,8 @@ interface ReduceFieldOptions {
 
 /**
  * @returns an object with a key for each selected stat
+ * NOTE: This will also modify the 'field.state' object,
+ * leaving values in a cache until cleared.
  */
 export function reduceField(options: ReduceFieldOptions): FieldCalcs {
   const { field, reducers } = options;
@@ -126,7 +127,7 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
 export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   {
     id: ReducerID.lastNotNull,
-    name: 'Last (not null)',
+    name: 'Last *',
     description: 'Last non-null value',
     standard: true,
     aliasIds: ['current'],
@@ -135,14 +136,14 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   {
     id: ReducerID.last,
     name: 'Last',
-    description: 'Last Value',
+    description: 'Last value',
     standard: true,
     reduce: calculateLast,
   },
   { id: ReducerID.first, name: 'First', description: 'First Value', standard: true, reduce: calculateFirst },
   {
     id: ReducerID.firstNotNull,
-    name: 'First (not null)',
+    name: 'First',
     description: 'First non-null value',
     standard: true,
     reduce: calculateFirstNotNull,
@@ -223,6 +224,19 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     standard: false,
     reduce: calculateDistinctCount,
   },
+  {
+    id: ReducerID.diffperc,
+    name: 'Difference percent',
+    description: 'Percentage difference between first and last values',
+    standard: true,
+  },
+  {
+    id: ReducerID.allValues,
+    name: 'All values',
+    description: 'Returns an array with all values',
+    standard: false,
+    reduce: (field: Field) => ({ allValues: field.values.toArray() }),
+  },
 ]);
 
 export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
@@ -244,6 +258,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
     diff: null,
     delta: 0,
     step: Number.MAX_VALUE,
+    diffperc: 0,
 
     // Just used for calculations -- not exposed as a stat
     previousDeltaUp: true,
@@ -251,6 +266,8 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
 
   const data = field.values;
   calcs.count = data.length;
+
+  const isNumberField = field.type === FieldType.number || FieldType.time;
 
   for (let i = 0; i < data.length; i++) {
     let currentValue = data.get(i);
@@ -270,13 +287,14 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
       }
     }
 
-    if (currentValue !== null && currentValue !== undefined) {
+    if (currentValue != null) {
+      // null || undefined
       const isFirst = calcs.firstNotNull === null;
       if (isFirst) {
         calcs.firstNotNull = currentValue;
       }
 
-      if (isNumber(currentValue)) {
+      if (isNumberField) {
         calcs.sum += currentValue;
         calcs.allIsNull = false;
         calcs.nonNullCount++;
@@ -353,6 +371,9 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
     calcs.diff = calcs.lastNotNull - calcs.firstNotNull;
   }
 
+  if (isNumber(calcs.firstNotNull) && isNumber(calcs.diff)) {
+    calcs.diffperc = calcs.diff / calcs.firstNotNull;
+  }
   return calcs;
 }
 

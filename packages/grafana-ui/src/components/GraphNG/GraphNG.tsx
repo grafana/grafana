@@ -1,189 +1,236 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { AlignedData } from 'uplot';
+import { Themeable2 } from '../../types';
+import { findMidPointYPosition, pluginLog } from '../uPlot/utils';
 import {
   DataFrame,
-  FieldConfig,
-  FieldType,
-  formattedValueToString,
-  getFieldColorModeForField,
-  getTimeField,
-  systemDateFormats,
+  FieldMatcherID,
+  fieldMatchers,
+  LegacyGraphHoverClearEvent,
+  LegacyGraphHoverEvent,
+  TimeRange,
+  TimeZone,
 } from '@grafana/data';
-import { timeFormatToTemplate } from '../uPlot/utils';
-import { alignAndSortDataFramesByFieldName } from './utils';
-import { Area, Axis, Line, Point, Scale, SeriesGeometry } from '../uPlot/geometries';
+import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
+import { VizLegendOptions } from '@grafana/schema';
+import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
+import { Subscription } from 'rxjs';
+import { throttleTime } from 'rxjs/operators';
+import { GraphNGLegendEvent, XYFieldMatchers } from './types';
+import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+import { VizLayout } from '../VizLayout/VizLayout';
 import { UPlotChart } from '../uPlot/Plot';
-import { AxisSide, GraphCustomFieldConfig, PlotProps } from '../uPlot/types';
-import { useTheme } from '../../themes';
 
-const timeStampsConfig = [
-  [3600 * 24 * 365, '{YYYY}', 7, '{YYYY}'],
-  [3600 * 24 * 28, `{${timeFormatToTemplate(systemDateFormats.interval.month)}`, 7, '{MMM}\n{YYYY}'],
-  [
-    3600 * 24,
-    `{${timeFormatToTemplate(systemDateFormats.interval.day)}`,
-    7,
-    `${timeFormatToTemplate(systemDateFormats.interval.day)}\n${timeFormatToTemplate(systemDateFormats.interval.year)}`,
-  ],
-  [
-    3600,
-    `{${timeFormatToTemplate(systemDateFormats.interval.minute)}`,
-    4,
-    `${timeFormatToTemplate(systemDateFormats.interval.minute)}\n${timeFormatToTemplate(
-      systemDateFormats.interval.day
-    )}`,
-  ],
-  [
-    60,
-    `{${timeFormatToTemplate(systemDateFormats.interval.second)}`,
-    4,
-    `${timeFormatToTemplate(systemDateFormats.interval.second)}\n${timeFormatToTemplate(
-      systemDateFormats.interval.day
-    )}`,
-  ],
-  [
-    1,
-    `:{ss}`,
-    2,
-    `:{ss}\n${timeFormatToTemplate(systemDateFormats.interval.day)} ${timeFormatToTemplate(
-      systemDateFormats.interval.minute
-    )}`,
-  ],
-  [
-    1e-3,
-    ':{ss}.{fff}',
-    2,
-    `:{ss}.{fff}\n${timeFormatToTemplate(systemDateFormats.interval.day)} ${timeFormatToTemplate(
-      systemDateFormats.interval.minute
-    )}`,
-  ],
-];
+/**
+ * @internal -- not a public API
+ */
+export const FIXED_UNIT = '__fixed';
 
-const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
+/**
+ * @internal -- not a public API
+ */
+export type PropDiffFn<T extends any = any> = (prev: T, next: T) => boolean;
 
-const TIME_FIELD_NAME = 'Time';
-
-interface GraphNGProps extends Omit<PlotProps, 'data'> {
-  data: DataFrame[];
+export interface GraphNGProps extends Themeable2 {
+  frames: DataFrame[];
+  structureRev?: number; // a number that will change when the frames[] structure changes
+  width: number;
+  height: number;
+  timeRange: TimeRange;
+  timeZone: TimeZone;
+  legend: VizLegendOptions;
+  fields?: XYFieldMatchers; // default will assume timeseries data
+  onLegendClick?: (event: GraphNGLegendEvent) => void;
+  children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
+  prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;
+  propsToDiff?: Array<string | PropDiffFn>;
+  preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame;
+  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
 }
 
-export const GraphNG: React.FC<GraphNGProps> = ({ data, children, ...plotProps }) => {
-  const theme = useTheme();
-  const [alignedData, setAlignedData] = useState<DataFrame | null>(null);
+function sameProps(prevProps: any, nextProps: any, propsToDiff: Array<string | PropDiffFn> = []) {
+  for (const propName of propsToDiff) {
+    if (typeof propName === 'function') {
+      if (!propName(prevProps, nextProps)) {
+        return false;
+      }
+    } else if (nextProps[propName] !== prevProps[propName]) {
+      return false;
+    }
+  }
 
-  useEffect(() => {
-    if (data.length === 0) {
-      setAlignedData(null);
-      return;
+  return true;
+}
+
+/**
+ * @internal -- not a public API
+ */
+export interface GraphNGState {
+  alignedFrame: DataFrame;
+  alignedData: AlignedData;
+  config?: UPlotConfigBuilder;
+}
+
+/**
+ * "Time as X" core component, expectes ascending x
+ */
+export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
+  static contextType = PanelContextRoot;
+  panelContext: PanelContext = {} as PanelContext;
+  private plotInstance: React.RefObject<uPlot>;
+
+  private subscription = new Subscription();
+
+  constructor(props: GraphNGProps) {
+    super(props);
+    this.state = this.prepState(props);
+    this.plotInstance = React.createRef();
+  }
+
+  getTimeRange = () => this.props.timeRange;
+
+  prepState(props: GraphNGProps, withConfig = true) {
+    let state: GraphNGState = null as any;
+
+    const { frames, fields, preparePlotFrame } = props;
+
+    const preparePlotFrameFn = preparePlotFrame || defaultPreparePlotFrame;
+
+    const alignedFrame = preparePlotFrameFn(
+      frames,
+      fields || {
+        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+      }
+    );
+    pluginLog('GraphNG', false, 'data aligned', alignedFrame);
+
+    if (alignedFrame) {
+      let config = this.state?.config;
+
+      if (withConfig) {
+        config = props.prepConfig(alignedFrame, this.props.frames, this.getTimeRange);
+        pluginLog('GraphNG', false, 'config prepared', config);
+      }
+
+      state = {
+        alignedFrame,
+        alignedData: config!.prepData!(alignedFrame),
+        config,
+      };
+
+      pluginLog('GraphNG', false, 'data prepared', state.alignedData);
     }
 
-    const subscription = alignAndSortDataFramesByFieldName(data, TIME_FIELD_NAME).subscribe(setAlignedData);
+    return state;
+  }
 
-    return function unsubscribe() {
-      subscription.unsubscribe();
-    };
-  }, [data]);
+  componentDidMount() {
+    this.panelContext = this.context as PanelContext;
+    const { eventBus } = this.panelContext;
 
-  if (!alignedData) {
-    return (
-      <div className="panel-empty">
-        <p>No data found in response</p>
-      </div>
+    this.subscription.add(
+      eventBus
+        .getStream(LegacyGraphHoverEvent)
+        .pipe(throttleTime(50))
+        .subscribe({
+          next: (evt) => {
+            const u = this.plotInstance.current;
+            if (u) {
+              // Try finding left position on time axis
+              const left = u.valToPos(evt.payload.point.time, 'time');
+              let top;
+              if (left) {
+                // find midpoint between points at current idx
+                top = findMidPointYPosition(u, u.posToIdx(left));
+              }
+
+              if (!top || !left) {
+                return;
+              }
+
+              u.setCursor({
+                left,
+                top,
+              });
+            }
+          },
+        })
+    );
+
+    this.subscription.add(
+      eventBus
+        .getStream(LegacyGraphHoverClearEvent)
+        .pipe(throttleTime(50))
+        .subscribe({
+          next: () => {
+            const u = this.plotInstance?.current;
+
+            if (u) {
+              u.setCursor({
+                left: -10,
+                top: -10,
+              });
+            }
+          },
+        })
     );
   }
 
-  const geometries: React.ReactNode[] = [];
-  const scales: React.ReactNode[] = [];
-  const axes: React.ReactNode[] = [];
+  componentDidUpdate(prevProps: GraphNGProps) {
+    const { frames, structureRev, timeZone, propsToDiff } = this.props;
 
-  let { timeIndex } = getTimeField(alignedData);
-  if (timeIndex === undefined) {
-    timeIndex = 0; // assuming first field represents x-domain
-    scales.push(<Scale key="scale-x" scaleKey="x" />);
-  } else {
-    scales.push(<Scale key="scale-x" scaleKey="x" time />);
+    const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
+
+    if (frames !== prevProps.frames || propsChanged) {
+      let newState = this.prepState(this.props, false);
+
+      if (newState) {
+        const shouldReconfig =
+          this.state.config === undefined ||
+          timeZone !== prevProps.timeZone ||
+          structureRev !== prevProps.structureRev ||
+          !structureRev ||
+          propsChanged;
+
+        if (shouldReconfig) {
+          newState.config = this.props.prepConfig(newState.alignedFrame, this.props.frames, this.getTimeRange);
+          newState.alignedData = newState.config.prepData!(newState.alignedFrame);
+          pluginLog('GraphNG', false, 'config recreated', newState.config);
+        }
+      }
+
+      newState && this.setState(newState);
+    }
   }
 
-  axes.push(<Axis key="axis-scale--x" scaleKey="x" values={timeStampsConfig} side={AxisSide.Bottom} />);
-
-  let seriesIdx = 0;
-  const uniqueScales: Record<string, boolean> = {};
-
-  for (let i = 0; i < alignedData.fields.length; i++) {
-    const seriesGeometry = [];
-    const field = alignedData.fields[i];
-    const config = field.config as FieldConfig<GraphCustomFieldConfig>;
-    const customConfig = config.custom;
-
-    if (i === timeIndex || field.type !== FieldType.number) {
-      continue;
-    }
-
-    const fmt = field.display ?? defaultFormatter;
-    const scale = config.unit || '__fixed';
-
-    if (!uniqueScales[scale]) {
-      uniqueScales[scale] = true;
-      scales.push(<Scale key={`scale-${scale}`} scaleKey={scale} />);
-      axes.push(
-        <Axis
-          key={`axis-${scale}-${i}`}
-          scaleKey={scale}
-          label={config.custom?.axis?.label}
-          size={config.custom?.axis?.width}
-          side={config.custom?.axis?.side || AxisSide.Left}
-          grid={config.custom?.axis?.grid}
-          formatValue={v => formattedValueToString(fmt(v))}
-        />
-      );
-    }
-
-    // need to update field state here because we use a transform to merge framesP
-    field.state = { ...field.state, seriesIndex: seriesIdx };
-
-    const colorMode = getFieldColorModeForField(field);
-    const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
-
-    if (customConfig?.line?.show) {
-      seriesGeometry.push(
-        <Line
-          key={`line-${scale}-${i}`}
-          scaleKey={scale}
-          stroke={seriesColor}
-          width={customConfig?.line.show ? customConfig?.line.width || 1 : 0}
-        />
-      );
-    }
-
-    if (customConfig?.points?.show) {
-      seriesGeometry.push(
-        <Point key={`point-${scale}-${i}`} scaleKey={scale} size={customConfig?.points?.radius} stroke={seriesColor} />
-      );
-    }
-
-    if (customConfig?.fill?.alpha) {
-      seriesGeometry.push(
-        <Area key={`area-${scale}-${i}`} scaleKey={scale} fill={customConfig?.fill.alpha} color={seriesColor} />
-      );
-    }
-    if (seriesGeometry.length > 1) {
-      geometries.push(
-        <SeriesGeometry key={`seriesGeometry-${scale}-${i}`} scaleKey={scale}>
-          {seriesGeometry}
-        </SeriesGeometry>
-      );
-    } else {
-      geometries.push(seriesGeometry);
-    }
-
-    seriesIdx++;
+  componentWillUnmount() {
+    this.subscription.unsubscribe();
   }
 
-  return (
-    <UPlotChart data={alignedData} {...plotProps}>
-      {scales}
-      {axes}
-      {geometries}
-      {children}
-    </UPlotChart>
-  );
-};
+  render() {
+    const { width, height, children, timeRange, renderLegend } = this.props;
+    const { config, alignedFrame } = this.state;
+
+    if (!config) {
+      return null;
+    }
+
+    return (
+      <VizLayout width={width} height={height} legend={renderLegend(config)}>
+        {(vizWidth: number, vizHeight: number) => (
+          <UPlotChart
+            config={this.state.config!}
+            data={this.state.alignedData}
+            width={vizWidth}
+            height={vizHeight}
+            timeRange={timeRange}
+            plotRef={(u) => ((this.plotInstance as React.MutableRefObject<uPlot>).current = u)}
+          >
+            {children ? children(config, alignedFrame) : null}
+          </UPlotChart>
+        )}
+      </VizLayout>
+    );
+  }
+}

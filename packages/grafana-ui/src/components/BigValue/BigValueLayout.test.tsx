@@ -1,6 +1,6 @@
 import { Props, BigValueColorMode, BigValueGraphMode } from './BigValue';
 import { buildLayout, StackedWithChartLayout, WideWithChartLayout } from './BigValueLayout';
-import { getTheme } from '../../themes';
+import { ArrayVector, createTheme, FieldType } from '@grafana/data';
 
 function getProps(propOverrides?: Partial<Props>): Props {
   const props: Props = {
@@ -13,14 +13,14 @@ function getProps(propOverrides?: Partial<Props>): Props {
       numeric: 25,
     },
     sparkline: {
-      data: [
-        [10, 10],
-        [10, 10],
-      ],
-      xMin: 0,
-      xMax: 100,
+      y: {
+        name: '',
+        values: new ArrayVector([1, 2, 3, 4, 3]),
+        type: FieldType.number,
+        config: {},
+      },
     },
-    theme: getTheme(),
+    theme: createTheme(),
   };
 
   Object.assign(props, propOverrides);

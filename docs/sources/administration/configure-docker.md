@@ -2,13 +2,8 @@
 title = "Configure Grafana Docker image"
 description = "Guide for configuring the Grafana Docker image"
 keywords = ["grafana", "configuration", "documentation", "docker"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/configure-docker/"]
-[menu.docs]
-name = "Configure Grafana Docker image"
-identifier = "configure-docker"
-parent = "administration"
-weight = 400
+weight = 200
 +++
 
 # Configure a Grafana Docker image
@@ -17,7 +12,7 @@ If you are running Grafana in a Docker image, then you configure Grafana using [
 
 ## Save your Grafana data
 
-If you do not designate a location for information storage, then all your Grafana data disappears as soon as you stop your image. To save your data, you need to set up persistent storage or bind mounts for your container.
+If you do not designate a location for information storage, then all your Grafana data disappears as soon as you stop your container. To save your data, you need to set up persistent storage or bind mounts for your container.
 
 ### Run Grafana container with persistent storage (recommended)
 
@@ -45,14 +40,14 @@ docker run -d --user $ID --volume "$PWD/data:/var/lib/grafana" -p 3000:3000 graf
 
 The following settings are hard-coded when launching the Grafana Docker container and can only be overridden using environment variables, not in `conf/grafana.ini`.
 
-Setting               | Default value
-----------------------|---------------------------
-GF_PATHS_CONFIG       | /etc/grafana/grafana.ini
-GF_PATHS_DATA         | /var/lib/grafana
-GF_PATHS_HOME         | /usr/share/grafana
-GF_PATHS_LOGS         | /var/log/grafana
-GF_PATHS_PLUGINS      | /var/lib/grafana/plugins
-GF_PATHS_PROVISIONING | /etc/grafana/provisioning
+| Setting               | Default value             |
+| --------------------- | ------------------------- |
+| GF_PATHS_CONFIG       | /etc/grafana/grafana.ini  |
+| GF_PATHS_DATA         | /var/lib/grafana          |
+| GF_PATHS_HOME         | /usr/share/grafana        |
+| GF_PATHS_LOGS         | /var/log/grafana          |
+| GF_PATHS_PLUGINS      | /var/lib/grafana/plugins  |
+| GF_PATHS_PROVISIONING | /etc/grafana/provisioning |
 
 ## Logging
 
@@ -97,5 +92,5 @@ You may also specify multiple profiles to `GF_AWS_PROFILES` (e.g.
 Supported variables:
 
 - `GF_AWS_${profile}_ACCESS_KEY_ID`: AWS access key ID (required).
-- `GF_AWS_${profile}_SECRET_ACCESS_KEY`: AWS secret access  key (required).
+- `GF_AWS_${profile}_SECRET_ACCESS_KEY`: AWS secret access key (required).
 - `GF_AWS_${profile}_REGION`: AWS region (optional).

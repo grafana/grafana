@@ -3,19 +3,15 @@ package api
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
-
-	"github.com/grafana/grafana/pkg/services/live"
-	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/grafana/grafana/pkg/services/shorturls"
-
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
@@ -23,32 +19,47 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
+	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
-	eval "github.com/grafana/grafana/pkg/services/ngalert"
+	"github.com/grafana/grafana/pkg/services/ngalert"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/schemaloader"
+	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/shorturls"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	macaron "gopkg.in/macaron.v1"
+	"gopkg.in/macaron.v1"
 )
-
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "HTTPServer",
-		Instance:     &HTTPServer{},
-		InitPriority: registry.High,
-	})
-}
 
 type HTTPServer struct {
 	log         log.Logger
@@ -57,44 +68,129 @@ type HTTPServer struct {
 	httpSrv     *http.Server
 	middlewares []macaron.Handler
 
-	RouteRegister        routing.RouteRegister            `inject:""`
-	Bus                  bus.Bus                          `inject:""`
-	RenderService        rendering.Service                `inject:""`
-	Cfg                  *setting.Cfg                     `inject:""`
-	HooksService         *hooks.HooksService              `inject:""`
-	CacheService         *localcache.CacheService         `inject:""`
-	DatasourceCache      datasources.CacheService         `inject:""`
-	AuthTokenService     models.UserTokenService          `inject:""`
-	QuotaService         *quota.QuotaService              `inject:""`
-	RemoteCacheService   *remotecache.RemoteCache         `inject:""`
-	ProvisioningService  provisioning.ProvisioningService `inject:""`
-	Login                *login.LoginService              `inject:""`
-	License              models.Licensing                 `inject:""`
-	BackendPluginManager backendplugin.Manager            `inject:""`
-	PluginManager        *plugins.PluginManager           `inject:""`
-	SearchService        *search.SearchService            `inject:""`
-	AlertNG              *eval.AlertNG                    `inject:""`
-	ShortURLService      *shorturls.ShortURLService       `inject:""`
-	Live                 *live.GrafanaLive
-	Listener             net.Listener
+	UsageStatsService      usagestats.UsageStats
+	PluginContextProvider  *plugincontext.Provider
+	RouteRegister          routing.RouteRegister
+	Bus                    bus.Bus
+	RenderService          rendering.Service
+	Cfg                    *setting.Cfg
+	SettingsProvider       setting.Provider
+	HooksService           *hooks.HooksService
+	CacheService           *localcache.CacheService
+	DataSourceCache        datasources.CacheService
+	AuthTokenService       models.UserTokenService
+	QuotaService           *quota.QuotaService
+	RemoteCacheService     *remotecache.RemoteCache
+	ProvisioningService    provisioning.ProvisioningService
+	Login                  login.Service
+	License                models.Licensing
+	AccessControl          accesscontrol.AccessControl
+	BackendPluginManager   backendplugin.Manager
+	DataProxy              *datasourceproxy.DataSourceProxyService
+	PluginRequestValidator models.PluginRequestValidator
+	PluginManager          plugins.Manager
+	SearchService          *search.SearchService
+	ShortURLService        shorturls.Service
+	Live                   *live.GrafanaLive
+	LivePushGateway        *pushhttp.Gateway
+	ContextHandler         *contexthandler.ContextHandler
+	SQLStore               *sqlstore.SQLStore
+	DataService            *tsdb.Service
+	AlertEngine            *alerting.AlertEngine
+	LoadSchemaService      *schemaloader.SchemaLoaderService
+	AlertNG                *ngalert.AlertNG
+	LibraryPanelService    librarypanels.Service
+	LibraryElementService  libraryelements.Service
+	notificationService    *notifications.NotificationService
+	SocialService          social.Service
+	OAuthTokenService      oauthtoken.OAuthTokenService
+	Listener               net.Listener
+	EncryptionService      encryption.Service
+	cleanUpService         *cleanup.CleanUpService
+	tracingService         *tracing.TracingService
+	internalMetricsSvc     *metrics.InternalMetricsService
 }
 
-func (hs *HTTPServer) Init() error {
-	hs.log = log.New("http.server")
+type ServerOptions struct {
+	Listener net.Listener
+}
 
-	// Set up a websocket broker
-	if hs.Cfg.IsLiveEnabled() { // feature flag
-		node, err := live.InitializeBroker()
-		if err != nil {
-			return err
-		}
-		hs.Live = node
+func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
+	renderService rendering.Service, licensing models.Licensing, hooksService *hooks.HooksService,
+	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
+	dataService *tsdb.Service, alertEngine *alerting.AlertEngine,
+	usageStatsService *usagestats.UsageStatsService, pluginRequestValidator models.PluginRequestValidator,
+	pluginManager plugins.Manager, backendPM backendplugin.Manager, settingsProvider setting.Provider,
+	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
+	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service,
+	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
+	loginService login.Service, accessControl accesscontrol.AccessControl,
+	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
+	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
+	contextHandler *contexthandler.ContextHandler,
+	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
+	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
+	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
+	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
+	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService,
+	encryptionService encryption.Service) (*HTTPServer, error) {
+	macaron.Env = cfg.Env
+	m := macaron.New()
+
+	hs := &HTTPServer{
+		Cfg:                    cfg,
+		RouteRegister:          routeRegister,
+		Bus:                    bus,
+		RenderService:          renderService,
+		License:                licensing,
+		HooksService:           hooksService,
+		CacheService:           cacheService,
+		SQLStore:               sqlStore,
+		DataService:            dataService,
+		AlertEngine:            alertEngine,
+		UsageStatsService:      usageStatsService,
+		PluginRequestValidator: pluginRequestValidator,
+		PluginManager:          pluginManager,
+		BackendPluginManager:   backendPM,
+		SettingsProvider:       settingsProvider,
+		DataSourceCache:        dataSourceCache,
+		AuthTokenService:       userTokenService,
+		cleanUpService:         cleanUpService,
+		ShortURLService:        shortURLService,
+		RemoteCacheService:     remoteCache,
+		ProvisioningService:    provisioningService,
+		Login:                  loginService,
+		AccessControl:          accessControl,
+		DataProxy:              dataSourceProxy,
+		SearchService:          searchService,
+		Live:                   live,
+		LivePushGateway:        livePushGateway,
+		PluginContextProvider:  plugCtxProvider,
+		ContextHandler:         contextHandler,
+		LoadSchemaService:      schemaService,
+		AlertNG:                alertNG,
+		LibraryPanelService:    libraryPanelService,
+		LibraryElementService:  libraryElementService,
+		QuotaService:           quotaService,
+		notificationService:    notificationService,
+		tracingService:         tracingService,
+		internalMetricsSvc:     internalMetricsSvc,
+		log:                    log.New("http.server"),
+		macaron:                m,
+		Listener:               opts.Listener,
+		SocialService:          socialService,
+		OAuthTokenService:      oauthTokenService,
+		EncryptionService:      encryptionService,
 	}
-
-	hs.macaron = hs.newMacaron()
+	if hs.Listener != nil {
+		hs.log.Debug("Using provided listener")
+	}
 	hs.registerRoutes()
 
-	return nil
+	if err := hs.declareFixedRoles(); err != nil {
+		return nil, err
+	}
+	return hs, nil
 }
 
 func (hs *HTTPServer) AddMiddleware(middleware macaron.Handler) {
@@ -106,11 +202,14 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 
 	hs.applyRoutes()
 
+	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
+	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
 	hs.httpSrv = &http.Server{
-		Addr:    fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort),
-		Handler: hs.macaron,
+		Addr:        net.JoinHostPort(host, hs.Cfg.HTTPPort),
+		Handler:     hs.macaron,
+		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
-	switch setting.Protocol {
+	switch hs.Cfg.Protocol {
 	case setting.HTTP2Scheme:
 		if err := hs.configureHttp2(); err != nil {
 			return err
@@ -119,6 +218,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		if err := hs.configureHttps(); err != nil {
 			return err
 		}
+	default:
 	}
 
 	listener, err := hs.getListener()
@@ -127,7 +227,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	}
 
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
-		setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
+		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -142,25 +242,25 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		}
 	}()
 
-	switch setting.Protocol {
+	switch hs.Cfg.Protocol {
 	case setting.HTTPScheme, setting.SocketScheme:
 		if err := hs.httpSrv.Serve(listener); err != nil {
-			if err == http.ErrServerClosed {
+			if errors.Is(err, http.ErrServerClosed) {
 				hs.log.Debug("server was shutdown gracefully")
 				return nil
 			}
 			return err
 		}
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
-		if err := hs.httpSrv.ServeTLS(listener, setting.CertFile, setting.KeyFile); err != nil {
-			if err == http.ErrServerClosed {
+		if err := hs.httpSrv.ServeTLS(listener, hs.Cfg.CertFile, hs.Cfg.KeyFile); err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
 				hs.log.Debug("server was shutdown gracefully")
 				return nil
 			}
 			return err
 		}
 	default:
-		panic(fmt.Sprintf("Unhandled protocol %q", setting.Protocol))
+		panic(fmt.Sprintf("Unhandled protocol %q", hs.Cfg.Protocol))
 	}
 
 	wg.Wait()
@@ -173,7 +273,7 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 		return hs.Listener, nil
 	}
 
-	switch setting.Protocol {
+	switch hs.Cfg.Protocol {
 	case setting.HTTPScheme, setting.HTTPSScheme, setting.HTTP2Scheme:
 		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
 		if err != nil {
@@ -181,38 +281,39 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 		}
 		return listener, nil
 	case setting.SocketScheme:
-		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
+		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: hs.Cfg.SocketPath, Net: "unix"})
 		if err != nil {
-			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
+			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", hs.Cfg.SocketPath)
 		}
 
 		// Make socket writable by group
-		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
+		// nolint:gosec
+		if err := os.Chmod(hs.Cfg.SocketPath, 0660); err != nil {
 			return nil, errutil.Wrapf(err, "failed to change socket permissions")
 		}
 
 		return listener, nil
 	default:
-		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
-		return nil, fmt.Errorf("invalid protocol %q", setting.Protocol)
+		hs.log.Error("Invalid protocol", "protocol", hs.Cfg.Protocol)
+		return nil, fmt.Errorf("invalid protocol %q", hs.Cfg.Protocol)
 	}
 }
 
 func (hs *HTTPServer) configureHttps() error {
-	if setting.CertFile == "" {
+	if hs.Cfg.CertFile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
 	}
 
-	if setting.KeyFile == "" {
+	if hs.Cfg.KeyFile == "" {
 		return fmt.Errorf("cert_key cannot be empty when using HTTPS")
 	}
 
-	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`Cannot find SSL cert_file at %v`, setting.CertFile)
+	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
+		return fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
 	}
 
-	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`Cannot find SSL key_file at %v`, setting.KeyFile)
+	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
+		return fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
 	}
 
 	tlsCfg := &tls.Config{
@@ -223,7 +324,6 @@ func (hs *HTTPServer) configureHttps() error {
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
 			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
@@ -241,25 +341,25 @@ func (hs *HTTPServer) configureHttps() error {
 }
 
 func (hs *HTTPServer) configureHttp2() error {
-	if setting.CertFile == "" {
+	if hs.Cfg.CertFile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTP2")
 	}
 
-	if setting.KeyFile == "" {
+	if hs.Cfg.KeyFile == "" {
 		return fmt.Errorf("cert_key cannot be empty when using HTTP2")
 	}
 
-	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`Cannot find SSL cert_file at %v`, setting.CertFile)
+	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
+		return fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
 	}
 
-	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`Cannot find SSL key_file at %v`, setting.KeyFile)
+	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
+		return fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
 	}
 
 	tlsCfg := &tls.Config{
 		MinVersion:               tls.VersionTLS12,
-		PreferServerCipherSuites: false,
+		PreferServerCipherSuites: true,
 		CipherSuites: []uint16{
 			tls.TLS_CHACHA20_POLY1305_SHA256,
 			tls.TLS_AES_128_GCM_SHA256,
@@ -279,16 +379,6 @@ func (hs *HTTPServer) configureHttp2() error {
 	return nil
 }
 
-func (hs *HTTPServer) newMacaron() *macaron.Macaron {
-	macaron.Env = setting.Env
-	m := macaron.New()
-
-	// automatically set HEAD for every GET
-	m.SetAutoHead(true)
-
-	return m
-}
-
 func (hs *HTTPServer) applyRoutes() {
 	// start with middlewares & static routes
 	hs.addMiddlewaresAndStaticRoutes()
@@ -297,65 +387,54 @@ func (hs *HTTPServer) applyRoutes() {
 	// then custom app proxy routes
 	hs.initAppPluginRoutes(hs.macaron)
 	// lastly not found route
-	hs.macaron.NotFound(hs.NotFoundHandler)
+	hs.macaron.NotFound(middleware.ReqSignedIn, hs.NotFoundHandler)
 }
 
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.macaron
 
-	m.Use(middleware.Logger())
+	m.Use(middleware.RequestTracing())
 
-	if setting.EnableGzip {
-		m.Use(middleware.Gziper())
+	m.Use(middleware.Logger(hs.Cfg))
+
+	if hs.Cfg.EnableGzip {
+		m.UseMiddleware(middleware.Gziper())
 	}
 
-	m.Use(middleware.Recovery())
+	m.Use(middleware.Recovery(hs.Cfg))
 
-	for _, route := range plugins.StaticRoutes {
-		pluginRoute := path.Join("/public/plugins/", route.PluginId)
-		hs.log.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
-		hs.mapStatic(m, route.Directory, "", pluginRoute)
-	}
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
 
-	hs.mapStatic(m, setting.StaticRootPath, "build", "public/build")
-	hs.mapStatic(m, setting.StaticRootPath, "", "public")
-	hs.mapStatic(m, setting.StaticRootPath, "robots.txt", "robots.txt")
-
-	if setting.ImageUploadProvider == "local" {
+	if hs.Cfg.ImageUploadProvider == "local" {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
 	}
 
-	m.Use(middleware.AddDefaultResponseHeaders())
+	m.Use(middleware.AddDefaultResponseHeaders(hs.Cfg))
 
-	if setting.ServeFromSubPath && setting.AppSubUrl != "" {
-		m.SetURLPrefix(setting.AppSubUrl)
+	if hs.Cfg.ServeFromSubPath && hs.Cfg.AppSubURL != "" {
+		m.SetURLPrefix(hs.Cfg.AppSubURL)
 	}
 
-	m.Use(macaron.Renderer(macaron.RenderOptions{
-		Directory:  filepath.Join(setting.StaticRootPath, "views"),
-		IndentJSON: macaron.Env != macaron.PROD,
-		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
-	}))
+	m.UseMiddleware(macaron.Renderer(filepath.Join(hs.Cfg.StaticRootPath, "views"), "[[", "]]"))
 
 	// These endpoints are used for monitoring the Grafana instance
-	// and should not be redirect or rejected.
+	// and should not be redirected or rejected.
 	m.Use(hs.healthzHandler)
 	m.Use(hs.apiHealthHandler)
 	m.Use(hs.metricsEndpoint)
 
-	m.Use(middleware.GetContextHandler(
-		hs.AuthTokenService,
-		hs.RemoteCacheService,
-		hs.RenderService,
-	))
-	m.Use(middleware.OrgRedirect())
+	m.Use(hs.ContextHandler.Middleware)
+	m.Use(middleware.OrgRedirect(hs.Cfg))
 
 	// needs to be after context handler
-	if setting.EnforceDomain {
-		m.Use(middleware.ValidateHostHeader(setting.Domain))
+	if hs.Cfg.EnforceDomain {
+		m.Use(middleware.ValidateHostHeader(hs.Cfg))
 	}
 
-	m.Use(middleware.HandleNoCacheHeader())
+	m.Use(middleware.HandleNoCacheHeader)
+	m.UseMiddleware(middleware.AddCSPHeader(hs.Cfg, hs.log))
 
 	for _, mw := range hs.middlewares {
 		m.Use(mw)
@@ -377,8 +456,8 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 	}
 
 	promhttp.
-		HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{}).
-		ServeHTTP(ctx.Resp, ctx.Req.Request)
+		HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}).
+		ServeHTTP(ctx.Resp, ctx.Req)
 }
 
 // healthzHandler always return 200 - Ok if Grafana's web server is running
@@ -388,7 +467,7 @@ func (hs *HTTPServer) healthzHandler(ctx *macaron.Context) {
 		return
 	}
 
-	ctx.WriteHeader(200)
+	ctx.Resp.WriteHeader(200)
 	_, err := ctx.Resp.Write([]byte("Ok"))
 	if err != nil {
 		hs.log.Error("could not write to response", "err", err)
@@ -396,7 +475,7 @@ func (hs *HTTPServer) healthzHandler(ctx *macaron.Context) {
 }
 
 // apiHealthHandler will return ok if Grafana's web server is running and it
-// can access the database. If the database cannot be access it will return
+// can access the database. If the database cannot be accessed it will return
 // http status code 503.
 func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
@@ -407,11 +486,11 @@ func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 	data := simplejson.New()
 	data.Set("database", "ok")
 	if !hs.Cfg.AnonymousHideVersion {
-		data.Set("version", setting.BuildVersion)
-		data.Set("commit", setting.BuildCommit)
+		data.Set("version", hs.Cfg.BuildVersion)
+		data.Set("commit", hs.Cfg.BuildCommit)
 	}
 
-	if err := bus.Dispatch(&models.GetDBHealthQuery{}); err != nil {
+	if !hs.databaseHealthy() {
 		data.Set("database", "failing")
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		ctx.Resp.WriteHeader(503)
@@ -442,7 +521,7 @@ func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, 
 		}
 	}
 
-	if setting.Env == setting.Dev {
+	if hs.Cfg.Env == setting.Dev {
 		headers = func(c *macaron.Context) {
 			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
 		}

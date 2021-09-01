@@ -1,42 +1,50 @@
 package testdatasource
 
 import (
-	"context"
+	"net/http"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-type TestDataExecutor struct {
-	*models.DataSource
-	log log.Logger
-}
-
-func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &TestDataExecutor{
-		DataSource: dsInfo,
-		log:        log.New("tsdb.testdata"),
-	}, nil
-}
-
-func init() {
-	tsdb.RegisterTsdbQueryEndpoint("testdata", NewTestDataExecutor)
-}
-
-func (e *TestDataExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{}
-	result.Results = make(map[string]*tsdb.QueryResult)
-
-	for _, query := range tsdbQuery.Queries {
-		scenarioId := query.Model.Get("scenarioId").MustString("random_walk")
-		if scenario, exist := ScenarioRegistry[scenarioId]; exist {
-			result.Results[query.RefId] = scenario.Handler(query, tsdbQuery)
-			result.Results[query.RefId].RefId = query.RefId
-		} else {
-			e.log.Error("Scenario not found", "scenarioId", scenarioId)
-		}
+func ProvideService(cfg *setting.Cfg, manager backendplugin.Manager) (*TestDataPlugin, error) {
+	resourceMux := http.NewServeMux()
+	p := new(cfg, resourceMux)
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler:    p.queryMux,
+		CallResourceHandler: httpadapter.New(resourceMux),
+		StreamHandler:       newTestStreamHandler(p.logger),
+	})
+	err := manager.Register("testdata", factory)
+	if err != nil {
+		return nil, err
 	}
 
-	return result, nil
+	return p, nil
+}
+
+func new(cfg *setting.Cfg, resourceMux *http.ServeMux) *TestDataPlugin {
+	p := &TestDataPlugin{
+		logger:    log.New("tsdb.testdata"),
+		cfg:       cfg,
+		scenarios: map[string]*Scenario{},
+		queryMux:  datasource.NewQueryTypeMux(),
+	}
+
+	p.registerScenarios()
+	p.registerRoutes(resourceMux)
+
+	return p
+}
+
+type TestDataPlugin struct {
+	cfg       *setting.Cfg
+	logger    log.Logger
+	scenarios map[string]*Scenario
+	queryMux  *datasource.QueryTypeMux
 }

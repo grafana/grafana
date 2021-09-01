@@ -28,8 +28,8 @@ func DeleteExpiredSnapshots(cmd *models.DeleteExpiredSnapshotsCommand) error {
 			return nil
 		}
 
-		deleteExpiredSql := "DELETE FROM dashboard_snapshot WHERE expires < ?"
-		expiredResponse, err := sess.Exec(deleteExpiredSql, time.Now())
+		deleteExpiredSQL := "DELETE FROM dashboard_snapshot WHERE expires < ?"
+		expiredResponse, err := sess.Exec(deleteExpiredSQL, time.Now())
 		if err != nil {
 			return err
 		}
@@ -81,8 +81,8 @@ func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
 
 func DeleteDashboardSnapshot(cmd *models.DeleteDashboardSnapshotCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "DELETE FROM dashboard_snapshot WHERE delete_key=?"
-		_, err := sess.Exec(rawSql, cmd.DeleteKey)
+		var rawSQL = "DELETE FROM dashboard_snapshot WHERE delete_key=?"
+		_, err := sess.Exec(rawSQL, cmd.DeleteKey)
 		return err
 	})
 }
@@ -106,7 +106,10 @@ func GetDashboardSnapshot(query *models.GetDashboardSnapshotQuery) error {
 func SearchDashboardSnapshots(query *models.GetDashboardSnapshotsQuery) error {
 	var snapshots = make(models.DashboardSnapshotsList, 0)
 
-	sess := x.Limit(query.Limit)
+	sess := x.NewSession()
+	if query.Limit > 0 {
+		sess.Limit(query.Limit)
+	}
 	sess.Table("dashboard_snapshot")
 
 	if query.Name != "" {

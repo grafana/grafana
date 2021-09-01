@@ -2,11 +2,6 @@
 title = "GitLab OAuth2 Authentication"
 description = "Grafana OAuthentication Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
-type = "docs"
-[menu.docs]
-name = "GitLab"
-identifier = "gitlab_oauth"
-parent = "authentication"
 weight = 900
 +++
 
@@ -17,7 +12,7 @@ To enable GitLab OAuth2 you must register the application in GitLab. GitLab will
 ## Create GitLab OAuth keys
 
 You need to [create a GitLab OAuth application](https://docs.gitlab.com/ce/integration/oauth_provider.html).
-Choose a descriptive *Name*, and use the following *Redirect URI*:
+Choose a descriptive _Name_, and use the following _Redirect URI_:
 
 ```
 https://grafana.example.com/login/gitlab
@@ -31,12 +26,12 @@ instance, if you access Grafana at `http://203.0.113.31:3000`, you should use
 http://203.0.113.31:3000/login/gitlab
 ```
 
-Finally, select *read_api* as the *Scope* and submit the form. Note that if you're
+Finally, select _read_api_ as the _Scope_ and submit the form. Note that if you're
 not going to use GitLab groups for authorization (i.e. not setting
-`allowed_groups`, see below), you can select *read_user* instead of *read_api* as
-the *Scope*, thus giving a more restricted access to your GitLab API.
+`allowed_groups`, see below), you can select _read_user_ instead of _read_api_ as
+the _Scope_, thus giving a more restricted access to your GitLab API.
 
-You'll get an *Application Id* and a *Secret* in return; we'll call them
+You'll get an _Application Id_ and a _Secret_ in return; we'll call them
 `GITLAB_APPLICATION_ID` and `GITLAB_SECRET` respectively for the rest of this
 section.
 
@@ -58,7 +53,7 @@ api_url = https://gitlab.com/api/v4
 allowed_groups =
 ```
 
-You may have to set the `root_url` option of `[server]` for the callback URL to be 
+You may have to set the `root_url` option of `[server]` for the callback URL to be
 correct. For example in case you are serving Grafana behind a proxy.
 
 Restart the Grafana backend for your changes to take effect.
@@ -68,7 +63,7 @@ If you use your own instance of GitLab instead of `gitlab.com`, adjust
 hostname with your own.
 
 With `allow_sign_up` set to `false`, only existing users will be able to login
-using their GitLab account, but with `allow_sign_up` set to `true`, *any* user
+using their GitLab account, but with `allow_sign_up` set to `true`, _any_ user
 who can authenticate on GitLab will be able to login on your Grafana instance;
 if you use the public `gitlab.com`, it means anyone in the world would be able
 to login on your Grafana instance.
@@ -82,7 +77,6 @@ To limit access to authenticated users that are members of one or more [GitLab
 groups](https://docs.gitlab.com/ce/user/group/index.html), set `allowed_groups`
 to a comma- or space-separated list of groups. For instance, if you want to
 only give access to members of the `example` group, set
-
 
 ```ini
 allowed_groups = example
@@ -121,7 +115,7 @@ allowed_groups = example, foo/bar
 > Only available in Grafana Enterprise v6.4+
 
 With Team Sync you can map your GitLab groups to teams in Grafana so that your users will automatically be added to
-the correct teams. 
+the correct teams.
 
 Your GitLab groups can be referenced in the same way as `allowed_groups`, like `example` or `foo/bar`.
 

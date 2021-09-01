@@ -1,159 +1,185 @@
-import throttle from 'lodash/throttle';
-import isEqual from 'lodash/isEqual';
-import omit from 'lodash/omit';
-import { DataFrame, FieldType, getTimeField, rangeUtil, RawTimeRange } from '@grafana/data';
-import uPlot from 'uplot';
-import { PlotPlugin, PlotProps } from './types';
+import { DataFrame, ensureTimeField, Field, FieldType } from '@grafana/data';
+import { StackingMode } from '@grafana/schema';
+import { createLogger } from '../../utils/logger';
+import { attachDebugger } from '../../utils';
+import { AlignedData, Options, PaddingSide } from 'uplot';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
-export const timeFormatToTemplate = (f: string) => {
-  return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, match => `{${match}}`);
-};
-
-export function rangeToMinMax(timeRange: RawTimeRange): [number, number] {
-  const v = rangeUtil.convertRawToRange(timeRange);
-  return [v.from.valueOf() / 1000, v.to.valueOf() / 1000];
+export function timeFormatToTemplate(f: string) {
+  return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, (match) => `{${match}}`);
 }
 
-export const buildPlotConfig = (props: PlotProps, plugins: Record<string, PlotPlugin>): uPlot.Options => {
-  return {
-    width: props.width,
-    height: props.height,
-    focus: {
-      alpha: 1,
-    },
-    cursor: {
-      focus: {
-        prox: 30,
-      },
-    },
-    legend: {
-      show: false,
-    },
-    plugins: Object.entries(plugins).map(p => ({
-      hooks: p[1].hooks,
-    })),
-    hooks: {},
-  } as any;
+const paddingSide: PaddingSide = (u, side, sidesWithAxes) => {
+  let hasCrossAxis = side % 2 ? sidesWithAxes[0] || sidesWithAxes[2] : sidesWithAxes[1] || sidesWithAxes[3];
+
+  return sidesWithAxes[side] || !hasCrossAxis ? 0 : 8;
 };
 
-export const preparePlotData = (data: DataFrame): uPlot.AlignedData => {
-  const plotData: any[] = [];
+export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
+  focus: {
+    alpha: 1,
+  },
+  cursor: {
+    focus: {
+      prox: 30,
+    },
+  },
+  legend: {
+    show: false,
+  },
+  padding: [paddingSide, paddingSide, paddingSide, paddingSide],
+  series: [],
+  hooks: {},
+};
 
-  // Prepare x axis
-  let { timeIndex } = getTimeField(data);
-  let xvals = data.fields[timeIndex!].values.toArray();
+/** @internal */
+interface StackMeta {
+  totals: AlignedData;
+}
 
-  if (!isNaN(timeIndex!)) {
-    xvals = xvals.map(v => v / 1000);
-  }
+/** @internal */
+export function preparePlotData(frame: DataFrame, onStackMeta?: (meta: StackMeta) => void): AlignedData {
+  const result: any[] = [];
+  const stackingGroups: Map<string, number[]> = new Map();
+  let seriesIndex = 0;
 
-  plotData.push(xvals);
+  for (let i = 0; i < frame.fields.length; i++) {
+    const f = frame.fields[i];
 
-  for (let i = 0; i < data.fields.length; i++) {
-    const field = data.fields[i];
-
-    // already handled time and we ignore non-numeric fields
-    if (i === timeIndex || field.type !== FieldType.number) {
+    if (f.type === FieldType.time) {
+      result.push(ensureTimeField(f).values.toArray());
+      seriesIndex++;
       continue;
     }
 
-    let values = field.values.toArray();
-
-    if (field.config.custom?.nullValues === 'asZero') {
-      values = values.map(v => (v === null ? 0 : v));
-    }
-
-    plotData.push(values);
+    collectStackingGroups(f, stackingGroups, seriesIndex);
+    result.push(f.values.toArray());
+    seriesIndex++;
   }
 
-  return plotData;
-};
+  // Stacking
+  if (stackingGroups.size !== 0) {
+    const byPct = frame.fields[1].config.custom?.stacking?.mode === StackingMode.Percent;
+    const dataLength = result[0].length;
+    const alignedTotals = Array(stackingGroups.size);
+    alignedTotals[0] = null;
 
-const isPlottingTime = (config: uPlot.Options) => {
-  let isTimeSeries = false;
+    // array or stacking groups
+    for (const [_, seriesIdxs] of stackingGroups.entries()) {
+      const groupTotals = byPct ? Array(dataLength).fill(0) : null;
 
-  if (!config.scales) {
-    return false;
-  }
+      if (byPct) {
+        for (let j = 0; j < seriesIdxs.length; j++) {
+          const currentlyStacking = result[seriesIdxs[j]];
 
-  for (let i = 0; i < Object.keys(config.scales).length; i++) {
-    const key = Object.keys(config.scales)[i];
-    if (config.scales[key].time === true) {
-      isTimeSeries = true;
-      break;
-    }
-  }
-
-  return isTimeSeries;
-};
-
-/**
- * Based on two config objects indicates whether or not uPlot needs reinitialisation
- * This COULD be done based on data frames, but keeping it this way for now as a simplification
- */
-export const shouldInitialisePlot = (prevConfig?: uPlot.Options, config?: uPlot.Options) => {
-  if (!config && !prevConfig) {
-    return false;
-  }
-
-  if (config) {
-    if (config.width === 0 || config.height === 0) {
-      return false;
-    }
-    if (!prevConfig) {
-      return true;
-    }
-  }
-
-  if (isPlottingTime(config!) && prevConfig!.tzDate !== config!.tzDate) {
-    return true;
-  }
-  // reinitialise when number of series, scales or axes changes
-  if (
-    prevConfig!.series?.length !== config!.series?.length ||
-    prevConfig!.axes?.length !== config!.axes?.length ||
-    prevConfig!.scales?.length !== config!.scales?.length
-  ) {
-    return true;
-  }
-
-  let idx = 0;
-
-  // reinitialise when any of the series config changes
-  if (config!.series && prevConfig!.series) {
-    for (const series of config!.series) {
-      if (!isEqual(series, prevConfig!.series[idx])) {
-        return true;
+          for (let k = 0; k < dataLength; k++) {
+            const v = currentlyStacking[k];
+            groupTotals![k] += v == null ? 0 : +v;
+          }
+        }
       }
-      idx++;
-    }
-  }
 
-  if (config!.axes && prevConfig!.axes) {
-    idx = 0;
-    for (const axis of config!.axes) {
-      // Comparing axes config, skipping values property as it changes across config builds - probably need to be more clever
-      if (!isEqual(omit(axis, 'values'), omit(prevConfig!.axes[idx], 'values'))) {
-        return true;
+      const acc = Array(dataLength).fill(0);
+
+      for (let j = 0; j < seriesIdxs.length; j++) {
+        let seriesIdx = seriesIdxs[j];
+
+        alignedTotals[seriesIdx] = groupTotals;
+
+        const currentlyStacking = result[seriesIdx];
+
+        for (let k = 0; k < dataLength; k++) {
+          const v = currentlyStacking[k];
+          acc[k] += v == null ? 0 : v / (byPct ? groupTotals![k] : 1);
+        }
+
+        result[seriesIdx] = acc.slice();
       }
-      idx++;
     }
+
+    onStackMeta &&
+      onStackMeta({
+        totals: alignedTotals as AlignedData,
+      });
   }
 
-  return false;
-};
+  return result as AlignedData;
+}
 
-// Dev helpers
-export const throttledLog = throttle((...t: any[]) => {
-  console.log(...t);
-}, 500);
-
-export const pluginLog = (id: string, throttle = false, ...t: any[]) => {
-  if (process.env.NODE_ENV === 'production') {
+export function collectStackingGroups(f: Field, groups: Map<string, number[]>, seriesIdx: number) {
+  const customConfig = f.config.custom;
+  if (!customConfig) {
     return;
   }
-  const fn = throttle ? throttledLog : console.log;
-  fn(`[Plugin: ${id}]: `, ...t);
-};
+  if (
+    customConfig.stacking?.mode !== StackingMode.None &&
+    customConfig.stacking?.group &&
+    !customConfig.hideFrom?.viz
+  ) {
+    if (!groups.has(customConfig.stacking.group)) {
+      groups.set(customConfig.stacking.group, [seriesIdx]);
+    } else {
+      groups.set(customConfig.stacking.group, groups.get(customConfig.stacking.group)!.concat(seriesIdx));
+    }
+  }
+}
+
+/**
+ * Finds y axis midpoind for point at given idx (css pixels relative to uPlot canvas)
+ * @internal
+ **/
+
+export function findMidPointYPosition(u: uPlot, idx: number) {
+  let y;
+  let sMaxIdx = 1;
+  let sMinIdx = 1;
+  // assume min/max being values of 1st series
+  let max = u.data[1][idx];
+  let min = u.data[1][idx];
+
+  // find min max values AND ids of the corresponding series to get the scales
+  for (let i = 1; i < u.data.length; i++) {
+    const sData = u.data[i];
+    const sVal = sData[idx];
+    if (sVal != null) {
+      if (max == null) {
+        max = sVal;
+      } else {
+        if (sVal > max) {
+          max = u.data[i][idx];
+          sMaxIdx = i;
+        }
+      }
+      if (min == null) {
+        min = sVal;
+      } else {
+        if (sVal < min) {
+          min = u.data[i][idx];
+          sMinIdx = i;
+        }
+      }
+    }
+  }
+
+  if (min == null && max == null) {
+    // no tooltip to show
+    y = undefined;
+  } else if (min != null && max != null) {
+    // find median position
+    y = (u.valToPos(min, u.series[sMinIdx].scale!) + u.valToPos(max, u.series[sMaxIdx].scale!)) / 2;
+  } else {
+    // snap tooltip to min OR max point, one of thos is not null :)
+    y = u.valToPos((min || max)!, u.series[(sMaxIdx || sMinIdx)!].scale!);
+  }
+
+  return y;
+}
+
+// Dev helpers
+
+/** @internal */
+export const pluginLogger = createLogger('uPlot');
+export const pluginLog = pluginLogger.logger;
+// pluginLogger.enable();
+attachDebugger('graphng', undefined, pluginLogger);

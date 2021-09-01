@@ -4,6 +4,7 @@ package sqlstore
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"testing"
 	"time"
@@ -324,6 +325,10 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				err := GetAllAlertNotifications(query)
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 4)
+				So(query.Result[0].Name, ShouldEqual, cmd4.Name)
+				So(query.Result[1].Name, ShouldEqual, cmd1.Name)
+				So(query.Result[2].Name, ShouldEqual, cmd3.Name)
+				So(query.Result[3].Name, ShouldEqual, cmd2.Name)
 			})
 		})
 
@@ -384,7 +389,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				err := ss.GetAlertNotificationUidWithId(query)
 				So(query.Result, ShouldEqual, "")
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "Alert notification [ Id: -1, OrgId: 100 ] not found")
+				So(errors.Is(err, models.ErrAlertNotificationFailedTranslateUniqueID), ShouldBeTrue)
 
 				cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
 				result, found := ss.CacheService.Get(cacheKey)

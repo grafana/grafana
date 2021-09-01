@@ -78,6 +78,9 @@ export interface EchoEvent<T extends EchoEventType = any, P = any> {
 export enum EchoEventType {
   Performance = 'performance',
   MetaAnalytics = 'meta-analytics',
+  Sentry = 'sentry',
+  Pageview = 'pageview',
+  Interaction = 'interaction',
 }
 
 /**

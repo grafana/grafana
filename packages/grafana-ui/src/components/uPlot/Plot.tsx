@@ -1,132 +1,140 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { css } from 'emotion';
-import uPlot from 'uplot';
-import { usePrevious } from 'react-use';
-import { buildPlotContext, PlotContext } from './context';
-import { pluginLog, preparePlotData, shouldInitialisePlot } from './utils';
-import { usePlotConfig } from './hooks';
+import React, { createRef, MutableRefObject } from 'react';
+import uPlot, { Options } from 'uplot';
+import { PlotContext, PlotContextType } from './context';
+import { DEFAULT_PLOT_CONFIG, pluginLog } from './utils';
 import { PlotProps } from './types';
 
-// uPlot abstraction responsible for plot initialisation, setup and refresh
-// Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
-// Exposes contexts for plugins registration and uPlot instance access
-export const UPlotChart: React.FC<PlotProps> = props => {
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const [plotInstance, setPlotInstance] = useState<uPlot>();
-  const plotData = useRef<uPlot.AlignedData>();
+function sameDims(prevProps: PlotProps, nextProps: PlotProps) {
+  return nextProps.width === prevProps.width && nextProps.height === prevProps.height;
+}
 
-  // uPlot config API
-  const { currentConfig, addSeries, addAxis, addScale, registerPlugin } = usePlotConfig(
-    props.width,
-    props.height,
-    props.timeZone
-  );
-  const prevConfig = usePrevious(currentConfig);
+function sameData(prevProps: PlotProps, nextProps: PlotProps) {
+  return nextProps.data === prevProps.data;
+}
 
-  const getPlotInstance = useCallback(() => {
-    if (!plotInstance) {
-      throw new Error("Plot hasn't initialised yet");
-    }
+function sameConfig(prevProps: PlotProps, nextProps: PlotProps) {
+  return nextProps.config === prevProps.config;
+}
 
-    return plotInstance;
-  }, [plotInstance]);
-
-  // Callback executed when there was no change in plot config
-  const updateData = useCallback(() => {
-    if (!plotInstance || !plotData.current) {
-      return;
-    }
-    pluginLog('uPlot core', false, 'updating plot data(throttled log!)', plotData.current);
-    // If config hasn't changed just update uPlot's data
-    plotInstance.setData(plotData.current);
-
-    if (props.onDataUpdate) {
-      props.onDataUpdate(plotData.current);
-    }
-  }, [plotInstance, props.onDataUpdate]);
-
-  // Destroys previous plot instance when plot re-initialised
-  useEffect(() => {
-    const currentInstance = plotInstance;
-    return () => {
-      currentInstance?.destroy();
-    };
-  }, [plotInstance]);
-
-  useLayoutEffect(() => {
-    plotData.current = preparePlotData(props.data);
-  }, [props.data]);
-
-  // Decides if plot should update data or re-initialise
-  useLayoutEffect(() => {
-    // Make sure everything is ready before proceeding
-    if (!currentConfig || !plotData.current) {
-      return;
-    }
-
-    // Do nothing if there is data vs series config mismatch. This may happen when the data was updated and made this
-    // effect fire before the config update triggered the effect.
-    if (currentConfig.series.length !== plotData.current.length) {
-      return;
-    }
-
-    if (shouldInitialisePlot(prevConfig, currentConfig)) {
-      if (!canvasRef.current) {
-        throw new Error('Missing Canvas component as a child of the plot.');
-      }
-      const instance = initPlot(plotData.current, currentConfig, canvasRef.current);
-
-      if (props.onPlotInit) {
-        props.onPlotInit();
-      }
-
-      setPlotInstance(instance);
-    } else {
-      updateData();
-    }
-  }, [currentConfig, updateData, setPlotInstance, props.onPlotInit]);
-
-  // When size props changed update plot size synchronously
-  useLayoutEffect(() => {
-    if (plotInstance) {
-      plotInstance.setSize({
-        width: props.width,
-        height: props.height,
-      });
-    }
-  }, [plotInstance, props.width, props.height]);
-
-  // Memoize plot context
-  const plotCtx = useMemo(() => {
-    return buildPlotContext(
-      Boolean(plotInstance),
-      canvasRef,
-      props.data,
-      registerPlugin,
-      addSeries,
-      addAxis,
-      addScale,
-      getPlotInstance
-    );
-  }, [plotInstance, canvasRef, props.data, registerPlugin, addSeries, addAxis, addScale, getPlotInstance]);
+function sameTimeRange(prevProps: PlotProps, nextProps: PlotProps) {
+  let prevTime = prevProps.timeRange;
+  let nextTime = nextProps.timeRange;
 
   return (
-    <PlotContext.Provider value={plotCtx}>
-      <div
-        className={css`
-          position: relative;
-          width: ${props.width}px;
-          height: ${props.height}px;
-        `}
-      >
-        {props.children}
-      </div>
-    </PlotContext.Provider>
+    prevTime === nextTime ||
+    (nextTime.from.valueOf() === prevTime.from.valueOf() && nextTime.to.valueOf() === prevTime.to.valueOf())
   );
+}
+
+type UPlotChartState = {
+  ctx: PlotContextType;
 };
 
-// Main function initialising uPlot. If final config is not settled it will do nothing
-function initPlot(data: uPlot.AlignedData, config: uPlot.Options, ref: HTMLDivElement) {
-  pluginLog('uPlot core', false, 'initialized with', data, config);
-  return new uPlot(config, data, ref);
+/**
+ * @internal
+ * uPlot abstraction responsible for plot initialisation, setup and refresh
+ * Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
+ * Exposes context for uPlot instance access
+ */
+export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
+  plotContainer = createRef<HTMLDivElement>();
+  plotCanvasBBox = createRef<DOMRect>();
+
+  constructor(props: PlotProps) {
+    super(props);
+
+    this.state = {
+      ctx: {
+        plot: null,
+        getCanvasBoundingBox: () => {
+          return this.plotCanvasBBox.current;
+        },
+      },
+    };
+  }
+
+  reinitPlot() {
+    let { ctx } = this.state;
+    let { width, height, plotRef } = this.props;
+
+    ctx.plot?.destroy();
+
+    if (width === 0 && height === 0) {
+      return;
+    }
+
+    this.props.config.addHook('syncRect', (u, rect) => {
+      (this.plotCanvasBBox as MutableRefObject<any>).current = rect;
+    });
+
+    this.props.config.addHook('setSize', (u) => {
+      const canvas = u.over;
+      if (!canvas) {
+        return;
+      }
+      (this.plotCanvasBBox as MutableRefObject<any>).current = canvas.getBoundingClientRect();
+    });
+
+    const config: Options = {
+      ...DEFAULT_PLOT_CONFIG,
+      width: this.props.width,
+      height: this.props.height,
+      ms: 1 as 1,
+      ...this.props.config.getConfig(),
+    };
+
+    pluginLog('UPlot', false, 'Reinitializing plot', config);
+    const plot = new uPlot(config, this.props.data, this.plotContainer!.current!);
+
+    if (plotRef) {
+      plotRef(plot);
+    }
+
+    this.setState((s) => ({
+      ...s,
+      ctx: {
+        ...s.ctx,
+        plot,
+      },
+    }));
+  }
+
+  componentDidMount() {
+    this.reinitPlot();
+  }
+
+  componentWillUnmount() {
+    this.state.ctx.plot?.destroy();
+  }
+
+  componentDidUpdate(prevProps: PlotProps) {
+    let { ctx } = this.state;
+
+    if (!sameDims(prevProps, this.props)) {
+      ctx.plot?.setSize({
+        width: this.props.width,
+        height: this.props.height,
+      });
+    } else if (!sameConfig(prevProps, this.props)) {
+      this.reinitPlot();
+    } else if (!sameData(prevProps, this.props)) {
+      ctx.plot?.setData(this.props.data);
+    } else if (!sameTimeRange(prevProps, this.props)) {
+      ctx.plot?.setScale('x', {
+        min: this.props.timeRange.from.valueOf(),
+        max: this.props.timeRange.to.valueOf(),
+      });
+    }
+  }
+
+  render() {
+    return (
+      <PlotContext.Provider value={this.state.ctx}>
+        <div style={{ position: 'relative' }}>
+          <div ref={this.plotContainer} data-testid="uplot-main-div" />
+          {this.props.children}
+        </div>
+      </PlotContext.Provider>
+    );
+  }
 }

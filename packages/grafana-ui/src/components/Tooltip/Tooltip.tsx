@@ -1,5 +1,5 @@
 import React, { createRef, FC } from 'react';
-import * as PopperJS from 'popper.js';
+import { VirtualElement } from '@popperjs/core';
 import { Popover } from './Popover';
 import { PopoverController, UsingPopperProps } from './PopoverController';
 
@@ -13,8 +13,8 @@ export interface PopoverContentProps {
 
 export type PopoverContent = string | React.ReactElement<any> | ((props: PopoverContentProps) => JSX.Element);
 
-export const Tooltip: FC<TooltipProps> = ({ children, theme, ...controllerProps }: TooltipProps) => {
-  const tooltipTriggerRef = createRef<PopperJS.ReferenceObject>();
+export const Tooltip: FC<TooltipProps> = React.memo(({ children, theme, ...controllerProps }: TooltipProps) => {
+  const tooltipTriggerRef = createRef<HTMLElement | VirtualElement>();
   const popperBackgroundClassName = 'popper__background' + (theme ? ' popper__background--' + theme : '');
 
   return (
@@ -29,7 +29,7 @@ export const Tooltip: FC<TooltipProps> = ({ children, theme, ...controllerProps 
         };
         return (
           <>
-            {tooltipTriggerRef.current && (
+            {tooltipTriggerRef.current && controllerProps.content && (
               <Popover
                 {...payloadProps}
                 onMouseEnter={showPopper}
@@ -52,4 +52,6 @@ export const Tooltip: FC<TooltipProps> = ({ children, theme, ...controllerProps 
       }}
     </PopoverController>
   );
-};
+});
+
+Tooltip.displayName = 'Tooltip';

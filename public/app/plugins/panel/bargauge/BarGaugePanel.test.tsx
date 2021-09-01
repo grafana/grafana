@@ -92,11 +92,12 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
       onFieldConfigChange={() => {}}
       onOptionsChange={() => {}}
       onChangeTimeRange={() => {}}
-      replaceVariables={s => s}
+      replaceVariables={(s) => s}
       renderCounter={0}
       width={532}
       transparent={false}
       height={250}
+      eventBus={{} as any}
     />
   );
 }

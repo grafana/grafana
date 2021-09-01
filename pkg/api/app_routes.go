@@ -31,7 +31,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
-	for _, plugin := range plugins.Apps {
+	for _, plugin := range hs.PluginManager.Apps() {
 		for _, route := range plugin.Routes {
 			url := util.JoinURLFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
 			handlers := make([]macaron.Handler, 0)
@@ -47,7 +47,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 				}
 			}
 			handlers = append(handlers, AppPluginRoute(route, plugin.Id, hs))
-			r.Route(url, route.Method, handlers...)
+			r.Handle(route.Method, url, handlers)
 			log.Debugf("Plugins: Adding proxy route %s", url)
 		}
 	}
@@ -59,6 +59,6 @@ func AppPluginRoute(route *plugins.AppPluginRoute, appID string, hs *HTTPServer)
 
 		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg)
 		proxy.Transport = pluginProxyTransport
-		proxy.ServeHTTP(c.Resp, c.Req.Request)
+		proxy.ServeHTTP(c.Resp, c.Req)
 	}
 }

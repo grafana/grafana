@@ -1,5 +1,7 @@
-import { FormEvent, useReducer } from 'react';
+import { FormEvent, useCallback, useReducer } from 'react';
+import { debounce } from 'lodash';
 import { SelectableValue } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { defaultQuery, defaultQueryParams, queryReducer } from '../reducers/searchQueryReducer';
 import {
   ADD_TAG,
@@ -10,48 +12,57 @@ import {
   TOGGLE_SORT,
   TOGGLE_STARRED,
 } from '../reducers/actionTypes';
-import { DashboardQuery, RouteParams, SearchLayout } from '../types';
-import { hasFilters } from '../utils';
+import { DashboardQuery, SearchLayout } from '../types';
+import { hasFilters, parseRouteParams } from '../utils';
 
-export const useSearchQuery = (queryParams: Partial<DashboardQuery>, updateLocation = (args: any) => {}) => {
-  const updateLocationQuery = (query: RouteParams) => updateLocation({ query, partial: true });
-  const initialState = { ...defaultQuery, ...queryParams };
+const updateLocation = debounce((query) => locationService.partial(query), 300);
+
+export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
+  const queryParams = parseRouteParams(locationService.getSearchObject());
+  const initialState = { ...defaultQuery, ...defaults, ...queryParams };
   const [query, dispatch] = useReducer(queryReducer, initialState);
 
   const onQueryChange = (query: string) => {
     dispatch({ type: QUERY_CHANGE, payload: query });
-    updateLocationQuery({ query });
+    updateLocation({ query });
   };
 
   const onTagFilterChange = (tags: string[]) => {
     dispatch({ type: SET_TAGS, payload: tags });
-    updateLocationQuery({ tag: tags });
+    updateLocation({ tag: tags });
   };
 
-  const onTagAdd = (tag: string) => {
-    dispatch({ type: ADD_TAG, payload: tag });
-    updateLocationQuery({ tag: [...query.tag, tag] });
-  };
+  const onTagAdd = useCallback(
+    (tag: string) => {
+      dispatch({ type: ADD_TAG, payload: tag });
+      updateLocation({ tag: [...query.tag, tag] });
+    },
+    [query.tag]
+  );
 
   const onClearFilters = () => {
     dispatch({ type: CLEAR_FILTERS });
-    updateLocationQuery(defaultQueryParams);
+    updateLocation(defaultQueryParams);
   };
 
   const onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
     const starred = (e.target as HTMLInputElement).checked;
     dispatch({ type: TOGGLE_STARRED, payload: starred });
-    updateLocationQuery({ starred: starred || null });
+    updateLocation({ starred: starred || null });
   };
 
   const onSortChange = (sort: SelectableValue | null) => {
     dispatch({ type: TOGGLE_SORT, payload: sort });
-    updateLocationQuery({ sort: sort?.value, layout: SearchLayout.List });
+    updateLocation({ sort: sort?.value, layout: SearchLayout.List });
   };
 
   const onLayoutChange = (layout: SearchLayout) => {
     dispatch({ type: LAYOUT_CHANGE, payload: layout });
-    updateLocationQuery({ layout });
+    if (layout === SearchLayout.Folders) {
+      updateLocation({ layout, sort: null });
+      return;
+    }
+    updateLocation({ layout });
   };
 
   return {

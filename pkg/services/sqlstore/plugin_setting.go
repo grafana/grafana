@@ -3,32 +3,34 @@ package sqlstore
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
-	bus.AddHandler("sql", GetPluginSettings)
 	bus.AddHandler("sql", GetPluginSettingById)
 	bus.AddHandler("sql", UpdatePluginSetting)
 	bus.AddHandler("sql", UpdatePluginSettingVersion)
 }
 
-func GetPluginSettings(query *models.GetPluginSettingsQuery) error {
+func (ss *SQLStore) GetPluginSettings(orgID int64) ([]*models.PluginSettingInfoDTO, error) {
 	sql := `SELECT org_id, plugin_id, enabled, pinned, plugin_version
 					FROM plugin_setting `
 	params := make([]interface{}, 0)
 
-	if query.OrgId != 0 {
+	if orgID != 0 {
 		sql += "WHERE org_id=?"
-		params = append(params, query.OrgId)
+		params = append(params, orgID)
 	}
 
 	sess := x.SQL(sql, params...)
-	query.Result = make([]*models.PluginSettingInfoDTO, 0)
-	return sess.Find(&query.Result)
+	var rslt []*models.PluginSettingInfoDTO
+	if err := sess.Find(&rslt); err != nil {
+		return nil, err
+	}
+	return rslt, nil
 }
 
 func GetPluginSettingById(query *models.GetPluginSettingByIdQuery) error {
@@ -44,6 +46,8 @@ func GetPluginSettingById(query *models.GetPluginSettingByIdQuery) error {
 }
 
 func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
+	encryptedJsonData := securejsondata.GetEncryptedJsonData(cmd.SecureJsonData)
+
 	return inTransaction(func(sess *DBSession) error {
 		var pluginSetting models.PluginSetting
 
@@ -61,7 +65,7 @@ func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
 				Pinned:         cmd.Pinned,
 				JsonData:       cmd.JsonData,
 				PluginVersion:  cmd.PluginVersion,
-				SecureJsonData: cmd.GetEncryptedJsonData(),
+				SecureJsonData: encryptedJsonData,
 				Created:        time.Now(),
 				Updated:        time.Now(),
 			}
@@ -76,12 +80,8 @@ func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
 			_, err = sess.Insert(&pluginSetting)
 			return err
 		}
-		for key, data := range cmd.SecureJsonData {
-			encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
-			if err != nil {
-				return err
-			}
 
+		for key, encryptedData := range encryptedJsonData {
 			pluginSetting.SecureJsonData[key] = encryptedData
 		}
 

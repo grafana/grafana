@@ -5,21 +5,27 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func init() {
-	registry.RegisterService(&ShortURLService{})
+var getTime = time.Now
+
+func ProvideService(sqlStore *sqlstore.SQLStore) *ShortURLService {
+	return &ShortURLService{
+		SQLStore: sqlStore,
+	}
+}
+
+type Service interface {
+	GetShortURLByUID(ctx context.Context, user *models.SignedInUser, uid string) (*models.ShortUrl, error)
+	CreateShortURL(ctx context.Context, user *models.SignedInUser, path string) (*models.ShortUrl, error)
+	UpdateLastSeenAt(ctx context.Context, shortURL *models.ShortUrl) error
+	DeleteStaleShortURLs(ctx context.Context, cmd *models.DeleteShortUrlCommand) error
 }
 
 type ShortURLService struct {
-	SQLStore *sqlstore.SqlStore `inject:""`
-}
-
-func (s *ShortURLService) Init() error {
-	return nil
+	SQLStore *sqlstore.SQLStore
 }
 
 func (s ShortURLService) GetShortURLByUID(ctx context.Context, user *models.SignedInUser, uid string) (*models.ShortUrl, error) {
@@ -42,6 +48,18 @@ func (s ShortURLService) GetShortURLByUID(ctx context.Context, user *models.Sign
 	return &shortURL, nil
 }
 
+func (s ShortURLService) UpdateLastSeenAt(ctx context.Context, shortURL *models.ShortUrl) error {
+	shortURL.LastSeenAt = getTime().Unix()
+	return s.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		_, err := dbSession.ID(shortURL.Id).Update(shortURL)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 func (s ShortURLService) CreateShortURL(ctx context.Context, user *models.SignedInUser, path string) (*models.ShortUrl, error) {
 	now := time.Now().Unix()
 	shortURL := models.ShortUrl{
@@ -62,3 +80,18 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user *models.Signed
 
 	return &shortURL, nil
 }
+
+func (s ShortURLService) DeleteStaleShortURLs(ctx context.Context, cmd *models.DeleteShortUrlCommand) error {
+	return s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+		var rawSql = "DELETE FROM short_url WHERE created_at <= ? AND (last_seen_at IS NULL OR last_seen_at = 0)"
+
+		if result, err := session.Exec(rawSql, cmd.OlderThan.Unix()); err != nil {
+			return err
+		} else if cmd.NumDeleted, err = result.RowsAffected(); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+var _ Service = &ShortURLService{}

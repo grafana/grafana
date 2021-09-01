@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
-import { ContextMenu, ContextMenuGroup } from '../ContextMenu/ContextMenu';
+import { ContextMenu } from '../ContextMenu/ContextMenu';
 
 interface WithContextMenuProps {
+  /** Menu item trigger that accepts openMenu prop */
   children: (props: { openMenu: React.MouseEventHandler<HTMLElement> }) => JSX.Element;
-  getContextMenuItems: () => ContextMenuGroup[];
+  /** A function that returns an array of menu items */
+  renderMenuItems: () => React.ReactNode;
 }
 
-export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, getContextMenuItems }) => {
+export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, renderMenuItems }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-
   return (
     <>
       {children({
-        openMenu: e => {
+        openMenu: (e) => {
           setIsMenuOpen(true);
           setMenuPosition({
             x: e.pageX,
@@ -27,7 +28,7 @@ export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, getC
           onClose={() => setIsMenuOpen(false)}
           x={menuPosition.x}
           y={menuPosition.y}
-          items={getContextMenuItems()}
+          renderMenuItems={renderMenuItems}
         />
       )}
     </>

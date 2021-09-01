@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import commandExists from 'command-exists';
 import { promises as fs, readFileSync } from 'fs';
 import { prompt } from 'inquirer';
-import kebabCase from 'lodash/kebabCase';
+import { kebabCase } from 'lodash';
 import path from 'path';
 import gitPromise from 'simple-git/promise';
 import { promptConfirm, promptInput } from '../../utils/prompt';
@@ -49,8 +49,8 @@ export const getPluginId = (pluginDetails: PluginDetails) =>
 export const getPluginKeywords = (pluginDetails: PluginDetails) =>
   pluginDetails.keywords
     .split(',')
-    .map(k => k.trim())
-    .filter(k => k !== '');
+    .map((k) => k.trim())
+    .filter((k) => k !== '');
 
 export const verifyGitExists = async () => {
   return new Promise((resolve, reject) => {

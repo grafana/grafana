@@ -1,15 +1,28 @@
 import { configure } from 'enzyme';
-import Adapter from 'enzyme-adapter-react-16';
-import 'jquery';
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import $ from 'jquery';
 import 'mutationobserver-shim';
 
 const global = window as any;
 global.$ = global.jQuery = $;
 
+// https://jestjs.io/docs/manual-mocks#mocking-methods-which-are-not-implemented-in-jsdom
+Object.defineProperty(global, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(), // deprecated
+    removeListener: jest.fn(), // deprecated
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
+
 import '../vendor/flot/jquery.flot';
 import '../vendor/flot/jquery.flot.time';
-import 'angular';
 import angular from 'angular';
 
 angular.module('grafana', ['ngRoute']);
@@ -46,7 +59,7 @@ const localStorageMock = (() => {
 global.localStorage = localStorageMock;
 
 const throwUnhandledRejections = () => {
-  process.on('unhandledRejection', err => {
+  process.on('unhandledRejection', (err) => {
     throw err;
   });
 };

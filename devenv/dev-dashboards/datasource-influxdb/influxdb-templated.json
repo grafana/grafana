@@ -27,7 +27,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-influxdb",
+      "datasource": "gdev-influxdb1-influxql",
       "editable": true,
       "error": false,
       "fill": 2,
@@ -167,7 +167,7 @@
           "text": "America",
           "value": "America"
         },
-        "datasource": "gdev-influxdb",
+        "datasource": "gdev-influxdb1-influxql",
         "definition": "",
         "hide": 0,
         "includeAll": false,
@@ -193,7 +193,7 @@
           "text": "All",
           "value": "$__all"
         },
-        "datasource": "gdev-influxdb",
+        "datasource": "gdev-influxdb1-influxql",
         "definition": "",
         "hide": 0,
         "includeAll": true,

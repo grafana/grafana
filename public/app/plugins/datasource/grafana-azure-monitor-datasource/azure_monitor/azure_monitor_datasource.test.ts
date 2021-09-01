@@ -2,14 +2,12 @@ import AzureMonitorDatasource from '../datasource';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { AzureDataSourceJsonData } from '../types';
+import { AzureDataSourceJsonData, DatasourceValidationResult } from '../types';
 
 const templateSrv = new TemplateSrv();
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  getBackendSrv: () => backendSrv,
   getTemplateSrv: () => templateSrv,
 }));
 
@@ -20,15 +18,13 @@ interface TestContext {
 
 describe('AzureMonitorDatasource', () => {
   const ctx: TestContext = {} as TestContext;
-  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 
   beforeEach(() => {
     jest.clearAllMocks();
     ctx.instanceSettings = ({
       name: 'test',
       url: 'http://azuremonitor.com',
-      jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f' },
-      cloudName: 'azuremonitor',
+      jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f', cloudName: 'azuremonitor' },
     } as unknown) as DataSourceInstanceSettings<AzureDataSourceJsonData>;
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });
@@ -47,39 +43,32 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.instanceSettings.jsonData.tenantId = 'xxx';
-        ctx.instanceSettings.jsonData.clientId = 'xxx';
-        datasourceRequestMock.mockImplementation(() => Promise.reject(error));
+        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockRejectedValue(error);
       });
 
       it('should return error status and a detailed error message', () => {
-        return ctx.ds.testDatasource().then((results: any) => {
-          expect(results.status).toEqual('error');
-          expect(results.message).toEqual(
-            '1. Azure Monitor: Bad Request: InvalidApiVersionParameter. An error message. '
-          );
+        return ctx.ds.azureMonitorDatasource.testDatasource().then((result: DatasourceValidationResult) => {
+          expect(result.status).toEqual('error');
+          expect(result.message).toEqual('Azure Monitor: Bad Request: InvalidApiVersionParameter. An error message.');
         });
       });
     });
 
     describe('and a list of resource groups is returned', () => {
       const response = {
-        data: {
-          value: [{ name: 'grp1' }, { name: 'grp2' }],
-        },
-        status: 200,
-        statusText: 'OK',
+        value: [{ name: 'grp1' }, { name: 'grp2' }],
       };
 
       beforeEach(() => {
         ctx.instanceSettings.jsonData.tenantId = 'xxx';
         ctx.instanceSettings.jsonData.clientId = 'xxx';
-        datasourceRequestMock.mockImplementation(() => Promise.resolve({ data: response, status: 200 }));
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue({ data: response, status: 200 });
       });
 
       it('should return success status', () => {
-        return ctx.ds.testDatasource().then((results: any) => {
-          expect(results.status).toEqual('success');
+        return ctx.ds.azureMonitorDatasource.testDatasource().then((result: DatasourceValidationResult) => {
+          expect(result.status).toEqual('success');
         });
       });
     });
@@ -88,213 +77,168 @@ describe('AzureMonitorDatasource', () => {
   describe('When performing metricFindQuery', () => {
     describe('with a subscriptions query', () => {
       const response = {
-        data: {
-          value: [
-            { displayName: 'Primary', subscriptionId: 'sub1' },
-            { displayName: 'Secondary', subscriptionId: 'sub2' },
-          ],
-        },
-        status: 200,
-        statusText: 'OK',
+        value: [
+          { displayName: 'Primary', subscriptionId: 'sub1' },
+          { displayName: 'Secondary', subscriptionId: 'sub2' },
+        ],
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
+        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue(response);
       });
 
-      it('should return a list of subscriptions', () => {
-        return ctx.ds.metricFindQuery('subscriptions()').then((results: Array<{ text: string; value: string }>) => {
-          expect(results.length).toBe(2);
-          expect(results[0].text).toBe('Primary - sub1');
-          expect(results[0].value).toBe('sub1');
-          expect(results[1].text).toBe('Secondary - sub2');
-          expect(results[1].value).toBe('sub2');
-        });
+      it('should return a list of subscriptions', async () => {
+        const results = await ctx.ds.metricFindQuery('subscriptions()');
+        expect(results.length).toBe(2);
+        expect(results[0].text).toBe('Primary');
+        expect(results[0].value).toBe('sub1');
+        expect(results[1].text).toBe('Secondary');
+        expect(results[1].value).toBe('sub2');
       });
     });
 
     describe('with a resource groups query', () => {
       const response = {
-        data: {
-          value: [{ name: 'grp1' }, { name: 'grp2' }],
-        },
-        status: 200,
-        statusText: 'OK',
+        value: [{ name: 'grp1' }, { name: 'grp2' }],
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue(response);
       });
 
-      it('should return a list of resource groups', () => {
-        return ctx.ds.metricFindQuery('ResourceGroups()').then((results: Array<{ text: string; value: string }>) => {
-          expect(results.length).toBe(2);
-          expect(results[0].text).toBe('grp1');
-          expect(results[0].value).toBe('grp1');
-          expect(results[1].text).toBe('grp2');
-          expect(results[1].value).toBe('grp2');
-        });
+      it('should return a list of resource groups', async () => {
+        const results = await ctx.ds.metricFindQuery('ResourceGroups()');
+        expect(results.length).toBe(2);
+        expect(results[0].text).toBe('grp1');
+        expect(results[0].value).toBe('grp1');
+        expect(results[1].text).toBe('grp2');
+        expect(results[1].value).toBe('grp2');
       });
     });
 
     describe('with a resource groups query that specifies a subscription id', () => {
       const response = {
-        data: {
-          value: [{ name: 'grp1' }, { name: 'grp2' }],
-        },
-        status: 200,
-        statusText: 'OK',
+        value: [{ name: 'grp1' }, { name: 'grp2' }],
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          expect(path).toContain('11112222-eeee-4949-9b2d-9106972f9123');
           return Promise.resolve(response);
         });
       });
 
-      it('should return a list of resource groups', () => {
-        return ctx.ds
-          .metricFindQuery('ResourceGroups(11112222-eeee-4949-9b2d-9106972f9123)')
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toBe(2);
-            expect(results[0].text).toBe('grp1');
-            expect(results[0].value).toBe('grp1');
-            expect(results[1].text).toBe('grp2');
-            expect(results[1].value).toBe('grp2');
-          });
+      it('should return a list of resource groups', async () => {
+        const results = await ctx.ds.metricFindQuery('ResourceGroups(11112222-eeee-4949-9b2d-9106972f9123)');
+        expect(results.length).toBe(2);
+        expect(results[0].text).toBe('grp1');
+        expect(results[0].value).toBe('grp1');
+        expect(results[1].text).toBe('grp2');
+        expect(results[1].value).toBe('grp2');
       });
     });
 
     describe('with namespaces query', () => {
       const response = {
-        data: {
-          value: [
-            {
-              name: 'test',
-              type: 'Microsoft.Network/networkInterfaces',
-            },
-          ],
-        },
-        status: 200,
-        statusText: 'OK',
+        value: [
+          {
+            name: 'test',
+            type: 'Microsoft.Network/networkInterfaces',
+          },
+        ],
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          const baseUrl =
-            'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
-          expect(options.url).toBe(baseUrl + '/nodesapp/resources?api-version=2018-01-01');
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
+          expect(path).toBe(basePath + '/nodesapp/resources?api-version=2018-01-01');
           return Promise.resolve(response);
         });
       });
 
-      it('should return a list of namespaces', () => {
-        return ctx.ds
-          .metricFindQuery('Namespaces(nodesapp)')
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toEqual(1);
-            expect(results[0].text).toEqual('Microsoft.Network/networkInterfaces');
-            expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
-          });
+      it('should return a list of namespaces', async () => {
+        const results = await ctx.ds.metricFindQuery('Namespaces(nodesapp)');
+        expect(results.length).toEqual(1);
+        expect(results[0].text).toEqual('Network interface');
+        expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
       });
     });
 
     describe('with namespaces query that specifies a subscription id', () => {
       const response = {
-        data: {
-          value: [
-            {
-              name: 'test',
-              type: 'Microsoft.Network/networkInterfaces',
-            },
-          ],
-        },
-        status: 200,
-        statusText: 'OK',
+        value: [
+          {
+            name: 'test',
+            type: 'Microsoft.Network/networkInterfaces',
+          },
+        ],
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          const baseUrl =
-            'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
-          expect(options.url).toBe(baseUrl + '/nodesapp/resources?api-version=2018-01-01');
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          const basePath = 'azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
+          expect(path).toBe(basePath + '/nodesapp/resources?api-version=2018-01-01');
           return Promise.resolve(response);
         });
       });
 
-      it('should return a list of namespaces', () => {
-        return ctx.ds
-          .metricFindQuery('namespaces(11112222-eeee-4949-9b2d-9106972f9123, nodesapp)')
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toEqual(1);
-            expect(results[0].text).toEqual('Microsoft.Network/networkInterfaces');
-            expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
-          });
+      it('should return a list of namespaces', async () => {
+        const results = await ctx.ds.metricFindQuery('namespaces(11112222-eeee-4949-9b2d-9106972f9123, nodesapp)');
+        expect(results.length).toEqual(1);
+        expect(results[0].text).toEqual('Network interface');
+        expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
       });
     });
 
     describe('with resource names query', () => {
       const response = {
-        data: {
-          value: [
-            {
-              name: 'Failure Anomalies - nodeapp',
-              type: 'microsoft.insights/alertrules',
-            },
-            {
-              name: 'nodeapp',
-              type: 'microsoft.insights/components',
-            },
-          ],
-        },
-        status: 200,
-        statusText: 'OK',
+        value: [
+          {
+            name: 'Failure Anomalies - nodeapp',
+            type: 'microsoft.insights/alertrules',
+          },
+          {
+            name: 'nodeapp',
+            type: 'microsoft.insights/components',
+          },
+        ],
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          const baseUrl =
-            'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
-          expect(options.url).toBe(baseUrl + '/nodeapp/resources?api-version=2018-01-01');
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
+          expect(path).toBe(basePath + '/nodeapp/resources?api-version=2018-01-01');
           return Promise.resolve(response);
         });
       });
 
-      it('should return a list of resource names', () => {
-        return ctx.ds
-          .metricFindQuery('resourceNames(nodeapp, microsoft.insights/components )')
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toEqual(1);
-            expect(results[0].text).toEqual('nodeapp');
-            expect(results[0].value).toEqual('nodeapp');
-          });
+      it('should return a list of resource names', async () => {
+        const results = await ctx.ds.metricFindQuery('resourceNames(nodeapp, microsoft.insights/components )');
+        expect(results.length).toEqual(1);
+        expect(results[0].text).toEqual('nodeapp');
+        expect(results[0].value).toEqual('nodeapp');
       });
     });
 
     describe('with resource names query and that specifies a subscription id', () => {
       const response = {
-        data: {
-          value: [
-            {
-              name: 'Failure Anomalies - nodeapp',
-              type: 'microsoft.insights/alertrules',
-            },
-            {
-              name: 'nodeapp',
-              type: 'microsoft.insights/components',
-            },
-          ],
-        },
-        status: 200,
-        statusText: 'OK',
+        value: [
+          {
+            name: 'Failure Anomalies - nodeapp',
+            type: 'microsoft.insights/alertrules',
+          },
+          {
+            name: 'nodeapp',
+            type: 'microsoft.insights/components',
+          },
+        ],
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          const baseUrl =
-            'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
-          expect(options.url).toBe(baseUrl + '/nodeapp/resources?api-version=2018-01-01');
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          const basePath = 'azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
+          expect(path).toBe(basePath + '/nodeapp/resources?api-version=2018-01-01');
           return Promise.resolve(response);
         });
       });
@@ -314,32 +258,27 @@ describe('AzureMonitorDatasource', () => {
 
     describe('with metric names query', () => {
       const response = {
-        data: {
-          value: [
-            {
-              name: {
-                value: 'Percentage CPU',
-                localizedValue: 'Percentage CPU',
-              },
+        value: [
+          {
+            name: {
+              value: 'Percentage CPU',
+              localizedValue: 'Percentage CPU',
             },
-            {
-              name: {
-                value: 'UsedCapacity',
-                localizedValue: 'Used capacity',
-              },
+          },
+          {
+            name: {
+              value: 'UsedCapacity',
+              localizedValue: 'Used capacity',
             },
-          ],
-        },
-        status: 200,
-        statusText: 'OK',
+          },
+        ],
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          const baseUrl =
-            'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
-          expect(options.url).toBe(
-            baseUrl +
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
+          expect(path).toBe(
+            basePath +
               '/nodeapp/providers/microsoft.insights/components/rn/providers/microsoft.insights/' +
               'metricdefinitions?api-version=2018-01-01&metricnamespace=default'
           );
@@ -347,48 +286,42 @@ describe('AzureMonitorDatasource', () => {
         });
       });
 
-      it('should return a list of metric names', () => {
-        return ctx.ds
-          .metricFindQuery('Metricnames(nodeapp, microsoft.insights/components, rn, default)')
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toEqual(2);
-            expect(results[0].text).toEqual('Percentage CPU');
-            expect(results[0].value).toEqual('Percentage CPU');
+      it('should return a list of metric names', async () => {
+        const results = await ctx.ds.metricFindQuery(
+          'Metricnames(nodeapp, microsoft.insights/components, rn, default)'
+        );
+        expect(results.length).toEqual(2);
+        expect(results[0].text).toEqual('Percentage CPU');
+        expect(results[0].value).toEqual('Percentage CPU');
 
-            expect(results[1].text).toEqual('Used capacity');
-            expect(results[1].value).toEqual('UsedCapacity');
-          });
+        expect(results[1].text).toEqual('Used capacity');
+        expect(results[1].value).toEqual('UsedCapacity');
       });
     });
 
     describe('with metric names query and specifies a subscription id', () => {
       const response = {
-        data: {
-          value: [
-            {
-              name: {
-                value: 'Percentage CPU',
-                localizedValue: 'Percentage CPU',
-              },
+        value: [
+          {
+            name: {
+              value: 'Percentage CPU',
+              localizedValue: 'Percentage CPU',
             },
-            {
-              name: {
-                value: 'UsedCapacity',
-                localizedValue: 'Used capacity',
-              },
+          },
+          {
+            name: {
+              value: 'UsedCapacity',
+              localizedValue: 'Used capacity',
             },
-          ],
-        },
-        status: 200,
-        statusText: 'OK',
+          },
+        ],
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          const baseUrl =
-            'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
-          expect(options.url).toBe(
-            baseUrl +
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          const basePath = 'azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
+          expect(path).toBe(
+            basePath +
               '/nodeapp/providers/microsoft.insights/components/rn/providers/microsoft.insights/' +
               'metricdefinitions?api-version=2018-01-01&metricnamespace=default'
           );
@@ -396,156 +329,134 @@ describe('AzureMonitorDatasource', () => {
         });
       });
 
-      it('should return a list of metric names', () => {
-        return ctx.ds
-          .metricFindQuery(
-            'Metricnames(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, microsoft.insights/components, rn, default)'
-          )
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toEqual(2);
-            expect(results[0].text).toEqual('Percentage CPU');
-            expect(results[0].value).toEqual('Percentage CPU');
+      it('should return a list of metric names', async () => {
+        const results = await ctx.ds.metricFindQuery(
+          'Metricnames(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, microsoft.insights/components, rn, default)'
+        );
+        expect(results.length).toEqual(2);
+        expect(results[0].text).toEqual('Percentage CPU');
+        expect(results[0].value).toEqual('Percentage CPU');
 
-            expect(results[1].text).toEqual('Used capacity');
-            expect(results[1].value).toEqual('UsedCapacity');
-          });
+        expect(results[1].text).toEqual('Used capacity');
+        expect(results[1].value).toEqual('UsedCapacity');
       });
     });
 
     describe('with metric namespace query', () => {
       const response = {
-        data: {
-          value: [
-            {
-              name: 'Microsoft.Compute-virtualMachines',
-              properties: {
-                metricNamespaceName: 'Microsoft.Compute/virtualMachines',
-              },
+        value: [
+          {
+            name: 'Microsoft.Compute-virtualMachines',
+            properties: {
+              metricNamespaceName: 'Microsoft.Compute/virtualMachines',
             },
-            {
-              name: 'Telegraf-mem',
-              properties: {
-                metricNamespaceName: 'Telegraf/mem',
-              },
+          },
+          {
+            name: 'Telegraf-mem',
+            properties: {
+              metricNamespaceName: 'Telegraf/mem',
             },
-          ],
-        },
-        status: 200,
-        statusText: 'OK',
+          },
+        ],
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          const baseUrl =
-            'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
-          expect(options.url).toBe(
-            baseUrl +
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
+          expect(path).toBe(
+            basePath +
               '/nodeapp/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview'
           );
           return Promise.resolve(response);
         });
       });
 
-      it('should return a list of metric names', () => {
-        return ctx.ds
-          .metricFindQuery('Metricnamespace(nodeapp, Microsoft.Compute/virtualMachines, rn)')
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toEqual(2);
-            expect(results[0].text).toEqual('Microsoft.Compute-virtualMachines');
-            expect(results[0].value).toEqual('Microsoft.Compute/virtualMachines');
+      it('should return a list of metric names', async () => {
+        const results = await ctx.ds.metricFindQuery('Metricnamespace(nodeapp, Microsoft.Compute/virtualMachines, rn)');
+        expect(results.length).toEqual(2);
+        expect(results[0].text).toEqual('Microsoft.Compute-virtualMachines');
+        expect(results[0].value).toEqual('Microsoft.Compute/virtualMachines');
 
-            expect(results[1].text).toEqual('Telegraf-mem');
-            expect(results[1].value).toEqual('Telegraf/mem');
-          });
+        expect(results[1].text).toEqual('Telegraf-mem');
+        expect(results[1].value).toEqual('Telegraf/mem');
       });
     });
 
     describe('with metric namespace query and specifies a subscription id', () => {
       const response = {
-        data: {
-          value: [
-            {
-              name: 'Microsoft.Compute-virtualMachines',
-              properties: {
-                metricNamespaceName: 'Microsoft.Compute/virtualMachines',
-              },
+        value: [
+          {
+            name: 'Microsoft.Compute-virtualMachines',
+            properties: {
+              metricNamespaceName: 'Microsoft.Compute/virtualMachines',
             },
-            {
-              name: 'Telegraf-mem',
-              properties: {
-                metricNamespaceName: 'Telegraf/mem',
-              },
+          },
+          {
+            name: 'Telegraf-mem',
+            properties: {
+              metricNamespaceName: 'Telegraf/mem',
             },
-          ],
-        },
-        status: 200,
-        statusText: 'OK',
+          },
+        ],
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          const baseUrl =
-            'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
-          expect(options.url).toBe(
-            baseUrl +
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          const basePath = 'azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
+          expect(path).toBe(
+            basePath +
               '/nodeapp/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview'
           );
           return Promise.resolve(response);
         });
       });
 
-      it('should return a list of metric namespaces', () => {
-        return ctx.ds
-          .metricFindQuery(
-            'Metricnamespace(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, Microsoft.Compute/virtualMachines, rn)'
-          )
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toEqual(2);
-            expect(results[0].text).toEqual('Microsoft.Compute-virtualMachines');
-            expect(results[0].value).toEqual('Microsoft.Compute/virtualMachines');
+      it('should return a list of metric namespaces', async () => {
+        const results = await ctx.ds.metricFindQuery(
+          'Metricnamespace(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, Microsoft.Compute/virtualMachines, rn)'
+        );
+        expect(results.length).toEqual(2);
+        expect(results[0].text).toEqual('Microsoft.Compute-virtualMachines');
+        expect(results[0].value).toEqual('Microsoft.Compute/virtualMachines');
 
-            expect(results[1].text).toEqual('Telegraf-mem');
-            expect(results[1].value).toEqual('Telegraf/mem');
-          });
+        expect(results[1].text).toEqual('Telegraf-mem');
+        expect(results[1].value).toEqual('Telegraf/mem');
       });
     });
   });
 
   describe('When performing getSubscriptions', () => {
     const response = {
-      data: {
-        value: [
-          {
-            id: '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572',
-            subscriptionId: '99999999-cccc-bbbb-aaaa-9106972f9572',
-            tenantId: '99999999-aaaa-bbbb-cccc-51c4f982ec48',
-            displayName: 'Primary Subscription',
-            state: 'Enabled',
-            subscriptionPolicies: {
-              locationPlacementId: 'Public_2014-09-01',
-              quotaId: 'PayAsYouGo_2014-09-01',
-              spendingLimit: 'Off',
-            },
-            authorizationSource: 'RoleBased',
+      value: [
+        {
+          id: '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572',
+          subscriptionId: '99999999-cccc-bbbb-aaaa-9106972f9572',
+          tenantId: '99999999-aaaa-bbbb-cccc-51c4f982ec48',
+          displayName: 'Primary Subscription',
+          state: 'Enabled',
+          subscriptionPolicies: {
+            locationPlacementId: 'Public_2014-09-01',
+            quotaId: 'PayAsYouGo_2014-09-01',
+            spendingLimit: 'Off',
           },
-        ],
-        count: {
-          type: 'Total',
-          value: 1,
+          authorizationSource: 'RoleBased',
         },
+      ],
+      count: {
+        type: 'Total',
+        value: 1,
       },
-      status: 200,
-      statusText: 'OK',
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
+      ctx.instanceSettings.jsonData.azureAuthType = 'msi';
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue(response);
     });
 
-    it('should return list of Resource Groups', () => {
+    it('should return list of subscriptions', () => {
       return ctx.ds.getSubscriptions().then((results: Array<{ text: string; value: string }>) => {
         expect(results.length).toEqual(1);
-        expect(results[0].text).toEqual('Primary Subscription - 99999999-cccc-bbbb-aaaa-9106972f9572');
+        expect(results[0].text).toEqual('Primary Subscription');
         expect(results[0].value).toEqual('99999999-cccc-bbbb-aaaa-9106972f9572');
       });
     });
@@ -553,15 +464,11 @@ describe('AzureMonitorDatasource', () => {
 
   describe('When performing getResourceGroups', () => {
     const response = {
-      data: {
-        value: [{ name: 'grp1' }, { name: 'grp2' }],
-      },
-      status: 200,
-      statusText: 'OK',
+      value: [{ name: 'grp1' }, { name: 'grp2' }],
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue(response);
     });
 
     it('should return list of Resource Groups', () => {
@@ -577,41 +484,36 @@ describe('AzureMonitorDatasource', () => {
 
   describe('When performing getMetricDefinitions', () => {
     const response = {
-      data: {
-        value: [
-          {
-            name: 'test',
-            type: 'Microsoft.Network/networkInterfaces',
-          },
-          {
-            location: 'northeurope',
-            name: 'northeur',
-            type: 'Microsoft.Compute/virtualMachines',
-          },
-          {
-            location: 'westcentralus',
-            name: 'us',
-            type: 'Microsoft.Compute/virtualMachines',
-          },
-          {
-            name: 'IHaveNoMetrics',
-            type: 'IShouldBeFilteredOut',
-          },
-          {
-            name: 'storageTest',
-            type: 'Microsoft.Storage/storageAccounts',
-          },
-        ],
-      },
-      status: 200,
-      statusText: 'OK',
+      value: [
+        {
+          name: 'test',
+          type: 'Microsoft.Network/networkInterfaces',
+        },
+        {
+          location: 'northeurope',
+          name: 'northeur',
+          type: 'Microsoft.Compute/virtualMachines',
+        },
+        {
+          location: 'westcentralus',
+          name: 'us',
+          type: 'Microsoft.Compute/virtualMachines',
+        },
+        {
+          name: 'IHaveNoMetrics',
+          type: 'IShouldBeFilteredOut',
+        },
+        {
+          name: 'storageTest',
+          type: 'Microsoft.Storage/storageAccounts',
+        },
+      ],
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        const baseUrl =
-          'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
-        expect(options.url).toBe(baseUrl + '/nodesapp/resources?api-version=2018-01-01');
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
+        expect(path).toBe(basePath + '/nodesapp/resources?api-version=2018-01-01');
         return Promise.resolve(response);
       });
     });
@@ -621,11 +523,11 @@ describe('AzureMonitorDatasource', () => {
         .getMetricDefinitions('9935389e-9122-4ef9-95f9-1513dd24753f', 'nodesapp')
         .then((results: Array<{ text: string; value: string }>) => {
           expect(results.length).toEqual(7);
-          expect(results[0].text).toEqual('Microsoft.Network/networkInterfaces');
+          expect(results[0].text).toEqual('Network interface');
           expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
-          expect(results[1].text).toEqual('Microsoft.Compute/virtualMachines');
+          expect(results[1].text).toEqual('Virtual machine');
           expect(results[1].value).toEqual('Microsoft.Compute/virtualMachines');
-          expect(results[2].text).toEqual('Microsoft.Storage/storageAccounts');
+          expect(results[2].text).toEqual('Storage account');
           expect(results[2].value).toEqual('Microsoft.Storage/storageAccounts');
           expect(results[3].text).toEqual('Microsoft.Storage/storageAccounts/blobServices');
           expect(results[3].value).toEqual('Microsoft.Storage/storageAccounts/blobServices');
@@ -642,27 +544,22 @@ describe('AzureMonitorDatasource', () => {
   describe('When performing getResourceNames', () => {
     describe('and there are no special cases', () => {
       const response = {
-        data: {
-          value: [
-            {
-              name: 'Failure Anomalies - nodeapp',
-              type: 'microsoft.insights/alertrules',
-            },
-            {
-              name: 'nodeapp',
-              type: 'microsoft.insights/components',
-            },
-          ],
-        },
-        status: 200,
-        statusText: 'OK',
+        value: [
+          {
+            name: 'Failure Anomalies - nodeapp',
+            type: 'microsoft.insights/alertrules',
+          },
+          {
+            name: 'nodeapp',
+            type: 'microsoft.insights/components',
+          },
+        ],
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          const baseUrl =
-            'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
-          expect(options.url).toBe(baseUrl + '/nodeapp/resources?api-version=2018-01-01');
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
+          expect(path).toBe(basePath + '/nodeapp/resources?api-version=2018-01-01');
           return Promise.resolve(response);
         });
       });
@@ -680,27 +577,22 @@ describe('AzureMonitorDatasource', () => {
 
     describe('and the metric definition is blobServices', () => {
       const response = {
-        data: {
-          value: [
-            {
-              name: 'Failure Anomalies - nodeapp',
-              type: 'microsoft.insights/alertrules',
-            },
-            {
-              name: 'storagetest',
-              type: 'Microsoft.Storage/storageAccounts',
-            },
-          ],
-        },
-        status: 200,
-        statusText: 'OK',
+        value: [
+          {
+            name: 'Failure Anomalies - nodeapp',
+            type: 'microsoft.insights/alertrules',
+          },
+          {
+            name: 'storagetest',
+            type: 'Microsoft.Storage/storageAccounts',
+          },
+        ],
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          const baseUrl =
-            'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
-          expect(options.url).toBe(baseUrl + '/nodeapp/resources?api-version=2018-01-01');
+        ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
+          expect(path).toBe(basePath + '/nodeapp/resources?api-version=2018-01-01');
           return Promise.resolve(response);
         });
       });
@@ -723,53 +615,48 @@ describe('AzureMonitorDatasource', () => {
 
   describe('When performing getMetricNames', () => {
     const response = {
-      data: {
-        value: [
-          {
-            name: {
-              value: 'UsedCapacity',
-              localizedValue: 'Used capacity',
-            },
-            unit: 'CountPerSecond',
-            primaryAggregationType: 'Total',
-            supportedAggregationTypes: ['None', 'Average', 'Minimum', 'Maximum', 'Total', 'Count'],
-            metricAvailabilities: [
-              { timeGrain: 'PT1H', retention: 'P93D' },
-              { timeGrain: 'PT6H', retention: 'P93D' },
-              { timeGrain: 'PT12H', retention: 'P93D' },
-              { timeGrain: 'P1D', retention: 'P93D' },
-            ],
+      value: [
+        {
+          name: {
+            value: 'UsedCapacity',
+            localizedValue: 'Used capacity',
           },
-          {
-            name: {
-              value: 'FreeCapacity',
-              localizedValue: 'Free capacity',
-            },
-            unit: 'CountPerSecond',
-            primaryAggregationType: 'Average',
-            supportedAggregationTypes: ['None', 'Average'],
-            metricAvailabilities: [
-              { timeGrain: 'PT1H', retention: 'P93D' },
-              { timeGrain: 'PT6H', retention: 'P93D' },
-              { timeGrain: 'PT12H', retention: 'P93D' },
-              { timeGrain: 'P1D', retention: 'P93D' },
-            ],
+          unit: 'CountPerSecond',
+          primaryAggregationType: 'Total',
+          supportedAggregationTypes: ['None', 'Average', 'Minimum', 'Maximum', 'Total', 'Count'],
+          metricAvailabilities: [
+            { timeGrain: 'PT1H', retention: 'P93D' },
+            { timeGrain: 'PT6H', retention: 'P93D' },
+            { timeGrain: 'PT12H', retention: 'P93D' },
+            { timeGrain: 'P1D', retention: 'P93D' },
+          ],
+        },
+        {
+          name: {
+            value: 'FreeCapacity',
+            localizedValue: 'Free capacity',
           },
-        ],
-      },
-      status: 200,
-      statusText: 'OK',
+          unit: 'CountPerSecond',
+          primaryAggregationType: 'Average',
+          supportedAggregationTypes: ['None', 'Average'],
+          metricAvailabilities: [
+            { timeGrain: 'PT1H', retention: 'P93D' },
+            { timeGrain: 'PT6H', retention: 'P93D' },
+            { timeGrain: 'PT12H', retention: 'P93D' },
+            { timeGrain: 'P1D', retention: 'P93D' },
+          ],
+        },
+      ],
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        const baseUrl =
-          'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
         const expected =
-          baseUrl +
+          basePath +
           '/providers/microsoft.insights/components/resource1' +
           '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
-        expect(options.url).toBe(expected);
+        expect(path).toBe(expected);
         return Promise.resolve(response);
       });
     });
@@ -795,53 +682,48 @@ describe('AzureMonitorDatasource', () => {
 
   describe('When performing getMetricMetadata', () => {
     const response = {
-      data: {
-        value: [
-          {
-            name: {
-              value: 'UsedCapacity',
-              localizedValue: 'Used capacity',
-            },
-            unit: 'CountPerSecond',
-            primaryAggregationType: 'Total',
-            supportedAggregationTypes: ['None', 'Average', 'Minimum', 'Maximum', 'Total', 'Count'],
-            metricAvailabilities: [
-              { timeGrain: 'PT1H', retention: 'P93D' },
-              { timeGrain: 'PT6H', retention: 'P93D' },
-              { timeGrain: 'PT12H', retention: 'P93D' },
-              { timeGrain: 'P1D', retention: 'P93D' },
-            ],
+      value: [
+        {
+          name: {
+            value: 'UsedCapacity',
+            localizedValue: 'Used capacity',
           },
-          {
-            name: {
-              value: 'FreeCapacity',
-              localizedValue: 'Free capacity',
-            },
-            unit: 'CountPerSecond',
-            primaryAggregationType: 'Average',
-            supportedAggregationTypes: ['None', 'Average'],
-            metricAvailabilities: [
-              { timeGrain: 'PT1H', retention: 'P93D' },
-              { timeGrain: 'PT6H', retention: 'P93D' },
-              { timeGrain: 'PT12H', retention: 'P93D' },
-              { timeGrain: 'P1D', retention: 'P93D' },
-            ],
+          unit: 'CountPerSecond',
+          primaryAggregationType: 'Total',
+          supportedAggregationTypes: ['None', 'Average', 'Minimum', 'Maximum', 'Total', 'Count'],
+          metricAvailabilities: [
+            { timeGrain: 'PT1H', retention: 'P93D' },
+            { timeGrain: 'PT6H', retention: 'P93D' },
+            { timeGrain: 'PT12H', retention: 'P93D' },
+            { timeGrain: 'P1D', retention: 'P93D' },
+          ],
+        },
+        {
+          name: {
+            value: 'FreeCapacity',
+            localizedValue: 'Free capacity',
           },
-        ],
-      },
-      status: 200,
-      statusText: 'OK',
+          unit: 'CountPerSecond',
+          primaryAggregationType: 'Average',
+          supportedAggregationTypes: ['None', 'Average'],
+          metricAvailabilities: [
+            { timeGrain: 'PT1H', retention: 'P93D' },
+            { timeGrain: 'PT6H', retention: 'P93D' },
+            { timeGrain: 'PT12H', retention: 'P93D' },
+            { timeGrain: 'P1D', retention: 'P93D' },
+          ],
+        },
+      ],
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        const baseUrl =
-          'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
         const expected =
-          baseUrl +
+          basePath +
           '/providers/microsoft.insights/components/resource1' +
           '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
-        expect(options.url).toBe(expected);
+        expect(path).toBe(expected);
         return Promise.resolve(response);
       });
     });
@@ -856,66 +738,61 @@ describe('AzureMonitorDatasource', () => {
           'default',
           'UsedCapacity'
         )
-        .then((results: any) => {
+        .then((results) => {
           expect(results.primaryAggType).toEqual('Total');
           expect(results.supportedAggTypes.length).toEqual(6);
-          expect(results.supportedTimeGrains.length).toEqual(4);
+          expect(results.supportedTimeGrains.length).toEqual(5); // 4 time grains from the API + auto
         });
     });
   });
 
   describe('When performing getMetricMetadata on metrics with dimensions', () => {
     const response = {
-      data: {
-        value: [
-          {
-            name: {
-              value: 'Transactions',
-              localizedValue: 'Transactions',
-            },
-            unit: 'Count',
-            primaryAggregationType: 'Total',
-            supportedAggregationTypes: ['None', 'Average', 'Minimum', 'Maximum', 'Total', 'Count'],
-            isDimensionRequired: false,
-            dimensions: [
-              {
-                value: 'ResponseType',
-                localizedValue: 'Response type',
-              },
-              {
-                value: 'GeoType',
-                localizedValue: 'Geo type',
-              },
-              {
-                value: 'ApiName',
-                localizedValue: 'API name',
-              },
-            ],
+      value: [
+        {
+          name: {
+            value: 'Transactions',
+            localizedValue: 'Transactions',
           },
-          {
-            name: {
-              value: 'FreeCapacity',
-              localizedValue: 'Free capacity',
+          unit: 'Count',
+          primaryAggregationType: 'Total',
+          supportedAggregationTypes: ['None', 'Average', 'Minimum', 'Maximum', 'Total', 'Count'],
+          isDimensionRequired: false,
+          dimensions: [
+            {
+              value: 'ResponseType',
+              localizedValue: 'Response type',
             },
-            unit: 'CountPerSecond',
-            primaryAggregationType: 'Average',
-            supportedAggregationTypes: ['None', 'Average'],
+            {
+              value: 'GeoType',
+              localizedValue: 'Geo type',
+            },
+            {
+              value: 'ApiName',
+              localizedValue: 'API name',
+            },
+          ],
+        },
+        {
+          name: {
+            value: 'FreeCapacity',
+            localizedValue: 'Free capacity',
           },
-        ],
-      },
-      status: 200,
-      statusText: 'OK',
+          unit: 'CountPerSecond',
+          primaryAggregationType: 'Average',
+          supportedAggregationTypes: ['None', 'Average'],
+        },
+      ],
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        const baseUrl =
-          'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
         const expected =
-          baseUrl +
+          basePath +
           '/providers/microsoft.insights/components/resource1' +
           '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
-        expect(options.url).toBe(expected);
+        expect(path).toBe(expected);
         return Promise.resolve(response);
       });
     });
@@ -934,15 +811,15 @@ describe('AzureMonitorDatasource', () => {
           expect(results.dimensions).toMatchInlineSnapshot(`
             Array [
               Object {
-                "text": "Response type",
+                "label": "Response type",
                 "value": "ResponseType",
               },
               Object {
-                "text": "Geo type",
+                "label": "Geo type",
                 "value": "GeoType",
               },
               Object {
-                "text": "API name",
+                "label": "API name",
                 "value": "ApiName",
               },
             ]

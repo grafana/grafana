@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, Draft } from '@reduxjs/toolkit';
 import {
   DashboardAclDTO,
   DashboardInitError,
@@ -32,13 +32,13 @@ const dashbardSlice = createSlice({
     loadDashboardPermissions: (state, action: PayloadAction<DashboardAclDTO[]>) => {
       state.permissions = processAclItems(action.payload);
     },
-    dashboardInitFetching: (state, action: PayloadAction) => {
+    dashboardInitFetching: (state) => {
       state.initPhase = DashboardInitPhase.Fetching;
     },
-    dashboardInitServices: (state, action: PayloadAction) => {
+    dashboardInitServices: (state) => {
       state.initPhase = DashboardInitPhase.Services;
     },
-    dashboardInitSlow: (state, action: PayloadAction) => {
+    dashboardInitSlow: (state) => {
       state.isInitSlow = true;
     },
     dashboardInitCompleted: (state, action: PayloadAction<DashboardModel>) => {
@@ -59,41 +59,35 @@ const dashbardSlice = createSlice({
         return new DashboardModel({ title: 'Dashboard init failed' }, { canSave: false, canEdit: false });
       };
     },
-    cleanUpDashboard: (state, action: PayloadAction) => {
-      if (state.getModel()) {
-        state.getModel()!.destroy();
-        state.getModel = () => null;
-      }
-
+    cleanUpDashboard: (state) => {
       state.panels = {};
       state.initPhase = DashboardInitPhase.NotStarted;
       state.isInitSlow = false;
       state.initError = null;
+      state.getModel = () => null;
     },
     setDashboardQueriesToUpdateOnLoad: (state, action: PayloadAction<QueriesToUpdateOnDashboardLoad>) => {
       state.modifiedQueries = action.payload;
     },
-    clearDashboardQueriesToUpdateOnLoad: (state, action: PayloadAction) => {
+    clearDashboardQueriesToUpdateOnLoad: (state) => {
       state.modifiedQueries = null;
     },
-    panelModelAndPluginReady: (state: DashboardState, action: PayloadAction<PanelModelAndPluginReadyPayload>) => {
+    panelModelAndPluginReady: (state, action: PayloadAction<PanelModelAndPluginReadyPayload>) => {
       updatePanelState(state, action.payload.panelId, { plugin: action.payload.plugin });
     },
-    cleanUpEditPanel: (state, action: PayloadAction) => {
-      // TODO: refactor, since the state should be mutated by copying only
+    cleanUpEditPanel: (state) => {
       delete state.panels[EDIT_PANEL_ID];
     },
-    setPanelAngularComponent: (state: DashboardState, action: PayloadAction<SetPanelAngularComponentPayload>) => {
+    setPanelAngularComponent: (state, action: PayloadAction<SetPanelAngularComponentPayload>) => {
       updatePanelState(state, action.payload.panelId, { angularComponent: action.payload.angularComponent });
     },
     addPanel: (state, action: PayloadAction<PanelModel>) => {
-      // TODO: refactor, since the state should be mutated by copying only
       state.panels[action.payload.id] = { pluginId: action.payload.type };
     },
   },
 });
 
-export function updatePanelState(state: DashboardState, panelId: number, ps: Partial<PanelState>) {
+export function updatePanelState(state: Draft<DashboardState>, panelId: number, ps: Partial<PanelState>) {
   if (!state.panels[panelId]) {
     state.panels[panelId] = ps as PanelState;
   } else {

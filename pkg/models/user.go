@@ -7,9 +7,10 @@ import (
 
 // Typed errors
 var (
-	ErrUserNotFound      = errors.New("User not found")
-	ErrUserAlreadyExists = errors.New("User already exists")
-	ErrLastGrafanaAdmin  = errors.New("Cannot remove last grafana admin")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrLastGrafanaAdmin  = errors.New("cannot remove last grafana admin")
+	ErrProtectedUser     = errors.New("cannot adopt protected user")
 )
 
 type Password string
@@ -87,11 +88,6 @@ type ChangeUserPasswordCommand struct {
 	UserId int64 `json:"-"`
 }
 
-type UpdateUserPermissionsCommand struct {
-	IsGrafanaAdmin bool
-	UserId         int64 `json:"-"`
-}
-
 type DisableUserCommand struct {
 	UserId     int64
 	IsDisabled bool
@@ -142,12 +138,17 @@ type GetUserProfileQuery struct {
 	Result UserProfileDTO
 }
 
+type SearchUsersFilter string
+
+const ActiveLast30Days SearchUsersFilter = "activeLast30Days"
+
 type SearchUsersQuery struct {
 	OrgId      int64
 	Query      string
 	Page       int
 	Limit      int
 	AuthModule string
+	Filter     SearchUsersFilter
 
 	IsDisabled *bool
 
@@ -200,20 +201,28 @@ func (u *SignedInUser) NameOrFallback() string {
 	return u.Email
 }
 
+func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
+	return &UserDisplayDTO{
+		Id:    u.UserId,
+		Login: u.Login,
+		Name:  u.Name,
+	}
+}
+
 type UpdateUserLastSeenAtCommand struct {
 	UserId int64
 }
 
-func (user *SignedInUser) HasRole(role RoleType) bool {
-	if user.IsGrafanaAdmin {
+func (u *SignedInUser) HasRole(role RoleType) bool {
+	if u.IsGrafanaAdmin {
 		return true
 	}
 
-	return user.OrgRole.Includes(role)
+	return u.OrgRole.Includes(role)
 }
 
-func (user *SignedInUser) IsRealUser() bool {
-	return user.UserId != 0
+func (u *SignedInUser) IsRealUser() bool {
+	return u.UserId != 0
 }
 
 type UserProfileDTO struct {
@@ -244,6 +253,13 @@ type UserSearchHitDTO struct {
 	LastSeenAtAge string               `json:"lastSeenAtAge"`
 	AuthLabels    []string             `json:"authLabels"`
 	AuthModule    AuthModuleConversion `json:"-"`
+}
+
+type UserDisplayDTO struct {
+	Id        int64  `json:"id,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Login     string `json:"login,omitempty"`
+	AvatarUrl string `json:"avatarUrl"`
 }
 
 type UserIdDTO struct {

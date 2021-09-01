@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { concat, filter, find, forEach, indexOf, intersection, isObject, map, without, keys as _keys } from 'lodash';
 import { dateTime } from '@grafana/data';
 
 export default class ResponseParser {
@@ -12,16 +12,13 @@ export default class ResponseParser {
         const xaxis = this.results[i].query.xaxis;
         const yaxises = this.results[i].query.yaxis;
         const spliton = this.results[i].query.spliton;
-        columns = this.results[i].result.data.Tables[0].Columns;
-        const rows = this.results[i].result.data.Tables[0].Rows;
-        data = _.concat(
-          data,
-          this.parseRawQueryResultRow(this.results[i].query, columns, rows, xaxis, yaxises, spliton)
-        );
+        columns = this.results[i].result.Tables[0].Columns;
+        const rows = this.results[i].result.Tables[0].Rows;
+        data = concat(data, this.parseRawQueryResultRow(this.results[i].query, columns, rows, xaxis, yaxises, spliton));
       } else {
-        const value = this.results[i].result.data.value;
+        const value = this.results[i].result.value;
         const alias = this.results[i].query.alias;
-        data = _.concat(data, this.parseQueryResultRow(this.results[i].query, value, alias));
+        data = concat(data, this.parseQueryResultRow(this.results[i].query, value, alias));
       }
     }
     return data;
@@ -29,19 +26,19 @@ export default class ResponseParser {
 
   parseRawQueryResultRow(query: any, columns: any, rows: any, xaxis: string, yaxises: string, spliton: string) {
     const data: any[] = [];
-    const columnsForDropdown = _.map(columns, column => ({ text: column.ColumnName, value: column.ColumnName }));
+    const columnsForDropdown = map(columns, (column) => ({ text: column.ColumnName, value: column.ColumnName }));
 
     const xaxisColumn = columns.findIndex((column: any) => column.ColumnName === xaxis);
     const yaxisesSplit = yaxises.split(',');
     const yaxisColumns: any = {};
-    _.forEach(yaxisesSplit, yaxis => {
+    forEach(yaxisesSplit, (yaxis) => {
       yaxisColumns[yaxis] = columns.findIndex((column: any) => column.ColumnName === yaxis);
     });
     const splitonColumn = columns.findIndex((column: any) => column.ColumnName === spliton);
     const convertTimestamp = xaxis === 'timestamp';
 
-    _.forEach(rows, row => {
-      _.forEach(yaxisColumns, (yaxisColumn, yaxisName) => {
+    forEach(rows, (row) => {
+      forEach(yaxisColumns, (yaxisColumn, yaxisName) => {
         const bucket =
           splitonColumn === -1
             ? ResponseParser.findOrCreateBucket(data, yaxisName)
@@ -113,7 +110,7 @@ export default class ResponseParser {
     let segmentName = '';
     let segmentValue = '';
     for (const prop in segment) {
-      if (_.isObject(segment[prop])) {
+      if (isObject(segment[prop])) {
         metric = prop;
       } else {
         segmentName = prop;
@@ -146,7 +143,7 @@ export default class ResponseParser {
   }
 
   static findOrCreateBucket(data: any[], target: string) {
-    let dataTarget: any = _.find(data, ['target', target]);
+    let dataTarget: any = find(data, ['target', target]);
     if (!dataTarget) {
       dataTarget = { target: target, datapoints: [] };
       data.push(dataTarget);
@@ -156,35 +153,35 @@ export default class ResponseParser {
   }
 
   static hasSegmentsField(obj: any) {
-    const keys = _.keys(obj);
-    return _.indexOf(keys, 'segments') > -1;
+    const keys = _keys(obj);
+    return indexOf(keys, 'segments') > -1;
   }
 
   static getMetricFieldKey(segment: { [x: string]: any }) {
-    const keys = _.keys(segment);
+    const keys = _keys(segment);
 
-    return _.filter(_.without(keys, 'start', 'end'), key => {
-      return _.isObject(segment[key]);
+    return filter(without(keys, 'start', 'end'), (key) => {
+      return isObject(segment[key]);
     })[0];
   }
 
   static getKeyForAggregationField(dataObj: any): string {
-    const keys = _.keys(dataObj);
-    return _.intersection(keys, ['sum', 'avg', 'min', 'max', 'count', 'unique'])[0];
+    const keys = _keys(dataObj);
+    return intersection(keys, ['sum', 'avg', 'min', 'max', 'count', 'unique'])[0];
   }
 
   static dateTimeToEpoch(dateTimeValue: any) {
     return dateTime(dateTimeValue).valueOf();
   }
 
-  static parseMetricNames(result: { data: { metrics: any } }) {
-    const keys = _.keys(result.data.metrics);
+  static parseMetricNames(result: { metrics: any }) {
+    const keys = _keys(result.metrics);
 
     return ResponseParser.toTextValueList(keys);
   }
 
   parseMetadata(metricName: string) {
-    const metric = this.results.data.metrics[metricName];
+    const metric = this.results.metrics[metricName];
 
     if (!metric) {
       throw Error('No data found for metric: ' + metricName);
@@ -206,9 +203,9 @@ export default class ResponseParser {
       Type: 'AppInsights',
       Tables: {},
     };
-    if (this.results && this.results.data && this.results.data.Tables) {
-      for (let i = 0; i < this.results.data.Tables[0].Rows.length; i++) {
-        const column = this.results.data.Tables[0].Rows[i];
+    if (this.results && this.results && this.results.Tables) {
+      for (let i = 0; i < this.results.Tables[0].Rows.length; i++) {
+        const column = this.results.Tables[0].Rows[i];
         const columnTable = column[0];
         const columnName = column[1];
         const columnType = column[2];

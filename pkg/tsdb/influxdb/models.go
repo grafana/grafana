@@ -25,19 +25,15 @@ type Tag struct {
 
 type Select []QueryPart
 
-type InfluxDbSelect struct {
-	Type string
-}
-
 type Response struct {
 	Results []Result
-	Err     error
+	Error   string
 }
 
 type Result struct {
 	Series   []Row
 	Messages []*Message
-	Err      error
+	Error    string
 }
 
 type Message struct {

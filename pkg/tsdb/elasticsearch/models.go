@@ -12,6 +12,7 @@ type Query struct {
 	Metrics    []*MetricAgg `json:"metrics"`
 	Alias      string       `json:"alias"`
 	Interval   string
+	IntervalMs int64
 	RefID      string
 }
 
@@ -43,12 +44,16 @@ var metricAggType = map[string]string{
 	"min":            "Min",
 	"extended_stats": "Extended Stats",
 	"percentiles":    "Percentiles",
+	"top_metrics":    "Top Metrics",
 	"cardinality":    "Unique Count",
 	"moving_avg":     "Moving Average",
+	"moving_fn":      "Moving Function",
 	"cumulative_sum": "Cumulative Sum",
 	"derivative":     "Derivative",
+	"serial_diff":    "Serial Difference",
 	"bucket_script":  "Bucket Script",
 	"raw_document":   "Raw Document",
+	"rate":           "Rate",
 }
 
 var extendedStats = map[string]string{
@@ -64,8 +69,20 @@ var extendedStats = map[string]string{
 
 var pipelineAggType = map[string]string{
 	"moving_avg":     "moving_avg",
+	"moving_fn":      "moving_fn",
 	"cumulative_sum": "cumulative_sum",
 	"derivative":     "derivative",
+	"serial_diff":    "serial_diff",
+	"bucket_script":  "bucket_script",
+}
+
+var scriptableAggType = map[string]string{
+	"avg":            "avg",
+	"sum":            "sum",
+	"max":            "max",
+	"min":            "min",
+	"extended_stats": "extended_stats",
+	"percentiles":    "percentiles",
 	"bucket_script":  "bucket_script",
 }
 
@@ -75,6 +92,13 @@ var pipelineAggWithMultipleBucketPathsType = map[string]string{
 
 func isPipelineAgg(metricType string) bool {
 	if _, ok := pipelineAggType[metricType]; ok {
+		return true
+	}
+	return false
+}
+
+func isMetricAggregationWithInlineScriptSupport(metricType string) bool {
+	if _, ok := scriptableAggType[metricType]; ok {
 		return true
 	}
 	return false

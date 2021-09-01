@@ -1,6 +1,6 @@
 import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
-import { closeCompleted, initialState, PanelEditorState } from './reducers';
-import { initPanelEditor, panelEditorCleanUp } from './actions';
+import { closeEditor, initialState, PanelEditorState } from './reducers';
+import { initPanelEditor, exitPanelEditor } from './actions';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import { DashboardModel, PanelModel } from '../../../state';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
@@ -48,12 +48,12 @@ describe('panelEditor actions', () => {
           getModel: () => dashboard,
         },
       })
-        .givenThunk(panelEditorCleanUp)
+        .givenThunk(exitPanelEditor)
         .whenThunkIsDispatched();
 
       expect(dispatchedActions.length).toBe(2);
-      expect(dispatchedActions[0].type).toBe(cleanUpEditPanel.type);
-      expect(dispatchedActions[1].type).toBe(closeCompleted.type);
+      expect(dispatchedActions[0].type).toBe(closeEditor.type);
+      expect(dispatchedActions[1].type).toBe(cleanUpEditPanel.type);
       expect(sourcePanel.getOptions()).toEqual({ prop: true });
       expect(sourcePanel.id).toEqual(12);
     });
@@ -83,7 +83,7 @@ describe('panelEditor actions', () => {
           getModel: () => dashboard,
         },
       })
-        .givenThunk(panelEditorCleanUp)
+        .givenThunk(exitPanelEditor)
         .whenThunkIsDispatched();
 
       expect(dispatchedActions.length).toBe(3);
@@ -118,7 +118,7 @@ describe('panelEditor actions', () => {
           getModel: () => dashboard,
         },
       })
-        .givenThunk(panelEditorCleanUp)
+        .givenThunk(exitPanelEditor)
         .whenThunkIsDispatched();
 
       expect(dispatchedActions.length).toBe(2);

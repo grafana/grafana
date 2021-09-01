@@ -18,7 +18,7 @@ export const VerifyEmail: FC = () => {
       .then(() => {
         setEmailSent(true);
       })
-      .catch(err => {
+      .catch((err) => {
         const msg = err.data?.message || err;
         appEvents.emit(AppEvents.alertWarning, [msg]);
       });
@@ -44,14 +44,24 @@ export const VerifyEmail: FC = () => {
           <Field
             label="Email"
             description="Enter your email address to get a verification link sent to you"
-            invalid={!!(errors as any).email}
-            error={(errors as any).email?.message}
+            invalid={!!errors.email}
+            error={errors.email?.message}
           >
-            <Input placeholder="Email" name="email" ref={register({ required: true })} />
+            <Input
+              id="email"
+              {...register('email', {
+                required: 'Email is required',
+                pattern: {
+                  value: /^\S+@\S+$/,
+                  message: 'Email is invalid',
+                },
+              })}
+              placeholder="Email"
+            />
           </Field>
           <HorizontalGroup>
             <Button>Send verification email</Button>
-            <LinkButton variant="link" href={getConfig().appSubUrl + '/login'}>
+            <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
               Back to login
             </LinkButton>
           </HorizontalGroup>

@@ -1,33 +1,45 @@
 // Libraries
-import _ from 'lodash';
+import { cloneDeep, defaultsDeep, isArray, isEqual, keys } from 'lodash';
 // Utils
 import { getTemplateSrv } from '@grafana/runtime';
-import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import {
-  AppEvent,
   DataConfigSource,
+  DataFrameDTO,
   DataLink,
+  DataLinkBuiltInVars,
   DataQuery,
-  DataQueryResponseData,
   DataTransformerConfig,
-  eventFactory,
+  EventBusSrv,
   FieldConfigSource,
-  PanelEvents,
   PanelPlugin,
+  PanelPluginDataSupport,
   ScopedVars,
-  ThresholdsConfig,
-  ThresholdsMode,
+  urlUtil,
+  PanelModel as IPanelModel,
+  DatasourceRef,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
-import { PanelQueryRunner } from './PanelQueryRunner';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { CoreEvents } from '../../../types';
-
-export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
-export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
+import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import {
+  PanelOptionsChangedEvent,
+  PanelQueriesChangedEvent,
+  PanelTransformationsChangedEvent,
+  RefreshEvent,
+  RenderEvent,
+} from 'app/types/events';
+import { getTimeSrv } from '../services/TimeSrv';
+import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
+import {
+  filterFieldConfigOverrides,
+  getPanelOptionsWithDefaults,
+  isStandardFieldProp,
+  restoreCustomOverrideRules,
+} from './getPanelOptionsWithDefaults';
+import { QueryGroupOptions } from 'app/types';
+import { PanelModelLibraryPanel } from '../../library-panels/types';
 
 export interface GridPos {
   x: number;
@@ -36,6 +48,8 @@ export interface GridPos {
   h: number;
   static?: boolean;
 }
+
+import { TimeOverrideResult } from '../utils/panel';
 
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
@@ -48,6 +62,9 @@ const notPersistedProperties: { [str: string]: boolean } = {
   queryRunner: true,
   replaceVariables: true,
   editSourceId: true,
+  configRev: true,
+  getDisplayTitle: true,
+  dataSupport: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -89,6 +106,10 @@ const mustKeepProps: { [str: string]: boolean } = {
   editSourceId: true,
   maxDataPoints: true,
   interval: true,
+  replaceVariables: true,
+  libraryPanel: true,
+  getDisplayTitle: true,
+  configRev: true,
 };
 
 const defaults: any = {
@@ -97,16 +118,21 @@ const defaults: any = {
   cachedPluginOptions: {},
   transparent: false,
   options: {},
+  fieldConfig: {
+    defaults: {},
+    overrides: [],
+  },
   datasource: null,
+  title: '',
 };
 
-export class PanelModel implements DataConfigSource {
+export class PanelModel implements DataConfigSource, IPanelModel {
   /* persisted id, used in URL to identify a panel */
-  id: number;
-  editSourceId: number;
-  gridPos: GridPos;
-  type: string;
-  title: string;
+  id!: number;
+  editSourceId?: number;
+  gridPos!: GridPos;
+  type!: string;
+  title!: string;
   alert?: any;
   scopedVars?: ScopedVars;
   repeat?: string;
@@ -118,43 +144,50 @@ export class PanelModel implements DataConfigSource {
   collapsed?: boolean;
 
   panels?: any;
-  targets: DataQuery[];
+  declare targets: DataQuery[];
   transformations?: DataTransformerConfig[];
-  datasource: string | null;
+  datasource: DatasourceRef | null = null;
   thresholds?: any;
   pluginVersion?: string;
 
-  snapshotData?: DataQueryResponseData[];
+  snapshotData?: DataFrameDTO[];
   timeFrom?: any;
   timeShift?: any;
   hideTimeOverride?: any;
-  options: {
+  declare options: {
     [key: string]: any;
   };
-  fieldConfig: FieldConfigSource;
+  declare fieldConfig: FieldConfigSource;
 
-  maxDataPoints?: number;
-  interval?: string;
+  maxDataPoints?: number | null;
+  interval?: string | null;
   description?: string;
   links?: DataLink[];
-  transparent: boolean;
+  declare transparent: boolean;
+
+  libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
 
   // non persisted
-  isViewing: boolean;
-  isEditing: boolean;
-  isInView: boolean;
-
-  hasRefreshed: boolean;
-  events: Emitter;
+  isViewing = false;
+  isEditing = false;
+  isInView = false;
+  configRev = 0; // increments when configs change
+  hasRefreshed?: boolean;
   cacheTimeout?: any;
-  cachedPluginOptions?: any;
+  cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
+
+  /**
+   * The PanelModel event bus only used for internal and legacy angular support.
+   * The EventBus passed to panels is based on the dashboard event model.
+   */
+  events: EventBusSrv;
 
   private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
-    this.events = new Emitter();
+    this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
   }
@@ -188,14 +221,14 @@ export class PanelModel implements DataConfigSource {
     }
 
     // defaults
-    _.defaultsDeep(this, _.cloneDeep(defaults));
+    defaultsDeep(this, cloneDeep(defaults));
 
     // queries must have refId
     this.ensureQueryIds();
   }
 
   ensureQueryIds() {
-    if (this.targets && _.isArray(this.targets)) {
+    if (this.targets && isArray(this.targets)) {
       for (const query of this.targets) {
         if (!query.refId) {
           query.refId = getNextRefIdChar(this.targets);
@@ -208,17 +241,21 @@ export class PanelModel implements DataConfigSource {
     return this.options;
   }
 
-  getFieldConfig() {
-    return this.fieldConfig;
+  get hasChanged(): boolean {
+    return this.configRev > 0;
   }
 
   updateOptions(options: object) {
     this.options = options;
+    this.configRev++;
+    this.events.publish(new PanelOptionsChangedEvent());
     this.render();
   }
 
   updateFieldConfig(config: FieldConfigSource) {
     this.fieldConfig = config;
+    this.configRev++;
+    this.events.publish(new PanelOptionsChangedEvent());
 
     this.resendLastResult();
     this.render();
@@ -232,11 +269,11 @@ export class PanelModel implements DataConfigSource {
         continue;
       }
 
-      if (_.isEqual(this[property], defaults[property])) {
+      if (isEqual(this[property], defaults[property])) {
         continue;
       }
 
-      model[property] = _.cloneDeep(this[property]);
+      model[property] = cloneDeep(this[property]);
     }
 
     if (model.datasource === undefined) {
@@ -253,41 +290,40 @@ export class PanelModel implements DataConfigSource {
   }
 
   updateGridPos(newPos: GridPos) {
-    let sizeChanged = false;
-
-    if (this.gridPos.w !== newPos.w || this.gridPos.h !== newPos.h) {
-      sizeChanged = true;
-    }
-
     this.gridPos.x = newPos.x;
     this.gridPos.y = newPos.y;
     this.gridPos.w = newPos.w;
     this.gridPos.h = newPos.h;
-
-    if (sizeChanged) {
-      this.events.emit(PanelEvents.panelSizeChanged);
-    }
   }
 
-  resizeDone() {
-    this.events.emit(PanelEvents.panelSizeChanged);
+  runAllPanelQueries(dashboardId: number, dashboardTimezone: string, timeData: TimeOverrideResult, width: number) {
+    this.getQueryRunner().run({
+      datasource: this.datasource,
+      queries: this.targets,
+      panelId: this.editSourceId || this.id,
+      dashboardId: dashboardId,
+      timezone: dashboardTimezone,
+      timeRange: timeData.timeRange,
+      timeInfo: timeData.timeInfo,
+      maxDataPoints: this.maxDataPoints || width,
+      minInterval: this.interval,
+      scopedVars: this.scopedVars,
+      cacheTimeout: this.cacheTimeout,
+      transformations: this.transformations,
+    });
   }
 
   refresh() {
     this.hasRefreshed = true;
-    this.events.emit(PanelEvents.refresh);
+    this.events.publish(new RefreshEvent());
   }
 
   render() {
     if (!this.hasRefreshed) {
       this.refresh();
     } else {
-      this.events.emit(PanelEvents.render);
+      this.events.publish(new RenderEvent());
     }
-  }
-
-  initialized() {
-    this.events.emit(PanelEvents.panelInitialized);
   }
 
   private getOptionsToRemember() {
@@ -303,101 +339,126 @@ export class PanelModel implements DataConfigSource {
   }
 
   private restorePanelOptions(pluginId: string) {
-    const prevOptions = this.cachedPluginOptions[pluginId] || {};
+    const prevOptions = this.cachedPluginOptions[pluginId];
 
-    Object.keys(prevOptions).map(property => {
-      (this as any)[property] = prevOptions[property];
-    });
-  }
-
-  private applyPluginOptionDefaults(plugin: PanelPlugin) {
-    if (plugin.angularConfigCtrl) {
+    if (!prevOptions) {
       return;
     }
 
-    this.options = _.mergeWith({}, plugin.defaults, this.options || {}, (objValue: any, srcValue: any): any => {
-      if (_.isArray(srcValue)) {
-        return srcValue;
-      }
+    Object.keys(prevOptions.properties).map((property) => {
+      (this as any)[property] = prevOptions.properties[property];
     });
 
-    this.fieldConfig = applyFieldConfigDefaults(this.fieldConfig, this.plugin!.fieldConfigDefaults);
+    this.fieldConfig = restoreCustomOverrideRules(this.fieldConfig, prevOptions.fieldConfig);
+  }
+
+  applyPluginOptionDefaults(plugin: PanelPlugin, isAfterPluginChange: boolean) {
+    const options = getPanelOptionsWithDefaults({
+      plugin,
+      currentOptions: this.options,
+      currentFieldConfig: this.fieldConfig,
+      isAfterPluginChange: isAfterPluginChange,
+    });
+
+    this.fieldConfig = options.fieldConfig;
+    this.options = options.options;
   }
 
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
+    const version = getPluginVersion(plugin);
 
     if (plugin.onPanelMigration) {
-      const version = getPluginVersion(plugin);
-
       if (version !== this.pluginVersion) {
         this.options = plugin.onPanelMigration(this);
         this.pluginVersion = version;
       }
     }
 
-    this.applyPluginOptionDefaults(plugin);
+    this.applyPluginOptionDefaults(plugin, false);
     this.resendLastResult();
+  }
+
+  clearPropertiesBeforePluginChange() {
+    // remove panel type specific  options
+    for (const key of keys(this)) {
+      if (mustKeepProps[key]) {
+        continue;
+      }
+      delete (this as any)[key];
+    }
+
+    this.options = {};
+
+    // clear custom options
+    this.fieldConfig = {
+      defaults: {
+        ...this.fieldConfig.defaults,
+        custom: {},
+      },
+      // filter out custom overrides
+      overrides: filterFieldConfigOverrides(this.fieldConfig.overrides, isStandardFieldProp),
+    };
   }
 
   changePlugin(newPlugin: PanelPlugin) {
     const pluginId = newPlugin.meta.id;
     const oldOptions: any = this.getOptionsToRemember();
+    const prevFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
     const wasAngular = this.isAngularPlugin();
+    this.cachedPluginOptions[oldPluginId] = {
+      properties: oldOptions,
+      fieldConfig: prevFieldConfig,
+    };
 
-    // remove panel type specific  options
-    for (const key of _.keys(this)) {
-      if (mustKeepProps[key]) {
-        continue;
-      }
-
-      delete (this as any)[key];
-    }
-
-    this.cachedPluginOptions[oldPluginId] = oldOptions;
+    this.clearPropertiesBeforePluginChange();
     this.restorePanelOptions(pluginId);
 
     // Let panel plugins inspect options from previous panel and keep any that it can use
     if (newPlugin.onPanelTypeChanged) {
-      let old: any = {};
-
-      if (wasAngular) {
-        old = { angular: oldOptions };
-      } else if (oldOptions && oldOptions.options) {
-        old = oldOptions.options;
-      }
-      this.options = this.options || {};
-      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, old));
+      const prevOptions = wasAngular ? { angular: oldOptions } : oldOptions.options;
+      Object.assign(this.options, newPlugin.onPanelTypeChanged(this, oldPluginId, prevOptions, prevFieldConfig));
     }
 
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
+    this.configRev++;
 
     // For some reason I need to rebind replace variables here, otherwise the viz repeater does not work
     this.replaceVariables = this.replaceVariables.bind(this);
-    this.applyPluginOptionDefaults(newPlugin);
+    this.applyPluginOptionDefaults(newPlugin, true);
 
     if (newPlugin.onPanelMigration) {
       this.pluginVersion = getPluginVersion(newPlugin);
     }
   }
 
-  updateQueries(queries: DataQuery[]) {
-    this.events.emit(CoreEvents.queryChanged);
-    this.targets = queries;
+  updateQueries(options: QueryGroupOptions) {
+    this.datasource = options.dataSource.default ? null : options.dataSource.name!;
+    this.timeFrom = options.timeRange?.from;
+    this.timeShift = options.timeRange?.shift;
+    this.hideTimeOverride = options.timeRange?.hide;
+    this.interval = options.minInterval;
+    this.maxDataPoints = options.maxDataPoints;
+    this.targets = options.queries;
+    this.configRev++;
+
+    this.events.publish(new PanelQueriesChangedEvent());
   }
 
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
     query.refId = getNextRefIdChar(this.targets);
     this.targets.push(query as DataQuery);
+    this.configRev++;
   }
 
   changeQuery(query: DataQuery, index: number) {
     // ensure refId is maintained
     query.refId = this.targets[index].refId;
+    this.configRev++;
 
     // update query in array
     this.targets = this.targets.map((item, itemIndex) => {
@@ -437,10 +498,13 @@ export class PanelModel implements DataConfigSource {
     return {
       fieldConfig: this.fieldConfig,
       replaceVariables: this.replaceVariables,
-      getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid.bind(getDatasourceSrv()),
       fieldConfigRegistry: this.plugin.fieldConfigRegistry,
-      theme: config.theme,
+      theme: config.theme2,
     };
+  }
+
+  getDataSupport(): PanelPluginDataSupport {
+    return this.plugin?.dataSupport ?? { annotations: false, alertStates: false };
   }
 
   getQueryRunner(): PanelQueryRunner {
@@ -459,7 +523,6 @@ export class PanelModel implements DataConfigSource {
   }
 
   destroy() {
-    this.events.emit(PanelEvents.panelTeardown);
     this.events.removeAllListeners();
 
     if (this.queryRunner) {
@@ -468,16 +531,51 @@ export class PanelModel implements DataConfigSource {
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {
-    this.events.emit(CoreEvents.transformationChanged);
     this.transformations = transformations;
     this.resendLastResult();
+    this.configRev++;
+    this.events.publish(new PanelTransformationsChangedEvent());
   }
 
-  replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
+  setProperty(key: keyof this, value: any) {
+    this[key] = value;
+    this.configRev++;
+
+    // Custom handling of repeat dependent options, handled here as PanelEditor can
+    // update one key at a time right now
+    if (key === 'repeat') {
+      if (this.repeat && !this.repeatDirection) {
+        this.repeatDirection = 'h';
+      } else if (!this.repeat) {
+        delete this.repeatDirection;
+        delete this.maxPerRow;
+      }
+    }
+  }
+
+  replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
     let vars = this.scopedVars;
+
     if (extraVars) {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
+
+    const allVariablesParams = getVariablesUrlParams(vars);
+    const variablesQuery = urlUtil.toUrlParams(allVariablesParams);
+    const timeRangeUrl = urlUtil.toUrlParams(getTimeSrv().timeRangeForUrl());
+
+    vars = {
+      ...vars,
+      [DataLinkBuiltInVars.keepTime]: {
+        text: timeRangeUrl,
+        value: timeRangeUrl,
+      },
+      [DataLinkBuiltInVars.includeVars]: {
+        text: variablesQuery,
+        value: variablesQuery,
+      },
+    };
+
     return getTemplateSrv().replace(value, vars, format);
   }
 
@@ -497,60 +595,20 @@ export class PanelModel implements DataConfigSource {
     return this.editSourceId ?? this.id;
   }
 
-  on<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
-    this.events.on(event, callback);
-  }
-
-  off<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
-    this.events.off(event, callback);
-  }
-}
-
-function applyFieldConfigDefaults(fieldConfig: FieldConfigSource, defaults: FieldConfigSource): FieldConfigSource {
-  const result: FieldConfigSource = {
-    defaults: _.mergeWith(
-      {},
-      defaults.defaults,
-      fieldConfig ? fieldConfig.defaults : {},
-      (objValue: any, srcValue: any): any => {
-        if (_.isArray(srcValue)) {
-          return srcValue;
-        }
-      }
-    ),
-    overrides: fieldConfig?.overrides ?? [],
-  };
-
-  // Thresholds base values are null in JSON but need to be converted to -Infinity
-  if (result.defaults.thresholds) {
-    fixThresholds(result.defaults.thresholds);
-  }
-
-  for (const override of result.overrides) {
-    for (const property of override.properties) {
-      if (property.id === 'thresholds') {
-        fixThresholds(property.value as ThresholdsConfig);
-      }
-    }
-  }
-
-  return result;
-}
-
-function fixThresholds(thresholds: ThresholdsConfig) {
-  if (!thresholds.mode) {
-    thresholds.mode = ThresholdsMode.Absolute;
-  }
-
-  if (!thresholds.steps) {
-    thresholds.steps = [];
-  } else if (thresholds.steps.length) {
-    // First value is always -Infinity
-    // JSON saves it as null
-    thresholds.steps[0].value = -Infinity;
+  /*
+   * This is the title used when displaying the title in the UI so it will include any interpolated variables.
+   * If you need the raw title without interpolation use title property instead.
+   * */
+  getDisplayTitle(): string {
+    return this.replaceVariables(this.title, {}, 'text');
   }
 }
 
 function getPluginVersion(plugin: PanelPlugin): string {
   return plugin && plugin.meta.info.version ? plugin.meta.info.version : config.buildInfo.version;
+}
+
+interface PanelOptionsCache {
+  properties: any;
+  fieldConfig: FieldConfigSource;
 }

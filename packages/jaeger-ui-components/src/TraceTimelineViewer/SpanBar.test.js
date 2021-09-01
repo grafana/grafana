@@ -29,7 +29,8 @@ describe('<SpanBar>', () => {
     hintSide: 'right',
     viewEnd: 1,
     viewStart: 0,
-    getViewedBounds: s => {
+    theme: {},
+    getViewedBounds: (s) => {
       // Log entries
       if (s === 10) {
         return { start: 0.1, end: 0.1 };
@@ -44,7 +45,7 @@ describe('<SpanBar>', () => {
       viewEnd: 0.75,
       color: '#000',
     },
-    tracestartTime: 0,
+    traceStartTime: 0,
     span: {
       logs: [
         {
@@ -79,12 +80,12 @@ describe('<SpanBar>', () => {
       </UIElementsContext.Provider>
     );
     expect(wrapper).toBeDefined();
-    const { onMouseOver, onMouseOut } = wrapper.find('[data-test-id="SpanBar--wrapper"]').props();
+    const { onMouseOver, onMouseLeave } = wrapper.find('[data-test-id="SpanBar--wrapper"]').props();
     const labelElm = wrapper.find('[data-test-id="SpanBar--label"]');
     expect(labelElm.text()).toBe(shortLabel);
     onMouseOver();
     expect(labelElm.text()).toBe(longLabel);
-    onMouseOut();
+    onMouseLeave();
     expect(labelElm.text()).toBe(shortLabel);
   });
 

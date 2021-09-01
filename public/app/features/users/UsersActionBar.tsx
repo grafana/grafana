@@ -4,6 +4,8 @@ import { setUsersSearchQuery } from './state/reducers';
 import { getInviteesCount, getUsersSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { RadioButtonGroup, LinkButton } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
 
 export interface Props {
   searchQuery: string;
@@ -32,30 +34,28 @@ export class UsersActionBar extends PureComponent<Props> {
       { label: 'Users', value: 'users' },
       { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
     ];
+    const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd);
 
     return (
       <div className="page-action-bar">
         <div className="gf-form gf-form--grow">
           <FilterInput
-            labelClassName="gf-form--has-input-icon"
-            inputClassName="gf-form-input width-20"
             value={searchQuery}
             onChange={setUsersSearchQuery}
             placeholder="Search user by login, email or name"
           />
-          {pendingInvitesCount > 0 && (
-            <div style={{ marginLeft: '1rem' }}>
-              <RadioButtonGroup value={showInvites ? 'invites' : 'users'} options={options} onChange={onShowInvites} />
-            </div>
-          )}
-          <div className="page-action-bar__spacer" />
-          {canInvite && <LinkButton href="org/users/invite">Invite</LinkButton>}
-          {externalUserMngLinkUrl && (
-            <LinkButton href={externalUserMngLinkUrl} target="_blank" rel="noopener">
-              {externalUserMngLinkName}
-            </LinkButton>
-          )}
         </div>
+        {pendingInvitesCount > 0 && (
+          <div style={{ marginLeft: '1rem' }}>
+            <RadioButtonGroup value={showInvites ? 'invites' : 'users'} options={options} onChange={onShowInvites} />
+          </div>
+        )}
+        {canInvite && canAddToOrg && <LinkButton href="org/users/invite">Invite</LinkButton>}
+        {externalUserMngLinkUrl && (
+          <LinkButton href={externalUserMngLinkUrl} target="_blank" rel="noopener">
+            {externalUserMngLinkName}
+          </LinkButton>
+        )}
       </div>
     );
   }

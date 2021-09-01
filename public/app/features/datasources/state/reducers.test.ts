@@ -18,9 +18,8 @@ import {
   setIsDefault,
 } from './reducers';
 import { getMockDataSource, getMockDataSources } from '../__mocks__/dataSourcesMocks';
-import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { DataSourceSettingsState, DataSourcesState } from 'app/types';
-import { PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
+import { PluginMeta, PluginMetaInfo, PluginType, LayoutModes } from '@grafana/data';
 import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
 const mockPlugin = () =>
@@ -40,7 +39,7 @@ const mockPlugin = () =>
 describe('dataSourcesReducer', () => {
   describe('when dataSourcesLoaded is dispatched', () => {
     it('then state should be correct', () => {
-      const dataSources = getMockDataSources(0);
+      const dataSources = getMockDataSources(1);
 
       reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)
@@ -164,7 +163,7 @@ describe('dataSourceSettingsReducer', () => {
           plugin: {} as GenericDataSourcePlugin,
         })
         .whenActionIsDispatched(initDataSourceSettingsFailed(new Error('Some error')))
-        .thenStatePredicateShouldEqual(resultingState => {
+        .thenStatePredicateShouldEqual((resultingState) => {
           expect(resultingState.plugin).toEqual(null);
           expect(resultingState.loadError).toEqual('Some error');
           return true;

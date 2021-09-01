@@ -2,9 +2,7 @@
 title = "Troubleshooting"
 description = "Guide to troubleshooting Grafana problems"
 keywords = ["grafana", "troubleshooting", "documentation", "guide"]
-type = "docs"
-[menu.docs]
-weight = 100
+weight = 180
 +++
 
 # Troubleshooting

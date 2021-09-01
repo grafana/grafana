@@ -1,5 +1,14 @@
-let canvas: HTMLCanvasElement | null = null;
-const cache: Record<string, TextMetrics> = {};
+const context = document.createElement('canvas').getContext('2d')!;
+const cache = new Map<string, TextMetrics>();
+const cacheLimit = 500;
+let ctxFontStyle = '';
+
+/**
+ * @internal
+ */
+export function getCanvasContext() {
+  return context;
+}
 
 /**
  * @beta
@@ -7,25 +16,24 @@ const cache: Record<string, TextMetrics> = {};
 export function measureText(text: string, fontSize: number): TextMetrics {
   const fontStyle = `${fontSize}px 'Roboto'`;
   const cacheKey = text + fontStyle;
-  const fromCache = cache[cacheKey];
+  const fromCache = cache.get(cacheKey);
 
   if (fromCache) {
     return fromCache;
   }
 
-  if (canvas === null) {
-    canvas = document.createElement('canvas');
+  if (ctxFontStyle !== fontStyle) {
+    context.font = ctxFontStyle = fontStyle;
   }
 
-  const context = canvas.getContext('2d');
-  if (!context) {
-    throw new Error('Could not create context');
-  }
-
-  context.font = fontStyle;
   const metrics = context.measureText(text);
 
-  cache[cacheKey] = metrics;
+  if (cache.size === cacheLimit) {
+    cache.clear();
+  }
+
+  cache.set(cacheKey, metrics);
+
   return metrics;
 }
 

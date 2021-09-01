@@ -2,15 +2,14 @@
 title = "Image rendering"
 description = ""
 keywords = ["grafana", "image", "rendering", "plugin"]
-type = "docs"
-[menu.docs]
-parent = "features"
-weight = 8
+weight = 300
 +++
 
 # Image rendering
 
-Grafana supports automatic rendering of panels and dashboards as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../alerting/notifications.md" >}}).
+Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../alerting/old-alerting/notifications.md" >}}).
+
+> **Note:** Image rendering of dashboards is not supported at this time.
 
 While an image is being rendered, the PNG image is temporarily written to the file system. When the image is rendered, the PNG image is temporarily written to the `png` folder in the Grafana `data` folder.
 
@@ -32,11 +31,11 @@ Alert notifications can include images, but rendering many images at the same ti
 
 The [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) is a plugin that runs on the backend and handles rendering panels and dashboards as PNG images using headless Chrome.
 
-To install the plugin, refer to the [Grafana Image Renderer Installation instructions](https://grafana.com/grafana/plugins/grafana-image-renderer/installation).
+To install the plugin, refer to the [Grafana Image Renderer Installation instructions](https://grafana.com/grafana/plugins/grafana-image-renderer/?tab=installation).
 
 ## Run in custom Grafana Docker image
 
- We recommend setting up another Docker container for rendering and using remote rendering. Refer to [Remote rendering service]({{< relref "#remote-rendering-service" >}}) for instructions.
+We recommend setting up another Docker container for rendering and using remote rendering. Refer to [Remote rendering service]({{< relref "#remote-rendering-service" >}}) for instructions.
 
 If you still want to install the plugin in the Grafana Docker image, refer to [Build with Grafana Image Renderer plugin pre-installed]({{< relref "../installation/docker/#build-with-grafana-image-renderer-plugin-pre-installed" >}}).
 
@@ -59,9 +58,9 @@ version: '2'
 
 services:
   grafana:
-    image: grafana/grafana:master
+    image: grafana/grafana:main
     ports:
-     - "3000:3000"
+      - '3000:3000'
     environment:
       GF_RENDERING_SERVER_URL: http://renderer:8081/render
       GF_RENDERING_CALLBACK_URL: http://grafana:3000/
@@ -85,24 +84,24 @@ The following example describes how to build and run the remote HTTP rendering s
 1. Clone the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) Git repository.
 1. Install dependencies and build:
 
-    ```bash
-    yarn install --pure-lockfile
-    yarn run build
-    ```
+   ```bash
+   yarn install --pure-lockfile
+   yarn run build
+   ```
 
 1. Run the server:
 
-    ```bash
-    node build/app.js server --port=8081
-    ```
+   ```bash
+   node build/app.js server --port=8081
+   ```
 
 1. Update Grafana configuration:
 
-    ```
-    [rendering]
-    server_url = http://localhost:8081/render
-    callback_url = http://localhost:3000/
-    ```
+   ```
+   [rendering]
+   server_url = http://localhost:8081/render
+   callback_url = http://localhost:3000/
+   ```
 
 1. Restart Grafana.
 
@@ -129,7 +128,7 @@ Rendering failed: Error: Failed to launch chrome!/var/lib/grafana/plugins/grafan
 error while loading shared libraries: libX11.so.6: cannot open shared object file: No such file or directory\n\n\nTROUBLESHOOTING: https://github.com/GoogleChrome/puppeteer/blob/master/docs/troubleshooting.md
 ```
 
-In general you can use the [`ldd`](https://en.wikipedia.org/wiki/Ldd_(Unix)) utility to figure out what shared libraries
+In general you can use the [`ldd`](<https://en.wikipedia.org/wiki/Ldd_(Unix)>) utility to figure out what shared libraries
 are not installed in your system:
 
 ```bash
@@ -151,7 +150,7 @@ ldd chrome-linux/chrome
 On Ubuntu 18.10 the following dependencies have been confirmed as needed for the image rendering to function.
 
 ```bash
-libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrender1 libxtst6 libglib2.0-0 libnss3 libcups2  libdbus-1-3 libxss1 libxrandr2 libgtk-3-0 libgtk-3-0 libasound2
+libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrender1 libxtst6 libglib2.0-0 libnss3 libcups2  libdbus-1-3 libxss1 libxrandr2 libgtk-3-0 libgtk-3-0 libasound2 libxcb-dri3-0 libgbm1
 ```
 
 **Debian:**
@@ -159,13 +158,13 @@ libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 
 On Debian 9 (Stretch) the following dependencies have been confirmed as needed for the image rendering to function.
 
 ```bash
-libx11 libcairo bcairo2 libcairo2 libxtst6 libxcomposite1 libx11-xcb1 libxcursor1 libxdamage1 libnss3 libcups libcups2 libXss libXss1 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0
+libx11 libcairo bcairo2 libcairo2 libxtst6 libxcomposite1 libx11-xcb1 libxcursor1 libxdamage1 libnss3 libcups libcups2 libXss libXss1 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0 libgbm1
 ```
 
 On Debian 10 (Buster) the following dependencies have been confirmed as needed for the image rendering to function.
 
 ```bash
-libxdamage1 libxext6 libxi6 libxtst6 libnss3 libnss3 libcups2 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libpango-1.0-0 libcairo2 libatspi2.0-0 libgtk3.0-cil libgdk3.0-cil libx11-xcb-dev
+libxdamage1 libxext6 libxi6 libxtst6 libnss3 libnss3 libcups2 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libpango-1.0-0 libcairo2 libatspi2.0-0 libgtk3.0-cil libgdk3.0-cil libx11-xcb-dev libgbm1
 ```
 
 **Centos:**
@@ -173,7 +172,7 @@ libxdamage1 libxext6 libxi6 libxtst6 libnss3 libnss3 libcups2 libxss1 libxrandr2
 On a minimal Centos installation, the following dependencies have been confirmed as needed for the image rendering to function:
 
 ```bash
-libXcomposite libXdamage libXtst cups libXScrnSaver pango atk adwaita-cursor-theme adwaita-icon-theme at at-spi2-atk at-spi2-core cairo-gobject colord-libs dconf desktop-file-utils ed emacs-filesystem gdk-pixbuf2 glib-networking gnutls gsettings-desktop-schemas gtk-update-icon-cache gtk3 hicolor-icon-theme jasper-libs json-glib libappindicator-gtk3 libdbusmenu libdbusmenu-gtk3 libepoxy liberation-fonts liberation-narrow-fonts liberation-sans-fonts liberation-serif-fonts libgusb libindicator-gtk3 libmodman libproxy libsoup libwayland-cursor libwayland-egl libxkbcommon m4 mailx nettle patch psmisc redhat-lsb-core redhat-lsb-submod-security rest spax time trousers xdg-utils xkeyboard-config
+libXcomposite libXdamage libXtst cups libXScrnSaver pango atk adwaita-cursor-theme adwaita-icon-theme at at-spi2-atk at-spi2-core cairo-gobject colord-libs dconf desktop-file-utils ed emacs-filesystem gdk-pixbuf2 glib-networking gnutls gsettings-desktop-schemas gtk-update-icon-cache gtk3 hicolor-icon-theme jasper-libs json-glib libappindicator-gtk3 libdbusmenu libdbusmenu-gtk3 libepoxy liberation-fonts liberation-narrow-fonts liberation-sans-fonts liberation-serif-fonts libgusb libindicator-gtk3 libmodman libproxy libsoup libwayland-cursor libwayland-egl libxkbcommon m4 mailx nettle patch psmisc redhat-lsb-core redhat-lsb-submod-security rest spax time trousers xdg-utils xkeyboard-config alsa-lib
 ```
 
 ### Certificate signed by internal certificate authorities
@@ -209,5 +208,5 @@ instead of the pre-packaged version of Chromium.
 To override the path to the Chrome/Chromium executable, set an environment variable and make sure that it's available for the Grafana process. For example:
 
 ```bash
-export GF_RENDERER_PLUGIN_CHROME_BIN="/usr/bin/chromium-browser"
+export GF_PLUGIN_RENDERING_CHROME_BIN="/usr/bin/chromium-browser"
 ```

@@ -22,18 +22,17 @@ type DateFormatIntervals struct {
 	Year   string `json:"year"`
 }
 
-const LocalBrowserTimezone = "browser"
+const localBrowserTimezone = "browser"
 
-func valueAsTimezone(section *ini.Section, keyName string, defaultValue string) (string, error) {
-	timezone := section.Key(keyName).MustString(defaultValue)
-
-	if timezone == LocalBrowserTimezone {
-		return LocalBrowserTimezone, nil
+func valueAsTimezone(section *ini.Section, keyName string) (string, error) {
+	timezone := section.Key(keyName).MustString(localBrowserTimezone)
+	if timezone == localBrowserTimezone {
+		return localBrowserTimezone, nil
 	}
 
 	location, err := time.LoadLocation(timezone)
 	if err != nil {
-		return LocalBrowserTimezone, err
+		return localBrowserTimezone, err
 	}
 
 	return location.String(), nil
@@ -48,9 +47,9 @@ func (cfg *Cfg) readDateFormats() {
 	cfg.DateFormats.Interval.Day = valueAsString(dateFormats, "interval_day", "YYYY-MM-DD")
 	cfg.DateFormats.Interval.Month = valueAsString(dateFormats, "interval_month", "YYYY-MM")
 	cfg.DateFormats.Interval.Year = "YYYY"
-	cfg.DateFormats.UseBrowserLocale = dateFormats.Key("date_format_use_browser_locale").MustBool(false)
+	cfg.DateFormats.UseBrowserLocale = dateFormats.Key("use_browser_locale").MustBool(false)
 
-	timezone, err := valueAsTimezone(dateFormats, "default_timezone", LocalBrowserTimezone)
+	timezone, err := valueAsTimezone(dateFormats, "default_timezone")
 	if err != nil {
 		cfg.Logger.Warn("Unknown timezone as default_timezone", "err", err)
 	}

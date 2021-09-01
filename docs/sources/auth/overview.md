@@ -1,11 +1,6 @@
 +++
 title = "Overview"
 description = "Overview for auth"
-type = "docs"
-[menu.docs]
-name = "Overview"
-identifier = "overview-auth"
-parent = "authentication"
 weight = 1
 +++
 
@@ -15,17 +10,18 @@ Grafana provides many ways to authenticate users. Some authentication integratio
 
 Here is a table showing all supported authentication providers and the features available for them. [Team sync]({{< relref "../enterprise/team-sync.md" >}}) and [active sync]({{< relref "../enterprise/enhanced_ldap.md#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
 
-Provider | Support | Role mapping | Team sync<br> *(Enterprise only)* | Active sync<br> *(Enterprise only)*
--------- | :-----: | :----------: | :-------: | :---------: 
-[Auth Proxy]({{< relref "auth-proxy.md" >}})       | v2.1+ | - | v6.3+ | - 
-[Azure AD OAuth]({{< relref "azuread.md" >}})      | v6.7+ | v6.7+ | v6.7+ | - 
-[Generic OAuth]({{< relref "generic-oauth.md" >}}) | v4.0+ | v6.5+ | - | - 
-[GitHub OAuth]({{< relref "github.md" >}})         | v2.0+ | - | v6.3+ | -
-[GitLab OAuth]({{< relref "gitlab.md" >}})         | v5.3+ | - | v6.4+ | -
-[Google OAuth]({{< relref "google.md" >}})         | v2.0+ | - | - | - 
-[LDAP]({{< relref "ldap.md" >}})                   | v2.1+ | v2.1+ | v5.3+ | v6.3+
-[Okta OAuth]({{< relref "okta.md" >}})             | v7.0+ | v7.0+ | v7.0+ | - 
-[SAML]({{< relref "../enterprise/saml.md" >}}) (Enterprise only)    | v6.3+ | v7.0+ | v7.0+ | - 
+| Provider                                                         | Support | Role mapping | Team sync<br> _(Enterprise only)_ | Active sync<br> _(Enterprise only)_ |
+| ---------------------------------------------------------------- | :-----: | :----------: | :-------------------------------: | :---------------------------------: |
+| [Auth Proxy]({{< relref "auth-proxy.md" >}})                     |  v2.1+  |      -       |               v6.3+               |                  -                  |
+| [Azure AD OAuth]({{< relref "azuread.md" >}})                    |  v6.7+  |    v6.7+     |               v6.7+               |                  -                  |
+| [Generic OAuth]({{< relref "generic-oauth.md" >}})               |  v4.0+  |    v6.5+     |                 -                 |                  -                  |
+| [GitHub OAuth]({{< relref "github.md" >}})                       |  v2.0+  |      -       |               v6.3+               |                  -                  |
+| [GitLab OAuth]({{< relref "gitlab.md" >}})                       |  v5.3+  |      -       |               v6.4+               |                  -                  |
+| [Google OAuth]({{< relref "google.md" >}})                       |  v2.0+  |      -       |                 -                 |                  -                  |
+| [JWT]({{< relref "jwt.md" >}})                                   |  v8.0+  |      -       |                 -                 |                  -                  |
+| [LDAP]({{< relref "ldap.md" >}})                                 |  v2.1+  |    v2.1+     |               v5.3+               |                v6.3+                |
+| [Okta OAuth]({{< relref "okta.md" >}})                           |  v7.0+  |    v7.0+     |               v7.0+               |                  -                  |
+| [SAML]({{< relref "../enterprise/saml.md" >}}) (Enterprise only) |  v6.3+  |    v7.0+     |               v7.0+               |                  -                  |
 
 ## Grafana Auth
 
@@ -40,9 +36,9 @@ provider (listed above). There are also options for allowing self sign up.
 Grafana are using short-lived tokens as a mechanism for verifying authenticated users.
 These short-lived tokens are rotated each `token_rotation_interval_minutes` for an active authenticated user.
 
-An active authenticated user that gets it token rotated will extend the `login_maximum_inactive_lifetime_days` time from "now" that Grafana will remember the user.
-This means that a user can close its browser and come back before `now + login_maximum_inactive_lifetime_days` and still being authenticated.
- This is true as long as the time since user login is less than `login_maximum_lifetime_days`.
+An active authenticated user that gets it token rotated will extend the `login_maximum_inactive_lifetime_duration` time from "now" that Grafana will remember the user.
+This means that a user can close its browser and come back before `now + login_maximum_inactive_lifetime_duration` and still being authenticated.
+This is true as long as the time since user login is less than `login_maximum_lifetime_duration`.
 
 #### Remote logout
 
@@ -61,11 +57,11 @@ login_cookie_name = grafana_session
 
 
 # The maximum lifetime (duration) an authenticated user can be inactive before being required to login at next visit. Default is 7 days (7d). This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month). The lifetime resets at each successful token rotation (token_rotation_interval_minutes).
-login_maximum_inactive_lifetime_duration = 
+login_maximum_inactive_lifetime_duration =
 
 
 # The maximum lifetime (duration) an authenticated user can be logged in since login time before being required to login. Default is 30 days (30d). This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month).
-login_maximum_lifetime_duration = 
+login_maximum_lifetime_duration =
 
 # How often should auth tokens be rotated for authenticated users when being active. The default is each 10 minutes.
 token_rotation_interval_minutes = 10
@@ -132,7 +128,7 @@ For example:  `grafana.example.com/login?disableAutoLogin` or `grafana.example.c
 
 ### Hide sign-out menu
 
-Set the option detailed below to true to hide sign-out menu link. Useful if you use an auth proxy.
+Set the option detailed below to true to hide sign-out menu link. Useful if you use an auth proxy or JWT authentication.
 
 ```bash
 [auth]

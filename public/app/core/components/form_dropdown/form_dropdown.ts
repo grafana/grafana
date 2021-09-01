@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { debounce, find, indexOf, map, isObject, escape, unescape } from 'lodash';
 import coreModule from '../../core_module';
 import { ISCEService } from 'angular';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
@@ -36,7 +36,7 @@ export class FormDropdownCtrl {
   lookupText: boolean;
   placeholder: any;
   startOpen: any;
-  debounce: number;
+  debounce: boolean;
 
   /** @ngInject */
   constructor(private $scope: any, $element: JQLite, private $sce: ISCEService, private templateSrv: any) {
@@ -44,10 +44,15 @@ export class FormDropdownCtrl {
     this.linkElement = $element.find('a').first();
     this.linkMode = true;
     this.cancelBlur = null;
+    this.labelMode = false;
+    this.lookupText = false;
+    this.debounce = false;
 
     // listen to model changes
     $scope.$watch('ctrl.model', this.modelChanged.bind(this));
+  }
 
+  $onInit() {
     if (this.labelMode) {
       this.cssClasses = 'gf-form-label ' + this.cssClass;
     } else {
@@ -70,23 +75,23 @@ export class FormDropdownCtrl {
     // modify typeahead lookup
     // this = typeahead
     const typeahead = this.inputElement.data('typeahead');
-    typeahead.lookup = function() {
+    typeahead.lookup = function () {
       this.query = this.$element.val() || '';
       this.source(this.query, this.process.bind(this));
     };
 
     if (this.debounce) {
-      typeahead.lookup = _.debounce(typeahead.lookup, 500, { leading: true });
+      typeahead.lookup = debounce(typeahead.lookup, 500, { leading: true });
     }
 
-    this.linkElement.keydown(evt => {
+    this.linkElement.keydown((evt) => {
       // trigger typeahead on down arrow or enter key
       if (evt.keyCode === 40 || evt.keyCode === 13) {
         this.linkElement.click();
       }
     });
 
-    this.inputElement.keydown(evt => {
+    this.inputElement.keydown((evt) => {
       if (evt.keyCode === 13) {
         setTimeout(() => {
           this.inputElement.blur();
@@ -110,13 +115,13 @@ export class FormDropdownCtrl {
   }
 
   modelChanged() {
-    if (_.isObject(this.model)) {
+    if (isObject(this.model)) {
       this.updateDisplay((this.model as any).text);
     } else {
       // if we have text use it
       if (this.lookupText) {
         this.getOptionsInternal('').then((options: any) => {
-          const item: any = _.find(options, { value: this.model });
+          const item: any = find(options, { value: this.model });
           this.updateDisplay(item ? item.text : this.model);
         });
       } else {
@@ -130,13 +135,13 @@ export class FormDropdownCtrl {
       this.optionCache = options;
 
       // extract texts
-      const optionTexts = _.map(options, (op: any) => {
-        return _.escape(op.text);
+      const optionTexts = map(options, (op: any) => {
+        return escape(op.text);
       });
 
       // add custom values
       if (this.allowCustom && this.text !== '') {
-        if (_.indexOf(optionTexts, this.text) === -1) {
+        if (indexOf(optionTexts, this.text) === -1) {
           optionTexts.unshift(this.text);
         }
       }
@@ -167,7 +172,7 @@ export class FormDropdownCtrl {
     this.linkMode = true;
     this.inputElement.hide();
     this.linkElement.show();
-    this.updateValue(this.inputElement.val());
+    this.updateValue(this.inputElement.val() as string);
   }
 
   inputBlur() {
@@ -177,24 +182,24 @@ export class FormDropdownCtrl {
   }
 
   updateValue(text: string) {
-    text = _.unescape(text);
+    text = unescape(text);
 
     if (text === '' || this.text === text) {
       return;
     }
 
     this.$scope.$apply(() => {
-      const option: any = _.find(this.optionCache, { text: text });
+      const option: any = find(this.optionCache, { text: text });
 
       if (option) {
-        if (_.isObject(this.model)) {
+        if (isObject(this.model)) {
           this.model = option;
         } else {
           this.model = option.value;
         }
         this.text = option.text;
       } else if (this.allowCustom) {
-        if (_.isObject(this.model)) {
+        if (isObject(this.model)) {
           (this.model as any).text = (this.model as any).value = text;
         } else {
           this.model = text;

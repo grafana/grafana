@@ -2,32 +2,42 @@ import React from 'react';
 import { merge } from 'lodash';
 import { Table } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { number } from '@storybook/addon-knobs';
-import { useTheme } from '../../themes';
+import { Meta, Story } from '@storybook/react';
+import { useTheme2 } from '../../themes';
 import mdx from './Table.mdx';
 import {
-  applyFieldOverrides,
   DataFrame,
   FieldType,
-  GrafanaTheme,
+  GrafanaTheme2,
   MutableDataFrame,
   ThresholdsConfig,
   ThresholdsMode,
   FieldConfig,
+  formattedValueToString,
 } from '@grafana/data';
+import { prepDataForStorybook } from '../../utils/storybook/data';
+import { FooterItem } from './types';
 
 export default {
   title: 'Visualizations/Table',
   component: Table,
   decorators: [withCenteredStory],
   parameters: {
+    controls: {
+      exclude: ['onColumnResize', 'onSortByChange', 'onCellFilterAdded', 'ariaLabel', 'data', 'initialSortBy'],
+    },
     docs: {
       page: mdx,
     },
   },
-};
+  args: {
+    width: 700,
+    height: 500,
+    columnMinWidth: 150,
+  },
+} as Meta;
 
-function buildData(theme: GrafanaTheme, config: Record<string, FieldConfig>): DataFrame {
+function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): DataFrame {
   const data = new MutableDataFrame({
     fields: [
       { name: 'Time', type: FieldType.time, values: [] }, // The time field
@@ -82,16 +92,24 @@ function buildData(theme: GrafanaTheme, config: Record<string, FieldConfig>): Da
     ]);
   }
 
-  return applyFieldOverrides({
-    data: [data],
-    fieldConfig: {
-      overrides: [],
-      defaults: {},
-    },
-    theme,
-    replaceVariables: (value: string) => value,
-    getDataSourceSettingsByUid: (value: string) => ({} as any),
-  })[0];
+  return prepDataForStorybook([data], theme)[0];
+}
+
+function buildFooterData(data: DataFrame): FooterItem[] {
+  const values = data.fields[3].values.toArray();
+  const valueSum = values.reduce((prev, curr) => {
+    return prev + curr;
+  }, 0);
+
+  const valueField = data.fields[3];
+  const displayValue = valueField.display ? valueField.display(valueSum) : valueSum;
+  const val = valueField.display ? formattedValueToString(displayValue) : displayValue;
+
+  const sum = { sum: val };
+  const min = { min: String(5.2) };
+  const valCell = [sum, min];
+
+  return ['Totals', '10', undefined, valCell, '100%'];
 }
 
 const defaultThresholds: ThresholdsConfig = {
@@ -108,21 +126,19 @@ const defaultThresholds: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
 };
 
-export const Simple = () => {
-  const theme = useTheme();
-  const width = number('width', 700, {}, 'Props');
+export const Basic: Story = (args) => {
+  const theme = useTheme2();
   const data = buildData(theme, {});
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <Table data={data} height={500} width={width} />
+      <Table data={data} height={args.height} width={args.width} {...args} />
     </div>
   );
 };
 
-export const BarGaugeCell = () => {
-  const theme = useTheme();
-  const width = number('width', 700, {}, 'Props');
+export const BarGaugeCell: Story = (args) => {
+  const theme = useTheme2();
   const data = buildData(theme, {
     Progress: {
       custom: {
@@ -135,14 +151,13 @@ export const BarGaugeCell = () => {
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <Table data={data} height={500} width={width} />
+      <Table data={data} height={args.height} width={args.width} {...args} />
     </div>
   );
 };
 
-export const ColoredCells = () => {
-  const theme = useTheme();
-  const width = number('width', 750, {}, 'Props');
+export const ColoredCells: Story = (args) => {
+  const theme = useTheme2();
   const data = buildData(theme, {
     Progress: {
       custom: {
@@ -155,7 +170,19 @@ export const ColoredCells = () => {
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <Table data={data} height={500} width={width} />
+      <Table data={data} height={args.height} width={args.width} {...args} />
+    </div>
+  );
+};
+
+export const Footer: Story = (args) => {
+  const theme = useTheme2();
+  const data = buildData(theme, {});
+  const footer = buildFooterData(data);
+
+  return (
+    <div className="panel-container" style={{ width: 'auto', height: 'unset' }}>
+      <Table data={data} height={args.height} width={args.width} footerValues={footer} {...args} />
     </div>
   );
 };

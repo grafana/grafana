@@ -1,15 +1,15 @@
 import React, { useCallback } from 'react';
-import { StatsPicker, Select, LegacyForms } from '@grafana/ui';
+import { LegacyForms, Select, StatsPicker } from '@grafana/ui';
 import {
   DataTransformerID,
   ReducerID,
-  standardTransformers,
-  TransformerRegistyItem,
-  TransformerUIProps,
   SelectableValue,
+  standardTransformers,
+  TransformerRegistryItem,
+  TransformerUIProps,
 } from '@grafana/data';
 
-import { ReduceTransformerOptions, ReduceTransformerMode } from '@grafana/data/src/transformations/transformers/reduce';
+import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
 import { selectors } from '@grafana/e2e-selectors';
 
 // TODO:  Minimal implementation, needs some <3
@@ -49,6 +49,13 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
     });
   }, [onChange, options]);
 
+  const onToggleLabels = useCallback(() => {
+    onChange({
+      ...options,
+      labelsToFields: !options.labelsToFields,
+    });
+  }, [onChange, options]);
+
   return (
     <>
       <div>
@@ -57,10 +64,10 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
             Mode
           </div>
           <Select
+            menuShouldPortal
             options={modes}
-            value={modes.find(v => v.value === options.mode) || modes[0]}
+            value={modes.find((v) => v.value === options.mode) || modes[0]}
             onChange={onSelectMode}
-            menuPlacement="bottom"
             className="flex-grow-1"
           />
         </div>
@@ -75,13 +82,12 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
             placeholder="Choose Stat"
             allowMultiple
             stats={options.reducers || []}
-            onChange={stats => {
+            onChange={(stats) => {
               onChange({
                 ...options,
                 reducers: stats as ReducerID[],
               });
             }}
-            menuPlacement="bottom"
           />
         </div>
       </div>
@@ -97,11 +103,23 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
           </div>
         </div>
       )}
+      {options.mode !== ReduceTransformerMode.ReduceFields && (
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <LegacyForms.Switch
+              label="Labels to fields"
+              labelClass="width-8"
+              checked={!!options.labelsToFields}
+              onChange={onToggleLabels}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 };
 
-export const reduceTransformRegistryItem: TransformerRegistyItem<ReduceTransformerOptions> = {
+export const reduceTransformRegistryItem: TransformerRegistryItem<ReduceTransformerOptions> = {
   id: DataTransformerID.reduce,
   editor: ReduceTransformerEditor,
   transformation: standardTransformers.reduceTransformer,

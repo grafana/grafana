@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import extend from 'lodash/extend';
+import { extend } from 'lodash';
 
 import { PluginDashboard } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
@@ -44,7 +44,7 @@ export class PluginDashboards extends PureComponent<Props, State> {
     const { dashboards } = this.state;
     return this.import(dashboards[index], true).then(() => {
       if (index + 1 < dashboards.length) {
-        return new Promise(resolve => {
+        return new Promise<void>((resolve) => {
           setTimeout(() => {
             this.importNext(index + 1).then(() => {
               resolve();

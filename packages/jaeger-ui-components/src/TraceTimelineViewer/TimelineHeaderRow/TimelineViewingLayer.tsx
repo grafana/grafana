@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as React from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
 import { TNil } from '../../types';
@@ -194,7 +194,7 @@ export default class TimelineViewingLayer extends React.PureComponent<TimelineVi
     this._root = undefined;
   }
 
-  componentWillReceiveProps(nextProps: TimelineViewingLayerProps) {
+  UNSAFE_componentWillReceiveProps(nextProps: TimelineViewingLayerProps) {
     const { boundsInvalidator } = this.props;
     if (boundsInvalidator !== nextProps.boundsInvalidator) {
       this._draggerReframe.resetBounds();

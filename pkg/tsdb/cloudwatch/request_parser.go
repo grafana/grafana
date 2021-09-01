@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"regexp"
 	"sort"
@@ -10,21 +11,26 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // Parses the json queries and returns a requestQuery. The requestQuery has a 1 to 1 mapping to a query editor row
-func (e *cloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery, startTime time.Time, endTime time.Time) (map[string][]*requestQuery, error) {
+func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time) (map[string][]*requestQuery, error) {
 	requestQueries := make(map[string][]*requestQuery)
-	for i, query := range queryContext.Queries {
-		queryType := query.Model.Get("type").MustString()
+	for _, query := range queries {
+		model, err := simplejson.NewJson(query.JSON)
+		if err != nil {
+			return nil, &queryError{err: err, RefID: query.RefID}
+		}
+
+		queryType := model.Get("type").MustString()
 		if queryType != "timeSeriesQuery" && queryType != "" {
 			continue
 		}
 
-		refID := query.RefId
-		query, err := parseRequestQuery(queryContext.Queries[i].Model, refID, startTime, endTime)
+		refID := query.RefID
+		query, err := parseRequestQuery(model, refID, startTime, endTime)
 		if err != nil {
 			return nil, &queryError{err: err, RefID: refID}
 		}
@@ -47,26 +53,23 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	}
 	namespace, err := model.Get("namespace").String()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get namespace: %v", err)
 	}
 	metricName, err := model.Get("metricName").String()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get metricName: %v", err)
 	}
 	dimensions, err := parseDimensions(model)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse dimensions: %v", err)
 	}
-	statistics, err := parseStatistics(model)
-	if err != nil {
-		return nil, err
-	}
+	statistics := parseStatistics(model)
 
 	p := model.Get("period").MustString("")
 	var period int
 	if strings.ToLower(p) == "auto" || p == "" {
 		deltaInSeconds := endTime.Sub(startTime).Seconds()
-		periods := []int{60, 300, 900, 3600, 21600, 86400}
+		periods := getRetainedPeriods(time.Since(startTime))
 		datapoints := int(math.Ceil(deltaInSeconds / 2000))
 		period = periods[len(periods)-1]
 		for _, value := range periods {
@@ -79,12 +82,12 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 		if reNumber.Match([]byte(p)) {
 			period, err = strconv.Atoi(p)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to parse period as integer: %v", err)
 			}
 		} else {
 			d, err := time.ParseDuration(p)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to parse period as duration: %v", err)
 			}
 			period = int(d.Seconds())
 		}
@@ -120,13 +123,26 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	}, nil
 }
 
-func parseStatistics(model *simplejson.Json) ([]string, error) {
+func getRetainedPeriods(timeSince time.Duration) []int {
+	// See https://aws.amazon.com/about-aws/whats-new/2016/11/cloudwatch-extends-metrics-retention-and-new-user-interface/
+	if timeSince > time.Duration(455)*24*time.Hour {
+		return []int{21600, 86400}
+	} else if timeSince > time.Duration(63)*24*time.Hour {
+		return []int{3600, 21600, 86400}
+	} else if timeSince > time.Duration(15)*24*time.Hour {
+		return []int{300, 900, 3600, 21600, 86400}
+	} else {
+		return []int{60, 300, 900, 3600, 21600, 86400}
+	}
+}
+
+func parseStatistics(model *simplejson.Json) []string {
 	var statistics []string
 	for _, s := range model.Get("statistics").MustArray() {
 		statistics = append(statistics, s.(string))
 	}
 
-	return statistics, nil
+	return statistics
 }
 
 func parseDimensions(model *simplejson.Json) (map[string][]string, error) {
@@ -140,7 +156,7 @@ func parseDimensions(model *simplejson.Json) (map[string][]string, error) {
 				parsedDimensions[k] = append(parsedDimensions[k], value.(string))
 			}
 		} else {
-			return nil, errors.New("failed to parse dimensions")
+			return nil, errors.New("unknown type as dimension value")
 		}
 	}
 

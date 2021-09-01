@@ -1,14 +1,14 @@
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
+import { cloneDeep } from 'lodash';
 import {
-  DataSourceSettings,
+  DataQuery,
+  DataSourceApi,
+  DataSourceJsonData,
   DataSourcePlugin,
   DataSourcePluginMeta,
-  DataSourceApi,
-  DataQuery,
-  DataSourceJsonData,
+  DataSourceSettings,
 } from '@grafana/data';
-import { getAngularLoader, AngularComponent } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 
 export type GenericDataSourcePlugin = DataSourcePlugin<DataSourceApi<DataQuery, DataSourceJsonData>>;
 
@@ -20,8 +20,8 @@ export interface Props {
 }
 
 export class PluginSettings extends PureComponent<Props> {
-  element: any;
-  component: AngularComponent;
+  element: HTMLDivElement | null = null;
+  component?: AngularComponent;
   scopeProps: {
     ctrl: { datasourceMeta: DataSourcePluginMeta; current: DataSourceSettings };
     onModelChanged: (dataSource: DataSourceSettings) => void;
@@ -31,7 +31,7 @@ export class PluginSettings extends PureComponent<Props> {
     super(props);
 
     this.scopeProps = {
-      ctrl: { datasourceMeta: props.dataSourceMeta, current: _.cloneDeep(props.dataSource) },
+      ctrl: { datasourceMeta: props.dataSourceMeta, current: cloneDeep(props.dataSource) },
       onModelChanged: this.onModelChanged,
     };
     this.onModelChanged = this.onModelChanged.bind(this);
@@ -46,7 +46,7 @@ export class PluginSettings extends PureComponent<Props> {
 
     if (!plugin.components.ConfigEditor) {
       // React editor is not specified, let's render angular editor
-      // How to apprach this better? Introduce ReactDataSourcePlugin interface and typeguard it here?
+      // How to approach this better? Introduce ReactDataSourcePlugin interface and typeguard it here?
       const loader = getAngularLoader();
       const template = '<plugin-component type="datasource-config-ctrl" />';
 
@@ -57,9 +57,9 @@ export class PluginSettings extends PureComponent<Props> {
   componentDidUpdate(prevProps: Props) {
     const { plugin } = this.props;
     if (!plugin.components.ConfigEditor && this.props.dataSource !== prevProps.dataSource) {
-      this.scopeProps.ctrl.current = _.cloneDeep(this.props.dataSource);
+      this.scopeProps.ctrl.current = cloneDeep(this.props.dataSource);
 
-      this.component.digest();
+      this.component?.digest();
     }
   }
 
@@ -81,7 +81,7 @@ export class PluginSettings extends PureComponent<Props> {
     }
 
     return (
-      <div ref={element => (this.element = element)}>
+      <div ref={(element) => (this.element = element)}>
         {plugin.components.ConfigEditor &&
           React.createElement(plugin.components.ConfigEditor, {
             options: dataSource,

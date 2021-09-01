@@ -1,122 +1,245 @@
+import { from, merge, Observable, of, throwError } from 'rxjs';
+import { map, mergeMap, toArray } from 'rxjs/operators';
 import {
-  dateMath,
-  DateTime,
-  MutableDataFrame,
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  DataQuery,
-  FieldType,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
+  LoadingState,
 } from '@grafana/data';
-import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
-import { Observable, from, of } from 'rxjs';
-import { map } from 'rxjs/operators';
-
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { serializeParams } from 'app/core/utils/fetch';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { identity, pick, pickBy, groupBy } from 'lodash';
+import Prism from 'prismjs';
+import { LokiOptions, LokiQuery } from '../loki/types';
+import { PrometheusDatasource } from '../prometheus/datasource';
+import { PromQuery } from '../prometheus/types';
+import { mapPromMetricsToServiceMap, serviceMapMetrics } from './graphTransform';
+import {
+  transformTrace,
+  transformTraceList,
+  transformFromOTLP as transformFromOTEL,
+  createTableFrameFromSearch,
+} from './resultTransformer';
+import { tokenizer } from './syntax';
+
+// search = Loki search, nativeSearch = Tempo search for backwards compatibility
+export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch';
+
+export interface TempoJsonData extends DataSourceJsonData {
+  tracesToLogs?: TraceToLogsOptions;
+  serviceMap?: {
+    datasourceUid?: string;
+  };
+}
 
 export type TempoQuery = {
   query: string;
+  // Query to find list of traces, e.g., via Loki
+  linkedQuery?: LokiQuery;
+  search: string;
+  queryType: TempoQueryType;
+  serviceName?: string;
+  spanName?: string;
+  minDuration?: string;
+  maxDuration?: string;
+  limit?: number;
 } & DataQuery;
 
-export class TempoDatasource extends DataSourceApi<TempoQuery> {
-  constructor(private instanceSettings: DataSourceInstanceSettings, private readonly timeSrv: TimeSrv = getTimeSrv()) {
-    super(instanceSettings);
-  }
+export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
+  tracesToLogs?: TraceToLogsOptions;
+  serviceMap?: {
+    datasourceUid?: string;
+  };
+  uploadedJson?: string | ArrayBuffer | null = null;
 
-  async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
-    const res = await this._request(url, params, { hideFromInspector: true }).toPromise();
-    return res.data.data;
+  constructor(private instanceSettings: DataSourceInstanceSettings<TempoJsonData>) {
+    super(instanceSettings);
+    this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
+    this.serviceMap = instanceSettings.jsonData.serviceMap;
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
-    // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
-    // traces at one we need to change this.
-    const id = options.targets[0]?.query;
-    if (id) {
-      return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
-        map(response => {
-          return {
-            data: [
-              new MutableDataFrame({
-                fields: [
-                  {
-                    name: 'trace',
-                    type: FieldType.trace,
-                    values: response?.data?.data || [],
-                  },
-                ],
-                meta: {
-                  preferredVisualisationType: 'trace',
-                },
-              }),
-            ],
-          };
-        })
+    const subQueries: Array<Observable<DataQueryResponse>> = [];
+    const filteredTargets = options.targets.filter((target) => !target.hide);
+    const targets: { [type: string]: TempoQuery[] } = groupBy(filteredTargets, (t) => t.queryType || 'traceId');
+
+    // Run search queries on linked datasource
+    if (this.tracesToLogs?.datasourceUid && targets.search?.length > 0) {
+      const dsSrv = getDatasourceSrv();
+      subQueries.push(
+        from(dsSrv.get(this.tracesToLogs.datasourceUid)).pipe(
+          mergeMap((linkedDatasource: DataSourceApi) => {
+            // Wrap linked query into a data request based on original request
+            const linkedRequest: DataQueryRequest = { ...options, targets: targets.search.map((t) => t.linkedQuery!) };
+            // Find trace matchers in derived fields of the linked datasource that's identical to this datasource
+            const settings: DataSourceInstanceSettings<LokiOptions> = (linkedDatasource as any).instanceSettings;
+            const traceLinkMatcher: string[] =
+              settings.jsonData.derivedFields
+                ?.filter((field) => field.datasourceUid === this.uid && field.matcherRegex)
+                .map((field) => field.matcherRegex) || [];
+            if (!traceLinkMatcher || traceLinkMatcher.length === 0) {
+              return throwError(
+                'No Loki datasource configured for search. Set up Derived Fields for traces in a Loki datasource settings and link it to this Tempo datasource.'
+              );
+            } else {
+              return (linkedDatasource.query(linkedRequest) as Observable<DataQueryResponse>).pipe(
+                map((response) =>
+                  response.error ? response : transformTraceList(response, this.uid, this.name, traceLinkMatcher)
+                )
+              );
+            }
+          })
+        )
       );
-    } else {
-      return of({
-        data: [
-          new MutableDataFrame({
-            fields: [
-              {
-                name: 'trace',
-                type: FieldType.trace,
-                values: [],
-              },
-            ],
-            meta: {
-              preferredVisualisationType: 'trace',
-            },
-          }),
-        ],
-      });
     }
+
+    if (targets.nativeSearch?.length) {
+      const searchQuery = this.buildSearchQuery(targets.nativeSearch[0]);
+      subQueries.push(
+        this._request('/api/search', searchQuery).pipe(
+          map((response) => {
+            return {
+              data: [createTableFrameFromSearch(response.data.traces, this.instanceSettings)],
+            };
+          })
+        )
+      );
+    }
+
+    if (targets.upload?.length) {
+      if (this.uploadedJson) {
+        const otelTraceData = JSON.parse(this.uploadedJson as string);
+        if (!otelTraceData.batches) {
+          subQueries.push(of({ error: { message: 'JSON is not valid OpenTelemetry format' }, data: [] }));
+        } else {
+          subQueries.push(of(transformFromOTEL(otelTraceData.batches)));
+        }
+      } else {
+        subQueries.push(of({ data: [], state: LoadingState.Done }));
+      }
+    }
+
+    if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
+      subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid));
+    }
+
+    if (targets.traceId?.length > 0) {
+      const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: targets.traceId };
+      subQueries.push(
+        super.query(traceRequest).pipe(
+          map((response) => {
+            if (response.error) {
+              return response;
+            }
+            return transformTrace(response);
+          })
+        )
+      );
+    }
+
+    return merge(...subQueries);
+  }
+
+  async metadataRequest(url: string, params = {}) {
+    return await this._request(url, params, { method: 'GET', hideFromInspector: true }).toPromise();
+  }
+
+  private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
+    const params = data ? serializeParams(data) : '';
+    const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
+    const req = { ...options, url };
+
+    return getBackendSrv().fetch(req);
   }
 
   async testDatasource(): Promise<any> {
-    try {
-      await this._request(`/api/traces/random`).toPromise();
-    } catch (e) {
-      // As we are not searching for a valid trace here this will definitely fail but we should return 502 if it's
-      // unreachable. 500 should otherwise be from tempo it self but probably makes sense to report them here.
-      if (e?.status >= 500 && e?.status < 600) {
-        throw e;
-      }
-    }
-    return true;
-  }
-
-  getTimeRange(): { start: number; end: number } {
-    const range = this.timeSrv.timeRange();
-    return {
-      start: getTime(range.from, false),
-      end: getTime(range.to, true),
+    const options: BackendSrvRequest = {
+      headers: {},
+      method: 'GET',
+      url: `${this.instanceSettings.url}/api/echo`,
     };
+    const response = await getBackendSrv().fetch<any>(options).toPromise();
+
+    if (response?.ok) {
+      return { status: 'success', message: 'Data source is working' };
+    }
   }
 
   getQueryDisplayText(query: TempoQuery) {
     return query.query;
   }
 
-  private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
-    // Hack for proxying metadata requests
-    const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
-    const params = data ? serializeParams(data) : '';
-    const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
-    const req = {
-      ...options,
-      url,
-    };
+  buildSearchQuery(query: TempoQuery) {
+    const tokens = query.search ? Prism.tokenize(query.search, tokenizer) : [];
 
-    return from(getBackendSrv().datasourceRequest(req));
+    // Build key value pairs
+    let tagsQuery: Array<{ [key: string]: string }> = [];
+    for (let i = 0; i < tokens.length - 1; i++) {
+      const token = tokens[i];
+      const lookupToken = tokens[i + 2];
+
+      // Ensure there is a valid key value pair with accurate types
+      if (
+        typeof token !== 'string' &&
+        token.type === 'key' &&
+        typeof token.content === 'string' &&
+        typeof lookupToken !== 'string' &&
+        lookupToken.type === 'value' &&
+        typeof lookupToken.content === 'string'
+      ) {
+        tagsQuery.push({ [token.content]: lookupToken.content });
+      }
+    }
+
+    let tempoQuery = pick(query, ['minDuration', 'maxDuration', 'limit']);
+    // Remove empty properties
+    tempoQuery = pickBy(tempoQuery, identity);
+    if (query.serviceName) {
+      tagsQuery.push({ ['service.name']: query.serviceName });
+    }
+    if (query.spanName) {
+      tagsQuery.push({ ['name']: query.spanName });
+    }
+    const tagsQueryObject = tagsQuery.reduce((tagQuery, item) => ({ ...tagQuery, ...item }), {});
+    return { ...tagsQueryObject, ...tempoQuery };
   }
 }
 
-function getTime(date: string | DateTime, roundUp: boolean) {
-  if (typeof date === 'string') {
-    date = dateMath.parse(date, roundUp)!;
-  }
-  return date.valueOf() * 1000;
+function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: string) {
+  return from(getDatasourceSrv().get(datasourceUid)).pipe(
+    mergeMap((ds) => {
+      return (ds as PrometheusDatasource).query(request);
+    })
+  );
+}
+
+function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
+  return queryServiceMapPrometheus(makePromServiceMapRequest(request), datasourceUid).pipe(
+    // Just collect all the responses first before processing into node graph data
+    toArray(),
+    map((responses: DataQueryResponse[]) => {
+      return {
+        data: mapPromMetricsToServiceMap(responses, request.range),
+        state: LoadingState.Done,
+      };
+    })
+  );
+}
+
+function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQueryRequest<PromQuery> {
+  return {
+    ...options,
+    targets: serviceMapMetrics.map((metric) => {
+      return {
+        refId: metric,
+        expr: `delta(${metric}[$__range])`,
+        instant: true,
+      };
+    }),
+  };
 }

@@ -1,64 +1,63 @@
 import React, { useEffect } from 'react';
-import { css, cx } from 'emotion';
-import { hot } from 'react-hot-loader';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { NavModel } from '@grafana/data';
-import { Pagination, Tooltip, HorizontalGroup, stylesFactory, LinkButton, Input, Icon } from '@grafana/ui';
-import { StoreState, UserDTO } from '../../types';
+import { css, cx } from '@emotion/css';
+import { connect, ConnectedProps } from 'react-redux';
+import { Pagination, Tooltip, stylesFactory, LinkButton, Icon } from '@grafana/ui';
+import { AccessControlAction, StoreState, UserDTO } from '../../types';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from '../../core/selectors/navModel';
 import { fetchUsers, changeQuery, changePage } from './state/actions';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
+import { contextSrv } from 'app/core/core';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+
+const mapDispatchToProps = {
+  fetchUsers,
+  changeQuery,
+  changePage,
+};
+
+const mapStateToProps = (state: StoreState) => ({
+  navModel: getNavModel(state.navIndex, 'global-users'),
+  users: state.userListAdmin.users,
+  query: state.userListAdmin.query,
+  showPaging: state.userListAdmin.showPaging,
+  totalPages: state.userListAdmin.totalPages,
+  page: state.userListAdmin.page,
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
 interface OwnProps {}
 
-interface ConnectedProps {
-  navModel: NavModel;
-  users: UserDTO[];
-  query: string;
-  showPaging: boolean;
-  totalPages: number;
-  page: number;
-}
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
-interface DispatchProps {
-  fetchUsers: typeof fetchUsers;
-  changeQuery: typeof changeQuery;
-  changePage: typeof changePage;
-}
-
-type Props = OwnProps & ConnectedProps & DispatchProps;
-
-const UserListAdminPageUnConnected: React.FC<Props> = props => {
+const UserListAdminPageUnConnected: React.FC<Props> = (props) => {
   const styles = getStyles();
+  const { fetchUsers, navModel, query, changeQuery, users, showPaging, totalPages, page, changePage } = props;
 
   useEffect(() => {
-    props.fetchUsers();
-  }, []);
+    fetchUsers();
+  }, [fetchUsers]);
 
   return (
-    <Page navModel={props.navModel}>
+    <Page navModel={navModel}>
       <Page.Contents>
         <>
-          <div>
-            <HorizontalGroup justify="space-between">
-              <Input
-                width={40}
-                type="text"
-                placeholder="Search user by login, email or name"
-                tabIndex={1}
+          <div className="page-action-bar">
+            <div className="gf-form gf-form--grow">
+              <FilterInput
+                placeholder="Search user by login, email, or name."
                 autoFocus={true}
-                value={props.query}
-                spellCheck={false}
-                onChange={event => props.changeQuery(event.currentTarget.value)}
-                prefix={<Icon name="search" />}
+                value={query}
+                onChange={(value) => changeQuery(value)}
               />
+            </div>
+            {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
               <LinkButton href="admin/users/create" variant="primary">
                 New user
               </LinkButton>
-            </HorizontalGroup>
+            )}
           </div>
-
           <div className={cx(styles.table, 'admin-list-table')}>
             <table className="filter-table form-inline filter-table--hover">
               <thead>
@@ -77,12 +76,10 @@ const UserListAdminPageUnConnected: React.FC<Props> = props => {
                   <th style={{ width: '1%' }}></th>
                 </tr>
               </thead>
-              <tbody>{props.users.map(renderUser)}</tbody>
+              <tbody>{users.map(renderUser)}</tbody>
             </table>
           </div>
-          {props.showPaging && (
-            <Pagination numberOfPages={props.totalPages} currentPage={props.page} onNavigate={props.changePage} />
-          )}
+          {showPaging && <Pagination numberOfPages={totalPages} currentPage={page} onNavigate={changePage} />}
         </>
       </Page.Contents>
     </Page>
@@ -144,19 +141,4 @@ const getStyles = stylesFactory(() => {
   };
 });
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  fetchUsers,
-  changeQuery,
-  changePage,
-};
-
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  navModel: getNavModel(state.navIndex, 'global-users'),
-  users: state.userListAdmin.users,
-  query: state.userListAdmin.query,
-  showPaging: state.userListAdmin.showPaging,
-  totalPages: state.userListAdmin.totalPages,
-  page: state.userListAdmin.page,
-});
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UserListAdminPageUnConnected));
+export default connector(UserListAdminPageUnConnected);

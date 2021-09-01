@@ -6,32 +6,34 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestNotifications(t *testing.T) {
-	Convey("Given the notifications service", t, func() {
-		setting.StaticRootPath = "../../../public/"
+func TestNotificationService(t *testing.T) {
+	ns := &NotificationService{
+		Cfg: setting.NewCfg(),
+	}
+	ns.Cfg.StaticRootPath = "../../../public/"
+	ns.Cfg.Smtp.Enabled = true
+	ns.Cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
+	ns.Cfg.Smtp.FromAddress = "from@address.com"
+	ns.Cfg.Smtp.FromName = "Grafana Admin"
+	ns.Cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
+	ns.Bus = bus.New()
 
-		ns := &NotificationService{}
-		ns.Bus = bus.New()
-		ns.Cfg = setting.NewCfg()
-		ns.Cfg.Smtp.Enabled = true
-		ns.Cfg.Smtp.TemplatesPattern = "emails/*.html"
-		ns.Cfg.Smtp.FromAddress = "from@address.com"
-		ns.Cfg.Smtp.FromName = "Grafana Admin"
+	ns, err := ProvideService(bus.New(), ns.Cfg)
+	require.NoError(t, err)
 
-		err := ns.Init()
-		So(err, ShouldBeNil)
+	t.Run("When sending reset email password", func(t *testing.T) {
+		err := ns.sendResetPasswordEmail(&models.SendResetPasswordEmailCommand{User: &models.User{Email: "asd@asd.com"}})
+		require.NoError(t, err)
 
-		Convey("When sending reset email password", func() {
-			err := ns.sendResetPasswordEmail(&models.SendResetPasswordEmailCommand{User: &models.User{Email: "asd@asd.com"}})
-			So(err, ShouldBeNil)
-
-			sentMsg := <-ns.mailQueue
-			So(sentMsg.Body, ShouldContainSubstring, "body")
-			So(sentMsg.Subject, ShouldEqual, "Reset your Grafana password - asd@asd.com")
-			So(sentMsg.Body, ShouldNotContainSubstring, "Subject")
-		})
+		sentMsg := <-ns.mailQueue
+		assert.Contains(t, sentMsg.Body["text/html"], "body")
+		assert.NotContains(t, sentMsg.Body["text/plain"], "body")
+		assert.Equal(t, "Reset your Grafana password - asd@asd.com", sentMsg.Subject)
+		assert.NotContains(t, sentMsg.Body["text/html"], "Subject")
+		assert.NotContains(t, sentMsg.Body["text/plain"], "Subject")
 	})
 }

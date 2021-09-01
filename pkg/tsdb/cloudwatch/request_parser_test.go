@@ -5,13 +5,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRequestParser(t *testing.T) {
-	timeRange := tsdb.NewTimeRange("now-1h", "now-2h")
+	timeRange := plugins.NewDataTimeRange("now-1h", "now-2h")
 	from, err := timeRange.ParseFrom()
 	require.NoError(t, err)
 	to, err := timeRange.ParseTo()
@@ -102,7 +102,7 @@ func TestRequestParser(t *testing.T) {
 			"hide":       false,
 		})
 		query.Set("period", "900")
-		timeRange := tsdb.NewTimeRange("now-1h", "now-2h")
+		timeRange := plugins.NewDataTimeRange("now-1h", "now-2h")
 		from, err := timeRange.ParseFrom()
 		require.NoError(t, err)
 		to, err := timeRange.ParseTo()
@@ -207,6 +207,33 @@ func TestRequestParser(t *testing.T) {
 			res, err := parseRequestQuery(query, "ref1", from, to)
 			require.NoError(t, err)
 			assert.Equal(t, 86400, res.Period)
+		})
+
+		t.Run("Time range is 2 days, but 16 days ago", func(t *testing.T) {
+			query.Set("period", "auto")
+			to := time.Now().AddDate(0, 0, -14)
+			from := to.AddDate(0, 0, -2)
+			res, err := parseRequestQuery(query, "ref1", from, to)
+			require.NoError(t, err)
+			assert.Equal(t, 300, res.Period)
+		})
+
+		t.Run("Time range is 2 days, but 90 days ago", func(t *testing.T) {
+			query.Set("period", "auto")
+			to := time.Now().AddDate(0, 0, -88)
+			from := to.AddDate(0, 0, -2)
+			res, err := parseRequestQuery(query, "ref1", from, to)
+			require.NoError(t, err)
+			assert.Equal(t, 3600, res.Period)
+		})
+
+		t.Run("Time range is 2 days, but 456 days ago", func(t *testing.T) {
+			query.Set("period", "auto")
+			to := time.Now().AddDate(0, 0, -454)
+			from := to.AddDate(0, 0, -2)
+			res, err := parseRequestQuery(query, "ref1", from, to)
+			require.NoError(t, err)
+			assert.Equal(t, 21600, res.Period)
 		})
 	})
 }

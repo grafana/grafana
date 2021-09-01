@@ -3,19 +3,18 @@ package dashboards
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func MakeUserAdmin(bus bus.Bus, orgId int64, userId int64, dashboardId int64, setViewAndEditPermissions bool) error {
+func (dr *dashboardServiceImpl) MakeUserAdmin(orgID int64, userID int64, dashboardID int64, setViewAndEditPermissions bool) error {
 	rtEditor := models.ROLE_EDITOR
 	rtViewer := models.ROLE_VIEWER
 
 	items := []*models.DashboardAcl{
 		{
-			OrgId:       orgId,
-			DashboardId: dashboardId,
-			UserId:      userId,
+			OrgID:       orgID,
+			DashboardID: dashboardID,
+			UserID:      userID,
 			Permission:  models.PERMISSION_ADMIN,
 			Created:     time.Now(),
 			Updated:     time.Now(),
@@ -25,16 +24,16 @@ func MakeUserAdmin(bus bus.Bus, orgId int64, userId int64, dashboardId int64, se
 	if setViewAndEditPermissions {
 		items = append(items,
 			&models.DashboardAcl{
-				OrgId:       orgId,
-				DashboardId: dashboardId,
+				OrgID:       orgID,
+				DashboardID: dashboardID,
 				Role:        &rtEditor,
 				Permission:  models.PERMISSION_EDIT,
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
 			&models.DashboardAcl{
-				OrgId:       orgId,
-				DashboardId: dashboardId,
+				OrgID:       orgID,
+				DashboardID: dashboardID,
 				Role:        &rtViewer,
 				Permission:  models.PERMISSION_VIEW,
 				Created:     time.Now(),
@@ -43,12 +42,7 @@ func MakeUserAdmin(bus bus.Bus, orgId int64, userId int64, dashboardId int64, se
 		)
 	}
 
-	aclCmd := &models.UpdateDashboardAclCommand{
-		DashboardId: dashboardId,
-		Items:       items,
-	}
-
-	if err := bus.Dispatch(aclCmd); err != nil {
+	if err := dr.dashboardStore.UpdateDashboardACL(dashboardID, items); err != nil {
 		return err
 	}
 

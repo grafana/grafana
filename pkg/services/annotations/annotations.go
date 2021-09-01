@@ -2,9 +2,14 @@ package annotations
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+var (
+	ErrTimerangeMissing = errors.New("missing timerange")
 )
 
 type Repository interface {
@@ -12,11 +17,12 @@ type Repository interface {
 	Update(item *Item) error
 	Find(query *ItemQuery) ([]*ItemDTO, error)
 	Delete(params *DeleteParams) error
+	FindTags(query *TagsQuery) (FindTagsResult, error)
 }
 
 // AnnotationCleaner is responsible for cleaning up old annotations
 type AnnotationCleaner interface {
-	CleanAnnotations(ctx context.Context, cfg *setting.Cfg) error
+	CleanAnnotations(ctx context.Context, cfg *setting.Cfg) (int64, int64, error)
 }
 
 type ItemQuery struct {
@@ -35,13 +41,35 @@ type ItemQuery struct {
 	Limit int64 `json:"limit"`
 }
 
-type PostParams struct {
-	DashboardId int64  `json:"dashboardId"`
-	PanelId     int64  `json:"panelId"`
-	Epoch       int64  `json:"epoch"`
-	Title       string `json:"title"`
-	Text        string `json:"text"`
-	Icon        string `json:"icon"`
+// TagsQuery is the query for a tags search.
+type TagsQuery struct {
+	OrgID int64  `json:"orgId"`
+	Tag   string `json:"tag"`
+
+	Limit int64 `json:"limit"`
+}
+
+// Tag is the DB result of a tags search.
+type Tag struct {
+	Key   string
+	Value string
+	Count int64
+}
+
+// TagsDTO is the frontend DTO for Tag.
+type TagsDTO struct {
+	Tag   string `json:"tag"`
+	Count int64  `json:"count"`
+}
+
+// FindTagsResult is the result of a tags search.
+type FindTagsResult struct {
+	Tags []*TagsDTO `json:"tags"`
+}
+
+// GetAnnotationTagsResponse is a response struct for FindTagsResult.
+type GetAnnotationTagsResponse struct {
+	Result FindTagsResult `json:"result"`
 }
 
 type DeleteParams struct {

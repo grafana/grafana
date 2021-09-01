@@ -26,6 +26,8 @@ type SocialGenericOAuth struct {
 	loginAttributePath   string
 	nameAttributePath    string
 	roleAttributePath    string
+	roleAttributeStrict  bool
+	groupsAttributePath  string
 	idTokenAttributeName string
 	teamIds              []int
 }
@@ -118,7 +120,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 			} else {
 				if s.loginAttributePath != "" {
 					s.log.Debug("Searching for login among JSON", "loginAttributePath", s.loginAttributePath)
-					login, err := s.searchJSONForAttr(s.loginAttributePath, data.rawJSON)
+					login, err := s.searchJSONForStringAttr(s.loginAttributePath, data.rawJSON)
 					if err != nil {
 						s.log.Error("Failed to search JSON for login attribute", "error", err)
 					} else if login != "" {
@@ -150,6 +152,14 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 				userInfo.Role = role
 			}
 		}
+
+		groups, err := s.extractGroups(data)
+		if err != nil {
+			s.log.Error("Failed to extract groups", "error", err)
+		} else if len(groups) > 0 {
+			s.log.Debug("Setting user info groups from extracted groups")
+			userInfo.Groups = groups
+		}
 	}
 
 	if userInfo.Email == "" {
@@ -164,6 +174,10 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	if userInfo.Login == "" {
 		s.log.Debug("Defaulting to using email for user info login", "email", userInfo.Email)
 		userInfo.Login = userInfo.Email
+	}
+
+	if s.roleAttributeStrict && !models.RoleType(userInfo.Role).IsValid() {
+		return nil, errors.New("invalid role")
 	}
 
 	if !s.IsTeamMember(client) {
@@ -229,7 +243,11 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 			s.log.Error("Error creating zlib reader", "error", err)
 			return nil
 		}
-		defer fr.Close()
+		defer func() {
+			if err := fr.Close(); err != nil {
+				s.log.Warn("Failed closing zlib reader", "error", err)
+			}
+		}()
 		rawJSON, err = ioutil.ReadAll(fr)
 		if err != nil {
 			s.log.Error("Error decompressing payload", "error", err)
@@ -251,7 +269,7 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 
 func (s *SocialGenericOAuth) extractFromAPI(client *http.Client) *UserInfoJson {
 	s.log.Debug("Getting user info from API")
-	rawUserInfoResponse, err := HttpGet(client, s.apiUrl)
+	rawUserInfoResponse, err := s.httpGet(client, s.apiUrl)
 	if err != nil {
 		s.log.Debug("Error getting user info from API", "url", s.apiUrl, "error", err)
 		return nil
@@ -277,7 +295,7 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 	}
 
 	if s.emailAttributePath != "" {
-		email, err := s.searchJSONForAttr(s.emailAttributePath, data.rawJSON)
+		email, err := s.searchJSONForStringAttr(s.emailAttributePath, data.rawJSON)
 		if err != nil {
 			s.log.Error("Failed to search JSON for attribute", "error", err)
 		} else if email != "" {
@@ -303,7 +321,7 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 
 func (s *SocialGenericOAuth) extractUserName(data *UserInfoJson) string {
 	if s.nameAttributePath != "" {
-		name, err := s.searchJSONForAttr(s.nameAttributePath, data.rawJSON)
+		name, err := s.searchJSONForStringAttr(s.nameAttributePath, data.rawJSON)
 		if err != nil {
 			s.log.Error("Failed to search JSON for attribute", "error", err)
 		} else if name != "" {
@@ -331,11 +349,20 @@ func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) (string, error) {
 		return "", nil
 	}
 
-	role, err := s.searchJSONForAttr(s.roleAttributePath, data.rawJSON)
+	role, err := s.searchJSONForStringAttr(s.roleAttributePath, data.rawJSON)
+
 	if err != nil {
 		return "", err
 	}
 	return role, nil
+}
+
+func (s *SocialGenericOAuth) extractGroups(data *UserInfoJson) ([]string, error) {
+	if s.groupsAttributePath == "" {
+		return []string{}, nil
+	}
+
+	return s.searchJSONForStringArrayAttr(s.groupsAttributePath, data.rawJSON)
 }
 
 func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
@@ -347,7 +374,7 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 		IsConfirmed bool   `json:"is_confirmed"`
 	}
 
-	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
+	response, err := s.httpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
 	if err != nil {
 		s.log.Error("Error getting email address", "url", s.apiUrl+"/emails", "error", err)
 		return "", errutil.Wrap("Error getting email address", err)
@@ -390,7 +417,7 @@ func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]int, b
 		Id int `json:"id"`
 	}
 
-	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
+	response, err := s.httpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
 	if err != nil {
 		s.log.Error("Error getting team memberships", "url", s.apiUrl+"/teams", "error", err)
 		return nil, false
@@ -419,7 +446,7 @@ func (s *SocialGenericOAuth) FetchOrganizations(client *http.Client) ([]string, 
 		Login string `json:"login"`
 	}
 
-	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/orgs"))
+	response, err := s.httpGet(client, fmt.Sprintf(s.apiUrl+"/orgs"))
 	if err != nil {
 		s.log.Error("Error getting organizations", "url", s.apiUrl+"/orgs", "error", err)
 		return nil, false

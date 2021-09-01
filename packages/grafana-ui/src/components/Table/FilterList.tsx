@@ -1,9 +1,9 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
-import { css } from 'emotion';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { css } from '@emotion/css';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useTheme2 } from '../../themes';
 import { Checkbox, Input, Label, VerticalGroup } from '..';
 
 interface Props {
@@ -16,15 +16,15 @@ const ITEM_HEIGHT = 28;
 const MIN_HEIGHT = ITEM_HEIGHT * 5;
 
 export const FilterList: FC<Props> = ({ options, values, onChange }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme);
   const [searchFilter, setSearchFilter] = useState('');
-  const items = useMemo(() => options.filter(option => option.label?.indexOf(searchFilter) !== -1), [
+  const items = useMemo(() => options.filter((option) => option.label?.indexOf(searchFilter) !== -1), [
     options,
     searchFilter,
   ]);
-  const gutter = parseInt(theme.spacing.sm, 10);
-  const height = useMemo(() => Math.min(items.length * ITEM_HEIGHT, MIN_HEIGHT) + gutter, [items]);
+  const gutter = theme.spacing.gridSize;
+  const height = useMemo(() => Math.min(items.length * ITEM_HEIGHT, MIN_HEIGHT) + gutter, [gutter, items.length]);
 
   const onInputChange = useCallback(
     (event: React.FormEvent<HTMLInputElement>) => {
@@ -37,7 +37,7 @@ export const FilterList: FC<Props> = ({ options, values, onChange }) => {
     (option: SelectableValue) => (event: React.FormEvent<HTMLInputElement>) => {
       const newValues = event.currentTarget.checked
         ? values.concat(option)
-        : values.filter(c => c.value !== option.value);
+        : values.filter((c) => c.value !== option.value);
 
       onChange(newValues);
     },
@@ -64,7 +64,7 @@ export const FilterList: FC<Props> = ({ options, values, onChange }) => {
           {({ index, style }) => {
             const option = items[index];
             const { value, label } = option;
-            const isChecked = values.find(s => s.value === value) !== undefined;
+            const isChecked = values.find((s) => s.value === value) !== undefined;
 
             return (
               <div className={styles.filterListRow} style={style} title={label}>
@@ -78,7 +78,7 @@ export const FilterList: FC<Props> = ({ options, values, onChange }) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   filterList: css`
     label: filterList;
   `,
@@ -88,9 +88,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding: ${theme.spacing.xs};
+    padding: ${theme.spacing(0.5)};
+
     :hover {
-      background-color: ${theme.colors.bg3};
+      background-color: ${theme.colors.action.hover};
     }
   `,
   filterListInput: css`

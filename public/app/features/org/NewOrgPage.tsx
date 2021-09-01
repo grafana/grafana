@@ -4,7 +4,6 @@ import Page from 'app/core/components/Page/Page';
 import { Button, Input, Field, Form } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { StoreState } from 'app/types';
-import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { getNavModel } from '../../core/selectors/navModel';
@@ -41,12 +40,12 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <h3 className="page-sub-heading">New Organization</h3>
+        <h3 className="page-sub-heading">New organization</h3>
 
         <p className="playlist-description">
-          Each organization contains their own dashboards, data sources and configuration, and cannot be shared between
-          orgs. While users may belong to more than one, multiple organization are most frequently used in multi-tenant
-          deployments.{' '}
+          Each organization contains their own dashboards, data sources, and configuration, which cannot be shared
+          shared between organizations. While users might belong to more than one organization, multiple organizations
+          are most frequently used in multi-tenant deployments.{' '}
         </p>
 
         <Form<CreateOrgFormDTO> onSubmit={createOrg}>
@@ -55,11 +54,10 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
               <>
                 <Field label="Organization name" invalid={!!errors.name} error={errors.name && errors.name.message}>
                   <Input
-                    placeholder="Org. name"
-                    name="name"
-                    ref={register({
+                    placeholder="Org name"
+                    {...register('name', {
                       required: 'Organization name is required',
-                      validate: async orgName => await validateOrg(orgName),
+                      validate: async (orgName) => await validateOrg(orgName),
                     })}
                   />
                 </Field>
@@ -77,4 +75,4 @@ const mapStateToProps = (state: StoreState) => {
   return { navModel: getNavModel(state.navIndex, 'global-orgs') };
 };
 
-export default hot(module)(connect(mapStateToProps)(NewOrgPage));
+export default connect(mapStateToProps)(NewOrgPage);
