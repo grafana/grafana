@@ -20,6 +20,7 @@ exports[`Render should render action bar and datasources 1`] = `
       key="action-bar"
       linkButton={
         Object {
+          "disabled": false,
           "href": "datasources/new",
           "title": "Add data source",
         }

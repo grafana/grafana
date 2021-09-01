@@ -126,9 +126,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		t.Run("with no real signed in user", func(t *testing.T) {
 			stub := &testLogger{}
 			c := &models.ReqContext{
-				Context: &macaron.Context{
-					Req: macaron.Request{Request: req},
-				},
+				Context:      &macaron.Context{Req: req},
 				SignedInUser: &models.SignedInUser{},
 				Logger:       stub,
 			}
@@ -144,9 +142,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		t.Run("with real signed in user", func(t *testing.T) {
 			stub := &testLogger{}
 			c := &models.ReqContext{
-				Context: &macaron.Context{
-					Req: macaron.Request{Request: req},
-				},
+				Context:      &macaron.Context{Req: req},
 				SignedInUser: &models.SignedInUser{UserId: 42},
 				Logger:       stub,
 			}

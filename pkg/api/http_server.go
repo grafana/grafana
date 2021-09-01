@@ -457,7 +457,7 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 
 	promhttp.
 		HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}).
-		ServeHTTP(ctx.Resp, ctx.Req.Request)
+		ServeHTTP(ctx.Resp, ctx.Req)
 }
 
 // healthzHandler always return 200 - Ok if Grafana's web server is running

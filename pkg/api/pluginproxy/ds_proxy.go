@@ -147,7 +147,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	span, ctx := opentracing.StartSpanFromContext(proxy.ctx.Req.Context(), "datasource reverse proxy")
 	defer span.Finish()
 
-	proxy.ctx.Req.Request = proxy.ctx.Req.WithContext(ctx)
+	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)
 
 	span.SetTag("datasource_name", proxy.ds.Name)
 	span.SetTag("datasource_type", proxy.ds.Type)
@@ -160,11 +160,11 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	if err := opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Request.Header)); err != nil {
+		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Header)); err != nil {
 		logger.Error("Failed to inject span context instance", "err", err)
 	}
 
-	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req.Request)
+	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req)
 }
 
 func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, headerName string, tagName string) {
@@ -252,13 +252,13 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	if proxy.ds.Type == models.DS_ES {
-		if proxy.ctx.Req.Request.Method == "DELETE" {
+		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("deletes not allowed on proxied Elasticsearch datasource")
 		}
-		if proxy.ctx.Req.Request.Method == "PUT" {
+		if proxy.ctx.Req.Method == "PUT" {
 			return errors.New("puts not allowed on proxied Elasticsearch datasource")
 		}
-		if proxy.ctx.Req.Request.Method == "POST" && proxy.proxyPath != "_msearch" {
+		if proxy.ctx.Req.Method == "POST" && proxy.proxyPath != "_msearch" {
 			return errors.New("posts not allowed on proxied Elasticsearch datasource except on /_msearch")
 		}
 	}
@@ -289,13 +289,13 @@ func (proxy *DataSourceProxy) validateRequest() error {
 
 	// Trailing validation below this point for routes that were not matched
 	if proxy.ds.Type == models.DS_PROMETHEUS {
-		if proxy.ctx.Req.Request.Method == "DELETE" {
+		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus datasource")
 		}
-		if proxy.ctx.Req.Request.Method == "PUT" {
+		if proxy.ctx.Req.Method == "PUT" {
 			return errors.New("non allow-listed PUTs not allowed on proxied Prometheus datasource")
 		}
-		if proxy.ctx.Req.Request.Method == "POST" {
+		if proxy.ctx.Req.Method == "POST" {
 			return errors.New("non allow-listed POSTs not allowed on proxied Prometheus datasource")
 		}
 	}
@@ -309,10 +309,10 @@ func (proxy *DataSourceProxy) logRequest() {
 	}
 
 	var body string
-	if proxy.ctx.Req.Request.Body != nil {
-		buffer, err := ioutil.ReadAll(proxy.ctx.Req.Request.Body)
+	if proxy.ctx.Req.Body != nil {
+		buffer, err := ioutil.ReadAll(proxy.ctx.Req.Body)
 		if err == nil {
-			proxy.ctx.Req.Request.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
+			proxy.ctx.Req.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
 			body = string(buffer)
 		}
 	}
@@ -323,7 +323,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		"username", proxy.ctx.Login,
 		"datasource", proxy.ds.Type,
 		"uri", proxy.ctx.Req.RequestURI,
-		"method", proxy.ctx.Req.Request.Method,
+		"method", proxy.ctx.Req.Method,
 		"body", body)
 }
 
