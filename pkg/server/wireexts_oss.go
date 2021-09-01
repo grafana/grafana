@@ -1,3 +1,4 @@
+//go:build wireinject && oss
 // +build wireinject,oss
 
 package server

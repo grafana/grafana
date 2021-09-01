@@ -1,3 +1,4 @@
+//go:build wireinject
 // +build wireinject
 
 package server
