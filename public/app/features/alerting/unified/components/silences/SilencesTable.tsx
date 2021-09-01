@@ -2,13 +2,7 @@ import React, { FC, useMemo, useCallback } from 'react';
 import { GrafanaTheme2, dateMath } from '@grafana/data';
 import { Icon, useStyles2, Link, Button } from '@grafana/ui';
 import { css } from '@emotion/css';
-<<<<<<< HEAD
-import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
-import SilenceTableRow from './SilenceTableRow';
-import { getAlertTableStyles } from '../../styles/table';
-=======
 import { AlertmanagerAlert, Silence } from 'app/plugins/datasource/alertmanager/types';
->>>>>>> Use dynamic table for silences page
 import { NoSilencesSplash } from './NoSilencesCTA';
 import { getFiltersFromUrlParams, makeAMLink } from '../../utils/misc';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -85,10 +79,12 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
             isExpandable
             renderExpandedContent={({ data }) => <SilenceDetails silence={data} />}
           />
-          {showExpiredSilencesBanner && (<div className={styles.callout}>
-            <Icon className={styles.calloutIcon} name="info-circle" />
-            <span>Expired silences are automatically deleted after 5 days.</span>
-          </div>)}
+          {showExpiredSilencesBanner && (
+            <div className={styles.callout}>
+              <Icon className={styles.calloutIcon} name="info-circle" />
+              <span>Expired silences are automatically deleted after 5 days.</span>
+            </div>
+          )}
         </>
       )}
       {!silences.length && <NoSilencesSplash alertManagerSourceName={alertManagerSourceName} />}
