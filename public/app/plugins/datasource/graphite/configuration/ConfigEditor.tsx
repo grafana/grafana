@@ -68,7 +68,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
         )}
         <DataSourceHttpSettings
           defaultUrl="http://localhost:8080"
-          showAccessOptions={true}
           dataSourceConfig={options}
           onChange={onOptionsChange}
         />
