@@ -1,9 +1,10 @@
 import React from 'react';
-import { Label, stylesFactory, useTheme2 } from '@grafana/ui';
+import { Label, stylesFactory, useTheme2, VizLegendItem } from '@grafana/ui';
 import { formattedValueToString, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { DimensionSupplier } from 'app/features/dimensions';
+import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils';
 import { getMinMaxAndDelta } from '../../../../../../../packages/grafana-data/src/field/scale';
 
 export interface MarkersLegendProps {
@@ -56,33 +57,17 @@ export function MarkersLegend(props: MarkersLegendProps) {
     return <div></div>; // don't show anything in the legend
   }
 
+  const items = getThresholdItems(color.field!.config, config.theme2);
   return (
     <div className={style.infoWrap}>
-      {thresholds && (
-        <div className={style.legend}>
-          {thresholds.steps.map((step: any, idx: number) => {
-            const next = thresholds!.steps[idx + 1];
-            let info = <span>?</span>;
-            if (idx === 0) {
-              info = <span>&lt; {fmt(next.value)}</span>;
-            } else if (next) {
-              info = (
-                <span>
-                  {fmt(step.value)} - {fmt(next.value)}
-                </span>
-              );
-            } else {
-              info = <span>{fmt(step.value)} +</span>;
-            }
-            return (
-              <div key={`${idx}/${step.value}`} className={style.legendItem}>
-                <i style={{ background: config.theme2.visualization.getColorByName(step.color) }}></i>
-                {info}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <div className={style.legend}>
+        {items.map((item: VizLegendItem, idx: number) => (
+          <div key={`${idx}/${item.label}`} className={style.legendItem}>
+            <i style={{ background: item.color }}></i>
+            {item.label}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
