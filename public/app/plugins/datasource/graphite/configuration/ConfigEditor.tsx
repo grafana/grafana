@@ -63,7 +63,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
       <>
         {options.access === 'direct' && (
           <Alert title="Deprecation Notice" severity="warning">
-            Browser access mode in Graphite datasource is deprecated and will be removed in the future.
+            This data source uses browser access mode. This mode is deprecated and will be removed in the future. Please
+            use server access mode instead.
           </Alert>
         )}
         <DataSourceHttpSettings
