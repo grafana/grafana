@@ -187,6 +187,7 @@ function initEchoSrv() {
     registerEchoBackend(
       new ApplicationInsightsBackend({
         connectionString: config.applicationInsightsConnectionString,
+        endpointUrl: config.applicationInsightsEndpointUrl,
       })
     );
   }

@@ -371,6 +371,7 @@ type Cfg struct {
 	ReportingDistributor                string
 	ReportingEnabled                    bool
 	ApplicationInsightsConnectionString string
+	ApplicationInsightsEndpointUrl      string
 
 	// LDAP
 	LDAPEnabled     bool
@@ -922,6 +923,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		cfg.ReportingDistributor = cfg.ReportingDistributor[:100]
 	}
 	cfg.ApplicationInsightsConnectionString = analytics.Key("application_insights_connection_string").String()
+	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
 
 	if err := readAlertingSettings(iniFile); err != nil {
 		return err

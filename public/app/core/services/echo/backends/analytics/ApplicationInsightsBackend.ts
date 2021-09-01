@@ -3,6 +3,7 @@ import { EchoBackend, EchoEventType, isInteractionEvent, isPageviewEvent, Pagevi
 
 export interface ApplicationInsightsBackendOptions {
   connectionString: string;
+  endpointUrl?: string;
 }
 
 export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent, ApplicationInsightsBackendOptions> {
@@ -17,6 +18,7 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
       var applicationInsightsOpts = {
         config: {
           connectionString: options.connectionString,
+          endpointUrl: options.endpointUrl,
         },
       };
       var init = new (window as any).Microsoft.ApplicationInsights.ApplicationInsights(applicationInsightsOpts);

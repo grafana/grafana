@@ -462,7 +462,11 @@ Google Tag Manager ID, only enabled if you enter an ID here.
 
 ### application_insights_connection_string
 
-If you want to track Grafana usage via Azure Application Insights, specify _your_ Application Insights connection string here. By default this feature is disabled.
+If you want to track Grafana usage via Azure Application Insights, specify _your_ Application Insights connection string here. Since the connection string contains semicolons, you need to wrap it in backticks (`). By default this feature is disabled.
+
+### application_insights_endpoint_url
+
+Optionally, you can override the default endpoint address for Application Insights data collecting. For details, please refer to the [official documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js) in Azure.
 
 <hr />
 
