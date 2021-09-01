@@ -91,7 +91,11 @@ function getTestContext(propOverrides: Partial<Props> = {}) {
 }
 
 function getTable(): HTMLElement {
-  return screen.getByRole('table');
+  return screen.getAllByRole('table')[0];
+}
+
+function getFooter(): HTMLElement {
+  return screen.getByTestId('table-footer');
 }
 
 function getColumnHeader(name: string | RegExp): HTMLElement {
@@ -139,6 +143,15 @@ describe('Table', () => {
       expect(rowTwoLink()).toHaveAttribute('href', '11');
       expect(rowThreeLink()).toHaveTextContent('12');
       expect(rowThreeLink()).toHaveAttribute('href', '12');
+    });
+  });
+
+  describe('when mounted with footer', () => {
+    it('then footer should be displayed', () => {
+      const footerValues = ['a', 'b', 'c'];
+      getTestContext({ footerValues });
+      expect(getTable()).toBeInTheDocument();
+      expect(getFooter()).toBeInTheDocument();
     });
   });
 

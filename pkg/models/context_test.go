@@ -31,9 +31,7 @@ func TestQueryBoolWithDefault(t *testing.T) {
 			req, err := http.NewRequest("GET", tt.url, nil)
 			require.NoError(t, err)
 			r := ReqContext{
-				Context: &macaron.Context{
-					Req: macaron.Request{Request: req},
-				},
+				Context: &macaron.Context{Req: req},
 			}
 			require.Equal(t, tt.expected, r.QueryBoolWithDefault("silenced", tt.defaultValue))
 		})

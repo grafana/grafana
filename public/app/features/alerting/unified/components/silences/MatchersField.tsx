@@ -5,7 +5,7 @@ import { css, cx } from '@emotion/css';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { SilenceFormFields } from '../../types/silence-form';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
-import { matcherToOperator, matcherFieldToMatcher, matcherFieldOptions } from '../../utils/alertmanager';
+import { matcherFieldOptions } from '../../utils/alertmanager';
 
 interface Props {
   className?: string;
@@ -49,16 +49,12 @@ const MatchersField: FC<Props> = ({ className }) => {
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
                           {...field}
+                          onChange={(value) => onChange(value.value)}
                           className={styles.matcherOptions}
-                          onChange={(value) => onChange(value?.value)}
                           options={matcherFieldOptions}
                         />
                       )}
-                      defaultValue={
-                        matcherFieldOptions.find(
-                          (field) => field.label === matcherToOperator(matcherFieldToMatcher(matcher))
-                        ) || matcherFieldOptions[0]
-                      }
+                      defaultValue={matcher.operator || matcherFieldOptions[0].value}
                       name={`matchers.${index}.operator` as const}
                       rules={{ required: { value: true, message: 'Required.' } }}
                     />

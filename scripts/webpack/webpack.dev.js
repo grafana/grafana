@@ -1,11 +1,11 @@
 'use strict';
 
-const merge = require('webpack-merge');
+const { merge } = require('webpack-merge');
 const common = require('./webpack.common.js');
 const path = require('path');
-const webpack = require('webpack');
+const { DefinePlugin } = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const getBabelConfig = require('./babel.config');
@@ -32,13 +32,11 @@ module.exports = (env = {}) =>
       rules: [
         {
           test: /\.tsx?$/,
+          use: {
+            loader: 'babel-loader',
+            options: getBabelConfig({ BABEL_ENV: 'dev' }),
+          },
           exclude: /node_modules/,
-          use: [
-            {
-              loader: 'babel-loader',
-              options: getBabelConfig({ BABEL_ENV: 'dev' }),
-            },
-          ],
         },
         require('./sass.rule.js')({
           sourceMap: false,
@@ -47,19 +45,25 @@ module.exports = (env = {}) =>
       ],
     },
 
+    // https://webpack.js.org/guides/build-performance/#output-without-path-info
+    output: {
+      pathinfo: false,
+      filename: '[name].js',
+    },
+
+    // https://webpack.js.org/guides/build-performance/#avoid-extra-optimization-steps
+    optimization: {
+      runtimeChunk: true,
+      removeAvailableModules: false,
+      removeEmptyChunks: false,
+      splitChunks: false,
+    },
+
     plugins: [
-      new CleanWebpackPlugin(),
-      env.noTsCheck
-        ? new webpack.DefinePlugin({}) // bogus plugin to satisfy webpack API
+      parseInt(env.noTsCheck, 10)
+        ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({
-            eslint: {
-              enabled: true,
-              files: ['public/app/**/*.{ts,tsx}', 'packages/*/src/**/*.{ts,tsx}'],
-              options: {
-                cache: true,
-              },
-              memoryLimit: 4096,
-            },
+            async: true, // don't block webpack emit
             typescript: {
               mode: 'write-references',
               memoryLimit: 4096,
@@ -69,8 +73,13 @@ module.exports = (env = {}) =>
               },
             },
           }),
+      // next major version of ForkTsChecker is dropping support for ESLint
+      new ESLintPlugin({
+        lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
+        extensions: ['.ts', '.tsx'],
+      }),
       new MiniCssExtractPlugin({
-        filename: 'grafana.[name].[hash].css',
+        filename: 'grafana.[name].[fullhash].css',
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/error.html'),
@@ -82,13 +91,12 @@ module.exports = (env = {}) =>
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/index.html'),
         template: path.resolve(__dirname, '../../public/views/index-template.html'),
+        hash: true,
         inject: false,
         chunksSortMode: 'none',
         excludeChunks: ['dark', 'light'],
       }),
-      new webpack.NamedModulesPlugin(),
-      new webpack.HotModuleReplacementPlugin(),
-      new webpack.DefinePlugin({
+      new DefinePlugin({
         'process.env': {
           NODE_ENV: JSON.stringify('development'),
         },

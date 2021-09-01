@@ -162,7 +162,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(30);
+      expect(model.schemaVersion).toBe(31);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -1418,6 +1418,38 @@ describe('DashboardModel', () => {
 
     it('should ignore fieldConfig.defaults', () => {
       expect(model.panels[0].panels[0].fieldConfig.defaults).toEqual(undefined);
+    });
+  });
+
+  describe('labelsToFields should be split into two transformers', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        schemaVersion: 29,
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            transformations: [{ id: 'labelsToFields' }],
+          },
+        ],
+      });
+    });
+
+    it('should create two transormatoins', () => {
+      const xforms = model.panels[0].transformations;
+      expect(xforms).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "id": "labelsToFields",
+          },
+          Object {
+            "id": "merge",
+            "options": Object {},
+          },
+        ]
+      `);
     });
   });
 });
