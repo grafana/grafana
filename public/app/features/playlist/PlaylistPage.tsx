@@ -32,11 +32,13 @@ export const PlaylistPage: FC<PlaylistPageProps> = ({ navModel }) => {
   const hasPlaylists = playlists && playlists.length > 0;
   const onDismissDelete = () => setPlaylistToDelete(undefined);
   const onDeletePlaylist = () => {
-    playlistToDelete &&
-      deletePlaylist(playlistToDelete?.id).finally(() => {
-        setForcePlaylistsFetch(forcePlaylistsFetch + 1);
-        setPlaylistToDelete(undefined);
-      });
+    if (!playlistToDelete) {
+      return;
+    }
+    deletePlaylist(playlistToDelete.id).finally(() => {
+      setForcePlaylistsFetch(forcePlaylistsFetch + 1);
+      setPlaylistToDelete(undefined);
+    });
   };
 
   let content = (
