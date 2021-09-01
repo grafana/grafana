@@ -123,7 +123,7 @@ const renderUser = (user: UserDTO) => {
     <tr key={user.id}>
       <td className="width-4 text-center link-td">
         <a href={editUrl}>
-          <img className="filter-table__avatar" src={user.avatarUrl} />
+          <img className="filter-table__avatar" src={user.avatarUrl} alt={`Avatar for user ${user.name}`} />
         </a>
       </td>
       <td className="link-td max-width-10">
@@ -143,14 +143,23 @@ const renderUser = (user: UserDTO) => {
       </td>
       <td className="link-td">
         {user.isAdmin && (
-          <a href={editUrl}>
+          <a href={editUrl} aria-label={`Edit user's ${user.name} details`}>
             <Tooltip placement="top" content="Grafana Admin">
               <Icon name="shield" />
             </Tooltip>
           </a>
         )}
       </td>
-      <td className="link-td">{user.lastSeenAtAge && <a href={editUrl}>{user.lastSeenAtAge}</a>}</td>
+      <td className="link-td">
+        {user.lastSeenAtAge && (
+          <a
+            href={editUrl}
+            aria-label={`Last seen at ${user.lastSeenAtAge}. Follow to edit user's ${user.name} details.`}
+          >
+            {user.lastSeenAtAge}
+          </a>
+        )}
+      </td>
       <td className="text-right">
         {Array.isArray(user.authLabels) && user.authLabels.length > 0 && (
           <TagBadge label={user.authLabels[0]} removeIcon={false} count={0} />
