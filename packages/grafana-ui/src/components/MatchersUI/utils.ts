@@ -92,7 +92,11 @@ export function useSelectOptions(
       options.push({
         value: name,
         label: name,
-        description: field ? (previewValues.length > 0 ? `${field.type}: ${previewValues}` : field.type) : undefined,
+        description: field
+          ? previewValues.length > 0
+            ? `Type: ${field.type}, Values: ${previewValues}`
+            : field.type
+          : undefined,
       });
     }
     for (const name of displayNames.raw) {
