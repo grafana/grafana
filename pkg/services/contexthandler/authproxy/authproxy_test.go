@@ -64,11 +64,7 @@ func prepareMiddleware(t *testing.T, remoteCache *remotecache.RemoteCache, cb fu
 	}
 
 	ctx := &models.ReqContext{
-		Context: &macaron.Context{
-			Req: macaron.Request{
-				Request: req,
-			},
-		},
+		Context: &macaron.Context{Req: req},
 	}
 
 	auth := New(cfg, &Options{

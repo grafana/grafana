@@ -65,5 +65,5 @@ func (b *BroadcastRunner) OnPublish(_ context.Context, u *models.SignedInUser, e
 	if err := b.liveMessageStore.SaveLiveMessage(query); err != nil {
 		return models.PublishReply{}, 0, err
 	}
-	return models.PublishReply{}, backend.PublishStreamStatusOK, nil
+	return models.PublishReply{Data: e.Data}, backend.PublishStreamStatusOK, nil
 }

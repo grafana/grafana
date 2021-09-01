@@ -1,7 +1,8 @@
 const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const FilterWarningsPlugin = require('webpack-filter-warnings-plugin');
+const getBabelConfig = require('../../../scripts/webpack/babel.config');
 
 const stories = ['../src/**/*.story.{js,jsx,ts,tsx,mdx}'];
 
@@ -23,8 +24,12 @@ module.exports = {
     '@storybook/addon-storysource',
     'storybook-dark-mode',
   ],
-  reactOptions: {
-    fastRefresh: true,
+  // currently broken in webpack 5 builder support
+  // reactOptions: {
+  //   fastRefresh: true,
+  // },
+  core: {
+    builder: 'webpack5',
   },
   typescript: {
     check: true,
@@ -39,6 +44,22 @@ module.exports = {
   },
   webpackFinal: async (config: any, { configType }: any) => {
     const isProductionBuild = configType === 'PRODUCTION';
+
+    // remove svg from default storybook webpack 5 config so we can use `raw-loader`
+    config.module.rules = config.module.rules.map((rule: any) => {
+      if (
+        String(rule.test) ===
+        String(/\.(svg|ico|jpg|jpeg|png|apng|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/)
+      ) {
+        return {
+          ...rule,
+          test: /\.(ico|jpg|jpeg|png|apng|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
+        };
+      }
+
+      return rule;
+    });
+
     config.module.rules = [
       ...(config.module.rules || []),
       {
@@ -52,6 +73,8 @@ module.exports = {
             },
           },
         ],
+        exclude: /node_modules/,
+        include: [path.resolve(__dirname, '../../../public/'), path.resolve(__dirname, '../../../packages/')],
       },
       {
         test: /\.scss$/,
@@ -63,6 +86,7 @@ module.exports = {
           {
             loader: 'css-loader',
             options: {
+              url: false,
               importLoaders: 2,
             },
           },
@@ -70,7 +94,9 @@ module.exports = {
             loader: 'postcss-loader',
             options: {
               sourceMap: false,
-              config: { path: __dirname + '../../../../scripts/webpack/postcss.config.js' },
+              postcssOptions: {
+                config: path.resolve(__dirname + '../../../../scripts/webpack/postcss.config.js'),
+              },
             },
           },
           {
@@ -81,52 +107,50 @@ module.exports = {
           },
         ],
       },
+      // for pre-caching SVGs as part of the JS bundles
+      {
+        test: /\.svg$/,
+        use: 'raw-loader',
+      },
       {
         test: require.resolve('jquery'),
-        use: [
-          {
-            loader: 'expose-loader',
-            query: 'jQuery',
-          },
-          {
-            loader: 'expose-loader',
-            query: '$',
-          },
-        ],
+        loader: 'expose-loader',
+        options: {
+          exposes: ['$', 'jQuery'],
+        },
       },
     ];
 
-    config.optimization = {
-      nodeEnv: 'production',
-      moduleIds: 'hashed',
-      runtimeChunk: 'single',
-      splitChunks: {
-        chunks: 'all',
-        minChunks: 1,
-        cacheGroups: {
-          vendors: {
-            test: /[\\/]node_modules[\\/].*[jt]sx?$/,
-            chunks: 'initial',
-            priority: -10,
-            reuseExistingChunk: true,
-            enforce: true,
-          },
-          default: {
-            priority: -20,
-            chunks: 'all',
-            test: /.*[jt]sx?$/,
-            reuseExistingChunk: true,
+    if (isProductionBuild) {
+      config.optimization = {
+        nodeEnv: 'production',
+        moduleIds: 'deterministic',
+        runtimeChunk: 'single',
+        splitChunks: {
+          chunks: 'all',
+          minChunks: 1,
+          cacheGroups: {
+            vendors: {
+              test: /[\\/]node_modules[\\/].*[jt]sx?$/,
+              chunks: 'initial',
+              priority: -10,
+              reuseExistingChunk: true,
+              enforce: true,
+            },
+            default: {
+              priority: -20,
+              chunks: 'all',
+              test: /.*[jt]sx?$/,
+              reuseExistingChunk: true,
+            },
           },
         },
-      },
-      minimize: isProductionBuild,
-      minimizer: isProductionBuild
-        ? [
-            new TerserPlugin({ cache: false, parallel: false, sourceMap: false, exclude: /monaco/ }),
-            new OptimizeCSSAssetsPlugin({}),
-          ]
-        : [],
-    };
+        minimize: isProductionBuild,
+        minimizer: isProductionBuild
+          ? [new TerserPlugin({ parallel: false, exclude: /monaco/ }), new CssMinimizerPlugin()]
+          : [],
+      };
+    }
 
     config.resolve.alias['@grafana/ui'] = path.resolve(__dirname, '..');
 

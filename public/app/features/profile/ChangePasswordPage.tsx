@@ -1,6 +1,5 @@
 import React from 'react';
 import { useMount } from 'react-use';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
 
@@ -50,4 +49,4 @@ export function ChangePasswordPage({ navModel, loadUser, isUpdating, user, chang
   );
 }
 
-export default hot(module)(connector(ChangePasswordPage));
+export default connector(ChangePasswordPage);

@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
 
@@ -62,4 +61,4 @@ const mapDispatchToProps = {
   updateOrganization,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage));
+export default connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { PluginSignatureStatus } from '@grafana/data';
-import { PluginBadges } from './PluginBadges';
+import { PluginListBadges } from './PluginListBadges';
 import { CatalogPlugin } from '../types';
 import { config } from '@grafana/runtime';
 
@@ -35,13 +35,13 @@ describe('PluginBadges', () => {
   });
 
   it('renders a plugin signature badge', () => {
-    render(<PluginBadges plugin={plugin} />);
+    render(<PluginListBadges plugin={plugin} />);
 
     expect(screen.getByText(/signed/i)).toBeVisible();
   });
 
   it('renders an installed badge', () => {
-    render(<PluginBadges plugin={{ ...plugin, isInstalled: true }} />);
+    render(<PluginListBadges plugin={{ ...plugin, isInstalled: true }} />);
 
     expect(screen.getByText(/signed/i)).toBeVisible();
     expect(screen.getByText(/installed/i)).toBeVisible();
@@ -49,14 +49,14 @@ describe('PluginBadges', () => {
 
   it('renders an enterprise badge (when a license is valid)', () => {
     config.licenseInfo.hasValidLicense = true;
-    render(<PluginBadges plugin={{ ...plugin, isEnterprise: true }} />);
+    render(<PluginListBadges plugin={{ ...plugin, isEnterprise: true }} />);
     expect(screen.getByText(/enterprise/i)).toBeVisible();
     expect(screen.queryByRole('button', { name: /learn more/i })).not.toBeInTheDocument();
   });
 
   it('renders an enterprise badge with icon and link (when a license is invalid)', () => {
     config.licenseInfo.hasValidLicense = false;
-    render(<PluginBadges plugin={{ ...plugin, isEnterprise: true }} />);
+    render(<PluginListBadges plugin={{ ...plugin, isEnterprise: true }} />);
     expect(screen.getByText(/enterprise/i)).toBeVisible();
     expect(screen.getByLabelText(/lock icon/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /learn more/i })).toBeInTheDocument();

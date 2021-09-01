@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -99,7 +98,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	viewData.Settings["oauth"] = enabledOAuths
 	viewData.Settings["samlEnabled"] = hs.samlEnabled()
 
-	if loginError, ok := tryGetEncryptedCookie(c, loginErrorCookieName); ok {
+	if loginError, ok := hs.tryGetEncryptedCookie(c, loginErrorCookieName); ok {
 		// this cookie is only set whenever an OAuth login fails
 		// therefore the loginError should be passed to the view data
 		// and the view should return immediately before attempting
@@ -299,7 +298,7 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 	}
 }
 
-func tryGetEncryptedCookie(ctx *models.ReqContext, cookieName string) (string, bool) {
+func (hs *HTTPServer) tryGetEncryptedCookie(ctx *models.ReqContext, cookieName string) (string, bool) {
 	cookie := ctx.GetCookie(cookieName)
 	if cookie == "" {
 		return "", false
@@ -310,12 +309,12 @@ func tryGetEncryptedCookie(ctx *models.ReqContext, cookieName string) (string, b
 		return "", false
 	}
 
-	decryptedError, err := util.Decrypt(decoded, setting.SecretKey)
+	decryptedError, err := hs.EncryptionService.Decrypt(decoded, setting.SecretKey)
 	return string(decryptedError), err == nil
 }
 
 func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName string, value string, maxAge int) error {
-	encryptedError, err := util.Encrypt([]byte(value), setting.SecretKey)
+	encryptedError, err := hs.EncryptionService.Encrypt([]byte(value), setting.SecretKey)
 	if err != nil {
 		return err
 	}
