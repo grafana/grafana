@@ -8,13 +8,17 @@ weight = 200
 
 # Grant dashboard and folder permissions
 
-You can assign and remove permissions for organization roles, users, and teams for specific dashboards and dashboard folders. This topic explains how to grant permissions to specific folders and dashboards. To learn more about denying access to certain Grafana users, refer to [Restricting access]({{< relref "restricting-access.md">}}).
+You can assign and remove permissions for organization roles, users, and teams for specific dashboards and dashboard folders.
 
-{{< figure src="/static/img/docs/permissions/folder-permissions-7-5.png" class="docs-image--no-shadow" max-width= "750px" caption="older permissions" >}}
+This topic explains how to grant permissions to specific folders and dashboards.
+
+To learn more about denying access to certain Grafana users, refer to [Restricting access]({{< relref "restricting-access.md">}}).
+
+![Folder permissions](/static/img/docs/permissions/folder-permissions-7-5.png)
 
 ## Permission levels
 
-There are three permission levels for files and folders. Each of the permissions is processed independently. They permissions are separate from [organization roles]({{< relref "organization_roles.md">}}).
+Grafana has three permission levels that can be assigned. These permissions are separate from [organization roles]({{< relref "organization_roles.md">}}).
 
 - **Admin -** Can create, edit, or delete dashboards. Can create, edit, and delete folders. Can also change dashboard and folder permissions.
 - **Edit -** Can create and edit dashboards. _Cannot_ change folder or dashboard permissions, or add, edit, or delete folders.
