@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package postgres
@@ -12,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -515,28 +515,28 @@ func TestPostgres(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("querying with time group with default value", func(t *testing.T) {
-			query := plugins.DataQuery{
-				Queries: []plugins.DataSubQuery{
+			query := &backend.QueryDataRequest{
+				Queries: []backend.DataQuery{
 					{
-						Model: simplejson.NewFromAny(map[string]interface{}{
+						JSON: []byte(`{
 							"rawSql": "WITH data AS (SELECT now()-'3m'::interval AS ts, 42 AS n) SELECT $__timeGroup(ts, '1m', 0), n FROM data",
-							"format": "time_series",
-						}),
+							"format": "time_series"
+						}`),
 						RefID: "A",
+						TimeRange: backend.TimeRange{
+							From: startTime,
+							To:   startTime.Add(5 * time.Minute),
+						},
 					},
-				},
-				TimeRange: &plugins.DataTimeRange{
-					From: fmt.Sprintf("%v", startTime.Unix()*1000),
-					To:   fmt.Sprintf("%v", startTime.Add(5*time.Minute).Unix()*1000),
 				},
 			}
 
-			resp, err := exe.DataQuery(context.Background(), nil, query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
-			queryResult := resp.Results["A"]
+			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
 
-			frames, _ := queryResult.Dataframes.Decoded()
+			frames := queryResult.Frames
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, "Time", frames[0].Fields[0].Name)
 			require.Equal(t, "n", frames[0].Fields[1].Name)
