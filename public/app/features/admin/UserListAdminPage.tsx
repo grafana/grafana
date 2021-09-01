@@ -122,22 +122,22 @@ const renderUser = (user: UserDTO) => {
   return (
     <tr key={user.id}>
       <td className="width-4 text-center link-td">
-        <a href={editUrl}>
+        <a href={editUrl} aria-label={`Edit user's ${user.name} details`}>
           <img className="filter-table__avatar" src={user.avatarUrl} alt={`Avatar for user ${user.name}`} />
         </a>
       </td>
       <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.login}>
+        <a className="ellipsis" href={editUrl} title={user.login} aria-label={`Edit user's ${user.name} details`}>
           {user.login}
         </a>
       </td>
       <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.email}>
+        <a className="ellipsis" href={editUrl} title={user.email} aria-label={`Edit user's ${user.name} details`}>
           {user.email}
         </a>
       </td>
       <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.name}>
+        <a className="ellipsis" href={editUrl} title={user.name} aria-label={`Edit user's ${user.name} details`}>
           {user.name}
         </a>
       </td>
