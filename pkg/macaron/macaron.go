@@ -128,7 +128,7 @@ func FromContext(c context.Context) *Context {
 func (m *Macaron) UseMiddleware(middleware func(http.Handler) http.Handler) {
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		c := FromContext(req.Context())
-		c.Req.Request = req
+		c.Req = req
 		if mrw, ok := rw.(*responseWriter); ok {
 			c.Resp = mrw
 		} else {
@@ -163,7 +163,7 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 	c.Map(c)
 	c.MapTo(c.Resp, (*http.ResponseWriter)(nil))
 	c.Map(req)
-	c.Req = Request{req}
+	c.Req = req
 	return c
 }
 
