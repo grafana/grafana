@@ -32,7 +32,7 @@ var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
 	// change to true to run the MSSQL tests
-	const runMssqlTests = true
+	const runMssqlTests = false
 
 	if !(sqlstore.IsTestDBMSSQL() || runMssqlTests) {
 		t.Skip()
