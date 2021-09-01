@@ -12,7 +12,6 @@ export enum DebugMode {
   Render = 'render',
   Events = 'events',
   Cursor = 'cursor',
-  EX = 'ex',
 }
 
 export interface DebugPanelOptions {
