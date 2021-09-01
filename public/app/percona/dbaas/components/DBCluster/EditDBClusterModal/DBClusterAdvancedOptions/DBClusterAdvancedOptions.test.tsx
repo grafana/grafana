@@ -11,7 +11,7 @@ jest.mock('../../DBCluster.service');
 jest.mock('../../PSMDB.service');
 jest.mock('../../XtraDB.service');
 
-xdescribe('DBClusterAdvancedOptions::', () => {
+describe('DBClusterAdvancedOptions::', () => {
   it('renders correctly', async () => {
     const root = await getMount(
       <Form

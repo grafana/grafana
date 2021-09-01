@@ -149,6 +149,12 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
     return () => clearTimeout(expectedTimer);
   }, [memory, cpu, disk, kubernetesCluster, topology, nodes, single, databaseType]);
 
+  useEffect(() => {
+    if (topology === DBClusterTopology.cluster && nodes < MIN_NODES) {
+      change(AddDBClusterFields.nodes, MIN_NODES);
+    }
+  }, [topology]);
+
   return (
     <>
       <RadioButtonGroupField
