@@ -129,7 +129,7 @@ const defaults: any = {
 
 export class PanelModel implements DataConfigSource, IPanelModel {
   /* persisted id, used in URL to identify a panel */
-  id: number;
+  id!: number;
   editSourceId?: number;
   gridPos!: GridPos;
   type!: string;
@@ -192,7 +192,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
-    this.key = `${this.id}`;
+    this.key = this.id ? `${this.id}` : `panel-${Math.floor(Math.random() * 100000)}`;
   }
 
   /** Given a persistened PanelModel restores property values */
