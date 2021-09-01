@@ -56,7 +56,7 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 	urlValues := ctx.Req.URL.Query()
 	frameFormat := pushurl.FrameFormatFromValues(urlValues)
 
-	body, err := io.ReadAll(ctx.Req.Request.Body)
+	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {
 		logger.Error("Error reading body", "error", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)

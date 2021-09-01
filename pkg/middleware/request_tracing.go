@@ -22,7 +22,7 @@ var routeOperationNameKey = contextKey{}
 func ProvideRouteOperationName(name string) macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		ctx := context.WithValue(c.Req.Context(), routeOperationNameKey, name)
-		c.Req.Request = c.Req.WithContext(ctx)
+		c.Req = c.Req.WithContext(ctx)
 	}
 }
 
@@ -51,7 +51,7 @@ func RequestTracing() macaron.Handler {
 		span := tracer.StartSpan(fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), ext.RPCServerOption(wireContext))
 
 		ctx := opentracing.ContextWithSpan(req.Context(), span)
-		c.Req.Request = req.WithContext(ctx)
+		c.Req = req.WithContext(ctx)
 
 		c.Next()
 
