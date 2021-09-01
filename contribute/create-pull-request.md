@@ -55,6 +55,17 @@ Pull requests that create new UI components or modify existing ones must adhere 
 - Use the [Grafana theme palette](/contribute/style-guides/themes.md) for styling. It contains colors with good contrast which aids accessibility.
 - Use [RTL](https://testing-library.com/docs/dom-testing-library/api-accessibility/) for writing unit tests. It helps to create accessible components.
 
+Pull requests that introduce accessibility(a11y) errors:
+
+We use [pa11y-ci](https://github.com/pa11y/pa11y-ci) to collect accessibility errors on [some URLs on the project](https://github.com/grafana/grafana/issues/36555), each URL has a threshold error set, as soon as a new error is introduced our continuous integration breaks, preventing you to merge on the main branch.
+
+If the contribution introduces new a11y errors, there are two alternatives for moving forward:
+
+- Check the error log on the pipeline step `test-a11y-frontend-pr`, identify the where was the error and fix it.
+- Locally run the command `yarn test:accessibility-report` to generate an HTML accessibility report, go the url that has your change, identify the error, and fix it. Keep in mind you should have running your local Grafana instance.
+
+You can also prevent the former scenario by installing a plugin in your browser that checks for a11y errors.
+
 ### Backend-specific guidelines
 
 Please refer to the [backend style guidelines](/contribute/style-guides/backend.md).
