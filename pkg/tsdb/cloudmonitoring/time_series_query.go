@@ -63,8 +63,8 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	span.SetTag("query", timeSeriesQuery.Query)
 	span.SetTag("from", req.Queries[0].TimeRange.From)
 	span.SetTag("until", req.Queries[0].TimeRange.To)
-	span.SetTag("datasource_id", dsInfo.ID)
-	span.SetTag("org_id", dsInfo.OrgID)
+	span.SetTag("datasource_id", dsInfo.id)
+	span.SetTag("org_id", req.PluginContext.OrgID)
 
 	defer span.Finish()
 
@@ -171,6 +171,24 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 				continue
 			}
 
+			labelsByKey := make(map[string][]string)
+			for key, values := range labels {
+				for value := range values {
+					labelsByKey[key] = append(labelsByKey[key], value)
+				}
+			}
+
+			if frame.Meta != nil {
+				// this will overwrite existing custom field
+				frame.Meta.Custom = map[string]interface{}{
+					"labels": labelsByKey,
+				}
+			} else {
+				frame.SetMeta(&data.FrameMeta{Custom: map[string]interface{}{
+					"labels": labelsByKey,
+				}})
+			}
+
 			// process distribution series
 			buckets := make(map[int]*data.Frame)
 			// reverse the order to be ascending
@@ -249,15 +267,6 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 	}
 
 	queryRes.Frames = frames
-
-	labelsByKey := make(map[string][]string)
-	for key, values := range labels {
-		for value := range values {
-			labelsByKey[key] = append(labelsByKey[key], value)
-		}
-	}
-
-	// queryRes.Meta.Set("labels", labelsByKey)
 
 	return nil
 }

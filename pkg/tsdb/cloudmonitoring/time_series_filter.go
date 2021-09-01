@@ -17,22 +17,22 @@ import (
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
-	queryResult := &backend.DataResponse{}
+	dr := &backend.DataResponse{}
 	projectName := timeSeriesFilter.ProjectName
 	if projectName == "" {
 		var err error
 		projectName, err = s.getDefaultProject(ctx, dsInfo)
 		if err != nil {
-			queryResult.Error = err
-			return queryResult, cloudMonitoringResponse{}, "", nil
+			dr.Error = err
+			return dr, cloudMonitoringResponse{}, "", nil
 		}
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
 
 	r, err := s.createRequest(ctx, req.PluginContext, &dsInfo, path.Join("cloudmonitoringv3/projects", projectName, "timeSeries"), nil)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
 	r.URL.RawQuery = timeSeriesFilter.Params.Encode()
@@ -41,10 +41,16 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	if ok {
 		seconds, err := strconv.ParseInt(alignmentPeriodRe.FindString(alignmentPeriod[0]), 10, 64)
 		if err == nil {
-			queryResult.Frames[0].Meta = &data.FrameMeta{
-				Custom: map[string]interface{}{
-					"alignmentPeriod": seconds,
-				},
+			if len(dr.Frames) == 0 {
+				dr.Frames = append(dr.Frames, data.NewFrame(""))
+			}
+			firstFrame := dr.Frames[0]
+			if firstFrame.Meta == nil {
+				firstFrame.SetMeta(&data.FrameMeta{
+					Custom: map[string]interface{}{
+						"alignmentPeriod": seconds,
+					},
+				})
 			}
 		}
 	}
@@ -53,8 +59,8 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	span.SetTag("target", timeSeriesFilter.Target)
 	span.SetTag("from", req.Queries[0].TimeRange.From)
 	span.SetTag("until", req.Queries[0].TimeRange.To)
-	span.SetTag("datasource_id", dsInfo.ID)
-	span.SetTag("org_id", dsInfo.OrgID)
+	span.SetTag("datasource_id", dsInfo.id)
+	span.SetTag("org_id", req.PluginContext.OrgID)
 
 	defer span.Finish()
 
@@ -62,24 +68,24 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 		span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(r.Header)); err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
 	r = r.WithContext(ctx)
 	res, err := dsInfo.client.Do(r)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
 	d, err := unmarshalResponse(res)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, cloudMonitoringResponse{}, "", nil
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	return queryResult, d, r.URL.RawQuery, nil
+	return dr, d, r.URL.RawQuery, nil
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *backend.DataResponse,

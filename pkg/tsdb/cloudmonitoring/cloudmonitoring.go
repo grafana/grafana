@@ -108,18 +108,25 @@ type QueryModel struct {
 }
 
 type datasourceInfo struct {
-	ID                 int64  `json:"ID"`
-	OrgID              int64  `json:"OrgID"`
-	Type               string `json:"Type"`
-	AuthenticationType string `json:"AuthenticationType"`
-	DefaultProject     string `json:"DefaultProject"`
-
-	client *http.Client
-	url    string
+	id                 int64
+	url                string
+	authenticationType string
+	defaultProject     string
+	client             *http.Client
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		jsonData := struct {
+			AuthenticationType string `json:"authenticationType"`
+			DefaultProject     string `json:"defaultProject"`
+		}{}
+
+		err := json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+
 		opts, err := settings.HTTPClientOptions()
 		if err != nil {
 			return nil, err
@@ -130,22 +137,15 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		jsonData := datasourceInfo{}
-		err = json.Unmarshal(settings.JSONData, &jsonData)
-		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
 		authenticationType := jsonData.AuthenticationType
 		if authenticationType == "" {
 			authenticationType = jwtAuthentication
 		}
 		model := &datasourceInfo{
-			ID:                 jsonData.ID,
-			OrgID:              jsonData.OrgID,
-			AuthenticationType: authenticationType,
-			DefaultProject:     jsonData.DefaultProject,
-			Type:               jsonData.Type,
+			id:                 settings.ID,
 			url:                settings.URL,
+			authenticationType: authenticationType,
+			defaultProject:     jsonData.DefaultProject,
 			client:             client,
 		}
 		return model, nil
@@ -203,24 +203,26 @@ func (s *Service) getGCEDefaultProject(ctx context.Context, req *backend.QueryDa
 
 func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
 	*backend.QueryDataResponse, error) {
-	result := backend.NewQueryDataResponse()
+	dr := backend.NewQueryDataResponse()
 	queryExecutors, err := s.buildQueryExecutors(req)
 	if err != nil {
-		return result, err
+		return dr, err
 	}
 
 	for _, queryExecutor := range queryExecutors {
 		queryRes, resp, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo)
 		if err != nil {
-			return result, err
+			return dr, err
 		}
 		err = queryExecutor.parseResponse(queryRes, resp, executedQueryString)
 		if err != nil {
 			queryRes.Error = err
 		}
+
+		dr.Responses[queryExecutor.getRefID()] = *queryRes
 	}
 
-	return result, nil
+	return dr, nil
 }
 
 func migrateLegacyQueryModel(query *backend.DataQuery) error {
@@ -586,7 +588,7 @@ func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginCon
 	req.Header.Set("Content-Type", "application/json")
 
 	// find plugin
-	plugin := s.PluginManager.GetDataSource("stackdriver")
+	plugin := s.PluginManager.GetDataSource(pluginCtx.PluginID)
 	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}
@@ -600,13 +602,13 @@ func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginCon
 	}
 
 	user := &models.SignedInUser{
-		OrgId:   dsInfo.OrgID,
+		OrgId:   pluginCtx.OrgID,
 		Login:   pluginCtx.User.Login,
 		Name:    pluginCtx.User.Name,
 		Email:   pluginCtx.User.Email,
 		OrgRole: models.RoleType(pluginCtx.User.Role),
 	}
-	ds, err := s.DataSourceCache.GetDatasource(dsInfo.ID, user, false)
+	ds, err := s.DataSourceCache.GetDatasource(dsInfo.id, user, false)
 	if err != nil {
 		return nil, err
 	}
@@ -618,7 +620,7 @@ func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginCon
 
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
 	// authenticationType := dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
-	authenticationType := dsInfo.AuthenticationType
+	authenticationType := dsInfo.authenticationType
 	if authenticationType == gceAuthentication {
 		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
 		if err != nil {
@@ -635,7 +637,7 @@ func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) 
 		return defaultCredentials.ProjectID, nil
 	}
 	// return s.dsInfo.JsonData.Get("defaultProject").MustString(), nil
-	return dsInfo.DefaultProject, nil
+	return dsInfo.defaultProject, nil
 }
 
 func unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
