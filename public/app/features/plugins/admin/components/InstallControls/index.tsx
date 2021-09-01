@@ -6,13 +6,13 @@ import { config } from '@grafana/runtime';
 import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { CatalogPluginDetails, PluginStatus } from '../../types';
+import { CatalogPlugin, PluginStatus } from '../../types';
 import { isGrafanaAdmin, getExternalManageLink } from '../../helpers';
 import { ExternallyManagedButton } from './ExternallyManagedButton';
 import { InstallControlsButton } from './InstallControlsButton';
 
 interface Props {
-  plugin: CatalogPluginDetails;
+  plugin: CatalogPlugin;
   isInflight: boolean;
   hasUpdate: boolean;
   hasInstalledPanel: boolean;
@@ -24,7 +24,7 @@ export const InstallControls = ({ plugin, isInflight, hasUpdate, isInstalled, ha
   const styles = useStyles2(getStyles);
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
   const hasPermission = isGrafanaAdmin();
-  const grafanaDependency = plugin.grafanaDependency;
+  const grafanaDependency = plugin.details?.grafanaDependency;
   const unsupportedGrafanaVersion = grafanaDependency
     ? !satisfies(config.buildInfo.version, grafanaDependency, {
         // needed for when running against master
