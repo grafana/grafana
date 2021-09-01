@@ -60,7 +60,7 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 		return
 	}
 
-	err = p.PluginRequestValidator.Validate(ds.Url, c.Req.Request)
+	err = p.PluginRequestValidator.Validate(ds.Url, c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return

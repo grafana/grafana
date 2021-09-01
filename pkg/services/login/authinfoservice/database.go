@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var getTime = time.Now
@@ -60,15 +59,15 @@ func (s *Implementation) GetAuthInfo(query *models.GetAuthInfoQuery) error {
 		return models.ErrUserNotFound
 	}
 
-	secretAccessToken, err := decodeAndDecrypt(userAuth.OAuthAccessToken)
+	secretAccessToken, err := s.decodeAndDecrypt(userAuth.OAuthAccessToken)
 	if err != nil {
 		return err
 	}
-	secretRefreshToken, err := decodeAndDecrypt(userAuth.OAuthRefreshToken)
+	secretRefreshToken, err := s.decodeAndDecrypt(userAuth.OAuthRefreshToken)
 	if err != nil {
 		return err
 	}
-	secretTokenType, err := decodeAndDecrypt(userAuth.OAuthTokenType)
+	secretTokenType, err := s.decodeAndDecrypt(userAuth.OAuthTokenType)
 	if err != nil {
 		return err
 	}
@@ -90,15 +89,15 @@ func (s *Implementation) SetAuthInfo(cmd *models.SetAuthInfoCommand) error {
 		}
 
 		if cmd.OAuthToken != nil {
-			secretAccessToken, err := encryptAndEncode(cmd.OAuthToken.AccessToken)
+			secretAccessToken, err := s.encryptAndEncode(cmd.OAuthToken.AccessToken)
 			if err != nil {
 				return err
 			}
-			secretRefreshToken, err := encryptAndEncode(cmd.OAuthToken.RefreshToken)
+			secretRefreshToken, err := s.encryptAndEncode(cmd.OAuthToken.RefreshToken)
 			if err != nil {
 				return err
 			}
-			secretTokenType, err := encryptAndEncode(cmd.OAuthToken.TokenType)
+			secretTokenType, err := s.encryptAndEncode(cmd.OAuthToken.TokenType)
 			if err != nil {
 				return err
 			}
@@ -124,15 +123,15 @@ func (s *Implementation) UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error
 		}
 
 		if cmd.OAuthToken != nil {
-			secretAccessToken, err := encryptAndEncode(cmd.OAuthToken.AccessToken)
+			secretAccessToken, err := s.encryptAndEncode(cmd.OAuthToken.AccessToken)
 			if err != nil {
 				return err
 			}
-			secretRefreshToken, err := encryptAndEncode(cmd.OAuthToken.RefreshToken)
+			secretRefreshToken, err := s.encryptAndEncode(cmd.OAuthToken.RefreshToken)
 			if err != nil {
 				return err
 			}
-			secretTokenType, err := encryptAndEncode(cmd.OAuthToken.TokenType)
+			secretTokenType, err := s.encryptAndEncode(cmd.OAuthToken.TokenType)
 			if err != nil {
 				return err
 			}
@@ -160,18 +159,17 @@ func (s *Implementation) DeleteAuthInfo(cmd *models.DeleteAuthInfoCommand) error
 	})
 }
 
-// decodeAndDecrypt will decode the string with the standard bas64 decoder
-// and then decrypt it with grafana's secretKey
-func decodeAndDecrypt(s string) (string, error) {
+// decodeAndDecrypt will decode the string with the standard base64 decoder and then decrypt it
+func (s *Implementation) decodeAndDecrypt(str string) (string, error) {
 	// Bail out if empty string since it'll cause a segfault in util.Decrypt
-	if s == "" {
+	if str == "" {
 		return "", nil
 	}
-	decoded, err := base64.StdEncoding.DecodeString(s)
+	decoded, err := base64.StdEncoding.DecodeString(str)
 	if err != nil {
 		return "", err
 	}
-	decrypted, err := util.Decrypt(decoded, setting.SecretKey)
+	decrypted, err := s.EncryptionService.Decrypt(decoded, setting.SecretKey)
 	if err != nil {
 		return "", err
 	}
@@ -180,8 +178,8 @@ func decodeAndDecrypt(s string) (string, error) {
 
 // encryptAndEncode will encrypt a string with grafana's secretKey, and
 // then encode it with the standard bas64 encoder
-func encryptAndEncode(s string) (string, error) {
-	encrypted, err := util.Encrypt([]byte(s), setting.SecretKey)
+func (s *Implementation) encryptAndEncode(str string) (string, error) {
+	encrypted, err := s.EncryptionService.Encrypt([]byte(str), setting.SecretKey)
 	if err != nil {
 		return "", err
 	}
