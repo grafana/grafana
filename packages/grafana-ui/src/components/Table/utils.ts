@@ -12,9 +12,10 @@ import {
 
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
-import { TableCellDisplayMode, TableFieldOptions } from './types';
+import { CellComponent, TableCellDisplayMode, TableFieldOptions, FooterItem } from './types';
 import { JSONViewCell } from './JSONViewCell';
 import { ImageCell } from './ImageCell';
+import { getFooterValue } from './FooterRow';
 
 export function getTextAlign(field?: Field): ContentPosition {
   if (!field) {
@@ -41,7 +42,12 @@ export function getTextAlign(field?: Field): ContentPosition {
   return 'flex-start';
 }
 
-export function getColumns(data: DataFrame, availableWidth: number, columnMinWidth: number): Column[] {
+export function getColumns(
+  data: DataFrame,
+  availableWidth: number,
+  columnMinWidth: number,
+  footerValues?: FooterItem[]
+): Column[] {
   const columns: any[] = [];
   let fieldCountWithoutWidth = data.fields.length;
 
@@ -81,6 +87,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       minWidth: fieldTableOptions.minWidth || columnMinWidth,
       filter: memoizeOne(filterByValue(field)),
       justifyContent: getTextAlign(field),
+      Footer: getFooterValue(fieldIndex, footerValues),
     });
   }
 
@@ -108,7 +115,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
   return columns;
 }
 
-function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
+function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
   switch (displayMode) {
     case TableCellDisplayMode.ColorText:
     case TableCellDisplayMode.ColorBackground:
