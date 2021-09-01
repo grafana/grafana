@@ -4,10 +4,10 @@ import { PluginDetails, Org, LocalPlugin, RemotePlugin, CatalogPlugin } from './
 import { mergeLocalsAndRemotes } from './helpers';
 
 export async function getCatalogPlugins(): Promise<CatalogPlugin[]> {
-  const installedPlugins = await getInstalledPlugins();
+  const localPlugins = await getLocalPlugins();
   const remotePlugins = await getRemotePlugins();
 
-  return mergeLocalsAndRemotes(installedPlugins, remotePlugins);
+  return mergeLocalsAndRemotes(localPlugins, remotePlugins);
 }
 
 async function getRemotePlugins(): Promise<RemotePlugin[]> {
@@ -16,7 +16,7 @@ async function getRemotePlugins(): Promise<RemotePlugin[]> {
 }
 
 async function getPlugin(slug: string): Promise<PluginDetails> {
-  const installed = await getInstalledPlugins();
+  const installed = await getLocalPlugins();
 
   const localPlugin = installed?.find((plugin: LocalPlugin) => {
     return plugin.id === slug;
@@ -50,7 +50,7 @@ async function getPluginVersions(id: string): Promise<any[]> {
   }
 }
 
-async function getInstalledPlugins(): Promise<LocalPlugin[]> {
+async function getLocalPlugins(): Promise<LocalPlugin[]> {
   const installed = await getBackendSrv().get(`${API_ROOT}`, { embedded: 0 });
   return installed;
 }
@@ -73,7 +73,7 @@ async function uninstallPlugin(id: string) {
 export const api = {
   getRemotePlugins,
   getPlugin,
-  getInstalledPlugins,
+  getInstalledPlugins: getLocalPlugins,
   getOrg,
   installPlugin,
   uninstallPlugin,
