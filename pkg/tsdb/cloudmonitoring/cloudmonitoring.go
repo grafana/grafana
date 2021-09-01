@@ -66,9 +66,11 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func ProvideService(pluginManager plugins.Manager) *Service {
+func ProvideService(cfg *setting.Cfg, pluginManager plugins.Manager, httpClientProvider httpclient.Provider) *Service {
 	return &Service{
-		PluginManager: pluginManager,
+		PluginManager:      pluginManager,
+		HTTPClientProvider: httpClientProvider,
+		Cfg:                cfg,
 	}
 }
 

@@ -1343,7 +1343,7 @@ This option to group query variable values into groups by tags has been an exper
 - **CloudWatch**: Adding support for additional Amazon CloudFront metrics. [#28069](https://github.com/grafana/grafana/pull/28069), [@darrylsepeda](https://github.com/darrylsepeda)
 - **CloudWatch**: Re-implement authentication. [#25548](https://github.com/grafana/grafana/pull/25548), [@aknuds1](https://github.com/aknuds1),[@patstrom](https://github.com/patstrom)
 - **Dashboard**: Allow shortlink generation. [#27409](https://github.com/grafana/grafana/pull/27409), [@MisterSquishy](https://github.com/MisterSquishy)
-- **Docker**: OpenShift compatability. [#27813](https://github.com/grafana/grafana/pull/27813), [@xlson](https://github.com/xlson)
+- **Docker**: OpenShift compatibility. [#27813](https://github.com/grafana/grafana/pull/27813), [@xlson](https://github.com/xlson)
 - **Elasticsearch**: Support multiple pipeline aggregations for a query. [#27945](https://github.com/grafana/grafana/pull/27945), [@simianhacker](https://github.com/simianhacker)
 - **Explore**: Allow shortlink generation. [#28222](https://github.com/grafana/grafana/pull/28222), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Explore**: Remove collapsing of visualisations. [#27026](https://github.com/grafana/grafana/pull/27026), [@ivanahuckova](https://github.com/ivanahuckova)
@@ -1846,7 +1846,7 @@ This option to group query variable values into groups by tags has been an exper
 - **Datasource/CloudWatch**: Makes CloudWatch Logs query history more readable. [#24795](https://github.com/grafana/grafana/pull/24795), [@kaydelaney](https://github.com/kaydelaney)
 - **Download CSV**: Add date and time formatting. [#24992](https://github.com/grafana/grafana/pull/24992), [@ryantxu](https://github.com/ryantxu)
 - **Table**: Make last cell value visible when right aligned. [#24921](https://github.com/grafana/grafana/pull/24921), [@peterholmberg](https://github.com/peterholmberg)
-- **TablePanel**: Adding sort order persistance. [#24705](https://github.com/grafana/grafana/pull/24705), [@torkelo](https://github.com/torkelo)
+- **TablePanel**: Adding sort order persistence. [#24705](https://github.com/grafana/grafana/pull/24705), [@torkelo](https://github.com/torkelo)
 - **Transformations**: Display correct field name when using reduce transformation. [#25068](https://github.com/grafana/grafana/pull/25068), [@peterholmberg](https://github.com/peterholmberg)
 - **Transformations**: Allow custom number input for binary operations. [#24752](https://github.com/grafana/grafana/pull/24752), [@ryantxu](https://github.com/ryantxu)
 
