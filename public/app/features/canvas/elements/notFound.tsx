@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { CanvasElementItem, CanvasElementProps } from '../base';
+import { CanvasElementItem, CanvasElementProps } from '../element';
 
 interface NotFoundConfig {
   orig?: any;

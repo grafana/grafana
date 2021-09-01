@@ -1,11 +1,11 @@
 import React, { FC } from 'react';
 import { StandardEditorProps } from '@grafana/data';
-import { CanvasGroupOptions } from '../base';
 import { PanelOptions } from '../models.gen';
 import { CanvasElementEditor } from './ElementEditor';
 import { theScene } from '../CanvasPanel';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
+import { CanvasGroupOptions } from 'app/features/canvas';
 
 export const SelectedElementEditor: FC<StandardEditorProps<CanvasGroupOptions, any, PanelOptions>> = ({ context }) => {
   const scene = useObservable(theScene);

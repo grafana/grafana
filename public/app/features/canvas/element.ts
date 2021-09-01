@@ -1,13 +1,7 @@
 import { ComponentType } from 'react';
 import { PanelOptionsEditorBuilder, RegistryItem } from '@grafana/data';
 import { Anchor, BackgroundConfig, LineConfig, Placement } from './types';
-import {
-  ColorDimensionConfig,
-  DimensionSupplier,
-  ResourceDimensionConfig,
-  ScaleDimensionConfig,
-  TextDimensionConfig,
-} from 'app/features/dimensions/types';
+import { DimensionContext } from '../dimensions/context';
 
 /**
  * This gets saved in panel json
@@ -29,12 +23,6 @@ export interface CanvasElementOptions<TConfig = any> {
   border?: LineConfig;
 }
 
-export interface CanvasGroupOptions extends CanvasElementOptions {
-  type: 'group';
-  elements: CanvasElementOptions[];
-  // layout? // absolute, list, grid?
-}
-
 export interface CanvasElementProps<TConfig = any, TData = any> {
   // Saved config
   config: TConfig;
@@ -45,13 +33,6 @@ export interface CanvasElementProps<TConfig = any, TData = any> {
 
   // Raw data
   data?: TData;
-}
-
-export interface CanvasSceneContext {
-  getColor(color: ColorDimensionConfig): DimensionSupplier<string>;
-  getScale(scale: ScaleDimensionConfig): DimensionSupplier<number>;
-  getText(text: TextDimensionConfig): DimensionSupplier<string>;
-  getResource(resource: ResourceDimensionConfig): DimensionSupplier<string>;
 }
 
 /**
@@ -65,7 +46,7 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
 
   defaultConfig: TConfig;
 
-  prepareData?: (ctx: CanvasSceneContext, cfg: TConfig) => TData;
+  prepareData?: (ctx: DimensionContext, cfg: TConfig) => TData;
 
   /** Component used to draw */
   display: ComponentType<CanvasElementProps<TConfig, TData>>;

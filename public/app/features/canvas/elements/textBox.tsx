@@ -1,13 +1,14 @@
 import React, { PureComponent } from 'react';
-import { ColorDimensionEditor } from '../../../../features/dimensions/editors/ColorDimensionEditor';
-import { TextDimensionEditor } from '../../../../features/dimensions/editors/TextDimensionEditor';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
+import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { ColorDimensionConfig, TextDimensionConfig } from 'app/features/dimensions/types';
 
-import { CanvasElementItem, CanvasElementProps, CanvasSceneContext } from '../base';
+import { CanvasElementItem, CanvasElementProps } from '../element';
 import { css } from '@emotion/css';
 import { stylesFactory } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
+import { DimensionContext } from 'app/features/dimensions/context';
 
 export enum Align {
   Left = 'left',
@@ -81,7 +82,7 @@ export const textBoxItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
   },
 
   // Called when data changes
-  prepareData: (ctx: CanvasSceneContext, cfg: TextBoxConfig) => {
+  prepareData: (ctx: DimensionContext, cfg: TextBoxConfig) => {
     const data: TextBoxData = {
       text: cfg.text ? ctx.getText(cfg.text).value() : '',
       align: cfg.align ?? Align.Center,

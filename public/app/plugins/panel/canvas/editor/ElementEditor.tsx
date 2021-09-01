@@ -1,13 +1,17 @@
 import React, { FC, useMemo } from 'react';
 import { Select } from '@grafana/ui';
 import { DataFrame, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
-import { CanvasElementItem, CanvasElementOptions } from '../base';
-import { canvasElementRegistry, DEFAULT_ELEMENT_CONFIG } from '../elements/registry';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVizualizationOptions';
 import { cloneDeep } from 'lodash';
 import { addBackgroundOptions, addBorderOptions } from './options';
+import {
+  CanvasElementItem,
+  CanvasElementOptions,
+  canvasElementRegistry,
+  DEFAULT_CANVAS_ELEMENT_CONFIG,
+} from 'app/features/canvas';
 
 export interface CanvasElementEditorProps<TConfig = any> {
   options?: CanvasElementOptions<TConfig>;
@@ -22,7 +26,7 @@ export const CanvasElementEditor: FC<CanvasElementEditorProps> = ({ options, onC
     return canvasElementRegistry.selectOptions(
       options?.type // the selected value
         ? [options.type] // as an array
-        : [DEFAULT_ELEMENT_CONFIG.type],
+        : [DEFAULT_CANVAS_ELEMENT_CONFIG.type],
       filter
     );
   }, [options?.type, filter]);

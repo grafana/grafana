@@ -8,10 +8,9 @@ import {
   CanvasElementItem,
   CanvasElementOptions,
   CanvasGroupOptions,
-  CanvasSceneContext,
-} from '../base';
-import { notFoundItem } from '../elements/notFound';
-import { canvasElementRegistry, DEFAULT_ELEMENT_CONFIG } from '../elements/registry';
+  canvasElementRegistry,
+  DEFAULT_CANVAS_ELEMENT_CONFIG,
+} from 'app/features/canvas';
 import { ReplaySubject } from 'rxjs';
 import {
   ColorDimensionConfig,
@@ -25,6 +24,8 @@ import {
   getResourceDimensionFromData,
   getTextDimensionFromData,
 } from './utils';
+import { DimensionContext } from 'app/features/dimensions/context';
+import { notFoundItem } from 'app/features/canvas/elements/notFound';
 
 let counter = 100;
 
@@ -58,7 +59,7 @@ export class ElementState {
     };
   }
 
-  updateData(ctx: CanvasSceneContext) {
+  updateData(ctx: DimensionContext) {
     if (this.item.prepareData) {
       this.data = this.item.prepareData(ctx, this.options.config);
       this.revId++; // rerender
@@ -185,7 +186,7 @@ export class GroupState extends ElementState {
     }
   }
 
-  updateData(ctx: CanvasSceneContext) {
+  updateData(ctx: DimensionContext) {
     super.updateData(ctx);
     for (const elem of this.elements) {
       elem.updateData(ctx);
@@ -237,7 +238,7 @@ export class Scene {
     this.root = new GroupState(
       cfg ?? {
         type: 'group',
-        elements: [DEFAULT_ELEMENT_CONFIG],
+        elements: [DEFAULT_CANVAS_ELEMENT_CONFIG],
       }
     );
 
@@ -254,7 +255,7 @@ export class Scene {
     return this.root;
   }
 
-  context: CanvasSceneContext = {
+  context: DimensionContext = {
     getColor: (color: ColorDimensionConfig) => getColorDimensionFromData(this.data, color),
     getScale: (scale: ScaleDimensionConfig) => getScaleDimensionFromData(this.data, scale),
     getText: (text: TextDimensionConfig) => getTextDimensionFromData(this.data, text),

@@ -1,11 +1,13 @@
 import React, { CSSProperties } from 'react';
 
-import { CanvasSceneContext, CanvasElementItem, CanvasElementProps, LineConfig } from '../base';
+import { CanvasElementItem, CanvasElementProps } from '../element';
 import { ColorDimensionConfig, ResourceDimensionConfig, ResourceDimensionMode } from 'app/features/dimensions';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
 import { isString } from 'lodash';
+import { LineConfig } from '../types';
+import { DimensionContext } from 'app/features/dimensions/context';
 
 interface IconConfig {
   path?: ResourceDimensionConfig;
@@ -71,7 +73,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
   },
 
   // Called when data changes
-  prepareData: (ctx: CanvasSceneContext, cfg: IconConfig) => {
+  prepareData: (ctx: DimensionContext, cfg: IconConfig) => {
     const iconRoot = (window as any).__grafana_public_path__ + 'img/icons/unicons/';
     let path: string | undefined = undefined;
     if (cfg.path) {

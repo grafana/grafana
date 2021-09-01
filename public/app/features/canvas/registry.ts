@@ -1,9 +1,9 @@
 import { Registry } from '@grafana/data';
-import { CanvasElementItem, CanvasElementOptions } from '../base';
-import { iconItem } from './icon';
-import { textBoxItem } from './textBox';
+import { CanvasElementItem, CanvasElementOptions } from './element';
+import { iconItem } from './elements/icon';
+import { textBoxItem } from './elements/textBox';
 
-export const DEFAULT_ELEMENT_CONFIG: CanvasElementOptions = {
+export const DEFAULT_CANVAS_ELEMENT_CONFIG: CanvasElementOptions = {
   type: iconItem.id,
   config: { ...iconItem.defaultConfig },
   placement: { ...iconItem.defaultSize },

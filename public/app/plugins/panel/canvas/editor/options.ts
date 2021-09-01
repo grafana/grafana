@@ -1,5 +1,5 @@
 import { PanelOptionsEditorBuilder } from '@grafana/data';
-import { BackgroundImageSize } from '../base';
+import { BackgroundImageSize } from 'app/features/canvas';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 
 export function addBackgroundOptions(builder: PanelOptionsEditorBuilder<any>) {
