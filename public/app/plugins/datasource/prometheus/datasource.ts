@@ -336,7 +336,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         // Decrease the counter here. We assume that each request returns only single value and then completes
         // (should hold until there is some streaming requests involved).
         tap(() => runningQueriesCount--),
-        filter(isValidResponse),
+        filter((response: any) => isValidResponse(response)),
         map(this.toDataQueryResponse(query, target, queries.length)),
         map(addIntervalError(query, target)),
         map(
@@ -367,7 +367,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       const target = activeTargets[index];
 
       const filterAndMapResponse = pipe(
-        filter(isValidResponse),
+        filter((response: any) => isValidResponse(response)),
         map(this.toDataQueryResponse(query, target, queries.length, scopedVars)),
         map(addIntervalError(query, target))
       );
