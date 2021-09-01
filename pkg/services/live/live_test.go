@@ -62,6 +62,7 @@ func TestCheckOrigin(t *testing.T) {
 		appURL         string
 		allowedOrigins []string
 		success        bool
+		host           string
 	}{
 		{
 			name:    "empty_origin",
@@ -126,6 +127,13 @@ func TestCheckOrigin(t *testing.T) {
 			allowedOrigins: []string{"*"},
 			success:        true,
 		},
+		{
+			name:    "request_host_matches_origin_host",
+			origin:  "http://example.com",
+			appURL:  "https://example.com",
+			success: true,
+			host:    "example.com",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -141,6 +149,7 @@ func TestCheckOrigin(t *testing.T) {
 			checkOrigin := getCheckOriginFunc(appURL, tc.allowedOrigins, originGlobs)
 
 			r := httptest.NewRequest("GET", tc.appURL, nil)
+			r.Host = tc.host
 			r.Header.Set("Origin", tc.origin)
 			require.Equal(t, tc.success, checkOrigin(r),
 				"origin %s, appURL: %s", tc.origin, tc.appURL,

@@ -19,7 +19,16 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const { eventBus, sync } = this.context;
     const { theme, timeZone } = this.props;
-    return preparePlotConfigBuilder({ frame: alignedFrame, theme, timeZone, getTimeRange, eventBus, sync, allFrames });
+
+    return preparePlotConfigBuilder({
+      frame: alignedFrame,
+      theme,
+      timeZone,
+      getTimeRange,
+      eventBus,
+      sync,
+      allFrames,
+    });
   };
 
   renderLegend = (config: UPlotConfigBuilder) => {

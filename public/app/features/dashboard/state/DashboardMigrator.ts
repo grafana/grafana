@@ -20,6 +20,7 @@ import {
   ValueMap,
   ValueMapping,
   getActiveThreshold,
+  DataTransformerConfig,
 } from '@grafana/data';
 // Constants
 import {
@@ -39,6 +40,8 @@ import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
 import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
+import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
 
 standardEditorsRegistry.setInit(getStandardOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
@@ -55,7 +58,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 31;
+    this.dashboard.schemaVersion = 32;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -663,8 +666,24 @@ export class DashboardMigrator {
       panelUpgrades.push(migrateTooltipOptions);
     }
 
-    // Replace datasource name with reference, uid and type
     if (oldVersion < 31) {
+      panelUpgrades.push((panel: PanelModel) => {
+        if (panel.transformations) {
+          for (const t of panel.transformations) {
+            if (t.id === labelsToFieldsTransformer.id) {
+              return appedTransformerAfter(panel, labelsToFieldsTransformer.id, {
+                id: mergeTransformer.id,
+                options: {},
+              });
+            }
+          }
+        }
+        return panel;
+      });
+    }
+
+    // Replace datasource name with reference, uid and type
+    if (oldVersion < 32) {
       for (const variable of this.dashboard.templating.list) {
         if (variable.type !== 'query') {
           continue;
@@ -1000,6 +1019,21 @@ export function migrateDatasourceNameToRef(name: string): DatasourceRef | null {
     return { uid: name }; // not found
   }
   return { type: ds.meta.id, uid: ds.uid };
+}
+
+// mutates transformations appending a new transformer after the existing one
+function appedTransformerAfter(panel: PanelModel, id: string, cfg: DataTransformerConfig) {
+  if (panel.transformations) {
+    const transformations: DataTransformerConfig[] = [];
+    for (const t of panel.transformations) {
+      transformations.push(t);
+      if (t.id === id) {
+        transformations.push({ ...cfg });
+      }
+    }
+    panel.transformations = transformations;
+  }
+  return panel;
 }
 
 function upgradeValueMappingsForPanel(panel: PanelModel) {

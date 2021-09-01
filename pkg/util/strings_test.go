@@ -62,14 +62,14 @@ func TestDateAge(t *testing.T) {
 	assert.Equal(t, "?", GetAgeString(time.Time{})) // base case
 
 	tests := map[time.Duration]string{
-		-1 * time.Hour:       "< 1m", // one hour in the future
-		0:                    "< 1m",
-		2 * time.Second:      "< 1m",
-		2 * time.Minute:      "2m",
-		2 * time.Hour:        "2h",
-		3 * 24 * time.Hour:   "3d",
-		67 * 24 * time.Hour:  "2M",
-		409 * 24 * time.Hour: "1y",
+		-1 * time.Hour:       "< 1 minute", // one hour in the future
+		0:                    "< 1 minute",
+		2 * time.Second:      "< 1 minute",
+		2 * time.Minute:      "2 minutes",
+		2 * time.Hour:        "2 hours",
+		3 * 24 * time.Hour:   "3 days",
+		67 * 24 * time.Hour:  "2 months",
+		409 * 24 * time.Hour: "1 year",
 	}
 	for elapsed, expected := range tests {
 		assert.Equalf(
