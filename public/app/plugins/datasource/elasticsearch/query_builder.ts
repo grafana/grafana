@@ -17,6 +17,7 @@ import {
 import { defaultBucketAgg, defaultMetricAgg, findMetricById, highlightTags } from './query_def';
 import { ElasticsearchQuery } from './types';
 import { convertOrderByToMetricId, getScriptValue } from './utils';
+import { getTimeZoneInfo } from '@grafana/data';
 
 export class ElasticQueryBuilder {
   timeField: string;
@@ -91,7 +92,7 @@ export class ElasticQueryBuilder {
     return queryNode;
   }
 
-  getDateHistogramAgg(aggDef: DateHistogram) {
+  getDateHistogramAgg(aggDef: DateHistogram, timezone: string | undefined) {
     const esAgg: any = {};
     const settings = aggDef.settings || {};
     esAgg.interval = settings.interval;
@@ -108,6 +109,12 @@ export class ElasticQueryBuilder {
       esAgg.interval = '$__interval';
     }
 
+    if (timezone) {
+      let tzInfo = getTimeZoneInfo(timezone, Date.now());
+      if (tzInfo) {
+        esAgg.time_zone = tzInfo.ianaName;
+      }
+    }
     return esAgg;
   }
 
@@ -260,7 +267,7 @@ export class ElasticQueryBuilder {
 
       switch (aggDef.type) {
         case 'date_histogram': {
-          esAgg['date_histogram'] = this.getDateHistogramAgg(aggDef);
+          esAgg['date_histogram'] = this.getDateHistogramAgg(aggDef, target.timezone);
           break;
         }
         case 'histogram': {
