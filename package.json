@@ -180,7 +180,7 @@
     "jest-canvas-mock": "2.3.0",
     "jest-date-mock": "1.0.8",
     "jest-matcher-utils": "26.0.0",
-    "lerna": "^3.22.1",
+    "lerna": "^4.0.0",
     "lint-staged": "10.0.7",
     "mini-css-extract-plugin": "2.2.0",
     "mocha": "7.0.1",
