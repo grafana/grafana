@@ -125,11 +125,10 @@ Defaults to `false`.
 oauth_auto_login = true
 ```
 
-If you want to skip automatic OAuth login and sign in with a username and password, then add the `disableAutoLogin` parameter to the login URL. This disables signing in with OAuth.
+### Avoid OAuth login
 
-Example: `grafana.example.com/login?disableAutoLogin` or `grafana.example.com/login?disableAutoLogin=true`
-
-> **Note:** `disableAutoLogin` parameter is available in Grafana 7.4+.
+To sign in with a username and password and avoid automatic OAuth login, add the `disableAutoLogin` parameter to your login URL. 
+For example:  `grafana.example.com/login?disableAutoLogin` or `grafana.example.com/login?disableAutoLogin=true`
 
 ### Hide sign-out menu
 
