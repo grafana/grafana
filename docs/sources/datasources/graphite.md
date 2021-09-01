@@ -43,6 +43,8 @@ All requests will be made from the browser to Grafana backend/server which in tu
 
 ### Browser access mode
 
+> **Warning:** Browser (Direct) access is deprecated and will be removed in the future.
+
 All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
 
 ## Graphite query editor
