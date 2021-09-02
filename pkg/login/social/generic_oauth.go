@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/mail"
+	"path"
 	"regexp"
 	"strconv"
 
@@ -377,7 +378,7 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 		IsConfirmed bool   `json:"is_confirmed"`
 	}
 
-	response, err := s.httpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
+	response, err := s.httpGet(client, path.Join(s.apiUrl, "/teams"))
 	if err != nil {
 		s.log.Error("Error getting email address", "url", s.apiUrl+"/emails", "error", err)
 		return "", errutil.Wrap("Error getting email address", err)
@@ -415,55 +416,80 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 	return email, nil
 }
 
+// FetchTeamMemberships will attempt to get the user's team string IDs from the JWT claims using the 'team_id_attribute_path' setting.
+// If the attribute path does not find anything in the JWT claims, then the same attribute path is used to attempt to retrieve the team IDs from the OIDC '/userinfo' endpoint.
+// If the attribute path still does not find anything in the '/userinfo' response, then the same attribute path is used to attempt to retrieve the team IDs from the 'teams_url'
+// If team IDs are found, then true is returned. Otherwise, false is returned.
 func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]string, bool) {
+	var ok bool
+	var ids []string
+
+	if s.teamsUrl == "" {
+		ids, ok = s.fetchTeamMembershipsFromDeprecatedTeamsUrl(client)
+	} else {
+		ids, ok = s.fetchTeamMembershipsFromTeamsUrl(client)
+	}
+
+	if ok {
+		s.log.Debug("Received team memberships", "ids", ids)
+	}
+
+	return ids, ok
+}
+
+func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(client *http.Client) ([]string, bool) {
+	s.log.Warn("[Deprecated] Switch to the use of the teams_url and team_id_attribute_path configuration options for filtering on team membership")
+
 	var response httpGetResponse
 	var err error
 	var ids []string
 
-	if s.teamsUrl == "" {
-		s.log.Warn("[Deprecated] Switch to the use of the teams_url and team_id_attribute_path configuration options for filtering on team membership")
-
-		type Record struct {
-			Id int `json:"id"`
-		}
-
-		response, err = s.httpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
-		if err != nil {
-			s.log.Error("Error getting team memberships", "url", s.apiUrl+"/teams", "error", err)
-			return nil, false
-		}
-
-		var records []Record
-
-		err = json.Unmarshal(response.Body, &records)
-		if err != nil {
-			s.log.Error("Error decoding team memberships response", "raw_json", string(response.Body), "error", err)
-			return nil, false
-		}
-
-		ids = make([]string, len(records))
-		for i, record := range records {
-			ids[i] = strconv.Itoa(record.Id)
-		}
-	} else {
-		response, err = s.httpGet(client, fmt.Sprintf(s.teamsUrl))
-		if err != nil {
-			s.log.Error("Error getting team memberships", "url", s.teamsUrl, "error", err)
-			return nil, false
-		}
-
-		if s.teamIdAttributePath == "" {
-			return []string{}, true
-		}
-
-		ids, err = s.searchJSONForStringArrayAttr(s.teamIdAttributePath, response.Body)
+	type Record struct {
+		Id int `json:"id"`
 	}
+
+	response, err = s.httpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
+	if err != nil {
+		s.log.Error("Error getting team memberships", "url", s.apiUrl+"/teams", "error", err)
+		return nil, false
+	}
+
+	var records []Record
+
+	err = json.Unmarshal(response.Body, &records)
+	if err != nil {
+		s.log.Error("Error decoding team memberships response", "raw_json", string(response.Body), "error", err)
+		return nil, false
+	}
+
+	ids = make([]string, len(records))
+	for i, record := range records {
+		ids[i] = strconv.Itoa(record.Id)
+	}
+
+	return ids, true
+}
+
+func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(client *http.Client) ([]string, bool) {
+	if s.teamIdAttributePath == "" {
+		return []string{}, true
+	}
+
+	var response httpGetResponse
+	var err error
+	var ids []string
+
+	response, err = s.httpGet(client, fmt.Sprintf(s.teamsUrl))
+	if err != nil {
+		s.log.Error("Error getting team memberships", "url", s.teamsUrl, "error", err)
+		return nil, false
+	}
+
+	ids, err = s.searchJSONForStringArrayAttr(s.teamIdAttributePath, response.Body)
 
 	if err != nil {
 		return nil, true
 	}
-
-	s.log.Debug("Received team memberships", "ids", ids)
 
 	return ids, true
 }
