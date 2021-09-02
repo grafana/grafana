@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { DataFrame, Field, getFieldDisplayName, SelectableValue } from '@grafana/data';
+import { DataFrame, Field, FieldType, getFieldDisplayName, SelectableValue } from '@grafana/data';
+import { IconName } from '../..';
 
 /**
  * @internal
@@ -61,6 +62,15 @@ export function useFieldDisplayNames(data: DataFrame[], filter?: (field: Field) 
   }, [data, filter]);
 }
 
+const fieldTypeIcons: { [key in FieldType]: IconName } = {
+  time: 'clock-nine',
+  string: 'font',
+  number: 'calculator-alt',
+  boolean: 'toggle-on',
+  trace: 'info-circle',
+  other: 'brackets-curly',
+};
+
 /**
  * @internal
  */
@@ -80,8 +90,10 @@ export function useSelectOptions(
         found = true;
       }
       const field = displayNames.fields.get(name);
+
       let previewValues = '';
       if (field?.values.length && field.values.length > 2) {
+        console.log(fieldTypeIcons[field.type]);
         previewValues += field.values.get(0);
         previewValues += `, ${field.values.get(1)}`;
         previewValues += `, ${field.values.get(2)}`;
@@ -92,11 +104,8 @@ export function useSelectOptions(
       options.push({
         value: name,
         label: name,
-        description: field
-          ? previewValues.length > 0
-            ? `Type: ${field.type}, Values: ${previewValues}`
-            : field.type
-          : undefined,
+        description: field ? (previewValues.length > 0 ? `Values: ${previewValues}` : field.type) : undefined,
+        icon: field ? fieldTypeIcons[field.type] : undefined,
       });
     }
     for (const name of displayNames.raw) {
