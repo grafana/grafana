@@ -13,18 +13,19 @@ import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ActionTypes } from '../types';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
+import { useGetSingle, useFetchStatus } from '../state/hooks';
 
 type Props = GrafanaRouteComponentProps<{ pluginId?: string }>;
 
 export default function PluginDetails({ match }: Props): JSX.Element | null {
-  const { pluginId } = match.params;
-  const { state, dispatch } = usePluginDetails(pluginId!);
-  const { loading, error, plugin, pluginConfig, tabs, activeTab } = state;
-  const tab = tabs[activeTab];
+  const { pluginId = '' } = match.params;
+  const plugin = useGetSingle(pluginId);
+  const { isLoading, error } = useFetchStatus();
+  // const tab = tabs[activeTab];
   const styles = useStyles2(getStyles);
   const parentUrl = match.url.substring(0, match.url.lastIndexOf('/'));
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Page>
         <Loader />
@@ -33,7 +34,8 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
   }
 
   if (!plugin) {
-    return null;
+    // TODO<Return with a 404 component here>
+    return <>Plugin not found.</>;
   }
 
   return (
@@ -42,7 +44,7 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
         <PluginDetailsHeader currentUrl={match.url} parentUrl={parentUrl} pluginId={pluginId} />
 
         {/* Tab navigation */}
-        <TabsBar>
+        {/* <TabsBar>
           {tabs.map((tab: { label: string }, idx: number) => (
             <Tab
               key={tab.label}
@@ -51,20 +53,20 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
               onChangeTab={() => dispatch({ type: ActionTypes.SET_ACTIVE_TAB, payload: idx })}
             />
           ))}
-        </TabsBar>
+        </TabsBar> */}
 
         {/* Active tab */}
         <TabContent className={styles.tabContent}>
-          {error && (
+          {/* {error && (
             <Alert severity={AppNotificationSeverity.Error} title="Error Loading Plugin">
               <>
                 Check the server startup logs for more information. <br />
                 If this plugin was loaded from git, make sure it was compiled.
               </>
             </Alert>
-          )}
-          <PluginDetailsSignature installedPlugin={pluginConfig} className={styles.signature} />
-          <PluginDetailsBody tab={tab} plugin={pluginConfig} remoteVersions={plugin.versions} readme={plugin.readme} />
+          )} */}
+          {/* <PluginDetailsSignature installedPlugin={pluginConfig} className={styles.signature} />
+          <PluginDetailsBody tab={tab} plugin={pluginConfig} remoteVersions={plugin.versions} readme={plugin.readme} /> */}
         </TabContent>
       </PluginPage>
     </Page>
