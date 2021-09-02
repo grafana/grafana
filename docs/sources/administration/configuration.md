@@ -1567,7 +1567,7 @@ ha_engine_address = 127.0.0.1:6379
 
 ## [plugin.grafana-image-renderer]
 
-For more information, refer to [Image rendering]({{< relref "../image_rendering" >}}).
+For more information, refer to [Image rendering]({{< relref "../image-rendering/" >}}).
 
 ### rendering_timezone
 

@@ -263,7 +263,7 @@ Grafana alert notifications can be sent to [Sensu](https://sensu.io) Go as event
 ## Enable images in notifications {#external-image-store}
 
 Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
-[image rendering]({{< relref "../../image_rendering/" >}}).
+[image rendering]({{< relref "../../image-rendering/" >}}).
 
 You must configure an [external image storage provider]({{< relref "../../administration/configuration/#external-image-storage" >}}) in order to receive images in alert notifications. If your notification channel requires that the image be publicly accessible (e.g. Slack, PagerDuty), configure a provider which uploads the image to a remote image store like Amazon S3, Webdav, Google Cloud Storage, or Azure Blob Storage. Otherwise, the local provider can be used to serve the image directly from Grafana.
 
