@@ -4,9 +4,9 @@ import {
   closeEditor,
   PANEL_EDITOR_UI_STATE_STORAGE_KEY,
   PanelEditorUIState,
+  setDiscardChanges,
   setPanelEditorUIState,
   updateEditorInitState,
-  setDiscardChanges,
 } from './reducers';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from 'app/core/store';
@@ -40,7 +40,7 @@ function updateDuplicateLibraryPanels(modifiedPanel: PanelModel, dashboard: Dash
 
   const modifiedSaveModel = modifiedPanel.getSaveModel();
   for (const panel of dashboard.panels) {
-    if (panel.libraryPanel?.uid !== modifiedPanel.libraryPanel!.uid) {
+    if (skipPanelUpdate(modifiedPanel, panel)) {
       continue;
     }
 
@@ -65,6 +65,25 @@ function updateDuplicateLibraryPanels(modifiedPanel: PanelModel, dashboard: Dash
       panel.getQueryRunner().useLastResultFrom(modifiedPanel.getQueryRunner());
     }, 20);
   }
+}
+
+function skipPanelUpdate(modifiedPanel: PanelModel, panelToUpdate: PanelModel): boolean {
+  // don't update library panels that aren't of the same type
+  if (panelToUpdate.libraryPanel?.uid !== modifiedPanel.libraryPanel!.uid) {
+    return true;
+  }
+
+  // don't update the modifiedPanel twice
+  if (panelToUpdate.id === modifiedPanel.editSourceId) {
+    return true;
+  }
+
+  // don't update library panels that are repeated
+  if (panelToUpdate.repeatPanelId && panelToUpdate.repeatPanelId === modifiedPanel.editSourceId) {
+    return true;
+  }
+
+  return false;
 }
 
 export function exitPanelEditor(): ThunkResult<void> {
