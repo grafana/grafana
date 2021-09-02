@@ -25,7 +25,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		EnableUnifiedAlerting:             true,
 		DisableAnonymous:                  true,
 		NGAlertAdminConfigIntervalSeconds: 2,
-		UnifiedAlertingDisabledOrgs:       []int64{int64(disableOrgID)}, // disable unified alerting for organisation 3
+		UnifiedAlertingDisabledOrgs:       []int64{disableOrgID}, // disable unified alerting for organisation 3
 	})
 
 	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
