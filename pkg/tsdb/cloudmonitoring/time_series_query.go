@@ -11,11 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/opentracing/opentracing-go"
+
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
