@@ -150,7 +150,7 @@ describe('panelEditor actions', () => {
     describe('when called with a panel that is repeated', () => {
       it('then it should return true', () => {
         const meta: any = {};
-        const modified: any = { editSourceId: 14, libraryPanel: { uid: '123', name: 'Name', meta, version: 1 } };
+        const modified: any = { libraryPanel: { uid: '123', name: 'Name', meta, version: 1 } };
         const panel: any = { repeatPanelId: 14, libraryPanel: { uid: '123', name: 'Name', meta, version: 1 } };
 
         expect(skipPanelUpdate(modified, panel)).toEqual(true);
