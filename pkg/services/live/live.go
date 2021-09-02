@@ -722,7 +722,7 @@ func (g *GrafanaLive) ClientCount(orgID int64, channel string) (int, error) {
 
 func (g *GrafanaLive) UsageStats() UsageStats {
 	clients := g.node.Hub().NumClients()
-	users := g.node.Hub().NumClients()
+	users := g.node.Hub().NumUsers()
 
 	return UsageStats{NumClients: clients, NumUsers: users}
 }
