@@ -226,32 +226,34 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	return resp, nil
 }
 
-func migrateLegacyQueryModel(query *backend.DataQuery) error {
+func queryModel(query *backend.DataQuery) (grafanaQuery, error) {
 	var rawQuery map[string]interface{}
 	err := json.Unmarshal(query.JSON, &rawQuery)
 	if err != nil {
-		return err
+		return grafanaQuery{}, err
 	}
 
 	if rawQuery["metricQuery"] == nil {
+		// migrate legacy query
 		var mq metricQuery
 		err = json.Unmarshal(query.JSON, &mq)
 		if err != nil {
-			return err
+			return grafanaQuery{}, err
 		}
 
-		gq := grafanaQuery{
+		return grafanaQuery{
 			QueryType:   metricQueryType,
 			MetricQuery: mq,
-		}
-
-		marshalled, err := json.Marshal(gq)
-		if err != nil {
-			return err
-		}
-		query.JSON = marshalled
+		}, nil
 	}
-	return nil
+
+	var q grafanaQuery
+	err = json.Unmarshal(query.JSON, &q)
+	if err != nil {
+		return grafanaQuery{}, err
+	}
+
+	return q, nil
 }
 
 func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMonitoringQueryExecutor, error) {
@@ -262,11 +264,8 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 	durationSeconds := int(endTime.Sub(startTime).Seconds())
 
 	for _, query := range req.Queries {
-		if err := migrateLegacyQueryModel(&query); err != nil {
-			return nil, fmt.Errorf("could not unmarshal CloudMonitoringQuery json: %w", err)
-		}
-		q := grafanaQuery{}
-		if err := json.Unmarshal(query.JSON, &q); err != nil {
+		q, err := queryModel(&query)
+		if err != nil {
 			return nil, fmt.Errorf("could not unmarshal CloudMonitoringQuery json: %w", err)
 		}
 
