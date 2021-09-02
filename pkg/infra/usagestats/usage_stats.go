@@ -50,6 +50,8 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 		return report, err
 	}
 
+	liveUsage := uss.grafanaLive.UsageStats()
+
 	metrics["stats.dashboards.count"] = statsQuery.Result.Dashboards
 	metrics["stats.users.count"] = statsQuery.Result.Users
 	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
@@ -77,6 +79,9 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.dashboards_viewers_can_admin.count"] = statsQuery.Result.DashboardsViewersCanAdmin
 	metrics["stats.folders_viewers_can_edit.count"] = statsQuery.Result.FoldersViewersCanEdit
 	metrics["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
+	metrics["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
+	metrics["stats.live_users.count"] = liveUsage.NumUsers
+	metrics["stats.live_clients.count"] = liveUsage.NumClients
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0

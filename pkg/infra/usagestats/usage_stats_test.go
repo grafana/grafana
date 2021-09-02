@@ -11,12 +11,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -322,6 +324,8 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, 18, metrics.Get("stats.alert_rules.count").MustInt())
 			assert.Equal(t, 19, metrics.Get("stats.library_panels.count").MustInt())
 			assert.Equal(t, 20, metrics.Get("stats.library_variables.count").MustInt())
+			assert.Equal(t, 0, metrics.Get("stats.live_users.count").MustInt())
+			assert.Equal(t, 0, metrics.Get("stats.live_clients.count").MustInt())
 
 			assert.Equal(t, 9, metrics.Get("stats.ds."+models.DS_ES+".count").MustInt())
 			assert.Equal(t, 10, metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt())
@@ -608,5 +612,13 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStatsService {
 		AlertingUsageStats: &alertingUsageMock{},
 		externalMetrics:    make([]MetricsFunc, 0),
 		PluginManager:      &fakePluginManager{},
+		grafanaLive:        newTestLive(t),
 	}
+}
+
+func newTestLive(t *testing.T) *live.GrafanaLive {
+	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
+	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t))
+	require.NoError(t, err)
+	return gLive
 }

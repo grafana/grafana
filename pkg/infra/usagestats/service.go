@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -31,6 +32,7 @@ type UsageStatsService struct {
 	AlertingUsageStats alerting.UsageStatsQuerier
 	PluginManager      plugins.Manager
 	SocialService      social.Service
+	grafanaLive        *live.GrafanaLive
 
 	log log.Logger
 
@@ -41,7 +43,7 @@ type UsageStatsService struct {
 
 func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
 	alertingStats alerting.UsageStatsQuerier, pluginManager plugins.Manager,
-	socialService social.Service) *UsageStatsService {
+	socialService social.Service, grafanaLive *live.GrafanaLive) *UsageStatsService {
 	s := &UsageStatsService{
 		Cfg:                cfg,
 		Bus:                bus,
@@ -49,6 +51,7 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
 		AlertingUsageStats: alertingStats,
 		oauthProviders:     socialService.GetOAuthProviders(),
 		PluginManager:      pluginManager,
+		grafanaLive:        grafanaLive,
 		log:                log.New("infra.usagestats"),
 	}
 	return s
