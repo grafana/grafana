@@ -52,7 +52,7 @@ export function PieChartPanel(props: Props) {
   if (!hasFrames(fieldDisplayValues)) {
     return (
       <div className="panel-empty">
-        <p>{'No data'}</p>
+        <p>No data</p>
       </div>
     );
   }
