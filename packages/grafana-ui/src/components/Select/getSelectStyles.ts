@@ -28,7 +28,6 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       }
     `,
     optionIcon: css`
-      align-self: 'flex-start';
       margin-right: ${theme.spacing(1)};
     `,
     optionImage: css`

@@ -90,21 +90,9 @@ export function useSelectOptions(
         found = true;
       }
       const field = displayNames.fields.get(name);
-
-      let previewValues = '';
-      if (field?.values.length && field.values.length > 2) {
-        console.log(fieldTypeIcons[field.type]);
-        previewValues += field.values.get(0);
-        previewValues += `, ${field.values.get(1)}`;
-        previewValues += `, ${field.values.get(2)}`;
-        if (field.values.length > 3) {
-          previewValues += '...';
-        }
-      }
       options.push({
         value: name,
         label: name,
-        description: field ? (previewValues.length > 0 ? `Values: ${previewValues}` : field.type) : undefined,
         icon: field ? fieldTypeIcons[field.type] : undefined,
       });
     }
