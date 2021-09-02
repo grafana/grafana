@@ -437,7 +437,7 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 // FetchTeamMemberships will attempt to get the user's team string IDs from the JWT claims using the 'team_id_attribute_path' setting.
 // If the attribute path does not find anything in the JWT claims, then the same attribute path is used to attempt to retrieve the team IDs from the OIDC '/userinfo' endpoint.
 // If the attribute path still does not find anything in the '/userinfo' response, then the same attribute path is used to attempt to retrieve the team IDs from the 'teams_url'
-// If team IDs are found, then true is returned. Otherwise, false is returned.
+// If team IDs are found, they are returned. Otherwise, an error is returned.
 func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]string, error) {
 	var err error
 	var ids []string
@@ -469,7 +469,7 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(client *
 	response, err = s.httpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
 	if err != nil {
 		s.log.Error("Error getting team memberships", "url", s.apiUrl+"/teams", "error", err)
-		return nil, err
+		return []string{}, err
 	}
 
 	var records []Record
@@ -477,7 +477,7 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(client *
 	err = json.Unmarshal(response.Body, &records)
 	if err != nil {
 		s.log.Error("Error decoding team memberships response", "raw_json", string(response.Body), "error", err)
-		return nil, err
+		return []string{}, err
 	}
 
 	ids = make([]string, len(records))
@@ -503,13 +503,7 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(client *http.Clien
 		return nil, err
 	}
 
-	ids, err = s.searchJSONForStringArrayAttr(s.teamIdAttributePath, response.Body)
-
-	if err != nil {
-		return nil, nil
-	}
-
-	return ids, nil
+	return s.searchJSONForStringArrayAttr(s.teamIdAttributePath, response.Body)
 }
 
 func (s *SocialGenericOAuth) FetchOrganizations(client *http.Client) ([]string, bool) {
