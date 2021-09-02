@@ -288,8 +288,8 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) handleNonDistributionSe
 	setDisplayNameAsFieldName(dataField)
 }
 
-func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(queryRes *backend.DataResponse,
-	response cloudMonitoringResponse, title, text, tags, refID string) error {
+func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(dr *backend.DataResponse,
+	response cloudMonitoringResponse, title, text, tags string) error {
 	frames := data.Frames{}
 	for _, series := range response.TimeSeries {
 		if len(series.Points) == 0 {
@@ -309,14 +309,14 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseToAnnotations(quer
 			annotation["text"] = append(annotation["text"], formatAnnotationText(text, value, series.Metric.Type,
 				series.Metric.Labels, series.Resource.Labels))
 		}
-		frames = append(frames, data.NewFrame(refID,
+		frames = append(frames, data.NewFrame(timeSeriesFilter.getRefID(),
 			data.NewField("time", nil, annotation["time"]),
 			data.NewField("title", nil, annotation["title"]),
 			data.NewField("tags", nil, annotation["tags"]),
 			data.NewField("text", nil, annotation["text"]),
 		))
 	}
-	queryRes.Frames = frames
+	dr.Frames = frames
 
 	return nil
 }

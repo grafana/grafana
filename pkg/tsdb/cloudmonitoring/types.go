@@ -12,8 +12,8 @@ type (
 	cloudMonitoringQueryExecutor interface {
 		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo) (
 			*backend.DataResponse, cloudMonitoringResponse, string, error)
-		parseResponse(queryRes *backend.DataResponse, data cloudMonitoringResponse, executedQueryString string) error
-		parseToAnnotations(queryRes *backend.DataResponse, data cloudMonitoringResponse, title, text, tags, refID string) error
+		parseResponse(dr *backend.DataResponse, data cloudMonitoringResponse, executedQueryString string) error
+		parseToAnnotations(dr *backend.DataResponse, data cloudMonitoringResponse, title, text, tags string) error
 		buildDeepLink() string
 		getRefID() string
 	}

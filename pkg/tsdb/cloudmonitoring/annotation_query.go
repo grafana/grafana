@@ -34,17 +34,17 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	if err != nil {
 		return resp, nil
 	}
-	err = queries[0].parseToAnnotations(queryRes, dr, mq.Title, mq.Text, mq.Tags, firstQuery.RefID)
+	err = queries[0].parseToAnnotations(queryRes, dr, mq.Title, mq.Text, mq.Tags)
 	resp.Responses[firstQuery.RefID] = *queryRes
 
 	return resp, err
 }
 
-func transformAnnotationToFrame(annotations []map[string]string, result *backend.DataResponse) {
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) transformAnnotationToFrame(annotations []map[string]string, result *backend.DataResponse) {
 	frames := data.Frames{}
 	for _, a := range annotations {
 		frame := &data.Frame{
-			Name: "Table",
+			RefID: timeSeriesQuery.getRefID(),
 			Fields: []*data.Field{
 				data.NewField("time", nil, a["time"]),
 				data.NewField("title", nil, a["title"]),

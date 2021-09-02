@@ -271,7 +271,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *ba
 }
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRes *backend.DataResponse,
-	data cloudMonitoringResponse, title, text, tags, refID string) error {
+	data cloudMonitoringResponse, title, text, tags string) error {
 	annotations := make([]map[string]string, 0)
 
 	for _, series := range data.TimeSeriesData {
@@ -319,7 +319,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRe
 		}
 	}
 
-	transformAnnotationToFrame(annotations, queryRes)
+	timeSeriesQuery.transformAnnotationToFrame(annotations, queryRes)
 	return nil
 }
 

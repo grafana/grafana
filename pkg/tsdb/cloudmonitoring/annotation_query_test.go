@@ -17,7 +17,7 @@ func TestExecutor_parseToAnnotations(t *testing.T) {
 	query := &cloudMonitoringTimeSeriesFilter{}
 
 	err = query.parseToAnnotations(res, d, "atitle {{metric.label.instance_name}} {{metric.value}}",
-		"atext {{resource.label.zone}}", "atag", "annotationQuery")
+		"atext {{resource.label.zone}}", "atag")
 	require.NoError(t, err)
 
 	frames := res.Frames
@@ -35,7 +35,7 @@ func TestCloudMonitoringExecutor_parseToAnnotations_emptyTimeSeries(t *testing.T
 		TimeSeries: []timeSeries{},
 	}
 
-	err := query.parseToAnnotations(res, response, "atitle", "atext", "atag", "annotationQuery")
+	err := query.parseToAnnotations(res, response, "atitle", "atext", "atag")
 	require.NoError(t, err)
 
 	frames := res.Frames
@@ -52,7 +52,7 @@ func TestCloudMonitoringExecutor_parseToAnnotations_noPointsInSeries(t *testing.
 		},
 	}
 
-	err := query.parseToAnnotations(res, response, "atitle", "atext", "atag", "annotationQuery")
+	err := query.parseToAnnotations(res, response, "atitle", "atext", "atag")
 	require.NoError(t, err)
 
 	frames := res.Frames
