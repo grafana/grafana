@@ -9,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props extends VariableEditorProps<TextBoxVariableModel> {}
 
-export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Props): ReactElement {
+export function TextBoxVariableEditor({ onPropChange, variable: { query, placeholder } }: Props): ReactElement {
   const updateDefaultVariable = useCallback(
     (event: FormEvent<HTMLInputElement>, updateOptions: boolean) => {
       event.preventDefault();
@@ -19,11 +19,26 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
     [onPropChange]
   );
 
+  const updatePlaceholderVariable = useCallback(
+    (event: FormEvent<HTMLInputElement>, updateOptions: boolean) => {
+      event.preventDefault();
+      onPropChange({ propName: 'placeholder', propValue: event.currentTarget.value, updateOptions });
+    },
+    [onPropChange]
+  );
+
   const onDefaultChange = useCallback((e: FormEvent<HTMLInputElement>) => updateDefaultVariable(e, false), [
     updateDefaultVariable,
   ]);
   const onDefaultBlur = useCallback((e: FormEvent<HTMLInputElement>) => updateDefaultVariable(e, true), [
     updateDefaultVariable,
+  ]);
+
+  const onPlaceholderChange = useCallback((e: FormEvent<HTMLInputElement>) => updatePlaceholderVariable(e, false), [
+    updatePlaceholderVariable,
+  ]);
+  const onPlaceholderBlur = useCallback((e: FormEvent<HTMLInputElement>) => updatePlaceholderVariable(e, false), [
+    updatePlaceholderVariable,
   ]);
 
   return (
@@ -38,6 +53,16 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
         labelWidth={20}
         grow
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInputV2}
+      />
+      <VariableTextField
+        value={placeholder ?? ''}
+        name="Placeholder"
+        placeholder="placeholder for empty field"
+        onChange={onPlaceholderChange}
+        onBlur={onPlaceholderBlur}
+        labelWidth={20}
+        grow
+        ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInput}
       />
     </VerticalGroup>
   );
