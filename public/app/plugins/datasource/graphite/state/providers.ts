@@ -31,17 +31,17 @@ async function getAltSegments(
     query = state.queryModel.getSegmentPathUpTo(index) + '.' + query;
   }
   const options = {
-    range: state.panelCtrl.range,
+    range: state.range,
     requestId: 'get-alt-segments',
   };
 
   try {
     const segments = await state.datasource.metricFindQuery(query, options);
-    const altSegments = map(segments, (segment) => {
-      return state.uiSegmentSrv.newSegment({
+    const altSegments: GraphiteSegment[] = map(segments, (segment) => {
+      return {
         value: segment.text,
         expandable: segment.expandable,
-      });
+      };
     });
 
     if (index > 0 && altSegments.length === 0) {
@@ -50,34 +50,30 @@ async function getAltSegments(
 
     // add query references
     if (index === 0) {
-      eachRight(state.panelCtrl.panel.targets, (target) => {
+      eachRight(state.queries, (target) => {
         if (target.refId === state.queryModel.target.refId) {
           return;
         }
 
-        altSegments.unshift(
-          state.uiSegmentSrv.newSegment({
-            type: 'series-ref',
-            value: '#' + target.refId,
-            expandable: false,
-          })
-        );
+        altSegments.unshift({
+          type: 'series-ref',
+          value: '#' + target.refId,
+          expandable: false,
+        });
       });
     }
 
     // add template variables
     eachRight(state.templateSrv.getVariables(), (variable) => {
-      altSegments.unshift(
-        state.uiSegmentSrv.newSegment({
-          type: 'template',
-          value: '$' + variable.name,
-          expandable: true,
-        })
-      );
+      altSegments.unshift({
+        type: 'template',
+        value: '$' + variable.name,
+        expandable: true,
+      });
     });
 
     // add wildcard option
-    altSegments.unshift(state.uiSegmentSrv.newSegment('*'));
+    altSegments.unshift({ value: '*', expandable: true });
 
     if (state.supportsTags && index === 0) {
       removeTaggedEntry(altSegments);
@@ -140,11 +136,11 @@ async function getTagsAsSegments(state: GraphiteQueryEditorState, tagPrefix: str
     const tagExpressions = state.queryModel.renderTagExpressions();
     const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
     tagsAsSegments = map(values, (val) => {
-      return state.uiSegmentSrv.newSegment({
+      return {
         value: val.text,
         type: 'tag',
         expandable: false,
-      });
+      };
     });
   } catch (err) {
     tagsAsSegments = [];
