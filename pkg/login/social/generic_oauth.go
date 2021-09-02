@@ -495,7 +495,6 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(client *http.Clien
 
 	var response httpGetResponse
 	var err error
-	var ids []string
 
 	response, err = s.httpGet(client, fmt.Sprintf(s.teamsUrl))
 	if err != nil {
