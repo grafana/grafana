@@ -9,13 +9,13 @@ export const selectItems = createSelector(selectRoot, ({ items }) => items);
 
 export const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
 
-const isInstalled = (filterBy: string) =>
+const selectInstalled = (filterBy: string) =>
   createSelector(selectAll, (plugins) =>
     plugins.filter((plugin) => (filterBy === 'installed' ? plugin.isInstalled : !plugin.isCore))
   );
 
 const findByInstallAndType = (filterBy: string, filterByType: string) =>
-  createSelector(isInstalled(filterBy), (plugins) =>
+  createSelector(selectInstalled(filterBy), (plugins) =>
     plugins.filter((plugin) => filterByType === 'all' || plugin.type === filterByType)
   );
 
