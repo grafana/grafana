@@ -12,11 +12,10 @@ import { CatalogPlugin, PluginAdminRoutes } from '../types';
 import { Page as PluginPage } from '../components/Page';
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { Page } from 'app/core/components/Page/Page';
-import { usePluginsByFilter } from '../hooks/usePlugins';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { useGetAll } from '../state/hooks';
+import { useGetAll, useFetchStatus } from '../state/hooks';
 import { find } from '../state/selectors';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
@@ -33,8 +32,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const sortBy = (query.sortBy as string) ?? 'nameAsc';
 
   const filteredPlugins = useSelector(find(q, filterBy, filterByType));
-  // TODO: put back loading and error
-  // const { plugins, isLoading, error } = usePluginsByFilter({ searchBy: q, filterBy, filterByType });
+  const { isLoading, error } = useFetchStatus();
   const sortedPlugins = filteredPlugins.sort(sorters[sortBy]);
   const history = useHistory();
 
@@ -55,10 +53,10 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   };
 
   // How should we handle errors?
-  // if (error) {
-  //   console.error(error.message);
-  //   return null;
-  // }
+  if (error) {
+    console.error(error.message);
+    return null;
+  }
 
   return (
     <Page navModel={navModel}>
@@ -107,16 +105,16 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
             </HorizontalGroup>
           </HorizontalGroup>
           <div className={styles.listWrap}>
-            {/* {isLoading ? (
+            {isLoading ? (
               <LoadingPlaceholder
                 className={css`
                   margin-bottom: 0;
                 `}
                 text="Loading results"
               />
-            ) : ( */}
-            <PluginList plugins={sortedPlugins} />
-            {/* )} */}
+            ) : (
+              <PluginList plugins={sortedPlugins} />
+            )}
           </div>
         </PluginPage>
       </Page.Contents>
