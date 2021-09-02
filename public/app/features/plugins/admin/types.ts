@@ -32,8 +32,8 @@ export interface CatalogPlugin {
 }
 
 export interface CatalogPluginDetails {
-  readme: string;
-  versions: Version[];
+  readme?: string;
+  versions?: Version[];
   links: Array<{
     name: string;
     url: string;

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAll, install, uninstall } from './actions';
+import { fetchAll, fetchDetails, install, uninstall } from './actions';
 import { CatalogPlugin } from '../types';
 import {
   selectAll,
@@ -18,6 +18,7 @@ export const useGetAll = (): CatalogPlugin[] => {
 
 export const useGetSingle = (id: string): CatalogPlugin | undefined => {
   useFetchAll();
+  useFetchDetails(id);
 
   return useSelector((state) => selectById(state, id));
 };
@@ -48,5 +49,16 @@ export const useFetchAll = () => {
 
   useEffect(() => {
     isNotFetched && dispatch(fetchAll());
+  }, []); // eslint-disable-line
+};
+
+export const useFetchDetails = (id: string) => {
+  const dispatch = useDispatch();
+  const plugin = useSelector((state) => selectById(state, id));
+  const isPending = useSelector(selectIsRequestPending(fetchDetails.typePrefix));
+  const shouldFetch = !isPending && !plugin?.details;
+
+  useEffect(() => {
+    shouldFetch && dispatch(fetchDetails(id));
   }, []); // eslint-disable-line
 };

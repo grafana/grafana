@@ -1,6 +1,7 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
-import { getCatalogPlugins, getCatalogPlugin } from '../api';
+import { createAsyncThunk, Update } from '@reduxjs/toolkit';
+import { getCatalogPlugins, getPluginDetails } from '../api';
 import { STATE_PREFIX } from '../constants';
+import { CatalogPlugin } from '../types';
 
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
   try {
@@ -11,9 +12,14 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
   }
 });
 
-export const fetchSingle = createAsyncThunk(`${STATE_PREFIX}/fetchSingle`, async (id: string, thunkApi) => {
+export const fetchDetails = createAsyncThunk(`${STATE_PREFIX}/fetchDetails`, async (id: string, thunkApi) => {
   try {
-    return await getCatalogPlugin(id);
+    const details = await getPluginDetails(id);
+
+    return {
+      id,
+      changes: { details },
+    } as Update<CatalogPlugin>;
   } catch (e) {
     // TODO<add more error handling here>
     return thunkApi.rejectWithValue('Unknown error.');

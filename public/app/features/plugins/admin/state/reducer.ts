@@ -1,5 +1,5 @@
 import { createSlice, createEntityAdapter, EntityState, AnyAction } from '@reduxjs/toolkit';
-import { fetchAll, fetchSingle } from './actions';
+import { fetchAll, fetchDetails } from './actions';
 import { CatalogPlugin, RequestInfo, RequestStatus } from '../types';
 import { STATE_PREFIX } from '../constants';
 
@@ -33,9 +33,9 @@ export const { reducer } = createSlice({
       .addCase(fetchAll.fulfilled, (state, action) => {
         pluginsAdapter.upsertMany(state.items, action.payload);
       })
-      // Fetch Single
-      .addCase(fetchSingle.fulfilled, (state, action) => {
-        pluginsAdapter.upsertOne(state.items, action.payload);
+      // Fetch Details
+      .addCase(fetchDetails.fulfilled, (state, action) => {
+        pluginsAdapter.updateOne(state.items, action.payload);
       })
       // Install
       // .addCase(install.fulfilled, (state, action) => {
