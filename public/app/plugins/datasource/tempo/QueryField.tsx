@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import { DataSourceApi, ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   FileDropzone,
   InlineField,
   InlineFieldRow,
   InlineLabel,
-  LegacyForms,
+  QueryField,
   RadioButtonGroup,
   Themeable2,
   withTheme2,
@@ -160,28 +159,25 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
           </div>
         )}
         {query.queryType === 'traceId' && (
-          <LegacyForms.FormField
-            label="Trace ID"
-            labelWidth={4}
-            inputEl={
-              <div className="slate-query-field__wrapper">
-                <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
-                  <input
-                    style={{ width: '100%' }}
-                    value={query.query || ''}
-                    onChange={(e) =>
-                      onChange({
-                        ...query,
-                        query: e.currentTarget.value,
-                        queryType: 'traceId',
-                        linkedQuery: undefined,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            }
-          />
+          <InlineFieldRow>
+            <InlineField label="Trace ID" labelWidth={14} grow>
+              <QueryField
+                query={query.query}
+                onChange={(val) => {
+                  onChange({
+                    ...query,
+                    query: val,
+                    queryType: 'traceId',
+                    linkedQuery: undefined,
+                  });
+                }}
+                onBlur={this.props.onBlur}
+                onRunQuery={this.props.onRunQuery}
+                placeholder={'Enter a Trace ID (run with Shift+Enter)'}
+                portalOrigin="tempo"
+              />
+            </InlineField>
+          </InlineFieldRow>
         )}
         {query.queryType === 'serviceMap' && <ServiceMapSection graphDatasourceUid={graphDatasourceUid} />}
       </>

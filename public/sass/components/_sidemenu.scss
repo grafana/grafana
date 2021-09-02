@@ -254,10 +254,6 @@ li.sidemenu-org-switcher {
     }
 
     .sidemenu-link {
-      text-align: left;
-    }
-
-    .sidemenu-icon {
       display: none;
     }
 
@@ -268,7 +264,8 @@ li.sidemenu-org-switcher {
       float: none;
       margin-bottom: $space-sm;
 
-      > li > a {
+      > li > a,
+      > li > button {
         padding-left: 15px;
       }
     }

@@ -10,7 +10,7 @@ type Props = {
 
 export function SeriesSection({ state }: Props) {
   const sectionContent = state.queryModel?.seriesByTagUsed ? (
-    <TagsSection tags={state.queryModel?.tags} addTagSegments={state.addTagSegments} state={state} />
+    <TagsSection tags={state.queryModel?.tags} state={state} />
   ) : (
     <MetricsSection segments={state.segments} state={state} />
   );

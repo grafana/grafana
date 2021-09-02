@@ -1,5 +1,5 @@
-import GraphiteQuery from '../graphite_query';
-import { GraphiteActionDispatcher, GraphiteSegment, GraphiteTagOperator } from '../types';
+import GraphiteQuery, { GraphiteTarget } from '../graphite_query';
+import { GraphiteSegment, GraphiteTagOperator } from '../types';
 import { GraphiteDatasource } from '../datasource';
 import { TemplateSrv } from '../../../../features/templating/template_srv';
 import { actions } from './actions';
@@ -9,7 +9,6 @@ import {
   buildSegments,
   checkOtherSegments,
   emptySegments,
-  fixTagSegments,
   handleTargetChanged,
   parseTarget,
   pause,
@@ -17,34 +16,28 @@ import {
   smartlyHandleNewAliasByNode,
   spliceSegments,
 } from './helpers';
-import { Action } from 'redux';
+import { Action, Dispatch } from 'redux';
 import { FuncDefs } from '../gfunc';
+import { AnyAction } from '@reduxjs/toolkit';
+import { DataQuery, TimeRange } from '@grafana/data';
 
 export type GraphiteQueryEditorState = {
-  /**
-   * Extra segment with plus button when tags are rendered
-   */
-  addTagSegments: GraphiteSegment[];
+  // external dependencies
+  datasource: GraphiteDatasource;
+  target: GraphiteTarget;
+  refresh: (target: string) => void;
+  queries?: DataQuery[];
+  templateSrv: TemplateSrv;
+  range?: TimeRange;
 
+  // internal
   supportsTags: boolean;
   paused: boolean;
   removeTagValue: string;
-
-  datasource: GraphiteDatasource;
-
-  uiSegmentSrv: any;
-  templateSrv: TemplateSrv;
-  panelCtrl: any;
-
-  target: { target: string; textEditor: boolean };
-
   funcDefs: FuncDefs | null;
-
   segments: GraphiteSegment[];
   queryModel: GraphiteQuery;
-
   error: Error | null;
-
   tagsAutoCompleteErrorShown: boolean;
   metricAutoCompleteErrorShown: boolean;
 };
@@ -66,9 +59,22 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
       paused: false,
       removeTagValue: '-- remove tag --',
       funcDefs: deps.datasource.funcDefs,
+      queries: deps.queries,
     };
 
     await buildSegments(state, false);
+  }
+  if (actions.timeRangeChanged.match(action)) {
+    state.range = action.payload;
+  }
+  if (actions.queriesChanged.match(action)) {
+    state.queries = action.payload;
+    handleTargetChanged(state);
+  }
+  if (actions.queryChanged.match(action)) {
+    state.target.target = action.payload.target || '';
+    await parseTarget(state);
+    handleTargetChanged(state);
   }
   if (actions.segmentValueChanged.match(action)) {
     const { segment: segmentOrString, index: segmentIndex } = action.payload;
@@ -125,11 +131,10 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     const newTag = { key: newTagKey, operator: '=' as GraphiteTagOperator, value: '' };
     state.queryModel.addTag(newTag);
     handleTargetChanged(state);
-    fixTagSegments(state);
   }
   if (actions.unpause.match(action)) {
     state.paused = false;
-    state.panelCtrl.refresh();
+    state.refresh(state.target.target);
   }
   if (actions.addFunction.match(action)) {
     const newFunc = state.datasource.createFuncInstance(action.payload.name, {
@@ -170,9 +175,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     handleTargetChanged(state);
   }
   if (actions.runQuery.match(action)) {
-    // handleTargetChanged() builds target from segments/tags/functions only,
-    // it doesn't handle refresh when target is change explicitly
-    state.panelCtrl.refresh();
+    state.refresh(state.target.target);
   }
   if (actions.toggleEditorMode.match(action)) {
     state.target.textEditor = !state.target.textEditor;
@@ -182,15 +185,13 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   return { ...state };
 };
 
-export const createStore = (
-  onChange: (state: GraphiteQueryEditorState) => void
-): [GraphiteActionDispatcher, GraphiteQueryEditorState] => {
+export const createStore = (onChange: (state: GraphiteQueryEditorState) => void): Dispatch<AnyAction> => {
   let state = {} as GraphiteQueryEditorState;
 
-  const dispatch = async (action: Action) => {
+  const dispatch = async (action: AnyAction) => {
     state = await reducer(action, state);
     onChange(state);
   };
 
-  return [dispatch, state];
+  return dispatch as Dispatch<AnyAction>;
 };
