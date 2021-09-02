@@ -4,7 +4,6 @@
       - "9090:9090"
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    user: "root:root"
 
   node_exporter:
     image: prom/node-exporter
