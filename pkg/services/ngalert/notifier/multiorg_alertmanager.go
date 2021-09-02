@@ -88,7 +88,6 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(orgIDs []int64) {
 		_, isDisabledOrg := moa.settings.UnifiedAlertingDisabledOrgs[orgID]
 		if !found {
 			if !isDisabledOrg {
-
 				reg := moa.orgRegistry.GetOrCreateOrgRegistry(orgID)
 				am, err := newAlertmanager(orgID, moa.settings, moa.configStore, metrics.NewMetrics(reg))
 				if err != nil {
@@ -98,7 +97,6 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(orgIDs []int64) {
 				existing = am
 			} else {
 				moa.logger.Debug("skipping creating Alertmanger for disabled org", "org", orgID)
-
 			}
 		}
 
