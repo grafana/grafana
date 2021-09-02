@@ -136,12 +136,7 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
 }
 
 function hasFrames(fieldDisplayValues: FieldDisplay[]) {
-  for (let fd of fieldDisplayValues) {
-    if (fd.view && fd.view.dataFrame.length > 0) {
-      return true;
-    }
-  }
-  return false;
+  return fieldDisplayValues.some((fd) => fd.view?.dataFrame.length);
 }
 
 function useSliceHighlightState() {
