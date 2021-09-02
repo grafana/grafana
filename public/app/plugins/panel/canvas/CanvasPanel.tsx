@@ -1,10 +1,10 @@
 import { Component } from 'react';
 import { PanelProps } from '@grafana/data';
 import { PanelOptions } from './models.gen';
-import { Scene } from './runtime/scene';
 import { ReplaySubject, Subscription } from 'rxjs';
 import { PanelEditExitedEvent } from 'app/types/events';
 import { CanvasGroupOptions } from 'app/features/canvas';
+import { Scene } from 'app/features/canvas/runtime/scene';
 
 interface Props extends PanelProps<PanelOptions> {}
 
