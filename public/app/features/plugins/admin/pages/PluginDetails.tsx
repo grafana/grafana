@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TabsBar, TabContent, Tab, Alert } from '@grafana/ui';
@@ -11,19 +11,35 @@ import { Page as PluginPage } from '../components/Page';
 import { Loader } from '../components/Loader';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { ActionTypes } from '../types';
+import { ActionTypes, PluginTabLabels } from '../types';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { useGetSingle, useFetchStatus } from '../state/hooks';
 
 type Props = GrafanaRouteComponentProps<{ pluginId?: string }>;
 
+type TabType = {
+  label: PluginTabLabels;
+};
+
+type State = {
+  tabs: TabType[];
+  activeTabIndex: number;
+};
+
+const DefaultState = {
+  tabs: [{ label: PluginTabLabels.OVERVIEW }, { label: PluginTabLabels.VERSIONS }],
+  activeTabIndex: 0,
+};
+
 export default function PluginDetails({ match }: Props): JSX.Element | null {
+  const [state, setState] = useState<State>(DefaultState);
+  const { tabs, activeTabIndex } = state;
   const { pluginId = '' } = match.params;
   const plugin = useGetSingle(pluginId);
   const { isLoading, error } = useFetchStatus();
-  // const tab = tabs[activeTab];
   const styles = useStyles2(getStyles);
   const parentUrl = match.url.substring(0, match.url.lastIndexOf('/'));
+  const setActiveTab = (activeTabIndex: number) => setState({ ...state, activeTabIndex });
 
   if (isLoading) {
     return (
@@ -44,16 +60,16 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
         <PluginDetailsHeader currentUrl={match.url} parentUrl={parentUrl} pluginId={pluginId} />
 
         {/* Tab navigation */}
-        {/* <TabsBar>
-          {tabs.map((tab: { label: string }, idx: number) => (
+        <TabsBar>
+          {tabs.map((tab: TabType, idx: number) => (
             <Tab
               key={tab.label}
               label={tab.label}
-              active={idx === activeTab}
-              onChangeTab={() => dispatch({ type: ActionTypes.SET_ACTIVE_TAB, payload: idx })}
+              active={idx === activeTabIndex}
+              onChangeTab={() => setActiveTab(idx)}
             />
           ))}
-        </TabsBar> */}
+        </TabsBar>
 
         {/* Active tab */}
         <TabContent className={styles.tabContent}>
