@@ -67,14 +67,14 @@ function updateDuplicateLibraryPanels(modifiedPanel: PanelModel, dashboard: Dash
   }
 }
 
-function skipPanelUpdate(modifiedPanel: PanelModel, panelToUpdate: PanelModel): boolean {
+export function skipPanelUpdate(modifiedPanel: PanelModel, panelToUpdate: PanelModel): boolean {
   // don't update library panels that aren't of the same type
   if (panelToUpdate.libraryPanel?.uid !== modifiedPanel.libraryPanel!.uid) {
     return true;
   }
 
   // don't update the modifiedPanel twice
-  if (panelToUpdate.id === modifiedPanel.editSourceId) {
+  if (panelToUpdate.id && panelToUpdate.id === modifiedPanel.editSourceId) {
     return true;
   }
 
