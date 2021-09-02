@@ -12,6 +12,10 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    ignore:
+      # ignore minor/patch updates for now
+      - dependency-name: '*'
+        update-types: ['version-update:semver-minor', 'version-update:semver-patch']
     reviewers:
       - "grafana/grafana-frontend-platform"
     versioning-strategy: "increase-if-necessary"
