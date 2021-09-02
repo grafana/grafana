@@ -10,7 +10,7 @@ import { selectors } from '@grafana/e2e-selectors';
 export interface Props extends VariableEditorProps<TextBoxVariableModel> {}
 
 export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Props): ReactElement {
-  const updateVariable = useCallback(
+  const updateDefaultVariable = useCallback(
     (event: FormEvent<HTMLInputElement>, updateOptions: boolean) => {
       event.preventDefault();
       onPropChange({ propName: 'originalQuery', propValue: event.currentTarget.value, updateOptions: false });
@@ -19,8 +19,12 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
     [onPropChange]
   );
 
-  const onChange = useCallback((e: FormEvent<HTMLInputElement>) => updateVariable(e, false), [updateVariable]);
-  const onBlur = useCallback((e: FormEvent<HTMLInputElement>) => updateVariable(e, true), [updateVariable]);
+  const onDefaultChange = useCallback((e: FormEvent<HTMLInputElement>) => updateDefaultVariable(e, false), [
+    updateDefaultVariable,
+  ]);
+  const onDefaultBlur = useCallback((e: FormEvent<HTMLInputElement>) => updateDefaultVariable(e, true), [
+    updateDefaultVariable,
+  ]);
 
   return (
     <VerticalGroup spacing="xs">
@@ -29,8 +33,8 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
         value={query}
         name="Default value"
         placeholder="default value, if any"
-        onChange={onChange}
-        onBlur={onBlur}
+        onChange={onDefaultChange}
+        onBlur={onDefaultBlur}
         labelWidth={20}
         grow
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInputV2}
