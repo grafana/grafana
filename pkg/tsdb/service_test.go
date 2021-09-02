@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
@@ -139,10 +138,7 @@ func (s *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool 
 
 func createService() (*Service, *fakeExecutor, *fakeBackendPM) {
 	fakeBackendPM := &fakeBackendPM{}
-	manager := &manager.PluginManager{
-		BackendPluginManager: fakeBackendPM,
-	}
-	s := newService(setting.NewCfg(), manager, fakeBackendPM, &fakeOAuthTokenService{})
+	s := newService(setting.NewCfg(), fakeBackendPM, &fakeOAuthTokenService{})
 	e := &fakeExecutor{
 		//nolint: staticcheck // plugins.DataPlugin deprecated
 		results:   make(map[string]plugins.DataQueryResult),
