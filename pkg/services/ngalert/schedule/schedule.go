@@ -84,6 +84,7 @@ type schedule struct {
 	sendersCfgHash          map[int64]string
 	senders                 map[int64]*sender.Sender
 	adminConfigPollInterval time.Duration
+	disabledOrgs            map[int64]struct{}
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -102,6 +103,7 @@ type SchedulerCfg struct {
 	MultiOrgNotifier        *notifier.MultiOrgAlertmanager
 	Metrics                 *metrics.Metrics
 	AdminConfigPollInterval time.Duration
+	DisabledOrgs            map[int64]struct{}
 }
 
 // NewScheduler returns a new schedule.
@@ -129,6 +131,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, st
 		senders:                 map[int64]*sender.Sender{},
 		sendersCfgHash:          map[int64]string{},
 		adminConfigPollInterval: cfg.AdminConfigPollInterval,
+		disabledOrgs:            cfg.DisabledOrgs,
 	}
 	return &sch
 }
@@ -217,6 +220,12 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 				continue
 			}
 			sch.sendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
+			continue
+		}
+
+		_, isDisabledOrg := sch.disabledOrgs[cfg.OrgID]
+		if isDisabledOrg {
+			sch.log.Debug("skipping starting sender for disabled org", "org", cfg.OrgID)
 			continue
 		}
 
@@ -314,8 +323,12 @@ func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
 		select {
 		case tick := <-sch.heartbeat.C:
 			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
-			alertRules := sch.fetchAllDetails()
-			sch.log.Debug("alert rules fetched", "count", len(alertRules))
+			disabledOrgsArray := make([]int64, 0, len(sch.disabledOrgs))
+			for disabledOrg := range sch.disabledOrgs {
+				disabledOrgsArray = append(disabledOrgsArray, disabledOrg)
+			}
+			alertRules := sch.fetchAllDetails(disabledOrgsArray)
+			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgsArray)
 
 			// registeredDefinitions is a map used for finding deleted alert rules
 			// initially it is assigned to all known alert rules from the previous cycle

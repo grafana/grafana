@@ -135,6 +135,7 @@ type GetAlertRuleByUIDQuery struct {
 type ListAlertRulesQuery struct {
 	OrgID         int64
 	NamespaceUIDs []string
+	ExcludeOrgs   []int64
 
 	Result []*AlertRule
 }

@@ -416,8 +416,9 @@ type Cfg struct {
 	GeomapEnableCustomBaseLayers bool
 
 	// Unified Alerting
-	UnifiedAlertingEnabled  bool
-	AdminConfigPollInterval time.Duration
+	UnifiedAlertingEnabled      bool
+	UnifiedAlertingDisabledOrgs map[int64]struct{}
+	AdminConfigPollInterval     time.Duration
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -1381,6 +1382,17 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 func (cfg *Cfg) readUnifiedAlertingSettings(iniFile *ini.File) error {
 	ua := iniFile.Section("unified_alerting")
 	cfg.UnifiedAlertingEnabled = ua.Key("enabled").MustBool(true)
+
+	cfg.UnifiedAlertingDisabledOrgs = make(map[int64]struct{})
+	orgsStr := valueAsString(ua, "disabled_orgs", "")
+	for _, org := range util.SplitString(orgsStr) {
+		orgID, err := strconv.ParseInt(org, 10, 64)
+		if err != nil {
+			return err
+		}
+		cfg.UnifiedAlertingDisabledOrgs[orgID] = struct{}{}
+	}
+
 	s := ua.Key("admin_config_poll_interval_seconds").MustInt(60)
 	cfg.AdminConfigPollInterval = time.Second * time.Duration(s)
 	return nil

@@ -84,14 +84,26 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(orgIDs []int64) {
 		orgsFound[orgID] = struct{}{}
 
 		existing, found := moa.alertmanagers[orgID]
+
+		_, isDisabledOrg := moa.settings.UnifiedAlertingDisabledOrgs[orgID]
 		if !found {
-			reg := moa.orgRegistry.GetOrCreateOrgRegistry(orgID)
-			am, err := newAlertmanager(orgID, moa.settings, moa.configStore, metrics.NewMetrics(reg))
-			if err != nil {
-				moa.logger.Error("unable to create Alertmanager for org", "org", orgID, "err", err)
+			if !isDisabledOrg {
+
+				reg := moa.orgRegistry.GetOrCreateOrgRegistry(orgID)
+				am, err := newAlertmanager(orgID, moa.settings, moa.configStore, metrics.NewMetrics(reg))
+				if err != nil {
+					moa.logger.Error("unable to create Alertmanager for org", "org", orgID, "err", err)
+				}
+				moa.alertmanagers[orgID] = am
+				existing = am
+			} else {
+				moa.logger.Debug("skipping creating Alertmanger for disabled org", "org", orgID)
+
 			}
-			moa.alertmanagers[orgID] = am
-			existing = am
+		}
+
+		if isDisabledOrg {
+			continue
 		}
 
 		//TODO: This will create an N+1 query

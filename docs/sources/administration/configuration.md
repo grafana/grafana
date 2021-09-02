@@ -1107,6 +1107,10 @@ For more information about the Grafana 8 alerts, refer to [Unified Alerting]({{<
 
 Set to `false` to disable Grafana 8 alerts. Default is `true`.
 
+### disabled_orgs
+
+Set the organisations (IDs) for which to disable unified alerting, separated by commas. It has no effect if unified alerting in disabled.
+
 ### admin_config_poll_interval_seconds
 
 Specify the frequency of polling for admin config changes. The default value is `60`.
