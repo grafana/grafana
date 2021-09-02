@@ -42,14 +42,14 @@ type MultipleProcessorConfig struct {
 }
 
 type MultipleOutputterConfig struct {
-	Outputters []OutputterConfig `json:"outputters"`
+	Outputters []OutputterConfig `json:"outputs"`
 }
 
 type ManagedStreamOutputConfig struct{}
 
 type ConditionalOutputConfig struct {
 	Condition *ConditionCheckerConfig `json:"condition"`
-	Outputter *OutputterConfig        `json:"outputter"`
+	Outputter *OutputterConfig        `json:"output"`
 }
 
 type RemoteWriteOutputConfig struct {
@@ -70,7 +70,7 @@ type OutputterConfig struct {
 type ChannelRuleSettings struct {
 	Converter *ConverterConfig `json:"converter,omitempty"`
 	Processor *ProcessorConfig `json:"processor,omitempty"`
-	Outputter *OutputterConfig `json:"outputter,omitempty"`
+	Outputter *OutputterConfig `json:"output,omitempty"`
 }
 
 type ChannelRule struct {

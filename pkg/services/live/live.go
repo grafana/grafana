@@ -166,7 +166,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	g.ManagedStreamRunner = managedStreamRunner
 	if enabled := g.Cfg.FeatureToggles["live-pipeline"]; enabled {
-		storage := &pipeline.DevStorage{
+		storage := &pipeline.FileStorage{
 			Node:          node,
 			ManagedStream: g.ManagedStreamRunner,
 			FrameStorage:  pipeline.NewFrameStorage(),
