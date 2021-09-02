@@ -4,9 +4,8 @@ import (
 	"testing"
 	"time"
 
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/stretchr/testify/assert"
 )
