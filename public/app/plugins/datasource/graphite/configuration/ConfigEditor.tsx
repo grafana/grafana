@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
+import { Alert, DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
 const { Select, Switch } = LegacyForms;
 import {
   DataSourcePluginOptionsEditorProps,
@@ -61,6 +61,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     return (
       <>
+        {options.access === 'direct' && (
+          <Alert title="Deprecation Notice" severity="warning">
+            This data source uses browser access mode. This mode is deprecated and will be removed in the future. Please
+            use server access mode instead.
+          </Alert>
+        )}
         <DataSourceHttpSettings
           defaultUrl="http://localhost:8080"
           dataSourceConfig={options}
