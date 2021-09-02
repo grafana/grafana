@@ -1,7 +1,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { getCatalogPlugins, getCatalogPlugin } from '../api';
+import { STATE_PREFIX } from '../constants';
 
-export const fetchAll = createAsyncThunk('plugins/fetchAll', async (_, thunkApi) => {
+export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
   try {
     return await getCatalogPlugins();
   } catch (e) {
@@ -10,7 +11,7 @@ export const fetchAll = createAsyncThunk('plugins/fetchAll', async (_, thunkApi)
   }
 });
 
-export const fetchSingle = createAsyncThunk('plugins/fetchSingle', async (id: string, thunkApi) => {
+export const fetchSingle = createAsyncThunk(`${STATE_PREFIX}/fetchSingle`, async (id: string, thunkApi) => {
   try {
     return await getCatalogPlugin(id);
   } catch (e) {
@@ -19,7 +20,7 @@ export const fetchSingle = createAsyncThunk('plugins/fetchSingle', async (id: st
   }
 });
 
-export const install = createAsyncThunk('plugins/install', async (id: string, thunkApi) => {
+export const install = createAsyncThunk(`${STATE_PREFIX}/install`, async (id: string, thunkApi) => {
   try {
     // call the install plugin API
     // return response;
@@ -29,7 +30,7 @@ export const install = createAsyncThunk('plugins/install', async (id: string, th
   }
 });
 
-export const uninstall = createAsyncThunk('plugins/uninstall', async (id: string, thunkApi) => {
+export const uninstall = createAsyncThunk(`${STATE_PREFIX}/uninstall`, async (id: string, thunkApi) => {
   try {
     // call the uninstall plugin API
     // return response;
