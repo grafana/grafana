@@ -2,17 +2,23 @@
 title = "Troubleshooting"
 description = "Image rendering troubleshooting"
 keywords = ["grafana", "image", "rendering", "plugin", "troubleshooting"]
-weight = 300
+weight = 100
 +++
 
 # Troubleshoot image rendering
 
-Enable debug log messages for rendering in the Grafana configuration file and inspect the Grafana server log.
+In order to troubleshoot the image renderer, you can access different kind of logs:
+
+- Enable debug log messages for rendering in the Grafana configuration file and inspect the Grafana server log.
 
 ```bash
 [log]
 filters = rendering:debug
 ```
+
+- Increase the [log level]({{< relref "./#log-level" >}}) of the image renderer.
+- Enable [verbose logging]({{< relref "./#verbose-logging" >}}) for the image renderer.
+- [Capture headless browser output]({{< relref "./#capture-browser-output" >}}).
 
 ## Grafana image renderer plugin and remote rendering service
 

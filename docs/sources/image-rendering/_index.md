@@ -2,7 +2,7 @@
 title = "Image rendering"
 description = "Image rendering"
 keywords = ["grafana", "image", "rendering", "plugin"]
-weight = 300
+weight = 55
 +++
 
 # Image rendering
@@ -27,13 +27,13 @@ Alert notifications can include images, but rendering many images at the same ti
 
 To install the plugin, refer to the [Grafana Image Renderer Installation instructions](https://grafana.com/grafana/plugins/grafana-image-renderer#installation).
 
-c
+## Configuration
 
 The Grafana Image Renderer plugin has a number of configuration options that are used in plugin or remote rendering modes.
 
 In plugin mode, you can specify them directly in the [Grafana configuration file]({{< relref "../administration/configuration/#plugin.grafana-image-renderer" >}}).
 
-In remote rendering mode, you can specify them in a `.json` configuration file or, for some of them, you can override the configuration defaults using environment variables.
+In remote rendering mode, you can specify them in a `.json` [configuration file](#configuration-file") or, for some of them, you can override the configuration defaults using environment variables.
 
 > Please note that not all settings are available using environment variables. If there is no example using environment variable below, it means that you need to update the configuration file.
 
@@ -47,7 +47,7 @@ You can volume mount your custom configuration file when starting the docker con
 docker run -d --name=renderer --network=host -v /some/path/config.json:/usr/src/app/config.json grafana/grafana-image-renderer:latest
 ```
 
-You can see a docker-compose example using a custom configuration file [here/](https://github.com/grafana/grafana-image-renderer/tree/master/devenv/docker/custom-config).
+You can see a docker-compose example using a custom configuration file [here](https://github.com/grafana/grafana-image-renderer/tree/master/devenv/docker/custom-config).
 
 ### Rendering mode
 
@@ -117,21 +117,20 @@ RENDERING_MODE=reusable
 
 #### Rendering modes performance and CPU / memory usage
 
-The performance and resources consumption of the different modes depend a lot on the number of concurrent requests your service is handling so it's recommended to monitor your image renderer service. On the Grafana website, you can find a [pre-made dashboard](https://grafana.com/grafana/dashboards/12203) along with documentation on how to set it up.
+The performance and resources consumption of the different modes depend a lot on the number of concurrent requests your service is handling so it's recommended to [monitor your image renderer service]({{< relref "./monitoring.md" >}}).
 
 With no concurrent request, the different modes show very similar performance and CPU / memory usage.
 
 When handling concurrent requests, we see the following trends:
 
-- Parallelizing incognito pages instead of browsers is better for performance and CPU / memory consumption meaning that `reusable` and `clustered` (with clustering mode set as `context`) modes are the most performant.
-- If you use the `clustered` mode with a `maxConcurrency` setting below your average number of concurrent requests, performance will drop as the rendering requests will need to wait for the other to finish before getting access to an incognito page / browser.
+- Parallelizing incognito pages instead of browsers is better for performance and CPU / memory consumption meaning that [`reusable`](#reusable-experimental) and [`clustered`](#clustered) (with clustering mode set as `context`) modes are the most performant.
+- If you use the [`clustered`](#clustered) mode with a `maxConcurrency` setting below your average number of concurrent requests, performance will drop as the rendering requests will need to wait for the other to finish before getting access to an incognito page / browser.
 
 To achieve better performance, it's also recommended to monitor the machine on which your service is running. If you don't have enough memory and / or CPU, every rendering step will be slower than usual, increasing the duration of every rendering request.
-Minimum free memory recommendation is 16GB on the system doing the rendering. One advantage of using the remote rendering service is that the rendering will be done on the remote system, so your local system resources will not be affected by rendering.
 
 ### Other available settings
 
-**HTTP host:**
+#### HTTP host
 
 Change the listening host of the HTTP server. Default is unset and will use the local host.
 
@@ -147,7 +146,7 @@ HTTP_HOST=localhost
 }
 ```
 
-**HTTP port:**
+#### HTTP port
 
 Change the listening port of the HTTP server. Default is `8081`. Setting `0` will automatically assign a port not in use.
 
@@ -163,7 +162,7 @@ HTTP_PORT=0
 }
 ```
 
-**Enable Prometheus metrics:**
+#### Enable Prometheus metrics
 
 You can enable [Prometheus](https://prometheus.io/) metrics endpoint `/metrics` using the environment variable `ENABLE_METRICS`. Node.js and render request duration metrics are included, see [output example](#prometheus-metrics-endpoint-output-example) for details.
 
@@ -185,7 +184,7 @@ ENABLE_METRICS=true
 }
 ```
 
-**Log level:**
+#### Log level
 
 Change the log level. Default is `info` and will include log messages with level `error`, `warning` and info.
 
@@ -207,7 +206,7 @@ LOG_LEVEL=debug
 }
 ```
 
-**Verbose logging:**
+#### Verbose logging
 
 Instruct headless browser instance whether to capture and log verbose information when rendering an image. Default is `false` and will only capture and log error messages. When enabled (`true`) debug messages are captured and logged as well.
 
@@ -225,7 +224,7 @@ RENDERING_VERBOSE_LOGGING=true
 }
 ```
 
-**Capture browser output:**
+#### Capture browser output
 
 Instruct headless browser instance whether to output its debug and error messages into running process of remote rendering service. Default is `false`.
 This can be useful to enable (`true`) when troubleshooting.
@@ -242,7 +241,7 @@ RENDERING_DUMPIO=true
 }
 ```
 
-**Custom Chrome/Chromium:**
+#### Custom Chrome/Chromium
 
 If you already have [Chrome](https://www.google.com/chrome/) or [Chromium](https://www.chromium.org/)
 installed on your system, then you can use this instead of the pre-packaged version of Chromium.
@@ -263,7 +262,7 @@ CHROME_BIN="/usr/bin/chromium-browser"
 }
 ```
 
-**Start browser with additional arguments:**
+#### Start browser with additional arguments
 
 Additional arguments to pass to the headless browser instance. Defaults are `--no-sandbox,--disable-gpu`. The list of Chromium flags can be found [here](https://peter.sh/experiments/chromium-command-line-switches/) and the list of flags used as defaults by Puppeteer can be found [there](https://github.com/puppeteer/puppeteer/blob/main/src/node/Launcher.ts#L172). Multiple arguments is separated with comma-character.
 
@@ -286,7 +285,7 @@ RENDERING_ARGS=--no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--d
 }
 ```
 
-**Ignore HTTPS errors:**
+#### Ignore HTTPS errors
 
 Instruct headless browser instance whether to ignore HTTPS errors during navigation. Per default HTTPS errors are not ignored.
 Due to the security risk it's not recommended to ignore HTTPS errors.
@@ -303,7 +302,7 @@ IGNORE_HTTPS_ERRORS=true
 }
 ```
 
-**Default timezone:**
+#### Default timezone
 
 Instruct headless browser instance to use a default timezone when not provided by Grafana, .e.g. when rendering panel image of alert. See [ICU’s metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs. Fallbacks to `TZ` environment variable if not set.
 
@@ -319,7 +318,7 @@ BROWSER_TZ=Europe/Stockholm
 }
 ```
 
-**Default language:**
+#### Default language
 
 Instruct headless browser instance to use a default language when not provided by Grafana, e.g. when rendering panel image of alert.
 Refer to the HTTP header Accept-Language to understand how to format this value, e.g. 'fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, \*;q=0.5'.
@@ -332,7 +331,7 @@ Refer to the HTTP header Accept-Language to understand how to format this value,
 }
 ```
 
-**Viewport width:**
+#### Viewport width
 
 Default viewport width when width is not specified in the rendering request. Default is `1000`.
 
@@ -344,7 +343,7 @@ Default viewport width when width is not specified in the rendering request. Def
 }
 ```
 
-**Viewport height:**
+#### Viewport height
 
 Default viewport height when height is not specified in the rendering request. Default is `500`.
 
@@ -356,7 +355,7 @@ Default viewport height when height is not specified in the rendering request. D
 }
 ```
 
-**Viewport maximum width:**
+#### Viewport maximum width
 
 Limit the maximum viewport width that can be requested. Default is `3000`.
 
@@ -368,7 +367,7 @@ Limit the maximum viewport width that can be requested. Default is `3000`.
 }
 ```
 
-**Viewport maximum height:**
+#### Viewport maximum height
 
 Limit the maximum viewport height that can be requested. Default is `3000`.
 
@@ -380,7 +379,7 @@ Limit the maximum viewport height that can be requested. Default is `3000`.
 }
 ```
 
-**Device scale factor:**
+#### Device scale factor
 
 Specify default device scale factor for rendering images. 2 is enough for monitor resolutions, 4 would be better for printed material. Setting a higher value affects performance and memory. Default is `1`.
 This can be overriden in the rendering request.
@@ -393,7 +392,7 @@ This can be overriden in the rendering request.
 }
 ```
 
-**Maximum device scale factor:**
+#### Maximum device scale factor
 
 Limit the maximum device scale factor that can be requested. Default is `4`.
 
@@ -404,9 +403,3 @@ Limit the maximum device scale factor that can be requested. Default is `4`.
   }
 }
 ```
-
-## Troubleshooting and monitoring the image renderer plugin
-
-For troubleshooting instructions, please refer to the [troubleshooting documentation]({{< "./troubleshooting.md" >}}).
-
-For monitoring guidance, please refer to the [monitoring documentation]({{< "./monitoring.md" >}}).

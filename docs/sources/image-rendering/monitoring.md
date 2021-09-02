@@ -1,17 +1,17 @@
 +++
-title = "Monitoring"
+title = "Monitoring the image renderer"
 description = "Image rendering monitoring"
 keywords = ["grafana", "image", "rendering", "plugin", "monitoring"]
-weight = 300
+weight = 200
 +++
 
-# Monitor image rendering
+# Monitoring the image renderer
 
-Rendering images can require a lot of memory, mainly because Grafana creates browser instances in the background for the actual rendering. Monitoring your service can help to allocate the right amount of resources to your rendering service and set the right configuration.
+Rendering images can require a lot of memory, mainly because Grafana creates browser instances in the background for the actual rendering. Monitoring your service can help to allocate the right amount of resources to your rendering service and set the right [rendering mode]({{< relref "./#rendering-mode" >}}).
 
 ## Enable Prometheus metrics endpoint
 
-The service can be configured to expose a Prometheus metrics endpoint. There's [dashboard](https://grafana.com/grafana/dashboards/12203) published that explains the details of how to configure and monitor the rendering service using Prometheus as a data source.
+The service can be configured to expose a Prometheus metrics endpoint. There is a [dashboard](https://grafana.com/grafana/dashboards/12203) published that explains the details of how to configure and monitor the rendering service using Prometheus as a data source.
 
 **Metrics endpoint output example:**
 
