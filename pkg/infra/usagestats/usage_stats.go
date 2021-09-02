@@ -50,8 +50,6 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 		return report, err
 	}
 
-	liveUsage := uss.grafanaLive.UsageStats()
-
 	metrics["stats.dashboards.count"] = statsQuery.Result.Dashboards
 	metrics["stats.users.count"] = statsQuery.Result.Users
 	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
@@ -80,8 +78,13 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.folders_viewers_can_edit.count"] = statsQuery.Result.FoldersViewersCanEdit
 	metrics["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
 	metrics["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
-	metrics["stats.live_users.count"] = liveUsage.NumUsers
-	metrics["stats.live_clients.count"] = liveUsage.NumClients
+
+	metrics["stats.live_users_max.count"] = uss.liveStats.numUsersMax
+	metrics["stats.live_users_min.count"] = uss.liveStats.numUsersMin
+	metrics["stats.live_users_avg.count"] = uss.liveStats.numUsersSum / uss.liveStats.sampleCount
+	metrics["stats.live_clients_max.count"] = uss.liveStats.numClientsMax
+	metrics["stats.live_clients_min.count"] = uss.liveStats.numClientsMin
+	metrics["stats.live_clients_avg.count"] = uss.liveStats.numClientsSum / uss.liveStats.sampleCount
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
@@ -305,6 +308,34 @@ var sendUsageStats = func(data *bytes.Buffer) {
 			metricsLogger.Warn("Failed to close response body", "err", err)
 		}
 	}()
+}
+
+func (uss *UsageStatsService) sampleLiveStats() {
+	current := uss.grafanaLive.UsageStats()
+
+	uss.liveStats.sampleCount++
+	uss.liveStats.numClientsSum += current.NumClients
+	uss.liveStats.numUsersSum += current.NumUsers
+
+	if current.NumClients > uss.liveStats.numClientsMax {
+		uss.liveStats.numClientsMax = current.NumClients
+	}
+
+	if current.NumClients < uss.liveStats.numClientsMin {
+		uss.liveStats.numClientsMin = current.NumClients
+	}
+
+	if current.NumUsers > uss.liveStats.numUsersMax {
+		uss.liveStats.numUsersMax = current.NumUsers
+	}
+
+	if current.NumUsers < uss.liveStats.numUsersMin {
+		uss.liveStats.numUsersMin = current.NumUsers
+	}
+}
+
+func (uss *UsageStatsService) resetLiveStats() {
+	uss.liveStats = liveUsageStats{}
 }
 
 func (uss *UsageStatsService) updateTotalStats() {

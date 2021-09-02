@@ -39,6 +39,17 @@ type UsageStatsService struct {
 	oauthProviders           map[string]bool
 	externalMetrics          []MetricsFunc
 	concurrentUserStatsCache memoConcurrentUserStats
+	liveStats                liveUsageStats
+}
+
+type liveUsageStats struct {
+	numClientsMax int
+	numClientsMin int
+	numClientsSum int
+	numUsersMax   int
+	numUsersMin   int
+	numUsersSum   int
+	sampleCount   int
 }
 
 func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
@@ -62,6 +73,7 @@ func (uss *UsageStatsService) Run(ctx context.Context) error {
 
 	sendReportTicker := time.NewTicker(time.Hour * 24)
 	updateStatsTicker := time.NewTicker(time.Minute * 30)
+
 	defer sendReportTicker.Stop()
 	defer updateStatsTicker.Stop()
 
@@ -73,6 +85,7 @@ func (uss *UsageStatsService) Run(ctx context.Context) error {
 			}
 		case <-updateStatsTicker.C:
 			uss.updateTotalStats()
+			uss.sampleLiveStats()
 		case <-ctx.Done():
 			return ctx.Err()
 		}
