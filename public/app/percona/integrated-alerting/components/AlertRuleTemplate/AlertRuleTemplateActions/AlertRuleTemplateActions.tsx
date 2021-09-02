@@ -6,15 +6,14 @@ import { AlertRuleTemplateActionsProps } from './AlertRuleTemplateActions.types'
 import { SourceDescription } from '../AlertRuleTemplate.types';
 import { DeleteRuleTemplateModal } from '../DeleteRuleTemplateModal/DeleteRuleTemplateModal';
 
+const nonActionableSources = [SourceDescription.BUILT_IN, SourceDescription.USER_FILE, SourceDescription.SAAS];
+
 export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ template, getAlertRuleTemplates }) => {
   const styles = useStyles(getStyles);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const { source, yaml, name, summary } = template;
-  const isActionDisabled = useMemo(
-    () => source === SourceDescription.BUILT_IN || source === SourceDescription.USER_FILE,
-    [template]
-  );
+  const isActionDisabled = useMemo(() => nonActionableSources.includes(source), [template]);
 
   return (
     <div className={styles.actionsWrapper}>

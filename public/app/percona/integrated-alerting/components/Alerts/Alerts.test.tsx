@@ -2,16 +2,9 @@ import React from 'react';
 import { dataQa } from '@percona/platform-core';
 import { getMount } from 'app/percona/shared/helpers/testUtils';
 import { Alerts } from './Alerts';
-import { alertsStubs } from './__mocks__/alertsStubs';
 import { AlertsService } from './Alerts.service';
 
-jest.mock('./Alerts.service', () => ({
-  AlertsService: {
-    list: () => ({
-      alerts: alertsStubs,
-    }),
-  },
-}));
+jest.mock('./Alerts.service');
 
 describe('AlertsTable', () => {
   afterEach(() => {

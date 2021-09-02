@@ -1,4 +1,9 @@
-import { Severity, TemplateParamType, TemplateParamUnit } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
+import {
+  Severity,
+  SourceDescription,
+  TemplateParamType,
+  TemplateParamUnit,
+} from '../../AlertRuleTemplate/AlertRuleTemplate.types';
 import { AddAlertRuleFormValues } from './AddAlertRuleModal.types';
 import {
   formatCreateAPIPayload,
@@ -101,7 +106,7 @@ describe('AddAlertRuleModal utils', () => {
         {
           summary: 'test summary 1',
           name: 'testsum1',
-          source: 'SAAS',
+          source: SourceDescription.SAAS,
           created_at: 'test',
           yaml: 'test',
           params: [],
@@ -112,7 +117,7 @@ describe('AddAlertRuleModal utils', () => {
         {
           summary: '',
           name: '',
-          source: 'SAAS',
+          source: SourceDescription.SAAS,
           created_at: 'test',
           yaml: 'test',
           params: [],
@@ -123,7 +128,7 @@ describe('AddAlertRuleModal utils', () => {
         {
           summary: '   ',
           name: 'test2',
-          source: 'SAAS',
+          source: SourceDescription.SAAS,
           created_at: 'test',
           yaml: 'test',
           params: [],

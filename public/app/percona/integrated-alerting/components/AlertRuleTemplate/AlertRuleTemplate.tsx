@@ -7,7 +7,7 @@ import { Messages } from 'app/percona/integrated-alerting/IntegratedAlerting.mes
 import { getStyles } from './AlertRuleTemplate.styles';
 import { AddAlertRuleTemplateModal } from './AddAlertRuleTemplateModal';
 import { Table } from '../Table/Table';
-import { formatTemplates } from './AlertRuleTemplate.utils';
+import { formatSource, formatTemplates } from './AlertRuleTemplate.utils';
 import { AlertRuleTemplateService } from './AlertRuleTemplate.service';
 import { Column } from 'react-table';
 import { AlertRuleTemplateActions } from './AlertRuleTemplateActions/AlertRuleTemplateActions';
@@ -41,6 +41,7 @@ export const AlertRuleTemplate: FC = () => {
         Header: sourceColumn,
         accessor: 'source',
         width: '20%',
+        Cell: ({ value }) => formatSource(value),
       } as Column,
       {
         Header: createdAtColumn,
