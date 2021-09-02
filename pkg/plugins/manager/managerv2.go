@@ -61,7 +61,7 @@ func newManagerV2(cfg *setting.Cfg, license models.Licensing, pluginRequestValid
 		PluginRequestValidator: pluginRequestValidator,
 		plugins:                map[string]*plugins.PluginV2{},
 		log:                    log.New("plugin.manager.v2"),
-		pluginInstaller:        installer.New(false, cfg.BuildVersion, NewInstallerLogger("plugin.installer", true)),
+		pluginInstaller:        installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
 		pluginLoader:           loader.New(nil, nil, cfg, corePluginRegistry),
 	}
 }
@@ -238,7 +238,7 @@ func (m *PluginManagerV2) CallResource(pCtx backend.PluginContext, reqCtx *model
 		dsURL = pCtx.DataSourceInstanceSettings.URL
 	}
 
-	err := m.PluginRequestValidator.Validate(dsURL, reqCtx.Req.Request)
+	err := m.PluginRequestValidator.Validate(dsURL, reqCtx.Req)
 	if err != nil {
 		reqCtx.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return

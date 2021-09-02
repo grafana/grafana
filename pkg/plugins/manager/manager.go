@@ -30,7 +30,7 @@ import (
 
 var (
 	plog         log.Logger
-	installerLog = NewInstallerLogger("plugin.installer", true)
+	installerLog = newInstallerLogger("plugin.installer", true)
 )
 
 const (
