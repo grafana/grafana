@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
+var ResendDelay = 30 * time.Second
+
 type Manager struct {
 	log     log.Logger
 	metrics *metrics.Metrics
@@ -33,7 +35,7 @@ func NewManager(logger log.Logger, metrics *metrics.Metrics, ruleStore store.Rul
 	manager := &Manager{
 		cache:         newCache(logger, metrics),
 		quit:          make(chan struct{}),
-		ResendDelay:   1 * time.Minute, // TODO: make this configurable
+		ResendDelay:   ResendDelay, // TODO: make this configurable
 		log:           logger,
 		metrics:       metrics,
 		ruleStore:     ruleStore,
