@@ -9,7 +9,7 @@ import selectEvent from 'react-select-event';
 import { describeMetric } from 'app/plugins/datasource/elasticsearch/utils';
 
 describe('Terms Settings Editor', () => {
-  it('Pipeline aggregations should not bein  order by options', () => {
+  it('Pipeline aggregations should not be in "order by" options', () => {
     const termsAgg: Terms = {
       id: '1',
       type: 'terms',
