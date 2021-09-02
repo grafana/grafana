@@ -74,6 +74,7 @@ type ChannelRuleSettings struct {
 }
 
 type ChannelRule struct {
+	OrgId    int64               `json:"orgId"`
 	Pattern  string              `json:"pattern"`
 	Settings ChannelRuleSettings `json:"settings"`
 }
@@ -277,7 +278,7 @@ func (f *FileStorage) getRemoteWriteConfig(uid string) (*RemoteWriteConfig, bool
 	return nil, false
 }
 
-func (f *FileStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
+func (f *FileStorage) ListChannelRules(_ context.Context, cmd ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
 	ruleBytes, _ := ioutil.ReadFile(os.Getenv("GF_LIVE_CHANNEL_RULES_FILE"))
 	var channelRules ChannelRules
 	err := json.Unmarshal(ruleBytes, &channelRules)
@@ -290,7 +291,15 @@ func (f *FileStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleC
 	var rules []*LiveChannelRule
 
 	for _, ruleConfig := range channelRules.Rules {
+		orgID := ruleConfig.OrgId
+		if orgID == 0 {
+			orgID = 1
+		}
+		if cmd.OrgId != orgID {
+			continue
+		}
 		rule := &LiveChannelRule{
+			OrgId:   orgID,
 			Pattern: ruleConfig.Pattern,
 		}
 		var err error
