@@ -5,6 +5,7 @@ type SystemStats struct {
 	Datasources               int64
 	Users                     int64
 	ActiveUsers               int64
+	DailyActiveUsers          int64
 	Orgs                      int64
 	Playlists                 int64
 	Alerts                    int64
@@ -25,14 +26,17 @@ type SystemStats struct {
 	DashboardsViewersCanAdmin int64
 	FoldersViewersCanEdit     int64
 	FoldersViewersCanAdmin    int64
-
-	Admins         int
-	Editors        int
-	Viewers        int
-	ActiveAdmins   int
-	ActiveEditors  int
-	ActiveViewers  int
-	ActiveSessions int
+	Admins                    int
+	Editors                   int
+	Viewers                   int
+	ActiveAdmins              int
+	ActiveEditors             int
+	ActiveViewers             int
+	ActiveSessions            int
+	DailyActiveAdmins         int
+	DailyActiveEditors        int
+	DailyActiveViewers        int
+	DailyActiveSessions       int
 }
 
 type DataSourceStats struct {
@@ -68,23 +72,28 @@ type GetAlertNotifierUsageStatsQuery struct {
 }
 
 type AdminStats struct {
-	Orgs           int `json:"orgs"`
-	Dashboards     int `json:"dashboards"`
-	Snapshots      int `json:"snapshots"`
-	Tags           int `json:"tags"`
-	Datasources    int `json:"datasources"`
-	Playlists      int `json:"playlists"`
-	Stars          int `json:"stars"`
-	Alerts         int `json:"alerts"`
-	Users          int `json:"users"`
-	Admins         int `json:"admins"`
-	Editors        int `json:"editors"`
-	Viewers        int `json:"viewers"`
-	ActiveUsers    int `json:"activeUsers"`
-	ActiveAdmins   int `json:"activeAdmins"`
-	ActiveEditors  int `json:"activeEditors"`
-	ActiveViewers  int `json:"activeViewers"`
-	ActiveSessions int `json:"activeSessions"`
+	Orgs                int `json:"orgs"`
+	Dashboards          int `json:"dashboards"`
+	Snapshots           int `json:"snapshots"`
+	Tags                int `json:"tags"`
+	Datasources         int `json:"datasources"`
+	Playlists           int `json:"playlists"`
+	Stars               int `json:"stars"`
+	Alerts              int `json:"alerts"`
+	Users               int `json:"users"`
+	Admins              int `json:"admins"`
+	Editors             int `json:"editors"`
+	Viewers             int `json:"viewers"`
+	ActiveUsers         int `json:"activeUsers"`
+	ActiveAdmins        int `json:"activeAdmins"`
+	ActiveEditors       int `json:"activeEditors"`
+	ActiveViewers       int `json:"activeViewers"`
+	ActiveSessions      int `json:"activeSessions"`
+	DailyActiveUsers    int `json:"dailyActiveUsers"`
+	DailyActiveAdmins   int `json:"dailyActiveAdmins"`
+	DailyActiveEditors  int `json:"dailyActiveEditors"`
+	DailyActiveViewers  int `json:"dailyActiveViewers"`
+	DailyActiveSessions int `json:"dailyActiveSessions"`
 }
 
 type GetAdminStatsQuery struct {

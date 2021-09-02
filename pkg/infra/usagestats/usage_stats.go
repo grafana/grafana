@@ -59,6 +59,15 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.plugins.datasources.count"] = uss.PluginManager.DataSourceCount()
 	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
+	metrics["stats.active_admins.count"] = statsQuery.Result.ActiveAdmins
+	metrics["stats.active_editors.count"] = statsQuery.Result.ActiveEditors
+	metrics["stats.active_viewers.count"] = statsQuery.Result.ActiveViewers
+	metrics["stats.active_sessions.count"] = statsQuery.Result.ActiveSessions
+	metrics["stats.daily_active_users.count"] = statsQuery.Result.DailyActiveUsers
+	metrics["stats.daily_active_admins.count"] = statsQuery.Result.DailyActiveAdmins
+	metrics["stats.daily_active_editors.count"] = statsQuery.Result.DailyActiveEditors
+	metrics["stats.daily_active_viewers.count"] = statsQuery.Result.DailyActiveViewers
+	metrics["stats.daily_active_sessions.count"] = statsQuery.Result.DailyActiveSessions
 	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
 	metrics["stats.stars.count"] = statsQuery.Result.Stars
 	metrics["stats.folders.count"] = statsQuery.Result.Folders
