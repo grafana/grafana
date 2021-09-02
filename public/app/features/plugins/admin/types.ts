@@ -237,3 +237,17 @@ export enum PluginTabLabels {
   CONFIG = 'Config',
   DASHBOARDS = 'Dashboards',
 }
+
+export enum RequestStatus {
+  Pending = 'Pending',
+  Fulfilled = 'Fulfilled',
+  Rejected = 'Rejected',
+}
+
+export type RequestInfo = {
+  status: RequestStatus;
+  // The whole error object
+  error?: any;
+  // An optional error message
+  errorMessage?: string;
+};
