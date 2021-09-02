@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/grafana/grafana/pkg/cmd/build"
+	"github.com/grafana/grafana/pkg/build"
 )
 
 func main() {
