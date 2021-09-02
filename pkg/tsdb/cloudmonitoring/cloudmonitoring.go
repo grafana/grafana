@@ -226,7 +226,7 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	return resp, nil
 }
 
-func queryModel(query *backend.DataQuery) (grafanaQuery, error) {
+func queryModel(query backend.DataQuery) (grafanaQuery, error) {
 	var rawQuery map[string]interface{}
 	err := json.Unmarshal(query.JSON, &rawQuery)
 	if err != nil {
@@ -264,7 +264,7 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 	durationSeconds := int(endTime.Sub(startTime).Seconds())
 
 	for _, query := range req.Queries {
-		q, err := queryModel(&query)
+		q, err := queryModel(query)
 		if err != nil {
 			return nil, fmt.Errorf("could not unmarshal CloudMonitoringQuery json: %w", err)
 		}

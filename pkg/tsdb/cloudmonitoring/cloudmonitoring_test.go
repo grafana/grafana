@@ -655,7 +655,6 @@ func TestCloudMonitoring(t *testing.T) {
 			assert.Equal(t, "collector-us-east-1", field.Labels["metric.label.instance_name"])
 			assert.Equal(t, "us-east1-b", field.Labels["resource.label.zone"])
 			assert.Equal(t, "grafana-prod", field.Labels["resource.label.project_id"])
-
 		})
 
 		t.Run("when data from query with no aggregation and group bys", func(t *testing.T) {
