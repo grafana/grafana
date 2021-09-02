@@ -16,8 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var metricsLogger log.Logger = log.New("metrics")
-
 type UsageStats interface {
 	GetUsageReport(context.Context) (UsageReport, error)
 	RegisterMetricsFunc(MetricsFunc)
@@ -34,7 +32,7 @@ type UsageStatsService struct {
 	PluginManager      plugins.Manager
 	SocialService      social.Service
 	grafanaLive        *live.GrafanaLive
-	kvStore            kvstore.KVStore
+	kvStore            *kvstore.NamespacedKVStore
 
 	log log.Logger
 
@@ -67,7 +65,7 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
 		oauthProviders:     socialService.GetOAuthProviders(),
 		PluginManager:      pluginManager,
 		grafanaLive:        grafanaLive,
-		kvStore:            kvStore,
+		kvStore:            kvstore.WithNamespace(kvStore, 0, "infra.usagestats"),
 		log:                log.New("infra.usagestats"),
 		startTime:          time.Now(),
 	}
@@ -77,7 +75,26 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
 func (uss *UsageStatsService) Run(ctx context.Context) error {
 	uss.updateTotalStats()
 
-	sendReportTicker := time.NewTicker(time.Hour * 24)
+	// try to load last sent time from kv store
+	lastSent := time.Now()
+	if val, ok, err := uss.kvStore.Get(ctx, "last_sent"); err != nil {
+		uss.log.Error("Failed to get last sent time", "error", err)
+	} else if ok {
+		if parsed, err := time.Parse(time.RFC3339, val); err != nil {
+			uss.log.Error("Failed to parse last sent time", "error", err)
+		} else {
+			lastSent = parsed
+		}
+	}
+
+	// calculate initial send delay
+	sendInterval := time.Hour * 24
+	nextSendInterval := time.Until(lastSent.Add(sendInterval))
+	if nextSendInterval < time.Minute {
+		nextSendInterval = time.Minute
+	}
+
+	sendReportTicker := time.NewTicker(nextSendInterval)
 	updateStatsTicker := time.NewTicker(time.Minute * 30)
 
 	defer sendReportTicker.Stop()
@@ -87,7 +104,15 @@ func (uss *UsageStatsService) Run(ctx context.Context) error {
 		select {
 		case <-sendReportTicker.C:
 			if err := uss.sendUsageStats(ctx); err != nil {
-				metricsLogger.Warn("Failed to send usage stats", "err", err)
+				uss.log.Warn("Failed to send usage stats", "err", err)
+			}
+
+			lastSent = time.Now()
+			uss.kvStore.Set(ctx, "last_sent", lastSent.Format(time.RFC3339))
+
+			if nextSendInterval != sendInterval {
+				nextSendInterval = sendInterval
+				sendReportTicker.Reset(nextSendInterval)
 			}
 			// always reset live stats every report tick
 			uss.resetLiveStats()

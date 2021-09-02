@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
@@ -220,7 +221,7 @@ func TestMetrics(t *testing.T) {
 				sendUsageStats = origSendUsageStats
 			})
 			statsSent := false
-			sendUsageStats = func(*bytes.Buffer) {
+			sendUsageStats = func(uss *UsageStatsService, b *bytes.Buffer) {
 				statsSent = true
 			}
 
@@ -640,7 +641,8 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStatsService {
 		externalMetrics:    make([]MetricsFunc, 0),
 		PluginManager:      &fakePluginManager{},
 		grafanaLive:        newTestLive(t),
-		kvStore:            kvstore.ProvideService(sqlStore),
+		kvStore:            kvstore.WithNamespace(kvstore.ProvideService(sqlStore), 0, "infra.usagestats"),
+		log:                log.New("infra.usagestats"),
 	}
 }
 
