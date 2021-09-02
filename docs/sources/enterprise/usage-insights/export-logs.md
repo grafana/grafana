@@ -80,7 +80,7 @@ There are no options for configuring the `logger` storage type.
 
 ## Visualize Loki usage insights in Grafana
 
-If your logs are exported into Loki, you can build Grafana dashboards to understand your Grafana instance usage.
+If you export logs into Loki, you can build Grafana dashboards to understand your Grafana instance usage.
 
 1. Add Loki as a data source. Refer to [Grafana fundamentals tutorial](/tutorials/grafana-fundamentals/#6).
 1. Import one of the following dashboards:
