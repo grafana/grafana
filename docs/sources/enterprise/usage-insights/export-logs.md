@@ -76,7 +76,7 @@ tls = true
 ```
 
 Using `logger` will print usage insights to your [Grafana server log]({{< relref "../../administration/configuration.md#log" >}}).
-There are no options for configuring the `logger` storage type.
+There is no option for configuring the `logger` storage type.
 
 ## Visualize Loki usage insights in Grafana
 
