@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/mail"
-	"path"
 	"regexp"
 	"strconv"
 
@@ -40,14 +39,17 @@ func (s *SocialGenericOAuth) Type() int {
 	return int(models.GENERIC)
 }
 
-func (s *SocialGenericOAuth) IsTeamMember(client *http.Client) bool {
+func (s *SocialGenericOAuth) IsTeamMember(teamMemberships []string, client *http.Client) bool {
 	if len(s.teamIds) == 0 {
 		return true
 	}
 
-	teamMemberships, ok := s.FetchTeamMemberships(client)
-	if !ok {
-		return false
+	if teamMemberships == nil {
+		var err error
+		teamMemberships, err = s.FetchTeamMemberships(client)
+		if err != nil {
+			return false
+		}
 	}
 
 	for _, teamId := range s.teamIds {
@@ -164,6 +166,14 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 			s.log.Debug("Setting user info groups from extracted groups")
 			userInfo.Groups = groups
 		}
+
+		teams, err := s.extractTeams(data)
+		if err != nil {
+			s.log.Error("Failed to extract teams", "error", err)
+		} else if len(teams) > 0 {
+			s.log.Debug("Setting user info teams from extracted teams")
+			userInfo.Teams = teams
+		}
 	}
 
 	if userInfo.Email == "" {
@@ -184,7 +194,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		return nil, errors.New("invalid role")
 	}
 
-	if !s.IsTeamMember(client) {
+	if !s.IsTeamMember(userInfo.Teams, client) {
 		return nil, errors.New("user not a member of one of the required teams")
 	}
 
@@ -369,6 +379,14 @@ func (s *SocialGenericOAuth) extractGroups(data *UserInfoJson) ([]string, error)
 	return s.searchJSONForStringArrayAttr(s.groupsAttributePath, data.rawJSON)
 }
 
+func (s *SocialGenericOAuth) extractTeams(data *UserInfoJson) ([]string, error) {
+	if s.teamIdAttributePath == "" {
+		return []string{}, nil
+	}
+
+	return s.searchJSONForStringArrayAttr(s.teamIdAttributePath, data.rawJSON)
+}
+
 func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
 	type Record struct {
 		Email       string `json:"email"`
@@ -378,7 +396,7 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 		IsConfirmed bool   `json:"is_confirmed"`
 	}
 
-	response, err := s.httpGet(client, path.Join(s.apiUrl, "/teams"))
+	response, err := s.httpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
 	if err != nil {
 		s.log.Error("Error getting email address", "url", s.apiUrl+"/emails", "error", err)
 		return "", errutil.Wrap("Error getting email address", err)
@@ -420,24 +438,24 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 // If the attribute path does not find anything in the JWT claims, then the same attribute path is used to attempt to retrieve the team IDs from the OIDC '/userinfo' endpoint.
 // If the attribute path still does not find anything in the '/userinfo' response, then the same attribute path is used to attempt to retrieve the team IDs from the 'teams_url'
 // If team IDs are found, then true is returned. Otherwise, false is returned.
-func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]string, bool) {
-	var ok bool
+func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]string, error) {
+	var err error
 	var ids []string
 
 	if s.teamsUrl == "" {
-		ids, ok = s.fetchTeamMembershipsFromDeprecatedTeamsUrl(client)
+		ids, err = s.fetchTeamMembershipsFromDeprecatedTeamsUrl(client)
 	} else {
-		ids, ok = s.fetchTeamMembershipsFromTeamsUrl(client)
+		ids, err = s.fetchTeamMembershipsFromTeamsUrl(client)
 	}
 
-	if ok {
+	if err == nil {
 		s.log.Debug("Received team memberships", "ids", ids)
 	}
 
-	return ids, ok
+	return ids, err
 }
 
-func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(client *http.Client) ([]string, bool) {
+func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(client *http.Client) ([]string, error) {
 	s.log.Warn("[Deprecated] Switch to the use of the teams_url and team_id_attribute_path configuration options for filtering on team membership")
 
 	var response httpGetResponse
@@ -451,7 +469,7 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(client *
 	response, err = s.httpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
 	if err != nil {
 		s.log.Error("Error getting team memberships", "url", s.apiUrl+"/teams", "error", err)
-		return nil, false
+		return nil, err
 	}
 
 	var records []Record
@@ -459,7 +477,7 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(client *
 	err = json.Unmarshal(response.Body, &records)
 	if err != nil {
 		s.log.Error("Error decoding team memberships response", "raw_json", string(response.Body), "error", err)
-		return nil, false
+		return nil, err
 	}
 
 	ids = make([]string, len(records))
@@ -467,12 +485,12 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(client *
 		ids[i] = strconv.Itoa(record.Id)
 	}
 
-	return ids, true
+	return ids, nil
 }
 
-func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(client *http.Client) ([]string, bool) {
+func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(client *http.Client) ([]string, error) {
 	if s.teamIdAttributePath == "" {
-		return []string{}, true
+		return []string{}, nil
 	}
 
 	var response httpGetResponse
@@ -482,16 +500,16 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(client *http.Clien
 	response, err = s.httpGet(client, fmt.Sprintf(s.teamsUrl))
 	if err != nil {
 		s.log.Error("Error getting team memberships", "url", s.teamsUrl, "error", err)
-		return nil, false
+		return nil, err
 	}
 
 	ids, err = s.searchJSONForStringArrayAttr(s.teamIdAttributePath, response.Body)
 
 	if err != nil {
-		return nil, true
+		return nil, nil
 	}
 
-	return ids, true
+	return ids, nil
 }
 
 func (s *SocialGenericOAuth) FetchOrganizations(client *http.Client) ([]string, bool) {

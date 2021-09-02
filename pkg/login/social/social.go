@@ -212,6 +212,7 @@ type BasicUserInfo struct {
 	Company string
 	Role    string
 	Groups  []string
+	Teams   []string
 }
 
 type SocialConnector interface {
