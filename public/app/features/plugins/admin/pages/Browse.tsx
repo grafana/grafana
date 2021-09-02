@@ -17,9 +17,10 @@ import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useGetAll } from '../state/hooks';
+import { find } from '../state/selectors';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
-  const catalogPlugins = useGetAll();
+  useGetAll();
   const location = useLocation();
   const query = locationSearchToObject(location.search);
   const navModelId = getNavModelId(route.routeName);
@@ -31,8 +32,10 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const filterByType = (query.filterByType as string) ?? 'all';
   const sortBy = (query.sortBy as string) ?? 'nameAsc';
 
-  const { plugins, isLoading, error } = usePluginsByFilter({ searchBy: q, filterBy, filterByType });
-  const sortedPlugins = plugins.sort(sorters[sortBy]);
+  const filteredPlugins = useSelector(find(q, filterBy, filterByType));
+  // TODO: put back loading and error
+  // const { plugins, isLoading, error } = usePluginsByFilter({ searchBy: q, filterBy, filterByType });
+  const sortedPlugins = filteredPlugins.sort(sorters[sortBy]);
   const history = useHistory();
 
   const onSortByChange = (value: SelectableValue<string>) => {
@@ -52,10 +55,10 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   };
 
   // How should we handle errors?
-  if (error) {
-    console.error(error.message);
-    return null;
-  }
+  // if (error) {
+  //   console.error(error.message);
+  //   return null;
+  // }
 
   return (
     <Page navModel={navModel}>
@@ -104,16 +107,16 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
             </HorizontalGroup>
           </HorizontalGroup>
           <div className={styles.listWrap}>
-            {isLoading ? (
+            {/* {isLoading ? (
               <LoadingPlaceholder
                 className={css`
                   margin-bottom: 0;
                 `}
                 text="Loading results"
               />
-            ) : (
-              <PluginList plugins={catalogPlugins} />
-            )}
+            ) : ( */}
+            <PluginList plugins={sortedPlugins} />
+            {/* )} */}
           </div>
         </PluginPage>
       </Page.Contents>
