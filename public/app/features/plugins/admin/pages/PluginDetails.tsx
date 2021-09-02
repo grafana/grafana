@@ -32,12 +32,12 @@ const DefaultState = {
 };
 
 export default function PluginDetails({ match }: Props): JSX.Element | null {
-  const [state, setState] = useState<State>(DefaultState);
-  const { tabs, activeTabIndex } = state;
   const { pluginId = '' } = match.params;
+  const [state, setState] = useState<State>(DefaultState);
   const plugin = useGetSingle(pluginId);
   const { isLoading, error } = useFetchStatus();
   const styles = useStyles2(getStyles);
+  const { tabs, activeTabIndex } = state;
   const parentUrl = match.url.substring(0, match.url.lastIndexOf('/'));
   const setActiveTab = (activeTabIndex: number) => setState({ ...state, activeTabIndex });
 
@@ -81,8 +81,8 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
               </>
             </Alert>
           )} */}
-          {/* <PluginDetailsSignature installedPlugin={pluginConfig} className={styles.signature} />
-          <PluginDetailsBody tab={tab} plugin={pluginConfig} remoteVersions={plugin.versions} readme={plugin.readme} /> */}
+          <PluginDetailsSignature plugin={plugin} className={styles.signature} />
+          {/* <PluginDetailsBody tab={tab} plugin={pluginConfig} remoteVersions={plugin.versions} readme={plugin.readme} /> */}
         </TabContent>
       </PluginPage>
     </Page>
