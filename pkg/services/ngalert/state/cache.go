@@ -3,6 +3,7 @@ package state
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"sync"
@@ -159,6 +160,8 @@ func newTemplateCaptureValues(values map[string]eval.NumberValueCapture) map[str
 		var f float64
 		if v.Value != nil {
 			f = *v.Value
+		} else {
+			f = math.NaN()
 		}
 		m[k] = templateCaptureValue{
 			Labels: v.Labels,

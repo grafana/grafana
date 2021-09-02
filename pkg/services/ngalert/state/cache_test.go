@@ -95,7 +95,7 @@ func TestExpandTemplate(t *testing.T) {
 		},
 		expectedError: errors.New("error executing template __alert_test: template: __alert_test:1:86: executing \"__alert_test\" at <$values.A.Labels.instance>: map has no entry for key \"instance\""),
 	}, {
-		name: "missing value in $values is returned as 0",
+		name: "missing value in $values is returned as NaN",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A }}",
 		alertInstance: eval.Result{
 			Values: map[string]eval.NumberValueCapture{
@@ -106,7 +106,7 @@ func TestExpandTemplate(t *testing.T) {
 				},
 			},
 		},
-		expected: "foo has value 0",
+		expected: "foo has value NaN",
 	}, {
 		name: "assert value string is expanded into $value",
 		text: "{{ $value }}",
