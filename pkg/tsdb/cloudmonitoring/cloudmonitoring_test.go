@@ -151,7 +151,6 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and range is two hours", func(t *testing.T) {
 				req := baseReq()
-
 				req.Queries[0].TimeRange.From = now.Add(-(time.Hour * 2))
 				req.Queries[0].TimeRange.To = now
 				req.Queries[0].JSON = json.RawMessage(`{
@@ -167,7 +166,6 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and range is 22 hours", func(t *testing.T) {
 				req := baseReq()
-
 				req.Queries[0].TimeRange.From = now.Add(-(time.Hour * 22))
 				req.Queries[0].TimeRange.To = now
 				req.Queries[0].JSON = json.RawMessage(`{
@@ -307,7 +305,6 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and range is 7 days", func(t *testing.T) {
 				req := baseReq()
-
 				req.Queries[0].TimeRange.From = now.AddDate(0, 0, -7)
 				req.Queries[0].TimeRange.To = now
 				req.Queries[0].JSON = json.RawMessage(`{
@@ -601,8 +598,6 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(data.TimeSeries))
 
-			//nolint: staticcheck // plugins.DataPlugin deprecated
-			// res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
 			err = query.parseResponse(res, data, "")
@@ -626,38 +621,41 @@ func TestCloudMonitoring(t *testing.T) {
 			data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
 			require.NoError(t, err)
 			assert.Equal(t, 3, len(data.TimeSeries))
-			//nolint: staticcheck // plugins.DataPlugin deprecated
-			// res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
-			frames := res.Frames
 
-			assert.Equal(t, 3, len(frames))
-			assert.Equal(t, "compute.googleapis.com/instance/cpu/usage_time collector-asia-east-1", frames[0].Fields[1].Name)
-			assert.Equal(t, "compute.googleapis.com/instance/cpu/usage_time collector-europe-west-1", frames[1].Fields[1].Name)
-			assert.Equal(t, "compute.googleapis.com/instance/cpu/usage_time collector-us-east-1", frames[2].Fields[1].Name)
+			field := res.Frames[0].Fields[1]
+			assert.Equal(t, 3, field.Len())
+			assert.Equal(t, 9.8566497180145, field.At(0))
+			assert.Equal(t, 9.7323568146676, field.At(1))
+			assert.Equal(t, 9.7730520330369, field.At(2))
+			assert.Equal(t, "compute.googleapis.com/instance/cpu/usage_time collector-asia-east-1", field.Name)
+			assert.Equal(t, "collector-asia-east-1", field.Labels["metric.label.instance_name"])
+			assert.Equal(t, "asia-east1-a", field.Labels["resource.label.zone"])
+			assert.Equal(t, "grafana-prod", field.Labels["resource.label.project_id"])
 
-			assert.Equal(t, 3, frames[0].Fields[1].Len())
-			assert.Equal(t, 9.8566497180145, frames[0].Fields[1].At(0))
-			assert.Equal(t, 9.7323568146676, frames[0].Fields[1].At(1))
-			assert.Equal(t, 9.7730520330369, frames[0].Fields[1].At(2))
+			field = res.Frames[1].Fields[1]
+			assert.Equal(t, 3, field.Len())
+			assert.Equal(t, 9.0238475054502, field.At(0))
+			assert.Equal(t, 8.9689492364414, field.At(1))
+			assert.Equal(t, 8.8210971239023, field.At(2))
+			assert.Equal(t, "compute.googleapis.com/instance/cpu/usage_time collector-europe-west-1", field.Name)
+			assert.Equal(t, "collector-europe-west-1", field.Labels["metric.label.instance_name"])
+			assert.Equal(t, "europe-west1-b", field.Labels["resource.label.zone"])
+			assert.Equal(t, "grafana-prod", field.Labels["resource.label.project_id"])
 
-			// labels := res.Meta.Get("labels").Interface().(map[string][]string)
-			// require.NotNil(t, labels)
-			// assert.Equal(t, 3, len(labels["metric.label.instance_name"]))
-			// assert.Contains(t, labels["metric.label.instance_name"], "collector-asia-east-1")
-			// assert.Contains(t, labels["metric.label.instance_name"], "collector-europe-west-1")
-			// assert.Contains(t, labels["metric.label.instance_name"], "collector-us-east-1")
+			field = res.Frames[2].Fields[1]
+			assert.Equal(t, 3, field.Len())
+			assert.Equal(t, 30.829426143318, field.At(0))
+			assert.Equal(t, 30.903974115849, field.At(1))
+			assert.Equal(t, 30.807846801355, field.At(2))
+			assert.Equal(t, "compute.googleapis.com/instance/cpu/usage_time collector-us-east-1", field.Name)
+			assert.Equal(t, "collector-us-east-1", field.Labels["metric.label.instance_name"])
+			assert.Equal(t, "us-east1-b", field.Labels["resource.label.zone"])
+			assert.Equal(t, "grafana-prod", field.Labels["resource.label.project_id"])
 
-			// assert.Equal(t, 3, len(labels["resource.label.zone"]))
-			// assert.Contains(t, labels["resource.label.zone"], "asia-east1-a")
-			// assert.Contains(t, labels["resource.label.zone"], "europe-west1-b")
-			// assert.Contains(t, labels["resource.label.zone"], "us-east1-b")
-
-			// assert.Equal(t, 1, len(labels["resource.label.project_id"]))
-			// assert.Equal(t, "grafana-prod", labels["resource.label.project_id"][0])
 		})
 
 		t.Run("when data from query with no aggregation and group bys", func(t *testing.T) {
@@ -665,7 +663,6 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 3, len(data.TimeSeries))
 			res := &backend.DataResponse{}
-			// res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, GroupBys: []string{
 				"metric.label.instance_name", "resource.label.zone",
 			}}
@@ -685,7 +682,6 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 3, len(data.TimeSeries))
 			res := &backend.DataResponse{}
-			// res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 
 			t.Run("and the alias pattern is for metric type, a metric label and a resource label", func(t *testing.T) {
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
@@ -719,7 +715,6 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(data.TimeSeries))
 			res := &backend.DataResponse{}
-			// res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
@@ -761,7 +756,6 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(data.TimeSeries))
 			res := &backend.DataResponse{}
-			// res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
@@ -796,33 +790,33 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 3, len(data.TimeSeries))
 			res := &backend.DataResponse{}
-			// res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 			query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{bucket}}"}
 			err = query.parseResponse(res, data, "")
 			require.NoError(t, err)
-			// labels := res.Meta.Get("labels").Interface().(map[string][]string)
-			frames := res.Frames
 			require.NoError(t, err)
-			assert.Equal(t, 3, len(frames))
+			assert.Equal(t, 3, len(res.Frames))
 
-			// assert.Equal(t, 5, len(labels["metadata.system_labels.test"]))
-			// assert.Contains(t, labels["metadata.system_labels.test"], "value1")
-			// assert.Contains(t, labels["metadata.system_labels.test"], "value2")
-			// assert.Contains(t, labels["metadata.system_labels.test"], "value3")
-			// assert.Contains(t, labels["metadata.system_labels.test"], "value4")
-			// assert.Contains(t, labels["metadata.system_labels.test"], "value5")
+			field := res.Frames[0].Fields[1]
+			assert.Equal(t, "diana-debian9", field.Labels["metadata.system_labels.name"])
+			assert.Equal(t, "value1, value2", field.Labels["metadata.system_labels.test"])
+			assert.Equal(t, "us-west1", field.Labels["metadata.system_labels.region"])
+			assert.Equal(t, "false", field.Labels["metadata.system_labels.spot_instance"])
+			assert.Equal(t, "name1", field.Labels["metadata.user_labels.name"])
+			assert.Equal(t, "region1", field.Labels["metadata.user_labels.region"])
 
-			// assert.Equal(t, 2, len(labels["metadata.system_labels.region"]))
-			// assert.Contains(t, labels["metadata.system_labels.region"], "us-central1")
-			// assert.Contains(t, labels["metadata.system_labels.region"], "us-west1")
+			field = res.Frames[1].Fields[1]
+			assert.Equal(t, "diana-ubuntu1910", field.Labels["metadata.system_labels.name"])
+			assert.Equal(t, "value1, value2, value3", field.Labels["metadata.system_labels.test"])
+			assert.Equal(t, "us-west1", field.Labels["metadata.system_labels.region"])
+			assert.Equal(t, "false", field.Labels["metadata.system_labels.spot_instance"])
 
-			// assert.Equal(t, 2, len(labels["metadata.user_labels.region"]))
-			// assert.Contains(t, labels["metadata.user_labels.region"], "region1")
-			// assert.Contains(t, labels["metadata.user_labels.region"], "region3")
-
-			// assert.Equal(t, 2, len(labels["metadata.user_labels.name"]))
-			// assert.Contains(t, labels["metadata.user_labels.name"], "name1")
-			// assert.Contains(t, labels["metadata.user_labels.name"], "name3")
+			field = res.Frames[2].Fields[1]
+			assert.Equal(t, "premium-plugin-staging", field.Labels["metadata.system_labels.name"])
+			assert.Equal(t, "value1, value2, value4, value5", field.Labels["metadata.system_labels.test"])
+			assert.Equal(t, "us-central1", field.Labels["metadata.system_labels.region"])
+			assert.Equal(t, "true", field.Labels["metadata.system_labels.spot_instance"])
+			assert.Equal(t, "name3", field.Labels["metadata.user_labels.name"])
+			assert.Equal(t, "region3", field.Labels["metadata.user_labels.region"])
 		})
 
 		t.Run("when data from query returns metadata system labels and alias by is defined", func(t *testing.T) {
@@ -832,7 +826,6 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and systemlabel contains key with array of string", func(t *testing.T) {
 				res := &backend.DataResponse{}
-				// res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metadata.system_labels.test}}"}
 				err = query.parseResponse(res, data, "")
 				require.NoError(t, err)
@@ -847,7 +840,6 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and systemlabel contains key with array of string2", func(t *testing.T) {
 				res := &backend.DataResponse{}
-				// res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, AliasBy: "{{metadata.system_labels.test2}}"}
 				err = query.parseResponse(res, data, "")
 				require.NoError(t, err)
@@ -865,7 +857,6 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and alias by is expanded", func(t *testing.T) {
 				res := &backend.DataResponse{}
-				// res := &plugins.DataQueryResulåt{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{
 					Params:      url.Values{},
 					ProjectName: "test-proj",
@@ -889,7 +880,6 @@ func TestCloudMonitoring(t *testing.T) {
 
 			t.Run("and alias by is expanded", func(t *testing.T) {
 				res := &backend.DataResponse{}
-				// res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{
 					Params:      url.Values{},
 					ProjectName: "test-proj",
@@ -911,7 +901,6 @@ func TestCloudMonitoring(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, 1, len(data.TimeSeries))
 				res := &backend.DataResponse{}
-				// res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
 				err = query.parseResponse(res, data, "")
 				require.NoError(t, err)
@@ -925,7 +914,6 @@ func TestCloudMonitoring(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, 3, len(data.TimeSeries))
 				res := &backend.DataResponse{}
-				// res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}}
 				err = query.parseResponse(res, data, "")
 				require.NoError(t, err)
@@ -944,7 +932,6 @@ func TestCloudMonitoring(t *testing.T) {
 			t.Run("and alias by is expanded", func(t *testing.T) {
 				fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
-				// res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
 				res := &backend.DataResponse{}
 				query := &cloudMonitoringTimeSeriesQuery{
 					ProjectName: "test-proj",
