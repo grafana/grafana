@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -17,6 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
 type Registry struct {
@@ -32,10 +33,14 @@ type Registry struct {
 	registry map[string]backendplugin.PluginFactoryFunc
 }
 
+type BackendFactoryProvider interface {
+	BackendFactory(pluginID string) (backendplugin.PluginFactoryFunc, error)
+}
+
 func ProvideService(cloudWatchService *cloudwatch.CloudWatchService, lokiService *loki.Service,
 	tempoService *tempo.Service, elasticSearchService *elasticsearch.Service, graphiteService *graphite.Service,
 	influxDBService *influxdb.Service, openTSDBService *opentsdb.Service, prometheusService *prometheus.Service,
-	azureMonitorService *azuremonitor.Service, testDataService *testdatasource.Service) Registry {
+	azureMonitorService *azuremonitor.Service, testDataService *testdatasource.Service) BackendFactoryProvider {
 
 	return newRegistry(cloudWatchService, lokiService, tempoService, elasticSearchService, graphiteService,
 		influxDBService, openTSDBService, prometheusService, azureMonitorService, testDataService)
@@ -44,7 +49,7 @@ func ProvideService(cloudWatchService *cloudwatch.CloudWatchService, lokiService
 func newRegistry(cloudWatchService *cloudwatch.CloudWatchService, lokiService *loki.Service, tempoService *tempo.Service,
 	elasticSearchService *elasticsearch.Service, graphiteService *graphite.Service, influxDBService *influxdb.Service,
 	openTSDBService *opentsdb.Service, prometheusService *prometheus.Service, azureMonitorService *azuremonitor.Service,
-	testDataService *testdatasource.Service) Registry {
+	testDataService *testdatasource.Service) BackendFactoryProvider {
 
 	// Azure Monitor
 	amMux := azureMonitorService.NewMux()
@@ -56,7 +61,7 @@ func newRegistry(cloudWatchService *cloudwatch.CloudWatchService, lokiService *l
 	tdResourceMux := http.NewServeMux()
 	testDataService.RegisterRoutes(tdResourceMux)
 
-	return Registry{
+	return &Registry{
 		CloudWatchService: cloudWatchService,
 		registry: map[string]backendplugin.PluginFactoryFunc{
 			"cloudwatch": New(backend.ServeOpts{

@@ -45,8 +45,8 @@ type PluginManagerV2 struct {
 }
 
 func ProvideServiceV2(cfg *setting.Cfg, license models.Licensing, requestValidator models.PluginRequestValidator,
-	corePluginRegistry coreplugin.Registry) (*PluginManagerV2, error) {
-	pm := newManagerV2(cfg, license, requestValidator, corePluginRegistry)
+	backendFactoryProvider coreplugin.BackendFactoryProvider) (*PluginManagerV2, error) {
+	pm := newManagerV2(cfg, license, requestValidator, backendFactoryProvider)
 	if err := pm.init(); err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func ProvideServiceV2(cfg *setting.Cfg, license models.Licensing, requestValidat
 }
 
 func newManagerV2(cfg *setting.Cfg, license models.Licensing, pluginRequestValidator models.PluginRequestValidator,
-	corePluginRegistry coreplugin.Registry) *PluginManagerV2 {
+	backendFactoryProvider coreplugin.BackendFactoryProvider) *PluginManagerV2 {
 	return &PluginManagerV2{
 		Cfg:                    cfg,
 		License:                license,
@@ -62,7 +62,7 @@ func newManagerV2(cfg *setting.Cfg, license models.Licensing, pluginRequestValid
 		plugins:                map[string]*plugins.PluginV2{},
 		log:                    log.New("plugin.manager.v2"),
 		pluginInstaller:        installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
-		pluginLoader:           loader.New(nil, nil, cfg, corePluginRegistry),
+		pluginLoader:           loader.New(nil, nil, cfg, backendFactoryProvider),
 	}
 }
 
@@ -72,7 +72,7 @@ func (m *PluginManagerV2) init() error {
 	}
 
 	// install Core plugins
-	err := m.installPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins"))
+	err := m.installPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins")) // wording
 	if err != nil {
 		return err
 	}
@@ -108,6 +108,7 @@ func (m *PluginManagerV2) IsEnabled() bool {
 }
 
 func (m *PluginManagerV2) installPlugins(path string) error {
+	// think about state + their transitions
 	loadedPlugins, err := m.pluginLoader.LoadAll(path, m.registeredPlugins())
 	if err != nil {
 		return err

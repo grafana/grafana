@@ -1,14 +1,19 @@
 package initializer
 
 import (
+	"context"
 	"path"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,6 +24,7 @@ func TestInitializer_Initialize(t *testing.T) {
 	t.Run("core backend datasource", func(t *testing.T) {
 		p := &plugins.PluginV2{
 			JSONData: plugins.JSONData{
+				ID:   "test",
 				Type: plugins.DataSource,
 				Includes: []*plugins.PluginInclude{
 					{
@@ -34,6 +40,9 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: setting.NewCfg(),
+			factoryProvider: &fakeFactoryProvider{registry: map[string]struct{}{
+				"test": {},
+			}},
 		}
 
 		err := i.Initialize(p)
@@ -211,4 +220,85 @@ func (t *testLicensingService) HasValidLicense() bool {
 
 func (t *testLicensingService) Environment() map[string]string {
 	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
+}
+
+type fakeFactoryProvider struct {
+	registry map[string]struct{}
+}
+
+func (f *fakeFactoryProvider) BackendFactory(pluginID string) (backendplugin.PluginFactoryFunc, error) {
+	if _, exists := f.registry[pluginID]; exists {
+		return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
+			return &testPlugin{
+				pluginID: pluginID,
+			}, nil
+		}, nil
+	}
+
+	return nil, nil
+}
+
+type testPlugin struct {
+	pluginID string
+}
+
+func (tp *testPlugin) PluginID() string {
+	return tp.pluginID
+}
+
+func (tp *testPlugin) Logger() log.Logger {
+	return nil
+}
+
+func (tp *testPlugin) Start(ctx context.Context) error {
+
+	return nil
+}
+
+func (tp *testPlugin) Stop(ctx context.Context) error {
+	return nil
+}
+
+func (tp *testPlugin) IsManaged() bool {
+	return false
+}
+
+func (tp *testPlugin) Exited() bool {
+	return false
+}
+
+func (tp *testPlugin) Decommission() error {
+	return nil
+}
+
+func (tp *testPlugin) IsDecommissioned() bool {
+	return false
+}
+
+func (tp *testPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return backendplugin.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) SubscribeStream(ctx context.Context, request *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) PublishStream(ctx context.Context, request *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	return backendplugin.ErrMethodNotImplemented
 }

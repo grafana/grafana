@@ -28,16 +28,16 @@ import (
 var logger = log.New("plugin.initializer")
 
 type Initializer struct {
-	cfg                *setting.Cfg
-	license            models.Licensing
-	corePluginRegistry coreplugin.Registry
+	cfg             *setting.Cfg
+	license         models.Licensing
+	factoryProvider coreplugin.BackendFactoryProvider
 }
 
-func New(cfg *setting.Cfg, license models.Licensing, corePluginRegistry coreplugin.Registry) Initializer {
+func New(cfg *setting.Cfg, license models.Licensing, factoryProvider coreplugin.BackendFactoryProvider) Initializer {
 	return Initializer{
-		cfg:                cfg,
-		license:            license,
-		corePluginRegistry: corePluginRegistry,
+		cfg:             cfg,
+		license:         license,
+		factoryProvider: factoryProvider,
 	}
 }
 
@@ -103,7 +103,7 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 			)
 		} else if p.IsCorePlugin() {
 			var err error
-			backendFactory, err = i.corePluginRegistry.BackendFactory(p.ID)
+			backendFactory, err = i.factoryProvider.BackendFactory(p.ID)
 			if err != nil {
 				return err
 			}

@@ -18,11 +18,11 @@ import (
 
 // NewService returns a new Service.
 func NewService(
-	cfg *setting.Cfg, pluginManager plugins.Manager, backendPluginManager backendplugin.Manager,
+	cfg *setting.Cfg, backendPluginManager backendplugin.Manager,
 	oauthTokenService *oauthtoken.Service, httpClientProvider httpclient.Provider, cloudMonitoringService *cloudmonitoring.Service,
 	postgresService *postgres.PostgresService,
 ) *Service {
-	s := newService(cfg, pluginManager, backendPluginManager, oauthTokenService)
+	s := newService(cfg, backendPluginManager, oauthTokenService)
 
 	// register backend data sources using legacy plugin
 	// contracts/non-SDK contracts
@@ -34,11 +34,10 @@ func NewService(
 	return s
 }
 
-func newService(cfg *setting.Cfg, manager plugins.Manager, backendPluginManager backendplugin.Manager,
+func newService(cfg *setting.Cfg, backendPluginManager backendplugin.Manager,
 	oauthTokenService oauthtoken.OAuthTokenService) *Service {
 	return &Service{
 		Cfg:                  cfg,
-		PluginManager:        manager,
 		BackendPluginManager: backendPluginManager,
 		// nolint:staticcheck // plugins.DataPlugin deprecated
 		registry:          map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
@@ -49,7 +48,6 @@ func newService(cfg *setting.Cfg, manager plugins.Manager, backendPluginManager 
 // Service handles data requests to data sources.
 type Service struct {
 	Cfg                  *setting.Cfg
-	PluginManager        plugins.Manager
 	BackendPluginManager backendplugin.Manager
 	OAuthTokenService    oauthtoken.OAuthTokenService
 

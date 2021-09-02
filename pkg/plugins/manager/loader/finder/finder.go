@@ -22,7 +22,7 @@ func New(cfg *setting.Cfg) Finder {
 	return Finder{cfg: cfg}
 }
 
-func (f *Finder) Find(pluginsDir string) ([]string, error) {
+func (f *Finder) Find(pluginsDir string) ([]string, error) { //io.fs
 	exists, err := fs.Exists(pluginsDir)
 	if err != nil {
 		return nil, err

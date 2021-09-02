@@ -39,12 +39,12 @@ type Loader struct {
 }
 
 func New(allowUnsignedPluginsCondition signature.UnsignedPluginConditionFunc, license models.Licensing, cfg *setting.Cfg,
-	corePluginRegistry coreplugin.Registry) Loader {
+	backendFactoryProvider coreplugin.BackendFactoryProvider) Loader {
 	return Loader{
 		cfg:                           cfg,
 		AllowUnsignedPluginsCondition: allowUnsignedPluginsCondition,
 		pluginFinder:                  finder.New(cfg),
-		pluginInitializer:             initializer.New(cfg, license, corePluginRegistry),
+		pluginInitializer:             initializer.New(cfg, license, backendFactoryProvider),
 		errs:                          make(map[string]error),
 	}
 }
@@ -99,6 +99,8 @@ func (l *Loader) loadPlugins(pluginJSONPaths []string, existingPlugins map[strin
 
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
 	}
+
+	// mutex protection for swaperoo
 
 	foundPlugins.stripDuplicates(existingPlugins)
 
