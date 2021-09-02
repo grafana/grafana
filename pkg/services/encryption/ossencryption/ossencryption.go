@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -80,6 +82,32 @@ func (s *Service) Encrypt(payload []byte, secret string) ([]byte, error) {
 	stream.XORKeyStream(ciphertext[saltLength+aes.BlockSize:], payload)
 
 	return ciphertext, nil
+}
+
+func (s *Service) EncryptToJsonData(kv map[string]string, secret string) (securejsondata.SecureJsonData, error) {
+	encrypted := make(securejsondata.SecureJsonData)
+	for key, value := range kv {
+		encryptedData, err := s.Encrypt([]byte(value), secret)
+		if err != nil {
+			return nil, err
+		}
+
+		encrypted[key] = encryptedData
+	}
+	return encrypted, nil
+}
+
+func (s *Service) DecryptToJsonData(sjd securejsondata.SecureJsonData, secret string) (map[string]string, error) {
+	decrypted := make(map[string]string)
+	for key, data := range sjd {
+		decryptedData, err := s.Decrypt(data, secret)
+		if err != nil {
+			return nil, err
+		}
+
+		decrypted[key] = string(decryptedData)
+	}
+	return decrypted, nil
 }
 
 // Key needs to be 32bytes
