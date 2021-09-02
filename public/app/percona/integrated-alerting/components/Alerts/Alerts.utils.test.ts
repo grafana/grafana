@@ -47,14 +47,17 @@ describe('AlertRulesTable utils', () => {
   });
 
   test('formatAlert', () => {
-    expect(formatAlert(alertsStubs[0])).toEqual(expectedAlertResult1);
+    expect(formatAlert(alertsStubs.alerts[0])).toEqual(expectedAlertResult1);
 
-    expect(formatAlert(alertsStubs[5])).toEqual(expectedAlertResult2);
+    expect(formatAlert(alertsStubs.alerts[5])).toEqual(expectedAlertResult2);
   });
 
   test('formatAlerts', () => {
     expect(formatAlerts([])).toEqual([]);
 
-    expect(formatAlerts([alertsStubs[0], alertsStubs[5]])).toEqual([expectedAlertResult1, expectedAlertResult2]);
+    expect(formatAlerts([alertsStubs.alerts[0], alertsStubs.alerts[5]])).toEqual([
+      expectedAlertResult1,
+      expectedAlertResult2,
+    ]);
   });
 });

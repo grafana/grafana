@@ -40,10 +40,10 @@ export interface TemplatesList extends Omit<TemplatesListAPI, 'templates'> {
 }
 
 export enum SourceDescription {
-  BUILT_IN = 'Built-in',
-  SAAS = 'Percona Enterprise Platform',
-  USER_FILE = 'User-defined (file)',
-  USER_API = 'User-defined (UI)',
+  BUILT_IN = 'BUILT_IN',
+  SAAS = 'SAAS',
+  USER_FILE = 'USER_FILE',
+  USER_API = 'USER_API',
 }
 
 // https://github.com/percona-platform/saas/blob/main/pkg/alert/type.go
@@ -93,7 +93,7 @@ export interface TemplateAnnotation {
 export interface TemplateAPI {
   summary: string;
   name: string;
-  source: keyof typeof SourceDescription;
+  source: SourceDescription;
   created_at: string | undefined;
   yaml: string;
   params?: TemplateParamAPI[];
@@ -110,7 +110,7 @@ export interface Template extends Omit<TemplateAPI, 'params'> {
 export interface FormattedTemplate {
   name: string;
   summary: string;
-  source: SourceDescription[keyof SourceDescription];
+  source: SourceDescription;
   created_at: string | undefined;
   yaml: string;
 }

@@ -1,6 +1,7 @@
 import {
   FormattedTemplate,
   Severity,
+  SourceDescription,
   Template,
   TemplateParamType,
   TemplateParamUnit,
@@ -11,7 +12,7 @@ export const templateStubs: Template[] = [
   {
     name: 'template_1',
     created_at: '2020-11-25T16:53:39.366Z',
-    source: 'BUILT_IN',
+    source: SourceDescription.BUILT_IN,
     summary: 'MySQL database down',
     yaml: 'yaml file content',
     params: [
@@ -38,7 +39,7 @@ export const templateStubs: Template[] = [
   {
     name: 'template_2',
     created_at: '2020-11-25T16:53:39.366Z',
-    source: 'SAAS',
+    source: SourceDescription.SAAS,
     summary: 'MongoDB database down',
     yaml: 'yaml file content',
     params: [],
@@ -49,7 +50,7 @@ export const templateStubs: Template[] = [
   {
     name: 'template_3',
     created_at: '2020-11-25T16:53:39.366Z',
-    source: 'USER_FILE',
+    source: SourceDescription.USER_FILE,
     summary: 'High memory consumption',
     yaml: 'yaml file content',
     params: [],
@@ -60,7 +61,7 @@ export const templateStubs: Template[] = [
   {
     name: 'template_4',
     created_at: '2020-11-25T16:53:39.366Z',
-    source: 'USER_FILE',
+    source: SourceDescription.USER_FILE,
     summary: 'Template',
     yaml: 'yaml file content',
     severity: Severity.SEVERITY_NOTICE,
@@ -80,6 +81,42 @@ export const templateStubs: Template[] = [
       },
       {
         name: 'template-4-to',
+        type: TemplateParamType.FLOAT,
+        unit: TemplateParamUnit.PERCENTAGE,
+        summary: 'a maximum threshold',
+        float: {
+          hasDefault: true,
+          hasMin: false,
+          hasMax: false,
+          default: 50,
+        },
+      },
+    ],
+    expr: '',
+  },
+  {
+    name: 'template_5',
+    created_at: '2020-12-25T16:53:39.366Z',
+    source: SourceDescription.SAAS,
+    summary: 'Template',
+    yaml: 'yaml file content',
+    severity: Severity.SEVERITY_ERROR,
+    for: '20s',
+    params: [
+      {
+        name: 'template-5-from',
+        type: TemplateParamType.FLOAT,
+        unit: TemplateParamUnit.PERCENTAGE,
+        summary: 'a minimum threshold',
+        float: {
+          hasDefault: true,
+          hasMin: false,
+          hasMax: false,
+          default: 10,
+        },
+      },
+      {
+        name: 'template-5-to',
         type: TemplateParamType.FLOAT,
         unit: TemplateParamUnit.PERCENTAGE,
         summary: 'a maximum threshold',

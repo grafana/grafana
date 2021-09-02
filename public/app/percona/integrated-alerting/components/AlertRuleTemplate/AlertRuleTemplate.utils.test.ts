@@ -1,18 +1,19 @@
-import { formatTemplate, formatTemplates, beautifyUnit } from './AlertRuleTemplate.utils';
-import { Template, TemplateParamUnit } from './AlertRuleTemplate.types';
+import { formatTemplate, formatTemplates, beautifyUnit, formatSource } from './AlertRuleTemplate.utils';
+import { SourceDescription, Template, TemplateParamUnit } from './AlertRuleTemplate.types';
+import { SOURCE_MAP } from './AlertRuleTemplate.constants';
 
 const moment = jest.requireActual('moment-timezone');
 moment.tz.setDefault('UTC');
 
 const testTemplate = {
-  source: 'BUILT_IN',
+  source: SourceDescription.BUILT_IN,
   summary: 'MySQL database down',
   created_at: '2020-11-25T16:53:39.366Z',
   yaml: 'yaml file content',
 } as Template;
 
 const expectedTemplate = {
-  source: 'Built-in',
+  source: SourceDescription.BUILT_IN,
   summary: 'MySQL database down',
   created_at: '2020-11-25 16:53:39',
   yaml: 'yaml file content',
@@ -29,13 +30,13 @@ describe('AlertRuleTemplatesTable utils', () => {
 
   test('formatTemplate with undefined creation date', () => {
     const testTemplate = {
-      source: 'BUILT_IN',
+      source: SourceDescription.BUILT_IN,
       summary: 'MySQL database down',
       yaml: 'yaml file content',
     } as Template;
 
     const expectedTemplate = {
-      source: 'Built-in',
+      source: SourceDescription.BUILT_IN,
       summary: 'MySQL database down',
       yaml: 'yaml file content',
     };
@@ -46,5 +47,10 @@ describe('AlertRuleTemplatesTable utils', () => {
   test('beautifyUnit', () => {
     expect(beautifyUnit(TemplateParamUnit.PERCENTAGE)).toBe('%');
     expect(beautifyUnit(TemplateParamUnit.SECONDS)).toBe('seconds');
+  });
+
+  test('formatSource', () => {
+    expect(formatSource(SourceDescription.BUILT_IN)).toBe(SOURCE_MAP.BUILT_IN);
+    expect(formatSource(SourceDescription.SAAS)).toBe(SOURCE_MAP.SAAS);
   });
 });
