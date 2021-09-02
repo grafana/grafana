@@ -33,7 +33,7 @@ describe('Terms Settings Editor', () => {
 
     // Derivative is a pipeline aggregation, it shouldn't be present in the order by options
     expect(screen.queryByText(describeMetric(derivative))).not.toBeInTheDocument();
-    // TopMetricscannot be used as order by option
+    // TopMetrics cannot be used as order by option
     expect(screen.queryByText(describeMetric(topMetrics))).not.toBeInTheDocument();
     // All other metric aggregations can be used in order by
     expect(screen.getByText(describeMetric(avg))).toBeInTheDocument();
