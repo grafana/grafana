@@ -3,7 +3,7 @@ import { useQuery } from '../../ElasticsearchQueryContext';
 import { BucketAggregation } from '../aggregations';
 import { bucketAggregationConfig, orderByOptions, orderOptions } from '../utils';
 
-const hasValue = (value: string) => (object: { value: string }) => object.value === value;
+const hasValue = (value: string) => (object: { value?: string }) => object.value === value;
 
 // FIXME: We should apply the same defaults we have in bucketAggregationsConfig here instead of "custom" values
 // as they might get out of sync.
