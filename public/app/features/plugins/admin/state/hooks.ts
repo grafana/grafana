@@ -35,8 +35,8 @@ export const useUninstall = () => {
 };
 
 export const useFetchStatus = () => {
-  const isLoading = useSelector(selectIsRequestPending(fetchAll.toString()));
-  const error = useSelector(selectRequestError(fetchAll.toString()));
+  const isLoading = useSelector(selectIsRequestPending(fetchAll.typePrefix));
+  const error = useSelector(selectRequestError(fetchAll.typePrefix));
 
   return { isLoading, error };
 };
@@ -44,7 +44,7 @@ export const useFetchStatus = () => {
 // Only fetches in case they were not fetched yet
 export const useFetchAll = () => {
   const dispatch = useDispatch();
-  const isNotFetched = useSelector(selectIsRequestNotFetched(fetchAll.toString()));
+  const isNotFetched = useSelector(selectIsRequestNotFetched(fetchAll.typePrefix));
 
   useEffect(() => {
     isNotFetched && dispatch(fetchAll());
