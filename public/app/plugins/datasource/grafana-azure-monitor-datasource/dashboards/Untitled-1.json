@@ -1,7 +1,7 @@
 {
   "__inputs": [
     {
-      "name": "ds",
+      "name": "DS_AZURE_MONITOR",
       "label": "Azure Monitor",
       "description": "",
       "type": "datasource",
@@ -35,16 +35,35 @@
       "version": ""
     }
   ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1630536080458,
+  "iteration": 1630619489326,
   "links": [],
   "liveNow": false,
   "panels": [
     {
-      "collapsed": false,
+      "collapsed": true,
       "datasource": null,
       "gridPos": {
         "h": 1,
@@ -53,296 +72,297 @@
         "y": 0
       },
       "id": 4,
-      "panels": [],
-      "title": "Overview",
-      "type": "row"
-    },
-    {
-      "datasource": "${ds}",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 7,
-        "x": 0,
-        "y": 1
-      },
-      "id": 2,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": true
-        },
-        "text": {},
-        "textMode": "auto"
-      },
-      "pluginVersion": "8.2.0-pre",
-      "targets": [
+      "panels": [
         {
-          "account": "",
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
+          "datasource": "${DS_AZURE_MONITOR}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
           },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": ""
+          "gridPos": {
+            "h": 6,
+            "w": 7,
+            "x": 0,
+            "y": 1
           },
-          "azureMonitor": {
-            "aggOptions": [],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "timeGrain": "auto",
-            "timeGrains": [],
-            "top": "10"
+          "id": 2,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
           },
-          "azureResourceGraph": {
-            "query": "Resources | summarize count(type)",
-            "resultFormat": "table"
-          },
-          "backends": [],
-          "dimension": "",
-          "environment": "prod",
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
-          },
-          "metric": "",
-          "namespace": "",
-          "queryType": "Azure Resource Graph",
-          "refId": "A",
-          "samplingType": "",
-          "service": "metric",
-          "subscriptions": ["$subscriprions"],
-          "useBackends": false,
-          "useCustomSeriesNaming": false
-        }
-      ],
-      "title": "Count of All Resources",
-      "type": "stat"
-    },
-    {
-      "datasource": "${ds}",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "displayMode": "auto"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
+          "pluginVersion": "8.2.0-pre",
+          "targets": [
+            {
+              "account": "",
+              "appInsights": {
+                "dimension": [],
+                "metricName": "select",
+                "timeGrain": "auto"
+              },
+              "azureLogAnalytics": {
+                "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
+                "resultFormat": "time_series",
+                "workspace": ""
+              },
+              "azureMonitor": {
+                "aggOptions": [],
+                "dimensionFilter": "*",
+                "dimensionFilters": [],
+                "timeGrain": "auto",
+                "timeGrains": [],
+                "top": "10"
+              },
+              "azureResourceGraph": {
+                "query": "Resources | summarize count(type)",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "insightsAnalytics": {
+                "query": "",
+                "resultFormat": "time_series"
+              },
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriprions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Count of All Resources",
+          "type": "stat"
+        },
+        {
+          "datasource": "${DS_AZURE_MONITOR}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": [
               {
-                "color": "green",
-                "value": null
+                "matcher": {
+                  "id": "byName",
+                  "options": "type"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 386
+                  }
+                ]
               },
               {
-                "color": "red",
-                "value": 80
+                "matcher": {
+                  "id": "byName",
+                  "options": "properties"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 339
+                  }
+                ]
               }
             ]
-          }
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 17,
+            "x": 7,
+            "y": 1
+          },
+          "id": 6,
+          "options": {
+            "showHeader": true,
+            "sortBy": []
+          },
+          "pluginVersion": "8.2.0-pre",
+          "targets": [
+            {
+              "account": "",
+              "appInsights": {
+                "dimension": [],
+                "metricName": "select",
+                "timeGrain": "auto"
+              },
+              "azureLogAnalytics": {
+                "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
+                "resultFormat": "time_series",
+                "workspace": ""
+              },
+              "azureMonitor": {
+                "aggOptions": [],
+                "dimensionFilter": "*",
+                "dimensionFilters": [],
+                "timeGrain": "auto",
+                "timeGrains": [],
+                "top": "10"
+              },
+              "azureResourceGraph": {
+                "query": "resourcecontainers \r\n| where type has \"microsoft.resources/subscriptions/resourcegroups\"\r\n| summarize Count=count(type) by type, subscriptionId | extend type = replace(@\"microsoft.resources/subscriptions/resourcegroups\", @\"Resource Groups\", type)",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "insightsAnalytics": {
+                "query": "",
+                "resultFormat": "time_series"
+              },
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriprions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Subscriptions and Resource Groups",
+          "type": "table"
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "type"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 386
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "properties"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 339
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 17,
-        "x": 7,
-        "y": 1
-      },
-      "id": 6,
-      "options": {
-        "showHeader": true,
-        "sortBy": []
-      },
-      "pluginVersion": "8.2.0-pre",
-      "targets": [
         {
-          "account": "",
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
+          "datasource": "${DS_AZURE_MONITOR}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
           },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": ""
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 7
           },
-          "azureMonitor": {
-            "aggOptions": [],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "timeGrain": "auto",
-            "timeGrains": [],
-            "top": "10"
+          "id": 8,
+          "options": {
+            "colorMode": "none",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {
+              "titleSize": 18
+            },
+            "textMode": "value_and_name"
           },
-          "azureResourceGraph": {
-            "query": "resourcecontainers \r\n| where type has \"microsoft.resources/subscriptions/resourcegroups\"\r\n| summarize Count=count(type) by type, subscriptionId | extend type = replace(@\"microsoft.resources/subscriptions/resourcegroups\", @\"Resource Groups\", type)",
-            "resultFormat": "table"
-          },
-          "backends": [],
-          "dimension": "",
-          "environment": "prod",
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
-          },
-          "metric": "",
-          "namespace": "",
-          "queryType": "Azure Resource Graph",
-          "refId": "A",
-          "samplingType": "",
-          "service": "metric",
-          "subscriptions": ["$subscriprions"],
-          "useBackends": false,
-          "useCustomSeriesNaming": false
+          "pluginVersion": "8.2.0-pre",
+          "targets": [
+            {
+              "account": "",
+              "appInsights": {
+                "dimension": [],
+                "metricName": "select",
+                "timeGrain": "auto"
+              },
+              "azureLogAnalytics": {
+                "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
+                "resultFormat": "time_series",
+                "workspace": ""
+              },
+              "azureMonitor": {
+                "aggOptions": [],
+                "dimensionFilter": "*",
+                "dimensionFilters": [],
+                "timeGrain": "auto",
+                "timeGrains": [],
+                "top": "10"
+              },
+              "azureResourceGraph": {
+                "query": "Resources \r\n| extend type = case(\r\ntype contains 'microsoft.netapp/netappaccounts', 'NetApp Accounts',\r\ntype contains \"microsoft.compute\", \"Azure Compute\",\r\ntype contains \"microsoft.logic\", \"LogicApps\",\r\ntype contains 'microsoft.keyvault/vaults', \"Key Vaults\",\r\ntype contains 'microsoft.storage/storageaccounts', \"Storage Accounts\",\r\ntype contains 'microsoft.compute/availabilitysets', 'Availability Sets',\r\ntype contains 'microsoft.operationalinsights/workspaces', 'Azure Monitor Resources',\r\ntype contains 'microsoft.operationsmanagement', 'Operations Management Resources',\r\ntype contains 'microsoft.insights', 'Azure Monitor Resources',\r\ntype contains 'microsoft.desktopvirtualization/applicationgroups', 'WVD Application Groups',\r\ntype contains 'microsoft.desktopvirtualization/workspaces', 'WVD Workspaces',\r\ntype contains 'microsoft.desktopvirtualization/hostpools', 'WVD Hostpools',\r\ntype contains 'microsoft.recoveryservices/vaults', 'Backup Vaults',\r\ntype contains 'microsoft.web', 'App Services',\r\ntype contains 'microsoft.managedidentity/userassignedidentities','Managed Identities',\r\ntype contains 'microsoft.storagesync/storagesyncservices', 'Azure File Sync',\r\ntype contains 'microsoft.hybridcompute/machines', 'ARC Machines',\r\ntype contains 'Microsoft.EventHub', 'Event Hub',\r\ntype contains 'Microsoft.EventGrid', 'Event Grid',\r\ntype contains 'Microsoft.Sql', 'SQL Resources',\r\ntype contains 'Microsoft.HDInsight/clusters', 'HDInsight Clusters',\r\ntype contains 'microsoft.devtestlab', 'DevTest Labs Resources',\r\ntype contains 'microsoft.containerinstance', 'Container Instances Resources',\r\ntype contains 'microsoft.portal/dashboards', 'Azure Dashboards',\r\ntype contains 'microsoft.containerregistry/registries', 'Container Registry',\r\ntype contains 'microsoft.automation', 'Automation Resources',\r\ntype contains 'sendgrid.email/accounts', 'SendGrid Accounts',\r\ntype contains 'microsoft.datafactory/factories', 'Data Factory',\r\ntype contains 'microsoft.databricks/workspaces', 'Databricks Workspaces',\r\ntype contains 'microsoft.machinelearningservices/workspaces', 'Machine Learnings Workspaces',\r\ntype contains 'microsoft.alertsmanagement/smartdetectoralertrules', 'Azure Monitor Resources',\r\ntype contains 'microsoft.apimanagement/service', 'API Management Services',\r\ntype contains 'microsoft.dbforpostgresql', 'PostgreSQL Resources',\r\ntype contains 'microsoft.scheduler/jobcollections', 'Scheduler Job Collections',\r\ntype contains 'microsoft.visualstudio/account', 'Azure DevOps Organization',\r\ntype contains 'microsoft.network/', 'Network Resources',\r\ntype contains 'microsoft.migrate/' or type contains 'microsoft.offazure', 'Azure Migrate Resources',\r\ntype contains 'microsoft.servicebus/namespaces', 'Service Bus Namespaces',\r\ntype contains 'microsoft.classic', 'ASM Obsolete Resources',\r\ntype contains 'microsoft.resources/templatespecs', 'Template Spec Resources',\r\ntype contains 'microsoft.virtualmachineimages', 'VM Image Templates',\r\ntype contains 'microsoft.documentdb', 'CosmosDB DB Resources',\r\ntype contains 'microsoft.alertsmanagement/actionrules', 'Azure Monitor Resources',\r\ntype contains 'microsoft.kubernetes/connectedclusters', 'ARC Kubernetes Clusters',\r\ntype contains 'microsoft.purview', 'Purview Resources',\r\ntype contains 'microsoft.security', 'Security Resources',\r\ntype contains 'microsoft.cdn', 'CDN Resources',\r\ntype contains 'microsoft.devices','IoT Resources',\r\ntype contains 'microsoft.datamigration', 'Data Migraiton Services',\r\ntype contains 'microsoft.cognitiveservices', 'Congitive Services',\r\ntype contains 'microsoft.customproviders', 'Custom Providers',\r\ntype contains 'microsoft.appconfiguration', 'App Services',\r\ntype contains 'microsoft.search', 'Search Services',\r\ntype contains 'microsoft.maps', 'Maps',\r\ntype contains 'microsoft.containerservice/managedclusters', 'AKS',\r\ntype contains 'microsoft.signalrservice', 'SignalR',\r\ntype contains 'microsoft.resourcegraph/queries', 'Resource Graph Queries',\r\ntype contains 'microsoft.batch', 'MS Batch',\r\ntype contains 'microsoft.analysisservices', 'Analysis Services',\r\ntype contains 'microsoft.synapse/workspaces', 'Synapse Workspaces',\r\ntype contains 'microsoft.synapse/workspaces/sqlpools', 'Synapse SQL Pools',\r\ntype contains 'microsoft.kusto/clusters', 'ADX Clusters',\r\ntype contains 'microsoft.resources/deploymentscripts', 'Deployment Scripts',\r\ntype contains 'microsoft.aad/domainservices', 'AD Domain Services',\r\ntype contains 'microsoft.labservices/labaccounts', 'Lab Accounts',\r\ntype contains 'microsoft.automanage/accounts', 'Automanage Accounts',\r\nstrcat(\"Not Translated: \", type))\r\n| summarize count() by type",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "insightsAnalytics": {
+                "query": "",
+                "resultFormat": "time_series"
+              },
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriprions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Resource Counts",
+          "type": "stat"
         }
       ],
-      "title": "Subscriptions and Resource Groups",
-      "type": "table"
-    },
-    {
-      "datasource": "${ds}",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 7
-      },
-      "id": 8,
-      "options": {
-        "colorMode": "none",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": true
-        },
-        "text": {
-          "titleSize": 18
-        },
-        "textMode": "value_and_name"
-      },
-      "pluginVersion": "8.2.0-pre",
-      "targets": [
-        {
-          "account": "",
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": ""
-          },
-          "azureMonitor": {
-            "aggOptions": [],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "timeGrain": "auto",
-            "timeGrains": [],
-            "top": "10"
-          },
-          "azureResourceGraph": {
-            "query": "Resources \r\n| extend type = case(\r\ntype contains 'microsoft.netapp/netappaccounts', 'NetApp Accounts',\r\ntype contains \"microsoft.compute\", \"Azure Compute\",\r\ntype contains \"microsoft.logic\", \"LogicApps\",\r\ntype contains 'microsoft.keyvault/vaults', \"Key Vaults\",\r\ntype contains 'microsoft.storage/storageaccounts', \"Storage Accounts\",\r\ntype contains 'microsoft.compute/availabilitysets', 'Availability Sets',\r\ntype contains 'microsoft.operationalinsights/workspaces', 'Azure Monitor Resources',\r\ntype contains 'microsoft.operationsmanagement', 'Operations Management Resources',\r\ntype contains 'microsoft.insights', 'Azure Monitor Resources',\r\ntype contains 'microsoft.desktopvirtualization/applicationgroups', 'WVD Application Groups',\r\ntype contains 'microsoft.desktopvirtualization/workspaces', 'WVD Workspaces',\r\ntype contains 'microsoft.desktopvirtualization/hostpools', 'WVD Hostpools',\r\ntype contains 'microsoft.recoveryservices/vaults', 'Backup Vaults',\r\ntype contains 'microsoft.web', 'App Services',\r\ntype contains 'microsoft.managedidentity/userassignedidentities','Managed Identities',\r\ntype contains 'microsoft.storagesync/storagesyncservices', 'Azure File Sync',\r\ntype contains 'microsoft.hybridcompute/machines', 'ARC Machines',\r\ntype contains 'Microsoft.EventHub', 'Event Hub',\r\ntype contains 'Microsoft.EventGrid', 'Event Grid',\r\ntype contains 'Microsoft.Sql', 'SQL Resources',\r\ntype contains 'Microsoft.HDInsight/clusters', 'HDInsight Clusters',\r\ntype contains 'microsoft.devtestlab', 'DevTest Labs Resources',\r\ntype contains 'microsoft.containerinstance', 'Container Instances Resources',\r\ntype contains 'microsoft.portal/dashboards', 'Azure Dashboards',\r\ntype contains 'microsoft.containerregistry/registries', 'Container Registry',\r\ntype contains 'microsoft.automation', 'Automation Resources',\r\ntype contains 'sendgrid.email/accounts', 'SendGrid Accounts',\r\ntype contains 'microsoft.datafactory/factories', 'Data Factory',\r\ntype contains 'microsoft.databricks/workspaces', 'Databricks Workspaces',\r\ntype contains 'microsoft.machinelearningservices/workspaces', 'Machine Learnings Workspaces',\r\ntype contains 'microsoft.alertsmanagement/smartdetectoralertrules', 'Azure Monitor Resources',\r\ntype contains 'microsoft.apimanagement/service', 'API Management Services',\r\ntype contains 'microsoft.dbforpostgresql', 'PostgreSQL Resources',\r\ntype contains 'microsoft.scheduler/jobcollections', 'Scheduler Job Collections',\r\ntype contains 'microsoft.visualstudio/account', 'Azure DevOps Organization',\r\ntype contains 'microsoft.network/', 'Network Resources',\r\ntype contains 'microsoft.migrate/' or type contains 'microsoft.offazure', 'Azure Migrate Resources',\r\ntype contains 'microsoft.servicebus/namespaces', 'Service Bus Namespaces',\r\ntype contains 'microsoft.classic', 'ASM Obsolete Resources',\r\ntype contains 'microsoft.resources/templatespecs', 'Template Spec Resources',\r\ntype contains 'microsoft.virtualmachineimages', 'VM Image Templates',\r\ntype contains 'microsoft.documentdb', 'CosmosDB DB Resources',\r\ntype contains 'microsoft.alertsmanagement/actionrules', 'Azure Monitor Resources',\r\ntype contains 'microsoft.kubernetes/connectedclusters', 'ARC Kubernetes Clusters',\r\ntype contains 'microsoft.purview', 'Purview Resources',\r\ntype contains 'microsoft.security', 'Security Resources',\r\ntype contains 'microsoft.cdn', 'CDN Resources',\r\ntype contains 'microsoft.devices','IoT Resources',\r\ntype contains 'microsoft.datamigration', 'Data Migraiton Services',\r\ntype contains 'microsoft.cognitiveservices', 'Congitive Services',\r\ntype contains 'microsoft.customproviders', 'Custom Providers',\r\ntype contains 'microsoft.appconfiguration', 'App Services',\r\ntype contains 'microsoft.search', 'Search Services',\r\ntype contains 'microsoft.maps', 'Maps',\r\ntype contains 'microsoft.containerservice/managedclusters', 'AKS',\r\ntype contains 'microsoft.signalrservice', 'SignalR',\r\ntype contains 'microsoft.resourcegraph/queries', 'Resource Graph Queries',\r\ntype contains 'microsoft.batch', 'MS Batch',\r\ntype contains 'microsoft.analysisservices', 'Analysis Services',\r\ntype contains 'microsoft.synapse/workspaces', 'Synapse Workspaces',\r\ntype contains 'microsoft.synapse/workspaces/sqlpools', 'Synapse SQL Pools',\r\ntype contains 'microsoft.kusto/clusters', 'ADX Clusters',\r\ntype contains 'microsoft.resources/deploymentscripts', 'Deployment Scripts',\r\ntype contains 'microsoft.aad/domainservices', 'AD Domain Services',\r\ntype contains 'microsoft.labservices/labaccounts', 'Lab Accounts',\r\ntype contains 'microsoft.automanage/accounts', 'Automanage Accounts',\r\nstrcat(\"Not Translated: \", type))\r\n| summarize count() by type",
-            "resultFormat": "table"
-          },
-          "backends": [],
-          "dimension": "",
-          "environment": "prod",
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
-          },
-          "metric": "",
-          "namespace": "",
-          "queryType": "Azure Resource Graph",
-          "refId": "A",
-          "samplingType": "",
-          "service": "metric",
-          "subscriptions": ["$subscriprions"],
-          "useBackends": false,
-          "useCustomSeriesNaming": false
-        }
-      ],
-      "title": "Resource Counts",
-      "type": "stat"
+      "title": "Overview",
+      "type": "row"
     },
     {
       "collapsed": true,
@@ -351,12 +371,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 1
       },
       "id": 10,
       "panels": [
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -399,7 +419,7 @@
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.0.5",
+          "pluginVersion": "8.2.0-pre",
           "targets": [
             {
               "account": "",
@@ -447,7 +467,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -490,7 +510,7 @@
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.0.5",
+          "pluginVersion": "8.2.0-pre",
           "targets": [
             {
               "account": "",
@@ -538,7 +558,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -661,7 +681,7 @@
             "showHeader": true,
             "sortBy": []
           },
-          "pluginVersion": "8.0.5",
+          "pluginVersion": "8.2.0-pre",
           "targets": [
             {
               "account": "",
@@ -709,7 +729,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -746,7 +766,7 @@
           "options": {
             "showHeader": true
           },
-          "pluginVersion": "8.0.5",
+          "pluginVersion": "8.2.0-pre",
           "targets": [
             {
               "account": "",
@@ -794,7 +814,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -831,7 +851,7 @@
           "options": {
             "showHeader": true
           },
-          "pluginVersion": "8.0.5",
+          "pluginVersion": "8.2.0-pre",
           "targets": [
             {
               "account": "",
@@ -879,7 +899,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -916,7 +936,7 @@
           "options": {
             "showHeader": true
           },
-          "pluginVersion": "8.0.5",
+          "pluginVersion": "8.2.0-pre",
           "targets": [
             {
               "account": "",
@@ -964,7 +984,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1001,7 +1021,7 @@
           "options": {
             "showHeader": true
           },
-          "pluginVersion": "8.0.5",
+          "pluginVersion": "8.2.0-pre",
           "targets": [
             {
               "account": "",
@@ -1049,7 +1069,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1086,7 +1106,7 @@
           "options": {
             "showHeader": true
           },
-          "pluginVersion": "8.0.5",
+          "pluginVersion": "8.2.0-pre",
           "targets": [
             {
               "account": "",
@@ -1134,7 +1154,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1171,7 +1191,7 @@
           "options": {
             "showHeader": true
           },
-          "pluginVersion": "8.0.5",
+          "pluginVersion": "8.2.0-pre",
           "targets": [
             {
               "account": "",
@@ -1229,12 +1249,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 2
       },
       "id": 23,
       "panels": [
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1325,7 +1345,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1410,7 +1430,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1501,7 +1521,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1586,7 +1606,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1677,7 +1697,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1762,7 +1782,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1853,7 +1873,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1938,7 +1958,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2029,7 +2049,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2114,7 +2134,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2205,7 +2225,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2290,7 +2310,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2381,7 +2401,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2466,7 +2486,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2557,7 +2577,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2642,7 +2662,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2733,7 +2753,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2833,7 +2853,7 @@
       "id": 45,
       "panels": [
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2924,7 +2944,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3009,7 +3029,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3094,7 +3114,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3194,7 +3214,7 @@
       "id": 52,
       "panels": [
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3285,7 +3305,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3376,7 +3396,7 @@
           "type": "stat"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3461,7 +3481,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3546,7 +3566,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3631,7 +3651,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3716,7 +3736,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3801,7 +3821,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3832,7 +3852,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 37
+            "y": 29
           },
           "id": 60,
           "options": {
@@ -3886,7 +3906,7 @@
           "type": "table"
         },
         {
-          "datasource": "${ds}",
+          "datasource": "${DS_AZURE_MONITOR}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3917,7 +3937,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 45
+            "y": 37
           },
           "id": 62,
           "options": {
@@ -3984,7 +4004,7 @@
       {
         "allValue": null,
         "current": {},
-        "datasource": "${ds}",
+        "datasource": "${DS_AZURE_MONITOR}",
         "definition": "Subscriptions()",
         "description": null,
         "error": null,
@@ -4009,7 +4029,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Azure Resources Overview",
-  "uid": "Mtwt2BV7k",
-  "version": 3
+  "title": "Azure Resources Overview1",
+  "uid": "Mtwt2BV7k1",
+  "version": 1
 }
