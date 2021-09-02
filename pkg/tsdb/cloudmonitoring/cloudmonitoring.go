@@ -16,8 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/datasources"
-
 	"golang.org/x/oauth2/google"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -32,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -76,11 +75,11 @@ const (
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginManager plugins.Manager,
 	backendPluginManager backendplugin.Manager, dataSourceCache datasources.CacheService) *Service {
 	s := &Service{
-		PluginManager:        pluginManager,
-		BackendPluginManager: backendPluginManager,
-		HTTPClientProvider:   httpClientProvider,
-		DataSourceCache:      dataSourceCache,
-		Cfg:                  cfg,
+		pluginManager:        pluginManager,
+		backendPluginManager: backendPluginManager,
+		httpClientProvider:   httpClientProvider,
+		dataSourceCache:      dataSourceCache,
+		cfg:                  cfg,
 		im:                   datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
 
@@ -88,18 +87,18 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pl
 		QueryDataHandler: s,
 	})
 
-	if err := s.BackendPluginManager.Register("stackdriver", factory); err != nil {
+	if err := s.backendPluginManager.Register("stackdriver", factory); err != nil {
 		slog.Error("Failed to register plugin", "error", err)
 	}
 	return s
 }
 
 type Service struct {
-	PluginManager        plugins.Manager
-	BackendPluginManager backendplugin.Manager
-	DataSourceCache      datasources.CacheService
-	HTTPClientProvider   httpclient.Provider
-	Cfg                  *setting.Cfg
+	pluginManager        plugins.Manager
+	backendPluginManager backendplugin.Manager
+	dataSourceCache      datasources.CacheService
+	httpClientProvider   httpclient.Provider
+	cfg                  *setting.Cfg
 	im                   instancemgmt.InstanceManager
 }
 
@@ -141,14 +140,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		if authenticationType == "" {
 			authenticationType = jwtAuthentication
 		}
-		model := &datasourceInfo{
+
+		return &datasourceInfo{
 			id:                 settings.ID,
 			url:                settings.URL,
 			authenticationType: authenticationType,
 			defaultProject:     jsonData.DefaultProject,
 			client:             client,
-		}
-		return model, nil
+		}, nil
 	}
 }
 
@@ -590,7 +589,7 @@ func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginCon
 	req.Header.Set("Content-Type", "application/json")
 
 	// find plugin
-	plugin := s.PluginManager.GetDataSource(pluginCtx.PluginID)
+	plugin := s.pluginManager.GetDataSource(pluginCtx.PluginID)
 	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}
@@ -610,20 +609,18 @@ func (s *Service) createRequest(ctx context.Context, pluginCtx backend.PluginCon
 		Email:   pluginCtx.User.Email,
 		OrgRole: models.RoleType(pluginCtx.User.Role),
 	}
-	ds, err := s.DataSourceCache.GetDatasource(dsInfo.id, user, false)
+	ds, err := s.dataSourceCache.GetDatasource(dsInfo.id, user, false)
 	if err != nil {
 		return nil, err
 	}
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, ds, s.Cfg)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, ds, s.cfg)
 
 	return req, nil
 }
 
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
-	// authenticationType := dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
-	authenticationType := dsInfo.authenticationType
-	if authenticationType == gceAuthentication {
+	if dsInfo.authenticationType == gceAuthentication {
 		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
 		if err != nil {
 			return "", fmt.Errorf("failed to retrieve default project from GCE metadata server: %w", err)
@@ -638,7 +635,6 @@ func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) 
 
 		return defaultCredentials.ProjectID, nil
 	}
-	// return s.dsInfo.JsonData.Get("defaultProject").MustString(), nil
 	return dsInfo.defaultProject, nil
 }
 

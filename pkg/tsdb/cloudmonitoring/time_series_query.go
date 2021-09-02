@@ -25,12 +25,12 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) run(ctx context.Context, r
 	projectName := timeSeriesQuery.ProjectName
 
 	if projectName == "" {
-		defaultProject, err := s.getDefaultProject(ctx, dsInfo)
+		var err error
+		projectName, err = s.getDefaultProject(ctx, dsInfo)
 		if err != nil {
 			dr.Error = err
 			return dr, cloudMonitoringResponse{}, "", nil
 		}
-		projectName = defaultProject
 		slog.Info("No project name set on query, using project name from datasource", "projectName", projectName)
 	}
 

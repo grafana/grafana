@@ -20,11 +20,10 @@ func TestExecutor_parseToAnnotations(t *testing.T) {
 		"atext {{resource.label.zone}}", "atag")
 	require.NoError(t, err)
 
-	frames := res.Frames
-	require.Len(t, frames, 3)
-	assert.Equal(t, "title", frames[0].Fields[1].Name)
-	assert.Equal(t, "tags", frames[0].Fields[2].Name)
-	assert.Equal(t, "text", frames[0].Fields[3].Name)
+	require.Len(t, res.Frames, 3)
+	assert.Equal(t, "title", res.Frames[0].Fields[1].Name)
+	assert.Equal(t, "tags", res.Frames[0].Fields[2].Name)
+	assert.Equal(t, "text", res.Frames[0].Fields[3].Name)
 }
 
 func TestCloudMonitoringExecutor_parseToAnnotations_emptyTimeSeries(t *testing.T) {
@@ -38,8 +37,7 @@ func TestCloudMonitoringExecutor_parseToAnnotations_emptyTimeSeries(t *testing.T
 	err := query.parseToAnnotations(res, response, "atitle", "atext", "atag")
 	require.NoError(t, err)
 
-	frames := res.Frames
-	require.Len(t, frames, 0)
+	require.Len(t, res.Frames, 0)
 }
 
 func TestCloudMonitoringExecutor_parseToAnnotations_noPointsInSeries(t *testing.T) {
@@ -55,6 +53,5 @@ func TestCloudMonitoringExecutor_parseToAnnotations_noPointsInSeries(t *testing.
 	err := query.parseToAnnotations(res, response, "atitle", "atext", "atag")
 	require.NoError(t, err)
 
-	frames := res.Frames
-	require.Len(t, frames, 0)
+	require.Len(t, res.Frames, 0)
 }
