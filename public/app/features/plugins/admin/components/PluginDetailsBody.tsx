@@ -1,29 +1,29 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
 
-import { AppPlugin, GrafanaTheme2, GrafanaPlugin, PluginMeta } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { PluginTabLabels } from '../types';
+import { CatalogPlugin, PluginTabLabels } from '../types';
 import { VersionList } from '../components/VersionList';
-import { AppConfigCtrlWrapper } from '../../wrappers/AppConfigWrapper';
-import { PluginDashboards } from '../../PluginDashboards';
+// import { AppConfigCtrlWrapper } from '../../wrappers/AppConfigWrapper';
+// import { PluginDashboards } from '../../PluginDashboards';
 
-type PluginDetailsBodyProps = {
+type Props = {
   tab: { label: string };
-  plugin: GrafanaPlugin<PluginMeta<{}>> | undefined;
-  remoteVersions: Array<{ version: string; createdAt: string }>;
-  readme: string;
+  plugin: CatalogPlugin;
 };
 
-export function PluginDetailsBody({ tab, plugin, remoteVersions, readme }: PluginDetailsBodyProps): JSX.Element | null {
+export function PluginDetailsBody({ tab, plugin }: Props): JSX.Element | null {
   const styles = useStyles2(getStyles);
 
   if (tab?.label === PluginTabLabels.OVERVIEW) {
     return (
       <div
         className={cx(styles.readme, styles.container)}
-        dangerouslySetInnerHTML={{ __html: readme ?? 'No plugin help or readme markdown file was found' }}
+        dangerouslySetInnerHTML={{
+          __html: plugin.details?.readme ?? 'No plugin help or readme markdown file was found',
+        }}
       />
     );
   }
@@ -31,38 +31,41 @@ export function PluginDetailsBody({ tab, plugin, remoteVersions, readme }: Plugi
   if (tab?.label === PluginTabLabels.VERSIONS) {
     return (
       <div className={styles.container}>
-        <VersionList versions={remoteVersions ?? []} />
+        <VersionList versions={plugin.details?.versions} />
       </div>
     );
   }
 
-  if (tab?.label === PluginTabLabels.CONFIG && plugin?.angularConfigCtrl) {
-    return (
-      <div className={styles.container}>
-        <AppConfigCtrlWrapper app={plugin as AppPlugin} />
-      </div>
-    );
-  }
+  // TODO<Make the custom angular config pages work as well>
+  // if (tab?.label === PluginTabLabels.CONFIG && plugin?.angularConfigCtrl) {
+  //   return (
+  //     <div className={styles.container}>
+  //       <AppConfigCtrlWrapper app={plugin as AppPlugin} />
+  //     </div>
+  //   );
+  // }
 
-  if (plugin?.configPages) {
-    for (const configPage of plugin.configPages) {
-      if (tab?.label === configPage.title) {
-        return (
-          <div className={styles.container}>
-            <configPage.body plugin={plugin} query={{}} />
-          </div>
-        );
-      }
-    }
-  }
+  // TODO<Make the config page component work as well>
+  // if (plugin?.configPages) {
+  //   for (const configPage of plugin.configPages) {
+  //     if (tab?.label === configPage.title) {
+  //       return (
+  //         <div className={styles.container}>
+  //           <configPage.body plugin={plugin} query={{}} />
+  //         </div>
+  //       );
+  //     }
+  //   }
+  // }
 
-  if (tab?.label === PluginTabLabels.DASHBOARDS && plugin) {
-    return (
-      <div className={styles.container}>
-        <PluginDashboards plugin={plugin.meta} />
-      </div>
-    );
-  }
+  // TODO<Make the dashboards tab work as well>
+  // if (tab?.label === PluginTabLabels.DASHBOARDS && plugin) {
+  //   return (
+  //     <div className={styles.container}>
+  //       <PluginDashboards plugin={plugin.meta} />
+  //     </div>
+  //   );
+  // }
 
   return null;
 }

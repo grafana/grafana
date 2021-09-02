@@ -82,7 +82,7 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
             </Alert>
           )} */}
           <PluginDetailsSignature plugin={plugin} className={styles.signature} />
-          {/* <PluginDetailsBody tab={tab} plugin={pluginConfig} remoteVersions={plugin.versions} readme={plugin.readme} /> */}
+          <PluginDetailsBody tab={tabs[activeTabIndex]} plugin={plugin} />
         </TabContent>
       </PluginPage>
     </Page>
