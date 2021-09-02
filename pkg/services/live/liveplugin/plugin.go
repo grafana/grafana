@@ -32,8 +32,8 @@ func (p *ChannelLocalPublisher) PublishLocal(channel string, data []byte) error 
 		if err != nil {
 			return err
 		}
-		if !ok {
-			return fmt.Errorf("no conversion rule for a channel %s", channelID)
+		if ok {
+			return nil
 		}
 	}
 	pub := &centrifuge.Publication{
