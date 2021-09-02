@@ -29,7 +29,7 @@ import { DashboardLoading } from '../components/DashboardLoading/DashboardLoadin
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import classnames from 'classnames';
-import { PanelEditFinishedEvent } from 'app/types/events';
+import { PanelEditExitedEvent } from 'app/types/events';
 import { liveTimer } from '../dashgrid/liveTimer';
 
 export interface DashboardPageRouteParams {
@@ -185,7 +185,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       dashboardWatcher.setEditingState(false);
 
       // Some panels need kicked when leaving edit mode
-      this.props.dashboard?.events.publish(new PanelEditFinishedEvent(prevState.editPanel.id));
+      this.props.dashboard?.events.publish(new PanelEditExitedEvent(prevState.editPanel.id));
     }
 
     if (this.state.editPanelAccessDenied) {

@@ -3,7 +3,7 @@ import { PanelProps } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { Scene } from './runtime/scene';
 import { ReplaySubject, Subscription } from 'rxjs';
-import { PanelEditFinishedEvent } from 'app/types/events';
+import { PanelEditExitedEvent } from 'app/types/events';
 import { CanvasGroupOptions } from 'app/features/canvas';
 
 interface Props extends PanelProps<PanelOptions> {}
@@ -34,7 +34,7 @@ export class CanvasPanel extends Component<Props, State> {
     theScene.next(this.scene); // used in the editors
 
     this.subs.add(
-      this.props.eventBus.subscribe(PanelEditFinishedEvent, (evt) => {
+      this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
         if (this.props.id === evt.payload) {
           this.needsReload = true;
         }
