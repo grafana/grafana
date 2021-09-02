@@ -40,7 +40,7 @@ func toMacaronPath(path string) string {
 }
 
 func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
-	recipient := ctx.Params("Recipient")
+	recipient := macaron.Vars(ctx.Req)["Recipient"]
 	if recipient == apimodels.GrafanaBackend.String() {
 		return apimodels.GrafanaBackend, nil
 	}

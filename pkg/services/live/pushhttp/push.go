@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
+	"gopkg.in/macaron.v1"
 )
 
 var (
@@ -45,7 +46,7 @@ func (g *Gateway) Run(ctx context.Context) error {
 }
 
 func (g *Gateway) Handle(ctx *models.ReqContext) {
-	streamID := ctx.Params(":streamId")
+	streamID := macaron.Vars(ctx.Req)[":streamId"]
 
 	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgId, liveDto.ScopeStream, streamID)
 	if err != nil {

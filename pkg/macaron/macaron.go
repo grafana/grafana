@@ -118,6 +118,19 @@ func FromContext(c context.Context) *Context {
 	return nil
 }
 
+type varsKey struct{}
+
+func Vars(r *http.Request) map[string]string {
+	if rv := r.Context().Value(varsKey{}); rv != nil {
+		return rv.(map[string]string)
+	}
+	return map[string]string{}
+}
+
+func SetURLVars(r *http.Request, vars map[string]string) *http.Request {
+	return r.WithContext(context.WithValue(r.Context(), varsKey{}, vars))
+}
+
 // UseMiddleware is a traditional approach to writing middleware in Go.
 // A middleware is a function that has a reference to the next handler in the chain
 // and returns the actual middleware handler, that may do its job and optionally
