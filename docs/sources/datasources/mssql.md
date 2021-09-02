@@ -168,10 +168,9 @@ The resulting table panel:
 
 ## Time series queries
 
-If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must have a column named `time` that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. You may return a column named `metric` that is used as metric name for the value column. Any column except `time` and `metric` is treated as a value column. If you omit the `metric` column, the name of the value column will be the metric name. You may select multiple value columns, each will have its name as metric.
-If you return multiple value columns and a column named `metric` then this column is used as prefix for the series name (only available in Grafana 5.3+).
+If you set Format as to Time series, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. You can additionally return a column named metric that represents the metric type for the value column, for example, seconds. Any column except time and metric is treated as a value column. If you omit the metric column, then the title of the value column is treated as its metric type. When you select multiple value columns without a column named metric, then each column's title is treated as its metric type. 
 
-If you're not satisfied with the default series name formatting, please use the [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}) to customize it.
+If you return multiple value columns and a column named metric, then the metric column is used as a prefix for the series name. You can optionally customize the default series name formatting using instructions in [Standard field options/Display name]({{< relref "../panels/standard-options.md#display-name" >}}).
 
 Result sets of time series queries need to be sorted by time.
 
