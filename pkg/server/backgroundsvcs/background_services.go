@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -41,6 +42,7 @@ func ProvideBackgroundServiceRegistry(
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ *azuremonitor.Service, _ *cloudwatch.CloudWatchService, _ *elasticsearch.Service, _ *graphite.Service, _ *influxdb.Service,
 	_ *loki.Service, _ *opentsdb.Service, _ *prometheus.Service, _ *tempo.Service, _ *testdatasource.Service, _ *plugindashboards.Service,
+	_ *dashboardsnapshots.Service,
 
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(

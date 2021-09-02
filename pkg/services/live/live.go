@@ -282,8 +282,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 		newCtx = livecontext.SetContextSignedUser(newCtx, user)
-		r := ctx.Req.Request
-		r = r.WithContext(newCtx)
+		r := ctx.Req.WithContext(newCtx)
 		wsHandler.ServeHTTP(ctx.Resp, r)
 	}
 
@@ -291,8 +290,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		user := ctx.SignedInUser
 		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
 		newCtx = livecontext.SetContextStreamID(newCtx, ctx.Params(":streamId"))
-		r := ctx.Req.Request
-		r = r.WithContext(newCtx)
+		r := ctx.Req.WithContext(newCtx)
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
@@ -748,7 +746,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 		return response.Error(code, text, nil)
 	}
 	if reply.Data != nil {
-		_, err = g.node.Publish(cmd.Channel, cmd.Data)
+		err = g.Publish(ctx.OrgId, cmd.Channel, cmd.Data)
 		if err != nil {
 			logger.Error("Error publish to channel", "error", err, "channel", cmd.Channel)
 			return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)

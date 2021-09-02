@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { Form, Button, Input, Field } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
@@ -83,4 +82,4 @@ const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'global-users'),
 });
 
-export default hot(module)(connect(mapStateToProps)(UserCreatePage));
+export default connect(mapStateToProps)(UserCreatePage);

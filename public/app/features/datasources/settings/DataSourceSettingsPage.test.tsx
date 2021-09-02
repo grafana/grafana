@@ -9,6 +9,14 @@ import { screen, render } from '@testing-library/react';
 import { selectors } from '@grafana/e2e-selectors';
 import { PluginState } from '@grafana/data';
 
+jest.mock('app/core/core', () => {
+  return {
+    contextSrv: {
+      hasPermission: () => true,
+    },
+  };
+});
+
 const getMockNode = () => ({
   text: 'text',
   subTitle: 'subtitle',

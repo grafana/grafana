@@ -53,7 +53,7 @@ func defaultReturnHandler() ReturnHandler {
 			if isError(respVal) {
 				err := respVal.Interface().(error)
 				if err != nil {
-					ctx.internalServerError(ctx, err)
+					http.Error(resp, err.Error(), 500)
 				}
 				return
 			} else if canDeref(respVal) {

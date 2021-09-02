@@ -42,6 +42,7 @@ function updatePanelModelWithUpdate(panel: PanelModel, updated: LibraryElementDT
     ...updated.model,
     configRev: 0, // reset config rev, since changes have been saved
     libraryPanel: toPanelModelLibraryPanel(updated),
+    title: panel.title,
   });
   panel.refresh();
 }
@@ -52,7 +53,6 @@ function saveOrUpdateLibraryPanel(panel: any, folderId: number): Promise<Library
   }
 
   if (panel.libraryPanel && panel.libraryPanel.uid === undefined) {
-    panel.libraryPanel.name = panel.title;
     return addLibraryPanel(panel, folderId!);
   }
 

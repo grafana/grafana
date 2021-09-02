@@ -40,6 +40,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+
   return (
     <TimeSeries
       frames={frames}
