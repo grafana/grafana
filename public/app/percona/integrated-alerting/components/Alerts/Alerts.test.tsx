@@ -7,13 +7,7 @@ import { Alerts } from './Alerts';
 import { AlertsService } from './Alerts.service';
 import { alertsStubs } from './__mocks__/alertsStubs';
 
-jest.mock('./Alerts.service', () => ({
-  AlertsService: {
-    list: () => ({
-      alerts: alertsStubs,
-    }),
-  },
-}));
+jest.mock('./Alerts.service');
 
 describe('AlertsTable', () => {
   afterEach(() => {

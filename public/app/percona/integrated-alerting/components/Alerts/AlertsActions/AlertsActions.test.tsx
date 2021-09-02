@@ -28,7 +28,9 @@ describe('AlertActions', () => {
   });
 
   it('renders a barred bell for an active alert', async () => {
-    const wrapper = await getMount(<AlertsActions alert={formatAlert(alertsStubs[0])} getAlerts={fakeGetAlerts} />);
+    const wrapper = await getMount(
+      <AlertsActions alert={formatAlert(alertsStubs.alerts[0])} getAlerts={fakeGetAlerts} />
+    );
 
     wrapper.update();
 
@@ -36,7 +38,9 @@ describe('AlertActions', () => {
   });
 
   it('renders a bell for an silenced alert', async () => {
-    const wrapper = await getMount(<AlertsActions alert={formatAlert(alertsStubs[3])} getAlerts={fakeGetAlerts} />);
+    const wrapper = await getMount(
+      <AlertsActions alert={formatAlert(alertsStubs.alerts[3])} getAlerts={fakeGetAlerts} />
+    );
 
     wrapper.update();
 
@@ -44,7 +48,9 @@ describe('AlertActions', () => {
   });
 
   it('calls the API to activate a silenced alert', async () => {
-    const wrapper = await getMount(<AlertsActions alert={formatAlert(alertsStubs[3])} getAlerts={fakeGetAlerts} />);
+    const wrapper = await getMount(
+      <AlertsActions alert={formatAlert(alertsStubs.alerts[3])} getAlerts={fakeGetAlerts} />
+    );
 
     await asyncAct(() => wrapper.find(dataQa('silence-alert-button')).at(0).simulate('click'));
     wrapper.update();
@@ -53,7 +59,9 @@ describe('AlertActions', () => {
   });
 
   it('calls the API to silence an active alert', async () => {
-    const wrapper = await getMount(<AlertsActions alert={formatAlert(alertsStubs[1])} getAlerts={fakeGetAlerts} />);
+    const wrapper = await getMount(
+      <AlertsActions alert={formatAlert(alertsStubs.alerts[1])} getAlerts={fakeGetAlerts} />
+    );
     await asyncAct(() => wrapper.find(dataQa('silence-alert-button')).at(0).simulate('click'));
 
     wrapper.update();

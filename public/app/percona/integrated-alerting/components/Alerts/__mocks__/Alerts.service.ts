@@ -4,6 +4,5 @@ import { alertsStubs } from './alertsStubs';
 
 export const AlertsService = jest.genMockFromModule<typeof alertsService>('../Alerts.service').AlertsService;
 
-AlertsService.list = () =>
-  Promise.resolve({ alerts: alertsStubs, totals: { total_items: alertsStubs.length, total_pages: 1 } });
+AlertsService.list = () => Promise.resolve(alertsStubs);
 AlertsService.toggle = () => Promise.resolve();

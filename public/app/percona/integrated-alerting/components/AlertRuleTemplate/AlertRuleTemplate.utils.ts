@@ -1,14 +1,14 @@
 import moment from 'moment/moment';
 
-import { UNIT_MAP } from './AlertRuleTemplate.constants';
-import { SourceDescription, FormattedTemplate, Template, TemplateParamUnit } from './AlertRuleTemplate.types';
+import { UNIT_MAP, SOURCE_MAP } from './AlertRuleTemplate.constants';
+import { FormattedTemplate, SourceDescription, Template, TemplateParamUnit } from './AlertRuleTemplate.types';
 
 export const formatTemplate = (template: Template): FormattedTemplate => {
   const { summary, source, created_at, ...restProps } = template;
 
   return {
     summary,
-    source: SourceDescription[source],
+    source,
     created_at: created_at ? moment(created_at).format('YYYY-MM-DD HH:mm:ss') : undefined,
     ...restProps,
   };
@@ -17,3 +17,5 @@ export const formatTemplate = (template: Template): FormattedTemplate => {
 export const formatTemplates = (templates: Template[]): FormattedTemplate[] => templates.map(formatTemplate);
 
 export const beautifyUnit = (unit: TemplateParamUnit) => UNIT_MAP[unit];
+
+export const formatSource = (source: SourceDescription) => SOURCE_MAP[source];

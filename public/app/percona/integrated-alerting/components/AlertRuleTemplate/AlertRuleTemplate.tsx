@@ -16,7 +16,7 @@ import { ALERT_RULE_TEMPLATES_TABLE_ID, GET_TEMPLATES_CANCEL_TOKEN } from './Ale
 import { AlertRuleTemplateService } from './AlertRuleTemplate.service';
 import { getStyles } from './AlertRuleTemplate.styles';
 import { FormattedTemplate } from './AlertRuleTemplate.types';
-import { formatTemplates } from './AlertRuleTemplate.utils';
+import { formatSource, formatTemplates } from './AlertRuleTemplate.utils';
 import { AlertRuleTemplateActions } from './AlertRuleTemplateActions/AlertRuleTemplateActions';
 
 const { noData, columns } = Messages.alertRuleTemplate.table;
@@ -69,6 +69,7 @@ export const AlertRuleTemplate: FC = () => {
         Header: sourceColumn,
         accessor: 'source',
         width: '20%',
+        Cell: ({ value }) => formatSource(value),
       } as Column,
       {
         Header: createdAtColumn,
