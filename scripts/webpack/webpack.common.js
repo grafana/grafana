@@ -1,5 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
+const webpack = require('webpack');
 
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
@@ -58,6 +59,9 @@ module.exports = {
     source: false,
   },
   plugins: [
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
+    }),
     new CopyUniconsPlugin(),
     new CopyWebpackPlugin({
       patterns: [
