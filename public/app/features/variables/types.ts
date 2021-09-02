@@ -84,6 +84,7 @@ export interface QueryVariableModel extends DataSourceVariableModel {
 
 export interface TextBoxVariableModel extends VariableWithOptions {
   originalQuery: string | null;
+  allValue?: string | null;
   placeholder?: string | null;
 }
 

@@ -9,12 +9,23 @@ import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props extends VariableEditorProps<TextBoxVariableModel> {}
 
-export function TextBoxVariableEditor({ onPropChange, variable: { query, placeholder } }: Props): ReactElement {
+export function TextBoxVariableEditor({
+  onPropChange,
+  variable: { query, allValue, placeholder },
+}: Props): ReactElement {
   const updateDefaultVariable = useCallback(
     (event: FormEvent<HTMLInputElement>, updateOptions: boolean) => {
       event.preventDefault();
       onPropChange({ propName: 'originalQuery', propValue: event.currentTarget.value, updateOptions: false });
       onPropChange({ propName: 'query', propValue: event.currentTarget.value, updateOptions });
+    },
+    [onPropChange]
+  );
+
+  const updateEmptyVariable = useCallback(
+    (event: FormEvent<HTMLInputElement>, updateOptions: boolean) => {
+      event.preventDefault();
+      onPropChange({ propName: 'allValue', propValue: event.currentTarget.value, updateOptions });
     },
     [onPropChange]
   );
@@ -27,19 +38,32 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query, placeho
     [onPropChange]
   );
 
-  const onDefaultChange = useCallback((e: FormEvent<HTMLInputElement>) => updateDefaultVariable(e, false), [
-    updateDefaultVariable,
-  ]);
-  const onDefaultBlur = useCallback((e: FormEvent<HTMLInputElement>) => updateDefaultVariable(e, true), [
-    updateDefaultVariable,
-  ]);
+  const onDefaultChange = useCallback(
+    (e: FormEvent<HTMLInputElement>) => updateDefaultVariable(e, false),
+    [updateDefaultVariable]
+  );
+  const onDefaultBlur = useCallback(
+    (e: FormEvent<HTMLInputElement>) => updateDefaultVariable(e, true),
+    [updateDefaultVariable]
+  );
 
-  const onPlaceholderChange = useCallback((e: FormEvent<HTMLInputElement>) => updatePlaceholderVariable(e, false), [
-    updatePlaceholderVariable,
-  ]);
-  const onPlaceholderBlur = useCallback((e: FormEvent<HTMLInputElement>) => updatePlaceholderVariable(e, false), [
-    updatePlaceholderVariable,
-  ]);
+  const onEmptyChange = useCallback(
+    (e: FormEvent<HTMLInputElement>) => updateEmptyVariable(e, true),
+    [updateEmptyVariable]
+  );
+  const onEmptyBlur = useCallback(
+    (e: FormEvent<HTMLInputElement>) => updateEmptyVariable(e, false),
+    [updateEmptyVariable]
+  );
+
+  const onPlaceholderChange = useCallback(
+    (e: FormEvent<HTMLInputElement>) => updatePlaceholderVariable(e, false),
+    [updatePlaceholderVariable]
+  );
+  const onPlaceholderBlur = useCallback(
+    (e: FormEvent<HTMLInputElement>) => updatePlaceholderVariable(e, false),
+    [updatePlaceholderVariable]
+  );
 
   return (
     <VerticalGroup spacing="xs">
@@ -53,6 +77,16 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query, placeho
         labelWidth={20}
         grow
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInputV2}
+      />
+      <VariableTextField
+        value={allValue ?? ''}
+        name="Empty Value"
+        placeholder="empty value, if cleared"
+        onChange={onEmptyChange}
+        onBlur={onEmptyBlur}
+        labelWidth={20}
+        grow
+        ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInput}
       />
       <VariableTextField
         value={placeholder ?? ''}

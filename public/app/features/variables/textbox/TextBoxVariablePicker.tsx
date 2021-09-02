@@ -8,6 +8,7 @@ import { variableAdapters } from '../adapters';
 import { useDispatch } from 'react-redux';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { toVariablePayload } from '../utils';
+import { ALL_VARIABLE_VALUE } from '../constants';
 
 export interface Props extends VariablePickerProps<TextBoxVariableModel> {}
 
@@ -30,12 +31,16 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
       return;
     }
 
+    const data = { propName: 'query', propValue: updatedValue };
+
+    if (updatedValue === '') {
+      data.propValue = ALL_VARIABLE_VALUE;
+    }
+
     dispatch(
       toKeyedAction(
         variable.rootStateKey,
-        changeVariableProp(
-          toVariablePayload({ id: variable.id, type: variable.type }, { propName: 'query', propValue: updatedValue })
-        )
+        changeVariableProp(toVariablePayload({ id: variable.id, type: variable.type }, data))
       )
     );
 
@@ -49,6 +54,16 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
 
     variableAdapters.get(variable.type).updateOptions(variable);
   }, [variable, updatedValue, dispatch, onVariableChange]);
+
+  const checkForOnEmptyValue = () => {
+    if (updatedValue !== '' && updatedValue !== ALL_VARIABLE_VALUE) {
+      return updatedValue;
+    } else {
+      return '';
+    }
+  };
+
+  const valueToDisplay = checkForOnEmptyValue();
 
   const onChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => setUpdatedValue(event.target.value),
@@ -66,7 +81,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
   return (
     <Input
       type="text"
-      value={updatedValue}
+      value={valueToDisplay ?? ''}
       onChange={onChange}
       onBlur={onBlur}
       onKeyDown={onKeyDown}
