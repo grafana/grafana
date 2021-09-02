@@ -100,7 +100,7 @@ func (f *DevStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCo
 		{
 			Pattern:   "plugin/testdata/random-20Hz-stream",
 			Converter: NewJsonFrameConverter(JsonFrameConverterConfig{}),
-			Outputter: NewMultipleOutputter(
+			Outputter: NewMultipleOutput(
 				NewManagedStreamOutput(f.ManagedStream),
 				NewRedirectOutput(RedirectOutputConfig{
 					Channel: "stream/testdata/random-20Hz-stream",
@@ -136,7 +136,7 @@ func (f *DevStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCo
 			Processor: NewKeepFieldsProcessor(KeepFieldsProcessorConfig{
 				FieldNames: []string{"labels", "time", "usage_user"},
 			}),
-			Outputter: NewMultipleOutputter(
+			Outputter: NewMultipleOutput(
 				NewManagedStreamOutput(f.ManagedStream),
 				NewConditionalOutput(
 					NewNumberCompareCondition("usage_user", "gte", 50),
@@ -267,7 +267,7 @@ func (f *DevStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCo
 					},
 				},
 			}),
-			Outputter: NewMultipleOutputter(
+			Outputter: NewMultipleOutput(
 				NewManagedStreamOutput(f.ManagedStream),
 				NewRemoteWriteOutput(RemoteWriteConfig{
 					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
@@ -301,7 +301,7 @@ func (f *DevStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCo
 		{
 			OrgId:   1,
 			Pattern: "stream/json/exact/value3/changes",
-			Outputter: NewMultipleOutputter(
+			Outputter: NewMultipleOutput(
 				NewManagedStreamOutput(f.ManagedStream),
 				NewRemoteWriteOutput(RemoteWriteConfig{
 					Endpoint: os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),

@@ -226,7 +226,7 @@ func (f *FileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 			}
 			outputters = append(outputters, outputter)
 		}
-		return NewMultipleOutputter(outputters...), nil
+		return NewMultipleOutput(outputters...), nil
 	case "ManagedStream":
 		return NewManagedStreamOutput(f.ManagedStream), nil
 	case "localSubscribers":

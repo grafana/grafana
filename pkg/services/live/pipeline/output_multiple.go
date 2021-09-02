@@ -6,13 +6,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// MultipleOutputter can combine several Outputter and
+// MultipleOutput can combine several Outputter and
 // execute them sequentially.
-type MultipleOutputter struct {
+type MultipleOutput struct {
 	Outputters []Outputter
 }
 
-func (m MultipleOutputter) Output(ctx context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
+func (m MultipleOutput) Output(ctx context.Context, vars OutputVars, frame *data.Frame) ([]*ChannelFrame, error) {
 	var frames []*ChannelFrame
 	for _, out := range m.Outputters {
 		f, err := out.Output(ctx, vars, frame)
@@ -25,6 +25,6 @@ func (m MultipleOutputter) Output(ctx context.Context, vars OutputVars, frame *d
 	return frames, nil
 }
 
-func NewMultipleOutputter(outputters ...Outputter) *MultipleOutputter {
-	return &MultipleOutputter{Outputters: outputters}
+func NewMultipleOutput(outputters ...Outputter) *MultipleOutput {
+	return &MultipleOutput{Outputters: outputters}
 }
