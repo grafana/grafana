@@ -1,8 +1,14 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAll, install, uninstall } from './actions';
-import { selectAll, selectById } from './selectors';
 import { CatalogPlugin } from '../types';
+import {
+  selectAll,
+  selectById,
+  selectIsRequestPending,
+  selectRequestError,
+  selectIsRequestNotFetched,
+} from './selectors';
 
 export const useGetAll = (): CatalogPlugin[] => {
   useFetchAll();
@@ -28,10 +34,19 @@ export const useUninstall = () => {
   return (id: string) => dispatch(uninstall(id));
 };
 
+export const useFetchStatus = () => {
+  const isLoading = useSelector(selectIsRequestPending(fetchAll.toString()));
+  const error = useSelector(selectRequestError(fetchAll.toString()));
+
+  return { isLoading, error };
+};
+
+// Only fetches in case they were not fetched yet
 export const useFetchAll = () => {
   const dispatch = useDispatch();
+  const isNotFetched = useSelector(selectIsRequestNotFetched(fetchAll.toString()));
 
   useEffect(() => {
-    dispatch(fetchAll());
+    isNotFetched && dispatch(fetchAll());
   }, []); // eslint-disable-line
 };

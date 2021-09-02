@@ -1,10 +1,13 @@
 import { createSelector } from 'reselect';
 import { pluginsAdapter } from './reducer';
+import { RequestStatus } from '../types';
 
 // TODO<use the proper store state here>
 export const selectRoot = (state: any) => state.plugins;
 
-export const { selectAll, selectById } = pluginsAdapter.getSelectors(selectRoot);
+export const selectItems = createSelector(selectRoot, ({ items }) => items);
+
+export const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
 
 const isInstalled = (filterBy: string) =>
   createSelector(selectAll, (plugins) =>
@@ -44,3 +47,17 @@ export const find = (searchBy: string, filterBy: string, filterByType: string) =
       return searchBy === '' ? filteredPlugins : searchedPlugins;
     }
   );
+
+export const selectRequest = (actionType: string) =>
+  createSelector(selectRoot, ({ requests = {} }) => requests[actionType]);
+
+export const selectIsRequestPending = (actionType: string) =>
+  createSelector(selectRequest(actionType), (request) => request?.status === RequestStatus.Pending);
+
+export const selectRequestError = (actionType: string) =>
+  createSelector(selectRequest(actionType), (request) =>
+    request?.status === RequestStatus.Rejected ? request?.error : null
+  );
+
+export const selectIsRequestNotFetched = (actionType: string) =>
+  createSelector(selectRequest(actionType), (request) => request === undefined);
