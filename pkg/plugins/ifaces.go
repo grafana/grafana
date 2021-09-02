@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
 // Manager is the plugin manager service interface.
@@ -96,11 +95,6 @@ type PluginInstallerLogger interface {
 	Warnf(format string, args ...interface{})
 	Error(args ...interface{})
 	Errorf(format string, args ...interface{})
-}
-
-type CorePluginInitializer interface {
-	// InitializeCorePlugin loads and initializes a core plugin.
-	InitializeCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error
 }
 
 type ManagerV2 interface {

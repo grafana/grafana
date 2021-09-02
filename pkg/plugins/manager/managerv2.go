@@ -135,21 +135,6 @@ func (m *PluginManagerV2) registeredPlugins() map[string]struct{} {
 	return pluginsByID
 }
 
-func (m *PluginManagerV2) InitializeCorePlugin(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
-	corePluginJSONPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins/datasource", pluginID)
-
-	plugin, err := m.pluginLoader.LoadWithFactory(corePluginJSONPath, factory)
-	if err != nil {
-		return err
-	}
-
-	if err := m.register(plugin); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *PluginManagerV2) Plugin(pluginID string) *plugins.PluginV2 {
 	m.pluginsMu.RLock()
 	p, ok := m.plugins[pluginID]

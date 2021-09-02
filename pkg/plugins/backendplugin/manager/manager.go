@@ -27,14 +27,12 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg, licensing models.Licensing,
-	pluginRequestValidator models.PluginRequestValidator, pluginManagerV2 plugins.ManagerV2,
-	corePluginInitializer plugins.CorePluginInitializer) *Manager {
+	pluginRequestValidator models.PluginRequestValidator, pluginManagerV2 plugins.ManagerV2) *Manager {
 	s := &Manager{
 		Cfg:                    cfg,
 		License:                licensing,
 		PluginRequestValidator: pluginRequestValidator,
 		PluginManagerV2:        pluginManagerV2,
-		CorePluginInitializer:  corePluginInitializer,
 		logger:                 log.New("plugins.backend"),
 		plugins:                map[string]backendplugin.Plugin{},
 	}
@@ -46,7 +44,6 @@ type Manager struct {
 	License                models.Licensing
 	PluginRequestValidator models.PluginRequestValidator
 	PluginManagerV2        plugins.ManagerV2
-	CorePluginInitializer  plugins.CorePluginInitializer
 	pluginsMu              sync.RWMutex
 	plugins                map[string]backendplugin.Plugin
 	logger                 log.Logger
@@ -60,10 +57,6 @@ func (m *Manager) Run(ctx context.Context) error {
 
 // Register registers a backend plugin
 func (m *Manager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
-	if m.PluginManagerV2.IsEnabled() {
-		return m.CorePluginInitializer.InitializeCorePlugin(context.Background(), pluginID, factory)
-	}
-
 	m.logger.Debug("Registering backend plugin", "pluginId", pluginID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
