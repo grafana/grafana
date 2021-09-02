@@ -45,11 +45,11 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 }
 
 // CreateTestAlertRule creates a dummy alert definition to be used by the tests.
-func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64) *models.AlertRule {
+func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64, orgID int64) *models.AlertRule {
 	d := rand.Intn(1000)
 	ruleGroup := fmt.Sprintf("ruleGroup-%d", d)
 	err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
-		OrgID:        1,
+		OrgID:        orgID,
 		NamespaceUID: "namespace",
 		RuleGroupConfig: apimodels.PostableRuleGroupConfig{
 			Name:     ruleGroup,
@@ -84,7 +84,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 	require.NoError(t, err)
 
 	q := models.ListRuleGroupAlertRulesQuery{
-		OrgID:        1,
+		OrgID:        orgID,
 		NamespaceUID: "namespace",
 		RuleGroup:    ruleGroup,
 	}

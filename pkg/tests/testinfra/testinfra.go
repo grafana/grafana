@@ -191,6 +191,14 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	_, err = alertingSect.NewKey("notification_timeout_seconds", "1")
 	require.NoError(t, err)
 
+	getOrCreateSection := func(name string) (*ini.Section, error) {
+		section, err := cfg.GetSection(name)
+		if err != nil {
+			return cfg.NewSection(name)
+		}
+		return section, err
+	}
+
 	for _, o := range opts {
 		if o.EnableCSP {
 			securitySect, err := cfg.NewSection("security")
@@ -205,7 +213,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 		if o.NGAlertAdminConfigIntervalSeconds != 0 {
-			ngalertingSection, err := cfg.NewSection("ngalerting")
+			ngalertingSection, err := cfg.NewSection("unified_alerting")
 			require.NoError(t, err)
 			_, err = ngalertingSection.NewKey("admin_config_poll_interval_seconds", fmt.Sprintf("%d", o.NGAlertAdminConfigIntervalSeconds))
 			require.NoError(t, err)
@@ -240,9 +248,16 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 		if o.EnableUnifiedAlerting {
-			unifiedAlertingSection, err := cfg.NewSection("unified_alerting")
+			unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
 			require.NoError(t, err)
 			_, err = unifiedAlertingSection.NewKey("enabled", "true")
+			require.NoError(t, err)
+		}
+		if len(o.UnifiedAlertingDisabledOrgs) > 0 {
+			unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+			require.NoError(t, err)
+			disableOrgStr := strings.Join(strings.Split(strings.Trim(fmt.Sprint(o.UnifiedAlertingDisabledOrgs), "[]"), " "), ",")
+			_, err = unifiedAlertingSection.NewKey("disabled_orgs", disableOrgStr)
 			require.NoError(t, err)
 		}
 	}
@@ -268,4 +283,5 @@ type GrafanaOpts struct {
 	CatalogAppEnabled                 bool
 	ViewersCanEdit                    bool
 	PluginAdminEnabled                bool
+	UnifiedAlertingDisabledOrgs       []int64
 }
