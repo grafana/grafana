@@ -1,6 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
-import { PluginDetails, Org, LocalPlugin, RemotePlugin, CatalogPlugin } from './types';
+import { PluginDetails, Org, LocalPlugin, RemotePlugin, CatalogPlugin, CatalogPluginDetails } from './types';
 import { mergeLocalsAndRemotes, mergeLocalAndRemote } from './helpers';
 
 export async function getCatalogPlugins(): Promise<CatalogPlugin[]> {
@@ -16,6 +16,20 @@ export async function getCatalogPlugin(id: string): Promise<CatalogPlugin> {
   return mergeLocalAndRemote(local, remote);
 }
 
+export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
+  const localPlugins = await getLocalPlugins();
+  const local = localPlugins.find((p) => p.id === id);
+  const isInstalled = Boolean(local);
+  const [remote, versions] = await Promise.all([getRemotePlugin(id, isInstalled), getPluginVersions(id)]);
+
+  return {
+    grafanaDependency: remote?.json?.dependencies?.grafanaDependency || '',
+    links: remote?.json?.info.links || local?.info.links || [],
+    readme: remote?.readme,
+    versions,
+  };
+}
+
 async function getRemotePlugins(): Promise<RemotePlugin[]> {
   const res = await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins`);
   return res.items;
@@ -28,7 +42,7 @@ async function getPlugin(slug: string): Promise<PluginDetails> {
     return plugin.id === slug;
   });
 
-  const [remote, versions] = await Promise.all([getRemotePlugin(slug, localPlugin), getPluginVersions(slug)]);
+  const [remote, versions] = await Promise.all([getRemotePlugin(slug, Boolean(localPlugin)), getPluginVersions(slug)]);
 
   return {
     remote: remote,
@@ -37,12 +51,12 @@ async function getPlugin(slug: string): Promise<PluginDetails> {
   };
 }
 
-async function getRemotePlugin(slug: string, local: LocalPlugin | undefined): Promise<RemotePlugin | undefined> {
+async function getRemotePlugin(id: string, isInstalled: boolean): Promise<RemotePlugin | undefined> {
   try {
-    return await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${slug}`);
+    return await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${id}`);
   } catch (error) {
     // this might be a plugin that doesn't exist on gcom.
-    error.isHandled = !!local;
+    error.isHandled = isInstalled;
     return;
   }
 }
