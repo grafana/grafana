@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=alpine:3.14.1
+ARG BASE_IMAGE=alpine:3.14.2
 FROM ${BASE_IMAGE}
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
@@ -27,7 +27,7 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 WORKDIR $GF_PATHS_HOME
 
 RUN apk add --no-cache ca-certificates bash tzdata && \
-    apk add --no-cache openssl musl-utils libcrypto1.1>1.1.1l-r0 libssl1.1>1.1.1l-r0
+    apk add --no-cache openssl musl-utils
 
 # Oracle Support for x86_64 only
 RUN if [ `arch` = "x86_64" ]; then \
