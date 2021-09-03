@@ -38,7 +38,7 @@ export const Status: FC<StatusProps> = ({ status }) => {
   const isPending = pendingStates.includes(status);
 
   return isPending ? (
-    <span className={styles.ellipsisContainer}>
+    <span data-qa="statusPending" className={styles.ellipsisContainer}>
       <Ellipsis />
     </span>
   ) : (
