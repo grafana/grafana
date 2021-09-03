@@ -43,10 +43,10 @@ export const ResourceDimensionEditor: FC<
   );
 
   const onFixedChange = useCallback(
-    (fixed: string) => {
+    (fixed?: string) => {
       onChange({
         ...value,
-        fixed,
+        fixed: fixed ?? '',
       });
       setOpen(false);
     },
