@@ -78,6 +78,10 @@ export const ResourceDimensionEditor: FC<
         <div
           style={{
             display: 'inline-block',
+            maxWidth: '400px',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'normal',
+            overflow: 'hidden',
           }}
         >
           <span
@@ -94,7 +98,13 @@ export const ResourceDimensionEditor: FC<
             <Modal isOpen={isOpen} title="Select Item" onDismiss={() => setOpen(false)} closeOnEscape>
               <ResourcePicker
                 onChange={onFixedChange}
-                value={value?.fixed ?? 'img/bg/p0.png'}
+                value={
+                  !value?.fixed
+                    ? item.settings?.resourceType === 'icon'
+                      ? 'img/icons/unicons/question-circle.svg'
+                      : 'img/bg/p3.png'
+                    : value?.fixed
+                }
                 mediaType={item.settings?.resourceType ?? 'icon'}
               />
             </Modal>

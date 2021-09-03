@@ -84,7 +84,9 @@ function ResourcePicker(props: Props) {
         {mediaType === 'icon' && <SVG src={imgSrc} width="40" height="40" fill={theme.colors.text.primary} />}
         {mediaType === 'image' && <img src={imgSrc} width="40" height="40" />}
         <StringValueEditor value={value} onChange={onChange} item={{} as any} context={{} as any} />
-        <Button variant="secondary">Apply</Button>
+        <Button variant="secondary" onClick={() => onChange(value)}>
+          Apply
+        </Button>
       </div>
       <TabsBar>
         {tabs.map((tab, index) => (
