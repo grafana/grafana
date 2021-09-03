@@ -17,9 +17,10 @@ import { getBackendSrv } from '@grafana/runtime';
 import { ResourceCards } from './ResourceCards';
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
+import { getPublicOrAbsoluteUrl } from '../resource';
 
 interface Props {
-  value: string; //img/icons/unicons/0-plus.svg
+  value?: string; //img/icons/unicons/0-plus.svg
   onChange: (value?: string) => void;
   mediaType: 'icon' | 'image';
 }
@@ -30,7 +31,7 @@ export function ResourcePicker(props: Props) {
     label: v,
     value: v,
   }));
-  const folderOfCurrentValue = folders.filter((folder) => value.indexOf(folder.value) > -1)[0];
+  const folderOfCurrentValue = value ? folders.filter((folder) => value.indexOf(folder.value) > -1)[0] : folders[0];
   const [currentFolder, setCurrentFolder] = useState<SelectableValue<string>>(folderOfCurrentValue);
   const [tabs, setTabs] = useState([
     { label: 'Select', active: true },
@@ -75,15 +76,19 @@ export function ResourcePicker(props: Props) {
       setDirectoryIndex(defaultList);
     }
   };
-  const imgSrc = value.indexOf(':/') > 0 ? value : 'public/' + value;
+  const imgSrc = getPublicOrAbsoluteUrl(value!);
 
   return (
     <div>
       <Label>Current Item</Label>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', columnGap: '2px' }}>
-        {mediaType === 'icon' && <SVG src={imgSrc} width="40" height="40" fill={theme.colors.text.primary} />}
-        {mediaType === 'image' && <img src={imgSrc} width="40" height="40" />}
-        <StringValueEditor value={value} onChange={onChange} item={{} as any} context={{} as any} />
+        {value && (
+          <>
+            {mediaType === 'icon' && <SVG src={imgSrc} width="40" height="40" fill={theme.colors.text.primary} />}
+            {mediaType === 'image' && <img src={imgSrc} width="40" height="40" />}
+          </>
+        )}
+        <StringValueEditor value={value ?? ''} onChange={onChange} item={{} as any} context={{} as any} />
         <Button variant="secondary" onClick={() => onChange(value)}>
           Apply
         </Button>

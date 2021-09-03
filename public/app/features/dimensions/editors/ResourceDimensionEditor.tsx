@@ -92,19 +92,13 @@ export const ResourceDimensionEditor: FC<
             {value?.fixed}
           </span>
           <Button variant="secondary" size="sm" fullWidth onClick={() => setOpen(true)}>
-            {value?.fixed ? `Edit ${item.settings?.resourceType}` : `Add ${item.settings?.resourceType}`}
+            Set {item.settings?.resourceType}
           </Button>
           {isOpen && (
             <Modal isOpen={isOpen} title="Select Item" onDismiss={() => setOpen(false)} closeOnEscape>
               <ResourcePicker
                 onChange={onFixedChange}
-                value={
-                  !value?.fixed
-                    ? item.settings?.resourceType === 'icon'
-                      ? 'img/icons/unicons/question-circle.svg'
-                      : 'img/bg/p3.png'
-                    : value?.fixed
-                }
+                value={value?.fixed}
                 mediaType={item.settings?.resourceType ?? 'icon'}
               />
             </Modal>
