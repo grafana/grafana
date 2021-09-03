@@ -86,6 +86,8 @@ export function convertFieldTypes(options: ConvertFieldTypeTransformerOptions, f
  * @param field - field to convert
  * @param opts - field conversion options
  * @returns converted field
+ *
+ * @internal
  */
 export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): Field {
   switch (opts.destinationType) {
@@ -102,6 +104,9 @@ export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): F
   }
 }
 
+/**
+ * @internal
+ */
 export function fieldToTimeField(field: Field, dateFormat?: string): Field {
   let opts = dateFormat ? { format: dateFormat } : undefined;
 
@@ -171,6 +176,8 @@ function fieldToStringField(field: Field): Field {
  * @param field - field to ensure is a time fieldtype
  * @param dateFormat - date format used to parse a string datetime
  * @returns field as time
+ *
+ * @public
  */
 export function ensureTimeField(field: Field, dateFormat?: string): Field {
   const firstValueTypeIsNumber = typeof field.values.get(0) === 'number';
