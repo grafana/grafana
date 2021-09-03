@@ -3,7 +3,7 @@ import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegi
 import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOptions } from '../types';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Button, Modal } from '@grafana/ui';
 import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
-import ResourcePicker from 'app/plugins/panel/canvas/editor/ResourcePicker';
+import { ResourcePicker } from './ResourcePicker';
 
 const resourceOptions = [
   { label: 'Fixed', value: ResourceDimensionMode.Fixed, description: 'Fixed value' },

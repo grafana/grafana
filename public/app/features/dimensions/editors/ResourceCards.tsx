@@ -1,7 +1,7 @@
 import React, { memo, CSSProperties } from 'react';
 import { areEqual, FixedSizeGrid as Grid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { GrafanaTheme2, SelectableValue } from '../../../../../../packages/grafana-data/src';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { useTheme2, stylesFactory } from '@grafana/ui';
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
@@ -12,6 +12,7 @@ interface CellProps {
   style: CSSProperties;
   data: any;
 }
+
 function Cell(props: CellProps) {
   const { columnIndex, rowIndex, style, data } = props;
   const { cards, columnCount, onChange, folder } = data;
@@ -78,43 +79,30 @@ interface CardProps {
   currentFolder: SelectableValue<string> | undefined;
 }
 
-const Cards = (props: CardProps) => {
+export const ResourceCards = (props: CardProps) => {
   const { onChange, cards, currentFolder: folder } = props;
 
   return (
-    <>
-      <div
-        style={{
-          minHeight: '100vh',
-          marginTop: '2em',
-          position: 'sticky',
-          top: '0px',
-        }}
-      >
-        <AutoSizer defaultWidth={1920} defaultHeight={1080}>
-          {({ width, height }) => {
-            const cardWidth = 80;
-            const cardHeight = 80;
-            const columnCount = Math.floor(width / cardWidth);
-            const rowCount = Math.ceil(cards.length / columnCount);
-            return (
-              <Grid
-                width={width}
-                height={height}
-                columnCount={columnCount}
-                columnWidth={cardWidth}
-                rowCount={rowCount}
-                rowHeight={cardHeight}
-                itemData={{ cards, columnCount, onChange, folder }}
-              >
-                {memo(Cell, areEqual)}
-              </Grid>
-            );
-          }}
-        </AutoSizer>
-      </div>
-    </>
+    <AutoSizer defaultWidth={1920} defaultHeight={1080}>
+      {({ width, height }) => {
+        const cardWidth = 80;
+        const cardHeight = 80;
+        const columnCount = Math.floor(width / cardWidth);
+        const rowCount = Math.ceil(cards.length / columnCount);
+        return (
+          <Grid
+            width={width}
+            height={height}
+            columnCount={columnCount}
+            columnWidth={cardWidth}
+            rowCount={rowCount}
+            rowHeight={cardHeight}
+            itemData={{ cards, columnCount, onChange, folder }}
+          >
+            {memo(Cell, areEqual)}
+          </Grid>
+        );
+      }}
+    </AutoSizer>
   );
 };
-
-export default Cards;

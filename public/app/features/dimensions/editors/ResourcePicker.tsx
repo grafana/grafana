@@ -12,19 +12,19 @@ import {
   useTheme2,
   stylesFactory,
 } from '@grafana/ui';
-import { GrafanaTheme2, SelectableValue } from '../../../../../../packages/grafana-data/src';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import Cards from './Cards';
+import { ResourceCards } from './ResourceCards';
 import SVG from 'react-inlinesvg';
 import { css } from '@emotion/css';
 
 interface Props {
   value: string; //img/icons/unicons/0-plus.svg
-  onChange: (value: string) => void;
+  onChange: (value?: string) => void;
   mediaType: 'icon' | 'image';
 }
 
-function ResourcePicker(props: Props) {
+export function ResourcePicker(props: Props) {
   const { value, onChange, mediaType } = props;
   const folders = (mediaType === 'icon' ? ['img/icons/unicons', 'img/icons/iot'] : ['img/bg']).map((v) => ({
     label: v,
@@ -78,7 +78,7 @@ function ResourcePicker(props: Props) {
   const imgSrc = value.indexOf(':/') > 0 ? value : 'public/' + value;
 
   return (
-    <>
+    <div>
       <Label>Current Item</Label>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', columnGap: '2px' }}>
         {mediaType === 'icon' && <SVG src={imgSrc} width="40" height="40" fill={theme.colors.text.primary} />}
@@ -104,7 +104,9 @@ function ResourcePicker(props: Props) {
             <Select options={folders} onChange={setCurrentFolder} value={currentFolder} />
             <Input placeholder="Search" onChange={onChangeSearch} />
             {directoryIndex ? (
-              <Cards cards={directoryIndex} onChange={onChange} currentFolder={currentFolder} />
+              <div className={styles.cardsWrapper}>
+                <ResourceCards cards={directoryIndex} onChange={onChange} currentFolder={currentFolder} />
+              </div>
             ) : (
               <Spinner />
             )}
@@ -118,12 +120,15 @@ function ResourcePicker(props: Props) {
           />
         )} */}
       </TabContent>
-    </>
+    </div>
   );
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, color) => {
   return {
+    cardsWrapper: css`
+      height: calc(100vh - 490px);
+    `,
     tabContent: css`
       margin-top: 20px;
       & > :nth-child(2) {
@@ -132,4 +137,3 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, color) => {
     `,
   };
 });
-export default ResourcePicker;
