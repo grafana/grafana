@@ -70,6 +70,24 @@ func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 }
 
 func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, error) {
+	all := make(map[string]schema.VersionedCueSchema)
+	vals, err := loadPanelScuemata(p)
+	if err != nil {
+		return nil, err
+	}
+
+	for id, val := range vals {
+		fam, err := buildGenericScuemata(val)
+		if err != nil {
+			return nil, err
+		}
+		all[id] = fam
+	}
+
+	return all, nil
+}
+
+func loadPanelScuemata(p BaseLoadPaths) (map[string]cue.Value, error) {
 	overlay := make(map[string]load.Source)
 
 	if err := toOverlay(prefix, p.BaseCueFS, overlay); err != nil {
@@ -89,7 +107,7 @@ func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, err
 		return nil, errors.New("could not locate #PanelFamily definition")
 	}
 
-	all := make(map[string]schema.VersionedCueSchema)
+	all := make(map[string]cue.Value)
 	err = fs.WalkDir(p.DistPluginCueFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -149,13 +167,8 @@ func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, err
 			return err
 		}
 
-		// Create a generic schema family to represent the whole of the
-		fam, err := buildGenericScuemata(pmod)
-		if err != nil {
-			return err
-		}
+		all[id] = pmod
 
-		all[id] = fam
 		return nil
 	})
 	if err != nil {
