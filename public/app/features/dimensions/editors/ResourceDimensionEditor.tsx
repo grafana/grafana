@@ -1,14 +1,9 @@
-import React, { FC, useCallback } from 'react';
-import {
-  FieldNamePickerConfigSettings,
-  StandardEditorProps,
-  StandardEditorsRegistryItem,
-  StringFieldConfigSettings,
-} from '@grafana/data';
+import React, { FC, useCallback, useState } from 'react';
+import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOptions } from '../types';
-import { InlineField, InlineFieldRow, RadioButtonGroup, StringValueEditor } from '@grafana/ui';
+import { InlineField, InlineFieldRow, RadioButtonGroup, Button, Modal } from '@grafana/ui';
 import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
-import IconSelector from './IconSelector';
+import ResourcePicker from 'app/plugins/panel/canvas/editor/ResourcePicker';
 
 const resourceOptions = [
   { label: 'Fixed', value: ResourceDimensionMode.Fixed, description: 'Fixed value' },
@@ -20,18 +15,12 @@ const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerCon
   settings: {},
 } as any;
 
-const dummyImageStringSettings: StandardEditorsRegistryItem<string, StringFieldConfigSettings> = {
-  settings: {
-    placeholder: 'Enter image URL',
-  },
-} as any;
-
 export const ResourceDimensionEditor: FC<
   StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, any>
 > = (props) => {
   const { value, context, onChange, item } = props;
-  const resourceType = item.settings?.resourceType ?? 'icon';
   const labelWidth = 9;
+  const [isOpen, setOpen] = useState(false);
 
   const onModeChange = useCallback(
     (mode) => {
@@ -54,11 +43,12 @@ export const ResourceDimensionEditor: FC<
   );
 
   const onFixedChange = useCallback(
-    (fixed) => {
+    (fixed: string) => {
       onChange({
         ...value,
         fixed,
       });
+      setOpen(false);
     },
     [onChange, value]
   );
@@ -85,23 +75,31 @@ export const ResourceDimensionEditor: FC<
         </InlineFieldRow>
       )}
       {mode === ResourceDimensionMode.Fixed && (
-        <InlineFieldRow>
-          {resourceType === 'icon' && (
-            <InlineField label="Icon" labelWidth={labelWidth} grow={true}>
-              <IconSelector value={value?.fixed} onChange={onFixedChange} />
-            </InlineField>
-          )}
-          {resourceType === 'image' && (
-            <InlineField label="Image" labelWidth={labelWidth} grow={true}>
-              <StringValueEditor
-                context={context}
-                value={value?.fixed}
+        <div
+          style={{
+            display: 'inline-block',
+          }}
+        >
+          <span
+            style={{
+              marginRight: value?.fixed ? '5px' : '0',
+            }}
+          >
+            {value?.fixed}
+          </span>
+          <Button variant="secondary" size="sm" fullWidth onClick={() => setOpen(true)}>
+            {value?.fixed ? `Edit ${item.settings?.resourceType}` : `Add ${item.settings?.resourceType}`}
+          </Button>
+          {isOpen && (
+            <Modal isOpen={isOpen} title="Select Item" onDismiss={() => setOpen(false)} closeOnEscape>
+              <ResourcePicker
                 onChange={onFixedChange}
-                item={dummyImageStringSettings}
+                value={value?.fixed ?? 'img/bg/p0.png'}
+                mediaType={item.settings?.resourceType ?? 'icon'}
               />
-            </InlineField>
+            </Modal>
           )}
-        </InlineFieldRow>
+        </div>
       )}
       {mode === ResourceDimensionMode.Mapping && (
         <InlineFieldRow>
