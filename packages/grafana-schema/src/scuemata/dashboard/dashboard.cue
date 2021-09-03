@@ -155,7 +155,8 @@ Family: scuemata.#Family & {
                     // _pv: { maj: int, min: int }
                     // The major and minor versions of the panel plugin for this schema.
                     // TODO 2-tuple list instead of struct?
-                    panelSchema?: { maj: number, min: number }
+                    // panelSchema?: { maj: number, min: number }
+                    panelSchema?: [number, number]
 
                     // TODO docs
                     targets?: [...#Target]
@@ -218,10 +219,9 @@ Family: scuemata.#Family & {
                     // TODO tighter constraint
                     timeShift?: string
 
-                    // The allowable options are specified by the panel plugin's
-                    // schema.
-                    // FIXME same conundrum as with the closed validation for fieldConfig.
-                    options: {...}
+                    // options is specified by the PanelOptions field in panel
+                    // plugin schemas.
+                    options: {}
 
                     fieldConfig: {
                         defaults: {
@@ -283,17 +283,9 @@ Family: scuemata.#Family & {
                             // Alternative to empty string
                             noValue?: string
 
-                            // TODO conundrum: marking this struct as open would
-                            // - i think - preclude closed validation of
-                            // plugin-defined config bits. But, marking it
-                            // closed makes it impossible to use just this
-                            // schema (the "base" variant) to validate the base
-                            // components of a dashboard.
-                            //
-                            // Can always exist. Valid fields within this are
-                            // defined by the panel plugin - that's the
-                            // PanelFieldConfig that comes from the plugin.
-                            custom?: {...}
+                            // custom is specified by the PanelFieldConfig field
+                            // in panel plugin schemas.
+                            custom?: {}
                         }
                         overrides: [...{
                             matcher: {
@@ -306,7 +298,29 @@ Family: scuemata.#Family & {
                             }]
                         }]
                     }
+                    // Embed the disjunction of all injected panel schema, if any were injected.
+                    if len(compose._panelSchemas) > 0 {
+                        or(compose._panelSchemas) // TODO try to stick graph in here
+                    }
+
+                    // Make the plugin-composed subtrees open if the panel is
+                    // of unknown types. This is important in every possible case:
+                    // - Base (this file only): no real dashboard json
+                    //   containing any panels would ever validate
+                    // - Dist (this file + core plugin schema): dashboard json containing
+                    //   panels with any third-party panel plugins would fail to validate,
+                    //   as well as any core plugins lacking a models.cue. The latter case
+                    //   is not normally expected, but this is not the appropriate place
+                    //   to enforce the invariant, anyway.
+                    // - Instance (this file + core + third-party plugin schema): dashboard
+                    //   json containing panels with a third-party plugin that exists but
+                    //   is not currently installed would fail to validate.
+                    if !list.Contains(compose._panelTypes, type) {
+                        options: {...}
+                        fieldConfig: defaults: custom: {...}
+                    }
                 }
+
                 // Row panel
                 #RowPanel: {
                     type: "row"
@@ -329,7 +343,7 @@ Family: scuemata.#Family & {
                         static?: bool
                     }
                     id: number
-                    panels: [...#Panel | #GraphPanel]
+                    panels: [...(#Panel | #GraphPanel)]
                 }
                 // Support for legacy graph panels.
                 #GraphPanel: {
@@ -406,9 +420,48 @@ Family: scuemata.#Family & {
             }
 		]
 	]
-}
+    compose: {
+        // Scuemata families for all panel types that should be composed into the
+        // dashboard schema.
+        Panel: [string]: scuemata.#PanelFamily
 
-#Latest: {
-    #Dashboard: Family.latest
-    #Panel: Family.latest._Panel
+        // _panelTypes: [for typ, _ in Panel {typ}]
+        _panelTypes: [for typ, _ in Panel {typ}, "graph", "row"]
+        _panelSchemas: [for typ, scue in Panel {
+            for lv, lin in scue.lineages {
+                for sv, sch in lin {
+                    (_mapPanel & {arg: {
+                        type: typ
+                        v: [lv, sv] // TODO add optionality for exact, at least, at most, any
+                        model: sch // TODO Does this need to be close()d?
+                    }}).out
+                }
+            }
+        }, { type: string }]
+        _mapPanel: {
+            arg: {
+                type: string & !=""
+                v: [number, number]
+                model: {...}
+            }
+            // Until CUE introduces the must() constraint, we have to enforce
+            // that the input model is as expected by checking for unification
+            // in this hidden property (see https://github.com/cue-lang/cue/issues/575).
+            // If we unified arg.model with the scuemata.#PanelSchema
+            // meta-schema directly, the struct openness (PanelOptions: {...})
+            // would be applied to the actual schema instance in the arg. Here,
+            // where we're actually putting those in the dashboard schema, want
+            // those to be closed, or at least preserve closed-ness.
+            _checkSchema: scuemata.#PanelSchema & arg.model
+            out: {
+                type: arg.type
+                panelSchema: arg.v // TODO add optionality for exact, at least, at most, any
+                options: arg.model.PanelOptions
+                fieldConfig: defaults: custom: {}
+                if arg.model.PanelFieldConfig != _|_ {
+                    fieldConfig: defaults: custom: arg.model.PanelFieldConfig
+                }
+            }
+        }
+    }
 }
