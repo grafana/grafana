@@ -7,7 +7,6 @@ import { Button, SegmentAsync, useStyles2 } from '@grafana/ui';
 import { actions } from '../state/actions';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { mapSegmentsToSelectables } from './helpers';
 import { TagEditor } from './TagEditor';
 import { debounce } from 'lodash';
 import { useDispatch } from '../state/context';
@@ -15,7 +14,6 @@ import { PlayButton } from './PlayButton';
 
 type Props = {
   tags: GraphiteTag[];
-  addTagSegments: GraphiteSegment[];
   state: GraphiteQueryEditorState;
 };
 
@@ -25,11 +23,9 @@ type Props = {
  * Options for tag names are reloaded while user is typing with backend taking care of auto-complete
  * (auto-complete cannot be implemented in front-end because backend returns only limited number of entries)
  */
-export function TagsSection({ tags, state, addTagSegments }: Props) {
+export function TagsSection({ tags, state }: Props) {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
-
-  const newTagsOptions = mapSegmentsToSelectables(addTagSegments || []);
 
   // Options are reloaded while user is typing with backend taking care of auto-complete (auto-complete cannot be
   // implemented in front-end because backend returns only limited number of entries)
@@ -48,7 +44,7 @@ export function TagsSection({ tags, state, addTagSegments }: Props) {
       {tags.map((tag, index) => {
         return <TagEditor key={index} tagIndex={index} tag={tag} state={state} />;
       })}
-      {newTagsOptions.length && (
+      {tags.length && (
         <SegmentAsync<GraphiteSegment>
           inputMinWidth={150}
           onChange={(value) => {

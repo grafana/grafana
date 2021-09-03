@@ -85,10 +85,10 @@ func (h *ContextHandler) Middleware(mContext *macaron.Context) {
 	}
 
 	// Inject ReqContext into a request context and replace the request instance in the macaron context
-	mContext.Req.Request = mContext.Req.WithContext(context.WithValue(mContext.Req.Context(), reqContextKey{}, reqContext))
-	mContext.Map(mContext.Req.Request)
+	mContext.Req = mContext.Req.WithContext(context.WithValue(mContext.Req.Context(), reqContextKey{}, reqContext))
+	mContext.Map(mContext.Req)
 
-	traceID, exists := cw.ExtractTraceID(mContext.Req.Request.Context())
+	traceID, exists := cw.ExtractTraceID(mContext.Req.Context())
 	if exists {
 		reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 	}

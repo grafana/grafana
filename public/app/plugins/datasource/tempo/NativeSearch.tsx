@@ -121,6 +121,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 search: value,
               });
             }}
+            placeholder="http.status_code=200 error=true"
             cleanText={cleanText}
             onRunQuery={onRunQuery}
             syntaxLoaded={hasSyntaxLoaded}
