@@ -1,5 +1,5 @@
 import { GraphiteQueryEditorState } from './store';
-import { map } from 'lodash';
+import { clone } from 'lodash';
 import { dispatch } from '../../../../store/store';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { createErrorNotification } from '../../../../core/copy/appNotification';
@@ -31,17 +31,12 @@ export async function parseTarget(state: GraphiteQueryEditorState): Promise<void
  * Create segments out of the current metric path + add "select metrics" if it's possible to add more to the path
  */
 export async function buildSegments(state: GraphiteQueryEditorState, modifyLastSegment = true): Promise<void> {
-  state.segments = map(state.queryModel.segments, (segment) => {
-    return state.uiSegmentSrv.newSegment(segment);
-  });
+  // Start with a shallow copy from the model, then check if "select metric" segment should be added at the end
+  state.segments = clone(state.queryModel.segments);
 
   const checkOtherSegmentsIndex = state.queryModel.checkOtherSegmentsIndex || 0;
 
   await checkOtherSegments(state, checkOtherSegmentsIndex, modifyLastSegment);
-
-  if (state.queryModel.seriesByTagUsed) {
-    fixTagSegments(state);
-  }
 }
 
 /**
@@ -49,7 +44,7 @@ export async function buildSegments(state: GraphiteQueryEditorState, modifyLastS
  */
 export function addSelectMetricSegment(state: GraphiteQueryEditorState): void {
   state.queryModel.addSelectMetricSegment();
-  state.segments.push(state.uiSegmentSrv.newSelectMetric());
+  state.segments.push({ value: 'select metric', fake: true });
 }
 
 /**
@@ -140,14 +135,6 @@ export function smartlyHandleNewAliasByNode(state: GraphiteQueryEditorState, fun
 }
 
 /**
- * Add "+" button for adding tags once at least one tag is selected
- */
-export function fixTagSegments(state: GraphiteQueryEditorState): void {
-  // Adding tag with the same name as just removed works incorrectly if single segment is used (instead of array)
-  state.addTagSegments = [state.uiSegmentSrv.newPlusButton()];
-}
-
-/**
  * Pauses running the query to allow selecting tag value. This is to prevent getting errors if the query is run
  * for a tag with no selected value.
  */
@@ -165,10 +152,10 @@ export function handleTargetChanged(state: GraphiteQueryEditorState): void {
   }
 
   const oldTarget = state.queryModel.target.target;
-  state.queryModel.updateModelTarget(state.panelCtrl.panel.targets);
+  state.queryModel.updateModelTarget(state.queries);
 
   if (state.queryModel.target.target !== oldTarget && !state.paused) {
-    state.panelCtrl.refresh();
+    state.refresh(state.target.target);
   }
 }
 

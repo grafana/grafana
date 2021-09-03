@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { hot } from 'react-hot-loader';
 // Utils
 import { ApiKey, NewApiKey, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -168,4 +167,4 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 }
 
 const ApiKeysPage = connector(ApiKeysPageUnconnected);
-export default hot(module)(ApiKeysPage);
+export default ApiKeysPage;

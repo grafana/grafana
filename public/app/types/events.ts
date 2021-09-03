@@ -201,3 +201,6 @@ export class AnnotationQueryFinished extends BusEventWithPayload<AnnotationQuery
 export class TimeRangeUpdatedEvent extends BusEventWithPayload<TimeRange> {
   static type = 'time-range-updated';
 }
+export class PanelEditExitedEvent extends BusEventWithPayload<number> {
+  static type = 'panel-edit-finished';
+}

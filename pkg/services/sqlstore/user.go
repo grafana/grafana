@@ -588,7 +588,6 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 			ORDER BY user_auth.created DESC `
 	joinCondition = "user_auth.id=" + joinCondition + dialect.Limit(1) + ")"
 	sess.Join("LEFT", "user_auth", joinCondition)
-
 	if query.OrgId > 0 {
 		whereConditions = append(whereConditions, "org_id = ?")
 		whereParams = append(whereParams, query.OrgId)
@@ -607,6 +606,12 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 	if query.AuthModule != "" {
 		whereConditions = append(whereConditions, `auth_module=?`)
 		whereParams = append(whereParams, query.AuthModule)
+	}
+
+	if query.Filter == models.ActiveLast30Days {
+		activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
+		whereConditions = append(whereConditions, `last_seen_at > ?`)
+		whereParams = append(whereParams, activeUserDeadlineDate)
 	}
 
 	if len(whereConditions) > 0 {

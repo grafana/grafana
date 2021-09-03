@@ -5,6 +5,7 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
 ## Table of Contents
 
 - [Frontend Style Guide](#frontend-style-guide)
+
   - [Table of Contents](#table-of-contents)
   - [Basic rules](#basic-rules)
     - [Naming conventions](#naming-conventions)
@@ -28,12 +29,12 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
     - [Linting](#linting)
   - [React](#react)
     - [Props](#props)
-        - [Name callback props and handlers with an "on" prefix.](#name-callback-props-and-handlers-with-an-on-prefix)
-        - [React Component definitions](#react-component-definitions)
-        - [React Component constructor](#react-component-constructor)
-        - [React Component defaultProps](#react-component-defaultprops)
+      - [Name callback props and handlers with an "on" prefix.](#name-callback-props-and-handlers-with-an-on-prefix)
+      - [React Component definitions](#react-component-definitions)
+      - [React Component constructor](#react-component-constructor)
+      - [React Component defaultProps](#react-component-defaultprops)
   - [State management](#state-management)
-  
+
   - [Proposal for removing or replacing Angular dependencies](https://github.com/grafana/grafana/pull/23048)
 
 ## Basic rules
@@ -194,12 +195,12 @@ _SASS styles are deprecated. Please migrate to Emotion whenever you need to modi
 
 ### Typing
 
-In general, you should let Typescript infer the types so that there's no need to explicitly define type for each variable. 
+In general, you should let Typescript infer the types so that there's no need to explicitly define type for each variable.
 
 There are some exceptions to this:
 
 ```typescript
-// Typescript needs to know type of arrays or objects otherwise it would infer it as array of any 
+// Typescript needs to know type of arrays or objects otherwise it would infer it as array of any
 
 // bad
 const stringArray = [];
@@ -208,7 +209,7 @@ const stringArray = [];
 const stringArray: string[] = [];
 ```
 
-Specify function return types explicitly in new code. This improves readability by being able to tell what a function returns just by looking at the signature. It also prevents errors when a function's return type is broader than expected by the author. 
+Specify function return types explicitly in new code. This improves readability by being able to tell what a function returns just by looking at the signature. It also prevents errors when a function's return type is broader than expected by the author.
 
 > **Note:** We don't have linting for this enabled because of lots of old code that needs to be fixed first.
 
@@ -216,18 +217,18 @@ Specify function return types explicitly in new code. This improves readability 
 // bad
 function transform(value?: string) {
   if (!value) {
-    return undefined
+    return undefined;
   }
-  return applyTransform(value)
-};
+  return applyTransform(value);
+}
 
 // good
 function transform(value?: string): TransformedValue | undefined {
   if (!value) {
-    return undefined
+    return undefined;
   }
-  return applyTransform(value)
-};
+  return applyTransform(value);
+}
 ```
 
 ### File and directory naming conventions
