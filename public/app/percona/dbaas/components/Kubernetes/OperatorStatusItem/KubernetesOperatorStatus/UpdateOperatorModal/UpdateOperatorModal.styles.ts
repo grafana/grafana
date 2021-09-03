@@ -1,0 +1,18 @@
+import { css } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
+
+export const getStyles = ({ palette, spacing }: GrafanaTheme) => ({
+  modalWrapper: css`
+    div[data-qa='modal-body'] {
+      left: 27%;
+      width: 45%;
+      max-width: none;
+    }
+  `,
+  updateModalContent: css`
+    margin-bottom: ${spacing.xl};
+  `,
+  versionHighlight: css`
+    color: ${palette.warn};
+  `,
+});

@@ -1,9 +1,17 @@
-import { Kubernetes, DeleteKubernetesAction, AddKubernetesAction } from '../Kubernetes.types';
-import { kubernetesStub, deleteActionStub, addActionStub } from './kubernetesStubs';
-
-export const useKubernetes = (): [Kubernetes[], DeleteKubernetesAction, AddKubernetesAction, boolean] => [
+import { ManageKubernetes } from '../Kubernetes.types';
+import {
   kubernetesStub,
   deleteActionStub,
   addActionStub,
+  getActionStub,
+  setLoadingActionStub,
+} from './kubernetesStubs';
+
+export const useKubernetes = (): ManageKubernetes => [
+  kubernetesStub,
+  deleteActionStub,
+  addActionStub,
+  getActionStub,
+  setLoadingActionStub,
   false,
 ];

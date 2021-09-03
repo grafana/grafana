@@ -43,3 +43,5 @@ export const addActionStub = jest.fn(() => {
     status: KubernetesClusterStatus.ok,
   });
 });
+export const getActionStub = jest.fn(() => kubernetesStub);
+export const setLoadingActionStub = jest.fn();

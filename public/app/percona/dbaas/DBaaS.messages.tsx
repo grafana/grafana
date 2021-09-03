@@ -1,3 +1,4 @@
+import React, { ReactNode } from 'react';
 import { DBClusterStatus } from './components/DBCluster/DBCluster.types';
 import { KubernetesOperatorStatus } from './components/Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
 import { KubernetesClusterStatus } from './components/Kubernetes/KubernetesClusterStatus/KubernetesClusterStatus.types';
@@ -53,6 +54,23 @@ export const Messages = {
       [KubernetesClusterStatus.unavailable]: 'Unavailable',
       [KubernetesClusterStatus.invalid]: 'Invalid',
     },
+    updateOperatorModal: {
+      cancel: 'Cancel',
+      confirm: 'Update',
+      title: 'Confirm operator update',
+      buildUpdateOperatorMessage: (
+        operatorType: string,
+        newVersion: ReactNode,
+        kubernetesClusterName: ReactNode,
+        currentVersion?: string
+      ) => (
+        <>
+          Are you sure you want to update {operatorType} {currentVersion} to version {newVersion} in{' '}
+          {kubernetesClusterName} cluster?
+        </>
+      ),
+    },
+    updateOperator: 'Update',
   },
   dbcluster: {
     addAction: 'Create DB Cluster',
