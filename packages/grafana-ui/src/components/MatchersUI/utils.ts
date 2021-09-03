@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { DataFrame, Field, getFieldDisplayName, SelectableValue } from '@grafana/data';
+import { DataFrame, Field, FieldType, getFieldDisplayName, SelectableValue } from '@grafana/data';
+import { IconName } from '../..';
 
 /**
  * @internal
@@ -61,6 +62,15 @@ export function useFieldDisplayNames(data: DataFrame[], filter?: (field: Field) 
   }, [data, filter]);
 }
 
+const fieldTypeIcons: { [key in FieldType]: IconName } = {
+  time: 'clock-nine',
+  string: 'font',
+  number: 'calculator-alt',
+  boolean: 'toggle-on',
+  trace: 'info-circle',
+  other: 'brackets-curly',
+};
+
 /**
  * @internal
  */
@@ -79,9 +89,11 @@ export function useSelectOptions(
       if (!found && name === currentName) {
         found = true;
       }
+      const field = displayNames.fields.get(name);
       options.push({
         value: name,
         label: name,
+        icon: field ? fieldTypeIcons[field.type] : undefined,
       });
     }
     for (const name of displayNames.raw) {
