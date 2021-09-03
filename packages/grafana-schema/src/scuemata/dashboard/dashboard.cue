@@ -1,10 +1,14 @@
 package dashboard
 
-import "github.com/grafana/grafana/cue/scuemata"
+import (
+    "list"
+
+    "github.com/grafana/grafana/cue/scuemata"
+)
 
 Family: scuemata.#Family & {
 	lineages: [
-		[ 
+		[
 			{ // 0.0
                 // Unique numeric identifier for the dashboard.
                 // TODO must isolate or remove identifiers local to a Grafana instance...?
@@ -131,9 +135,7 @@ Family: scuemata.#Family & {
 
                 // Dashboard panels. Panels are canonically defined inline
                 // because they share a version timeline with the dashboard
-                // schema; they do not vary independently. We create a separate,
-                // synthetic Family to represent them in Go, for ease of generating
-                // e.g. JSON Schema.
+                // schema; they do not evolve independently.
                 #Panel: {
                     // The panel plugin type id. 
                     type: !=""
@@ -350,72 +352,31 @@ Family: scuemata.#Family & {
                     ...
                     type: "graph"
                     thresholds: [...{...}]
-                    timeRegions: [...{...}]
-                    // FIXME this one is quite complicated, as it duplicates the #Panel object's own structure (...?)
+                    timeRegions?: [...{...}]
                     seriesOverrides: [...{...}]
-
-                    // TODO docs
-                    // TODO tighter constraint
                     aliasColors?: [string]: string
-
-                    // TODO docs
                     bars: bool | *false
-                    // TODO docs
                     dashes: bool | *false
-                    // TODO docs
                     dashLength: number | *10
-                    // TODO docs
-                    // TODO tighter constraint
                     fill?: number
-                    // TODO docs
-                    // TODO tighter constraint
                     fillGradient?: number
-
-                    // TODO docs
                     hiddenSeries: bool | *false
-
-                    // FIXME idk where this comes from, leaving it very open and very wrong for now
                     legend: {...}
-
-                    // TODO docs
-                    // TODO tighter constraint
                     lines: bool | *false
-                    // TODO docs
                     linewidth?: number
-                    // TODO docs
                     nullPointMode: *"null" | "connected" | "null as zero"
-                    // TODO docs
                     percentage: bool | *false
-                    // TODO docs
                     points: bool | *false
-                    // TODO docs
-                    // FIXME this is the kind of case that makes
-                    // optional/non-default tricky: it's optional because it
-                    // only makes sense when points is true (right?), but if it
-                    // is, then there actually is a default value. Easier way to
-                    // represent this would be to wrap up this handling into a
-                    // struct
                     pointradius?: number
-                    // TODO docs
-                    // TODO tighter constraint
                     renderer: string
-                    // TODO docs
                     spaceLength: number | *10
-                    // TODO docs
                     stack: bool | *false
-                    // TODO docs
                     steppedLine: bool | *false
-                    // TODO docs
                     tooltip?: {
-                        // TODO docs
                         shared?: bool
-                        // TODO docs
                         sort: number | *0
-                        // TODO docs
-                        // FIXME literally no idea if these values are sane
                         value_type: *"individual" | "cumulative"
                     }
-
                 }
             }
 		]
