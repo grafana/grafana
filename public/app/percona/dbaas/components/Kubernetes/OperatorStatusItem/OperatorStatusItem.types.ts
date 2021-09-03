@@ -1,8 +1,12 @@
 import { Databases } from 'app/percona/shared/core';
-import { Operator } from '../Kubernetes.types';
+import { Kubernetes, Operator, OperatorToUpdate } from '../Kubernetes.types';
 
-export interface DBClusterConnectionItemProps {
+export interface OperatorStatusItemProps {
   dataQa?: string;
   databaseType: Databases;
   operator: Operator;
+  kubernetes: Kubernetes;
+  setSelectedCluster: (kubernetes: Kubernetes) => void;
+  setOperatorToUpdate: (operator: OperatorToUpdate) => void;
+  setUpdateOperatorModalVisible: (isVisible: boolean) => void;
 }

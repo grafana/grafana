@@ -17,7 +17,7 @@ export const DBaaS: FC = () => {
   const styles = useStyles(getStyles);
   const { path: basePath } = PAGE_MODEL;
 
-  const [kubernetes, deleteKubernetes, addKubernetes, kubernetesLoading] = useKubernetes();
+  const [kubernetes, deleteKubernetes, addKubernetes, getKubernetes, setLoading, kubernetesLoading] = useKubernetes();
   const tabs: ContentTab[] = useMemo(
     (): ContentTab[] => [
       {
@@ -29,6 +29,8 @@ export const DBaaS: FC = () => {
             kubernetes={kubernetes}
             deleteKubernetes={deleteKubernetes}
             addKubernetes={addKubernetes}
+            getKubernetes={getKubernetes}
+            setLoading={setLoading}
             loading={kubernetesLoading}
           />
         ),

@@ -1,5 +1,5 @@
 import { Databases } from 'app/percona/shared/core';
-import { Operator } from '../../Kubernetes.types';
+import { Kubernetes, Operator, OperatorToUpdate } from '../../Kubernetes.types';
 
 export enum KubernetesOperatorStatus {
   ok = 'OPERATORS_STATUS_OK',
@@ -11,4 +11,8 @@ export enum KubernetesOperatorStatus {
 export interface KubernetesOperatorStatusProps {
   operator: Operator;
   databaseType: Databases;
+  kubernetes: Kubernetes;
+  setSelectedCluster: (kubernetes: Kubernetes) => void;
+  setOperatorToUpdate: (operator: OperatorToUpdate) => void;
+  setUpdateOperatorModalVisible: (isVisible: boolean) => void;
 }
