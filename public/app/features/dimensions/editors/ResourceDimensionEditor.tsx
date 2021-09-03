@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useState } from 'react';
 import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOptions } from '../types';
-import { InlineField, InlineFieldRow, RadioButtonGroup, Button, Modal } from '@grafana/ui';
+import { InlineField, InlineFieldRow, RadioButtonGroup, Button, Modal, Input } from '@grafana/ui';
 import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
 import { ResourcePicker } from './ResourcePicker';
 
@@ -53,10 +53,21 @@ export const ResourceDimensionEditor: FC<
     [onChange, value]
   );
 
+  const openModal = useCallback(() => {
+    setOpen(true);
+  }, []);
+
   const mode = value?.mode ?? ResourceDimensionMode.Fixed;
+  const mediaType = item.settings?.resourceType ?? 'icon';
 
   return (
     <>
+      {isOpen && (
+        <Modal isOpen={isOpen} title={`Select ${mediaType}`} onDismiss={() => setOpen(false)} closeOnEscape>
+          <ResourcePicker onChange={onFixedChange} value={value?.fixed} mediaType={mediaType} />
+        </Modal>
+      )}
+
       <InlineFieldRow>
         <InlineField label="Source" labelWidth={labelWidth} grow={true}>
           <RadioButtonGroup value={mode} options={resourceOptions} onChange={onModeChange} fullWidth />
@@ -75,35 +86,12 @@ export const ResourceDimensionEditor: FC<
         </InlineFieldRow>
       )}
       {mode === ResourceDimensionMode.Fixed && (
-        <div
-          style={{
-            display: 'inline-block',
-            maxWidth: '400px',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'normal',
-            overflow: 'hidden',
-          }}
-        >
-          <span
-            style={{
-              marginRight: value?.fixed ? '5px' : '0',
-            }}
-          >
-            {value?.fixed}
-          </span>
-          <Button variant="secondary" size="sm" fullWidth onClick={() => setOpen(true)}>
-            Set {item.settings?.resourceType}
-          </Button>
-          {isOpen && (
-            <Modal isOpen={isOpen} title="Select Item" onDismiss={() => setOpen(false)} closeOnEscape>
-              <ResourcePicker
-                onChange={onFixedChange}
-                value={value?.fixed}
-                mediaType={item.settings?.resourceType ?? 'icon'}
-              />
-            </Modal>
-          )}
-        </div>
+        <InlineFieldRow>
+          <InlineField label={null} grow>
+            <Input value={value?.fixed} placeholder="Resource URL" readOnly={true} onClick={openModal} />
+          </InlineField>
+          <Button icon="folder-open" variant="secondary" onClick={openModal} />
+        </InlineFieldRow>
       )}
       {mode === ResourceDimensionMode.Mapping && (
         <InlineFieldRow>

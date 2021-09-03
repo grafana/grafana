@@ -19,32 +19,16 @@ function Cell(props: CellProps) {
   const singleColumnIndex = columnIndex + rowIndex * columnCount;
   const card = cards[singleColumnIndex];
   const theme = useTheme2();
-  const styles = getStyles(theme, theme.colors.text.primary);
+  const styles = getStyles(theme);
 
   return (
     <div style={style}>
       {card && (
-        <div
-          key={card.value}
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            width: '100px',
-            height: '100px',
-            flexDirection: 'column',
-            margin: '.75rem',
-            borderRadius: '8px',
-            textAlign: 'center',
-            cursor: 'pointer',
-            position: 'relative',
-            backgroundColor: 'transparent',
-          }}
-        >
+        <div key={card.value} className={styles.card} onClick={() => onChange(`${folder.value}/${card.value}`)}>
           {folder.value.includes('icons') ? (
-            <SVG src={card.imgUrl} onClick={() => onChange(`${folder.value}/${card.value}`)} className={styles.card} />
+            <SVG src={card.imgUrl} className={styles.img} />
           ) : (
-            <img src={card.imgUrl} onClick={() => onChange(`${folder.value}/${card.value}`)} className={styles.card} />
+            <img src={card.imgUrl} className={styles.img} />
           )}
           <h6 className={styles.text}>{card.label.substr(0, card.label.length - 4)}</h6>
         </div>
@@ -53,16 +37,35 @@ function Cell(props: CellProps) {
   );
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, color) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     card: css`
+      display: flex;,
+      justify-content: center;
+      align-items: center;
+      width: 100px;
+      height: 100px;
+      flex-direction: column;
+      margin: .75rem;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      background-color: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+
+      :hover {
+        border-color: ${theme.colors.action.hover};
+      }
+    `,
+    img: css`
       width: 50px;
       vertical-align: middle;
-      fill: ${color};
+      fill: ${theme.colors.text.primary};
     `,
     text: css`
       text-align: center;
-      color: ${color};
+      color: ${theme.colors.text.primary};
       white-space: nowrap;
       font-size: 12px;
       text-overflow: ellipsis;

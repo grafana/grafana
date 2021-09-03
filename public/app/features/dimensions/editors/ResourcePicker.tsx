@@ -1,7 +1,6 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import {
   TabContent,
-  Label,
   Button,
   Select,
   Input,
@@ -40,7 +39,7 @@ export function ResourcePicker(props: Props) {
   const [directoryIndex, setDirectoryIndex] = useState<SelectableValue[]>([]);
   const [defaultList, setDefaultList] = useState<SelectableValue[]>([]);
   const theme = useTheme2();
-  const styles = getStyles(theme, theme.colors.text.primary);
+  const styles = getStyles(theme);
 
   useEffect(() => {
     // we don't want to load everything before picking a folder
@@ -80,8 +79,15 @@ export function ResourcePicker(props: Props) {
 
   return (
     <div>
-      <Label>Current Item</Label>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', columnGap: '2px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          columnGap: '2px',
+          margin: '-18px 0px 18px 0px',
+        }}
+      >
         {value && (
           <>
             {mediaType === 'icon' && <SVG src={imgSrc} width="40" height="40" fill={theme.colors.text.primary} />}
@@ -129,10 +135,10 @@ export function ResourcePicker(props: Props) {
   );
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, color) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     cardsWrapper: css`
-      height: calc(100vh - 490px);
+      height: calc(100vh - 480px);
     `,
     tabContent: css`
       margin-top: 20px;
