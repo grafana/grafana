@@ -127,12 +127,8 @@ function fieldToNumberField(field: Field): Field {
   const numValues = field.values.toArray().slice();
 
   for (let n = 0; n < numValues.length; n++) {
-    if (numValues[n]) {
-      let number = +numValues[n];
-      numValues[n] = Number.isFinite(number) ? number : null;
-    } else {
-      numValues[n] = null;
-    }
+    const number = +numValues[n];
+    numValues[n] = Number.isFinite(number) ? number : null;
   }
 
   return {
@@ -146,7 +142,7 @@ function fieldToBooleanField(field: Field): Field {
   const booleanValues = field.values.toArray().slice();
 
   for (let b = 0; b < booleanValues.length; b++) {
-    booleanValues[b] = Boolean(booleanValues[b]);
+    booleanValues[b] = Boolean(!!booleanValues[b]);
   }
 
   return {
