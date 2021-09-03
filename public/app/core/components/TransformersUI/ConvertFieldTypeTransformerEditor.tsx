@@ -58,7 +58,7 @@ export const ConvertFieldTypeTransformerEditor: React.FC<TransformerUIProps<Conv
   const onInputFormat = useCallback(
     (idx) => (e: ChangeEvent<HTMLInputElement>) => {
       const conversions = options.conversions;
-      conversions[idx] = { ...conversions[idx], dateFormat: e.target.value };
+      conversions[idx] = { ...conversions[idx], dateFormat: e.currentTarget.value };
       onChange({
         ...options,
         conversions: conversions,
