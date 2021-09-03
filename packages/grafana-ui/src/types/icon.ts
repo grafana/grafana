@@ -1,4 +1,4 @@
-import { FieldType } from '../../../grafana-data/src';
+import { FieldType } from '@grafana/data';
 import { ComponentSize } from './size';
 export type IconType = 'mono' | 'default';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
