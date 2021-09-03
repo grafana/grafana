@@ -13,34 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/schema"
 )
 
-// Returns a disjunction of structs representing each panel schema version
-// (post-mapping from on-disk #PanelModel form) from each scuemata in the map.
-func disjunctPanelScuemata(scuemap map[string]schema.VersionedCueSchema) (cue.Value, error) {
-	partsi, err := rt.Compile("glue-panelDisjunction", `
-	allPanels: [Name=_]: {}
-	parts: or([for v in allPanels { v }])
-	`)
-	if err != nil {
-		return cue.Value{}, err
-	}
-
-	parts := partsi.Value()
-	for id, sch := range scuemap {
-		for sch != nil {
-			cv := mapPanelModel(id, sch)
-
-			mjv, miv := sch.Version()
-			parts = parts.FillPath(cue.MakePath(cue.Str("allPanels"), cue.Str(fmt.Sprintf("%s@%v.%v", id, mjv, miv))), cv)
-			sch = sch.Successor()
-		}
-	}
-
-	return parts.LookupPath(cue.MakePath(cue.Str("parts"))), nil
-}
-
 // mapPanelModel maps a schema from the #PanelModel form in which it's declared
 // in a plugin's model.cue to the structure in which it actually appears in the
 // dashboard schema.
+// TODO remove, this is old sloppy hacks
 func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 	maj, min := vcs.Version()
 	// Ignore err return, this can't fail to compile
@@ -67,24 +43,6 @@ func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 
 	// TODO validate, especially with #PanelModel
 	return inter.Value().FillPath(cue.MakePath(cue.Str("in"), cue.Str("model")), vcs.CUE()).LookupPath(cue.MakePath(cue.Str(("result"))))
-}
-
-func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, error) {
-	all := make(map[string]schema.VersionedCueSchema)
-	vals, err := loadPanelScuemata(p)
-	if err != nil {
-		return nil, err
-	}
-
-	for id, val := range vals {
-		fam, err := buildGenericScuemata(val)
-		if err != nil {
-			return nil, err
-		}
-		all[id] = fam
-	}
-
-	return all, nil
 }
 
 func loadPanelScuemata(p BaseLoadPaths) (map[string]cue.Value, error) {

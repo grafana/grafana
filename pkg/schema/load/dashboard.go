@@ -193,6 +193,7 @@ func (cds *compositeDashboardSchema) LatestPanelSchemaFor(id string) (schema.Ver
 	}
 
 	latest := schema.Find(psch, schema.Latest())
+	// FIXME this relies on old sloppiness
 	sch := &genericVersionedSchema{
 		actual: cds.base.CUE().LookupPath(panelSubpath).Unify(mapPanelModel(id, latest)),
 	}
