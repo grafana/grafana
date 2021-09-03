@@ -86,6 +86,7 @@ export class TablePanel extends Component<Props> {
         width={width}
         data={frame}
         noHeader={!options.showHeader}
+        showTypeIcons={options.showTypeIcons}
         resizable={true}
         initialSortBy={options.sortBy}
         onSortByChange={this.onSortByChange}
