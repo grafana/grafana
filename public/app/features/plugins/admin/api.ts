@@ -17,7 +17,7 @@ export async function getCatalogPlugin(id: string): Promise<CatalogPlugin> {
 }
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
-  const localPlugins = await getLocalPlugins();
+  const localPlugins = await getLocalPlugins(); // /api/plugins/<id>/settings
   const local = localPlugins.find((p) => p.id === id);
   const isInstalled = Boolean(local);
   const [remote, versions] = await Promise.all([getRemotePlugin(id, isInstalled), getPluginVersions(id)]);

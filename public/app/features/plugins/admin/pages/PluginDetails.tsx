@@ -34,7 +34,8 @@ const DefaultState = {
 export default function PluginDetails({ match }: Props): JSX.Element | null {
   const { pluginId = '' } = match.params;
   const [state, setState] = useState<State>(DefaultState);
-  const plugin = useGetSingle(pluginId);
+  const plugin = useGetSingle(pluginId); // fetches the localplugin settings
+  // const pluginExtra = loadPlugin(pluginId); // fetches the local plugin settings as well
   const { isLoading, error } = useFetchStatus();
   const styles = useStyles2(getStyles);
   const { tabs, activeTabIndex } = state;
@@ -57,7 +58,7 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
   return (
     <Page>
       <PluginPage>
-        <PluginDetailsHeader currentUrl={match.url} parentUrl={parentUrl} pluginId={pluginId} />
+        <PluginDetailsHeader currentUrl={match.url} parentUrl={parentUrl} plugin={plugin} />
 
         {/* Tab navigation */}
         <TabsBar>
@@ -73,7 +74,8 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
 
         {/* Active tab */}
         <TabContent className={styles.tabContent}>
-          {/* {error && (
+          {/* Cannot get plugin meta data. e.g. cannot talk to gcom and plugin is not installed. */}
+          {/* {pluginConfig.loadError && (
             <Alert severity={AppNotificationSeverity.Error} title="Error Loading Plugin">
               <>
                 Check the server startup logs for more information. <br />

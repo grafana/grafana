@@ -7,21 +7,16 @@ import { InstallControls } from './InstallControls';
 import { usePluginDetails } from '../hooks/usePluginDetails';
 import { PluginDetailsHeaderSignature } from './PluginDetailsHeaderSignature';
 import { PluginLogo } from './PluginLogo';
+import { CatalogPlugin } from '../types';
 
 type Props = {
   parentUrl: string;
   currentUrl: string;
-  pluginId?: string;
+  plugin: CatalogPlugin;
 };
 
-export function PluginDetailsHeader({ pluginId, parentUrl, currentUrl }: Props): React.ReactElement | null {
+export function PluginDetailsHeader({ plugin, parentUrl, currentUrl }: Props): React.ReactElement {
   const styles = useStyles2(getStyles);
-  const { state, dispatch } = usePluginDetails(pluginId!);
-  const { plugin, pluginConfig, isInflight, hasUpdate, isInstalled, hasInstalledPanel } = state;
-
-  if (!plugin) {
-    return null;
-  }
 
   return (
     <div className={styles.headerContainer}>
@@ -58,7 +53,7 @@ export function PluginDetailsHeader({ pluginId, parentUrl, currentUrl }: Props):
           <span>{plugin.orgName}</span>
 
           {/* Links */}
-          {plugin.links.map((link: any) => (
+          {plugin.details?.links.map((link: any) => (
             <a key={link.name} href={link.url}>
               {link.name}
             </a>
@@ -76,19 +71,19 @@ export function PluginDetailsHeader({ pluginId, parentUrl, currentUrl }: Props):
           {plugin.version && <span>{plugin.version}</span>}
 
           {/* Signature information */}
-          <PluginDetailsHeaderSignature installedPlugin={pluginConfig} />
+          <PluginDetailsHeaderSignature plugin={plugin} />
         </div>
 
         <p>{plugin.description}</p>
 
-        <InstallControls
+        {/* <InstallControls
           plugin={plugin}
-          isInflight={isInflight}
+          isInflight={plugin.isInflight}
           hasUpdate={hasUpdate}
-          isInstalled={isInstalled}
+          isInstalled={plugin.isInstalled}
           hasInstalledPanel={hasInstalledPanel}
           dispatch={dispatch}
-        />
+        /> */}
       </div>
     </div>
   );

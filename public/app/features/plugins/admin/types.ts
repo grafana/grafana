@@ -23,6 +23,8 @@ export interface CatalogPlugin {
   name: string;
   orgName: string;
   signature: PluginSignatureStatus;
+  signatureType?: PluginSignatureType;
+  signatureOrg?: string;
   popularity: number;
   publishedAt: string;
   type?: PluginType;
@@ -127,7 +129,7 @@ export type LocalPlugin = {
   pinned: boolean;
   signature: PluginSignatureStatus;
   signatureOrg: string;
-  signatureType: string;
+  signatureType: PluginSignatureType;
   state: string;
   type: PluginType;
 };

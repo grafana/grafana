@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
-import { PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
 import { CatalogPlugin, CatalogPluginDetails, LocalPlugin, RemotePlugin, Version, PluginFilter } from './types';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -100,7 +100,10 @@ export function mapLocalToCatalog(plugin: LocalPlugin): CatalogPlugin {
     signature,
     dev,
     type,
+    signatureOrg,
+    signatureType,
   } = plugin;
+
   return {
     description,
     downloads: 0,
@@ -111,6 +114,8 @@ export function mapLocalToCatalog(plugin: LocalPlugin): CatalogPlugin {
     popularity: 0,
     publishedAt: '',
     signature,
+    signatureOrg,
+    signatureType,
     updatedAt: updated,
     version,
     hasUpdate: false,
@@ -160,6 +165,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin): 
     publishedAt: remote?.createdAt || '',
     type: remote?.typeCode || local?.type,
     signature: local?.signature || (hasRemoteSignature ? PluginSignatureStatus.valid : PluginSignatureStatus.missing),
+    signatureOrg: local?.signatureOrg || remote?.versionSignedByOrgName,
+    signatureType: local?.signatureType || remote?.versionSignatureType || remote?.signatureType || undefined,
     updatedAt: remote?.updatedAt || local?.info.updated || '',
     version,
   };
