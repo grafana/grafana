@@ -1,11 +1,15 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { BrowserRouter } from 'react-router-dom';
 import { ShowModalReactEvent } from '../../../types/events';
 import { HelpModal } from '../help/HelpModal';
 import appEvents from '../../app_events';
 import BottomSection from './BottomSection';
 
+jest.mock('./utils', () => ({
+  getForcedLoginUrl: () => '/mockForcedLoginUrl',
+}));
 jest.mock('../../app_events', () => ({
   publish: jest.fn(),
 }));
@@ -44,13 +48,21 @@ jest.mock('app/core/services/context_srv', () => ({
 
 describe('BottomSection', () => {
   it('should render the correct children', () => {
-    render(<BottomSection />);
+    render(
+      <BrowserRouter>
+        <BottomSection />
+      </BrowserRouter>
+    );
 
     expect(screen.getByTestId('bottom-section-items').children.length).toBe(3);
   });
 
   it('creates the correct children for the help link', () => {
-    render(<BottomSection />);
+    render(
+      <BrowserRouter>
+        <BottomSection />
+      </BrowserRouter>
+    );
 
     const documentation = screen.getByRole('link', { name: 'Documentation' });
     const support = screen.getByRole('link', { name: 'Support' });
@@ -63,7 +75,11 @@ describe('BottomSection', () => {
   });
 
   it('clicking the keyboard shortcuts button shows the modal', () => {
-    render(<BottomSection />);
+    render(
+      <BrowserRouter>
+        <BottomSection />
+      </BrowserRouter>
+    );
 
     const keyboardShortcuts = screen.getByText('Keyboard shortcuts');
     expect(keyboardShortcuts).toBeInTheDocument();
@@ -73,7 +89,11 @@ describe('BottomSection', () => {
   });
 
   it('shows the current organization and organization switcher if showOrgSwitcher is true', () => {
-    render(<BottomSection />);
+    render(
+      <BrowserRouter>
+        <BottomSection />
+      </BrowserRouter>
+    );
 
     const currentOrg = screen.getByText(new RegExp('Grafana', 'i'));
     const orgSwitcher = screen.getByText('Switch organization');
