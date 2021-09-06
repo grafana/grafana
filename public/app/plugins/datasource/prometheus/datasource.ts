@@ -217,8 +217,9 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
 
         target.expr = this.templateSrv.replace(target.expr, targetScopedVars, this.interpolateQueryExpr);
         target.interval = `${interval}s`;
-        target.isBackendQuery = true;
+        target.stepMS = Math.round(interval * 1000);
 
+        //If we run both - instant and range query, we have to create 2 separate queries
         if (target.instant && target.range) {
           const targetInstant: PromQuery = {
             ...target,

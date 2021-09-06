@@ -17,9 +17,7 @@ type QueryModel struct {
 	RangeQuery     bool   `json:"range"`
 	InstantQuery   bool   `json:"instant"`
 	IntervalFactor int    `json:"intervalFactor"`
-	// IsBackendQuery is used to track if we need to calculate interval or if it was calculated
-	// on client side. We can remove this when we fully migrate to running all queries trough backend.
-	IsBackendQuery bool `json:"isBackendQuery"`
+	StepMS         int    `json:"stepMS"`
 }
 
 func (s *Service) parseQuery(dsInfo *DatasourceInfo, queryContext *backend.QueryDataRequest) (
@@ -32,9 +30,13 @@ func (s *Service) parseQuery(dsInfo *DatasourceInfo, queryContext *backend.Query
 			return nil, err
 		}
 
-		step, err := createStep(dsInfo, model, query, s.intervalCalculator)
-		if err != nil {
-			return nil, err
+		step := time.Duration(model.StepMS) * time.Millisecond
+		if step == time.Duration(0) {
+			stepFromInterval, err := createStep(dsInfo, model, query, s.intervalCalculator)
+			if err != nil {
+				return nil, err
+			}
+			step = stepFromInterval
 		}
 
 		qs = append(qs, createQuery(model, step, query))
@@ -61,15 +63,6 @@ func createQuery(model *QueryModel, step time.Duration, query backend.DataQuery)
 }
 
 func createStep(dsInfo *DatasourceInfo, model *QueryModel, query backend.DataQuery, intervalCalculator tsdb.Calculator) (time.Duration, error) {
-	// If we have interval and query is processed as backend query, we have correct step and we only need to parse it from string to time.Duration
-	if model.IsBackendQuery && model.Interval != "" {
-		step, err := tsdb.ParseIntervalStringToTimeDuration(model.Interval)
-		if err != nil {
-			return time.Duration(0), err
-		}
-		return step, nil
-	}
-
 	intervalMode := "min"
 	hasQueryInterval := model.Interval != ""
 
@@ -78,7 +71,7 @@ func createStep(dsInfo *DatasourceInfo, model *QueryModel, query backend.DataQue
 		return time.Duration(0), err
 	}
 
-	if hasQueryInterval {
+	if hasQueryInterval && model.StepMode != "" {
 		intervalMode = model.StepMode
 	}
 	// Calculate interval value from query or data source settings or use default value

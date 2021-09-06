@@ -16,7 +16,7 @@ export interface PromQuery extends DataQuery {
   requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
-  isBackendQuery?: boolean;
+  stepMS?: number;
 }
 
 export type StepMode = 'min' | 'max' | 'exact';

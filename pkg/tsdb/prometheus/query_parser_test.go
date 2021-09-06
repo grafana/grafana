@@ -27,15 +27,11 @@ func TestPrometheusQueryParser_calculateStep(t *testing.T) {
 		query    backend.DataQuery
 		expected time.Duration
 	}{
-		{"Interval: nil, StepMode: nil, IsBackendQuery: false", QueryModel{Expr: expr, Interval: "", StepMode: "", IsBackendQuery: false}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
-		{"Interval: 15s, StepMode: min, IsBackendQuery: false", QueryModel{Expr: expr, Interval: "15s", StepMode: "min", IsBackendQuery: false}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
-		{"Interval: 15s, StepMode: min, IsBackendQuery: true", QueryModel{Expr: expr, Interval: "15s", StepMode: "min", IsBackendQuery: true}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(15) * time.Second},
-		{"Interval: 7s, StepMode: exact, IsBackendQuery: false", QueryModel{Expr: expr, Interval: "7s", StepMode: "exact", IsBackendQuery: false}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(7) * time.Second},
-		{"Interval: 7s, StepMode: exact, IsBackendQuery: true", QueryModel{Expr: expr, Interval: "7s", StepMode: "exact", IsBackendQuery: true}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(7) * time.Second},
-		{"Interval: 6s, StepMode: max, IsBackendQuery: false", QueryModel{Expr: expr, Interval: "6s", StepMode: "max", IsBackendQuery: false}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(6) * time.Second},
-		{"Interval: 6s, StepMode: max, IsBackendQuery: true", QueryModel{Expr: expr, Interval: "6s", StepMode: "max", IsBackendQuery: true}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(6) * time.Second},
-		{"Interval: 100s, StepMode: max, IsBackendQuery: false", QueryModel{Expr: expr, Interval: "100s", StepMode: "max", IsBackendQuery: false}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
-		{"Interval: 100s, StepMode: max, IsBackendQuery: true", QueryModel{Expr: expr, Interval: "100s", StepMode: "max", IsBackendQuery: true}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(100) * time.Second},
+		{"Interval: nil, StepMode: nil", QueryModel{Expr: expr, Interval: "", StepMode: ""}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
+		{"Interval: 15s, StepMode: min", QueryModel{Expr: expr, Interval: "15s", StepMode: "min"}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
+		{"Interval: 7s, StepMode: exact", QueryModel{Expr: expr, Interval: "7s", StepMode: "exact"}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(7) * time.Second},
+		{"Interval: 6s, StepMode: max", QueryModel{Expr: expr, Interval: "6s", StepMode: "max"}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(6) * time.Second},
+		{"Interval: 100s, StepMode: max", QueryModel{Expr: expr, Interval: "100s", StepMode: "max"}, backend.DataQuery{RefID: "A", QueryType: "", MaxDataPoints: int64(1), Interval: 15, TimeRange: timeRange}, time.Duration(30) * time.Second},
 	}
 
 	for _, tc := range testCases {
@@ -207,6 +203,24 @@ func TestPrometheusQueryParser_parseQuery(t *testing.T) {
 		require.Equal(t, time.Minute*2, models[0].Step)
 	})
 
+	t.Run("parsing query model with no intervalFactor", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "go_goroutines",
+			"format": "time_series",
+			"refId": "A"
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(dsInfo, query)
+		require.NoError(t, err)
+		require.Equal(t, time.Minute*2, models[0].Step)
+	})
+
 	t.Run("parsing query model specified scrape-interval in the data source", func(t *testing.T) {
 		timeRange := backend.TimeRange{
 			From: now,
@@ -226,6 +240,26 @@ func TestPrometheusQueryParser_parseQuery(t *testing.T) {
 		models, err := service.parseQuery(dsInfo, query)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*4, models[0].Step)
+	})
+
+	t.Run("parsing query model with specified StepMS", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		query := queryContext(`{
+			"expr": "go_goroutines",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A",
+			"StepMS": 500
+		}`, timeRange)
+
+		dsInfo := &DatasourceInfo{}
+		models, err := service.parseQuery(dsInfo, query)
+		require.NoError(t, err)
+		require.Equal(t, time.Millisecond*500, models[0].Step)
 	})
 
 	t.Run("parsing query model of instant query", func(t *testing.T) {
