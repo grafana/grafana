@@ -99,7 +99,7 @@ describe('PrometheusDatasource', () => {
       });
     });
 
-    describe('step parameter', () => {
+    describe('"stepMode" parameter', () => {
       const to = dateTime();
       const from = dateTime(to).subtract(6, 'hours');
       const sixHoursRange = { from, to, raw: { from: 'now-6h', to: 'now' } };
