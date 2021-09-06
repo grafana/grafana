@@ -19,6 +19,7 @@ import {
   ValueMap,
   ValueMapping,
   getActiveThreshold,
+  DataTransformerConfig,
 } from '@grafana/data';
 // Constants
 import {
@@ -36,6 +37,8 @@ import { config } from 'app/core/config';
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
 import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
+import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
+import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
 
 standardEditorsRegistry.setInit(getStandardOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
@@ -52,7 +55,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 30;
+    this.dashboard.schemaVersion = 31;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -660,6 +663,22 @@ export class DashboardMigrator {
       panelUpgrades.push(migrateTooltipOptions);
     }
 
+    if (oldVersion < 31) {
+      panelUpgrades.push((panel: PanelModel) => {
+        if (panel.transformations) {
+          for (const t of panel.transformations) {
+            if (t.id === labelsToFieldsTransformer.id) {
+              return appedTransformerAfter(panel, labelsToFieldsTransformer.id, {
+                id: mergeTransformer.id,
+                options: {},
+              });
+            }
+          }
+        }
+        return panel;
+      });
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -946,6 +965,21 @@ function migrateSinglestat(panel: PanelModel) {
     return panel.getSaveModel();
   }
 
+  return panel;
+}
+
+// mutates transformations appending a new transformer after the existing one
+function appedTransformerAfter(panel: PanelModel, id: string, cfg: DataTransformerConfig) {
+  if (panel.transformations) {
+    const transformations: DataTransformerConfig[] = [];
+    for (const t of panel.transformations) {
+      transformations.push(t);
+      if (t.id === id) {
+        transformations.push({ ...cfg });
+      }
+    }
+    panel.transformations = transformations;
+  }
   return panel;
 }
 

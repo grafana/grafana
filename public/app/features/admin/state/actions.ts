@@ -19,6 +19,9 @@ import {
   usersFetched,
   queryChanged,
   pageChanged,
+  filterChanged,
+  usersFetchBegin,
+  usersFetchEnd,
 } from './reducers';
 import { debounce } from 'lodash';
 import { contextSrv } from 'app/core/core';
@@ -258,10 +261,13 @@ export function clearUserMappingInfo(): ThunkResult<void> {
 export function fetchUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
-      const { perPage, page, query } = getState().userListAdmin;
-      const result = await getBackendSrv().get(`/api/users/search?perpage=${perPage}&page=${page}&query=${query}`);
+      const { perPage, page, query, filter } = getState().userListAdmin;
+      const result = await getBackendSrv().get(
+        `/api/users/search?perpage=${perPage}&page=${page}&query=${query}&filter=${filter}`
+      );
       dispatch(usersFetched(result));
     } catch (error) {
+      usersFetchEnd();
       console.error(error);
     }
   };
@@ -271,13 +277,23 @@ const fetchUsersWithDebounce = debounce((dispatch) => dispatch(fetchUsers()), 50
 
 export function changeQuery(query: string): ThunkResult<void> {
   return async (dispatch) => {
+    dispatch(usersFetchBegin());
     dispatch(queryChanged(query));
+    fetchUsersWithDebounce(dispatch);
+  };
+}
+
+export function changeFilter(filter: string): ThunkResult<void> {
+  return async (dispatch) => {
+    dispatch(usersFetchBegin());
+    dispatch(filterChanged(filter));
     fetchUsersWithDebounce(dispatch);
   };
 }
 
 export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
+    dispatch(usersFetchBegin());
     dispatch(pageChanged(page));
     dispatch(fetchUsers());
   };
