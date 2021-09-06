@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -83,8 +82,8 @@ func (s *Service) Encrypt(payload []byte, secret string) ([]byte, error) {
 	return ciphertext, nil
 }
 
-func (s *Service) EncryptToJsonData(kv map[string]string, secret string) (securejsondata.SecureJsonData, error) {
-	encrypted := make(securejsondata.SecureJsonData)
+func (s *Service) EncryptJsonData(kv map[string]string, secret string) (map[string][]byte, error) {
+	encrypted := make(map[string][]byte)
 	for key, value := range kv {
 		encryptedData, err := s.Encrypt([]byte(value), secret)
 		if err != nil {
@@ -96,7 +95,7 @@ func (s *Service) EncryptToJsonData(kv map[string]string, secret string) (secure
 	return encrypted, nil
 }
 
-func (s *Service) DecryptToJsonData(sjd securejsondata.SecureJsonData, secret string) (map[string]string, error) {
+func (s *Service) DecryptJsonData(sjd map[string][]byte, secret string) (map[string]string, error) {
 	decrypted := make(map[string]string)
 	for key, data := range sjd {
 		decryptedData, err := s.Decrypt(data, secret)

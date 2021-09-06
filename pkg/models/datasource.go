@@ -100,8 +100,9 @@ type AddDataSourceCommand struct {
 	SecureJsonData    map[string]string `json:"secureJsonData"`
 	Uid               string            `json:"uid"`
 
-	OrgId    int64 `json:"-"`
-	ReadOnly bool  `json:"-"`
+	OrgId                   int64             `json:"-"`
+	ReadOnly                bool              `json:"-"`
+	EncryptedSecureJsonData map[string][]byte `json:"-"`
 
 	Result *DataSource
 }
@@ -125,9 +126,10 @@ type UpdateDataSourceCommand struct {
 	Version           int               `json:"version"`
 	Uid               string            `json:"uid"`
 
-	OrgId    int64 `json:"-"`
-	Id       int64 `json:"-"`
-	ReadOnly bool  `json:"-"`
+	OrgId                   int64             `json:"-"`
+	Id                      int64             `json:"-"`
+	ReadOnly                bool              `json:"-"`
+	EncryptedSecureJsonData map[string][]byte `json:"-"`
 
 	Result *DataSource
 }

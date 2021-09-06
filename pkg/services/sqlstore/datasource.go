@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -147,7 +146,7 @@ func (ss *SQLStore) AddDataSource(cmd *models.AddDataSourceCommand) error {
 			BasicAuthPassword: cmd.BasicAuthPassword,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
-			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
+			SecureJsonData:    cmd.EncryptedSecureJsonData,
 			Created:           time.Now(),
 			Updated:           time.Now(),
 			Version:           1,
@@ -211,7 +210,7 @@ func (ss *SQLStore) UpdateDataSource(cmd *models.UpdateDataSourceCommand) error 
 			BasicAuthPassword: cmd.BasicAuthPassword,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
-			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
+			SecureJsonData:    cmd.EncryptedSecureJsonData,
 			Updated:           time.Now(),
 			ReadOnly:          cmd.ReadOnly,
 			Version:           cmd.Version + 1,

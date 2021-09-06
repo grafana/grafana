@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
@@ -44,6 +45,12 @@ func (s *Service) GetDataSourcesByType(query *models.GetDataSourcesByTypeQuery) 
 }
 
 func (s *Service) AddDataSource(cmd *models.AddDataSourceCommand) error {
+	var err error
+	cmd.EncryptedSecureJsonData, err = s.EncryptionService.EncryptJsonData(cmd.SecureJsonData, setting.SecretKey)
+	if err != nil {
+		return err
+	}
+
 	return s.SQLStore.AddDataSource(cmd)
 }
 
@@ -52,6 +59,12 @@ func (s *Service) DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
 }
 
 func (s *Service) UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
+	var err error
+	cmd.EncryptedSecureJsonData, err = s.EncryptionService.EncryptJsonData(cmd.SecureJsonData, setting.SecretKey)
+	if err != nil {
+		return err
+	}
+
 	return s.SQLStore.UpdateDataSource(cmd)
 }
 
