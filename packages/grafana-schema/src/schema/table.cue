@@ -1,7 +1,7 @@
 package schema
 
 // TODO -- should not be table specific!
-FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(targetType="type")
+FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
 
 // FIXME can't write enums as structs, must use disjunctions
 TableCellDisplayMode: {
@@ -13,11 +13,11 @@ TableCellDisplayMode: {
 	JSONView:        "json-view"
 	BasicGauge:      "basic"
 	Image:           "image"
-} @cuetsy(targetType="enum")
+} @cuetsy(kind="enum")
 
 TableFieldOptions: {
 	width?:      number
 	align:       FieldTextAlignment | *"auto"
 	displayMode: TableCellDisplayMode | *"auto"
 	hidden?:     bool // ?? default is missing or false ??
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")

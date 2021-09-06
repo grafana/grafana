@@ -61,7 +61,7 @@ func Logger(cfg *setting.Cfg) macaron.Handler {
 				"referer", req.Referer(),
 			}
 
-			traceID, exist := cw.ExtractTraceID(ctxTyped.Req.Request.Context())
+			traceID, exist := cw.ExtractTraceID(ctxTyped.Req.Context())
 			if exist {
 				logParams = append(logParams, "traceID", traceID)
 			}

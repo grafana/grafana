@@ -17,11 +17,12 @@ export function addAxisConfig(
   defaultConfig: AxisConfig,
   hideScale?: boolean
 ) {
+  const category = ['Axis'];
   builder
     .addRadio({
       path: 'axisPlacement',
       name: 'Placement',
-      category: ['Axis'],
+      category,
       defaultValue: graphFieldOptions.axisPlacement[0].value,
       settings: {
         options: graphFieldOptions.axisPlacement,
@@ -30,7 +31,7 @@ export function addAxisConfig(
     .addTextInput({
       path: 'axisLabel',
       name: 'Label',
-      category: ['Axis'],
+      category,
       defaultValue: '',
       settings: {
         placeholder: 'Optional text',
@@ -42,7 +43,7 @@ export function addAxisConfig(
     .addNumberInput({
       path: 'axisWidth',
       name: 'Width',
-      category: ['Axis'],
+      category,
       settings: {
         placeholder: 'Auto',
       },
@@ -52,7 +53,7 @@ export function addAxisConfig(
       path: 'axisSoftMin',
       name: 'Soft min',
       defaultValue: defaultConfig.axisSoftMin,
-      category: ['Axis'],
+      category,
       settings: {
         placeholder: 'See: Standard options > Min',
       },
@@ -61,17 +62,31 @@ export function addAxisConfig(
       path: 'axisSoftMax',
       name: 'Soft max',
       defaultValue: defaultConfig.axisSoftMax,
-      category: ['Axis'],
+      category,
       settings: {
         placeholder: 'See: Standard options > Max',
       },
+    })
+    .addRadio({
+      path: 'axisGridShow',
+      name: 'Show grid lines',
+      category,
+      defaultValue: undefined,
+      settings: {
+        options: [
+          { value: undefined, label: 'Auto' },
+          { value: true, label: 'On' },
+          { value: false, label: 'Off' },
+        ],
+      },
     });
+
   if (!hideScale) {
     builder.addCustomEditor<void, ScaleDistributionConfig>({
       id: 'scaleDistribution',
       path: 'scaleDistribution',
       name: 'Scale',
-      category: ['Axis'],
+      category,
       editor: ScaleDistributionEditor,
       override: ScaleDistributionEditor,
       defaultValue: { type: ScaleDistribution.Linear },

@@ -1,5 +1,5 @@
 import { CellProps } from 'react-table';
-import { Field } from '@grafana/data';
+import { Field, KeyValue } from '@grafana/data';
 import { TableStyles } from './styles';
 import { CSSProperties, FC } from 'react';
 
@@ -31,3 +31,5 @@ export interface TableCellProps extends CellProps<any> {
 }
 
 export type CellComponent = FC<TableCellProps>;
+
+export type FooterItem = Array<KeyValue<string>> | string | undefined;

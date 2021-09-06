@@ -1,8 +1,8 @@
 package schema
 
-LegendPlacement: "bottom" | "right" @cuetsy(targetType="type")
+LegendPlacement: "bottom" | "right" @cuetsy(kind="type")
 
-LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(targetType="enum")
+LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(kind="enum")
 
 VizLegendOptions: {
 	displayMode: LegendDisplayMode
@@ -10,4 +10,4 @@ VizLegendOptions: {
 	asTable:     bool | *false
 	isVisible:   bool | *false
 	calcs: [...string]
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")

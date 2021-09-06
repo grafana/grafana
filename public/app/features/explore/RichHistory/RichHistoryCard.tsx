@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { hot } from 'react-hot-loader';
 import { css, cx } from '@emotion/css';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -318,4 +317,4 @@ export function RichHistoryCard(props: Props) {
   );
 }
 
-export default hot(module)(connector(RichHistoryCard));
+export default connector(RichHistoryCard);

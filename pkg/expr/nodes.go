@@ -19,7 +19,7 @@ var (
 	logger = log.New("expr")
 )
 
-// baseNode includes commmon properties used across DPNodes.
+// baseNode includes common properties used across DPNodes.
 type baseNode struct {
 	id    int64
 	refID string

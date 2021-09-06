@@ -84,6 +84,13 @@ const testMetricsResponse: FetchResponse<LokiResponse> = {
   config: ({} as unknown) as BackendSrvRequest,
 };
 
+interface AdHocFilter {
+  condition: string;
+  key: string;
+  operator: string;
+  value: string;
+}
+
 describe('LokiDatasource', () => {
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
@@ -782,6 +789,80 @@ describe('LokiDatasource', () => {
     });
   });
 
+  describe('addAdHocFilters', () => {
+    let ds: LokiDatasource;
+    let adHocFilters: AdHocFilter[];
+    describe('when called with "=" operator', () => {
+      beforeEach(() => {
+        adHocFilters = [
+          {
+            condition: '',
+            key: 'job',
+            operator: '=',
+            value: 'grafana',
+          },
+        ];
+        const templateSrvMock = ({
+          getAdhocFilters: (): AdHocFilter[] => adHocFilters,
+          replace: (a: string) => a,
+        } as unknown) as TemplateSrv;
+        ds = createLokiDSForTests(templateSrvMock);
+      });
+      describe('and query has no parser', () => {
+        it('then the correct label should be added for logs query', () => {
+          assertAdHocFilters('{bar="baz"}', '{bar="baz",job="grafana"}', ds);
+        });
+
+        it('then the correct label should be added for metrics query', () => {
+          assertAdHocFilters('rate({bar="baz"}[5m])', 'rate({bar="baz",job="grafana"}[5m])', ds);
+        });
+      });
+      describe('and query has parser', () => {
+        it('then the correct label should be added for logs query', () => {
+          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz"} | logfmt | job="grafana"', ds);
+        });
+        it('then the correct label should be added for metrics query', () => {
+          assertAdHocFilters('rate({bar="baz"} | logfmt [5m])', 'rate({bar="baz",job="grafana"} | logfmt [5m])', ds);
+        });
+      });
+    });
+
+    describe('when called with "!=" operator', () => {
+      beforeEach(() => {
+        adHocFilters = [
+          {
+            condition: '',
+            key: 'job',
+            operator: '!=',
+            value: 'grafana',
+          },
+        ];
+        const templateSrvMock = ({
+          getAdhocFilters: (): AdHocFilter[] => adHocFilters,
+          replace: (a: string) => a,
+        } as unknown) as TemplateSrv;
+        ds = createLokiDSForTests(templateSrvMock);
+      });
+      describe('and query has no parser', () => {
+        it('then the correct label should be added for logs query', () => {
+          assertAdHocFilters('{bar="baz"}', '{bar="baz",job!="grafana"}', ds);
+        });
+
+        it('then the correct label should be added for metrics query', () => {
+          assertAdHocFilters('rate({bar="baz"}[5m])', 'rate({bar="baz",job!="grafana"}[5m])', ds);
+        });
+      });
+      describe('and query has parser', () => {
+        it('then the correct label should be added for logs query', () => {
+          assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz"} | logfmt | job!="grafana"', ds);
+        });
+        it('then the correct label should be added for metrics query', () => {
+          assertAdHocFilters('rate({bar="baz"} | logfmt [5m])', 'rate({bar="baz",job!="grafana"} | logfmt [5m])', ds);
+        });
+      });
+    });
+  });
+
   describe('adjustInterval', () => {
     const dynamicInterval = 15;
     const range = 1642;
@@ -802,6 +883,13 @@ describe('LokiDatasource', () => {
     });
   });
 });
+
+function assertAdHocFilters(query: string, expectedResults: string, ds: LokiDatasource) {
+  const lokiQuery: LokiQuery = { refId: 'A', expr: query };
+  const result = ds.addAdHocFilters(lokiQuery.expr);
+
+  expect(result).toEqual(expectedResults);
+}
 
 function createLokiDSForTests(
   templateSrvMock = ({

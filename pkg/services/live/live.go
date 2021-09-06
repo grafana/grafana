@@ -282,8 +282,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 		newCtx = livecontext.SetContextSignedUser(newCtx, user)
-		r := ctx.Req.Request
-		r = r.WithContext(newCtx)
+		r := ctx.Req.WithContext(newCtx)
 		wsHandler.ServeHTTP(ctx.Resp, r)
 	}
 
@@ -291,8 +290,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		user := ctx.SignedInUser
 		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
 		newCtx = livecontext.SetContextStreamID(newCtx, ctx.Params(":streamId"))
-		r := ctx.Req.Request
-		r = r.WithContext(newCtx)
+		r := ctx.Req.WithContext(newCtx)
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
@@ -373,25 +371,28 @@ func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []
 			// fast path for *.
 			return true
 		}
-		ok, err := checkAllowedOrigin(strings.ToLower(origin), appURL, originGlobs)
+		originURL, err := url.Parse(strings.ToLower(origin))
+		if err != nil {
+			logger.Warn("Failed to parse request origin", "error", err, "origin", origin)
+			return false
+		}
+		if strings.EqualFold(originURL.Host, r.Host) {
+			return true
+		}
+		ok, err := checkAllowedOrigin(origin, originURL, appURL, originGlobs)
 		if err != nil {
 			logger.Warn("Error parsing request origin", "error", err, "origin", origin)
 			return false
 		}
 		if !ok {
-			logger.Warn("Request Origin is not authorized", "origin", origin, "appUrl", appURL.String(), "allowedOrigins", strings.Join(originPatterns, ","))
+			logger.Warn("Request Origin is not authorized", "origin", origin, "host", r.Host, "appUrl", appURL.String(), "allowedOrigins", strings.Join(originPatterns, ","))
 			return false
 		}
 		return true
 	}
 }
 
-func checkAllowedOrigin(origin string, appURL *url.URL, originGlobs []glob.Glob) (bool, error) {
-	originURL, err := url.Parse(origin)
-	if err != nil {
-		logger.Warn("Failed to parse request origin", "error", err, "origin", origin)
-		return false, err
-	}
+func checkAllowedOrigin(origin string, originURL *url.URL, appURL *url.URL, originGlobs []glob.Glob) (bool, error) {
 	// Try to match over configured [server] root_url first.
 	if originURL.Port() == "" {
 		if strings.EqualFold(originURL.Scheme, appURL.Scheme) && strings.EqualFold(originURL.Host, appURL.Hostname()) {
@@ -745,7 +746,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 		return response.Error(code, text, nil)
 	}
 	if reply.Data != nil {
-		_, err = g.node.Publish(cmd.Channel, cmd.Data)
+		err = g.Publish(ctx.OrgId, cmd.Channel, cmd.Data)
 		if err != nil {
 			logger.Error("Error publish to channel", "error", err, "channel", cmd.Channel)
 			return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)

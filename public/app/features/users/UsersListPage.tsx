@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { renderMarkdown } from '@grafana/data';
 import { HorizontalGroup, Pagination, VerticalGroup } from '@grafana/ui';
@@ -138,4 +137,4 @@ export class UsersListPage extends PureComponent<Props, State> {
   }
 }
 
-export default hot(module)(connector(UsersListPage));
+export default connector(UsersListPage);

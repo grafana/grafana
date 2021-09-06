@@ -6,13 +6,13 @@ package schema
 TableSortByFieldState: {
 	displayName: string
 	desc?:       bool
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")
 
 SingleStatBaseOptions: {
 	OptionsWithTextFormatting
 	reduceOptions: ReduceDataOptions
 	orientation:   VizOrientation
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")
 // TODO copy back to appropriate place
 ReduceDataOptions: {
 	// If true show each row value
@@ -23,31 +23,31 @@ ReduceDataOptions: {
 	calcs: [...string]
 	// Which fields to show.  By default this is only numeric fields
 	fields?: string
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")
 // TODO copy back to appropriate place
-VizOrientation: "auto" | "vertical" | "horizontal" @cuetsy(targetType="enum")
+VizOrientation: "auto" | "vertical" | "horizontal" @cuetsy(kind="enum")
 // TODO copy back to appropriate place
 OptionsWithTooltip: {
 	// FIXME this field is non-optional in the corresponding TS type
 	tooltip?: VizTooltipOptions
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")
 // TODO copy back to appropriate place
 OptionsWithLegend: {
 	// FIXME this field is non-optional in the corresponding TS type
 	legend?: VizLegendOptions
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")
 // TODO copy back to appropriate place
 OptionsWithTextFormatting: {
 	text?: VizTextDisplayOptions
-} @cuetsy(targetType="interface")
+} @cuetsy(kind="interface")
 // TODO copy back to appropriate place
-BigValueColorMode: "value" | "background" | "none" @cuetsy(targetType="enum")
+BigValueColorMode: "value" | "background" | "none" @cuetsy(kind="enum")
 // TODO copy back to appropriate place
-BigValueGraphMode: "none" | "line" | "area" @cuetsy(targetType="enum")
+BigValueGraphMode: "none" | "line" | "area" @cuetsy(kind="enum")
 // TODO copy back to appropriate place
-BigValueJustifyMode: "auto" | "center" @cuetsy(targetType="enum")
+BigValueJustifyMode: "auto" | "center" @cuetsy(kind="enum")
 // TODO copy back to appropriate place
 // TODO does cuetsy handle underscores the expected way?
-BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(targetType="enum")
+BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(kind="enum")
 // TODO copy back to appropriate place
-BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(targetType="enum")
+BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")

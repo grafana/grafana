@@ -14,35 +14,35 @@ interface AddLibraryPanelContentsProps {
 
 export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: AddLibraryPanelContentsProps) => {
   const [folderId, setFolderId] = useState(initialFolderId);
-  const [panelTitle, setPanelTitle] = useState(panel.title);
-  const [debouncedPanelTitle, setDebouncedPanelTitle] = useState(panel.title);
+  const [panelName, setPanelName] = useState(panel.title);
+  const [debouncedPanelName, setDebouncedPanelName] = useState(panel.title);
   const [waiting, setWaiting] = useState(false);
 
-  useEffect(() => setWaiting(true), [panelTitle]);
-  useDebounce(() => setDebouncedPanelTitle(panelTitle), 350, [panelTitle]);
+  useEffect(() => setWaiting(true), [panelName]);
+  useDebounce(() => setDebouncedPanelName(panelName), 350, [panelName]);
 
   const { saveLibraryPanel } = usePanelSave();
   const onCreate = useCallback(() => {
-    panel.title = panelTitle;
+    panel.libraryPanel = { uid: undefined, name: panelName };
     saveLibraryPanel(panel, folderId!).then((res) => {
       if (!(res instanceof Error)) {
         onDismiss();
       }
     });
-  }, [panel, panelTitle, folderId, onDismiss, saveLibraryPanel]);
-  const isValidTitle = useAsync(async () => {
+  }, [panel, panelName, folderId, onDismiss, saveLibraryPanel]);
+  const isValidName = useAsync(async () => {
     try {
-      return !(await getLibraryPanelByName(panelTitle)).some((lp) => lp.folderId === folderId);
+      return !(await getLibraryPanelByName(panelName)).some((lp) => lp.folderId === folderId);
     } catch (err) {
       err.isHandled = true;
       return true;
     } finally {
       setWaiting(false);
     }
-  }, [debouncedPanelTitle, folderId]);
+  }, [debouncedPanelName, folderId]);
 
   const invalidInput =
-    !isValidTitle?.value && isValidTitle.value !== undefined && panelTitle === debouncedPanelTitle && !waiting;
+    !isValidName?.value && isValidName.value !== undefined && panelName === debouncedPanelName && !waiting;
 
   return (
     <>
@@ -51,7 +51,7 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
         invalid={invalidInput}
         error={invalidInput ? 'Library panel with this name already exists' : ''}
       >
-        <Input name="name" value={panelTitle} onChange={(e) => setPanelTitle(e.currentTarget.value)} />
+        <Input name="name" value={panelName} onChange={(e) => setPanelName(e.currentTarget.value)} />
       </Field>
       <Field label="Save in folder" description="Library panel permissions are derived from the folder permissions">
         <FolderPicker onChange={({ id }) => setFolderId(id)} initialFolderId={initialFolderId} />
