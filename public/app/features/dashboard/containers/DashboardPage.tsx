@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
-import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
@@ -30,6 +29,7 @@ import { DashboardLoading } from '../components/DashboardLoading/DashboardLoadin
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import classnames from 'classnames';
+import { PanelEditExitedEvent } from 'app/types/events';
 import { liveTimer } from '../dashgrid/liveTimer';
 
 export interface DashboardPageRouteParams {
@@ -68,14 +68,9 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-interface OwnProps {
-  isPanelEditorOpen?: boolean;
-}
-
 export type Props = Themeable2 &
   GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> &
-  ConnectedProps<typeof connector> &
-  OwnProps;
+  ConnectedProps<typeof connector>;
 
 export interface State {
   editPanel: PanelModel | null;
@@ -188,6 +183,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     // leaving edit mode
     if (!this.state.editPanel && prevState.editPanel) {
       dashboardWatcher.setEditingState(false);
+
+      // Some panels need kicked when leaving edit mode
+      this.props.dashboard?.events.publish(new PanelEditExitedEvent(prevState.editPanel.id));
     }
 
     if (this.state.editPanelAccessDenied) {
@@ -422,4 +420,4 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
 
 export const DashboardPage = withTheme2(UnthemedDashboardPage);
 DashboardPage.displayName = 'DashboardPage';
-export default hot(module)(connector(DashboardPage));
+export default connector(DashboardPage);

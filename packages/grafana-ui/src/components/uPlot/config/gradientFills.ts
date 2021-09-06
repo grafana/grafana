@@ -172,7 +172,7 @@ export function getDataRange(plot: uPlot, scaleKey: string) {
   return [min, max];
 }
 
-export function getThresholdRange(
+export function getGradientRange(
   u: uPlot,
   scaleKey: string,
   hardMin?: number | null,
@@ -224,7 +224,7 @@ export function getScaleGradientFn(
         );
         gradient = scaleGradient(plot, scaleKey, GradientDirection.Up, valueStops, true);
       } else {
-        const [min, max] = getThresholdRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
+        const [min, max] = getGradientRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
         const range = max - min;
         const valueStops = thresholds.steps.map(
           (step) =>
@@ -237,7 +237,7 @@ export function getScaleGradientFn(
       }
     } else if (colorMode.getColors) {
       const colors = colorMode.getColors(theme);
-      const [min, max] = getThresholdRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
+      const [min, max] = getGradientRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
       const range = max - min;
       const valueStops = colors.map(
         (color, i) =>

@@ -388,7 +388,7 @@ func (m *Manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqCon
 		dsURL = pCtx.DataSourceInstanceSettings.URL
 	}
 
-	err := m.PluginRequestValidator.Validate(dsURL, reqCtx.Req.Request)
+	err := m.PluginRequestValidator.Validate(dsURL, reqCtx.Req)
 	if err != nil {
 		reqCtx.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return

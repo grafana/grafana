@@ -6,7 +6,6 @@ import { getAllPluginsErrors } from './state/selectors';
 import { loadPlugins, loadPluginsErrors } from './state/actions';
 import useAsync from 'react-use/lib/useAsync';
 import { connect, ConnectedProps } from 'react-redux';
-import { hot } from 'react-hot-loader';
 import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { css } from '@emotion/css';
 
@@ -80,9 +79,7 @@ export const PluginsErrorsInfoUnconnected: React.FC<PluginsErrorsInfoProps> = ({
   );
 };
 
-export const PluginsErrorsInfo = hot(module)(
-  connect(mapStateToProps, mapDispatchToProps)(PluginsErrorsInfoUnconnected)
-);
+export const PluginsErrorsInfo = connect(mapStateToProps, mapDispatchToProps)(PluginsErrorsInfoUnconnected);
 
 function mapPluginErrorCodeToSignatureStatus(code: PluginErrorCode) {
   switch (code) {

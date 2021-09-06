@@ -66,15 +66,22 @@
       "packaging/**/*",
       "scripts/build/**/*",
       "scripts/*.sh",
-      "scripts/*.star",
-      ".drone.star",
-      ".drone.yml",
       "Makefile",
       "Dockerfile",
       "Dockerfile.ubuntu"
     ],
     "action": "updateLabel",
     "addLabel": "type/build-packaging"
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
+      "scripts/*.star",
+      ".drone.star",
+      ".drone.yml"
+    ],
+    "action": "updateLabel",
+    "addLabel": "type/ci"
   },
   {
     "type": "changedfiles",

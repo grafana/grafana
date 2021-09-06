@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	defaultRes         int64 = 1500
+	DefaultRes         int64 = 1500
 	defaultMinInterval       = time.Millisecond * 1
 	year                     = time.Hour * 24 * 365
 	day                      = time.Hour * 24
@@ -58,7 +58,7 @@ func (i *Interval) Milliseconds() int64 {
 func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, interval time.Duration, intervalMode string) (Interval, error) {
 	to := timerange.MustGetTo().UnixNano()
 	from := timerange.MustGetFrom().UnixNano()
-	calculatedInterval := time.Duration((to - from) / defaultRes)
+	calculatedInterval := time.Duration((to - from) / DefaultRes)
 
 	switch intervalMode {
 	case "min":

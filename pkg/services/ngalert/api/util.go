@@ -103,7 +103,7 @@ func (p *AlertingProxy) withReq(
 		req.Header.Add(h, v)
 	}
 	newCtx, resp := replacedResponseWriter(ctx)
-	newCtx.Req.Request = req
+	newCtx.Req = req
 	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, ctx.ParamsInt64("Recipient"))
 
 	status := resp.Status()
