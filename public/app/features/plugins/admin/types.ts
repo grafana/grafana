@@ -229,3 +229,10 @@ export enum PluginStatus {
   UNINSTALL = 'UNINSTALL',
   UPDATE = 'UPDATE',
 }
+
+export enum PluginTabLabels {
+  OVERVIEW = 'Overview',
+  VERSIONS = 'Version history',
+  CONFIG = 'Config',
+  DASHBOARDS = 'Dashboards',
+}

@@ -1,17 +1,21 @@
 package influxdb
 
 import (
+	"fmt"
 	"strconv"
-	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 type InfluxdbQueryParser struct{}
 
-func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.DatasourceInfo) (*Query, error) {
+func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery) (*Query, error) {
+	model, err := simplejson.NewJson(query.JSON)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't unmarshal query")
+	}
+
 	policy := model.Get("policy").MustString("default")
 	rawQuery := model.Get("query").MustString("")
 	useRawQuery := model.Get("rawQuery").MustBool(false)
@@ -40,13 +44,6 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.Data
 		return nil, err
 	}
 
-	queryInterval := model.Get("interval").MustString("")
-	intervalMS := model.Get("intervalMs").MustInt(0)
-	parsedInterval, err := tsdb.GetIntervalFrom(dsInfo.TimeInterval, queryInterval, int64(intervalMS), time.Millisecond*1)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Query{
 		Measurement:  measurement,
 		Policy:       policy,
@@ -55,7 +52,7 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.Data
 		Tags:         tags,
 		Selects:      selects,
 		RawQuery:     rawQuery,
-		Interval:     parsedInterval,
+		Interval:     query.Interval,
 		Alias:        alias,
 		UseRawQuery:  useRawQuery,
 		Tz:           tz,

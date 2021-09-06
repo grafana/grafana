@@ -29,6 +29,7 @@ export {
   DatePickerWithInput,
   DatePickerWithInputProps,
 } from './DateTimePickers/DatePickerWithInput/DatePickerWithInput';
+export { DateTimePicker } from './DateTimePickers/DateTimePicker/DateTimePicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
@@ -41,7 +42,14 @@ export { QueryField } from './QueryField/QueryField';
 
 // Code editor
 export { CodeEditor } from './Monaco/CodeEditorLazy';
-export { Monaco, MonacoEditor, CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './Monaco/types';
+export {
+  Monaco,
+  monacoTypes,
+  MonacoEditor,
+  MonacoOptions as CodeEditorMonacoOptions,
+  CodeEditorSuggestionItem,
+  CodeEditorSuggestionItemKind,
+} from './Monaco/types';
 export { variableSuggestionToCodeEditorSuggestion } from './Monaco/utils';
 
 // TODO: namespace

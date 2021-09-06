@@ -290,8 +290,9 @@ func searchUser(c *models.ReqContext) (*models.SearchUsersQuery, error) {
 	}
 
 	searchQuery := c.Query("query")
+	filter := c.Query("filter")
 
-	query := &models.SearchUsersQuery{Query: searchQuery, Page: page, Limit: perPage}
+	query := &models.SearchUsersQuery{Query: searchQuery, Filter: models.SearchUsersFilter(filter), Page: page, Limit: perPage}
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
 	}

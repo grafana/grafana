@@ -1,6 +1,6 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // NOTE: This file will be auto generated from models.cue
-// It is currenty hand written but will serve as the target for cuetsy
+// It is currently hand written but will serve as the target for cuetsy
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 export enum AxisPlacement {
@@ -144,6 +144,7 @@ export interface AxisConfig {
   axisWidth?: number; // pixels ideally auto?
   axisSoftMin?: number;
   axisSoftMax?: number;
+  axisGridShow?: boolean;
   scaleDistribution?: ScaleDistributionConfig;
 }
 

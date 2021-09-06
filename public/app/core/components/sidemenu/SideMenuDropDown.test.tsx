@@ -23,7 +23,7 @@ describe('SideMenuDropDown', () => {
     expect(text).toBeInTheDocument();
   });
 
-  it('attaches the link to the header text if provided', () => {
+  it('attaches the header url to the header text if provided', () => {
     render(
       <BrowserRouter>
         <SideMenuDropDown headerText={mockHeaderText} headerUrl={mockHeaderUrl} />
@@ -31,6 +31,7 @@ describe('SideMenuDropDown', () => {
     );
     const link = screen.getByRole('link', { name: mockHeaderText });
     expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', mockHeaderUrl);
   });
 
   it('calls the onHeaderClick function when the header is clicked', () => {

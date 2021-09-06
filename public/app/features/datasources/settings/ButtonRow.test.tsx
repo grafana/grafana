@@ -2,6 +2,14 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import ButtonRow, { Props } from './ButtonRow';
 
+jest.mock('app/core/core', () => {
+  return {
+    contextSrv: {
+      hasPermission: () => true,
+    },
+  };
+});
+
 const setup = (propOverrides?: object) => {
   const props: Props = {
     isReadOnly: true,
