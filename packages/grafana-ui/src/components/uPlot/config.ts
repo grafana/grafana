@@ -2,7 +2,7 @@ import { SelectableValue } from '@grafana/data';
 import {
   AxisPlacement,
   BarAlignment,
-  DrawStyle,
+  GraphDrawStyle,
   GraphGradientMode,
   GraphTresholdsStyleMode,
   LineInterpolation,
@@ -15,10 +15,10 @@ import {
  */
 export const graphFieldOptions = {
   drawStyle: [
-    { label: 'Lines', value: DrawStyle.Line },
-    { label: 'Bars', value: DrawStyle.Bars },
-    { label: 'Points', value: DrawStyle.Points },
-  ] as Array<SelectableValue<DrawStyle>>,
+    { label: 'Lines', value: GraphDrawStyle.Line },
+    { label: 'Bars', value: GraphDrawStyle.Bars },
+    { label: 'Points', value: GraphDrawStyle.Points },
+  ] as Array<SelectableValue<GraphDrawStyle>>,
 
   lineInterpolation: [
     { description: 'Linear', value: LineInterpolation.Linear, icon: 'gf-interpolation-linear' },

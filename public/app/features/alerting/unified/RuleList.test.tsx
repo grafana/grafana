@@ -3,10 +3,11 @@ import { render, waitFor } from '@testing-library/react';
 import { configureStore } from 'app/store/configureStore';
 import { Provider } from 'react-redux';
 import { RuleList } from './RuleList';
-import { byRole, byTestId, byText } from 'testing-library-selector';
+import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { getAllDataSources } from './utils/config';
 import { fetchRules } from './api/prometheus';
+import { fetchRulerRules, deleteRulerRulesGroup, deleteNamespace, setRulerRuleGroup } from './api/ruler';
 import {
   mockDataSource,
   mockPromAlert,
@@ -15,6 +16,8 @@ import {
   mockPromRuleGroup,
   mockPromRuleNamespace,
   MockDataSourceSrv,
+  somePromRules,
+  someRulerRules,
 } from './mocks';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { SerializedError } from '@reduxjs/toolkit';
@@ -24,18 +27,32 @@ import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { Router } from 'react-router-dom';
 
 jest.mock('./api/prometheus');
+jest.mock('./api/ruler');
 jest.mock('./utils/config');
+jest.mock('app/core/core', () => ({
+  appEvents: {
+    subscribe: () => {
+      return { unsubscribe: () => {} };
+    },
+    emit: () => {},
+  },
+}));
 
 const mocks = {
   getAllDataSourcesMock: typeAsJestMock(getAllDataSources),
 
   api: {
     fetchRules: typeAsJestMock(fetchRules),
+    fetchRulerRules: typeAsJestMock(fetchRulerRules),
+    deleteGroup: typeAsJestMock(deleteRulerRulesGroup),
+    deleteNamespace: typeAsJestMock(deleteNamespace),
+    setRulerRuleGroup: typeAsJestMock(setRulerRuleGroup),
   },
 };
 
 const renderRuleList = () => {
   const store = configureStore();
+  locationService.push('/');
 
   return render(
     <Provider store={store}>
@@ -78,6 +95,14 @@ const ui = {
   expandedContent: byTestId('expanded-content'),
   rulesFilterInput: byTestId('search-query-input'),
   moreErrorsButton: byRole('button', { name: /more errors/ }),
+  editCloudGroupIcon: byTestId('edit-group'),
+
+  editGroupModal: {
+    namespaceInput: byLabelText('Namespace'),
+    ruleGroupInput: byLabelText('Rule group'),
+    intervalInput: byLabelText('Rule group evaluation interval'),
+    saveButton: byRole('button', { name: /Save changes/ }),
+  },
 };
 
 describe('RuleList', () => {
@@ -309,7 +334,7 @@ describe('RuleList', () => {
   it('filters rules and alerts by labels', async () => {
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
-
+    mocks.api.fetchRulerRules.mockResolvedValue({});
     mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
       if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
         return Promise.resolve([]);
@@ -406,13 +431,12 @@ describe('RuleList', () => {
     expect(groups).toHaveLength(2);
 
     const filterInput = ui.rulesFilterInput.get();
-    userEvent.type(filterInput, '{foo="bar"}');
+    await userEvent.type(filterInput, '{foo="bar"}');
 
     // Input is debounced so wait for it to be visible
-    waitFor(() => expect(filterInput).toHaveTextContent('{foo="bar"}'));
+    await waitFor(() => expect(filterInput).toHaveValue('{foo="bar"}'));
     // Group doesn't contain matching labels
-    waitFor(() => expect(groups[1]).not.toBeVisible());
-    expect(groups[0]).toBeVisible();
+    await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
 
     userEvent.click(ui.groupCollapseToggle.get(groups[0]));
 
@@ -425,20 +449,126 @@ describe('RuleList', () => {
     expect(ruleDetails).toHaveTextContent('Labelsseverity=warningfoo=bar');
 
     // Check for different label matchers
-    userEvent.type(filterInput, '{foo!="bar"}');
-    waitFor(() => expect(filterInput).toHaveTextContent('{foo!="bar"}'));
+    await userEvent.type(filterInput, '{selectall}{del}{foo!="bar",foo!="baz"}');
     // Group doesn't contain matching labels
-    waitFor(() => expect(groups[0]).not.toBeVisible());
-    expect(groups[1]).toBeVisible();
+    await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
+    await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
 
-    userEvent.type(filterInput, '{foo=~"b.+"}');
-    waitFor(() => expect(filterInput).toHaveTextContent('{foo=~"b.+"}'));
-    expect(groups[0]).toBeVisible();
-    expect(groups[1]).toBeVisible();
+    await userEvent.type(filterInput, '{selectall}{del}{foo=~"b.+"}');
+    await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(2));
 
-    userEvent.type(filterInput, '{region="US"}');
-    waitFor(() => expect(filterInput).toHaveTextContent('{region="US"}'));
-    waitFor(() => expect(groups[0]).not.toBeVisible());
-    expect(groups[1]).toBeVisible();
+    await userEvent.type(filterInput, '{selectall}{del}{region="US"}');
+    await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
+    await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
+  });
+
+  describe('edit lotex groups, namespaces', () => {
+    const testDatasources = {
+      prom: dataSources.prom,
+    };
+
+    function testCase(name: string, fn: () => Promise<void>) {
+      it(name, async () => {
+        mocks.getAllDataSourcesMock.mockReturnValue(Object.values(testDatasources));
+        setDataSourceSrv(new MockDataSourceSrv(testDatasources));
+        mocks.api.fetchRules.mockImplementation((sourceName) =>
+          Promise.resolve(sourceName === testDatasources.prom.name ? somePromRules() : [])
+        );
+        mocks.api.fetchRulerRules.mockImplementation((sourceName) =>
+          Promise.resolve(sourceName === testDatasources.prom.name ? someRulerRules : {})
+        );
+        mocks.api.setRulerRuleGroup.mockResolvedValue();
+        mocks.api.deleteNamespace.mockResolvedValue();
+
+        await renderRuleList();
+
+        expect(await ui.rulesFilterInput.find()).toHaveValue('');
+
+        const groups = await ui.ruleGroup.findAll();
+        expect(groups).toHaveLength(3);
+
+        // open edit dialog
+        userEvent.click(ui.editCloudGroupIcon.get(groups[0]));
+
+        expect(ui.editGroupModal.namespaceInput.get()).toHaveValue('namespace1');
+        expect(ui.editGroupModal.ruleGroupInput.get()).toHaveValue('group1');
+        await fn();
+      });
+    }
+
+    testCase('rename both lotex namespace and group', async () => {
+      // make changes to form
+      userEvent.clear(ui.editGroupModal.namespaceInput.get());
+      await userEvent.type(ui.editGroupModal.namespaceInput.get(), 'super namespace');
+
+      userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
+      await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
+
+      await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
+
+      // submit, check that appropriate calls were made
+      userEvent.click(ui.editGroupModal.saveButton.get());
+
+      await waitFor(() => expect(ui.editGroupModal.namespaceInput.query()).not.toBeInTheDocument());
+
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledTimes(2);
+      expect(mocks.api.deleteNamespace).toHaveBeenCalledTimes(1);
+      expect(mocks.api.deleteGroup).not.toHaveBeenCalled();
+      expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(1, testDatasources.prom.name, 'super namespace', {
+        ...someRulerRules['namespace1'][0],
+        name: 'super group',
+        interval: '5m',
+      });
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(
+        2,
+        testDatasources.prom.name,
+        'super namespace',
+        someRulerRules['namespace1'][1]
+      );
+      expect(mocks.api.deleteNamespace).toHaveBeenLastCalledWith('Prometheus', 'namespace1');
+    });
+
+    testCase('rename just the lotex group', async () => {
+      // make changes to form
+      userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
+      await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
+      await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
+
+      // submit, check that appropriate calls were made
+      userEvent.click(ui.editGroupModal.saveButton.get());
+
+      await waitFor(() => expect(ui.editGroupModal.namespaceInput.query()).not.toBeInTheDocument());
+
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledTimes(1);
+      expect(mocks.api.deleteGroup).toHaveBeenCalledTimes(1);
+      expect(mocks.api.deleteNamespace).not.toHaveBeenCalled();
+      expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(1, testDatasources.prom.name, 'namespace1', {
+        ...someRulerRules['namespace1'][0],
+        name: 'super group',
+        interval: '5m',
+      });
+      expect(mocks.api.deleteGroup).toHaveBeenLastCalledWith('Prometheus', 'namespace1', 'group1');
+    });
+
+    testCase('edit lotex group eval interval, no renaming', async () => {
+      // make changes to form
+      await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
+
+      // submit, check that appropriate calls were made
+      userEvent.click(ui.editGroupModal.saveButton.get());
+
+      await waitFor(() => expect(ui.editGroupModal.namespaceInput.query()).not.toBeInTheDocument());
+
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledTimes(1);
+      expect(mocks.api.deleteGroup).not.toHaveBeenCalled();
+      expect(mocks.api.deleteNamespace).not.toHaveBeenCalled();
+      expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
+      expect(mocks.api.setRulerRuleGroup).toHaveBeenNthCalledWith(1, testDatasources.prom.name, 'namespace1', {
+        ...someRulerRules['namespace1'][0],
+        interval: '5m',
+      });
+    });
   });
 });

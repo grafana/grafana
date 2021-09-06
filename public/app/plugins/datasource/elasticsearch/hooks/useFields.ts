@@ -34,6 +34,8 @@ const getFilter = (type: AggregationType) => {
         return ['date'];
       case 'geohash_grid':
         return ['geo_point'];
+      case 'histogram':
+        return ['number'];
       default:
         return [];
     }

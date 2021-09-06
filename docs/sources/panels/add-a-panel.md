@@ -31,14 +31,14 @@ In the Visualization list, click a visualization type. Grafana displays a previe
 
 ![](/static/img/docs/panel-editor/select-visualization-8-0.png)
 
-For more information about individual visualizations, refer to [Visualizations options]({{< relref "visualizations/_index.md" >}}).
+For more information about individual visualizations, refer to [Visualizations options]({{< relref "../visualizations/_index.md" >}}).
 
 ## 4. (Optional) Edit panel settings
 
 While not required, most visualizations need some adjustment before they properly display the information that you need. Options are defined in the linked topics below.
 
 - [Panel options]({{< relref "./panel-options.md" >}})
-- [Visualization-specific options]({{< relref "./visualizations/_index.md" >}})
+- [Visualization-specific options]({{< relref "../visualizations/_index.md" >}})
 - [Standard options]({{< relref "./standard-options.md" >}})
 - [Thresholds]({{< relref "./thresholds.md" >}})
 - [Value mappings]({{< relref "./value-mappings.md" >}})

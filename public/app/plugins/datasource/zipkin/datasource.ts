@@ -28,8 +28,13 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
       if (!this.uploadedJson) {
         return of({ data: [] });
       }
-      const traceData = JSON.parse(this.uploadedJson as string);
-      return of(responseToDataQueryResponse({ data: traceData }));
+
+      try {
+        const traceData = JSON.parse(this.uploadedJson as string);
+        return of(responseToDataQueryResponse({ data: traceData }));
+      } catch (error) {
+        return of({ error: { message: 'JSON is not valid Zipkin format' }, data: [] });
+      }
     }
 
     if (target.query) {

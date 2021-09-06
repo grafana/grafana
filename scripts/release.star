@@ -123,9 +123,9 @@ def get_steps(edition, ver_mode):
         edition2 = 'enterprise2'
         steps.extend([
             package_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
-            upload_cdn(edition=edition2),
             e2e_tests_server_step(edition=edition2, port=3002),
             e2e_tests_step(edition=edition2, port=3002, tries=3),
+            upload_cdn(edition=edition2),
         ])
         if should_upload:
             steps.append(upload_packages_step(edition=edition2, ver_mode=ver_mode))

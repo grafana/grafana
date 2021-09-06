@@ -1,4 +1,4 @@
-import { DrawStyle, StackingMode } from '@grafana/schema';
+import { GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { lastValueFrom } from 'rxjs';
 import {
   ArrayVector,
@@ -365,7 +365,7 @@ describe('decorateWithLogsResult', () => {
                 decimals: 0,
                 unit: undefined,
                 custom: {
-                  drawStyle: DrawStyle.Bars,
+                  drawStyle: GraphDrawStyle.Bars,
                   barAlignment: 0,
                   barMaxWidth: 5,
                   barWidthFactor: 0.9,

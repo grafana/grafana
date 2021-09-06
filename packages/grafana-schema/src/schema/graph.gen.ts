@@ -1,6 +1,6 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // NOTE: This file will be auto generated from models.cue
-// It is currenty hand written but will serve as the target for cuetsy
+// It is currently hand written but will serve as the target for cuetsy
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 export enum AxisPlacement {
@@ -16,7 +16,7 @@ export enum PointVisibility {
   Auto = 'auto',
   Never = 'never',
 }
-export enum DrawStyle {
+export enum GraphDrawStyle {
   Bars = 'bars',
   Line = 'line',
   Points = 'points',
@@ -144,6 +144,7 @@ export interface AxisConfig {
   axisWidth?: number; // pixels ideally auto?
   axisSoftMin?: number;
   axisSoftMax?: number;
+  axisGridShow?: boolean;
   scaleDistribution?: ScaleDistributionConfig;
 }
 
@@ -207,7 +208,7 @@ export interface GraphFieldConfig
     BarConfig,
     StackableFieldConfig,
     HideableFieldConfig {
-  drawStyle?: DrawStyle;
+  drawStyle?: GraphDrawStyle;
   gradientMode?: GraphGradientMode;
   thresholdsStyle?: GraphThresholdsStyleConfig;
 }

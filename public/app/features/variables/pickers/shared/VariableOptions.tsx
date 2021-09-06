@@ -61,14 +61,8 @@ export class VariableOptions extends PureComponent<Props> {
     const highlightClass = index === highlightIndex ? `${selectClass} highlighted` : selectClass;
 
     return (
-      <li>
-        <a
-          key={`${option.value}`}
-          role="checkbox"
-          aria-checked={option.selected}
-          className={highlightClass}
-          onClick={this.onToggle(option)}
-        >
+      <li key={`${option.value}`}>
+        <a role="checkbox" aria-checked={option.selected} className={highlightClass} onClick={this.onToggle(option)}>
           <span className="variable-option-icon"></span>
           <span data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
             {option.text}

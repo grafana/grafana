@@ -50,6 +50,8 @@ func TestScuemataBasics(t *testing.T) {
 }
 
 func TestDevenvDashboardValidity(t *testing.T) {
+	t.Skip()
+
 	validdir := filepath.Join("..", "..", "..", "devenv", "dev-dashboards")
 
 	doTest := func(sch schema.VersionedCueSchema) func(t *testing.T) {

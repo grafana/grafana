@@ -5,7 +5,7 @@ pkg/
 node_modules
 public/vendor/
 vendor/
-data/
+/data/
 e2e/tmp
 public/build/
 public/sass/*.generated.scss

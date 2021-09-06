@@ -1,4 +1,4 @@
-import { GraphFieldConfig, DrawStyle } from '@grafana/schema';
+import { GraphFieldConfig, GraphDrawStyle } from '@grafana/schema';
 import { PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { XYChartPanel } from './XYChartPanel';
@@ -10,7 +10,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
   .useFieldConfig(
     getGraphFieldConfig({
       ...defaultGraphConfig,
-      drawStyle: DrawStyle.Points,
+      drawStyle: GraphDrawStyle.Points,
     })
   )
   .setPanelOptions((builder) => {

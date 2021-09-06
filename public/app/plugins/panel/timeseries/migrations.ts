@@ -16,7 +16,7 @@ import {
   LegendDisplayMode,
   TooltipDisplayMode,
   AxisPlacement,
-  DrawStyle,
+  GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
   GraphTresholdsStyleMode,
@@ -173,7 +173,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
             if (v) {
               rule.properties.push({
                 id: 'custom.drawStyle',
-                value: DrawStyle.Bars,
+                value: GraphDrawStyle.Bars,
               });
               rule.properties.push({
                 id: 'custom.fillOpacity',
@@ -182,7 +182,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
             } else {
               rule.properties.push({
                 id: 'custom.drawStyle',
-                value: DrawStyle.Line, // Change from bars
+                value: GraphDrawStyle.Line, // Change from bars
               });
             }
             break;
@@ -257,7 +257,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   }
 
   const graph = y1.custom ?? ({} as GraphFieldConfig);
-  graph.drawStyle = angular.bars ? DrawStyle.Bars : angular.lines ? DrawStyle.Line : DrawStyle.Points;
+  graph.drawStyle = angular.bars ? GraphDrawStyle.Bars : angular.lines ? GraphDrawStyle.Line : GraphDrawStyle.Points;
 
   if (angular.points) {
     graph.showPoints = PointVisibility.Always;
@@ -265,7 +265,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     if (isNumber(angular.pointradius)) {
       graph.pointSize = 2 + angular.pointradius * 2;
     }
-  } else if (graph.drawStyle !== DrawStyle.Points) {
+  } else if (graph.drawStyle !== GraphDrawStyle.Points) {
     graph.showPoints = PointVisibility.Never;
   }
 
@@ -291,7 +291,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     graph.lineInterpolation = LineInterpolation.StepAfter;
   }
 
-  if (graph.drawStyle === DrawStyle.Bars) {
+  if (graph.drawStyle === GraphDrawStyle.Bars) {
     graph.fillOpacity = 100; // bars were always
   }
 

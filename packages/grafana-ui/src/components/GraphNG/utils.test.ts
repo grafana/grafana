@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import {
   BarAlignment,
-  DrawStyle,
+  GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
@@ -36,7 +36,7 @@ function mockDataFrame() {
     displayName: 'Metric 1',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       gradientMode: GraphGradientMode.Opacity,
       lineColor: '#ff0000',
       lineWidth: 2,
@@ -60,7 +60,7 @@ function mockDataFrame() {
     displayName: 'Metric 2',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Bars,
+      drawStyle: GraphDrawStyle.Bars,
       gradientMode: GraphGradientMode.Hue,
       lineColor: '#ff0000',
       lineWidth: 2,
@@ -84,7 +84,7 @@ function mockDataFrame() {
     displayName: 'Metric 3',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Line,
+      drawStyle: GraphDrawStyle.Line,
       gradientMode: GraphGradientMode.Opacity,
       lineColor: '#ff0000',
       lineWidth: 2,
@@ -107,7 +107,7 @@ function mockDataFrame() {
     displayName: 'Metric 4',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Bars,
+      drawStyle: GraphDrawStyle.Bars,
       gradientMode: GraphGradientMode.Hue,
       lineColor: '#ff0000',
       lineWidth: 2,
@@ -130,7 +130,7 @@ function mockDataFrame() {
     displayName: 'Metric 4',
     decimals: 2,
     custom: {
-      drawStyle: DrawStyle.Bars,
+      drawStyle: GraphDrawStyle.Bars,
       gradientMode: GraphGradientMode.Hue,
       lineColor: '#ff0000',
       lineWidth: 2,

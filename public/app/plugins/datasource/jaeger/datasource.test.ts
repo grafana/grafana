@@ -89,6 +89,18 @@ describe('JaegerDatasource', () => {
     expect(field.values.length).toBe(2);
   });
 
+  it('should fail on invalid json file upload', async () => {
+    const ds = new JaegerDatasource(defaultSettings);
+    ds.uploadedJson = JSON.stringify({ key: 'value', arr: [] });
+    const response = await lastValueFrom(
+      ds.query({
+        targets: [{ queryType: 'upload', refId: 'A' }],
+      } as any)
+    );
+    expect(response.error?.message).toBeDefined();
+    expect(response.data.length).toBe(0);
+  });
+
   it('should return search results when the query type is search', async () => {
     const mock = setupFetchMock({ data: [testResponse] });
     const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
