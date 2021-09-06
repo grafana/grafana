@@ -8,29 +8,41 @@ import (
 	"strconv"
 	"strings"
 
+	mssql "github.com/denisenkom/go-mssqldb"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
-
-	mssql "github.com/denisenkom/go-mssqldb"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var logger = log.New("tsdb.mssql")
 
+func ProvideService(dsService *datasources.Service) *Service {
+	return &Service{
+		dsService: dsService,
+		logger:    log.New("tsdb.mssql"),
+	}
+}
+
+type Service struct {
+	dsService *datasources.Service
+	logger    log.Logger
+}
+
 //nolint: staticcheck // plugins.DataPlugin deprecated
-func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
-	cnnstr, err := generateConnectionString(datasource)
+func (s *Service) NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
+	cnnstr, err := s.generateConnectionString(datasource)
 	if err != nil {
 		return nil, err
 	}
 	// TODO: Don't use global
 	if setting.Env == setting.Dev {
-		logger.Debug("getEngine", "connection", cnnstr)
+		s.logger.Debug("getEngine", "connection", cnnstr)
 	}
 
 	config := sqleng.DataPluginConfiguration{
@@ -41,10 +53,10 @@ func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 	}
 
 	queryResultTransformer := mssqlQueryResultTransformer{
-		log: logger,
+		log: s.logger,
 	}
 
-	return sqleng.NewDataPlugin(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+	return sqleng.NewDataPlugin(config, &queryResultTransformer, newMssqlMacroEngine(), s.logger)
 }
 
 // ParseURL tries to parse an MSSQL URL string into a URL object.
@@ -68,7 +80,7 @@ func ParseURL(u string) (*url.URL, error) {
 	}, nil
 }
 
-func generateConnectionString(dataSource *models.DataSource) (string, error) {
+func (s *Service) generateConnectionString(dataSource *models.DataSource) (string, error) {
 	const dfltPort = "0"
 	var addr util.NetworkAddress
 	if dataSource.Url != "" {
@@ -94,13 +106,13 @@ func generateConnectionString(dataSource *models.DataSource) (string, error) {
 		args = append(args, "port", addr.Port)
 	}
 
-	logger.Debug("Generating connection string", args...)
+	s.logger.Debug("Generating connection string", args...)
 	encrypt := dataSource.JsonData.Get("encrypt").MustString("false")
 	connStr := fmt.Sprintf("server=%s;database=%s;user id=%s;password=%s;",
 		addr.Host,
 		dataSource.Database,
 		dataSource.User,
-		dataSource.DecryptedPassword(),
+		s.dsService.DecryptedPassword(dataSource),
 	)
 	// Port number 0 means to determine the port automatically, so we can let the driver choose
 	if addr.Port != "0" {

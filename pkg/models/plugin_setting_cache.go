@@ -1,5 +1,20 @@
 package models
 
+import (
+	"sync"
+	"time"
+)
+
+type cachedDecryptedJSON struct {
+	updated time.Time
+	json    map[string]string
+}
+
+type secureJSONDecryptionCache struct {
+	cache map[int64]cachedDecryptedJSON
+	sync.Mutex
+}
+
 var pluginSettingDecryptionCache = secureJSONDecryptionCache{
 	cache: make(map[int64]cachedDecryptedJSON),
 }

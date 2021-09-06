@@ -8,27 +8,30 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func ProvideService(cfg *setting.Cfg) *PostgresService {
+func ProvideService(dsService *datasources.Service, cfg *setting.Cfg) *PostgresService {
 	logger := log.New("tsdb.postgres")
+
 	return &PostgresService{
 		Cfg:        cfg,
 		logger:     logger,
-		tlsManager: newTLSManager(logger, cfg.DataPath),
+		dsService:  dsService,
+		tlsManager: newTLSManager(dsService, logger, cfg.DataPath),
 	}
 }
 
 type PostgresService struct {
 	Cfg        *setting.Cfg
 	logger     log.Logger
+	dsService  *datasources.Service
 	tlsManager tlsSettingsProvider
 }
 
@@ -97,7 +100,7 @@ func (s *PostgresService) generateConnectionString(datasource *models.DataSource
 	}
 
 	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s'",
-		escape(datasource.User), escape(datasource.DecryptedPassword()), escape(host), escape(datasource.Database))
+		escape(datasource.User), escape(s.dsService.DecryptedPassword(datasource)), escape(host), escape(datasource.Database))
 	if port > 0 {
 		connStr += fmt.Sprintf(" port=%d", port)
 	}

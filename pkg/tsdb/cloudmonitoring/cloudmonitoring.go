@@ -16,14 +16,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/oauth2/google"
 )
@@ -66,11 +66,13 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func ProvideService(cfg *setting.Cfg, pluginManager plugins.Manager, httpClientProvider httpclient.Provider) *Service {
+func ProvideService(cfg *setting.Cfg, pluginManager plugins.Manager, httpClientProvider httpclient.Provider,
+	dsService *datasources.Service) *Service {
 	return &Service{
 		PluginManager:      pluginManager,
 		HTTPClientProvider: httpClientProvider,
 		Cfg:                cfg,
+		dsService:          dsService,
 	}
 }
 
@@ -78,6 +80,7 @@ type Service struct {
 	PluginManager      plugins.Manager
 	HTTPClientProvider httpclient.Provider
 	Cfg                *setting.Cfg
+	dsService          *datasources.Service
 }
 
 // Executor executes queries for the CloudMonitoring datasource.
@@ -91,7 +94,7 @@ type Executor struct {
 // NewExecutor returns an Executor.
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-	httpClient, err := dsInfo.GetHTTPClient(s.HTTPClientProvider)
+	httpClient, err := s.dsService.GetHTTPClient(dsInfo, s.HTTPClientProvider)
 	if err != nil {
 		return nil, err
 	}

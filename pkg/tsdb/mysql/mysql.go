@@ -10,15 +10,16 @@ import (
 	"time"
 
 	"github.com/VividCortex/mysqlerr"
+	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -32,12 +33,22 @@ func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
+func ProvideService(dsService *datasources.Service) *Service {
+	return &Service{
+		dsService: dsService,
+		logger:    log.New("tsdb.mysql"),
+	}
+}
+
+type Service struct {
+	dsService *datasources.Service
+	logger    log.Logger
+}
+
 //nolint: staticcheck // plugins.DataPlugin deprecated
-func New(httpClientProvider httpclient.Provider) func(datasource *models.DataSource) (plugins.DataPlugin, error) {
+func (s *Service) New(httpClientProvider httpclient.Provider) func(datasource *models.DataSource) (plugins.DataPlugin, error) {
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	return func(datasource *models.DataSource) (plugins.DataPlugin, error) {
-		logger := log.New("tsdb.mysql")
-
 		protocol := "tcp"
 		if strings.HasPrefix(datasource.Url, "/") {
 			protocol = "unix"
@@ -45,13 +56,12 @@ func New(httpClientProvider httpclient.Provider) func(datasource *models.DataSou
 
 		cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
 			characterEscape(datasource.User, ":"),
-			datasource.DecryptedPassword(),
+			s.dsService.DecryptedPassword(datasource),
 			protocol,
 			characterEscape(datasource.Url, ")"),
-			characterEscape(datasource.Database, "?"),
-		)
+			characterEscape(datasource.Database, "?"))
 
-		tlsConfig, err := datasource.GetTLSConfig(httpClientProvider)
+		tlsConfig, err := s.dsService.GetTLSConfig(datasource, httpClientProvider)
 		if err != nil {
 			return nil, err
 		}
@@ -84,10 +94,10 @@ func New(httpClientProvider httpclient.Provider) func(datasource *models.DataSou
 		}
 
 		rowTransformer := mysqlQueryResultTransformer{
-			log: logger,
+			log: s.logger,
 		}
 
-		return sqleng.NewDataPlugin(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
+		return sqleng.NewDataPlugin(config, &rowTransformer, newMysqlMacroEngine(s.logger), s.logger)
 	}
 }
 

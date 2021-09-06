@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 var validateCertFunc = validateCertFilePaths
@@ -27,13 +28,15 @@ type datasourceCacheManager struct {
 }
 
 type tlsManager struct {
+	dsService       *datasources.Service
 	logger          log.Logger
 	dsCacheInstance datasourceCacheManager
 	dataPath        string
 }
 
-func newTLSManager(logger log.Logger, dataPath string) tlsSettingsProvider {
+func newTLSManager(dsService *datasources.Service, logger log.Logger, dataPath string) tlsSettingsProvider {
 	return &tlsManager{
+		dsService:       dsService,
 		logger:          logger,
 		dataPath:        dataPath,
 		dsCacheInstance: datasourceCacheManager{locker: newLocker()},
@@ -148,7 +151,7 @@ func writeCertFile(
 
 func (m *tlsManager) writeCertFiles(ds *models.DataSource, settings *tlsSettings) error {
 	m.logger.Debug("Writing TLS certificate files to disk")
-	decrypted := ds.DecryptedValues()
+	decrypted := m.dsService.DecryptedValues(ds)
 	tlsRootCert := decrypted["tlsCACert"]
 	tlsClientCert := decrypted["tlsClientCert"]
 	tlsClientKey := decrypted["tlsClientKey"]
