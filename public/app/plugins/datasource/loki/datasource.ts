@@ -176,7 +176,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           key: `${target.refId}_instant`,
         };
       }),
-      catchError((err: FetchError) => throwError(() => this.processError(err, target)))
+      catchError((err) => throwError(() => this.processError(err, target)))
     );
   };
 
