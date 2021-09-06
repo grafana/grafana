@@ -3,6 +3,7 @@ package influxdb
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -44,6 +45,15 @@ func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery) (*Query, error) {
 		return nil, err
 	}
 
+	interval := query.Interval
+
+	// we make sure it is at least 1 millisecond
+	minInterval := time.Millisecond
+
+	if interval < minInterval {
+		interval = minInterval
+	}
+
 	return &Query{
 		Measurement:  measurement,
 		Policy:       policy,
@@ -52,7 +62,7 @@ func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery) (*Query, error) {
 		Tags:         tags,
 		Selects:      selects,
 		RawQuery:     rawQuery,
-		Interval:     query.Interval,
+		Interval:     interval,
 		Alias:        alias,
 		UseRawQuery:  useRawQuery,
 		Tz:           tz,
