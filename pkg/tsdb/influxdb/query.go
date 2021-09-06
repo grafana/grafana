@@ -29,16 +29,13 @@ func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error
 		res += query.renderTz()
 	}
 
-	calculator := tsdb.NewCalculator(tsdb.CalculatorOptions{})
-	i, err := calculator.Calculate(queryContext.Queries[0].TimeRange, query.Interval, tsdb.Min)
-	if err != nil {
-		return "", err
-	}
+	intervalText := tsdb.FormatDuration(query.Interval)
+	intervalMs := int64(query.Interval / time.Millisecond)
 
 	res = strings.ReplaceAll(res, "$timeFilter", query.renderTimeFilter(queryContext))
-	res = strings.ReplaceAll(res, "$interval", i.Text)
-	res = strings.ReplaceAll(res, "$__interval_ms", strconv.FormatInt(i.Milliseconds(), 10))
-	res = strings.ReplaceAll(res, "$__interval", i.Text)
+	res = strings.ReplaceAll(res, "$interval", intervalText)
+	res = strings.ReplaceAll(res, "$__interval_ms", strconv.FormatInt(intervalMs, 10))
+	res = strings.ReplaceAll(res, "$__interval", intervalText)
 
 	return res, nil
 }
