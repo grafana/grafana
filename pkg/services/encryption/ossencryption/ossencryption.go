@@ -10,7 +10,6 @@ import (
 	"io"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
-
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/crypto/pbkdf2"
 )
