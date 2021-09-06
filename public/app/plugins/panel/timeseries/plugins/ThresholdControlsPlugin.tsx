@@ -68,6 +68,7 @@ export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = (
 
       const handle = (
         <ThresholdDragHandle
+          key={`${step.value}-${i}`}
           step={step}
           y={yPos}
           dragBounds={{ top: 0, bottom: plotInstance.bbox.height / window.devicePixelRatio }}
