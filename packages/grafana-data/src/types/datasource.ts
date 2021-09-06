@@ -232,6 +232,15 @@ abstract class DataSourceApi<
   abstract query(request: DataQueryRequest<TQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse>;
 
   /**
+   * Returns observable to get histogram data. If undefined is returned, histogram is not available for
+   * the given DataQueryRequest.
+   *
+   * Subscription to the returned observable may be created along with the query request (if auto loading
+   * the histogram is enabled, or on demand when the user clicks on load logs volume button)
+   */
+  getLogsVolumeQuery?(request?: DataQueryRequest<TQuery>): Observable<DataQueryResponse> | undefined;
+
+  /**
    * Test & verify datasource settings & connection details (returning TestingStatus)
    *
    * When verification fails - errors specific to the data source should be handled here and converted to

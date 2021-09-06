@@ -1,6 +1,6 @@
 // Libraries
 import { cloneDeep, isEmpty, map as lodashMap } from 'lodash';
-import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
+import { lastValueFrom, merge, Observable, of, throwError, tap } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import Prism from 'prismjs';
 
@@ -100,6 +100,29 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     };
 
     return getBackendSrv().fetch<Record<string, any>>(req);
+  }
+
+  getLogsVolumeQuery(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+    const histogramRequest = cloneDeep(request!);
+    histogramRequest.targets = histogramRequest.targets
+      .filter((target) => !isMetricsQuery(target.expr))
+      .map((target) => {
+        target.expr = `count_over_time(${target.expr}[${1 * histogramRequest.intervalMs}ms])`;
+        return target;
+      });
+
+    return new Observable((observer) => {
+      const subscription = this.query(histogramRequest!)
+        .pipe(
+          tap((value) => {
+            observer.next(value);
+          })
+        )
+        .subscribe();
+      return () => {
+        subscription.unsubscribe();
+      };
+    });
   }
 
   query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {

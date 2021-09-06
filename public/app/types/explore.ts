@@ -1,4 +1,4 @@
-import { Unsubscribable } from 'rxjs';
+import { Observable, Unsubscribable } from 'rxjs';
 import {
   AbsoluteTimeRange,
   DataFrame,
@@ -12,6 +12,7 @@ import {
   RawTimeRange,
   TimeRange,
   EventBusExtended,
+  DataQueryResponse,
 } from '@grafana/data';
 
 export enum ExploreId {
@@ -156,6 +157,10 @@ export interface ExploreItemState {
    * We are currently caching last 5 query responses.
    */
   cache: Array<{ key: string; value: PanelData }>;
+
+  logsVolumeQuery?: Observable<DataQueryResponse>;
+  logsVolume?: DataFrame[];
+  logsVolumeLoadingInProgress: boolean;
 }
 
 export interface ExploreUpdateState {

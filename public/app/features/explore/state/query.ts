@@ -1,13 +1,17 @@
 import { mergeMap, throttleTime } from 'rxjs/operators';
-import { identity, Unsubscribable, of } from 'rxjs';
+import { identity, Unsubscribable, of, Observable } from 'rxjs';
 import {
   DataQuery,
   DataQueryErrorType,
+  DataQueryResponse,
   DataSourceApi,
+  FieldCache,
+  FieldType,
   LoadingState,
   PanelData,
   PanelEvents,
   QueryFixAction,
+  toDataFrame,
   toLegacyResponseData,
 } from '@grafana/data';
 
@@ -35,6 +39,7 @@ import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
 import { createEmptyQueryResponse, createCacheKey, getResultsFromCache } from './utils';
+import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 
 //
 // Actions and Payloads
@@ -109,8 +114,37 @@ export interface QueryStoreSubscriptionPayload {
   exploreId: ExploreId;
   querySubscription: Unsubscribable;
 }
+
 export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionPayload>(
   'explore/queryStoreSubscription'
+);
+/**
+ * Contains information if the histogram can be displayed
+ */
+export interface StoreLogsVolumeQueryPayload {
+  exploreId: ExploreId;
+  /**
+   * if defined - histogram is available and subscription can be created
+   */
+  logsVolumeQuery?: Observable<DataQueryResponse>;
+}
+
+export const storeLogsVolumeQueryAction = createAction<StoreLogsVolumeQueryPayload>('explore/storeLogsVolumeQuery');
+
+/**
+ * Histogram data.
+ */
+export interface LogsVolumeLoadedPayload {
+  exploreId: ExploreId;
+  logsVolume: DataQueryResponse;
+}
+
+/**
+ * Passes logs volume data when it's loaded. May be called multiple times if multiple queries are entered in Explore.
+ */
+export const logsVolumeLoadedAction = createAction<LogsVolumeLoadedPayload>('explore/logsVolumeLoaded');
+export const logsVolumeLoadingInProgressAction = createAction<{ exploreId: ExploreId }>(
+  'explore/logsVolumeLoadingInProgress'
 );
 
 export interface QueryEndedPayload {
@@ -306,9 +340,11 @@ export function modifyQueries(
  */
 export const runQueries = (
   exploreId: ExploreId,
-  options?: { replaceUrl?: boolean; preserveCache?: boolean }
+  options?: { replaceUrl?: boolean; preserveCache?: boolean; autoLoadLogsVolume?: boolean }
 ): ThunkResult<void> => {
   return (dispatch, getState) => {
+    options = options || {};
+    options.autoLoadLogsVolume = window.location.href.includes('autoLoadHistogram=on');
     dispatch(updateTime({ exploreId }));
 
     // We always want to clear cache unless we explicitly pass preserveCache parameter
@@ -439,6 +475,19 @@ export const runQueries = (
             console.error(error);
           }
         );
+
+      const logsVolumeQuery = datasourceInstance.getLogsVolumeQuery
+        ? datasourceInstance.getLogsVolumeQuery(transaction.request)
+        : undefined;
+      dispatch(
+        storeLogsVolumeQueryAction({
+          exploreId,
+          logsVolumeQuery,
+        })
+      );
+      if (options?.autoLoadLogsVolume && logsVolumeQuery) {
+        dispatch(loadLogsVolume(exploreId));
+      }
     }
 
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
@@ -492,6 +541,18 @@ export function addResultsToCache(exploreId: ExploreId): ThunkResult<void> {
 export function clearCache(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     dispatch(clearCacheAction({ exploreId }));
+  };
+}
+
+export function loadLogsVolume(exploreId: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const state = getState().explore[exploreId]!;
+    const logsVolumeQuery = state.logsVolumeQuery;
+
+    dispatch(logsVolumeLoadingInProgressAction({ exploreId }));
+    logsVolumeQuery?.subscribe((logsVolume) => {
+      dispatch(logsVolumeLoadedAction({ exploreId, logsVolume }));
+    });
   };
 }
 
@@ -637,6 +698,58 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       querySubscription,
+    };
+  }
+
+  if (storeLogsVolumeQueryAction.match(action)) {
+    const { logsVolumeQuery } = action.payload;
+    return {
+      ...state,
+      logsVolumeQuery,
+      logsVolume: undefined, // clear previous results
+      logsVolumeLoadingInProgress: false,
+    };
+  }
+
+  if (logsVolumeLoadedAction.match(action)) {
+    const { logsVolume } = action.payload;
+    const data = logsVolume?.data.map((series) => {
+      const data = toDataFrame(series);
+      const fieldCache = new FieldCache(data);
+
+      const valueField = fieldCache.getFirstFieldOfType(FieldType.number)!;
+
+      data.fields[valueField.index].config.min = 0;
+      data.fields[valueField.index].config.decimals = 0;
+
+      data.fields[valueField.index].config.custom = {
+        drawStyle: GraphDrawStyle.Bars,
+        barAlignment: BarAlignment.Center,
+        barWidthFactor: 0.9,
+        barMaxWidth: 5,
+        lineWidth: 0,
+        fillOpacity: 100,
+        stacking: {
+          mode: StackingMode.Normal,
+          group: 'A',
+        },
+      };
+      return data;
+    });
+
+    const result = (state.logsVolume || []).concat(data || []);
+
+    return {
+      ...state,
+      logsVolumeLoadingInProgress: false,
+      logsVolume: result,
+    };
+  }
+
+  if (logsVolumeLoadingInProgressAction.match(action)) {
+    return {
+      ...state,
+      logsVolumeLoadingInProgress: true,
     };
   }
 

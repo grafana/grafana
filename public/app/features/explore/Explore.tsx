@@ -6,7 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { ErrorBoundaryAlert, CustomScrollbar, Collapse, withTheme2, Themeable2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, CustomScrollbar, Collapse, withTheme2, Themeable2, Button } from '@grafana/ui';
 import { AbsoluteTimeRange, DataQuery, LoadingState, RawTimeRange, DataFrame, GrafanaTheme2 } from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
@@ -17,7 +17,7 @@ import ExploreQueryInspector from './ExploreQueryInspector';
 import { splitOpen } from './state/main';
 import { changeSize } from './state/explorePane';
 import { updateTimeRange } from './state/time';
-import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart } from './state/query';
+import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart, loadLogsVolume } from './state/query';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -206,6 +206,26 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
+  renderLogsVolume(width: number) {
+    const { logsVolume, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme } = this.props;
+    const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
+    return (
+      <Collapse label="Logs volume" loading={loading} isOpen>
+        <ExploreGraphNGPanel
+          data={logsVolume!}
+          height={150}
+          width={width - spacing}
+          tooltipDisplayMode={TooltipDisplayMode.Single}
+          absoluteRange={absoluteRange}
+          timeZone={timeZone}
+          onUpdateTimeRange={this.onUpdateTimeRange}
+          annotations={queryResponse.annotations}
+          splitOpenFn={splitOpen}
+        />
+      </Collapse>
+    );
+  }
+
   renderTablePanel(width: number) {
     const { exploreId, datasourceInstance } = this.props;
     return (
@@ -270,6 +290,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       exploreId,
       queryKeys,
       graphResult,
+      logsVolumeQuery,
+      logsVolume,
+      logsVolumeLoadingInProgress,
+      loadLogsVolume,
       queryResponse,
       isLive,
       theme,
@@ -320,6 +344,28 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showMetrics && graphResult && (
                             <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
                           )}
+                          {logsVolumeQuery && !logsVolume && !logsVolumeLoadingInProgress && (
+                            <Collapse label="Logs volume" isOpen={true}>
+                              <div style={{ height: '150px', textAlign: 'center', paddingTop: '50px' }}>
+                                <Button
+                                  size="lg"
+                                  onClick={() => {
+                                    loadLogsVolume(exploreId);
+                                  }}
+                                >
+                                  Load histogram
+                                </Button>
+                              </div>
+                            </Collapse>
+                          )}
+                          {logsVolumeLoadingInProgress && !logsVolume && (
+                            <Collapse label="Logs volume" isOpen={true}>
+                              <div style={{ height: '150px', textAlign: 'center', paddingTop: '50px' }}>
+                                Histogram is loading... <Button size="md">Cancel</Button>
+                              </div>
+                            </Collapse>
+                          )}
+                          {logsVolume && <ErrorBoundaryAlert>{this.renderLogsVolume(width)}</ErrorBoundaryAlert>}
                           {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
@@ -363,6 +409,9 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
+    logsVolumeQuery,
+    logsVolume,
+    logsVolumeLoadingInProgress,
     logsResult,
     showLogs,
     showMetrics,
@@ -380,6 +429,9 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     isLive,
     graphResult,
+    logsVolumeQuery,
+    logsVolume,
+    logsVolumeLoadingInProgress,
     logsResult: logsResult ?? undefined,
     absoluteRange,
     queryResponse,
@@ -401,6 +453,7 @@ const mapDispatchToProps = {
   scanStopAction,
   setQueries,
   updateTimeRange,
+  loadLogsVolume,
   addQueryRow,
   splitOpen,
 };
