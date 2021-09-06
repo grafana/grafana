@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { ChangeEvent, useCallback } from 'react';
 import {
   DataTransformerID,
   FieldNamePickerConfigSettings,
@@ -56,9 +56,9 @@ export const ConvertFieldTypeTransformerEditor: React.FC<TransformerUIProps<Conv
   );
 
   const onInputFormat = useCallback(
-    (idx) => (value: SelectableValue<string>) => {
+    (idx) => (e: ChangeEvent<HTMLInputElement>) => {
       const conversions = options.conversions;
-      conversions[idx] = { ...conversions[idx], dateFormat: value.value };
+      conversions[idx] = { ...conversions[idx], dateFormat: e.currentTarget.value };
       onChange({
         ...options,
         conversions: conversions,
