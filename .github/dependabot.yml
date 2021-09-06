@@ -14,15 +14,15 @@ updates:
       interval: "daily"
     ignore:
       # ignore minor/patch updates for now
-      - dependency-name: '*'
-        update-types: ['version-update:semver-minor', 'version-update:semver-patch']
+      - dependency-name: "*"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
       # things that will probably need some thinking
-      - dependency-name: 'd3'
-      - dependency-name: 'husky'
-      - dependency-name: 'slate'
-      - dependency-name: 'slate-plain-serializer'
+      - dependency-name: "d3"
+      - dependency-name: "husky"
+      - dependency-name: "slate"
+      - dependency-name: "slate-plain-serializer"
       # things i'm not sure we even use anymore
-      - dependency-name: 'zone.js'
+      - dependency-name: "zone.js"
     reviewers:
       - "grafana/grafana-frontend-platform"
     versioning-strategy: "increase-if-necessary"
