@@ -1,6 +1,5 @@
 load(
     'scripts/star/steps/lib.star',
-    'pipeline',
     'lint_backend_step',
     'codespell_step',
     'shellcheck_step',
@@ -23,7 +22,6 @@ load(
     'memcached_integration_tests_step',
     'get_windows_steps',
     'benchmark_ldap_step',
-    'ldap_service',
     'enterprise_downstream_step',
     'frontend_metrics_step',
     'publish_storybook_step',
@@ -31,11 +29,21 @@ load(
     'upload_packages_step',
     'push_to_deployment_tools_step',
     'publish_packages_step',
-    'notify_pipeline',
-    'integration_test_services',
     'upload_cdn_step',
     'validate_scuemata_step',
     'test_a11y_frontend_step'
+)
+
+load(
+    'scripts/star/services/services.star',
+    'integration_test_services',
+    'ldap_service',
+)
+
+load(
+    'scripts/star/utils/utils.star',
+    'pipeline',
+    'notify_pipeline',
 )
 
 ver_mode = 'main'

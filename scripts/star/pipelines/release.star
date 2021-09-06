@@ -3,7 +3,6 @@ load(
     'test_release_ver',
     'build_image',
     'publish_image',
-    'pipeline',
     'lint_backend_step',
     'codespell_step',
     'shellcheck_step',
@@ -25,15 +24,24 @@ load(
     'memcached_integration_tests_step',
     'get_windows_steps',
     'benchmark_ldap_step',
-    'ldap_service',
     'frontend_metrics_step',
     'publish_storybook_step',
     'upload_packages_step',
-    'notify_pipeline',
-    'integration_test_services',
     'publish_packages_step',
     'upload_cdn_step',
     'validate_scuemata_step'
+)
+
+load(
+    'scripts/star/services/services.star',
+    'integration_test_services',
+    'ldap_service',
+)
+
+load(
+    'scripts/star/utils/utils.star',
+    'pipeline',
+    'notify_pipeline',
 )
 
 def release_npm_packages_step(edition, ver_mode):

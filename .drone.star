@@ -8,7 +8,7 @@ load('scripts/star/pipelines/pr.star', 'pr_pipelines')
 load('scripts/star/pipelines/main.star', 'main_pipelines')
 load('scripts/star/pipelines/release.star', 'release_pipelines', 'test_release_pipelines')
 load('scripts/star/version.star', 'version_branch_pipelines')
-load('scripts/star/pipelines/job.star', 'cronjobs')
+load('scripts/star/pipelines/cron.star', 'cronjobs')
 load('scripts/star/vault.star', 'secrets')
 
 def main(ctx):

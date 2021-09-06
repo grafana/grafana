@@ -1,6 +1,5 @@
 load(
     'scripts/star/steps/lib.star',
-    'pipeline',
     'lint_backend_step',
     'codespell_step',
     'shellcheck_step',
@@ -23,9 +22,18 @@ load(
     'redis_integration_tests_step',
     'memcached_integration_tests_step',
     'benchmark_ldap_step',
-    'ldap_service',
-    'integration_test_services',
     'validate_scuemata_step',
+)
+
+load(
+    'scripts/star/services/services.star',
+    'integration_test_services',
+    'ldap_service',
+)
+
+load(
+    'scripts/star/utils/utils.star',
+    'pipeline',
 )
 
 ver_mode = 'pr'
