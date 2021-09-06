@@ -8,10 +8,13 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,6 +29,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
 	mng := tlsManager{
+		dsService:       datasources.ProvideService(bus.New(), nil, ossencryption.ProvideService()),
 		logger:          log.New("tsdb.postgres"),
 		dsCacheInstance: datasourceCacheManager{locker: newLocker()},
 		dataPath:        cfg.DataPath,
@@ -35,11 +39,18 @@ func TestDataSourceCacheManager(t *testing.T) {
 		"sslmode":                "verify-full",
 		"tlsConfigurationMethod": "file-content",
 	})
-	secureJSONData := securejsondata.GetEncryptedJsonData(map[string]string{
+
+	var (
+		err error
+		sjd securejsondata.SecureJsonData
+	)
+
+	sjd, err = mng.dsService.EncryptionService.EncryptJsonData(map[string]string{
 		"tlsClientCert": "I am client certification",
 		"tlsClientKey":  "I am client key",
 		"tlsCACert":     "I am CA certification",
-	})
+	}, setting.SecretKey)
+	require.NoError(t, err)
 
 	mockValidateCertFilePaths()
 	t.Cleanup(resetValidateCertFilePaths)
@@ -54,7 +65,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 					Version:        1,
 					Database:       "database",
 					JsonData:       jsonData,
-					SecureJsonData: secureJSONData,
+					SecureJsonData: sjd,
 					Uid:            "testData",
 				}
 				s := tlsSettings{}
@@ -87,7 +98,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 						Version:        2,
 						Database:       "database",
 						JsonData:       jsonData,
-						SecureJsonData: secureJSONData,
+						SecureJsonData: sjd,
 						Uid:            "testData",
 					}
 					s := tlsSettings{}
@@ -106,7 +117,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 				Version:        2,
 				Database:       "database",
 				JsonData:       jsonData,
-				SecureJsonData: secureJSONData,
+				SecureJsonData: sjd,
 				Uid:            "testData",
 			}
 			dsV3 := &models.DataSource{
@@ -114,7 +125,7 @@ func TestDataSourceCacheManager(t *testing.T) {
 				Version:        3,
 				Database:       "database",
 				JsonData:       jsonData,
-				SecureJsonData: secureJSONData,
+				SecureJsonData: sjd,
 				Uid:            "testData",
 			}
 			s := tlsSettings{}
@@ -236,18 +247,25 @@ func TestGetTLSSettings(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
-			var settings tlsSettings
-			var err error
+			encryptionService := ossencryption.ProvideService()
 			mng := tlsManager{
+				dsService:       datasources.ProvideService(bus.New(), nil, encryptionService),
 				logger:          log.New("tsdb.postgres"),
 				dsCacheInstance: datasourceCacheManager{locker: newLocker()},
 				dataPath:        cfg.DataPath,
 			}
 
+			var settings tlsSettings
+			var err error
+
 			jsonData := simplejson.NewFromAny(tt.jsonData)
+
+			sjd, err := encryptionService.EncryptJsonData(tt.secureJSONData, setting.SecretKey)
+			require.NoError(t, err)
+
 			ds := &models.DataSource{
 				JsonData:       jsonData,
-				SecureJsonData: securejsondata.GetEncryptedJsonData(tt.secureJSONData),
+				SecureJsonData: sjd,
 				Uid:            tt.uid,
 				Version:        tt.version,
 			}
