@@ -1,5 +1,5 @@
 load(
-    'scripts/lib.star',
+    'scripts/star/steps/lib.star',
     'pipeline',
     'lint_backend_step',
     'codespell_step',

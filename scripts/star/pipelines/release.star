@@ -1,5 +1,5 @@
 load(
-    'scripts/lib.star',
+    'scripts/star/steps/lib.star',
     'test_release_ver',
     'build_image',
     'publish_image',
