@@ -21,8 +21,6 @@ updates:
       - dependency-name: "husky"
       - dependency-name: "slate"
       - dependency-name: "slate-plain-serializer"
-      # things i'm not sure we even use anymore
-      - dependency-name: "zone.js"
     reviewers:
       - "grafana/grafana-frontend-platform"
     versioning-strategy: "increase-if-necessary"
