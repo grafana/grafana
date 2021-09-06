@@ -1,6 +1,7 @@
 import React, { FormEvent, memo, useCallback } from 'react';
 import { css } from '@emotion/css';
 import Calendar from 'react-calendar/dist/entry.nostyle';
+import FocusLock from 'react-focus-lock';
 import { dateTime, DateTime, dateTimeParse, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { stylesFactory, useTheme2 } from '../../../themes';
 import { TimePickerTitle } from './TimePickerTitle';
@@ -223,14 +224,16 @@ export const TimePickerCalendar = memo<Props>((props) => {
 
   return (
     <Portal>
-      <div className={styles.modal} onClick={stopPropagation}>
-        <div className={styles.content} aria-label={selectors.components.TimePicker.calendar}>
-          <Header {...props} />
-          <Body {...props} />
-          <Footer {...props} />
-        </div>
-      </div>
-      <div className={styles.backdrop} onClick={stopPropagation} />
+      <FocusLock>
+        <section className={styles.modal} onClick={stopPropagation}>
+          <div className={styles.content} aria-label={selectors.components.TimePicker.calendar} role="grid">
+            <Header {...props} />
+            <Body {...props} />
+            <Footer {...props} />
+          </div>
+        </section>
+        <div className={styles.backdrop} onClick={stopPropagation} />
+      </FocusLock>
     </Portal>
   );
 });
@@ -242,9 +245,9 @@ const Header = memo<Props>(({ onClose }) => {
   const styles = getHeaderStyles(theme);
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} role="rowheader">
       <TimePickerTitle>Select a time range</TimePickerTitle>
-      <Icon name="times" onClick={onClose} />
+      <Icon name="times" onClick={onClose} tabIndex={0} />
     </div>
   );
 });
