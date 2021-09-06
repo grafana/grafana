@@ -485,6 +485,7 @@ export const runQueries = (
           logsVolumeQuery,
         })
       );
+      // CODE: Add optional switcher to automatically load logs
       if (options?.autoLoadLogsVolume && logsVolumeQuery) {
         dispatch(loadLogsVolume(exploreId));
       }

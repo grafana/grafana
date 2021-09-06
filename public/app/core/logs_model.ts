@@ -90,6 +90,9 @@ export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<Log
   });
 }
 
+/**
+ * CODE: Move aggregation by level logic to new logs volume
+ */
 export function makeDataFramesForLogs(sortedRows: LogRowModel[], bucketSize: number): DataFrame[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
   // Should be solved higher up the chain when executing queries & interval calculated and not here but this is a temporary fix.

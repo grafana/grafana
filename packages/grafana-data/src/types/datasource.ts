@@ -237,6 +237,8 @@ abstract class DataSourceApi<
    *
    * Subscription to the returned observable may be created along with the query request (if auto loading
    * the histogram is enabled, or on demand when the user clicks on load logs volume button)
+   *
+   * CODE: Document / implement waiting for data to load logs volume?
    */
   getLogsVolumeQuery?(request?: DataQueryRequest<TQuery>): Observable<DataQueryResponse> | undefined;
 
