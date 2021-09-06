@@ -37,7 +37,7 @@ There's also various tooling built that in some cases requires a pull request to
 
 ### Include in changelog and release notes?
 
-Grafana are generating its [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) and [release notes](https://grafana.com/docs/grafana/latest/release-notes/) based on merged pull requests. Including changes in the changelog/release notes is very important to provide a somewhat complete picture of what changes a Grafana release actually includes.
+At Grafana we generate the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) and [release notes](https://grafana.com/docs/grafana/latest/release-notes/) based on merged pull requests. Including changes in the changelog/release notes is very important to provide a somewhat complete picture of what changes a Grafana release actually includes.
 
 Exactly what changes should be added to the changelog is hard to answer but some general guideance would be any change that you think would be interesting for the community as a whole. Use your best judjement and/or ask other maintainers for advice.
 
