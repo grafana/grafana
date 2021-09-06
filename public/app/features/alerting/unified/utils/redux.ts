@@ -1,8 +1,9 @@
-import { AnyAction, AsyncThunk, createSlice, Draft, isAsyncThunkAction, SerializedError } from '@reduxjs/toolkit';
+import { AsyncThunk, createSlice, Draft, isAsyncThunkAction, PayloadAction, SerializedError } from '@reduxjs/toolkit';
 import { FetchError } from '@grafana/runtime';
 import { isArray } from 'angular';
 import { appEvents } from 'app/core/core';
 import { AppEvents } from '@grafana/data';
+
 export interface AsyncRequestState<T> {
   result?: T;
   loading: boolean;
@@ -18,10 +19,12 @@ export const initialAsyncRequestState: AsyncRequestState<any> = Object.freeze({
 
 export type AsyncRequestMapSlice<T> = Record<string, AsyncRequestState<T>>;
 
+export type AsyncRequestAction<T> = PayloadAction<Draft<T>, string, any, any>;
+
 function requestStateReducer<T, ThunkArg = void, ThunkApiConfig = {}>(
   asyncThunk: AsyncThunk<T, ThunkArg, ThunkApiConfig>,
   state: Draft<AsyncRequestState<T>> = initialAsyncRequestState,
-  action: AnyAction
+  action: AsyncRequestAction<T>
 ): Draft<AsyncRequestState<T>> {
   if (asyncThunk.pending.match(action)) {
     return {
@@ -35,7 +38,7 @@ function requestStateReducer<T, ThunkArg = void, ThunkApiConfig = {}>(
     if (state.requestId === undefined || state.requestId === action.meta.requestId) {
       return {
         ...state,
-        result: action.payload as Draft<T>,
+        result: action.payload,
         loading: false,
         error: undefined,
       };
@@ -45,7 +48,7 @@ function requestStateReducer<T, ThunkArg = void, ThunkApiConfig = {}>(
       return {
         ...state,
         loading: false,
-        error: (action as any).error,
+        error: action.error,
       };
     }
   }
@@ -65,7 +68,7 @@ export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
     initialState: initialAsyncRequestState as AsyncRequestState<T>,
     reducers: {},
     extraReducers: (builder) =>
-      builder.addDefaultCase((state, action) => requestStateReducer(asyncThunk, state, action)),
+      builder.addDefaultCase((state, action: AsyncRequestAction<T>) => requestStateReducer(asyncThunk, state, action)),
   });
 }
 
@@ -84,7 +87,7 @@ export function createAsyncMapSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
     initialState: {} as AsyncRequestMapSlice<T>,
     reducers: {},
     extraReducers: (builder) =>
-      builder.addDefaultCase((state, action) => {
+      builder.addDefaultCase((state, action: AsyncRequestAction<T>) => {
         if (isAsyncThunkAction(asyncThunk)(action)) {
           const entityId = getEntityId(action.meta.arg);
           return {

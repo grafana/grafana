@@ -1,31 +1,31 @@
 import {
   addQueryRowAction,
   addResultsToCache,
-  clearCache,
   cancelQueries,
   cancelQueriesAction,
+  clearCache,
+  importQueries,
   queryReducer,
   removeQueryRowAction,
-  importQueries,
   runQueries,
   scanStartAction,
   scanStopAction,
 } from './query';
-import { ExploreId, ExploreItemState } from 'app/types';
+import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
 import { interval, of } from 'rxjs';
 import {
   ArrayVector,
-  DataQueryResponse,
-  DefaultTimeZone,
-  MutableDataFrame,
-  RawTimeRange,
-  toUtc,
-  PanelData,
   DataFrame,
-  LoadingState,
+  DataQuery,
+  DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
-  DataQuery,
+  DefaultTimeZone,
+  LoadingState,
+  MutableDataFrame,
+  PanelData,
+  RawTimeRange,
+  toUtc,
 } from '@grafana/data';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { makeExplorePaneState } from './utils';
@@ -76,10 +76,10 @@ describe('runQueries', () => {
     setTimeSrv({
       init() {},
     } as any);
-    const store = configureStore({
+    const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
       ...(defaultInitialState as any),
     });
-    (store.getState().explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(
+    (getState().explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(
       of({
         error: { message: 'test error' },
         data: [
@@ -92,9 +92,9 @@ describe('runQueries', () => {
         ],
       } as DataQueryResponse)
     );
-    await store.dispatch(runQueries(ExploreId.left));
-    expect(store.getState().explore[ExploreId.left].showMetrics).toBeTruthy();
-    expect(store.getState().explore[ExploreId.left].graphResult).toBeDefined();
+    await dispatch(runQueries(ExploreId.left));
+    expect(getState().explore[ExploreId.left].showMetrics).toBeTruthy();
+    expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
   });
 });
 
@@ -131,7 +131,7 @@ describe('running queries', () => {
 describe('importing queries', () => {
   describe('when importing queries between the same type of data source', () => {
     it('remove datasource property from all of the queries', async () => {
-      const store = configureStore({
+      const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...(defaultInitialState as any),
         explore: {
           [ExploreId.left]: {
@@ -141,7 +141,7 @@ describe('importing queries', () => {
         },
       });
 
-      await store.dispatch(
+      await dispatch(
         importQueries(
           ExploreId.left,
           [
@@ -153,10 +153,10 @@ describe('importing queries', () => {
         )
       );
 
-      expect(store.getState().explore[ExploreId.left].queries[0]).toHaveProperty('refId', 'refId_A');
-      expect(store.getState().explore[ExploreId.left].queries[1]).toHaveProperty('refId', 'refId_B');
-      expect(store.getState().explore[ExploreId.left].queries[0]).not.toHaveProperty('datasource');
-      expect(store.getState().explore[ExploreId.left].queries[1]).not.toHaveProperty('datasource');
+      expect(getState().explore[ExploreId.left].queries[0]).toHaveProperty('refId', 'refId_A');
+      expect(getState().explore[ExploreId.left].queries[1]).toHaveProperty('refId', 'refId_B');
+      expect(getState().explore[ExploreId.left].queries[0]).not.toHaveProperty('datasource');
+      expect(getState().explore[ExploreId.left].queries[1]).not.toHaveProperty('datasource');
     });
   });
 });
@@ -266,7 +266,7 @@ describe('reducer', () => {
 
   describe('caching', () => {
     it('should add response to cache', async () => {
-      const store = configureStore({
+      const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...(defaultInitialState as any),
         explore: {
           [ExploreId.left]: {
@@ -280,15 +280,15 @@ describe('reducer', () => {
         },
       });
 
-      await store.dispatch(addResultsToCache(ExploreId.left));
+      await dispatch(addResultsToCache(ExploreId.left));
 
-      expect(store.getState().explore[ExploreId.left].cache).toEqual([
+      expect(getState().explore[ExploreId.left].cache).toEqual([
         { key: 'from=1621348027000&to=1621348050000', value: { series: [{ name: 'test name' }], state: 'Done' } },
       ]);
     });
 
     it('should not add response to cache if response is still loading', async () => {
-      const store = configureStore({
+      const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...(defaultInitialState as any),
         explore: {
           [ExploreId.left]: {
@@ -299,13 +299,13 @@ describe('reducer', () => {
         },
       });
 
-      await store.dispatch(addResultsToCache(ExploreId.left));
+      await dispatch(addResultsToCache(ExploreId.left));
 
-      expect(store.getState().explore[ExploreId.left].cache).toEqual([]);
+      expect(getState().explore[ExploreId.left].cache).toEqual([]);
     });
 
     it('should not add duplicate response to cache', async () => {
-      const store = configureStore({
+      const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...(defaultInitialState as any),
         explore: {
           [ExploreId.left]: {
@@ -325,16 +325,16 @@ describe('reducer', () => {
         },
       });
 
-      await store.dispatch(addResultsToCache(ExploreId.left));
+      await dispatch(addResultsToCache(ExploreId.left));
 
-      expect(store.getState().explore[ExploreId.left].cache).toHaveLength(1);
-      expect(store.getState().explore[ExploreId.left].cache).toEqual([
+      expect(getState().explore[ExploreId.left].cache).toHaveLength(1);
+      expect(getState().explore[ExploreId.left].cache).toEqual([
         { key: 'from=1621348027000&to=1621348050000', value: { series: [{ name: 'old test name' }], state: 'Done' } },
       ]);
     });
 
     it('should clear cache', async () => {
-      const store = configureStore({
+      const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...(defaultInitialState as any),
         explore: {
           [ExploreId.left]: {
@@ -349,9 +349,9 @@ describe('reducer', () => {
         },
       });
 
-      await store.dispatch(clearCache(ExploreId.left));
+      await dispatch(clearCache(ExploreId.left));
 
-      expect(store.getState().explore[ExploreId.left].cache).toEqual([]);
+      expect(getState().explore[ExploreId.left].cache).toEqual([]);
     });
   });
 });
