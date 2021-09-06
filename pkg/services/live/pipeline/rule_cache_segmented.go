@@ -10,15 +10,15 @@ import (
 
 // CacheSegmentedTree provides a fast access to channel rule configuration.
 type CacheSegmentedTree struct {
-	radixMu sync.RWMutex
-	radix   map[int64]*tree.Node
-	storage Storage
+	radixMu     sync.RWMutex
+	radix       map[int64]*tree.Node
+	ruleBuilder RuleBuilder
 }
 
-func NewCacheSegmentedTree(storage Storage) *CacheSegmentedTree {
+func NewCacheSegmentedTree(storage RuleBuilder) *CacheSegmentedTree {
 	s := &CacheSegmentedTree{
-		radix:   map[int64]*tree.Node{},
-		storage: storage,
+		radix:       map[int64]*tree.Node{},
+		ruleBuilder: storage,
 	}
 	go s.updatePeriodically()
 	return s
@@ -45,9 +45,7 @@ func (s *CacheSegmentedTree) updatePeriodically() {
 func (s *CacheSegmentedTree) fillOrg(orgID int64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	channels, err := s.storage.ListChannelRules(ctx, ListLiveChannelRuleCommand{
-		OrgId: orgID,
-	})
+	channels, err := s.ruleBuilder.BuildRules(ctx, orgID)
 	if err != nil {
 		return err
 	}

@@ -89,13 +89,13 @@ func postTestData() {
 	}
 }
 
-type DevStorage struct {
+type DevRuleBuilder struct {
 	Node          *centrifuge.Node
 	ManagedStream *managedstream.Runner
 	FrameStorage  *FrameStorage
 }
 
-func (f *DevStorage) ListChannelRules(_ context.Context, _ ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
+func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
 			Pattern:   "plugin/testdata/random-20Hz-stream",

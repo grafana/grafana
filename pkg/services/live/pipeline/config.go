@@ -2,23 +2,12 @@ package pipeline
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
 
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 
 	"github.com/centrifugal/centrifuge"
 )
-
-// FileStorage can load channel rules from a file on disk.
-type FileStorage struct {
-	Node                *centrifuge.Node
-	ManagedStream       *managedstream.Runner
-	FrameStorage        *FrameStorage
-	remoteWriteBackends []RemoteWriteBackend
-}
 
 type JsonAutoSettings struct{}
 
@@ -58,7 +47,7 @@ type RemoteWriteOutputConfig struct {
 
 type OutputterConfig struct {
 	Type                    string                     `json:"type"`
-	ManagedStreamConfig     *ManagedStreamOutputConfig `json:"ManagedStream,omitempty"`
+	ManagedStreamConfig     *ManagedStreamOutputConfig `json:"managedStream,omitempty"`
 	MultipleOutputterConfig *MultipleOutputterConfig   `json:"multiple,omitempty"`
 	RedirectOutputConfig    *RedirectOutputConfig      `json:"redirect,omitempty"`
 	ConditionalOutputConfig *ConditionalOutputConfig   `json:"conditional,omitempty"`
@@ -74,22 +63,55 @@ type ChannelRuleSettings struct {
 }
 
 type ChannelRule struct {
-	OrgId    int64               `json:"orgId"`
+	OrgId    int64               `json:"-"`
 	Pattern  string              `json:"pattern"`
 	Settings ChannelRuleSettings `json:"settings"`
 }
 
 type RemoteWriteBackend struct {
+	OrgId    int64              `json:"-"`
 	UID      string             `json:"uid"`
 	Settings *RemoteWriteConfig `json:"settings"`
 }
 
-type ChannelRules struct {
-	Rules               []ChannelRule        `json:"rules"`
-	RemoteWriteBackends []RemoteWriteBackend `json:"remoteWriteBackends"`
+type RemoteWriteBackends struct {
+	Backends []RemoteWriteBackend `json:"remoteWriteBackends"`
 }
 
-func (f *FileStorage) extractConverter(config *ConverterConfig) (Converter, error) {
+type ChannelRules struct {
+	Rules []ChannelRule `json:"rules"`
+}
+
+type MultipleConditionCheckerConfig struct {
+	Type       ConditionType            `json:"type"`
+	Conditions []ConditionCheckerConfig `json:"conditions"`
+}
+
+type NumberCompareConditionConfig struct {
+	FieldName string          `json:"fieldName"`
+	Op        NumberCompareOp `json:"op"`
+	Value     float64         `json:"value"`
+}
+
+type ConditionCheckerConfig struct {
+	Type                           string                          `json:"type"`
+	MultipleConditionCheckerConfig *MultipleConditionCheckerConfig `json:"multiple,omitempty"`
+	NumberCompareConditionConfig   *NumberCompareConditionConfig   `json:"numberCompare,omitempty"`
+}
+
+type RuleStorage interface {
+	ListRemoteWriteBackends(_ context.Context, orgID int64) ([]RemoteWriteBackend, error)
+	ListChannelRules(_ context.Context, orgID int64) ([]ChannelRule, error)
+}
+
+type StorageRuleBuilder struct {
+	Node          *centrifuge.Node
+	ManagedStream *managedstream.Runner
+	FrameStorage  *FrameStorage
+	RuleStorage   RuleStorage
+}
+
+func (f *StorageRuleBuilder) extractConverter(config *ConverterConfig) (Converter, error) {
 	if config == nil {
 		return nil, nil
 	}
@@ -120,7 +142,7 @@ func (f *FileStorage) extractConverter(config *ConverterConfig) (Converter, erro
 	}
 }
 
-func (f *FileStorage) extractProcessor(config *ProcessorConfig) (Processor, error) {
+func (f *StorageRuleBuilder) extractProcessor(config *ProcessorConfig) (Processor, error) {
 	if config == nil {
 		return nil, nil
 	}
@@ -155,24 +177,7 @@ func (f *FileStorage) extractProcessor(config *ProcessorConfig) (Processor, erro
 	}
 }
 
-type MultipleConditionCheckerConfig struct {
-	Type       ConditionType            `json:"type"`
-	Conditions []ConditionCheckerConfig `json:"conditions"`
-}
-
-type NumberCompareConditionConfig struct {
-	FieldName string          `json:"fieldName"`
-	Op        NumberCompareOp `json:"op"`
-	Value     float64         `json:"value"`
-}
-
-type ConditionCheckerConfig struct {
-	Type                           string                          `json:"type"`
-	MultipleConditionCheckerConfig *MultipleConditionCheckerConfig `json:"multiple,omitempty"`
-	NumberCompareConditionConfig   *NumberCompareConditionConfig   `json:"numberCompare,omitempty"`
-}
-
-func (f *FileStorage) extractConditionChecker(config *ConditionCheckerConfig) (ConditionChecker, error) {
+func (f *StorageRuleBuilder) extractConditionChecker(config *ConditionCheckerConfig) (ConditionChecker, error) {
 	if config == nil {
 		return nil, nil
 	}
@@ -203,7 +208,7 @@ func (f *FileStorage) extractConditionChecker(config *ConditionCheckerConfig) (C
 	}
 }
 
-func (f *FileStorage) extractOutputter(config *OutputterConfig) (Outputter, error) {
+func (f *StorageRuleBuilder) extractOutputter(config *OutputterConfig, remoteWriteBackends []RemoteWriteBackend) (Outputter, error) {
 	if config == nil {
 		return nil, nil
 	}
@@ -221,7 +226,7 @@ func (f *FileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 		var outputters []Outputter
 		for _, outConf := range config.MultipleOutputterConfig.Outputters {
 			out := outConf
-			outputter, err := f.extractOutputter(&out)
+			outputter, err := f.extractOutputter(&out, remoteWriteBackends)
 			if err != nil {
 				return nil, err
 			}
@@ -240,7 +245,7 @@ func (f *FileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 		if err != nil {
 			return nil, err
 		}
-		outputter, err := f.extractOutputter(config.ConditionalOutputConfig.Outputter)
+		outputter, err := f.extractOutputter(config.ConditionalOutputConfig.Outputter, remoteWriteBackends)
 		if err != nil {
 			return nil, err
 		}
@@ -254,7 +259,7 @@ func (f *FileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 		if config.RemoteWriteOutputConfig == nil {
 			return nil, missingConfiguration
 		}
-		remoteWriteConfig, ok := f.getRemoteWriteConfig(config.RemoteWriteOutputConfig.UID)
+		remoteWriteConfig, ok := f.getRemoteWriteConfig(config.RemoteWriteOutputConfig.UID, remoteWriteBackends)
 		if !ok {
 			return nil, fmt.Errorf("unknown remote write backend uid: %s", config.RemoteWriteOutputConfig.UID)
 		}
@@ -269,8 +274,8 @@ func (f *FileStorage) extractOutputter(config *OutputterConfig) (Outputter, erro
 	}
 }
 
-func (f *FileStorage) getRemoteWriteConfig(uid string) (*RemoteWriteConfig, bool) {
-	for _, rwb := range f.remoteWriteBackends {
+func (f *StorageRuleBuilder) getRemoteWriteConfig(uid string, remoteWriteBackends []RemoteWriteBackend) (*RemoteWriteConfig, bool) {
+	for _, rwb := range remoteWriteBackends {
 		if rwb.UID == uid {
 			return rwb.Settings, true
 		}
@@ -278,26 +283,20 @@ func (f *FileStorage) getRemoteWriteConfig(uid string) (*RemoteWriteConfig, bool
 	return nil, false
 }
 
-func (f *FileStorage) ListChannelRules(_ context.Context, cmd ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
-	ruleBytes, _ := ioutil.ReadFile(os.Getenv("GF_LIVE_CHANNEL_RULES_FILE"))
-	var channelRules ChannelRules
-	err := json.Unmarshal(ruleBytes, &channelRules)
+func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*LiveChannelRule, error) {
+	channelRules, err := f.RuleStorage.ListChannelRules(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	f.remoteWriteBackends = channelRules.RemoteWriteBackends
+	remoteWriteBackends, err := f.RuleStorage.ListRemoteWriteBackends(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
 
 	var rules []*LiveChannelRule
 
-	for _, ruleConfig := range channelRules.Rules {
-		orgID := ruleConfig.OrgId
-		if orgID == 0 {
-			orgID = 1
-		}
-		if cmd.OrgId != orgID {
-			continue
-		}
+	for _, ruleConfig := range channelRules {
 		rule := &LiveChannelRule{
 			OrgId:   orgID,
 			Pattern: ruleConfig.Pattern,
@@ -311,7 +310,7 @@ func (f *FileStorage) ListChannelRules(_ context.Context, cmd ListLiveChannelRul
 		if err != nil {
 			return nil, err
 		}
-		rule.Outputter, err = f.extractOutputter(ruleConfig.Settings.Outputter)
+		rule.Outputter, err = f.extractOutputter(ruleConfig.Settings.Outputter, remoteWriteBackends)
 		if err != nil {
 			return nil, err
 		}

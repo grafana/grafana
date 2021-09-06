@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type testStorageAlt struct{}
+type testBuilder struct{}
 
-func (t testStorageAlt) ListChannelRules(_ context.Context, cmd ListLiveChannelRuleCommand) ([]*LiveChannelRule, error) {
+func (t *testBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelRule, error) {
 	return []*LiveChannelRule{
 		{
 			OrgId:     1,
@@ -28,7 +28,7 @@ func (t testStorageAlt) ListChannelRules(_ context.Context, cmd ListLiveChannelR
 }
 
 func TestStorage_Get(t *testing.T) {
-	s := NewCacheSegmentedTree(&testStorageAlt{})
+	s := NewCacheSegmentedTree(&testBuilder{})
 	rule, ok, err := s.Get(1, "stream/telegraf/cpu")
 	require.NoError(t, err)
 	require.True(t, ok)
@@ -46,7 +46,7 @@ func TestStorage_Get(t *testing.T) {
 }
 
 func BenchmarkRuleGet(b *testing.B) {
-	s := NewCacheSegmentedTree(&testStorageAlt{})
+	s := NewCacheSegmentedTree(&testBuilder{})
 	for i := 0; i < b.N; i++ {
 		_, ok, err := s.Get(1, "stream/telegraf/cpu")
 		if err != nil || !ok {

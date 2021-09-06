@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -166,12 +167,24 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	g.ManagedStreamRunner = managedStreamRunner
 	if enabled := g.Cfg.FeatureToggles["live-pipeline"]; enabled {
-		storage := &pipeline.FileStorage{
-			Node:          node,
-			ManagedStream: g.ManagedStreamRunner,
-			FrameStorage:  pipeline.NewFrameStorage(),
+		var builder pipeline.RuleBuilder
+		if os.Getenv("GF_LIVE_DEV_BUILDER") != "" {
+			builder = &pipeline.DevRuleBuilder{
+				Node:          node,
+				ManagedStream: g.ManagedStreamRunner,
+				FrameStorage:  pipeline.NewFrameStorage(),
+			}
+		} else {
+			storage := &pipeline.FileStorage{}
+			g.channelRuleStorage = storage
+			builder = &pipeline.StorageRuleBuilder{
+				Node:          node,
+				ManagedStream: g.ManagedStreamRunner,
+				FrameStorage:  pipeline.NewFrameStorage(),
+				RuleStorage:   storage,
+			}
 		}
-		channelRuleGetter := pipeline.NewCacheSegmentedTree(storage)
+		channelRuleGetter := pipeline.NewCacheSegmentedTree(builder)
 		g.Pipeline, err = pipeline.New(channelRuleGetter)
 		if err != nil {
 			return nil, err
@@ -344,6 +357,7 @@ type GrafanaLive struct {
 
 	ManagedStreamRunner *managedstream.Runner
 	Pipeline            *pipeline.Pipeline
+	channelRuleStorage  pipeline.RuleStorage
 
 	contextGetter    *liveplugin.ContextGetter
 	runStreamManager *runstream.Manager
@@ -368,6 +382,10 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 		return g.runStreamManager.Run(ctx)
 	}
 	return nil
+}
+
+func (g *GrafanaLive) ChannelRuleStorage() pipeline.RuleStorage {
+	return g.channelRuleStorage
 }
 
 func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []glob.Glob) func(r *http.Request) bool {
@@ -797,6 +815,28 @@ func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
 	}
 	return response.JSONStreaming(404, util.DynMap{
 		"message": "Info is not supported for this channel",
+	})
+}
+
+// HandleChannelRulesListHTTP ...
+func (g *GrafanaLive) HandleChannelRulesListHTTP(c *models.ReqContext) response.Response {
+	result, err := g.channelRuleStorage.ListChannelRules(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get channel rules", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"rules": result,
+	})
+}
+
+// HandleRemoteWriteBackendsListHTTP ...
+func (g *GrafanaLive) HandleRemoteWriteBackendsListHTTP(c *models.ReqContext) response.Response {
+	result, err := g.channelRuleStorage.ListRemoteWriteBackends(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get channel rules", err)
+	}
+	return response.JSON(http.StatusOK, util.DynMap{
+		"remoteWriteBackends": result,
 	})
 }
 

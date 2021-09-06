@@ -182,14 +182,6 @@ type Field struct {
 	Config *data.FieldConfig `json:"config,omitempty"`
 }
 
-type ListLiveChannelRuleCommand struct {
-	OrgId int64
-}
-
-type Storage interface {
-	ListChannelRules(ctx context.Context, cmd ListLiveChannelRuleCommand) ([]*LiveChannelRule, error)
-}
-
 type Vars struct {
 	OrgID     int64
 	Channel   string
