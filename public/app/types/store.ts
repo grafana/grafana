@@ -17,6 +17,7 @@ import { ApiKeysState } from './apiKeys';
 import { TemplatingState } from '../features/variables/state/reducers';
 import { ImportDashboardState } from '../features/manage-dashboards/state/reducers';
 import { UserState } from 'app/features/profile/state/reducers';
+import { UnifiedAlertingState } from 'app/features/alerting/unified/state/reducers';
 
 export interface StoreState {
   navIndex: NavIndex;
@@ -41,7 +42,7 @@ export interface StoreState {
   templating: TemplatingState;
   importDashboard: ImportDashboardState;
   notificationChannel: NotificationChannelState;
-  // unifiedAlerting: UnifiedAlertingState;
+  unifiedAlerting: UnifiedAlertingState;
 }
 
 /*
