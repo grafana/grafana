@@ -32,8 +32,8 @@ load(
     'notify_pipeline',
     'integration_test_services',
     'publish_packages_step',
-    'upload_cdn',
-    'validate_scuemata'
+    'upload_cdn_step',
+    'validate_scuemata_step'
 )
 
 def release_npm_packages_step(edition, ver_mode):
@@ -80,7 +80,7 @@ def get_steps(edition, ver_mode):
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
-        validate_scuemata(),
+        validate_scuemata_step(),
     ]
 
     # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
@@ -110,7 +110,7 @@ def get_steps(edition, ver_mode):
       steps.extend([redis_integration_tests_step(), memcached_integration_tests_step()])
 
     if should_upload:
-        steps.append(upload_cdn(edition=edition))
+        steps.append(upload_cdn_step(edition=edition))
         steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode))
     if should_publish:
         steps.extend([
@@ -125,7 +125,7 @@ def get_steps(edition, ver_mode):
             package_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
             e2e_tests_server_step(edition=edition2, port=3002),
             e2e_tests_step(edition=edition2, port=3002, tries=3),
-            upload_cdn(edition=edition2),
+            upload_cdn_step(edition=edition2),
         ])
         if should_upload:
             steps.append(upload_packages_step(edition=edition2, ver_mode=ver_mode))

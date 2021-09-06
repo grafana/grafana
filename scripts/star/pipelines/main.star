@@ -33,8 +33,8 @@ load(
     'publish_packages_step',
     'notify_pipeline',
     'integration_test_services',
-    'upload_cdn',
-    'validate_scuemata',
+    'upload_cdn_step',
+    'validate_scuemata_step',
     'test_a11y_frontend_step'
 )
 
@@ -53,7 +53,7 @@ def get_steps(edition, is_downstream=False):
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
-        validate_scuemata(),
+        validate_scuemata_step(),
     ]
 
     # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
@@ -90,7 +90,7 @@ def get_steps(edition, is_downstream=False):
         release_canary_npm_packages_step(edition),
         upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         push_to_deployment_tools_step(edition=edition, is_downstream=is_downstream),
-        upload_cdn(edition=edition)
+        upload_cdn_step(edition=edition)
     ])
 
     if include_enterprise2:
@@ -100,7 +100,7 @@ def get_steps(edition, is_downstream=False):
             e2e_tests_server_step(edition=edition2, port=3002),
             e2e_tests_step(edition=edition2, port=3002),
             upload_packages_step(edition=edition2, ver_mode=ver_mode, is_downstream=is_downstream),
-            upload_cdn(edition=edition2)
+            upload_cdn_step(edition=edition2)
         ])
 
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream)

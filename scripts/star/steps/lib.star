@@ -42,7 +42,7 @@ def pipeline(
         'name': name,
         'trigger': trigger,
         'services': services,
-        'steps': init_steps(
+        'steps': initialize_step(
             edition, platform, is_downstream=is_downstream, install_deps=install_deps, ver_mode=ver_mode,
         ) + steps,
         'depends_on': depends_on,
@@ -86,7 +86,7 @@ def slack_step(channel):
         },
     }
 
-def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=True):
+def initialize_step(edition, platform, ver_mode, is_downstream=False, install_deps=True):
     if platform == 'windows':
         return [
             {
@@ -315,7 +315,7 @@ def publish_storybook_step(edition, ver_mode):
         'commands': commands,
     }
 
-def upload_cdn(edition):
+def upload_cdn_step(edition):
     return {
         'name': 'upload-cdn-assets' + enterprise2_sfx(edition),
         'image': publish_image,
@@ -1089,7 +1089,7 @@ def integration_test_services(edition):
 
     return services
 
-def validate_scuemata():
+def validate_scuemata_step():
     return {
         'name': 'validate-scuemata',
         'image': build_image,
