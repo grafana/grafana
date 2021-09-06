@@ -221,13 +221,8 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     );
   }
 
-  getMetricNamespaces(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
-    return this.azureMonitorDatasource.getMetricNamespaces(
-      this.replaceTemplateVariable(subscriptionId),
-      this.replaceTemplateVariable(resourceGroup),
-      this.replaceTemplateVariable(metricDefinition),
-      this.replaceTemplateVariable(resourceName)
-    );
+  getMetricNamespaces(resourceURI: string) {
+    return this.azureMonitorDatasource.getMetricNamespaces(this.replaceTemplateVariable(resourceURI));
   }
 
   getMetricMetadata(

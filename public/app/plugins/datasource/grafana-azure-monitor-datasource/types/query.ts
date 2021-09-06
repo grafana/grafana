@@ -15,6 +15,7 @@ export enum AzureQueryType {
 export interface AzureMonitorQuery extends DataQuery {
   queryType?: AzureQueryType;
 
+  /** @deprecated In favor of resource URI */
   subscription?: string;
 
   /** ARG uses multiple subscriptions */
@@ -35,12 +36,18 @@ export interface AzureMonitorQuery extends DataQuery {
  * Azure Monitor Metrics sub-query properties
  */
 export interface AzureMetricQuery {
+  resource?: string;
+
+  /** @deprecated In favor of resource URI */
   resourceGroup?: string;
 
   /** Resource type */
+  /** @deprecated In favor of resource URI */
   metricDefinition?: string;
 
+  /** @deprecated In favor of resource URI */
   resourceName?: string;
+
   metricNamespace?: string;
   metricName?: string;
   timeGrain?: string;

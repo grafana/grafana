@@ -157,16 +157,15 @@ export const useResourceNames: DataHook = (query, datasource, onChange, setError
 };
 
 export const useMetricNamespaces: DataHook = (query, datasource, onChange, setError) => {
-  const { subscription } = query;
-  const { resourceGroup, metricDefinition, resourceName, metricNamespace } = query.azureMonitor ?? {};
+  const { resource, metricNamespace } = query.azureMonitor ?? {};
 
   const metricNamespaces = useAsyncState(
     async () => {
-      if (!(subscription && resourceGroup && metricDefinition && resourceName)) {
+      if (!resource) {
         return;
       }
 
-      const results = await datasource.getMetricNamespaces(subscription, resourceGroup, metricDefinition, resourceName);
+      const results = await datasource.getMetricNamespaces(resource);
       const options = results.map(toOption);
 
       // Do some cleanup of the query state if need be

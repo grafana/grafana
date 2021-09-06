@@ -15,6 +15,20 @@ export function setSubscriptionID(query: AzureMonitorQuery, subscriptionID: stri
   };
 }
 
+export function setResource(query: AzureMonitorQuery, resourceURI: string | undefined): AzureMonitorQuery {
+  if (query.azureMonitor?.resource === resourceURI) {
+    return query;
+  }
+
+  return {
+    ...query,
+    azureMonitor: {
+      ...query.azureMonitor,
+      resource: resourceURI,
+    },
+  };
+}
+
 export function setResourceGroup(query: AzureMonitorQuery, resourceGroup: string | undefined): AzureMonitorQuery {
   if (query.azureMonitor?.resourceGroup === resourceGroup) {
     return query;
