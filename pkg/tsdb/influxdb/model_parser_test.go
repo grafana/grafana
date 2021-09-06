@@ -175,4 +175,23 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
 		require.Empty(t, res.Tags)
 		require.Equal(t, time.Second*10, res.Interval)
 	})
+
+	t.Run("will enforce a minInterval of 1 millisecond", func(t *testing.T) {
+		json := `
+      {
+        "query": "RawDummyQuery",
+        "rawQuery": true,
+        "resultFormat": "time_series"
+      }
+      `
+
+		query := backend.DataQuery{
+			JSON:     []byte(json),
+			Interval: time.Millisecond * 0,
+		}
+
+		res, err := parser.Parse(query)
+		require.NoError(t, err)
+		require.Equal(t, time.Millisecond*1, res.Interval)
+	})
 }
