@@ -42,9 +42,9 @@ import {
   LokiOptions,
   LokiQuery,
   LokiRangeQueryRequest,
-  LokiResponse,
   LokiResultType,
   LokiStreamResponse,
+  LokiStreamResult,
 } from './types';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
 import LanguageProvider from './language_provider';
@@ -156,7 +156,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     };
 
     return this._request(INSTANT_QUERY_ENDPOINT, query).pipe(
-      map((response: { data: LokiResponse }) => {
+      map((response) => {
         if (response.data.data.resultType === LokiResultType.Stream) {
           return {
             data: response.data
@@ -236,8 +236,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const query = this.createRangeQuery(target, options, maxDataPoints);
 
     return this._request(RANGE_QUERY_ENDPOINT, query).pipe(
-      catchError((err: FetchError) => throwError(() => this.processError(err, target))),
-      switchMap((response: { data: LokiResponse; status: number }) =>
+      catchError((err) => throwError(() => this.processError(err, target))),
+      switchMap((response) =>
         processRangeQueryResponse(
           response.data,
           target,
@@ -451,7 +451,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const reverse = options && options.direction === 'FORWARD';
     return lastValueFrom(
       this._request(RANGE_QUERY_ENDPOINT, target).pipe(
-        catchError((err: any) => {
+        catchError((err) => {
           const error: DataQueryError = {
             message: 'Error during context query. Please check JS console logs.',
             status: err.status,
@@ -459,9 +459,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           };
           throw error;
         }),
-        switchMap((res: { data: LokiStreamResponse; status: number }) =>
+        switchMap((res) =>
           of({
-            data: res.data ? res.data.data.result.map((stream) => lokiStreamResultToDataFrame(stream, reverse)) : [],
+            data: res.data
+              ? res.data.data.result.map((stream: LokiStreamResult) => lokiStreamResultToDataFrame(stream, reverse))
+              : [],
           })
         )
       )
