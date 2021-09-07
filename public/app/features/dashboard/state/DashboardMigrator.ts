@@ -668,7 +668,7 @@ export class DashboardMigrator {
         if (panel.transformations) {
           for (const t of panel.transformations) {
             if (t.id === labelsToFieldsTransformer.id) {
-              return appedTransformerAfter(panel, labelsToFieldsTransformer.id, {
+              return appendTransformerAfter(panel, labelsToFieldsTransformer.id, {
                 id: mergeTransformer.id,
                 options: {},
               });
@@ -969,7 +969,7 @@ function migrateSinglestat(panel: PanelModel) {
 }
 
 // mutates transformations appending a new transformer after the existing one
-function appedTransformerAfter(panel: PanelModel, id: string, cfg: DataTransformerConfig) {
+function appendTransformerAfter(panel: PanelModel, id: string, cfg: DataTransformerConfig) {
   if (panel.transformations) {
     const transformations: DataTransformerConfig[] = [];
     for (const t of panel.transformations) {
