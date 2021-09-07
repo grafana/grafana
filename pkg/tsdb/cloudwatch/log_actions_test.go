@@ -214,9 +214,6 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 				aws.Int64(100), aws.Int64(30), aws.Int64(55),
 			}),
 		},
-		Meta: &data.FrameMeta{
-			PreferredVisualization: "logs",
-		},
 	}
 	expFrame.RefID = refID
 	assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
@@ -351,7 +348,6 @@ func TestQuery_StartQuery(t *testing.T) {
 			Custom: map[string]interface{}{
 				"Region": "default",
 			},
-			PreferredVisualization: "logs",
 		}
 		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
 			refID: {
@@ -424,9 +420,6 @@ func TestQuery_StopQuery(t *testing.T) {
 		Name: "StopQueryResponse",
 		Fields: []*data.Field{
 			data.NewField("success", nil, []bool{true}),
-		},
-		Meta: &data.FrameMeta{
-			PreferredVisualization: "logs",
 		},
 	}
 	assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
