@@ -81,9 +81,6 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 								aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
 							}),
 						},
-						Meta: &data.FrameMeta{
-							PreferredVisualization: "logs",
-						},
 					},
 				},
 			},
@@ -141,9 +138,6 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 							data.NewField("logGroupName", nil, []*string{
 								aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
 							}),
-						},
-						Meta: &data.FrameMeta{
-							PreferredVisualization: "logs",
 						},
 					},
 				},
