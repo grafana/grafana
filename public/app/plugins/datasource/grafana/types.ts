@@ -20,6 +20,7 @@ export interface GrafanaQuery extends DataQuery {
   channel?: string;
   filter?: LiveDataFilter;
   buffer?: number;
+  path?: string; // for list and read
 }
 
 export const defaultQuery: GrafanaQuery = {

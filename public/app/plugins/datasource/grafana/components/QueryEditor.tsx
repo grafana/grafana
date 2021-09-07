@@ -1,9 +1,16 @@
 import React, { PureComponent } from 'react';
 import { InlineField, Select, Alert, Input, InlineFieldRow } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue, dataFrameFromJSON, rangeUtil } from '@grafana/data';
+import {
+  QueryEditorProps,
+  SelectableValue,
+  dataFrameFromJSON,
+  rangeUtil,
+  DataQueryRequest,
+  DataFrame,
+} from '@grafana/data';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 
 type Props = QueryEditorProps<GrafanaDatasource, GrafanaQuery>;
 
@@ -12,6 +19,7 @@ const labelWidth = 12;
 interface State {
   channels: Array<SelectableValue<string>>;
   channelFields: Record<string, Array<SelectableValue<string>>>;
+  folders?: Array<SelectableValue<string>>;
 }
 
 export class QueryEditor extends PureComponent<Props, State> {
@@ -29,9 +37,9 @@ export class QueryEditor extends PureComponent<Props, State> {
       description: 'Stream real-time measurements from Grafana',
     },
     {
-      label: 'List files',
+      label: 'List public files',
       value: GrafanaQueryType.List,
-      description: 'List public files',
+      description: 'Show directory listings for public resources',
     },
   ];
 
@@ -64,6 +72,30 @@ export class QueryEditor extends PureComponent<Props, State> {
             this.setState({ channelFields, channels });
           }
         },
+      });
+  }
+
+  loadFolderInfo() {
+    const query: DataQueryRequest<GrafanaQuery> = {
+      targets: [{ queryType: GrafanaQueryType.List, refId: 'A' }],
+    } as any;
+
+    getDataSourceSrv()
+      .get('-- Grafana --')
+      .then((ds) => {
+        const gds = ds as GrafanaDatasource;
+        gds.query(query).subscribe({
+          next: (rsp) => {
+            if (rsp.data.length) {
+              const names = (rsp.data[0] as DataFrame).fields[0];
+              const folders = names.values.toArray().map((v) => ({
+                value: v,
+                label: v,
+              }));
+              this.setState({ folders });
+            }
+          },
+        });
       });
   }
 
@@ -247,9 +279,29 @@ export class QueryEditor extends PureComponent<Props, State> {
     );
   }
 
+  onFolderChanged = (sel: SelectableValue<string>) => {
+    const { onChange, query, onRunQuery } = this.props;
+    onChange({ ...query, path: sel?.value });
+    onRunQuery();
+  };
+
   renderListPublicFiles() {
-    const folders = ['aaa', 'bbb'].map((v) => ({ label: v, value: v }));
-    const currentFolder = undefined;
+    let { path } = this.props.query;
+    let { folders } = this.state;
+    if (!folders) {
+      folders = [];
+      this.loadFolderInfo();
+    }
+    const currentFolder = folders.find((f) => f.value === path);
+    if (path && !currentFolder) {
+      folders = [
+        ...folders,
+        {
+          value: path,
+          label: path,
+        },
+      ];
+    }
 
     return (
       <InlineFieldRow>
@@ -258,7 +310,7 @@ export class QueryEditor extends PureComponent<Props, State> {
             menuShouldPortal
             options={folders}
             value={currentFolder || ''}
-            onChange={this.onChannelChange}
+            onChange={this.onFolderChanged}
             allowCustomValue={true}
             backspaceRemovesValue={true}
             placeholder="Select folder"
@@ -289,7 +341,7 @@ export class QueryEditor extends PureComponent<Props, State> {
           </InlineField>
         </InlineFieldRow>
         {query.queryType === GrafanaQueryType.LiveMeasurements && this.renderMeasurementsQuery()}
-        {query.queryType === GrafanaQueryType.List && this.renderListPublicFiles}
+        {query.queryType === GrafanaQueryType.List && this.renderListPublicFiles()}
       </>
     );
   }
