@@ -15,7 +15,7 @@ export type GraphiteTag = {
   value: string;
 };
 
-type GraphiteTarget = {
+export type GraphiteTarget = {
   refId: string | number;
   target: string;
   /**

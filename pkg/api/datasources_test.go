@@ -1,12 +1,18 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -161,4 +167,335 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 
 	assert.Equal(t, 200, sc.resp.Code)
+}
+
+func TestAPI_Datasources_AccessControl(t *testing.T) {
+	testDatasource := models.DataSource{
+		Id:     3,
+		Uid:    "testUID",
+		OrgId:  testOrgID,
+		Name:   "test",
+		Url:    "http://localhost:5432",
+		Type:   "postgresql",
+		Access: "Proxy",
+	}
+	getDatasourceStub := func(query *models.GetDataSourceQuery) error {
+		result := testDatasource
+		result.Id = query.Id
+		result.OrgId = query.OrgId
+		query.Result = &result
+		return nil
+	}
+	getDatasourcesStub := func(cmd *models.GetDataSourcesQuery) error {
+		cmd.Result = []*models.DataSource{}
+		return nil
+	}
+	addDatasourceStub := func(cmd *models.AddDataSourceCommand) error {
+		cmd.Result = &testDatasource
+		return nil
+	}
+	updateDatasourceStub := func(cmd *models.UpdateDataSourceCommand) error {
+		cmd.Result = &testDatasource
+		return nil
+	}
+	deleteDatasourceStub := func(cmd *models.DeleteDataSourceCommand) error {
+		cmd.DeletedDatasourcesCount = 1
+		return nil
+	}
+	addDatasourceBody := func() io.Reader {
+		s, _ := json.Marshal(models.AddDataSourceCommand{
+			Name:   "test",
+			Url:    "http://localhost:5432",
+			Type:   "postgresql",
+			Access: "Proxy",
+		})
+		return bytes.NewReader(s)
+	}
+	updateDatasourceBody := func() io.Reader {
+		s, _ := json.Marshal(models.UpdateDataSourceCommand{
+			Name:   "test",
+			Url:    "http://localhost:5432",
+			Type:   "postgresql",
+			Access: "Proxy",
+		})
+		return bytes.NewReader(s)
+	}
+
+	type acTestCaseWithHandler struct {
+		busStubs []bus.HandlerFunc
+		body     func() io.Reader
+		accessControlTestCase
+	}
+	tests := []acTestCaseWithHandler{
+		{
+			busStubs: []bus.HandlerFunc{getDatasourcesStub},
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesGet should return 200 for user with correct permissions",
+				url:          "/api/datasources/",
+				method:       http.MethodGet,
+				permissions:  []*accesscontrol.Permission{{Action: ActionDatasourcesRead}},
+			},
+		},
+		{
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesGet should return 403 for user without required permissions",
+				url:          "/api/datasources/",
+				method:       http.MethodGet,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
+		{
+			busStubs: []bus.HandlerFunc{addDatasourceStub},
+			body:     addDatasourceBody,
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesPost should return 200 for user with correct permissions",
+				url:          "/api/datasources/",
+				method:       http.MethodPost,
+				permissions:  []*accesscontrol.Permission{{Action: ActionDatasourcesCreate}},
+			},
+		},
+		{
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesPost should return 403 for user without required permissions",
+				url:          "/api/datasources/",
+				method:       http.MethodPost,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
+		{
+			busStubs: []bus.HandlerFunc{getDatasourceStub, updateDatasourceStub},
+			body:     updateDatasourceBody,
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesPut should return 200 for user with correct permissions",
+				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
+				method:       http.MethodPut,
+				permissions: []*accesscontrol.Permission{
+					{
+						Action: ActionDatasourcesWrite,
+						Scope:  fmt.Sprintf("datasources:id:%v", testDatasource.Id),
+					},
+				},
+			},
+		},
+		{
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesPut should return 403 for user without required permissions",
+				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
+				method:       http.MethodPut,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
+		{
+			busStubs: []bus.HandlerFunc{getDatasourceStub, deleteDatasourceStub},
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesDeleteByID should return 200 for user with correct permissions",
+				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
+				method:       http.MethodDelete,
+				permissions: []*accesscontrol.Permission{
+					{
+						Action: ActionDatasourcesDelete,
+						Scope:  fmt.Sprintf("datasources:id:%v", testDatasource.Id),
+					},
+				},
+			},
+		},
+		{
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesDeleteByID should return 403 for user without required permissions",
+				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
+				method:       http.MethodDelete,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
+		{
+			busStubs: []bus.HandlerFunc{getDatasourceStub, deleteDatasourceStub},
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesDeleteByUID should return 200 for user with correct permissions",
+				url:          fmt.Sprintf("/api/datasources/uid/%v", testDatasource.Uid),
+				method:       http.MethodDelete,
+				permissions: []*accesscontrol.Permission{
+					{
+						Action: ActionDatasourcesDelete,
+						Scope:  fmt.Sprintf("datasources:uid:%v", testDatasource.Uid),
+					},
+				},
+			},
+		},
+		{
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesDeleteByUID should return 403 for user without required permissions",
+				url:          fmt.Sprintf("/api/datasources/uid/%v", testDatasource.Uid),
+				method:       http.MethodDelete,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
+		{
+			busStubs: []bus.HandlerFunc{getDatasourceStub, deleteDatasourceStub},
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesDeleteByName should return 200 for user with correct permissions",
+				url:          fmt.Sprintf("/api/datasources/name/%v", testDatasource.Name),
+				method:       http.MethodDelete,
+				permissions: []*accesscontrol.Permission{
+					{
+						Action: ActionDatasourcesDelete,
+						Scope:  fmt.Sprintf("datasources:name:%v", testDatasource.Name),
+					},
+				},
+			},
+		},
+		{
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesDeleteByName should return 403 for user without required permissions",
+				url:          fmt.Sprintf("/api/datasources/name/%v", testDatasource.Name),
+				method:       http.MethodDelete,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
+		{
+			busStubs: []bus.HandlerFunc{getDatasourceStub},
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesGetByID should return 200 for user with correct permissions",
+				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
+				method:       http.MethodGet,
+				permissions: []*accesscontrol.Permission{
+					{
+						Action: ActionDatasourcesRead,
+						Scope:  fmt.Sprintf("datasources:id:%v", testDatasource.Id),
+					},
+				},
+			},
+		},
+		{
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesGetByID should return 403 for user without required permissions",
+				url:          fmt.Sprintf("/api/datasources/%v", testDatasource.Id),
+				method:       http.MethodGet,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
+		{
+			busStubs: []bus.HandlerFunc{getDatasourceStub},
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesGetByUID should return 200 for user with correct permissions",
+				url:          fmt.Sprintf("/api/datasources/uid/%v", testDatasource.Uid),
+				method:       http.MethodGet,
+				permissions: []*accesscontrol.Permission{
+					{
+						Action: ActionDatasourcesRead,
+						Scope:  fmt.Sprintf("datasources:uid:%v", testDatasource.Uid),
+					},
+				},
+			},
+		},
+		{
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesGetByUID should return 403 for user without required permissions",
+				url:          fmt.Sprintf("/api/datasources/uid/%v", testDatasource.Uid),
+				method:       http.MethodGet,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
+		{
+			busStubs: []bus.HandlerFunc{getDatasourceStub},
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesGetByName should return 200 for user with correct permissions",
+				url:          fmt.Sprintf("/api/datasources/name/%v", testDatasource.Name),
+				method:       http.MethodGet,
+				permissions: []*accesscontrol.Permission{
+					{
+						Action: ActionDatasourcesRead,
+						Scope:  fmt.Sprintf("datasources:name:%v", testDatasource.Name),
+					},
+				},
+			},
+		},
+		{
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesGetByName should return 403 for user without required permissions",
+				url:          fmt.Sprintf("/api/datasources/name/%v", testDatasource.Name),
+				method:       http.MethodGet,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
+		{
+			busStubs: []bus.HandlerFunc{getDatasourceStub},
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusOK,
+				desc:         "DatasourcesGetIdByName should return 200 for user with correct permissions",
+				url:          fmt.Sprintf("/api/datasources/id/%v", testDatasource.Name),
+				method:       http.MethodGet,
+				permissions: []*accesscontrol.Permission{
+					{
+						Action: ActionDatasourcesIDRead,
+						Scope:  fmt.Sprintf("datasources:name:%v", testDatasource.Name),
+					},
+				},
+			},
+		},
+		{
+			accessControlTestCase: accessControlTestCase{
+				expectedCode: http.StatusForbidden,
+				desc:         "DatasourcesGetIdByName should return 403 for user without required permissions",
+				url:          fmt.Sprintf("/api/datasources/id/%v", testDatasource.Name),
+				method:       http.MethodGet,
+				permissions:  []*accesscontrol.Permission{{Action: "wrong"}},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Cleanup(bus.ClearBusHandlers)
+			for i, handler := range test.busStubs {
+				bus.AddHandler(fmt.Sprintf("test_handler_%v", i), handler)
+			}
+
+			cfg := setting.NewCfg()
+			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
+
+			// Create a middleware to pretend user is logged in
+			pretendSignInMiddleware := func(c *models.ReqContext) {
+				sc.context = c
+				sc.context.UserId = testUserID
+				sc.context.OrgId = testOrgID
+				sc.context.Login = testUserLogin
+				sc.context.OrgRole = models.ROLE_VIEWER
+				sc.context.IsSignedIn = true
+			}
+			sc.m.Use(pretendSignInMiddleware)
+
+			sc.resp = httptest.NewRecorder()
+			hs.SettingsProvider = &setting.OSSImpl{Cfg: cfg}
+
+			var err error
+			if test.body != nil {
+				sc.req, err = http.NewRequest(test.method, test.url, test.body())
+				sc.req.Header.Add("Content-Type", "application/json")
+			} else {
+				sc.req, err = http.NewRequest(test.method, test.url, nil)
+			}
+			assert.NoError(t, err)
+
+			sc.exec()
+			assert.Equal(t, test.expectedCode, sc.resp.Code)
+		})
+	}
 }

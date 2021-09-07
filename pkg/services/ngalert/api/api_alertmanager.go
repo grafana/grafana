@@ -372,7 +372,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body api
 
 	ctx, cancelFunc, err := contextWithTimeoutFromRequest(
 		c.Req.Context(),
-		c.Req.Request,
+		c.Req,
 		defaultTestReceiversTimeout,
 		maxTestReceiversTimeout)
 	if err != nil {
