@@ -37,41 +37,6 @@ function Cell(props: CellProps) {
   );
 }
 
-interface CardProps {
-  onChange: (value: string) => void;
-  cards: SelectableValue[];
-  currentFolder: SelectableValue<string> | undefined;
-}
-
-export const ResourceCards = (props: CardProps) => {
-  const { onChange, cards, currentFolder: folder } = props;
-  const theme = useTheme2();
-  const styles = getStyles(theme);
-  return (
-    <AutoSizer defaultWidth={1920} defaultHeight={1080}>
-      {({ width, height }) => {
-        const cardWidth = 80;
-        const cardHeight = 80;
-        const columnCount = Math.floor(width / cardWidth);
-        const rowCount = Math.ceil(cards.length / columnCount);
-        return (
-          <Grid
-            width={width}
-            height={height}
-            columnCount={columnCount}
-            columnWidth={cardWidth}
-            rowCount={rowCount}
-            rowHeight={cardHeight}
-            itemData={{ cards, columnCount, onChange, folder }}
-          >
-            {memo(Cell, areEqual)}
-          </Grid>
-        );
-      }}
-    </AutoSizer>
-  );
-};
-
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     card: css`
@@ -109,3 +74,37 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
   };
 });
+
+interface CardProps {
+  onChange: (value: string) => void;
+  cards: SelectableValue[];
+  currentFolder: SelectableValue<string> | undefined;
+}
+
+export const ResourceCards = (props: CardProps) => {
+  const { onChange, cards, currentFolder: folder } = props;
+
+  return (
+    <AutoSizer defaultWidth={1920} defaultHeight={1080}>
+      {({ width, height }) => {
+        const cardWidth = 80;
+        const cardHeight = 80;
+        const columnCount = Math.floor(width / cardWidth);
+        const rowCount = Math.ceil(cards.length / columnCount);
+        return (
+          <Grid
+            width={width}
+            height={height}
+            columnCount={columnCount}
+            columnWidth={cardWidth}
+            rowCount={rowCount}
+            rowHeight={cardHeight}
+            itemData={{ cards, columnCount, onChange, folder }}
+          >
+            {memo(Cell, areEqual)}
+          </Grid>
+        );
+      }}
+    </AutoSizer>
+  );
+};
