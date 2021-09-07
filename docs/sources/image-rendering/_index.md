@@ -13,7 +13,7 @@ Grafana supports automatic rendering of panels as PNG images. This allows Grafan
 
 While an image is being rendered, the PNG image is temporarily written to the file system. When the image is rendered, the PNG image is temporarily written to the `png` folder in the Grafana `data` folder.
 
-A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp-data-lifetime]({{< relref "../administration/configuration/#temp-data-lifetime" >}}) setting.
+A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime]({{< relref "../administration/configuration/#temp_data_lifetime" >}}) setting.
 
 You can also render a PNG by clicking the dropdown arrow next to a panel title, then clicking **Share > Direct link rendered image**.
 
@@ -23,7 +23,7 @@ Alert notifications can include images, but rendering many images at the same ti
 
 ## Install Grafana Image Renderer plugin
 
-> Starting from Grafana v7.0.0, all PhantomJS support has been removed. Please use the Grafana Image Renderer plugin or remote rendering service.
+> **Note:** Starting from Grafana v7.0.0, all PhantomJS support has been removed. Please use the Grafana Image Renderer plugin or remote rendering service.
 
 To install the plugin, refer to the [Grafana Image Renderer Installation instructions](https://grafana.com/grafana/plugins/grafana-image-renderer#installation).
 
@@ -31,15 +31,13 @@ To install the plugin, refer to the [Grafana Image Renderer Installation instruc
 
 The Grafana Image Renderer plugin has a number of configuration options that are used in plugin or remote rendering modes.
 
-In plugin mode, you can specify them directly in the [Grafana configuration file]({{< relref "../administration/configuration/#plugin.grafana-image-renderer" >}}).
+In plugin mode, you can specify them directly in the [Grafana configuration file]({{< relref "../administration/configuration/#plugingrafana-image-renderer" >}}).
 
-In remote rendering mode, you can specify them in a `.json` [configuration file](#configuration-file") or, for some of them, you can override the configuration defaults using environment variables.
-
-> Please note that not all settings are available using environment variables. If there is no example using environment variable below, it means that you need to update the configuration file.
+In remote rendering mode, you can specify them in a `.json` [configuration file](#configuration-file) or, for some of them, you can override the configuration defaults using environment variables.
 
 ### Configuration file
 
-You can override certain settings by using a configuration file, see [default.json](https://github.com/grafana/grafana-image-renderer/tree/master/default.json) for defaults. Note that any configured environment variable takes precedence over configuration file settings.
+You can update your settings by using a configuration file, see [default.json](https://github.com/grafana/grafana-image-renderer/tree/master/default.json) for defaults. Note that any configured environment variable takes precedence over configuration file settings.
 
 You can volume mount your custom configuration file when starting the docker container:
 
@@ -51,13 +49,13 @@ You can see a docker-compose example using a custom configuration file [here](ht
 
 ### Rendering mode
 
-You can instruct how headless browser instances are created by configuring a rendering mode (`RENDERING_MODE`). Default is `default`, other supported values are `clustered` and `reusable`.
+You can instruct how headless browser instances are created by configuring a rendering mode. Default is `default`, other supported values are `clustered` and `reusable`.
 
 #### Default
 
 Default mode will create a new browser instance on each request. When handling multiple concurrent requests, this mode increases memory usage as it will launch multiple browsers at the same time. If you want to set a maximum number of browser to open, you'll need to use the [clustered mode](#clustered).
 
-> Note: When using the `default` mode, it's recommended to not remove the default Chromium flag `--disable-gpu`. When receiving a lot of concurrent requests, not using this flag can cause Puppeteer `newPage` function to freeze, causing request timeouts and leaving browsers open.
+> **Note:** When using the `default` mode, it's recommended to not remove the default Chromium flag `--disable-gpu`. When receiving a lot of concurrent requests, not using this flag can cause Puppeteer `newPage` function to freeze, causing request timeouts and leaving browsers open.
 
 ```bash
 RENDERING_MODE=default
@@ -73,7 +71,7 @@ RENDERING_MODE=default
 
 #### Clustered
 
-With the `clustered` mode, you can configure how many browser instances or incognito pages can execute concurrently. Default is `browser` and will ensure a maximum amount of browser instances can execute concurrently. Mode `context` will ensure a maximum amount of incognito pages can execute concurrently. You can also configure the maximum concurrency allowed which per default is `5`.
+With the `clustered` mode, you can configure how many browser instances or incognito pages can execute concurrently. Default is `browser` and will ensure a maximum amount of browser instances can execute concurrently. Mode `context` will ensure a maximum amount of incognito pages can execute concurrently. You can also configure the maximum concurrency allowed, which per default is `5`.
 
 Using a cluster of incognito pages is more performant and consumes less CPU and memory than a cluster of browsers. However, if one page crashes it can bring down the entire browser with it (making all the rendering requests happening at the same time fail). Also, each page isn't guaranteed to be totally clean (cookies and storage might bleed-through as seen [here](https://bugs.chromium.org/p/chromium/issues/detail?id=754576)).
 
@@ -106,29 +104,27 @@ RENDERING_MODE=reusable
 ```json
 {
   "rendering": {
-    "mode": "clustered",
-    "clustering": {
-      "mode": "default",
-      "maxConcurrency": 5
-    }
+    "mode": "reusable"
   }
 }
 ```
 
 #### Rendering modes performance and CPU / memory usage
 
-The performance and resources consumption of the different modes depend a lot on the number of concurrent requests your service is handling so it's recommended to [monitor your image renderer service]({{< relref "./monitoring.md" >}}).
+The performance and resources consumption of the different modes depend a lot on the number of concurrent requests your service is handling so it's recommended to [monitor your image renderer service]({{< relref "./monitoring/" >}}).
 
 With no concurrent request, the different modes show very similar performance and CPU / memory usage.
 
 When handling concurrent requests, we see the following trends:
 
-- Parallelizing incognito pages instead of browsers is better for performance and CPU / memory consumption meaning that [`reusable`](#reusable-experimental) and [`clustered`](#clustered) (with clustering mode set as `context`) modes are the most performant.
-- If you use the [`clustered`](#clustered) mode with a `maxConcurrency` setting below your average number of concurrent requests, performance will drop as the rendering requests will need to wait for the other to finish before getting access to an incognito page / browser.
+- Parallelizing incognito pages instead of browsers is better for performance and CPU / memory consumption meaning that [clustered](#clustered) (with clustering mode set as `context`) mode is the most performant.
+- If you use the [clustered](#clustered) mode with a `maxConcurrency` setting below your average number of concurrent requests, performance will drop as the rendering requests will need to wait for the other to finish before getting access to an incognito page / browser.
 
 To achieve better performance, it's also recommended to monitor the machine on which your service is running. If you don't have enough memory and / or CPU, every rendering step will be slower than usual, increasing the duration of every rendering request.
 
 ### Other available settings
+
+> **Note:** Please note that not all settings are available using environment variables. If there is no example using environment variable below, it means that you need to update the configuration file.
 
 #### HTTP host
 
@@ -164,7 +160,7 @@ HTTP_PORT=0
 
 #### Enable Prometheus metrics
 
-You can enable [Prometheus](https://prometheus.io/) metrics endpoint `/metrics` using the environment variable `ENABLE_METRICS`. Node.js and render request duration metrics are included, see [output example](#prometheus-metrics-endpoint-output-example) for details.
+You can enable [Prometheus](https://prometheus.io/) metrics endpoint `/metrics` using the environment variable `ENABLE_METRICS`. Node.js and render request duration metrics are included, see [output example](./monitoring/#prometheus-metrics-endpoint-output-example) for details.
 
 Default is `false`.
 
@@ -186,7 +182,7 @@ ENABLE_METRICS=true
 
 #### Log level
 
-Change the log level. Default is `info` and will include log messages with level `error`, `warning` and info.
+Change the log level. Default is `info` and will include log messages with level `error`, `warning` and `info`.
 
 ```bash
 LOG_LEVEL=debug
@@ -246,7 +242,7 @@ RENDERING_DUMPIO=true
 If you already have [Chrome](https://www.google.com/chrome/) or [Chromium](https://www.chromium.org/)
 installed on your system, then you can use this instead of the pre-packaged version of Chromium.
 
-> Please note that this is not recommended, since you may encounter problems if the installed version of Chrome/Chromium is not compatible with the [Grafana Image renderer plugin](#grafana-image-renderer-plugin).
+> **Note:** Please note that this is not recommended, since you may encounter problems if the installed version of Chrome/Chromium is not compatible with the [Grafana Image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
 
 You need to make sure that the Chrome/Chromium executable is available for the Grafana/image rendering service process.
 
@@ -321,7 +317,7 @@ BROWSER_TZ=Europe/Stockholm
 #### Default language
 
 Instruct headless browser instance to use a default language when not provided by Grafana, e.g. when rendering panel image of alert.
-Refer to the HTTP header Accept-Language to understand how to format this value, e.g. 'fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, \*;q=0.5'.
+Refer to the HTTP header Accept-Language to understand how to format this value.
 
 ```json
 {
@@ -381,7 +377,7 @@ Limit the maximum viewport height that can be requested. Default is `3000`.
 
 #### Device scale factor
 
-Specify default device scale factor for rendering images. 2 is enough for monitor resolutions, 4 would be better for printed material. Setting a higher value affects performance and memory. Default is `1`.
+Specify default device scale factor for rendering images. `2` is enough for monitor resolutions, `4` would be better for printed material. Setting a higher value affects performance and memory. Default is `1`.
 This can be overriden in the rendering request.
 
 ```json

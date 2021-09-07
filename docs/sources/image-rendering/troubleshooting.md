@@ -20,7 +20,7 @@ filters = rendering:debug
 - Enable [verbose logging]({{< relref "./#verbose-logging" >}}) for the image renderer.
 - [Capture headless browser output]({{< relref "./#capture-browser-output" >}}).
 
-## Grafana image renderer plugin and remote rendering service
+## Missing libraries
 
 The plugin and rendering service uses [Chromium browser](https://www.chromium.org/) which depends on certain libraries.
 If you don't have all of those libraries installed in your system you may encounter errors when trying to render an image, e.g.
@@ -89,9 +89,9 @@ t=2019-12-04T12:39:22+0000 lvl=error msg="Rendering failed." logger=context user
 t=2019-12-04T12:39:22+0000 lvl=error msg="Request Completed" logger=context userId=1 orgId=1 uname=admin method=GET path=/render/d-solo/zxDJxNaZk/graphite-metrics status=500 remote_addr=192.168.106.101 time_ms=310 size=1722 referer="https://grafana.xxx-xxx/d/zxDJxNaZk/graphite-metrics?orgId=1&refresh=1m"
 ```
 
-(The severity-level `error` in the above messages might be misspelled with a single `r`)
-
 If this happens, then you have to add the certificate to the trust store. If you have the certificate file for the internal root CA in the file `internal-root-ca.crt.pem`, then use these commands to create a user specific NSS trust store for the Grafana user (`grafana` for the purpose of this example) and execute the following steps:
+
+**Linux:**
 
 ```
 [root@server ~]# [ -d /usr/share/grafana/.pki/nssdb ] || mkdir -p /usr/share/grafana/.pki/nssdb
@@ -99,17 +99,37 @@ If this happens, then you have to add the certificate to the trust store. If you
 [root@server ~]# chown -R grafana: /usr/share/grafana/.pki/nssdb
 ```
 
+**Windows:**
+
+```
+certutil –addstore "Root" <path>/internal-root-ca.crt.pem
+```
+
 ## Custom Chrome/Chromium
 
 As a last resort, if you already have [Chrome](https://www.google.com/chrome/) or [Chromium](https://www.chromium.org/)
-installed on your system, then you can configure [Grafana Image renderer plugin](#grafana-image-renderer-plugin) to use this
+installed on your system, then you can configure the [Grafana Image renderer plugin](../#custom-chromechromium) to use this
 instead of the pre-packaged version of Chromium.
 
-> Please note that this is not recommended, since you may encounter problems if the installed version of Chrome/Chromium is not
-> compatible with the [Grafana Image renderer plugin](#grafana-image-renderer-plugin).
+> **Note:** Please note that this is not recommended, since you may encounter problems if the installed version of Chrome/Chromium is not
+> compatible with the [Grafana Image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
 
-To override the path to the Chrome/Chromium executable, set an environment variable and make sure that it's available for the Grafana process. For example:
+To override the path to the Chrome/Chromium executable in plugin mode, set an environment variable and make sure that it's available for the Grafana process. For example:
 
 ```bash
 export GF_PLUGIN_RENDERING_CHROME_BIN="/usr/bin/chromium-browser"
+```
+
+In remote rendering mode, you need to set the environment variable or update the configuration file and make sure that it's available for the image rendering service process:
+
+```bash
+CHROME_BIN="/usr/bin/chromium-browser"
+```
+
+```json
+{
+  "rendering": {
+    "chromeBin": "/usr/bin/chromium-browser"
+  }
+}
 ```
