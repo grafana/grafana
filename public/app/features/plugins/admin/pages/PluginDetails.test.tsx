@@ -1,8 +1,10 @@
 import React from 'react';
+import { Provider } from 'react-redux';
 import { render, RenderResult, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { config } from '@grafana/runtime';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
+import { configureStore } from 'app/store/configureStore';
 import PluginDetailsPage from './PluginDetails';
 import { API_ROOT, GRAFANA_API_ROOT } from '../constants';
 import { LocalPlugin, RemotePlugin } from '../types';
@@ -63,13 +65,19 @@ jest.mock('@grafana/runtime', () => {
         ...original.config.buildInfo,
         version: 'v7.5.0',
       },
+      pluginAdminEnabled: true,
     },
   };
 });
 
 function setup(pluginId: string): RenderResult {
   const props = getRouteComponentProps({ match: { params: { pluginId }, isExact: true, url: '', path: '' } });
-  return render(<PluginDetailsPage {...props} />);
+  const store = configureStore();
+  return render(
+    <Provider store={store}>
+      <PluginDetailsPage {...props} />
+    </Provider>
+  );
 }
 
 describe('Plugin details page', () => {

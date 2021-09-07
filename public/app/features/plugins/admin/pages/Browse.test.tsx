@@ -10,21 +10,28 @@ import { configureStore } from 'app/store/configureStore';
 import { LocalPlugin, RemotePlugin, PluginAdminRoutes } from '../types';
 import { API_ROOT, GRAFANA_API_ROOT } from '../constants';
 
-jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as object),
-  getBackendSrv: () => ({
-    get: (path: string) => {
-      switch (path) {
-        case `${GRAFANA_API_ROOT}/plugins`:
-          return Promise.resolve({ items: remote });
-        case API_ROOT:
-          return Promise.resolve(installed);
-        default:
-          return Promise.reject();
-      }
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  return {
+    ...original,
+    getBackendSrv: () => ({
+      get: (path: string) => {
+        switch (path) {
+          case `${GRAFANA_API_ROOT}/plugins`:
+            return Promise.resolve({ items: remote });
+          case API_ROOT:
+            return Promise.resolve(installed);
+          default:
+            return Promise.reject();
+        }
+      },
+    }),
+    config: {
+      ...original.config,
+      pluginAdminEnabled: true,
     },
-  }),
-}));
+  };
+});
 
 function setup(path = '/plugins'): RenderResult {
   const store = configureStore();
