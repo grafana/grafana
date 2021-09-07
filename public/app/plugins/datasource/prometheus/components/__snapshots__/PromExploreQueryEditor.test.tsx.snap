@@ -74,6 +74,7 @@ exports[`PromExploreQueryEditor should render component 1`] = `
     }
   }
   history={Array []}
+  isExplore={true}
   onBlur={[Function]}
   onChange={[MockFunction]}
   onRunQuery={[MockFunction]}
