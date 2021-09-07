@@ -35,7 +35,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 	if setting.AddChangePasswordLink() {
 		children = append(children, &dtos.NavLink{
 			Text: "Change password", Id: "change-password", Url: hs.Cfg.AppSubURL + "/profile/password",
-			Icon: "lock", HideFromMenu: true,
+			Icon: "lock",
 		})
 	}
 

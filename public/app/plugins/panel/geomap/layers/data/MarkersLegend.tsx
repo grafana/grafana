@@ -52,8 +52,8 @@ export function MarkersLegend(props: MarkersLegendProps) {
   }
 
   const thresholds = color.field?.config?.thresholds;
-  if (!thresholds) {
-    return <div className={style.infoWrap}>no thresholds????</div>;
+  if (!thresholds || thresholds.steps.length < 2) {
+    return <div></div>; // don't show anything in the legend
   }
 
   return (

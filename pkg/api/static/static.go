@@ -17,7 +17,6 @@ package httpstatic
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -26,6 +25,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"gopkg.in/macaron.v1"
 )
 
@@ -115,7 +115,7 @@ func prepareStaticOptions(dir string, options []StaticOptions) StaticOptions {
 	return prepareStaticOption(dir, opt)
 }
 
-func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) bool {
+func staticHandler(ctx *macaron.Context, log log.Logger, opt StaticOptions) bool {
 	if ctx.Req.Method != "GET" && ctx.Req.Method != "HEAD" {
 		return false
 	}
@@ -138,7 +138,7 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
-			log.Printf("Failed to close file: %s\n", err)
+			log.Error("Failed to close file", "error", err)
 		}
 	}()
 
@@ -171,7 +171,7 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 		}
 		defer func() {
 			if err := indexFile.Close(); err != nil {
-				log.Printf("Failed to close file: %s", err)
+				log.Error("Failed to close file", "error", err)
 			}
 		}()
 
@@ -182,7 +182,7 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 	}
 
 	if !opt.SkipLogging {
-		log.Printf("[Static] Serving %s\n", file)
+		log.Info("[Static] Serving", "file", file)
 	}
 
 	// Add an Expires header to the static content
@@ -198,7 +198,8 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 func Static(directory string, staticOpt ...StaticOptions) macaron.Handler {
 	opt := prepareStaticOptions(directory, staticOpt)
 
-	return func(ctx *macaron.Context, log *log.Logger) {
-		staticHandler(ctx, log, opt)
+	logger := log.New("static")
+	return func(ctx *macaron.Context) {
+		staticHandler(ctx, logger, opt)
 	}
 }

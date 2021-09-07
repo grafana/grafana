@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import Page from 'app/core/components/Page/Page';
-import { hot } from 'react-hot-loader';
 import { Button, Form, Field, Input, FieldSet, Label, Tooltip, Icon } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
@@ -68,4 +67,4 @@ function mapStateToProps(state: StoreState) {
   };
 }
 
-export default hot(module)(connect(mapStateToProps)(CreateTeam));
+export default connect(mapStateToProps)(CreateTeam);

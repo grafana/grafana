@@ -346,3 +346,13 @@ Grafana v8.0 changes the underlying data structure to [data frames]({{< relref "
 
 For any existing panels/visualizations using a _Time series_ query, where the time column is only needed for filtering the time range, for example, using the bar gauge or pie chart panel, we recommend that you use a _Table query_ instead and exclude the time column as a field in the response.
 Refer to this [issue comment](https://github.com/grafana/grafana/issues/35534#issuecomment-861519658) for detailed instructions and workarounds.
+
+## Upgrading to v8.1
+
+### Use of unencrypted passwords for data sources no longer supported
+
+As of Grafana v8.1, we no longer support unencrypted storage of passwords and basic auth passwords.
+
+>**Note":** Since Grafana v6.2, new or updated data sources store passwords and basic auth passwords encrypted. See [upgrade note]({{< relref "#ensure-encryption-of-data-source-secrets" >}}) for more information. However, unencrypted passwords and basic auth passwords were also allowed. 
+		
+To migrate to encrypted storage, follow the instructions from the [v6.2 upgrade notes]({{< relref "#ensure-encryption-of-data-source-secrets" >}}). You can also use a `grafana-cli` command to migrate all of your data sources to use encrypted storage of secrets. See [migrate data and encrypt passwords]({{< relref "../administration/cli.md#migrate-data-and-encrypt-passwords" >}}) for further instructions.
