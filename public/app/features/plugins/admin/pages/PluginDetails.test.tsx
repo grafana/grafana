@@ -270,7 +270,7 @@ function localPlugin(plugin: Partial<LocalPlugin> = {}): LocalPlugin {
     category: '',
     state: '',
     signature: PluginSignatureStatus.valid,
-    signatureType: 'community',
+    signatureType: PluginSignatureType.core,
     signatureOrg: 'Grafana Labs',
     ...plugin,
   };

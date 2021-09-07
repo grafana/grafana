@@ -254,7 +254,7 @@ const installed: LocalPlugin[] = [
     category: '',
     state: 'alpha',
     signature: PluginSignatureStatus.internal,
-    signatureType: '',
+    signatureType: PluginSignatureType.core,
     signatureOrg: '',
   },
   {
@@ -291,7 +291,7 @@ const installed: LocalPlugin[] = [
     category: '',
     state: '',
     signature: PluginSignatureStatus.missing,
-    signatureType: '',
+    signatureType: PluginSignatureType.core,
     signatureOrg: '',
   },
   {

@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, PluginIncludeType, PluginType } from '@grafana/data';
-import { useStyles2, TabsBar, TabContent, Tab, Alert } from '@grafana/ui';
-import { AppNotificationSeverity } from 'app/types';
+import { useStyles2, TabsBar, TabContent, Tab } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
@@ -82,8 +81,7 @@ export default function PluginDetails({ match }: Props): JSX.Element | null {
   const plugin = useGetSingle(pluginId); // fetches the localplugin settings
   const { tabs } = useTabs(plugin);
   const { activeTabIndex } = state;
-  // const pluginExtra = loadPlugin(pluginId); // fetches the local plugin settings as well
-  const { isLoading, error } = useFetchStatus();
+  const { isLoading } = useFetchStatus();
   const styles = useStyles2(getStyles);
   const setActiveTab = (activeTabIndex: number) => setState({ ...state, activeTabIndex });
 

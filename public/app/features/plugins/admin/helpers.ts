@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { gt } from 'semver';
-import { PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
+import { PluginSignatureStatus } from '@grafana/data';
 import { CatalogPlugin, CatalogPluginDetails, LocalPlugin, RemotePlugin, Version, PluginFilter } from './types';
 import { contextSrv } from 'app/core/services/context_srv';
 
