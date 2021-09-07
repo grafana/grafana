@@ -1,4 +1,8 @@
 import { createAsyncThunk, Update } from '@reduxjs/toolkit';
+import { getBackendSrv } from '@grafana/runtime';
+import { PanelPlugin } from '@grafana/data';
+import { StoreState } from 'app/types';
+import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 import { getCatalogPlugins, getPluginDetails, installPlugin, uninstallPlugin } from '../api';
 import { STATE_PREFIX } from '../constants';
 import { CatalogPlugin } from '../types';
@@ -55,3 +59,36 @@ export const uninstall = createAsyncThunk(`${STATE_PREFIX}/uninstall`, async (id
     return thunkApi.rejectWithValue('Unknown error.');
   }
 });
+
+// Action needed for backwards compatibility
+// Originally location: public/app/features/plugins/state/actions.ts
+// TODO<get rid of this this once the "plugin_admin_enabled" feature flag is removed>
+export const loadPluginDashboards = createAsyncThunk(`${STATE_PREFIX}/loadPluginDashboards`, async (_, thunkApi) => {
+  const state = thunkApi.getState() as StoreState;
+  const dataSourceType = state.dataSources.dataSource.type;
+  const url = `api/plugins/${dataSourceType}/dashboards`;
+
+  return getBackendSrv().get(url);
+});
+
+// Action needed for backwards compatibility
+// Original location: public/app/features/plugins/state/actions.ts
+// TODO<get rid of this this once the "plugin_admin_enabled" feature flag is removed>
+export const loadPanelPlugin = createAsyncThunk<PanelPlugin, string, { state: StoreState }>(
+  `${STATE_PREFIX}/loadPanelPlugin`,
+  async (id: string, thunkApi) => {
+    const plugin = thunkApi.getState().plugins.panels[id];
+
+    if (!plugin) {
+      return importPanelPlugin(id);
+
+      // I don't think it's needed?
+      // second check to protect against raise condition
+      // if (!state.plugins.panels[id]) {
+      //   thunkApi.dispatch(panelPluginLoaded(plugin));
+      // }
+    }
+
+    return plugin;
+  }
+);

@@ -1,6 +1,6 @@
 import { createSlice, createEntityAdapter, EntityState, AnyAction } from '@reduxjs/toolkit';
 import { PluginsState } from 'app/types';
-import { fetchAll, fetchDetails, install, uninstall } from './actions';
+import { fetchAll, fetchDetails, install, uninstall, loadPanelPlugin, loadPluginDashboards } from './actions';
 import { CatalogPlugin, RequestInfo, RequestStatus } from '../types';
 import { STATE_PREFIX } from '../constants';
 
@@ -57,6 +57,17 @@ export const { reducer } = createSlice({
       // Uninstall
       .addCase(uninstall.fulfilled, (state, action) => {
         pluginsAdapter.updateOne(state.items, action.payload);
+      })
+      .addCase(loadPanelPlugin.fulfilled, (state, action) => {
+        state.panels[action.payload.meta!.id] = action.payload;
+      })
+      .addCase(loadPluginDashboards.pending, (state, action) => {
+        state.isLoadingPluginDashboards = true;
+        state.dashboards = [];
+      })
+      .addCase(loadPluginDashboards.fulfilled, (state, action) => {
+        state.isLoadingPluginDashboards = false;
+        state.dashboards = action.payload;
       })
       .addMatcher(isPendingRequest, (state, action) => {
         state.requests[getOriginalActionType(action.type)] = {
