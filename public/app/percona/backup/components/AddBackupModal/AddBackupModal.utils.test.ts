@@ -1,5 +1,5 @@
 import { BackupType, DataModel, RetryMode } from 'app/percona/backup/Backup.types';
-import { Databases } from 'app/percona/shared/core';
+import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
 
 import { stubs as backupStubs } from '../BackupInventory/__mocks__/BackupInventory.service';
 import { ScheduledBackup } from '../ScheduledBackups/ScheduledBackups.types';
@@ -29,6 +29,7 @@ describe('AddBackupModal::utils', () => {
         retention: 7,
         logs: false,
         active: true,
+        vendor: '',
       });
     });
 
@@ -43,6 +44,7 @@ describe('AddBackupModal::utils', () => {
         backupName: 'Backup 1',
         description: '',
         location: { label: locationName, value: locationId },
+        vendor: DATABASE_LABELS[Databases.mysql],
       });
     });
 
@@ -86,6 +88,7 @@ describe('AddBackupModal::utils', () => {
         retention: 0,
         logs: false,
         active: true,
+        vendor: DATABASE_LABELS[Databases.mongodb],
       });
     });
   });

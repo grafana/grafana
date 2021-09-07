@@ -7,9 +7,6 @@ export const Messages = {
   description: 'Description',
   location: 'Location',
   retryMode: 'Retry mode',
-  editAction: 'Edit',
-  backupAction: 'Backup',
-  scheduleAction: 'Schedule',
   cancelAction: 'Cancel',
   retryTimes: 'Retry, times',
   retryInterval: 'Retry interval, seconds',
@@ -23,10 +20,17 @@ export const Messages = {
   retention: 'Retention (Number of backups - 0 for unlimited)',
   scheduleSection: 'Schedule - UTC time',
   getModalTitle: (scheduleMode: boolean, edit: boolean) => {
-    if (edit) {
-      return scheduleMode ? 'Edit Scheduled backup' : 'Edit Backup on demand';
+    if (scheduleMode) {
+      return edit ? 'Edit Scheduled backup' : 'Schedule backup';
     }
 
-    return scheduleMode ? 'Schedule backup' : 'Backup on demand';
+    return 'Backup on demand';
+  },
+  getSubmitButtonText: (scheduleMode: boolean, edit: boolean) => {
+    if (scheduleMode) {
+      return edit ? 'Edit' : 'Schedule';
+    }
+
+    return 'Backup';
   },
 };

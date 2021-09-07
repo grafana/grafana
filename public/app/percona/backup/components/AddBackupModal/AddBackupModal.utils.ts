@@ -1,5 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { DataModel, RetryMode } from 'app/percona/backup/Backup.types';
+import { DATABASE_LABELS } from 'app/percona/shared/core';
 import { getPeriodFromCronparts, parseCronString } from 'app/percona/shared/helpers/cron/cron';
 import { PeriodType } from 'app/percona/shared/helpers/cron/types';
 
@@ -44,6 +45,7 @@ export const toFormBackup = (backup: Backup | ScheduledBackup | null): AddBackup
       id: '',
       service: null as unknown as SelectableValue<SelectableService>,
       dataModel: DataModel.PHYSICAL,
+      vendor: '',
       retryMode: RetryMode.MANUAL,
       retryTimes: 2,
       retryInterval: 30,
@@ -63,6 +65,7 @@ export const toFormBackup = (backup: Backup | ScheduledBackup | null): AddBackup
   }
 
   const { name, serviceName, serviceId, vendor, dataModel, locationName, locationId, id } = backup;
+  const vendorValue = DATABASE_LABELS[vendor];
 
   let month: Array<SelectableValue<number>> = [];
   let day: Array<SelectableValue<number>> = [];
@@ -91,6 +94,7 @@ export const toFormBackup = (backup: Backup | ScheduledBackup | null): AddBackup
       id,
       service: { label: serviceName, value: { id: serviceId, vendor } },
       dataModel,
+      vendor: vendorValue,
       backupName: name,
       description,
       location: { label: locationName, value: locationId },
@@ -112,6 +116,7 @@ export const toFormBackup = (backup: Backup | ScheduledBackup | null): AddBackup
       id,
       service: { label: serviceName, value: { id: serviceId, vendor } },
       dataModel,
+      vendor: vendorValue,
       backupName: name,
       description,
       location: { label: locationName, value: locationId },
