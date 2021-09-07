@@ -79,19 +79,11 @@ export function ResourcePicker(props: Props) {
 
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          columnGap: '2px',
-          margin: '-18px 0px 18px 0px',
-        }}
-      >
+      <div className={styles.currentItem}>
         {value && (
           <>
-            {mediaType === 'icon' && <SVG src={imgSrc} width="40" height="40" fill={theme.colors.text.primary} />}
-            {mediaType === 'image' && <img src={imgSrc} width="40" height="40" />}
+            {mediaType === 'icon' && <SVG src={imgSrc} className={styles.img} />}
+            {mediaType === 'image' && <img src={imgSrc} className={styles.img} />}
           </>
         )}
         <StringValueEditor value={value ?? ''} onChange={onChange} item={{} as any} context={{} as any} />
@@ -145,6 +137,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       & > :nth-child(2) {
         margin-top: 10px;
       },
+    `,
+    currentItem: css`
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      column-gap: 2px;
+      margin: -18px 0px 18px 0px;
+    `,
+    img: css`
+      width: 40px;
+      height: 40px;
+      fill: ${theme.colors.text.primary};
     `,
   };
 });

@@ -37,45 +37,6 @@ function Cell(props: CellProps) {
   );
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    card: css`
-      display: flex;,
-      justify-content: center;
-      align-items: center;
-      width: 100px;
-      height: 100px;
-      flex-direction: column;
-      margin: .75rem;
-      text-align: center;
-      cursor: pointer;
-      position: relative;
-      background-color: transparent;
-      border: 1px solid transparent;
-      border-radius: 8px;
-
-      :hover {
-        border-color: ${theme.colors.action.hover};
-      }
-    `,
-    img: css`
-      width: 50px;
-      vertical-align: middle;
-      fill: ${theme.colors.text.primary};
-    `,
-    text: css`
-      text-align: center;
-      color: ${theme.colors.text.primary};
-      white-space: nowrap;
-      font-size: 12px;
-      text-overflow: ellipsis;
-      display: block;
-      max-width: 70px;
-      overflow: hidden;
-    `,
-  };
-});
-
 interface CardProps {
   onChange: (value: string) => void;
   cards: SelectableValue[];
@@ -84,7 +45,8 @@ interface CardProps {
 
 export const ResourceCards = (props: CardProps) => {
   const { onChange, cards, currentFolder: folder } = props;
-
+  const theme = useTheme2();
+  const styles = getStyles(theme);
   return (
     <AutoSizer defaultWidth={1920} defaultHeight={1080}>
       {({ width, height }) => {
@@ -109,3 +71,41 @@ export const ResourceCards = (props: CardProps) => {
     </AutoSizer>
   );
 };
+
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+  return {
+    card: css`
+      display: inline-block;
+      width: 80px;
+      height: 80px;
+      margin: 0.75rem;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      background-color: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding-top: 6px;
+
+      :hover {
+        border-color: ${theme.colors.action.hover};
+        box-shadow: ${theme.shadows.z2};
+      }
+    `,
+    img: css`
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      vertical-align: middle;
+      fill: ${theme.colors.text.primary};
+    `,
+    text: css`
+      color: ${theme.colors.text.primary};
+      white-space: nowrap;
+      font-size: 12px;
+      text-overflow: ellipsis;
+      display: block;
+      overflow: hidden;
+    `,
+  };
+});
