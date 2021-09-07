@@ -128,11 +128,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length > 0) {
-      if (config.liveEnabled) {
-        dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
-      } else {
-        dataQueryResponses.push(this.handleLogQueries(logQueries, options));
-      }
+      dataQueryResponses.push(this.handleLogQueries(logQueries, options));
     }
 
     if (metricsQueries.length > 0) {
@@ -150,7 +146,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     return merge(...dataQueryResponses);
   }
 
-  handleLiveLogQueries = (
+  handleLogQueries = (
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
@@ -164,7 +160,31 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
       return of({ data: [], state: LoadingState.Done });
     }
 
-    const queryParams = validLogQueries.map((target: CloudWatchLogsQuery) => ({
+    const response = config.liveEnabled
+      ? this.handleLiveLogQueries(validLogQueries, options)
+      : this.handleLegacyLogQueries(validLogQueries, options);
+
+    return response.pipe(
+      map((dataQueryResponse) => {
+        this.addDataLinksToLogsResponse(dataQueryResponse, options);
+        return dataQueryResponse;
+      })
+    );
+  };
+
+  /**
+   * Handle log query using grafana live feature. This means the backend will return a websocket channel name and it
+   * will listen on it for partial responses until it's terminated. This should give quicker partial data to the user
+   * as the log query can be long running. This requires that config.liveEnabled === true as that controls whether
+   * websocket connections can be made.
+   * @param logQueries
+   * @param options
+   */
+  private handleLiveLogQueries = (
+    logQueries: CloudWatchLogsQuery[],
+    options: DataQueryRequest<CloudWatchQuery>
+  ): Observable<DataQueryResponse> => {
+    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
       intervalMs: 1, // dummy
       maxDataPoints: 1, // dummy
       datasourceId: this.id,
@@ -207,7 +227,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
           ? LoadingState.Done
           : LoadingState.Loading;
         dataQueryResponse.key = message.results[Object.keys(message.results)[0]].refId;
-        return this.addDataLinksToLogsResponse(dataQueryResponse, options);
+        return dataQueryResponse;
       }),
       catchError((err) => {
         if (err.data?.error) {
@@ -219,21 +239,17 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     );
   };
 
-  handleLogQueries = (
+  /**
+   * Handle query the old way (see handleLiveLogQueries) when websockets are not enabled. As enabling websockets is
+   * configurable we will have to be able to degrade gracefully for the time being.
+   * @param logQueries
+   * @param options
+   */
+  private handleLegacyLogQueries = (
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const validLogQueries = logQueries.filter((item) => item.logGroupNames?.length);
-    if (logQueries.length > validLogQueries.length) {
-      return of({ data: [], error: { message: 'Log group is required' } });
-    }
-
-    // No valid targets, return the empty result to save a round trip.
-    if (isEmpty(validLogQueries)) {
-      return of({ data: [], state: LoadingState.Done });
-    }
-
-    const queryParams = validLogQueries.map((target: CloudWatchLogsQuery) => ({
+    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
       queryString: target.expression,
       refId: target.refId,
       logGroupNames: target.logGroupNames,
@@ -251,8 +267,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
               .statsGroups,
           }))
         )
-      ),
-      map((response) => this.addDataLinksToLogsResponse(response, options))
+      )
     );
   };
 
@@ -408,7 +423,7 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     return withTeardown(queryResponse, () => this.stopQueries());
   }
 
-  private addDataLinksToLogsResponse(response: DataQueryResponse, options: DataQueryRequest<CloudWatchQuery>) {
+  private addDataLinksToLogsResponse(response: DataQueryResponse, options: DataQueryRequest<CloudWatchQuery>): void {
     for (const dataFrame of response.data as DataFrame[]) {
       const range = this.timeSrv.timeRange();
       const start = range.from.toISOString();
@@ -444,8 +459,6 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
         ];
       }
     }
-
-    return response;
   }
 
   stopQueries() {
