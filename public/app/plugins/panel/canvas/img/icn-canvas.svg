@@ -1,0 +1,9 @@
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1000 1000" enable-background="new 0 0 1000 1000" xml:space="preserve">
+    <defs><style>.cls-1{fill:#84aff1;}.cls-2{fill:url(#linear-gradient);}.cls-3{fill:#3865ab;}</style><linearGradient id="linear-gradient" y1="40.18" x2="82.99" y2="40.18" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f2cc0c"/><stop offset="1" stop-color="#ff9830"/></linearGradient></defs>
+    <g>
+      <path class="cls-3" d="M869,351v543.4H97.6V123.1h596V17.9H81.8C34.9,17.9,10,50.4,10,97.3v814.7c0,46.9,45.8,70.1,79.9,70.1h806.4c44.4,0,60.3-23.3,60.3-70.1V351H869z"/>
+      <path class="cls-2" d="M888.2,263.3L765.4,140.6L302.6,606l120,120L888.2,263.3z"/>
+      <path class="cls-1" d="M204.5,824.3l192.8-70.1L274.6,631.5L204.5,824.3z"/>
+      <path class="cls-1" d="M977.6,111.1l-60-60c-16.6-16.6-43.4-16.6-60,0l-60,60l120,120l60-60C994.1,154.5,994.1,127.6,977.6,111.1z"/>
+    </g>
+</svg>

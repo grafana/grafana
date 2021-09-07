@@ -8,11 +8,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/prometheus/alertmanager/pkg/labels"
-
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/prometheus/alertmanager/pkg/labels"
 )
 
 type notificationChannel struct {

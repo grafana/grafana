@@ -1,10 +1,14 @@
 package dashboard
 
-import "github.com/grafana/grafana/cue/scuemata"
+import (
+    "list"
+
+    "github.com/grafana/grafana/cue/scuemata"
+)
 
 Family: scuemata.#Family & {
 	lineages: [
-		[ 
+		[
 			{ // 0.0
                 // Unique numeric identifier for the dashboard.
                 // TODO must isolate or remove identifiers local to a Grafana instance...?
@@ -131,9 +135,7 @@ Family: scuemata.#Family & {
 
                 // Dashboard panels. Panels are canonically defined inline
                 // because they share a version timeline with the dashboard
-                // schema; they do not vary independently. We create a separate,
-                // synthetic Family to represent them in Go, for ease of generating
-                // e.g. JSON Schema.
+                // schema; they do not evolve independently.
                 #Panel: {
                     // The panel plugin type id. 
                     type: !=""
@@ -155,7 +157,8 @@ Family: scuemata.#Family & {
                     // _pv: { maj: int, min: int }
                     // The major and minor versions of the panel plugin for this schema.
                     // TODO 2-tuple list instead of struct?
-                    panelSchema?: { maj: number, min: number }
+                    // panelSchema?: { maj: number, min: number }
+                    panelSchema?: [number, number]
 
                     // TODO docs
                     targets?: [...#Target]
@@ -218,9 +221,8 @@ Family: scuemata.#Family & {
                     // TODO tighter constraint
                     timeShift?: string
 
-                    // The allowable options are specified by the panel plugin's
-                    // schema.
-                    // FIXME same conundrum as with the closed validation for fieldConfig.
+                    // options is specified by the PanelOptions field in panel
+                    // plugin schemas.
                     options: {}
 
                     fieldConfig: {
@@ -283,16 +285,8 @@ Family: scuemata.#Family & {
                             // Alternative to empty string
                             noValue?: string
 
-                            // TODO conundrum: marking this struct as open would
-                            // - i think - preclude closed validation of
-                            // plugin-defined config bits. But, marking it
-                            // closed makes it impossible to use just this
-                            // schema (the "base" variant) to validate the base
-                            // components of a dashboard.
-                            //
-                            // Can always exist. Valid fields within this are
-                            // defined by the panel plugin - that's the
-                            // PanelFieldConfig that comes from the plugin.
+                            // custom is specified by the PanelFieldConfig field
+                            // in panel plugin schemas.
                             custom?: {}
                         }
                         overrides: [...{
@@ -306,7 +300,29 @@ Family: scuemata.#Family & {
                             }]
                         }]
                     }
+                    // Embed the disjunction of all injected panel schema, if any were injected.
+                    if len(compose._panelSchemas) > 0 {
+                        or(compose._panelSchemas) // TODO try to stick graph in here
+                    }
+
+                    // Make the plugin-composed subtrees open if the panel is
+                    // of unknown types. This is important in every possible case:
+                    // - Base (this file only): no real dashboard json
+                    //   containing any panels would ever validate
+                    // - Dist (this file + core plugin schema): dashboard json containing
+                    //   panels with any third-party panel plugins would fail to validate,
+                    //   as well as any core plugins lacking a models.cue. The latter case
+                    //   is not normally expected, but this is not the appropriate place
+                    //   to enforce the invariant, anyway.
+                    // - Instance (this file + core + third-party plugin schema): dashboard
+                    //   json containing panels with a third-party plugin that exists but
+                    //   is not currently installed would fail to validate.
+                    if !list.Contains(compose._panelTypes, type) {
+                        options: {...}
+                        fieldConfig: defaults: custom: {...}
+                    }
                 }
+
                 // Row panel
                 #RowPanel: {
                     type: "row"
@@ -329,86 +345,84 @@ Family: scuemata.#Family & {
                         static?: bool
                     }
                     id: number
-                    panels: [...#Panel | #GraphPanel]
+                    panels: [...(#Panel | #GraphPanel)]
                 }
                 // Support for legacy graph panels.
                 #GraphPanel: {
                     ...
                     type: "graph"
                     thresholds: [...{...}]
-                    timeRegions: [...{...}]
-                    // FIXME this one is quite complicated, as it duplicates the #Panel object's own structure (...?)
+                    timeRegions?: [...{...}]
                     seriesOverrides: [...{...}]
-
-                    // TODO docs
-                    // TODO tighter constraint
                     aliasColors?: [string]: string
-
-                    // TODO docs
                     bars: bool | *false
-                    // TODO docs
                     dashes: bool | *false
-                    // TODO docs
                     dashLength: number | *10
-                    // TODO docs
-                    // TODO tighter constraint
                     fill?: number
-                    // TODO docs
-                    // TODO tighter constraint
                     fillGradient?: number
-
-                    // TODO docs
                     hiddenSeries: bool | *false
-
-                    // FIXME idk where this comes from, leaving it very open and very wrong for now
                     legend: {...}
-
-                    // TODO docs
-                    // TODO tighter constraint
                     lines: bool | *false
-                    // TODO docs
                     linewidth?: number
-                    // TODO docs
                     nullPointMode: *"null" | "connected" | "null as zero"
-                    // TODO docs
                     percentage: bool | *false
-                    // TODO docs
                     points: bool | *false
-                    // TODO docs
-                    // FIXME this is the kind of case that makes
-                    // optional/non-default tricky: it's optional because it
-                    // only makes sense when points is true (right?), but if it
-                    // is, then there actually is a default value. Easier way to
-                    // represent this would be to wrap up this handling into a
-                    // struct
                     pointradius?: number
-                    // TODO docs
-                    // TODO tighter constraint
                     renderer: string
-                    // TODO docs
                     spaceLength: number | *10
-                    // TODO docs
                     stack: bool | *false
-                    // TODO docs
                     steppedLine: bool | *false
-                    // TODO docs
                     tooltip?: {
-                        // TODO docs
                         shared?: bool
-                        // TODO docs
                         sort: number | *0
-                        // TODO docs
-                        // FIXME literally no idea if these values are sane
                         value_type: *"individual" | "cumulative"
                     }
-
                 }
             }
 		]
 	]
-}
+    compose: {
+        // Scuemata families for all panel types that should be composed into the
+        // dashboard schema.
+        Panel: [string]: scuemata.#PanelFamily
 
-#Latest: {
-    #Dashboard: Family.latest
-    #Panel: Family.latest._Panel
+        // _panelTypes: [for typ, _ in Panel {typ}]
+        _panelTypes: [for typ, _ in Panel {typ}, "graph", "row"]
+        _panelSchemas: [for typ, scue in Panel {
+            for lv, lin in scue.lineages {
+                for sv, sch in lin {
+                    (_mapPanel & {arg: {
+                        type: typ
+                        v: [lv, sv] // TODO add optionality for exact, at least, at most, any
+                        model: sch // TODO Does this need to be close()d?
+                    }}).out
+                }
+            }
+        }, { type: string }]
+        _mapPanel: {
+            arg: {
+                type: string & !=""
+                v: [number, number]
+                model: {...}
+            }
+            // Until CUE introduces the must() constraint, we have to enforce
+            // that the input model is as expected by checking for unification
+            // in this hidden property (see https://github.com/cue-lang/cue/issues/575).
+            // If we unified arg.model with the scuemata.#PanelSchema
+            // meta-schema directly, the struct openness (PanelOptions: {...})
+            // would be applied to the actual schema instance in the arg. Here,
+            // where we're actually putting those in the dashboard schema, want
+            // those to be closed, or at least preserve closed-ness.
+            _checkSchema: scuemata.#PanelSchema & arg.model
+            out: {
+                type: arg.type
+                panelSchema: arg.v // TODO add optionality for exact, at least, at most, any
+                options: arg.model.PanelOptions
+                fieldConfig: defaults: custom: {}
+                if arg.model.PanelFieldConfig != _|_ {
+                    fieldConfig: defaults: custom: arg.model.PanelFieldConfig
+                }
+            }
+        }
+    }
 }
