@@ -74,17 +74,17 @@ export class QueryRows extends PureComponent<Props, State> {
             ...query,
             model: {
               ...query.model,
-              conditions: query.model.conditions.map((c) => {
-                if (c.query.params[0] === referencedRefId) {
+              conditions: query.model.conditions.map((condition) => {
+                if (condition.query.params[0] === referencedRefId) {
                   return {
-                    ...c,
+                    ...condition,
                     evaluator: {
-                      ...c.evaluator,
+                      ...condition.evaluator,
                       params: [thresholds.steps[1].value.toPrecision(4)],
                     },
                   };
                 }
-                return c;
+                return condition;
               }),
             },
           };

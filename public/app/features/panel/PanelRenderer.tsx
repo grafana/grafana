@@ -20,7 +20,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
     onChangeTimeRange = () => {},
     fieldConfig: config = { defaults: {}, overrides: [] },
   } = props;
-
+  console.log('panel renderer config', config);
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>(config);
   const { value: plugin, error, loading } = useAsync(() => importPanelPlugin(pluginId), [pluginId]);
   const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
@@ -43,6 +43,8 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
   }
 
   const PanelComponent = plugin.panel;
+
+  console.log('panel renderer', fieldConfig);
 
   return (
     <PanelComponent
