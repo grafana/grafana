@@ -46,6 +46,7 @@ import (
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
@@ -144,6 +145,7 @@ var wireBasicSet = wire.NewSet(
 	elasticsearch.ProvideService,
 	dashboardsnapshots.ProvideService,
 	datasources.ProvideService,
+	pluginsettings.ProvideService,
 )
 
 var wireSet = wire.NewSet(

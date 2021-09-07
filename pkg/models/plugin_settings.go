@@ -36,8 +36,9 @@ type UpdatePluginSettingCmd struct {
 	SecureJsonData map[string]string      `json:"secureJsonData"`
 	PluginVersion  string                 `json:"version"`
 
-	PluginId string `json:"-"`
-	OrgId    int64  `json:"-"`
+	PluginId                string            `json:"-"`
+	OrgId                   int64             `json:"-"`
+	EncryptedSecureJsonData map[string][]byte `json:"-"`
 }
 
 // specific command, will only update version
@@ -45,10 +46,6 @@ type UpdatePluginSettingVersionCmd struct {
 	PluginVersion string
 	PluginId      string `json:"-"`
 	OrgId         int64  `json:"-"`
-}
-
-func (cmd *UpdatePluginSettingCmd) GetEncryptedJsonData() securejsondata.SecureJsonData {
-	return securejsondata.GetEncryptedJsonData(cmd.SecureJsonData)
 }
 
 // ---------------------

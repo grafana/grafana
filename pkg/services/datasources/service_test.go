@@ -13,11 +13,50 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestService(t *testing.T) {
+	sqlStore := sqlstore.InitTestDB(t)
+
+	s := ProvideService(bus.New(), sqlStore, ossencryption.ProvideService())
+
+	origSecret := setting.SecretKey
+	setting.SecretKey = "datasources_service_test"
+	t.Cleanup(func() {
+		setting.SecretKey = origSecret
+	})
+
+	var ds *models.DataSource
+
+	t.Run("create datasource should encrypt the secure json data", func(t *testing.T) {
+		sjd := map[string]string{"password": "12345"}
+		cmd := models.AddDataSourceCommand{SecureJsonData: sjd}
+
+		err := s.AddDataSource(&cmd)
+		require.NoError(t, err)
+
+		ds = cmd.Result
+		decrypted, err := s.EncryptionService.DecryptJsonData(ds.SecureJsonData, setting.SecretKey)
+		require.NoError(t, err)
+		require.Equal(t, sjd, decrypted)
+	})
+
+	t.Run("update datasource should encrypt the secure json data", func(t *testing.T) {
+		sjd := map[string]string{"password": "678910"}
+		cmd := models.UpdateDataSourceCommand{Id: ds.Id, OrgId: ds.OrgId, SecureJsonData: sjd}
+		err := s.UpdateDataSource(&cmd)
+		require.NoError(t, err)
+
+		decrypted, err := s.EncryptionService.DecryptJsonData(cmd.Result.SecureJsonData, setting.SecretKey)
+		require.NoError(t, err)
+		require.Equal(t, sjd, decrypted)
+	})
+}
 
 //nolint:goconst
 func TestService_GetHttpTransport(t *testing.T) {
