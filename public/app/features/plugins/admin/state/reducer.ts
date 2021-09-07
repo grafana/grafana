@@ -1,6 +1,6 @@
 import { createSlice, createEntityAdapter, EntityState, AnyAction } from '@reduxjs/toolkit';
 import { PluginsState } from 'app/types';
-import { fetchAll, fetchDetails } from './actions';
+import { fetchAll, fetchDetails, install, uninstall } from './actions';
 import { CatalogPlugin, RequestInfo, RequestStatus } from '../types';
 import { STATE_PREFIX } from '../constants';
 
@@ -51,13 +51,13 @@ export const { reducer } = createSlice({
         pluginsAdapter.updateOne(state.items, action.payload);
       })
       // Install
-      // .addCase(install.fulfilled, (state, action) => {
-      //   pluginsAdapter.upsertOne(state, action.payload);
-      // })
+      .addCase(install.fulfilled, (state, action) => {
+        pluginsAdapter.updateOne(state.items, action.payload);
+      })
       // Uninstall
-      // .addCase(uninstall.fulfilled, (state, action) => {
-      //   pluginsAdapter.upsertOne(state, action.payload);
-      // }),
+      .addCase(uninstall.fulfilled, (state, action) => {
+        pluginsAdapter.updateOne(state.items, action.payload);
+      })
       .addMatcher(isPendingRequest, (state, action) => {
         state.requests[getOriginalActionType(action.type)] = {
           status: RequestStatus.Pending,

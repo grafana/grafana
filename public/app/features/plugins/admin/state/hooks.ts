@@ -26,7 +26,7 @@ export const useGetSingle = (id: string): CatalogPlugin | undefined => {
 export const useInstall = () => {
   const dispatch = useDispatch();
 
-  return (id: string) => dispatch(install(id));
+  return (id: string, version: string) => dispatch(install({ id, version }));
 };
 
 export const useUninstall = () => {
@@ -40,6 +40,20 @@ export const useFetchStatus = () => {
   const error = useSelector(selectRequestError(fetchAll.typePrefix));
 
   return { isLoading, error };
+};
+
+export const useInstallStatus = () => {
+  const isInstalling = useSelector(selectIsRequestPending(install.typePrefix));
+  const error = useSelector(selectRequestError(install.typePrefix));
+
+  return { isInstalling, error };
+};
+
+export const useUninstallStatus = () => {
+  const isUninstalling = useSelector(selectIsRequestPending(uninstall.typePrefix));
+  const error = useSelector(selectRequestError(uninstall.typePrefix));
+
+  return { isUninstalling, error };
 };
 
 // Only fetches in case they were not fetched yet
