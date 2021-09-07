@@ -70,13 +70,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 | Telegram                                      | `telegram`                | yes                | no                      |
 | Threema                                       | `threema`                 | yes, external only | no                      |
 | VictorOps                                     | `victorops`               | yes, external only | yes                     |
-
-<<<<<<< HEAD
-| [Webhook](#webhook) | `webhook` | yes, external only | yes |
-=======
-| [Webhook](#webhook) | `webhook` | yes, external only | yes | |
-
-> > > > > > > main
+| [Webhook](#webhook)                           | `webhook`                 | yes, external only | yes                     |
 
 ### Email
 
