@@ -122,8 +122,6 @@ export interface ExploreItemState {
    */
   refreshInterval?: string;
 
-  latency: number;
-
   /**
    * If true, the view is in live tailing mode.
    */
@@ -176,7 +174,6 @@ export interface QueryTransaction {
   done: boolean;
   error?: string | JSX.Element;
   hints?: QueryHint[];
-  latency: number;
   request: DataQueryRequest;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs

@@ -22,7 +22,6 @@ const setup = (propOverrides?: object) => {
     removeQueryRowAction: jest.fn() as any,
     runQueries: jest.fn(),
     queryResponse: {} as PanelData,
-    latency: 1,
   };
 
   Object.assign(props, propOverrides);

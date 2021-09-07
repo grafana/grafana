@@ -1,15 +1,10 @@
 import React from 'react';
 import { Icon } from '@grafana/ui';
 
-function formatLatency(value: number) {
-  return `${(value / 1000).toFixed(1)}s`;
-}
-
 export type Props = {
   canToggleEditorModes: boolean;
   isDisabled?: boolean;
   isNotStarted: boolean;
-  latency: number;
   onClickToggleEditorMode: () => void;
   onClickToggleDisabled: () => void;
   onClickRemoveButton: () => void;
@@ -23,7 +18,6 @@ export function QueryRowActions(props: Props) {
     onClickRemoveButton,
     isDisabled,
     isNotStarted,
-    latency,
   } = props;
 
   return (
@@ -39,11 +33,6 @@ export function QueryRowActions(props: Props) {
           </button>
         </div>
       )}
-      <div className="gf-form">
-        <button disabled className="gf-form-label" title="Query row latency">
-          {formatLatency(latency)}
-        </button>
-      </div>
       <div className="gf-form">
         <button
           disabled={isNotStarted}

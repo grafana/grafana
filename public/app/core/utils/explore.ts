@@ -165,7 +165,6 @@ export function buildQueryTransaction(
     scanning,
     id: generateKey(), // reusing for unique ID
     done: false,
-    latency: 0,
   };
 }
 

@@ -771,8 +771,6 @@ export const processQueryResponse = (
     return { ...state };
   }
 
-  const latency = request.endTime ? request.endTime - request.startTime : 0;
-
   // Send legacy data to Angular editors
   if (state.datasourceInstance?.components?.QueryCtrl) {
     const legacy = series.map((v) => toLegacyResponseData(v));
@@ -781,7 +779,6 @@ export const processQueryResponse = (
 
   return {
     ...state,
-    latency,
     queryResponse: response,
     graphResult,
     tableResult,

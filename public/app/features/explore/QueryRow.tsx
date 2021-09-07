@@ -140,7 +140,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   }, 500);
 
   render() {
-    const { datasourceInstance, query, queryResponse, latency } = this.props;
+    const { datasourceInstance, query, queryResponse } = this.props;
 
     if (!datasourceInstance) {
       return <>Loading data source</>;
@@ -160,7 +160,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
             canToggleEditorModes={canToggleEditorModes}
             isDisabled={query.hide}
             isNotStarted={isNotStarted}
-            latency={latency}
             onClickToggleEditorMode={this.onClickToggleEditorMode}
             onClickToggleDisabled={this.onClickToggleDisabled}
             onClickRemoveButton={this.onClickRemoveButton}
@@ -175,7 +174,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 function mapStateToProps(state: StoreState, { exploreId, index }: OwnProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId]!;
-  const { datasourceInstance, history, queries, range, absoluteRange, queryResponse, latency, eventBridge } = item;
+  const { datasourceInstance, history, queries, range, absoluteRange, queryResponse, eventBridge } = item;
   const query = queries[index];
 
   return {
@@ -185,7 +184,6 @@ function mapStateToProps(state: StoreState, { exploreId, index }: OwnProps) {
     range,
     absoluteRange,
     queryResponse,
-    latency,
     exploreEvents: eventBridge,
   };
 }
