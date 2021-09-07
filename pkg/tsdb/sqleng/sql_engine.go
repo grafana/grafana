@@ -307,6 +307,13 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		}
 	}
 
+	if qm.timeEndIndex != -1 {
+		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeEndIndex); err != nil {
+			errAppendDebug("db convert timeend column failed", err, interpolatedQuery)
+			return
+		}
+	}
+
 	if qm.Format == dataQueryFormatSeries {
 		// time series has to have time column
 		if qm.timeIndex == -1 {
@@ -408,6 +415,7 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 		columnNames:  columnNames,
 		rows:         rows,
 		timeIndex:    -1,
+		timeEndIndex: -1,
 		metricIndex:  -1,
 		metricPrefix: false,
 		queryContext: queryContext,
@@ -454,6 +462,12 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 				break
 			}
 		}
+
+		if qm.Format == dataQueryFormatTable && col == "timeend" {
+			qm.timeEndIndex = i
+			break
+		}
+
 		switch col {
 		case "metric":
 			qm.metricIndex = i
@@ -492,6 +506,7 @@ type dataQueryModel struct {
 	columnNames       []string
 	columnTypes       []*sql.ColumnType
 	timeIndex         int
+	timeEndIndex      int
 	metricIndex       int
 	rows              *core.Rows
 	metricPrefix      bool
