@@ -1,5 +1,5 @@
 import { colorManipulator, DataFrame, DataFrameFieldIndex, DataFrameView, TimeZone } from '@grafana/data';
-import { EventsCanvas, UPlotConfigBuilder, usePlotContext, useTheme } from '@grafana/ui';
+import { EventsCanvas, UPlotConfigBuilder, useTheme2 } from '@grafana/ui';
 import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { AnnotationMarker } from './annotations/AnnotationMarker';
 
@@ -10,8 +10,8 @@ interface AnnotationsPluginProps {
 }
 
 export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotations, timeZone, config }) => {
-  const theme = useTheme();
-  const plotCtx = usePlotContext();
+  const theme = useTheme2();
+  const plotInstance = useRef<uPlot>();
 
   const annotationsRef = useRef<Array<DataFrameView<AnnotationsDataFrameViewDTO>>>();
 
@@ -27,6 +27,10 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
   }, [annotations]);
 
   useLayoutEffect(() => {
+    config.addHook('init', (u) => {
+      plotInstance.current = u;
+    });
+
     config.addHook('draw', (u) => {
       // Render annotation lines on the canvas
       /**
@@ -86,26 +90,23 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     });
   }, [config, theme]);
 
-  const mapAnnotationToXYCoords = useCallback(
-    (frame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
-      const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
-      const annotation = view.get(dataFrameFieldIndex.fieldIndex);
-      const plotInstance = plotCtx.plot;
-      if (!annotation.time || !plotInstance) {
-        return undefined;
-      }
-      let x = plotInstance.valToPos(annotation.time, 'x');
+  const mapAnnotationToXYCoords = useCallback((frame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
+    const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
+    const annotation = view.get(dataFrameFieldIndex.fieldIndex);
 
-      if (x < 0) {
-        x = 0;
-      }
-      return {
-        x,
-        y: plotInstance.bbox.height / window.devicePixelRatio + 4,
-      };
-    },
-    [plotCtx]
-  );
+    if (!annotation.time || !plotInstance.current) {
+      return undefined;
+    }
+    let x = plotInstance.current.valToPos(annotation.time, 'x');
+
+    if (x < 0) {
+      x = 0;
+    }
+    return {
+      x,
+      y: plotInstance.current.bbox.height / window.devicePixelRatio + 4,
+    };
+  }, []);
 
   const renderMarker = useCallback(
     (frame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
