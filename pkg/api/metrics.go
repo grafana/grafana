@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"net/http"
 
@@ -9,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -232,38 +230,4 @@ func GenerateSQLTestData(c *models.ReqContext) response.Response {
 	}
 
 	return response.JSON(200, &util.DynMap{"message": "OK"})
-}
-
-// GET /api/tsdb/testdata/random-walk
-func (hs *HTTPServer) GetTestDataRandomWalk(c *models.ReqContext) response.Response {
-	from := c.Query("from")
-	to := c.Query("to")
-	intervalMS := c.QueryInt64("intervalMs")
-
-	timeRange := plugins.NewDataTimeRange(from, to)
-	request := plugins.DataQuery{TimeRange: &timeRange}
-
-	dsInfo := &models.DataSource{
-		Type:     "testdata",
-		JsonData: simplejson.New(),
-	}
-	request.Queries = append(request.Queries, plugins.DataSubQuery{
-		RefID:      "A",
-		IntervalMS: intervalMS,
-		Model: simplejson.NewFromAny(&util.DynMap{
-			"scenario": "random_walk",
-		}),
-		DataSource: dsInfo,
-	})
-
-	resp, err := hs.DataService.HandleRequest(context.Background(), dsInfo, request)
-	if err != nil {
-		return response.Error(500, "Metric request error", err)
-	}
-
-	qdr, err := resp.ToBackendDataResponse()
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "error converting results", err)
-	}
-	return toMacronResponse(qdr)
 }
